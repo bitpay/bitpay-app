@@ -1,28 +1,20 @@
-import {
-  getStateFromPath,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
 import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import haptic from '../../../../../components/haptic-feedback/haptic';
-import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {
   isCaptionedContentCard,
   isClassicContentCard,
 } from '../../../../../utils/braze';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useShopDeepLinkHandler,
+} from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
 import {LogActions} from '../../../../../store/log';
-import {
-  selectAvailableGiftCards,
-  selectIntegrations,
-} from '../../../../../store/shop/shop.selectors';
-import {ShopTabs} from '../../../shop/ShopHome';
 import LinkCard from '../cards/LinkCard';
-import {ShopScreens} from '../../../shop/ShopStack';
 import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 interface OfferCardProps {
@@ -36,12 +28,9 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   const {contentCard} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
+  const shopDeepLinkHandler = useShopDeepLinkHandler();
   let description = '';
   let imageSource: Source | null = null;
-
-  const availableGiftCards = useAppSelector(selectAvailableGiftCards);
-  const integrations = useAppSelector(selectIntegrations);
 
   if (
     isCaptionedContentCard(contentCard) ||
@@ -70,74 +59,15 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     haptic('impactLight');
 
     try {
-      const path = url.replace(APP_DEEPLINK_PREFIX, '');
-      const state = getStateFromPath(path);
-
-      if (!state?.routes.length) {
-        return;
-      }
-
-      const route = state.routes[0];
-
-      if (!route.params) {
-        return;
-      }
-
-      const merchantName = ((route.params as any).merchant || '').toLowerCase();
-
-      if (route.name === 'giftcard') {
-        const cardConfig = availableGiftCards.find(
-          gc => gc.name.toLowerCase() === merchantName,
-        );
-
-        if (cardConfig) {
-          navigation.navigate('GiftCard', {
-            screen: 'BuyGiftCard',
-            params: {
-              cardConfig,
-            },
-          });
-        } else {
-          navigation.navigate('Shop', {
-            screen: ShopScreens.HOME,
-            params: {
-              screen: ShopTabs.GIFT_CARDS,
-            },
-          });
-        }
-      } else if (route.name === 'shoponline') {
-        const directIntegration = integrations.find(
-          i => i.displayName.toLowerCase() === merchantName,
-        );
-
-        if (directIntegration) {
-          navigation.navigate('Merchant', {
-            screen: 'MerchantDetails',
-            params: {
-              directIntegration,
-            },
-          });
-        } else {
-          navigation.navigate('Shop', {
-            screen: ShopScreens.HOME,
-            params: {
-              screen: ShopTabs.SHOP_ONLINE,
-            },
-          });
-        }
-      }
-      dispatch(
-        logSegmentEvent(
-          'track',
-          'Clicked Shop with Crypto',
-          {
+      const pathInfo = shopDeepLinkHandler(url);
+      if (pathInfo) {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Shop with Crypto', {
             context: 'OfferCard',
-            merchantName: merchantName || '',
-          },
-          true,
-        ),
-      );
-
+            merchantName: pathInfo.merchantName,
+          }),
+        );
+      }
       return;
     } catch (err) {
       dispatch(

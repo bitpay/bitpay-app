@@ -285,15 +285,10 @@ const PriceCharts = () => {
 
   const goToBuyCrypto = useRequireKeyAndWalletRedirect(() => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Buy Crypto',
-        {
-          context: 'PriceChart',
-          coin: currencyAbbreviation || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Buy Crypto', {
+        context: 'PriceChart',
+        coin: currencyAbbreviation || '',
+      }),
     );
     navigation.navigate('Wallet', {
       screen: 'Amount',

@@ -30,6 +30,7 @@ const ShopStack = () => {
       screenOptions={{
         ...baseNavigatorOptions,
         ...baseScreenOptions,
+        gestureEnabled: false,
       }}>
       <Shop.Screen
         name={ShopScreens.HOME}

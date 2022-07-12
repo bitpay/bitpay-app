@@ -296,6 +296,8 @@ export interface TransactionProposal {
   fees: number;
   feeRate: string;
   from: string;
+  copayerId: string;
+  walletId: string;
   nonce?: number;
   enableRBF?: boolean;
   replaceTxByFee?: boolean;

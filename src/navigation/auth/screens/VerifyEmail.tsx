@@ -79,13 +79,9 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
       }
 
       dispatch(
-        Analytics.track(
-          'Verified Email',
-          {
-            email: email || '',
-          },
-          true,
-        ),
+        Analytics.track('Verified Email', {
+          email: email || '',
+        }),
       );
 
       navigation.navigate('CreateAccount');

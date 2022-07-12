@@ -46,6 +46,7 @@ interface Props {
   value?: string;
   time?: string;
   onPressTransaction?: () => void;
+  hideIcon?: boolean;
 }
 
 const TransactionProposalRow = ({
@@ -54,11 +55,12 @@ const TransactionProposalRow = ({
   value,
   time,
   onPressTransaction,
+  hideIcon,
 }: Props) => {
   const {t} = useTranslation();
   return (
     <TransactionContainer onPress={onPressTransaction}>
-      {icon && <IconContainer>{icon}</IconContainer>}
+      {icon && !hideIcon && <IconContainer>{icon}</IconContainer>}
 
       <HeadContainer>
         <Description numberOfLines={1} ellipsizeMode={'tail'}>

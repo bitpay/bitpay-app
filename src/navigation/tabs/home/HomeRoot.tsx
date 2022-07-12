@@ -45,6 +45,9 @@ import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {batch} from 'react-redux';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
+import {ProposalBadgeContainer} from '../../../components/styled/Containers';
+import {ProposalBadge} from '../../../components/styled/Text';
+import _ from 'lodash';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -57,6 +60,13 @@ const HomeRoot = () => {
   const brazeDoMore = useAppSelector(selectBrazeDoMore);
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const wallets = Object.values(keys).flatMap(k => k.wallets);
+  let pendingTxps: any = [];
+  _.each(wallets, x => {
+    if (x.pendingTxps) {
+      pendingTxps = pendingTxps.concat(x.pendingTxps);
+    }
+  });
   const keyMigrationFailure = useAppSelector(
     ({APP}) => APP.keyMigrationFailure,
   );
@@ -153,6 +163,16 @@ const HomeRoot = () => {
     setRefreshing(false);
   };
 
+  const onPressTxpBadge = useMemo(
+    () => () => {
+      navigation.navigate('Wallet', {
+        screen: 'TransactionProposalNotifications',
+        params: {},
+      });
+    },
+    [],
+  );
+
   useEffect(() => {
     if (keyMigrationFailure && !keyMigrationFailureModalHasBeenShown) {
       batch(() => {
@@ -174,6 +194,11 @@ const HomeRoot = () => {
             />
           }>
           <HeaderContainer>
+            {pendingTxps.length ? (
+              <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+              </ProposalBadgeContainer>
+            ) : null}
             <ScanButton />
             <ProfileButton />
           </HeaderContainer>
@@ -206,14 +231,9 @@ const HomeRoot = () => {
                       );
                     } else {
                       dispatch(
-                        logSegmentEvent(
-                          'track',
-                          'Clicked Receive',
-                          {
-                            context: 'HomeRoot',
-                          },
-                          true,
-                        ),
+                        logSegmentEvent('track', 'Clicked Receive', {
+                          context: 'HomeRoot',
+                        }),
                       );
                       navigation.navigate('Wallet', {
                         screen: 'GlobalSelect',
@@ -250,7 +270,6 @@ const HomeRoot = () => {
                                     {
                                       context: 'HomeRoot',
                                     },
-                                    true,
                                   ),
                                 );
                                 navigation.navigate('Wallet', {
@@ -283,14 +302,9 @@ const HomeRoot = () => {
                       );
                     } else {
                       dispatch(
-                        logSegmentEvent(
-                          'track',
-                          'Clicked Send',
-                          {
-                            context: 'HomeRoot',
-                          },
-                          true,
-                        ),
+                        logSegmentEvent('track', 'Clicked Send', {
+                          context: 'HomeRoot',
+                        }),
                       );
                       navigation.navigate('Wallet', {
                         screen: 'GlobalSelect',
@@ -316,14 +330,9 @@ const HomeRoot = () => {
               onActionPress={() => {
                 navigation.navigate('Tabs', {screen: 'Shop'});
                 dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Clicked Shop with Crypto',
-                    {
-                      context: 'HomeRoot',
-                    },
-                    true,
-                  ),
+                  logSegmentEvent('track', 'Clicked Shop with Crypto', {
+                    context: 'HomeRoot',
+                  }),
                 );
               }}>
               <OffersCarousel contentCards={memoizedShopWithCryptoCards} />

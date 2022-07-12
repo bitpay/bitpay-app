@@ -150,7 +150,7 @@ const Referral = ({}) => {
     if (!copied) {
       Clipboard.setString(code);
       setCopied(true);
-      dispatch(Analytics.track('Copied Share Referral Code', {}, true));
+      dispatch(Analytics.track('Copied Share Referral Code', {}));
     }
   };
 
@@ -177,7 +177,7 @@ const Referral = ({}) => {
         message,
       });
 
-      dispatch(Analytics.track('Clicked Share Referral Code', {}, true));
+      dispatch(Analytics.track('Clicked Share Referral Code', {}));
     } catch (e) {}
   };
   const currentDate = new Date().getTime();

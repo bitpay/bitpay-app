@@ -593,17 +593,12 @@ const SwapCryptoRoot: React.FC = () => {
 
   const continueToCheckout = () => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Requested Swap Crypto',
-        {
-          fromCoin: fromWalletSelected!.currencyAbbreviation,
-          toCoin: toWalletSelected!.currencyAbbreviation,
-          amountFrom: amountFrom,
-          exchange: 'changelly',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Requested Swap Crypto', {
+        fromCoin: fromWalletSelected!.currencyAbbreviation,
+        toCoin: toWalletSelected!.currencyAbbreviation,
+        amountFrom: amountFrom,
+        exchange: 'changelly',
+      }),
     );
     navigation.navigate('SwapCrypto', {
       screen: 'ChangellyCheckout',
@@ -633,7 +628,9 @@ const SwapCryptoRoot: React.FC = () => {
           (coin: any) =>
             coin.enabled &&
             coin.fixRateEnabled &&
-            [...SupportedChains, 'ERC20'].includes(coin.protocol.toUpperCase()),
+            [...SupportedChains, 'ERC20'].includes(
+              coin.protocol?.toUpperCase(),
+            ),
         )
         .map(({name}: any) => name);
 
