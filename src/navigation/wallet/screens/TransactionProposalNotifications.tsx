@@ -367,7 +367,7 @@ const TransactionProposalNotifications = () => {
                   {selectingProposalsWalletId === _walletId ? (
                     <CheckBoxContainer>
                       <Checkbox
-                        checked={txpChecked[txp.id]}
+                        checked={!!txpChecked[txp.id]}
                         onPress={() => {
                           txpSelectionChange(txp);
                         }}
