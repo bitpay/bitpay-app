@@ -70,7 +70,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
 
-const TxsDetailsContainer = styled.View`
+const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
