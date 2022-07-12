@@ -534,15 +534,10 @@ const TransactionProposalNotifications = () => {
 
               if (count.success > 0) {
                 dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Sent Crypto',
-                    {
-                      context: 'Transaction Proposal Notifications',
-                      coin: wallet.currencyAbbreviation || '',
-                    },
-                    true,
-                  ),
+                  logSegmentEvent('track', 'Sent Crypto', {
+                    context: 'Transaction Proposal Notifications',
+                    coin: wallet.currencyAbbreviation || '',
+                  }),
                 );
                 await sleep(400);
                 setShowPaymentSentModal(true);
