@@ -50,9 +50,6 @@ const PercentageContainer = styled.View`
 
 const PortfolioBalance = () => {
   const {t} = useTranslation();
-  const coinbaseUser = useAppSelector(
-    ({COINBASE}) => COINBASE.user[COINBASE_ENV],
-  );
   const coinbaseBalance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
   const portfolioBalance = useSelector(
@@ -61,14 +58,7 @@ const PortfolioBalance = () => {
 
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
-  // Sum only if same currency
-  let totalBalance: number = portfolioBalance.current;
-  if (
-    coinbaseUser &&
-    coinbaseUser.data.native_currency === defaultAltCurrency.isoCode
-  ) {
-    totalBalance += coinbaseBalance;
-  }
+  const totalBalance: number = portfolioBalance.current + coinbaseBalance;
 
   const dispatch = useAppDispatch();
   const percentageDifference = calculatePercentageDifference(
