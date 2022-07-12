@@ -1,23 +1,22 @@
 import Slider from '@react-native-community/slider';
 import {StackNavigationProp} from '@react-navigation/stack';
+import React, {memo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import React, {useState, memo} from 'react';
-import Mailer from 'react-native-mail';
 import {Alert, FlatList} from 'react-native';
+import Mailer from 'react-native-mail';
 import styled from 'styled-components/native';
-// @ts-ignore
-import {version} from '../../../../../../package.json'; // TODO: better way to get version
 import Button from '../../../../../components/button/Button';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {IS_ANDROID, IS_IOS} from '../../../../../constants';
-import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
+import {APP_VERSION} from '../../../../../constants/config';
 import {LogActions} from '../../../../../store/log';
+import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
 import {
-  SlateDark,
   Caution,
-  Warning,
   LinkBlue,
+  SlateDark,
+  Warning,
   White,
 } from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -102,7 +101,7 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const handleEmail = (data: string) => {
     Mailer.mail(
       {
-        subject: `BitPay v${version} Logs`,
+        subject: `BitPay v${APP_VERSION} Logs`,
         body: data,
         isHTML: false,
       },
