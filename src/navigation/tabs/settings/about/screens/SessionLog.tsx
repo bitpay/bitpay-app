@@ -68,27 +68,33 @@ const LogColorMap: Partial<{[key in LogLevel]: string | null}> = {
   [LogLevel.Debug]: LinkBlue,
 };
 
-const FilterLabels = memo(() => {
-  const labels = [];
+const FilterLabels: React.VFC<{onPress?: (level: LogLevel) => any}> = memo(
+  props => {
+    const levels = [];
 
-  for (let i = MIN_LOG_LEVEL; i <= MAX_LOG_LEVEL; ++i) {
-    labels.push(LogLevel[i]);
-  }
+    for (let i = MIN_LOG_LEVEL; i <= MAX_LOG_LEVEL; ++i) {
+      levels.push(i);
+    }
 
-  return (
-    <FilterLabelsContainer>
-      {labels.map(label => (
-        <FilterLabel key={label}>{label}</FilterLabel>
-      ))}
-    </FilterLabelsContainer>
-  );
-});
+    return (
+      <FilterLabelsContainer>
+        {levels.map(level => (
+          <FilterLabel onPress={() => props.onPress?.(level)} key={level}>
+            {LogLevel[level]}
+          </FilterLabel>
+        ))}
+      </FilterLabelsContainer>
+    );
+  },
+);
 
 const renderItem = ({item}: {item: LogEntry}) => (
   <Logs color={LogColorMap[item.level]}>
     [{LogLevel[item.level]}] {item.message}
   </Logs>
 );
+
+const keyExtractor = (item: LogEntry, index: number) => item.message + index;
 
 const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const {t} = useTranslation();
@@ -97,6 +103,12 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
+
+  const onFilterLevelChange = (level: LogLevel) => {
+    if (level !== filterLevel) {
+      setFilterLevel(level);
+    }
+  };
 
   const handleEmail = (data: string) => {
     Mailer.mail(
@@ -145,17 +157,17 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
         }}
         data={filteredLogs}
         renderItem={renderItem}
-        keyExtractor={(item, index) => item.message + index}
+        keyExtractor={keyExtractor}
       />
 
-      <FilterLabels />
+      <FilterLabels onPress={onFilterLevelChange} />
 
       <Slider
         step={1}
         value={filterLevel}
         minimumValue={MIN_LOG_LEVEL}
         maximumValue={MAX_LOG_LEVEL}
-        onValueChange={setFilterLevel}
+        onValueChange={onFilterLevelChange}
         style={{
           alignSelf: 'center',
           width: SLIDER_WIDTH,
