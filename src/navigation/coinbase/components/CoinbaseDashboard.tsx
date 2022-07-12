@@ -180,7 +180,7 @@ const CoinbaseDashboard = () => {
   return (
     <OverviewContainer>
       <BalanceContainer>
-        {balance ? (
+        {balance !== null ? (
           <Balance scale={shouldScale(balance)}>
             {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
           </Balance>
