@@ -4,7 +4,6 @@ import {useTranslation} from 'react-i18next';
 import React, {useState, memo} from 'react';
 import Mailer from 'react-native-mail';
 import {Alert, FlatList} from 'react-native';
-import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 // @ts-ignore
 import {version} from '../../../../../../package.json'; // TODO: better way to get version
@@ -12,7 +11,6 @@ import Button from '../../../../../components/button/Button';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {IS_ANDROID, IS_IOS} from '../../../../../constants';
-import {RootState} from '../../../../../store';
 import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
 import {LogActions} from '../../../../../store/log';
 import {
@@ -22,7 +20,7 @@ import {
   LinkBlue,
   White,
 } from '../../../../../styles/colors';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {AboutStackParamList} from '../AboutStack';
 
 export interface SessionLogsParamList {}
@@ -96,18 +94,10 @@ const renderItem = ({item}: {item: LogEntry}) => (
 const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const logs = useSelector(({LOG}: RootState) => LOG.logs);
+  const logs = useAppSelector(({LOG}) => LOG.logs);
   const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
-
-  let logStr: string =
-    'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
-  logStr += filteredLogs.map(log => {
-    const formattedLevel = LogLevel[log.level].toLowerCase();
-
-    return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
-  });
 
   const handleEmail = (data: string) => {
     Mailer.mail(
@@ -127,11 +117,22 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
     );
   };
 
-  const showDisclaimer = (data: string) => {
+  const showDisclaimer = () => {
+    let logStr =
+      'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
+    logStr += filteredLogs.map(log => {
+      const formattedLevel = LogLevel[log.level].toLowerCase();
+
+      return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+    });
+
     Alert.alert(
       'Warning',
       'Be careful, this could contain sensitive private data.',
-      [{text: 'Continue', onPress: () => handleEmail(data)}, {text: 'Cancel'}],
+      [
+        {text: 'Continue', onPress: () => handleEmail(logStr)},
+        {text: 'Cancel'},
+      ],
       {cancelable: true},
     );
   };
@@ -165,7 +166,7 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
       />
 
       <ButtonContainer>
-        <Button onPress={() => showDisclaimer(logStr)}>
+        <Button onPress={() => showDisclaimer()}>
           {t('Send Logs By Email')}
         </Button>
       </ButtonContainer>
