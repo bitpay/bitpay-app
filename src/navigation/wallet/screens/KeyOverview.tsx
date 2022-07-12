@@ -10,13 +10,20 @@ import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
-import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
+import {
+  BaseText,
+  H2,
+  H5,
+  HeaderTitle,
+  ProposalBadge,
+} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
 import {
   Hr,
   ActiveOpacity,
   ScreenGutter,
-  HeaderRightContainer,
+  HeaderRightContainer as _HeaderRightContainer,
+  ProposalBadgeContainer,
 } from '../../../components/styled/Containers';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
@@ -55,6 +62,7 @@ import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
+import _ from 'lodash';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -136,6 +144,11 @@ const CogIconContainer = styled.TouchableOpacity`
 `;
 
 const HeaderTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const HeaderRightContainer = styled(_HeaderRightContainer)`
   flex-direction: row;
   align-items: center;
 `;
@@ -327,7 +340,12 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const key = keys[id];
   const hasMultipleKeys =
     Object.values(keys).filter(k => k.backupComplete).length > 1;
-
+  let pendingTxps: any = [];
+  _.each(key.wallets, x => {
+    if (x.pendingTxps) {
+      pendingTxps = pendingTxps.concat(x.pendingTxps);
+    }
+  });
   useLayoutEffect(() => {
     if (!key) {
       return;
@@ -357,25 +375,36 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
       headerRight: () => {
-        return key?.methods.isPrivKeyEncrypted() ? (
-          <HeaderRightContainer>
-            <CogIconContainer
-              onPress={() =>
-                navigation.navigate('KeySettings', {
-                  key,
-                })
-              }
-              activeOpacity={ActiveOpacity}>
-              <Icons.Cog />
-            </CogIconContainer>
-          </HeaderRightContainer>
-        ) : (
+        return (
           <>
-            <Settings
-              onPress={() => {
-                setShowKeyOptions(true);
-              }}
-            />
+            <HeaderRightContainer>
+              {pendingTxps.length ? (
+                <ProposalBadgeContainer
+                  style={{marginRight: 10}}
+                  onPress={onPressTxpBadge}>
+                  <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                </ProposalBadgeContainer>
+              ) : null}
+              {key?.methods.isPrivKeyEncrypted() ? (
+                <CogIconContainer
+                  onPress={() =>
+                    navigation.navigate('KeySettings', {
+                      key,
+                    })
+                  }
+                  activeOpacity={ActiveOpacity}>
+                  <Icons.Cog />
+                </CogIconContainer>
+              ) : (
+                <>
+                  <Settings
+                    onPress={() => {
+                      setShowKeyOptions(true);
+                    }}
+                  />
+                </>
+              )}
+            </HeaderRightContainer>
           </>
         );
       },
@@ -450,6 +479,13 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       },
     });
   }
+
+  const onPressTxpBadge = useMemo(
+    () => () => {
+      navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
+    },
+    [],
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);

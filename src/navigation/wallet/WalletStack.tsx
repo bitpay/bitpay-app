@@ -23,6 +23,7 @@ import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
   Key,
+  TransactionProposal,
   Wallet as WalletModel,
   _Credentials,
 } from '../../store/wallet/wallet.models';
@@ -44,6 +45,7 @@ import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 import TransactionDetails from './screens/TransactionDetails';
 import TransactionProposalDetails from './screens/TransactionProposalDetails';
+import TransactionProposalNotifications from './screens/TransactionProposalNotifications';
 import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 import KeyGlobalSelect, {
   KeyGlobalSelectParamList,
@@ -109,6 +111,7 @@ export type WalletStackParamList = {
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {wallet: WalletModel; transaction: any};
   TransactionProposalDetails: {wallet: WalletModel; transaction: any; key: Key};
+  TransactionProposalNotifications: {walletId?: string; keyId?: string};
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
   WalletInformation: {wallet: WalletModel};
@@ -159,6 +162,7 @@ export enum WalletScreens {
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
   TRANSACTION_DETAILS = 'TransactionDetails',
   TRANSACTION_PROPOSAL_DETAILS = 'TransactionProposalDetails',
+  TRANSACTION_PROPOSAL_NOTIFICATIONS = 'TransactionProposalNotifications',
   GLOBAL_SELECT = 'GlobalSelect',
   KEY_GLOBAL_SELECT = 'KeyGlobalSelect',
   WALLET_INFORMATION = 'WalletInformation',
@@ -341,6 +345,13 @@ const WalletStack = () => {
           }}
           name={WalletScreens.TRANSACTION_PROPOSAL_DETAILS}
           component={TransactionProposalDetails}
+        />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS}
+          component={TransactionProposalNotifications}
         />
         <Wallet.Screen
           options={{

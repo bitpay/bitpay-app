@@ -193,6 +193,13 @@ export const Badge = styled(BaseText)`
   border: 1px solid #e1e4e7;
 `;
 
+export const ProposalBadge = styled(BaseText)`
+  color: white;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+`;
+
 export const ImportTitle = styled(BaseText)`
   font-weight: 500;
   font-size: 13px;

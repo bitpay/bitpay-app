@@ -677,16 +677,17 @@ export const publishAndSign =
     key,
     wallet,
     recipient,
+    password,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
+    password?: string; // when signing multiple proposals from a wallet we ask for decrypt password before
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
-      let password;
-      if (key.isPrivKeyEncrypted) {
+      if (key.isPrivKeyEncrypted && !password) {
         try {
           password = await new Promise<string>((_resolve, _reject) => {
             dispatch(
@@ -764,6 +765,74 @@ export const publishAndSign =
       } catch (err) {
         console.log(err);
         reject(err);
+      }
+    });
+  };
+
+export const publishAndSignMultipleProposals =
+  ({
+    txps,
+    key,
+    wallet,
+    recipient,
+  }: {
+    txps: Partial<TransactionProposal>[];
+    key: Key;
+    wallet: Wallet;
+    recipient?: Recipient;
+  }): Effect<Promise<(Partial<TransactionProposal> | void)[]>> =>
+  async (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let password: string;
+        if (key.isPrivKeyEncrypted) {
+          try {
+            password = await new Promise<string>((_resolve, _reject) => {
+              dispatch(
+                showDecryptPasswordModal({
+                  onSubmitHandler: async (_password: string) => {
+                    dispatch(dismissDecryptPasswordModal());
+                    await sleep(500);
+                    checkEncryptPassword(key, _password)
+                      ? _resolve(_password)
+                      : _reject('invalid password');
+                  },
+                  onCancelHandler: () => {
+                    _reject('password canceled');
+                  },
+                }),
+              );
+            });
+          } catch (error) {
+            return reject(error);
+          }
+        }
+        const promises: Promise<Partial<TransactionProposal> | void>[] = [];
+
+        txps.forEach(async txp => {
+          promises.push(
+            dispatch(
+              publishAndSign({txp, key, wallet, recipient, password}),
+            ).catch(err => {
+              const errorStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(
+                LogActions.error(
+                  `Error signing transaction proposal: ${errorStr}`,
+                ),
+              );
+              return err;
+            }),
+          );
+        });
+        return resolve(await Promise.all(promises));
+      } catch (err) {
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error(`Error signing transaction proposal: ${errorStr}`),
+        );
+        return reject(err);
       }
     });
   };

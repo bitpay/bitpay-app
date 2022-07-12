@@ -9,6 +9,7 @@ import {
   White,
   Slate,
   NotificationPrimary,
+  Action,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -361,4 +362,14 @@ export const NoResultsImgContainer = styled.View`
 
 export const NoResultsDescription = styled(BaseText)`
   font-size: 16px;
+`;
+
+export const ProposalBadgeContainer = styled.TouchableOpacity`
+  background: ${Action};
+  border-radius: 10px;
+  height: 30px;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
