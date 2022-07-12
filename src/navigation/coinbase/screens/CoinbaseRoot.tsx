@@ -111,6 +111,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
     tokenError,
     tokenStatus,
     showError,
+    t,
   ]);
 
   const DashboardOrIntro = useMemo(() => {

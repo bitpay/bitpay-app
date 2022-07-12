@@ -18,7 +18,7 @@ export const BuyCryptoExpandibleCard = styled.TouchableOpacity`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
   border-radius: 9px;
   margin: 20px 15px 0px 15px;
-  padding: 20px 14px;
+  padding: 18px 14px;
 `;
 
 export const ActionsContainer = styled.View`

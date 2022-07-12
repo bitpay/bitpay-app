@@ -54,6 +54,10 @@ const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
   return error.errors.some(err => err.id === 'expired_token');
 };
 
+export const isInvalidTokenError = (error: CoinbaseErrorsProps): boolean => {
+  return error.errors.some(err => err.id === 'invalid_token');
+};
+
 export const coinbaseErrorIncludesErrorParams = (
   error: CoinbaseErrorsProps | any,
   errorParams: {
@@ -90,19 +94,20 @@ export const coinbaseInitialize =
     if (!COINBASE.token[COINBASE_ENV]) {
       return;
     }
-    await dispatch(coinbaseGetUser());
     await dispatch(coinbaseUpdateExchangeRate());
+    dispatch(coinbaseGetUser());
     dispatch(coinbaseGetAccountsAndBalance());
   };
 
 export const coinbaseUpdateExchangeRate =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
-    const {COINBASE} = getState();
-    const nativeCurrency: string =
-      COINBASE.user[COINBASE_ENV]?.data.native_currency || 'USD';
+    const {APP} = getState();
+    const selectedCurrency: string = APP.defaultAltCurrency.isoCode || 'USD';
     try {
       dispatch(exchangeRatesPending());
-      const exchangeRates = await CoinbaseAPI.getExchangeRates(nativeCurrency);
+      const exchangeRates = await CoinbaseAPI.getExchangeRates(
+        selectedCurrency,
+      );
       dispatch(exchangeRatesSuccess(exchangeRates));
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(LogActions.warn(coinbaseParseErrorToString(error)));

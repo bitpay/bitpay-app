@@ -157,7 +157,6 @@ const OfferDataContainer = styled.View`
 `;
 
 const OfferDataCryptoAmount = styled(H5)`
-  line-height: 20px;
   color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
 

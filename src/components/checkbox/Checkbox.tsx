@@ -49,8 +49,10 @@ const baseRadioStyles = {
 const Checkbox: React.FC<Props> = ({onPress, checked, disabled, radio}) => {
   const baseStyles = radio ? baseRadioStyles : baseCheckboxStyles;
   const theme = useTheme();
+
   return (
     <RoundedCheckbox
+      key={Math.floor(Math.random() * 500)}
       onPress={() => !disabled && onPress()}
       active={checked}
       uncheckedColor={!disabled ? (theme.dark ? LightBlack : White) : undefined}
