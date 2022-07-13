@@ -243,7 +243,7 @@ export const ImportContainer = styled.View`
 `;
 
 export const ImportTextInput = styled.TextInput`
-  height: 100px;
+  height: 80px;
   color: ${({theme}) => theme.colors.text};
   background: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};

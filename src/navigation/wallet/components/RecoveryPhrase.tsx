@@ -595,7 +595,7 @@ const RecoveryPhrase = () => {
             <ImportTextInput
               multiline
               autoCapitalize={'none'}
-              numberOfLines={5}
+              numberOfLines={3}
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
