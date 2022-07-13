@@ -562,7 +562,7 @@ const RecoveryPhrase = () => {
 
   return (
     <ScrollViewContainer
-      extraScrollHeight={50}
+      extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView keyboardShouldPersistTaps={'handled'}>
         <Paragraph>
