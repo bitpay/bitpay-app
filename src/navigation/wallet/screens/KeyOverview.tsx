@@ -341,7 +341,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const hasMultipleKeys =
     Object.values(keys).filter(k => k.backupComplete).length > 1;
   let pendingTxps: any = [];
-  _.each(key.wallets, x => {
+  _.each(key?.wallets, x => {
     if (x.pendingTxps) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
@@ -413,7 +413,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
 
   useEffect(() => {
     if (context === 'createNewMultisigKey') {
-      key.wallets[0].getStatus(
+      key?.wallets[0].getStatus(
         {network: 'livenet'},
         (err: any, status: Status) => {
           if (err) {
@@ -421,13 +421,13 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             console.log(err);
           }
           navigation.navigate('Copayers', {
-            wallet: key.wallets[0],
+            wallet: key?.wallets[0],
             status: status.wallet,
           });
         },
       );
     }
-  }, [navigation, key.wallets, context]);
+  }, [navigation, key?.wallets, context]);
 
   const {wallets = [], totalBalance} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};

@@ -61,7 +61,7 @@ import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
 import {HamburgerContainer} from '../../tabs/settings/general/screens/customize-home/Shared';
 
-const NotificationsContainer = styled.View`
+const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -364,7 +364,8 @@ const TransactionProposalNotifications = () => {
           {item?.txps[0]
             ? item.txps.map((txp: any) => (
                 <ProposalsContainer key={txp.id}>
-                  {selectingProposalsWalletId === _walletId ? (
+                  {selectingProposalsWalletId === _walletId &&
+                  item.multipleSignAvailable ? (
                     <CheckBoxContainer>
                       <Checkbox
                         checked={!!txpChecked[txp.id]}
@@ -380,7 +381,12 @@ const TransactionProposalNotifications = () => {
                       creator={txp.uiCreator}
                       time={txp.uiTime}
                       value={txp.uiValue}
-                      onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
+                      onPressTransaction={() =>
+                        selectingProposalsWalletId === _walletId &&
+                        item.multipleSignAvailable
+                          ? txpSelectionChange(txp)
+                          : onPressTxp(txp, fullWalletObj)
+                      }
                       hideIcon={true}
                     />
                   </ProposalsInfoContainer>
