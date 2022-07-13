@@ -120,6 +120,14 @@ type WalletDetailsScreenProps = StackScreenProps<
   'WalletDetails'
 >;
 
+const TestnetFaucets = {
+  BTC: 'https://bitcoinfaucet.uo1.net/',
+  BCH: 'https://tbch.googol.cash/',
+  ETH: 'https://faucets.chain.link/',
+  LTC: 'https://testnet-faucet.com/ltc-testnet/',
+  DOGE: 'https://testnet-faucet.com/doge-testnet/',
+};
+
 const WalletDetailsContainer = styled.View`
   flex: 1;
   padding-top: 10px;
@@ -947,34 +955,43 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 {fullWalletObj ? (
                   <LinkingButtons
                     buy={{
-                      hide: !isCoinSupportedToBuy(
-                        fullWalletObj.currencyAbbreviation,
-                      ),
+                      hide:
+                        !isCoinSupportedToBuy(
+                          fullWalletObj.currencyAbbreviation,
+                        ) ||
+                        (network !== 'livenet' &&
+                          !Object.keys(TestnetFaucets).includes(
+                            currencyAbbreviation,
+                          )),
                       cta: () => {
-                        dispatch(
-                          logSegmentEvent('track', 'Clicked Buy Crypto', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                          }),
-                        );
-                        navigation.navigate('Wallet', {
-                          screen: 'Amount',
-                          params: {
-                            onAmountSelected: async (amount: string) => {
-                              navigation.navigate('BuyCrypto', {
-                                screen: 'BuyCryptoRoot',
-                                params: {
-                                  amount: Number(amount),
-                                  fromWallet: fullWalletObj,
-                                },
-                              });
+                        if (network === 'livenet') {
+                          dispatch(
+                            logSegmentEvent('track', 'Clicked Buy Crypto', {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            }),
+                          );
+                          navigation.navigate('Wallet', {
+                            screen: 'Amount',
+                            params: {
+                              onAmountSelected: async (amount: string) => {
+                                navigation.navigate('BuyCrypto', {
+                                  screen: 'BuyCryptoRoot',
+                                  params: {
+                                    amount: Number(amount),
+                                    fromWallet: fullWalletObj,
+                                  },
+                                });
+                              },
+                              opts: {
+                                hideSendMax: true,
+                                context: 'buyCrypto',
+                              },
                             },
-                            opts: {
-                              hideSendMax: true,
-                              context: 'buyCrypto',
-                            },
-                          },
-                        });
+                          });
+                        } else {
+                          Linking.openURL(TestnetFaucets[currencyAbbreviation]);
+                        }
                       },
                     }}
                     swap={{
