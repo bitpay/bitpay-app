@@ -768,11 +768,9 @@ const RecoveryPhrase = () => {
           </AdvancedOptionsContainer>
         </CtaContainer>
 
-        <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-            {t('Import Wallet')}
-          </Button>
-        </CtaContainer>
+        <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+          {t('Import Wallet')}
+        </Button>
       </ImportContainer>
     </ScrollViewContainer>
   );
