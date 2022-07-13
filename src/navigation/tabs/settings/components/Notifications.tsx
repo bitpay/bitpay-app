@@ -7,6 +7,7 @@ import {
   Platform,
   LogBox,
   DeviceEventEmitter,
+  Platform,
 } from 'react-native';
 import {AppEffects} from '../../../../store/app';
 import {
