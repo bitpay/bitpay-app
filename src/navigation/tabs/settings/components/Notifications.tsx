@@ -7,6 +7,7 @@ import {
   AppStateStatus,
   Linking,
   LogBox,
+  Platform,
 } from 'react-native';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {
@@ -69,8 +70,16 @@ const Notifications = () => {
           dispatch(AppEffects.setNotifications(accepted));
         }
       } else {
-        openSettings();
-        if (notificationsState.pushNotifications) {
+        if (accepted && Platform.OS === 'ios') {
+          const requestPermissions =
+            await AppEffects.requestNotificationsPermissions();
+          if (requestPermissions) {
+            setPushNotifications(accepted);
+            dispatch(AppEffects.setNotifications(accepted));
+          } else {
+            openSettings();
+          }
+        } else if (notificationsState.pushNotifications) {
           setPushNotifications(false);
           dispatch(AppEffects.setNotifications(false));
         }

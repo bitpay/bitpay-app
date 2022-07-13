@@ -11,7 +11,11 @@ import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
-import {checkNotifications, RESULTS} from 'react-native-permissions';
+import {
+  checkNotifications,
+  requestNotifications,
+  RESULTS,
+} from 'react-native-permissions';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import uuid from 'react-native-uuid';
 import {batch} from 'react-redux';
@@ -660,6 +664,18 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
   getAllWalletClients(keys).then(walletClients => {
     walletClients.forEach(walletClient => {
       dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
+    });
+  });
+};
+
+export const requestNotificationsPermissions = (): Promise<boolean> => {
+  return new Promise(async resolve => {
+    requestNotifications(['alert', 'badge', 'sound']).then(({status}) => {
+      if (status === RESULTS.GRANTED) {
+        return resolve(true);
+      } else {
+        return resolve(false);
+      }
     });
   });
 };
