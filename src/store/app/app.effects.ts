@@ -612,6 +612,30 @@ export const checkNotificationsPermissions = (): Promise<boolean> => {
   });
 };
 
+export const renewSubscription = (): Effect => (dispatch, getState) => {
+  const {
+    WALLET: {keys},
+    APP,
+  } = getState();
+  console.log('[app.effects.ts:619] #### renew subscription'); /* TODO */
+
+  getAllWalletClients(keys).then(walletClients => {
+    walletClients.forEach(walletClient => {
+      console.log(
+        '[app.effects.ts:623] ### for wallet',
+        walletClient.credentials.walletId,
+      ); /* TODO */
+      dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
+      dispatch(
+        LogActions.debug(
+          'Review Subscription Push Notifications for: ' +
+            walletClient.credentials.walletId,
+        ),
+      );
+    });
+  });
+};
+
 export const setNotifications =
   (accepted: boolean): Effect =>
   (dispatch, getState) => {

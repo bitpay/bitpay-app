@@ -125,6 +125,16 @@ const Notifications = () => {
     return () => AppState.removeEventListener('change', onAppStateChange);
   }, [dispatch, setNotificationValue, notificationsState.pushNotifications]);
 
+  useEffect(() => {
+    if (notificationsState && notificationsState.pushNotifications) {
+      // Subscribe for silent push notifications
+      const silentPushInterval = setInterval(() => {
+        dispatch(AppEffects.renewSubscription());
+      }, 3 * 60 * 1000); // 3 min
+      return () => clearInterval(silentPushInterval);
+    }
+  }, [dispatch, notificationsState]);
+
   return (
     <SettingsComponent>
       {notificationsList.map(({title, checked, onPress, show}, i) =>
