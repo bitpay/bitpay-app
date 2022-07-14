@@ -33,11 +33,13 @@ import {
   FormatAmountStr,
   GetLowUtxos,
 } from '../../../../store/wallet/effects/amount/amount';
-import {TouchableOpacity, View} from 'react-native';
+import {View} from 'react-native';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
 import Clipboard from '@react-native-community/clipboard';
 import AddressesSkeleton from './AddressesSkeleton';
 import {useTranslation} from 'react-i18next';
+import haptic from '../../../../components/haptic-feedback/haptic';
+import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 
 const ADDRESS_LIMIT = 5;
 
@@ -78,6 +80,14 @@ const SubText = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const CopyRow = styled.TouchableOpacity`
+  flex-direction: row;
+`;
+
+const CopyImgContainerRight = styled.View`
+  justify-content: center;
+`;
+
 const Addresses = () => {
   const {t} = useTranslation();
   const {
@@ -92,6 +102,22 @@ const Addresses = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const dispatch = useAppDispatch();
+  const [copiedAddressWithBalance, setCopiedAddressWithBalance] = useState('');
+  const [copiedUnusedAddress, setCopiedUnusedAddress] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedAddressWithBalance('');
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedAddressWithBalance]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedUnusedAddress('');
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedUnusedAddress]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -255,6 +281,7 @@ const Addresses = () => {
   };
 
   const copyText = (text: string) => {
+    haptic('impactLight');
     Clipboard.setString(text);
   };
 
@@ -350,17 +377,26 @@ const Addresses = () => {
                     <View key={index}>
                       <SettingView>
                         <View>
-                          <TouchableOpacity
+                          <CopyRow
                             style={{justifyContent: 'center'}}
                             activeOpacity={ActiveOpacity}
-                            onPress={() => copyText(address)}>
+                            onPress={() => {
+                              copyText(address);
+                              setCopiedAddressWithBalance(address);
+                            }}>
                             <SettingTitle
                               numberOfLines={1}
                               ellipsizeMode={'tail'}
                               style={{maxWidth: 250}}>
                               {address}
                             </SettingTitle>
-                          </TouchableOpacity>
+                            <CopyImgContainerRight
+                              style={{minWidth: '10%', marginLeft: -7}}>
+                              {copiedAddressWithBalance === address ? (
+                                <CopiedSvg width={17} />
+                              ) : null}
+                            </CopyImgContainerRight>
+                          </CopyRow>
                         </View>
 
                         <H7>{dispatch(FormatAmountStr(coin, amount))}</H7>
@@ -381,15 +417,24 @@ const Addresses = () => {
                   {latestUnusedAddress.map(({address, path, uiTime}, index) => (
                     <View key={index}>
                       <VerticalPadding>
-                        <TouchableOpacity
+                        <CopyRow
                           activeOpacity={ActiveOpacity}
-                          onPress={() => copyText(address)}>
+                          onPress={() => {
+                            copyText(address);
+                            setCopiedUnusedAddress(address);
+                          }}>
                           <SettingTitle
+                            style={{width: '90%'}}
                             numberOfLines={1}
                             ellipsizeMode={'tail'}>
                             {address}
                           </SettingTitle>
-                        </TouchableOpacity>
+                          <CopyImgContainerRight style={{width: '10%'}}>
+                            {copiedUnusedAddress === address ? (
+                              <CopiedSvg width={17} />
+                            ) : null}
+                          </CopyImgContainerRight>
+                        </CopyRow>
 
                         <SubText>
                           {path} {uiTime}
