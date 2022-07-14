@@ -179,7 +179,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             value={localLockState}
             onChange={onLockToggled}
             state={localLockStatus}>
-            Lock Card
+            {t('Lock Card')}
           </Styled.SettingsToggle>
 
           <Hr />

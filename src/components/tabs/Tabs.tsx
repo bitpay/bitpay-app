@@ -3,6 +3,7 @@ import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
 import TabButton from './TabButton';
+import {useAppSelector} from '../../utils/hooks/useAppSelector';
 
 interface TabsProps {
   tabs: () => {
@@ -21,6 +22,7 @@ const TabsHeader = styled.View`
 const Tabs: React.VFC<TabsProps> = props => {
   const {tabs} = props;
   const [activeTabIdx, setActiveIdx] = useState(0);
+  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
 
   const memoizedTabs = useMemo(() => {
     const tabData = tabs();
@@ -33,7 +35,7 @@ const Tabs: React.VFC<TabsProps> = props => {
       ...t,
       key: 'tab-' + idx,
     }));
-  }, [tabs]);
+  }, [tabs, defaultLanguage]);
 
   const TabButtons = memoizedTabs.map((d, idx) => (
     <TabButton
