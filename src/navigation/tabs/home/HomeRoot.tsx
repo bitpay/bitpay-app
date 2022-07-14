@@ -77,6 +77,7 @@ const HomeRoot = () => {
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
+  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
 
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
@@ -85,7 +86,7 @@ const HomeRoot = () => {
     }
 
     return brazeShopWithCrypto;
-  }, [brazeShopWithCrypto]);
+  }, [brazeShopWithCrypto, defaultLanguage]);
 
   // Do More
   const memoizedDoMoreCards = useMemo(() => {
@@ -96,7 +97,7 @@ const HomeRoot = () => {
     }
 
     return brazeDoMore;
-  }, [brazeDoMore, hasCards, themeType]);
+  }, [brazeDoMore, hasCards, themeType, defaultLanguage]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
@@ -133,7 +134,7 @@ const HomeRoot = () => {
     }
 
     return brazeQuickLinks;
-  }, [brazeQuickLinks]);
+  }, [brazeQuickLinks, defaultLanguage]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
