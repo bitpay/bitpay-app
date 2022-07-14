@@ -239,8 +239,10 @@ const initializeApi =
   };
 
 /**
- * Initializes Braze content by checking for a paired user, refreshing the
- * Braze cache, then fetching data from Braze and commiting it to the store.
+ * Initializes Braze content by setting up an event subscription for content
+ * changes, checking for a paired user, then requesting a Braze refresh.
+ *
+ * The subscription will fetch latest content when it receives an update event.
  * @returns void
  */
 export const initializeBrazeContent =
@@ -250,25 +252,85 @@ export const initializeBrazeContent =
       const {APP, BITPAY_ID} = getState();
       const user = BITPAY_ID.user[APP.network];
 
+      let contentCardSubscription = APP.brazeContentCardSubscription;
+
+      if (contentCardSubscription) {
+        contentCardSubscription.subscriber.removeAllSubscriptions();
+        contentCardSubscription = null;
+      }
+
+      // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
+      const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
+      const MAX_RETRIES = 3;
+      let currentRetry = 0;
+
+      contentCardSubscription = ReactAppboy.addListener(
+        ReactAppboy.Events.CONTENT_CARDS_UPDATED,
+        async () => {
+          const isInitializing = currentRetry < MAX_RETRIES;
+
+          dispatch(
+            isInitializing
+              ? LogActions.debug(
+                  'Braze content cards updated, fetching latest content cards...',
+                )
+              : LogActions.info(
+                  'Braze content cards updated, fetching latest content cards...',
+                ),
+          );
+
+          const contentCards = await ReactAppboy.getContentCards();
+
+          if (contentCards.length) {
+            currentRetry = MAX_RETRIES;
+          } else {
+            if (isInitializing) {
+              currentRetry++;
+              await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
+              dispatch(
+                LogActions.debug(
+                  `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
+                ),
+              );
+              ReactAppboy.requestContentCardsRefresh();
+              return;
+            }
+          }
+
+          dispatch(
+            LogActions.info(
+              `${contentCards.length} content ${
+                contentCards.length === 1 ? 'card' : 'cards'
+              } fetched from Braze.`,
+            ),
+          );
+          dispatch(AppActions.brazeContentCardsFetched(contentCards));
+        },
+      );
+
       if (user) {
         ReactAppboy.changeUser(user.eid);
         ReactAppboy.setEmail(user.email);
         dispatch(setBrazeEid(user.eid));
       } else {
-        const eid = APP.brazeEid || uuid.v4().toString();
-        console.log('###### EXTERNAL ID: ', eid); /* TODO */
+        let eid: string;
+
+        if (APP.brazeEid) {
+          dispatch(LogActions.debug('Braze EID exists.'));
+          eid = APP.brazeEid;
+        } else {
+          dispatch(LogActions.debug('Generating a new Braze EID...'));
+          eid = uuid.v4().toString();
+        }
+
         ReactAppboy.changeUser(eid);
         dispatch(setBrazeEid(eid));
       }
 
-      ReactAppboy.requestContentCardsRefresh();
-
-      const contentCards = await ReactAppboy.getContentCards();
-
-      dispatch(LogActions.info('Successfully fetched data from Braze.'));
-      dispatch(AppActions.brazeContentCardsFetched(contentCards));
+      dispatch(LogActions.info('Successfully initialized Braze.'));
+      dispatch(AppActions.brazeInitialized(contentCardSubscription));
     } catch (err) {
-      const errMsg = 'Failed to fetch data from Braze.';
+      const errMsg = 'Something went wrong while initializing Braze.';
 
       dispatch(LogActions.error(errMsg));
       dispatch(
@@ -282,8 +344,7 @@ export const initializeBrazeContent =
   };
 
 /**
- * Refreshes Braze content by refreshing the Braze cache, then fetching
- * data from Braze and commiting it to the store. Does not change or set user.
+ * Refreshes Braze content by refreshing the Braze cache. Does not change or set user.
  * @returns void
  */
 export const startRefreshBrazeContent = (): Effect => async dispatch => {
@@ -291,13 +352,8 @@ export const startRefreshBrazeContent = (): Effect => async dispatch => {
     dispatch(LogActions.info('Refreshing Braze content...'));
 
     ReactAppboy.requestContentCardsRefresh();
-
-    const contentCards = await ReactAppboy.getContentCards();
-
-    dispatch(LogActions.info('Successfully fetched data from Braze.'));
-    dispatch(AppActions.brazeContentCardsFetched(contentCards));
   } catch (err) {
-    const errMsg = 'Failed to fetch data from Braze.';
+    const errMsg = 'Something went wrong while refreshing Braze content.';
 
     dispatch(LogActions.error(errMsg));
     dispatch(
@@ -305,8 +361,6 @@ export const startRefreshBrazeContent = (): Effect => async dispatch => {
         err instanceof Error ? err.message : JSON.stringify(err),
       ),
     );
-  } finally {
-    dispatch(LogActions.info('Refreshing Braze content complete.'));
   }
 };
 

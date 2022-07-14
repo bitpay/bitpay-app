@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import {ColorSchemeName} from 'react-native';
+import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -28,6 +28,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showBiometricModal',
   'activeModalId',
   'failedAppInit',
+  'brazeContentCardSubscription',
 ];
 
 export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
@@ -68,6 +69,7 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   defaultLanguage: string;
   showPortfolioValue: boolean;
+  brazeContentCardSubscription: EventSubscription | null;
   brazeContentCards: ContentCard[];
   brazeEid: string | undefined;
   showBiometricModal: boolean;
@@ -126,6 +128,7 @@ const initialState: AppState = {
   colorScheme: null,
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
+  brazeContentCardSubscription: null,
   brazeContentCards: [],
   brazeEid: undefined,
   showBiometricModal: false,
@@ -349,6 +352,12 @@ export const appReducer = (
       return {
         ...state,
         showPortfolioValue: action.payload,
+      };
+
+    case AppActionTypes.BRAZE_INITIALIZED:
+      return {
+        ...state,
+        brazeContentCardSubscription: action.payload.contentCardSubscription,
       };
 
     case AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED:
