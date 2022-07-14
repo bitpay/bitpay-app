@@ -617,14 +617,9 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
     WALLET: {keys},
     APP,
   } = getState();
-  console.log('[app.effects.ts:619] #### renew subscription'); /* TODO */
 
   getAllWalletClients(keys).then(walletClients => {
     walletClients.forEach(walletClient => {
-      console.log(
-        '[app.effects.ts:623] ### for wallet',
-        walletClient.credentials.walletId,
-      ); /* TODO */
       dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
       dispatch(
         LogActions.debug(
@@ -749,13 +744,11 @@ export const handleBwsEvent =
         case 'TxProposalAcceptedBy':
         case 'TxProposalRejectedBy':
         case 'TxProposalRemoved':
-          dispatch(startUpdateAllWalletStatusForKey({key: keyObj}));
-          break;
         case 'NewOutgoingTx':
         case 'NewIncomingTx':
         case 'NewTxProposal':
         case 'TxConfirmation':
-          dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
+          await dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
           DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
           break;
       }
