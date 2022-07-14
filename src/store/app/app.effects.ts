@@ -344,10 +344,10 @@ export const initializeBrazeContent =
   };
 
 /**
- * Refreshes Braze content by refreshing the Braze cache. Does not change or set user.
+ * Requests a refresh for Braze content.
  * @returns void
  */
-export const startRefreshBrazeContent = (): Effect => async dispatch => {
+export const requestBrazeContentRefresh = (): Effect => async dispatch => {
   try {
     dispatch(LogActions.info('Refreshing Braze content...'));
 
