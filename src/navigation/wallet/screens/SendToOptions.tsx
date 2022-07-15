@@ -254,7 +254,7 @@ const SendToOptions = () => {
       headerTitle: () => <HeaderTitle>{params.title}</HeaderTitle>,
       headerTitleAlign: 'center',
     });
-  }, [navigation, t]);
+  }, [navigation, t, params.title]);
 
   return (
     <SendToOptionsContext.Provider

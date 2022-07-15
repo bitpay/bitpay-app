@@ -47,7 +47,6 @@ import KeyWalletsRow, {
 } from '../../../components/list/KeyWalletsRow';
 import {BuildKeyWalletRow} from '../screens/send/SendTo';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import _ from 'lodash';
 import {
   RecipientList,
   RecipientRowContainer,
@@ -245,7 +244,7 @@ const SendToAddress = () => {
         />
       );
     },
-    [wallet],
+    [wallet, setRecipientListContext, setRecipientAmountContext],
   );
 
   const goToNextView = () => {

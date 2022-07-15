@@ -261,7 +261,7 @@ const setEthAddressNonce =
         if (pendingTxsNonce && pendingTxsNonce.length > 0) {
           pendingTxsNonce.sort((a, b) => a! - b!);
           for (let i = 0; i < pendingTxsNonce.length; i++) {
-            if (pendingTxsNonce[i]! + 1 != pendingTxsNonce[i + 1]) {
+            if (pendingTxsNonce[i]! + 1 !== pendingTxsNonce[i + 1]) {
               suggestedNonce = pendingTxsNonce[i]! + 1;
               break;
             }
@@ -814,7 +814,7 @@ export const publishAndSignMultipleProposals =
     wallet: Wallet;
     recipient?: Recipient;
   }): Effect<Promise<(Partial<TransactionProposal> | void)[]>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
         let password: string;

@@ -5,14 +5,7 @@ import {
   TxDetailsSendingFrom,
   TxDetailsSendingTo,
 } from '../../../../../store/wallet/wallet.models';
-import {
-  BaseText,
-  H4,
-  H5,
-  H6,
-  H7,
-  TextAlign,
-} from '../../../../../components/styled/Text';
+import {H4, H5, H6, H7, TextAlign} from '../../../../../components/styled/Text';
 import SendToPill from '../../../components/SendToPill';
 import {
   Column,
@@ -21,7 +14,7 @@ import {
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import React, {ReactChild, useCallback, useEffect, useState} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {Pressable, ScrollView, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
@@ -46,7 +39,6 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {NeutralSlate, SlateDark} from '../../../../../styles/colors';
 import AddressCard from '../../../components/AddressCard';
 
 // Styled

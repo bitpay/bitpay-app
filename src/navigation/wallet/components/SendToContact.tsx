@@ -29,7 +29,6 @@ import {
   RecipientRowContainer,
   SendToOptionsContext,
 } from '../screens/SendToOptions';
-import _ from 'lodash';
 
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
@@ -85,7 +84,7 @@ const SendToContact = () => {
         />
       );
     },
-    [wallet],
+    [wallet, setRecipientListContext, setRecipientAmountContext],
   );
 
   return (

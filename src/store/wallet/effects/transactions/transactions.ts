@@ -499,7 +499,7 @@ export const GetTransactionHistory =
         return resolve({transactions: newHistory, loadMore});
       } catch (err) {
         const errString =
-          error instanceof Error ? err.message : JSON.stringify(err);
+          err instanceof Error ? err.message : JSON.stringify(err);
 
         dispatch(
           LogActions.error(
