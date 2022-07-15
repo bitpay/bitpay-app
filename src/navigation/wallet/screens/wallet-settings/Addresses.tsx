@@ -376,28 +376,25 @@ const Addresses = () => {
                   {latestUsedAddress.map(({address, amount}, index) => (
                     <View key={index}>
                       <SettingView>
-                        <View>
-                          <CopyRow
-                            style={{justifyContent: 'center'}}
-                            activeOpacity={ActiveOpacity}
-                            onPress={() => {
-                              copyText(address);
-                              setCopiedAddressWithBalance(address);
-                            }}>
-                            <SettingTitle
-                              numberOfLines={1}
-                              ellipsizeMode={'tail'}
-                              style={{maxWidth: 250}}>
-                              {address}
-                            </SettingTitle>
-                            <CopyImgContainerRight
-                              style={{minWidth: '10%', marginLeft: -7}}>
-                              {copiedAddressWithBalance === address ? (
-                                <CopiedSvg width={17} />
-                              ) : null}
-                            </CopyImgContainerRight>
-                          </CopyRow>
-                        </View>
+                        <CopyRow
+                          style={{justifyContent: 'center'}}
+                          activeOpacity={ActiveOpacity}
+                          onPress={() => {
+                            copyText(address);
+                            setCopiedAddressWithBalance(address);
+                          }}>
+                          <SettingTitle
+                            numberOfLines={1}
+                            ellipsizeMode={'tail'}
+                            style={{maxWidth: 225}}>
+                            {address}
+                          </SettingTitle>
+                          <CopyImgContainerRight style={{minWidth: '10%'}}>
+                            {copiedAddressWithBalance === address ? (
+                              <CopiedSvg width={17} />
+                            ) : null}
+                          </CopyImgContainerRight>
+                        </CopyRow>
 
                         <H7>{dispatch(FormatAmountStr(coin, amount))}</H7>
                       </SettingView>
