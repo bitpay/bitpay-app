@@ -66,7 +66,6 @@ import {Alert, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
-import {GetEstimatedTxSize} from '../../../../../store/wallet/utils/wallet';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -74,6 +73,7 @@ const VerticalPadding = styled.View`
 export interface ConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
+  recipientList?: Recipient[];
   txp: Partial<TransactionProposal>;
   txDetails: TxDetails;
   amount: number;
@@ -109,6 +109,7 @@ const Confirm = () => {
   const {
     wallet,
     recipient,
+    recipientList,
     txDetails,
     txp: _txp,
     amount,
@@ -297,7 +298,20 @@ const Confirm = () => {
     [dispatch],
   );
 
-  let recipientData;
+  let recipientData, recipientListData;
+
+  if (recipientList) {
+    recipientListData = recipientList.map(r => {
+      return {
+        recipientName: r.name,
+        recipientAddress: r.address,
+        img: r.type === 'contact' ? r.type : wallet.img,
+        recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
+        recipientType: r.type,
+        recipientCoin: currencyAbbreviation,
+      };
+    });
+  }
 
   if (
     recipient.type &&
@@ -320,7 +334,11 @@ const Confirm = () => {
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header>Summary</Header>
-          <SendingTo recipient={recipientData} hr />
+          <SendingTo
+            recipient={recipientData}
+            recipientList={recipientListData}
+            hr
+          />
           <Fee
             onPress={
               isTxLevelAvailable()

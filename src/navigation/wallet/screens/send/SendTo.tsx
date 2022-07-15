@@ -232,12 +232,31 @@ const SendTo = () => {
         params: {
           title: t('Select Inputs'),
           wallet,
+          context: 'selectInputs',
         },
       });
     },
   };
 
-  const assetOptions: Array<Option> = isUtxo ? [selectInputOption] : [];
+  const multisendOption: Option = {
+    img: <Icons.Multisend />,
+    title: t('Transfer to Multiple Recipients'),
+    description: t('Send crypto to multiple contacts or addresses.'),
+    onPress: () => {
+      navigation.navigate('Wallet', {
+        screen: 'SendToOptions',
+        params: {
+          title: t('Multiple Recipients'),
+          wallet,
+          context: 'multisend',
+        },
+      });
+    },
+  };
+
+  const assetOptions: Array<Option> = isUtxo
+    ? [multisendOption, selectInputOption]
+    : [];
 
   useLayoutEffect(() => {
     navigation.setOptions({

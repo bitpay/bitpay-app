@@ -217,6 +217,7 @@ export interface Recipient {
   walletId?: string;
   keyId?: string;
   address: string;
+  amount?: number;
 }
 
 export interface CustomTransactionData {
@@ -271,7 +272,10 @@ export interface TransactionOptions {
   useUnconfirmedFunds?: boolean;
   // fromReplaceByFee
   fee?: number;
+  // selectInputs
   inputs?: Utxo[];
+  // multisend
+  recipientList?: Recipient[];
 }
 
 export interface Action {
@@ -376,6 +380,8 @@ export interface TxDetailsSendingTo {
   recipientAddress?: string;
   img: string | ((props?: any) => ReactElement);
   recipientFullAddress?: string;
+  recipientAmountStr?: string;
+  recipientCoin?: string;
 }
 
 export interface TxDetailsSendingFrom {

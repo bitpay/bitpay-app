@@ -5,7 +5,14 @@ import {
   TxDetailsSendingFrom,
   TxDetailsSendingTo,
 } from '../../../../../store/wallet/wallet.models';
-import {H4, H5, H6, H7, TextAlign} from '../../../../../components/styled/Text';
+import {
+  BaseText,
+  H4,
+  H5,
+  H6,
+  H7,
+  TextAlign,
+} from '../../../../../components/styled/Text';
 import SendToPill from '../../../components/SendToPill';
 import {
   Column,
@@ -14,7 +21,7 @@ import {
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import React, {ReactChild, useCallback, useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {Pressable, ScrollView, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
@@ -39,6 +46,8 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {NeutralSlate, SlateDark} from '../../../../../styles/colors';
+import AddressCard from '../../../components/AddressCard';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -109,13 +118,17 @@ export const Header = ({
 
 export const SendingTo = ({
   recipient,
+  recipientList,
   hr,
 }: {
   recipient: TxDetailsSendingTo | undefined;
+  recipientList?: TxDetailsSendingTo[];
   hr?: boolean;
 }): JSX.Element | null => {
   const {t} = useTranslation();
   const [copied, setCopied] = useState(false);
+  const [showRecipientCards, setShowRecipientCards] = useState(true);
+
   useEffect(() => {
     if (!copied) {
       return;
@@ -138,13 +151,27 @@ export const SendingTo = ({
       }
     };
 
+    let description;
+    if (recipientList) {
+      description =
+        recipientList.length +
+        ' ' +
+        (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
+    } else {
+      description = recipientName || recipientAddress || '';
+    }
+
     return (
       <>
         <DetailContainer height={83}>
           <DetailRow>
             <H7>{t('Sending to')}</H7>
             <SendToPill
-              onPress={() => copyText(recipientFullAddress || '')}
+              onPress={() =>
+                !recipientList
+                  ? copyText(recipientFullAddress || '')
+                  : setShowRecipientCards(!showRecipientCards)
+              }
               icon={
                 copied ? (
                   <CopiedSvg width={18} />
@@ -152,11 +179,18 @@ export const SendingTo = ({
                   <CurrencyImage img={img} size={18} />
                 )
               }
-              description={recipientName || recipientAddress || ''}
+              description={description}
+              dropDown={!!recipientList}
             />
           </DetailRow>
         </DetailContainer>
         {hr && <Hr />}
+        {showRecipientCards && recipientList
+          ? recipientList.map((r, i) => (
+              <AddressCard key={i.toString()} recipient={r} />
+            ))
+          : null}
+        {showRecipientCards && recipientList && <Hr />}
       </>
     );
   } else {

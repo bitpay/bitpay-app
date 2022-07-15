@@ -1,14 +1,14 @@
-import React, {useState} from 'react';
+import React, {useCallback, useContext, useState} from 'react';
 import {
   CtaContainer as _CtaContainer,
+  Hr,
   SearchContainer,
   SearchInput,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import styled, {useTheme} from 'styled-components/native';
-import {Paragraph} from '../../../components/styled/Text';
+import {H5, SubText} from '../../../components/styled/Text';
 import {NeutralSlate} from '../../../styles/colors';
-import {useLogger} from '../../../utils/hooks/useLogger';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
@@ -22,8 +22,14 @@ import {
 } from '../screens/send/SendTo';
 import ContactsSvg from '../../../../assets/img/tab-icons/contacts.svg';
 import SettingsContactRow from '../../../components/list/SettingsContactRow';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {ContactRowProps} from '../../../components/list/ContactRow';
+import {useAppSelector} from '../../../utils/hooks';
+import {FlatList, View} from 'react-native';
+import {
+  RecipientList,
+  RecipientRowContainer,
+  SendToOptionsContext,
+} from '../screens/SendToOptions';
+import _ from 'lodash';
 
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
@@ -45,12 +51,15 @@ const SendToContact = () => {
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
-  const [selectedContact, setSelectedContact] = useState<ContactRowProps>();
-
-  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
-  const {wallet} = route.params;
+  const {wallet, context} = route.params;
+  const {
+    recipientList,
+    setRecipientListContext,
+    setRecipientAmountContext,
+    goToConfirmView,
+  } = useContext(SendToOptionsContext);
   const {
     currencyAbbreviation,
     credentials: {network},
@@ -64,15 +73,25 @@ const SendToContact = () => {
         contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
   );
 
+  const renderItem = useCallback(
+    ({item}) => {
+      return (
+        <RecipientList
+          recipient={item}
+          wallet={wallet}
+          deleteRecipient={() => setRecipientListContext(item, true)}
+          setAmount={() => setRecipientAmountContext(item, true)}
+          context={context}
+        />
+      );
+    },
+    [wallet],
+  );
+
   return (
     <>
       <SendToContactContainer>
-        <Paragraph>
-          {t(
-            'To get started, you’ll need to enter a valid address or select an existing contact or wallet.',
-          )}
-        </Paragraph>
-        <SearchContainer style={{marginTop: 25, height: 54}}>
+        <SearchContainer style={{height: 54}}>
           <SearchInput
             placeholder={t('Search contact')}
             placeholderTextColor={placeHolderTextColor}
@@ -82,58 +101,87 @@ const SendToContact = () => {
             }}
           />
         </SearchContainer>
-
-        <ScrollViewContainer>
-          {contacts.length > 0 ? (
+        <View style={{marginTop: 10}}>
+          <H5>
+            {recipientList?.length > 1 ? t('Recipients') : t('Recipient')}
+          </H5>
+          <Hr />
+          {recipientList && recipientList.length ? (
+            <FlatList
+              data={recipientList}
+              keyExtractor={(_item, index) => index.toString()}
+              renderItem={renderItem}
+            />
+          ) : (
             <>
-              <ContactTitleContainer>
-                {ContactsSvg({})}
-                <ContactTitle>{'Contacts'}</ContactTitle>
-              </ContactTitleContainer>
-
-              {contacts.map((item, index) => {
-                return (
-                  <SendContactRow key={index}>
-                    <SettingsContactRow
-                      contact={item}
-                      onPress={() => {
-                        haptic('impactLight');
-                        try {
-                          if (item) {
-                            setSelectedContact(item);
-                            setSearchInput(item.name);
-                          }
-                        } catch (err) {
-                          console.log(err);
-                        }
-                      }}
-                    />
-                  </SendContactRow>
-                );
-              })}
+              <RecipientRowContainer>
+                <SubText>
+                  {t(
+                    'To get started, you’ll need to enter a valid address or select an existing contact or wallet.',
+                  )}
+                </SubText>
+              </RecipientRowContainer>
+              <Hr />
             </>
-          ) : null}
-        </ScrollViewContainer>
+          )}
+        </View>
       </SendToContactContainer>
-      {contacts.length > 0 ? (
-        <CtaContainer>
-          <Button
-            buttonStyle={'primary'}
-            onPress={() => {
-              haptic('impactLight');
+      <ScrollViewContainer>
+        {contacts.length > 0 ? (
+          <>
+            <ContactTitleContainer>
+              {ContactsSvg({})}
+              <ContactTitle>{'Contacts'}</ContactTitle>
+            </ContactTitleContainer>
+            {contacts.map((item, index) => {
+              return (
+                <SendContactRow key={index}>
+                  <SettingsContactRow
+                    contact={item}
+                    onPress={() => {
+                      haptic('impactLight');
+                      if (
+                        !recipientList.some(r => r.address === item.address)
+                      ) {
+                        context === 'selectInputs'
+                          ? setRecipientListContext({
+                              ...item,
+                              type: 'contact',
+                            })
+                          : setRecipientAmountContext({
+                              ...item,
+                              type: 'contact',
+                            });
+                      }
+                    }}
+                  />
+                </SendContactRow>
+              );
+            })}
+          </>
+        ) : null}
+      </ScrollViewContainer>
+      <CtaContainer>
+        <Button
+          buttonStyle={'primary'}
+          onPress={() => {
+            haptic('impactLight');
+            if (context === 'selectInputs') {
               navigation.navigate('Wallet', {
                 screen: 'SelectInputs',
                 params: {
-                  recipient: {...selectedContact!, type: 'contact'},
+                  recipient: {...recipientList[0]!},
                   wallet,
                 },
               });
-            }}
-            disabled={!selectedContact}>
-            {t('Continue')}
-          </Button>
-        </CtaContainer>
-      ) : null}
+            } else {
+              goToConfirmView();
+            }
+          }}
+          disabled={!recipientList[0]}>
+          {t('Continue')}
+        </Button>
+      </CtaContainer>
     </>
   );
 };
