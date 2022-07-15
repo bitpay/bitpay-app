@@ -48,6 +48,7 @@ import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {LogActions} from '../../../log';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -194,7 +195,7 @@ export const createProposalAndBuildTxDetails =
 const setEthAddressNonce =
   (wallet: Wallet, tx: TransactionOptions): Effect<Promise<void>> =>
   async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       try {
         const {
           coin: currencyAbbreviation,
@@ -268,17 +269,21 @@ const setEthAddressNonce =
           }
         }
 
-        console.log(
-          `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
-            suggestedNonce! - nonce
-          }`,
+        dispatch(
+          LogActions.info(
+            `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
+              suggestedNonce! - nonce
+            }`,
+          ),
         );
 
         tx.nonce = suggestedNonce;
 
         return resolve();
       } catch (error: any) {
-        console.log('Could not get address nonce', error.message);
+        const errString =
+          error instanceof Error ? error.message : JSON.stringify(error);
+        dispatch(LogActions.error(`Could not get address nonce ${errString}`));
         return resolve();
       }
     });
@@ -672,16 +677,17 @@ export const publishAndSign =
     key,
     wallet,
     recipient,
+    password,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
+    password?: string; // when signing multiple proposals from a wallet we ask for decrypt password before
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
-      let password;
-      if (key.isPrivKeyEncrypted) {
+      if (key.isPrivKeyEncrypted && !password) {
         try {
           password = await new Promise<string>((_resolve, _reject) => {
             dispatch(
@@ -763,6 +769,74 @@ export const publishAndSign =
     });
   };
 
+export const publishAndSignMultipleProposals =
+  ({
+    txps,
+    key,
+    wallet,
+    recipient,
+  }: {
+    txps: Partial<TransactionProposal>[];
+    key: Key;
+    wallet: Wallet;
+    recipient?: Recipient;
+  }): Effect<Promise<(Partial<TransactionProposal> | void)[]>> =>
+  async (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let password: string;
+        if (key.isPrivKeyEncrypted) {
+          try {
+            password = await new Promise<string>((_resolve, _reject) => {
+              dispatch(
+                showDecryptPasswordModal({
+                  onSubmitHandler: async (_password: string) => {
+                    dispatch(dismissDecryptPasswordModal());
+                    await sleep(500);
+                    checkEncryptPassword(key, _password)
+                      ? _resolve(_password)
+                      : _reject('invalid password');
+                  },
+                  onCancelHandler: () => {
+                    _reject('password canceled');
+                  },
+                }),
+              );
+            });
+          } catch (error) {
+            return reject(error);
+          }
+        }
+        const promises: Promise<Partial<TransactionProposal> | void>[] = [];
+
+        txps.forEach(async txp => {
+          promises.push(
+            dispatch(
+              publishAndSign({txp, key, wallet, recipient, password}),
+            ).catch(err => {
+              const errorStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(
+                LogActions.error(
+                  `Error signing transaction proposal: ${errorStr}`,
+                ),
+              );
+              return err;
+            }),
+          );
+        });
+        return resolve(await Promise.all(promises));
+      } catch (err) {
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error(`Error signing transaction proposal: ${errorStr}`),
+        );
+        return reject(err);
+      }
+    });
+  };
+
 export const createTxProposal = (
   wallet: Wallet,
   txp: Partial<TransactionProposal>,
@@ -807,14 +881,13 @@ export const signTx = (
         signatures,
         (err: Error, signedTxp: any) => {
           if (err) {
-            throw err;
+            reject(err);
           }
           resolve(signedTxp);
         },
         null,
       );
     } catch (err) {
-      console.error(err);
       reject(err);
     }
   });

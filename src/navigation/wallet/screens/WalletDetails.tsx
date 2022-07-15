@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 import {
   Linking,
@@ -29,6 +28,7 @@ import {
   H5,
   HeaderTitle,
   Paragraph,
+  ProposalBadge,
   Small,
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
@@ -39,13 +39,18 @@ import {
   toggleHideBalance,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
-import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {
+  Key,
+  TransactionProposal,
+  Wallet,
+} from '../../../store/wallet/wallet.models';
 import {
   Air,
   Black,
   LightBlack,
   LuckySevens,
   SlateDark,
+  Action,
   White,
 } from '../../../styles/colors';
 import {shouldScale, sleep} from '../../../utils/helper-methods';
@@ -78,7 +83,10 @@ import {
   IsShared,
   TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
-import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  ProposalBadgeContainer,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import TransactionRow, {
   TRANSACTION_ROW_HEIGHT,
 } from '../../../components/list/TransactionRow';
@@ -105,6 +113,7 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Currencies} from '../../../constants/currencies';
 import i18next from 'i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import _ from 'lodash';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -138,13 +147,15 @@ const BalanceContainer = styled.View`
   flex-direction: column;
 `;
 
-const TransactionSectionHeader = styled(H5)`
+const TransactionSectionHeaderContainer = styled.View`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
   height: 55px;
   width: 100%;
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
+  align-items: center;
 `;
 
 const BorderBottom = styled.View`
@@ -276,9 +287,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
@@ -395,6 +403,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
+      setNeedActionTxps(pendingTxps);
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
@@ -426,7 +435,26 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
-  // const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);  TODO
+  const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
+
+  const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
+    const txpsPending: TransactionProposal[] = [];
+    pendingTxps.forEach((txp: any) => {
+      const action: any = _.find(txp.actions, {
+        copayerId: fullWalletObj.credentials.copayerId,
+      });
+
+      if ((!action || action.type === 'failed') && txp.status == 'pending') {
+        txpsPending.push(txp);
+      }
+
+      // For unsent transactions
+      if (action && txp.status == 'accepted') {
+        txpsPending.push(txp);
+      }
+    });
+    setNeedActionPendingTxps(txpsPending);
+  };
 
   const loadHistory = async (refresh?: boolean) => {
     if (!loadMore && !refresh) {
@@ -479,6 +507,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
+    setNeedActionTxps(pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
       () => {
@@ -771,6 +800,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     [],
   );
 
+  const onPressTxpBadge = useMemo(
+    () => () => {
+      navigation.navigate('Wallet', {
+        screen: 'TransactionProposalNotifications',
+        params: {walletId: fullWalletObj.credentials.walletId},
+      });
+    },
+    [],
+  );
+
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
@@ -911,15 +950,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Buy Crypto',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Buy Crypto', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('Wallet', {
                           screen: WalletScreens.AMOUNT,
@@ -948,15 +982,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Swap Crypto',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Swap Crypto', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('SwapCrypto', {
                           screen: 'Root',
@@ -969,15 +998,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     receive={{
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Receive',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Receive', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         setShowReceiveAddressBottomModal(true);
                       },
@@ -986,15 +1010,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       hide: !fullWalletObj.balance.sat,
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Send',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Send', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('Wallet', {
                           screen: 'SendTo',
@@ -1006,15 +1025,20 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 ) : null}
               </HeaderContainer>
               {pendingTxps && pendingTxps[0] ? (
-                <TransactionSectionHeader>
-                  {fullWalletObj.credentials.m > 1
-                    ? t('Pending Proposals')
-                    : t('Unsent Transactions')}
-                </TransactionSectionHeader>
+                <TransactionSectionHeaderContainer>
+                  <H5>
+                    {fullWalletObj.credentials.m > 1
+                      ? t('Pending Proposals')
+                      : t('Unsent Transactions')}
+                  </H5>
+                  <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                    <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                  </ProposalBadgeContainer>
+                </TransactionSectionHeaderContainer>
               ) : null}
               <FlatList
                 contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-                data={pendingTxps} // TODO use needActionPendingTxps
+                data={needActionPendingTxps}
                 keyExtractor={pendingTxpsKeyExtractor}
                 renderItem={renderTxp}
               />
@@ -1050,7 +1074,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         renderSectionHeader={({section: {title}}) => {
           return (
             <TouchableOpacity onPress={() => viewOnBlockchain()}>
-              <TransactionSectionHeader>{title}</TransactionSectionHeader>
+              <TransactionSectionHeaderContainer>
+                <H5>{title}</H5>
+              </TransactionSectionHeaderContainer>
             </TouchableOpacity>
           );
         }}

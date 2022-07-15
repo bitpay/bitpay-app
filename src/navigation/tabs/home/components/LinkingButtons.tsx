@@ -137,14 +137,9 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       ? buy.cta
       : () => {
           dispatch(
-            logSegmentEvent(
-              'track',
-              'Clicked Buy Crypto',
-              {
-                context: 'LinkingButtons',
-              },
-              true,
-            ),
+            logSegmentEvent('track', 'Clicked Buy Crypto', {
+              context: 'LinkingButtons',
+            }),
           );
           navigation.navigate('Wallet', {
             screen: WalletScreens.AMOUNT,
@@ -167,14 +162,9 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       ? swap.cta
       : () => {
           dispatch(
-            logSegmentEvent(
-              'track',
-              'Clicked Swap Crypto',
-              {
-                context: 'LinkingButtons',
-              },
-              true,
-            ),
+            logSegmentEvent('track', 'Clicked Swap Crypto', {
+              context: 'LinkingButtons',
+            }),
           );
           navigation.navigate('SwapCrypto', {screen: 'Root'});
         },

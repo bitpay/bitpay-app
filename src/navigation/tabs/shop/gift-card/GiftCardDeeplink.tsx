@@ -29,14 +29,9 @@ const GiftCardDeeplinkScreen: React.FC<
 
   useEffect(() => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Shop with Crypto',
-        {
-          context: 'GiftCardDeeplink',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Shop with Crypto', {
+        context: 'GiftCardDeeplink',
+      }),
     );
     if (targetedGiftCardRef.current) {
       navigation.replace('GiftCard', {

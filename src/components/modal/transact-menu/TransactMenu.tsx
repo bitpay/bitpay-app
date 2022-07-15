@@ -94,14 +94,9 @@ const TransactModal = () => {
       description: t('Buy crypto with cash'),
       onPress: () => {
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Clicked Buy Crypto',
-            {
-              context: 'TransactMenu',
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Clicked Buy Crypto', {
+            context: 'TransactMenu',
+          }),
         );
         navigation.navigate('Wallet', {
           screen: WalletScreens.AMOUNT,
@@ -126,14 +121,9 @@ const TransactModal = () => {
       description: t('Swap crypto for another'),
       onPress: () => {
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Clicked Swap Crypto',
-            {
-              context: 'TransactMenu',
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Clicked Swap Crypto', {
+            context: 'TransactMenu',
+          }),
         );
         navigation.navigate('SwapCrypto', {screen: 'Root'});
       },
@@ -175,14 +165,9 @@ const TransactModal = () => {
           },
         });
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Clicked Buy Gift Cards',
-            {
-              context: 'TransactMenu',
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Clicked Buy Gift Cards', {
+            context: 'TransactMenu',
+          }),
         );
       },
     },

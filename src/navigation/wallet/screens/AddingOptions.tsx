@@ -36,7 +36,6 @@ const AddingOptions: React.FC = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{t('Select Wallet Type')}</HeaderTitle>,
       headerTitleAlign: 'center',
     });

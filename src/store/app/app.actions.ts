@@ -26,6 +26,7 @@ export const successAppInit = (): AppActionType => ({
 
 export const failedAppInit = (): AppActionType => ({
   type: AppActionTypes.FAILED_APP_INIT,
+  payload: true,
 });
 
 export const setAppFirstOpenEventComplete = (): AppActionType => ({

@@ -300,17 +300,12 @@ const BuyCryptoRoot: React.FC<
 
   const continueToViewOffers = () => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Buy Crypto "View Offers"',
-        {
-          fiatAmount: amount,
-          fiatCurrency,
-          paymentMethod: selectedPaymentMethod.method,
-          coin: selectedWallet!.currencyAbbreviation,
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Buy Crypto "View Offers"', {
+        fiatAmount: amount,
+        fiatCurrency,
+        paymentMethod: selectedPaymentMethod.method,
+        coin: selectedWallet!.currencyAbbreviation,
+      }),
     );
 
     navigation.navigate('BuyCryptoOffers', {

@@ -33,6 +33,7 @@ export const getPriceHistory =
   (defaultAltCurrencyIsoCode: string): Effect =>
   async dispatch => {
     try {
+      dispatch(LogActions.info('starting [getPriceHistory]'));
       const coinsList = SUPPORTED_COINS.map(
         coin =>
           `${coin.toUpperCase()}:${defaultAltCurrencyIsoCode.toUpperCase()}`,
@@ -55,8 +56,14 @@ export const getPriceHistory =
         });
       dispatch(successGetPriceHistory(formattedData));
     } catch (err) {
-      console.error(err);
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
       dispatch(failedGetPriceHistory());
+      dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
     }
   };
 
@@ -64,6 +71,7 @@ export const startGetRates =
   ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      dispatch(LogActions.info('starting [startGetRates]'));
       const {
         WALLET: {ratesCacheKey, rates: cachedRates},
       } = getState();
@@ -81,19 +89,36 @@ export const startGetRates =
       dispatch(updateCacheKey({cacheKey: CacheKeys.RATES}));
 
       try {
-        console.log('Rates - fetching new rates');
-
-        const {tokenRates, tokenLastDayRates} = (await dispatch<any>(
-          getTokenRates(),
-        )) as any;
-
+        dispatch(LogActions.info('[startGetRates]: fetching new rates'));
         const yesterday =
           moment().subtract(1, 'days').startOf('hour').unix() * 1000;
+
+        dispatch(
+          LogActions.info(
+            `[startGetRates]: get request to: ${BASE_BWS_URL}/v3/fiatrates/`,
+          ),
+        );
         const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
+        dispatch(LogActions.info('[startGetRates]: success get request'));
+
+        dispatch(
+          LogActions.info(
+            `[startGetRates]: get request (yesterday) to: ${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
+          ),
+        );
         const {data: lastDayRates} = await axios.get(
           `${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
         );
+        dispatch(
+          LogActions.info('[startGetRates]: success get request (yesterday)'),
+        );
+
         if (init) {
+          dispatch(
+            LogActions.info(
+              '[startGetRates]: setting alternative currency list',
+            ),
+          );
           // set alternative currency list
           const alternatives: Array<AltCurrenciesRowProps> = [];
           rates.btc.forEach((r: Rate) => {
@@ -103,7 +128,17 @@ export const startGetRates =
           });
           alternatives.sort((a, b) => (a.name < b.name ? -1 : 1));
           dispatch(addAltCurrencyList(alternatives));
+          dispatch(
+            LogActions.info(
+              '[startGetRates]: success set alternative currency list',
+            ),
+          );
         }
+
+        // needs alt currency list set on init
+        const {tokenRates, tokenLastDayRates} = (await dispatch<any>(
+          getTokenRates(),
+        )) as any;
 
         const allRates = {...rates, ...tokenRates};
         const allLastDayRates = {...lastDayRates, ...tokenLastDayRates};
@@ -115,17 +150,25 @@ export const startGetRates =
             ratesByDateRange: rates,
           }),
         );
+        dispatch(LogActions.info('success [startGetRates]'));
         resolve(allRates);
       } catch (err) {
-        console.error(err);
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
         dispatch(failedGetRates());
-        reject();
+        dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
+        reject(err);
       }
     });
   };
 
 export const getContractAddresses =
-  (): Effect<Array<string | undefined>> => (_dispatch, getState) => {
+  (): Effect<Array<string | undefined>> => (dispatch, getState) => {
+    dispatch(LogActions.info('starting [getContractAddresses]'));
     const {
       WALLET: {keys},
     } = getState();
@@ -141,7 +184,7 @@ export const getContractAddresses =
         }
       });
     });
-
+    dispatch(LogActions.info('success [getContractAddresses]'));
     return allTokenAddresses;
   };
 
@@ -151,6 +194,8 @@ export const getTokenRates =
   > =>
   (dispatch, getState) => {
     return new Promise(async resolve => {
+      dispatch(LogActions.info('starting [getTokenRates]'));
+
       let tokenRates: {[key in string]: any} = {};
       let tokenLastDayRates: {[key in string]: any} = {};
 
@@ -165,6 +210,10 @@ export const getTokenRates =
           ...tokenOptionsByAddress,
           ...customTokenOptionsByAddress,
         };
+
+        dispatch(
+          LogActions.info('[getTokenRates]: selecting alternative currencies'),
+        );
         const altCurrencies = altCurrencyList.map(altCurrency =>
           altCurrency.isoCode.toLowerCase(),
         );
@@ -175,43 +224,57 @@ export const getTokenRates =
         )}&vs_currencies=${altCurrencies.join(
           ',',
         )}&include_24hr_change=true&include_last_updated_at=true`;
+
+        dispatch(LogActions.info(`[getTokenRates]: get request to: ${url}`));
         const {data} = await axios.get(url);
+        dispatch(LogActions.info('[getTokenRates]: success get request'));
 
         Object.entries(data).map(([key, value]: [string, any]) => {
-          const tokenName = tokens[key].symbol.toLowerCase();
-          tokenRates[tokenName] = [];
-          tokenLastDayRates[tokenName] = [];
+          // only save token rates if exist in tokens list
+          if (tokens[key]) {
+            const tokenName = tokens[key]?.symbol?.toLowerCase();
+            tokenRates[tokenName] = [];
+            tokenLastDayRates[tokenName] = [];
 
-          altCurrencies.forEach(altCurrency => {
-            tokenRates[tokenName].push({
-              code: altCurrency.toUpperCase(),
-              fetchedOn: value.last_updated_at,
-              name: tokenName,
-              rate: value[altCurrency],
-              ts: value.last_updated_at,
-            });
+            altCurrencies.forEach(altCurrency => {
+              tokenRates[tokenName].push({
+                code: altCurrency.toUpperCase(),
+                fetchedOn: value.last_updated_at,
+                name: tokenName,
+                rate: value[altCurrency],
+                ts: value.last_updated_at,
+              });
 
-            const yesterday = moment
-              .unix(value.last_updated_at)
-              .subtract(1, 'days')
-              .unix();
-            tokenLastDayRates[tokenName].push({
-              code: altCurrency.toUpperCase(),
-              fetchedOn: yesterday,
-              name: tokenName,
-              rate:
-                value[altCurrency] +
-                (value[altCurrency] * value[`${altCurrency}_24h_change`]) / 100,
-              ts: yesterday,
+              const yesterday = moment
+                .unix(value.last_updated_at)
+                .subtract(1, 'days')
+                .unix();
+              tokenLastDayRates[tokenName].push({
+                code: altCurrency.toUpperCase(),
+                fetchedOn: yesterday,
+                name: tokenName,
+                rate:
+                  value[altCurrency] +
+                  (value[altCurrency] * value[`${altCurrency}_24h_change`]) /
+                    100,
+                ts: yesterday,
+              });
             });
-          });
+          }
         });
 
+        dispatch(LogActions.info('success [getTokenRates]'));
         resolve({tokenRates, tokenLastDayRates});
       } catch (e) {
+        let errorStr;
+        if (e instanceof Error) {
+          errorStr = e.message;
+        } else {
+          errorStr = JSON.stringify(e);
+        }
         dispatch(
           LogActions.error(
-            '[getTokenRates]: an error occurred while fetching token rates from coingecko.',
+            `failed [getTokenRates]: ${errorStr} - continue anyway`,
           ),
         );
         resolve({tokenRates, tokenLastDayRates}); // prevent the app from crashing if coingecko fails

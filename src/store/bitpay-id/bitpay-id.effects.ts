@@ -13,18 +13,13 @@ import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {
-  analyticsIdentify,
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../app/app.effects';
+import {Analytics, startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
-import analytics from '@segment/analytics-react-native';
 
 interface StartLoginParams {
   email: string;
@@ -188,14 +183,9 @@ export const startLogin =
 
       // complete
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Log In User success',
-          {
-            type: 'basicAuth',
-          },
-          true,
-        ),
+        Analytics.track('Log In User success', {
+          type: 'basicAuth',
+        }),
       );
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
@@ -246,14 +236,9 @@ export const startTwoFactorAuth =
 
       // complete
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Log In User success',
-          {
-            type: 'twoFactorAuth',
-          },
-          true,
-        ),
+        Analytics.track('Log In User success', {
+          type: 'twoFactorAuth',
+        }),
       );
       dispatch(
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
@@ -348,14 +333,9 @@ export const startEmailPairing =
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Log In User success',
-          {
-            type: 'emailAuth',
-          },
-          true,
-        ),
+        Analytics.track('Log In User success', {
+          type: 'emailAuth',
+        }),
       );
       dispatch(BitPayIdActions.successEmailPairing());
     } catch (err) {
@@ -447,7 +427,7 @@ const startPairAndLoadUser =
       if (data.user.basicInfo) {
         const {eid, email, name} = data.user.basicInfo;
 
-        dispatch(analyticsIdentify(eid, {email, name}));
+        dispatch(Analytics.identify(eid, {email, name}));
       }
     } catch (err) {
       let errMsg;
@@ -466,16 +446,15 @@ const startPairAndLoadUser =
 export const startDisconnectBitPayId =
   (): Effect => async (dispatch, getState) => {
     try {
-      const {APP, BITPAY_ID, CARD} = getState();
+      const {APP, BITPAY_ID} = getState();
       const {isAuthenticated, csrfToken} = BITPAY_ID.session;
 
       if (isAuthenticated && csrfToken) {
-        AuthApi.logout(APP.network, csrfToken);
+        await AuthApi.logout(APP.network, csrfToken);
       }
 
+      dispatch(Analytics.track('Log Out User success', {}));
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
-
-      dispatch(logSegmentEvent('track', 'Log Out User success', {}, true));
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.error('An error occurred while logging out.'));

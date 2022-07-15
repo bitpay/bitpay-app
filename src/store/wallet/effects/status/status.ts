@@ -34,6 +34,7 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {IsUtxoCoin} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
+import {LogActions} from '../../../log';
 
 /*
  * post broadcasting of payment
@@ -254,6 +255,9 @@ export const startUpdateAllWalletStatusForKeys =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
+        dispatch(
+          LogActions.info('starting [startUpdateAllWalletStatusForKeys]'),
+        );
         const {APP, WALLET} = getState();
         const {defaultAltCurrency} = APP;
         const {rates, lastDayRates, balanceCacheKey} = WALLET;
@@ -325,7 +329,19 @@ export const startUpdateAllWalletStatusForKeys =
                     const {balance: cachedBalance} = wallet;
 
                     if (err || !bulkStatus) {
-                      console.log('getStatusAll error', err);
+                      if (err) {
+                        let errorStr;
+                        if (err instanceof Error) {
+                          errorStr = err.message;
+                        } else {
+                          errorStr = JSON.stringify(err);
+                        }
+                        dispatch(
+                          LogActions.error(
+                            `[startUpdateAllWalletStatusForKeys] - failed getStatusAll: ${errorStr}`,
+                          ),
+                        );
+                      }
                       return {
                         ...cachedBalance,
                         ...dispatch(
@@ -398,8 +414,10 @@ export const startUpdateAllWalletStatusForKeys =
                         }),
                       );
 
-                      console.log(
-                        `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
+                      dispatch(
+                        LogActions.info(
+                          `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
+                        ),
                       );
 
                       return newBalance;
@@ -434,9 +452,23 @@ export const startUpdateAllWalletStatusForKeys =
         const keyUpdates = await Promise.all(keyUpdatesPromises);
 
         dispatch(successUpdateKeysTotalBalance(keyUpdates));
+        dispatch(
+          LogActions.info('success [startUpdateAllWalletStatusForKeys]'),
+        );
         resolve();
       } catch (err) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
         dispatch(failedUpdateKeyTotalBalance());
+        dispatch(
+          LogActions.error(
+            `failed [startUpdateAllWalletStatusForKeys]: ${errorStr}`,
+          ),
+        );
         reject(err);
       }
     });
@@ -454,6 +486,9 @@ export const startUpdateAllKeyAndWalletStatus =
   (): Effect => async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
+        dispatch(
+          LogActions.info('starting [startUpdateAllKeyAndWalletStatus]'),
+        );
         const {
           WALLET: {keys, balanceCacheKey},
         } = getState();
@@ -468,9 +503,21 @@ export const startUpdateAllKeyAndWalletStatus =
         );
         dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances
         dispatch(successUpdateAllKeysAndStatus());
+        dispatch(LogActions.info('success [startUpdateAllKeyAndWalletStatus]'));
         resolve();
       } catch (err) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
         dispatch(failedUpdateAllKeysAndStatus());
+        dispatch(
+          LogActions.error(
+            `failed [startUpdateAllKeyAndWalletStatus]: ${errorStr}`,
+          ),
+        );
         reject(err);
       }
     });

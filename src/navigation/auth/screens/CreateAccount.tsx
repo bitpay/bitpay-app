@@ -37,7 +37,7 @@ type CreateAccountScreenProps = StackScreenProps<
 const schema = yup.object().shape({
   givenName: yup.string().required('Required'),
   familyName: yup.string().required('Required'),
-  email: yup.string().email().required('Required'),
+  email: yup.string().email().required('Required').trim(),
   password: yup.string().required('Required'),
   agreedToTOSandPP: yup.boolean().oneOf([true], 'Required'),
 });
@@ -50,7 +50,7 @@ interface CreateAccountFieldValues {
   agreedToTOSandPP: boolean;
 }
 
-const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
+const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
   navigation,
 }) => {
   const {t} = useTranslation();
@@ -80,6 +80,8 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   const captchaRef = useRef<CaptchaRef>(null);
 
   useEffect(() => {
+    dispatch(BitPayIdEffects.startFetchSession());
+
     return () => {
       dispatch(BitPayIdActions.updateCreateAccountStatus(null));
     };

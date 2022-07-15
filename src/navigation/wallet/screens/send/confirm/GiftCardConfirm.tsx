@@ -314,17 +314,12 @@ const Confirm = () => {
         ? 'Failed Gift Card'
         : 'Purchased Gift Card';
     dispatch(
-      logSegmentEvent(
-        'track',
-        purchaseEventName,
-        {
-          giftCardAmount: amount,
-          giftCardBrand: cardConfig.name,
-          giftCardCurrency: cardConfig.currency,
-          coin: getTransactionCurrency(),
-        },
-        true,
-      ),
+      logSegmentEvent('track', purchaseEventName, {
+        giftCardAmount: amount,
+        giftCardBrand: cardConfig.name,
+        giftCardCurrency: cardConfig.currency,
+        coin: getTransactionCurrency(),
+      }),
     );
   };
 
@@ -364,6 +359,8 @@ const Confirm = () => {
       defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => openWalletSelector(400),
     });
+    await sleep(400);
+    setResetSwipeButton(true);
   };
 
   const request2FA = async () => {

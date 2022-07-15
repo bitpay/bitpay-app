@@ -231,7 +231,7 @@ const ShopHome: React.FC<
   ]);
 
   useFocusEffect(() => {
-    dispatch(logSegmentEvent('track', 'Viewed Shop Tab', undefined, true));
+    dispatch(logSegmentEvent('track', 'Viewed Shop Tab', undefined));
   });
 
   return (

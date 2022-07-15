@@ -25,7 +25,7 @@ import {
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
 import {
-  logSegmentEvent,
+  Analytics,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
@@ -296,6 +296,8 @@ const Confirm = () => {
       defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => reshowWalletSelector(),
     });
+    await sleep(400);
+    setResetSwipeButton(true);
   };
 
   const request2FA = async () => {
@@ -415,15 +417,10 @@ const Confirm = () => {
               try {
                 await sendPayment();
                 dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Adding funds to Debit Card',
-                    {
-                      amount: amount,
-                      brand: brand || '',
-                    },
-                    true,
-                  ),
+                  Analytics.track('Adding funds to Debit Card', {
+                    amount: amount,
+                    brand: brand || '',
+                  }),
                 );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());

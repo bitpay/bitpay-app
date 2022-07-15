@@ -1,5 +1,5 @@
 import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
-import analytics, {JsonMap} from '@segment/analytics-react-native';
+import Segment, {JsonMap} from '@segment/analytics-react-native';
 import {Options} from '@segment/analytics-react-native/build/esm/bridge';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
@@ -57,6 +57,7 @@ import {
 } from '../wallet/effects/status/status';
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
+import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -78,6 +79,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     if (!appFirstOpenData?.firstOpenDate) {
       dispatch(setAppFirstOpenEventDate());
+      dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
     }
 
     // init analytics -> post onboarding or migration
@@ -88,6 +90,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (!migrationComplete) {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
+      dispatch(LogActions.info('success [setMigrationComplete]'));
     }
 
     const {BITPAY_ID} = getState();
@@ -171,11 +174,21 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         dispatch(AppActions.showBiometricModal());
       }
     });
-  } catch (err) {
-    console.error(err);
+  } catch (err: unknown) {
+    let errorStr;
+    if (err instanceof Error) {
+      errorStr = err.message;
+    } else {
+      errorStr = JSON.stringify(err);
+    }
+    // wait for navigationRef
+    await sleep(2000);
     dispatch(AppActions.failedAppInit());
     dispatch(LogActions.error('Failed to initialize app.'));
-    dispatch(LogActions.error(JSON.stringify(err)));
+    dispatch(LogActions.error(errorStr));
+    await sleep(500);
+    dispatch(showBlur(false));
+    RNBootSplash.hide();
   }
 };
 
@@ -370,9 +383,15 @@ export const openUrlWithInAppBrowser =
 export const askForTrackingPermissionAndEnableSdks =
   (appInit: boolean = false): Effect<Promise<void>> =>
   async (dispatch, getState) => {
+    dispatch(
+      LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
+    );
     const trackingStatus = await requestTrackingPermission();
 
     if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
+      dispatch(
+        LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
+      );
       try {
         await new Promise<void>((resolve, reject) => {
           AppsFlyer.initSdk(
@@ -397,7 +416,7 @@ export const askForTrackingPermissionAndEnableSdks =
       }
 
       try {
-        await analytics.setup(SEGMENT_API_KEY, {
+        await Segment.setup(SEGMENT_API_KEY, {
           recordScreenViews: false,
           trackAppLifecycleEvents: true,
           ios: {
@@ -406,7 +425,7 @@ export const askForTrackingPermissionAndEnableSdks =
         });
 
         const {advertisingId} = await AdID.getAdvertisingId();
-        analytics.setIDFA(advertisingId);
+        Segment.setIDFA(advertisingId);
 
         if (appInit) {
           const {appFirstOpenData} = getState().APP;
@@ -417,17 +436,12 @@ export const askForTrackingPermissionAndEnableSdks =
           ) {
             dispatch(setAppFirstOpenEventComplete());
             dispatch(
-              logSegmentEvent(
-                'track',
-                'First Opened App',
-                {
-                  date: appFirstOpenData?.firstOpenDate || '',
-                },
-                true,
-              ),
+              Analytics.track('First Opened App', {
+                date: appFirstOpenData?.firstOpenDate || '',
+              }),
             );
           } else {
-            dispatch(logSegmentEvent('track', 'Last Opened App', {}, true));
+            dispatch(Analytics.track('Last Opened App', {}));
           }
         }
       } catch (err) {
@@ -435,67 +449,108 @@ export const askForTrackingPermissionAndEnableSdks =
         dispatch(LogActions.error(JSON.stringify(err)));
       }
     }
+    dispatch(
+      LogActions.info('success [askForTrackingPermissionAndEnableSdks]'),
+    );
   };
 
 export const logSegmentEvent =
   (
-    eventType: 'screen' | 'track',
+    _eventType: 'track',
     eventName: string,
     eventProperties: JsonMap = {},
-    includeAppUser: boolean = false,
-  ): Effect<void> =>
+  ): Effect<Promise<void>> =>
   (_dispatch, getState) => {
-    // TODO: always include userId if available?
-    if (includeAppUser) {
-      const {BITPAY_ID, APP} = getState();
-      const user = BITPAY_ID.user[APP.network];
-      eventProperties.userId = user?.eid || '';
-    } else {
-      eventProperties.userId = '';
-    }
+    if (APP_ANALYTICS_ENABLED) {
+      if (!eventProperties?.userId) {
+        const {BITPAY_ID, APP} = getState();
+        const user = BITPAY_ID.user[APP.network];
+        eventProperties.userId = user?.eid || '';
+      }
 
-    const eventOptions: Options = {
-      integrations: {
-        AppsFlyer: {
-          appsFlyerId: APPSFLYER_APP_ID,
+      const eventOptions: Options = {
+        integrations: {
+          AppsFlyer: {
+            appsFlyerId: APPSFLYER_APP_ID,
+          },
         },
-      },
-    };
+      };
 
-    switch (eventType) {
-      case 'screen':
-        analytics.screen(eventName, eventProperties, eventOptions);
-        break;
-
-      case 'track':
-        analytics.track(
-          `BitPay App - ${eventName}`,
-          eventProperties,
-          eventOptions,
-        );
-        break;
-    }
-  };
-
-/**
- * Makes a call to identify a user through the analytics SDK.
- *
- * @param user database ID (or email address) for this user.
- * If you don't have a userId but want to record traits, you should pass nil.
- * For more information on how we generate the UUID and Apple's policies on IDs, see https://segment.io/libraries/ios#ids
- * @param traits A dictionary of traits you know about the user. Things like: email, name, plan, etc.
- */
-export const analyticsIdentify =
-  (user: string | null, traits?: JsonMap): Effect<Promise<void>> =>
-  () => {
-    if (!__DEV__) {
-      const options: Options = {};
-
-      return analytics.identify(user, traits, options);
+      return Segment.track(
+        `BitPay App - ${eventName}`,
+        eventProperties,
+        eventOptions,
+      );
     }
 
     return Promise.resolve();
   };
+
+export const Analytics = {
+  /**
+   * Makes a call to identify a user through the analytics SDK.
+   *
+   * @param user database ID (or email address) for this user.
+   * If you don't have a userId but want to record traits, you should pass nil.
+   * For more information on how we generate the UUID and Apple's policies on IDs, see https://segment.io/libraries/ios#ids
+   * @param traits A dictionary of traits you know about the user. Things like: email, name, plan, etc.
+   */
+  identify:
+    (user: string | null, traits?: JsonMap): Effect<Promise<void>> =>
+    () => {
+      if (APP_ANALYTICS_ENABLED) {
+        const options: Options = {};
+
+        return Segment.identify(user, traits, options);
+      }
+
+      return Promise.resolve();
+    },
+
+  /**
+   * Makes a call to record a screen view through the analytics SDK.
+   *
+   * @param name The title of the screen being viewed.
+   * @param properties A dictionary of properties for the screen view event.
+   * If the event was 'Added to Shopping Cart', it might have properties like price, productType, etc.
+   */
+  screen:
+    (name: string, properties: JsonMap = {}): Effect<Promise<void>> =>
+    (_dispatch, getState) => {
+      if (APP_ANALYTICS_ENABLED) {
+        const {BITPAY_ID, APP} = getState();
+        const user = BITPAY_ID.user[APP.network];
+        properties.userId = user?.eid || '';
+
+        const options: Options = {
+          integrations: {
+            AppsFlyer: {
+              appsFlyerId: APPSFLYER_APP_ID,
+            },
+          },
+        };
+
+        return Segment.screen(name, properties, options);
+      }
+
+      return Promise.resolve();
+    },
+
+  /**
+   * Record the actions your users perform through the analytics SDK.
+   *
+   * When a user performs an action in your app, you'll want to track that action for later analysis.
+   * Use the event name to say what the user did, and properties to specify any interesting details of the action.
+   *
+   * @param event The name of the event you're tracking.
+   * The SDK recommend using human-readable names like `Played a Song` or `Updated Status`.
+   * @param properties A dictionary of properties for the event.
+   * If the event was 'Added to Shopping Cart', it might have properties like price, productType, etc.
+   */
+  track: (event: string, properties: JsonMap = {}) => {
+    return logSegmentEvent('track', event, properties);
+  },
+};
 
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect<Promise<void>> =>

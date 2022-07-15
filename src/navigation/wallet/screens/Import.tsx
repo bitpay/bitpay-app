@@ -30,7 +30,6 @@ const Import: React.FC<ImportScreenProps> = ({route}) => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{t('Import')}</HeaderTitle>,
       headerTitleAlign: 'center',
     });

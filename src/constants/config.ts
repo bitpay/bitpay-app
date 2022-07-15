@@ -2,6 +2,7 @@ import {Network} from '.';
 
 export const DEVTOOLS_ENABLED = false;
 export const STATIC_CONTENT_CARDS_ENABLED = true;
+export const APP_ANALYTICS_ENABLED = !__DEV__;
 
 // GENERAL
 export const APP_NAME = 'bitpay';
