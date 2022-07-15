@@ -553,30 +553,15 @@ export const Analytics = {
 };
 
 export const subscribePushNotifications =
-  (walletClient: any, eid: string): Effect<Promise<void>> =>
-  async dispatch => {
+  (walletClient: any, eid: string): Effect =>
+  () => {
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
       packageName: 'BitPay',
       walletId: walletClient.credentials.walletId,
     };
-    walletClient.pushNotificationsSubscribe(opts, (err: any) => {
-      if (err) {
-        dispatch(
-          LogActions.error(
-            'Push Notifications error subscribing: ' + JSON.stringify(err),
-          ),
-        );
-      } else {
-        dispatch(
-          LogActions.info(
-            'Push Notifications success subscribing: ' +
-              walletClient.credentials.walletName,
-          ),
-        );
-      }
-    });
+    walletClient.pushNotificationsSubscribe(opts);
   };
 
 export const unSubscribePushNotifications =
@@ -621,12 +606,6 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
   getAllWalletClients(keys).then(walletClients => {
     walletClients.forEach(walletClient => {
       dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
-      dispatch(
-        LogActions.debug(
-          'Review Subscription Push Notifications for: ' +
-            walletClient.credentials.walletId,
-        ),
-      );
     });
   });
 };
