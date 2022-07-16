@@ -23,7 +23,6 @@ import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
   Key,
-  TransactionProposal,
   Wallet as WalletModel,
   _Credentials,
 } from '../../store/wallet/wallet.models';
@@ -66,7 +65,9 @@ import PriceCharts, {PriceChartsParamList} from './screens/PriceCharts';
 import ClearEncryptPassword, {
   ClearEncryptPasswordParamList,
 } from './screens/ClearEncryptPassword';
-import PayProConfirmTwoFactor from './screens/send/confirm/PayProConfirmTwoFactor';
+import PayProConfirmTwoFactor, {
+  PayProConfirmTwoFactorParamList,
+} from './screens/send/confirm/PayProConfirmTwoFactor';
 import {useTranslation} from 'react-i18next';
 
 export type WalletStackParamList = {
@@ -103,7 +104,7 @@ export type WalletStackParamList = {
   Confirm: ConfirmParamList;
   DebitCardConfirm: DebitCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
-  PayProConfirmTwoFactor: {onSubmit: (code: string) => Promise<void>};
+  PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};

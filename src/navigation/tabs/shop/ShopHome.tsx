@@ -1,7 +1,7 @@
 import debounce from 'lodash.debounce';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components/native';
-import {ScrollView} from 'react-native';
+import {Keyboard, ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getGiftCardConfigList,
@@ -236,7 +236,11 @@ const ShopHome: React.FC<
 
   return (
     <ShopContainer>
-      <ScrollView ref={scrollViewRef} keyboardDismissMode="on-drag">
+      <ScrollView
+        ref={scrollViewRef}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={Keyboard.dismiss}>
         <ShopInnerContainer>
           <Tab.Navigator
             style={{
