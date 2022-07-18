@@ -1,5 +1,9 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
-import React, {useEffect, useMemo, useState} from 'react';
+import {
+  useNavigation,
+  useScrollToTop,
+  useTheme,
+} from '@react-navigation/native';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
@@ -183,10 +187,14 @@ const HomeRoot = () => {
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
+
   return (
     <HomeContainer>
       {appIsLoading ? null : (
         <ScrollView
+          ref={scrollViewRef}
           refreshControl={
             <RefreshControl
               tintColor={theme.dark ? White : SlateDark}

@@ -1,5 +1,5 @@
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -28,6 +28,7 @@ import {CardStackParamList} from '../CardStack';
 import CardFeatureTabs from './CardIntroFeatureTabs';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
+import {useScrollToTop} from '@react-navigation/native';
 
 interface CardIntroProps {
   navigation: StackNavigationProp<CardStackParamList, 'CardHome'>;
@@ -94,9 +95,13 @@ const CardIntro: React.FC<CardIntroProps> = props => {
     });
   }, [navigation]);
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
+
   return (
     <>
       <ScrollView
+        ref={scrollViewRef}
         style={{
           marginTop: insets.top,
         }}>

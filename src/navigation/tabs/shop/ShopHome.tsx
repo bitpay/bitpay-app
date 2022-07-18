@@ -24,7 +24,7 @@ import {useAppSelector} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 
 export enum ShopTabs {
@@ -107,7 +107,9 @@ const ShopHome: React.FC<
     [purchasedGiftCards],
   );
   const categoriesAndCurations = useAppSelector(selectCategoriesAndCurations);
+
   const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
 
   const availableGiftCards = useMemo(
     () =>
