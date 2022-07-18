@@ -50,7 +50,6 @@ import {
   LightBlack,
   LuckySevens,
   SlateDark,
-  Action,
   White,
 } from '../../../styles/colors';
 import {shouldScale, sleep} from '../../../utils/helper-methods';
@@ -71,7 +70,7 @@ import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
@@ -120,7 +119,7 @@ type WalletDetailsScreenProps = StackScreenProps<
   'WalletDetails'
 >;
 
-const TestnetFaucets = {
+const TestnetFaucets: {[key: string]: string} = {
   BTC: 'https://bitcoinfaucet.uo1.net/',
   BCH: 'https://tbch.googol.cash/',
   ETH: 'https://faucets.chain.link/',
@@ -308,6 +307,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     useState(false);
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
+  const logger = useLogger();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -990,6 +990,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             },
                           });
                         } else {
+                          logger.info(
+                            `Buy [Testnet Wallet]: Redirecting to ${currencyAbbreviation} faucet link`,
+                          );
                           Linking.openURL(TestnetFaucets[currencyAbbreviation]);
                         }
                       },
