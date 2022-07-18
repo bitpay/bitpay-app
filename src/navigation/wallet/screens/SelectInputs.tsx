@@ -9,13 +9,7 @@ import {
   Utxo,
   Wallet,
 } from '../../../store/wallet/wallet.models';
-import {
-  BaseText,
-  H5,
-  H7,
-  HeaderTitle,
-  Link,
-} from '../../../components/styled/Text';
+import {BaseText, H5, H7, HeaderTitle} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {WalletStackParamList} from '../WalletStack';
 import {
@@ -44,8 +38,7 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {sleep} from '../../../utils/helper-methods';
 import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
-import AmountModal from '../components/AmountModal';
-import {Caution} from '../../../styles/colors';
+import _ from 'lodash';
 
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
@@ -65,9 +58,6 @@ const ItemRowContainer = styled.View`
 const RecipientContainer = styled.View`
   flex-direction: row;
 `;
-const SpecifyAmountContainer = styled.TouchableOpacity`
-  align-items: flex-end;
-`;
 
 const SelectInputsContainer = styled.SafeAreaView`
   flex: 1;
@@ -84,13 +74,6 @@ const InputSelectionRowContainer = styled.View`
 
 const CtaContainer = styled(_CtaContainer)`
   padding: 10px 16px;
-`;
-
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 0 0 0;
 `;
 
 export const InputTouchableContainer = styled.TouchableOpacity`
@@ -120,9 +103,6 @@ const SelectInputs = () => {
   const [totalAmount, setTotalAmount] = useState(
     Number(0).toFixed(precision?.unitDecimals),
   );
-  const [amountModalVisible, setAmountModalVisible] = useState(false);
-  const [specifiedAmount, setSpecifiedAmount] = useState<number | undefined>();
-  const [canContinue, setCanContinue] = useState<boolean>(false);
 
   const logger = useLogger();
   let recipientData: TxDetailsSendingTo;
@@ -147,7 +127,7 @@ const SelectInputs = () => {
       if (!useUnconfirmedFunds) {
         utxos = utxos.filter(u => u.confirmations !== 0);
       }
-      setInputs(utxos);
+      setInputs(_.sortBy(utxos, 'amount'));
     } catch (err) {
       logger.error(`An error occurred while getting utxos: ${err}`);
     }
@@ -230,6 +210,7 @@ const SelectInputs = () => {
           txDetails,
           amount,
           inputs,
+          selectInputs: true,
         },
       });
     } catch (err: any) {
@@ -256,13 +237,6 @@ const SelectInputs = () => {
     }
   };
 
-  useEffect(() => {
-    setCanContinue(
-      inputs.filter(i => i.checked).length > 0 &&
-        (specifiedAmount ? Number(totalAmount) > specifiedAmount : true),
-    );
-  }, [totalAmount, specifiedAmount, inputs]);
-
   return (
     <SelectInputsContainer>
       <SelectInputsDetailsContainer>
@@ -279,19 +253,6 @@ const SelectInputs = () => {
                 {recipientData.recipientName || recipientData.recipientAddress}
               </H7>
             </RecipientContainer>
-            <SpecifyAmountContainer
-              onPress={() => {
-                haptic('impactLight');
-                setAmountModalVisible(true);
-              }}>
-              {specifiedAmount ? (
-                <Link>
-                  {specifiedAmount + ' ' + currencyAbbreviation.toUpperCase()}
-                </Link>
-              ) : (
-                <Link>{t('Specify Amount')}</Link>
-              )}
-            </SpecifyAmountContainer>
           </ItemRowContainer>
           <Hr />
         </SectionContainer>
@@ -307,15 +268,6 @@ const SelectInputs = () => {
             <BaseText>
               {Number(totalAmount)} {precision?.unitCode.toUpperCase()}
             </BaseText>
-
-            {specifiedAmount && Number(totalAmount) < specifiedAmount ? (
-              <ErrorText>
-                {t('The sum of the selected amounts must be at least:', {
-                  specifiedAmount,
-                  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-                })}
-              </ErrorText>
-            ) : null}
           </ItemRowContainer>
           <Hr />
         </SectionContainer>
@@ -343,22 +295,10 @@ const SelectInputs = () => {
         <Button
           buttonStyle={'primary'}
           onPress={goToConfirmView}
-          disabled={!canContinue}>
+          disabled={!inputs.filter(i => i.checked).length}>
           {t('Continue')}
         </Button>
       </CtaContainer>
-
-      <AmountModal
-        isVisible={amountModalVisible}
-        opts={{
-          hideSendMax: true,
-          currencyAbbreviation,
-        }}
-        onDismiss={(amount?: number) => {
-          setSpecifiedAmount(amount);
-          setAmountModalVisible(false);
-        }}
-      />
     </SelectInputsContainer>
   );
 };

@@ -80,6 +80,7 @@ export interface ConfirmParamList {
   speedup?: boolean;
   sendMax?: boolean;
   inputs?: Utxo[];
+  selectInputs?: boolean;
 }
 
 export const Setting = styled.TouchableOpacity`
@@ -116,6 +117,7 @@ const Confirm = () => {
     speedup,
     sendMax,
     inputs,
+    selectInputs,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -341,7 +343,7 @@ const Confirm = () => {
           />
           <Fee
             onPress={
-              isTxLevelAvailable()
+              isTxLevelAvailable() && !selectInputs
                 ? () => setShowTransactionLevel(true)
                 : undefined
             }
