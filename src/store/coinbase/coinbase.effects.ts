@@ -91,7 +91,7 @@ export const coinbaseParseErrorToString = (
 export const coinbaseInitialize =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
-    dispatch(LogActions.debug('Initializing Coinbase...'));
+    dispatch(LogActions.info('Initializing Coinbase...'));
     if (!COINBASE.token[COINBASE_ENV]) {
       dispatch(LogActions.warn('No token found for Coinbase: ' + COINBASE_ENV));
       return;
