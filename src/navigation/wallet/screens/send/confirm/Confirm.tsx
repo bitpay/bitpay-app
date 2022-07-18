@@ -17,7 +17,7 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
-import {sleep} from '../../../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {
   logSegmentEvent,
   openUrlWithInAppBrowser,
@@ -66,6 +66,8 @@ import {Alert, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
+import {toFiat} from '../../../../../store/wallet/utils/wallet';
+import {GetPrecision} from '../../../../../store/wallet/utils/currency';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -125,6 +127,8 @@ const Confirm = () => {
     ({WALLET}) => WALLET.enableReplaceByFee,
   );
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
+  const rates = useAppSelector(({WALLET}) => WALLET.rates);
+  const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
@@ -153,6 +157,7 @@ const Confirm = () => {
   const [destinationTag, setDestinationTag] = useState(_destinationTag);
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
+  const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation)) || {};
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -304,11 +309,16 @@ const Confirm = () => {
 
   if (recipientList) {
     recipientListData = recipientList.map(r => {
+      const amountSat = Number(r.amount! * unitToSatoshi!);
       return {
         recipientName: r.name,
         recipientAddress: r.address,
         img: r.type === 'contact' ? r.type : wallet.img,
         recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
+        recipientAltAmountStr: formatFiatAmount(
+          dispatch(toFiat(amountSat, isoCode, currencyAbbreviation, rates)),
+          isoCode,
+        ),
         recipientType: r.type,
         recipientCoin: currencyAbbreviation,
       };

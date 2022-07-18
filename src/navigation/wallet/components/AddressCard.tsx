@@ -67,6 +67,9 @@ const AddressCard: React.FC<AddressCardComponentProps> = ({recipient}) => {
         </Row>
         <Column style={{alignItems: 'flex-end'}}>
           <RecipientAmount>{recipient.recipientAmountStr}</RecipientAmount>
+          {recipient.recipientAltAmountStr ? (
+            <H7>{recipient.recipientAltAmountStr}</H7>
+          ) : null}
         </Column>
       </Row>
     </ListCard>

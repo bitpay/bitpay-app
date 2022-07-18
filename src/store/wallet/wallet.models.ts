@@ -381,6 +381,8 @@ export interface TxDetailsSendingTo {
   img: string | ((props?: any) => ReactElement);
   recipientFullAddress?: string;
   recipientAmountStr?: string;
+  currencyAbbreviation?: string;
+  recipientAltAmountStr?: string;
   recipientCoin?: string;
 }
 
