@@ -351,7 +351,10 @@ const Confirm = () => {
             feeOptions={feeOptions}
             hr
           />
-          {enableReplaceByFee && currencyAbbreviation === 'btc' ? (
+          {enableReplaceByFee &&
+          currencyAbbreviation === 'btc' &&
+          !recipientList &&
+          !selectInputs ? (
             <>
               <Setting activeOpacity={1}>
                 <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
