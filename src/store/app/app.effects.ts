@@ -72,6 +72,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.clear());
     dispatch(LogActions.info(`Initializing app (${__DEV__ ? 'D' : 'P'})...`));
 
+    const {APP, BITPAY_ID} = getState();
+    const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
+
+    dispatch(LogActions.debug(`Network: ${network}`));
+    dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
+
     await dispatch(startWalletStoreInit());
 
     const {appFirstOpenData, onboardingCompleted, migrationComplete} =
@@ -92,13 +98,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(setMigrationComplete());
       dispatch(LogActions.info('success [setMigrationComplete]'));
     }
-
-    const {BITPAY_ID} = getState();
-    const {network, pinLockActive, biometricLockActive, colorScheme} =
-      getState().APP;
-
-    dispatch(LogActions.debug(`Network: ${network}`));
-    dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
     const token = BITPAY_ID.apiToken[network];
     const isPaired = !!token;
