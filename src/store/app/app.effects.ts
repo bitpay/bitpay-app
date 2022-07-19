@@ -612,19 +612,27 @@ export const Analytics = {
 
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  () => {
+  dispatch => {
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
       packageName: 'BitPay',
       walletId: walletClient.credentials.walletId,
     };
-    walletClient.pushNotificationsSubscribe(opts);
+    walletClient.pushNotificationsSubscribe(opts, (err: any) => {
+      if (err) {
+        dispatch(
+          LogActions.error(
+            'Push Notifications error subscribing: ' + JSON.stringify(err),
+          ),
+        );
+      }
+    });
   };
 
 export const unSubscribePushNotifications =
-  (walletClient: any, eid: string): Effect<Promise<void>> =>
-  async dispatch => {
+  (walletClient: any, eid: string): Effect =>
+  dispatch => {
     walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
       if (err) {
         dispatch(
