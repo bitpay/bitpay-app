@@ -13,7 +13,11 @@ import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
-import {checkNotifications, RESULTS} from 'react-native-permissions';
+import {
+  checkNotifications,
+  requestNotifications,
+  RESULTS,
+} from 'react-native-permissions';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import uuid from 'react-native-uuid';
 import {batch} from 'react-redux';
@@ -609,19 +613,27 @@ export const Analytics = {
 
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  () => {
+  dispatch => {
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
       packageName: 'BitPay',
       walletId: walletClient.credentials.walletId,
     };
-    walletClient.pushNotificationsSubscribe(opts);
+    walletClient.pushNotificationsSubscribe(opts, (err: any) => {
+      if (err) {
+        dispatch(
+          LogActions.error(
+            'Push Notifications error subscribing: ' + JSON.stringify(err),
+          ),
+        );
+      }
+    });
   };
 
 export const unSubscribePushNotifications =
-  (walletClient: any, eid: string): Effect<Promise<void>> =>
-  async dispatch => {
+  (walletClient: any, eid: string): Effect =>
+  dispatch => {
     walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
       if (err) {
         dispatch(
@@ -706,6 +718,18 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
   getAllWalletClients(keys).then(walletClients => {
     walletClients.forEach(walletClient => {
       dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
+    });
+  });
+};
+
+export const requestNotificationsPermissions = (): Promise<boolean> => {
+  return new Promise(async resolve => {
+    requestNotifications(['alert', 'badge', 'sound']).then(({status}) => {
+      if (status === RESULTS.GRANTED) {
+        return resolve(true);
+      } else {
+        return resolve(false);
+      }
     });
   });
 };

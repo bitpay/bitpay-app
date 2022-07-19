@@ -1,7 +1,7 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {selectSettingsNotificationState} from '../../../../../store/app/app.selectors';
-import {Alert, View, Linking} from 'react-native';
+import {View} from 'react-native';
 import {AppEffects} from '../../../../../store/app';
 import {
   Hr,
@@ -12,8 +12,6 @@ import {
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {useNavigation} from '@react-navigation/native';
-import {sleep} from '../../../../../utils/helper-methods';
 import styled from 'styled-components/native';
 
 const SettingRow = styled(View)`
@@ -26,7 +24,6 @@ const SettingRow = styled(View)`
 const PushNotifications = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
 
   const notificationsState = useAppSelector(selectSettingsNotificationState);
 
@@ -39,43 +36,6 @@ const PushNotifications = () => {
   const [pushNotifications, setPushNotifications] = useState(
     notificationsState.pushNotifications,
   );
-
-  const openSettings = useCallback(() => {
-    Alert.alert(
-      t('Notifications Disabled'),
-      t(
-        'If you want to get important updates on your account, new features, promos and more, go to Settings and tap Allow Notifications.',
-      ),
-      [
-        {
-          text: t('Cancel'),
-          onPress: () => {
-            navigation.goBack();
-          },
-          style: 'cancel',
-        },
-        {
-          text: t('Change Settings'),
-          onPress: async () => {
-            Linking.openSettings();
-            await sleep(300);
-            navigation.goBack();
-          },
-        },
-      ],
-    );
-  }, [t]);
-
-  const checkSystemEnabled = async () => {
-    const systemEnabled = await AppEffects.checkNotificationsPermissions();
-    if (!systemEnabled) {
-      openSettings();
-    }
-  };
-
-  useEffect(() => {
-    checkSystemEnabled();
-  }, []);
 
   const notificationsList = [
     {
