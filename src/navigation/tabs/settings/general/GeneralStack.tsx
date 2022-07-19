@@ -57,15 +57,14 @@ const GeneralSettingsStack = () => {
           headerTitle: () => <HeaderTitle>{t('Display Currency')}</HeaderTitle>,
         }}
       />
-      {__DEV__ ? (
-        <GeneralSettings.Screen
-          name={GeneralSettingsScreens.LANGUAGE_SETTINGS}
-          component={LanguageSettings}
-          options={{
-            headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
-          }}
-        />
-      ) : null}
+
+      <GeneralSettings.Screen
+        name={GeneralSettingsScreens.LANGUAGE_SETTINGS}
+        component={LanguageSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
+        }}
+      />
     </GeneralSettings.Navigator>
   );
 };

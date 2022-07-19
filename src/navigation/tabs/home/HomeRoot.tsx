@@ -1,10 +1,11 @@
 import {
   useFocusEffect,
   useNavigation,
+  useScrollToTop,
   useTheme,
 } from '@react-navigation/native';
 import {each, throttle} from 'lodash';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
@@ -81,6 +82,7 @@ const HomeRoot = () => {
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
+  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
 
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
@@ -89,7 +91,7 @@ const HomeRoot = () => {
     }
 
     return brazeShopWithCrypto;
-  }, [brazeShopWithCrypto]);
+  }, [brazeShopWithCrypto, defaultLanguage]);
 
   // Do More
   const memoizedDoMoreCards = useMemo(() => {
@@ -100,7 +102,7 @@ const HomeRoot = () => {
     }
 
     return brazeDoMore;
-  }, [brazeDoMore, hasCards, themeType]);
+  }, [brazeDoMore, hasCards, themeType, defaultLanguage]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
@@ -137,7 +139,7 @@ const HomeRoot = () => {
     }
 
     return brazeQuickLinks;
-  }, [brazeQuickLinks]);
+  }, [brazeQuickLinks, defaultLanguage]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
@@ -199,10 +201,14 @@ const HomeRoot = () => {
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
+
   return (
     <HomeContainer>
       {appIsLoading ? null : (
         <ScrollView
+          ref={scrollViewRef}
           refreshControl={
             <RefreshControl
               tintColor={theme.dark ? White : SlateDark}
