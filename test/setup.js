@@ -1,4 +1,4 @@
-import mockRNDeviceInfo from '../node_modules/react-native-device-info/jest/react-native-device-info-mock';
+import mockRNDeviceInfo from 'react-native-device-info/jest/react-native-device-info-mock';
 jest.mock('react-native-device-info', () => mockRNDeviceInfo);
 
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
@@ -16,7 +16,7 @@ jest.mock('react-native/Libraries/Utilities/Platform', () => ({
 }));
 
 jest.mock('react-native-reanimated', () =>
-    require('react-native-reanimated/mock'),
+  require('react-native-reanimated/mock'),
 );
 global.__reanimatedWorkletInit = jest.fn();
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
@@ -28,7 +28,7 @@ jest.mock('@segment/analytics-react-native', () => ({
 }));
 
 jest.mock('react-native-permissions', () =>
-    require('react-native-permissions/mock'),
+  require('react-native-permissions/mock'),
 );
 
 jest.mock('react-native-fs', () => {

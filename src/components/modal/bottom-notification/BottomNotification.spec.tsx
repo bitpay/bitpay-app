@@ -1,8 +1,8 @@
 import React from 'react';
-import {cleanup, fireEvent, render} from './render';
+import {cleanup, fireEvent, render} from '@test/render';
 import {Provider} from 'react-redux';
-import BottomNotification from '../src/components/modal/bottom-notification/BottomNotification';
-import {configureTestStore} from '../src/store';
+import BottomNotification from './BottomNotification';
+import configureTestStore from '@test/store';
 
 const mockFn = jest.fn();
 
@@ -30,17 +30,17 @@ describe('Bottom Notification Modal', () => {
   afterEach(cleanup);
   it('should render correctly', async () => {
     render(
-        <Provider store={store}>
-          <BottomNotification />
-        </Provider>,
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
     );
   });
 
   it('should display all the details', async () => {
     const {findByText, getByText} = render(
-        <Provider store={store}>
-          <BottomNotification />
-        </Provider>,
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
     );
 
     const title = await findByText('Modal Title');
@@ -54,9 +54,9 @@ describe('Bottom Notification Modal', () => {
 
   it('should enable backdrop', async () => {
     const {getByTestId} = render(
-        <Provider store={store}>
-          <BottomNotification />
-        </Provider>,
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
     );
 
     const backdrop = await getByTestId('modalBackdrop');
@@ -66,9 +66,9 @@ describe('Bottom Notification Modal', () => {
 
   it('should close modal on cta press', async () => {
     const {getAllByText} = render(
-        <Provider store={store}>
-          <BottomNotification />
-        </Provider>,
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
     );
     const buttons = getAllByText('CLOSE');
     expect(buttons.length).toBe(1);
