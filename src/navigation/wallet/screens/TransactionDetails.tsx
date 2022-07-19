@@ -28,7 +28,6 @@ import {
   ActiveOpacity,
   Column,
   Hr,
-  ImportTextInput,
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
@@ -68,6 +67,7 @@ import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
 import {TransactionOptionsContext} from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
+import {Memo} from './send/confirm/Memo';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -90,11 +90,6 @@ export const DetailContainer = styled.View`
 `;
 
 const VerticalSpace = styled.View`
-  margin: 10px 0;
-`;
-
-const MemoHeader = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin: 10px 0;
 `;
 
@@ -153,10 +148,6 @@ const DetailLink = styled(Link)`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-`;
-
-const InputText = styled(ImportTextInput)`
-  height: 75px;
 `;
 
 const CopyImgContainer = styled.View`
@@ -366,17 +357,16 @@ const TransactionDetails = () => {
     dispatch(openUrlWithInAppBrowser(url));
   };
 
-  const saveMemo = async () => {
-    if (memo) {
-      try {
-        await EditTxNote(wallet, {txid: txs.txid, body: memo});
-        transaction.note = {
-          body: memo,
-        };
-        transaction.uiDescription = memo;
-      } catch (e) {
-        console.log('Edit note err: ', e);
-      }
+  const saveMemo = async (newMemo: string) => {
+    try {
+      await EditTxNote(wallet, {txid: txs.txid, body: newMemo});
+      transaction.note = {
+        body: newMemo,
+      };
+      transaction.uiDescription = newMemo;
+      setMemo(newMemo);
+    } catch (e) {
+      console.log('Edit note err: ', e);
     }
   };
 
@@ -385,7 +375,9 @@ const TransactionDetails = () => {
       {isLoading ? (
         <TransactionDetailSkeleton />
       ) : txs ? (
-        <ScrollView>
+        <ScrollView
+          keyboardShouldPersistTaps={'handled'}
+          extraScrollHeight={80}>
           <>
             {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
               <H2 medium={true}>{txs.amountStr}</H2>
@@ -560,18 +552,8 @@ const TransactionDetails = () => {
           <Hr />
 
           <VerticalSpace>
-            <MemoHeader>{t('MEMO')}</MemoHeader>
-
-            <InputText
-              multiline
-              numberOfLines={3}
-              value={memo}
-              onChangeText={text => setMemo(text)}
-              onEndEditing={saveMemo}
-            />
+            <Memo memo={memo || ''} onChange={text => saveMemo(text)} />
           </VerticalSpace>
-
-          <Hr />
 
           <DetailContainer>
             <DetailRow>
