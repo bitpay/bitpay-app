@@ -1,9 +1,9 @@
 import React from 'react';
 import {
   ImportTextInput,
-  ImportContainer,
   CtaContainer as _CtaContainer,
   HeaderContainer,
+  ScreenGutter,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
@@ -37,12 +37,17 @@ import {sleep} from '../../../utils/helper-methods';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {ScrollView} from 'react-native';
 
 const BWCProvider = BwcProvider.getInstance();
 
-const ScrollViewContainer = styled.ScrollView`
+const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
-  padding: 0 15px;
+`;
+
+const ContentView = styled(ScrollView)`
+  padding: 0 ${ScreenGutter};
 `;
 
 const ErrorText = styled(BaseText)`
@@ -165,8 +170,10 @@ const FileOrText = () => {
   });
 
   return (
-    <ScrollViewContainer>
-      <ImportContainer>
+    <ScrollViewContainer
+      extraScrollHeight={90}
+      keyboardShouldPersistTaps={'handled'}>
+      <ContentView keyboardShouldPersistTaps={'handled'}>
         <FormRow>
           <HeaderContainer>
             <ImportTitle>{t('Backup plain text code')}</ImportTitle>
@@ -213,7 +220,7 @@ const FileOrText = () => {
         <Button buttonStyle={'primary'} onPress={onSubmit}>
           {t('Import Wallet')}
         </Button>
-      </ImportContainer>
+      </ContentView>
     </ScrollViewContainer>
   );
 };

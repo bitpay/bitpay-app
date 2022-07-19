@@ -2033,6 +2033,11 @@
   resolved "https://registry.yarnpkg.com/@react-native-community/eslint-plugin/-/eslint-plugin-1.1.0.tgz#e42b1bef12d2415411519fd528e64b593b1363dc"
   integrity sha512-W/J0fNYVO01tioHjvYWQ9m6RgndVtbElzYozBq1ZPrHO/iCzlqoySHl4gO/fpCl9QEFjvJfjPgtPMTMlsoq5DQ==
 
+"@react-native-community/slider@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@react-native-community/slider/-/slider-4.2.4.tgz#8d88adceeb32f7997a122feba48d7186fca80346"
+  integrity sha512-uY51UoipQW4ELnFWMU6rTHRc4EUYaW+Z1O9Teijej6NYVYdUcUKq+t7WeBGjMAEc1ipyooMeBqRXToWO5zAU2Q==
+
 "@react-native-masked-view/masked-view@0.2.6":
   version "0.2.6"
   resolved "https://registry.yarnpkg.com/@react-native-masked-view/masked-view/-/masked-view-0.2.6.tgz#b26c52d5db3ad0926b13deea79c69620966a9221"
@@ -4054,10 +4059,10 @@ bitcore-mnemonic@^8.25.31:
     bitcore-lib "^8.25.31"
     unorm "^1.4.1"
 
-bitcore-wallet-client@8.25.31:
-  version "8.25.31"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-8.25.31.tgz#6efec1f6bbe610f78ee59b9e04d5bb66db48e86e"
-  integrity sha512-Cwn6b5JqL1OzJvVECyBLRlSp/0iOsk+RcVxRrZQgYw295a6o9E4OKkWeU/X1uAt71icGyoKr11A8IB6KNziPUQ==
+bitcore-wallet-client@8.25.33:
+  version "8.25.33"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-8.25.33.tgz#0834d050504902fd04731e0de55cf22fffcdb492"
+  integrity sha512-ffXqi+ix+or6dGGGR2I2z1uENdrzZvU68jkPW2qPN33+dLzdvdeveyxPyR8To0IaZRPLInlmtiyrdd6GgXHWKQ==
   dependencies:
     ajv "^6.10.0"
     async "^0.9.0"

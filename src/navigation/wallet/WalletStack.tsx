@@ -23,7 +23,6 @@ import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
   Key,
-  TransactionProposal,
   Wallet as WalletModel,
   _Credentials,
 } from '../../store/wallet/wallet.models';
@@ -66,8 +65,12 @@ import PriceCharts, {PriceChartsParamList} from './screens/PriceCharts';
 import ClearEncryptPassword, {
   ClearEncryptPasswordParamList,
 } from './screens/ClearEncryptPassword';
-import PayProConfirmTwoFactor from './screens/send/confirm/PayProConfirmTwoFactor';
+import PayProConfirmTwoFactor, {
+  PayProConfirmTwoFactorParamList,
+} from './screens/send/confirm/PayProConfirmTwoFactor';
 import {useTranslation} from 'react-i18next';
+import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
+import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -103,7 +106,7 @@ export type WalletStackParamList = {
   Confirm: ConfirmParamList;
   DebitCardConfirm: DebitCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
-  PayProConfirmTwoFactor: {onSubmit: (code: string) => Promise<void>};
+  PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};
@@ -127,6 +130,8 @@ export type WalletStackParamList = {
   AllAddresses: AllAddressesParamList;
   PriceCharts: PriceChartsParamList;
   ClearEncryptPassword: ClearEncryptPasswordParamList;
+  SendToOptions: SendToOptionsParamList;
+  SelectInputs: SelectInputsParamList;
 };
 
 export enum WalletScreens {
@@ -171,6 +176,8 @@ export enum WalletScreens {
   ALL_ADDRESSES = 'AllAddresses',
   PRICE_CHARTS = 'PriceCharts',
   CLEAR_ENCRYPT_PASSWORD = 'ClearEncryptPassword',
+  SEND_TO_OPTIONS = 'SendToOptions',
+  SELECT_INPUTS = 'SelectInputs',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -400,6 +407,14 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CLEAR_ENCRYPT_PASSWORD}
           component={ClearEncryptPassword}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SEND_TO_OPTIONS}
+          component={SendToOptions}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SELECT_INPUTS}
+          component={SelectInputs}
         />
       </Wallet.Navigator>
     </>

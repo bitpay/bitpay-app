@@ -14,6 +14,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
+import ChangellyCheckoutSkeleton from './ChangellyCheckoutSkeleton';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Slate, Caution} from '../../../../styles/colors';
@@ -125,6 +126,7 @@ const ChangellyCheckout: React.FC = () => {
   const theme = useTheme();
   const BWC = BwcProvider.getInstance();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [amountExpectedFrom, setAmountExpectedFrom] =
@@ -298,6 +300,7 @@ const ChangellyCheckout: React.FC = () => {
             };
             setTxData(_txData);
 
+            setIsLoading(false);
             dispatch(dismissOnGoingProcessModal());
             await sleep(400);
 
@@ -588,6 +591,7 @@ const ChangellyCheckout: React.FC = () => {
   };
 
   const showError = async (msg?: string, reason?: any) => {
+    setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
     dispatch(
@@ -685,101 +689,112 @@ const ChangellyCheckout: React.FC = () => {
           </SelectedOptionContainer>
         </RowDataContainer>
         <ItemDivisor />
-        <RowDataContainer>
-          <RowLabel>{t('Paying')}</RowLabel>
-          {amountFrom ? (
-            <RowData>
-              {Number(amountFrom.toFixed(6))}{' '}
-              {fromWalletSelected.currencyAbbreviation.toUpperCase()}
-            </RowData>
-          ) : null}
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer>
-          <RowLabel>{t('Miner Fee')}</RowLabel>
-          {fee && (
-            <RowData>
-              {dispatch(
-                FormatAmountStr(
-                  dispatch(
-                    GetChain(fromWalletSelected.currencyAbbreviation),
-                  ).toLowerCase(),
-                  fee,
-                ),
-              )}
-            </RowData>
-          )}
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer>
-          <RowLabel>{t('Exchange Fee')}</RowLabel>
-          {!!totalExchangeFee && (
-            <RowData>
-              {' '}
-              {Number(totalExchangeFee).toFixed(6)}{' '}
-              {toWalletSelected.currencyAbbreviation.toUpperCase()}
-            </RowData>
-          )}
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer>
-          <RowLabel>{t('Expires')}</RowLabel>
-          {!!remainingTimeStr && (
-            <RowData
-              style={{
-                color: paymentExpired ? Caution : theme.dark ? White : Black,
-              }}>
-              {remainingTimeStr}
-            </RowData>
-          )}
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer style={{marginTop: 25, marginBottom: 5}}>
-          <H7>{t('TOTAL TO RECEIVE')}</H7>
-          {!!amountTo && (
-            <H5>
-              {amountTo} {toWalletSelected.currencyAbbreviation.toUpperCase()}
-            </H5>
-          )}
-        </RowDataContainer>
-        {!!fiatAmountTo && (
+        {isLoading ? (
+          <ChangellyCheckoutSkeleton />
+        ) : (
           <>
-            <FiatAmountContainer>
-              <FiatAmount>
-                ~{fiatAmountTo} {alternativeIsoCode}
-              </FiatAmount>
-            </FiatAmountContainer>
+            <RowDataContainer>
+              <RowLabel>{t('Paying')}</RowLabel>
+              {amountFrom ? (
+                <RowData>
+                  {Number(amountFrom.toFixed(6))}{' '}
+                  {fromWalletSelected.currencyAbbreviation.toUpperCase()}
+                </RowData>
+              ) : null}
+            </RowDataContainer>
+            <ItemDivisor />
+            <RowDataContainer>
+              <RowLabel>{t('Miner Fee')}</RowLabel>
+              {fee && (
+                <RowData>
+                  {dispatch(
+                    FormatAmountStr(
+                      dispatch(
+                        GetChain(fromWalletSelected.currencyAbbreviation),
+                      ).toLowerCase(),
+                      fee,
+                    ),
+                  )}
+                </RowData>
+              )}
+            </RowDataContainer>
+            <ItemDivisor />
+            <RowDataContainer>
+              <RowLabel>{t('Exchange Fee')}</RowLabel>
+              {!!totalExchangeFee && (
+                <RowData>
+                  {' '}
+                  {Number(totalExchangeFee).toFixed(6)}{' '}
+                  {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                </RowData>
+              )}
+            </RowDataContainer>
+            <ItemDivisor />
+            <RowDataContainer>
+              <RowLabel>{t('Expires')}</RowLabel>
+              {!!remainingTimeStr && (
+                <RowData
+                  style={{
+                    color: paymentExpired
+                      ? Caution
+                      : theme.dark
+                      ? White
+                      : Black,
+                  }}>
+                  {remainingTimeStr}
+                </RowData>
+              )}
+            </RowDataContainer>
+            <ItemDivisor />
+            <RowDataContainer style={{marginTop: 25, marginBottom: 5}}>
+              <H7>{t('TOTAL TO RECEIVE')}</H7>
+              {!!amountTo && (
+                <H5>
+                  {amountTo}{' '}
+                  {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                </H5>
+              )}
+            </RowDataContainer>
+            {!!fiatAmountTo && (
+              <>
+                <FiatAmountContainer>
+                  <FiatAmount>
+                    ~{fiatAmountTo} {alternativeIsoCode}
+                  </FiatAmount>
+                </FiatAmountContainer>
+              </>
+            )}
+            <CheckBoxContainer>
+              <Checkbox
+                radio={false}
+                onPress={() => {
+                  setTermsAccepted(!termsAccepted);
+                }}
+                checked={termsAccepted}
+              />
+              <CheckboxText>
+                {t(
+                  'Exchange services provided by Changelly. By clicking “Accept”, I acknowledge and understand that my transaction may trigger AML/KYC verification according to Changelly AML/KYC',
+                )}
+              </CheckboxText>
+            </CheckBoxContainer>
+            <PoliciesContainer
+              onPress={() => {
+                setChangellyPoliciesModalVisible(true);
+              }}>
+              <PoliciesText>{t('Review Changelly policies')}</PoliciesText>
+              <ArrowContainer>
+                <SelectorArrowRight
+                  {...{
+                    width: 13,
+                    height: 13,
+                    color: theme.dark ? White : Slate,
+                  }}
+                />
+              </ArrowContainer>
+            </PoliciesContainer>
           </>
         )}
-        <CheckBoxContainer>
-          <Checkbox
-            radio={false}
-            onPress={() => {
-              setTermsAccepted(!termsAccepted);
-            }}
-            checked={termsAccepted}
-          />
-          <CheckboxText>
-            {t(
-              'Exchange services provided by Changelly. By clicking “Accept”, I acknowledge and understand that my transaction may trigger AML/KYC verification according to Changelly AML/KYC',
-            )}
-          </CheckboxText>
-        </CheckBoxContainer>
-        <PoliciesContainer
-          onPress={() => {
-            setChangellyPoliciesModalVisible(true);
-          }}>
-          <PoliciesText>{t('Review Changelly policies')}</PoliciesText>
-          <ArrowContainer>
-            <SelectorArrowRight
-              {...{
-                width: 13,
-                height: 13,
-                color: theme.dark ? White : Slate,
-              }}
-            />
-          </ArrowContainer>
-        </PoliciesContainer>
       </ScrollView>
 
       {termsAccepted && !paymentExpired && !!exchangeTxId && (

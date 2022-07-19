@@ -1,8 +1,6 @@
-import {Currencies} from '../../../../constants/currencies';
-import {APP_NAME} from '../../../../constants/config';
-// @ts-ignore
-import {version} from '../../../../../package.json'; // TODO: better way to get version
 import UserAgent from 'react-native-user-agent';
+import {APP_NAME, APP_VERSION} from '../../../../constants/config';
+import {Currencies} from '../../../../constants/currencies';
 
 const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/simplex/';
 const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/simplex/';
@@ -102,11 +100,11 @@ const getUserAgent = (): string => {
 };
 
 const getAppVersion = (): string => {
-  return version;
+  return APP_VERSION;
 };
 
 const checkSimplexCoin = (coin: string): string => {
-  if (coin == 'PAX') {
+  if (coin === 'PAX') {
     return 'USDP';
   }
   return coin;
@@ -201,7 +199,7 @@ export const getPaymentUrl = (
 
   let str = '';
   for (let key in dataSrc) {
-    if (str != '') {
+    if (str !== '') {
       str += '&';
     }
     str += key + '=' + encodeURIComponent(dataSrc[key]);

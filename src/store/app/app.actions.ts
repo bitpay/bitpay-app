@@ -1,4 +1,4 @@
-import {ColorSchemeName} from 'react-native';
+import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -183,6 +183,13 @@ export const showBlur = (value: boolean): AppActionType => ({
 export const showPortfolioValue = (value: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_PORTFOLIO_VALUE,
   payload: value,
+});
+
+export const brazeInitialized = (
+  contentCardSubscription: EventSubscription | null,
+): AppActionType => ({
+  type: AppActionTypes.BRAZE_INITIALIZED,
+  payload: {contentCardSubscription},
 });
 
 export const brazeContentCardsFetched = (

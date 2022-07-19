@@ -12,6 +12,7 @@ import {
   ActiveOpacity,
   CtaContainer as _CtaContainer,
   HeaderContainer,
+  ScreenGutter,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
@@ -52,7 +53,6 @@ import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {
   ImportTextInput,
-  ImportContainer,
   AdvancedOptionsContainer,
   AdvancedOptionsButton,
   AdvancedOptionsButtonText,
@@ -79,7 +79,7 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {FlatList} from 'react-native';
+import {FlatList, ScrollView} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
 import CurrencySelectionRow, {
   CurrencySelectionToggleProps,
@@ -91,10 +91,14 @@ import {
   isSingleAddressCoin,
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
-const ScrollViewContainer = styled.ScrollView`
+const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
-  padding: 0 15px;
+`;
+
+const ContentView = styled(ScrollView)`
+  padding: 0 ${ScreenGutter};
 `;
 
 const PasswordParagraph = styled(BaseText)`
@@ -557,8 +561,10 @@ const RecoveryPhrase = () => {
   }, []);
 
   return (
-    <ScrollViewContainer>
-      <ImportContainer>
+    <ScrollViewContainer
+      extraScrollHeight={90}
+      keyboardShouldPersistTaps={'handled'}>
+      <ContentView keyboardShouldPersistTaps={'handled'}>
         <Paragraph>
           {t(
             'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
@@ -771,7 +777,7 @@ const RecoveryPhrase = () => {
         <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
           {t('Import Wallet')}
         </Button>
-      </ImportContainer>
+      </ContentView>
     </ScrollViewContainer>
   );
 };

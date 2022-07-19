@@ -522,6 +522,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
       () => {
         loadHistoryRef.current(true);
+        setNeedActionTxps(pendingTxps);
       },
     );
     return () => subscription.remove();
@@ -1048,23 +1049,25 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 ) : null}
               </HeaderContainer>
               {pendingTxps && pendingTxps[0] ? (
-                <TransactionSectionHeaderContainer>
-                  <H5>
-                    {fullWalletObj.credentials.m > 1
-                      ? t('Pending Proposals')
-                      : t('Unsent Transactions')}
-                  </H5>
-                  <ProposalBadgeContainer onPress={onPressTxpBadge}>
-                    <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-                  </ProposalBadgeContainer>
-                </TransactionSectionHeaderContainer>
+                <>
+                  <TransactionSectionHeaderContainer>
+                    <H5>
+                      {fullWalletObj.credentials.m > 1
+                        ? t('Pending Proposals')
+                        : t('Unsent Transactions')}
+                    </H5>
+                    <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                      <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                    </ProposalBadgeContainer>
+                  </TransactionSectionHeaderContainer>
+                  <FlatList
+                    contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
+                    data={needActionPendingTxps}
+                    keyExtractor={pendingTxpsKeyExtractor}
+                    renderItem={renderTxp}
+                  />
+                </>
               ) : null}
-              <FlatList
-                contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-                data={needActionPendingTxps}
-                keyExtractor={pendingTxpsKeyExtractor}
-                renderItem={renderTxp}
-              />
 
               {Number(cryptoLockedBalance) > 0 ? (
                 <LockedBalanceContainer>

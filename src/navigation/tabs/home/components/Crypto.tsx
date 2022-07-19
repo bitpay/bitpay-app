@@ -280,7 +280,7 @@ const Crypto = () => {
     homeCarouselLayoutType,
   ]);
 
-  if (!hasKeys) {
+  if (!hasKeys && !linkedCoinbase) {
     return (
       <CryptoContainer>
         <SectionHeaderContainer style={{marginBottom: 0}}>

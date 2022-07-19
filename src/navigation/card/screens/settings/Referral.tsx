@@ -184,7 +184,7 @@ const Referral = ({}) => {
 
   const getStatus = (status: string, expiration: number) => {
     return status === 'pending' && currentDate >= expiration
-      ? 'Expired'
+      ? t('Expired')
       : status.charAt(0).toUpperCase() + status.slice(1);
   };
 
@@ -223,7 +223,7 @@ const Referral = ({}) => {
             </CopyToClipboardContainer>
 
             <VerticalSpacing>
-              <Button onPress={onShareReferralCode}>Share</Button>
+              <Button onPress={onShareReferralCode}>{t('Share')}</Button>
             </VerticalSpacing>
           </CodeContainer>
         ) : code === 'failed' ? (
