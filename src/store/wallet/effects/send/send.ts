@@ -52,7 +52,7 @@ import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
-import TouchID from 'react-native-touch-id';
+import TouchID from 'react-native-touch-id-ng';
 import {
   authOptionalConfigObject,
   BiometricErrorNotification,
