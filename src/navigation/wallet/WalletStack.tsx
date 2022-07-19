@@ -110,7 +110,11 @@ export type WalletStackParamList = {
   Copayers: {wallet: WalletModel; status: _Credentials};
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
-  TransactionDetails: {wallet: WalletModel; transaction: any};
+  TransactionDetails: {
+    wallet: WalletModel;
+    transaction: any;
+    onMemoChange: () => void;
+  };
   TransactionProposalDetails: {wallet: WalletModel; transaction: any; key: Key};
   TransactionProposalNotifications: {walletId?: string; keyId?: string};
   GlobalSelect: GlobalSelectParamList;

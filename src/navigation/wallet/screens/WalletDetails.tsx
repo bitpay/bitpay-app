@@ -563,9 +563,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const goToTransactionDetails = (transaction: any) => {
+    const onMemoChange = () => loadHistory(true);
     navigation.navigate('Wallet', {
       screen: 'TransactionDetails',
-      params: {wallet: fullWalletObj, transaction},
+      params: {wallet: fullWalletObj, transaction, onMemoChange},
     });
   };
 

@@ -212,7 +212,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 
 const TransactionDetails = () => {
   const {
-    params: {transaction, wallet},
+    params: {transaction, wallet, onMemoChange},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {t} = useTranslation();
@@ -365,6 +365,7 @@ const TransactionDetails = () => {
       };
       transaction.uiDescription = newMemo;
       setMemo(newMemo);
+      onMemoChange();
     } catch (e) {
       console.log('Edit note err: ', e);
     }
