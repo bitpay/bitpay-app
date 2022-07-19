@@ -168,6 +168,8 @@ const getParameterByName = (name: string, url: string): string | undefined => {
 const goToPayPro =
   (data: string): Effect =>
   async dispatch => {
+    dispatch(dismissOnGoingProcessModal());
+
     dispatch(
       startOnGoingProcessModal(
         //  t('Fetching payment options...')
@@ -254,17 +256,15 @@ const handleUnlock =
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: t('Connect Your BitPay ID'),
+            title: t('Verification Required'),
             enableBackdropDismiss: false,
-            message: t(
-              'To complete this payment, please login with your BitPay ID.',
-            ),
+            message: t('To complete this payment please verify your account.'),
             actions: [
               {
-                text: t('CONTINUE'),
+                text: t('Verify'),
                 action: () => {
                   Linking.openURL(
-                    `https://${host}/id/verify?context=unlockAppV&id=${invoiceId}`,
+                    `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
                   );
                 },
               },
@@ -818,17 +818,12 @@ const handleSimplexUri =
     const order = BUY_CRYPTO.simplex[paymentId];
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Successfully Complete Crypto Purchase',
-        {
-          exchange: 'simplex',
-          fiatAmount: order?.fiat_total_amount || '',
-          fiatCurrency: order?.fiat_total_amount_currency || '',
-          coin: order?.coin || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Purchased Buy Crypto', {
+        exchange: 'simplex',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin || '',
+      }),
     );
 
     navigationRef.navigate('ExternalServicesSettings', {
@@ -896,17 +891,12 @@ const handleWyreUri =
     );
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Successfully Complete Crypto Purchase',
-        {
-          exchange: 'wyre',
-          fiatAmount: sourceAmount || '',
-          fiatCurrency: sourceCurrency || '',
-          coin: destCurrency || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Purchased Buy Crypto', {
+        exchange: 'wyre',
+        fiatAmount: sourceAmount || '',
+        fiatCurrency: sourceCurrency || '',
+        coin: destCurrency || '',
+      }),
     );
 
     navigationRef.navigate('ExternalServicesSettings', {

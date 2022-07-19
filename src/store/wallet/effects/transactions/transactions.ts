@@ -3,6 +3,7 @@ import {
   Rates,
   Wallet,
   TransactionProposal,
+  Utxo,
 } from '../../wallet.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -34,6 +35,7 @@ import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
+import {LogActions} from '../../../log';
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
@@ -95,6 +97,9 @@ export const ProcessPendingTxps =
       if (tx.createdOn > now) {
         tx.createdOn = now;
       }
+
+      tx.copayerId = wallet.credentials.copayerId;
+      tx.walletId = wallet.credentials.walletId;
 
       const action: any = tx.actions.find(
         (a: any) => a.copayerId === wallet.credentials.copayerId,
@@ -239,7 +244,9 @@ const ProcessNewTxs =
         ret.push(tx);
         txHistoryUnique[tx.txid] = true;
       } else {
-        console.log('Ignoring duplicate TX in history: ' + tx.txid);
+        dispatch(
+          LogActions.info(`Ignoring duplicate TX in history: ${tx.txid}`),
+        );
       }
     }
     return Promise.resolve(ret);
@@ -269,8 +276,10 @@ const GetNewTransactions =
           const _newTxs = await dispatch(ProcessNewTxs(wallet, _transactions));
           newTxs = newTxs.concat(_newTxs);
 
-          console.log(
-            `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
+          dispatch(
+            LogActions.info(
+              `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
+            ),
           );
 
           return resolve({
@@ -489,10 +498,14 @@ export const GetTransactionHistory =
         }
         return resolve({transactions: newHistory, loadMore});
       } catch (err) {
-        console.log(
-          '!! Could not update transaction history for ',
-          wallet.id,
-          err,
+        const errString =
+          err instanceof Error ? err.message : JSON.stringify(err);
+
+        dispatch(
+          LogActions.error(
+            `!! Could not update transaction history for 
+          ${wallet.id}: ${errString}`,
+          ),
         );
         return reject(err);
       }
@@ -962,7 +975,7 @@ const GetActionsList = (transaction: any, wallet: Wallet) => {
   return actionList.reverse();
 };
 
-export const GetUtxos = (wallet: Wallet): Promise<any> => {
+export const GetUtxos = (wallet: Wallet): Promise<Utxo[]> => {
   return new Promise((resolve, reject) => {
     wallet.getUtxos(
       {

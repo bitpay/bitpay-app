@@ -1,4 +1,8 @@
-import {LinkingOptions} from '@react-navigation/native';
+import {
+  getStateFromPath,
+  LinkingOptions,
+  useNavigation,
+} from '@react-navigation/native';
 import {useEffect} from 'react';
 import {Linking} from 'react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
@@ -13,11 +17,17 @@ import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoSt
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
 import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseStack';
 import {RootStackParamList, RootStacks} from '../../Root';
-import {useLogger} from '.';
+import {useAppSelector, useLogger} from '.';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {incomingData} from '../../store/scan/scan.effects';
 import {showBlur} from '../../store/app/app.actions';
+import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
+import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
+import {
+  selectAvailableGiftCards,
+  selectIntegrations,
+} from '../../store/shop/shop.selectors';
 
 const isUniversalLink = (url: string): boolean => {
   const domain = url.split('https://')[1].split('/')[0];
@@ -49,6 +59,75 @@ export const useUrlEventHandler = () => {
     }
   };
   return urlEventHandler;
+};
+
+export const useShopDeepLinkHandler = () => {
+  const navigation = useNavigation();
+  const availableGiftCards = useAppSelector(selectAvailableGiftCards);
+  const integrations = useAppSelector(selectIntegrations);
+
+  const shopDeepLinkHandler = (
+    url: string,
+  ): {merchantName: string} | undefined => {
+    const path = url.replace(APP_DEEPLINK_PREFIX, '');
+    const state = getStateFromPath(path);
+    if (!state?.routes.length) {
+      return undefined;
+    }
+    const route = state.routes[0];
+    const merchantName = (
+      ((route.params as any) || {}).merchant || ''
+    ).toLowerCase();
+
+    if (!['giftcard', 'shoponline'].includes(route.name)) {
+      return undefined;
+    }
+
+    if (route.name === 'giftcard') {
+      const cardConfig = availableGiftCards.find(
+        gc => gc.name.toLowerCase() === merchantName,
+      );
+
+      if (cardConfig) {
+        navigation.navigate('GiftCard', {
+          screen: 'BuyGiftCard',
+          params: {
+            cardConfig,
+          },
+        });
+      } else {
+        console.log('navigating to shop tab');
+        navigation.navigate('Shop', {
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.GIFT_CARDS,
+          },
+        });
+      }
+    } else if (route.name === 'shoponline') {
+      const directIntegration = integrations.find(
+        i => i.displayName.toLowerCase() === merchantName,
+      );
+
+      if (directIntegration) {
+        navigation.navigate('Merchant', {
+          screen: 'MerchantDetails',
+          params: {
+            directIntegration,
+          },
+        });
+      } else {
+        navigation.navigate('Shop', {
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.SHOP_ONLINE,
+          },
+        });
+      }
+    }
+    return {merchantName};
+  };
+  return shopDeepLinkHandler;
 };
 
 export const useDeeplinks = () => {
@@ -83,7 +162,6 @@ export const useDeeplinks = () => {
             [TabsScreens.CARD]: {
               path: 'wallet-card',
               screens: {
-                [CardScreens.HOME]: 'dashboard/:id',
                 [CardScreens.PAIRING]: 'pairing',
               },
             },

@@ -45,13 +45,19 @@ export const walletConnectInit = (): Effect => async (dispatch, getState) => {
     );
     dispatch(WalletConnectActions.successInitRequest(connectors || []));
     dispatch(walletConnectSubscribeToEvents());
-  } catch (err) {
+  } catch (err: unknown) {
+    let errorStr;
+    if (err instanceof Error) {
+      errorStr = err.message;
+    } else {
+      errorStr = JSON.stringify(err);
+    }
     dispatch(
       LogActions.error(
         '[WC/walletConnectInit]: an error occurred while initializing.',
       ),
     );
-    dispatch(LogActions.error(JSON.stringify(err)));
+    dispatch(LogActions.error(errorStr));
     dispatch(WalletConnectActions.failedInitRquest());
   }
 };

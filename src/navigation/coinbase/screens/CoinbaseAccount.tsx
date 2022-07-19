@@ -153,8 +153,8 @@ const CoinbaseAccount = ({
 
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
 
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const exchangeRates = useAppSelector(({COINBASE}) => COINBASE.exchangeRates);
-  const user = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
   const transactions = useAppSelector(
     ({COINBASE}) => COINBASE.transactions[COINBASE_ENV],
   );
@@ -279,7 +279,6 @@ const CoinbaseAccount = ({
           exchangeRates,
         );
         setFiatAmount(fa);
-        console.log(fa);
         setCryptoAmount(account.balance.amount.toString());
       } else {
         setFiatAmount(0);
@@ -326,14 +325,9 @@ const CoinbaseAccount = ({
       ),
     );
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Receive',
-        {
-          context: 'CoinbaseAccount',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Receive', {
+        context: 'CoinbaseAccount',
+      }),
     );
     dispatch(coinbaseCreateAddress(accountId))
       .then(async newAddress => {
@@ -368,14 +362,9 @@ const CoinbaseAccount = ({
   const onSelectedWallet = async (newWallet?: Wallet) => {
     setWalletModalVisible(false);
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Send',
-        {
-          context: 'CoinbaseAccount',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Send', {
+        context: 'CoinbaseAccount',
+      }),
     );
     if (newWallet) {
       setSelectedWallet(newWallet);
@@ -447,10 +436,7 @@ const CoinbaseAccount = ({
         <Row>
           <H5>
             {fiatAmount
-              ? formatFiatAmount(
-                  fiatAmount,
-                  user?.data?.native_currency?.toUpperCase(),
-                )
+              ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
               : '0'}
           </H5>
           {account?.primary && <Type>Primary</Type>}

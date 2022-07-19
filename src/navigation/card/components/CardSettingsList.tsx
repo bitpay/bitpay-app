@@ -179,7 +179,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             value={localLockState}
             onChange={onLockToggled}
             state={localLockStatus}>
-            Lock Card
+            {t('Lock Card')}
           </Styled.SettingsToggle>
 
           <Hr />
@@ -202,11 +202,9 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             Icon={OffersIcon}
             onPress={async () => {
               dispatch(
-                Analytics.track(
-                  'Clicked Card Offer',
-                  {context: 'Card Settings'},
-                  true,
-                ),
+                Analytics.track('Clicked Card Offer', {
+                  context: 'Card Settings',
+                }),
               );
               dispatch(CardEffects.startOpenDosh(user?.email || ''));
             }}>

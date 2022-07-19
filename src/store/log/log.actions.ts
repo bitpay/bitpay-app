@@ -7,24 +7,31 @@ export const clear = (): LogActionType => {
   };
 };
 
-export const debug = (message?: string): LogActionType =>
-  _log(message, LogLevel.Debug);
+export const debug = (
+  ...messages: (string | null | undefined)[]
+): LogActionType => _log(LogLevel.Debug, ...messages);
 
-export const info = (message?: string): LogActionType =>
-  _log(message, LogLevel.Info);
+export const info = (
+  ...messages: (string | null | undefined)[]
+): LogActionType => _log(LogLevel.Info, ...messages);
 
-export const warn = (message?: string): LogActionType =>
-  _log(message, LogLevel.Warn);
+export const warn = (
+  ...messages: (string | null | undefined)[]
+): LogActionType => _log(LogLevel.Warn, ...messages);
 
-export const error = (message?: string): LogActionType =>
-  _log(message, LogLevel.Error);
+export const error = (
+  ...messages: (string | null | undefined)[]
+): LogActionType => _log(LogLevel.Error, ...messages);
 
-function _log(message: string = '', level: LogLevel): LogActionType {
+function _log(
+  level: LogLevel,
+  ...messages: (string | null | undefined)[]
+): LogActionType {
   return {
     type: LogActionTypes.ADD_LOG,
     payload: {
       level,
-      message,
+      message: messages.join(' '),
       timestamp: new Date().toISOString(),
     } as LogEntry,
   };

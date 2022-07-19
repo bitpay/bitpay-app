@@ -24,6 +24,7 @@ import {
   coinbaseParseErrorToString,
   coinbaseGetUser,
   coinbaseDisconnectAccount,
+  isInvalidTokenError,
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -32,6 +33,8 @@ import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
+import {toggleHideCoinbaseTotalBalance} from '../../../store/coinbase/coinbase.actions';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -114,22 +117,39 @@ const CoinbaseSettings = () => {
   );
   const userError = useAppSelector(({COINBASE}) => COINBASE.getUserError);
 
+  const hideTotalBalance = useAppSelector(
+    ({COINBASE}) => COINBASE.hideTotalBalance,
+  );
+
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
       const errMsg = coinbaseParseErrorToString(error);
+      const isInvalidToken = isInvalidTokenError(error);
+      const textAction = isInvalidToken ? t('Re-Connect') : t('OK');
       dispatch(
         showBottomNotificationModal({
           type: 'error',
           title: t('Coinbase error'),
           message: errMsg,
-          enableBackdropDismiss: true,
+          enableBackdropDismiss: false,
           actions: [
             {
-              text: t('OK'),
+              text: textAction,
+              action: async () => {
+                if (isInvalidToken) {
+                  await dispatch(coinbaseDisconnectAccount());
+                  navigation.navigate('Tabs', {screen: 'Home'});
+                } else {
+                  navigation.goBack();
+                }
+              },
+              primary: true,
+            },
+            {
+              text: t('Back'),
               action: () => {
                 navigation.goBack();
               },
-              primary: true,
             },
           ],
         }),
@@ -150,7 +170,7 @@ const CoinbaseSettings = () => {
 
   const deleteAccount = async () => {
     await dispatch(coinbaseDisconnectAccount());
-    dispatch(logSegmentEvent('track', 'Coinbase Disconnected', {}, true));
+    dispatch(logSegmentEvent('track', 'Coinbase Disconnected', {}));
     if (fromScreen === 'CoinbaseDashboard') {
       navigation.navigate('Tabs', {screen: 'Home'});
     } else {
@@ -260,6 +280,17 @@ const CoinbaseSettings = () => {
           <Detail>
             <Item>{t('Time Zone')}</Item>
             <DetailInfo align="right">{userData?.data.time_zone}</DetailInfo>
+          </Detail>
+          <Hr />
+          <Detail>
+            <Item>{t('Hide Balance')}</Item>
+
+            <ToggleSwitch
+              onChange={() => {
+                dispatch(toggleHideCoinbaseTotalBalance(!hideTotalBalance));
+              }}
+              isEnabled={!!hideTotalBalance}
+            />
           </Detail>
           <Hr />
         </Details>

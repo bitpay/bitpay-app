@@ -70,7 +70,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
 
-const TxsDetailsContainer = styled.View`
+const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -506,15 +506,10 @@ const TransactionProposalDetails = () => {
               await dispatch(publishAndSign({txp: txs, key, wallet}));
               dispatch(dismissOnGoingProcessModal());
               dispatch(
-                logSegmentEvent(
-                  'track',
-                  'Sent Crypto',
-                  {
-                    context: 'Transaction Proposal Details',
-                    coin: currencyAbbreviation || '',
-                  },
-                  true,
-                ),
+                logSegmentEvent('track', 'Sent Crypto', {
+                  context: 'Transaction Proposal Details',
+                  coin: currencyAbbreviation || '',
+                }),
               );
               await sleep(400);
               setShowPaymentSentModal(true);

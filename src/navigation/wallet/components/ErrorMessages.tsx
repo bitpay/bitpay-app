@@ -33,7 +33,7 @@ export const DecryptError = (): BottomNotificationConfig => {
 export const GeneralError = (): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: t('Uh oh, Something went wrong'),
+    title: t('Uh oh, something went wrong'),
     message: t('Please try again later.'),
     enableBackdropDismiss: true,
     actions: [

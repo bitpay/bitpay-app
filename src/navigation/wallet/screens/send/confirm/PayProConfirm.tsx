@@ -425,15 +425,10 @@ const PayProConfirm = () => {
               try {
                 await sendPayment();
                 dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Sent Crypto',
-                    {
-                      context: 'PayPro Confirm',
-                      coin: wallet?.currencyAbbreviation || '',
-                    },
-                    true,
-                  ),
+                  logSegmentEvent('track', 'Sent Crypto', {
+                    context: 'PayPro Confirm',
+                    coin: wallet?.currencyAbbreviation || '',
+                  }),
                 );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());

@@ -112,10 +112,6 @@ const SendFeedback = () => {
     },
   ];
 
-  if (!__DEV__) {
-    feedbackList.shift();
-  }
-
   return (
     <SendFeedbackContainer>
       <SendFeedbackParagraph>

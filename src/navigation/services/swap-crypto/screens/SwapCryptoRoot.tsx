@@ -1,10 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  InteractionManager,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import cloneDeep from 'lodash.clonedeep';
@@ -593,17 +588,12 @@ const SwapCryptoRoot: React.FC = () => {
 
   const continueToCheckout = () => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Requested Swap Crypto',
-        {
-          fromCoin: fromWalletSelected!.currencyAbbreviation,
-          toCoin: toWalletSelected!.currencyAbbreviation,
-          amountFrom: amountFrom,
-          exchange: 'changelly',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Requested Swap Crypto', {
+        fromCoin: fromWalletSelected!.currencyAbbreviation,
+        toCoin: toWalletSelected!.currencyAbbreviation,
+        amountFrom: amountFrom,
+        exchange: 'changelly',
+      }),
     );
     navigation.navigate('SwapCrypto', {
       screen: 'ChangellyCheckout',
@@ -633,7 +623,9 @@ const SwapCryptoRoot: React.FC = () => {
           (coin: any) =>
             coin.enabled &&
             coin.fixRateEnabled &&
-            [...SupportedChains, 'ERC20'].includes(coin.protocol.toUpperCase()),
+            [...SupportedChains, 'ERC20'].includes(
+              coin.protocol?.toUpperCase(),
+            ),
         )
         .map(({name}: any) => name);
 
@@ -660,27 +652,29 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
+  const init = async () => {
+    try {
+      dispatch(
+        startOnGoingProcessModal(
+          // t("Just a second, we're setting a few things up")
+          t(OnGoingProcessMessages.GENERAL_AWAITING),
+        ),
+      );
+      await Promise.all([getChangellyCurrencies(), sleep(400)]);
+      dispatch(dismissOnGoingProcessModal());
+    } catch (err) {
+      logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
+      const msg = t(
+        'Changelly is not available at this moment. Please try again later.',
+      );
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(200);
+      showError(msg);
+    }
+  };
+
   useEffect(() => {
-    InteractionManager.runAfterInteractions(async () => {
-      try {
-        dispatch(
-          startOnGoingProcessModal(
-            // t("Just a second, we're setting a few things up")
-            t(OnGoingProcessMessages.GENERAL_AWAITING),
-          ),
-        );
-        await Promise.all([getChangellyCurrencies(), sleep(400)]);
-        dispatch(dismissOnGoingProcessModal());
-      } catch (err) {
-        logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
-        const msg = t(
-          'Changelly is not available at this moment. Please try again later.',
-        );
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(200);
-        showError(msg);
-      }
-    });
+    init();
   }, []);
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {ReactElement, useMemo} from 'react';
+import React, {ReactElement, useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {View, LayoutAnimation} from 'react-native';
+import {View, LayoutAnimation, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
@@ -33,6 +33,7 @@ import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
 import {SettingsStackParamList} from './SettingsStack';
+import {useScrollToTop} from '@react-navigation/native';
 
 interface HomeSetting {
   id: SettingsListType;
@@ -218,9 +219,12 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
     );
   }, [dispatch, memoizedSettingsConfigs, hideList]);
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
+
   return (
     <SettingsContainer>
-      <SettingsHome>
+      <SettingsHome ref={scrollViewRef}>
         <BitPayIdSettingsLink
           style={{paddingHorizontal: 15}}
           onPress={() => {

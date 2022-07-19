@@ -44,6 +44,7 @@ import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 import TransactionDetails from './screens/TransactionDetails';
 import TransactionProposalDetails from './screens/TransactionProposalDetails';
+import TransactionProposalNotifications from './screens/TransactionProposalNotifications';
 import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 import KeyGlobalSelect, {
   KeyGlobalSelectParamList,
@@ -64,8 +65,12 @@ import PriceCharts, {PriceChartsParamList} from './screens/PriceCharts';
 import ClearEncryptPassword, {
   ClearEncryptPasswordParamList,
 } from './screens/ClearEncryptPassword';
-import PayProConfirmTwoFactor from './screens/send/confirm/PayProConfirmTwoFactor';
+import PayProConfirmTwoFactor, {
+  PayProConfirmTwoFactorParamList,
+} from './screens/send/confirm/PayProConfirmTwoFactor';
 import {useTranslation} from 'react-i18next';
+import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
+import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -101,7 +106,7 @@ export type WalletStackParamList = {
   Confirm: ConfirmParamList;
   DebitCardConfirm: DebitCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
-  PayProConfirmTwoFactor: {onSubmit: (code: string) => Promise<void>};
+  PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};
@@ -109,6 +114,7 @@ export type WalletStackParamList = {
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {wallet: WalletModel; transaction: any};
   TransactionProposalDetails: {wallet: WalletModel; transaction: any; key: Key};
+  TransactionProposalNotifications: {walletId?: string; keyId?: string};
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
   WalletInformation: {wallet: WalletModel};
@@ -124,6 +130,8 @@ export type WalletStackParamList = {
   AllAddresses: AllAddressesParamList;
   PriceCharts: PriceChartsParamList;
   ClearEncryptPassword: ClearEncryptPasswordParamList;
+  SendToOptions: SendToOptionsParamList;
+  SelectInputs: SelectInputsParamList;
 };
 
 export enum WalletScreens {
@@ -159,6 +167,7 @@ export enum WalletScreens {
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
   TRANSACTION_DETAILS = 'TransactionDetails',
   TRANSACTION_PROPOSAL_DETAILS = 'TransactionProposalDetails',
+  TRANSACTION_PROPOSAL_NOTIFICATIONS = 'TransactionProposalNotifications',
   GLOBAL_SELECT = 'GlobalSelect',
   KEY_GLOBAL_SELECT = 'KeyGlobalSelect',
   WALLET_INFORMATION = 'WalletInformation',
@@ -167,6 +176,8 @@ export enum WalletScreens {
   ALL_ADDRESSES = 'AllAddresses',
   PRICE_CHARTS = 'PriceCharts',
   CLEAR_ENCRYPT_PASSWORD = 'ClearEncryptPassword',
+  SEND_TO_OPTIONS = 'SendToOptions',
+  SELECT_INPUTS = 'SelectInputs',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -344,6 +355,13 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS}
+          component={TransactionProposalNotifications}
+        />
+        <Wallet.Screen
+          options={{
             headerTitle: () => (
               <HeaderTitle>{t('Select a currency')}</HeaderTitle>
             ),
@@ -389,6 +407,14 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CLEAR_ENCRYPT_PASSWORD}
           component={ClearEncryptPassword}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SEND_TO_OPTIONS}
+          component={SendToOptions}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SELECT_INPUTS}
+          component={SelectInputs}
         />
       </Wallet.Navigator>
     </>

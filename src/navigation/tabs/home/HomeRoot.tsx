@@ -1,5 +1,11 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
-import React, {useEffect, useMemo, useState} from 'react';
+import {
+  useFocusEffect,
+  useNavigation,
+  useScrollToTop,
+  useTheme,
+} from '@react-navigation/native';
+import {each, throttle} from 'lodash';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
@@ -10,7 +16,7 @@ import {
 } from '../../../store/app/app.actions';
 import {
   logSegmentEvent,
-  startRefreshBrazeContent,
+  requestBrazeContentRefresh,
 } from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
@@ -45,6 +51,8 @@ import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {batch} from 'react-redux';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
+import {ProposalBadgeContainer} from '../../../components/styled/Containers';
+import {ProposalBadge} from '../../../components/styled/Text';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -57,6 +65,13 @@ const HomeRoot = () => {
   const brazeDoMore = useAppSelector(selectBrazeDoMore);
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const wallets = Object.values(keys).flatMap(k => k.wallets);
+  let pendingTxps: any = [];
+  each(wallets, x => {
+    if (x.pendingTxps) {
+      pendingTxps = pendingTxps.concat(x.pendingTxps);
+    }
+  });
   const keyMigrationFailure = useAppSelector(
     ({APP}) => APP.keyMigrationFailure,
   );
@@ -67,6 +82,7 @@ const HomeRoot = () => {
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
+  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
 
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
@@ -75,7 +91,7 @@ const HomeRoot = () => {
     }
 
     return brazeShopWithCrypto;
-  }, [brazeShopWithCrypto]);
+  }, [brazeShopWithCrypto, defaultLanguage]);
 
   // Do More
   const memoizedDoMoreCards = useMemo(() => {
@@ -86,7 +102,7 @@ const HomeRoot = () => {
     }
 
     return brazeDoMore;
-  }, [brazeDoMore, hasCards, themeType]);
+  }, [brazeDoMore, hasCards, themeType, defaultLanguage]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
@@ -123,7 +139,7 @@ const HomeRoot = () => {
     }
 
     return brazeQuickLinks;
-  }, [brazeQuickLinks]);
+  }, [brazeQuickLinks, defaultLanguage]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
@@ -136,6 +152,19 @@ const HomeRoot = () => {
     });
   }, [dispatch, navigation]);
 
+  useFocusEffect(
+    useCallback(
+      throttle(
+        () => {
+          dispatch(requestBrazeContentRefresh());
+        },
+        10 * 1000,
+        {leading: true, trailing: false},
+      ),
+      [],
+    ),
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -143,7 +172,7 @@ const HomeRoot = () => {
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus()),
-        dispatch(startRefreshBrazeContent()),
+        dispatch(requestBrazeContentRefresh()),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -152,6 +181,16 @@ const HomeRoot = () => {
     }
     setRefreshing(false);
   };
+
+  const onPressTxpBadge = useMemo(
+    () => () => {
+      navigation.navigate('Wallet', {
+        screen: 'TransactionProposalNotifications',
+        params: {},
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (keyMigrationFailure && !keyMigrationFailureModalHasBeenShown) {
@@ -162,10 +201,14 @@ const HomeRoot = () => {
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
+
   return (
     <HomeContainer>
       {appIsLoading ? null : (
         <ScrollView
+          ref={scrollViewRef}
           refreshControl={
             <RefreshControl
               tintColor={theme.dark ? White : SlateDark}
@@ -174,6 +217,11 @@ const HomeRoot = () => {
             />
           }>
           <HeaderContainer>
+            {pendingTxps.length ? (
+              <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+              </ProposalBadgeContainer>
+            ) : null}
             <ScanButton />
             <ProfileButton />
           </HeaderContainer>
@@ -206,14 +254,9 @@ const HomeRoot = () => {
                       );
                     } else {
                       dispatch(
-                        logSegmentEvent(
-                          'track',
-                          'Clicked Receive',
-                          {
-                            context: 'HomeRoot',
-                          },
-                          true,
-                        ),
+                        logSegmentEvent('track', 'Clicked Receive', {
+                          context: 'HomeRoot',
+                        }),
                       );
                       navigation.navigate('Wallet', {
                         screen: 'GlobalSelect',
@@ -250,7 +293,6 @@ const HomeRoot = () => {
                                     {
                                       context: 'HomeRoot',
                                     },
-                                    true,
                                   ),
                                 );
                                 navigation.navigate('Wallet', {
@@ -283,14 +325,9 @@ const HomeRoot = () => {
                       );
                     } else {
                       dispatch(
-                        logSegmentEvent(
-                          'track',
-                          'Clicked Send',
-                          {
-                            context: 'HomeRoot',
-                          },
-                          true,
-                        ),
+                        logSegmentEvent('track', 'Clicked Send', {
+                          context: 'HomeRoot',
+                        }),
                       );
                       navigation.navigate('Wallet', {
                         screen: 'GlobalSelect',
@@ -316,14 +353,9 @@ const HomeRoot = () => {
               onActionPress={() => {
                 navigation.navigate('Tabs', {screen: 'Shop'});
                 dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Clicked Shop with Crypto',
-                    {
-                      context: 'HomeRoot',
-                    },
-                    true,
-                  ),
+                  logSegmentEvent('track', 'Clicked Shop with Crypto', {
+                    context: 'HomeRoot',
+                  }),
                 );
               }}>
               <OffersCarousel contentCards={memoizedShopWithCryptoCards} />

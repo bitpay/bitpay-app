@@ -150,7 +150,7 @@ const Referral = ({}) => {
     if (!copied) {
       Clipboard.setString(code);
       setCopied(true);
-      dispatch(Analytics.track('Copied Share Referral Code', {}, true));
+      dispatch(Analytics.track('Copied Share Referral Code', {}));
     }
   };
 
@@ -177,14 +177,14 @@ const Referral = ({}) => {
         message,
       });
 
-      dispatch(Analytics.track('Clicked Share Referral Code', {}, true));
+      dispatch(Analytics.track('Clicked Share Referral Code', {}));
     } catch (e) {}
   };
   const currentDate = new Date().getTime();
 
   const getStatus = (status: string, expiration: number) => {
     return status === 'pending' && currentDate >= expiration
-      ? 'Expired'
+      ? t('Expired')
       : status.charAt(0).toUpperCase() + status.slice(1);
   };
 
@@ -223,7 +223,7 @@ const Referral = ({}) => {
             </CopyToClipboardContainer>
 
             <VerticalSpacing>
-              <Button onPress={onShareReferralCode}>Share</Button>
+              <Button onPress={onShareReferralCode}>{t('Share')}</Button>
             </VerticalSpacing>
           </CodeContainer>
         ) : code === 'failed' ? (

@@ -1,7 +1,7 @@
 import debounce from 'lodash.debounce';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components/native';
-import {ScrollView} from 'react-native';
+import {Keyboard, ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getGiftCardConfigList,
@@ -24,7 +24,7 @@ import {useAppSelector} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 
 export enum ShopTabs {
@@ -107,7 +107,9 @@ const ShopHome: React.FC<
     [purchasedGiftCards],
   );
   const categoriesAndCurations = useAppSelector(selectCategoriesAndCurations);
+
   const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
 
   const availableGiftCards = useMemo(
     () =>
@@ -231,12 +233,16 @@ const ShopHome: React.FC<
   ]);
 
   useFocusEffect(() => {
-    dispatch(logSegmentEvent('track', 'Viewed Shop Tab', undefined, true));
+    dispatch(logSegmentEvent('track', 'Viewed Shop Tab', undefined));
   });
 
   return (
     <ShopContainer>
-      <ScrollView ref={scrollViewRef} keyboardDismissMode="on-drag">
+      <ScrollView
+        ref={scrollViewRef}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={Keyboard.dismiss}>
         <ShopInnerContainer>
           <Tab.Navigator
             style={{

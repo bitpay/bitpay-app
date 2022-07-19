@@ -108,7 +108,7 @@ export const startMigration =
   (): Effect<Promise<void>> =>
   async (dispatch): Promise<void> => {
     return new Promise(async resolve => {
-      dispatch(LogActions.info('starting [startMigration]'));
+      dispatch(LogActions.info('[startMigration] - starting...'));
       const goToNewUserOnboarding = () => {
         dispatch(setIntroCompleted());
         navigationRef.dispatch(
@@ -120,16 +120,16 @@ export const startMigration =
 
       // keys and wallets
       try {
-        dispatch(LogActions.info('startMigration] - keys and wallets'));
+        dispatch(LogActions.info('[startMigration] - keys and wallets'));
         // cordova directory not found
         if (!(await RNFS.exists(cordovaStoragePath))) {
           dispatch(
-            LogActions.info('directory not found -> new user onboarding'),
+            LogActions.info('Directory not found -> new user onboarding'),
           );
           goToNewUserOnboarding();
           return resolve();
         }
-        dispatch(LogActions.info('startMigration] - directory found'));
+        dispatch(LogActions.info('[startMigration] - directory found'));
 
         const files = (await RNFS.readDir(cordovaStoragePath)) as {
           name: string;
@@ -143,7 +143,7 @@ export const startMigration =
           goToNewUserOnboarding();
           return resolve();
         }
-        dispatch(LogActions.info('startMigration] - key file found'));
+        dispatch(LogActions.info('[startMigration] - key file found'));
 
         const keys = JSON.parse(
           await RNFS.readFile(cordovaStoragePath + 'keys', 'utf8'),
@@ -173,17 +173,40 @@ export const startMigration =
               cordovaStoragePath + `Key-${key.id}`,
               'utf8',
             )) as string;
-          } catch (e) {
+          } catch (e: unknown) {
             // not found. Continue anyway
+            let errorStr;
+            if (e instanceof Error) {
+              errorStr = e.message;
+            } else {
+              errorStr = JSON.stringify(e);
+            }
+            dispatch(
+              LogActions.info(
+                '[startMigration] - not found. Continue anyway... ' + errorStr,
+              ),
+            );
           }
 
+          dispatch(LogActions.info('[startMigration] - backup complete'));
           try {
             backupComplete = (await RNFS.readFile(
               cordovaStoragePath + `walletGroupBackup-${key.id}`,
               'utf8',
             )) as string;
-          } catch (e) {
+          } catch (e: unknown) {
             // not found. Continue anyway
+            let errorStr;
+            if (e instanceof Error) {
+              errorStr = e.message;
+            } else {
+              errorStr = JSON.stringify(e);
+            }
+            dispatch(
+              LogActions.info(
+                '[startMigration] - not found. Continue anyway... ' + errorStr,
+              ),
+            );
           }
           const keyConfig = {
             backupComplete: !!backupComplete,
@@ -199,11 +222,17 @@ export const startMigration =
         await dispatch(startUpdateAllKeyAndWalletStatus());
         dispatch(
           LogActions.info(
-            'startMigration] - success migration keys and wallets',
+            '[startMigration] - success migration keys and wallets',
           ),
         );
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate keys'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(LogActions.info('Failed to migrate keys: ' + errorStr));
         // flag for showing error modal
         dispatch(setKeyMigrationFailure());
       }
@@ -298,8 +327,16 @@ export const startMigration =
         }
 
         dispatch(LogActions.info('Successfully migrated config settings'));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate config settings'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(
+          LogActions.info('Failed to migrate config settings: ' + errorStr),
+        );
       }
 
       // buy crypto
@@ -323,8 +360,14 @@ export const startMigration =
             );
           },
         );
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate simplex'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(LogActions.info('Failed to migrate simplex: ' + errorStr));
       }
 
       // wyre
@@ -345,8 +388,14 @@ export const startMigration =
             }),
           );
         });
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate wyre'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(LogActions.info('Failed to migrate wyre: ' + errorStr));
       }
 
       // swap crypto
@@ -370,8 +419,14 @@ export const startMigration =
             );
           },
         );
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate changelly'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(LogActions.info('Failed to migrate changelly: ' + errorStr));
       }
 
       // gift cards
@@ -471,8 +526,14 @@ export const startMigration =
         if (phone && phoneCountryInfo) {
           dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
         }
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate gift cards'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(LogActions.info('Failed to migrate gift cards: ' + errorStr));
       }
 
       // address book
@@ -488,8 +549,16 @@ export const startMigration =
           dispatch(createContact(contact));
         });
         dispatch(LogActions.info('Successfully migrated address book'));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate address book'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(
+          LogActions.info('Failed to migrate address book: ' + errorStr),
+        );
       }
 
       // app identity
@@ -503,8 +572,16 @@ export const startMigration =
         ) as AppIdentity;
         dispatch(LogActions.info('Successfully migrated app identity'));
         dispatch(successGenerateAppIdentity(Network.mainnet, identity));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate app identity'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(
+          LogActions.info('Failed to migrate app identity: ' + errorStr),
+        );
       }
 
       // bitpay id
@@ -516,8 +593,14 @@ export const startMigration =
         );
         dispatch(LogActions.info('Successfully migrated bitpay id'));
         await dispatch(successPairingBitPayId(Network.mainnet, token));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate bitpay id'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(LogActions.info('Failed to migrate bitpay id: ' + errorStr));
       }
 
       // coinbase
@@ -541,8 +624,16 @@ export const startMigration =
           setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
         );
         dispatch(LogActions.info('Successfully migrated Coinbase account'));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate Coinbase account'));
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(
+          LogActions.info('Failed to migrate Coinbase account: ' + errorStr),
+        );
       }
 
       dispatch(setOnboardingCompleted());
