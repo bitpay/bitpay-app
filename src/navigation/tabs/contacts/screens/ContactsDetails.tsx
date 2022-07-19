@@ -24,11 +24,14 @@ import ContactIcon from '../components/ContactIcon';
 import SendIcon from '../../../../../assets/img/send-icon.svg';
 import SendIconWhite from '../../../../../assets/img/send-icon-white.svg';
 import DeleteIcon from '../../../../../assets/img/delete-icon.svg';
+import EditIcon from '../../../../../assets/img/edit-icon.svg';
+import EditIconWhite from '../../../../../assets/img/edit-icon-white.svg';
 import DeleteIconWhite from '../../../../../assets/img/delete-icon-white.svg';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
+import {ContactRowProps} from '../../../../components/list/ContactRow';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -133,7 +136,8 @@ const ContactsDetails = ({
   const theme = useTheme();
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const {address, coin, network, name, tag, email} = route.params;
+  const {contact: _contact} = route.params;
+  const [contact, setContact] = useState(_contact);
 
   const [copied, setCopied] = useState(false);
   const [showIconOptions, setShowIconOptions] = useState(false);
@@ -149,19 +153,37 @@ const ContactsDetails = ({
       !wallet.hideWallet &&
       wallet.network === 'livenet' &&
       wallet.isComplete() &&
-      wallet.currencyAbbreviation === coin &&
+      wallet.currencyAbbreviation === contact.coin &&
       wallet.balance.sat > 0,
   );
 
+  contactOptions.push({
+    img: theme.dark ? <EditIconWhite /> : <EditIcon />,
+    title: t('Edit Contact'),
+    onPress: async () => {
+      setShowIconOptions(false);
+      navigation.navigate('Contacts', {
+        screen: 'ContactsAdd',
+        params: {
+          contact,
+          context: 'edit',
+          onEditComplete: (c: ContactRowProps) => {
+            setContact(c);
+          },
+        },
+      });
+    },
+  });
+
   if (availableWallets.length) {
-    let newAddress = address;
-    if (coin === 'bch') {
+    let newAddress = contact.address;
+    if (contact.coin === 'bch') {
       // Remove prefix
-      newAddress = ToCashAddress(address, false);
+      newAddress = ToCashAddress(contact.address, false);
     }
     contactOptions.push({
       img: theme.dark ? <SendIconWhite /> : <SendIcon />,
-      title: t('Send ') + coin.toUpperCase(),
+      title: t('Send ') + contact.coin.toUpperCase(),
       onPress: () => {
         setShowIconOptions(false);
         navigation.navigate('Wallet', {
@@ -169,10 +191,10 @@ const ContactsDetails = ({
           params: {
             context: 'contact',
             recipient: {
-              name,
+              name: contact.name,
               address: newAddress,
-              currency: coin,
-              network,
+              currency: contact.coin,
+              network: contact.network,
             },
           },
         });
@@ -215,13 +237,13 @@ const ContactsDetails = ({
 
   const copyToClipboard = () => {
     haptic('impactLight');
-    Clipboard.setString(address);
+    Clipboard.setString(contact.address);
     setCopied(true);
   };
 
   const deleteContactView = async () => {
     await sleep(500);
-    dispatch(deleteContact(address, coin, network));
+    dispatch(deleteContact(contact.address, contact.coin, contact.network));
     navigation.goBack();
   };
 
@@ -256,21 +278,21 @@ const ContactsDetails = ({
     <ContactsDetailsContainer>
       <DetailsScrollContainer>
         <ContactImageHeader>
-          <ContactIcon coin={coin} size={100} name={name} />
+          <ContactIcon coin={contact.coin} size={100} name={contact.name} />
         </ContactImageHeader>
         <Details>
-          {email ? (
+          {contact.email ? (
             <>
               <Detail>
                 <Title>{t('Email')}</Title>
-                <DetailInfo align="right">{email}</DetailInfo>
+                <DetailInfo align="right">{contact.email}</DetailInfo>
               </Detail>
               <Hr />
             </>
           ) : null}
           <Detail>
             <Title>{t('Name')}</Title>
-            <DetailInfo align="right">{name}</DetailInfo>
+            <DetailInfo align="right">{contact.name}</DetailInfo>
           </Detail>
           <Hr />
           <Detail>
@@ -281,35 +303,37 @@ const ContactsDetails = ({
                   {copied ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainer>
                 <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
-                  {address}
+                  {contact.address}
                 </AddressText>
               </AddressContainer>
             </DetailInfo>
           </Detail>
-          {network !== 'livenet' ? (
+          {contact.network !== 'livenet' ? (
             <>
               <Hr />
               <Detail>
                 <Title>{t('Network')}</Title>
-                <DetailInfo align="right">{network}</DetailInfo>
+                <DetailInfo align="right">{contact.network}</DetailInfo>
               </Detail>
             </>
           ) : null}
-          {coin ? (
+          {contact.coin ? (
             <>
               <Hr />
               <Detail>
                 <Title>{t('Coin')}</Title>
-                <DetailInfo align="right">{coin.toUpperCase()}</DetailInfo>
+                <DetailInfo align="right">
+                  {contact.coin.toUpperCase()}
+                </DetailInfo>
               </Detail>
             </>
           ) : null}
-          {tag ? (
+          {contact.tag ? (
             <>
               <Hr />
               <Detail>
                 <Title>{t('Tag')}</Title>
-                <DetailInfo align="right">{tag}</DetailInfo>
+                <DetailInfo align="right">{contact.tag}</DetailInfo>
               </Detail>
             </>
           ) : null}

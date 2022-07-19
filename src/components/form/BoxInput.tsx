@@ -8,6 +8,7 @@ import Search from '../../../assets/img/search.svg';
 import {
   Caution,
   LightBlack,
+  NeutralSlate,
   ProgressBlue,
   Slate,
   White,
@@ -24,6 +25,7 @@ interface InputProps {
   isFocused: boolean;
   isError?: boolean;
   type?: InputType;
+  disabled?: boolean;
 }
 
 const InputContainer = styled.View<InputProps>`
@@ -49,6 +51,12 @@ const InputContainer = styled.View<InputProps>`
       border-color: #fbc7d1;
       border-bottom-color: ${Caution};
       color: ${Caution};
+    `}
+
+    ${({disabled}) =>
+    disabled &&
+    css`
+      border-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
     `}
 `;
 
@@ -79,6 +87,12 @@ const Input = styled(TextInputMask)<InputProps>`
     isError &&
     css`
       color: ${Caution};
+    `}
+
+  ${({disabled}) =>
+    disabled &&
+    css`
+      background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
     `}
 `;
 
@@ -133,6 +147,7 @@ interface BoxInputProps extends TextInputProps {
   suffix?: () => JSX.Element;
   error?: any;
   type?: InputType;
+  disabled?: boolean;
 }
 
 const BoxInput = React.forwardRef<
@@ -140,7 +155,18 @@ const BoxInput = React.forwardRef<
   BoxInputProps & TextInputMaskProps
 >(
   (
-    {label, onFocus, onBlur, onSearch, prefix, suffix, error, type, ...props},
+    {
+      label,
+      onFocus,
+      onBlur,
+      onSearch,
+      prefix,
+      suffix,
+      error,
+      type,
+      disabled,
+      ...props
+    },
     ref,
   ) => {
     const isPassword = type === 'password';
@@ -180,11 +206,15 @@ const BoxInput = React.forwardRef<
       <>
         {label ? <Label>{label}</Label> : null}
 
-        <InputContainer isFocused={isFocused} isError={error}>
+        <InputContainer
+          isFocused={isFocused}
+          isError={error}
+          disabled={disabled}>
           {prefix ? <Prefix>{prefix()}</Prefix> : null}
 
           <Input
             {...props}
+            editable={!disabled}
             ref={ref}
             secureTextEntry={isPassword && isSecureTextEntry}
             placeholderTextColor={Slate}
@@ -192,6 +222,7 @@ const BoxInput = React.forwardRef<
             onBlur={_onBlur}
             isFocused={isFocused}
             isError={error}
+            disabled={disabled}
             autoCapitalize={'none'}
             type={type}
           />
