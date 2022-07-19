@@ -1,25 +1,25 @@
 import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
 import {
   CoinbaseAccountProps,
+  CoinbaseEnvironment,
   CoinbaseErrorsProps,
   CoinbaseExchangeRatesProps,
   CoinbaseTokenProps,
   CoinbaseTransactionsByAccountProps,
   CoinbaseUserProps,
-  CoinbaseEnvironment,
 } from '../../api/coinbase/coinbase.types';
 import {
+  ApiLoading,
   CoinbaseActionType,
   CoinbaseActionTypes,
-  ApiLoading,
-  GetAccessTokenStatus,
-  GetRefreshTokenStatus,
-  GetAccountsStatus,
-  GetUserStatus,
-  GetTransactionsStatus,
   CreateAddressStatus,
-  SendTransactionStatus,
+  GetAccessTokenStatus,
+  GetAccountsStatus,
+  GetRefreshTokenStatus,
+  GetTransactionsStatus,
+  GetUserStatus,
   PayInvoiceStatus,
+  SendTransactionStatus,
 } from './coinbase.types';
 
 export const CoinbaseReduxPersistBlackList: (keyof CoinbaseState)[] = [
@@ -61,6 +61,7 @@ export interface CoinbaseState {
   payInvoiceStatus: PayInvoiceStatus;
   payInvoiceError: CoinbaseErrorsProps | null;
   exchangeRates: CoinbaseExchangeRatesProps | null;
+  hideTotalBalance: boolean;
   token: {
     [key in CoinbaseEnvironment]: CoinbaseTokenProps | null;
   };
@@ -97,6 +98,7 @@ const initialState: CoinbaseState = {
   payInvoiceStatus: null,
   payInvoiceError: null,
   exchangeRates: null,
+  hideTotalBalance: false,
   token: {
     [CoinbaseEnvironment.production]: null,
     [CoinbaseEnvironment.sandbox]: null,
@@ -407,6 +409,14 @@ export const coinbaseReducer = (
         sendTransactionError: null,
         payInvoiceStatus: null,
         payInvoiceError: null,
+      };
+
+    // ------- Settings -------- //
+    case CoinbaseActionTypes.TOGGLE_HIDE_TOTAL_BALANCE:
+      console.log(action.payload);
+      return {
+        ...state,
+        hideTotalBalance: action.payload,
       };
 
     default:

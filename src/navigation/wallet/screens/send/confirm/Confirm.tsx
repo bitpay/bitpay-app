@@ -7,6 +7,7 @@ import {
   Recipient,
   TransactionProposal,
   TxDetails,
+  Utxo,
   Wallet,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
@@ -16,7 +17,7 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
-import {sleep} from '../../../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {
   logSegmentEvent,
   openUrlWithInAppBrowser,
@@ -65,6 +66,8 @@ import {Alert, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
+import {toFiat} from '../../../../../store/wallet/utils/wallet';
+import {GetPrecision} from '../../../../../store/wallet/utils/currency';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -72,11 +75,14 @@ const VerticalPadding = styled.View`
 export interface ConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
+  recipientList?: Recipient[];
   txp: Partial<TransactionProposal>;
   txDetails: TxDetails;
   amount: number;
   speedup?: boolean;
   sendMax?: boolean;
+  inputs?: Utxo[];
+  selectInputs?: boolean;
 }
 
 export const Setting = styled.TouchableOpacity`
@@ -106,11 +112,14 @@ const Confirm = () => {
   const {
     wallet,
     recipient,
+    recipientList,
     txDetails,
     txp: _txp,
     amount,
     speedup,
     sendMax,
+    inputs,
+    selectInputs,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -118,6 +127,8 @@ const Confirm = () => {
     ({WALLET}) => WALLET.enableReplaceByFee,
   );
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
+  const rates = useAppSelector(({WALLET}) => WALLET.rates);
+  const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
@@ -146,6 +157,7 @@ const Confirm = () => {
   const [destinationTag, setDestinationTag] = useState(_destinationTag);
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
+  const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation)) || {};
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -237,6 +249,7 @@ const Confirm = () => {
           recipient,
           amount,
           sendMax,
+          inputs,
           ...txp,
           ...newOpts,
         }),
@@ -292,7 +305,25 @@ const Confirm = () => {
     [dispatch],
   );
 
-  let recipientData;
+  let recipientData, recipientListData;
+
+  if (recipientList) {
+    recipientListData = recipientList.map(r => {
+      const amountSat = Number(r.amount! * unitToSatoshi!);
+      return {
+        recipientName: r.name,
+        recipientAddress: r.address,
+        img: r.type === 'contact' ? r.type : wallet.img,
+        recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
+        recipientAltAmountStr: formatFiatAmount(
+          dispatch(toFiat(amountSat, isoCode, currencyAbbreviation, rates)),
+          isoCode,
+        ),
+        recipientType: r.type,
+        recipientCoin: currencyAbbreviation,
+      };
+    });
+  }
 
   if (
     recipient.type &&
@@ -315,10 +346,14 @@ const Confirm = () => {
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header>Summary</Header>
-          <SendingTo recipient={recipientData} hr />
+          <SendingTo
+            recipient={recipientData}
+            recipientList={recipientListData}
+            hr
+          />
           <Fee
             onPress={
-              isTxLevelAvailable()
+              isTxLevelAvailable() && !selectInputs
                 ? () => setShowTransactionLevel(true)
                 : undefined
             }
@@ -326,7 +361,10 @@ const Confirm = () => {
             feeOptions={feeOptions}
             hr
           />
-          {enableReplaceByFee && currencyAbbreviation === 'btc' ? (
+          {enableReplaceByFee &&
+          currencyAbbreviation === 'btc' &&
+          !recipientList &&
+          !selectInputs ? (
             <>
               <Setting activeOpacity={1}>
                 <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>

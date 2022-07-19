@@ -21,6 +21,10 @@ const PrimaryActionContainer = styled.View`
   margin-bottom: 20px;
 `;
 
+export interface PayProConfirmTwoFactorParamList {
+  onSubmit: (code: string) => Promise<void>;
+}
+
 interface TwoFactorCodeFormValues {
   code: string;
 }

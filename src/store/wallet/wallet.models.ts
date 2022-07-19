@@ -217,6 +217,7 @@ export interface Recipient {
   walletId?: string;
   keyId?: string;
   address: string;
+  amount?: number;
 }
 
 export interface CustomTransactionData {
@@ -271,7 +272,10 @@ export interface TransactionOptions {
   useUnconfirmedFunds?: boolean;
   // fromReplaceByFee
   fee?: number;
-  inputs?: any[];
+  // selectInputs
+  inputs?: Utxo[];
+  // multisend
+  recipientList?: Recipient[];
 }
 
 export interface Action {
@@ -376,6 +380,10 @@ export interface TxDetailsSendingTo {
   recipientAddress?: string;
   img: string | ((props?: any) => ReactElement);
   recipientFullAddress?: string;
+  recipientAmountStr?: string;
+  currencyAbbreviation?: string;
+  recipientAltAmountStr?: string;
+  recipientCoin?: string;
 }
 
 export interface TxDetailsSendingFrom {
@@ -421,4 +429,19 @@ export interface BulkStatus {
   success: boolean;
   walletId: string;
   tokenAddress?: string;
+}
+
+export interface Utxo {
+  address: string;
+  amount: number;
+  confirmations: number;
+  locked: boolean;
+  path: string;
+  publicKeys: Array<string>;
+  satoshis: number;
+  scriptPubKey: string;
+  spent: boolean;
+  txid: string;
+  vout: number;
+  checked?: boolean;
 }

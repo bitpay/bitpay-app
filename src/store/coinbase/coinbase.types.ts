@@ -49,6 +49,7 @@ export enum CoinbaseActionTypes {
   PAY_INVOICE_PENDING = 'Coinbase/PAY_INVOICE_PENDING',
   PAY_INVOICE_SUCCESS = 'Coinbase/PAY_INVOICE_SUCCESS',
   PAY_INVOICE_FAILED = 'Coinbase/PAY_INVOICE_FAILED',
+  TOGGLE_HIDE_TOTAL_BALANCE = 'Coinbase/TOGGLE_HIDE_TOTAL_BALANCE',
 }
 
 // ------- Exchange Rate -------- //
@@ -211,6 +212,13 @@ interface ClearErrorStatus {
   type: typeof CoinbaseActionTypes.CLEAR_ERROR_STATUS;
 }
 
+// ------- Settings -------- //
+
+interface ToggleHideCoinbaseTotalBalance {
+  type: typeof CoinbaseActionTypes.TOGGLE_HIDE_TOTAL_BALANCE;
+  payload: boolean;
+}
+
 export type CoinbaseActionType =
   | ExchangeRatesPending
   | ExchangeRatesSuccess
@@ -241,4 +249,5 @@ export type CoinbaseActionType =
   | PayInvoicePending
   | PayInvoiceSuccess
   | PayInvoiceFailed
-  | ClearErrorStatus;
+  | ClearErrorStatus
+  | ToggleHideCoinbaseTotalBalance;

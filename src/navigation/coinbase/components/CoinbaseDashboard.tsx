@@ -3,7 +3,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {FlatList, RefreshControl, View} from 'react-native';
 import styled from 'styled-components/native';
 import WalletRow from '../../../components/list/WalletRow';
-import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
+import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {SlateDark, White, LightBlack} from '../../../styles/colors';
@@ -88,6 +88,10 @@ const CoinbaseDashboard = () => {
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+
+  const hideTotalBalance = useAppSelector(
+    ({COINBASE}) => COINBASE.hideTotalBalance,
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -208,9 +212,15 @@ const CoinbaseDashboard = () => {
     <OverviewContainer>
       <BalanceContainer>
         {balance !== null ? (
-          <Balance scale={shouldScale(balance)}>
-            {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
-          </Balance>
+          <>
+            {!hideTotalBalance ? (
+              <Balance scale={shouldScale(balance)}>
+                {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
+              </Balance>
+            ) : (
+              <H2 style={{textAlign: 'center'}}>****</H2>
+            )}
+          </>
         ) : (
           <SkeletonPlaceholder
             backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}

@@ -3,6 +3,7 @@ import {
   Rates,
   Wallet,
   TransactionProposal,
+  Utxo,
 } from '../../wallet.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -498,7 +499,7 @@ export const GetTransactionHistory =
         return resolve({transactions: newHistory, loadMore});
       } catch (err) {
         const errString =
-          error instanceof Error ? err.message : JSON.stringify(err);
+          err instanceof Error ? err.message : JSON.stringify(err);
 
         dispatch(
           LogActions.error(
@@ -974,7 +975,7 @@ const GetActionsList = (transaction: any, wallet: Wallet) => {
   return actionList.reverse();
 };
 
-export const GetUtxos = (wallet: Wallet): Promise<any> => {
+export const GetUtxos = (wallet: Wallet): Promise<Utxo[]> => {
   return new Promise((resolve, reject) => {
     wallet.getUtxos(
       {

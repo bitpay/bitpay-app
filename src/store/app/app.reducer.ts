@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import {ColorSchemeName} from 'react-native';
+import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -16,6 +16,7 @@ import {
   HomeCarouselLayoutType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
+import uniqBy from 'lodash.uniqby';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
@@ -28,6 +29,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showBiometricModal',
   'activeModalId',
   'failedAppInit',
+  'brazeContentCardSubscription',
 ];
 
 export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
@@ -68,6 +70,7 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   defaultLanguage: string;
   showPortfolioValue: boolean;
+  brazeContentCardSubscription: EventSubscription | null;
   brazeContentCards: ContentCard[];
   brazeEid: string | undefined;
   showBiometricModal: boolean;
@@ -78,6 +81,7 @@ export interface AppState {
   settingsListConfig: SettingsListType[];
   altCurrencyList: Array<AltCurrenciesRowProps>;
   defaultAltCurrency: AltCurrenciesRowProps;
+  recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
   showKeyMigrationFailureModal: boolean;
@@ -126,6 +130,7 @@ const initialState: AppState = {
   colorScheme: null,
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
+  brazeContentCardSubscription: null,
   brazeContentCards: [],
   brazeEid: undefined,
   showBiometricModal: false,
@@ -136,6 +141,7 @@ const initialState: AppState = {
   settingsListConfig: [],
   altCurrencyList: [],
   defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
+  recentDefaultAltCurrency: [],
   migrationComplete: false,
   keyMigrationFailure: false,
   showKeyMigrationFailureModal: false,
@@ -351,6 +357,12 @@ export const appReducer = (
         showPortfolioValue: action.payload,
       };
 
+    case AppActionTypes.BRAZE_INITIALIZED:
+      return {
+        ...state,
+        brazeContentCardSubscription: action.payload.contentCardSubscription,
+      };
+
     case AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED:
       if (
         state.brazeContentCards.length === 0 &&
@@ -436,9 +448,16 @@ export const appReducer = (
       };
 
     case AppActionTypes.SET_DEFAULT_ALT_CURRENCY:
+      let recentDefaultAltCurrency = [...state.recentDefaultAltCurrency];
+      recentDefaultAltCurrency.unshift(action.defaultAltCurrency);
+      recentDefaultAltCurrency = uniqBy(
+        recentDefaultAltCurrency,
+        'isoCode',
+      ).slice(0, 3);
       return {
         ...state,
         defaultAltCurrency: action.defaultAltCurrency,
+        recentDefaultAltCurrency,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:

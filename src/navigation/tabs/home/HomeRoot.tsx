@@ -1,5 +1,11 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
-import React, {useEffect, useMemo, useState} from 'react';
+import {
+  useFocusEffect,
+  useNavigation,
+  useScrollToTop,
+  useTheme,
+} from '@react-navigation/native';
+import {each, throttle} from 'lodash';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
@@ -10,7 +16,7 @@ import {
 } from '../../../store/app/app.actions';
 import {
   logSegmentEvent,
-  startRefreshBrazeContent,
+  requestBrazeContentRefresh,
 } from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
@@ -63,7 +69,7 @@ const HomeRoot = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const wallets = Object.values(keys).flatMap(k => k.wallets);
   let pendingTxps: any = [];
-  _.each(wallets, x => {
+  each(wallets, x => {
     if (x.pendingTxps) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
@@ -148,6 +154,19 @@ const HomeRoot = () => {
     });
   }, [dispatch, navigation]);
 
+  useFocusEffect(
+    useCallback(
+      throttle(
+        () => {
+          dispatch(requestBrazeContentRefresh());
+        },
+        10 * 1000,
+        {leading: true, trailing: false},
+      ),
+      [],
+    ),
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -155,7 +174,7 @@ const HomeRoot = () => {
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus()),
-        dispatch(startRefreshBrazeContent()),
+        dispatch(requestBrazeContentRefresh()),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -184,10 +203,14 @@ const HomeRoot = () => {
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
+
   return (
     <HomeContainer>
       {appIsLoading ? null : (
         <ScrollView
+          ref={scrollViewRef}
           refreshControl={
             <RefreshControl
               tintColor={theme.dark ? White : SlateDark}

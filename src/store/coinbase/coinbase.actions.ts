@@ -1,11 +1,11 @@
 import {
   CoinbaseAccountProps,
+  CoinbaseEnvironment,
   CoinbaseErrorsProps,
   CoinbaseExchangeRatesProps,
   CoinbaseTokenProps,
   CoinbaseTransactionsProps,
   CoinbaseUserProps,
-  CoinbaseEnvironment,
 } from '../../api/coinbase/coinbase.types';
 import {CoinbaseActionType, CoinbaseActionTypes} from './coinbase.types';
 
@@ -196,4 +196,12 @@ export const payInvoiceFailed = (
 
 export const clearErrorStatus = (): CoinbaseActionType => ({
   type: CoinbaseActionTypes.CLEAR_ERROR_STATUS,
+});
+
+// ------- Settings -------- //
+export const toggleHideCoinbaseTotalBalance = (
+  hideTotalBalance: boolean,
+): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.TOGGLE_HIDE_TOTAL_BALANCE,
+  payload: hideTotalBalance,
 });

@@ -129,7 +129,6 @@ export const createProposalAndBuildTxDetails =
           customFeeLevel ||
           cachedFeeLevel[currencyAbbreviation] ||
           FeeLevels.NORMAL;
-
         if (!feePerKb && tx.sendMax) {
           feePerKb = await getFeeRatePerKb({
             wallet,
@@ -262,7 +261,7 @@ const setEthAddressNonce =
         if (pendingTxsNonce && pendingTxsNonce.length > 0) {
           pendingTxsNonce.sort((a, b) => a! - b!);
           for (let i = 0; i < pendingTxsNonce.length; i++) {
-            if (pendingTxsNonce[i]! + 1 != pendingTxsNonce[i + 1]) {
+            if (pendingTxsNonce[i]! + 1 !== pendingTxsNonce[i + 1]) {
               suggestedNonce = pendingTxsNonce[i]! + 1;
               break;
             }
@@ -340,7 +339,7 @@ export const buildTxDetails =
     rates: Rates;
     defaultAltCurrencyIsoCode: string;
     wallet: Wallet | WalletRowProps;
-    recipient?: Recipient;
+    recipient: Recipient;
     invoice?: Invoice;
     context?: TransactionOptionsContext;
     feeLevel?: string;
@@ -473,6 +472,8 @@ const buildTransactionProposal =
           payProUrl,
           sendMax,
           wallet,
+          inputs,
+          recipientList,
         } = tx;
         let {customData} = tx;
 
@@ -487,10 +488,12 @@ const buildTransactionProposal =
             };
           }
         }
+
+        const chain = dispatch(GetChain(currency!)).toLowerCase();
         // base tx
         const txp: Partial<TransactionProposal> = {
           coin: currency,
-          chain: dispatch(GetChain(currency!)).toLowerCase(),
+          chain,
           customData,
           feePerKb,
           ...(!feePerKb && {feeLevel}),
@@ -498,7 +501,7 @@ const buildTransactionProposal =
           message,
         };
         // currency specific
-        switch (dispatch(GetChain(currency!)).toLowerCase()) {
+        switch (chain) {
           case 'btc':
             txp.enableRBF = tx.enableRBF;
             txp.replaceTxByFee = tx.replaceTxByFee;
@@ -514,7 +517,9 @@ const buildTransactionProposal =
             txp.destinationTag = tx.destinationTag;
             break;
           case 'bch':
-            tx.toAddress = ToCashAddress(tx.toAddress!, false);
+            tx.toAddress = recipientList
+              ? ToCashAddress(tx.toAddress!, false)
+              : undefined;
             break;
         }
 
@@ -548,6 +553,22 @@ const buildTransactionProposal =
         txp.outputs = [];
         switch (context) {
           case 'multisend':
+            if (recipientList) {
+              recipientList.forEach(r => {
+                const formattedAmount = dispatch(
+                  ParseAmount(r.amount || 0, chain),
+                );
+                txp.outputs?.push({
+                  toAddress:
+                    chain === 'bch'
+                      ? ToCashAddress(tx.toAddress!, false)
+                      : r.address,
+                  amount: formattedAmount.amountSat,
+                  message: tx.description,
+                  data: tx.data,
+                });
+              });
+            }
             break;
           case 'paypro':
             txp.payProUrl = payProUrl;
@@ -560,6 +581,18 @@ const buildTransactionProposal =
             });
             break;
           case 'selectInputs':
+            txp.inputs = inputs;
+            txp.fee = tx.fee;
+            txp.feeLevel = undefined;
+            if (tx.replaceTxByFee) {
+              txp.replaceTxByFee = true;
+            }
+            txp.outputs.push({
+              toAddress: tx.toAddress,
+              amount: tx.amount!,
+              message: tx.description,
+              data: tx.data,
+            });
             break;
           case 'fromReplaceByFee':
             txp.inputs = tx.inputs;
@@ -781,7 +814,7 @@ export const publishAndSignMultipleProposals =
     wallet: Wallet;
     recipient?: Recipient;
   }): Effect<Promise<(Partial<TransactionProposal> | void)[]>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
         let password: string;
