@@ -16,6 +16,7 @@ import {
   HomeCarouselLayoutType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
+import uniqBy from 'lodash.uniqby';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
@@ -78,6 +79,7 @@ export interface AppState {
   settingsListConfig: SettingsListType[];
   altCurrencyList: Array<AltCurrenciesRowProps>;
   defaultAltCurrency: AltCurrenciesRowProps;
+  recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
   showKeyMigrationFailureModal: boolean;
@@ -136,6 +138,7 @@ const initialState: AppState = {
   settingsListConfig: [],
   altCurrencyList: [],
   defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
+  recentDefaultAltCurrency: [],
   migrationComplete: false,
   keyMigrationFailure: false,
   showKeyMigrationFailureModal: false,
@@ -436,9 +439,16 @@ export const appReducer = (
       };
 
     case AppActionTypes.SET_DEFAULT_ALT_CURRENCY:
+      let recentDefaultAltCurrency = [...state.recentDefaultAltCurrency];
+      recentDefaultAltCurrency.unshift(action.defaultAltCurrency);
+      recentDefaultAltCurrency = uniqBy(
+        recentDefaultAltCurrency,
+        'isoCode',
+      ).slice(0, 3);
       return {
         ...state,
         defaultAltCurrency: action.defaultAltCurrency,
+        recentDefaultAltCurrency,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:
