@@ -52,12 +52,12 @@ import {
 import {SilentPushEvent} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
-  startUpdateAllWalletStatusForKey,
   startUpdateWalletStatus,
 } from '../wallet/effects/status/status';
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
+import {debounce} from 'lodash';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -607,30 +607,15 @@ export const Analytics = {
 };
 
 export const subscribePushNotifications =
-  (walletClient: any, eid: string): Effect<Promise<void>> =>
-  async dispatch => {
+  (walletClient: any, eid: string): Effect =>
+  () => {
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
       packageName: 'BitPay',
       walletId: walletClient.credentials.walletId,
     };
-    walletClient.pushNotificationsSubscribe(opts, (err: any) => {
-      if (err) {
-        dispatch(
-          LogActions.error(
-            'Push Notifications error subscribing: ' + JSON.stringify(err),
-          ),
-        );
-      } else {
-        dispatch(
-          LogActions.info(
-            'Push Notifications success subscribing: ' +
-              walletClient.credentials.walletName,
-          ),
-        );
-      }
-    });
+    walletClient.pushNotificationsSubscribe(opts);
   };
 
 export const unSubscribePushNotifications =
@@ -662,6 +647,19 @@ export const checkNotificationsPermissions = (): Promise<boolean> => {
       } else {
         return resolve(false);
       }
+    });
+  });
+};
+
+export const renewSubscription = (): Effect => (dispatch, getState) => {
+  const {
+    WALLET: {keys},
+    APP,
+  } = getState();
+
+  getAllWalletClients(keys).then(walletClients => {
+    walletClients.forEach(walletClient => {
+      dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
     });
   });
 };
@@ -722,6 +720,32 @@ export const setOffersAndPromotionsNotifications =
     }
   };
 
+const _startUpdateAllKeyAndWalletStatus = debounce(
+  async dispatch => {
+    dispatch(startUpdateAllKeyAndWalletStatus());
+    DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+  },
+  5000,
+  {leading: true, trailing: false},
+);
+
+const _createWalletAddress = debounce(
+  async (dispatch, wallet) => {
+    dispatch(createWalletAddress({wallet, newAddress: true}));
+  },
+  5000,
+  {leading: true, trailing: false},
+);
+
+const _startUpdateWalletStatus = debounce(
+  async (dispatch, keyObj, wallet) => {
+    dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
+    DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+  },
+  5000,
+  {leading: true, trailing: false},
+);
+
 export const handleBwsEvent =
   (response: SilentPushEvent): Effect =>
   async (dispatch, getState) => {
@@ -744,18 +768,6 @@ export const handleBwsEvent =
       ) {
         return;
       }
-      console.log(
-        '#### wallet found! Sending Event...',
-        wallet.credentials.walletId,
-      );
-      let walletId = wallet.credentials.walletId;
-      if (response.tokenAddress) {
-        walletId =
-          wallet.credentials.walletId +
-          '-' +
-          response.tokenAddress.toLowerCase();
-        console.log(`### event for token wallet: ${walletId}`);
-      }
 
       // TODO showInappNotification(data);
 
@@ -768,25 +780,21 @@ export const handleBwsEvent =
 
       switch (response.notification_type) {
         case 'NewAddress':
-          dispatch(createWalletAddress({wallet, newAddress: true}));
+          _createWalletAddress(dispatch, wallet);
           break;
         case 'NewBlock':
           if (response.network && response.network === 'livenet') {
-            dispatch(startUpdateAllKeyAndWalletStatus());
-            DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+            _startUpdateAllKeyAndWalletStatus(dispatch);
           }
           break;
         case 'TxProposalAcceptedBy':
         case 'TxProposalRejectedBy':
         case 'TxProposalRemoved':
-          dispatch(startUpdateAllWalletStatusForKey({key: keyObj}));
-          break;
         case 'NewOutgoingTx':
         case 'NewIncomingTx':
         case 'NewTxProposal':
         case 'TxConfirmation':
-          dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
-          DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+          _startUpdateWalletStatus(dispatch, keyObj, wallet);
           break;
       }
     }
