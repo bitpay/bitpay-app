@@ -12,7 +12,7 @@ import {useAppSelector} from '../../../utils/hooks';
 import {HomeCarouselLayoutType} from '../../../store/app/app.models';
 import {Balance, KeyName} from '../../wallet/components/KeyDropdownOption';
 import {BoxShadow} from '../../tabs/home/components/Styled';
-import {BaseText} from '../../../components/styled/Text';
+import {BaseText, H3} from '../../../components/styled/Text';
 import {
   LightBlack,
   White,
@@ -88,6 +88,9 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideTotalBalance = useAppSelector(
+    ({COINBASE}) => COINBASE.hideTotalBalance,
+  );
 
   const {amount, code} = formatFiatAmountObj(
     balance,
@@ -112,14 +115,18 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
             <KeyName>Coinbase</KeyName>
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            <Balance>
-              {amount}
-              {code ? (
-                <BalanceCodeContainer>
-                  <BalanceCode>{code}</BalanceCode>
-                </BalanceCodeContainer>
-              ) : null}
-            </Balance>
+            {!hideTotalBalance ? (
+              <Balance>
+                {amount}
+                {code ? (
+                  <BalanceCodeContainer>
+                    <BalanceCode>{code}</BalanceCode>
+                  </BalanceCodeContainer>
+                ) : null}
+              </Balance>
+            ) : (
+              <H3>****</H3>
+            )}
           </Column>
         </Row>
       </ListCard>

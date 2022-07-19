@@ -33,6 +33,8 @@ import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
+import {toggleHideCoinbaseTotalBalance} from '../../../store/coinbase/coinbase.actions';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -114,6 +116,10 @@ const CoinbaseSettings = () => {
     ({COINBASE}) => COINBASE.isApiLoading,
   );
   const userError = useAppSelector(({COINBASE}) => COINBASE.getUserError);
+
+  const hideTotalBalance = useAppSelector(
+    ({COINBASE}) => COINBASE.hideTotalBalance,
+  );
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
@@ -274,6 +280,17 @@ const CoinbaseSettings = () => {
           <Detail>
             <Item>{t('Time Zone')}</Item>
             <DetailInfo align="right">{userData?.data.time_zone}</DetailInfo>
+          </Detail>
+          <Hr />
+          <Detail>
+            <Item>{t('Hide Balance')}</Item>
+
+            <ToggleSwitch
+              onChange={() => {
+                dispatch(toggleHideCoinbaseTotalBalance(!hideTotalBalance));
+              }}
+              isEnabled={!!hideTotalBalance}
+            />
           </Detail>
           <Hr />
         </Details>

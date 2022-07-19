@@ -52,12 +52,12 @@ import {
 import {SilentPushEvent} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
-  startUpdateAllWalletStatusForKey,
   startUpdateWalletStatus,
 } from '../wallet/effects/status/status';
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
+import {debounce} from 'lodash';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -71,6 +71,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
     dispatch(LogActions.info(`Initializing app (${__DEV__ ? 'D' : 'P'})...`));
+
+    const {APP, BITPAY_ID} = getState();
+    const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
+
+    dispatch(LogActions.debug(`Network: ${network}`));
+    dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
     await dispatch(startWalletStoreInit());
 
@@ -92,13 +98,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(setMigrationComplete());
       dispatch(LogActions.info('success [setMigrationComplete]'));
     }
-
-    const {BITPAY_ID} = getState();
-    const {network, pinLockActive, biometricLockActive, colorScheme} =
-      getState().APP;
-
-    dispatch(LogActions.debug(`Network: ${network}`));
-    dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
     const token = BITPAY_ID.apiToken[network];
     const isPaired = !!token;
@@ -239,8 +238,10 @@ const initializeApi =
   };
 
 /**
- * Initializes Braze content by checking for a paired user, refreshing the
- * Braze cache, then fetching data from Braze and commiting it to the store.
+ * Initializes Braze content by setting up an event subscription for content
+ * changes, checking for a paired user, then requesting a Braze refresh.
+ *
+ * The subscription will fetch latest content when it receives an update event.
  * @returns void
  */
 export const initializeBrazeContent =
@@ -250,25 +251,85 @@ export const initializeBrazeContent =
       const {APP, BITPAY_ID} = getState();
       const user = BITPAY_ID.user[APP.network];
 
+      let contentCardSubscription = APP.brazeContentCardSubscription;
+
+      if (contentCardSubscription) {
+        contentCardSubscription.subscriber.removeAllSubscriptions();
+        contentCardSubscription = null;
+      }
+
+      // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
+      const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
+      const MAX_RETRIES = 3;
+      let currentRetry = 0;
+
+      contentCardSubscription = ReactAppboy.addListener(
+        ReactAppboy.Events.CONTENT_CARDS_UPDATED,
+        async () => {
+          const isInitializing = currentRetry < MAX_RETRIES;
+
+          dispatch(
+            isInitializing
+              ? LogActions.debug(
+                  'Braze content cards updated, fetching latest content cards...',
+                )
+              : LogActions.info(
+                  'Braze content cards updated, fetching latest content cards...',
+                ),
+          );
+
+          const contentCards = await ReactAppboy.getContentCards();
+
+          if (contentCards.length) {
+            currentRetry = MAX_RETRIES;
+          } else {
+            if (isInitializing) {
+              currentRetry++;
+              await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
+              dispatch(
+                LogActions.debug(
+                  `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
+                ),
+              );
+              ReactAppboy.requestContentCardsRefresh();
+              return;
+            }
+          }
+
+          dispatch(
+            LogActions.info(
+              `${contentCards.length} content ${
+                contentCards.length === 1 ? 'card' : 'cards'
+              } fetched from Braze.`,
+            ),
+          );
+          dispatch(AppActions.brazeContentCardsFetched(contentCards));
+        },
+      );
+
       if (user) {
         ReactAppboy.changeUser(user.eid);
         ReactAppboy.setEmail(user.email);
         dispatch(setBrazeEid(user.eid));
       } else {
-        const eid = APP.brazeEid || uuid.v4().toString();
-        console.log('###### EXTERNAL ID: ', eid); /* TODO */
+        let eid: string;
+
+        if (APP.brazeEid) {
+          dispatch(LogActions.debug('Braze EID exists.'));
+          eid = APP.brazeEid;
+        } else {
+          dispatch(LogActions.debug('Generating a new Braze EID...'));
+          eid = uuid.v4().toString();
+        }
+
         ReactAppboy.changeUser(eid);
         dispatch(setBrazeEid(eid));
       }
 
-      ReactAppboy.requestContentCardsRefresh();
-
-      const contentCards = await ReactAppboy.getContentCards();
-
-      dispatch(LogActions.info('Successfully fetched data from Braze.'));
-      dispatch(AppActions.brazeContentCardsFetched(contentCards));
+      dispatch(LogActions.info('Successfully initialized Braze.'));
+      dispatch(AppActions.brazeInitialized(contentCardSubscription));
     } catch (err) {
-      const errMsg = 'Failed to fetch data from Braze.';
+      const errMsg = 'Something went wrong while initializing Braze.';
 
       dispatch(LogActions.error(errMsg));
       dispatch(
@@ -282,22 +343,16 @@ export const initializeBrazeContent =
   };
 
 /**
- * Refreshes Braze content by refreshing the Braze cache, then fetching
- * data from Braze and commiting it to the store. Does not change or set user.
+ * Requests a refresh for Braze content.
  * @returns void
  */
-export const startRefreshBrazeContent = (): Effect => async dispatch => {
+export const requestBrazeContentRefresh = (): Effect => async dispatch => {
   try {
     dispatch(LogActions.info('Refreshing Braze content...'));
 
     ReactAppboy.requestContentCardsRefresh();
-
-    const contentCards = await ReactAppboy.getContentCards();
-
-    dispatch(LogActions.info('Successfully fetched data from Braze.'));
-    dispatch(AppActions.brazeContentCardsFetched(contentCards));
   } catch (err) {
-    const errMsg = 'Failed to fetch data from Braze.';
+    const errMsg = 'Something went wrong while refreshing Braze content.';
 
     dispatch(LogActions.error(errMsg));
     dispatch(
@@ -305,8 +360,6 @@ export const startRefreshBrazeContent = (): Effect => async dispatch => {
         err instanceof Error ? err.message : JSON.stringify(err),
       ),
     );
-  } finally {
-    dispatch(LogActions.info('Refreshing Braze content complete.'));
   }
 };
 
@@ -553,30 +606,15 @@ export const Analytics = {
 };
 
 export const subscribePushNotifications =
-  (walletClient: any, eid: string): Effect<Promise<void>> =>
-  async dispatch => {
+  (walletClient: any, eid: string): Effect =>
+  () => {
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
       packageName: 'BitPay',
       walletId: walletClient.credentials.walletId,
     };
-    walletClient.pushNotificationsSubscribe(opts, (err: any) => {
-      if (err) {
-        dispatch(
-          LogActions.error(
-            'Push Notifications error subscribing: ' + JSON.stringify(err),
-          ),
-        );
-      } else {
-        dispatch(
-          LogActions.info(
-            'Push Notifications success subscribing: ' +
-              walletClient.credentials.walletName,
-          ),
-        );
-      }
-    });
+    walletClient.pushNotificationsSubscribe(opts);
   };
 
 export const unSubscribePushNotifications =
@@ -608,6 +646,19 @@ export const checkNotificationsPermissions = (): Promise<boolean> => {
       } else {
         return resolve(false);
       }
+    });
+  });
+};
+
+export const renewSubscription = (): Effect => (dispatch, getState) => {
+  const {
+    WALLET: {keys},
+    APP,
+  } = getState();
+
+  getAllWalletClients(keys).then(walletClients => {
+    walletClients.forEach(walletClient => {
+      dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
     });
   });
 };
@@ -668,6 +719,32 @@ export const setOffersAndPromotionsNotifications =
     }
   };
 
+const _startUpdateAllKeyAndWalletStatus = debounce(
+  async dispatch => {
+    dispatch(startUpdateAllKeyAndWalletStatus());
+    DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+  },
+  5000,
+  {leading: true, trailing: false},
+);
+
+const _createWalletAddress = debounce(
+  async (dispatch, wallet) => {
+    dispatch(createWalletAddress({wallet, newAddress: true}));
+  },
+  5000,
+  {leading: true, trailing: false},
+);
+
+const _startUpdateWalletStatus = debounce(
+  async (dispatch, keyObj, wallet) => {
+    dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
+    DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+  },
+  5000,
+  {leading: true, trailing: false},
+);
+
 export const handleBwsEvent =
   (response: SilentPushEvent): Effect =>
   async (dispatch, getState) => {
@@ -690,18 +767,6 @@ export const handleBwsEvent =
       ) {
         return;
       }
-      console.log(
-        '#### wallet found! Sending Event...',
-        wallet.credentials.walletId,
-      );
-      let walletId = wallet.credentials.walletId;
-      if (response.tokenAddress) {
-        walletId =
-          wallet.credentials.walletId +
-          '-' +
-          response.tokenAddress.toLowerCase();
-        console.log(`### event for token wallet: ${walletId}`);
-      }
 
       // TODO showInappNotification(data);
 
@@ -714,25 +779,21 @@ export const handleBwsEvent =
 
       switch (response.notification_type) {
         case 'NewAddress':
-          dispatch(createWalletAddress({wallet, newAddress: true}));
+          _createWalletAddress(dispatch, wallet);
           break;
         case 'NewBlock':
           if (response.network && response.network === 'livenet') {
-            dispatch(startUpdateAllKeyAndWalletStatus());
-            DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+            _startUpdateAllKeyAndWalletStatus(dispatch);
           }
           break;
         case 'TxProposalAcceptedBy':
         case 'TxProposalRejectedBy':
         case 'TxProposalRemoved':
-          dispatch(startUpdateAllWalletStatusForKey({key: keyObj}));
-          break;
         case 'NewOutgoingTx':
         case 'NewIncomingTx':
         case 'NewTxProposal':
         case 'TxConfirmation':
-          dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
-          DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+          _startUpdateWalletStatus(dispatch, keyObj, wallet);
           break;
       }
     }
