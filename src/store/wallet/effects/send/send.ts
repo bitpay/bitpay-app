@@ -783,12 +783,7 @@ export const publishAndSign =
         APP: {biometricLockActive},
       } = getState();
 
-      // TODO android
-      if (
-        biometricLockActive &&
-        Platform.OS === 'ios' &&
-        !signingMultipleProposals
-      ) {
+      if (biometricLockActive && !signingMultipleProposals) {
         try {
           await dispatch(checkBiometricForSending());
         } catch (error) {
@@ -912,8 +907,7 @@ export const publishAndSignMultipleProposals =
           APP: {biometricLockActive},
         } = getState();
 
-        // TODO android
-        if (biometricLockActive && Platform.OS === 'ios') {
+        if (biometricLockActive) {
           try {
             await dispatch(checkBiometricForSending());
           } catch (error) {
