@@ -10,6 +10,7 @@ import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.soloader.SoLoader;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.swmansion.reanimated.ReanimatedJSIModulePackage;
@@ -103,4 +104,21 @@ public class MainApplication extends Application implements ReactApplication {
       }
     }
   }
+
+    /*
+      Fix for IAB
+     */
+    private ArrayList<Class> runningActivities = new ArrayList<>();
+
+    public void addActivityToStack (Class cls) {
+        if (!runningActivities.contains(cls)) runningActivities.add(cls);
+    }
+
+    public void removeActivityFromStack (Class cls) {
+        if (runningActivities.contains(cls)) runningActivities.remove(cls);
+    }
+
+    public boolean isActivityInBackStack (Class cls) {
+        return runningActivities.contains(cls);
+    }
 }
