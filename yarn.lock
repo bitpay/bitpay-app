@@ -11402,10 +11402,10 @@ react-native-timeago@0.5.0:
   resolved "https://registry.yarnpkg.com/react-native-timeago/-/react-native-timeago-0.5.0.tgz#1b08057e3473dbb5b6720ee5cde4e544a7c250f0"
   integrity sha512-GYrV36FK8ttkl7BIAdh77OlYLYGIKLGNviJqzPUtKaO8ANEtI8ph7UkSTRv9oMKfvDnA5VKV9hVX7GtYoAztRg==
 
-react-native-touch-id@4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/react-native-touch-id/-/react-native-touch-id-4.4.1.tgz#8b1bb2d04c30bac36bb9696d2d723e719c4a8b08"
-  integrity sha512-1jTl8fC+0fxvqegy/XXTyo6vMvPhjzkoDdaqoYZx0OH8AT250NuXnNPyKktvigIcys3+2acciqOeaCall7lrvg==
+react-native-touch-id-ng@5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-touch-id-ng/-/react-native-touch-id-ng-5.0.1.tgz#acb229e3f3d70a7fee75153296e07778763b8032"
+  integrity sha512-J8V10YnIfRvNNJ0hVUX889qqmu6lgs5O1baFars3q1qUgVqj0l4MAsrBF5tpyo5K89LFyLGWAt5XH7/0zNOPvA==
 
 react-native-tracking-transparency@0.1.1:
   version "0.1.1"

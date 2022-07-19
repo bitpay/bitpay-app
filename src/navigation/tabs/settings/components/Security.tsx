@@ -12,7 +12,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useThemeType} from '../../../../utils/hooks/useThemeType';
 import {RootState} from '../../../../store';
 import {AppActions} from '../../../../store/app';
-import TouchID from 'react-native-touch-id';
+import TouchID from 'react-native-touch-id-ng';
 import {
   authOptionalConfigObject,
   BiometricErrorCodes,
