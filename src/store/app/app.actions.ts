@@ -107,18 +107,19 @@ export const setConfirmedTxAccepted = (
   payload: confirmedTxAccepted,
 });
 
-export const setProductsUpdatesAccepted = (
-  productsUpdatesAccepted: boolean,
+export const setAnnouncementsAccepted = (
+  announcementsAccepted: boolean,
 ): AppActionType => ({
-  type: AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED,
-  payload: productsUpdatesAccepted,
+  type: AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED,
+  payload: announcementsAccepted,
 });
 
-export const setOffersAndPromotionsAccepted = (
-  offersAndPromotionsAccepted: boolean,
+export const setEmailNotificationsAccepted = (
+  accepted: boolean,
+  email: string | null,
 ): AppActionType => ({
-  type: AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED,
-  payload: offersAndPromotionsAccepted,
+  type: AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED,
+  payload: {accepted, email},
 });
 
 export const showOnboardingFinishModal = (): AppActionType => ({

@@ -56,8 +56,11 @@ export interface AppState {
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
   confirmedTxAccepted: boolean;
-  productsUpdatesAccepted: boolean;
-  offersAndPromotionsAccepted: boolean;
+  announcementsAccepted: boolean;
+  emailNotifications: {
+    accepted: boolean;
+    email: string | null;
+  };
   showOnboardingFinishModal: boolean;
   showDecryptPasswordModal: boolean;
   decryptPasswordConfig: DecryptPasswordConfig | undefined;
@@ -116,8 +119,11 @@ const initialState: AppState = {
   currentRoute: undefined,
   notificationsAccepted: false,
   confirmedTxAccepted: false,
-  productsUpdatesAccepted: false,
-  offersAndPromotionsAccepted: false,
+  announcementsAccepted: false,
+  emailNotifications: {
+    accepted: false,
+    email: null,
+  },
   showOnboardingFinishModal: false,
   showDecryptPasswordModal: false,
   decryptPasswordConfig: undefined,
@@ -264,16 +270,19 @@ export const appReducer = (
         confirmedTxAccepted: action.payload,
       };
 
-    case AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED:
+    case AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED:
       return {
         ...state,
-        productsUpdatesAccepted: action.payload,
+        announcementsAccepted: action.payload,
       };
 
-    case AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED:
+    case AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED:
       return {
         ...state,
-        offersAndPromotionsAccepted: action.payload,
+        emailNotifications: {
+          accepted: action.payload.accepted,
+          email: action.payload.email,
+        },
       };
 
     case AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL:
