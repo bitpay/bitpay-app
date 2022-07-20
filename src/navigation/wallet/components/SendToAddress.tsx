@@ -95,6 +95,7 @@ const SendToAddress = () => {
     setRecipientListContext,
     setRecipientAmountContext,
     goToConfirmView,
+    goToSelectInputsView,
   } = useContext(SendToOptionsContext);
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
@@ -176,7 +177,9 @@ const SendToAddress = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setErrorMessage('');
         setSearchInput('');
-        addRecipient({address: text});
+        context === 'selectInputs'
+          ? goToSelectInputsView({address: text})
+          : addRecipient({address: text});
       }
     } else {
       setErrorMessage(text.length > 15 ? 'Invalid Address' : '');
@@ -189,9 +192,7 @@ const SendToAddress = () => {
 
   const addRecipient = (newRecipient: Recipient) => {
     if (!recipientList.some(r => r.address === newRecipient.address)) {
-      context === 'selectInputs'
-        ? setRecipientListContext(newRecipient)
-        : setRecipientAmountContext(newRecipient);
+      setRecipientAmountContext(newRecipient);
     }
   };
 
@@ -220,13 +221,17 @@ const SendToAddress = () => {
         dispatch(dismissOnGoingProcessModal());
       }
 
-      addRecipient({
+      const newRecipient = {
         type: 'wallet',
         name: walletName || credentials.walletName,
         walletId,
         keyId,
         address,
-      });
+      };
+
+      context === 'selectInputs'
+        ? goToSelectInputsView(newRecipient)
+        : addRecipient(newRecipient);
     } catch (err) {
       console.error(err);
     }
@@ -246,20 +251,6 @@ const SendToAddress = () => {
     },
     [wallet, setRecipientListContext, setRecipientAmountContext],
   );
-
-  const goToNextView = () => {
-    if (context === 'selectInputs') {
-      navigation.navigate('Wallet', {
-        screen: 'SelectInputs',
-        params: {
-          recipient: recipientList[0],
-          wallet,
-        },
-      });
-    } else {
-      goToConfirmView();
-    }
-  };
 
   return (
     <>
@@ -339,17 +330,19 @@ const SendToAddress = () => {
         </View>
       </ScrollViewContainer>
 
-      <CtaContainer>
-        <Button
-          buttonStyle={'primary'}
-          onPress={() => {
-            haptic('impactLight');
-            goToNextView();
-          }}
-          disabled={!recipientList[0]}>
-          {t('Continue')}
-        </Button>
-      </CtaContainer>
+      {context !== 'selectInputs' ? (
+        <CtaContainer>
+          <Button
+            buttonStyle={'primary'}
+            onPress={() => {
+              haptic('impactLight');
+              goToConfirmView();
+            }}
+            disabled={!recipientList[0]}>
+            {t('Continue')}
+          </Button>
+        </CtaContainer>
+      ) : null}
     </>
   );
 };
