@@ -147,6 +147,7 @@ interface SendToOptionsContextProps {
     updateRecipient?: boolean,
   ) => void;
   goToConfirmView: () => void;
+  goToSelectInputsView: (recipient: Recipient) => void;
 }
 
 export const SendToOptionsContext =
@@ -256,6 +257,16 @@ const SendToOptions = () => {
     });
   }, [navigation, t, params.title]);
 
+  const goToSelectInputsView = (recipient: Recipient) => {
+    navigation.navigate('Wallet', {
+      screen: 'SelectInputs',
+      params: {
+        recipient,
+        wallet,
+      },
+    });
+  };
+
   return (
     <SendToOptionsContext.Provider
       value={{
@@ -263,6 +274,7 @@ const SendToOptions = () => {
         setRecipientListContext,
         setRecipientAmountContext,
         goToConfirmView,
+        goToSelectInputsView,
       }}>
       <ImportContainer>
         <Tab.Navigator screenOptions={{...ScreenOptions(150)}}>
