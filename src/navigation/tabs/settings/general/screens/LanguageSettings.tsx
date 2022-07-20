@@ -9,13 +9,11 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
-import {LanguageList} from '../../../../../constants/LanguageSelectionList';
 import {AppActions} from '../../../../../store/app';
 import {Analytics} from '../../../../../store/app/app.effects';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
-
-const SortedLanguages = sortBy(LanguageList, 'name');
+import {LanguageList} from "../../../../../constants/LanguageSelectionList";
 
 const LanguageSettingsScreen: React.VFC = () => {
   const dispatch = useAppDispatch();
@@ -33,7 +31,9 @@ const LanguageSettingsScreen: React.VFC = () => {
   return (
     <SettingsContainer>
       <Settings>
-        {SortedLanguages.map(({name, isoCode}) => {
+        <Hr />
+
+        {LanguageList.map(({name, isoCode}) => {
           return (
             <View key={isoCode}>
               <Setting onPress={() => onSetLanguage(isoCode)}>
