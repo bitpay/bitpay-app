@@ -5,48 +5,39 @@ interface ItemProps {
 
 export const LanguageList: Array<ItemProps> = [
   {
-    // t('Dutch')
-    name: 'Dutch',
-    isoCode: 'nl',
-  },
-  {
-    // t('English')
     name: 'English',
     isoCode: 'en',
   },
   {
-    // t('Spanish')
-    name: 'Spanish',
+    name: 'Español',
     isoCode: 'es',
   },
   {
-    // t('French')
-    name: 'French',
+    name: 'Français',
     isoCode: 'fr',
   },
   {
-    // t('Japanese')
-    name: 'Japanese',
-    isoCode: 'ja',
+    name: 'Nederlands',
+    isoCode: 'nl',
   },
   {
-    // t('German')
-    name: 'German',
+    name: 'Deutsch',
     isoCode: 'de',
   },
   {
-    // t('Portuguese')
-    name: 'Portuguese',
-    isoCode: 'pt',
+    name: '日本語',
+    isoCode: 'ja',
   },
   {
-    // t('Russian')
-    name: 'Russian',
+    name: '中文（简体）',
+    isoCode: 'zh',
+  },
+  {
+    name: 'Pусский',
     isoCode: 'ru',
   },
   {
-    // t('Chinese')
-    name: 'Chinese',
-    isoCode: 'zh',
+    name: 'Português',
+    isoCode: 'pt',
   },
 ];
