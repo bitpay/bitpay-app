@@ -1,7 +1,7 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {selectSettingsNotificationState} from '../../../../../store/app/app.selectors';
-import {View} from 'react-native';
+import {View, DeviceEventEmitter} from 'react-native';
 import {AppEffects} from '../../../../../store/app';
 import {
   Hr,
@@ -9,6 +9,7 @@ import {
   SettingDescription,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
+import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -43,14 +44,9 @@ const PushNotifications = () => {
       checked: pushNotifications,
       onPress: async () => {
         const accepted = !pushNotifications;
-        dispatch(AppEffects.setNotifications(accepted));
-        setPushNotifications(accepted);
-
-        setConfirmedTx(accepted);
-        dispatch(AppEffects.setConfirmTxNotifications(accepted));
-
-        setAnnouncements(accepted);
-        dispatch(AppEffects.setAnnouncementsNotifications(accepted));
+        DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
+          accepted,
+        });
       },
     },
     {
@@ -58,14 +54,14 @@ const PushNotifications = () => {
       checked: confirmedTx,
       description: t('Automated alerts about wallet or card.'),
       onPress: () => {
-        if (!pushNotifications) {
-          dispatch(AppEffects.setNotifications(true));
-          setPushNotifications(true);
-        }
-
         const accepted = !confirmedTx;
         setConfirmedTx(accepted);
         dispatch(AppEffects.setConfirmTxNotifications(accepted));
+        if (!pushNotifications) {
+          DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
+            accepted: true,
+          });
+        }
       },
     },
     {
@@ -73,17 +69,23 @@ const PushNotifications = () => {
       checked: annnouncements,
       description: t('Updates on new features and other relevant news.'),
       onPress: () => {
-        if (!pushNotifications) {
-          dispatch(AppEffects.setNotifications(true));
-          setPushNotifications(true);
-        }
-
         const accepted = !annnouncements;
         setAnnouncements(accepted);
         dispatch(AppEffects.setAnnouncementsNotifications(accepted));
+        if (!pushNotifications) {
+          DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
+            accepted: true,
+          });
+        }
       },
     },
   ];
+
+  useEffect(() => {
+    setPushNotifications(notificationsState.pushNotifications);
+    setConfirmedTx(notificationsState.confirmedTx);
+    setAnnouncements(notificationsState.announcements);
+  }, [notificationsState]);
 
   return (
     <SettingsContainer>
