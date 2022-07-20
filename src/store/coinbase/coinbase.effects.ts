@@ -38,6 +38,7 @@ import {
   CoinbaseAccountProps,
   CoinbaseErrorsProps,
   CoinbaseExchangeRatesProps,
+  CoinbaseTransactionsByAccountProps,
 } from '../../api/coinbase/coinbase.types';
 import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
 
@@ -47,15 +48,15 @@ import {setHomeCarouselConfig} from '../app/app.actions';
 import {logSegmentEvent} from '../app/app.effects';
 
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
-  return error.errors.some(err => err.id === 'revoked_token');
+  return error?.errors?.some(err => err.id === 'revoked_token');
 };
 
 const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
-  return error.errors.some(err => err.id === 'expired_token');
+  return error?.errors?.some(err => err.id === 'expired_token');
 };
 
 export const isInvalidTokenError = (error: CoinbaseErrorsProps): boolean => {
-  return error.errors.some(err => err.id === 'invalid_token');
+  return error?.errors?.some(err => err.id === 'invalid_token');
 };
 
 export const coinbaseErrorIncludesErrorParams = (
@@ -79,12 +80,14 @@ export const coinbaseParseErrorToString = (
     return error;
   } else if (error?.error_description) {
     return error.error_description;
-  } else {
+  } else if (error?.errors) {
     let message = '';
     for (let i = 0; i < error.errors.length; i++) {
       message = message + (i > 0 ? '. ' : '') + error.errors[i].message;
     }
     return message;
+  } else {
+    return 'Network Error';
   }
 };
 
@@ -112,7 +115,11 @@ export const coinbaseUpdateExchangeRate =
       );
       dispatch(exchangeRatesSuccess(exchangeRates));
     } catch (error: CoinbaseErrorsProps | any) {
-      dispatch(LogActions.warn(coinbaseParseErrorToString(error)));
+      dispatch(
+        LogActions.warn(
+          '[coinbaseUpdateExchangeRate] ' + coinbaseParseErrorToString(error),
+        ),
+      );
     }
   };
 
@@ -148,7 +155,11 @@ export const coinbaseLinkAccount =
       );
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(accessTokenFailed(error));
-      dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+      dispatch(
+        LogActions.error(
+          '[coinbaseLinkAccount] ' + coinbaseParseErrorToString(error),
+        ),
+      );
     }
   };
 
@@ -168,7 +179,11 @@ export const coinbaseRefreshToken =
       dispatch(refreshTokenSuccess(COINBASE_ENV, newToken));
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(refreshTokenFailed(error));
-      dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+      dispatch(
+        LogActions.error(
+          '[coinbaseRefreshToken] ' + coinbaseParseErrorToString(error),
+        ),
+      );
     }
   };
 
@@ -206,15 +221,23 @@ export const coinbaseGetUser =
       dispatch(userSuccess(COINBASE_ENV, user));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        dispatch(LogActions.warn('Token expired. Getting new token...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token expired. Getting new token...'),
+        );
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseGetUser());
       } else if (isRevokedTokenError(error)) {
-        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token revoked. Should re-connect...'),
+        );
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(userFailed(error));
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(
+          LogActions.error(
+            '[coinbaseGetUser] ' + coinbaseParseErrorToString(error),
+          ),
+        );
       }
     }
   };
@@ -283,15 +306,24 @@ export const coinbaseGetAccountsAndBalance =
       );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        dispatch(LogActions.warn('Token expired. Getting new token...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token expired. Getting new token...'),
+        );
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseGetAccountsAndBalance());
       } else if (isRevokedTokenError(error)) {
-        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token revoked. Should re-connect...'),
+        );
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(accountsFailed(error));
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(
+          LogActions.error(
+            '[coinbaseGetAccountsAndBalance] ' +
+              coinbaseParseErrorToString(error),
+          ),
+        );
       }
     }
   };
@@ -314,15 +346,27 @@ export const coinbaseGetTransactionsByAccount =
       dispatch(transactionsSuccess(COINBASE_ENV, accountId, transactions));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        dispatch(LogActions.warn('Token expired. Getting new token...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token expired. Getting new token...'),
+        );
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseGetTransactionsByAccount(accountId));
       } else if (isRevokedTokenError(error)) {
-        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token revoked. Should re-connect...'),
+        );
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(transactionsFailed(error));
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(
+          LogActions.error(
+            '[coinbaseGetTransactionsByAccount] ' +
+              coinbaseParseErrorToString(error),
+          ),
+        );
+        const txs: CoinbaseTransactionsByAccountProps =
+          COINBASE.transactions[COINBASE_ENV] || {};
+        dispatch(transactionsSuccess(COINBASE_ENV, accountId, txs[accountId]));
       }
     }
   };
@@ -346,15 +390,23 @@ export const coinbaseCreateAddress =
       return addressData.data.address;
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        dispatch(LogActions.warn('Token expired. Getting new token...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token expired. Getting new token...'),
+        );
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseCreateAddress(accountId));
       } else if (isRevokedTokenError(error)) {
-        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token revoked. Should re-connect...'),
+        );
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(createAddressFailed(error));
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(
+          LogActions.error(
+            '[coinbaseCreateAddress] ' + coinbaseParseErrorToString(error),
+          ),
+        );
       }
     }
   };
@@ -385,15 +437,23 @@ export const coinbaseSendTransaction =
       );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        dispatch(LogActions.warn('Token expired. Getting new token...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token expired. Getting new token...'),
+        );
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseSendTransaction(accountId, tx));
       } else if (isRevokedTokenError(error)) {
-        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token revoked. Should re-connect...'),
+        );
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(sendTransactionFailed(error));
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(
+          LogActions.error(
+            '[coinbaseSendTransaction] ' + coinbaseParseErrorToString(error),
+          ),
+        );
       }
     }
   };
@@ -423,16 +483,25 @@ export const coinbasePayInvoice =
       dispatch(payInvoiceSuccess());
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        dispatch(LogActions.warn('Token expired. Getting new token...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token expired. Getting new token...'),
+        );
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbasePayInvoice(invoiceId, currency));
         return;
       } else if (isRevokedTokenError(error)) {
-        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
+        dispatch(
+          LogActions.warn('[Coinbase] Token revoked. Should re-connect...'),
+        );
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(payInvoiceFailed(error));
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(
+          LogActions.error(
+            '[coinbaseClearSendTransactionStatus] ' +
+              coinbaseParseErrorToString(error),
+          ),
+        );
       }
       const coinbaseErrorString = coinbaseParseErrorToString(error);
       if (coinbaseErrorString) {

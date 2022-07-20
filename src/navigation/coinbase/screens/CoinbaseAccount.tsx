@@ -385,6 +385,9 @@ const CoinbaseAccount = ({
 
   const showError = async (error: CoinbaseErrorsProps) => {
     const errMsg = coinbaseParseErrorToString(error);
+    if (errMsg === 'Network Error') {
+      return;
+    }
     dispatch(
       showBottomNotificationModal({
         type: 'error',
