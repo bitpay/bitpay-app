@@ -73,7 +73,7 @@ const CreateEncryptionPassword = () => {
       .string()
       .required()
       .oneOf([yup.ref('password')], t('Passwords must match')),
-  });  
+  });
   const {
     control,
     handleSubmit,

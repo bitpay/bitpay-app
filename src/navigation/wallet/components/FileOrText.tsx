@@ -185,9 +185,7 @@ const FileOrText = () => {
             defaultValue=""
           />
 
-          {errors.text?.message && (
-            <ErrorText>{errors.text.message}</ErrorText>
-          )}
+          {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
         </FormRow>
 
         <FormRow>

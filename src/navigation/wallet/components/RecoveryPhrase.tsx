@@ -605,9 +605,7 @@ const RecoveryPhrase = () => {
           defaultValue=""
         />
 
-        {errors.text?.message && (
-          <ErrorText>{errors.text.message}</ErrorText>
-        )}
+        {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
 
         <CtaContainer>
           <AdvancedOptionsContainer>
