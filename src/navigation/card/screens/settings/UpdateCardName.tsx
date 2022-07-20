@@ -1,7 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView} from 'react-native';
+import {Keyboard} from 'react-native';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';
@@ -11,13 +11,13 @@ import {AppActions} from '../../../../store/app';
 import {CardActions, CardEffects} from '../../../../store/card';
 import {Card} from '../../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {CardStackParamList} from '../../CardStack';
+import {CardScreens, CardStackParamList} from '../../CardStack';
 
 export interface UpdateCardNameScreenParamList {
   card: Card;
 }
 
-const ContentContainer = styled.View`
+const ContentContainer = styled.ScrollView`
   padding: ${ScreenGutter};
 `;
 
@@ -42,8 +42,8 @@ const createErrorConfig = (
   ],
 });
 
-const UpdateCardNameScreen: React.FC<
-  StackScreenProps<CardStackParamList, 'UpdateCardName'>
+const UpdateCardNameScreen: React.VFC<
+  StackScreenProps<CardStackParamList, CardScreens.UPDATE_CARD_NAME>
 > = ({navigation, route}) => {
   const {card} = route.params;
   const dispatch = useAppDispatch();
@@ -55,6 +55,8 @@ const UpdateCardNameScreen: React.FC<
   const [buttonState, setButtonState] = useState<ButtonState>();
 
   const onUpdatePress = () => {
+    Keyboard.dismiss();
+
     setButtonState('loading');
 
     dispatch(CardEffects.START_UPDATE_CARD_NAME(card.id, newName));
@@ -85,21 +87,19 @@ const UpdateCardNameScreen: React.FC<
   }, [updateNameStatus, card.id, dispatch, navigation, t]);
 
   return (
-    <ScrollView>
-      <ContentContainer>
-        <FormContainer>
-          <BoxInput
-            label={t('Card Name')}
-            value={newName}
-            onChangeText={(text: string) => setNewName(text)}
-          />
-        </FormContainer>
+    <ContentContainer keyboardShouldPersistTaps={'handled'}>
+      <FormContainer>
+        <BoxInput
+          label={t('Card Name')}
+          value={newName}
+          onChangeText={(text: string) => setNewName(text)}
+        />
+      </FormContainer>
 
-        <Button state={buttonState} onPress={() => onUpdatePress()}>
-          {t('Update')}
-        </Button>
-      </ContentContainer>
-    </ScrollView>
+      <Button state={buttonState} onPress={() => onUpdatePress()}>
+        {t('Update')}
+      </Button>
+    </ContentContainer>
   );
 };
 
