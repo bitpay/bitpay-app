@@ -420,10 +420,11 @@ const ContactsAdd = ({
   useEffect(() => {
     if (contact?.address) {
       setValue('address', contact.address, {shouldDirty: true});
-      processAddress(contact.address);
       setValue('name', contact.name);
       setValue('email', contact.email);
+      setValue('tag', contact.tag);
       currencySelected({id: contact.coin} as CurrencySelectionToggleProps);
+      processAddress(contact.address);
     }
   }, [contact]);
 
@@ -510,7 +511,7 @@ const ContactsAdd = ({
       <InputContainer hideInput={!xrpValidAddress}>
         <Controller
           control={control}
-          render={({field: {onChange, onBlur}}) => (
+          render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'Tag'}
               label={t('TAG')}
@@ -520,6 +521,7 @@ const ContactsAdd = ({
               keyboardType={'number-pad'}
               type={'number'}
               maxLength={9}
+              value={value?.toString()}
             />
           )}
           name="tag"
@@ -611,7 +613,7 @@ const ContactsAdd = ({
             </SearchImageContainer>
           </SearchContainer>
           <FlatList
-            contentContainerStyle={{height: '100%'}}
+            contentContainerStyle={{minHeight: '100%'}}
             data={ethCurrencyOptions}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
