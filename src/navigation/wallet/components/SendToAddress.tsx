@@ -58,6 +58,10 @@ const ValidDataTypes: string[] = [
   'BitcoinCashAddress',
   'DogecoinAddress',
   'LitecoinAddress',
+  'BitcoinUri',
+  'BitcoinCashUri',
+  'DogecoinUri',
+  'LitecoinUri',
 ];
 
 const SendToAddressContainer = styled.View`
