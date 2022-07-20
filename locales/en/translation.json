@@ -1127,5 +1127,6 @@
   "Testnet": "Testnet",
   "InvalidInvitationCode": "Invalid invitation code",
   "MustBeLessThanArgCharacters": "Must be less than {{0}} characters",
-  "MustBeGreaterThanArgCharacters": "Must be greater than {{0}} characters"
+  "MustBeGreaterThanArgCharacters": "Must be greater than {{0}} characters",
+  "IAgreeToTheArgAndArg": "I agree to the <0>{{0}}</0> and <1>{{1}}</1>."
 }

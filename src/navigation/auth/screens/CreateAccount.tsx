@@ -2,7 +2,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {useTranslation} from 'react-i18next';
+import {Trans, useTranslation} from 'react-i18next';
 import {SafeAreaView, TextInput} from 'react-native';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
@@ -271,8 +271,17 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
                   />
 
                   <CheckboxLabel>
-                    I agree to the <A href={URL.TOU_BITPAY_ID}>Terms of Use</A>{' '}
-                    and <A href={URL.PRIVACY_POLICY}>Privacy Policy</A>.
+                    <Trans
+                      i18nKey={'IAgreeToTheArgAndArg'}
+                      values={{
+                        0: t('Terms of Use'),
+                        1: t('Privacy Policy'),
+                      }}
+                      components={[
+                        <A href={URL.TOU_BITPAY_ID} />,
+                        <A href={URL.PRIVACY_POLICY} />,
+                      ]}
+                    />
                   </CheckboxLabel>
                 </CheckboxControl>
 
