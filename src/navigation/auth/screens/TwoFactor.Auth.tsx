@@ -4,9 +4,9 @@ import React, {useEffect} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {useDispatch, useSelector} from 'react-redux';
-import * as yup from 'yup';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
+import yup from '../../../lib/yup';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
@@ -34,7 +34,7 @@ interface TwoFactorAuthFieldValues {
 }
 
 const schema = yup.object().shape({
-  code: yup.string().required('Required'),
+  code: yup.string().required(),
 });
 
 const TwoFactorAuthentication: React.FC<

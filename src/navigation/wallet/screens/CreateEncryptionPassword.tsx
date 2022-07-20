@@ -6,7 +6,7 @@ import {WalletStackParamList} from '../WalletStack';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {Caution, SlateDark, White} from '../../../styles/colors';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import BoxInput from '../../../components/form/BoxInput';
@@ -55,14 +55,6 @@ const ErrorText = styled(BaseText)`
   margin: 5px auto;
 `;
 
-const schema = yup.object().shape({
-  password: yup.string().required(),
-  confirmPassword: yup
-    .string()
-    .required('Confirm Encryption Password is required field')
-    .oneOf([yup.ref('password')], 'Passwords must match'),
-});
-
 interface EncryptPasswordFieldValues {
   password: string;
   confirmPassword: string;
@@ -75,6 +67,13 @@ const CreateEncryptionPassword = () => {
     params: {key},
   } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptPassword'>>();
 
+  const schema = yup.object().shape({
+    password: yup.string().required(),
+    confirmPassword: yup
+      .string()
+      .required()
+      .oneOf([yup.ref('password')], t('Passwords must match')),
+  });  
   const {
     control,
     handleSubmit,
