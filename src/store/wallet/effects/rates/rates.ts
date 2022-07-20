@@ -31,7 +31,7 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 export const getPriceHistory =
   (defaultAltCurrencyIsoCode: string): Effect =>
-  async dispatch => {
+  async (dispatch, getState) => {
     try {
       dispatch(LogActions.info('starting [getPriceHistory]'));
       const coinsList = SUPPORTED_COINS.map(
@@ -62,8 +62,16 @@ export const getPriceHistory =
       } else {
         errorStr = JSON.stringify(err);
       }
-      dispatch(failedGetPriceHistory());
-      dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
+      if (errorStr === 'Network Error') {
+        dispatch(LogActions.warn(`[getPriceHistory] ${errorStr}`));
+        const {
+          WALLET: {priceHistory},
+        } = getState();
+        dispatch(successGetPriceHistory(priceHistory));
+      } else {
+        dispatch(failedGetPriceHistory());
+        dispatch(LogActions.error(`failed [getPriceHistory]: ${errorStr}`));
+      }
     }
   };
 
@@ -159,9 +167,21 @@ export const startGetRates =
         } else {
           errorStr = JSON.stringify(err);
         }
-        dispatch(failedGetRates());
-        dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
-        reject(err);
+        if (errorStr === 'Network Error') {
+          dispatch(LogActions.warn(`[startGetRates] ${errorStr}`));
+          const {WALLET} = getState();
+          dispatch(
+            successGetRates({
+              rates: WALLET.rates,
+              lastDayRates: WALLET.lastDayRates,
+            }),
+          );
+          resolve(WALLET.rates);
+        } else {
+          dispatch(failedGetRates());
+          dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
+          reject(err);
+        }
       }
     });
   };

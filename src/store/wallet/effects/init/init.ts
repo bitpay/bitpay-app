@@ -32,11 +32,16 @@ export const startWalletStoreInit =
         } else {
           errorStr = JSON.stringify(e);
         }
-        dispatch(WalletActions.failedWalletStoreInit());
-        dispatch(
-          LogActions.error(`failed [startWalletStoreInit]: ${errorStr}`),
-        );
-        return reject(e);
+        if (errorStr === 'Network Error') {
+          dispatch(LogActions.warn(`[startWalletStoreInit] ${errorStr}`));
+          return resolve();
+        } else {
+          dispatch(WalletActions.failedWalletStoreInit());
+          dispatch(
+            LogActions.error(`failed [startWalletStoreInit]: ${errorStr}`),
+          );
+          return reject(e);
+        }
       }
     });
   };

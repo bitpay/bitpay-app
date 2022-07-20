@@ -10,7 +10,7 @@ import {Currencies, CurrencyOpts} from '../../../../constants/currencies';
 import {LogActions} from '../../../log';
 
 export const startGetTokenOptions =
-  (): Effect<Promise<void>> => async dispatch => {
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
     try {
       dispatch(LogActions.info('starting [startGetTokenOptions]'));
       const {
@@ -49,8 +49,22 @@ export const startGetTokenOptions =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(failedGetTokenOptions());
-      dispatch(LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`));
+      if (errorStr === 'Network Error') {
+        dispatch(LogActions.warn(`[startGetTokenOptions] ${errorStr}`));
+        const {WALLET} = getState();
+        dispatch(
+          successGetTokenOptions({
+            tokenOptions: WALLET.tokenOptions,
+            tokenData: WALLET.tokenData,
+            tokenOptionsByAddress: WALLET.tokenOptionsByAddress,
+          }),
+        );
+      } else {
+        dispatch(failedGetTokenOptions());
+        dispatch(
+          LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`),
+        );
+      }
     }
   };
 
