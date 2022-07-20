@@ -11,6 +11,8 @@ yup.setLocale({
   },
   string: {
     email: () => t('Please enter a valid email address.'),
+    min: params => t('MustBeGreaterThanArgCharacters', {0: params.min}),
+    max: params => t('MustBeLessThanArgCharacters', {0: params.max}),
   },
 });
 

@@ -1,7 +1,6 @@
 import React, {useCallback} from 'react';
 import styled from 'styled-components/native';
-import {Caution} from '../../../styles/colors';
-import {BaseText, ImportTitle} from '../../../components/styled/Text';
+import {ImportTitle} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {
   showBottomNotificationModal,
@@ -9,7 +8,7 @@ import {
   setHomeCarouselConfig,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {KeyOptions, Status} from '../../../store/wallet/wallet.models';
@@ -49,14 +48,6 @@ export type JoinMultisigParamList = {
   invitationCode?: string;
 };
 
-const schema = yup.object().shape({
-  myName: yup.string().required(),
-  invitationCode: yup
-    .string()
-    .required()
-    .matches(/^[0-9A-HJ-NP-Za-km-z]{70,80}$/, 'Invalid invitation code'),
-});
-
 const Gutter = '10px';
 export const JoinContainer = styled.View`
   padding: ${Gutter} 0;
@@ -65,13 +56,6 @@ export const JoinContainer = styled.View`
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
   padding: 0 15px;
-`;
-
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 0 0 10px;
 `;
 
 const CtaContainer = styled(_CtaContainer)`
@@ -85,6 +69,13 @@ const JoinMultisig = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'JoinMultisig'>>();
   const {key, invitationCode} = route.params || {};
 
+  const schema = yup.object().shape({
+    myName: yup.string().required(),
+    invitationCode: yup
+      .string()
+      .required()
+      .matches(/^[0-9A-HJ-NP-Za-km-z]{70,80}$/, t('InvalidInvitationCode')),
+  });
   const {
     control,
     handleSubmit,
@@ -263,15 +254,12 @@ const JoinMultisig = () => {
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
+              error={errors.myName?.message}
             />
           )}
           name="myName"
           defaultValue=""
         />
-
-        {errors?.myName?.message && (
-          <ErrorText>{errors?.myName?.message}</ErrorText>
-        )}
 
         <HeaderContainer>
           <ImportTitle>{t('Wallet invitation')}</ImportTitle>
@@ -306,15 +294,12 @@ const JoinMultisig = () => {
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
+              error={errors.invitationCode?.message}
             />
           )}
           name="invitationCode"
           defaultValue={invitationCode}
         />
-
-        {errors?.invitationCode?.message && (
-          <ErrorText>{errors?.invitationCode?.message}</ErrorText>
-        )}
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
