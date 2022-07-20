@@ -157,24 +157,6 @@ const ContactsDetails = ({
       wallet.balance.sat > 0,
   );
 
-  contactOptions.push({
-    img: theme.dark ? <EditIconWhite /> : <EditIcon />,
-    title: t('Edit Contact'),
-    onPress: async () => {
-      setShowIconOptions(false);
-      navigation.navigate('Contacts', {
-        screen: 'ContactsAdd',
-        params: {
-          contact,
-          context: 'edit',
-          onEditComplete: (c: ContactRowProps) => {
-            setContact(c);
-          },
-        },
-      });
-    },
-  });
-
   if (availableWallets.length) {
     let newAddress = contact.address;
     if (contact.coin === 'bch') {
@@ -201,6 +183,24 @@ const ContactsDetails = ({
       },
     });
   }
+
+  contactOptions.push({
+    img: theme.dark ? <EditIconWhite /> : <EditIcon />,
+    title: t('Edit Contact'),
+    onPress: async () => {
+      setShowIconOptions(false);
+      navigation.navigate('Contacts', {
+        screen: 'ContactsAdd',
+        params: {
+          contact,
+          context: 'edit',
+          onEditComplete: (c: ContactRowProps) => {
+            setContact(c);
+          },
+        },
+      });
+    },
+  });
 
   contactOptions.push({
     img: theme.dark ? <DeleteIconWhite /> : <DeleteIcon />,

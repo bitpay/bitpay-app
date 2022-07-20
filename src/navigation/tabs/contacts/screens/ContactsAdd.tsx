@@ -315,15 +315,6 @@ const ContactsAdd = ({
     }
   };
 
-  useEffect(() => {
-    if (contact?.address) {
-      setValue('address', contact.address, {shouldDirty: true});
-      processAddress(contact.address);
-      setValue('name', contact.name);
-      setValue('email', contact.email);
-    }
-  }, [contact]);
-
   const onSubmit = handleSubmit((contact: ContactRowProps) => {
     if (!validAddress) {
       setError('address', {
@@ -425,6 +416,16 @@ const ContactsAdd = ({
       },
     });
   };
+
+  useEffect(() => {
+    if (contact?.address) {
+      setValue('address', contact.address, {shouldDirty: true});
+      processAddress(contact.address);
+      setValue('name', contact.name);
+      setValue('email', contact.email);
+      currencySelected({id: contact.coin} as CurrencySelectionToggleProps);
+    }
+  }, [contact]);
 
   return (
     <Container keyboardShouldPersistTaps="handled">
