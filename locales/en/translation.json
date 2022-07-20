@@ -1121,6 +1121,8 @@
   "Backup format not recognized. If you are using a Copay Beta backup and version is older than 0.10, please see:": "Backup format not recognized. If you are using a Copay Beta backup and version is older than 0.10, please see:",
   "There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable \"ETH Queued transactions\" in Advanced Settings.": "There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable \"ETH Queued transactions\" in Advanced Settings.",
   "Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.": "Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.",
+  "A total of were excluded. These funds come from UTXOs smaller than the network fee provided": "A total of {{amountBelowFeeStr}} {{currencyAbbreviation}} were excluded. These funds come from UTXOs smaller than the network fee provided",
+  "A total of were excluded. The maximum size allowed for a transaction was exceeded.": "A total of {{amountAboveMaxSizeStr}} {{currencyAbbreviation}} were excluded. The maximum size allowed for a transaction was exceeded.",
   "Insufficient confirmed funds": "Insufficient confirmed funds",
   "You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable \"Use unconfirmed funds\" in Advanced Settings.": "You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable \"Use unconfirmed funds\" in Advanced Settings.",
   "Insufficient funds": "Insufficient funds",

@@ -28,6 +28,7 @@ import {
 } from '../status/status';
 import {
   CustomErrorMessage,
+  ExcludedUtxosWarning,
   GeneralError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
@@ -49,6 +50,7 @@ import {t} from 'i18next';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {LogActions} from '../../../log';
+import _ from 'lodash';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -526,12 +528,47 @@ const buildTransactionProposal =
         // unconfirmed funds
         txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
+        const verifyExcludedUtxos = (
+          sendMaxInfo: SendMaxInfo,
+          currencyAbbreviation: string,
+        ) => {
+          const warningMsg = [];
+          if (sendMaxInfo.utxosBelowFee > 0) {
+            const amountBelowFeeStr =
+              sendMaxInfo.amountBelowFee /
+              dispatch(GetPrecision(currencyAbbreviation))!.unitToSatoshi!;
+            const message = t(
+              'A total of were excluded. These funds come from UTXOs smaller than the network fee provided',
+              {
+                amountBelowFeeStr,
+                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+              },
+            );
+            warningMsg.push(message);
+          }
+
+          if (sendMaxInfo.utxosAboveMaxSize > 0) {
+            const amountAboveMaxSizeStr =
+              sendMaxInfo.amountAboveMaxSize /
+              dispatch(GetPrecision(currencyAbbreviation))!.unitToSatoshi;
+            const message = t(
+              'A total of were excluded. The maximum size allowed for a transaction was exceeded.',
+              {
+                amountAboveMaxSizeStr,
+                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+              },
+            );
+            warningMsg.push(message);
+          }
+          return warningMsg.join('\n');
+        };
+
         // send max
         if (sendMax && wallet) {
           if (dispatch(IsERCToken(wallet.currencyAbbreviation))) {
             txp.amount = tx.amount = wallet.balance.satAvailable;
           } else {
-            const {amount, inputs, fee} = await getSendMaxInfo({
+            const sendMaxInfo = await getSendMaxInfo({
               wallet,
               opts: {
                 feePerKb,
@@ -539,12 +576,28 @@ const buildTransactionProposal =
                 returnInputs: true,
               },
             });
+            const {amount, inputs, fee} = sendMaxInfo;
 
             txp.amount = tx.amount = amount;
             txp.inputs = inputs;
             // Either fee or feePerKb can be available
             txp.fee = fee;
             txp.feePerKb = undefined;
+
+            const warningMsg = verifyExcludedUtxos(
+              sendMaxInfo,
+              wallet.currencyAbbreviation,
+            );
+
+            if (!_.isEmpty(warningMsg)) {
+              dispatch(
+                showBottomNotificationModal(
+                  ExcludedUtxosWarning({
+                    errMsg: warningMsg,
+                  }),
+                ),
+              );
+            }
           }
         }
 
