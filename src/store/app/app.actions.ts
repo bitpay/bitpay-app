@@ -1,4 +1,4 @@
-import {ColorSchemeName} from 'react-native';
+import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -107,18 +107,19 @@ export const setConfirmedTxAccepted = (
   payload: confirmedTxAccepted,
 });
 
-export const setProductsUpdatesAccepted = (
-  productsUpdatesAccepted: boolean,
+export const setAnnouncementsAccepted = (
+  announcementsAccepted: boolean,
 ): AppActionType => ({
-  type: AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED,
-  payload: productsUpdatesAccepted,
+  type: AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED,
+  payload: announcementsAccepted,
 });
 
-export const setOffersAndPromotionsAccepted = (
-  offersAndPromotionsAccepted: boolean,
+export const setEmailNotificationsAccepted = (
+  accepted: boolean,
+  email: string | null,
 ): AppActionType => ({
-  type: AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED,
-  payload: offersAndPromotionsAccepted,
+  type: AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED,
+  payload: {accepted, email},
 });
 
 export const showOnboardingFinishModal = (): AppActionType => ({
@@ -183,6 +184,13 @@ export const showBlur = (value: boolean): AppActionType => ({
 export const showPortfolioValue = (value: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_PORTFOLIO_VALUE,
   payload: value,
+});
+
+export const brazeInitialized = (
+  contentCardSubscription: EventSubscription | null,
+): AppActionType => ({
+  type: AppActionTypes.BRAZE_INITIALIZED,
+  payload: {contentCardSubscription},
 });
 
 export const brazeContentCardsFetched = (
