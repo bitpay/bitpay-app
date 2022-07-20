@@ -14,8 +14,14 @@ import {useTranslation} from 'react-i18next';
 
 export type ContactsStackParamList = {
   Root: undefined;
-  ContactsDetails: ContactRowProps;
-  ContactsAdd: undefined;
+  ContactsDetails: {contact: ContactRowProps};
+  ContactsAdd:
+    | {
+        contact?: ContactRowProps;
+        context?: string;
+        onEditComplete?: (contact: ContactRowProps) => void;
+      }
+    | undefined;
 };
 
 export enum ContactsScreens {
@@ -49,7 +55,6 @@ const ContactsStack = () => {
         component={ContactsAdd}
         options={{
           headerMode: 'screen',
-          headerTitle: () => <HeaderTitle>{t('New Contact')}</HeaderTitle>,
         }}
       />
     </Contacts.Navigator>

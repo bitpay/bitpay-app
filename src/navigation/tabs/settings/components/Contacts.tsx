@@ -38,7 +38,7 @@ const Contacts = () => {
                 onPress={() => {
                   navigation.navigate('Contacts', {
                     screen: 'ContactsDetails',
-                    params: item,
+                    params: {contact: item},
                   });
                 }}
               />
