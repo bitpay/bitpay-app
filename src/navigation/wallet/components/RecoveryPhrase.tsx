@@ -21,7 +21,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
 import {
   BaseText,
@@ -605,8 +605,8 @@ const RecoveryPhrase = () => {
           defaultValue=""
         />
 
-        {errors?.text?.message && (
-          <ErrorText>{t('Recovery phrase is required.')}</ErrorText>
+        {errors.text?.message && (
+          <ErrorText>{errors.text.message}</ErrorText>
         )}
 
         <CtaContainer>
