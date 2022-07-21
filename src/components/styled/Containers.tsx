@@ -158,6 +158,11 @@ export const SettingTitle = styled(BaseText)`
   margin-right: 5px;
 `;
 
+export const SettingDescription = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  font-size: 14px;
+`;
+
 interface SettingIconProps {
   prefix?: boolean;
   suffix?: boolean;

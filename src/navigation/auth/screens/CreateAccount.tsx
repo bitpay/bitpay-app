@@ -3,7 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {SafeAreaView, TextInput} from 'react-native';
+import {Keyboard, SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
@@ -16,7 +16,7 @@ import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -31,7 +31,7 @@ import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 export type CreateAccountScreenParamList = {} | undefined;
 type CreateAccountScreenProps = StackScreenProps<
   AuthStackParamList,
-  'CreateAccount'
+  AuthScreens.CREATE_ACCOUNT
 >;
 
 const schema = yup.object().shape({
@@ -134,24 +134,32 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
     t,
   ]);
 
-  const onSubmit = handleSubmit(formData => {
-    const {email, givenName, familyName, agreedToTOSandPP, password} = formData;
+  const onSubmit = handleSubmit(
+    formData => {
+      Keyboard.dismiss();
 
-    if (!session.captchaDisabled) {
-      setRecaptchaVisible(true);
-      return;
-    }
+      const {email, givenName, familyName, agreedToTOSandPP, password} =
+        formData;
 
-    dispatch(
-      BitPayIdEffects.startCreateAccount({
-        givenName,
-        familyName,
-        email,
-        password,
-        agreedToTOSandPP,
-      }),
-    );
-  });
+      if (!session.captchaDisabled) {
+        setRecaptchaVisible(true);
+        return;
+      }
+
+      dispatch(
+        BitPayIdEffects.startCreateAccount({
+          givenName,
+          familyName,
+          email,
+          password,
+          agreedToTOSandPP,
+        }),
+      );
+    },
+    () => {
+      Keyboard.dismiss();
+    },
+  );
 
   const onCaptchaResponse = (gCaptchaResponse: string) => {
     setRecaptchaVisible(false);

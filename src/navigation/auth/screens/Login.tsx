@@ -16,7 +16,7 @@ import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
-import {AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -31,7 +31,7 @@ export type LoginScreenParamList =
     }
   | undefined;
 
-type LoginScreenProps = StackScreenProps<AuthStackParamList, 'Login'>;
+type LoginScreenProps = StackScreenProps<AuthStackParamList, AuthScreens.LOGIN>;
 
 const schema = yup.object().shape({
   email: yup.string().email().required().trim(),
@@ -43,7 +43,7 @@ interface LoginFormFieldValues {
   password: string;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
+const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {
@@ -128,14 +128,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     }
   }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError, t]);
 
-  const onSubmit = handleSubmit(({email, password}) => {
-    Keyboard.dismiss();
-    if (session.captchaDisabled) {
-      dispatch(BitPayIdEffects.startLogin({email, password}));
-    } else {
-      setCaptchaModalVisible(true);
-    }
-  });
+  const onSubmit = handleSubmit(
+    ({email, password}) => {
+      Keyboard.dismiss();
+      if (session.captchaDisabled) {
+        dispatch(BitPayIdEffects.startLogin({email, password}));
+      } else {
+        setCaptchaModalVisible(true);
+      }
+    },
+    () => {
+      Keyboard.dismiss();
+    },
+  );
 
   const onTroubleLoggingIn = () => {
     navigation.navigate('ForgotPassword');

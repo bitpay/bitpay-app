@@ -3,6 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useMemo} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
+import {Keyboard} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
 import Button from '../../../components/button/Button';
@@ -13,7 +14,7 @@ import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {TwoFactorPairingStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
-import {AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthFormParagraph,
@@ -27,14 +28,14 @@ export type TwoFactorPairingParamList = {
 
 type TwoFactorPairingScreenProps = StackScreenProps<
   AuthStackParamList,
-  'TwoFactorPairing'
+  AuthScreens.TWO_FACTOR_PAIR
 >;
 
 interface TwoFactorPairingFieldValues {
   code: string;
 }
 
-const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
+const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
   navigation,
   route,
 }) => {
@@ -128,13 +129,20 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
     onLoginSuccess,
   ]);
 
-  const onSubmit = handleSubmit(({code}) => {
-    if (!code) {
-      return;
-    }
+  const onSubmit = handleSubmit(
+    ({code}) => {
+      Keyboard.dismiss();
 
-    dispatch(BitPayIdEffects.startTwoFactorPairing(code));
-  });
+      if (!code) {
+        return;
+      }
+
+      dispatch(BitPayIdEffects.startTwoFactorPairing(code));
+    },
+    () => {
+      Keyboard.dismiss();
+    },
+  );
 
   return (
     <AuthFormContainer>

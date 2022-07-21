@@ -1,42 +1,32 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {useTranslation} from 'react-i18next';
+import React, {useEffect, useCallback} from 'react';
 import {
   Alert,
-  View,
   AppState,
   AppStateStatus,
   Linking,
+  Platform,
   LogBox,
+  DeviceEventEmitter,
 } from 'react-native';
-import Checkbox from '../../../../components/checkbox/Checkbox';
+import {AppEffects} from '../../../../store/app';
 import {
-  Hr,
+  ActiveOpacity,
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {AppEffects} from '../../../../store/app';
-import {selectSettingsNotificationState} from '../../../../store/app/app.selectors';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {SettingsComponent} from '../SettingsRoot';
+import {useTranslation} from 'react-i18next';
+import {useNavigation} from '@react-navigation/native';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {selectSettingsNotificationState} from '../../../../store/app/app.selectors';
+import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 
 const Notifications = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-
   const notificationsState = useAppSelector(selectSettingsNotificationState);
-
-  const [pushNotifications, setPushNotifications] = useState(
-    notificationsState.pushNotifications,
-  );
-  const [confirmedTx, setConfirmedTx] = useState(
-    notificationsState.confirmedTx,
-  );
-  const [productsUpdates, setProductsUpdates] = useState(
-    notificationsState.productsUpdates,
-  );
-  const [offersAndPromotions, setOffersAndPromotions] = useState(
-    notificationsState.offersAndPromotions,
-  );
+  const navigation = useNavigation();
 
   const openSettings = useCallback(() => {
     Alert.alert(
@@ -52,7 +42,7 @@ const Notifications = () => {
         },
         {
           text: t('Change Settings'),
-          onPress: () => {
+          onPress: async () => {
             Linking.openSettings();
           },
         },
@@ -61,65 +51,35 @@ const Notifications = () => {
   }, [t]);
 
   const setNotificationValue = useCallback(
-    async (accepted: boolean) => {
+    async (accepted: boolean, notificationsStatePush?: boolean) => {
       const systemEnabled = await AppEffects.checkNotificationsPermissions();
       if (systemEnabled) {
-        if (accepted !== notificationsState.pushNotifications) {
-          setPushNotifications(accepted);
+        if (accepted !== notificationsStatePush) {
           dispatch(AppEffects.setNotifications(accepted));
+          dispatch(AppEffects.setConfirmTxNotifications(accepted));
+          dispatch(AppEffects.setAnnouncementsNotifications(accepted));
         }
       } else {
-        openSettings();
-        if (notificationsState.pushNotifications) {
-          setPushNotifications(false);
+        if (accepted && Platform.OS === 'ios') {
+          const requestPermissions =
+            await AppEffects.requestNotificationsPermissions();
+          if (requestPermissions) {
+            dispatch(AppEffects.setNotifications(accepted));
+          } else {
+            openSettings();
+            dispatch(AppEffects.setNotifications(false));
+            dispatch(AppEffects.setConfirmTxNotifications(false));
+            dispatch(AppEffects.setAnnouncementsNotifications(false));
+          }
+        } else if (notificationsStatePush) {
           dispatch(AppEffects.setNotifications(false));
+          dispatch(AppEffects.setConfirmTxNotifications(false));
+          dispatch(AppEffects.setAnnouncementsNotifications(false));
         }
       }
     },
-    [dispatch, openSettings, notificationsState.pushNotifications],
+    [dispatch, openSettings],
   );
-
-  const notificationsList = [
-    {
-      title: t('Enable Push Notifications'),
-      checked: pushNotifications,
-      show: true,
-      onPress: () => {
-        const accepted = !pushNotifications;
-        setNotificationValue(accepted);
-      },
-    },
-    {
-      title: t('Confirmed Transactions'),
-      checked: confirmedTx,
-      show: pushNotifications,
-      onPress: () => {
-        const accepted = !confirmedTx;
-        setConfirmedTx(accepted);
-        dispatch(AppEffects.setConfirmTxNotifications(accepted));
-      },
-    },
-    {
-      title: t('Product Updates'),
-      checked: productsUpdates,
-      show: pushNotifications,
-      onPress: () => {
-        const accepted = !productsUpdates;
-        setProductsUpdates(accepted);
-        dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
-      },
-    },
-    {
-      title: t('Offers & Promotions'),
-      checked: offersAndPromotions,
-      show: pushNotifications,
-      onPress: () => {
-        const accepted = !offersAndPromotions;
-        setOffersAndPromotions(accepted);
-        dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
-      },
-    },
-  ];
 
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
@@ -130,11 +90,20 @@ const Notifications = () => {
     }
     AppState.addEventListener('change', onAppStateChange);
     return () => AppState.removeEventListener('change', onAppStateChange);
-  }, [dispatch, setNotificationValue, notificationsState.pushNotifications]);
+  }, [dispatch, setNotificationValue, notificationsState]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.PUSH_NOTIFICATIONS,
+      ({accepted}) => {
+        setNotificationValue(accepted, notificationsState.pushNotifications);
+      },
+    );
+    return () => subscription.remove();
+  }, [notificationsState]);
 
   // Ignore warning: Setting a timer for long period of time...
   LogBox.ignoreLogs(['Setting a timer']);
-
   useEffect(() => {
     if (notificationsState && notificationsState.pushNotifications) {
       // Subscribe for silent push notifications
@@ -147,17 +116,29 @@ const Notifications = () => {
 
   return (
     <SettingsComponent>
-      {notificationsList.map(({title, checked, onPress, show}, i) =>
-        show ? (
-          <View key={i}>
-            {i !== 0 ? <Hr /> : null}
-            <Setting onPress={onPress}>
-              <SettingTitle>{title}</SettingTitle>
-              <Checkbox onPress={onPress} checked={checked} />
-            </Setting>
-          </View>
-        ) : null,
-      )}
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() =>
+          navigation.navigate('NotificationsSettings', {
+            screen: 'PushNotifications',
+          })
+        }>
+        <SettingTitle>{t('Push Notifications')}</SettingTitle>
+        <AngleRight />
+      </Setting>
+
+      {/*----------------------------------------------------------------------*/}
+
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() =>
+          navigation.navigate('NotificationsSettings', {
+            screen: 'EmailNotifications',
+          })
+        }>
+        <SettingTitle>{t('Email Notifications')}</SettingTitle>
+        <AngleRight />
+      </Setting>
     </SettingsComponent>
   );
 };

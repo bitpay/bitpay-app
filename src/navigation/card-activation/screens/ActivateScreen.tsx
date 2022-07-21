@@ -3,7 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {t} from 'i18next';
-import {TextInput} from 'react-native';
+import {Keyboard, TextInput} from 'react-native';
 import * as yup from 'yup';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
@@ -21,7 +21,10 @@ import AuthFormContainer, {
   AuthActionsContainer,
   AuthRowContainer,
 } from '../../auth/components/AuthFormContainer';
-import {CardActivationStackParamList} from '../CardActivationStack';
+import {
+  CardActivationScreens,
+  CardActivationStackParamList,
+} from '../CardActivationStack';
 
 export type ActivateScreenParamList = {
   card: Card;
@@ -117,8 +120,8 @@ const formatExpirationDateForBackend = (expirationDate: string) => {
   return `${expYear}${expMonth}`;
 };
 
-const ActivateScreen: React.FC<
-  StackScreenProps<CardActivationStackParamList, 'Activate'>
+const ActivateScreen: React.VFC<
+  StackScreenProps<CardActivationStackParamList, CardActivationScreens.ACTIVATE>
 > = ({navigation, route}) => {
   const {card} = route.params;
   const dispatch = useAppDispatch();
@@ -147,27 +150,34 @@ const ActivateScreen: React.FC<
   const initRef = useRef(init);
   initRef.current = init;
 
-  const onSubmit = handleSubmit(formData => {
-    setButtonState('loading');
-    const {cvv, expirationDate} = formData;
-    const payload: StartActivateCardParams = {
-      cvv: cvv,
-      expirationDate: formatExpirationDateForBackend(expirationDate),
-    };
+  const onSubmit = handleSubmit(
+    formData => {
+      Keyboard.dismiss();
 
-    if (isGalileoForm(formData)) {
-      const {lastFourDigits} = formData;
+      setButtonState('loading');
+      const {cvv, expirationDate} = formData;
+      const payload: StartActivateCardParams = {
+        cvv: cvv,
+        expirationDate: formatExpirationDateForBackend(expirationDate),
+      };
 
-      payload.lastFourDigits = lastFourDigits;
-    } else if (isFirstViewForm(formData)) {
-      const {cardNumber} = formData;
+      if (isGalileoForm(formData)) {
+        const {lastFourDigits} = formData;
 
-      payload.cardNumber = cardNumber;
-      payload.lastFourDigits = cardNumber.slice(-4);
-    }
+        payload.lastFourDigits = lastFourDigits;
+      } else if (isFirstViewForm(formData)) {
+        const {cardNumber} = formData;
 
-    dispatch(CardEffects.startActivateCard(card.id, payload));
-  });
+        payload.cardNumber = cardNumber;
+        payload.lastFourDigits = cardNumber.slice(-4);
+      }
+
+      dispatch(CardEffects.startActivateCard(card.id, payload));
+    },
+    () => {
+      Keyboard.dismiss();
+    },
+  );
 
   useLayoutEffect(() => {
     initRef.current();
