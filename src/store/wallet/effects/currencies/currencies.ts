@@ -10,7 +10,7 @@ import {Currencies, CurrencyOpts} from '../../../../constants/currencies';
 import {LogActions} from '../../../log';
 
 export const startGetTokenOptions =
-  (): Effect<Promise<void>> => async dispatch => {
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
     try {
       dispatch(LogActions.info('starting [startGetTokenOptions]'));
       const {
