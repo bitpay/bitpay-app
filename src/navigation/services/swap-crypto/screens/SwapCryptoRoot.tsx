@@ -35,7 +35,7 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import WalletSelectorModal from '../components/WalletSelectorModal';
-import AmountModal from '../components/AmountModal';
+import AmountModal from '../../../../components/amount/AmountModal';
 import {
   changellyGetPairsParams,
   changellyGetFixRateForAmount,
@@ -910,43 +910,45 @@ const SwapCryptoRoot: React.FC = () => {
 
       <AmountModal
         isVisible={amountModalVisible}
-        currencyAbbreviation={fromWalletData?.currencyAbbreviation}
-        onDismiss={async (
-          newAmount?: number,
-          opts?: {sendMax?: boolean; close?: boolean},
-        ) => {
+        cryptoCurrencyAbbreviation={fromWalletData?.currencyAbbreviation}
+        onClose={() => hideModal('amount')}
+        onSubmit={newAmount => {
           hideModal('amount');
-          if (opts?.close) {
+          setUseSendMax(false);
+          setSendMaxInfo(undefined);
+          setAmountFrom(newAmount);
+        }}
+        onSendMaxPressed={async () => {
+          hideModal('amount');
+
+          if (!fromWalletSelected) {
             return;
           }
-          if (opts?.sendMax && fromWalletSelected) {
-            if (
-              dispatch(
-                IsERCToken(
+
+          let newAmount: number | undefined;
+
+          if (
+            dispatch(
+              IsERCToken(fromWalletSelected.currencyAbbreviation.toLowerCase()),
+            )
+          ) {
+            setUseSendMax(true);
+            setSendMaxInfo(undefined);
+            newAmount = Number(fromWalletSelected.balance.cryptoSpendable);
+          } else {
+            setUseSendMax(true);
+            const data = await getSendMaxData();
+            setSendMaxInfo(data);
+            if (data?.amount) {
+              newAmount = dispatch(
+                SatToUnit(
+                  data.amount,
                   fromWalletSelected.currencyAbbreviation.toLowerCase(),
                 ),
-              )
-            ) {
-              setUseSendMax(true);
-              setSendMaxInfo(undefined);
-              newAmount = Number(fromWalletSelected.balance.cryptoSpendable);
-            } else {
-              setUseSendMax(true);
-              const data = await getSendMaxData();
-              setSendMaxInfo(data);
-              if (data?.amount) {
-                newAmount = dispatch(
-                  SatToUnit(
-                    data.amount,
-                    fromWalletSelected.currencyAbbreviation.toLowerCase(),
-                  ),
-                );
-              }
+              );
             }
-          } else {
-            setUseSendMax(false);
-            setSendMaxInfo(undefined);
           }
+
           if (newAmount) {
             setAmountFrom(newAmount);
           }

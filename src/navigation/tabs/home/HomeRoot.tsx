@@ -53,6 +53,8 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
+import _ from 'lodash';
+import {WalletScreens} from '../../wallet/WalletStack';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -296,7 +298,7 @@ const HomeRoot = () => {
                                   ),
                                 );
                                 navigation.navigate('Wallet', {
-                                  screen: 'Amount',
+                                  screen: WalletScreens.AMOUNT,
                                   params: {
                                     onAmountSelected: (amount: string) => {
                                       navigation.navigate('BuyCrypto', {
@@ -306,10 +308,7 @@ const HomeRoot = () => {
                                         },
                                       });
                                     },
-                                    opts: {
-                                      hideSendMax: true,
-                                      context: 'buyCrypto',
-                                    },
+                                    context: 'buyCrypto',
                                   },
                                 });
                               },
