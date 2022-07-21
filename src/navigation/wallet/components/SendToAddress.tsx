@@ -52,6 +52,10 @@ import {
   RecipientRowContainer,
   SendToOptionsContext,
 } from '../screens/SendToOptions';
+import {
+  ExtractBitPayUriAddress,
+  ExtractUriAmount,
+} from '../../../store/wallet/utils/decode-uri';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -181,9 +185,14 @@ const SendToAddress = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setErrorMessage('');
         setSearchInput('');
+        const extractedAmount = ExtractUriAmount(data.data);
+        const addr = ExtractBitPayUriAddress(text);
         context === 'selectInputs'
-          ? goToSelectInputsView({address: text})
-          : addRecipient({address: text});
+          ? goToSelectInputsView({address: addr})
+          : addRecipient({
+              address: addr,
+              amount: extractedAmount ? Number(extractedAmount[1]) : undefined,
+            });
       }
     } else {
       setErrorMessage(text.length > 15 ? 'Invalid Address' : '');

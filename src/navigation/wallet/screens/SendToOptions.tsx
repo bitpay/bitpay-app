@@ -195,7 +195,11 @@ const SendToOptions = () => {
     index?: number,
     updateRecipient?: boolean,
   ) => {
-    setRecipientAmount({showModal: true, recipient, index, updateRecipient});
+    if (recipient.amount && !updateRecipient) {
+      setRecipientListContext(recipient);
+    } else {
+      setRecipientAmount({showModal: true, recipient, index, updateRecipient});
+    }
   };
 
   const goToConfirmView = async () => {
