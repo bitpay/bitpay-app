@@ -70,7 +70,7 @@ import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
-import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
@@ -307,7 +307,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     useState(false);
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
-  const logger = useLogger();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -860,6 +859,32 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   );
 
   const chain = dispatch(getChain(currencyAbbreviation.toLowerCase(), network));
+  const showFaucetRedirectNotification = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Warning'),
+        message: t(
+          'You are being redirected to a Faucet that will give you test coins. These test coins have no value and cannot be used to purchase things.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('CONTINUE'),
+            action: () => {
+              Linking.openURL(TestnetFaucets[currencyAbbreviation]);
+            },
+            primary: true,
+          },
+          {
+            text: t('GO BACK'),
+            action: () => {},
+            primary: false,
+          },
+        ],
+      }),
+    );
+  };
 
   return (
     <WalletDetailsContainer>
@@ -992,10 +1017,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             },
                           });
                         } else {
-                          logger.info(
-                            `Buy [Testnet Wallet]: Redirecting to ${currencyAbbreviation} faucet link`,
-                          );
-                          Linking.openURL(TestnetFaucets[currencyAbbreviation]);
+                          showFaucetRedirectNotification();
                         }
                       },
                     }}
