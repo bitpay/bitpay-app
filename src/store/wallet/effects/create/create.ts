@@ -45,8 +45,8 @@ export interface CreateOptions {
 const BWC = BwcProvider.getInstance();
 
 export const startCreateKey =
-  (currencies: string[]): Effect =>
-  async (dispatch, getState): Promise<Key> => {
+  (currencies: string[]): Effect<Promise<Key>> =>
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         const state = getState();

@@ -1,4 +1,10 @@
-import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
+import React, {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -33,9 +39,7 @@ import {
   SupportedCurrencyOptions,
   SupportedCurrencyOption,
 } from '../../../constants/SupportedCurrencyOptions';
-import {RootState} from '../../../store';
-import {WalletStackParamList} from '../WalletStack';
-import {Dispatch} from 'redux';
+import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {RootStackParamList} from '../../../Root';
 import {
   dismissOnGoingProcessModal,
@@ -52,26 +56,30 @@ import debounce from 'lodash.debounce';
 import Icons from '../components/WalletIcons';
 import SearchSvg from '../../../../assets/img/search.svg';
 import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
-import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
+import {
+  useAppSelector,
+  useAppDispatch,
+  AppDispatch,
+} from '../../../utils/hooks';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
-  'CurrencySelection'
+  WalletScreens.CURRENCY_SELECTION
 >;
 
-type CurrencySelectionContext =
-  | 'onboarding'
-  | 'createNewKey'
-  | 'addWallet'
-  | 'addWalletMultisig'
-  | 'joinWalletMultisig';
-
-export type CurrencySelectionParamList = {
-  context: CurrencySelectionContext;
-  key?: Key;
-};
+type CurrencySelectionContextWithoutKey = 'onboarding' | 'createNewKey';
+type CurrencySelectionContextWithKey = 'addWallet' | 'addWalletMultisig';
+export type CurrencySelectionParamList =
+  | {
+      context: CurrencySelectionContextWithoutKey;
+      key?: undefined;
+    }
+  | {
+      context: CurrencySelectionContextWithKey;
+      key: Key;
+    };
 
 interface ContextHandler {
   currencies: SupportedCurrencyOption[];
@@ -79,7 +87,7 @@ interface ContextHandler {
   ctaTitle?: string;
   bottomCta?: (props: {
     selectedCurrencies: string[];
-    dispatch: Dispatch<any>;
+    dispatch: AppDispatch;
     navigation: NavigationProp<RootStackParamList>;
   }) => void;
   selectionCta?: (props: {
@@ -116,44 +124,48 @@ const SearchImageContainer = styled.View`
   align-items: center;
 `;
 
-const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
+const SupportedMultisigCurrencyOptions = SupportedCurrencyOptions.filter(
+  currency => currency.hasMultisig,
+);
+
+const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
+  route,
+}) => {
   const {t} = useTranslation();
-  // setting context
   const navigation = useNavigation();
   const {context, key} = route.params;
   const logger = useLogger();
   const dispatch = useAppDispatch();
-
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
-
-  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
-    };
-  });
-
-  const ALL_CUSTOM_TOKENS = useMemo(
-    () =>
-      Object.values(tokenOptions)
-        .filter(
-          token => !SUPPORTED_CURRENCIES.includes(token.symbol.toLowerCase()),
-        )
-        .map(({symbol, name, logoURI}) => {
-          return {
-            id: Math.random(),
-            currencyAbbreviation: symbol,
-            currencyName: name,
-            img: logoURI,
-            isToken: true,
-            checked: false,
-          };
-        }),
-    [tokenOptions],
+  const appTokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+  const appCustomTokenOptions = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptions,
   );
+
+  const ALL_CUSTOM_TOKENS = useMemo(() => {
+    const tokenOptions = {
+      ...BitpaySupportedTokenOpts,
+      ...appTokenOptions,
+      ...appCustomTokenOptions,
+    };
+
+    return Object.values(tokenOptions)
+      .filter(
+        token => !SUPPORTED_CURRENCIES.includes(token.symbol.toLowerCase()),
+      )
+      .map(({symbol, name, logoURI}) => {
+        return {
+          id: Math.random(),
+          currencyAbbreviation: symbol,
+          currencyName: name,
+          img: logoURI,
+          isToken: true,
+          checked: false,
+        };
+      });
+  }, [appTokenOptions, appCustomTokenOptions]);
 
   const showErrorModal = (e: string) => {
     dispatch(
@@ -173,26 +185,16 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     );
   };
 
-  const _SupportedCurrencyOptions = useMemo(
-    () =>
-      SupportedCurrencyOptions.map(currency => {
-        return {
-          ...currency,
-          checked: false,
-        };
-      }),
-    [],
-  );
+  const supportedCurrenciesAndTokens = useMemo(() => {
+    const _SupportedCurrencyOptions = SupportedCurrencyOptions.map(currency => {
+      return {
+        ...currency,
+        checked: false,
+      };
+    });
 
-  const _currencies = useMemo(
-    () => [..._SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
-    [_SupportedCurrencyOptions, ALL_CUSTOM_TOKENS],
-  );
-
-  const _multiSigCurrencies = useMemo(
-    () => SupportedCurrencyOptions.filter(currency => currency.hasMultisig),
-    [],
-  );
+    return [..._SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS];
+  }, [ALL_CUSTOM_TOKENS]);
 
   const checkEthIfTokenSelected = (
     currencies: Array<string>,
@@ -219,7 +221,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       case 'createNewKey': {
         return {
           // @ts-ignore
-          currencies: _currencies,
+          currencies: supportedCurrenciesAndTokens,
           ctaTitle: t('Create Key'),
           bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
             try {
@@ -235,9 +237,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
                   t(OnGoingProcessMessages.CREATING_KEY),
                 ),
               );
-              const key = (await dispatch<any>(
-                startCreateKey(currencies),
-              )) as Key;
+              const key = await dispatch(startCreateKey(currencies));
 
               dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
@@ -268,7 +268,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       case 'addWallet': {
         return {
           // @ts-ignore
-          currencies: _currencies,
+          currencies: supportedCurrenciesAndTokens,
           headerTitle: t('Select Currency'),
           hideBottomCta: true,
           removeCheckbox: true,
@@ -292,7 +292,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       }
       case 'addWalletMultisig': {
         return {
-          currencies: _multiSigCurrencies,
+          currencies: SupportedMultisigCurrencyOptions,
           headerTitle: t('Select Currency'),
           hideBottomCta: true,
           removeCheckbox: true,
@@ -343,7 +343,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
           </HeaderRightContainer>
         ),
     });
-  }, [navigation, t]);
+  }, [navigation, t, context, headerTitle]);
 
   const [selectedCurrencies, setSelectedCurrencies] = useState<Array<string>>(
     [],
@@ -382,17 +382,20 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       });
     }
   };
+  const currencyToggledRef = useRef(currencyToggled);
+  currencyToggledRef.current = currencyToggled;
+
   // Flat list
   const renderItem = useCallback(
     ({item}) => (
       <CurrencySelectionRow
         item={item}
-        emit={currencyToggled}
+        emit={currencyToggledRef.current}
         key={item.id}
         removeCheckbox={removeCheckbox}
       />
     ),
-    [],
+    [removeCheckbox],
   );
 
   const resetSearch = () => {
@@ -428,7 +431,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
 
         setCurrencyOptions(_searchList);
       }, 300),
-    [currencies, selectedCurrencies],
+    [DEFAULT_CURRENCY_OPTIONS, selectedCurrencies],
   );
 
   return (
