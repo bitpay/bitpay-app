@@ -26,7 +26,7 @@ import {
   SupportedCurrencies,
 } from '../../../constants/currencies';
 import {startCreateKey} from '../../../store/wallet/effects';
-import {FlatList, TouchableOpacity} from 'react-native';
+import {FlatList, ListRenderItem, TouchableOpacity} from 'react-native';
 import {
   logSegmentEvent,
   startOnGoingProcessModal,
@@ -354,54 +354,65 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     [currencies],
   );
 
-  const [currencyOptions, setCurrencyOptions] = useState<Array<any>>([
-    ...DEFAULT_CURRENCY_OPTIONS,
-  ]);
-
-  const currencyToggled = ({
-    currencyAbbreviation,
-    currencyName,
-    checked,
-    isToken,
-  }: CurrencySelectionToggleProps) => {
-    if (selectionCta) {
-      resetSearch();
-      selectionCta({currencyAbbreviation, currencyName, isToken, navigation});
-    } else {
-      setSelectedCurrencies(currencies => {
-        // reset asset in list
-        currencies = currencies.filter(
-          selected => selected !== currencyAbbreviation,
-        );
-        // add if checked
-        if (checked) {
-          currencies = [...currencies, currencyAbbreviation];
-        }
-
-        return currencies;
-      });
-    }
-  };
-  const currencyToggledRef = useRef(currencyToggled);
-  currencyToggledRef.current = currencyToggled;
-
-  // Flat list
-  const renderItem = useCallback(
-    ({item}) => (
-      <CurrencySelectionRow
-        item={item}
-        emit={currencyToggledRef.current}
-        key={item.id}
-        removeCheckbox={removeCheckbox}
-      />
-    ),
-    [removeCheckbox],
-  );
+  const [currencyOptions, setCurrencyOptions] = useState<
+    SupportedCurrencyOption[]
+  >([...DEFAULT_CURRENCY_OPTIONS]);
 
   const resetSearch = () => {
     setSearchInput('');
     onSearchInputChange('');
   };
+
+  const resetSearchRef = useRef(resetSearch);
+  resetSearchRef.current = resetSearch;
+
+  const selectionCtaRef = useRef(selectionCta);
+  selectionCtaRef.current = selectionCta;
+
+  const memoizedOnToggle = useMemo(() => {
+    return ({
+      currencyAbbreviation,
+      currencyName,
+      checked,
+      isToken,
+    }: CurrencySelectionToggleProps) => {
+      if (selectionCtaRef.current) {
+        resetSearchRef.current();
+        selectionCtaRef.current({
+          currencyAbbreviation,
+          currencyName,
+          isToken,
+          navigation,
+        });
+      } else {
+        setSelectedCurrencies(currencies => {
+          // reset asset in list
+          currencies = currencies.filter(
+            selected => selected !== currencyAbbreviation,
+          );
+          // add if checked
+          if (checked) {
+            currencies = [...currencies, currencyAbbreviation];
+          }
+
+          return currencies;
+        });
+      }
+    };
+  }, [navigation]);
+
+  // Flat list
+  const renderItem: ListRenderItem<SupportedCurrencyOption> = useCallback(
+    ({item}) => (
+      <CurrencySelectionRow
+        item={item}
+        emit={memoizedOnToggle}
+        key={item.id}
+        removeCheckbox={removeCheckbox}
+      />
+    ),
+    [memoizedOnToggle, removeCheckbox],
+  );
 
   const onSearchInputChange = useMemo(
     () =>
@@ -464,7 +475,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
       {currencyOptions.length ? (
         <ListContainer>
-          <FlatList
+          <FlatList<SupportedCurrencyOption>
             contentContainerStyle={{paddingBottom: 100}}
             data={currencyOptions}
             keyExtractor={keyExtractor}
