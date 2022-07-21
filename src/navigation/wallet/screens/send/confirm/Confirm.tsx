@@ -535,6 +535,9 @@ const Confirm = () => {
                 break;
               case 'password canceled':
                 break;
+              case 'biometric check failed':
+                setResetSwipeButton(true);
+                break;
               default:
                 await showErrorMessage(
                   CustomErrorMessage({

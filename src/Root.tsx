@@ -216,6 +216,9 @@ export default () => {
   );
   const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
+  const checkingBiometricForSending = useAppSelector(
+    ({APP}) => APP.checkingBiometricForSending,
+  );
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
   const currentRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
@@ -261,7 +264,10 @@ export default () => {
       };
 
       if (onboardingCompleted) {
-        if (status === 'active' && !appIsLoading) {
+        if (status === 'active' && checkingBiometricForSending) {
+          dispatch(AppActions.checkingBiometricForSending(false));
+          dispatch(AppActions.showBlur(false));
+        } else if (status === 'active' && !appIsLoading) {
           if (lockAuthorizedUntil) {
             const now = Math.floor(Date.now() / 1000);
             const totalSecs = lockAuthorizedUntil - now;
@@ -292,6 +298,7 @@ export default () => {
     pinLockActive,
     lockAuthorizedUntil,
     biometricLockActive,
+    checkingBiometricForSending,
     appIsLoading,
     failedAppInit,
   ]);

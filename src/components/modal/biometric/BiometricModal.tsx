@@ -11,7 +11,7 @@ import {
   NeutralSlate,
   White,
 } from '../../../styles/colors';
-import TouchID from 'react-native-touch-id';
+import TouchID from 'react-native-touch-id-ng';
 import styled from 'styled-components/native';
 import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';

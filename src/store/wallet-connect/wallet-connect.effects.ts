@@ -24,6 +24,7 @@ import {checkEncryptPassword} from '../wallet/utils/wallet';
 import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
 import {LogActions} from '../log';
 import {t} from 'i18next';
+import {checkBiometricForSending} from '../wallet/effects/send/send';
 
 const BWC = BwcProvider.getInstance();
 
@@ -354,9 +355,18 @@ const getPrivKey =
     return new Promise(async (resolve, reject) => {
       try {
         const {keys} = getState().WALLET;
+        const {biometricLockActive} = getState().APP;
         const key: Key = keys[keyId];
 
         let password: string | undefined;
+
+        if (biometricLockActive) {
+          try {
+            await dispatch(checkBiometricForSending());
+          } catch (error) {
+            return reject(error);
+          }
+        }
 
         if (key.isPrivKeyEncrypted) {
           password = await new Promise<string>((_resolve, _reject) => {
