@@ -31,7 +31,7 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 export const getPriceHistory =
   (defaultAltCurrencyIsoCode: string): Effect =>
-  async (dispatch, getState) => {
+  async dispatch => {
     try {
       dispatch(LogActions.info('starting [getPriceHistory]'));
       const coinsList = SUPPORTED_COINS.map(
@@ -62,23 +62,15 @@ export const getPriceHistory =
       } else {
         errorStr = JSON.stringify(err);
       }
-      if (errorStr === 'Network Error') {
-        dispatch(LogActions.warn(`[getPriceHistory] ${errorStr}`));
-        const {
-          WALLET: {priceHistory},
-        } = getState();
-        dispatch(successGetPriceHistory(priceHistory));
-      } else {
-        dispatch(failedGetPriceHistory());
-        dispatch(LogActions.error(`failed [getPriceHistory]: ${errorStr}`));
-      }
+      dispatch(failedGetPriceHistory());
+      dispatch(LogActions.error(`failed [getPriceHistory]: ${errorStr}`));
     }
   };
 
 export const startGetRates =
   ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       dispatch(LogActions.info('starting [startGetRates]'));
       const {
         WALLET: {ratesCacheKey, rates: cachedRates},
@@ -167,21 +159,9 @@ export const startGetRates =
         } else {
           errorStr = JSON.stringify(err);
         }
-        if (errorStr === 'Network Error') {
-          dispatch(LogActions.warn(`[startGetRates] ${errorStr}`));
-          const {WALLET} = getState();
-          dispatch(
-            successGetRates({
-              rates: WALLET.rates,
-              lastDayRates: WALLET.lastDayRates,
-            }),
-          );
-          resolve(WALLET.rates);
-        } else {
-          dispatch(failedGetRates());
-          dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
-          reject(err);
-        }
+        dispatch(failedGetRates());
+        dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
+        resolve(getState().WALLET.rates); // Return cached rates
       }
     });
   };

@@ -49,22 +49,8 @@ export const startGetTokenOptions =
       } else {
         errorStr = JSON.stringify(e);
       }
-      if (errorStr === 'Network Error') {
-        dispatch(LogActions.warn(`[startGetTokenOptions] ${errorStr}`));
-        const {WALLET} = getState();
-        dispatch(
-          successGetTokenOptions({
-            tokenOptions: WALLET.tokenOptions,
-            tokenData: WALLET.tokenData,
-            tokenOptionsByAddress: WALLET.tokenOptionsByAddress,
-          }),
-        );
-      } else {
-        dispatch(failedGetTokenOptions());
-        dispatch(
-          LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`),
-        );
-      }
+      dispatch(failedGetTokenOptions());
+      dispatch(LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`));
     }
   };
 
