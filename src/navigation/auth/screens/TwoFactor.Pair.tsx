@@ -5,9 +5,9 @@ import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {Keyboard} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import * as yup from 'yup';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
+import yup from '../../../lib/yup';
 import {navigationRef, RootStacks} from '../../../Root';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
@@ -42,18 +42,16 @@ const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const {prevCode, onLoginSuccess} = route.params;
-  const schema = useMemo(() => {
-    return yup.object().shape({
-      code: yup
-        .string()
-        .required('Required')
-        .test(
-          'NoSameCode',
-          'Cannot use the same code twice.',
-          value => value !== prevCode,
-        ),
-    });
-  }, [prevCode]);
+  const schema = yup.object().shape({
+    code: yup
+      .string()
+      .required()
+      .test(
+        'NoSameCode',
+        t('CannotUseSameCodeTwice'),
+        value => value !== prevCode,
+      ),
+  });
   const twoFactorPairingStatus = useSelector<RootState, TwoFactorPairingStatus>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingStatus,
   );

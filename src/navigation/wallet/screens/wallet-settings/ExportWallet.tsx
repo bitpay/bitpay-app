@@ -13,7 +13,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {SlateDark, White} from '../../../../styles/colors';
-import * as yup from 'yup';
+import yup from '../../../../lib/yup';
 import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../../components/form/BoxInput';
 import Button, {ButtonState} from '../../../../components/button/Button';
@@ -30,7 +30,6 @@ import Clipboard from '@react-native-community/clipboard';
 import {sleep} from '../../../../utils/helper-methods';
 import {Linking} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import i18next from 'i18next';
 
 const BWC = BwcProvider.getInstance();
 
@@ -63,14 +62,6 @@ const PasswordActionContainer = styled.View`
 const PasswordInputContainer = styled.View`
   margin: 15px 0;
 `;
-
-const schema = yup.object().shape({
-  password: yup.string().required(),
-  confirmPassword: yup
-    .string()
-    .required(() => i18next.t('Confirm Encryption Password is required field'))
-    .oneOf([yup.ref('password')], () => i18next.t('Passwords must match')),
-});
 
 interface ExportWalletPasswordFieldValues {
   password: string;
@@ -119,6 +110,13 @@ const ExportWallet = () => {
     });
   }, [navigation, t]);
 
+  const schema = yup.object().shape({
+    password: yup.string().required(),
+    confirmPassword: yup
+      .string()
+      .required()
+      .oneOf([yup.ref('password')], t('Passwords must match')),
+  });
   const {
     control,
     handleSubmit,
