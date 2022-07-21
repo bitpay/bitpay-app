@@ -29,6 +29,7 @@ import {
   RecipientRowContainer,
   SendToOptionsContext,
 } from '../screens/SendToOptions';
+import {Recipient} from '../../../store/wallet/wallet.models';
 
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
@@ -73,13 +74,13 @@ const SendToContact = () => {
   );
 
   const renderItem = useCallback(
-    ({item}) => {
+    ({item, index}) => {
       return (
         <RecipientList
           recipient={item}
           wallet={wallet}
-          deleteRecipient={() => setRecipientListContext(item, true)}
-          setAmount={() => setRecipientAmountContext(item, true)}
+          deleteRecipient={() => setRecipientListContext(item, index, true)}
+          setAmount={() => setRecipientAmountContext(item, index, true)}
           context={context}
         />
       );
@@ -109,7 +110,9 @@ const SendToContact = () => {
             <FlatList
               data={recipientList}
               keyExtractor={(_item, index) => index.toString()}
-              renderItem={renderItem}
+              renderItem={({item, index}: {item: Recipient; index: number}) =>
+                renderItem({item, index})
+              }
             />
           ) : (
             <>
@@ -139,16 +142,12 @@ const SendToContact = () => {
                     contact={item}
                     onPress={() => {
                       haptic('impactLight');
-                      if (
-                        !recipientList.some(r => r.address === item.address)
-                      ) {
-                        context === 'selectInputs'
-                          ? goToSelectInputsView({...item, type: 'contact'})
-                          : setRecipientAmountContext({
-                              ...item,
-                              type: 'contact',
-                            });
-                      }
+                      context === 'selectInputs'
+                        ? goToSelectInputsView({...item, type: 'contact'})
+                        : setRecipientAmountContext({
+                            ...item,
+                            type: 'contact',
+                          });
                     }}
                   />
                 </SendContactRow>

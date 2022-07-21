@@ -52,6 +52,10 @@ import {
   RecipientRowContainer,
   SendToOptionsContext,
 } from '../screens/SendToOptions';
+import {
+  ExtractBitPayUriAddress,
+  ExtractUriAmount,
+} from '../../../store/wallet/utils/decode-uri';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -181,9 +185,14 @@ const SendToAddress = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setErrorMessage('');
         setSearchInput('');
+        const extractedAmount = ExtractUriAmount(data.data);
+        const addr = ExtractBitPayUriAddress(text);
         context === 'selectInputs'
-          ? goToSelectInputsView({address: text})
-          : addRecipient({address: text});
+          ? goToSelectInputsView({address: addr})
+          : addRecipient({
+              address: addr,
+              amount: extractedAmount ? Number(extractedAmount[1]) : undefined,
+            });
       }
     } else {
       setErrorMessage(text.length > 15 ? 'Invalid Address' : '');
@@ -195,9 +204,7 @@ const SendToAddress = () => {
   }, 300);
 
   const addRecipient = (newRecipient: Recipient) => {
-    if (!recipientList.some(r => r.address === newRecipient.address)) {
-      setRecipientAmountContext(newRecipient);
-    }
+    setRecipientAmountContext(newRecipient);
   };
 
   const onSendToWallet = async (selectedWallet: KeyWallet) => {
@@ -242,13 +249,13 @@ const SendToAddress = () => {
   };
 
   const renderItem = useCallback(
-    ({item}) => {
+    ({item, index}) => {
       return (
         <RecipientList
           recipient={item}
           wallet={wallet}
-          deleteRecipient={() => setRecipientListContext(item, true)}
-          setAmount={() => setRecipientAmountContext(item, true)}
+          deleteRecipient={() => setRecipientListContext(item, index, true)}
+          setAmount={() => setRecipientAmountContext(item, index, true)}
           context={context}
         />
       );
@@ -307,7 +314,9 @@ const SendToAddress = () => {
             <FlatList
               data={recipientList}
               keyExtractor={(_item, index) => index.toString()}
-              renderItem={renderItem}
+              renderItem={({item, index}: {item: Recipient; index: number}) =>
+                renderItem({item, index})
+              }
             />
           ) : (
             <>
