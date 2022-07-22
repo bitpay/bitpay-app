@@ -1,5 +1,5 @@
 import {Platform} from 'react-native';
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 
 export const WalletConnectContainer = styled.View`
   flex: 1;
@@ -59,4 +59,14 @@ export const IconContainer = styled.View`
   width: auto;
   border-radius: 9px;
   overflow: hidden;
+`;
+
+export const WalletConnectCtaContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  ${({platform}: {platform: string}) =>
+    platform === 'ios' &&
+    css`
+      margin-bottom: 10px;
+    `}
 `;

@@ -50,7 +50,6 @@ import {
   LightBlack,
   LuckySevens,
   SlateDark,
-  Action,
   White,
 } from '../../../styles/colors';
 import {shouldScale, sleep} from '../../../utils/helper-methods';
@@ -119,6 +118,14 @@ type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
   'WalletDetails'
 >;
+
+const TestnetFaucets: {[key: string]: string} = {
+  BTC: 'https://bitcoinfaucet.uo1.net/',
+  BCH: 'https://tbch.googol.cash/',
+  ETH: 'https://faucets.chain.link/',
+  LTC: 'https://testnet-faucet.com/ltc-testnet/',
+  DOGE: 'https://testnet-faucet.com/doge-testnet/',
+};
 
 const WalletDetailsContainer = styled.View`
   flex: 1;
@@ -852,6 +859,32 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   );
 
   const chain = dispatch(getChain(currencyAbbreviation.toLowerCase(), network));
+  const showFaucetRedirectNotification = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Warning'),
+        message: t(
+          'You are being redirected to a Faucet that will give you test coins. These test coins have no value and cannot be used to purchase things.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('CONTINUE'),
+            action: () => {
+              Linking.openURL(TestnetFaucets[currencyAbbreviation]);
+            },
+            primary: true,
+          },
+          {
+            text: t('GO BACK'),
+            action: () => {},
+            primary: false,
+          },
+        ],
+      }),
+    );
+  };
 
   return (
     <WalletDetailsContainer>
@@ -949,34 +982,43 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 {fullWalletObj ? (
                   <LinkingButtons
                     buy={{
-                      hide: !isCoinSupportedToBuy(
-                        fullWalletObj.currencyAbbreviation,
-                      ),
+                      hide:
+                        !isCoinSupportedToBuy(
+                          fullWalletObj.currencyAbbreviation,
+                        ) ||
+                        (network !== 'livenet' &&
+                          !Object.keys(TestnetFaucets).includes(
+                            currencyAbbreviation,
+                          )),
                       cta: () => {
-                        dispatch(
-                          logSegmentEvent('track', 'Clicked Buy Crypto', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                          }),
-                        );
-                        navigation.navigate('Wallet', {
-                          screen: 'Amount',
-                          params: {
-                            onAmountSelected: async (amount: string) => {
-                              navigation.navigate('BuyCrypto', {
-                                screen: 'BuyCryptoRoot',
-                                params: {
-                                  amount: Number(amount),
-                                  fromWallet: fullWalletObj,
-                                },
-                              });
+                        if (network === 'livenet') {
+                          dispatch(
+                            logSegmentEvent('track', 'Clicked Buy Crypto', {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            }),
+                          );
+                          navigation.navigate('Wallet', {
+                            screen: 'Amount',
+                            params: {
+                              onAmountSelected: async (amount: string) => {
+                                navigation.navigate('BuyCrypto', {
+                                  screen: 'BuyCryptoRoot',
+                                  params: {
+                                    amount: Number(amount),
+                                    fromWallet: fullWalletObj,
+                                  },
+                                });
+                              },
+                              opts: {
+                                hideSendMax: true,
+                                context: 'buyCrypto',
+                              },
                             },
-                            opts: {
-                              hideSendMax: true,
-                              context: 'buyCrypto',
-                            },
-                          },
-                        });
+                          });
+                        } else {
+                          showFaucetRedirectNotification();
+                        }
                       },
                     }}
                     swap={{
