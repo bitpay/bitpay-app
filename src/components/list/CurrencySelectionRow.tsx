@@ -1,16 +1,17 @@
 import React, {memo, useState} from 'react';
 import styled from 'styled-components/native';
+import {IS_ANDROID} from '../../constants';
+import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
+import Checkbox from '../checkbox/Checkbox';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
+import haptic from '../haptic-feedback/haptic';
 import {
+  ActiveOpacity,
   CurrencyColumn,
   CurrencyImageContainer,
-  ActiveOpacity,
+  RowContainer,
 } from '../styled/Containers';
-import {RowContainer} from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
-import haptic from '../haptic-feedback/haptic';
-import Checkbox from '../checkbox/Checkbox';
-import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
-import {CurrencyImage} from '../currency-image/CurrencyImage';
 
 export interface ItemProps extends SupportedCurrencyOption {
   disabled?: boolean;
@@ -26,10 +27,10 @@ export interface CurrencySelectionToggleProps {
   isToken?: boolean;
 }
 
-interface Props {
+interface CurrencySelectionRowProps {
   item: ItemProps;
-  emit: (props: CurrencySelectionToggleProps) => void;
-  removeCheckbox?: boolean;
+  hideCheckbox?: boolean;
+  onToggle?: (props: CurrencySelectionToggleProps) => void;
 }
 
 const CheckBoxContainer = styled.View`
@@ -37,7 +38,11 @@ const CheckBoxContainer = styled.View`
   justify-content: center;
 `;
 
-const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
+const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
+  item,
+  hideCheckbox,
+  onToggle,
+}) => {
   const {
     id,
     currencyName,
@@ -49,10 +54,10 @@ const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
   } = item;
 
   const [checked, setChecked] = useState(!!initialCheckValue);
-  const toggle = (): void => {
+  const onPress = (): void => {
     setChecked(!checked);
-    haptic('impactLight');
-    emit({
+    haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
+    onToggle?.({
       id,
       currencyAbbreviation,
       currencyName,
@@ -62,17 +67,19 @@ const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
   };
 
   return (
-    <RowContainer activeOpacity={ActiveOpacity} onPress={toggle}>
+    <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
       <CurrencyImageContainer>
         <CurrencyImage img={img} />
       </CurrencyImageContainer>
+
       <CurrencyColumn>
         <H5>{currencyName}</H5>
         <ListItemSubText>{currencyAbbreviation}</ListItemSubText>
       </CurrencyColumn>
-      {!removeCheckbox && (
+
+      {!hideCheckbox && (
         <CheckBoxContainer>
-          <Checkbox checked={checked} disabled={disabled} onPress={toggle} />
+          <Checkbox checked={checked} disabled={disabled} onPress={onPress} />
         </CheckBoxContainer>
       )}
     </RowContainer>

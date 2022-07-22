@@ -405,10 +405,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   const renderItem: ListRenderItem<SupportedCurrencyOption> = useCallback(
     ({item}) => (
       <CurrencySelectionRow
-        item={item}
-        emit={memoizedOnToggle}
         key={item.id}
-        removeCheckbox={removeCheckbox}
+        item={item}
+        onToggle={memoizedOnToggle}
+        hideCheckbox={removeCheckbox}
       />
     ),
     [memoizedOnToggle, removeCheckbox],
