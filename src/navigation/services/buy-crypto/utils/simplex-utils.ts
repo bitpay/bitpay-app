@@ -74,9 +74,11 @@ export const simplexSupportedCoins = [
   'xrp',
 ];
 
-export const simplexFiatAmountLimits = {
-  min: 50,
-  max: 20000,
+export const getSimplexFiatAmountLimits = () => {
+  return {
+    min: 50,
+    max: 20000,
+  };
 };
 
 export const getCheckoutUrl = (): string => {

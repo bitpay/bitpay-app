@@ -10,9 +10,18 @@ export const wyreSupportedCoins = [
   'wbtc',
 ];
 
-export const wyreFiatAmountLimits = {
-  min: 50,
-  max: 2500,
+export const getWyreFiatAmountLimits = (country?: string) => {
+  if (!country || country !== 'US') {
+    return {
+      min: 50,
+      max: 1000,
+    };
+  } else {
+    return {
+      min: 50,
+      max: 2500,
+    };
+  }
 };
 
 export const handleWyreStatus = (status: string): string => {
