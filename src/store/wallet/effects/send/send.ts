@@ -749,7 +749,7 @@ export const publishAndSign =
         // Already published?
         if (txp.status !== 'pending') {
           publishedTx = await publishTx(wallet, txp);
-          console.log('-------- published');
+          dispatch(LogActions.debug('success publish [publishAndSign]'));
         }
 
         const signedTx: any = await signTx(
@@ -758,12 +758,10 @@ export const publishAndSign =
           publishedTx || txp,
           password,
         );
-        console.log('-------- signed');
-
+        dispatch(LogActions.debug('success sign [publishAndSign]'));
         if (signedTx.status === 'accepted') {
           broadcastedTx = await broadcastTx(wallet, signedTx);
-          console.log('-------- broadcastedTx');
-
+          dispatch(LogActions.debug('success broadcast [publishAndSign]'));
           const {fee, amount} = broadcastedTx as {
             fee: number;
             amount: number;
@@ -781,22 +779,32 @@ export const publishAndSign =
         } else {
           dispatch(startUpdateWalletStatus({key, wallet}));
         }
+
+        let resultTx = broadcastedTx ? broadcastedTx : signedTx;
+
         // Check if ConfirmTx notification is enabled
         const {APP} = getState();
         if (APP.confirmedTxAccepted) {
           wallet.txConfirmationSubscribe(
-            {txid: broadcastedTx?.id, amount: txp.amount},
+            {txid: resultTx?.id, amount: txp.amount},
             (err: any) => {
               if (err) {
-                console.log('-------- push notification', err);
+                dispatch(
+                  LogActions.error(
+                    '[publishAndSign] txConfirmationSubscribe err',
+                    err,
+                  ),
+                );
               }
             },
           );
         }
 
-        resolve(broadcastedTx);
+        resolve(resultTx);
       } catch (err) {
-        console.log(err);
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`[publishAndSign] err: ${errorStr}`));
         reject(err);
       }
     });
