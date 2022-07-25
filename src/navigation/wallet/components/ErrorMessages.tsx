@@ -354,3 +354,27 @@ export const SpeedupInvalidTx = (): BottomNotificationConfig => {
     ],
   };
 };
+
+export const ExcludedUtxosWarning = ({
+  errMsg,
+  gotIt = () => null,
+}: {
+  errMsg: string;
+  gotIt?: () => void;
+}): BottomNotificationConfig => {
+  return {
+    type: 'warning',
+    title: t('Warning!'),
+    message: errMsg,
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: t('Got It'),
+        action: () => {
+          gotIt();
+        },
+        primary: true,
+      },
+    ],
+  };
+};

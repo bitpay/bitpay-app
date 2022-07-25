@@ -138,12 +138,14 @@ interface SendToOptionsContextProps {
   recipientList: Recipient[];
   setRecipientListContext: (
     recipient: Recipient,
+    index?: number,
     removeRecipient?: boolean,
     updateRecipient?: boolean,
     amount?: number,
   ) => void;
   setRecipientAmountContext: (
     recipient: Recipient,
+    index?: number,
     updateRecipient?: boolean,
   ) => void;
   goToConfirmView: () => void;
@@ -166,36 +168,38 @@ const SendToOptions = () => {
   const [recipientAmount, setRecipientAmount] = useState<{
     showModal: boolean;
     recipient?: Recipient;
+    index?: number;
     updateRecipient?: boolean;
   }>({showModal: false});
 
   const setRecipientListContext = (
     recipient: Recipient,
+    index?: number,
     removeRecipient?: boolean,
     updateRecipient?: boolean,
   ) => {
-    setRecipientList(prev => {
-      let newRecipientList: Recipient[] = [];
-      if (removeRecipient) {
-        newRecipientList = prev.filter(r => r.address !== recipient.address);
-      } else if (updateRecipient) {
-        newRecipientList = prev.map(r =>
-          r.address === recipient.address ? recipient : r,
-        );
-      } else if (params?.context === 'selectInputs') {
-        newRecipientList = [recipient];
-      } else {
-        newRecipientList = [...prev, recipient];
-      }
-      return newRecipientList;
-    });
+    let newRecipientList: Recipient[] = _.cloneDeep(recipientList);
+    if (removeRecipient) {
+      newRecipientList.splice(index!, 1);
+    } else if (updateRecipient) {
+      newRecipientList[index!] = recipient;
+    } else {
+      newRecipientList = [...newRecipientList, recipient];
+    }
+
+    setRecipientList(newRecipientList);
   };
 
   const setRecipientAmountContext = (
     recipient: Recipient,
+    index?: number,
     updateRecipient?: boolean,
   ) => {
-    setRecipientAmount({showModal: true, recipient, updateRecipient});
+    if (recipient.amount && !updateRecipient) {
+      setRecipientListContext(recipient);
+    } else {
+      setRecipientAmount({showModal: true, recipient, index, updateRecipient});
+    }
   };
 
   const goToConfirmView = async () => {
@@ -301,6 +305,7 @@ const SendToOptions = () => {
           setRecipientAmount({showModal: false});
           setRecipientListContext(
             {...recipientAmount.recipient!, amount},
+            recipientAmount.index,
             false,
             recipientAmount.updateRecipient,
           );

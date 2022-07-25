@@ -63,6 +63,7 @@ import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import _ from 'lodash';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -428,6 +429,10 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       );
     }
   }, [navigation, key?.wallets, context]);
+
+  useEffect(() => {
+    dispatch(logSegmentEvent('track', 'View Key'));
+  }, []);
 
   const {wallets = [], totalBalance} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};

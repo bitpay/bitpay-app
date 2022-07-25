@@ -17,6 +17,7 @@ import {
 } from '../../lib/gift-cards/gift-card';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
+import {LogActions} from '../log';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
@@ -48,7 +49,12 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
       }),
     );
   } catch (err) {
-    console.error(err);
+    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+    dispatch(
+      LogActions.error(
+        `failed [startFetchCatalog]: ${errStr} - continue anyway`,
+      ),
+    );
     dispatch(ShopActions.failedFetchCatalog());
   }
 };

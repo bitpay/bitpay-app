@@ -8,7 +8,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {useAppDispatch} from '../../../utils/hooks';
 import {titleCasing} from '../../../utils/helper-methods';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -85,7 +85,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
               placeholder={context === 'key' ? t('My Key') : t('My Wallet')}
               label={context.toUpperCase() + t(' NAME')}
               onBlur={onBlur}
-              onChangeText={(text: string) => onChange(text)}
+              onChangeText={onChange}
               error={errors.name?.message}
               value={value}
               onSubmitEditing={handleSubmit(updateName)}
