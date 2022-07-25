@@ -448,7 +448,7 @@ const TransactionProposalNotifications = () => {
     arrayData.forEach((data: TransactionProposal | Error) => {
       if (data instanceof Error) {
         count.failed = count.failed + 1;
-      } else if (data.id) {
+      } else if (data && data.id) {
         count.success = count.success + 1;
       }
     });
