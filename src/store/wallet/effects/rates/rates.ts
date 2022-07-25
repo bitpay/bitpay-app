@@ -63,14 +63,14 @@ export const getPriceHistory =
         errorStr = JSON.stringify(err);
       }
       dispatch(failedGetPriceHistory());
-      dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
+      dispatch(LogActions.error(`failed [getPriceHistory]: ${errorStr}`));
     }
   };
 
 export const startGetRates =
   ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       dispatch(LogActions.info('starting [startGetRates]'));
       const {
         WALLET: {ratesCacheKey, rates: cachedRates},
@@ -161,7 +161,7 @@ export const startGetRates =
         }
         dispatch(failedGetRates());
         dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
-        reject(err);
+        resolve(getState().WALLET.rates); // Return cached rates
       }
     });
   };
