@@ -214,7 +214,7 @@ export const bitPayIdReducer = (
     case BitPayIdActionTypes.UPDATE_TWO_FACTOR_PAIRING_STATUS:
       return {
         ...state,
-        twoFactorPairingStatus: 'success',
+        twoFactorPairingStatus: action.payload,
       };
 
     case BitPayIdActionTypes.SUCCESS_EMAIL_PAIRING:

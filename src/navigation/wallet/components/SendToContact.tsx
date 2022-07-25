@@ -9,7 +9,7 @@ import Button from '../../../components/button/Button';
 import styled, {useTheme} from 'styled-components/native';
 import {H5, SubText} from '../../../components/styled/Text';
 import {NeutralSlate} from '../../../styles/colors';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {RootState} from '../../../store';
@@ -50,7 +50,6 @@ const SendToContact = () => {
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
-  const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
   const {wallet, context} = route.params;
   const {
@@ -58,6 +57,7 @@ const SendToContact = () => {
     setRecipientListContext,
     setRecipientAmountContext,
     goToConfirmView,
+    goToSelectInputsView,
   } = useContext(SendToOptionsContext);
   const {
     currencyAbbreviation,
@@ -66,7 +66,7 @@ const SendToContact = () => {
 
   const contacts = allContacts.filter(
     contact =>
-      contact.coin === currencyAbbreviation &&
+      contact.coin === currencyAbbreviation.toLowerCase() &&
       contact.network === network &&
       (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
         contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
@@ -143,10 +143,7 @@ const SendToContact = () => {
                         !recipientList.some(r => r.address === item.address)
                       ) {
                         context === 'selectInputs'
-                          ? setRecipientListContext({
-                              ...item,
-                              type: 'contact',
-                            })
+                          ? goToSelectInputsView({...item, type: 'contact'})
                           : setRecipientAmountContext({
                               ...item,
                               type: 'contact',
@@ -160,27 +157,19 @@ const SendToContact = () => {
           </>
         ) : null}
       </ScrollViewContainer>
-      <CtaContainer>
-        <Button
-          buttonStyle={'primary'}
-          onPress={() => {
-            haptic('impactLight');
-            if (context === 'selectInputs') {
-              navigation.navigate('Wallet', {
-                screen: 'SelectInputs',
-                params: {
-                  recipient: {...recipientList[0]!},
-                  wallet,
-                },
-              });
-            } else {
+      {context !== 'selectInputs' ? (
+        <CtaContainer>
+          <Button
+            buttonStyle={'primary'}
+            onPress={() => {
+              haptic('impactLight');
               goToConfirmView();
-            }
-          }}
-          disabled={!recipientList[0]}>
-          {t('Continue')}
-        </Button>
-      </CtaContainer>
+            }}
+            disabled={!recipientList[0]}>
+            {t('Continue')}
+          </Button>
+        </CtaContainer>
+      ) : null}
     </>
   );
 };

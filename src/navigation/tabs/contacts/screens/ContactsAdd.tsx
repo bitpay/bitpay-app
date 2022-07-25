@@ -1,4 +1,10 @@
-import React, {useState, useMemo, useCallback} from 'react';
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useLayoutEffect,
+  useEffect,
+} from 'react';
 import {FlatList} from 'react-native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -6,7 +12,12 @@ import styled, {useTheme} from 'styled-components/native';
 import {Controller, useForm} from 'react-hook-form';
 import Button from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';
-import {TextAlign, H4, BaseText} from '../../../../components/styled/Text';
+import {
+  TextAlign,
+  H4,
+  BaseText,
+  HeaderTitle,
+} from '../../../../components/styled/Text';
 import {
   SheetContainer,
   Row,
@@ -19,7 +30,10 @@ import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/addres
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
 import {RootState} from '../../../../store';
-import {createContact} from '../../../../store/contact/contact.actions';
+import {
+  createContact,
+  updateContact,
+} from '../../../../store/contact/contact.actions';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import SuccessIcon from '../../../../../assets/img/success.svg';
 import SearchSvg from '../../../../../assets/img/search.svg';
@@ -43,6 +57,8 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 import debounce from 'lodash.debounce';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {ContactsStackParamList} from '../ContactsStack';
+import {StackScreenProps} from '@react-navigation/stack';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -129,8 +145,9 @@ const SearchImageContainer = styled.View`
   width: 50px;
   align-items: center;
 `;
-
-const ContactsAdd: React.FC = () => {
+const ContactsAdd = ({
+  route,
+}: StackScreenProps<ContactsStackParamList, 'ContactsAdd'>) => {
   const {t} = useTranslation();
   const {
     control,
@@ -139,6 +156,7 @@ const ContactsAdd: React.FC = () => {
     setValue,
     formState: {errors, dirtyFields},
   } = useForm<ContactRowProps>({resolver: yupResolver(schema)});
+  const {contact, context, onEditComplete} = route.params || {};
 
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
@@ -147,7 +165,7 @@ const ContactsAdd: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
-  const [validAddress, setvalidAddress] = useState(false);
+  const [validAddress, setValidAddress] = useState(false);
   const [xrpValidAddress, setXrpValidAddress] = useState(false);
   const [ethValidAddress, setEthValidAddress] = useState(false);
   const [searchInput, setSearchInput] = useState('');
@@ -188,7 +206,7 @@ const ContactsAdd: React.FC = () => {
 
   const ALL_CURRENCIES = useMemo(
     () => [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
-    [SupportedCurrencyOptions, ALL_CUSTOM_TOKENS],
+    [ALL_CUSTOM_TOKENS],
   );
 
   const ETH_CHAIN_CURRENCIES = useMemo(
@@ -198,7 +216,7 @@ const ContactsAdd: React.FC = () => {
           dispatch(GetChain(currency.currencyAbbreviation)).toLowerCase() ===
           'eth',
       ),
-    [],
+    [ALL_CURRENCIES, dispatch],
   );
 
   const [ethCurrencyOptions, setEthCurrencyOptions] = useState<Array<any>>([
@@ -213,6 +231,16 @@ const ContactsAdd: React.FC = () => {
     {id: 'livenet', name: 'Livenet'},
     {id: 'testnet', name: 'Testnet'},
   ];
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <HeaderTitle>
+          {contact ? t('Edit Contact') : t('New Contact')}
+        </HeaderTitle>
+      ),
+    });
+  }, [navigation, t, contact]);
 
   const onSearchInputChange = useMemo(
     () =>
@@ -230,11 +258,11 @@ const ContactsAdd: React.FC = () => {
         }
         setEthCurrencyOptions(_searchList);
       }, 300),
-    [selectedCurrency],
+    [ethCurrencyOptions],
   );
 
   const setValidValues = (address: string, coin: string, network: string) => {
-    setvalidAddress(true);
+    setValidAddress(true);
     setAddressValue(address);
     setCoinValue(coin);
     setNetworkValue(network);
@@ -280,7 +308,7 @@ const ContactsAdd: React.FC = () => {
         setCoinValue('');
         setNetworkValue('');
         setAddressValue('');
-        setvalidAddress(false);
+        setValidAddress(false);
         setEthValidAddress(false);
         setXrpValidAddress(false);
       }
@@ -312,6 +340,13 @@ const ContactsAdd: React.FC = () => {
         type: 'manual',
         message: t('Tag number is required for XRP address'),
       });
+      return;
+    }
+
+    if (context === 'edit') {
+      dispatch(updateContact(contact));
+      navigation.goBack();
+      onEditComplete && onEditComplete(contact);
       return;
     }
 
@@ -382,6 +417,17 @@ const ContactsAdd: React.FC = () => {
     });
   };
 
+  useEffect(() => {
+    if (contact?.address) {
+      setValue('address', contact.address, {shouldDirty: true});
+      setValue('name', contact.name);
+      setValue('email', contact.email);
+      setValue('tag', contact.tag);
+      currencySelected({id: contact.coin} as CurrencySelectionToggleProps);
+      processAddress(contact.address);
+    }
+  }, [contact]);
+
   return (
     <Container keyboardShouldPersistTaps="handled">
       <InputContainer>
@@ -419,40 +465,53 @@ const ContactsAdd: React.FC = () => {
           defaultValue=""
         />
       </InputContainer>
-      <InputContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={'Crypto address'}
-              label={t('ADDRESS')}
-              onBlur={onBlur}
-              onChangeText={(newValue: string) => {
-                onChange(newValue);
-                processAddress(newValue);
-              }}
-              error={errors.address?.message}
-              value={value}
-            />
+      {!contact ? (
+        <InputContainer>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={'Crypto address'}
+                label={t('ADDRESS')}
+                onBlur={onBlur}
+                onChangeText={(newValue: string) => {
+                  onChange(newValue);
+                  processAddress(newValue);
+                }}
+                error={errors.address?.message}
+                value={value}
+              />
+            )}
+            name="address"
+            defaultValue=""
+          />
+          {addressValue && dirtyFields.address ? (
+            <AddressBadge>
+              <SuccessIcon />
+            </AddressBadge>
+          ) : (
+            <ScanButtonContainer onPress={goToScan}>
+              <Icons.Scan />
+            </ScanButtonContainer>
           )}
-          name="address"
-          defaultValue=""
-        />
-        {addressValue && dirtyFields.address ? (
-          <AddressBadge>
-            <SuccessIcon />
-          </AddressBadge>
-        ) : (
-          <ScanButtonContainer onPress={goToScan}>
-            <Icons.Scan />
-          </ScanButtonContainer>
-        )}
-      </InputContainer>
+        </InputContainer>
+      ) : (
+        <InputContainer>
+          <Controller
+            control={control}
+            render={({field: {value}}) => (
+              <BoxInput disabled={true} label={t('ADDRESS')} value={value} />
+            )}
+            name="address"
+            defaultValue=""
+          />
+        </InputContainer>
+      )}
 
       <InputContainer hideInput={!xrpValidAddress}>
         <Controller
           control={control}
-          render={({field: {onChange, onBlur}}) => (
+          render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'Tag'}
               label={t('TAG')}
@@ -462,36 +521,39 @@ const ContactsAdd: React.FC = () => {
               keyboardType={'number-pad'}
               type={'number'}
               maxLength={9}
+              value={value?.toString()}
             />
           )}
           name="tag"
         />
       </InputContainer>
 
-      <CurrencySelectorContainer hideSelector={!ethValidAddress}>
-        <Label>{t('CURRENCY')}</Label>
-        <CurrencyContainer
-          activeOpacity={ActiveOpacity}
-          onPress={() => {
-            setCurrencyModalVisible(true);
-          }}>
-          <Row
-            style={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
+      {!contact ? (
+        <CurrencySelectorContainer hideSelector={!ethValidAddress}>
+          <Label>{t('CURRENCY')}</Label>
+          <CurrencyContainer
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              setCurrencyModalVisible(true);
             }}>
-            <Row style={{alignItems: 'center'}}>
-              {selectedCurrency?.img ? (
-                <CurrencyImage img={selectedCurrency.img} size={30} />
-              ) : null}
-              <CurrencyName>
-                {selectedCurrency?.currencyAbbreviation}
-              </CurrencyName>
+            <Row
+              style={{
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+              <Row style={{alignItems: 'center'}}>
+                {selectedCurrency?.img ? (
+                  <CurrencyImage img={selectedCurrency.img} size={30} />
+                ) : null}
+                <CurrencyName>
+                  {selectedCurrency?.currencyAbbreviation}
+                </CurrencyName>
+              </Row>
+              <WalletIcons.DownToggle />
             </Row>
-            <WalletIcons.DownToggle />
-          </Row>
-        </CurrencyContainer>
-      </CurrencySelectorContainer>
+          </CurrencyContainer>
+        </CurrencySelectorContainer>
+      ) : null}
 
       <CurrencySelectorContainer hideSelector={true}>
         <Label>{t('NETWORK')}</Label>
@@ -514,7 +576,9 @@ const ContactsAdd: React.FC = () => {
       </CurrencySelectorContainer>
 
       <ActionContainer>
-        <Button onPress={onSubmit}>{t('Add Contact')}</Button>
+        <Button onPress={onSubmit}>
+          {contact ? t('Save Contact') : t('Add Contact')}
+        </Button>
       </ActionContainer>
       <SheetModal
         isVisible={currencyModalVisible}
@@ -549,7 +613,7 @@ const ContactsAdd: React.FC = () => {
             </SearchImageContainer>
           </SearchContainer>
           <FlatList
-            contentContainerStyle={{height: '100%'}}
+            contentContainerStyle={{minHeight: '100%'}}
             data={ethCurrencyOptions}
             keyExtractor={keyExtractor}
             renderItem={renderItem}

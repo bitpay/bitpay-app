@@ -67,7 +67,7 @@ const TransactionRow = ({
       ) : (
         icon && <IconContainer>{icon}</IconContainer>
       )}
-      {description && (
+      {!!description && (
         <Description numberOfLines={details ? 2 : 1} ellipsizeMode={'tail'}>
           {description}
           {details && (

@@ -517,7 +517,7 @@ const buildTransactionProposal =
             txp.destinationTag = tx.destinationTag;
             break;
           case 'bch':
-            tx.toAddress = recipientList
+            tx.toAddress = !recipientList
               ? ToCashAddress(tx.toAddress!, false)
               : undefined;
             break;
@@ -561,7 +561,7 @@ const buildTransactionProposal =
                 txp.outputs?.push({
                   toAddress:
                     chain === 'bch'
-                      ? ToCashAddress(tx.toAddress!, false)
+                      ? ToCashAddress(r.address!, false)
                       : r.address,
                   amount: formattedAmount.amountSat,
                   message: tx.description,

@@ -35,6 +35,7 @@ import {
   biometricLockActive,
   currentPin,
   pinLockActive,
+  setAnnouncementsAccepted,
   setColorScheme,
   setDefaultAltCurrency,
   setHomeCarouselConfig,
@@ -77,8 +78,6 @@ import {
   checkNotificationsPermissions,
   setConfirmTxNotifications,
   setNotifications,
-  setOffersAndPromotionsNotifications,
-  setProductsUpdatesNotifications,
   subscribePushNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
@@ -271,11 +270,8 @@ export const startMigration =
             if (confirmedTxsNotifications?.enabled) {
               dispatch(setConfirmTxNotifications(true));
             }
-            if (offersAndPromotions?.enabled) {
-              dispatch(setOffersAndPromotionsNotifications(true));
-            }
-            if (productsUpdates?.enabled) {
-              dispatch(setProductsUpdatesNotifications(true));
+            if (offersAndPromotions?.enabled || productsUpdates?.enabled) {
+              dispatch(setAnnouncementsAccepted(true));
             }
           }
         }
