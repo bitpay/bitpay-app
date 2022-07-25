@@ -879,7 +879,11 @@ export const publishAndSign =
         try {
           await removeTxp(wallet, txp);
         } catch (removeTxpErr: any) {
-        dispatch(LogActions.error(`[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`));
+          dispatch(
+            LogActions.error(
+              `[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`,
+            ),
+          );
         }
         reject(err);
       }
