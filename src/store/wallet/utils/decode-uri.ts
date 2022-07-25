@@ -23,3 +23,7 @@ export const ExtractCoinNetworkAddress = (str: string): string => {
   const extractedAddress = str.replace(/^[a-z]+:/i, '').replace(/\?.*/, '');
   return extractedAddress;
 };
+
+export const ExtractUriAmount = (uri: string): RegExpExecArray | null => {
+  return /[\?\&]amount=(\d+([\,\.]\d+)?)/i.exec(uri);
+};
