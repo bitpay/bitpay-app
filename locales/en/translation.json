@@ -1135,8 +1135,6 @@
   "EnterArgArgToActivateYourCard": "Enter {{0}} and {{1}} to activate your card.",
   "EnterArgToActivateYourCard": "Enter {{0}} to activate your card.",
   "EnterYourInformationToActivateYourCard": "Enter your information to activate your card.",
-  "Segwit": "Segwit",
-  "Testnet": "Testnet",
   "InvalidInvitationCode": "Invalid invitation code",
   "MustBeLessThanArgCharacters": "Must be less than {{max}} characters",
   "MustBeGreaterThanArgCharacters": "Must be greater than {{min}} characters",

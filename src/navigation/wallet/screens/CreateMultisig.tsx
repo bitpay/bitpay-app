@@ -541,7 +541,7 @@ const CreateMultisig = () => {
                     });
                   }}>
                   <Column>
-                    <OptionTitle>{t('Segwit')}</OptionTitle>
+                    <OptionTitle>Segwit</OptionTitle>
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
@@ -561,7 +561,7 @@ const CreateMultisig = () => {
               <AdvancedOptions>
                 <RowContainer onPress={toggleTestnet}>
                   <Column>
-                    <OptionTitle>{t('Testnet')}</OptionTitle>
+                    <OptionTitle>Testnet</OptionTitle>
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
