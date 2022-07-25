@@ -7,11 +7,11 @@ import AngleRight from '../../../assets/img/angle-right.svg';
 import ContactIcon from '../../navigation/tabs/contacts/components/ContactIcon';
 
 const ContactContainer = styled.TouchableHighlight`
-  padding: 20px;
+  padding: 20px 0;
 `;
 
 const ContactColumn = styled(Column)`
-  margin-left: 25px;
+  margin-left: 18px;
 `;
 
 const ContactImageContainer = styled.View`

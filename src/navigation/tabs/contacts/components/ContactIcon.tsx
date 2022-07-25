@@ -27,7 +27,7 @@ const ContactIconContainer = styled.View`
 
 const CoinBadgeContainer = styled.View`
   position: absolute;
-  right: -13px;
+  right: -10px;
   bottom: -1px;
 `;
 
@@ -39,7 +39,7 @@ const CoinBadge: React.FC<BadgeProps> = ({size = 20, img}) => {
   );
 };
 
-const ContactIcon: React.FC<ContactIconProps> = ({coin, size = 50, name}) => {
+const ContactIcon: React.FC<ContactIconProps> = ({coin, size = 45, name}) => {
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOpts,

@@ -75,11 +75,11 @@ import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetChain, IsUtxoCoin} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
-import SettingsContactRow from '../../../../components/list/SettingsContactRow';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
 import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
+import ContactRow from '../../../../components/list/ContactRow';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -112,10 +112,6 @@ const PasteClipboardContainer = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: center;
   padding: 10px;
-`;
-
-export const SendContactRow = styled.View`
-  padding: 10px 0px;
 `;
 
 export const ContactTitleContainer = styled.View`
@@ -534,24 +530,23 @@ const SendTo = () => {
 
             {contacts.map((item, index) => {
               return (
-                <SendContactRow key={index}>
-                  <SettingsContactRow
-                    contact={item}
-                    onPress={() => {
-                      try {
-                        if (item) {
-                          validateAndNavigateToConfirm(
-                            item.address,
-                            'contact',
-                            item.name,
-                          );
-                        }
-                      } catch (err) {
-                        console.log(err);
+                <ContactRow
+                  key={index}
+                  contact={item}
+                  onPress={() => {
+                    try {
+                      if (item) {
+                        validateAndNavigateToConfirm(
+                          item.address,
+                          'contact',
+                          item.name,
+                        );
                       }
-                    }}
-                  />
-                </SendContactRow>
+                    } catch (err) {
+                      console.log(err);
+                    }
+                  }}
+                />
               );
             })}
           </>

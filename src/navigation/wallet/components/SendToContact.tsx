@@ -15,13 +15,8 @@ import {WalletStackParamList} from '../WalletStack';
 import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {
-  ContactTitle,
-  ContactTitleContainer,
-  SendContactRow,
-} from '../screens/send/SendTo';
+import {ContactTitle, ContactTitleContainer} from '../screens/send/SendTo';
 import ContactsSvg from '../../../../assets/img/tab-icons/contacts.svg';
-import SettingsContactRow from '../../../components/list/SettingsContactRow';
 import {useAppSelector} from '../../../utils/hooks';
 import {FlatList, View} from 'react-native';
 import {
@@ -29,6 +24,7 @@ import {
   RecipientRowContainer,
   SendToOptionsContext,
 } from '../screens/SendToOptions';
+import ContactRow from '../../../components/list/ContactRow';
 
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
@@ -134,24 +130,21 @@ const SendToContact = () => {
             </ContactTitleContainer>
             {contacts.map((item, index) => {
               return (
-                <SendContactRow key={index}>
-                  <SettingsContactRow
-                    contact={item}
-                    onPress={() => {
-                      haptic('impactLight');
-                      if (
-                        !recipientList.some(r => r.address === item.address)
-                      ) {
-                        context === 'selectInputs'
-                          ? goToSelectInputsView({...item, type: 'contact'})
-                          : setRecipientAmountContext({
-                              ...item,
-                              type: 'contact',
-                            });
-                      }
-                    }}
-                  />
-                </SendContactRow>
+                <ContactRow
+                  key={index}
+                  contact={item}
+                  onPress={() => {
+                    haptic('impactLight');
+                    if (!recipientList.some(r => r.address === item.address)) {
+                      context === 'selectInputs'
+                        ? goToSelectInputsView({...item, type: 'contact'})
+                        : setRecipientAmountContext({
+                            ...item,
+                            type: 'contact',
+                          });
+                    }
+                  }}
+                />
               );
             })}
           </>
