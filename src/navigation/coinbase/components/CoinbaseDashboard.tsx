@@ -155,6 +155,9 @@ const CoinbaseDashboard = () => {
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
       const errMsg = coinbaseParseErrorToString(error);
+      if (errMsg === 'Network Error') {
+        return;
+      }
       const isInvalidToken = isInvalidTokenError(error);
       const textAction = isInvalidToken ? t('Re-Connect') : t('OK');
       dispatch(
