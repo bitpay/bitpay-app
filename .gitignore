@@ -30,6 +30,9 @@ local.properties
 *.iml
 android/app/src/main/res/raw/*
 
+# Emacs
+.log/
+
 # node.js
 #
 node_modules/

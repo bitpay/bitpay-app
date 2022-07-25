@@ -1,4 +1,4 @@
-import {ColorSchemeName} from 'react-native';
+import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
@@ -34,8 +34,8 @@ export enum AppActionTypes {
   FAILED_GENERATE_APP_IDENTITY = 'APP/FAILED_GENERATE_APP_IDENTITY',
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
   SET_CONFIRMED_TX_ACCEPTED = 'APP/SET_CONFIRMED_TX_ACCEPTED',
-  SET_PRODUCTS_UPDATES_ACCEPTED = 'APP/SET_PRODUCTS_UPDATES_ACCEPTED',
-  SET_OFFERS_AND_PROMOTIONS_ACCEPTED = 'APP/SET_OFFERS_AND_PROMOTIONS_ACCEPTED',
+  SET_ANNOUNCEMENTS_ACCEPTED = 'APP/SET_ANNOUNCEMENTS_ACCEPTED',
+  SET_EMAIL_NOTIFICATIONS_ACCEPTED = 'APP/SET_EMAIL_NOTIFICATIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
   SHOW_DECRYPT_PASSWORD_MODAL = 'APP/SHOW_DECRYPT_PASSWORD_MODAL',
@@ -49,6 +49,7 @@ export enum AppActionTypes {
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
+  BRAZE_INITIALIZED = 'APP/BRAZE_INITIALIZED',
   BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
   SET_BRAZE_EID = 'APP/SET_BRAZE_EID',
   SHOW_BIOMETRIC_MODAL = 'APP/SHOW_BIOMETRIC_MODAL',
@@ -148,14 +149,14 @@ interface SetConfirmedTxAccepted {
   payload: boolean;
 }
 
-interface SetProductsUpdatesAccepted {
-  type: typeof AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED;
+interface SetAnnouncementsAccepted {
+  type: typeof AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED;
   payload: boolean;
 }
 
-interface SetOffersAndPromotionsAccepted {
-  type: typeof AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED;
-  payload: boolean;
+interface SetEmailNotificationsAccepted {
+  type: typeof AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED;
+  payload: {accepted: boolean; email: string | null};
 }
 
 interface ShowOnboardingFinishModal {
@@ -237,6 +238,11 @@ interface ShowPortfolioValue {
   payload: boolean;
 }
 
+interface BrazeInitialized {
+  type: typeof AppActionTypes.BRAZE_INITIALIZED;
+  payload: {contentCardSubscription: EventSubscription | null};
+}
+
 interface BrazeContentCardsFetched {
   type: typeof AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED;
   payload: {contentCards: ContentCard[]};
@@ -313,8 +319,8 @@ export type AppActionType =
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
   | SetConfirmedTxAccepted
-  | SetProductsUpdatesAccepted
-  | SetOffersAndPromotionsAccepted
+  | SetAnnouncementsAccepted
+  | SetEmailNotificationsAccepted
   | ShowOnboardingFinishModal
   | DismissOnboardingFinishModal
   | SetDefaultLanguage
@@ -328,6 +334,7 @@ export type AppActionType =
   | PinBannedUntil
   | ShowBlur
   | ShowPortfolioValue
+  | BrazeInitialized
   | BrazeContentCardsFetched
   | SetBrazeEid
   | ShowBiometricModal

@@ -7,10 +7,9 @@ import {
   SettingTitle,
 } from '../../../../components/styled/Containers';
 import Button from '../../../../components/button/Button';
-// @ts-ignore
-import {version} from '../../../../../package.json'; // TODO: better way to get version
 import {useNavigation} from '@react-navigation/native';
 import {URL} from '../../../../constants';
+import {APP_VERSION} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import {useDispatch} from 'react-redux';
@@ -59,7 +58,7 @@ const About = () => {
       <Setting>
         <SettingTitle>{t('Version')}</SettingTitle>
 
-        <Button buttonType="pill">{version}</Button>
+        <Button buttonType="pill">{APP_VERSION}</Button>
       </Setting>
 
       <Hr />

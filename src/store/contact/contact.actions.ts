@@ -6,6 +6,11 @@ export const createContact = (contact: ContactRowProps): ContactActionType => ({
   contact: contact,
 });
 
+export const updateContact = (contact: ContactRowProps): ContactActionType => ({
+  type: ContactActionTypes.UPDATE_CONTACT,
+  contact: contact,
+});
+
 export const deleteContact = (
   address: string,
   coin: string,

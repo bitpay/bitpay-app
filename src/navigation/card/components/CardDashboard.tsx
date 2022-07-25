@@ -1,4 +1,8 @@
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useScrollToTop,
+} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
@@ -356,6 +360,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     });
   }
 
+  const flatListRef = useRef<FlatList>(null);
+  useScrollToTop(flatListRef);
+
   return (
     <>
       <FlatList
@@ -415,6 +422,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         }
         ListFooterComponent={listFooterComponent}
         ListEmptyComponent={listEmptyComponent}
+        ref={flatListRef}
       />
       <FloatingActionButtonContainer>
         <FloatingActionButton

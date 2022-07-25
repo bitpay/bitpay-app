@@ -33,6 +33,22 @@ export const contactReducer = (
       }
       return {...state};
 
+    case ContactActionTypes.UPDATE_CONTACT:
+      const {address, coin, network} = action.contact;
+      return {
+        ...state,
+        list: state.list.map((contact: ContactRowProps) => {
+          if (
+            contact.address === address &&
+            contact.coin === coin &&
+            contact.network === network
+          ) {
+            contact = action.contact;
+          }
+          return contact;
+        }),
+      };
+
     case ContactActionTypes.DELETE_CONTACT:
       return {
         ...state,

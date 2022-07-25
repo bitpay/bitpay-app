@@ -1,26 +1,26 @@
+import Slider from '@react-native-community/slider';
 import {StackNavigationProp} from '@react-navigation/stack';
+import React, {memo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import React, {useState, useCallback} from 'react';
-import Mailer from 'react-native-mail';
 import {Alert, FlatList} from 'react-native';
-import {useSelector} from 'react-redux';
+import Mailer from 'react-native-mail';
 import styled from 'styled-components/native';
-import {RootState} from '../../../../../store';
-import {LogLevel} from '../../../../../store/log/log.models';
-import {LogActions} from '../../../../../store/log';
-import {AboutStackParamList} from '../AboutStack';
 import Button from '../../../../../components/button/Button';
+import {WIDTH} from '../../../../../components/styled/Containers';
+import {BaseText} from '../../../../../components/styled/Text';
+import {IS_ANDROID, IS_IOS} from '../../../../../constants';
+import {APP_VERSION} from '../../../../../constants/config';
+import {LogActions} from '../../../../../store/log';
+import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
 import {
-  SlateDark,
   Caution,
-  Warning,
   LinkBlue,
+  SlateDark,
+  Warning,
   White,
 } from '../../../../../styles/colors';
-import {BaseText} from '../../../../../components/styled/Text';
-// @ts-ignore
-import {version} from '../../../../../../package.json'; // TODO: better way to get version
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {AboutStackParamList} from '../AboutStack';
 
 export interface SessionLogsParamList {}
 
@@ -44,25 +44,76 @@ const Logs = styled(BaseText)<{color?: string | null}>`
     color ? color : dark ? White : SlateDark};
 `;
 
-const SessionLogs: React.FC<SessionLogsScreenProps> = () => {
+const FilterLabelsContainer = styled.View`
+  flex-direction: row;
+  margin-top: 16px;
+`;
+
+const FilterLabel = styled(BaseText)`
+  flex: 1 1 100%;
+  text-align: center;
+`;
+
+const MIN_LOG_LEVEL = LogLevel.Error;
+const MAX_LOG_LEVEL = LogLevel.Debug;
+const TOTAL_LOG_LEVELS = MAX_LOG_LEVEL - MIN_LOG_LEVEL + 1;
+
+const THUMB_WIDTH = IS_IOS || IS_ANDROID ? 30 : 0;
+const SLIDER_WIDTH =
+  ((TOTAL_LOG_LEVELS - 1) / TOTAL_LOG_LEVELS) * WIDTH + THUMB_WIDTH;
+
+const LogColorMap: Partial<{[key in LogLevel]: string | null}> = {
+  [LogLevel.Error]: Caution,
+  [LogLevel.Warn]: Warning,
+  [LogLevel.Debug]: LinkBlue,
+};
+
+const FilterLabels: React.VFC<{onPress?: (level: LogLevel) => any}> = memo(
+  props => {
+    const levels = [];
+
+    for (let i = MIN_LOG_LEVEL; i <= MAX_LOG_LEVEL; ++i) {
+      levels.push(i);
+    }
+
+    return (
+      <FilterLabelsContainer>
+        {levels.map(level => (
+          <FilterLabel onPress={() => props.onPress?.(level)} key={level}>
+            {LogLevel[level]}
+          </FilterLabel>
+        ))}
+      </FilterLabelsContainer>
+    );
+  },
+);
+
+const renderItem = ({item}: {item: LogEntry}) => (
+  <Logs color={LogColorMap[item.level]}>
+    [{LogLevel[item.level]}] {item.message}
+  </Logs>
+);
+
+const keyExtractor = (item: LogEntry, index: number) => item.message + index;
+
+const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const logs = useSelector(({LOG}: RootState) => LOG.logs);
-  const [filterLevel] = useState(LogLevel.None);
+  const logs = useAppSelector(({LOG}) => LOG.logs);
+  const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
 
-  let logStr: string =
-    'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
-  logStr += filteredLogs.map(log => {
-    const formattedLevel = LogLevel[log.level].toLowerCase();
-    return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
-  });
+  const onFilterLevelChange = (level: LogLevel) => {
+    if (level !== filterLevel) {
+      setFilterLevel(level);
+    }
+  };
 
   const handleEmail = (data: string) => {
     Mailer.mail(
       {
-        subject: `BitPay v${version} Logs`,
+        subject: `BitPay v${APP_VERSION} Logs`,
         body: data,
         isHTML: false,
       },
@@ -77,32 +128,25 @@ const SessionLogs: React.FC<SessionLogsScreenProps> = () => {
     );
   };
 
-  const showDisclaimer = (data: string) => {
+  const showDisclaimer = () => {
+    let logStr =
+      'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
+    logStr += filteredLogs.map(log => {
+      const formattedLevel = LogLevel[log.level].toLowerCase();
+
+      return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+    });
+
     Alert.alert(
       'Warning',
       'Be careful, this could contain sensitive private data.',
-      [{text: 'Continue', onPress: () => handleEmail(data)}, {text: 'Cancel'}],
+      [
+        {text: 'Continue', onPress: () => handleEmail(logStr)},
+        {text: 'Cancel'},
+      ],
       {cancelable: true},
     );
   };
-
-  const renderItem = useCallback(
-    ({item}) => (
-      <Logs
-        color={
-          LogLevel[item.level].toLowerCase() === 'error'
-            ? Caution
-            : LogLevel[item.level].toLowerCase() === 'warn'
-            ? Warning
-            : LogLevel[item.level].toLowerCase() === 'debug'
-            ? LinkBlue
-            : null
-        }>
-        [{LogLevel[item.level]}] {item.message}
-      </Logs>
-    ),
-    [],
-  );
 
   return (
     <LogsContainer>
@@ -113,10 +157,27 @@ const SessionLogs: React.FC<SessionLogsScreenProps> = () => {
         }}
         data={filteredLogs}
         renderItem={renderItem}
-        keyExtractor={(item, index) => item.message + index}
+        keyExtractor={keyExtractor}
       />
+
+      <FilterLabels onPress={onFilterLevelChange} />
+
+      <Slider
+        step={1}
+        value={filterLevel}
+        minimumValue={MIN_LOG_LEVEL}
+        maximumValue={MAX_LOG_LEVEL}
+        onValueChange={onFilterLevelChange}
+        style={{
+          alignSelf: 'center',
+          width: SLIDER_WIDTH,
+        }}
+        // iOS
+        tapToSeek={true}
+      />
+
       <ButtonContainer>
-        <Button onPress={() => showDisclaimer(logStr)}>
+        <Button onPress={() => showDisclaimer()}>
           {t('Send Logs By Email')}
         </Button>
       </ButtonContainer>
