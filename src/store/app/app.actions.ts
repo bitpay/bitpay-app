@@ -283,3 +283,10 @@ export const activeModalUpdated = (id: ModalId | null): AppActionType => ({
   type: AppActionTypes.ACTIVE_MODAL_UPDATED,
   payload: id,
 });
+
+export const checkingBiometricForSending = (
+  payload: boolean,
+): AppActionType => ({
+  type: AppActionTypes.CHECKING_BIOMETRIC_FOR_SENDING,
+  payload,
+});
