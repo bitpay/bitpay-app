@@ -902,7 +902,7 @@ export const publishAndSignMultipleProposals =
     wallet: Wallet;
     recipient?: Recipient;
   }): Effect<Promise<(Partial<TransactionProposal> | void)[]>> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         const signingMultipleProposals = true;
