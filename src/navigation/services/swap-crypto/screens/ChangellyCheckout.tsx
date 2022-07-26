@@ -516,6 +516,9 @@ const ChangellyCheckout: React.FC = () => {
           break;
         case 'password canceled':
           break;
+        case 'biometric check failed':
+          setResetSwipeButton(true);
+          break;
         default:
           logger.error(JSON.stringify(err));
           const msg = t('Uh oh, something went wrong. Please try again later');
