@@ -12,6 +12,7 @@ import DaiIcon from '../../assets/img/currencies/dai.svg';
 import UsdpIcon from '../../assets/img/currencies/usdp.svg';
 import WbtcIcon from '../../assets/img/currencies/wbtc.svg';
 import ShibIcon from '../../assets/img/currencies/shib.svg';
+import ApeIcon from '../../assets/img/currencies/ape.svg';
 import {ImageSourcePropType} from 'react-native';
 
 export interface SupportedCurrencyOption {
@@ -40,6 +41,7 @@ export const CurrencyListIcons: {
   usdp: props => <UsdpIcon {...props} />,
   wbtc: props => <WbtcIcon {...props} />,
   shib: props => <ShibIcon {...props} />,
+  ape: props => <ApeIcon {...props} />,
 };
 
 export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
@@ -145,5 +147,13 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     currencyAbbreviation: 'WBTC',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/WBTC.png'),
+  },
+  {
+    id: 'ape',
+    img: CurrencyListIcons.ape,
+    currencyName: 'ApeCoin',
+    currencyAbbreviation: 'APE',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/APE.png'),
   },
 ];

@@ -6,7 +6,8 @@ export type SupportedTokens =
   | 'busd'
   | 'dai'
   | 'wbtc'
-  | 'shib';
+  | 'shib'
+  | 'ape';
 export type SupportedCurrencies = SupportedCoins | SupportedTokens;
 
 export interface CurrencyOpts {
@@ -537,6 +538,44 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#2775c9',
     },
   },
+  ape: {
+    name: 'ApeCoin',
+    chain: 'ETH',
+    coin: 'ape',
+    unitInfo: {
+      unitName: 'APE',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'ape',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: false,
+      singleAddress: true,
+      isCustom: false,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape',
+      blockExplorerUrls: 'etherscan.io/',
+      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#2775ca',
+      backgroundColor: '#2775c9',
+      gradientBackgroundColor: '#2775c9',
+    },
+  },
 };
 
 export const SUPPORTED_TOKENS = [
@@ -547,6 +586,7 @@ export const SUPPORTED_TOKENS = [
   'dai',
   'wbtc',
   'shib',
+  'ape',
 ];
 export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc', 'xrp'];
 export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];

@@ -50,6 +50,12 @@ export const BitpaySupportedTokenOpts: TokenOptsType = {
     decimals: 18,
     address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce',
   },
+  ape: {
+    name: 'ApeCoin',
+    symbol: 'APE',
+    decimals: 18,
+    address: '0x4d224452801ACEd8B2F0aebE155379bb5D594381',
+  },
 };
 
 export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
@@ -94,5 +100,11 @@ export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
     symbol: 'SHIB',
     decimals: 18,
     address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce',
+  },
+  '0x4d224452801ACEd8B2F0aebE155379bb5D594381': {
+    name: 'ApeCoin',
+    symbol: 'APE',
+    decimals: 18,
+    address: '0x4d224452801ACEd8B2F0aebE155379bb5D594381',
   },
 };
