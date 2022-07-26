@@ -28,12 +28,14 @@ import {
 } from '../status/status';
 import {
   CustomErrorMessage,
+  ExcludedUtxosWarning,
   GeneralError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
+  checkingBiometricForSending,
   dismissBottomNotificationModal,
   dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
@@ -49,6 +51,15 @@ import {t} from 'i18next';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {LogActions} from '../../../log';
+import _ from 'lodash';
+import TouchID from 'react-native-touch-id-ng';
+import {
+  authOptionalConfigObject,
+  BiometricErrorNotification,
+  isSupportedOptionalConfigObject,
+  TO_HANDLE_ERRORS,
+} from '../../../../constants/BiometricError';
+import {Platform} from 'react-native';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -526,12 +537,47 @@ const buildTransactionProposal =
         // unconfirmed funds
         txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
+        const verifyExcludedUtxos = (
+          sendMaxInfo: SendMaxInfo,
+          currencyAbbreviation: string,
+        ) => {
+          const warningMsg = [];
+          if (sendMaxInfo.utxosBelowFee > 0) {
+            const amountBelowFeeStr =
+              sendMaxInfo.amountBelowFee /
+              dispatch(GetPrecision(currencyAbbreviation))!.unitToSatoshi!;
+            const message = t(
+              'A total of were excluded. These funds come from UTXOs smaller than the network fee provided',
+              {
+                amountBelowFeeStr,
+                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+              },
+            );
+            warningMsg.push(message);
+          }
+
+          if (sendMaxInfo.utxosAboveMaxSize > 0) {
+            const amountAboveMaxSizeStr =
+              sendMaxInfo.amountAboveMaxSize /
+              dispatch(GetPrecision(currencyAbbreviation))!.unitToSatoshi;
+            const message = t(
+              'A total of were excluded. The maximum size allowed for a transaction was exceeded.',
+              {
+                amountAboveMaxSizeStr,
+                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+              },
+            );
+            warningMsg.push(message);
+          }
+          return warningMsg.join('\n');
+        };
+
         // send max
         if (sendMax && wallet) {
           if (dispatch(IsERCToken(wallet.currencyAbbreviation))) {
             txp.amount = tx.amount = wallet.balance.satAvailable;
           } else {
-            const {amount, inputs, fee} = await getSendMaxInfo({
+            const sendMaxInfo = await getSendMaxInfo({
               wallet,
               opts: {
                 feePerKb,
@@ -539,12 +585,28 @@ const buildTransactionProposal =
                 returnInputs: true,
               },
             });
+            const {amount, inputs, fee} = sendMaxInfo;
 
             txp.amount = tx.amount = amount;
             txp.inputs = inputs;
             // Either fee or feePerKb can be available
             txp.fee = fee;
             txp.feePerKb = undefined;
+
+            const warningMsg = verifyExcludedUtxos(
+              sendMaxInfo,
+              wallet.currencyAbbreviation,
+            );
+
+            if (!_.isEmpty(warningMsg)) {
+              dispatch(
+                showBottomNotificationModal(
+                  ExcludedUtxosWarning({
+                    errMsg: warningMsg,
+                  }),
+                ),
+              );
+            }
           }
         }
 
@@ -687,11 +749,6 @@ export const startSendPayment =
               );
               return resolve(broadcastedTx);
             } catch (e) {
-              try {
-                await removeTxp(wallet, proposal);
-              } catch (removeTxpErr) {
-                console.log('Could not delete payment proposal');
-              }
               return reject(e);
             }
           },
@@ -711,16 +768,29 @@ export const publishAndSign =
     wallet,
     recipient,
     password,
+    signingMultipleProposals,
   }: {
-    txp: Partial<TransactionProposal>;
+    txp: TransactionProposal;
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
-    password?: string; // when signing multiple proposals from a wallet we ask for decrypt password before
+    password?: string;
+    signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
-      if (key.isPrivKeyEncrypted && !password) {
+      const {
+        APP: {biometricLockActive},
+      } = getState();
+
+      if (biometricLockActive && !signingMultipleProposals) {
+        try {
+          await dispatch(checkBiometricForSending());
+        } catch (error) {
+          return reject(error);
+        }
+      }
+      if (key.isPrivKeyEncrypted && !signingMultipleProposals) {
         try {
           password = await new Promise<string>((_resolve, _reject) => {
             dispatch(
@@ -749,7 +819,7 @@ export const publishAndSign =
         // Already published?
         if (txp.status !== 'pending') {
           publishedTx = await publishTx(wallet, txp);
-          console.log('-------- published');
+          dispatch(LogActions.debug('success publish [publishAndSign]'));
         }
 
         const signedTx: any = await signTx(
@@ -758,12 +828,10 @@ export const publishAndSign =
           publishedTx || txp,
           password,
         );
-        console.log('-------- signed');
-
+        dispatch(LogActions.debug('success sign [publishAndSign]'));
         if (signedTx.status === 'accepted') {
           broadcastedTx = await broadcastTx(wallet, signedTx);
-          console.log('-------- broadcastedTx');
-
+          dispatch(LogActions.debug('success broadcast [publishAndSign]'));
           const {fee, amount} = broadcastedTx as {
             fee: number;
             amount: number;
@@ -781,22 +849,42 @@ export const publishAndSign =
         } else {
           dispatch(startUpdateWalletStatus({key, wallet}));
         }
+
+        let resultTx = broadcastedTx ? broadcastedTx : signedTx;
+
         // Check if ConfirmTx notification is enabled
         const {APP} = getState();
         if (APP.confirmedTxAccepted) {
           wallet.txConfirmationSubscribe(
-            {txid: broadcastedTx?.id, amount: txp.amount},
+            {txid: resultTx?.id, amount: txp.amount},
             (err: any) => {
               if (err) {
-                console.log('-------- push notification', err);
+                dispatch(
+                  LogActions.error(
+                    '[publishAndSign] txConfirmationSubscribe err',
+                    err,
+                  ),
+                );
               }
             },
           );
         }
 
-        resolve(broadcastedTx);
+        resolve(resultTx);
       } catch (err) {
-        console.log(err);
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`[publishAndSign] err: ${errorStr}`));
+        // if broadcast fails, remove transaction proposal
+        try {
+          await removeTxp(wallet, txp);
+        } catch (removeTxpErr: any) {
+          dispatch(
+            LogActions.error(
+              `[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`,
+            ),
+          );
+        }
         reject(err);
       }
     });
@@ -809,7 +897,7 @@ export const publishAndSignMultipleProposals =
     wallet,
     recipient,
   }: {
-    txps: Partial<TransactionProposal>[];
+    txps: TransactionProposal[];
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
@@ -817,7 +905,19 @@ export const publishAndSignMultipleProposals =
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
+        const signingMultipleProposals = true;
         let password: string;
+        const {
+          APP: {biometricLockActive},
+        } = getState();
+
+        if (biometricLockActive) {
+          try {
+            await dispatch(checkBiometricForSending());
+          } catch (error) {
+            return reject(error);
+          }
+        }
         if (key.isPrivKeyEncrypted) {
           try {
             password = await new Promise<string>((_resolve, _reject) => {
@@ -845,7 +945,14 @@ export const publishAndSignMultipleProposals =
         txps.forEach(async txp => {
           promises.push(
             dispatch(
-              publishAndSign({txp, key, wallet, recipient, password}),
+              publishAndSign({
+                txp,
+                key,
+                wallet,
+                recipient,
+                password,
+                signingMultipleProposals,
+              }),
             ).catch(err => {
               const errorStr =
                 err instanceof Error ? err.message : JSON.stringify(err);
@@ -1246,4 +1353,34 @@ export const showNoWalletsModal =
         ],
       }),
     );
+  };
+
+export const checkBiometricForSending =
+  (): Effect<Promise<any>> => async dispatch => {
+    // preventing for asking biometric again when the app goes to background ( ios only )
+    if (Platform.OS === 'ios') {
+      dispatch(checkingBiometricForSending(true));
+    }
+    await TouchID.isSupported(isSupportedOptionalConfigObject)
+      .then(biometryType => {
+        if (biometryType === 'FaceID') {
+          console.log('FaceID is supported.');
+        } else {
+          console.log('TouchID is supported.');
+        }
+        return TouchID.authenticate(
+          'Authentication Check',
+          authOptionalConfigObject,
+        );
+      })
+      .catch(error => {
+        if (error.code && TO_HANDLE_ERRORS[error.code]) {
+          const err = TO_HANDLE_ERRORS[error.code];
+          dispatch(
+            showBottomNotificationModal(BiometricErrorNotification(err)),
+          );
+        }
+        return Promise.reject('biometric check failed');
+      });
+    return Promise.resolve();
   };

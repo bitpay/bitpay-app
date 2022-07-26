@@ -4,7 +4,6 @@ import {
   AppState,
   AppStateStatus,
   Linking,
-  Platform,
   LogBox,
   DeviceEventEmitter,
 } from 'react-native';

@@ -49,7 +49,7 @@ import {
 import {addWallet, getDecryptPassword} from '../../../store/wallet/effects';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {
   LightBlack,

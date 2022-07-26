@@ -309,15 +309,17 @@ const ChangellyCheckout: React.FC = () => {
             }
             return;
           })
-          .catch(async err => {
-            logger.error(err.message);
-            const msg = t('Error creating transaction');
+          .catch(err => {
+            let msg = t('Error creating transaction');
+            if (typeof err?.message === 'string') {
+              msg = msg + `: ${err.message}`;
+            }
             const reason = 'createTx Error';
             showError(msg, reason);
             return;
           });
       })
-      .catch(async err => {
+      .catch(err => {
         logger.error(
           'Changelly createFixTransaction Error: ' + JSON.stringify(err),
         );
@@ -479,7 +481,10 @@ const ChangellyCheckout: React.FC = () => {
 
       const ctxp = await createTxProposal(wallet, txp);
       return Promise.resolve(ctxp);
-    } catch (err) {
+    } catch (err: any) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      const log = `createTxProposal error: ${errStr}`;
+      logger.error(log);
       return Promise.reject({
         title: t('Could not create transaction'),
         message: BWCErrorMessage(err),
@@ -510,6 +515,9 @@ const ChangellyCheckout: React.FC = () => {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
           break;
         case 'password canceled':
+          break;
+        case 'biometric check failed':
+          setResetSwipeButton(true);
           break;
         default:
           logger.error(JSON.stringify(err));
@@ -590,7 +598,7 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, reason?: any) => {
+  const showError = async (msg?: string, reason?: string) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
@@ -705,7 +713,7 @@ const ChangellyCheckout: React.FC = () => {
             <ItemDivisor />
             <RowDataContainer>
               <RowLabel>{t('Miner Fee')}</RowLabel>
-              {fee && (
+              {fee ? (
                 <RowData>
                   {dispatch(
                     FormatAmountStr(
@@ -716,6 +724,8 @@ const ChangellyCheckout: React.FC = () => {
                     ),
                   )}
                 </RowData>
+              ) : (
+                <RowData>...</RowData>
               )}
             </RowDataContainer>
             <ItemDivisor />
