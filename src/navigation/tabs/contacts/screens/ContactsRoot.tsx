@@ -95,7 +95,7 @@ const SearchContainer = styled.View`
 `;
 
 const SearchResults = styled.View`
-  margin: 0 20px 50px 20px;
+  margin: 0 10px 50px 10px;
 `;
 
 const NoResultsContainer = styled.View`
