@@ -97,7 +97,7 @@ export const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   margin: 10px 0;
-  padding: 0 10px 0 10px;
+  padding: 0 10px;
 `;
 
 export const CurrencyColumn = styled(Column)`

@@ -4,7 +4,7 @@ import {Column, Setting} from '../styled/Containers';
 import {H7, Smallest} from '../styled/Text';
 import AngleRight from '../../../assets/img/angle-right.svg';
 import ContactIcon from '../../navigation/tabs/contacts/components/ContactIcon';
-import {SlateDark, White} from '../../styles/colors';
+import {LuckySevens, SlateDark} from '../../styles/colors';
 import {ContactRowProps} from './ContactRow';
 
 const ContactColumn = styled(Column)`
@@ -26,7 +26,7 @@ const RowContainer = styled.View`
 `;
 
 const ContactsSubtext = styled(Smallest)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
 `;
 
 interface Props {
@@ -44,7 +44,9 @@ const SettingsContactRow = ({contact, onPress}: Props) => {
         </ContactImageContainer>
         <ContactColumn>
           <H7 medium={true}>{name}</H7>
-          <ContactsSubtext>{email ? email : address}</ContactsSubtext>
+          <ContactsSubtext numberOfLines={1} ellipsizeMode={'tail'}>
+            {email ? email : address}
+          </ContactsSubtext>
         </ContactColumn>
         <AngleRight />
       </RowContainer>
