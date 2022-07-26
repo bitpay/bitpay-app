@@ -420,7 +420,7 @@ const Amount: React.FC<AmountProps> = ({
           <ButtonContainer>
             <Button
               state={buttonState}
-              disabled={!+amount}
+              disabled={!+amount && buttonState !== 'loading'}
               onPress={() => {
                 if (useAsModal && onDismiss) {
                   onDismiss(Number(amount));
