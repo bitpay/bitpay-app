@@ -30,7 +30,7 @@ import {
   isValidWalletConnectUri,
   isValidWyreUri,
 } from '../wallet/utils/validations';
-import {APP_DEEPLINK_PREFIX, APP_NAME} from '../../constants/config';
+import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
   simplexIncomingData,
@@ -512,9 +512,9 @@ const handleBitPayUri =
     console.log('### Incoming-data: BitPay URI');
 
     // From Braze (push notifications)
-    if (data.indexOf('bitpay://wallet?') === 0) {
+    if (data.indexOf('wallet?') === 0) {
       const params: URLSearchParams = new URLSearchParams(
-        data.replace('bitpay://wallet?', ''),
+        data.replace('wallet?', ''),
       );
       const walletIdHashed = params.get('walletId')!;
       const tokenAddress = params.get('tokenAddress');
@@ -839,7 +839,7 @@ const handleWyreUri =
   dispatch => {
     dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
 
-    if (data.indexOf(APP_NAME + '://wyreError') >= 0) {
+    if (data.indexOf('wyreError') >= 0) {
       navigationRef.navigate('ExternalServicesSettings', {
         screen: 'WyreSettings',
         params: {
@@ -849,7 +849,7 @@ const handleWyreUri =
       return;
     }
 
-    if (data === APP_NAME + '://wyre') {
+    if (data === 'wyre') {
       return;
     }
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
