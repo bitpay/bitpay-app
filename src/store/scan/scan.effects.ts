@@ -508,7 +508,7 @@ export const goToAmount =
 const handleBitPayUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   (dispatch, getState) => {
-    console.log('### Incoming-data: BitPay URI', data);
+    dispatch(LogActions.info('[scan] Incoming-data: BitPay URI', data));
 
     // From Braze (push notifications)
     if (data.includes('wallet?')) {
@@ -573,7 +573,7 @@ const handleBitPayUri =
 const handleBitcoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('### Incoming-data: Bitcoin URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Bitcoin URI'));
     const coin = 'btc';
     const parsed = BwcProvider.getInstance().getBitcore().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -597,7 +597,7 @@ const handleBitcoinUri =
 const handleBitcoinCashUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('### Incoming-data: BitcoinCash URI');
+    dispatch(LogActions.info('[scan] Incoming-data: BitcoinCash URI'));
     const coin = 'bch';
     const parsed = BwcProvider.getInstance().getBitcoreCash().URI(data);
     const message = parsed.message;
@@ -627,7 +627,11 @@ const handleBitcoinCashUri =
 const handleBitcoinCashUriLegacyAddress =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('### Incoming-data: Bitcoin Cash URI with legacy address');
+    dispatch(
+      LogActions.info(
+        '[scan] Incoming-data: Bitcoin Cash URI with legacy address',
+      ),
+    );
     const coin = 'bch';
     const parsed = BwcProvider.getInstance()
       .getBitcore()
@@ -635,7 +639,9 @@ const handleBitcoinCashUriLegacyAddress =
 
     const oldAddr = parsed.address ? parsed.address.toString() : '';
     if (!oldAddr) {
-      console.log('### Could not parse Bitcoin Cash legacy address');
+      dispatch(
+        LogActions.info('[scan] Could not parse Bitcoin Cash legacy address'),
+      );
     }
 
     const a = BwcProvider.getInstance()
@@ -649,7 +655,11 @@ const handleBitcoinCashUriLegacyAddress =
     const message = parsed.message;
 
     // Translate address
-    console.log('### Legacy Bitcoin Address translated to: ' + address);
+    dispatch(
+      LogActions.info(
+        '[scan] Legacy Bitcoin Address translated to: ' + address,
+      ),
+    );
     const recipient = {
       type: 'address',
       currency: coin,
@@ -669,7 +679,7 @@ const handleBitcoinCashUriLegacyAddress =
 const handleEthereumUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('### Incoming-data: Ethereum URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Ethereum URI'));
     const coin = 'eth';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -702,7 +712,7 @@ const handleEthereumUri =
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('### Incoming-data: Ripple URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Ripple URI'));
     const coin = 'xrp';
     const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
     const tagParam = /[\?\&]dt=(\d+([\,\.]\d+)?)/i;
@@ -736,7 +746,7 @@ const handleRippleUri =
 const handleDogecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('### Incoming-data: Dogecoin URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Dogecoin URI'));
     const coin = 'doge';
     const parsed = BwcProvider.getInstance().getBitcoreDoge().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -762,7 +772,7 @@ const handleDogecoinUri =
 const handleLitecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('### Incoming-data: Litecoin URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Litecoin URI'));
     const coin = 'ltc';
     const parsed = BwcProvider.getInstance().getBitcoreLtc().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -922,7 +932,7 @@ const handlePlainAddress =
     opts?: {wallet?: Wallet; context?: string; name?: string},
   ): Effect<void> =>
   dispatch => {
-    console.log(`### Incoming-data: ${coin} plain address`);
+    dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
@@ -948,8 +958,10 @@ const goToImport = (importQrCodeData: string): void => {
 const goToJoinWallet =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    console.log(
-      '### Incoming-data (redirect): Code to join to a multisig wallet',
+    dispatch(
+      LogActions.info(
+        '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
+      ),
     );
     const keys = Object.values(getState().WALLET.keys);
     if (!keys.length) {
