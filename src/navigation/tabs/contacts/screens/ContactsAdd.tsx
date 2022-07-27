@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import {FlatList} from 'react-native';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../../lib/yup';
 import styled, {useTheme} from 'styled-components/native';
 import {Controller, useForm} from 'react-hook-form';
 import Button from '../../../../components/button/Button';

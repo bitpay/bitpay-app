@@ -10,7 +10,7 @@ import {
   WIDTH,
 } from '../../../components/styled/Containers';
 import {LightBlack, White} from '../../../styles/colors';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';

@@ -21,6 +21,13 @@ export const APP_UNIVERSAL_LINK_DOMAINS = [
   'link.test.bitpay.com',
   'link.staging.bitpay.com',
 ];
+export const APP_CRYPTO_PREFIX = [
+  'bitcoin',
+  'bitcoincash',
+  'ethereum',
+  'dogecoin',
+  'litecoin',
+];
 
 // BWC
 export const BASE_BWS_URL = 'https://bws.bitpay.com/bws/api';

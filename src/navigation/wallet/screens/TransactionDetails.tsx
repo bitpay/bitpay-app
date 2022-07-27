@@ -64,7 +64,10 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
-import {TransactionOptionsContext} from '../../../store/wallet/wallet.models';
+import {
+  Recipient,
+  TransactionOptionsContext,
+} from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {Memo} from './send/confirm/Memo';
@@ -263,16 +266,22 @@ const TransactionDetails = () => {
 
   const speedup = async () => {
     try {
-      const txp = await getTx(wallet, transaction.proposalId);
+      const txp = await getTx(wallet, transaction.proposalId); // only way to get actual inputs and ouputs
       const toAddress = transaction.outputs[0].address;
       const recipient = {
-        type: 'wallet',
-        name: walletName,
-        walletId,
-        keyId,
         address: toAddress,
       };
 
+      let recipientList: Recipient[] | undefined;
+      if (transaction.hasMultiplesOutputs) {
+        recipientList = [];
+        txp.outputs.forEach((output: any) => {
+          recipientList!.push({
+            address: output.toAddress,
+            amount: Number(dispatch(FormatAmount(coin, output.amount))),
+          });
+        });
+      }
       const tx = {
         wallet,
         walletId,
@@ -282,8 +291,10 @@ const TransactionDetails = () => {
         coin,
         network,
         inputs: txp.inputs,
+        recipientList,
         feeLevel: 'priority',
         recipient,
+        message: txp.message,
       };
 
       const {txDetails, txp: newTxp} = await dispatch(
@@ -295,6 +306,7 @@ const TransactionDetails = () => {
         params: {
           wallet,
           recipient,
+          recipientList,
           txp: newTxp,
           txDetails,
           amount: tx.amount,

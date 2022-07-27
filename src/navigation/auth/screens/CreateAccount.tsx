@@ -2,9 +2,8 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {useTranslation} from 'react-i18next';
+import {Trans, useTranslation} from 'react-i18next';
 import {Keyboard, SafeAreaView, TextInput} from 'react-native';
-import * as yup from 'yup';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
 import Checkbox from '../../../components/checkbox/Checkbox';
@@ -12,6 +11,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import {Link} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
+import yup from '../../../lib/yup';
 import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
@@ -34,14 +34,6 @@ type CreateAccountScreenProps = StackScreenProps<
   AuthScreens.CREATE_ACCOUNT
 >;
 
-const schema = yup.object().shape({
-  givenName: yup.string().required('Required'),
-  familyName: yup.string().required('Required'),
-  email: yup.string().email().required('Required').trim(),
-  password: yup.string().required('Required'),
-  agreedToTOSandPP: yup.boolean().oneOf([true], 'Required'),
-});
-
 interface CreateAccountFieldValues {
   givenName: string;
   familyName: string;
@@ -54,13 +46,6 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
   navigation,
 }) => {
   const {t} = useTranslation();
-  const {
-    control,
-    handleSubmit,
-    formState: {errors},
-    getValues,
-    setValue,
-  } = useForm<CreateAccountFieldValues>({resolver: yupResolver(schema)});
   const familyNameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
@@ -78,6 +63,21 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
   const dispatch = useAppDispatch();
   const [isRecaptchaVisible, setRecaptchaVisible] = useState(false);
   const captchaRef = useRef<CaptchaRef>(null);
+
+  const schema = yup.object().shape({
+    givenName: yup.string().required(),
+    familyName: yup.string().required(),
+    email: yup.string().email().required().trim(),
+    password: yup.string().required(),
+    agreedToTOSandPP: yup.boolean().oneOf([true], t('Required')),
+  });
+  const {
+    control,
+    handleSubmit,
+    formState: {errors},
+    getValues,
+    setValue,
+  } = useForm<CreateAccountFieldValues>({resolver: yupResolver(schema)});
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
@@ -279,12 +279,21 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
                   />
 
                   <CheckboxLabel>
-                    I agree to the <A href={URL.TOU_BITPAY_ID}>Terms of Use</A>{' '}
-                    and <A href={URL.PRIVACY_POLICY}>Privacy Policy</A>.
+                    <Trans
+                      i18nKey={'IAgreeToTheArgAndArg'}
+                      values={{
+                        0: t('Terms of Use'),
+                        1: t('Privacy Policy'),
+                      }}
+                      components={[
+                        <A href={URL.TOU_BITPAY_ID} />,
+                        <A href={URL.PRIVACY_POLICY} />,
+                      ]}
+                    />
                   </CheckboxLabel>
                 </CheckboxControl>
 
-                {errors.agreedToTOSandPP ? (
+                {errors.agreedToTOSandPP?.message ? (
                   <CheckboxControl>
                     <CheckboxError>
                       {errors.agreedToTOSandPP.message}

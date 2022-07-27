@@ -1,4 +1,4 @@
-import * as yup from 'yup';
+import yup from '../../../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useState} from 'react';

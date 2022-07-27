@@ -82,7 +82,7 @@ const DottedBorder = styled.View`
 
 const WordSelector = styled.TouchableOpacity`
   background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  padding: 10px 15px;
+  padding: 8px 12px;
   margin: 5px;
   border-radius: 5px;
   opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
