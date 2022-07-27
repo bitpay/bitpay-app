@@ -57,7 +57,7 @@ import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {APP_NAME} from '../../../../constants/config';
+import {APP_DEEPLINK_PREFIX} from '../../../../constants/config';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
@@ -716,14 +716,13 @@ const BuyCryptoOffers: React.FC = () => {
         _paymentMethod = 'debit-card';
         break;
     }
-    const appName = APP_NAME;
     const redirectUrl =
-      APP_NAME +
-      '://wyre?walletId=' +
+      APP_DEEPLINK_PREFIX +
+      'wyre?walletId=' +
       selectedWallet.id +
       '&destAmount=' +
       offers.wyre.amountReceiving;
-    const failureRedirectUrl = appName + '://wyreError';
+    const failureRedirectUrl = APP_DEEPLINK_PREFIX + 'wyreError';
     const dest = setPrefix(address, coin, selectedWallet.credentials.network);
     const requestData = {
       sourceAmount: amount.toString(),

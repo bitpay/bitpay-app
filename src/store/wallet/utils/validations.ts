@@ -1,6 +1,5 @@
 import {BwcProvider} from '../../../lib/bwc';
 import {ExtractBitPayUriAddress} from './decode-uri';
-import {APP_NAME} from '../../../constants/config';
 
 const BWC = BwcProvider.getInstance();
 
@@ -40,16 +39,12 @@ export const isValidWalletConnectUri = (data: string): boolean => {
 
 export const isValidSimplexUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!(data && data.indexOf(APP_NAME + '://simplex') === 0);
+  return !!(data?.indexOf('simplex') === 0);
 };
 
 export const isValidWyreUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!(
-    data &&
-    (data.indexOf(APP_NAME + '://wyre') === 0 ||
-      data.indexOf(APP_NAME + '://wyreError') === 0)
-  );
+  return !!(data?.indexOf('wyre') === 0 || data?.indexOf('wyreError') === 0);
 };
 
 export const IsValidBitcoinUri = (data: string): boolean => {
@@ -129,13 +124,22 @@ export const IsValidLitecoinAddress = (data: string): boolean => {
 
 export const IsValidBitPayUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  if (!(data && data.indexOf('bitpay:') === 0)) {
+  if (!data) {
     return false;
   }
 
   if (data.indexOf('bitpay://wallet?') === 0) {
     const params: URLSearchParams = new URLSearchParams(
       data.replace('bitpay://wallet?', ''),
+    );
+    if (params.get('walletId')) {
+      return true;
+    }
+  }
+
+  if (data.indexOf('wallet?') === 0) {
+    const params: URLSearchParams = new URLSearchParams(
+      data.replace('wallet?', ''),
     );
     if (params.get('walletId')) {
       return true;
