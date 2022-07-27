@@ -218,6 +218,7 @@ export interface Recipient {
   keyId?: string;
   address: string;
   amount?: number;
+  tag?: number;
 }
 
 export interface CustomTransactionData {
