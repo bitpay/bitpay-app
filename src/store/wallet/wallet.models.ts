@@ -254,6 +254,7 @@ export interface TransactionOptions {
   customData?: CustomTransactionData;
   payProUrl?: string;
   sendMax?: boolean;
+  payProDetails?: any;
   // btc
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
