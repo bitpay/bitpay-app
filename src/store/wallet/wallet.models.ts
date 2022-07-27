@@ -273,6 +273,7 @@ export interface TransactionOptions {
   useUnconfirmedFunds?: boolean;
   // fromReplaceByFee
   fee?: number;
+  outputs?: Utxo[];
   // selectInputs
   inputs?: Utxo[];
   // multisend
@@ -397,6 +398,7 @@ export interface TxDetails {
   sendingTo: TxDetailsSendingTo;
   fee: TxDetailsFee;
   networkCost?: TxDetailsAmount;
+  context?: TransactionOptionsContext;
   // eth
   gasPrice?: number;
   gasLimit?: number;

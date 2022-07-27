@@ -371,14 +371,13 @@ export const buildTxDetails =
 
     if (context === 'paypro') {
       amount = invoice!.paymentTotals[coin.toUpperCase()];
-    }
-
-    if (context === 'fromReplaceByFee') {
+    } else if (context === 'speedupBtcReceive') {
       amount = amount - fee;
     }
 
     const {type, name, address} = recipient || {};
     return {
+      context,
       currency: coin,
       sendingTo: {
         recipientType: type,
@@ -666,13 +665,25 @@ const buildTransactionProposal =
           case 'fromReplaceByFee':
             txp.inputs = tx.inputs;
             txp.replaceTxByFee = true;
-
-            txp.outputs.push({
-              toAddress: tx.toAddress,
-              amount: tx.amount!,
-              message: tx.description,
-              data: tx.data,
-            });
+            if (recipientList) {
+              recipientList.forEach(r => {
+                const formattedAmount = dispatch(
+                  ParseAmount(r.amount || 0, chain),
+                );
+                txp.outputs?.push({
+                  toAddress: r.address,
+                  amount: formattedAmount.amountSat,
+                  message: tx.description,
+                });
+              });
+            } else {
+              txp.outputs.push({
+                toAddress: tx.toAddress,
+                amount: tx.amount!,
+                message: tx.description,
+                data: tx.data,
+              });
+            }
             break;
           case 'speedupBtcReceive':
             txp.inputs = tx.inputs;

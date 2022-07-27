@@ -148,6 +148,7 @@ const Confirm = () => {
     nonce: _nonce,
     total: _total,
     destinationTag: _destinationTag,
+    context,
   } = txDetails;
 
   const [fee, setFee] = useState(_fee);
@@ -249,9 +250,11 @@ const Confirm = () => {
         createProposalAndBuildTxDetails({
           wallet,
           recipient,
+          recipientList,
           amount,
           sendMax,
           inputs,
+          context,
           ...txp,
           ...newOpts,
         }),
@@ -364,9 +367,8 @@ const Confirm = () => {
             hr
           />
           {enableReplaceByFee &&
-          currencyAbbreviation === 'btc' &&
-          !recipientList &&
-          !selectInputs ? (
+          !selectInputs &&
+          currencyAbbreviation === 'btc' ? (
             <>
               <Setting activeOpacity={1}>
                 <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
