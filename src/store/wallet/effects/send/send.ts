@@ -369,6 +369,10 @@ export const buildTxDetails =
     const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
     const isERC20 = dispatch(IsERCToken(coin));
 
+    if (context === 'paypro') {
+      amount = invoice!.paymentTotals[coin.toUpperCase()];
+    }
+
     if (context === 'fromReplaceByFee') {
       amount = amount - fee;
     }
@@ -634,13 +638,16 @@ const buildTransactionProposal =
             break;
           case 'paypro':
             txp.payProUrl = payProUrl;
-            txp.outputs.push({
-              toAddress: tx.toAddress,
-              amount: tx.amount!,
-              message: tx.message,
-              data: tx.data,
-              gasLimit: tx.gasLimit,
-            });
+            const {instructions} = tx.payProDetails;
+            for (const instruction of instructions) {
+              txp.outputs.push({
+                toAddress: instruction.toAddress,
+                amount: instruction.amount,
+                message: instruction.message,
+                data: instruction.data,
+                gasLimit: tx.gasLimit,
+              });
+            }
             break;
           case 'selectInputs':
             txp.inputs = inputs;
@@ -1161,6 +1168,7 @@ export const createPayProTxProposal =
         wallet,
         ...(feePerKb && {feePerKb}),
         payProUrl: paymentUrl,
+        payProDetails,
         recipient: {address},
         gasLimit,
         data,
