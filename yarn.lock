@@ -11378,6 +11378,11 @@ react-native-reanimated@2.5.0:
     setimmediate "^1.0.5"
     string-hash-64 "^1.0.3"
 
+react-native-restart@0.0.24:
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/react-native-restart/-/react-native-restart-0.0.24.tgz#c7036f25d900d9221b84d3e5129b02d4289d4e94"
+  integrity sha512-pvJNU3NwQk6bCG2gOWcQpZ4IxhtELB0K9gzmtixfsaTFbW1UXXHkJNjk1kHazcbH5hrD7QbUkR63fsAVh8X4VQ==
+
 react-native-rounded-checkbox@0.3.3:
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/react-native-rounded-checkbox/-/react-native-rounded-checkbox-0.3.3.tgz#05a753180604db61a074b2ef1ae7446347c3df8c"

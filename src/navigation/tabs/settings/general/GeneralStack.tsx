@@ -39,9 +39,6 @@ const GeneralSettingsStack = () => {
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.THEME}
         component={Theme}
-        options={{
-          headerTitle: () => <HeaderTitle>{t('Theme')}</HeaderTitle>,
-        }}
       />
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.CUSTOMIZE_HOME}
