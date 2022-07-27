@@ -83,6 +83,7 @@ export interface ConfirmParamList {
   sendMax?: boolean;
   inputs?: Utxo[];
   selectInputs?: boolean;
+  message?: string | undefined;
 }
 
 export const Setting = styled.TouchableOpacity`
@@ -120,6 +121,7 @@ const Confirm = () => {
     sendMax,
     inputs,
     selectInputs,
+    message,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -441,7 +443,7 @@ const Confirm = () => {
           ) : null}
           {txp && currencyAbbreviation !== 'xrp' ? (
             <Memo
-              memo={txp.message || ''}
+              memo={txp.message || message || ''}
               onChange={message => setTxp({...txp, message})}
             />
           ) : null}

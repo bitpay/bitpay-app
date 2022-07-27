@@ -30,6 +30,7 @@ import {
   isValidWalletConnectUri,
   isValidWyreUri,
 } from '../wallet/utils/validations';
+import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
   simplexIncomingData,
@@ -359,6 +360,7 @@ const goToConfirm =
     };
   }): Effect<Promise<void>> =>
   async dispatch => {
+    console.log('### options to confirm', opts);
     try {
       if (!wallet) {
         navigationRef.navigate('Wallet', {
@@ -370,6 +372,7 @@ const goToConfirm =
               ...{
                 opts: {
                   showERC20Tokens: recipient.currency.toLowerCase() === 'eth', // no wallet selected - if ETH address show token wallets in next view
+                  message: opts?.message || '',
                 },
               },
             },
@@ -412,6 +415,7 @@ const goToConfirm =
           txp,
           txDetails,
           amount,
+          message: opts?.message || '',
         },
       });
     } catch (err: any) {
@@ -505,12 +509,12 @@ export const goToAmount =
 const handleBitPayUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   (dispatch, getState) => {
-    console.log('### Incoming-data: BitPay URI');
+    console.log('### Incoming-data: BitPay URI', data);
 
     // From Braze (push notifications)
-    if (data.indexOf('wallet?') === 0) {
+    if (data.includes('wallet?')) {
       const params: URLSearchParams = new URLSearchParams(
-        data.replace('wallet?', ''),
+        data.replace(APP_DEEPLINK_PREFIX + 'wallet?', ''),
       );
       const walletIdHashed = params.get('walletId')!;
       const tokenAddress = params.get('tokenAddress');
@@ -570,7 +574,7 @@ const handleBitPayUri =
 const handleBitcoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Bitcoin URI');
+    console.log('### Incoming-data: Bitcoin URI');
     const coin = 'btc';
     const parsed = BwcProvider.getInstance().getBitcore().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -594,7 +598,7 @@ const handleBitcoinUri =
 const handleBitcoinCashUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: BitcoinCash URI');
+    console.log('### Incoming-data: BitcoinCash URI');
     const coin = 'bch';
     const parsed = BwcProvider.getInstance().getBitcoreCash().URI(data);
     const message = parsed.message;
@@ -624,7 +628,7 @@ const handleBitcoinCashUri =
 const handleBitcoinCashUriLegacyAddress =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Bitcoin Cash URI with legacy address');
+    console.log('### Incoming-data: Bitcoin Cash URI with legacy address');
     const coin = 'bch';
     const parsed = BwcProvider.getInstance()
       .getBitcore()
@@ -632,7 +636,7 @@ const handleBitcoinCashUriLegacyAddress =
 
     const oldAddr = parsed.address ? parsed.address.toString() : '';
     if (!oldAddr) {
-      console.log('Could not parse Bitcoin Cash legacy address');
+      console.log('### Could not parse Bitcoin Cash legacy address');
     }
 
     const a = BwcProvider.getInstance()
@@ -646,7 +650,7 @@ const handleBitcoinCashUriLegacyAddress =
     const message = parsed.message;
 
     // Translate address
-    console.log('Legacy Bitcoin Address translated to: ' + address);
+    console.log('### Legacy Bitcoin Address translated to: ' + address);
     const recipient = {
       type: 'address',
       currency: coin,
@@ -666,7 +670,7 @@ const handleBitcoinCashUriLegacyAddress =
 const handleEthereumUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Ethereum URI');
+    console.log('### Incoming-data: Ethereum URI');
     const coin = 'eth';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -699,7 +703,7 @@ const handleEthereumUri =
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Ripple URI');
+    console.log('### Incoming-data: Ripple URI');
     const coin = 'xrp';
     const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
     const tagParam = /[\?\&]dt=(\d+([\,\.]\d+)?)/i;
@@ -733,7 +737,7 @@ const handleRippleUri =
 const handleDogecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Dogecoin URI');
+    console.log('### Incoming-data: Dogecoin URI');
     const coin = 'doge';
     const parsed = BwcProvider.getInstance().getBitcoreDoge().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -759,7 +763,7 @@ const handleDogecoinUri =
 const handleLitecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Litecoin URI');
+    console.log('### Incoming-data: Litecoin URI');
     const coin = 'ltc';
     const parsed = BwcProvider.getInstance().getBitcoreLtc().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -835,7 +839,7 @@ const handleWyreUri =
   dispatch => {
     dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
 
-    if (data?.includes('wyreError')) {
+    if (data.indexOf('wyreError') >= 0) {
       navigationRef.navigate('ExternalServicesSettings', {
         screen: 'WyreSettings',
         params: {
@@ -919,7 +923,7 @@ const handlePlainAddress =
     opts?: {wallet?: Wallet; context?: string; name?: string},
   ): Effect<void> =>
   dispatch => {
-    console.log(`Incoming-data: ${coin} plain address`);
+    console.log(`### Incoming-data: ${coin} plain address`);
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
@@ -945,7 +949,9 @@ const goToImport = (importQrCodeData: string): void => {
 const goToJoinWallet =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    console.log('Incoming-data (redirect): Code to join to a multisig wallet');
+    console.log(
+      '### Incoming-data (redirect): Code to join to a multisig wallet',
+    );
     const keys = Object.values(getState().WALLET.keys);
     if (!keys.length) {
       navigationRef.navigate('Wallet', {
