@@ -67,7 +67,7 @@ import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 export const incomingData =
   (
     data: string,
-    opts?: {wallet?: Wallet; context?: string; name?: string},
+    opts?: {wallet?: Wallet; context?: string; name?: string; tag?: number},
   ): Effect<Promise<void>> =>
   async dispatch => {
     // wait to close blur
@@ -459,6 +459,7 @@ export const goToAmount =
       address: string;
       currency: string;
       network?: Network;
+      tag?: number;
     };
     wallet?: Wallet;
     opts?: {
@@ -929,7 +930,7 @@ const handlePlainAddress =
   (
     address: string,
     coin: string,
-    opts?: {wallet?: Wallet; context?: string; name?: string},
+    opts?: {wallet?: Wallet; context?: string; name?: string; tag?: number},
   ): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
@@ -942,6 +943,7 @@ const handlePlainAddress =
       currency: coin,
       address,
       network,
+      tag: opts?.tag,
     };
     dispatch(goToAmount({coin, recipient, wallet: opts?.wallet}));
   };

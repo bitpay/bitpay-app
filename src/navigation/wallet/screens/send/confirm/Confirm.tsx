@@ -157,7 +157,9 @@ const Confirm = () => {
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
-  const [destinationTag, setDestinationTag] = useState(_destinationTag);
+  const [destinationTag, setDestinationTag] = useState(
+    recipient?.tag || _destinationTag,
+  );
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
   const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation)) || {};
