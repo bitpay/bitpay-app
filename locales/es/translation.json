@@ -1065,6 +1065,8 @@
   "Error getting \"Speed Up\" information. Please try again later.": "Error al obtener la información de \"Aceleramiento\". Por favor, inténtelo de nuevo más tarde.",
   "View on blockchain": "Ver en Blockchain",
   "ViewTxHistory": "Continuar para ver el historial de transacciones de {{coin}}",
+  "Warning": "Warning",
+  "You are being redirected to a Faucet that will give you test coins. These test coins have no value and cannot be used to purchase things.": "You are being redirected to a Faucet that will give you test coins. These test coins have no value and cannot be used to purchase things.",
   "Activated": "Activado",
   "Pending Proposals": "Propuestas pendientes",
   "Unsent Transactions": "Transacciones no enviadas",
