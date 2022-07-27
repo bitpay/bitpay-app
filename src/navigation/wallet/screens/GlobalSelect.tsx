@@ -452,6 +452,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             txp,
             txDetails,
             amount,
+            message: opts.message,
           },
         });
       } catch (err: any) {

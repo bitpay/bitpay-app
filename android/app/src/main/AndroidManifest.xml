@@ -66,6 +66,11 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="bitpay"/>
+                <data android:scheme="bitcoin"/>
+                <data android:scheme="bitcoincash"/>
+                <data android:scheme="ethereum"/>
+                <data android:scheme="dogecoin"/>
+                <data android:scheme="litecoin"/>
             </intent-filter>
             <intent-filter android:autoVerify="true" android:label="BitPay">
                 <data android:scheme="https"
