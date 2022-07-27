@@ -17,7 +17,7 @@ import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoSt
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
 import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseStack';
 import {RootStackParamList, RootStacks} from '../../Root';
-import {useAppSelector, useLogger} from '.';
+import {useAppSelector} from '.';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {incomingData} from '../../store/scan/scan.effects';
@@ -28,21 +28,27 @@ import {
   selectAvailableGiftCards,
   selectIntegrations,
 } from '../../store/shop/shop.selectors';
+import {LogActions} from '../../store/log';
 
 const isUniversalLink = (url: string): boolean => {
-  const domain = url.split('https://')[1].split('/')[0];
-  return APP_UNIVERSAL_LINK_DOMAINS.includes(domain);
+  try {
+    const domain = url.split('https://')[1].split('/')[0];
+    return APP_UNIVERSAL_LINK_DOMAINS.includes(domain);
+  } catch {
+    return false;
+  }
 };
 
 const isDeepLink = (url: string): boolean =>
-  url.startsWith(APP_DEEPLINK_PREFIX);
+  url.startsWith(APP_DEEPLINK_PREFIX) ||
+  url.startsWith(APP_DEEPLINK_PREFIX.replace('//', ''));
 
 export const useUrlEventHandler = () => {
   const dispatch = useDispatch();
-  const logger = useLogger();
   const urlEventHandler = ({url}: {url: string | null}) => {
+    dispatch(LogActions.debug(`[deeplink] received: ${url}`));
     if (url && (isDeepLink(url) || isUniversalLink(url))) {
-      logger.info(`Deep link received: ${url}`);
+      dispatch(LogActions.info(`[deeplink] valid: ${url}`));
       dispatch(showBlur(false));
       dispatch(incomingData(url));
 
@@ -54,7 +60,10 @@ export const useUrlEventHandler = () => {
           }
         });
       } catch (err) {
-        console.log(err);
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error('[deeplink] not available from IAB: ' + errStr),
+        );
       }
     }
   };
@@ -96,7 +105,6 @@ export const useShopDeepLinkHandler = () => {
           },
         });
       } else {
-        console.log('navigating to shop tab');
         navigation.navigate('Shop', {
           screen: ShopScreens.HOME,
           params: {
@@ -132,7 +140,6 @@ export const useShopDeepLinkHandler = () => {
 
 export const useDeeplinks = () => {
   const dispatch = useDispatch();
-  const logger = useLogger();
   const urlEventHandler = useUrlEventHandler();
 
   useEffect(() => {
@@ -140,7 +147,7 @@ export const useDeeplinks = () => {
     return () => {
       Linking.removeEventListener('url', urlEventHandler);
     };
-  }, [dispatch, logger, urlEventHandler]);
+  }, [dispatch, urlEventHandler]);
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {
     prefixes: [APP_DEEPLINK_PREFIX],

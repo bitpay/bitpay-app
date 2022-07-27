@@ -39,12 +39,12 @@ export const isValidWalletConnectUri = (data: string): boolean => {
 
 export const isValidSimplexUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!(data?.indexOf('simplex') === 0);
+  return !!data?.includes('simplex');
 };
 
 export const isValidWyreUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!(data?.indexOf('wyre') === 0 || data?.indexOf('wyreError') === 0);
+  return !!(data?.includes('wyre') || data?.includes('wyreError'));
 };
 
 export const IsValidBitcoinUri = (data: string): boolean => {
@@ -124,7 +124,7 @@ export const IsValidLitecoinAddress = (data: string): boolean => {
 
 export const IsValidBitPayUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  if (!data) {
+  if (!(data && data.indexOf('bitpay:') === 0)) {
     return false;
   }
 
@@ -137,9 +137,9 @@ export const IsValidBitPayUri = (data: string): boolean => {
     }
   }
 
-  if (data.indexOf('wallet?') === 0) {
+  if (data.indexOf('bitpay:wallet?') === 0) {
     const params: URLSearchParams = new URLSearchParams(
-      data.replace('wallet?', ''),
+      data.replace('bitpay:wallet?', ''),
     );
     if (params.get('walletId')) {
       return true;

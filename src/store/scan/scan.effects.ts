@@ -30,7 +30,6 @@ import {
   isValidWalletConnectUri,
   isValidWyreUri,
 } from '../wallet/utils/validations';
-import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
   simplexIncomingData,
@@ -70,11 +69,8 @@ export const incomingData =
     opts?: {wallet?: Wallet; context?: string; name?: string},
   ): Effect<Promise<void>> =>
   async dispatch => {
-    if (data.includes(APP_DEEPLINK_PREFIX)) {
-      data = data.replace(APP_DEEPLINK_PREFIX, '');
-      // wait to close blur
-      await sleep(200);
-    }
+    // wait to close blur
+    await sleep(200);
 
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     try {
@@ -839,7 +835,7 @@ const handleWyreUri =
   dispatch => {
     dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
 
-    if (data.indexOf('wyreError') >= 0) {
+    if (data?.includes('wyreError')) {
       navigationRef.navigate('ExternalServicesSettings', {
         screen: 'WyreSettings',
         params: {
