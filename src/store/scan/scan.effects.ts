@@ -360,7 +360,6 @@ const goToConfirm =
     };
   }): Effect<Promise<void>> =>
   async dispatch => {
-    console.log('### options to confirm', opts);
     try {
       if (!wallet) {
         navigationRef.navigate('Wallet', {
