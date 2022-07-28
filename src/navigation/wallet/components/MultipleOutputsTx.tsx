@@ -120,7 +120,7 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     <>
       <DetailContainer>
         <DetailRow>
-          <H7>{t('Sending to')}</H7>
+          <H7>{t('Sent to')}</H7>
 
           <DetailColumn>
             {tx.misunderstoodOutputs ? (
