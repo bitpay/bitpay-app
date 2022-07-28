@@ -3,7 +3,10 @@ import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import cloneDeep from 'lodash.clonedeep';
-import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
+import {
+  SupportedCurrencyOption,
+  SupportedCurrencyOptions,
+} from '../../../../constants/SupportedCurrencyOptions';
 import {Currencies} from '../../../../constants/currencies';
 import {
   Action,
@@ -32,7 +35,6 @@ import {SwapCryptoStackParamList} from '../SwapCryptoStack';
 import Button from '../../../../components/button/Button';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import WalletSelectorModal from '../components/WalletSelectorModal';
 import AmountModal from '../components/AmountModal';
@@ -87,10 +89,11 @@ const SwapCryptoRoot: React.FC = () => {
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
     useState(false);
   const [fromWalletSelected, setFromWalletSelected] = useState<Wallet>();
-  const [fromWalletData, setFromWalletData] = useState<ItemProps>();
+  const [fromWalletData, setFromWalletData] =
+    useState<SupportedCurrencyOption>();
   const [useDefaultToWallet, setUseDefaultToWallet] = useState<boolean>(false);
   const [toWalletSelected, setToWalletSelected] = useState<Wallet>();
-  const [toWalletData, setToWalletData] = useState<ItemProps>();
+  const [toWalletData, setToWalletData] = useState<SupportedCurrencyOption>();
   const [amountFrom, setAmountFrom] = useState<number>(0);
   const [swapCryptoSupportedCoinsFrom, setSwapCryptoSupportedCoinsFrom] =
     useState<string[]>([]);

@@ -1131,5 +1131,7 @@
   "To continue you will need to add a wallet to your key.": "To continue you will need to add a wallet to your key.",
   "Add wallet": "Add wallet",
   "Key and wallet required": "Key and wallet required",
-  "To continue you will need to create a key and add a wallet.": "To continue you will need to create a key and add a wallet."
+  "To continue you will need to create a key and add a wallet.": "To continue you will need to create a key and add a wallet.",
+  "SelectArgCurrencies": "Select {{currency}} Currencies",
+  "SeeAllArgTokens": "See all {{currency}} tokens"
 }

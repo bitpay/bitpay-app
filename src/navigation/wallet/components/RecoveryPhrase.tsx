@@ -537,7 +537,7 @@ const RecoveryPhrase = () => {
 
       return (
         <CurrencySelectionRow
-          item={item}
+          currency={item}
           onToggle={currencySelected}
           key={item.id}
           hideCheckbox={true}

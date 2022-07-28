@@ -23,8 +23,10 @@ import {
   CoinIconContainer,
 } from '../styled/BuyCryptoCard';
 import Button from '../../../../components/button/Button';
-import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
-import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
+import {
+  SupportedCurrencyOption,
+  SupportedCurrencyOptions,
+} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
 import {
@@ -74,7 +76,7 @@ const BuyCryptoRoot: React.FC<
 
   const [amount, setAmount] = useState<number>(fromAmount ? fromAmount : 0);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
-  const [walletData, setWalletData] = useState<ItemProps>();
+  const [walletData, setWalletData] = useState<SupportedCurrencyOption>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
     useState(false);

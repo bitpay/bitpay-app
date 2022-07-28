@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -16,6 +17,8 @@ import {
   NoResultsDescription,
 } from '../../../components/styled/Containers';
 import CurrencySelectionRow, {
+  CurrencySelectionItem,
+  CurrencySelectionRowProps,
   CurrencySelectionToggleProps,
 } from '../../../components/list/CurrencySelectionRow';
 
@@ -35,10 +38,7 @@ import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {
-  SupportedCurrencyOptions,
-  SupportedCurrencyOption,
-} from '../../../constants/SupportedCurrencyOptions';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {RootStackParamList} from '../../../Root';
 import {
@@ -48,7 +48,6 @@ import {
 } from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
-import {keyExtractor} from '../../../utils/helper-methods';
 import {sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {NeutralSlate} from '../../../styles/colors';
@@ -82,7 +81,7 @@ export type CurrencySelectionParamList =
     };
 
 interface ContextHandler {
-  currencies: SupportedCurrencyOption[];
+  listItems: CurrencySelectionRowProps[];
   headerTitle?: string;
   ctaTitle?: string;
   bottomCta?: (props: {
@@ -97,7 +96,7 @@ interface ContextHandler {
     navigation: NavigationProp<RootStackParamList>;
   }) => void;
   hideBottomCta?: boolean;
-  removeCheckbox?: boolean;
+  hideCheckbox?: boolean;
 }
 
 const CurrencySelectionContainer = styled.View`
@@ -124,9 +123,29 @@ const SearchImageContainer = styled.View`
   align-items: center;
 `;
 
-const SupportedMultisigCurrencyOptions = SupportedCurrencyOptions.filter(
-  currency => currency.hasMultisig,
-);
+const SupportedMultisigCurrencyOptions: CurrencySelectionRowProps[] =
+  SupportedCurrencyOptions.filter(currency => currency.hasMultisig).map(
+    currency => {
+      const item: CurrencySelectionRowProps = {
+        currency: {
+          ...currency,
+          selected: false,
+          disabled: false,
+        },
+      };
+
+      return item;
+    },
+  );
+
+// TODO: translations
+const DESCRIPTIONS: Record<string, string> = {
+  eth: 'Tokens on the Ethererum network need an Ethereum wallet to pay for fees.',
+  matic:
+    'Tokens on the Polygon network need an Polygon wallet to pay for fees.',
+};
+
+const keyExtractor = (item: CurrencySelectionRowProps) => item.currency.id;
 
 const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   route,
@@ -138,34 +157,138 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+
+  /**
+   * The state for rendering the input text component. This value updates immediately.
+   */
   const [searchInput, setSearchInput] = useState('');
+  const searchInputRef = useRef(searchInput);
+  searchInputRef.current = searchInput;
+
+  /**
+   * The state for the value applied as a filter. This value is debounced.
+   */
+  const [searchFilter, setSearchFilter] = useState('');
   const appTokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+  const appTokenData = useAppSelector(({WALLET}) => WALLET.tokenData);
   const appCustomTokenOptions = useAppSelector(
     ({WALLET}) => WALLET.customTokenOptions,
   );
 
-  const ALL_CUSTOM_TOKENS = useMemo(() => {
-    const tokenOptions = {
+  /**
+   * Source of truth for which currencies are selected.
+   */
+  const [allListItems, setAllListItems] = useState<CurrencySelectionRowProps[]>(
+    [],
+  );
+  const allListItemsRef = useRef(allListItems);
+  allListItemsRef.current = allListItems;
+
+  /**
+   * Derived from allListItems, but with search filter applied.
+   */
+  const filteredListItems = useMemo(() => {
+    // If no filter, return reference to allListItems.
+    if (!searchFilter) {
+      return allListItems;
+    }
+
+    // Else return a new array to trigger a rerender.
+    return allListItems.reduce<CurrencySelectionRowProps[]>((accum, item) => {
+      const currencyMatch =
+        item.currency.currencyAbbreviation
+          .toLowerCase()
+          .includes(searchFilter) ||
+        item.currency.currencyName.toLowerCase().includes(searchFilter);
+
+      if (currencyMatch) {
+        accum.push(item);
+      } else if (item.tokens?.length) {
+        const tokenMatch = item.tokens.filter(
+          t =>
+            t.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
+            t.currencyName.toLowerCase().includes(searchFilter),
+        );
+
+        if (tokenMatch.length) {
+          accum.push({
+            ...item,
+            tokens: tokenMatch,
+          });
+        }
+      }
+
+      return accum;
+    }, []);
+  }, [searchFilter, allListItems]);
+
+  // Format supported currencies and tokens into row item format.
+  // Resets if tokenOptions or tokenData updates.
+  useEffect(() => {
+    const chainMap: Record<string, CurrencySelectionRowProps> = {};
+
+    // Add all top level currencies to list
+    const list: CurrencySelectionRowProps[] = SupportedCurrencyOptions.map(
+      ({id, currencyAbbreviation, currencyName, img}) => {
+        const item = {
+          currency: {
+            id,
+            currencyAbbreviation,
+            currencyName,
+            img,
+            selected: false,
+            disabled: false,
+          },
+          tokens: [],
+          description: DESCRIPTIONS[id],
+        };
+
+        chainMap[id.toLowerCase()] = item;
+
+        return item;
+      },
+    );
+
+    // For each token, add it to the token list for its parent chain object
+    const allTokenOptions = {
       ...BitpaySupportedTokenOpts,
       ...appTokenOptions,
       ...appCustomTokenOptions,
     };
+    Object.entries(allTokenOptions).forEach(([key, tokenOpt]) => {
+      if (SUPPORTED_CURRENCIES.includes(key) || !appTokenData[key]) {
+        return;
+      }
 
-    return Object.values(tokenOptions)
-      .filter(
-        token => !SUPPORTED_CURRENCIES.includes(token.symbol.toLowerCase()),
-      )
-      .map(({symbol, name, logoURI}) => {
-        return {
-          id: Math.random(),
-          currencyAbbreviation: symbol,
-          currencyName: name,
-          img: logoURI,
-          isToken: true,
-          checked: false,
-        };
-      });
-  }, [appTokenOptions, appCustomTokenOptions]);
+      const tokenData = appTokenData[key];
+      const chainData = chainMap[tokenData.chain.toLowerCase()];
+
+      const token: CurrencySelectionItem = {
+        id: key,
+        currencyAbbreviation: tokenOpt.symbol,
+        currencyName: tokenOpt.name,
+        img: tokenOpt.logoURI || chainData?.currency.img || '',
+        selected: false,
+        disabled: false,
+        isToken: true,
+      };
+
+      if (chainData) {
+        if (!chainData.tokens) {
+          chainData.tokens = [];
+        }
+
+        chainData.tokens.push(token);
+      } else {
+        // Parent chain currency not found, just push to the main list.
+        list.push({
+          currency: token,
+        });
+      }
+    });
+
+    setAllListItems(list);
+  }, [appTokenData, appTokenOptions]);
 
   const showErrorModal = (e: string) => {
     dispatch(
@@ -185,33 +308,34 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     );
   };
 
-  const supportedCurrenciesAndTokens = useMemo(() => {
-    const _SupportedCurrencyOptions = SupportedCurrencyOptions.map(currency => {
-      return {
-        ...currency,
-        checked: false,
-      };
-    });
-
-    return [..._SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS];
-  }, [ALL_CUSTOM_TOKENS]);
-
   const checkEthIfTokenSelected = (
     currencies: Array<string>,
   ): Array<string> => {
-    if (!currencies.includes('ETH')) {
-      for (const selected of currencies) {
-        if (
-          SUPPORTED_TOKENS.includes(selected.toLowerCase()) ||
-          ALL_CUSTOM_TOKENS.some(
-            token => token.currencyAbbreviation === selected,
-          )
-        ) {
-          currencies = [...currencies, 'ETH'];
-          break;
-        }
-      }
+    const isEthSelected = currencies.some(c => c.toLowerCase() === 'eth');
+
+    if (isEthSelected) {
+      return currencies;
     }
+
+    const ethState = allListItems.find(
+      item => item.currency.id.toLowerCase() === 'eth',
+    );
+
+    const isEthTokenSelected = currencies.some(c => {
+      const selectedLower = c.toLowerCase();
+
+      return (
+        SUPPORTED_TOKENS.includes(selectedLower) ||
+        ethState?.tokens?.some(t => {
+          return t.id.toLowerCase() === selectedLower && t.selected;
+        })
+      );
+    });
+
+    if (isEthTokenSelected) {
+      currencies.push('ETH');
+    }
+
     return currencies;
   };
 
@@ -221,7 +345,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       case 'createNewKey': {
         return {
           // @ts-ignore
-          currencies: supportedCurrenciesAndTokens,
+          listItems: filteredListItems,
           ctaTitle: t('Create Key'),
           bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
             try {
@@ -268,10 +392,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       case 'addWallet': {
         return {
           // @ts-ignore
-          currencies: supportedCurrenciesAndTokens,
+          listItems: filteredListItems,
           headerTitle: t('Select Currency'),
           hideBottomCta: true,
-          removeCheckbox: true,
+          hideCheckbox: true,
           selectionCta: async ({
             currencyAbbreviation,
             currencyName,
@@ -292,10 +416,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       }
       case 'addWalletMultisig': {
         return {
-          currencies: SupportedMultisigCurrencyOptions,
+          listItems: SupportedMultisigCurrencyOptions,
           headerTitle: t('Select Currency'),
           hideBottomCta: true,
-          removeCheckbox: true,
+          hideCheckbox: true,
           selectionCta: async ({currencyAbbreviation, navigation}) => {
             navigation.navigate('Wallet', {
               screen: 'CreateMultisig',
@@ -308,13 +432,13 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   };
 
   const {
-    currencies = [],
+    listItems = [],
     bottomCta,
     ctaTitle,
     headerTitle,
     hideBottomCta,
     selectionCta,
-    removeCheckbox,
+    hideCheckbox,
   } = contextHandler() || {};
 
   // Configuring Header
@@ -345,104 +469,122 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     });
   }, [navigation, t, context, headerTitle]);
 
-  const [selectedCurrencies, setSelectedCurrencies] = useState<Array<string>>(
-    [],
-  );
+  const selectedCurrencies = useMemo(() => {
+    return allListItems.reduce<string[]>((accum, item) => {
+      if (item.currency.selected) {
+        accum.push(item.currency.currencyAbbreviation);
+      }
 
-  const DEFAULT_CURRENCY_OPTIONS = useMemo(
-    () => currencies || [],
-    [currencies],
-  );
-
-  const [currencyOptions, setCurrencyOptions] = useState<
-    SupportedCurrencyOption[]
-  >([...DEFAULT_CURRENCY_OPTIONS]);
+      item.tokens?.forEach(t => {
+        if (t.selected) {
+          accum.push(t.currencyAbbreviation);
+        }
+      });
+      return accum;
+    }, []);
+  }, [allListItems]);
 
   const resetSearch = () => {
     setSearchInput('');
-    onSearchInputChange('');
+    debouncedOnSearchInputChange('');
   };
 
-  const resetSearchRef = useRef(resetSearch);
-  resetSearchRef.current = resetSearch;
+  const toggleCurrency = (id: string) => {
+    const updated = allListItems.reduce<CurrencySelectionRowProps[]>(
+      (accum, item) => {
+        const isCurrencyMatch = item.currency.id === id;
+        const isTokenMatch = item.tokens?.some(t => t.id === id);
 
-  const selectionCtaRef = useRef(selectionCta);
-  selectionCtaRef.current = selectionCta;
+        if (isCurrencyMatch) {
+          item.currency = {
+            ...item.currency,
+            selected: !item.currency.selected,
+          };
+        } else if (isTokenMatch) {
+          item.tokens = item.tokens?.reduce<CurrencySelectionItem[]>(
+            (taccum, t) => {
+              if (t.id === id) {
+                taccum.push({
+                  ...t,
+                  selected: !t.selected,
+                });
+              } else {
+                taccum.push(t);
+              }
 
-  const memoizedOnToggle = useMemo(() => {
-    return ({
-      currencyAbbreviation,
-      currencyName,
-      checked,
-      isToken,
-    }: CurrencySelectionToggleProps) => {
-      if (selectionCtaRef.current) {
-        resetSearchRef.current();
-        selectionCtaRef.current({
-          currencyAbbreviation,
-          currencyName,
-          isToken,
-          navigation,
-        });
-      } else {
-        setSelectedCurrencies(currencies => {
-          // reset asset in list
-          currencies = currencies.filter(
-            selected => selected !== currencyAbbreviation,
+              return taccum;
+            },
+            [],
           );
-          // add if checked
-          if (checked) {
-            currencies = [...currencies, currencyAbbreviation];
-          }
-
-          return currencies;
-        });
-      }
-    };
-  }, [navigation]);
-
-  // Flat list
-  const renderItem: ListRenderItem<SupportedCurrencyOption> = useCallback(
-    ({item}) => (
-      <CurrencySelectionRow
-        key={item.id}
-        item={item}
-        onToggle={memoizedOnToggle}
-        hideCheckbox={removeCheckbox}
-      />
-    ),
-    [memoizedOnToggle, removeCheckbox],
-  );
-
-  const onSearchInputChange = useMemo(
-    () =>
-      debounce((search: string) => {
-        let _searchList: Array<any> = [];
-
-        if (search) {
-          search = search.toLowerCase();
-          _searchList = DEFAULT_CURRENCY_OPTIONS.filter(
-            ({currencyAbbreviation, currencyName}) =>
-              currencyAbbreviation.toLowerCase().includes(search) ||
-              currencyName.toLowerCase().includes(search),
-          );
-        } else {
-          _searchList = DEFAULT_CURRENCY_OPTIONS;
         }
 
-        _searchList.forEach(currency => {
-          if (selectedCurrencies.includes(currency.currencyAbbreviation)) {
-            currency.checked = true;
-            currency.id = Math.random();
-          } else {
-            currency.checked = false;
-          }
-          return currency;
-        });
+        accum.push(item);
 
-        setCurrencyOptions(_searchList);
-      }, 300),
-    [DEFAULT_CURRENCY_OPTIONS, selectedCurrencies],
+        return accum;
+      },
+      [],
+    );
+
+    setAllListItems(updated);
+  };
+
+  const onToggle = ({
+    id,
+    currencyName,
+    currencyAbbreviation,
+    isToken,
+  }: CurrencySelectionToggleProps) => {
+    if (selectionCta) {
+      resetSearch();
+      selectionCta({
+        currencyAbbreviation,
+        currencyName,
+        isToken,
+        navigation,
+      });
+    } else {
+      toggleCurrency(id);
+    }
+  };
+  const onToggleRef = useRef(onToggle);
+  onToggleRef.current = onToggle;
+
+  const memoizedOnToggle = useCallback((args: CurrencySelectionToggleProps) => {
+    onToggleRef.current(args);
+  }, []);
+
+  const memoizedOnViewAllPressed = useMemo(() => {
+    return (id: string) => {};
+  }, [memoizedOnToggle, navigation]);
+
+  const renderItem: ListRenderItem<CurrencySelectionRowProps> = useCallback(
+    ({item}) => {
+      return (
+        <CurrencySelectionRow
+          key={item.currency.id}
+          currency={item.currency}
+          tokens={item.tokens}
+          description={item.description}
+          onToggle={memoizedOnToggle}
+          hideCheckbox={item.hideCheckbox}
+          onViewAllTokensPressed={memoizedOnViewAllPressed}
+        />
+      );
+    },
+    [memoizedOnToggle, memoizedOnViewAllPressed, hideCheckbox],
+  );
+
+  const debouncedOnSearchInputChange = useCallback(
+    debounce((search: string) => {
+      // after debouncing, if current search is null, ignore the previous search
+      if (!searchInputRef.current) {
+        return;
+      }
+
+      const searchInputLower = search.toLowerCase();
+      setSearchFilter(searchInputLower);
+    }, 300),
+    [],
   );
 
   return (
@@ -454,7 +596,17 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           value={searchInput}
           onChangeText={(text: string) => {
             setSearchInput(text);
-            onSearchInputChange(text);
+
+            // if 2+ char, filter search
+            // else if 1 char, do nothing
+            // else if 0 char, clear search immediately
+            if (text) {
+              if (text.length > 1) {
+                debouncedOnSearchInputChange(text);
+              }
+            } else {
+              setSearchFilter('');
+            }
           }}
         />
         <SearchImageContainer>
@@ -465,7 +617,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 setSearchInput('');
-                onSearchInputChange('');
+                setSearchFilter('');
               }}>
               <Icons.Delete />
             </TouchableOpacity>
@@ -473,11 +625,11 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         </SearchImageContainer>
       </SearchContainer>
 
-      {currencyOptions.length ? (
+      {listItems.length ? (
         <ListContainer>
-          <FlatList<SupportedCurrencyOption>
+          <FlatList<CurrencySelectionRowProps>
             contentContainerStyle={{paddingBottom: 100}}
-            data={currencyOptions}
+            data={listItems}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />

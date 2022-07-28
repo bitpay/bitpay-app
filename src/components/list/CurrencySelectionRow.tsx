@@ -1,4 +1,6 @@
-import React, {memo, useState} from 'react';
+import React, {memo} from 'react';
+import {useTranslation} from 'react-i18next';
+import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {IS_ANDROID} from '../../constants';
 import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
@@ -13,25 +15,29 @@ import {
 } from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
 
-export interface ItemProps extends SupportedCurrencyOption {
+export type CurrencySelectionItem = Pick<
+  SupportedCurrencyOption,
+  'id' | 'currencyAbbreviation' | 'currencyName' | 'img' | 'isToken'
+> & {
+  selected?: boolean;
   disabled?: boolean;
-  checked?: boolean;
-  isToken?: boolean;
-}
+};
 
 export interface CurrencySelectionToggleProps {
   id: string;
-  checked: boolean;
   currencyAbbreviation: string;
   currencyName: string;
   isToken?: boolean;
 }
 
-interface CurrencySelectionRowProps {
-  item: ItemProps;
+export type CurrencySelectionRowProps = {
+  currency: CurrencySelectionItem;
+  tokens?: CurrencySelectionItem[];
+  description?: string;
   hideCheckbox?: boolean;
   onToggle?: (props: CurrencySelectionToggleProps) => void;
-}
+  onViewAllTokensPressed?: (id: string) => any;
+};
 
 const CheckBoxContainer = styled.View`
   flex-direction: column;
@@ -39,47 +45,73 @@ const CheckBoxContainer = styled.View`
 `;
 
 const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
-  item,
+  currency,
+  description,
+  tokens,
   hideCheckbox,
   onToggle,
+  onViewAllTokensPressed,
 }) => {
-  const {
-    id,
-    currencyName,
-    currencyAbbreviation,
-    img,
-    checked: initialCheckValue,
-    disabled,
-    isToken,
-  } = item;
-
-  const [checked, setChecked] = useState(!!initialCheckValue);
-  const onPress = (): void => {
-    setChecked(!checked);
+  const {t} = useTranslation();
+  const {id, currencyAbbreviation, currencyName, img, selected, disabled} =
+    currency;
+  const onPress = (currency: CurrencySelectionItem): void => {
+    const {id, currencyAbbreviation, currencyName, isToken} = currency;
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
     onToggle?.({
       id,
       currencyAbbreviation,
       currencyName,
-      checked: !checked,
       isToken,
     });
   };
 
   return (
-    <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
+    <RowContainer
+      activeOpacity={ActiveOpacity}
+      onPress={() => onPress(currency)}>
       <CurrencyImageContainer>
         <CurrencyImage img={img} />
       </CurrencyImageContainer>
 
       <CurrencyColumn>
         <H5>{currencyName}</H5>
+
         <ListItemSubText>{currencyAbbreviation}</ListItemSubText>
+
+        {description ? <ListItemSubText>{description}</ListItemSubText> : null}
+
+        {tokens?.length ? (
+          <>
+            {tokens.slice(0, 3).map(token => (
+              <View key={id + ':' + token.id} style={{flexDirection: 'row'}}>
+                <ListItemSubText style={{flexShrink: 1, flexGrow: 1}}>
+                  {token.currencyAbbreviation}
+                </ListItemSubText>
+                <Checkbox
+                  checked={!!token.selected}
+                  disabled={false}
+                  onPress={() => onPress(token)}
+                />
+              </View>
+            ))}
+            <ListItemSubText
+              onPress={() => {
+                onViewAllTokensPressed?.(id);
+              }}>
+              {t('SeeAllArgTokens', {currency: t(currencyName)})}
+            </ListItemSubText>
+          </>
+        ) : null}
       </CurrencyColumn>
 
       {!hideCheckbox && (
         <CheckBoxContainer>
-          <Checkbox checked={checked} disabled={disabled} onPress={onPress} />
+          <Checkbox
+            checked={!!selected}
+            disabled={disabled}
+            onPress={() => onPress(currency)}
+          />
         </CheckBoxContainer>
       )}
     </RowContainer>
