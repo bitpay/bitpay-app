@@ -554,7 +554,19 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   }, []);
 
   const memoizedOnViewAllPressed = useMemo(() => {
-    return (id: string) => {};
+    return (
+      currency: CurrencySelectionItem,
+      tokens: CurrencySelectionItem[],
+    ) => {
+      navigation.navigate('Wallet', {
+        screen: WalletScreens.CURRENCY_TOKEN_SELECTION,
+        params: {
+          currency,
+          tokens,
+          onToggle: memoizedOnToggle,
+        },
+      });
+    };
   }, [memoizedOnToggle, navigation]);
 
   const renderItem: ListRenderItem<CurrencySelectionRowProps> = useCallback(

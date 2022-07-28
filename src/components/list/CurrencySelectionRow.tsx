@@ -36,7 +36,10 @@ export type CurrencySelectionRowProps = {
   description?: string;
   hideCheckbox?: boolean;
   onToggle?: (props: CurrencySelectionToggleProps) => void;
-  onViewAllTokensPressed?: (id: string) => any;
+  onViewAllTokensPressed?: (
+    currency: CurrencySelectionItem,
+    tokens: CurrencySelectionItem[],
+  ) => any;
 };
 
 const CheckBoxContainer = styled.View`
@@ -97,7 +100,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
             ))}
             <ListItemSubText
               onPress={() => {
-                onViewAllTokensPressed?.(id);
+                onViewAllTokensPressed?.(currency, tokens);
               }}>
               {t('SeeAllArgTokens', {currency: t(currencyName)})}
             </ListItemSubText>
