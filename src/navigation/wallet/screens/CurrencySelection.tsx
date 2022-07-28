@@ -172,6 +172,9 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   const appCustomTokenOptions = useAppSelector(
     ({WALLET}) => WALLET.customTokenOptions,
   );
+  const appCustomTokenData = useAppSelector(
+    ({WALLET}) => WALLET.customTokenData,
+  );
 
   /**
    * Source of truth for which currencies are selected.
@@ -254,11 +257,14 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       ...appCustomTokenOptions,
     };
     Object.entries(allTokenOptions).forEach(([key, tokenOpt]) => {
-      if (SUPPORTED_CURRENCIES.includes(key) || !appTokenData[key]) {
+      if (
+        SUPPORTED_CURRENCIES.includes(key) ||
+        !(appTokenData[key] || appCustomTokenData[key])
+      ) {
         return;
       }
 
-      const tokenData = appTokenData[key];
+      const tokenData = appTokenData[key] || appCustomTokenData[key];
       const chainData = chainMap[tokenData.chain.toLowerCase()];
 
       const token: CurrencySelectionItem = {
@@ -286,7 +292,12 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     });
 
     setAllListItems(list);
-  }, [appTokenData, appTokenOptions]);
+  }, [
+    appTokenData,
+    appTokenOptions,
+    appCustomTokenOptions,
+    appCustomTokenData,
+  ]);
 
   const showErrorModal = (e: string) => {
     dispatch(
