@@ -2,6 +2,7 @@ import React, {useCallback, useContext, useState} from 'react';
 import {
   ActiveOpacity,
   CtaContainer as _CtaContainer,
+  HEIGHT,
   Hr,
   SearchContainer,
   SearchInput,
@@ -308,11 +309,13 @@ const SendToAddress = () => {
 
         <View style={{marginTop: 30}}>
           <H5>
-            {recipientList?.length > 1 ? t('Recipients') : t('Recipient')}
+            {recipientList?.length > 1
+              ? t('Recipients') + ` (${recipientList?.length})`
+              : t('Recipient')}
           </H5>
           <Hr />
           {recipientList && recipientList.length ? (
-            <View style={{maxHeight: 195}}>
+            <View style={{maxHeight: HEIGHT * 0.18}}>
               <FlatList
                 data={recipientList}
                 keyExtractor={(_item, index) => index.toString()}
