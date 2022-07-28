@@ -360,6 +360,7 @@ const SendTo = () => {
     text: string,
     context?: string,
     name?: string,
+    tag?: number,
   ) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
@@ -409,7 +410,7 @@ const SendTo = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
-        dispatch(incomingData(text, {wallet, context, name}));
+        dispatch(incomingData(text, {wallet, context, name, tag}));
       }
     }
   };
@@ -546,6 +547,7 @@ const SendTo = () => {
                           item.address,
                           'contact',
                           item.name,
+                          item.tag,
                         );
                       }
                     } catch (err) {

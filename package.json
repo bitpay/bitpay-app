@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.4.1",
+  "version": "14.4.2",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -109,6 +109,7 @@
     "react-native-randombytes": "3.6.1",
     "react-native-rate": "1.2.9",
     "react-native-reanimated": "2.5.0",
+    "react-native-restart": "0.0.24",
     "react-native-rounded-checkbox": "0.3.3",
     "react-native-safe-area-context": "3.3.2",
     "react-native-screens": "2.18.1",
@@ -186,6 +187,7 @@
     "jest": "26.6.3",
     "jest-svg-transformer": "^1.0.0",
     "metro-react-native-babel-preset": "0.64.0",
+    "patch-package": "6.4.7",
     "react-dom": "17.0.1",
     "react-native-clean-project": "3.6.7",
     "react-native-codegen": "0.0.7",

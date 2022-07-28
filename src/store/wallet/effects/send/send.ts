@@ -369,12 +369,15 @@ export const buildTxDetails =
     const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
     const isERC20 = dispatch(IsERCToken(coin));
 
-    if (context === 'fromReplaceByFee') {
+    if (context === 'paypro') {
+      amount = invoice!.paymentTotals[coin.toUpperCase()];
+    } else if (context === 'speedupBtcReceive') {
       amount = amount - fee;
     }
 
     const {type, name, address} = recipient || {};
     return {
+      context,
       currency: coin,
       sendingTo: {
         recipientType: type,
@@ -634,13 +637,16 @@ const buildTransactionProposal =
             break;
           case 'paypro':
             txp.payProUrl = payProUrl;
-            txp.outputs.push({
-              toAddress: tx.toAddress,
-              amount: tx.amount!,
-              message: tx.message,
-              data: tx.data,
-              gasLimit: tx.gasLimit,
-            });
+            const {instructions} = tx.payProDetails;
+            for (const instruction of instructions) {
+              txp.outputs.push({
+                toAddress: instruction.toAddress,
+                amount: instruction.amount,
+                message: instruction.message,
+                data: instruction.data,
+                gasLimit: tx.gasLimit,
+              });
+            }
             break;
           case 'selectInputs':
             txp.inputs = inputs;
@@ -659,13 +665,25 @@ const buildTransactionProposal =
           case 'fromReplaceByFee':
             txp.inputs = tx.inputs;
             txp.replaceTxByFee = true;
-
-            txp.outputs.push({
-              toAddress: tx.toAddress,
-              amount: tx.amount!,
-              message: tx.description,
-              data: tx.data,
-            });
+            if (recipientList) {
+              recipientList.forEach(r => {
+                const formattedAmount = dispatch(
+                  ParseAmount(r.amount || 0, chain),
+                );
+                txp.outputs?.push({
+                  toAddress: r.address,
+                  amount: formattedAmount.amountSat,
+                  message: tx.description,
+                });
+              });
+            } else {
+              txp.outputs.push({
+                toAddress: tx.toAddress,
+                amount: tx.amount!,
+                message: tx.description,
+                data: tx.data,
+              });
+            }
             break;
           case 'speedupBtcReceive':
             txp.inputs = tx.inputs;
@@ -1161,6 +1179,7 @@ export const createPayProTxProposal =
         wallet,
         ...(feePerKb && {feePerKb}),
         payProUrl: paymentUrl,
+        payProDetails,
         recipient: {address},
         gasLimit,
         data,
