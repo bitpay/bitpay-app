@@ -368,6 +368,7 @@ export const buildTxDetails =
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
     const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
     const isERC20 = dispatch(IsERCToken(coin));
+    const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
     if (context === 'paypro') {
       amount = invoice!.paymentTotals[coin.toUpperCase()];
@@ -391,7 +392,13 @@ export const buildTxDetails =
         cryptoAmount: dispatch(FormatAmountStr(chain, fee)),
         fiatAmount: formatFiatAmount(
           dispatch(
-            toFiat(fee, defaultAltCurrencyIsoCode, chain, rates, effectiveRate),
+            toFiat(
+              fee,
+              defaultAltCurrencyIsoCode,
+              chain,
+              rates,
+              effectiveRateForFee,
+            ),
           ),
           defaultAltCurrencyIsoCode,
         ),
@@ -408,7 +415,7 @@ export const buildTxDetails =
                 defaultAltCurrencyIsoCode,
                 chain,
                 rates,
-                effectiveRate,
+                effectiveRateForFee,
               ),
             ),
             defaultAltCurrencyIsoCode,
@@ -456,7 +463,7 @@ export const buildTxDetails =
                 defaultAltCurrencyIsoCode,
                 chain,
                 rates,
-                effectiveRate,
+                effectiveRateForFee,
               ),
             ),
           defaultAltCurrencyIsoCode,
