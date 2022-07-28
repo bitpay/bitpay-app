@@ -230,6 +230,7 @@ const SendToAddress = () => {
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         )) as string;
         dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
       }
 
       const newRecipient = {
