@@ -56,6 +56,7 @@ import {
   ExtractBitPayUriAddress,
   ExtractUriAmount,
 } from '../../../store/wallet/utils/decode-uri';
+import {sleep} from '../../../utils/helper-methods';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -74,8 +75,7 @@ const SendToAddressContainer = styled.View`
 `;
 
 const ScrollViewContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
+  margin: 20px 15px 0 15px;
 `;
 
 const ErrorText = styled(BaseText)`
@@ -311,13 +311,15 @@ const SendToAddress = () => {
           </H5>
           <Hr />
           {recipientList && recipientList.length ? (
-            <FlatList
-              data={recipientList}
-              keyExtractor={(_item, index) => index.toString()}
-              renderItem={({item, index}: {item: Recipient; index: number}) =>
-                renderItem({item, index})
-              }
-            />
+            <View style={{maxHeight: 195}}>
+              <FlatList
+                data={recipientList}
+                keyExtractor={(_item, index) => index.toString()}
+                renderItem={({item, index}: {item: Recipient; index: number}) =>
+                  renderItem({item, index})
+                }
+              />
+            </View>
           ) : (
             <>
               <RecipientRowContainer>
