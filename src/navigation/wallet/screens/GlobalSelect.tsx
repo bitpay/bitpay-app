@@ -385,7 +385,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             );
           }
         } catch (err) {
-          console.error(err);
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         }
       } else if (context === 'send') {
         setWalletSelectModalVisible(false);
