@@ -138,11 +138,9 @@ const SupportedMultisigCurrencyOptions: CurrencySelectionRowProps[] =
     },
   );
 
-// TODO: translations
 const DESCRIPTIONS: Record<string, string> = {
-  eth: 'Tokens on the Ethererum network need an Ethereum wallet to pay for fees.',
-  matic:
-    'Tokens on the Polygon network need an Polygon wallet to pay for fees.',
+  eth: 'TokensOnEthereumNetworkDescription',
+  matic: 'TokensOnPolygonNetworkDescription',
 };
 
 const keyExtractor = (item: CurrencySelectionRowProps) => item.currency.id;
@@ -240,7 +238,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             disabled: false,
           },
           tokens: [],
-          description: DESCRIPTIONS[id],
+          description: DESCRIPTIONS[id] ? t(DESCRIPTIONS[id]) : '',
         };
 
         chainMap[id.toLowerCase()] = item;
