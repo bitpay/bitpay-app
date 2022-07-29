@@ -114,10 +114,6 @@ const PasteClipboardContainer = styled.TouchableOpacity`
   padding: 10px;
 `;
 
-export const SendContactRow = styled.View`
-  padding: 10px 0px;
-`;
-
 export const ContactTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
