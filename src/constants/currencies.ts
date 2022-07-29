@@ -494,9 +494,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'normal',
     },
     theme: {
-      coinColor: '#f7931a',
-      backgroundColor: '#f7921a',
-      gradientBackgroundColor: '#f7921a',
+      coinColor: '#FFFFFF',
+      backgroundColor: '#A6A9AA',
+      gradientBackgroundColor: '#A6A9AA',
     },
   },
   shib: {
