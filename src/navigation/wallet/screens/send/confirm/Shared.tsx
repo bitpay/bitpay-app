@@ -40,6 +40,7 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import AddressCard from '../../../components/AddressCard';
+import {LuckySevens} from '../../../../../styles/colors';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -86,6 +87,10 @@ export const DetailColumn = styled(Column)`
 
 export const DetailsList = styled(ScrollView)`
   padding: 0 ${ScreenGutter};
+`;
+
+export const ConfirmSubText = styled(H7)`
+  color: ${({theme}) => (theme.dark ? LuckySevens : theme.colors.text)};
 `;
 
 // Row UI
@@ -217,12 +222,12 @@ export const Fee = ({
               <DetailColumn>
                 {feeLevel && !hideFeeOptions ? <H5>{viewFee}</H5> : null}
                 <H6>{cryptoAmount}</H6>
-                <H7>
+                <ConfirmSubText>
                   {t(' ( of total amount)', {
                     fiatAmount,
                     percentageOfTotalAmount,
                   })}
-                </H7>
+                </ConfirmSubText>
               </DetailColumn>
               {onPress ? (
                 <View style={{marginLeft: 10}}>
@@ -302,7 +307,7 @@ export const Amount = ({
               ) : (
                 <>
                   <H4>{cryptoAmount}</H4>
-                  <H7>{fiatAmount}</H7>
+                  <ConfirmSubText>{fiatAmount}</ConfirmSubText>
                 </>
               )}
             </DetailColumn>
