@@ -56,6 +56,12 @@ export const BitpaySupportedTokenOpts: TokenOptsType = {
     decimals: 18,
     address: '0x4d224452801ACEd8B2F0aebE155379bb5D594381',
   },
+  euroc: {
+    name: 'Euro Coin',
+    symbol: 'EUROC',
+    decimals: 18,
+    address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
+  },
 };
 
 export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
@@ -106,5 +112,11 @@ export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
     symbol: 'APE',
     decimals: 18,
     address: '0x4d224452801ACEd8B2F0aebE155379bb5D594381',
+  },
+  '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c': {
+    name: 'Euro Coin',
+    symbol: 'EUROC',
+    decimals: 18,
+    address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
   },
 };
