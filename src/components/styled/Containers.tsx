@@ -50,7 +50,7 @@ export const SubTextContainer = styled.View`
 `;
 
 export const CtaContainer = styled.View`
-  padding: 10px;
+  padding: 10px ${ScreenGutter};
   align-self: stretch;
   flex-direction: column;
   margin-top: 30px;

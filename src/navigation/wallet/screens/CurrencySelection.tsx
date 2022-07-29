@@ -8,8 +8,9 @@ import React, {
 } from 'react';
 import styled from 'styled-components/native';
 import {
-  CtaContainerAbsolute,
+  CtaContainer,
   HeaderRightContainer,
+  ScreenGutter,
 } from '../../../components/styled/Containers';
 import CurrencySelectionRow, {
   CurrencySelectionItem,
@@ -103,7 +104,7 @@ export const ListContainer = styled.View`
 export const SearchContainer = styled.View`
   align-items: center;
   padding: 4px 0;
-  margin: 20px 10px 0;
+  margin: 20px ${ScreenGutter} 0;
 `;
 
 const SupportedMultisigCurrencyOptions: CurrencySelectionRowProps[] =
@@ -613,9 +614,8 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       </SearchContainer>
 
       {listItems.length ? (
-        <ListContainer>
+        <ListContainer style={{flexShrink: 1}}>
           <FlatList<CurrencySelectionRowProps>
-            contentContainerStyle={{paddingBottom: 100}}
             data={listItems}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
@@ -626,14 +626,14 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       )}
 
       {bottomCta && !hideBottomCta && (
-        <CtaContainerAbsolute
-          background={true}
+        <CtaContainer
           style={{
             shadowColor: '#000',
             shadowOffset: {width: 0, height: 4},
             shadowOpacity: 0.1,
             shadowRadius: 12,
             elevation: 5,
+            marginTop: 16,
           }}>
           <Button
             onPress={() =>
@@ -643,7 +643,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             disabled={!selectedCurrencies.length}>
             {ctaTitle}
           </Button>
-        </CtaContainerAbsolute>
+        </CtaContainer>
       )}
     </CurrencySelectionContainer>
   );
