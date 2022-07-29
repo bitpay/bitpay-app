@@ -112,7 +112,7 @@ const ErrorText = styled(BaseText)`
   margin-top: 4px;
 `;
 
-const IconContainer = styled.TouchableOpacity.attrs(() => ({
+export const IconContainer = styled.TouchableOpacity.attrs(() => ({
   activeOpacity: ActiveOpacity,
 }))`
   align-items: center;
@@ -219,11 +219,11 @@ const BoxInput = React.forwardRef<
 
           <Input
             keyboardType={keyboardType}
+            placeholderTextColor={Slate}
             {...props}
             editable={!disabled}
             ref={ref}
             secureTextEntry={isPassword && isSecureTextEntry}
-            placeholderTextColor={Slate}
             onFocus={_onFocus}
             onBlur={_onBlur}
             isFocused={isFocused}

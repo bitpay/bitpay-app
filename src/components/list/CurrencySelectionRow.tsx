@@ -58,14 +58,13 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   const {t} = useTranslation();
   const {id, currencyAbbreviation, currencyName, img, selected, disabled} =
     currency;
-  const onPress = (currency: CurrencySelectionItem): void => {
-    const {id, currencyAbbreviation, currencyName, isToken} = currency;
+  const onPress = (item: CurrencySelectionItem): void => {
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
     onToggle?.({
-      id,
-      currencyAbbreviation,
-      currencyName,
-      isToken,
+      id: item.id,
+      currencyAbbreviation: item.currencyAbbreviation,
+      currencyName: item.currencyName,
+      isToken: item.isToken,
     });
   };
 

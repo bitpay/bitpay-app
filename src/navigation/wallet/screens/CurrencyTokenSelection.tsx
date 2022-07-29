@@ -1,4 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
+import debounce from 'lodash.debounce';
 import React, {
   useCallback,
   useLayoutEffect,
@@ -14,7 +15,14 @@ import CurrencySelectionRow, {
   CurrencySelectionToggleProps,
 } from '../../../components/list/CurrencySelectionRow';
 import {HeaderTitle} from '../../../components/styled/Text';
+import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
+import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {
+  CurrencySelectionContainer,
+  ListContainer,
+  SearchContainer,
+} from './CurrencySelection';
 
 export type CurrencyTokenSelectionScreenParamList = {
   currency: CurrencySelectionItem;
@@ -35,18 +43,48 @@ const CurrencyTokenSelectionScreen: React.VFC<
   const {t} = useTranslation();
   const {currency, tokens, onToggle} = route.params;
   const [items, setItems] = useState([currency, ...(tokens || [])]);
+  const [searchInput, setSearchInput] = useState('');
+  const searchInputRef = useRef(searchInput);
+  searchInputRef.current = searchInput;
+  const [searchFilter, setSearchFilter] = useState('');
+
+  const filteredItems = useMemo(() => {
+    if (!searchFilter) {
+      return items;
+    }
+
+    return items.reduce<CurrencySelectionItem[]>((accum, item) => {
+      if (
+        item.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
+        item.currencyName.toLowerCase().includes(searchFilter)
+      ) {
+        accum.push(item);
+      }
+
+      return accum;
+    }, []);
+  }, [searchFilter, items]);
+
+  const debouncedSetSearchFilter = useMemo(
+    () =>
+      debounce((search: string) => {
+        // after debouncing, if current search is null, ignore the previous search
+        searchInputRef.current ? setSearchFilter(search.toLowerCase()) : null;
+      }, 300),
+    [],
+  );
 
   const onTokenToggle = (tgt: CurrencySelectionToggleProps) => {
     setItems(prev =>
       prev.reduce<CurrencySelectionItem[]>((accum, token) => {
-        accum.push(
-          token.id === tgt.id
-            ? {
-                ...token,
-                selected: !token.selected,
-              }
-            : token,
-        );
+        if (token.id === tgt.id) {
+          accum.push({
+            ...token,
+            selected: !token.selected,
+          });
+        } else {
+          accum.push(token);
+        }
 
         return accum;
       }, []),
@@ -71,7 +109,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
         />
       );
     };
-  }, []);
+  }, [memoizedOnToggle]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -86,14 +124,44 @@ const CurrencyTokenSelectionScreen: React.VFC<
   }, [navigation, t, currency.currencyName]);
 
   return (
-    <>
-      <FlatList<CurrencySelectionItem>
-        contentContainerStyle={styles.list}
-        data={items}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-      />
-    </>
+    <CurrencySelectionContainer>
+      <SearchContainer>
+        <CurrencySelectionSearchInput
+          value={searchInput}
+          onChangeText={text => {
+            setSearchInput(text);
+
+            // if 2+ char, filter search
+            // else if 1 char, do nothing
+            // else if 0 char, clear search immediately
+            if (!text) {
+              setSearchFilter(text);
+            } else if (text.length > 1) {
+              debouncedSetSearchFilter(text);
+            }
+          }}
+          onSearchPress={search => {
+            if (search) {
+              setSearchInput('');
+              setSearchFilter('');
+            }
+          }}
+        />
+      </SearchContainer>
+
+      {filteredItems.length ? (
+        <ListContainer>
+          <FlatList<CurrencySelectionItem>
+            contentContainerStyle={styles.list}
+            data={filteredItems}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+          />
+        </ListContainer>
+      ) : (
+        <CurrencySelectionNoResults query={searchInput} />
+      )}
+    </CurrencySelectionContainer>
   );
 };
 
