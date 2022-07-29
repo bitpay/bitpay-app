@@ -136,9 +136,11 @@ export const createProposalAndBuildTxDetails =
           });
         }
 
+        const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
         const feeLevel =
           customFeeLevel ||
           cachedFeeLevel[currencyAbbreviation] ||
+          tokenFeeLevel ||
           FeeLevels.NORMAL;
         if (!feePerKb && tx.sendMax) {
           feePerKb = await getFeeRatePerKb({
