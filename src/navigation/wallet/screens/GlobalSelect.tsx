@@ -49,6 +49,7 @@ import {ButtonState} from '../../../components/button/Button';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
+import {LogActions} from '../../../store/log';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -384,7 +385,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             );
           }
         } catch (err) {
-          console.error(err);
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         }
       } else if (context === 'send') {
         setWalletSelectModalVisible(false);
@@ -452,9 +455,12 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             txp,
             txDetails,
             amount,
+            message: opts?.message,
           },
         });
       } catch (err: any) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         if (setButtonState) {
           setButtonState('failed');
         } else {

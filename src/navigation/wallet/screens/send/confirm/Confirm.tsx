@@ -83,6 +83,7 @@ export interface ConfirmParamList {
   sendMax?: boolean;
   inputs?: Utxo[];
   selectInputs?: boolean;
+  message?: string | undefined;
 }
 
 export const Setting = styled.TouchableOpacity`
@@ -120,6 +121,7 @@ const Confirm = () => {
     sendMax,
     inputs,
     selectInputs,
+    message,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -146,6 +148,7 @@ const Confirm = () => {
     nonce: _nonce,
     total: _total,
     destinationTag: _destinationTag,
+    context,
   } = txDetails;
 
   const [fee, setFee] = useState(_fee);
@@ -154,7 +157,9 @@ const Confirm = () => {
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
-  const [destinationTag, setDestinationTag] = useState(_destinationTag);
+  const [destinationTag, setDestinationTag] = useState(
+    recipient?.tag || _destinationTag,
+  );
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
   const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation)) || {};
@@ -247,9 +252,11 @@ const Confirm = () => {
         createProposalAndBuildTxDetails({
           wallet,
           recipient,
+          recipientList,
           amount,
           sendMax,
           inputs,
+          context,
           ...txp,
           ...newOpts,
         }),
@@ -362,9 +369,8 @@ const Confirm = () => {
             hr
           />
           {enableReplaceByFee &&
-          currencyAbbreviation === 'btc' &&
-          !recipientList &&
-          !selectInputs ? (
+          !selectInputs &&
+          currencyAbbreviation === 'btc' ? (
             <>
               <Setting activeOpacity={1}>
                 <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
@@ -441,7 +447,7 @@ const Confirm = () => {
           ) : null}
           {txp && currencyAbbreviation !== 'xrp' ? (
             <Memo
-              memo={txp.message || ''}
+              memo={txp.message || message || ''}
               onChange={message => setTxp({...txp, message})}
             />
           ) : null}

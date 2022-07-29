@@ -170,7 +170,7 @@ const ContactsRoot: React.FC = () => {
 
   const renderItem = useCallback(
     ({item}) => (
-      <View style={{paddingHorizontal: 10}}>
+      <View style={{paddingHorizontal: 20}}>
         <ContactRow
           contact={item}
           onPress={() => {
