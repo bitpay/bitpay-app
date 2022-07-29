@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {Trans, useTranslation} from 'react-i18next';
 import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -30,8 +30,11 @@ const CurrencySelectionNoResults: React.VFC<
       </NoResultsImgContainer>
 
       <NoResultsDescription>
-        {t("We couldn't find a match for ")}
-        <BaseText style={{fontWeight: 'bold'}}>{query}</BaseText>.
+        <Trans
+          i18nKey="WeCouldntFindMatchForArg"
+          values={{query}}
+          components={[<BaseText style={{fontWeight: 'bold'}} />]}
+        />
       </NoResultsDescription>
 
       {walletKey ? (

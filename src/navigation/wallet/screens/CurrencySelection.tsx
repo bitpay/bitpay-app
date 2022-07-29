@@ -622,7 +622,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           />
         </ListContainer>
       ) : (
-        <CurrencySelectionNoResults query={searchInput} walletKey={key} />
+        <CurrencySelectionNoResults query={searchFilter} walletKey={key} />
       )}
 
       {bottomCta && !hideBottomCta && (
