@@ -218,7 +218,7 @@ export interface Recipient {
   keyId?: string;
   address: string;
   amount?: number;
-  tag?: number;
+  destinationTag?: number;
 }
 
 export interface CustomTransactionData {
@@ -269,7 +269,7 @@ export interface TransactionOptions {
   isTokenSwap?: boolean;
   multisigContractAddress?: string;
   // xrp
-  destinationTag?: string;
+  destinationTag?: number;
   invoiceID?: string;
   useUnconfirmedFunds?: boolean;
   // fromReplaceByFee
@@ -328,7 +328,7 @@ export interface TransactionProposal {
   feeLevel: string;
   dryRun: boolean;
   tokenAddress?: string;
-  destinationTag?: string;
+  destinationTag?: number;
   invoiceID?: string;
   multisigGnosisContractAddress?: string;
   multisigContractAddress?: string;
@@ -409,7 +409,7 @@ export interface TxDetails {
   subTotal: TxDetailsAmount;
   total: TxDetailsAmount;
   // xrp
-  destinationTag?: string;
+  destinationTag?: number;
 }
 
 export interface SendMaxInfo {
