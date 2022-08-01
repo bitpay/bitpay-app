@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useState} from 'react';
+import React, {useCallback, useContext, useMemo, useState} from 'react';
 import {
   CtaContainer as _CtaContainer,
   Hr,
@@ -15,13 +15,8 @@ import {WalletStackParamList} from '../WalletStack';
 import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {
-  ContactTitle,
-  ContactTitleContainer,
-  SendContactRow,
-} from '../screens/send/SendTo';
+import {ContactTitle, ContactTitleContainer} from '../screens/send/SendTo';
 import ContactsSvg from '../../../../assets/img/tab-icons/contacts.svg';
-import SettingsContactRow from '../../../components/list/SettingsContactRow';
 import {useAppSelector} from '../../../utils/hooks';
 import {FlatList, View} from 'react-native';
 import {
@@ -30,6 +25,7 @@ import {
   SendToOptionsContext,
 } from '../screens/SendToOptions';
 import {Recipient} from '../../../store/wallet/wallet.models';
+import ContactRow from '../../../components/list/ContactRow';
 
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
@@ -65,13 +61,15 @@ const SendToContact = () => {
     credentials: {network},
   } = wallet;
 
-  const contacts = allContacts.filter(
-    contact =>
-      contact.coin === currencyAbbreviation.toLowerCase() &&
-      contact.network === network &&
-      (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-        contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
-  );
+  const contacts = useMemo(() => {
+    return allContacts.filter(
+      contact =>
+        contact.coin === currencyAbbreviation.toLowerCase() &&
+        contact.network === network &&
+        (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+          contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
+    );
+  }, [allContacts, searchInput, network, currencyAbbreviation]);
 
   const renderItem = useCallback(
     ({item, index}) => {
@@ -137,8 +135,8 @@ const SendToContact = () => {
             </ContactTitleContainer>
             {contacts.map((item, index) => {
               return (
-                <SendContactRow key={index}>
-                  <SettingsContactRow
+                <View key={index}>
+                  <ContactRow
                     contact={item}
                     onPress={() => {
                       haptic('impactLight');
@@ -150,7 +148,7 @@ const SendToContact = () => {
                           });
                     }}
                   />
-                </SendContactRow>
+                </View>
               );
             })}
           </>

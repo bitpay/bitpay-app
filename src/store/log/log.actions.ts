@@ -27,6 +27,11 @@ function _log(
   level: LogLevel,
   ...messages: (string | null | undefined)[]
 ): LogActionType {
+  if (__DEV__ && !!messages) {
+    messages.forEach(msg => {
+      console.log(`log[${LogLevel[level]}]`, msg);
+    });
+  }
   return {
     type: LogActionTypes.ADD_LOG,
     payload: {

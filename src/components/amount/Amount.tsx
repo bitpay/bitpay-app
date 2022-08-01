@@ -284,7 +284,7 @@ const Amount: React.VFC<AmountProps> = ({
           <ButtonContainer>
             <Button
               state={buttonState}
-              disabled={!+amount}
+              disabled={!+amount && buttonState !== 'loading'}
               onPress={() => onSubmit?.(+amount)}>
               {t('Continue')}
             </Button>

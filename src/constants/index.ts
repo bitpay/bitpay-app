@@ -59,7 +59,7 @@ export const URL = {
   VISA_FAQ:
     'https://support.bitpay.com/hc/en-us/categories/360004308991-BitPay-Prepaid-Debit-Visa-Card-US-',
   MASTERCARD_CARDHOLDER_AGREEMENT:
-    'https://bitpay.com/assets/pdfs/mcb-mastercard-cha-09-21.pdf',
+    'https://bitpay.com/assets/pdfs/mcb-mastercard-cha-06-22.pdf',
   MASTERCARD_FEES_DISCLOSURE:
     'https://bitpay.com/assets/pdfs/gpr-mastercard-short-form.pdf',
   MASTERCARD_FAQ:
