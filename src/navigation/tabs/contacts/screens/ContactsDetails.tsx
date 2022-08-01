@@ -177,6 +177,7 @@ const ContactsDetails = ({
               address: newAddress,
               currency: contact.coin,
               network: contact.network,
+              destinationTag: contact.tag || contact.destinationTag,
             },
           },
         });
@@ -328,12 +329,14 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
-          {contact.tag ? (
+          {contact.tag || contact.destinationTag ? (
             <>
               <Hr />
               <Detail>
                 <Title>{t('Tag')}</Title>
-                <DetailInfo align="right">{contact.tag}</DetailInfo>
+                <DetailInfo align="right">
+                  {contact.tag || contact.destinationTag}
+                </DetailInfo>
               </Detail>
             </>
           ) : null}

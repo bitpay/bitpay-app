@@ -116,11 +116,11 @@ export type GlobalSelectParamList = {
     name?: string;
     type?: string;
     network?: string;
+    destinationTag?: number;
     opts?: {
       sendMax?: boolean | undefined;
       message?: string;
       feePerKb?: number;
-      destinationTag?: string;
       showERC20Tokens?: boolean;
     };
   };
@@ -342,7 +342,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
       }
       if (['coinbase', 'contact', 'scanner'].includes(context)) {
         setWalletSelectModalVisible(false);
-        const {name, address, type, opts} = recipient!;
+        const {name, address, type, destinationTag, opts} = recipient!;
         if (!address) {
           return;
         }
@@ -352,6 +352,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             name,
             type: type || context,
             address,
+            destinationTag,
           };
 
           if (!amount) {
@@ -417,6 +418,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         name: string | undefined;
         type: string;
         address: string;
+        destinationTag?: number;
       };
       setButtonState?: (state: ButtonState) => void;
       opts: any;

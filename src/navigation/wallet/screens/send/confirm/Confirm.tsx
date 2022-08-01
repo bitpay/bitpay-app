@@ -158,7 +158,7 @@ const Confirm = () => {
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
   const [destinationTag, setDestinationTag] = useState(
-    recipient?.tag || _destinationTag,
+    recipient?.destinationTag || _destinationTag,
   );
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
@@ -209,7 +209,7 @@ const Confirm = () => {
             const opts: {
               nonce?: number;
               gasLimit?: number;
-              destinationTag?: string;
+              destinationTag?: number;
             } = {};
             switch (type) {
               case 'nonce':
@@ -219,7 +219,7 @@ const Confirm = () => {
                 opts.gasLimit = Number(value);
                 break;
               case 'destinationTag':
-                opts.destinationTag = value;
+                opts.destinationTag = Number(value);
                 break;
               default:
                 break;

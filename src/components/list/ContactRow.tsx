@@ -34,7 +34,8 @@ export interface ContactRowProps {
   coin: string;
   network: string;
   name: string;
-  tag?: number;
+  tag?: number; // backward compatibility
+  destinationTag?: number;
   email?: string;
 }
 
