@@ -17,7 +17,6 @@ import {
   isMatch,
   isMatchedWallet,
 } from '../../utils/wallet';
-import {LogActions} from '../../../../store/log';
 import {
   deleteKey,
   failedImport,
@@ -81,6 +80,7 @@ import {
   subscribePushNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
+import {useLogger} from '../../../../utils/hooks';
 
 const BWC = BwcProvider.getInstance();
 
@@ -108,7 +108,8 @@ export const startMigration =
   (): Effect<Promise<void>> =>
   async (dispatch): Promise<void> => {
     return new Promise(async resolve => {
-      dispatch(LogActions.info('[startMigration] - starting...'));
+      const logger = useLogger();
+      logger.info('startMigration: starting...');
       const goToNewUserOnboarding = () => {
         dispatch(setIntroCompleted());
         navigationRef.dispatch(
@@ -120,16 +121,16 @@ export const startMigration =
 
       // keys and wallets
       try {
-        dispatch(LogActions.info('[startMigration] - keys and wallets'));
+        logger.info('startMigration: keys and wallets');
         // cordova directory not found
         if (!(await RNFS.exists(cordovaStoragePath))) {
-          dispatch(
-            LogActions.info('Directory not found -> new user onboarding'),
+          logger.info(
+            'startMigration: Directory not found -> new user onboarding',
           );
           goToNewUserOnboarding();
           return resolve();
         }
-        dispatch(LogActions.info('[startMigration] - directory found'));
+        logger.info('startMigration: directory found');
 
         const files = (await RNFS.readDir(cordovaStoragePath)) as {
           name: string;
@@ -137,13 +138,13 @@ export const startMigration =
 
         // key file does not exist
         if (!files.find(file => file.name === 'keys')) {
-          dispatch(
-            LogActions.info('Key file not found -> new user onboarding'),
+          logger.info(
+            'startMigration: Key file not found -> new user onboarding',
           );
           goToNewUserOnboarding();
           return resolve();
         }
-        dispatch(LogActions.info('[startMigration] - key file found'));
+        logger.info('startMigration: key file found');
 
         const keys = JSON.parse(
           await RNFS.readFile(cordovaStoragePath + 'keys', 'utf8'),
@@ -155,12 +156,12 @@ export const startMigration =
 
         // no keys
         if (!keys.length) {
-          dispatch(LogActions.info('No keys -> new user onboarding'));
+          logger.info('startMigration: No keys -> new user onboarding');
           goToNewUserOnboarding();
           return resolve();
         }
 
-        dispatch(LogActions.info('[startMigration] - has keys'));
+        logger.info('startMigration: has keys');
 
         for (const key of keys) {
           const wallets = profile.credentials.filter(
@@ -175,20 +176,13 @@ export const startMigration =
             )) as string;
           } catch (e: unknown) {
             // not found. Continue anyway
-            let errorStr;
-            if (e instanceof Error) {
-              errorStr = e.message;
-            } else {
-              errorStr = JSON.stringify(e);
-            }
-            dispatch(
-              LogActions.info(
-                '[startMigration] - not found. Continue anyway... ' + errorStr,
-              ),
+            const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+            logger.info(
+              `startMigration: key not found. Continue anyway... ${errorStr}`,
             );
           }
 
-          dispatch(LogActions.info('[startMigration] - backup complete'));
+          logger.info('startMigration: backup complete');
           try {
             backupComplete = (await RNFS.readFile(
               cordovaStoragePath + `walletGroupBackup-${key.id}`,
@@ -196,16 +190,9 @@ export const startMigration =
             )) as string;
           } catch (e: unknown) {
             // not found. Continue anyway
-            let errorStr;
-            if (e instanceof Error) {
-              errorStr = e.message;
-            } else {
-              errorStr = JSON.stringify(e);
-            }
-            dispatch(
-              LogActions.info(
-                '[startMigration] - not found. Continue anyway... ' + errorStr,
-              ),
+            const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+            logger.info(
+              `startMigration: backup not found. Continue anyway... ${errorStr}`,
             );
           }
           const keyConfig = {
@@ -214,25 +201,16 @@ export const startMigration =
           };
           await dispatch(migrateKeyAndWallets({key, wallets, keyConfig}));
           dispatch(setHomeCarouselConfig({id: key.id, show: true}));
-          dispatch(LogActions.info('[startMigration] - success key migration'));
+          logger.info('startMigration: success key migration');
         }
 
         // update store with token rates from coin gecko and update balances
         await dispatch(startGetRates({force: true}));
         await dispatch(startUpdateAllKeyAndWalletStatus());
-        dispatch(
-          LogActions.info(
-            '[startMigration] - success migration keys and wallets',
-          ),
-        );
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate keys: ' + errorStr));
+        logger.info('startMigration: success migration keys and wallets');
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(`startMigration: failed to migrate keys ${errorStr}`);
         // flag for showing error modal
         dispatch(setKeyMigrationFailure());
       }
@@ -240,9 +218,7 @@ export const startMigration =
       // config
       let emailNotificationsConfig: {email: string} = {email: ''};
       try {
-        dispatch(
-          LogActions.info('[startMigration] - Migrating config settings'),
-        );
+        logger.info('startMigration: Migrating config settings');
         const config = JSON.parse(
           await RNFS.readFile(cordovaStoragePath + 'config', 'utf8'),
         );
@@ -326,23 +302,18 @@ export const startMigration =
           );
         }
 
-        dispatch(LogActions.info('Successfully migrated config settings'));
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(
-          LogActions.info('Failed to migrate config settings: ' + errorStr),
+        logger.info('startMigration: Successfully migrated config settings');
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(
+          `startMigration: failed to migrate config settings ${errorStr}`,
         );
       }
 
       // buy crypto
       // simplex
       try {
-        dispatch(LogActions.info('[startMigration] - Migrating simplex'));
+        logger.info('startMigration: Migrating simplex');
         const buyCryptoSimplexData = JSON.parse(
           await RNFS.readFile(
             cordovaStoragePath + 'simplex-production',
@@ -360,19 +331,14 @@ export const startMigration =
             );
           },
         );
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate simplex: ' + errorStr));
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(`startMigration: Failed to migrate simplex ${errorStr}`);
       }
 
       // wyre
       try {
-        dispatch(LogActions.info('[startMigration] - Migrating wyre'));
+        logger.info('startMigration: Migrating wyre');
         const buyCryptoWyreData = JSON.parse(
           await RNFS.readFile(
             cordovaStoragePath + 'wyre-production',
@@ -388,20 +354,15 @@ export const startMigration =
             }),
           );
         });
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate wyre: ' + errorStr));
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(`startMigration: Failed to migrate wyre ${errorStr}`);
       }
 
       // swap crypto
       // changelly
       try {
-        dispatch(LogActions.info('[startMigration] - Migrating changelly'));
+        logger.info('startMigration: Migrating changelly');
         const swapCryptoChangellyData = JSON.parse(
           await RNFS.readFile(
             cordovaStoragePath + 'changelly-production',
@@ -419,19 +380,14 @@ export const startMigration =
             );
           },
         );
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate changelly: ' + errorStr));
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(`startMigration: Failed to migrate changelly ${errorStr}`);
       }
 
       // gift cards
       try {
-        dispatch(LogActions.info('[startMigration] - Migrating gift cards'));
+        logger.info('startMigration: Migrating gift cards');
         const supportedCardMap = JSON.parse(
           await RNFS.readFile(
             cordovaStoragePath + 'giftCardConfigCache',
@@ -526,19 +482,14 @@ export const startMigration =
         if (phone && phoneCountryInfo) {
           dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
         }
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate gift cards: ' + errorStr));
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(`startMigration: Failed to migrate gift cards ${errorStr}`);
       }
 
       // address book
       try {
-        dispatch(LogActions.info('[startMigration] - Migrating address book'));
+        logger.info('startMigration: Migrating address book');
         const addressBook = JSON.parse(
           await RNFS.readFile(
             cordovaStoragePath + 'addressbook-v2-livenet',
@@ -548,66 +499,47 @@ export const startMigration =
         Object.values(addressBook).forEach((contact: ContactRowProps) => {
           dispatch(createContact(contact));
         });
-        dispatch(LogActions.info('Successfully migrated address book'));
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(
-          LogActions.info('Failed to migrate address book: ' + errorStr),
+        logger.info('startMigration: Successfully migrated address book');
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(
+          `startMigration: Failed to migrate address book ${errorStr}`,
         );
       }
 
       // app identity
       try {
-        dispatch(LogActions.info('[startMigration] - Migrating app identity'));
+        logger.info('startMigration: Migrating app identity');
         const identity = JSON.parse(
           await RNFS.readFile(
             cordovaStoragePath + 'appIdentity-livenet',
             'utf8',
           ),
         ) as AppIdentity;
-        dispatch(LogActions.info('Successfully migrated app identity'));
+        logger.info('startMigration: Successfully migrated app identity');
         dispatch(successGenerateAppIdentity(Network.mainnet, identity));
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(
-          LogActions.info('Failed to migrate app identity: ' + errorStr),
-        );
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(`Failed to migrate app identity ${errorStr}`);
       }
 
       // bitpay id
       try {
-        dispatch(LogActions.info('[startMigration] - Migrating bitpay id'));
+        logger.info('startMigration: Migrating bitpay id');
         const token = await RNFS.readFile(
           cordovaStoragePath + 'bitpayIdToken-livenet',
           'utf8',
         );
-        dispatch(LogActions.info('Successfully migrated bitpay id'));
+        logger.info('startMigration: Successfully migrated bitpay id');
         await dispatch(successPairingBitPayId(Network.mainnet, token));
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate bitpay id: ' + errorStr));
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(`startMigration: Failed to migrate bitpay id ${errorStr}`);
       }
 
       // coinbase
       try {
-        dispatch(
-          LogActions.info('[startMigration] - Migrating Coinbase tokens'),
-        );
+        logger.info('startMigration: Migrating Coinbase tokens');
         const account = JSON.parse(
           await RNFS.readFile(
             cordovaStoragePath + 'coinbase-production',
@@ -623,23 +555,18 @@ export const startMigration =
         dispatch(
           setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
         );
-        dispatch(LogActions.info('Successfully migrated Coinbase account'));
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(
-          LogActions.info('Failed to migrate Coinbase account: ' + errorStr),
+        logger.info('startMigration: Successfully migrated Coinbase account');
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.info(
+          `startMigration: Failed to migrate Coinbase account ${errorStr}`,
         );
       }
 
       dispatch(setOnboardingCompleted());
       dispatch(setWalletTermsAccepted());
 
-      dispatch(LogActions.info('success [startMigration]'));
+      logger.info('startMigration: success');
       resolve();
     });
   };
@@ -655,8 +582,9 @@ export const migrateKeyAndWallets =
   }): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
-        dispatch(LogActions.info('starting [migrateKeyAndWallets]'));
+        logger.info('migrateKeyAndWallets: starting...');
         const state = getState();
         const {backupComplete, keyName} = migrationData.keyConfig;
         const tokenOpts = {
@@ -672,7 +600,7 @@ export const migrateKeyAndWallets =
         });
 
         let wallets = [];
-        dispatch(LogActions.info('[migrateKeyAndWallets] - wallets migration'));
+        logger.info('migrateKeyAndWallets: wallets migration');
         for (const wallet of migrationData.wallets) {
           const walletObj = await BWC.getClient(JSON.stringify(wallet));
           let hideBalance: boolean | undefined;
@@ -703,11 +631,7 @@ export const migrateKeyAndWallets =
               ),
             ),
           );
-          dispatch(
-            LogActions.info(
-              '[migrateKeyAndWallets] - success wallet migration',
-            ),
-          );
+          logger.info('migrateKeyAndWallets: success wallet migration');
         }
 
         const tokens: Wallet[] = wallets.filter(
@@ -715,9 +639,9 @@ export const migrateKeyAndWallets =
         );
 
         if (tokens && !!tokens.length) {
-          dispatch(LogActions.info('starting [linkTokenToWallet]'));
+          logger.info('linkTokenToWallet: starting...');
           wallets = linkTokenToWallet(tokens, wallets);
-          dispatch(LogActions.info('success [linkTokenToWallet]'));
+          logger.info('linkTokenToWallet: success');
         }
 
         const key = buildMigrationKeyObj({
@@ -732,19 +656,12 @@ export const migrateKeyAndWallets =
             key,
           }),
         );
-        dispatch(LogActions.info('success [migrateKeyAndWallets]'));
+        logger.info('migrateKeyAndWallets: success');
         resolve();
-      } catch (e) {
-        let errorStr;
-        if (e instanceof Error) {
-          errorStr = e.message;
-        } else {
-          errorStr = JSON.stringify(e);
-        }
+      } catch (e: unknown) {
         dispatch(failedImport());
-        dispatch(
-          LogActions.error(`failed [migrateKeyAndWallets]: ${errorStr}`),
-        );
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(`migrateKeyAndWallets: ${errorStr}`);
         reject(e);
       }
     });
@@ -892,6 +809,7 @@ export const startImportWithDerivationPath =
   ): Effect =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const {
           WALLET,
@@ -912,12 +830,8 @@ export const startImportWithDerivationPath =
         if (showOpts.mnemonic) {
           showOpts.mnemonic = '[hidden]';
         }
-        dispatch(
-          LogActions.info(
-            `Importing Wallet with derivation path: ${JSON.stringify(
-              showOpts,
-            )}`,
-          ),
+        logger.info(
+          `startImportWithDerivationPath: ${JSON.stringify(showOpts)}`,
         );
         const data = await createKeyAndCredentials(opts);
         const {wallet, key: _key} = data;

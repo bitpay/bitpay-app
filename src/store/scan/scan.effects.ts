@@ -36,7 +36,6 @@ import {
   simplexIncomingData,
   wyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
-import {LogActions} from '../log';
 import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {
@@ -63,6 +62,7 @@ import BitPayIdApi from '../../api/bitpay';
 import axios from 'axios';
 import {t} from 'i18next';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
+import {useLogger} from '../../utils/hooks';
 
 export const incomingData =
   (
@@ -517,7 +517,8 @@ export const goToAmount =
 const handleBitPayUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('[scan] Incoming-data: BitPay URI', data));
+    const logger = useLogger();
+    logger.info(`Incoming-data BitPay URI: ${data}`);
 
     // From Braze (push notifications)
     if (data.includes('wallet?')) {
@@ -582,7 +583,8 @@ const handleBitPayUri =
 const handleBitcoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Bitcoin URI'));
+    const logger = useLogger();
+    logger.info(`Incoming-data Bitcoin URI: ${data}`);
     const coin = 'btc';
     const parsed = BwcProvider.getInstance().getBitcore().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -606,7 +608,8 @@ const handleBitcoinUri =
 const handleBitcoinCashUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: BitcoinCash URI'));
+    const logger = useLogger();
+    logger.info(`Incoming-data BitcoinCash URI: ${data}`);
     const coin = 'bch';
     const parsed = BwcProvider.getInstance().getBitcoreCash().URI(data);
     const message = parsed.message;
@@ -636,11 +639,8 @@ const handleBitcoinCashUri =
 const handleBitcoinCashUriLegacyAddress =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(
-      LogActions.info(
-        '[scan] Incoming-data: Bitcoin Cash URI with legacy address',
-      ),
-    );
+    const logger = useLogger();
+    logger.info(`Incoming-data Bitcoin Cash URI with legacy address: ${data}`);
     const coin = 'bch';
     const parsed = BwcProvider.getInstance()
       .getBitcore()
@@ -648,9 +648,7 @@ const handleBitcoinCashUriLegacyAddress =
 
     const oldAddr = parsed.address ? parsed.address.toString() : '';
     if (!oldAddr) {
-      dispatch(
-        LogActions.info('[scan] Could not parse Bitcoin Cash legacy address'),
-      );
+      logger.info('Could not parse Bitcoin Cash legacy address');
     }
 
     const a = BwcProvider.getInstance()
@@ -664,11 +662,7 @@ const handleBitcoinCashUriLegacyAddress =
     const message = parsed.message;
 
     // Translate address
-    dispatch(
-      LogActions.info(
-        '[scan] Legacy Bitcoin Address translated to: ' + address,
-      ),
-    );
+    logger.info('Legacy Bitcoin Address translated to: ' + address);
     const recipient = {
       type: 'address',
       currency: coin,
@@ -688,7 +682,8 @@ const handleBitcoinCashUriLegacyAddress =
 const handleEthereumUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Ethereum URI'));
+    const logger = useLogger();
+    logger.info(`Incoming-data Ethereum URI: ${data}`);
     const coin = 'eth';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -721,7 +716,8 @@ const handleEthereumUri =
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Ripple URI'));
+    const logger = useLogger();
+    logger.info(`Incoming-data: Ripple URI: ${data}`);
     const coin = 'xrp';
     const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
     const tagParam = /[\?\&]dt=(\d+([\,\.]\d+)?)/i;
@@ -755,7 +751,8 @@ const handleRippleUri =
 const handleDogecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Dogecoin URI'));
+    const logger = useLogger();
+    logger.info(`Incoming-data Dogecoin URI: ${data}`);
     const coin = 'doge';
     const parsed = BwcProvider.getInstance().getBitcoreDoge().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -781,7 +778,8 @@ const handleDogecoinUri =
 const handleLitecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Litecoin URI'));
+    const logger = useLogger();
+    logger.info(`Incoming-data Litecoin URI: ${data}`);
     const coin = 'ltc';
     const parsed = BwcProvider.getInstance().getBitcoreLtc().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -806,12 +804,13 @@ const handleLitecoinUri =
 const handleSimplexUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Simplex URL: ' + data));
+    const logger = useLogger();
+    logger.info(`Incoming-data (redirect) Simplex URL: ${data}`);
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const paymentId = getParameterByName('paymentId', res);
     if (!paymentId) {
-      dispatch(LogActions.warn('No paymentId present. Do not redir'));
+      logger.warn('No paymentId present. Do not redir');
       return;
     }
 
@@ -855,7 +854,8 @@ const handleSimplexUri =
 const handleWyreUri =
   (data: string): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
+    const logger = useLogger();
+    logger.info(`Incoming-data (redirect) Wyre URL: ${data}`);
 
     if (data.indexOf('wyreError') >= 0) {
       navigationRef.navigate('ExternalServicesSettings', {
@@ -873,7 +873,7 @@ const handleWyreUri =
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const orderId = getParameterByName('id', res);
     if (!orderId) {
-      dispatch(LogActions.warn('No orderId present. Do not redir'));
+      logger.warn('No orderId present. Do not redir');
       return;
     }
 
@@ -946,7 +946,8 @@ const handlePlainAddress =
     },
   ): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
+    const logger = useLogger();
+    logger.info(`Incoming-data: ${coin} plain address`);
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
@@ -973,10 +974,9 @@ const goToImport = (importQrCodeData: string): void => {
 const goToJoinWallet =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(
-      LogActions.info(
-        '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
-      ),
+    const logger = useLogger();
+    logger.info(
+      '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
     );
     const keys = Object.values(getState().WALLET.keys);
     if (!keys.length) {

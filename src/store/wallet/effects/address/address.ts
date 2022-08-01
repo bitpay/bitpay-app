@@ -4,7 +4,7 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
 import {Effect} from '../../../index';
 import {successGetReceiveAddress} from '../../wallet.actions';
-import {LogActions} from '../../../log';
+import {useLogger} from '../../../../utils/hooks';
 
 const BWC = BwcProvider.getInstance();
 
@@ -43,12 +43,13 @@ export const createWalletAddress =
   }): Effect<Promise<string>> =>
   async dispatch => {
     return new Promise((resolve, reject) => {
+      const logger = useLogger();
       if (!wallet) {
         return reject();
       }
 
       if (!newAddress && wallet.receiveAddress) {
-        dispatch(LogActions.info('returned cached wallet address'));
+        logger.info('createWalletAddress: returned cached wallet address');
         return resolve(wallet.receiveAddress);
       }
 

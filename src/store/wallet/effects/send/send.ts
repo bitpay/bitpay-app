@@ -50,7 +50,6 @@ import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
-import {LogActions} from '../../../log';
 import _ from 'lodash';
 import TouchID from 'react-native-touch-id-ng';
 import {
@@ -60,6 +59,7 @@ import {
   TO_HANDLE_ERRORS,
 } from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
+import {useLogger} from '../../../../utils/hooks';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -210,6 +210,7 @@ const setEthAddressNonce =
   (wallet: Wallet, tx: TransactionOptions): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async resolve => {
+      const logger = useLogger();
       try {
         const {
           coin: currencyAbbreviation,
@@ -283,12 +284,10 @@ const setEthAddressNonce =
           }
         }
 
-        dispatch(
-          LogActions.info(
-            `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
-              suggestedNonce! - nonce
-            }`,
-          ),
+        logger.info(
+          `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
+            suggestedNonce! - nonce
+          }`,
         );
 
         tx.nonce = suggestedNonce;
@@ -297,7 +296,7 @@ const setEthAddressNonce =
       } catch (error: any) {
         const errString =
           error instanceof Error ? error.message : JSON.stringify(error);
-        dispatch(LogActions.error(`Could not get address nonce ${errString}`));
+        logger.error(`Could not get address nonce: ${errString}`);
         return resolve();
       }
     });
@@ -808,6 +807,7 @@ export const publishAndSign =
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       const {
         APP: {biometricLockActive},
       } = getState();
@@ -848,7 +848,7 @@ export const publishAndSign =
         // Already published?
         if (txp.status !== 'pending') {
           publishedTx = await publishTx(wallet, txp);
-          dispatch(LogActions.debug('success publish [publishAndSign]'));
+          logger.debug('publishAndSign: success publish');
         }
 
         const signedTx: any = await signTx(
@@ -857,10 +857,10 @@ export const publishAndSign =
           publishedTx || txp,
           password,
         );
-        dispatch(LogActions.debug('success sign [publishAndSign]'));
+        logger.debug('publishAndSign: success sign');
         if (signedTx.status === 'accepted') {
           broadcastedTx = await broadcastTx(wallet, signedTx);
-          dispatch(LogActions.debug('success broadcast [publishAndSign]'));
+          logger.debug('publishAndSign: success broadcast');
           const {fee, amount} = broadcastedTx as {
             fee: number;
             amount: number;
@@ -888,11 +888,10 @@ export const publishAndSign =
             {txid: resultTx?.id, amount: txp.amount},
             (err: any) => {
               if (err) {
-                dispatch(
-                  LogActions.error(
-                    '[publishAndSign] txConfirmationSubscribe err',
-                    err,
-                  ),
+                const errStr =
+                  err instanceof Error ? err.message : JSON.stringify(err);
+                logger.error(
+                  `publishAndSign: txConfirmationSubscribe ${errStr}`,
                 );
               }
             },
@@ -903,15 +902,17 @@ export const publishAndSign =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`[publishAndSign] err: ${errorStr}`));
+        logger.error(`publishAndSign: ${errorStr}`);
         // if broadcast fails, remove transaction proposal
         try {
           await removeTxp(wallet, txp);
         } catch (removeTxpErr: any) {
-          dispatch(
-            LogActions.error(
-              `[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`,
-            ),
+          const removeTxpErrStr =
+            removeTxpErr instanceof Error
+              ? removeTxpErr.message
+              : JSON.stringify(removeTxpErr);
+          logger.error(
+            `publishAndSign: Could not delete payment proposal. ${removeTxpErrStr}`,
           );
         }
         reject(err);
@@ -933,6 +934,7 @@ export const publishAndSignMultipleProposals =
   }): Effect<Promise<(Partial<TransactionProposal> | void)[]>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const signingMultipleProposals = true;
         let password: string;
@@ -985,11 +987,7 @@ export const publishAndSignMultipleProposals =
             ).catch(err => {
               const errorStr =
                 err instanceof Error ? err.message : JSON.stringify(err);
-              dispatch(
-                LogActions.error(
-                  `Error signing transaction proposal: ${errorStr}`,
-                ),
-              );
+              logger.error(`Error signing transaction proposal: ${errorStr}`);
               return err;
             }),
           );
@@ -998,9 +996,7 @@ export const publishAndSignMultipleProposals =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(`Error signing transaction proposal: ${errorStr}`),
-        );
+        logger.error(`Error signing transaction proposal: ${errorStr}`);
         return reject(err);
       }
     });

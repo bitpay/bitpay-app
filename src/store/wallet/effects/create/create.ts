@@ -31,7 +31,7 @@ import {
 } from '../../../app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
-import {LogActions} from '../../../log';
+import {useLogger} from '../../../../utils/hooks';
 
 export interface CreateOptions {
   network?: Network;
@@ -99,6 +99,7 @@ export const addWallet =
   }): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         let newWallet;
         const {
@@ -162,13 +163,13 @@ export const addWallet =
         );
 
         dispatch(successAddWallet({key}));
-        dispatch(LogActions.info(`Added Wallet ${currency}`));
+        logger.info(`Added Wallet ${currency}`);
         resolve(newWallet);
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(failedAddWallet());
-        dispatch(LogActions.error(`Error adding wallet: ${errstring}`));
+        logger.error(`Error adding wallet: ${errstring}`);
         reject();
       }
     });
@@ -331,8 +332,9 @@ const createTokenWallet =
     token: string,
     tokenOpts: {[key in string]: Token},
   ): Effect<Promise<API>> =>
-  async (dispatch): Promise<API> => {
+  async (): Promise<API> => {
     return new Promise((resolve, reject) => {
+      const logger = useLogger();
       try {
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
@@ -348,15 +350,15 @@ const createTokenWallet =
         );
         wallet.savePreferences(wallet.preferences, (err: any) => {
           if (err) {
-            dispatch(LogActions.error(`Error saving token: ${token}`));
+            logger.error(`Error saving token: ${token}`);
           }
-          dispatch(LogActions.info(`Added token ${token}`));
+          logger.info(`Added token: ${token}`);
           resolve(bwcClient);
         });
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`Error creating token wallet: ${errstring}`));
+        logger.error(`Error creating token wallet: ${errstring}`);
         reject();
       }
     });

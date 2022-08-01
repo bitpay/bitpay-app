@@ -7,12 +7,13 @@ import {
   successGetTokenOptions,
 } from '../../wallet.actions';
 import {Currencies, CurrencyOpts} from '../../../../constants/currencies';
-import {LogActions} from '../../../log';
+import {useLogger} from '../../../../utils/hooks';
 
 export const startGetTokenOptions =
-  (): Effect<Promise<void>> => async (dispatch, getState) => {
+  (): Effect<Promise<void>> => async dispatch => {
+    const logger = useLogger();
     try {
-      dispatch(LogActions.info('starting [startGetTokenOptions]'));
+      logger.info('startGetTokenOptions: starting...');
       const {
         data: {tokens},
       } = await axios.get<{
@@ -41,22 +42,18 @@ export const startGetTokenOptions =
           tokenOptionsByAddress,
         }),
       );
-      dispatch(LogActions.info('successful [startGetTokenOptions]'));
+      logger.info('startGetTokenOptions: successful');
     } catch (e) {
-      let errorStr;
-      if (e instanceof Error) {
-        errorStr = e.message;
-      } else {
-        errorStr = JSON.stringify(e);
-      }
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
       dispatch(failedGetTokenOptions());
-      dispatch(LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`));
+      logger.error(`startGetTokenOptions: ${errorStr}`);
     }
   };
 
 export const addCustomTokenOption =
   (token: Token): Effect =>
   async dispatch => {
+    const logger = useLogger();
     try {
       const customTokenOptions: {[key in string]: Token} = {};
       const customTokenOptionsByAddress: {[key in string]: Token} = {};
@@ -79,7 +76,7 @@ export const addCustomTokenOption =
       );
     } catch (e) {
       const errString = e instanceof Error ? e.message : JSON.stringify(e);
-      dispatch(LogActions.error(`Add custom options: ${errString}`));
+      logger.error(`AddCustomTokenOption: ${errString}`);
       dispatch(failedGetTokenOptions());
     }
   };
