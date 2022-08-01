@@ -72,6 +72,7 @@ export const simplexSupportedCoins = [
   'ltc',
   'shib',
   'xrp',
+  'ape',
 ];
 
 export const getSimplexFiatAmountLimits = () => {
