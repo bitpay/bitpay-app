@@ -35,14 +35,51 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 });
+
 const keyExtractor = (item: CurrencySelectionItem) => item.id;
+
+const computeInitialItems = (
+  chainCurrency: CurrencySelectionItem,
+  tokens: CurrencySelectionItem[],
+) => {
+  // chain currency always at top, don't modify original object
+  const items: CurrencySelectionItem[] = [
+    {
+      ...chainCurrency,
+    },
+  ];
+
+  // copy the array before sort
+  const tokensCopy = tokens.slice();
+
+  // sort selected items to the top
+  tokensCopy.sort((a, b) => {
+    if (a.selected && !b.selected) {
+      return -1;
+    }
+    if (b.selected && !a.selected) {
+      return 1;
+    }
+
+    return 0;
+  });
+
+  // don't modify original objects
+  tokensCopy.forEach(token =>
+    items.push({
+      ...token,
+    }),
+  );
+
+  return items;
+};
 
 const CurrencyTokenSelectionScreen: React.VFC<
   StackScreenProps<WalletStackParamList, WalletScreens.CURRENCY_TOKEN_SELECTION>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const {currency, tokens, onToggle} = route.params;
-  const [items, setItems] = useState([currency, ...(tokens || [])]);
+  const [items, setItems] = useState(computeInitialItems(currency, tokens));
   const [searchInput, setSearchInput] = useState('');
   const searchInputRef = useRef(searchInput);
   searchInputRef.current = searchInput;
