@@ -116,7 +116,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
       headerTitle: () => (
         <HeaderTitle>
           {t('SelectArgCurrencies', {
-            currency: t(currency.currencyName),
+            chain: t(currency.currencyName),
           })}
         </HeaderTitle>
       ),

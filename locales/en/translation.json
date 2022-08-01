@@ -1133,9 +1133,9 @@
   "Add wallet": "Add wallet",
   "Key and wallet required": "Key and wallet required",
   "To continue you will need to create a key and add a wallet.": "To continue you will need to create a key and add a wallet.",
-  "SelectArgCurrencies": "Select {{currency}} Currencies",
+  "SelectArgCurrencies": "Select {{chain}} Currencies",
+  "PopularArgTokens": "Popular {{currency}} Tokens",
   "ViewAllArgTokens": "View all {{currency}} tokens",
   "TokensOnEthereumNetworkDescription": "Tokens on the Ethereum network need an Ethereum wallet to pay for fees.",
-  "TokensOnPolygonNetworkDescription": "Tokens on the Polygon network need an Polygon wallet to pay for fees.",
-  "PopularArgTokens": "Popular {{currency}} Tokens"
+  "TokensOnPolygonNetworkDescription": "Tokens on the Polygon network need an Polygon wallet to pay for fees."
 }
