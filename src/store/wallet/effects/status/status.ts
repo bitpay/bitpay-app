@@ -34,7 +34,7 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {IsUtxoCoin} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
-import {LogActions} from '../../../log';
+import {useLogger} from '../../../../utils/hooks';
 
 /*
  * post broadcasting of payment
@@ -254,10 +254,9 @@ export const startUpdateAllWalletStatusForKeys =
   ({keys}: {keys: Key[]}): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
-        dispatch(
-          LogActions.info('starting [startUpdateAllWalletStatusForKeys]'),
-        );
+        logger.info('startUpdateAllWalletStatusForKeys: starting...');
         const {APP, WALLET} = getState();
         const {defaultAltCurrency} = APP;
         const {rates, lastDayRates, balanceCacheKey} = WALLET;
@@ -336,10 +335,8 @@ export const startUpdateAllWalletStatusForKeys =
                         } else {
                           errorStr = JSON.stringify(err);
                         }
-                        dispatch(
-                          LogActions.error(
-                            `[startUpdateAllWalletStatusForKeys] - failed getStatusAll: ${errorStr}`,
-                          ),
+                        logger.error(
+                          `startUpdateAllWalletStatusForKeys: failed getStatusAll ${errorStr}`,
                         );
                       }
                       return {
@@ -414,10 +411,8 @@ export const startUpdateAllWalletStatusForKeys =
                         }),
                       );
 
-                      dispatch(
-                        LogActions.info(
-                          `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
-                        ),
+                      logger.info(
+                        `startUpdateAllWalletStatusForKeys: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
                       );
 
                       return newBalance;
@@ -452,9 +447,7 @@ export const startUpdateAllWalletStatusForKeys =
         const keyUpdates = await Promise.all(keyUpdatesPromises);
 
         dispatch(successUpdateKeysTotalBalance(keyUpdates));
-        dispatch(
-          LogActions.info('success [startUpdateAllWalletStatusForKeys]'),
-        );
+        logger.info('startUpdateAllWalletStatusForKeys: success');
         resolve();
       } catch (err) {
         let errorStr;
@@ -464,11 +457,7 @@ export const startUpdateAllWalletStatusForKeys =
           errorStr = JSON.stringify(err);
         }
         dispatch(failedUpdateKeyTotalBalance());
-        dispatch(
-          LogActions.error(
-            `failed [startUpdateAllWalletStatusForKeys]: ${errorStr}`,
-          ),
-        );
+        logger.error(`startUpdateAllWalletStatusForKeys: failed ${errorStr}`);
         reject(err);
       }
     });
@@ -485,10 +474,9 @@ export const startUpdateAllWalletStatusForKey =
 export const startUpdateAllKeyAndWalletStatus =
   (): Effect => async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
-        dispatch(
-          LogActions.info('starting [startUpdateAllKeyAndWalletStatus]'),
-        );
+        logger.info('startUpdateAllKeyAndWalletStatus: starting...');
         const {
           WALLET: {keys, balanceCacheKey},
         } = getState();
@@ -503,7 +491,7 @@ export const startUpdateAllKeyAndWalletStatus =
         );
         dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances
         dispatch(successUpdateAllKeysAndStatus());
-        dispatch(LogActions.info('success [startUpdateAllKeyAndWalletStatus]'));
+        logger.info('startUpdateAllKeyAndWalletStatus: success');
         resolve();
       } catch (err) {
         let errorStr;
@@ -513,11 +501,7 @@ export const startUpdateAllKeyAndWalletStatus =
           errorStr = JSON.stringify(err);
         }
         dispatch(failedUpdateAllKeysAndStatus());
-        dispatch(
-          LogActions.error(
-            `failed [startUpdateAllKeyAndWalletStatus]: ${errorStr}`,
-          ),
-        );
+        logger.error(`startUpdateAllKeyAndWalletStatus: failed ${errorStr}`);
         reject(err);
       }
     });

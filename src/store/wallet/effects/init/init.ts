@@ -3,11 +3,12 @@ import {WalletActions} from '../../index';
 import {getPriceHistory, startGetRates} from '../rates/rates';
 import {startGetTokenOptions} from '../currencies/currencies';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
-import {LogActions} from '../../../log';
+import {useLogger} from '../../../../utils/hooks';
 
 export const startWalletStoreInit =
   (): Effect<Promise<void>> => async (dispatch, getState: () => RootState) => {
-    dispatch(LogActions.info('starting [startWalletStoreInit]'));
+    const logger = useLogger();
+    logger.info('startWalletStoreInit: starting...');
     try {
       const {WALLET, APP} = getState();
       const defaultAltCurrencyIsoCode = APP.defaultAltCurrency.isoCode;
@@ -22,15 +23,10 @@ export const startWalletStoreInit =
 
       dispatch(getPriceHistory(defaultAltCurrencyIsoCode));
       dispatch(WalletActions.successWalletStoreInit());
-      dispatch(LogActions.info('success [startWalletStoreInit]'));
-    } catch (e) {
-      let errorStr;
-      if (e instanceof Error) {
-        errorStr = e.message;
-      } else {
-        errorStr = JSON.stringify(e);
-      }
+      logger.info('startWalletStoreInit: success');
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
       dispatch(WalletActions.failedWalletStoreInit());
-      dispatch(LogActions.error(`failed [startWalletStoreInit]: ${errorStr}`));
+      logger.error(`startWalletStoreInit: failed ${errorStr}`);
     }
   };

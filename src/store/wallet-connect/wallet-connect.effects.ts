@@ -22,14 +22,16 @@ import {
 } from '../app/app.actions';
 import {checkEncryptPassword} from '../wallet/utils/wallet';
 import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
-import {LogActions} from '../log';
 import {t} from 'i18next';
 import {checkBiometricForSending} from '../wallet/effects/send/send';
+import {useLogger} from '../../utils/hooks';
 
 const BWC = BwcProvider.getInstance();
 
 export const walletConnectInit = (): Effect => async (dispatch, getState) => {
+  const logger = useLogger();
   try {
+    logger.info('walletConnectInit: starting...');
     const {sessions} = getState().WALLET_CONNECT;
     const connectors: IWCConnector[] =
       sessions &&
@@ -41,24 +43,14 @@ export const walletConnectInit = (): Effect => async (dispatch, getState) => {
           };
         }),
       ));
-    dispatch(
-      LogActions.info('[WC/walletConnectInit]: initialized successfully'),
-    );
+    logger.info('walletConnectInit: initialized successfully');
     dispatch(WalletConnectActions.successInitRequest(connectors || []));
     dispatch(walletConnectSubscribeToEvents());
-  } catch (err: unknown) {
-    let errorStr;
-    if (err instanceof Error) {
-      errorStr = err.message;
-    } else {
-      errorStr = JSON.stringify(err);
-    }
-    dispatch(
-      LogActions.error(
-        '[WC/walletConnectInit]: an error occurred while initializing.',
-      ),
+  } catch (e: unknown) {
+    const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+    logger.error(
+      `walletConnectInit: an error occurred while initializing: ${errorStr}`,
     );
-    dispatch(LogActions.error(errorStr));
     dispatch(WalletConnectActions.failedInitRquest());
   }
 };
@@ -67,6 +59,7 @@ export const walletConnectOnSessionRequest =
   (uri: string): Effect<Promise<{peer: any; peerId: any}>> =>
   (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       const connector = new WalletConnect({uri});
       let isWaitingForEvent: boolean = true;
       connector.on('session_request', (error: any, payload: any) => {
@@ -76,12 +69,10 @@ export const walletConnectOnSessionRequest =
         }
         const {pending} = getState().WALLET_CONNECT;
         dispatch(WalletConnectActions.sessionRequest([...pending, connector]));
-        dispatch(
-          LogActions.info(
-            `[WC/walletConnectOnSessionRequest]: session request: ${JSON.stringify(
-              payload.params[0],
-            )}`,
-          ),
+        logger.info(
+          `walletConnectOnSessionRequest: session request: ${JSON.stringify(
+            payload.params[0],
+          )}`,
         );
         resolve(payload.params[0]);
       });
@@ -92,9 +83,7 @@ export const walletConnectOnSessionRequest =
         const error = t(
           'Session request failed or rejected. Please try again by refreshing the QR code.',
         );
-        dispatch(
-          LogActions.error(`[WC/walletConnectOnSessionRequest]: ${error}`),
-        );
+        logger.error(`walletConnectOnSessionRequest: ${error}`);
         reject(error);
       }
     });
@@ -108,6 +97,7 @@ export const walletConnectApproveSessionRequest =
   ): Effect<Promise<void>> =>
   (dispatch, getState) => {
     return new Promise((resolve, reject) => {
+      const logger = useLogger();
       try {
         const {connectors, pending, sessions} = getState().WALLET_CONNECT;
         let updatedConnectors: IWCConnector[] = [...connectors];
@@ -134,20 +124,14 @@ export const walletConnectApproveSessionRequest =
           ),
         );
         dispatch(walletConnectSubscribeToEvents(peerId));
-        dispatch(
-          LogActions.info(
-            '[WC/walletConnectApproveSessionRequest]: session approval',
-          ),
-        );
+        logger.info('walletConnectApproveSessionRequest: session approval');
         resolve();
-      } catch (err) {
-        dispatch(
-          LogActions.error(
-            '[WC/walletConnectApproveSessionRequest]: an error occurred while approving session.',
-          ),
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `walletConnectApproveSessionRequest: an error occurred while approving session: ${errorStr}`,
         );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        reject(err);
+        reject(e);
       }
     });
   };
@@ -167,11 +151,7 @@ export const walletConnectRejectSessionRequest =
       (connector: WalletConnect) => connector.peerId !== peerId,
     );
 
-    dispatch(
-      LogActions.info(
-        '[WC/walletConnectRejectSessionRequest]: session rejection',
-      ),
-    );
+    useLogger().info('walletConnectRejectSessionRequest: session rejection');
     dispatch(WalletConnectActions.rejectSessionRequest(updatedPending));
   };
 
@@ -193,12 +173,10 @@ export const walletConnectSubscribeToEvents =
         if (error) {
           throw error;
         }
-        dispatch(
-          LogActions.info(
-            `[WC/call_request]: new pending request: ${JSON.stringify(
-              payload,
-            )}`,
-          ),
+        useLogger().info(
+          `walletConnectSubscribeToEvent: new pending request: ${JSON.stringify(
+            payload,
+          )}`,
         );
         const updatedRequests: IWCRequest[] = [
           ...getState().WALLET_CONNECT.requests,
@@ -245,27 +223,22 @@ export const walletConnectKillSession =
   (peerId: string): Effect<Promise<void>> =>
   (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       const {connectors} = getState().WALLET_CONNECT;
       await Promise.all(
         connectors.map(async c => {
           try {
             if (c.connector.peerId === peerId) {
               await c.connector.killSession();
-              dispatch(
-                LogActions.info(
-                  '[WC/walletConnectKillSession]: session killed',
-                ),
-              );
+              logger.info('walletConnectKillSession: session killed');
               resolve();
             }
-          } catch (err) {
-            dispatch(
-              LogActions.error(
-                '[WC/walletConnectKillSession]: an error occurred while killing session',
-              ),
-            );
-            dispatch(LogActions.error(JSON.stringify(err)));
-            reject(err);
+          } catch (e: unknown) {
+            const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+            logger.error(
+              `walletConnectKillSession: an error occurred while killing session: ${errorStr}`,
+            ),
+              reject(e);
           }
         }),
       );
@@ -279,6 +252,7 @@ export const walletConnectApproveCallRequest =
   ): Effect<Promise<void>> =>
   (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const wcConnector: IWCConnector =
           getState().WALLET_CONNECT.connectors.filter(
@@ -293,20 +267,14 @@ export const walletConnectApproveCallRequest =
         await dispatch(
           WalletConnectActions.approveCallRequest(updatedRequests),
         );
-        dispatch(
-          LogActions.info(
-            '[WC/walletConnectApproveCallRequest]: call request approval',
-          ),
-        );
+        logger.info('walletConnectApproveCallRequest: call request approval');
         resolve();
-      } catch (err) {
-        dispatch(
-          LogActions.error(
-            '[WC/walletConnectApproveCallRequest]: an error occurred while approving call request',
-          ),
-        );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        reject(err);
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `walletConnectApproveCallRequest: an error occurred while approving call request: ${errorStr}`,
+        ),
+          reject(e);
       }
     });
   };
@@ -318,6 +286,7 @@ export const walletConnectRejectCallRequest =
   ): Effect<Promise<void>> =>
   (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const wcConnector: IWCConnector =
           getState().WALLET_CONNECT.connectors.filter(
@@ -331,20 +300,14 @@ export const walletConnectRejectCallRequest =
               request.payload && request.payload.id !== response.id,
           );
         await dispatch(WalletConnectActions.rejectCallRequest(updatedRequests));
-        dispatch(
-          LogActions.info(
-            '[WC/walletConnectRejectCallRequest]: call request rejection',
-          ),
-        );
+        logger.info('walletConnectRejectCallRequest: call request rejection');
         resolve();
-      } catch (err) {
-        dispatch(
-          LogActions.error(
-            '[WC/walletConnectRejectCallRequest]: an error occurred while rejecting call request',
-          ),
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `walletConnectRejectCallRequest: an error occurred while rejecting call request: ${errorStr}`,
         );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        reject(err);
+        reject(e);
       }
     });
   };
@@ -353,6 +316,7 @@ const getPrivKey =
   (keyId: string): Effect<Promise<any>> =>
   (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const {keys} = getState().WALLET;
         const {biometricLockActive} = getState().APP;
@@ -398,18 +362,14 @@ const getPrivKey =
         const bitcore = BWC.getBitcore();
         const xpriv = new bitcore.HDPrivateKey(xPrivKey);
         const priv = xpriv.deriveChild("m/44'/60'/0'/0/0").privateKey;
-        dispatch(
-          LogActions.info('[WC/getPrivKey]: got the private key successfully'),
-        );
+        logger.info('getPrivKey: got the private key successfully');
         resolve(priv);
-      } catch (err) {
-        dispatch(
-          LogActions.error(
-            '[WC/getPrivKey]: an error occurred while getting private key',
-          ),
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `getPrivKey: an error occurred while getting private key: ${errorStr}`,
         );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        reject(err);
+        reject(e);
       }
     });
   };
@@ -418,6 +378,7 @@ export const walletConnectSignTypedDataLegacy =
   (data: any, wallet: Wallet): Effect<Promise<any>> =>
   (dispatch, _getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const priv = (await dispatch<any>(getPrivKey(wallet.keyId))) as any;
         const result = signTypedDataLegacy(
@@ -426,20 +387,14 @@ export const walletConnectSignTypedDataLegacy =
             data,
           },
         );
-        dispatch(
-          LogActions.info(
-            '[WC/walletConnectSignTypedDataLegacy]: signed message',
-          ),
-        );
+        logger.info('walletConnectSignTypedDataLegacy: signed message');
         resolve(result);
-      } catch (err) {
-        dispatch(
-          LogActions.error(
-            '[WC/walletConnectSignTypedDataLegacy]: an error occurred while signing message',
-          ),
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `walletConnectSignTypedDataLegacy: an error occurred while signing message: ${errorStr}`,
         );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        reject(err);
+        reject(e);
       }
     });
   };
@@ -448,23 +403,20 @@ export const walletConnectSignTypedData =
   (data: any, wallet: Wallet): Effect<Promise<any>> =>
   (dispatch, _getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const priv = (await dispatch<any>(getPrivKey(wallet.keyId))) as any;
         const result = signTypedData_v4(Buffer.from(priv.toString(), 'hex'), {
           data,
         });
-        dispatch(
-          LogActions.info('[WC/walletConnectSignTypedData]: signed message'),
-        );
+        logger.info('walletConnectSignTypedData: signed message');
         resolve(result);
-      } catch (err) {
-        dispatch(
-          LogActions.error(
-            '[WC/walletConnectSignTypedData]: an error occurred while signing message',
-          ),
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `walletConnectSignTypedData: an error occurred while signing message: ${errorStr}`,
         );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        reject(err);
+        reject(e);
       }
     });
   };
@@ -473,23 +425,20 @@ export const walletConnectPersonalSign =
   (data: any, wallet: Wallet): Effect<Promise<any>> =>
   (dispatch, _getState) => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const priv = (await dispatch<any>(getPrivKey(wallet.keyId))) as any;
         const result = personalSign(Buffer.from(priv.toString(), 'hex'), {
           data,
         });
-        dispatch(
-          LogActions.info('[WC/walletConnectPersonalSign]: signed message'),
-        );
+        logger.info('walletConnectPersonalSign: signed message');
         resolve(result);
-      } catch (err) {
-        dispatch(
-          LogActions.error(
-            '[WC/walletConnectPersonalSign]: an error occurred while signing message',
-          ),
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `walletConnectPersonalSign: an error occurred while signing message: ${errorStr}`,
         );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        reject(err);
+        reject(e);
       }
     });
   };

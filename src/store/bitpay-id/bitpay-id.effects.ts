@@ -16,10 +16,10 @@ import {AppActions, AppEffects} from '../app/';
 import {Analytics, startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
-import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
+import {useLogger} from '../../utils/hooks';
 
 interface StartLoginParams {
   email: string;
@@ -66,7 +66,9 @@ interface CreateAccountParams {
 export const startCreateAccount =
   (params: CreateAccountParams): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startCreateAccount: starting...');
       const {APP, BITPAY_ID} = getState();
       const salt = generateSalt();
       const hashedPassword = hashPassword(params.password);
@@ -92,6 +94,7 @@ export const startCreateAccount =
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
       dispatch(BitPayIdActions.successCreateAccount());
+      logger.info('startCreateAccount: success');
     } catch (err) {
       let errMsg;
 
@@ -109,8 +112,7 @@ export const startCreateAccount =
       }
 
       dispatch(BitPayIdActions.failedCreateAccount(upperFirst(errMsg)));
-      dispatch(LogActions.error('Failed to create account.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      logger.error(`startCreateAccount: ${errMsg}`);
     }
   };
 
@@ -120,18 +122,20 @@ export const startSendVerificationEmail =
       const {APP, BITPAY_ID} = getState();
 
       AuthApi.sendVerificationEmail(APP.network, BITPAY_ID.session.csrfToken);
-    } catch (err) {
-      dispatch(
-        LogActions.error('An error occurred sending verification email.'),
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+      useLogger().error(
+        `An error occurred sending verification email: ${errorStr}`,
       );
-      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 
 export const startLogin =
   ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startLogin: starting...');
       dispatch(
         startOnGoingProcessModal(
           // t('Logging In')
@@ -143,7 +147,7 @@ export const startLogin =
       const {APP, BITPAY_ID} = getState();
 
       // authenticate
-      dispatch(LogActions.info('Authenticating BitPayID credentials...'));
+      logger.info('startLogin: Authenticating BitPayID credentials...');
       const {twoFactorPending, emailAuthenticationPending} =
         await AuthApi.login(
           APP.network,
@@ -157,21 +161,21 @@ export const startLogin =
       const session = await AuthApi.fetchSession(APP.network);
 
       if (twoFactorPending) {
-        dispatch(LogActions.debug('Two-factor authentication pending.'));
+        logger.debug('startLogin: Two-factor authentication pending.');
         dispatch(BitPayIdActions.pendingLogin('twoFactorPending', session));
         return;
       }
 
       if (emailAuthenticationPending) {
-        dispatch(LogActions.debug('Email authentication pending.'));
+        logger.debug('startLogin: Email authentication pending.');
         dispatch(
           BitPayIdActions.pendingLogin('emailAuthenticationPending', session),
         );
         return;
       }
 
-      dispatch(
-        LogActions.info('Successfully authenticated BitPayID credentials.'),
+      logger.info(
+        'startLogin: Successfully authenticated BitPayID credentials.',
       );
 
       // start pairing
@@ -198,13 +202,13 @@ export const startLogin =
               err.message ||
               t('An unexpected error occurred.'),
           );
-          console.error(errMsg);
+        } else if (err instanceof Error) {
+          errMsg = upperFirst(err.message);
         } else {
-          console.error(err);
+          errMsg = JSON.stringify(err);
         }
 
-        dispatch(LogActions.error('Login failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
+        logger.error(`startLogin: failed ${errMsg}`);
         dispatch(BitPayIdActions.failedLogin(errMsg));
       });
     } finally {
@@ -215,7 +219,9 @@ export const startLogin =
 export const startTwoFactorAuth =
   (code: string): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startTwoFactorAuth: starting...');
       dispatch(
         startOnGoingProcessModal(
           // t('Logging In')
@@ -243,6 +249,7 @@ export const startTwoFactorAuth =
       dispatch(
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
       );
+      logger.info('startTwoFactorAuth: success');
     } catch (err) {
       batch(() => {
         let errMsg;
@@ -253,13 +260,13 @@ export const startTwoFactorAuth =
               err.message ||
               t('An unexpected error occurred.'),
           );
-          console.error(errMsg);
+        } else if (err instanceof Error) {
+          errMsg = upperFirst(err.message);
         } else {
-          console.error(err);
+          errMsg = JSON.stringify(err);
         }
 
-        dispatch(LogActions.error('Two factor authentication failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
+        logger.error(`startTwoFactorAuth: failed ${errMsg}`);
         dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
       });
     } finally {
@@ -270,7 +277,9 @@ export const startTwoFactorAuth =
 export const startTwoFactorPairing =
   (code: string): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startTwoFactorPairing: starting...');
       dispatch(
         startOnGoingProcessModal(
           // t('Logging In')
@@ -287,6 +296,7 @@ export const startTwoFactorPairing =
       await dispatch(startPairAndLoadUser(APP.network, secret, code));
 
       dispatch(BitPayIdActions.successSubmitTwoFactorPairing());
+      logger.info('startTwoFactorPairing: success');
     } catch (err) {
       batch(() => {
         let errMsg;
@@ -297,19 +307,14 @@ export const startTwoFactorPairing =
               err.message ||
               t('An unexpected error occurred.'),
           );
-          console.error(errMsg);
         } else if (err instanceof Error) {
           errMsg = upperFirst(err.message);
-          console.error(errMsg);
         } else {
-          console.error(err);
+          errMsg = JSON.stringify(err);
         }
 
-        dispatch(LogActions.error('Pairing with two factor failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(
-          BitPayIdActions.failedSubmitTwoFactorPairing(JSON.stringify(errMsg)),
-        );
+        logger.error(`startTwoFactorAuth: failed ${errMsg}`);
+        dispatch(BitPayIdActions.failedSubmitTwoFactorPairing(errMsg));
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -319,7 +324,9 @@ export const startTwoFactorPairing =
 export const startEmailPairing =
   (csrfToken: string): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startEmailPairing: starting...');
       const {APP} = getState();
       dispatch(
         startOnGoingProcessModal(
@@ -338,11 +345,12 @@ export const startEmailPairing =
         }),
       );
       dispatch(BitPayIdActions.successEmailPairing());
+      logger.info('startEmailPairing: success');
     } catch (err) {
       batch(() => {
-        console.error(err);
-        dispatch(LogActions.error('Pairing from email authentication failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`startEmailPairing: failed ${errorStr}`);
         dispatch(BitPayIdActions.failedEmailPairing());
       });
     } finally {
@@ -353,10 +361,12 @@ export const startEmailPairing =
 export const startDeeplinkPairing =
   (secret: string, code?: string): Effect<Promise<void>> =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     const state = getState();
     const network = state.APP.network;
 
     try {
+      logger.info('startDeeplinkPairing: starting...');
       dispatch(
         AppEffects.startOnGoingProcessModal(
           // t('Pairing')
@@ -364,6 +374,7 @@ export const startDeeplinkPairing =
         ),
       );
       await dispatch(startPairAndLoadUser(network, secret, code));
+      logger.info('startDeeplinkPairing: success');
     } catch (err) {
       let errMsg;
 
@@ -375,9 +386,7 @@ export const startDeeplinkPairing =
         errMsg = JSON.stringify(err);
       }
 
-      console.error(errMsg);
-      dispatch(LogActions.error('Pairing failed.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      logger.error(`startDeeplinkPairing: failed ${errMsg}`);
       dispatch(BitPayIdActions.failedPairingBitPayId(errMsg));
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -387,19 +396,21 @@ export const startDeeplinkPairing =
 const startPairAndLoadUser =
   (network: Network, secret: string, code?: string): Effect<Promise<void>> =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startPairAndLoaduser: starting...');
       const token = await AuthApi.pair(secret, code);
 
       dispatch(BitPayIdActions.successPairingBitPayId(network, token));
-      dispatch(LogActions.info('Successfully paired with BitPayID.'));
-    } catch (err) {
-      dispatch(LogActions.error('An error occurred while pairing.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
-
-      throw err;
+      logger.info('startPairAndLoaduser: Successfully paired with BitPayID.');
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(`startPairAndLoaduser: failed ${errorStr}`);
+      throw e;
     }
 
     try {
+      logger.info('startPairAndLoaduser: fetching initial user data...');
       const {APP, BITPAY_ID} = getState();
       const token = BITPAY_ID.apiToken[APP.network];
 
@@ -411,11 +422,8 @@ const startPairAndLoadUser =
           .map(e => `${e.path.join('.')}: ${e.message}`)
           .join(',\n');
 
-        dispatch(
-          LogActions.error(
-            'One or more errors occurred while fetching initial user data:\n' +
-              msg,
-          ),
+        logger.error(
+          `startPairAndLoadUser: One or more errors occurred while fetching initial user data: ${msg}`,
         );
       }
 
@@ -429,6 +437,7 @@ const startPairAndLoadUser =
 
         dispatch(Analytics.identify(eid, {email, name}));
       }
+      logger.info('startPairAndLoadUser: Successfully initial user data.');
     } catch (err) {
       let errMsg;
 
@@ -437,15 +446,15 @@ const startPairAndLoadUser =
       } else {
         errMsg = JSON.stringify(err);
       }
-
-      dispatch(LogActions.error('An error occurred while fetching user data.'));
-      dispatch(LogActions.error(errMsg));
+      logger.error(`startPairAndLoadUser: failed ${errMsg}`);
     }
   };
 
 export const startDisconnectBitPayId =
   (): Effect => async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startDisconnectBitPayId: starting...');
       const {APP, BITPAY_ID} = getState();
       const {isAuthenticated, csrfToken} = BITPAY_ID.session;
 
@@ -455,18 +464,24 @@ export const startDisconnectBitPayId =
 
       dispatch(Analytics.track('Log Out User success', {}));
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+      logger.info('startDisconnectBitPayId: success');
     } catch (err) {
       // log but swallow this error
-      dispatch(LogActions.error('An error occurred while logging out.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(
+        `startDisconnectBitPayId: An error occured while logging out: ${errorStr}`,
+      );
     }
 
     try {
+      logger.info('startDisconnectBitPayId: clear Dosh user');
       Dosh.clearUser();
-    } catch (err) {
+    } catch (e) {
       // log but swallow this error
-      dispatch(LogActions.error('An error occured while clearing Dosh user.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(
+        `startDisconnectBitPayId: An error occured while clearing Dosh user: ${errorStr}`,
+      );
       return;
     }
   };
@@ -474,30 +489,36 @@ export const startDisconnectBitPayId =
 export const startFetchBasicInfo =
   (token: string): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startFetchBasicInfo: starting...');
       const {APP} = getState();
       const user = await UserApi.fetchBasicInfo(token);
 
       dispatch(BitPayIdActions.successFetchBasicInfo(APP.network, user));
+      logger.info('startFetchBasicInfo: success');
     } catch (err) {
-      dispatch(LogActions.error('Failed to fetch basic user info'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`startFetchBasicInfo: failed ${errorStr}`);
       dispatch(BitPayIdActions.failedFetchBasicInfo());
     }
   };
 
 export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
+  const logger = useLogger();
   try {
+    logger.info('startFetchDoshToken: starting...');
     const {APP, BITPAY_ID} = getState();
     const doshToken = await UserApi.fetchDoshToken(
       BITPAY_ID.apiToken[APP.network],
     );
 
     dispatch(BitPayIdActions.successFetchDoshToken(APP.network, doshToken));
+    logger.info('startFetchDoshToken: success');
   } catch (err) {
     batch(() => {
-      dispatch(LogActions.error('Failed to fetch dosh token.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`startFetchDoshToken: failed ${errorStr}`);
       dispatch(BitPayIdActions.failedFetchDoshToken());
     });
   }

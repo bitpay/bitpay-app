@@ -6,7 +6,7 @@ import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import {Key, KeyOptions, Wallet} from '../../wallet.models';
 import {createWalletWithOpts} from '../create/create';
 import {subscribePushNotifications} from '../../../app/app.effects';
-import {LogActions} from '../../../log';
+import {useLogger} from '../../../../utils/hooks';
 
 const BWC = BwcProvider.getInstance();
 
@@ -14,6 +14,7 @@ export const startCreateKeyMultisig =
   (opts: Partial<KeyOptions>): Effect =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const {
           APP: {notificationsAccepted, brazeEid},
@@ -48,7 +49,7 @@ export const startCreateKeyMultisig =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`Error create key multisig: ${errorStr}`));
+        logger.error(`Error create key multisig: ${errorStr}`);
         reject();
       }
     });
@@ -58,6 +59,7 @@ export const addWalletMultisig =
   ({key, opts}: {key: Key; opts: Partial<KeyOptions>}): Effect =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const {
           APP: {notificationsAccepted, brazeEid},
@@ -85,7 +87,7 @@ export const addWalletMultisig =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`Error adding multisig wallet: ${errorStr}`));
+        logger.error(`Error adding multisig wallet: ${errorStr}`);
         reject(err);
       }
     });
