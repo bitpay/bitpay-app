@@ -22,6 +22,7 @@ import {Effect, RootState} from '../../../../store';
 import {
   convertToFiat,
   formatFiatAmount,
+  getErrorString,
   sleep,
 } from '../../../../utils/helper-methods';
 import {Key, Rates} from '../../../../store/wallet/wallet.models';
@@ -452,8 +453,9 @@ const SendTo = () => {
       dispatch(
         goToAmount({coin: wallet.currencyAbbreviation, recipient, wallet}),
       );
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      logger.error(`Send To: ${getErrorString(err)}`);
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -547,11 +549,9 @@ const SendTo = () => {
                         );
                       }
                     } catch (err) {
-                      const errString =
-                        err instanceof Error
-                          ? err.message
-                          : JSON.stringify(err);
-                      logger.error(`Send To [Contacts]: ${errString}`);
+                      logger.error(
+                        `Send To [Contacts]: ${getErrorString(err)}`,
+                      );
                     }
                   }}
                 />

@@ -41,13 +41,13 @@ import Button from '../../../../components/button/Button';
 import {
   Caution,
   NeutralSlate,
-  Slate,
   SlateDark,
   White,
 } from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import BoxInput from '../../../../components/form/BoxInput';
 
 const CIRCLE_SIZE = 20;
 
@@ -84,16 +84,6 @@ const TitleContainer = styled.View`
   justify-content: center;
   align-items: center;
   width: ${WIDTH - 110}px;
-`;
-
-export const TextInput = styled.TextInput`
-  height: 50px;
-  color: ${({theme}) => theme.colors.text};
-  background: ${({theme}) => theme.colors.background};
-  border: 0.75px solid ${Slate};
-  border-top-right-radius: 4px;
-  border-top-left-radius: 4px;
-  padding: 5px;
 `;
 
 const ErrorText = styled(BaseText)`
@@ -591,8 +581,9 @@ const TransactionLevel = ({
               <DetailsList>
                 {selectedLevel === 'custom' ? (
                   <ActionContainer>
-                    <TextInput
-                      keyboardType="numeric"
+                    <BoxInput
+                      keyboardType={'number-pad'}
+                      type="number"
                       value={customSatsPerByte}
                       onChangeText={(text: string) => {
                         checkFees(text);

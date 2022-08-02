@@ -282,3 +282,7 @@ export const convertToFiat = (
   hideWallet: boolean | undefined,
   network: Network,
 ) => (network === Network.mainnet && !hideWallet ? fiat : 0);
+
+export const getErrorString = (err: any): string => {
+  return err instanceof Error ? err.message : JSON.stringify(err);
+};
