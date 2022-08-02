@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.5.0",
+  "version": "14.5.1",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -105,6 +105,7 @@
     "react-native-pager-view": "5.4.9",
     "react-native-permissions": "3.2.0",
     "react-native-progress": "5.0.0",
+    "react-native-prompt-android": "1.1.0",
     "react-native-qrcode-svg": "6.1.2",
     "react-native-randombytes": "3.6.1",
     "react-native-rate": "1.2.9",
