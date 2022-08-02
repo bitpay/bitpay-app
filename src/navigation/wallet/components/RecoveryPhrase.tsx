@@ -601,7 +601,7 @@ const RecoveryPhrase = () => {
             <ImportTextInput
               multiline
               autoCapitalize={'none'}
-              numberOfLines={5}
+              numberOfLines={3}
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
@@ -774,11 +774,9 @@ const RecoveryPhrase = () => {
           </AdvancedOptionsContainer>
         </CtaContainer>
 
-        <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-            {t('Import Wallet')}
-          </Button>
-        </CtaContainer>
+        <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+          {t('Import Wallet')}
+        </Button>
       </ContentView>
     </ScrollViewContainer>
   );

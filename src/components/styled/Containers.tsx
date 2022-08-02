@@ -256,6 +256,7 @@ export const ImportTextInput = styled.TextInput`
   border-top-left-radius: 4px;
   text-align-vertical: top;
   padding: 5px;
+  font-size: 16px;
 `;
 
 export const InfoImageContainer = styled.View<{infoMargin: string}>`
