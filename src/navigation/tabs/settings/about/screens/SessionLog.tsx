@@ -2,8 +2,9 @@ import Slider from '@react-native-community/slider';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {memo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Alert, FlatList} from 'react-native';
+import {FlatList} from 'react-native';
 import Mailer from 'react-native-mail';
+import prompt from 'react-native-prompt-android';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import {WIDTH} from '../../../../../components/styled/Containers';
@@ -137,7 +138,7 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
       return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
     });
 
-    Alert.alert(
+    prompt(
       'Warning',
       'Be careful, this could contain sensitive private data.',
       [

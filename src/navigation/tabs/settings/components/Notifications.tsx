@@ -1,11 +1,11 @@
 import React, {useEffect, useCallback} from 'react';
 import {
-  Alert,
   AppState,
   AppStateStatus,
   Linking,
   LogBox,
   DeviceEventEmitter,
+  Platform,
 } from 'react-native';
 import {AppEffects} from '../../../../store/app';
 import {
@@ -20,6 +20,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {selectSettingsNotificationState} from '../../../../store/app/app.selectors';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
+import prompt from 'react-native-prompt-android';
 
 const Notifications = () => {
   const {t} = useTranslation();
@@ -28,7 +29,7 @@ const Notifications = () => {
   const navigation = useNavigation();
 
   const openSettings = useCallback(() => {
-    Alert.alert(
+    prompt(
       t('Notifications Disabled'),
       t(
         'If you want to get important updates on your account, new features, promos and more, go to Settings and tap Allow Notifications.',

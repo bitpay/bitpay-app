@@ -1,5 +1,4 @@
 import React from 'react';
-import {Alert} from 'react-native';
 import Mailer from 'react-native-mail';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useAppSelector} from '../utils/hooks';
@@ -10,6 +9,7 @@ import {BaseText} from '../components/styled/Text';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White} from '../styles/colors';
 import Button from '../components/button/Button';
+import prompt from 'react-native-prompt-android';
 
 export type DebugScreenParamList =
   | {
@@ -75,7 +75,7 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
         isHTML: false,
       },
       (error, event) => {
-        Alert.alert(
+        prompt(
           error,
           event,
           [
@@ -95,7 +95,7 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
   };
 
   const showDisclaimer = (data: string) => {
-    Alert.alert(
+    prompt(
       'Warning',
       'Be careful, this could contain sensitive private data.',
       [{text: 'Continue', onPress: () => handleEmail(data)}, {text: 'Cancel'}],
