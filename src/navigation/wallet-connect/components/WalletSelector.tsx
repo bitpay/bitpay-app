@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {StackActions, useNavigation} from '@react-navigation/native';
 import React, {useCallback, useMemo, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
@@ -21,7 +21,11 @@ import {
 import {LightBlack, White} from '../../../styles/colors';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {
+  BottomNotificationConfig,
+  BottomNotificationCta,
+  BottomNotificationHr,
+} from '../../../components/modal/bottom-notification/BottomNotification';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {
   GlobalSelectObj,
@@ -38,6 +42,8 @@ import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import {toFiat} from '../../../store/wallet/utils/wallet';
+import {Platform} from 'react-native';
+import {WalletConnectCtaContainer} from '../styled/WalletConnectContainers';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -228,21 +234,69 @@ export default ({
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
       <WalletSelectorContainer>
-        <TextAlign align={'center'}>
-          <H4>{t('Select a Wallet')}</H4>
-        </TextAlign>
         {keyWallets.length ? (
-          <DescriptionText>
-            {t(
-              'Which Ethereum wallet would you like to use for WalletConnect?',
-            )}
-          </DescriptionText>
+          <>
+            <TextAlign align={'center'}>
+              <H4>{t('Select a Wallet')}</H4>
+            </TextAlign>
+
+            <DescriptionText>
+              {t(
+                'Which Ethereum wallet would you like to use for WalletConnect?',
+              )}
+            </DescriptionText>
+
+            <WalletSelectMenuBodyContainer>
+              <KeyWalletsRow
+                keyWallets={keyWallets!}
+                onPress={onWalletSelect}
+              />
+            </WalletSelectMenuBodyContainer>
+          </>
         ) : (
-          <DescriptionText>{t('No wallets available')}</DescriptionText>
+          <>
+            <TextAlign align={'center'}>
+              <H4>{t('No compatible wallets')}</H4>
+            </TextAlign>
+
+            <DescriptionText>
+              {t(
+                "You currently don't have any wallets capable of sending this payment. Would you like to import one?",
+              )}
+            </DescriptionText>
+
+            <BottomNotificationHr />
+            <WalletConnectCtaContainer platform={Platform.OS}>
+              <BottomNotificationCta
+                suppressHighlighting={true}
+                primary={true}
+                onPress={async () => {
+                  haptic('impactLight');
+                  onBackdropPress();
+                  await sleep(0);
+                  navigation.dispatch(
+                    StackActions.replace('Wallet', {
+                      screen: 'CreationOptions',
+                    }),
+                  );
+                }}>
+                {t('IMPORT WALLET')}
+              </BottomNotificationCta>
+
+              <BottomNotificationCta
+                suppressHighlighting={true}
+                primary={false}
+                onPress={async () => {
+                  haptic('impactLight');
+                  onBackdropPress();
+                  await sleep(0);
+                  navigation.goBack();
+                }}>
+                {t('MAYBE LATER')}
+              </BottomNotificationCta>
+            </WalletConnectCtaContainer>
+          </>
         )}
-        <WalletSelectMenuBodyContainer>
-          <KeyWalletsRow keyWallets={keyWallets!} onPress={onWalletSelect} />
-        </WalletSelectMenuBodyContainer>
       </WalletSelectorContainer>
     </SheetModal>
   );
