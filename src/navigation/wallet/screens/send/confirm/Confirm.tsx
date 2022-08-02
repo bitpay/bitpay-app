@@ -44,6 +44,7 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../../../components/ErrorMessages';
+import {URL} from '../../../../../constants';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
 import {
@@ -436,7 +437,7 @@ const Confirm = () => {
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
-                        openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'),
+                        openUrlWithInAppBrowser(URL.HELP_DESTINATION_TAG),
                       );
                     }}>
                     <Link>Learn More</Link>
