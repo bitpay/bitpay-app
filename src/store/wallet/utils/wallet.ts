@@ -31,7 +31,7 @@ import {
   KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
-import {AppDispatch} from '../../../utils/hooks';
+import {AppDispatch, useLogger} from '../../../utils/hooks';
 import {find, isEqual} from 'lodash';
 
 const mapAbbreviationAndName =
@@ -205,11 +205,14 @@ export const toFiat =
     customRate?: number,
   ): Effect<number> =>
   dispatch => {
+    const logger = useLogger();
     const ratesPerCurrency = rates[currencyAbbreviation];
 
     if (!ratesPerCurrency) {
       // Rate not found return 0
-      console.log(`Rate not found for currency: ${currencyAbbreviation}`);
+      logger.debug(
+        `toFiat: Rate not found for currency: ${currencyAbbreviation}`,
+      );
       return 0;
     }
 
@@ -221,8 +224,8 @@ export const toFiat =
 
     if (!fiatRate) {
       // Rate not found for fiat/currency pair
-      console.log(
-        `Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
+      logger.debug(
+        `toFiat: Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
       );
       return 0;
     }
@@ -231,7 +234,9 @@ export const toFiat =
 
     if (!precision) {
       // precision not found return 0
-      console.log(`precision not found for currency ${currencyAbbreviation}`);
+      logger.debug(
+        `toFiat: precision not found for currency ${currencyAbbreviation}`,
+      );
       return 0;
     } else {
     }

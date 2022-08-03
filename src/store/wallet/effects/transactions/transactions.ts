@@ -36,6 +36,7 @@ import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
+import {useLogger} from '../../../../utils/hooks';
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
@@ -810,6 +811,7 @@ export const buildTransactionDetails =
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
         const _transaction = {...transaction};
         const {
@@ -856,7 +858,11 @@ export const buildTransactionDetails =
             const minFee = GetMinFee(wallet);
             _transaction.lowAmount = amount < minFee;
           } catch (minFeeErr) {
-            console.log(minFeeErr);
+            const errMsg =
+              minFeeErr instanceof Error
+                ? minFeeErr.message
+                : JSON.stringify(minFeeErr);
+            logger.error(`buildTransactionDetails: ${errMsg}`);
           }
         }
 
@@ -886,8 +892,10 @@ export const buildTransactionDetails =
         );
 
         resolve(_transaction);
-      } catch (e) {
-        return reject(e);
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`buildTransactionDetails: ${errMsg}`);
+        return reject(err);
       }
     });
   };

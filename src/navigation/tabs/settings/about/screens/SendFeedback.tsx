@@ -15,7 +15,7 @@ import Feature from '../../../../../../assets/img/settings/feedback/feature.svg'
 import ShareSvg from '../../../../../../assets/img/settings/feedback/share.svg';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {URL} from '../../../../../constants';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {BoxShadow} from '../../../home/components/Styled';
 import {Platform, Share} from 'react-native';
 import {APP_NAME, DOWNLOAD_BITPAY_URL} from '../../../../../constants/config';
@@ -44,6 +44,7 @@ const LeftIconContainer = styled.View`
 `;
 const SendFeedback = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const share = async () => {
@@ -77,7 +78,7 @@ const SendFeedback = () => {
           }
           if (errorMessage) {
             // errorMessage comes from the native code. Useful for debugging, but probably not for users to view
-            console.log(`Error Rating App: ${errorMessage}`);
+            logger.error(`SendFeedback: Error Rating App: ${errorMessage}`);
           }
         });
       },

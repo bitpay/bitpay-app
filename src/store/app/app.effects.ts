@@ -338,7 +338,7 @@ export const initializeBrazeContent =
  * Requests a refresh for Braze content.
  * @returns void
  */
-export const requestBrazeContentRefresh = (): Effect => async dispatch => {
+export const requestBrazeContentRefresh = (): Effect => () => {
   const logger = useLogger();
   try {
     logger.info('requestBrazeContentRefresh: starting...');
@@ -442,11 +442,13 @@ export const askForTrackingPermissionAndEnableSdks =
               appId: APPSFLYER_APP_ID, // iOS app id
             },
             result => {
-              console.log(result);
+              logger.debug('askForTrackingPermissionAndEnableSdks: ' + result);
               resolve();
             },
             error => {
-              console.log(error);
+              const errMsg =
+                error instanceof Error ? error.message : JSON.stringify(error);
+              logger.error('askForTrackingPermissionAndEnableSdks: ' + errMsg);
               reject(error);
             },
           );
@@ -832,6 +834,7 @@ const _startUpdateWalletStatus = debounce(
 export const handleBwsEvent =
   (response: SilentPushEvent): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     const {
       WALLET: {keys},
     } = getState();
@@ -854,9 +857,8 @@ export const handleBwsEvent =
 
       // TODO showInappNotification(data);
 
-      console.log(
-        `BWS Event: ${response.notification_type}: `,
-        JSON.stringify(response),
+      logger.debug(
+        `BWS Event: ${response.notification_type}: ${JSON.stringify(response)}`,
       );
 
       const keyObj = await findKeyByKeyId(keyId, keys);

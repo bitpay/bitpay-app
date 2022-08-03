@@ -20,7 +20,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppSelector, useLogger} from '../../../utils/hooks';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {AppActions} from '../../../store/app';
@@ -77,6 +77,7 @@ const WalletSettingsTitle = styled(SettingTitle)`
 
 const WalletSettings = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const {
     params: {walletId, key},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
@@ -108,7 +109,8 @@ const WalletSettings = () => {
           await sleep(300);
           cta(decryptedKey);
         } catch (e) {
-          console.log(`Decrypt Error: ${e}`);
+          const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+          logger.error('WalletSettings: (decrypt error)' + errMsg);
           await dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(500); // Wait to close Decrypt Password modal
           dispatch(showBottomNotificationModal(WrongPasswordError()));

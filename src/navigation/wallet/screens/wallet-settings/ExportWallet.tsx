@@ -18,7 +18,7 @@ import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../../components/form/BoxInput';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {yupResolver} from '@hookform/resolvers/yup';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppSelector, useLogger} from '../../../../utils/hooks';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';
@@ -87,6 +87,7 @@ const CheckBoxContainer = styled.View`
 
 const ExportWallet = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const {
     params: {wallet, keyObj},
   } = useRoute<RouteProp<WalletStackParamList, 'ExportWallet'>>();
@@ -202,7 +203,8 @@ const ExportWallet = () => {
       await sleep(200);
       setSendButtonState(undefined);
     } catch (e) {
-      console.log(e);
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error('ExportWallet: (onSendByEmail) ' + errMsg);
       setSendButtonState('failed');
       await sleep(500);
       setSendButtonState(undefined);

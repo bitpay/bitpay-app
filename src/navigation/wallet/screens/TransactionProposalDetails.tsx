@@ -10,7 +10,7 @@ import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
   getDetailsTitle,
@@ -194,6 +194,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 
 const TransactionProposalDetails = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const {
     params: {transaction, wallet, key},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionProposalDetails'>>();
@@ -236,7 +237,8 @@ const TransactionProposalDetails = () => {
     } catch (e) {
       await sleep(500);
       setIsLoading(false);
-      console.log(e);
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error('TransactionProposalDetails: (init)' + errMsg);
     }
   };
 
@@ -279,7 +281,10 @@ const TransactionProposalDetails = () => {
         }),
       );
     } catch (e) {
-      console.log(e);
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(
+        'TransactionProposalDetails: (removePaymentProposal)' + errMsg,
+      );
     }
   };
 
@@ -310,7 +315,10 @@ const TransactionProposalDetails = () => {
         }),
       );
     } catch (e) {
-      console.log(e);
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(
+        'TransactionProposalDetails: (rejectPaymentProposal)' + errMsg,
+      );
     }
   };
 

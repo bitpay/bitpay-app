@@ -8,7 +8,7 @@ import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import SimplexLogo from '../../../../../components/icons/external-services/simplex/simplex-logo';
 import {simplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -45,6 +45,7 @@ const copyText = (text: string) => {
 
 const SimplexDetails: React.FC = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const {
     params: {paymentRequest},
   } = useRoute<RouteProp<{params: SimplexDetailsProps}>>();
@@ -240,7 +241,9 @@ const SimplexDetails: React.FC = () => {
                   {
                     text: t('GO BACK'),
                     action: () => {
-                      console.log('Removing payment Request CANCELED');
+                      logger.debug(
+                        'SimplexDetails: Removing payment Request CANCELED',
+                      );
                     },
                   },
                 ],

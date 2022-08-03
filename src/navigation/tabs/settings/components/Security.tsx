@@ -107,12 +107,7 @@ const Security = () => {
 
   const setBiometric = () => {
     TouchID.isSupported(isSupportedOptionalConfigObject)
-      .then(biometryType => {
-        if (biometryType === 'FaceID') {
-          console.log('FaceID is supported.');
-        } else {
-          console.log('TouchID is supported.');
-        }
+      .then(() => {
         return TouchID.authenticate(
           'Authentication Check',
           authOptionalConfigObject,

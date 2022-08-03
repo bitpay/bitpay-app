@@ -34,7 +34,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
     if (key) {
       try {
         key.methods.decrypt(password);
-        logger.debug('Key Decrypted');
+        logger.debug('RequestEncryptPasswordToggle: Key Decrypted');
         dispatch(
           WalletActions.successEncryptOrDecryptPassword({
             key,
@@ -63,7 +63,8 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
           }),
         );
       } catch (e) {
-        console.log(`Decrypt Error: ${e}`);
+        const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(`RequestEncryptPasswordToggle: Decrypt Error: ${errMsg}`);
         dispatch(AppActions.dismissDecryptPasswordModal());
         await sleep(500); // Wait to close Decrypt Password modal
         dispatch(showBottomNotificationModal(WrongPasswordError()));
@@ -72,7 +73,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
       dispatch(AppActions.dismissDecryptPasswordModal());
       await sleep(500); // Wait to close Decrypt Password modal
       dispatch(showBottomNotificationModal(DecryptError()));
-      logger.debug('Missing Key Error');
+      logger.debug('RequestEncryptPasswordToggle: Missing Key Error');
     }
   };
 

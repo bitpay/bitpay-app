@@ -364,7 +364,9 @@ const ChangellyDetails: React.FC = () => {
                   {
                     text: t('GO BACK'),
                     action: () => {
-                      console.log('Removing transaction data CANCELED');
+                      logger.debug(
+                        'ChangellyDetails: Removing transaction data CANCELED',
+                      );
                     },
                   },
                 ],

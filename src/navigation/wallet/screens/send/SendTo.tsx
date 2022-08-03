@@ -504,7 +504,11 @@ const SendTo = () => {
                         validateAndNavigateToConfirm(data);
                       }
                     } catch (err) {
-                      console.log(err);
+                      const errMsg =
+                        err instanceof Error
+                          ? err.message
+                          : JSON.stringify(err);
+                      logger.error(`SendTo: ${errMsg}`);
                     }
                   },
                 },

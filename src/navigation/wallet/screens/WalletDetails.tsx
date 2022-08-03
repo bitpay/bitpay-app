@@ -71,7 +71,7 @@ import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
@@ -278,6 +278,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const {t} = useTranslation();
+  const logger = useLogger();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, skipInitializeHistory} = route.params;
@@ -501,7 +502,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       setIsLoading(false);
       setErrorLoadingTxs(true);
 
-      console.log('Transaction Update: ', e);
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error('WalletDetails: (Transaction Update) ' + errMsg);
     }
   };
   const loadHistoryRef = useRef(loadHistory);

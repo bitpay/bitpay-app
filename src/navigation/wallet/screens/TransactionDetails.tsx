@@ -10,7 +10,7 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
   EditTxNote,
@@ -219,6 +219,7 @@ const TransactionDetails = () => {
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {t} = useTranslation();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [txs, setTxs] = useState<any>();
@@ -254,9 +255,10 @@ const TransactionDetails = () => {
       await sleep(500);
       setIsLoading(false);
     } catch (e) {
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
       await sleep(500);
       setIsLoading(false);
-      console.log(e);
+      logger.error('TransactionDetails: (init)' + errMsg);
     }
   };
 
@@ -379,7 +381,8 @@ const TransactionDetails = () => {
       setMemo(newMemo);
       onMemoChange();
     } catch (e) {
-      console.log('Edit note err: ', e);
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error('TransactionDetails: (saveMemo)' + errMsg);
     }
   };
 

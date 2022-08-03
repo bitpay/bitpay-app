@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {LogActions} from '../../../log';
 
 const URI_DEV = 'https://api.testwyre.com';
 const URI_PROD = 'https://api.sendwyre.com';
@@ -17,7 +18,8 @@ export const wyreGetWalletOrderDetails = async (orderId: string) => {
 
     return Promise.resolve(data);
   } catch (err) {
-    console.log(err);
+    const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
+    LogActions.error(`requestBrazeContentRefresh: failed ${errorStr}`);
     return Promise.reject(err);
   }
 };

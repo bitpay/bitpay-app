@@ -5,6 +5,7 @@ import {BwcProvider} from '../../lib/bwc';
 import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import Flatted from 'flatted';
+import {useLogger} from '../../utils/hooks';
 const BWCProvider = BwcProvider.getInstance();
 
 export const bindWalletClient = createTransform(
@@ -12,6 +13,7 @@ export const bindWalletClient = createTransform(
   inboundState => inboundState,
   // transform state being rehydrated
   (_outboundState, key) => {
+    const logger = useLogger();
     if (key === 'keys') {
       const outboundState: {[key in string]: Key} = {};
       // eslint-disable-next-line no-shadow
@@ -29,7 +31,7 @@ export const bindWalletClient = createTransform(
             loadMore: true,
             hasConfirmingTxs: false,
           };
-          console.log(`bindWalletClient - ${wallet.id}`);
+          logger.debug(`bindWalletClient: ${wallet.id}`);
           return merge(
             BWCProvider.getClient(JSON.stringify(wallet.credentials)),
             wallet,
@@ -51,6 +53,7 @@ export const bindWalletClient = createTransform(
 export const bindWalletKeys = createTransform(
   inboundState => inboundState,
   (_outboundState, k) => {
+    const logger = useLogger();
     if (k === 'keys') {
       const outboundState: {[key in string]: Key} = {};
       for (const [id, key] of Object.entries(
@@ -62,7 +65,7 @@ export const bindWalletKeys = createTransform(
             seedData: key.properties,
           }),
         });
-        console.log(`bindWalletKey - ${id}`);
+        logger.debug(`bindWalletKey: ${id}`);
       }
 
       return outboundState;

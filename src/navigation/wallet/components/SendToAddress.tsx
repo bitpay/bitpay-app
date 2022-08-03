@@ -47,7 +47,7 @@ import KeyWalletsRow, {
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import {BuildKeyWalletRow} from '../screens/send/SendTo';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   RecipientList,
   RecipientRowContainer,
@@ -93,6 +93,7 @@ const CtaContainer = styled(_CtaContainer)`
 const SendToAddress = () => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+  const logger = useLogger();
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
@@ -246,7 +247,8 @@ const SendToAddress = () => {
         ? goToSelectInputsView(newRecipient)
         : addRecipient(newRecipient);
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`SendToAddress: ${errMsg}`);
     }
   };
 
@@ -296,7 +298,11 @@ const SendToAddress = () => {
                         validateData(data);
                       }
                     } catch (err) {
-                      console.log(err);
+                      const errMsg =
+                        err instanceof Error
+                          ? err.message
+                          : JSON.stringify(err);
+                      logger.error(`SendToAddress: ${errMsg}`);
                     }
                   },
                 },

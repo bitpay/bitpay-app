@@ -29,7 +29,7 @@ function _log(
 ): LogActionType {
   if (__DEV__ && !!messages) {
     messages.forEach(msg => {
-      console.log(`log[${LogLevel[level]}]`, msg);
+      console.log(`[${LogLevel[level]}]`, msg);
     });
   }
   return {

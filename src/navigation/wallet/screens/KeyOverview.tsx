@@ -54,6 +54,7 @@ import {
   AppDispatch,
   useAppDispatch,
   useAppSelector,
+  useLogger,
 } from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
@@ -330,6 +331,7 @@ export const buildNestedWalletList = (
 
 const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
@@ -419,7 +421,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         (err: any, status: Status) => {
           if (err) {
             // TODO
-            console.log(err);
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error('KeyOverview: (createNewMultisigKey) ' + errMsg);
           }
           navigation.navigate('Copayers', {
             wallet: key?.wallets[0],
@@ -523,7 +527,11 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
                 (err: any, status: Status) => {
                   if (err) {
                     // TODO
-                    console.log(err);
+                    const errMsg =
+                      err instanceof Error ? err.message : JSON.stringify(err);
+                    logger.error(
+                      'KeyOverview: (fullWalletObj.getStatus) ' + errMsg,
+                    );
                   }
                   if (status.wallet.status === 'complete') {
                     fullWalletObj.openWallet({}, () => {

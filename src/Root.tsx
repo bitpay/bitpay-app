@@ -307,16 +307,15 @@ export default () => {
   // Silent Push Notifications
   useEffect(() => {
     function onMessageReceived(response: SilentPushEvent) {
-      console.log(
-        '##### Received Silent Push Notification',
-        JSON.stringify(response),
+      logger.debug(
+        'Received Silent Push Notification: ' + JSON.stringify(response),
       );
       dispatch(handleBwsEvent(response));
     }
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
-  }, [dispatch]);
+  }, [dispatch, logger]);
 
   // THEME
   useEffect(() => {

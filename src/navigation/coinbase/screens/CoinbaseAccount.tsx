@@ -289,7 +289,6 @@ const CoinbaseAccount = ({
 
     if (transactions && transactions[accountId]) {
       const tx = transactions[accountId].data;
-      console.log(tx);
       setTxs(tx);
     }
 

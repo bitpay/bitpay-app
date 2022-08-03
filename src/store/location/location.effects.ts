@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {LocationActions} from '.';
 import {Effect} from '..';
+import {useLogger} from '../../utils/hooks';
 import {EUCountries} from './location.constants';
 
 const isEuCountry = (countryShortCode: string) => {
@@ -8,6 +9,7 @@ const isEuCountry = (countryShortCode: string) => {
 };
 
 export const getCountry = (): Effect => async dispatch => {
+  const logger = useLogger();
   try {
     const {data: countryData} = await axios.get(
       'https://bitpay.com/wallet-card/location',
@@ -28,6 +30,7 @@ export const getCountry = (): Effect => async dispatch => {
       }),
     );
   } catch (err) {
-    console.log(err);
+    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    logger.error(`getCountry: ${errMsg}`);
   }
 };

@@ -48,6 +48,7 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {LogActions} from '../../../../store/log';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -109,7 +110,9 @@ export const keyBackupRequired = (
                       },
                     });
                   } catch (e) {
-                    console.log(`Decrypt Error: ${e}`);
+                    const errMsg =
+                      e instanceof Error ? e.message : JSON.stringify(e);
+                    LogActions.error('Crypto: (decrypt error)' + errMsg);
                     await dispatch(dismissDecryptPasswordModal());
                     await sleep(1000); // Wait to close Decrypt Password modal
                     dispatch(showBottomNotificationModal(WrongPasswordError()));

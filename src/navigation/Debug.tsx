@@ -81,11 +81,11 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
           [
             {
               text: 'Ok',
-              onPress: () => console.log('OK: Email Error Response'),
+              onPress: () => {},
             },
             {
               text: 'Cancel',
-              onPress: () => console.log('CANCEL: Email Error Response'),
+              onPress: () => {},
             },
           ],
           {cancelable: true},

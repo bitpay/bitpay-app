@@ -53,6 +53,7 @@ export const waitForTargetAmountAndUpdateWallet =
     recipient?: Recipient;
   }): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
       // set loading (for UI spinner on wallet details as well as keyOverview
       dispatch(
@@ -70,7 +71,10 @@ export const waitForTargetAmountAndUpdateWallet =
 
       // wait for expected balance
       const interval = setInterval(() => {
-        console.log('waiting for target balance', retry);
+        logger.debug(
+          'waitForTargetAmountAndUpdateWallet: waiting for target balance ' +
+            retry,
+        );
         retry++;
 
         if (retry > 5) {
@@ -99,7 +103,9 @@ export const waitForTargetAmountAndUpdateWallet =
           },
           async (err: Error, status: Status) => {
             if (err) {
-              console.error(err);
+              const errMsg =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              logger.error(`waitForTargetAmountAndUpdateWallet: ${errMsg}`);
             }
             const {totalAmount} = status.balance;
             // TODO ETH totalAmount !== targetAmount while the transaction is unconfirmed
@@ -124,7 +130,9 @@ export const waitForTargetAmountAndUpdateWallet =
                         wallet: recipientWallet,
                       }),
                     );
-                    console.log('updated recipient wallet');
+                    logger.debug(
+                      'waitForTargetAmountAndUpdateWallet: updated recipient wallet',
+                    );
                   }
                 }
               }
@@ -137,7 +145,8 @@ export const waitForTargetAmountAndUpdateWallet =
         );
       }, 5000);
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`waitForTargetAmountAndUpdateWallet: ${errMsg}`);
     }
   };
 
@@ -145,6 +154,7 @@ export const startUpdateWalletStatus =
   ({key, wallet}: {key: Key; wallet: Wallet}): Effect =>
   async (dispatch, getState) => {
     return new Promise<WalletBalance | void>(async (resolve, reject) => {
+      const logger = useLogger();
       if (!key || !wallet) {
         return reject();
       }
@@ -162,7 +172,9 @@ export const startUpdateWalletStatus =
         } = wallet;
 
         if (!isCacheKeyStale(balanceCacheKey[id], BALANCE_CACHE_DURATION)) {
-          console.log(`Wallet: ${id} - skipping balance update`);
+          logger.debug(
+            `startUpdateWalletStatus: ${id} - skipping balance update`,
+          );
           return resolve();
         }
 
@@ -236,9 +248,13 @@ export const startUpdateWalletStatus =
           );
         }
 
-        console.log(`Updated balance: ${currencyAbbreviation} ${id}`);
+        logger.debug(
+          `startUpdateWalletStatus: Updated balance ${currencyAbbreviation} ${id}`,
+        );
         resolve();
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`startUpdateWalletStatus: ${errMsg}`);
         dispatch(
           failedUpdateWalletStatus({
             keyId: key.id,
@@ -272,7 +288,9 @@ export const startUpdateAllWalletStatusForKeys =
           if (
             !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION)
           ) {
-            console.log(`Key: ${key.id} - skipping balance update`);
+            logger.debug(
+              `startUpdateAllWalletStatusForKeys: ${key.id} - skipping balance update`,
+            );
             return;
           }
 
@@ -482,7 +500,9 @@ export const startUpdateAllKeyAndWalletStatus =
         } = getState();
 
         if (!isCacheKeyStale(balanceCacheKey.all, BALANCE_CACHE_DURATION)) {
-          console.log('All: skipping balance update');
+          logger.debug(
+            'startUpdateAllKeyAndWalletStatus: skipping balance update',
+          );
           return resolve();
         }
 
@@ -521,6 +541,7 @@ const updateWalletStatus =
   }): Effect<Promise<WalletStatus>> =>
   async dispatch => {
     return new Promise(async resolve => {
+      const logger = useLogger();
       const {
         balance: cachedBalance,
         credentials: {token, multisigEthInfo},
@@ -576,7 +597,9 @@ const updateWalletStatus =
 
             const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
 
-            console.log('Status updated: ', newBalance, newPendingTxps);
+            logger.debug(
+              `updateWalletStatus: ${newBalance}. Pending txps: ${newPendingTxps}`,
+            );
 
             resolve({balance: newBalance, pendingTxps: newPendingTxps});
           } catch (err2) {
@@ -767,6 +790,7 @@ const buildPendingTxps =
     status: Status;
   }): Effect<TransactionProposal[]> =>
   dispatch => {
+    const logger = useLogger();
     let newPendingTxps = [];
     try {
       if (status.pendingTxps?.length > 0) {
@@ -774,9 +798,10 @@ const buildPendingTxps =
           ProcessPendingTxps(status.pendingTxps, wallet),
         );
       }
-    } catch (error) {
-      console.log(
-        `Wallet: ${wallet.currencyAbbreviation} - error getting pending txps.`,
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(
+        `buildPendingTxps: for wallet ${wallet.currencyAbbreviation}. ${errMsg}`,
       );
     }
 

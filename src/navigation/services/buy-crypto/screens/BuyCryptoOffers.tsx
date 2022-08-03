@@ -6,12 +6,7 @@ import {
   Linking,
 } from 'react-native';
 import styled from 'styled-components/native';
-import {
-  useTheme,
-  RouteProp,
-  useRoute,
-  useNavigation,
-} from '@react-navigation/native';
+import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
@@ -267,7 +262,6 @@ const BuyCryptoOffers: React.FC = () => {
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const theme = useTheme();
   offersDefault.simplex.showOffer = isPaymentMethodSupported(
     'simplex',
     paymentMethod,
@@ -383,7 +377,9 @@ const BuyCryptoOffers: React.FC = () => {
           }
         })
         .catch((err: any) => {
-          console.log('Simplex getting quote: FAILED', err);
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error('Simplex getting quote: FAILED ' + errMsg);
           const reason = 'simplexGetQuote Error';
           showSimplexError(err, reason);
         });
@@ -531,7 +527,8 @@ const BuyCryptoOffers: React.FC = () => {
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         )) as string;
       } catch (err) {
-        console.error(err);
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('getWyreQuote: createWalletAddress ' + errMsg);
         const reason = 'createWalletAddress Error';
         showWyreError(err, reason);
       }
@@ -592,7 +589,9 @@ const BuyCryptoOffers: React.FC = () => {
           setFinishedWyre(!finishedWyre);
         })
         .catch((err: any) => {
-          console.log('Wyre getting quote: FAILED', err);
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error('getWyreQuote: wyreWalletOrderQuotation ' + errMsg);
           const reason = 'wyreWalletOrderQuotation Error';
           showWyreError(err, reason);
         });
@@ -617,7 +616,8 @@ const BuyCryptoOffers: React.FC = () => {
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('setPrefix: createWalletAddress ' + errMsg);
       const reason = 'createWalletAddress Error';
       showSimplexError(err, reason);
     }
@@ -688,7 +688,7 @@ const BuyCryptoOffers: React.FC = () => {
           .then(() => {
             navigation.goBack();
           })
-          .catch(err => console.error("Couldn't load page", err));
+          .catch(() => logger.error("BuyCryptoOffers: Couldn't load page"));
       })
       .catch(err => {
         const reason = 'simplexPaymentRequest Error';
@@ -703,7 +703,8 @@ const BuyCryptoOffers: React.FC = () => {
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('goToWyreBuyPage: createWalletAddress ' + errMsg);
       const reason = 'createWalletAddress Error';
       showWyreError(err, reason);
     }
@@ -770,7 +771,7 @@ const BuyCryptoOffers: React.FC = () => {
       .then(() => {
         navigation.goBack();
       })
-      .catch(err => console.error("Couldn't load page", err));
+      .catch(() => logger.error("BuyCryptoOffers: Couldn't load page"));
   };
 
   const goTo = (key: string): void => {
@@ -843,7 +844,9 @@ const BuyCryptoOffers: React.FC = () => {
                       .then(() => {
                         navigation.goBack();
                       })
-                      .catch(err => console.error("Couldn't load page", err));
+                      .catch(() =>
+                        logger.error("BuyCryptoOffers: Couldn't load page"),
+                      );
                   }
                   break;
               }
@@ -853,7 +856,9 @@ const BuyCryptoOffers: React.FC = () => {
           {
             text: t('GO BACK'),
             action: () => {
-              console.log('Continue to the exchange website CANCELED');
+              logger.debug(
+                'BuyCryptoOffers: Continue to the exchange website CANCELED',
+              );
             },
           },
         ],

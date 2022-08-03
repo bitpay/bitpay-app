@@ -258,6 +258,7 @@ const createWallet = (params: {
   options: CreateOptions;
 }): Promise<API> => {
   return new Promise((resolve, reject) => {
+    const logger = useLogger();
     const bwcClient = BWC.getClient();
     const {key, coin, options} = params;
 
@@ -290,7 +291,6 @@ const createWallet = (params: {
       },
       (err: any) => {
         if (err) {
-          console.log(err);
           switch (err.name) {
             case 'bwc.ErrorCOPAYER_REGISTERED': {
               // eslint-disable-next-line no-shadow
@@ -313,10 +313,13 @@ const createWallet = (params: {
               );
             }
           }
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error(`createWallet: ${errMsg}`);
 
           reject(err);
         } else {
-          console.log('added coin', coin);
+          logger.info('createWallet: success ' + coin);
           resolve(bwcClient);
         }
       },
@@ -422,6 +425,7 @@ export const createWalletWithOpts = (params: {
   opts: Partial<KeyOptions>;
 }): Promise<API> => {
   return new Promise((resolve, reject) => {
+    const logger = useLogger();
     const bwcClient = BWC.getClient();
     const {key, opts} = params;
     try {
@@ -447,7 +451,6 @@ export const createWalletWithOpts = (params: {
         },
         (err: Error) => {
           if (err) {
-            console.log(err);
             switch (err.name) {
               case 'bwc.ErrorCOPAYER_REGISTERED': {
                 const account = opts.account || 0;
@@ -468,10 +471,13 @@ export const createWalletWithOpts = (params: {
                 );
               }
             }
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`createWalletWithOpts: ${errMsg}`);
 
             reject(err);
           } else {
-            console.log('added coin', opts.coin);
+            logger.info('createWalletWithOpts: success ' + opts.coin);
             resolve(bwcClient);
           }
         },

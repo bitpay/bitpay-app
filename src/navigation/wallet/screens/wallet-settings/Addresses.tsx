@@ -22,7 +22,7 @@ import {WalletStackParamList} from '../../WalletStack';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {GetMainAddresses} from '../../../../store/wallet/effects/address/address';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
@@ -90,6 +90,7 @@ const CopyImgContainerRight = styled.View`
 
 const Addresses = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'Addresses'>>();
@@ -203,7 +204,8 @@ const Addresses = () => {
           setMinFeePer(per.toFixed(2) + '%');
         }
       } catch (e) {
-        console.log(e);
+        const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error('Addresses: (init)' + errMsg);
       }
       setLoading(false);
     } catch (e) {
@@ -262,7 +264,9 @@ const Addresses = () => {
         },
         async (err: any) => {
           if (err) {
-            console.log(err);
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error('Addresses: (startScan)' + errMsg);
             setButtonState('failed');
             await sleep(1000);
             setButtonState(null);

@@ -198,7 +198,9 @@ export const startCreateDebitCardTopUpInvoice =
     params: DebitCardTopUpInvoiceParams,
   ): Effect<Promise<{invoiceId: string; invoice: Invoice}>> =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startCreateDebitCardTopUpInvoice: starting...');
       const {APP} = getState();
       const {network} = APP;
       const baseUrl = BASE_BITPAY_URLS[network];
@@ -217,9 +219,11 @@ export const startCreateDebitCardTopUpInvoice =
       const {
         data: {data: invoice},
       } = getInvoiceResponse as {data: {data: Invoice}};
+      logger.info('startCreateDebitCardTopUpInvoice: success');
       return {invoiceId, invoice} as {invoiceId: string; invoice: Invoice};
     } catch (err) {
-      console.error('Error creating debit card top up invoice', err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`startCreateDebitCardTopUpInvoice: ${errMsg}`);
       throw err;
     }
   };

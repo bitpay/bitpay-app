@@ -10,7 +10,7 @@ import {
   SettingTitle,
   SettingView,
 } from '../../../../components/styled/Containers';
-import {Linking, TouchableOpacity, View} from 'react-native';
+import {Linking, View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {SlateDark, White} from '../../../../styles/colors';
@@ -19,7 +19,7 @@ import Button, {ButtonState} from '../../../../components/button/Button';
 import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
 import {sleep} from '../../../../utils/helper-methods';
 import {APP_NAME} from '../../../../constants/config';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
@@ -65,6 +65,7 @@ const CopyImgContainerRight = styled.View`
 
 const AllAddresses = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const {
     params: {walletName, currencyAbbreviation, usedAddresses, unusedAddresses},
   } = useRoute<RouteProp<WalletStackParamList, 'AllAddresses'>>();
@@ -127,7 +128,8 @@ const AllAddresses = () => {
       await sleep(200);
       setButtonState(undefined);
     } catch (e) {
-      console.log(e);
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error('AllAddresses: (sendAddresses)' + errMsg);
       setButtonState('failed');
       await sleep(500);
       setButtonState(undefined);

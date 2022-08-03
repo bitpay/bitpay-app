@@ -758,7 +758,9 @@ export const startSendPayment =
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
+      const logger = useLogger();
       try {
+        logger.info('startSendPayment: starting...');
         wallet.createTxProposal(
           {...txp, dryRun: false},
           async (err: Error, proposal: TransactionProposal) => {
@@ -777,13 +779,17 @@ export const startSendPayment =
               );
               return resolve(broadcastedTx);
             } catch (e) {
+              const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+              logger.error(`startSendPayment: broadcastedTx ${errMsg}`);
               return reject(e);
             }
           },
           null,
         );
+        logger.info('startSendPayment: success');
       } catch (err) {
-        console.log(err);
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`startSendPayment: ${errMsg}`);
         reject(err);
       }
     });
@@ -1388,12 +1394,7 @@ export const checkBiometricForSending =
       dispatch(checkingBiometricForSending(true));
     }
     await TouchID.isSupported(isSupportedOptionalConfigObject)
-      .then(biometryType => {
-        if (biometryType === 'FaceID') {
-          console.log('FaceID is supported.');
-        } else {
-          console.log('TouchID is supported.');
-        }
+      .then(() => {
         return TouchID.authenticate(
           'Authentication Check',
           authOptionalConfigObject,
