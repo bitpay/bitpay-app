@@ -1,5 +1,6 @@
 import React, {memo} from 'react';
 import {useTranslation} from 'react-i18next';
+import {ImageRequireSource} from 'react-native';
 import styled from 'styled-components/native';
 import ArrowDownRightIcon from '../../../assets/img/arrow-down-right.svg';
 import {IS_ANDROID} from '../../constants';
@@ -21,6 +22,7 @@ export type CurrencySelectionItem = Pick<
   SupportedCurrencyOption,
   'id' | 'currencyAbbreviation' | 'currencyName' | 'img' | 'isToken'
 > & {
+  imgSrc?: ImageRequireSource | undefined;
   selected?: boolean;
   disabled?: boolean;
 };
@@ -112,7 +114,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   onViewAllTokensPressed,
 }) => {
   const {t} = useTranslation();
-  const {currencyAbbreviation, currencyName, img, selected, disabled} =
+  const {currencyAbbreviation, currencyName, img, imgSrc, selected, disabled} =
     currency;
   const onPress = (item: CurrencySelectionItem): void => {
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
@@ -128,7 +130,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
     <CurrencySelectionRowContainer>
       <ChainSelectionRow>
         <CurrencyColumn>
-          <CurrencyImage img={img} />
+          <CurrencyImage img={img} imgSrc={imgSrc} />
         </CurrencyColumn>
 
         <CurrencyTitleColumn style={{flexGrow: 1}}>
@@ -160,14 +162,14 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
             {t('PopularArgTokens', {currency: t(currencyName)})}
           </TokensHeading>
 
-          {tokens.slice(0, 3).map(token => (
+          {tokens.map(token => (
             <TokenSelectionRow key={token.id}>
               <CurrencyColumn style={{marginRight: 16}}>
                 <ArrowDownRightIcon />
               </CurrencyColumn>
 
               <CurrencyColumn>
-                <CurrencyImage img={token.img} />
+                <CurrencyImage img={token.img} imgSrc={token.imgSrc} />
               </CurrencyColumn>
 
               <CurrencyTitleColumn style={{flexGrow: 1}}>

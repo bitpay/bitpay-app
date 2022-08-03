@@ -20,7 +20,7 @@ import CurrencySelectionRow, {
 
 import Button from '../../../components/button/Button';
 import {
-  SUPPORTED_CURRENCIES,
+  Currencies,
   SUPPORTED_TOKENS,
   SupportedCurrencies,
 } from '../../../constants/currencies';
@@ -52,7 +52,7 @@ import {
   useAppDispatch,
   AppDispatch,
 } from '../../../utils/hooks';
-import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOpts, TokenEx} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
@@ -74,8 +74,21 @@ export type CurrencySelectionParamList =
       key: Key;
     };
 
+type CurrencySelectionRowItem = Omit<CurrencySelectionRowProps, 'tokens'> & {
+  /**
+   * All tokens for this chain currency.
+   */
+  tokens: CurrencySelectionItem[];
+
+  /**
+   * Popular tokens for this chain currency. Needs to be kept in sync with tokens.
+   * Using a separate property instead of deriving due to performance reasons.
+   */
+  popularTokens: CurrencySelectionItem[];
+};
+
 interface ContextHandler {
-  listItems: CurrencySelectionRowProps[];
+  listItems: CurrencySelectionRowItem[];
   headerTitle?: string;
   ctaTitle?: string;
   bottomCta?: (props: {
@@ -107,15 +120,24 @@ export const SearchContainer = styled.View`
   margin: 20px ${ScreenGutter} 0;
 `;
 
-const SupportedMultisigCurrencyOptions: CurrencySelectionRowProps[] =
+const SupportedChainCurrencyOptions = SupportedCurrencyOptions.filter(
+  currency => {
+    return !currency.isToken;
+  },
+);
+
+const SupportedMultisigCurrencyOptions: CurrencySelectionRowItem[] =
   SupportedCurrencyOptions.filter(currency => currency.hasMultisig).map(
     currency => {
-      const item: CurrencySelectionRowProps = {
+      const item: CurrencySelectionRowItem = {
         currency: {
           ...currency,
+          imgSrc: undefined,
           selected: false,
           disabled: false,
         },
+        tokens: [],
+        popularTokens: [],
       };
 
       return item;
@@ -127,7 +149,12 @@ const DESCRIPTIONS: Record<string, string> = {
   matic: 'TokensOnPolygonNetworkDescription',
 };
 
-const keyExtractor = (item: CurrencySelectionRowProps) => item.currency.id;
+const POPULAR_TOKENS: Record<string, string[]> = {
+  eth: ['usdc', 'busd', 'gusd'],
+  matic: ['usdc', 'busd', 'gusd'],
+};
+
+const keyExtractor = (item: CurrencySelectionRowItem) => item.currency.id;
 
 const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   route,
@@ -161,7 +188,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   /**
    * Source of truth for which currencies are selected.
    */
-  const [allListItems, setAllListItems] = useState<CurrencySelectionRowProps[]>(
+  const [allListItems, setAllListItems] = useState<CurrencySelectionRowItem[]>(
     [],
   );
   const allListItemsRef = useRef(allListItems);
@@ -177,28 +204,24 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     }
 
     // Else return a new array to trigger a rerender.
-    return allListItems.reduce<CurrencySelectionRowProps[]>((accum, item) => {
-      const currencyMatch =
+    return allListItems.reduce<CurrencySelectionRowItem[]>((accum, item) => {
+      const isCurrencyMatch =
         item.currency.currencyAbbreviation
           .toLowerCase()
           .includes(searchFilter) ||
         item.currency.currencyName.toLowerCase().includes(searchFilter);
+      const matchingTokens = item.popularTokens.filter(
+        token =>
+          token.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
+          token.currencyName.toLowerCase().includes(searchFilter),
+      );
 
-      if (currencyMatch) {
-        accum.push(item);
-      } else if (item.tokens?.length) {
-        const tokenMatch = item.tokens.filter(
-          token =>
-            token.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
-            token.currencyName.toLowerCase().includes(searchFilter),
-        );
-
-        if (tokenMatch.length) {
-          accum.push({
-            ...item,
-            tokens: tokenMatch,
-          });
-        }
+      // Display the item if the currency itself matches the filter or one of its tokens matches
+      if (isCurrencyMatch || matchingTokens.length) {
+        accum.push({
+          ...item,
+          popularTokens: matchingTokens,
+        });
       }
 
       return accum;
@@ -208,12 +231,12 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   // Format supported currencies and tokens into row item format.
   // Resets if tokenOptions or tokenData updates.
   useEffect(() => {
-    const chainMap: Record<string, CurrencySelectionRowProps> = {};
+    const chainMap: Record<string, CurrencySelectionRowItem> = {};
 
-    // Add all top level currencies to list
-    const list: CurrencySelectionRowProps[] = SupportedCurrencyOptions.map(
+    // Add all chain currencies to list
+    const list: CurrencySelectionRowItem[] = SupportedChainCurrencyOptions.map(
       ({id, currencyAbbreviation, currencyName, img}) => {
-        const item = {
+        const item: CurrencySelectionRowItem = {
           currency: {
             id,
             currencyAbbreviation,
@@ -223,6 +246,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             disabled: false,
           },
           tokens: [],
+          popularTokens: [],
           description: DESCRIPTIONS[id] ? t(DESCRIPTIONS[id]) : '',
         };
 
@@ -233,27 +257,26 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     );
 
     // For each token, add it to the token list for its parent chain object
-    const allTokenOptions = {
+    const allTokenOptions: Record<string, TokenEx> = {
       ...BitpaySupportedTokenOpts,
       ...appTokenOptions,
       ...appCustomTokenOptions,
     };
     Object.entries(allTokenOptions).forEach(([k, tokenOpt]) => {
-      if (
-        SUPPORTED_CURRENCIES.includes(k) ||
-        !(appTokenData[k] || appCustomTokenData[k])
-      ) {
+      if (!(Currencies[k] || appTokenData[k] || appCustomTokenData[k])) {
         return;
       }
 
-      const tokenData = appTokenData[k] || appCustomTokenData[k];
+      const tokenData =
+        Currencies[k] || appTokenData[k] || appCustomTokenData[k];
       const chainData = chainMap[tokenData.chain.toLowerCase()];
 
       const token: CurrencySelectionItem = {
         id: k,
         currencyAbbreviation: tokenOpt.symbol,
         currencyName: tokenOpt.name,
-        img: tokenOpt.logoURI || chainData?.currency.img || '',
+        img: tokenOpt.logoURI || chainData.currency.img || '',
+        imgSrc: tokenOpt.logoSource || undefined,
         selected: false,
         disabled: false,
         isToken: true,
@@ -265,10 +288,16 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         }
 
         chainData.tokens.push(token);
+
+        if (POPULAR_TOKENS[tokenData.chain.toLowerCase()].includes(token.id)) {
+          chainData.popularTokens.push(token);
+        }
       } else {
         // Parent chain currency not found, just push to the main list.
         list.push({
           currency: token,
+          tokens: [],
+          popularTokens: [],
         });
       }
     });
@@ -318,7 +347,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
       return (
         SUPPORTED_TOKENS.includes(selectedLower) ||
-        ethState?.tokens?.some(token => {
+        ethState?.tokens.some(token => {
           return token.id.toLowerCase() === selectedLower && token.selected;
         })
       );
@@ -467,7 +496,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         accum.push(item.currency.currencyAbbreviation);
       }
 
-      item.tokens?.forEach(token => {
+      item.tokens.forEach(token => {
         if (token.selected) {
           accum.push(token.currencyAbbreviation);
         }
@@ -482,42 +511,47 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   };
 
   const toggleCurrency = (id: string) => {
-    const updated = allListItems.reduce<CurrencySelectionRowProps[]>(
-      (accum, item) => {
+    setAllListItems(previous =>
+      previous.map(item => {
         const isCurrencyMatch = item.currency.id === id;
-        const isTokenMatch = item.tokens?.some(token => token.id === id);
+        const tokenMatch = item.tokens.find(token => token.id === id);
 
         if (isCurrencyMatch) {
           item.currency = {
             ...item.currency,
             selected: !item.currency.selected,
           };
-        } else if (isTokenMatch) {
-          item.tokens = item.tokens?.reduce<CurrencySelectionItem[]>(
-            (tokenAccum, token) => {
-              if (token.id === id) {
-                tokenAccum.push({
-                  ...token,
-                  selected: !token.selected,
-                });
-              } else {
-                tokenAccum.push(token);
-              }
+        } else if (tokenMatch) {
+          const updatedToken = {
+            ...tokenMatch,
+            selected: !tokenMatch.selected,
+          };
 
-              return tokenAccum;
-            },
-            [],
-          );
+          // update token state
+          item.tokens = item.tokens.map(token => {
+            return token.id === id ? updatedToken : token;
+          });
+
+          // update popular token state
+          // add tokens once selected so user can see their entire selection
+          // don't remove tokens once added so user doesn't have to hunt for it again if they toggle it on/off
+          let appendToPopular = true;
+          item.popularTokens = item.popularTokens.map(token => {
+            if (token.id === id) {
+              appendToPopular = false;
+            }
+
+            return token.id === id ? updatedToken : token;
+          });
+
+          if (appendToPopular) {
+            item.popularTokens.push(updatedToken);
+          }
         }
 
-        accum.push(item);
-
-        return accum;
-      },
-      [],
+        return item;
+      }),
     );
-
-    setAllListItems(updated);
   };
 
   const onToggle = ({
@@ -546,28 +580,33 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   }, []);
 
   const memoizedOnViewAllPressed = useMemo(() => {
-    return (
-      currency: CurrencySelectionItem,
-      tokens: CurrencySelectionItem[],
-    ) => {
+    return (currency: CurrencySelectionItem) => {
+      const item = allListItemsRef.current.find(
+        i => i.currency.id === currency.id,
+      );
+
+      if (!item) {
+        return;
+      }
+
       navigation.navigate('Wallet', {
         screen: WalletScreens.CURRENCY_TOKEN_SELECTION,
         params: {
           currency,
-          tokens,
+          tokens: item.tokens,
           onToggle: memoizedOnToggle,
         },
       });
     };
   }, [memoizedOnToggle, navigation]);
 
-  const renderItem: ListRenderItem<CurrencySelectionRowProps> = useCallback(
+  const renderItem: ListRenderItem<CurrencySelectionRowItem> = useCallback(
     ({item}) => {
       return (
         <CurrencySelectionRow
           key={item.currency.id}
           currency={item.currency}
-          tokens={item.tokens}
+          tokens={item.popularTokens}
           description={item.description}
           onToggle={memoizedOnToggle}
           hideCheckbox={hideCheckbox}
@@ -615,7 +654,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
       {listItems.length ? (
         <ListContainer style={{flexShrink: 1}}>
-          <FlatList<CurrencySelectionRowProps>
+          <FlatList<CurrencySelectionRowItem>
             data={listItems}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
