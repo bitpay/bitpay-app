@@ -444,7 +444,7 @@ const Confirm = () => {
                         openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'),
                       );
                     }}>
-                    <Link>Learn More</Link>
+                    <Link>{t('Learn More')}</Link>
                   </TouchableOpacity>
                 </VerticalPadding>
               </Info>
@@ -462,6 +462,7 @@ const Confirm = () => {
 
         <PaymentSent
           isVisible={showPaymentSentModal}
+          title={wallet.credentials.n > 1 ? t('Proposal created') : t('Payment Sent')}
           onCloseModal={async () => {
             setShowPaymentSentModal(false);
             if (recipient.type === 'coinbase') {
@@ -482,8 +483,6 @@ const Confirm = () => {
                   ],
                 }),
               );
-            } else if (recipient.type === 'contact') {
-              navigation.dispatch(StackActions.popToTop());
             } else {
               navigation.dispatch(StackActions.popToTop());
               navigation.dispatch(

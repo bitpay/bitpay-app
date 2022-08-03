@@ -69,6 +69,7 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
+import _ from 'lodash';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -93,10 +94,6 @@ export const DetailContainer = styled.View`
 export const DetailRow = styled(Row)`
   align-items: center;
   justify-content: space-between;
-`;
-
-const TransactionIdText = styled(H7)`
-  max-width: 150px;
 `;
 
 export const DetailColumn = styled(Column)`
@@ -198,7 +195,6 @@ const TransactionProposalDetails = () => {
     params: {transaction, wallet, key},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionProposalDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [txs, setTxs] = useState<any>();
@@ -206,6 +202,7 @@ const TransactionProposalDetails = () => {
   const title = getDetailsTitle(transaction, wallet);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [lastSigner, setLastSigner] = useState(false);
 
   let {
     currencyAbbreviation,
@@ -231,6 +228,10 @@ const TransactionProposalDetails = () => {
         }),
       );
       setTxs(_transaction);
+      setLastSigner(
+        _.filter(_transaction.actions, {type: 'accept'}).length ===
+          _transaction.requiredSignatures - 1,
+      );
       await sleep(500);
       setIsLoading(false);
     } catch (e) {
@@ -434,6 +435,7 @@ const TransactionProposalDetails = () => {
                 />
               </DetailRow>
             </DetailContainer>
+            <Hr />
           </>
 
           {txs.creatorName && IsShared(wallet) ? (
@@ -492,14 +494,15 @@ const TransactionProposalDetails = () => {
       txs.pendingForUs &&
       (IsShared(wallet) || txs.multisigContractAddress) ? (
         <SwipeButton
-          title={t('Slide to send')}
+          title={lastSigner ? t('Slide to send') : t('Slide to accept')}
           forceReset={resetSwipeButton}
           onSwipeComplete={async () => {
             try {
               dispatch(
                 startOnGoingProcessModal(
-                  //  t('Sending Payment')
-                  t(OnGoingProcessMessages.SENDING_PAYMENT),
+                  lastSigner
+                    ? t(OnGoingProcessMessages.SENDING_PAYMENT)
+                    : t(OnGoingProcessMessages.ACCEPTING_PAYMENT),
                 ),
               );
               await sleep(400);
@@ -541,6 +544,7 @@ const TransactionProposalDetails = () => {
 
       <PaymentSent
         isVisible={showPaymentSentModal}
+        title={lastSigner ? t('Payment Sent') : t('Payment Accepted')}
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
           await sleep(300);
