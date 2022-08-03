@@ -17,11 +17,14 @@ import {
 import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
 import {logSegmentEvent} from '../../../../../store/app/app.effects';
-import {LogActions} from '../../../../../store/log';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {HeaderTitle} from '../../../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../../utils/hooks';
 import {Network} from '../../../../../constants';
 import {
   networkChanged,
@@ -32,6 +35,7 @@ import RNRestart from 'react-native-restart';
 
 const ThemeSettings: React.FC = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const currentTheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
   const navigation = useNavigation();
@@ -92,9 +96,7 @@ const ThemeSettings: React.FC = () => {
   const onSetThemePress = (setScheme: ColorSchemeName) => {
     setSelected(setScheme);
     dispatch(AppActions.setColorScheme(setScheme));
-    dispatch(
-      LogActions.info('Theme updated to ' + (setScheme || 'system default')),
-    );
+    logger.info('Theme: updated to ' + (setScheme || 'system default'));
     dispatch(
       logSegmentEvent('track', 'Saved Theme', {
         theme: setScheme || 'system default',

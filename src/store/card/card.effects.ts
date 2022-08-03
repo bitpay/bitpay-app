@@ -24,6 +24,7 @@ import {BASE_BITPAY_URLS} from '../../constants/config';
 import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
+import {useLogger} from '../../utils/hooks';
 
 const DoshWhitelist: string[] = [];
 
@@ -53,6 +54,7 @@ export interface AppleWalletProvisioningRequestParams {
 export const startCardStoreInit =
   (initialData: InitialUserData): Effect<void> =>
   (dispatch, getState) => {
+    const logger = useLogger();
     const {APP} = getState();
 
     dispatch(CardActions.successInitializeStore(APP.network, initialData));
@@ -71,35 +73,30 @@ export const startCardStoreInit =
     }
 
     // Dosh card rewards
-    dispatch(LogActions.info('Initializing Dosh...'));
+    logger.info('startCardStoreInit: Initializing Dosh...');
 
     if (!Dosh) {
-      dispatch(LogActions.debug('Dosh module not found.'));
+      logger.debug('startCardStoreInit: Dosh module not found.');
     } else {
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
       try {
         Dosh.initializeDosh(options).then(() => {
-          dispatch(LogActions.info('Successfully initialized Dosh.'));
+          logger.info('startCardStoreInit: Successfully initialized Dosh.');
 
           const {doshToken} = initialData;
           if (!doshToken) {
-            dispatch(LogActions.debug('No doshToken provided.'));
+            logger.debug('startCardStoreInit: No doshToken provided.');
             return;
           }
 
           return Dosh.setDoshToken(doshToken);
         });
-      } catch (err: any) {
-        dispatch(
-          LogActions.error('An error occurred while initializing Dosh.'),
+      } catch (e: any) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `startCardStoreInit: An error occurred while initializing Dosh. ${errorStr}`,
         );
-
-        if ((err as any).message) {
-          dispatch(LogActions.error((err as any).message));
-        } else {
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
       }
     }
   };
@@ -128,7 +125,9 @@ export const startFetchOverview =
     },
   ): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startFetchOverview: starting...');
       dispatch(
         AppActions.showOnGoingProcessModal(
           // t('Loading')
@@ -179,11 +178,13 @@ export const startFetchOverview =
           topUpHistory,
         }),
       );
-    } catch (err) {
-      console.log(`Failed to fetch overview for card ${id}`);
+      logger.info('startFetchOverview: success');
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
       batch(() => {
-        dispatch(LogActions.error(`Failed to fetch overview for card ${id}`));
-        dispatch(LogActions.error(JSON.stringify(err)));
+        logger.error(
+          `startFetchOverview: Failed to fetch overview for card ${id}. ${errorStr}`,
+        );
         dispatch(CardActions.failedFetchOverview(id));
       });
     } finally {
@@ -234,7 +235,9 @@ export const startFetchSettledTransactions =
     },
   ): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startFetchSettledTransactions: starting...');
       dispatch(
         AppActions.showOnGoingProcessModal(
           // t('Loading')
@@ -270,6 +273,7 @@ export const startFetchSettledTransactions =
       dispatch(
         CardActions.successFetchSettledTransactions(id, transactionPageData),
       );
+      logger.info('startFetchSettledTransactions: success');
     } catch (err) {
       let errMsg;
 
@@ -281,10 +285,9 @@ export const startFetchSettledTransactions =
         errMsg = JSON.stringify(err);
       }
 
-      dispatch(
-        LogActions.error(`Failed to fetch settled transactions for ${id}`),
+      logger.error(
+        `startFetchSettledTransactions: Failed for ${id}. ${errMsg}`,
       );
-      dispatch(LogActions.error(errMsg || JSON.stringify(err)));
       dispatch(CardActions.failedFetchSettledTransactions(id));
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -294,7 +297,9 @@ export const startFetchSettledTransactions =
 export const startFetchVirtualCardImageUrls =
   (ids: string[]): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startFetchVirtualCardImageUrls: starting...');
       const {APP, BITPAY_ID} = getState();
 
       const urlsPayload = await CardApi.fetchVirtualCardImageUrls(
@@ -310,18 +315,23 @@ export const startFetchVirtualCardImageUrls =
         });
 
         FastImage.preload(sources);
-      } catch (err) {
-        dispatch(LogActions.error('Failed to preload virtual card images.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-      }
-    } catch (err) {
-      batch(() => {
-        dispatch(
-          LogActions.error(
-            `Failed to fetch virtual card image URLs for ${ids.join(', ')}`,
-          ),
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          'startFetchVirtualCardImageUrls: Failed to preload virtual card images',
         );
-        dispatch(LogActions.error(JSON.stringify(err)));
+        logger.error(`startFetchVirtualCardImageUrls: ${errorStr}`);
+      }
+      logger.info('startFetchVirtualCardImageUrls: success');
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+      batch(() => {
+        logger.error(
+          `startFetchVirtualCardImageUrls: Failed to fetch virtual card image URLs for ${ids.join(
+            ', ',
+          )}`,
+        );
+        logger.error(`startFetchVirtualCardImageUrls: ${errorStr}`);
         dispatch(CardActions.failedFetchVirtualImageUrls());
       });
     }
@@ -339,12 +349,13 @@ export const START_UPDATE_CARD_LOCK =
       const isLocked = res.user.card.locked === 'true';
 
       dispatch(CardActions.successUpdateCardLock(network, id, isLocked));
-    } catch (err) {
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
       batch(() => {
         dispatch(
           LogActions.error(`Failed to update card lock status for ${id}`),
         );
-        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(LogActions.error(`START_UPDATE_CARD_LOCK: ${errorStr}`));
         dispatch(CardActions.failedUpdateCardLock(id));
       });
     }
@@ -353,7 +364,9 @@ export const START_UPDATE_CARD_LOCK =
 export const startActivateCard =
   (id: string, payload: StartActivateCardParams): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startActivateCard: starting...');
       dispatch(CardActions.updateActivateCardStatus(null));
 
       const {APP, BITPAY_ID} = getState();
@@ -371,14 +384,10 @@ export const startActivateCard =
       } else {
         throw new Error('An unexpected error occurred.');
       }
-    } catch (err) {
-      let errMsg = JSON.stringify(err);
-
-      if (err instanceof Error) {
-        errMsg = err.message;
-      }
-
-      dispatch(LogActions.error(`Failed to activate card: ${errMsg}`));
+      logger.info('startActivateCard: success');
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(`startActivateCard: ${errMsg}`);
       dispatch(CardActions.failedActivateCard(errMsg));
     }
   };
@@ -395,10 +404,11 @@ export const START_UPDATE_CARD_NAME =
       const {nickname} = res.user.card;
 
       dispatch(CardActions.successUpdateCardName(network, id, nickname));
-    } catch (err) {
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
       batch(() => {
         dispatch(LogActions.error(`Failed to update card name for ${id}`));
-        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(LogActions.error(`START_UPDATE_CARD_NAME: ${errMsg}`));
         dispatch(CardActions.failedUpdateCardName(id));
       });
     }
@@ -462,6 +472,7 @@ export const START_FETCH_REFERRED_USERS =
 export const startOpenDosh =
   (email: string): Effect<void> =>
   async dispatch => {
+    const logger = useLogger();
     const isDoshWhitelisted = !!email && DoshWhitelist.includes(email);
 
     if (!isDoshWhitelisted) {
@@ -486,11 +497,12 @@ export const startOpenDosh =
 
     try {
       Dosh.present();
-    } catch (err) {
-      dispatch(
-        LogActions.error('Something went wrong trying to open Dosh Rewards'),
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(
+        'startOpenDosh: Something went wrong trying to open Dosh Rewards',
       );
-      dispatch(LogActions.error(JSON.stringify(err)));
+      logger.error('startOpenDosh: ' + errMsg);
     }
   };
 
@@ -507,11 +519,14 @@ export const startAddToAppleWallet =
     };
   }): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
       const {APP, BITPAY_ID} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
       const {cardholderName, primaryAccountNumberSuffix} = data;
+
+      logger.info('startAddToAppleWallet: starging...');
 
       await ApplePushProvisioningModule.startAddPaymentPass(
         primaryAccountNumberSuffix,
@@ -539,14 +554,17 @@ export const startAddToAppleWallet =
           dispatch(completeAddApplePaymentPass({res}));
         },
       );
-    } catch (e) {
-      dispatch(
-        LogActions.debug(
-          `appleWallet - startAddPaymentPassError - ${JSON.stringify(e)}`,
-        ),
+      logger.info('startAddToAppleWallet: success');
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.debug(
+        `startAddToAppleWallet: startAddPaymentPassError - ${errMsg}`,
       );
-      dispatch(
-        LogActions.debug(JSON.stringify(e, Object.getOwnPropertyNames(e))),
+      logger.debug(
+        `startAddToAppleWallet: ${JSON.stringify(
+          e,
+          Object.getOwnPropertyNames(e),
+        )}`,
       );
       ApplePushProvisioningModule.eventEmitter.removeAllListeners(
         'getPassAndActivation',
@@ -557,11 +575,12 @@ export const startAddToAppleWallet =
 export const completeAddApplePaymentPass =
   ({res}: {res: {data: any}}): Effect =>
   async dispatch => {
+    const logger = useLogger();
     try {
-      dispatch(
-        LogActions.debug(
-          `appleWallet - completeAddPaymentPass - ${JSON.stringify(res)}`,
-        ),
+      logger.debug(
+        `completeAddApplePaymentPass: completeAddPaymentPass - ${JSON.stringify(
+          res,
+        )}`,
       );
 
       const {
@@ -590,11 +609,11 @@ export const completeAddApplePaymentPass =
         Analytics.track('Added card to Apple Wallet', {brand: brand || ''}),
       );
     } catch (e) {
-      console.error(e);
-      dispatch(
-        LogActions.error(`appleWallet - completeAddPaymentPassError - ${e}`),
-      );
-      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(
+        `completeAddApplePaymentPass: completeAddPaymentPassError - ${errMsg}`,
+      ),
+        dispatch(AppActions.showBottomNotificationModal(GeneralError()));
     }
   };
 
@@ -607,11 +626,14 @@ export const startAddToGooglePay =
     data: {lastFourDigits: string; name: string};
   }): Effect =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
       const {APP, BITPAY_ID, CARD} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
       const card = CARD.cards[network].find(c => c.id === id);
+
+      logger.info('startAddToGooglePay: starting...');
 
       const {data: provisioningData} =
         await CardApi.startCreateGooglePayProvisioningRequest(token, id);
@@ -634,11 +656,12 @@ export const startAddToGooglePay =
             brand: card?.brand || '',
           }),
         );
+        logger.info('startAddToGooglePay: success');
       }
-    } catch (e) {
-      console.error(e);
-      dispatch(
-        LogActions.error(`googlePay - completePushProvisionError - ${e}`),
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(
+        `startAddToGooglePay: completePushProvisionError - ${errMsg}`,
       );
 
       if (e instanceof Error) {

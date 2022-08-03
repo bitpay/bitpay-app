@@ -10,7 +10,6 @@ import {WIDTH} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {IS_ANDROID, IS_IOS} from '../../../../../constants';
 import {APP_VERSION} from '../../../../../constants/config';
-import {LogActions} from '../../../../../store/log';
 import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
 import {
   Caution,
@@ -19,7 +18,7 @@ import {
   Warning,
   White,
 } from '../../../../../styles/colors';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {useAppSelector, useLogger} from '../../../../../utils/hooks';
 import {AboutStackParamList} from '../AboutStack';
 
 export interface SessionLogsParamList {}
@@ -98,7 +97,7 @@ const keyExtractor = (item: LogEntry, index: number) => item.message + index;
 
 const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const {t} = useTranslation();
-  const dispatch = useAppDispatch();
+  const logger = useLogger();
   const logs = useAppSelector(({LOG}) => LOG.logs);
   const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
 
@@ -119,10 +118,10 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
       },
       (error, event) => {
         if (error) {
-          dispatch(LogActions.error('Error sending email: ' + error));
+          logger.error('SessionLogs: Error sending email: ' + error);
         }
         if (event) {
-          dispatch(LogActions.debug('Email Logs: ' + event));
+          logger.debug('SessionLogs: Email Logs: ' + event);
         }
       },
     );

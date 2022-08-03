@@ -34,7 +34,6 @@ import {CardEffects} from '../card';
 import {coinbaseInitialize} from '../coinbase';
 import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
-import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {startMigration, startWalletStoreInit} from '../wallet/effects';
@@ -64,6 +63,7 @@ import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import {debounce} from 'lodash';
+import {useLogger} from '../../utils/hooks';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -74,15 +74,17 @@ const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
   : '1d1db929-909d-40e0-93ec-34106ea576b4';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
+  const logger = useLogger();
   try {
-    dispatch(LogActions.clear());
-    dispatch(LogActions.info(`Initializing app (${__DEV__ ? 'D' : 'P'})...`));
+    // TODO: review if we want to clear log every session
+    logger.clear();
+    logger.info(`startAppInit: Initializing app (${__DEV__ ? 'D' : 'P'})...`);
 
     const {APP, BITPAY_ID} = getState();
     const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
 
-    dispatch(LogActions.debug(`Network: ${network}`));
-    dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
+    logger.debug(`startAppInit: Network: ${network}`);
+    logger.debug(`startAppInit: Theme: ${colorScheme || 'system'}`);
 
     await dispatch(startWalletStoreInit());
 
@@ -91,7 +93,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     if (!appFirstOpenData?.firstOpenDate) {
       dispatch(setAppFirstOpenEventDate());
-      dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
+      logger.info('startAppInit: setAppFirstOpenEventDate success');
     }
 
     // init analytics -> post onboarding or migration
@@ -102,7 +104,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (!migrationComplete) {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
-      dispatch(LogActions.info('success [setMigrationComplete]'));
     }
 
     const token = BITPAY_ID.apiToken[network];
@@ -115,10 +116,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     if (isPaired) {
       try {
-        dispatch(
-          LogActions.info(
-            'App is paired with BitPayID, refreshing user data...',
-          ),
+        logger.info(
+          'startAppInit: App is paired with BitPayID, refreshing user data...',
         );
 
         const {errors, data} = await UserApi.fetchInitialUserData(token);
@@ -129,30 +128,26 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             .map(e => `${e.path.join('.')}: ${e.message}`)
             .join(',\n');
 
-          dispatch(
-            LogActions.error(
-              'One or more errors occurred while fetching initial user data:\n' +
-                msg,
-            ),
+          logger.error(
+            'startAppInit: One or more errors occurred while fetching initial user data: ' +
+              msg,
           );
         }
         await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {
-        if (isAxiosError(err)) {
-          dispatch(LogActions.error(`${err.name}: ${err.message}`));
-          dispatch(LogActions.error(err.config.url));
-          dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
-        } else if (err instanceof Error) {
-          dispatch(LogActions.error(`${err.name}: ${err.message}`));
-        } else {
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
+        let errMsg;
 
-        dispatch(
-          LogActions.info(
-            'Failed to refresh user data. Continuing initialization.',
-          ),
+        if (isAxiosError(err)) {
+          errMsg = err.response?.data.message || err.message;
+        } else if (err instanceof Error) {
+          errMsg = err.message;
+        } else {
+          errMsg = JSON.stringify(err);
+        }
+        logger.error(`startAppInit: ${errMsg}`);
+        logger.info(
+          'startAppInit: Failed to refresh user data. Continuing initialization.',
         );
       }
     }
@@ -166,9 +161,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(showBlur(pinLockActive || biometricLockActive));
     dispatch(AppActions.successAppInit());
     await sleep(500);
-    dispatch(LogActions.info('Initialized app successfully.'));
-    dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
-    dispatch(LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`));
+    logger.info('startAppInit: Initialized app successfully.');
+    logger.debug(`startAppInit: Pin Lock Active: ${pinLockActive}`);
+    logger.debug(`startAppInit: Biometric Lock Active: ${biometricLockActive}`);
     RNBootSplash.hide({fade: true}).then(() => {
       // avoid splash conflicting with modal in iOS
       // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
@@ -192,7 +187,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       // Avoid lock the app in Debug view
       dispatch(AppActions.failedAppInit());
     }
-    dispatch(LogActions.error('Failed to initialize app: ' + errorStr));
+    logger.error('startAppInit: Failed to initialize app: ' + errorStr);
     await sleep(500);
     dispatch(showBlur(false));
     RNBootSplash.hide();
@@ -205,29 +200,29 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
  */
 const initializeAppIdentity =
   (): Effect<AppIdentity> => (dispatch, getState) => {
+    const logger = useLogger();
     const {APP} = getState();
     let identity = APP.identity[APP.network];
 
-    dispatch(LogActions.info('Initializing App Identity...'));
+    logger.info('initializeAppIdentity: starting...');
 
     if (!identity || !Object.keys(identity).length || !identity.priv) {
       try {
-        dispatch(LogActions.info('Generating new App Identity...'));
+        logger.info('initializeAppIdentity: Generating new App Identity...');
 
         identity = BitAuth.generateSin();
 
         dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
-      } catch (error) {
-        dispatch(
-          LogActions.error(
-            'Error generating App Identity: ' + JSON.stringify(error),
-          ),
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          'initializeAppIdentity: Error generating App Identity: ' + errorStr,
         );
         dispatch(AppActions.failedGenerateAppIdentity());
       }
     }
 
-    dispatch(LogActions.info('Initialized App Identity successfully.'));
+    logger.info('initializeAppIdentity: success');
 
     return identity;
   };
@@ -254,8 +249,9 @@ const initializeApi =
  */
 export const initializeBrazeContent =
   (): Effect => async (dispatch, getState) => {
+    const logger = useLogger();
     try {
-      dispatch(LogActions.info('Initializing Braze content...'));
+      logger.info('initializeBrazeContent: starting...');
       const {APP, BITPAY_ID} = getState();
       const user = BITPAY_ID.user[APP.network];
 
@@ -276,15 +272,13 @@ export const initializeBrazeContent =
         async () => {
           const isInitializing = currentRetry < MAX_RETRIES;
 
-          dispatch(
-            isInitializing
-              ? LogActions.debug(
-                  'Braze content cards updated, fetching latest content cards...',
-                )
-              : LogActions.info(
-                  'Braze content cards updated, fetching latest content cards...',
-                ),
-          );
+          isInitializing
+            ? logger.debug(
+                'initializeBrazeContent: Braze content cards updated, fetching latest content cards...',
+              )
+            : logger.info(
+                'initializeBrazeContent: Braze content cards updated, fetching latest content cards...',
+              );
 
           const contentCards = await ReactAppboy.getContentCards();
 
@@ -294,22 +288,18 @@ export const initializeBrazeContent =
             if (isInitializing) {
               currentRetry++;
               await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
-              dispatch(
-                LogActions.debug(
-                  `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
-                ),
+              logger.debug(
+                `initializeBrazeContent: 0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
               );
               ReactAppboy.requestContentCardsRefresh();
               return;
             }
           }
 
-          dispatch(
-            LogActions.info(
-              `${contentCards.length} content ${
-                contentCards.length === 1 ? 'card' : 'cards'
-              } fetched from Braze.`,
-            ),
+          logger.info(
+            `initializeBrazeContent: ${contentCards.length} content ${
+              contentCards.length === 1 ? 'card' : 'cards'
+            } fetched from Braze.`,
           );
           dispatch(AppActions.brazeContentCardsFetched(contentCards));
         },
@@ -323,10 +313,10 @@ export const initializeBrazeContent =
         let eid: string;
 
         if (APP.brazeEid) {
-          dispatch(LogActions.debug('Braze EID exists.'));
+          logger.debug('initializeBrazeContent: Braze EID exists.');
           eid = APP.brazeEid;
         } else {
-          dispatch(LogActions.debug('Generating a new Braze EID...'));
+          logger.debug('initializeBrazeContent: Generating a new Braze EID...');
           eid = uuid.v4().toString();
         }
 
@@ -334,19 +324,13 @@ export const initializeBrazeContent =
         dispatch(setBrazeEid(eid));
       }
 
-      dispatch(LogActions.info('Successfully initialized Braze.'));
+      logger.info('initializeBrazeContent: Successfully initialized Braze.');
       dispatch(AppActions.brazeInitialized(contentCardSubscription));
-    } catch (err) {
-      const errMsg = 'Something went wrong while initializing Braze.';
-
-      dispatch(LogActions.error(errMsg));
-      dispatch(
-        LogActions.error(
-          err instanceof Error ? err.message : JSON.stringify(err),
-        ),
-      );
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(`initializeBrazeContent: failed ${errorStr}`);
     } finally {
-      dispatch(LogActions.info('Initializing Braze content complete.'));
+      logger.info('initializeBrazeContent: success');
     }
   };
 
@@ -355,19 +339,15 @@ export const initializeBrazeContent =
  * @returns void
  */
 export const requestBrazeContentRefresh = (): Effect => async dispatch => {
+  const logger = useLogger();
   try {
-    dispatch(LogActions.info('Refreshing Braze content...'));
+    logger.info('requestBrazeContentRefresh: starting...');
 
     ReactAppboy.requestContentCardsRefresh();
-  } catch (err) {
-    const errMsg = 'Something went wrong while refreshing Braze content.';
-
-    dispatch(LogActions.error(errMsg));
-    dispatch(
-      LogActions.error(
-        err instanceof Error ? err.message : JSON.stringify(err),
-      ),
-    );
+    logger.info('requestBrazeContentRefresh: success');
+  } catch (e: unknown) {
+    const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+    logger.error(`requestBrazeContentRefresh: failed ${errorStr}`);
   }
 };
 
@@ -394,19 +374,23 @@ export const startOnGoingProcessModal =
  */
 export const openUrlWithInAppBrowser =
   (url: string, options: InAppBrowserOptions = {}): Effect =>
-  async dispatch => {
+  async () => {
+    const logger = useLogger();
     let isIabAvailable = false;
 
     try {
       isIabAvailable = await InAppBrowser.isAvailable();
-    } catch (err) {
-      console.log(err);
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(`openUrlWithInAppBrowser: ${errorStr}`);
     }
 
     const handler = isIabAvailable ? 'InAppBrowser' : 'external app';
 
     try {
-      dispatch(LogActions.info(`Opening URL ${url} with ${handler}`));
+      logger.info(
+        `openUrlWithInAppBrowser: Opening URL ${url} with ${handler}`,
+      );
 
       if (isIabAvailable) {
         // successfully resolves after IAB is cancelled or dismissed
@@ -424,35 +408,31 @@ export const openUrlWithInAppBrowser =
           ...options,
         });
 
-        dispatch(
-          LogActions.info(`InAppBrowser closed with type: ${result.type}`),
+        logger.info(
+          `openUrlWithInAppBrowser: InAppBrowser closed with type: ${result.type}`,
         );
       } else {
         // successfully resolves if an installed app handles the URL,
         // or the user confirms any presented 'open' dialog
         await Linking.openURL(url);
       }
-    } catch (err) {
-      const logMsg = `Error opening URL ${url} with ${handler}.\n${JSON.stringify(
-        err,
-      )}`;
-
-      dispatch(LogActions.error(logMsg));
+    } catch (e: unknown) {
+      const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.error(
+        `openUrlWithInAppBrowser: Error opening URL ${url} with ${handler}. ${errorStr}`,
+      );
     }
   };
 
 export const askForTrackingPermissionAndEnableSdks =
   (appInit: boolean = false): Effect<Promise<void>> =>
   async (dispatch, getState) => {
-    dispatch(
-      LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
-    );
+    const logger = useLogger();
+    logger.info('askForTrackingPermissionAndEnableSdks: starting...');
     const trackingStatus = await requestTrackingPermission();
 
     if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
-      dispatch(
-        LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
-      );
+      logger.info('askForTrackingPermissionAndEnableSdks: setup init');
       try {
         await new Promise<void>((resolve, reject) => {
           AppsFlyer.initSdk(
@@ -471,9 +451,11 @@ export const askForTrackingPermissionAndEnableSdks =
             },
           );
         });
-      } catch (err) {
-        dispatch(LogActions.error('Appsflyer setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `askForTrackingPermissionAndEnableSdks: Appsflyer setup failed ${errorStr}`,
+        );
       }
 
       try {
@@ -505,14 +487,14 @@ export const askForTrackingPermissionAndEnableSdks =
             dispatch(Analytics.track('Last Opened App', {}));
           }
         }
-      } catch (err) {
-        dispatch(LogActions.error('Segment setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
+      } catch (e: unknown) {
+        const errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(
+          `askForTrackingPermissionAndEnableSdks: Segment setup failed ${errorStr}`,
+        );
       }
     }
-    dispatch(
-      LogActions.info('success [askForTrackingPermissionAndEnableSdks]'),
-    );
+    logger.info('askForTrackingPermissionAndEnableSdks: success');
   };
 
 export const logSegmentEvent =
@@ -615,7 +597,8 @@ export const Analytics = {
 
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  dispatch => {
+  () => {
+    const logger = useLogger();
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
@@ -624,10 +607,9 @@ export const subscribePushNotifications =
     };
     walletClient.pushNotificationsSubscribe(opts, (err: any) => {
       if (err) {
-        dispatch(
-          LogActions.error(
-            'Push Notifications error subscribing: ' + JSON.stringify(err),
-          ),
+        logger.error(
+          'subscribePushNotifications: error subscribing: ' +
+            JSON.stringify(err),
         );
       }
     });
@@ -635,20 +617,18 @@ export const subscribePushNotifications =
 
 export const unSubscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  dispatch => {
+  () => {
+    const logger = useLogger();
     walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
       if (err) {
-        dispatch(
-          LogActions.error(
-            'Push Notifications error unsubscribing: ' + JSON.stringify(err),
-          ),
+        logger.error(
+          'unsubscribePushNotifications: error unsubscribing: ' +
+            JSON.stringify(err),
         );
       } else {
-        dispatch(
-          LogActions.info(
-            'Push Notifications success unsubscribing: ' +
-              walletClient.credentials.walletName,
-          ),
+        logger.info(
+          'unsubscribePushNotifications: success unsubscribing: ' +
+            walletClient.credentials.walletName,
         );
       }
     });
@@ -658,42 +638,38 @@ export const subscribeEmailNotifications =
   (
     walletClient: any,
     prefs: {email: string; language: string; unit: string},
-  ): Effect<Promise<void>> =>
-  async dispatch => {
+  ): Effect =>
+  () => {
+    const logger = useLogger();
     walletClient.savePreferences(prefs, (err: any) => {
       if (err) {
-        dispatch(
-          LogActions.error(
-            'Email Notifications error subscribing: ' + JSON.stringify(err),
-          ),
+        logger.error(
+          'subscribeEmailNotifications: error subscribing: ' +
+            JSON.stringify(err),
         );
       } else {
-        dispatch(
-          LogActions.info(
-            'Email Notifications success subscribing: ' +
-              walletClient.credentials.walletName,
-          ),
+        logger.info(
+          'subscribeEmailNotifications: success subscribing: ' +
+            walletClient.credentials.walletName,
         );
       }
     });
   };
 
 export const unSubscribeEmailNotifications =
-  (walletClient: any): Effect<Promise<void>> =>
-  async dispatch => {
+  (walletClient: any): Effect =>
+  () => {
+    const logger = useLogger();
     walletClient.savePreferences({}, (err: any) => {
       if (err) {
-        dispatch(
-          LogActions.error(
-            'Email Notifications error unsubscribing: ' + JSON.stringify(err),
-          ),
+        logger.error(
+          'unSubscribeEmailNotifications: error unsubscribing: ' +
+            JSON.stringify(err),
         );
       } else {
-        dispatch(
-          LogActions.info(
-            'Email Notifications success unsubscribing: ' +
-              walletClient.credentials.walletName,
-          ),
+        logger.info(
+          'unSubscribeEmailNotifications: success unsubscribing: ' +
+            walletClient.credentials.walletName,
         );
       }
     });
@@ -739,6 +715,7 @@ export const requestNotificationsPermissions = (): Promise<boolean> => {
 export const setNotifications =
   (accepted: boolean): Effect =>
   (dispatch, getState) => {
+    const logger = useLogger();
     dispatch(setNotificationsAccepted(accepted));
     const value = accepted
       ? ReactAppboy.NotificationSubscriptionTypes.SUBSCRIBED
@@ -760,7 +737,7 @@ export const setNotifications =
           dispatch(unSubscribePushNotifications(walletClient, APP.brazeEid!));
         });
       }
-      dispatch(LogActions.info('Push Notifications: ' + value));
+      logger.info('setNotifications: ' + value);
     });
   };
 
@@ -907,6 +884,7 @@ export const handleBwsEvent =
   };
 
 export const resetAllSettings = (): Effect => dispatch => {
+  const logger = useLogger();
   batch(() => {
     dispatch(AppActions.setColorScheme(null));
     dispatch(AppActions.showPortfolioValue(true));
@@ -918,6 +896,6 @@ export const resetAllSettings = (): Effect => dispatch => {
     dispatch(WalletActions.setCustomizeNonce(false));
     dispatch(WalletActions.setQueuedTransactions(false));
     dispatch(WalletActions.setEnableReplaceByFee(false));
-    dispatch(LogActions.info('Reset all settings'));
+    logger.info('resetAllSettings: success');
   });
 };

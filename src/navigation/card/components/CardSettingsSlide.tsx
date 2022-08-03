@@ -3,8 +3,7 @@ import FastImage from 'react-native-fast-image';
 import styled from 'styled-components/native';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 import {Card} from '../../../store/card/card.models';
-import {LogActions} from '../../../store/log';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppSelector, useLogger} from '../../../utils/hooks';
 import CardBack from './CardBack';
 
 interface SettingsSlideProps {
@@ -32,27 +31,23 @@ const StyledImage = styled(FastImage)`
 `;
 
 const SettingsSlide: React.FC<SettingsSlideProps> = props => {
+  const logger = useLogger();
   const {card} = props;
-  const dispatch = useAppDispatch();
   const virtualImageUrl = useAppSelector(
     ({CARD}) => CARD.virtualCardImages[card.id],
   );
   const [isError, setError] = useState(false);
 
   const onLoad = () => {
-    dispatch(
-      LogActions.debug(
-        `Successfully loaded virtual card image for card ${card.id}`,
-      ),
+    logger.debug(
+      `SettingsSlide: Successfully loaded virtual card image for card ${card.id}`,
     );
   };
 
   const onError = () => {
     setError(true);
-    dispatch(
-      LogActions.error(
-        `An error occurred while loading virtual card image for card ${card.id}`,
-      ),
+    logger.error(
+      `SettingSlide: An error occurred while loading virtual card image for card ${card.id}`,
     );
   };
 

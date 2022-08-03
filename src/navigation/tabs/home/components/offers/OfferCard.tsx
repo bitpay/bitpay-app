@@ -10,10 +10,10 @@ import {
 } from '../../../../../utils/braze';
 import {
   useAppDispatch,
+  useLogger,
   useShopDeepLinkHandler,
 } from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
-import {LogActions} from '../../../../../store/log';
 import LinkCard from '../cards/LinkCard';
 import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
@@ -25,6 +25,7 @@ const OFFER_HEIGHT = 30;
 const OFFER_WIDTH = 30;
 
 const OfferCard: React.FC<OfferCardProps> = props => {
+  const logger = useLogger();
   const {contentCard} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
@@ -69,11 +70,11 @@ const OfferCard: React.FC<OfferCardProps> = props => {
         );
       }
       return;
-    } catch (err) {
-      dispatch(
-        LogActions.debug('Something went wrong parsing offer URL: ' + url),
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+      logger.debug(
+        `OfferCard: Something went wrong parsing offer URL: ${url}. ${errMsg}`,
       );
-      dispatch(LogActions.debug(JSON.stringify(err)));
     }
 
     if (openURLInWebView) {

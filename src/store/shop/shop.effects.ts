@@ -17,10 +17,12 @@ import {
 } from '../../lib/gift-cards/gift-card';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
-import {LogActions} from '../log';
+import {useLogger} from '../../utils/hooks';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
+  const logger = useLogger();
   try {
+    logger.info('startFetchCatalog: starting...');
     const {APP, BITPAY_ID, LOCATION, SHOP} = getState();
     const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
     const user = BITPAY_ID.user[APP.network];
@@ -48,13 +50,10 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
         integrations,
       }),
     );
+    logger.info('startFetchCatalog: success');
   } catch (err) {
     const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    dispatch(
-      LogActions.error(
-        `failed [startFetchCatalog]: ${errStr} - continue anyway`,
-      ),
-    );
+    logger.warn(`startFetchCatalog: failed ${errStr} - continue anyway`);
     dispatch(ShopActions.failedFetchCatalog());
   }
 };
@@ -65,7 +64,9 @@ export const startCreateGiftCardInvoice =
     params: GiftCardInvoiceParams,
   ): Effect<Promise<GiftCardOrder>> =>
   async (dispatch, getState) => {
+    const logger = useLogger();
     try {
+      logger.info('startCreateGiftCardInvoice: starting...');
       const {BITPAY_ID, SHOP} = getState();
       const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
       const user = BITPAY_ID.user[APP_NETWORK];
@@ -116,9 +117,11 @@ export const startCreateGiftCardInvoice =
           giftCard: unsoldGiftCard,
         }),
       );
+      logger.info('startCreateGiftCardInvoice: success');
       return {...cardOrder, invoice} as GiftCardOrder;
-    } catch (err) {
-      console.error(err);
+    } catch (err: unknown) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`startCreateGiftCardInvoice: failed ${errStr}`);
       dispatch(ShopActions.failedCreateGiftCardInvoice());
       throw err;
     }

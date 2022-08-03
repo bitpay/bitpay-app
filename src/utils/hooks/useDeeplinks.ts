@@ -56,9 +56,9 @@ const isCryptoLink = (url: string): boolean => {
 export const useUrlEventHandler = () => {
   const dispatch = useDispatch();
   const urlEventHandler = ({url}: {url: string | null}) => {
-    dispatch(LogActions.debug(`[deeplink] received: ${url}`));
+    dispatch(LogActions.debug(`useUrlEventHandler: deeplink received: ${url}`));
     if (url && (isDeepLink(url) || isUniversalLink(url) || isCryptoLink(url))) {
-      dispatch(LogActions.info(`[deeplink] valid: ${url}`));
+      dispatch(LogActions.info(`useUrlEventHandler: deeplink valid: ${url}`));
       dispatch(showBlur(false));
       dispatch(incomingData(url));
 
@@ -72,7 +72,9 @@ export const useUrlEventHandler = () => {
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
-          LogActions.error('[deeplink] not available from IAB: ' + errStr),
+          LogActions.error(
+            'useUrlEventHandler: deeplink not available from IAB: ' + errStr,
+          ),
         );
       }
     }

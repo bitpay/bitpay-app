@@ -6,8 +6,11 @@ import Spinner from '../../../../components/spinner/Spinner';
 import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {AppActions} from '../../../../store/app';
 import {CardActions, CardEffects} from '../../../../store/card';
-import {LogActions} from '../../../../store/log';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../utils/hooks';
 import {CardScreens, CardStackParamList} from '../../CardStack';
 
 export type ResetPinScreenParamList = {
@@ -39,6 +42,7 @@ const SpinnerWrapper = styled.View`
 const ResetPinScreen: React.VFC<
   StackScreenProps<CardStackParamList, CardScreens.RESET_PIN>
 > = ({navigation, route}) => {
+  const logger = useLogger();
   const {id} = route.params;
   const dispatch = useAppDispatch();
   const network = useAppSelector(({APP}) => APP.network);
@@ -66,7 +70,9 @@ const ResetPinScreen: React.VFC<
 
       switch (statusCode) {
         case StatusCodes.SUCCESS:
-          dispatch(LogActions.debug(`PIN successfully reset for card ${id}.`));
+          logger.debug(
+            `ResetPinScreen: PIN successfully reset for card ${id}.`,
+          );
           dispatch(
             AppActions.showBottomNotificationModal({
               type: 'success',
@@ -86,21 +92,17 @@ const ResetPinScreen: React.VFC<
           break;
 
         case StatusCodes.TOKEN_CHANGED:
-          dispatch(
-            LogActions.debug(
-              `Token changed while resetting PIN for card ${id}.`,
-            ),
+          logger.debug(
+            `ResetPinScreen: Token changed while resetting PIN for card ${id}.`,
           );
           setStaleUri(true);
           break;
 
         default:
-          dispatch(
-            LogActions.debug(
-              `Failed to reset PIN for card ${id} with status code (${statusCode}): ${
-                StatusTextMap[statusCode] || 'Unknown status code'
-              }`,
-            ),
+          logger.debug(
+            `ResetPinScreen: Failed to reset PIN for card ${id} with status code (${statusCode}): ${
+              StatusTextMap[statusCode] || 'Unknown status code'
+            }`,
           );
           dispatch(
             AppActions.showBottomNotificationModal({
@@ -130,10 +132,8 @@ const ResetPinScreen: React.VFC<
         errMsg = JSON.stringify(err);
       }
 
-      dispatch(
-        LogActions.error(
-          `An error occurred while resetting PIN for card ${id}: ${errMsg}`,
-        ),
+      logger.error(
+        `ResetPinScreen: An error occurred while resetting PIN for card ${id}: ${errMsg}`,
       );
       dispatch(
         AppActions.showBottomNotificationModal({

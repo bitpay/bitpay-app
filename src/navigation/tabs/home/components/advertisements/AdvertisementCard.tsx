@@ -11,7 +11,6 @@ import {BaseText} from '../../../../../components/styled/Text';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {AppEffects} from '../../../../../store/app';
 import {logSegmentEvent} from '../../../../../store/app/app.effects';
-import {LogActions} from '../../../../../store/log';
 import {
   LightBlack,
   Slate,
@@ -24,6 +23,7 @@ import {
 } from '../../../../../utils/braze';
 import {
   useAppDispatch,
+  useLogger,
   useShopDeepLinkHandler,
 } from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
@@ -82,6 +82,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const dispatch = useAppDispatch();
   const linkTo = useLinkTo();
   const theme = useTheme();
+  const logger = useLogger();
 
   let title = '';
   let description = '';
@@ -133,11 +134,11 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
           linkTo(path);
         }
         return;
-      } catch (err) {
-        dispatch(
-          LogActions.debug('Something went wrong parsing Do More URL: ' + url),
+      } catch (e: unknown) {
+        const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.debug(
+          `AdvertisementCard: something went wrong parsing Do More URL: ${url}. ${errMsg}`,
         );
-        dispatch(LogActions.debug(JSON.stringify(err)));
       }
     }
 

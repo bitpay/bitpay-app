@@ -34,7 +34,7 @@ import {Midnight, SlateDark, White} from '../../../../styles/colors';
 import {H4, Paragraph} from '../../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {sleep} from '../../../../utils/helper-methods';
-import {LogActions} from '../../../../store/log';
+import {useLogger} from '../../../../utils/hooks';
 const FingerprintSvg = {
   light: <FingerprintImg />,
   dark: <FingerprintDarkModeImg />,
@@ -83,6 +83,7 @@ const ImgRow = styled.View`
 
 const Security = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const dispatch = useDispatch();
   const themeType = useThemeType();
   const [modalVisible, setModalVisible] = useState(false);
@@ -137,9 +138,7 @@ const Security = () => {
           debugMsg = JSON.stringify(error);
         }
 
-        dispatch(
-          LogActions.error(`setBiometric failed with error: ${debugMsg}`),
-        );
+        logger.error(`setBiometric: failed ${debugMsg}`);
         dispatch(
           showBottomNotificationModal(
             BiometricErrorNotification(uiErrMsg, async () => {

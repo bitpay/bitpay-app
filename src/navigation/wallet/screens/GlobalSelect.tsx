@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from 'react';
 import styled from 'styled-components/native';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
@@ -49,7 +49,6 @@ import {ButtonState} from '../../../components/button/Button';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
-import {LogActions} from '../../../store/log';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -184,6 +183,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   livenetOnly,
 }) => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
   let {context, recipient, amount} = route.params || {};
   if (useAsModal && modalContext) {
@@ -388,7 +388,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         } catch (err) {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(LogActions.error('[GlobalSelect] ' + errStr));
+          logger.error('GlobalSelect: ' + errStr);
         }
       } else if (context === 'send') {
         setWalletSelectModalVisible(false);
@@ -462,7 +462,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         });
       } catch (err: any) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[GlobalSelect] ' + errStr));
+        logger.error('GlobalSelect: ' + errStr);
         if (setButtonState) {
           setButtonState('failed');
         } else {

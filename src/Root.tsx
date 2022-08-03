@@ -29,11 +29,11 @@ import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
 import BiometricModal from './components/modal/biometric/BiometricModal';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
-import {LogActions} from './store/log';
 import {
   useAppDispatch,
   useAppSelector,
   useDeeplinks,
+  useLogger,
   useUrlEventHandler,
 } from './utils/hooks';
 import i18n from 'i18next';
@@ -231,6 +231,7 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
+  const logger = useLogger();
 
   // MAIN APP INIT
   useEffect(() => {
@@ -365,12 +366,10 @@ export default () => {
             if (currentRoute && !onboardingCompleted) {
               const [currentStack, params] = currentRoute;
               navigationRef.navigate(currentStack, params);
-              dispatch(
-                LogActions.info(
-                  `Navigating to cached route... ${currentStack} ${JSON.stringify(
-                    params,
-                  )}`,
-                ),
+              logger.debug(
+                `Navigating to cached route... ${currentStack} ${JSON.stringify(
+                  params,
+                )}`,
               );
             } else {
               const url = await Linking.getInitialURL();
@@ -384,7 +383,7 @@ export default () => {
               const {routes} = navEvent;
               let {name, params} = navEvent.routes[routes.length - 1];
               dispatch(AppActions.setCurrentRoute([name, params]));
-              dispatch(LogActions.info(`Navigation event... ${name}`));
+              logger.debug(`Navigation event: ${name}`);
 
               if (APP_ANALYTICS_ENABLED) {
                 if (name === 'Tabs') {
