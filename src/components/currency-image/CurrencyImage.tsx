@@ -1,18 +1,32 @@
 // renders svg if supported currency or cached png if custom token
 import React, {ReactElement} from 'react';
+import {ImageRequireSource} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import DefaultImage from '../../../assets/img/currencies/default.svg';
 import CoinbaseSvg from '../../../assets/img/logos/coinbase.svg';
 import ProfileIcon from '../avatar/ProfileIcon';
-interface Props {
+
+interface CurrencyImageProps {
   img: string | ((props?: any) => ReactElement);
+  imgSrc?: ImageRequireSource;
   size?: number;
 }
-export const CurrencyImage = ({img, size = 40}: Props) => {
+
+export const CurrencyImage = ({img, imgSrc, size = 40}: CurrencyImageProps) => {
   const style = {width: size, height: size};
 
-  if (!img) {
+  if (!img && !imgSrc) {
     return <DefaultImage {...style} />;
+  }
+
+  if (imgSrc) {
+    return (
+      <FastImage
+        style={style}
+        source={imgSrc}
+        resizeMode={FastImage.resizeMode.cover}
+      />
+    );
   }
 
   if (typeof img === 'string') {
