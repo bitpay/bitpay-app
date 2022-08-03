@@ -5,7 +5,6 @@ import {View, DeviceEventEmitter} from 'react-native';
 import {AppEffects} from '../../../../../store/app';
 import {
   Hr,
-  Setting,
   SettingDescription,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
@@ -20,6 +19,12 @@ const SettingRow = styled(View)`
   justify-content: center;
   flex-direction: column;
   padding: 8px 0;
+`;
+
+const SettingRowContainer = styled.TouchableOpacity`
+  align-items: center;
+  flex-direction: row;
+  min-height: 58px;
 `;
 
 const PushNotifications = () => {
@@ -93,8 +98,8 @@ const PushNotifications = () => {
         <Hr />
         {notificationsList.map(({title, checked, onPress, description}, i) => (
           <View key={i}>
-            <Setting onPress={onPress}>
-              <SettingRow>
+            <SettingRowContainer onPress={onPress}>
+              <SettingRow style={{flex: 1}}>
                 <SettingTitle style={{flexGrow: 0}}>{title}</SettingTitle>
 
                 {description ? (
@@ -103,7 +108,7 @@ const PushNotifications = () => {
               </SettingRow>
 
               <Checkbox radio={true} onPress={onPress} checked={checked} />
-            </Setting>
+            </SettingRowContainer>
             <Hr />
           </View>
         ))}
