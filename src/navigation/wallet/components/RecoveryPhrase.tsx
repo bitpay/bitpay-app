@@ -605,6 +605,8 @@ const RecoveryPhrase = () => {
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
+              autoCorrect={false}
+              spellCheck={false}
             />
           )}
           name="text"

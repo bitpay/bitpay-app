@@ -188,9 +188,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
     // wait for navigationRef
     await sleep(2000);
-    dispatch(AppActions.failedAppInit());
-    dispatch(LogActions.error('Failed to initialize app.'));
-    dispatch(LogActions.error(errorStr));
+    if (errorStr !== 'Network Error') {
+      // Avoid lock the app in Debug view
+      dispatch(AppActions.failedAppInit());
+    }
+    dispatch(LogActions.error('Failed to initialize app: ' + errorStr));
     await sleep(500);
     dispatch(showBlur(false));
     RNBootSplash.hide();

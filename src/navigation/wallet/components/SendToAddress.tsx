@@ -2,6 +2,7 @@ import React, {useCallback, useContext, useState} from 'react';
 import {
   ActiveOpacity,
   CtaContainer as _CtaContainer,
+  HEIGHT,
   Hr,
   SearchContainer,
   SearchInput,
@@ -56,6 +57,7 @@ import {
   ExtractBitPayUriAddress,
   ExtractUriAmount,
 } from '../../../store/wallet/utils/decode-uri';
+import {sleep} from '../../../utils/helper-methods';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -74,8 +76,7 @@ const SendToAddressContainer = styled.View`
 `;
 
 const ScrollViewContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
+  margin: 20px 15px 0 15px;
 `;
 
 const ErrorText = styled(BaseText)`
@@ -230,6 +231,7 @@ const SendToAddress = () => {
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         )) as string;
         dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
       }
 
       const newRecipient = {
@@ -307,17 +309,21 @@ const SendToAddress = () => {
 
         <View style={{marginTop: 30}}>
           <H5>
-            {recipientList?.length > 1 ? t('Recipients') : t('Recipient')}
+            {recipientList?.length > 1
+              ? t('Recipients') + ` (${recipientList?.length})`
+              : t('Recipient')}
           </H5>
           <Hr />
           {recipientList && recipientList.length ? (
-            <FlatList
-              data={recipientList}
-              keyExtractor={(_item, index) => index.toString()}
-              renderItem={({item, index}: {item: Recipient; index: number}) =>
-                renderItem({item, index})
-              }
-            />
+            <View style={{maxHeight: HEIGHT * 0.18}}>
+              <FlatList
+                data={recipientList}
+                keyExtractor={(_item, index) => index.toString()}
+                renderItem={({item, index}: {item: Recipient; index: number}) =>
+                  renderItem({item, index})
+                }
+              />
+            </View>
           ) : (
             <>
               <RecipientRowContainer>

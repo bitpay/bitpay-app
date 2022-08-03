@@ -62,12 +62,13 @@ import {
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {Alert, TouchableOpacity} from 'react-native';
+import {Platform, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
 import {toFiat} from '../../../../../store/wallet/utils/wallet';
 import {GetPrecision} from '../../../../../store/wallet/utils/currency';
+import prompt from 'react-native-prompt-android';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -158,7 +159,7 @@ const Confirm = () => {
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
   const [destinationTag, setDestinationTag] = useState(
-    recipient?.tag || _destinationTag,
+    recipient?.destinationTag || _destinationTag,
   );
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
@@ -194,7 +195,7 @@ const Confirm = () => {
   };
 
   const editValue = (title: string, type: string) => {
-    Alert.prompt(
+    prompt(
       title,
       '',
       [
@@ -209,7 +210,7 @@ const Confirm = () => {
             const opts: {
               nonce?: number;
               gasLimit?: number;
-              destinationTag?: string;
+              destinationTag?: number;
             } = {};
             switch (type) {
               case 'nonce':
@@ -219,7 +220,7 @@ const Confirm = () => {
                 opts.gasLimit = Number(value);
                 break;
               case 'destinationTag':
-                opts.destinationTag = value;
+                opts.destinationTag = Number(value);
                 break;
               default:
                 break;
@@ -228,9 +229,13 @@ const Confirm = () => {
           },
         },
       ],
-      'plain-text',
-      '',
-      'number-pad',
+      {
+        type: Platform.OS === 'ios' ? 'plain-text' : 'numeric',
+        cancelable: true,
+        defaultValue: '',
+        // @ts-ignore
+        keyboardType: 'numeric',
+      },
     );
   };
 

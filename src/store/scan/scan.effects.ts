@@ -67,7 +67,12 @@ import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 export const incomingData =
   (
     data: string,
-    opts?: {wallet?: Wallet; context?: string; name?: string; tag?: number},
+    opts?: {
+      wallet?: Wallet;
+      context?: string;
+      name?: string;
+      destinationTag?: number;
+    },
   ): Effect<Promise<void>> =>
   async dispatch => {
     // wait to close blur
@@ -348,7 +353,12 @@ const goToConfirm =
     setButtonState,
     opts,
   }: {
-    recipient: {type: string; address: string; currency: string};
+    recipient: {
+      type: string;
+      address: string;
+      currency: string;
+      destinationTag?: number;
+    };
     amount: number;
     wallet?: Wallet;
     setButtonState?: (state: ButtonState) => void;
@@ -356,7 +366,6 @@ const goToConfirm =
       sendMax?: boolean | undefined;
       message?: string;
       feePerKb?: number;
-      destinationTag?: string;
     };
   }): Effect<Promise<void>> =>
   async dispatch => {
@@ -459,13 +468,12 @@ export const goToAmount =
       address: string;
       currency: string;
       network?: Network;
-      tag?: number;
+      destinationTag?: number;
     };
     wallet?: Wallet;
     opts?: {
       message?: string;
       feePerKb?: number;
-      destinationTag?: string;
     };
   }): Effect<Promise<void>> =>
   async dispatch => {
@@ -727,9 +735,10 @@ const handleRippleUri =
       type: 'address',
       currency: coin,
       address,
+      destinationTag: Number(destinationTag),
     };
     if (!amountParam.exec(data)) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {destinationTag}}));
+      dispatch(goToAmount({coin, recipient, wallet}));
     } else {
       const parsedAmount = amountParam.exec(data)![1];
       const amount = Number(parsedAmount);
@@ -738,7 +747,6 @@ const handleRippleUri =
           recipient,
           amount,
           wallet,
-          opts: {destinationTag},
         }),
       );
     }
@@ -930,7 +938,12 @@ const handlePlainAddress =
   (
     address: string,
     coin: string,
-    opts?: {wallet?: Wallet; context?: string; name?: string; tag?: number},
+    opts?: {
+      wallet?: Wallet;
+      context?: string;
+      name?: string;
+      destinationTag?: number;
+    },
   ): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
@@ -943,7 +956,7 @@ const handlePlainAddress =
       currency: coin,
       address,
       network,
-      tag: opts?.tag,
+      destinationTag: opts?.destinationTag,
     };
     dispatch(goToAmount({coin, recipient, wallet: opts?.wallet}));
   };

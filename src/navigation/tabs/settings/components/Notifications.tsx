@@ -6,6 +6,7 @@ import {
   Linking,
   LogBox,
   DeviceEventEmitter,
+  Platform,
 } from 'react-native';
 import {AppEffects} from '../../../../store/app';
 import {
@@ -53,7 +54,10 @@ const Notifications = () => {
     async (accepted: boolean, notificationsStatePush?: boolean) => {
       const systemEnabled = await AppEffects.checkNotificationsPermissions();
       if (systemEnabled) {
-        if (accepted !== notificationsStatePush) {
+        if (
+          notificationsStatePush !== undefined &&
+          accepted !== notificationsStatePush
+        ) {
           dispatch(AppEffects.setNotifications(accepted));
           dispatch(AppEffects.setConfirmTxNotifications(accepted));
           dispatch(AppEffects.setAnnouncementsNotifications(accepted));

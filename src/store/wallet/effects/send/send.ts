@@ -84,6 +84,7 @@ export const createProposalAndBuildTxDetails =
           invoice,
           payProUrl,
           dryRun = true,
+          destinationTag,
         } = tx;
 
         let {credentials} = wallet;
@@ -123,22 +124,25 @@ export const createProposalAndBuildTxDetails =
           }
         }
 
-        if (
-          currencyAbbreviation === 'xrp' &&
-          wallet.receiveAddress === recipient.address
-        ) {
-          return reject({
-            err: new Error(
-              t(
-                'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+        if (currencyAbbreviation === 'xrp') {
+          tx.destinationTag = destinationTag || recipient.destinationTag;
+
+          if (wallet.receiveAddress === recipient.address) {
+            return reject({
+              err: new Error(
+                t(
+                  'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+                ),
               ),
-            ),
-          });
+            });
+          }
         }
 
+        const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
         const feeLevel =
           customFeeLevel ||
           cachedFeeLevel[currencyAbbreviation] ||
+          tokenFeeLevel ||
           FeeLevels.NORMAL;
         if (!feePerKb && tx.sendMax) {
           feePerKb = await getFeeRatePerKb({
@@ -368,6 +372,7 @@ export const buildTxDetails =
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
     const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
     const isERC20 = dispatch(IsERCToken(coin));
+    const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
     if (context === 'paypro') {
       amount = invoice!.paymentTotals[coin.toUpperCase()];
@@ -391,7 +396,13 @@ export const buildTxDetails =
         cryptoAmount: dispatch(FormatAmountStr(chain, fee)),
         fiatAmount: formatFiatAmount(
           dispatch(
-            toFiat(fee, defaultAltCurrencyIsoCode, chain, rates, effectiveRate),
+            toFiat(
+              fee,
+              defaultAltCurrencyIsoCode,
+              chain,
+              rates,
+              effectiveRateForFee,
+            ),
           ),
           defaultAltCurrencyIsoCode,
         ),
@@ -408,7 +419,7 @@ export const buildTxDetails =
                 defaultAltCurrencyIsoCode,
                 chain,
                 rates,
-                effectiveRate,
+                effectiveRateForFee,
               ),
             ),
             defaultAltCurrencyIsoCode,
@@ -456,7 +467,7 @@ export const buildTxDetails =
                 defaultAltCurrencyIsoCode,
                 chain,
                 rates,
-                effectiveRate,
+                effectiveRateForFee,
               ),
             ),
           defaultAltCurrencyIsoCode,

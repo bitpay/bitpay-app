@@ -51,9 +51,10 @@ import {
   SharedDetailRow,
 } from '../../wallet/screens/send/confirm/Shared';
 import TransactionLevel from '../../wallet/screens/send/TransactionLevel';
-import {Alert} from 'react-native';
 import {GetFeeOptions} from '../../../store/wallet/effects/fee/fee';
 import {useTranslation} from 'react-i18next';
+import prompt from 'react-native-prompt-android';
+import {Platform} from 'react-native';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
@@ -285,7 +286,7 @@ const WalletConnectConfirm = () => {
   };
 
   const editValue = (title: string, type: string) => {
-    Alert.prompt(
+    prompt(
       title,
       '',
       [
@@ -314,9 +315,13 @@ const WalletConnectConfirm = () => {
           },
         },
       ],
-      'plain-text',
-      '',
-      'number-pad',
+      {
+        type: Platform.OS === 'ios' ? 'plain-text' : 'numeric',
+        cancelable: true,
+        defaultValue: '',
+        // @ts-ignore
+        keyboardType: 'numeric',
+      },
     );
   };
 

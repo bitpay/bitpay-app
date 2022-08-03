@@ -15,6 +15,7 @@ export const changellySupportedCoins = [
   'shib',
   'xrp',
   'wbtc',
+  'ape',
 ];
 
 export const generateMessageId = (walletId?: string) => {
