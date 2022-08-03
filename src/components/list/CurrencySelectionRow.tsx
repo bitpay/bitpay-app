@@ -169,7 +169,11 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
               </CurrencyColumn>
 
               <CurrencyColumn>
-                <CurrencyImage img={token.img} imgSrc={token.imgSrc} />
+                <CurrencyImage
+                  img={token.img}
+                  imgSrc={token.imgSrc}
+                  badgeUri={img}
+                />
               </CurrencyColumn>
 
               <CurrencyTitleColumn style={{flexGrow: 1}}>
