@@ -499,6 +499,9 @@ const ChangellyCheckout: React.FC = () => {
       );
       await sleep(400);
 
+      const broadcastedTx = (await dispatch<any>(
+        publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
+      )) as any;
       saveChangellyTx();
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
