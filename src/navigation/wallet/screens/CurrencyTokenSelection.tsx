@@ -1,5 +1,4 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import debounce from 'lodash.debounce';
 import React, {
   useCallback,
   useLayoutEffect,
@@ -64,9 +63,6 @@ const CurrencyTokenSelectionScreen: React.VFC<
   const {params} = route;
   const [chain, setChain] = useState(params.currency);
   const [items, setItems] = useState(params.tokens);
-  const [searchInput, setSearchInput] = useState('');
-  const searchInputRef = useRef(searchInput);
-  searchInputRef.current = searchInput;
   const [searchFilter, setSearchFilter] = useState('');
 
   const filteredItems = useMemo(() => {
@@ -85,15 +81,6 @@ const CurrencyTokenSelectionScreen: React.VFC<
       return accum;
     }, []);
   }, [searchFilter, items]);
-
-  const debouncedSetSearchFilter = useMemo(
-    () =>
-      debounce((search: string) => {
-        // after debouncing, if current search is null, ignore the previous search
-        searchInputRef.current ? setSearchFilter(search.toLowerCase()) : null;
-      }, 300),
-    [],
-  );
 
   const onChainToggle = (tgt: CurrencySelectionToggleProps) => {
     setChain({
@@ -197,25 +184,8 @@ const CurrencyTokenSelectionScreen: React.VFC<
     <CurrencySelectionContainer>
       <SearchContainer>
         <CurrencySelectionSearchInput
-          value={searchInput}
-          onChangeText={text => {
-            setSearchInput(text);
-
-            // if 2+ char, filter search
-            // else if 1 char, do nothing
-            // else if 0 char, clear search immediately
-            if (!text) {
-              setSearchFilter(text);
-            } else if (text.length > 1) {
-              debouncedSetSearchFilter(text);
-            }
-          }}
-          onSearchPress={search => {
-            if (search) {
-              setSearchInput('');
-              setSearchFilter('');
-            }
-          }}
+          onSearch={setSearchFilter}
+          debounceWait={300}
         />
       </SearchContainer>
 
@@ -234,7 +204,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
           />
         </ListContainer>
       ) : (
-        <CurrencySelectionNoResults query={searchInput} />
+        <CurrencySelectionNoResults query={searchFilter} />
       )}
     </CurrencySelectionContainer>
   );

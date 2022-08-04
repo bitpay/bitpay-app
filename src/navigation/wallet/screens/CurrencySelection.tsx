@@ -46,7 +46,6 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
 import {sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import debounce from 'lodash.debounce';
 import {
   useAppSelector,
   useAppDispatch,
@@ -164,17 +163,6 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   const {context, key} = route.params;
   const logger = useLogger();
   const dispatch = useAppDispatch();
-
-  /**
-   * The state for rendering the input text component. This value updates immediately.
-   */
-  const [searchInput, setSearchInput] = useState('');
-  const searchInputRef = useRef(searchInput);
-  searchInputRef.current = searchInput;
-
-  /**
-   * The state for the value applied as a filter. This value is debounced.
-   */
   const [searchFilter, setSearchFilter] = useState('');
   const appTokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
   const appTokenData = useAppSelector(({WALLET}) => WALLET.tokenData);
@@ -505,11 +493,6 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     }, []);
   }, [allListItems]);
 
-  const resetSearch = () => {
-    setSearchInput('');
-    debouncedSetSearchFilter('');
-  };
-
   const toggleCurrency = (id: string) => {
     setAllListItems(previous =>
       previous.map(item => {
@@ -561,7 +544,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     isToken,
   }: CurrencySelectionToggleProps) => {
     if (selectionCta) {
-      resetSearch();
+      setSearchFilter('');
       selectionCta({
         currencyAbbreviation,
         currencyName,
@@ -630,41 +613,15 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         />
       );
     },
-    [t, memoizedOnToggle, memoizedOnViewAllPressed, hideCheckbox],
-  );
-
-  const debouncedSetSearchFilter = useMemo(
-    () =>
-      debounce((search: string) => {
-        // after debouncing, if current search is null, ignore the previous search
-        searchInputRef.current ? setSearchFilter(search.toLowerCase()) : null;
-      }, 300),
-    [],
+    [memoizedOnToggle, memoizedOnViewAllPressed, hideCheckbox],
   );
 
   return (
     <CurrencySelectionContainer>
       <SearchContainer>
         <CurrencySelectionSearchInput
-          value={searchInput}
-          onChangeText={text => {
-            setSearchInput(text);
-
-            // if 2+ char, filter search
-            // else if 1 char, do nothing
-            // else if 0 char, clear search immediately
-            if (!text) {
-              setSearchFilter(text);
-            } else if (text.length > 1) {
-              debouncedSetSearchFilter(text);
-            }
-          }}
-          onSearchPress={search => {
-            if (search) {
-              setSearchInput('');
-              setSearchFilter('');
-            }
-          }}
+          onSearch={setSearchFilter}
+          debounceWait={300}
         />
       </SearchContainer>
 
