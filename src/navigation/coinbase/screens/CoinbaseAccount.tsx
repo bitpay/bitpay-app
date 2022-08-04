@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';

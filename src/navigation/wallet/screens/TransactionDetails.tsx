@@ -491,6 +491,9 @@ const TransactionDetails = () => {
                     ) : (
                       <SubTitle>{t('Test Only - No Value')}</SubTitle>
                     )}
+                    {txs.feeRate ? (
+                      <SubTitle>{t('Fee rate: ') + txs.feeRate}</SubTitle>
+                    ) : null}
                   </DetailColumn>
                 </DetailRow>
               </DetailContainer>
@@ -551,9 +554,6 @@ const TransactionDetails = () => {
                     <DetailLink>{t('Unconfirmed')}?</DetailLink>
                   </TouchableOpacity>
                 ) : null}
-                {txs.feeRate ? (
-                  <SubTitle>{t('Fee rate: ') + txs.feeRate}</SubTitle>
-                ) : null}
                 {!!txs.confirmations && !txs.safeConfirmed ? (
                   <H7>{txs.conformations}</H7>
                 ) : null}
@@ -563,10 +563,6 @@ const TransactionDetails = () => {
           </DetailContainer>
 
           <Hr />
-
-          <VerticalSpace>
-            <Memo memo={memo || ''} onChange={text => saveMemo(text)} />
-          </VerticalSpace>
 
           <DetailContainer>
             <DetailRow>
@@ -598,6 +594,10 @@ const TransactionDetails = () => {
               <Hr />
             </>
           ) : null}
+
+          <VerticalSpace>
+            <Memo memo={memo || ''} onChange={text => saveMemo(text)} />
+          </VerticalSpace>
 
           <VerticalSpace>
             <Button buttonStyle={'secondary'} onPress={goToBlockchain}>

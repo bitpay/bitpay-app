@@ -22,6 +22,7 @@ import {Effect, RootState} from '../../../../store';
 import {
   convertToFiat,
   formatFiatAmount,
+  getErrorString,
   sleep,
 } from '../../../../utils/helper-methods';
 import {Key, Rates} from '../../../../store/wallet/wallet.models';
@@ -356,7 +357,7 @@ const SendTo = () => {
     text: string,
     context?: string,
     name?: string,
-    tag?: number,
+    destinationTag?: number,
   ) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
@@ -406,7 +407,7 @@ const SendTo = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
-        dispatch(incomingData(text, {wallet, context, name, tag}));
+        dispatch(incomingData(text, {wallet, context, name, destinationTag}));
       }
     }
   };
@@ -452,8 +453,9 @@ const SendTo = () => {
       dispatch(
         goToAmount({coin: wallet.currencyAbbreviation, recipient, wallet}),
       );
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      logger.error(`Send To: ${getErrorString(err)}`);
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -543,15 +545,13 @@ const SendTo = () => {
                           item.address,
                           'contact',
                           item.name,
-                          item.tag,
+                          item.tag || item.destinationTag,
                         );
                       }
                     } catch (err) {
-                      const errString =
-                        err instanceof Error
-                          ? err.message
-                          : JSON.stringify(err);
-                      logger.error(`Send To [Contacts]: ${errString}`);
+                      logger.error(
+                        `Send To [Contacts]: ${getErrorString(err)}`,
+                      );
                     }
                   }}
                 />

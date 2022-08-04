@@ -9,6 +9,7 @@ import {IS_ANDROID} from '../../constants';
 import {
   Caution,
   LightBlack,
+  LuckySevens,
   NeutralSlate,
   ProgressBlue,
   Slate,
@@ -30,7 +31,7 @@ interface InputProps {
 }
 
 const InputContainer = styled.View<InputProps>`
-  border: 0.75px solid ${Slate};
+  border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
   flex-direction: row;
@@ -41,7 +42,7 @@ const InputContainer = styled.View<InputProps>`
     isFocused &&
     css`
       background: ${({theme}) => (theme.dark ? 'transparent' : '#fafbff')};
-      border-color: ${Slate};
+      border-color: ${({theme}) => (theme.dark ? LuckySevens : Slate)};
       border-bottom-color: ${ProgressBlue};
     `}
 

@@ -59,6 +59,7 @@ const ErrorText = styled(BaseText)`
 
 const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
+  margin-top: 6px;
 `;
 
 const FormRow = styled.View`
@@ -214,11 +215,9 @@ const FileOrText = () => {
           />
         </FormRow>
 
-        <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={onSubmit}>
-            {t('Import Wallet')}
-          </Button>
-        </CtaContainer>
+        <Button buttonStyle={'primary'} onPress={onSubmit}>
+          {t('Import Wallet')}
+        </Button>
       </ContentView>
     </ScrollViewContainer>
   );

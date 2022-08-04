@@ -13,14 +13,14 @@ import {useTheme} from 'styled-components/native';
 export const ScreenOptions = (
   width: number,
 ): MaterialTopTabNavigationOptions => {
-  const gutter = 8;
+  const gutter = 5;
   const totalWidth = width * 2 + gutter * 4;
   const {dark} = useTheme();
 
   return {
     swipeEnabled: false,
     tabBarIndicatorStyle: {
-      height: 40,
+      height: 46,
       borderRadius: 50,
       backgroundColor: Action,
       width: width,

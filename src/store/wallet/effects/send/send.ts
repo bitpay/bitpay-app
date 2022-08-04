@@ -84,6 +84,7 @@ export const createProposalAndBuildTxDetails =
           invoice,
           payProUrl,
           dryRun = true,
+          destinationTag,
         } = tx;
 
         let {credentials} = wallet;
@@ -123,22 +124,25 @@ export const createProposalAndBuildTxDetails =
           }
         }
 
-        if (
-          currencyAbbreviation === 'xrp' &&
-          wallet.receiveAddress === recipient.address
-        ) {
-          return reject({
-            err: new Error(
-              t(
-                'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+        if (currencyAbbreviation === 'xrp') {
+          tx.destinationTag = destinationTag || recipient.destinationTag;
+
+          if (wallet.receiveAddress === recipient.address) {
+            return reject({
+              err: new Error(
+                t(
+                  'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+                ),
               ),
-            ),
-          });
+            });
+          }
         }
 
+        const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
         const feeLevel =
           customFeeLevel ||
           cachedFeeLevel[currencyAbbreviation] ||
+          tokenFeeLevel ||
           FeeLevels.NORMAL;
         if (!feePerKb && tx.sendMax) {
           feePerKb = await getFeeRatePerKb({
