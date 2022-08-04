@@ -9,6 +9,7 @@ import {
   Action,
   Black,
   LightBlack,
+  LuckySevens,
   NeutralSlate,
   Slate,
   White,
@@ -38,7 +39,7 @@ interface MemoColors {
 }
 const memoColors: MemoColors = {
   border: {
-    dark: White,
+    dark: LuckySevens,
     light: '#e1e4e7',
   },
   unfocusedBorder: {

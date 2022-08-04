@@ -346,7 +346,7 @@ const Crypto = () => {
                   screen: 'CustomizeHome',
                 });
               }}>
-              <CustomizeSvg />
+              <CustomizeSvg width={54} height={54} />
             </TouchableOpacity>
           </Row>
         </Column>

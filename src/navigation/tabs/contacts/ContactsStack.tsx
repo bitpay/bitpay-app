@@ -17,7 +17,7 @@ export type ContactsStackParamList = {
   ContactsDetails: {contact: ContactRowProps};
   ContactsAdd:
     | {
-        contact?: ContactRowProps;
+        contact?: Partial<ContactRowProps>;
         context?: string;
         onEditComplete?: (contact: ContactRowProps) => void;
       }
