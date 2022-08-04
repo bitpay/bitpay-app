@@ -5,9 +5,9 @@ import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {Keyboard, TextInput} from 'react-native';
 import styled from 'styled-components/native';
-import * as yup from 'yup';
 import Button from '../../../../../components/button/Button';
 import BoxInput from '../../../../../components/form/BoxInput';
+import yup from '../../../../../lib/yup';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthFormParagraph,

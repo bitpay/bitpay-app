@@ -72,11 +72,14 @@ export const simplexSupportedCoins = [
   'ltc',
   'shib',
   'xrp',
+  'ape',
 ];
 
-export const simplexFiatAmountLimits = {
-  min: 50,
-  max: 20000,
+export const getSimplexFiatAmountLimits = () => {
+  return {
+    min: 50,
+    max: 20000,
+  };
 };
 
 export const getCheckoutUrl = (): string => {

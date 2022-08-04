@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
@@ -385,6 +386,9 @@ const CoinbaseAccount = ({
 
   const showError = async (error: CoinbaseErrorsProps) => {
     const errMsg = coinbaseParseErrorToString(error);
+    if (errMsg === 'Network Error') {
+      return;
+    }
     dispatch(
       showBottomNotificationModal({
         type: 'error',
@@ -422,6 +426,19 @@ const CoinbaseAccount = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const AmountComponent = gestureHandlerRootHOC(() => {
+    return (
+      <AmountContainer>
+        <Amount
+          useAsModal={true}
+          hideSendMaxProp={true}
+          currencyAbbreviationProp={account?.balance.currency}
+          onDismiss={onEnteredAmount}
+        />
+      </AmountContainer>
+    );
+  });
 
   return (
     <AccountContainer>
@@ -503,14 +520,7 @@ const CoinbaseAccount = ({
         onBackdropPress={() => {
           setAmountModalVisible(false);
         }}>
-        <AmountContainer>
-          <Amount
-            useAsModal={true}
-            hideSendMaxProp={true}
-            currencyAbbreviationProp={account?.balance.currency}
-            onDismiss={onEnteredAmount}
-          />
-        </AmountContainer>
+        <AmountComponent />
       </SheetModal>
     </AccountContainer>
   );

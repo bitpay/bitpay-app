@@ -2,6 +2,7 @@ import React, {useCallback, useContext, useState} from 'react';
 import {
   ActiveOpacity,
   CtaContainer as _CtaContainer,
+  HEIGHT,
   Hr,
   SearchContainer,
   SearchInput,
@@ -52,6 +53,11 @@ import {
   RecipientRowContainer,
   SendToOptionsContext,
 } from '../screens/SendToOptions';
+import {
+  ExtractBitPayUriAddress,
+  ExtractUriAmount,
+} from '../../../store/wallet/utils/decode-uri';
+import {sleep} from '../../../utils/helper-methods';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -70,8 +76,7 @@ const SendToAddressContainer = styled.View`
 `;
 
 const ScrollViewContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
+  margin: 20px 15px 0 15px;
 `;
 
 const ErrorText = styled(BaseText)`
@@ -181,9 +186,14 @@ const SendToAddress = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setErrorMessage('');
         setSearchInput('');
+        const extractedAmount = ExtractUriAmount(data.data);
+        const addr = ExtractBitPayUriAddress(text);
         context === 'selectInputs'
-          ? goToSelectInputsView({address: text})
-          : addRecipient({address: text});
+          ? goToSelectInputsView({address: addr})
+          : addRecipient({
+              address: addr,
+              amount: extractedAmount ? Number(extractedAmount[1]) : undefined,
+            });
       }
     } else {
       setErrorMessage(text.length > 15 ? 'Invalid Address' : '');
@@ -195,9 +205,7 @@ const SendToAddress = () => {
   }, 300);
 
   const addRecipient = (newRecipient: Recipient) => {
-    if (!recipientList.some(r => r.address === newRecipient.address)) {
-      setRecipientAmountContext(newRecipient);
-    }
+    setRecipientAmountContext(newRecipient);
   };
 
   const onSendToWallet = async (selectedWallet: KeyWallet) => {
@@ -223,6 +231,7 @@ const SendToAddress = () => {
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         )) as string;
         dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
       }
 
       const newRecipient = {
@@ -242,13 +251,13 @@ const SendToAddress = () => {
   };
 
   const renderItem = useCallback(
-    ({item}) => {
+    ({item, index}) => {
       return (
         <RecipientList
           recipient={item}
           wallet={wallet}
-          deleteRecipient={() => setRecipientListContext(item, true)}
-          setAmount={() => setRecipientAmountContext(item, true)}
+          deleteRecipient={() => setRecipientListContext(item, index, true)}
+          setAmount={() => setRecipientAmountContext(item, index, true)}
           context={context}
         />
       );
@@ -300,15 +309,21 @@ const SendToAddress = () => {
 
         <View style={{marginTop: 30}}>
           <H5>
-            {recipientList?.length > 1 ? t('Recipients') : t('Recipient')}
+            {recipientList?.length > 1
+              ? t('Recipients') + ` (${recipientList?.length})`
+              : t('Recipient')}
           </H5>
           <Hr />
           {recipientList && recipientList.length ? (
-            <FlatList
-              data={recipientList}
-              keyExtractor={(_item, index) => index.toString()}
-              renderItem={renderItem}
-            />
+            <View style={{maxHeight: HEIGHT * 0.18}}>
+              <FlatList
+                data={recipientList}
+                keyExtractor={(_item, index) => index.toString()}
+                renderItem={({item, index}: {item: Recipient; index: number}) =>
+                  renderItem({item, index})
+                }
+              />
+            </View>
           ) : (
             <>
               <RecipientRowContainer>

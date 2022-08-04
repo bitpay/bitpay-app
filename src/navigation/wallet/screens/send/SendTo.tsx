@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -22,6 +22,7 @@ import {Effect, RootState} from '../../../../store';
 import {
   convertToFiat,
   formatFiatAmount,
+  getErrorString,
   sleep,
 } from '../../../../utils/helper-methods';
 import {Key, Rates} from '../../../../store/wallet/wallet.models';
@@ -75,11 +76,11 @@ import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetChain, IsUtxoCoin} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
-import SettingsContactRow from '../../../../components/list/SettingsContactRow';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
 import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
+import ContactRow from '../../../../components/list/ContactRow';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -112,10 +113,6 @@ const PasteClipboardContainer = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: center;
   padding: 10px;
-`;
-
-export const SendContactRow = styled.View`
-  padding: 10px 0px;
 `;
 
 export const ContactTitleContainer = styled.View`
@@ -283,13 +280,15 @@ const SendTo = () => {
     dispatch,
   );
 
-  const contacts = allContacts.filter(
-    contact =>
-      contact.coin === currencyAbbreviation.toLowerCase() &&
-      contact.network === network &&
-      (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-        contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
-  );
+  const contacts = useMemo(() => {
+    return allContacts.filter(
+      contact =>
+        contact.coin === currencyAbbreviation.toLowerCase() &&
+        contact.network === network &&
+        (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+          contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
+    );
+  }, [allContacts, currencyAbbreviation, network, searchInput]);
 
   const onErrorMessageDismiss = () => {
     setSearchInput('');
@@ -358,6 +357,7 @@ const SendTo = () => {
     text: string,
     context?: string,
     name?: string,
+    destinationTag?: number,
   ) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
@@ -407,7 +407,7 @@ const SendTo = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
-        dispatch(incomingData(text, {wallet, context, name}));
+        dispatch(incomingData(text, {wallet, context, name, destinationTag}));
       }
     }
   };
@@ -453,8 +453,9 @@ const SendTo = () => {
       dispatch(
         goToAmount({coin: wallet.currencyAbbreviation, recipient, wallet}),
       );
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      logger.error(`Send To: ${getErrorString(err)}`);
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -534,24 +535,26 @@ const SendTo = () => {
 
             {contacts.map((item, index) => {
               return (
-                <SendContactRow key={index}>
-                  <SettingsContactRow
-                    contact={item}
-                    onPress={() => {
-                      try {
-                        if (item) {
-                          validateAndNavigateToConfirm(
-                            item.address,
-                            'contact',
-                            item.name,
-                          );
-                        }
-                      } catch (err) {
-                        console.log(err);
+                <ContactRow
+                  key={index}
+                  contact={item}
+                  onPress={() => {
+                    try {
+                      if (item) {
+                        validateAndNavigateToConfirm(
+                          item.address,
+                          'contact',
+                          item.name,
+                          item.tag || item.destinationTag,
+                        );
                       }
-                    }}
-                  />
-                </SendContactRow>
+                    } catch (err) {
+                      logger.error(
+                        `Send To [Contacts]: ${getErrorString(err)}`,
+                      );
+                    }
+                  }}
+                />
               );
             })}
           </>

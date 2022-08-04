@@ -22,7 +22,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
 import {
   BaseText,
@@ -601,19 +601,19 @@ const RecoveryPhrase = () => {
             <ImportTextInput
               multiline
               autoCapitalize={'none'}
-              numberOfLines={5}
+              numberOfLines={3}
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
+              autoCorrect={false}
+              spellCheck={false}
             />
           )}
           name="text"
           defaultValue=""
         />
 
-        {errors?.text?.message && (
-          <ErrorText>{t('Recovery phrase is required.')}</ErrorText>
-        )}
+        {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
 
         <CtaContainer>
           <AdvancedOptionsContainer>
@@ -774,11 +774,9 @@ const RecoveryPhrase = () => {
           </AdvancedOptionsContainer>
         </CtaContainer>
 
-        <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-            {t('Import Wallet')}
-          </Button>
-        </CtaContainer>
+        <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+          {t('Import Wallet')}
+        </Button>
       </ContentView>
     </ScrollViewContainer>
   );

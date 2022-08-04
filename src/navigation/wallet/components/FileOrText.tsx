@@ -9,7 +9,7 @@ import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import styled from 'styled-components/native';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {BaseText, ImportTitle} from '../../../components/styled/Text';
@@ -59,6 +59,7 @@ const ErrorText = styled(BaseText)`
 
 const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
+  margin-top: 6px;
 `;
 
 const FormRow = styled.View`
@@ -192,9 +193,7 @@ const FileOrText = () => {
             defaultValue=""
           />
 
-          {errors?.text?.message && (
-            <ErrorText>{t('Backup text is required.')}</ErrorText>
-          )}
+          {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
         </FormRow>
 
         <FormRow>
@@ -208,7 +207,7 @@ const FileOrText = () => {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
-                error={errors?.password?.message && t('Password is required.')}
+                error={errors.password?.message}
               />
             )}
             name="password"
@@ -216,11 +215,9 @@ const FileOrText = () => {
           />
         </FormRow>
 
-        <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={onSubmit}>
-            {t('Import Wallet')}
-          </Button>
-        </CtaContainer>
+        <Button buttonStyle={'primary'} onPress={onSubmit}>
+          {t('Import Wallet')}
+        </Button>
       </ContentView>
     </ScrollViewContainer>
   );

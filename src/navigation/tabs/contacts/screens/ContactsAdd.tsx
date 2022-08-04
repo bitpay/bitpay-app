@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import {FlatList} from 'react-native';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../../lib/yup';
 import styled, {useTheme} from 'styled-components/native';
 import {Controller, useForm} from 'react-hook-form';
 import Button from '../../../../components/button/Button';
@@ -137,7 +137,7 @@ const NetworkName = styled(BaseText)`
 const schema = yup.object().shape({
   name: yup.string().required(),
   email: yup.string().email().trim(),
-  tag: yup.number(),
+  destinationTag: yup.number(),
   address: yup.string().required(),
 });
 
@@ -335,8 +335,8 @@ const ContactsAdd = ({
       return;
     }
 
-    if (coinValue === 'xrp' && !contact.tag) {
-      setError('tag', {
+    if (coinValue === 'xrp' && !contact.destinationTag) {
+      setError('destinationTag', {
         type: 'manual',
         message: t('Tag number is required for XRP address'),
       });
@@ -422,7 +422,7 @@ const ContactsAdd = ({
       setValue('address', contact.address, {shouldDirty: true});
       setValue('name', contact.name);
       setValue('email', contact.email);
-      setValue('tag', contact.tag);
+      setValue('destinationTag', contact.tag || contact.destinationTag);
       currencySelected({id: contact.coin} as CurrencySelectionToggleProps);
       processAddress(contact.address);
     }
@@ -517,14 +517,14 @@ const ContactsAdd = ({
               label={t('TAG')}
               onBlur={onBlur}
               onChangeText={onChange}
-              error={errors.tag?.message}
+              error={errors.destinationTag?.message}
               keyboardType={'number-pad'}
               type={'number'}
               maxLength={9}
               value={value?.toString()}
             />
           )}
-          name="tag"
+          name="destinationTag"
         />
       </InputContainer>
 

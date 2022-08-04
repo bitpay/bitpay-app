@@ -49,6 +49,7 @@ import {ButtonState} from '../../../components/button/Button';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
+import {LogActions} from '../../../store/log';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -115,11 +116,11 @@ export type GlobalSelectParamList = {
     name?: string;
     type?: string;
     network?: string;
+    destinationTag?: number;
     opts?: {
       sendMax?: boolean | undefined;
       message?: string;
       feePerKb?: number;
-      destinationTag?: string;
       showERC20Tokens?: boolean;
     };
   };
@@ -341,7 +342,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
       }
       if (['coinbase', 'contact', 'scanner'].includes(context)) {
         setWalletSelectModalVisible(false);
-        const {name, address, type, opts} = recipient!;
+        const {name, address, type, destinationTag, opts} = recipient!;
         if (!address) {
           return;
         }
@@ -351,6 +352,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             name,
             type: type || context,
             address,
+            destinationTag,
           };
 
           if (!amount) {
@@ -384,7 +386,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             );
           }
         } catch (err) {
-          console.error(err);
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         }
       } else if (context === 'send') {
         setWalletSelectModalVisible(false);
@@ -414,6 +418,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         name: string | undefined;
         type: string;
         address: string;
+        destinationTag?: number;
       };
       setButtonState?: (state: ButtonState) => void;
       opts: any;
@@ -452,9 +457,12 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             txp,
             txDetails,
             amount,
+            message: opts?.message,
           },
         });
       } catch (err: any) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         if (setButtonState) {
           setButtonState('failed');
         } else {

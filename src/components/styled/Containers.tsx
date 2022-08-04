@@ -97,7 +97,7 @@ export const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   margin: 10px 0;
-  padding: 0 10px 0 10px;
+  padding: 0 10px;
 `;
 
 export const CurrencyColumn = styled(Column)`
@@ -248,7 +248,7 @@ export const ImportContainer = styled.View`
 `;
 
 export const ImportTextInput = styled.TextInput`
-  height: 100px;
+  height: 80px;
   color: ${({theme}) => theme.colors.text};
   background: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};
@@ -256,6 +256,7 @@ export const ImportTextInput = styled.TextInput`
   border-top-left-radius: 4px;
   text-align-vertical: top;
   padding: 5px;
+  font-size: 16px;
 `;
 
 export const InfoImageContainer = styled.View<{infoMargin: string}>`

@@ -3,7 +3,7 @@ import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {useTheme} from 'styled-components/native';
-import {TouchableOpacity, FlatList} from 'react-native';
+import {TouchableOpacity, FlatList, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {useForm, Controller} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/core';
@@ -170,15 +170,17 @@ const ContactsRoot: React.FC = () => {
 
   const renderItem = useCallback(
     ({item}) => (
-      <ContactRow
-        contact={item}
-        onPress={() => {
-          navigation.navigate('Contacts', {
-            screen: 'ContactsDetails',
-            params: {contact: item},
-          });
-        }}
-      />
+      <View style={{paddingHorizontal: 20}}>
+        <ContactRow
+          contact={item}
+          onPress={() => {
+            navigation.navigate('Contacts', {
+              screen: 'ContactsDetails',
+              params: {contact: item},
+            });
+          }}
+        />
+      </View>
     ),
     [navigation],
   );

@@ -44,6 +44,7 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../../../components/ErrorMessages';
+import {URL} from '../../../../../constants';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
 import {
@@ -62,12 +63,13 @@ import {
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {Alert, TouchableOpacity} from 'react-native';
+import {Platform, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
 import {toFiat} from '../../../../../store/wallet/utils/wallet';
 import {GetPrecision} from '../../../../../store/wallet/utils/currency';
+import prompt from 'react-native-prompt-android';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -83,6 +85,7 @@ export interface ConfirmParamList {
   sendMax?: boolean;
   inputs?: Utxo[];
   selectInputs?: boolean;
+  message?: string | undefined;
 }
 
 export const Setting = styled.TouchableOpacity`
@@ -120,6 +123,7 @@ const Confirm = () => {
     sendMax,
     inputs,
     selectInputs,
+    message,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -146,6 +150,7 @@ const Confirm = () => {
     nonce: _nonce,
     total: _total,
     destinationTag: _destinationTag,
+    context,
   } = txDetails;
 
   const [fee, setFee] = useState(_fee);
@@ -154,7 +159,9 @@ const Confirm = () => {
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
-  const [destinationTag, setDestinationTag] = useState(_destinationTag);
+  const [destinationTag, setDestinationTag] = useState(
+    recipient?.destinationTag || _destinationTag,
+  );
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
   const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation)) || {};
@@ -189,7 +196,7 @@ const Confirm = () => {
   };
 
   const editValue = (title: string, type: string) => {
-    Alert.prompt(
+    prompt(
       title,
       '',
       [
@@ -204,7 +211,7 @@ const Confirm = () => {
             const opts: {
               nonce?: number;
               gasLimit?: number;
-              destinationTag?: string;
+              destinationTag?: number;
             } = {};
             switch (type) {
               case 'nonce':
@@ -214,7 +221,7 @@ const Confirm = () => {
                 opts.gasLimit = Number(value);
                 break;
               case 'destinationTag':
-                opts.destinationTag = value;
+                opts.destinationTag = Number(value);
                 break;
               default:
                 break;
@@ -223,9 +230,13 @@ const Confirm = () => {
           },
         },
       ],
-      'plain-text',
-      '',
-      'number-pad',
+      {
+        type: Platform.OS === 'ios' ? 'plain-text' : 'numeric',
+        cancelable: true,
+        defaultValue: '',
+        // @ts-ignore
+        keyboardType: 'numeric',
+      },
     );
   };
 
@@ -247,9 +258,11 @@ const Confirm = () => {
         createProposalAndBuildTxDetails({
           wallet,
           recipient,
+          recipientList,
           amount,
           sendMax,
           inputs,
+          context,
           ...txp,
           ...newOpts,
         }),
@@ -362,9 +375,8 @@ const Confirm = () => {
             hr
           />
           {enableReplaceByFee &&
-          currencyAbbreviation === 'btc' &&
-          !recipientList &&
-          !selectInputs ? (
+          !selectInputs &&
+          currencyAbbreviation === 'btc' ? (
             <>
               <Setting activeOpacity={1}>
                 <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
@@ -430,7 +442,7 @@ const Confirm = () => {
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
-                        openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'),
+                        openUrlWithInAppBrowser(URL.HELP_DESTINATION_TAG),
                       );
                     }}>
                     <Link>Learn More</Link>
@@ -441,7 +453,7 @@ const Confirm = () => {
           ) : null}
           {txp && currencyAbbreviation !== 'xrp' ? (
             <Memo
-              memo={txp.message || ''}
+              memo={txp.message || message || ''}
               onChange={message => setTxp({...txp, message})}
             />
           ) : null}
@@ -534,6 +546,9 @@ const Confirm = () => {
                 dispatch(showBottomNotificationModal(WrongPasswordError()));
                 break;
               case 'password canceled':
+                break;
+              case 'biometric check failed':
+                setResetSwipeButton(true);
                 break;
               default:
                 await showErrorMessage(

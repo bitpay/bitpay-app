@@ -37,7 +37,7 @@ import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {useTranslation} from 'react-i18next';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {startGetRates} from '../../../store/wallet/effects';
-import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
+import {startUpdateAllWalletStatusForKeys} from '../../../store/wallet/effects/status/status';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -429,12 +429,25 @@ const TransactionProposalNotifications = () => {
     );
   };
 
+  const updateWalletsWithProposals = async () => {
+    const walletIdsWithProposals = _.uniq(pendingTxps.map(txp => txp.walletId));
+    const keyIdsWithProposals = walletIdsWithProposals.map(
+      walletIdString => findWalletById(wallets, walletIdString)!.keyId,
+    );
+    const keyIds = _.uniq(keyIdsWithProposals);
+    await dispatch(
+      startUpdateAllWalletStatusForKeys({
+        keys: keyIds.map(keyIdString => keys[keyIdString]),
+      }),
+    );
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await sleep(1000);
     try {
       await dispatch(startGetRates({force: true}));
-      await dispatch(startUpdateAllKeyAndWalletStatus());
+      await updateWalletsWithProposals();
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
@@ -448,7 +461,7 @@ const TransactionProposalNotifications = () => {
     arrayData.forEach((data: TransactionProposal | Error) => {
       if (data instanceof Error) {
         count.failed = count.failed + 1;
-      } else if (data.id) {
+      } else if (data && data.id) {
         count.success = count.success + 1;
       }
     });

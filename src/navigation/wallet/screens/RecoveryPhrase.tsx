@@ -43,7 +43,7 @@ export interface RecoveryPhraseParamList {
   walletTermsAccepted: boolean;
 }
 
-const RecoveryPhraseContainer = styled.View`
+const RecoveryPhraseContainer = styled.ScrollView`
   flex: 1;
 `;
 
@@ -140,15 +140,14 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   });
 
   useAndroidBackHandler(() => true);
-  const ref = useRef(null);
+  const ref = useRef<Carousel<string>>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   useEffect(() => {
     return navigation.addListener('blur', async () => {
       await sleep(400);
       setActiveSlideIndex(0);
-      // @ts-ignore
-      ref.current.snapToItem(0);
+      ref.current?.snapToItem(0);
     });
   }, [navigation]);
 

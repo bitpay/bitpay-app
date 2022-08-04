@@ -218,6 +218,7 @@ export interface Recipient {
   keyId?: string;
   address: string;
   amount?: number;
+  destinationTag?: number;
 }
 
 export interface CustomTransactionData {
@@ -254,6 +255,7 @@ export interface TransactionOptions {
   customData?: CustomTransactionData;
   payProUrl?: string;
   sendMax?: boolean;
+  payProDetails?: any;
   // btc
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
@@ -267,11 +269,12 @@ export interface TransactionOptions {
   isTokenSwap?: boolean;
   multisigContractAddress?: string;
   // xrp
-  destinationTag?: string;
+  destinationTag?: number;
   invoiceID?: string;
   useUnconfirmedFunds?: boolean;
   // fromReplaceByFee
   fee?: number;
+  outputs?: Utxo[];
   // selectInputs
   inputs?: Utxo[];
   // multisend
@@ -325,7 +328,7 @@ export interface TransactionProposal {
   feeLevel: string;
   dryRun: boolean;
   tokenAddress?: string;
-  destinationTag?: string;
+  destinationTag?: number;
   invoiceID?: string;
   multisigGnosisContractAddress?: string;
   multisigContractAddress?: string;
@@ -396,6 +399,7 @@ export interface TxDetails {
   sendingTo: TxDetailsSendingTo;
   fee: TxDetailsFee;
   networkCost?: TxDetailsAmount;
+  context?: TransactionOptionsContext;
   // eth
   gasPrice?: number;
   gasLimit?: number;
@@ -405,7 +409,7 @@ export interface TxDetails {
   subTotal: TxDetailsAmount;
   total: TxDetailsAmount;
   // xrp
-  destinationTag?: string;
+  destinationTag?: number;
 }
 
 export interface SendMaxInfo {

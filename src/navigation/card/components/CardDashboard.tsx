@@ -350,19 +350,19 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     });
   }
 
-  if (brazeCardOffers.length) {
-    additionalContent.push({
-      key: 'card-offers',
-      content: (
-        <CardOffersContainer>
-          <CardOffers
-            contentCard={brazeCardOffers[0]}
-            userEmail={user?.email}
-          />
-        </CardOffersContainer>
-      ),
-    });
-  }
+  // if (brazeCardOffers.length) {
+  //   additionalContent.push({
+  //     key: 'card-offers',
+  //     content: (
+  //       <CardOffersContainer>
+  //         <CardOffers
+  //           contentCard={brazeCardOffers[0]}
+  //           userEmail={user?.email}
+  //         />
+  //       </CardOffersContainer>
+  //     ),
+  //   });
+  // }
 
   const flatListRef = useRef<FlatList>(null);
   useScrollToTop(flatListRef);

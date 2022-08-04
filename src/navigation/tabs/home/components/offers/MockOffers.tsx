@@ -13,14 +13,14 @@ const MockOffers = (): ClassicContentCard[] => {
       url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amc%20theatres`,
       openURLInWebView: false,
     },
-    {
-      ...DEFAULT_CLASSIC_CONTENT_CARD,
-      id: 'dev_2',
-      cardDescription: t('Spend Crypto at Amazon'),
-      image: require('../../../../../../assets/img/home/offers/amazon.png'),
-      url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amazon.com`,
-      openURLInWebView: false,
-    },
+    // {
+    //   ...DEFAULT_CLASSIC_CONTENT_CARD,
+    //   id: 'dev_2',
+    //   cardDescription: t('Spend Crypto at Amazon'),
+    //   image: require('../../../../../../assets/img/home/offers/amazon.png'),
+    //   url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amazon.com`,
+    //   openURLInWebView: false,
+    // },
   ];
 };
 
