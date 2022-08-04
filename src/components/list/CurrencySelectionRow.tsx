@@ -1,4 +1,4 @@
-import React, {memo} from 'react';
+import React, {memo, useCallback} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ImageRequireSource} from 'react-native';
 import styled from 'styled-components/native';
@@ -46,7 +46,7 @@ export type CurrencySelectionRowProps = {
   ) => any;
 };
 
-const CurrencySelectionRowContainer = styled.View`
+export const CurrencySelectionRowContainer = styled.View`
   border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
   border-radius: 12px;
   flex-direction: column;
@@ -54,13 +54,8 @@ const CurrencySelectionRowContainer = styled.View`
   padding: 16px;
 `;
 
-const ChainSelectionRow = styled.View`
+const FlexRow = styled.View`
   flex-direction: row;
-`;
-
-const TokenSelectionRow = styled.View`
-  flex-direction: row;
-  margin-bottom: 24px;
 `;
 
 const ChainDescription = styled(H7)`
@@ -88,7 +83,7 @@ const CurrencySubTitle = styled(BaseText)`
   font-size: 12px;
 `;
 
-const TokensHeading = styled(H7).attrs(() => ({
+export const TokensHeading = styled(H7).attrs(() => ({
   medium: true,
 }))`
   color: ${({theme}) => (theme.dark ? Slate10 : LuckySevens)};
@@ -105,30 +100,26 @@ const ViewAllLink = styled(H6)`
   text-align: center;
 `;
 
-const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
-  currency,
-  description,
-  tokens,
-  hideCheckbox,
-  onToggle,
-  onViewAllTokensPressed,
-}) => {
-  const {t} = useTranslation();
-  const {currencyAbbreviation, currencyName, img, imgSrc, selected, disabled} =
-    currency;
-  const onPress = (item: CurrencySelectionItem): void => {
-    haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
-    onToggle?.({
-      id: item.id,
-      currencyAbbreviation: item.currencyAbbreviation,
-      currencyName: item.currencyName,
-      isToken: item.isToken,
-    });
-  };
+interface ChainSelectionRowProps {
+  currency: CurrencySelectionItem;
+  hideCheckbox?: boolean;
+  onToggle?: (currency: CurrencySelectionItem) => any;
+}
 
-  return (
-    <CurrencySelectionRowContainer>
-      <ChainSelectionRow>
+export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
+  props => {
+    const {onToggle, currency, hideCheckbox} = props;
+    const {
+      currencyAbbreviation,
+      currencyName,
+      img,
+      imgSrc,
+      selected,
+      disabled,
+    } = currency;
+
+    return (
+      <FlexRow>
         <CurrencyColumn>
           <CurrencyImage img={img} imgSrc={imgSrc} />
         </CurrencyColumn>
@@ -143,18 +134,103 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
           <CurrencyColumn>
             <Checkbox
               checked={!!selected}
-              disabled={disabled}
-              onPress={() => onPress(currency)}
+              disabled={!!disabled}
+              onPress={() => onToggle?.(currency)}
             />
           </CurrencyColumn>
         )}
-      </ChainSelectionRow>
+      </FlexRow>
+    );
+  },
+);
 
-      {description ? (
-        <ChainSelectionRow style={{marginTop: 16}}>
-          <ChainDescription>{description}</ChainDescription>
-        </ChainSelectionRow>
-      ) : null}
+interface TokenSelectionRowProps {
+  chainImg?: CurrencySelectionItem['img'];
+  token: CurrencySelectionItem;
+  hideCheckbox?: boolean;
+  onToggle?: (token: CurrencySelectionItem) => any;
+}
+
+export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
+  props => {
+    const {chainImg, token, hideCheckbox, onToggle} = props;
+
+    return (
+      <FlexRow style={{marginBottom: 24}}>
+        <CurrencyColumn style={{marginRight: 16}}>
+          <ArrowDownRightIcon />
+        </CurrencyColumn>
+
+        <CurrencyColumn>
+          <CurrencyImage
+            img={token.img}
+            imgSrc={token.imgSrc}
+            badgeUri={chainImg}
+          />
+        </CurrencyColumn>
+
+        <CurrencyTitleColumn style={{flexGrow: 1}}>
+          <CurrencyTitle>{token.currencyName}</CurrencyTitle>
+
+          <CurrencySubTitle style={{flexShrink: 1, flexGrow: 1}}>
+            {token.currencyAbbreviation}
+          </CurrencySubTitle>
+        </CurrencyTitleColumn>
+
+        {!hideCheckbox ? (
+          <CurrencyColumn>
+            <Checkbox
+              checked={!!token.selected}
+              disabled={!!token.disabled}
+              onPress={() => onToggle?.(token)}
+            />
+          </CurrencyColumn>
+        ) : null}
+      </FlexRow>
+    );
+  },
+);
+
+export const DescriptionRow: React.FC = ({children}) => {
+  return (
+    <FlexRow style={{marginTop: 16}}>
+      <ChainDescription>{children}</ChainDescription>
+    </FlexRow>
+  );
+};
+
+const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
+  currency,
+  description,
+  tokens,
+  hideCheckbox,
+  onToggle,
+  onViewAllTokensPressed,
+}) => {
+  const {t} = useTranslation();
+  const {currencyName} = currency;
+  const onPress = useCallback(
+    (item: CurrencySelectionItem): void => {
+      haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
+      onToggle?.({
+        id: item.id,
+        currencyAbbreviation: item.currencyAbbreviation,
+        currencyName: item.currencyName,
+        isToken: item.isToken,
+      });
+    },
+    [onToggle],
+  );
+
+  return (
+    <CurrencySelectionRowContainer>
+      <ChainSelectionRow
+        currency={currency}
+        onToggle={onPress}
+        hideCheckbox={hideCheckbox}
+      />
+
+      {description ? <DescriptionRow>{description}</DescriptionRow> : null}
 
       {tokens?.length ? (
         <>
@@ -163,35 +239,13 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
           </TokensHeading>
 
           {tokens.map(token => (
-            <TokenSelectionRow key={token.id}>
-              <CurrencyColumn style={{marginRight: 16}}>
-                <ArrowDownRightIcon />
-              </CurrencyColumn>
-
-              <CurrencyColumn>
-                <CurrencyImage
-                  img={token.img}
-                  imgSrc={token.imgSrc}
-                  badgeUri={img}
-                />
-              </CurrencyColumn>
-
-              <CurrencyTitleColumn style={{flexGrow: 1}}>
-                <CurrencyTitle>{token.currencyName}</CurrencyTitle>
-
-                <CurrencySubTitle style={{flexShrink: 1, flexGrow: 1}}>
-                  {token.currencyAbbreviation}
-                </CurrencySubTitle>
-              </CurrencyTitleColumn>
-
-              <CurrencyColumn>
-                <Checkbox
-                  checked={!!token.selected}
-                  disabled={false}
-                  onPress={() => onPress(token)}
-                />
-              </CurrencyColumn>
-            </TokenSelectionRow>
+            <TokenSelectionRow
+              key={token.id}
+              chainImg={currency.img}
+              token={token}
+              onToggle={onPress}
+              hideCheckbox={hideCheckbox}
+            />
           ))}
 
           <TokensFooter>

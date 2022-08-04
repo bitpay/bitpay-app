@@ -110,14 +110,14 @@ export const CurrencySelectionContainer = styled.View`
   flex: 1;
 `;
 
-export const ListContainer = styled.View`
-  margin-top: 20px;
+const ListContainer = styled.View`
+  flex-shrink: 1;
 `;
 
 export const SearchContainer = styled.View`
   align-items: center;
   padding: 4px 0;
-  margin: 20px ${ScreenGutter} 0;
+  margin: 20px ${ScreenGutter} 20px;
 `;
 
 const SupportedChainCurrencyOptions = SupportedCurrencyOptions.filter(
@@ -589,16 +589,32 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         return;
       }
 
+      const sortedTokens = item.tokens.map(token => ({...token}));
+
+      // sorted selected tokens to the top for ease of use
+      sortedTokens.sort((a, b) => {
+        if (a.selected && !b.selected) {
+          return -1;
+        }
+        if (b.selected && !a.selected) {
+          return 1;
+        }
+
+        return 0;
+      });
+
       navigation.navigate('Wallet', {
         screen: WalletScreens.CURRENCY_TOKEN_SELECTION,
         params: {
-          currency,
-          tokens: item.tokens,
+          currency: {...currency},
+          tokens: sortedTokens,
+          description: item.description,
+          hideCheckbox: hideCheckbox,
           onToggle: memoizedOnToggle,
         },
       });
     };
-  }, [memoizedOnToggle, navigation]);
+  }, [memoizedOnToggle, navigation, hideCheckbox]);
 
   const renderItem: ListRenderItem<CurrencySelectionRowItem> = useCallback(
     ({item}) => {
@@ -614,7 +630,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         />
       );
     },
-    [memoizedOnToggle, memoizedOnViewAllPressed, hideCheckbox],
+    [t, memoizedOnToggle, memoizedOnViewAllPressed, hideCheckbox],
   );
 
   const debouncedSetSearchFilter = useMemo(
@@ -653,7 +669,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       </SearchContainer>
 
       {listItems.length ? (
-        <ListContainer style={{flexShrink: 1}}>
+        <ListContainer>
           <FlatList<CurrencySelectionRowItem>
             data={listItems}
             keyExtractor={keyExtractor}

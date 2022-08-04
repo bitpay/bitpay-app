@@ -1133,6 +1133,7 @@
   "Key and wallet required": "Key and wallet required",
   "SelectArgCurrencies": "Select {{chain}} Currencies",
   "PopularArgTokens": "Popular {{currency}} Tokens",
+  "AllArgTokens": "All {{currency}} Tokens",
   "ViewAllArgTokens": "View all {{currency}} tokens",
   "TokensOnEthereumNetworkDescription": "Tokens on the Ethereum network need an Ethereum wallet to pay for fees.",
   "TokensOnPolygonNetworkDescription": "Tokens on the Polygon network need an Polygon wallet to pay for fees.",

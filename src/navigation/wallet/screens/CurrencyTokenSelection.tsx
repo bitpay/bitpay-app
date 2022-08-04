@@ -10,76 +10,60 @@ import React, {
 import {useTranslation} from 'react-i18next';
 import {StyleSheet} from 'react-native';
 import {FlatList} from 'react-native-gesture-handler';
-import CurrencySelectionRow, {
+import styled, {useTheme} from 'styled-components/native';
+import {
+  ChainSelectionRow,
   CurrencySelectionItem,
   CurrencySelectionToggleProps,
+  DescriptionRow,
+  TokenSelectionRow,
+  TokensHeading,
 } from '../../../components/list/CurrencySelectionRow';
+import {ScreenGutter} from '../../../components/styled/Containers';
 import {HeaderTitle} from '../../../components/styled/Text';
+import {LightBlack, Slate30} from '../../../styles/colors';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
-import {
-  CurrencySelectionContainer,
-  ListContainer,
-  SearchContainer,
-} from './CurrencySelection';
+import {CurrencySelectionContainer, SearchContainer} from './CurrencySelection';
 
 export type CurrencyTokenSelectionScreenParamList = {
   currency: CurrencySelectionItem;
   tokens: CurrencySelectionItem[];
+  description?: string;
+  hideCheckbox?: boolean;
   onToggle: (args: CurrencySelectionToggleProps) => any;
 };
 
+const ListContainer = styled.View`
+  flex-shrink: 1;
+  padding-bottom: ${ScreenGutter};
+`;
+
 const styles = StyleSheet.create({
   list: {
-    paddingBottom: 100,
+    borderWidth: 1,
+    marginLeft: 15,
+    marginRight: 15,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 15,
+  },
+  listHeader: {
+    marginBottom: 16,
   },
 });
 
 const keyExtractor = (item: CurrencySelectionItem) => item.id;
 
-const computeInitialItems = (
-  chainCurrency: CurrencySelectionItem,
-  tokens: CurrencySelectionItem[],
-) => {
-  // chain currency always at top, don't modify original object
-  const items: CurrencySelectionItem[] = [
-    {
-      ...chainCurrency,
-    },
-  ];
-
-  // copy the array before sort
-  const tokensCopy = tokens.slice();
-
-  // sort selected items to the top
-  tokensCopy.sort((a, b) => {
-    if (a.selected && !b.selected) {
-      return -1;
-    }
-    if (b.selected && !a.selected) {
-      return 1;
-    }
-
-    return 0;
-  });
-
-  // don't modify original objects
-  tokensCopy.forEach(token =>
-    items.push({
-      ...token,
-    }),
-  );
-
-  return items;
-};
-
 const CurrencyTokenSelectionScreen: React.VFC<
   StackScreenProps<WalletStackParamList, WalletScreens.CURRENCY_TOKEN_SELECTION>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
-  const {currency, tokens, onToggle} = route.params;
-  const [items, setItems] = useState(computeInitialItems(currency, tokens));
+  const theme = useTheme();
+  const {params} = route;
+  const [chain, setChain] = useState(params.currency);
+  const [items, setItems] = useState(params.tokens);
   const [searchInput, setSearchInput] = useState('');
   const searchInputRef = useRef(searchInput);
   searchInputRef.current = searchInput;
@@ -111,6 +95,24 @@ const CurrencyTokenSelectionScreen: React.VFC<
     [],
   );
 
+  const onChainToggle = (tgt: CurrencySelectionToggleProps) => {
+    setChain({
+      ...chain,
+      selected: !chain.selected,
+    });
+    params.onToggle(tgt);
+  };
+
+  const onChainToggleRef = useRef(onChainToggle);
+  onChainToggleRef.current = onChainToggle;
+
+  const memoizedOnChainToggle = useCallback(
+    (args: CurrencySelectionToggleProps) => {
+      onChainToggleRef.current(args);
+    },
+    [],
+  );
+
   const onTokenToggle = (tgt: CurrencySelectionToggleProps) => {
     setItems(prev =>
       prev.reduce<CurrencySelectionItem[]>((accum, token) => {
@@ -126,39 +128,70 @@ const CurrencyTokenSelectionScreen: React.VFC<
         return accum;
       }, []),
     );
-    onToggle(tgt);
+    params.onToggle(tgt);
   };
 
-  const onToggleRef = useRef(onTokenToggle);
-  onToggleRef.current = onTokenToggle;
+  const onTokenToggleRef = useRef(onTokenToggle);
+  onTokenToggleRef.current = onTokenToggle;
 
-  const memoizedOnToggle = useCallback((args: CurrencySelectionToggleProps) => {
-    onToggleRef.current(args);
-  }, []);
+  const memoizedOnTokenToggle = useCallback(
+    (args: CurrencySelectionToggleProps) => {
+      onTokenToggleRef.current(args);
+    },
+    [],
+  );
+
+  const listHeaderComponent = useMemo(() => {
+    return () => (
+      <>
+        <ChainSelectionRow
+          currency={chain}
+          hideCheckbox={params.hideCheckbox}
+          onToggle={memoizedOnChainToggle}
+        />
+
+        {params.description ? (
+          <DescriptionRow>{params.description}</DescriptionRow>
+        ) : null}
+
+        <TokensHeading>
+          {t('AllArgTokens', {currency: t(chain.currencyName)})}
+        </TokensHeading>
+      </>
+    );
+  }, [
+    t,
+    memoizedOnChainToggle,
+    params.description,
+    params.hideCheckbox,
+    chain,
+  ]);
 
   const renderItem = useMemo(() => {
     return ({item}: {item: CurrencySelectionItem}) => {
       return (
-        <CurrencySelectionRow
+        <TokenSelectionRow
           key={item.id}
-          currency={item}
-          onToggle={memoizedOnToggle}
+          chainImg={chain.img}
+          token={item}
+          hideCheckbox={params.hideCheckbox}
+          onToggle={memoizedOnTokenToggle}
         />
       );
     };
-  }, [memoizedOnToggle]);
+  }, [memoizedOnTokenToggle, params.hideCheckbox, chain.img]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <HeaderTitle>
           {t('SelectArgCurrencies', {
-            chain: t(currency.currencyName),
+            chain: t(chain.currencyName),
           })}
         </HeaderTitle>
       ),
     });
-  }, [navigation, t, currency.currencyName]);
+  }, [navigation, t, chain.currencyName]);
 
   return (
     <CurrencySelectionContainer>
@@ -189,10 +222,15 @@ const CurrencyTokenSelectionScreen: React.VFC<
       {filteredItems.length ? (
         <ListContainer>
           <FlatList<CurrencySelectionItem>
-            contentContainerStyle={styles.list}
+            contentContainerStyle={{
+              ...styles.list,
+              borderColor: theme.dark ? LightBlack : Slate30,
+            }}
             data={filteredItems}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
+            ListHeaderComponent={listHeaderComponent}
+            ListHeaderComponentStyle={styles.listHeader}
           />
         </ListContainer>
       ) : (
