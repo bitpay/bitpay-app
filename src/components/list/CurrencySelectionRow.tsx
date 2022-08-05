@@ -39,7 +39,7 @@ export type CurrencySelectionRowProps = {
   tokens?: CurrencySelectionItem[];
   description?: string;
   hideCheckbox?: boolean;
-  onToggle?: (props: CurrencySelectionToggleProps) => void;
+  onToggle?: (id: string) => void;
   onViewAllTokensPressed?: (
     currency: CurrencySelectionItem,
     tokens: CurrencySelectionItem[],
@@ -103,7 +103,7 @@ const ViewAllLink = styled(H6)`
 interface ChainSelectionRowProps {
   currency: CurrencySelectionItem;
   hideCheckbox?: boolean;
-  onToggle?: (currency: CurrencySelectionItem) => any;
+  onToggle?: (id: string) => any;
 }
 
 export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
@@ -135,7 +135,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
             <Checkbox
               checked={!!selected}
               disabled={!!disabled}
-              onPress={() => onToggle?.(currency)}
+              onPress={() => onToggle?.(currency.id)}
             />
           </CurrencyColumn>
         )}
@@ -148,7 +148,7 @@ interface TokenSelectionRowProps {
   chainImg?: CurrencySelectionItem['img'];
   token: CurrencySelectionItem;
   hideCheckbox?: boolean;
-  onToggle?: (token: CurrencySelectionItem) => any;
+  onToggle?: (id: string) => any;
 }
 
 export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
@@ -182,7 +182,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
             <Checkbox
               checked={!!token.selected}
               disabled={!!token.disabled}
-              onPress={() => onToggle?.(token)}
+              onPress={() => onToggle?.(token.id)}
             />
           </CurrencyColumn>
         ) : null}
@@ -210,14 +210,9 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   const {t} = useTranslation();
   const {currencyName} = currency;
   const onPress = useCallback(
-    (item: CurrencySelectionItem): void => {
+    (id: string): void => {
       haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
-      onToggle?.({
-        id: item.id,
-        currencyAbbreviation: item.currencyAbbreviation,
-        currencyName: item.currencyName,
-        isToken: item.isToken,
-      });
+      onToggle?.(id);
     },
     [onToggle],
   );

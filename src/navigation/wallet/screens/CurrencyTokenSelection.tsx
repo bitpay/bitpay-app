@@ -13,7 +13,6 @@ import styled, {useTheme} from 'styled-components/native';
 import {
   ChainSelectionRow,
   CurrencySelectionItem,
-  CurrencySelectionToggleProps,
   DescriptionRow,
   TokenSelectionRow,
   TokensHeading,
@@ -24,14 +23,19 @@ import {LightBlack, Slate30} from '../../../styles/colors';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
-import {CurrencySelectionContainer, SearchContainer} from './CurrencySelection';
+import {
+  CurrencySelectionContainer,
+  CurrencySelectionMode,
+  SearchContainer,
+} from './CurrencySelection';
 
 export type CurrencyTokenSelectionScreenParamList = {
   currency: CurrencySelectionItem;
   tokens: CurrencySelectionItem[];
   description?: string;
   hideCheckbox?: boolean;
-  onToggle: (args: CurrencySelectionToggleProps) => any;
+  selectionMode?: CurrencySelectionMode;
+  onToggle: (id: string) => any;
 };
 
 const ListContainer = styled.View`
@@ -82,49 +86,72 @@ const CurrencyTokenSelectionScreen: React.VFC<
     }, []);
   }, [searchFilter, items]);
 
-  const onChainToggle = (tgt: CurrencySelectionToggleProps) => {
+  const onChainToggle = (id: string) => {
+    if (params.selectionMode === 'single' && items.some(i => i.selected)) {
+      setItems(prev =>
+        prev.map(item => {
+          return item.selected
+            ? {
+                ...item,
+                selected: false,
+              }
+            : item;
+        }),
+      );
+    }
+
     setChain({
       ...chain,
       selected: !chain.selected,
     });
-    params.onToggle(tgt);
+    params.onToggle(id);
   };
 
   const onChainToggleRef = useRef(onChainToggle);
   onChainToggleRef.current = onChainToggle;
 
   const memoizedOnChainToggle = useCallback(
-    (args: CurrencySelectionToggleProps) => {
-      onChainToggleRef.current(args);
-    },
+    (id: string) => onChainToggleRef.current(id),
     [],
   );
 
-  const onTokenToggle = (tgt: CurrencySelectionToggleProps) => {
+  const onTokenToggle = (id: string) => {
+    if (params.selectionMode === 'single' && chain.selected) {
+      setChain({
+        ...chain,
+        selected: false,
+      });
+    }
+
     setItems(prev =>
       prev.reduce<CurrencySelectionItem[]>((accum, token) => {
-        if (token.id === tgt.id) {
+        if (token.id === id) {
           accum.push({
             ...token,
             selected: !token.selected,
           });
         } else {
-          accum.push(token);
+          if (params.selectionMode === 'single' && token.selected) {
+            accum.push({
+              ...token,
+              selected: false,
+            });
+          } else {
+            accum.push(token);
+          }
         }
 
         return accum;
       }, []),
     );
-    params.onToggle(tgt);
+    params.onToggle(id);
   };
 
   const onTokenToggleRef = useRef(onTokenToggle);
   onTokenToggleRef.current = onTokenToggle;
 
   const memoizedOnTokenToggle = useCallback(
-    (args: CurrencySelectionToggleProps) => {
-      onTokenToggleRef.current(args);
-    },
+    id => onTokenToggleRef.current(id),
     [],
   );
 

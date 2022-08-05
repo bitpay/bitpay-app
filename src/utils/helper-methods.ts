@@ -3,8 +3,8 @@ import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 
-export const sleep = async (duration: number) =>
-  await new Promise(resolve => setTimeout(resolve, duration));
+export const sleep = (duration: number) =>
+  new Promise<void>(resolve => setTimeout(resolve, duration));
 
 export const coinSupported = (coin: string): boolean => {
   return Object.keys(Currencies).some(

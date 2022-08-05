@@ -372,7 +372,7 @@ export const requestBrazeContentRefresh = (): Effect => async dispatch => {
 };
 
 export const startOnGoingProcessModal =
-  (message: OnGoingProcessMessages): Effect =>
+  (message: OnGoingProcessMessages): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
     const store: RootState = getState();
 

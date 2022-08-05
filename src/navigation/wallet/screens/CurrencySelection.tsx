@@ -15,7 +15,6 @@ import {
 import CurrencySelectionRow, {
   CurrencySelectionItem,
   CurrencySelectionRowProps,
-  CurrencySelectionToggleProps,
 } from '../../../components/list/CurrencySelectionRow';
 
 import Button from '../../../components/button/Button';
@@ -31,12 +30,14 @@ import {
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {
+  SupportedCurrencyOption,
+  SupportedCurrencyOptions,
+} from '../../../constants/SupportedCurrencyOptions';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
-import {RootStackParamList} from '../../../Root';
 import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
@@ -46,11 +47,7 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
 import {sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {
-  useAppSelector,
-  useAppDispatch,
-  AppDispatch,
-} from '../../../utils/hooks';
+import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedTokenOpts, TokenEx} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
@@ -73,7 +70,7 @@ export type CurrencySelectionParamList =
       key: Key;
     };
 
-type CurrencySelectionRowItem = Omit<CurrencySelectionRowProps, 'tokens'> & {
+type CurrencySelectionListItem = CurrencySelectionRowProps & {
   /**
    * All tokens for this chain currency.
    */
@@ -86,23 +83,13 @@ type CurrencySelectionRowItem = Omit<CurrencySelectionRowProps, 'tokens'> & {
   popularTokens: CurrencySelectionItem[];
 };
 
+export type CurrencySelectionMode = 'single' | 'multi';
+
 interface ContextHandler {
-  listItems: CurrencySelectionRowItem[];
   headerTitle?: string;
   ctaTitle?: string;
-  bottomCta?: (props: {
-    selectedCurrencies: string[];
-    dispatch: AppDispatch;
-    navigation: NavigationProp<RootStackParamList>;
-  }) => void;
-  selectionCta?: (props: {
-    currencyAbbreviation: string;
-    currencyName: string;
-    isToken?: boolean;
-    navigation: NavigationProp<RootStackParamList>;
-  }) => void;
-  hideBottomCta?: boolean;
-  hideCheckbox?: boolean;
+  onCtaPress?: () => void;
+  selectionMode: CurrencySelectionMode;
 }
 
 export const CurrencySelectionContainer = styled.View`
@@ -125,23 +112,10 @@ const SupportedChainCurrencyOptions = SupportedCurrencyOptions.filter(
   },
 );
 
-const SupportedMultisigCurrencyOptions: CurrencySelectionRowItem[] =
-  SupportedCurrencyOptions.filter(currency => currency.hasMultisig).map(
-    currency => {
-      const item: CurrencySelectionRowItem = {
-        currency: {
-          ...currency,
-          imgSrc: undefined,
-          selected: false,
-          disabled: false,
-        },
-        tokens: [],
-        popularTokens: [],
-      };
-
-      return item;
-    },
-  );
+const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
+  SupportedCurrencyOptions.filter(currency => {
+    return currency.hasMultisig;
+  });
 
 const DESCRIPTIONS: Record<string, string> = {
   eth: 'TokensOnEthereumNetworkDescription',
@@ -153,7 +127,7 @@ const POPULAR_TOKENS: Record<string, string[]> = {
   matic: ['usdc', 'busd', 'gusd'],
 };
 
-const keyExtractor = (item: CurrencySelectionRowItem) => item.currency.id;
+const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
 
 const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   route,
@@ -176,7 +150,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   /**
    * Source of truth for which currencies are selected.
    */
-  const [allListItems, setAllListItems] = useState<CurrencySelectionRowItem[]>(
+  const [allListItems, setAllListItems] = useState<CurrencySelectionListItem[]>(
     [],
   );
   const allListItemsRef = useRef(allListItems);
@@ -192,7 +166,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     }
 
     // Else return a new array to trigger a rerender.
-    return allListItems.reduce<CurrencySelectionRowItem[]>((accum, item) => {
+    return allListItems.reduce<CurrencySelectionListItem[]>((accum, item) => {
       const isCurrencyMatch =
         item.currency.currencyAbbreviation
           .toLowerCase()
@@ -216,15 +190,35 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     }, []);
   }, [searchFilter, allListItems]);
 
-  // Format supported currencies and tokens into row item format.
+  // Initialize supported currencies and tokens into row item format.
   // Resets if tokenOptions or tokenData updates.
   useEffect(() => {
-    const chainMap: Record<string, CurrencySelectionRowItem> = {};
+    if (context === 'addWalletMultisig') {
+      const items = SupportedMultisigCurrencyOptions.map(currency => {
+        const item: CurrencySelectionListItem = {
+          currency: {
+            ...currency,
+            imgSrc: undefined,
+            selected: false,
+            disabled: false,
+          },
+          tokens: [],
+          popularTokens: [],
+        };
+
+        return item;
+      });
+
+      setAllListItems(items);
+      return;
+    }
+
+    const chainMap: Record<string, CurrencySelectionListItem> = {};
 
     // Add all chain currencies to list
-    const list: CurrencySelectionRowItem[] = SupportedChainCurrencyOptions.map(
+    const list: CurrencySelectionListItem[] = SupportedChainCurrencyOptions.map(
       ({id, currencyAbbreviation, currencyName, img}) => {
-        const item: CurrencySelectionRowItem = {
+        const item: CurrencySelectionListItem = {
           currency: {
             id,
             currencyAbbreviation,
@@ -293,10 +287,11 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     setAllListItems(list);
   }, [
     t,
-    appTokenData,
     appTokenOptions,
+    appTokenData,
     appCustomTokenOptions,
     appCustomTokenData,
+    context,
   ]);
 
   const showErrorModal = (e: string) => {
@@ -348,15 +343,29 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     return currencies;
   };
 
+  const selectedCurrencies = useMemo(() => {
+    return allListItems.reduce<string[]>((accum, item) => {
+      if (item.currency.selected) {
+        accum.push(item.currency.currencyAbbreviation);
+      }
+
+      item.tokens.forEach(token => {
+        if (token.selected) {
+          accum.push(token.currencyAbbreviation);
+        }
+      });
+      return accum;
+    }, []);
+  }, [allListItems]);
+
   const contextHandler = (): ContextHandler | undefined => {
     switch (context) {
       case 'onboarding':
       case 'createNewKey': {
         return {
-          // @ts-ignore
-          listItems: filteredListItems,
+          selectionMode: 'multi',
           ctaTitle: t('Create Key'),
-          bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
+          onCtaPress: async () => {
             try {
               const currencies = checkEthIfTokenSelected(
                 selectedCurrencies,
@@ -366,19 +375,18 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
               await dispatch(
                 startOnGoingProcessModal(
-                  // t('Creating Key')
                   t(OnGoingProcessMessages.CREATING_KEY),
                 ),
               );
-              const key = await dispatch(startCreateKey(currencies));
+              const createdKey = await dispatch(startCreateKey(currencies));
 
-              dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+              dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
 
               navigation.navigate(
                 context === 'onboarding' ? 'Onboarding' : 'Wallet',
                 {
                   screen: 'BackupKey',
-                  params: {context, key},
+                  params: {context, key: createdKey},
                 },
               );
               dispatch(
@@ -400,39 +408,75 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
       case 'addWallet': {
         return {
-          // @ts-ignore
-          listItems: filteredListItems,
+          selectionMode: 'single',
           headerTitle: t('Select Currency'),
-          hideBottomCta: true,
-          hideCheckbox: true,
-          selectionCta: async ({
-            currencyAbbreviation,
-            currencyName,
-            isToken,
-            navigation,
-          }) => {
+          ctaTitle: t('Add Wallet'),
+          onCtaPress: async () => {
             if (!key) {
               // TODO
               console.error('add wallet - key not found');
-            } else {
-              navigation.navigate('Wallet', {
-                screen: 'AddWallet',
-                params: {key, currencyAbbreviation, currencyName, isToken},
-              });
+              return;
             }
+
+            if (!selectedCurrencies.length) {
+              showErrorModal(t('Select a currency'));
+              return;
+            }
+
+            const selectedId = selectedCurrencies[0];
+            const item = allListItems.find(
+              i =>
+                i.currency.currencyAbbreviation === selectedId ||
+                i.tokens.some(
+                  token => token.currencyAbbreviation === selectedId,
+                ),
+            );
+            let currency: CurrencySelectionItem | undefined;
+
+            if (!item) {
+              showErrorModal(t('Select a currency'));
+              return;
+            }
+
+            if (item.currency.currencyAbbreviation === selectedId) {
+              currency = item.currency;
+            } else {
+              currency = item.tokens.find(
+                token => token.currencyAbbreviation === selectedId,
+              );
+            }
+
+            if (!currency) {
+              showErrorModal(t('Select a currency'));
+              return;
+            }
+
+            navigation.navigate('Wallet', {
+              screen: 'AddWallet',
+              params: {
+                key,
+                currencyAbbreviation: currency.currencyAbbreviation,
+                currencyName: currency.currencyName,
+                isToken: !!currency.isToken,
+              },
+            });
           },
         };
       }
       case 'addWalletMultisig': {
         return {
-          listItems: SupportedMultisigCurrencyOptions,
+          selectionMode: 'single',
           headerTitle: t('Select Currency'),
-          hideBottomCta: true,
-          hideCheckbox: true,
-          selectionCta: async ({currencyAbbreviation, navigation}) => {
+          ctaTitle: t('Create Wallet'),
+          onCtaPress: async () => {
+            if (!selectedCurrencies.length) {
+              showErrorModal(t('Select a currency'));
+              return;
+            }
+
             navigation.navigate('Wallet', {
               screen: 'CreateMultisig',
-              params: {currency: currencyAbbreviation, key},
+              params: {currency: selectedCurrencies[0], key},
             });
           },
         };
@@ -440,15 +484,8 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     }
   };
 
-  const {
-    listItems = [],
-    bottomCta,
-    ctaTitle,
-    headerTitle,
-    hideBottomCta,
-    selectionCta,
-    hideCheckbox,
-  } = contextHandler() || {};
+  const {onCtaPress, ctaTitle, headerTitle, selectionMode} =
+    contextHandler() || {};
 
   // Configuring Header
   useLayoutEffect(() => {
@@ -478,24 +515,11 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     });
   }, [navigation, t, context, headerTitle]);
 
-  const selectedCurrencies = useMemo(() => {
-    return allListItems.reduce<string[]>((accum, item) => {
-      if (item.currency.selected) {
-        accum.push(item.currency.currencyAbbreviation);
-      }
+  const onToggle = (id: string) => {
+    setAllListItems(previous => {
+      const isSingleSelectionMode = selectionMode === 'single';
 
-      item.tokens.forEach(token => {
-        if (token.selected) {
-          accum.push(token.currencyAbbreviation);
-        }
-      });
-      return accum;
-    }, []);
-  }, [allListItems]);
-
-  const toggleCurrency = (id: string) => {
-    setAllListItems(previous =>
-      previous.map(item => {
+      return previous.map(item => {
         const isCurrencyMatch = item.currency.id === id;
         const tokenMatch = item.tokens.find(token => token.id === id);
 
@@ -504,7 +528,32 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             ...item.currency,
             selected: !item.currency.selected,
           };
-        } else if (tokenMatch) {
+
+          if (isSingleSelectionMode) {
+            if (item.tokens.some(token => token.selected)) {
+              item.tokens = item.tokens.map(token => {
+                return token.selected ? {...token, selected: false} : token;
+              });
+            }
+
+            if (item.popularTokens.some(token => token.selected)) {
+              item.popularTokens = item.popularTokens.map(token => {
+                return token.selected ? {...token, selected: false} : token;
+              });
+            }
+          }
+        } else {
+          // if single selection mode, non-matching currencies should be deselected
+          // don't blanket update all currencies, only when selected === true to avoid unnecessary rerenders
+          if (isSingleSelectionMode && item.currency.selected) {
+            item.currency = {
+              ...item.currency,
+              selected: false,
+            };
+          }
+        }
+
+        if (tokenMatch) {
           const updatedToken = {
             ...tokenMatch,
             selected: !tokenMatch.selected,
@@ -512,19 +561,40 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
           // update token state
           item.tokens = item.tokens.map(token => {
-            return token.id === id ? updatedToken : token;
+            if (token.id === id) {
+              return updatedToken;
+            }
+
+            // if single selection mode, non-matching tokens should be deselected
+            if (isSingleSelectionMode && token.selected) {
+              return {
+                ...token,
+                selected: false,
+              };
+            }
+
+            return token;
           });
 
           // update popular token state
-          // add tokens once selected so user can see their entire selection
-          // don't remove tokens once added so user doesn't have to hunt for it again if they toggle it on/off
+          // append tokens once selected so user can see their entire selection
           let appendToPopular = true;
           item.popularTokens = item.popularTokens.map(token => {
             if (token.id === id) {
               appendToPopular = false;
+
+              return updatedToken;
             }
 
-            return token.id === id ? updatedToken : token;
+            // if single selection mode, non-matching tokens should be deselected
+            if (isSingleSelectionMode) {
+              return {
+                ...token,
+                selected: false,
+              };
+            }
+
+            return token;
           });
 
           if (appendToPopular) {
@@ -533,33 +603,15 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         }
 
         return item;
-      }),
-    );
+      });
+    });
   };
 
-  const onToggle = ({
-    id,
-    currencyName,
-    currencyAbbreviation,
-    isToken,
-  }: CurrencySelectionToggleProps) => {
-    if (selectionCta) {
-      setSearchFilter('');
-      selectionCta({
-        currencyAbbreviation,
-        currencyName,
-        isToken,
-        navigation,
-      });
-    } else {
-      toggleCurrency(id);
-    }
-  };
   const onToggleRef = useRef(onToggle);
   onToggleRef.current = onToggle;
 
-  const memoizedOnToggle = useCallback((args: CurrencySelectionToggleProps) => {
-    onToggleRef.current(args);
+  const memoizedOnToggle = useCallback((id: string) => {
+    onToggleRef.current(id);
   }, []);
 
   const memoizedOnViewAllPressed = useMemo(() => {
@@ -592,14 +644,14 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           currency: {...currency},
           tokens: sortedTokens,
           description: item.description,
-          hideCheckbox: hideCheckbox,
+          selectionMode,
           onToggle: memoizedOnToggle,
         },
       });
     };
-  }, [memoizedOnToggle, navigation, hideCheckbox]);
+  }, [memoizedOnToggle, navigation, selectionMode]);
 
-  const renderItem: ListRenderItem<CurrencySelectionRowItem> = useCallback(
+  const renderItem: ListRenderItem<CurrencySelectionListItem> = useCallback(
     ({item}) => {
       return (
         <CurrencySelectionRow
@@ -608,12 +660,11 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           tokens={item.popularTokens}
           description={item.description}
           onToggle={memoizedOnToggle}
-          hideCheckbox={hideCheckbox}
           onViewAllTokensPressed={memoizedOnViewAllPressed}
         />
       );
     },
-    [memoizedOnToggle, memoizedOnViewAllPressed, hideCheckbox],
+    [memoizedOnToggle, memoizedOnViewAllPressed],
   );
 
   return (
@@ -625,10 +676,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         />
       </SearchContainer>
 
-      {listItems.length ? (
+      {filteredListItems.length ? (
         <ListContainer>
-          <FlatList<CurrencySelectionRowItem>
-            data={listItems}
+          <FlatList<CurrencySelectionListItem>
+            data={filteredListItems}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
@@ -637,7 +688,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         <CurrencySelectionNoResults query={searchFilter} walletKey={key} />
       )}
 
-      {bottomCta && !hideBottomCta && (
+      {onCtaPress && (
         <CtaContainer
           style={{
             shadowColor: '#000',
@@ -648,12 +699,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             marginTop: 16,
           }}>
           <Button
-            onPress={() =>
-              bottomCta({selectedCurrencies, dispatch, navigation})
-            }
+            onPress={onCtaPress}
             buttonStyle={'primary'}
             disabled={!selectedCurrencies.length}>
-            {ctaTitle}
+            {ctaTitle || t('Continue')}
           </Button>
         </CtaContainer>
       )}
