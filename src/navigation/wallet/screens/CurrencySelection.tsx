@@ -516,95 +516,125 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   }, [navigation, t, context, headerTitle]);
 
   const onToggle = (id: string) => {
-    setAllListItems(previous => {
-      const isSingleSelectionMode = selectionMode === 'single';
-
-      return previous.map(item => {
+    setAllListItems(previous =>
+      previous.map(item => {
         const isCurrencyMatch = item.currency.id === id;
         const tokenMatch = item.tokens.find(token => token.id === id);
 
-        if (isCurrencyMatch) {
-          item.currency = {
-            ...item.currency,
-            selected: !item.currency.selected,
-          };
+        // if multi, just toggle the selected item and rerender
+        if (selectionMode === 'multi') {
+          if (isCurrencyMatch) {
+            item.currency = {
+              ...item.currency,
+              selected: !item.currency.selected,
+            };
+          }
 
-          if (isSingleSelectionMode) {
+          if (tokenMatch) {
+            const updatedToken = {
+              ...tokenMatch,
+              selected: !tokenMatch.selected,
+            };
+
+            // update token state
+            item.tokens = item.tokens.map(token => {
+              return token.id === id ? updatedToken : token;
+            });
+
+            // update popular token state
+            // append tokens once selected so user can see their entire selection
+            let appendToPopular = true;
+            item.popularTokens = item.popularTokens.map(token => {
+              if (token.id === id) {
+                appendToPopular = false;
+              }
+
+              return token.id === id ? updatedToken : token;
+            });
+
+            if (appendToPopular) {
+              item.popularTokens.push(updatedToken);
+            }
+          }
+        }
+
+        // if single, toggle the selected item, deselect any selected items, and rerender
+        if (selectionMode === 'single') {
+          if (isCurrencyMatch) {
+            // if single selection mode, don't toggle if already selected
+            if (item.currency.selected) {
+              return item;
+            }
+
+            item.currency = {
+              ...item.currency,
+              selected: !item.currency.selected,
+            };
+
+            // deselect any selected tokens
             if (item.tokens.some(token => token.selected)) {
               item.tokens = item.tokens.map(token => {
                 return token.selected ? {...token, selected: false} : token;
               });
             }
 
+            // deselect any selected popular tokens
             if (item.popularTokens.some(token => token.selected)) {
               item.popularTokens = item.popularTokens.map(token => {
                 return token.selected ? {...token, selected: false} : token;
               });
             }
+          } else {
+            // deselect this item's currency
+            if (item.currency.selected) {
+              item.currency = {
+                ...item.currency,
+                selected: false,
+              };
+            }
           }
-        } else {
-          // if single selection mode, non-matching currencies should be deselected
-          // don't blanket update all currencies, only when selected === true to avoid unnecessary rerenders
-          if (isSingleSelectionMode && item.currency.selected) {
-            item.currency = {
-              ...item.currency,
-              selected: false,
+
+          if (tokenMatch) {
+            // if single selection mode, don't toggle if already selected
+            if (tokenMatch.selected) {
+              return item;
+            }
+
+            const updatedToken = {
+              ...tokenMatch,
+              selected: !tokenMatch.selected,
             };
-          }
-        }
 
-        if (tokenMatch) {
-          const updatedToken = {
-            ...tokenMatch,
-            selected: !tokenMatch.selected,
-          };
+            // update token state
+            item.tokens = item.tokens.map(token => {
+              if (token.id === id) {
+                return updatedToken;
+              }
 
-          // update token state
-          item.tokens = item.tokens.map(token => {
-            if (token.id === id) {
-              return updatedToken;
+              return token.selected ? {...token, selected: false} : token;
+            });
+
+            // update popular token state
+            // append tokens once selected so user can see their entire selection
+            let appendToPopular = true;
+            item.popularTokens = item.popularTokens.map(token => {
+              if (token.id === id) {
+                appendToPopular = false;
+                return updatedToken;
+              }
+
+              return token.selected ? {...token, selected: false} : token;
+            });
+
+            if (appendToPopular) {
+              item.popularTokens.push(updatedToken);
             }
-
-            // if single selection mode, non-matching tokens should be deselected
-            if (isSingleSelectionMode && token.selected) {
-              return {
-                ...token,
-                selected: false,
-              };
-            }
-
-            return token;
-          });
-
-          // update popular token state
-          // append tokens once selected so user can see their entire selection
-          let appendToPopular = true;
-          item.popularTokens = item.popularTokens.map(token => {
-            if (token.id === id) {
-              appendToPopular = false;
-
-              return updatedToken;
-            }
-
-            // if single selection mode, non-matching tokens should be deselected
-            if (isSingleSelectionMode) {
-              return {
-                ...token,
-                selected: false,
-              };
-            }
-
-            return token;
-          });
-
-          if (appendToPopular) {
-            item.popularTokens.push(updatedToken);
           }
         }
 
         return item;
-      });
-    });
+      }),
+    );
   };
 
   const onToggleRef = useRef(onToggle);
