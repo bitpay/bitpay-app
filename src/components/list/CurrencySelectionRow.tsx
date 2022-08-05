@@ -2,7 +2,6 @@ import React, {memo, useCallback} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ImageRequireSource} from 'react-native';
 import styled from 'styled-components/native';
-import ArrowDownRightIcon from '../../../assets/img/arrow-down-right.svg';
 import {IS_ANDROID} from '../../constants';
 import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
 import {
@@ -15,6 +14,7 @@ import {
 import Checkbox from '../checkbox/Checkbox';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import haptic from '../haptic-feedback/haptic';
+import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {ScreenGutter} from '../styled/Containers';
 import {BaseText, H6, H7} from '../styled/Text';
 
@@ -158,7 +158,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
     return (
       <FlexRow style={{marginBottom: 24}}>
         <CurrencyColumn style={{marginRight: 16}}>
-          <ArrowDownRightIcon />
+          <NestedArrowIcon />
         </CurrencyColumn>
 
         <CurrencyColumn>
