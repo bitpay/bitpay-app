@@ -123,7 +123,7 @@ const DESCRIPTIONS: Record<string, string> = {
 };
 
 const POPULAR_TOKENS: Record<string, string[]> = {
-  eth: ['usdc', 'busd', 'gusd'],
+  eth: ['usdc', 'ape', 'euroc'],
   matic: ['usdc', 'busd', 'gusd'],
 };
 
