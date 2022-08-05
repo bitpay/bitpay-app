@@ -659,12 +659,13 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           currency={item.currency}
           tokens={item.popularTokens}
           description={item.description}
+          selectionMode={selectionMode}
           onToggle={memoizedOnToggle}
           onViewAllTokensPressed={memoizedOnViewAllPressed}
         />
       );
     },
-    [memoizedOnToggle, memoizedOnViewAllPressed],
+    [memoizedOnToggle, memoizedOnViewAllPressed, selectionMode],
   );
 
   return (

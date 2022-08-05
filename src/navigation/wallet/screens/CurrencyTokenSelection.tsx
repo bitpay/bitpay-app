@@ -10,6 +10,7 @@ import {useTranslation} from 'react-i18next';
 import {StyleSheet} from 'react-native';
 import {FlatList} from 'react-native-gesture-handler';
 import styled, {useTheme} from 'styled-components/native';
+import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ChainSelectionRow,
   CurrencySelectionItem,
@@ -19,6 +20,7 @@ import {
 } from '../../../components/list/CurrencySelectionRow';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {HeaderTitle} from '../../../components/styled/Text';
+import {IS_ANDROID} from '../../../constants';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
@@ -87,6 +89,8 @@ const CurrencyTokenSelectionScreen: React.VFC<
   }, [searchFilter, items]);
 
   const onChainToggle = (id: string) => {
+    haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
+
     if (params.selectionMode === 'single' && items.some(i => i.selected)) {
       setItems(prev =>
         prev.map(item => {
@@ -104,6 +108,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
       ...chain,
       selected: !chain.selected,
     });
+
     params.onToggle(id);
   };
 
@@ -116,6 +121,8 @@ const CurrencyTokenSelectionScreen: React.VFC<
   );
 
   const onTokenToggle = (id: string) => {
+    haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
+
     if (params.selectionMode === 'single' && chain.selected) {
       setChain({
         ...chain,
@@ -161,6 +168,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
         <ChainSelectionRow
           currency={chain}
           hideCheckbox={params.hideCheckbox}
+          selectionMode={params.selectionMode}
           onToggle={memoizedOnChainToggle}
         />
 
@@ -178,6 +186,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
     memoizedOnChainToggle,
     params.description,
     params.hideCheckbox,
+    params.selectionMode,
     chain,
   ]);
 
@@ -189,11 +198,17 @@ const CurrencyTokenSelectionScreen: React.VFC<
           chainImg={chain.img}
           token={item}
           hideCheckbox={params.hideCheckbox}
+          selectionMode={params.selectionMode}
           onToggle={memoizedOnTokenToggle}
         />
       );
     };
-  }, [memoizedOnTokenToggle, params.hideCheckbox, chain.img]);
+  }, [
+    memoizedOnTokenToggle,
+    params.hideCheckbox,
+    params.selectionMode,
+    chain.img,
+  ]);
 
   useLayoutEffect(() => {
     navigation.setOptions({

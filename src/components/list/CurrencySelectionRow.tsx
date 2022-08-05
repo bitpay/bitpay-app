@@ -4,6 +4,7 @@ import {ImageRequireSource} from 'react-native';
 import styled from 'styled-components/native';
 import {IS_ANDROID} from '../../constants';
 import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
+import {CurrencySelectionMode} from '../../navigation/wallet/screens/CurrencySelection';
 import {
   LightBlack,
   LuckySevens,
@@ -39,6 +40,7 @@ export type CurrencySelectionRowProps = {
   tokens?: CurrencySelectionItem[];
   description?: string;
   hideCheckbox?: boolean;
+  selectionMode?: CurrencySelectionMode;
   onToggle?: (id: string) => void;
   onViewAllTokensPressed?: (
     currency: CurrencySelectionItem,
@@ -103,12 +105,13 @@ const ViewAllLink = styled(H6)`
 interface ChainSelectionRowProps {
   currency: CurrencySelectionItem;
   hideCheckbox?: boolean;
+  selectionMode?: CurrencySelectionMode;
   onToggle?: (id: string) => any;
 }
 
 export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
   props => {
-    const {onToggle, currency, hideCheckbox} = props;
+    const {onToggle, currency, hideCheckbox, selectionMode} = props;
     const {
       currencyAbbreviation,
       currencyName,
@@ -134,6 +137,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
           <CurrencyColumn>
             <Checkbox
               checked={!!selected}
+              radio={selectionMode === 'single'}
               disabled={!!disabled}
               onPress={() => onToggle?.(currency.id)}
             />
@@ -148,12 +152,13 @@ interface TokenSelectionRowProps {
   chainImg?: CurrencySelectionItem['img'];
   token: CurrencySelectionItem;
   hideCheckbox?: boolean;
+  selectionMode?: CurrencySelectionMode;
   onToggle?: (id: string) => any;
 }
 
 export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
   props => {
-    const {chainImg, token, hideCheckbox, onToggle} = props;
+    const {chainImg, token, hideCheckbox, selectionMode, onToggle} = props;
 
     return (
       <FlexRow style={{marginBottom: 24}}>
@@ -181,6 +186,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
           <CurrencyColumn>
             <Checkbox
               checked={!!token.selected}
+              radio={selectionMode === 'single'}
               disabled={!!token.disabled}
               onPress={() => onToggle?.(token.id)}
             />
@@ -204,6 +210,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   description,
   tokens,
   hideCheckbox,
+  selectionMode,
   onToggle,
   onViewAllTokensPressed,
 }) => {
@@ -223,6 +230,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
         currency={currency}
         onToggle={onPress}
         hideCheckbox={hideCheckbox}
+        selectionMode={selectionMode}
       />
 
       {description ? <DescriptionRow>{description}</DescriptionRow> : null}
@@ -240,6 +248,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
               token={token}
               onToggle={onPress}
               hideCheckbox={hideCheckbox}
+              selectionMode={selectionMode}
             />
           ))}
 
