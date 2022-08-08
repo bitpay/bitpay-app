@@ -88,6 +88,7 @@ import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
 import {Currencies} from '../../../../constants/currencies';
+import {swapCryptoCoin} from './SwapCryptoRoot';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -98,8 +99,8 @@ export const SwapCheckoutContainer = styled.SafeAreaView`
 export interface ChangellyCheckoutProps {
   fromWalletSelected: Wallet;
   toWalletSelected: Wallet;
-  fromWalletData: any;
-  toWalletData: any;
+  fromWalletData: swapCryptoCoin;
+  toWalletData: swapCryptoCoin;
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;
@@ -667,7 +668,7 @@ const ChangellyCheckout: React.FC = () => {
             <SelectedOptionCol>
               {fromWalletData && (
                 <CoinIconContainer>
-                  <CurrencyImage img={fromWalletData.img} size={20} />
+                  <CurrencyImage img={fromWalletData.logoUri} size={20} />
                 </CoinIconContainer>
               )}
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
@@ -685,7 +686,7 @@ const ChangellyCheckout: React.FC = () => {
             <SelectedOptionCol>
               {toWalletData && (
                 <CoinIconContainer>
-                  <CurrencyImage img={toWalletData.img} size={20} />
+                  <CurrencyImage img={toWalletData.logoUri} size={20} />
                 </CoinIconContainer>
               )}
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>

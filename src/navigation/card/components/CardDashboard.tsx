@@ -156,7 +156,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         screen: WalletScreens.AMOUNT,
         params: {
           fiatCurrencyAbbreviation: activeCard.currency.code,
-          opts: {hideSendMax: true},
           onAmountSelected: selectedAmount =>
             goToConfirmScreen(+selectedAmount),
         },
@@ -187,9 +186,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
                           amount: Number(amount),
                         },
                       });
-                    },
-                    opts: {
-                      hideSendMax: true,
                     },
                   },
                 });

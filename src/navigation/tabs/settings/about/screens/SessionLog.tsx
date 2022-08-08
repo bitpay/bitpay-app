@@ -1,26 +1,37 @@
 import Slider from '@react-native-community/slider';
+import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {memo, useState} from 'react';
+import React, {memo, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Alert, FlatList} from 'react-native';
 import Mailer from 'react-native-mail';
-import styled from 'styled-components/native';
-import Button from '../../../../../components/button/Button';
-import {WIDTH} from '../../../../../components/styled/Containers';
+import styled, {useTheme} from 'styled-components/native';
+import {
+  WIDTH,
+  SheetContainer,
+  SheetParams,
+} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {IS_ANDROID, IS_IOS} from '../../../../../constants';
 import {APP_VERSION} from '../../../../../constants/config';
 import {LogActions} from '../../../../../store/log';
 import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
 import {
+  Action,
   Caution,
   LinkBlue,
   SlateDark,
   Warning,
   White,
+  Slate,
+  Black,
 } from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {AboutStackParamList} from '../AboutStack';
+import Settings from '../../../../../components/settings/Settings';
+import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
+import SendIcon from '../../../../../../assets/img/send-icon.svg';
+import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
 
 export interface SessionLogsParamList {}
 
@@ -33,15 +44,16 @@ const LogsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const ButtonContainer = styled.View`
-  padding: 20px 15px;
-`;
-
 const Logs = styled(BaseText)<{color?: string | null}>`
   font-size: 14px;
-  line-height: 21px;
+  line-height: 22px;
+  font-weight: 600;
   color: ${({theme: {dark}, color}) =>
     color ? color : dark ? White : SlateDark};
+`;
+
+const LogsMessage = styled.Text`
+  font-weight: 400;
 `;
 
 const FilterLabelsContainer = styled.View`
@@ -52,6 +64,40 @@ const FilterLabelsContainer = styled.View`
 const FilterLabel = styled(BaseText)`
   flex: 1 1 100%;
   text-align: center;
+`;
+
+const OptionContainer = styled.TouchableOpacity<SheetParams>`
+  flex-direction: row;
+  align-items: stretch;
+  padding-${({placement}) => placement}: 31px;
+`;
+
+const OptionTextContainer = styled.View`
+  align-items: flex-start;
+  justify-content: space-around;
+  flex-direction: column;
+  margin: 0 20px;
+`;
+
+const OptionTitleText = styled(BaseText)`
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 19px;
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+`;
+
+const OptionDescriptionText = styled(BaseText)`
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  color: ${({theme: {dark}}) => (dark ? Slate : Black)};
+`;
+
+const OptionIconContainer = styled.View`
+  justify-content: center;
+  width: 20px;
 `;
 
 const MIN_LOG_LEVEL = LogLevel.Error;
@@ -90,7 +136,7 @@ const FilterLabels: React.VFC<{onPress?: (level: LogLevel) => any}> = memo(
 
 const renderItem = ({item}: {item: LogEntry}) => (
   <Logs color={LogColorMap[item.level]}>
-    [{LogLevel[item.level]}] {item.message}
+    [{LogLevel[item.level]}] <LogsMessage>{item.message}</LogsMessage>
   </Logs>
 );
 
@@ -98,7 +144,10 @@ const keyExtractor = (item: LogEntry, index: number) => item.message + index;
 
 const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
+  const navigation = useNavigation();
+  const [showOptions, setShowOptions] = useState(false);
   const logs = useAppSelector(({LOG}) => LOG.logs);
   const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
 
@@ -129,6 +178,7 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   };
 
   const showDisclaimer = () => {
+    setShowOptions(false);
     let logStr =
       'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
     logStr += filteredLogs.map(log => {
@@ -138,15 +188,21 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
     });
 
     Alert.alert(
-      'Warning',
-      'Be careful, this could contain sensitive private data.',
+      t('Warning'),
+      t('Be careful, this could contain sensitive private data'),
       [
-        {text: 'Continue', onPress: () => handleEmail(logStr)},
-        {text: 'Cancel'},
+        {text: t('Continue'), onPress: () => handleEmail(logStr)},
+        {text: t('Cancel')},
       ],
       {cancelable: true},
     );
   };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => <Settings onPress={() => setShowOptions(true)} />,
+    });
+  }, [navigation]);
 
   return (
     <LogsContainer>
@@ -176,11 +232,24 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
         tapToSeek={true}
       />
 
-      <ButtonContainer>
-        <Button onPress={() => showDisclaimer()}>
-          {t('Send Logs By Email')}
-        </Button>
-      </ButtonContainer>
+      <SheetModal
+        placement={'top'}
+        isVisible={showOptions}
+        onBackdropPress={() => setShowOptions(false)}>
+        <SheetContainer placement={'top'}>
+          <OptionContainer placement={'top'} onPress={() => showDisclaimer()}>
+            <OptionIconContainer>
+              {theme.dark ? <SendIconWhite /> : <SendIcon />}
+            </OptionIconContainer>
+            <OptionTextContainer>
+              <OptionTitleText>{t('Send Logs By Email')}</OptionTitleText>
+              <OptionDescriptionText>
+                {t('Be careful, this could contain sensitive private data')}
+              </OptionDescriptionText>
+            </OptionTextContainer>
+          </OptionContainer>
+        </SheetContainer>
+      </SheetModal>
     </LogsContainer>
   );
 };

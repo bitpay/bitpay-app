@@ -15,7 +15,7 @@ import {
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import {FlatList} from 'react-native';
+import {FlatList, TouchableOpacity} from 'react-native';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -33,6 +33,7 @@ import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import ReceiveAddress from '../components/ReceiveAddress';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+import InfoSvg from '../../../../assets/img/info.svg';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
@@ -74,6 +75,13 @@ const CloseModalButton = styled.TouchableOpacity`
   border-radius: 50px;
   background-color: #9ba3ae33;
   display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ModalTitleContainer = styled.View`
+  display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
 `;
@@ -173,6 +181,7 @@ interface GlobalSelectProps {
   onDismiss?: (newWallet?: any) => void;
   modalContext?: GlobalSelectModalContext;
   livenetOnly?: boolean;
+  onHelpPress?: () => void;
 }
 
 const GlobalSelect: React.FC<GlobalSelectProps> = ({
@@ -182,6 +191,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   onDismiss,
   modalContext,
   livenetOnly,
+  onHelpPress,
 }) => {
   const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
@@ -359,8 +369,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             navigation.navigate('Wallet', {
               screen: WalletScreens.AMOUNT,
               params: {
-                opts: {hideSendMax: true},
-                currencyAbbreviationRouteParam:
+                cryptoCurrencyAbbreviation:
                   wallet.currencyAbbreviation.toUpperCase(),
                 onAmountSelected: async (amount, setButtonState, opts) => {
                   dispatch(
@@ -551,9 +560,20 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             </CloseModalButton>
           </CloseModalButtonContainer>
           {!!modalTitle && (
-            <TextAlign align={'center'}>
-              <H4>{modalTitle}</H4>
-            </TextAlign>
+            <ModalTitleContainer>
+              <TextAlign align={'center'}>
+                <H4>{modalTitle}</H4>
+              </TextAlign>
+              {onHelpPress ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    onHelpPress();
+                  }}
+                  style={{marginLeft: 5}}>
+                  <InfoSvg width={20} height={20} />
+                </TouchableOpacity>
+              ) : null}
+            </ModalTitleContainer>
           )}
         </ModalHeader>
       )}
