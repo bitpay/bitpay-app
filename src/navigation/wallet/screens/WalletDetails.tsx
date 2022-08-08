@@ -507,13 +507,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const loadHistoryRef = useRef(loadHistory);
   loadHistoryRef.current = loadHistory;
 
+  const updateWalletStatusAndProfileBalance = async () => {
+    await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
+    dispatch(updatePortfolioBalance);
+  };
+
   useEffect(() => {
     dispatch(
       logSegmentEvent('track', 'View Wallet', {
         coin: fullWalletObj?.currencyAbbreviation,
       }),
     );
-    dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
+    updateWalletStatusAndProfileBalance();
     setNeedActionTxps(pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,

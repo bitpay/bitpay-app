@@ -85,6 +85,7 @@ export const createProposalAndBuildTxDetails =
           payProUrl,
           dryRun = true,
           destinationTag,
+          payProDetails,
         } = tx;
 
         let {credentials} = wallet;
@@ -125,6 +126,9 @@ export const createProposalAndBuildTxDetails =
         }
 
         if (currencyAbbreviation === 'xrp') {
+          const instructions = payProDetails.instructions[0];
+          const {outputs} = instructions;
+          tx.invoiceID = outputs[0].invoiceID;
           tx.destinationTag = destinationTag || recipient.destinationTag;
 
           if (wallet.receiveAddress === recipient.address) {

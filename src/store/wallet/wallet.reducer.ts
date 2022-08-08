@@ -4,8 +4,12 @@ import {FeeLevels} from './effects/fee/fee';
 import {DEFAULT_DATE_RANGE} from '../../constants/wallet';
 import {CurrencyOpts} from '../../constants/currencies';
 
-type WalletReduxPersistBlackList = [];
-export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
+type WalletReduxPersistBlackList = string[];
+export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
+  'tokenData',
+  'tokenOptions',
+  'tokenOptionsByAddress',
+];
 
 export interface WalletState {
   createdOn: number;
