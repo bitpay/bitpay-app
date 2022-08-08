@@ -47,7 +47,7 @@ const CurrencySelectionNoResults: React.VFC<
               params: {key: walletKey, isCustomToken: true, isToken: true},
             });
           }}>
-          {t('Add custom token')}
+          {t('Add Custom Token')}
         </Link>
       ) : null}
     </NoResultsContainer>

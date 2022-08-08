@@ -1,10 +1,13 @@
-import {ImageRequireSource} from 'react-native';
 import {Token} from '../store/wallet/wallet.models';
+
+export type TokenOptsType = {
+  [key in string]: Token;
+};
 
 export const TokensListAPIUrl =
   'https://bitpay.api.enterprise.1inch.exchange/v3.0/1/tokens';
 
-export const BitpaySupportedTokenOpts: Record<string, Token> = {
+export const BitpaySupportedTokenOpts: TokenOptsType = {
   usdc: {
     name: 'USD Coin',
     symbol: 'USDC',
@@ -61,7 +64,7 @@ export const BitpaySupportedTokenOpts: Record<string, Token> = {
   },
 };
 
-export const BitpaySupportedTokenOptsByAddress: Record<string, Token> = {
+export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': {
     name: 'USD Coin',
     symbol: 'USDC',
