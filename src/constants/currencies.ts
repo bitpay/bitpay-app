@@ -385,9 +385,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#00ddfa', // TODO: change to proper color after beta
-      backgroundColor: '#00dcfa', // TODO: change to proper color after beta
-      gradientBackgroundColor: '#00dcfa', // TODO: change to proper color after beta
+      coinColor: '#F5AC37',
+      backgroundColor: '#F5AC37',
+      gradientBackgroundColor: '#F5AC37',
     },
   },
   wbtc: {
@@ -422,9 +422,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#00ddfa', // TODO: change to proper color after beta
-      backgroundColor: '#00dcfa', // TODO: change to proper color after beta
-      gradientBackgroundColor: '#00dcfa', // TODO: change to proper color after beta
+      coinColor: '#282A47',
+      backgroundColor: '#282A47',
+      gradientBackgroundColor: '#282A47',
     },
   },
   doge: {
@@ -534,9 +534,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#2775ca',
-      backgroundColor: '#2775c9',
-      gradientBackgroundColor: '#2775c9',
+      coinColor: '#F00500',
+      backgroundColor: '#F00500',
+      gradientBackgroundColor: '#F00500',
     },
   },
   ape: {
@@ -572,9 +572,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#2775ca',
-      backgroundColor: '#2775c9',
-      gradientBackgroundColor: '#2775c9',
+      coinColor: '#0054F9',
+      backgroundColor: '#0054F9',
+      gradientBackgroundColor: '#0054F9',
     },
   },
   euroc: {
@@ -610,9 +610,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#2775ca',
-      backgroundColor: '#2775c9',
-      gradientBackgroundColor: '#2775c9',
+      coinColor: '#1AA3FF',
+      backgroundColor: '#1AA3FF',
+      gradientBackgroundColor: '#1AA3FF',
     },
   },
 };

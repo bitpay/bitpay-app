@@ -170,7 +170,6 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
         },
   );
   const buttonsList: Array<ButtonListProps> = [
-    // TODO: update icons
     {
       label: t('buy'),
       img: <BuySvg />,

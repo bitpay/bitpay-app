@@ -1,4 +1,5 @@
 import BWC from 'bitcore-wallet-client';
+import {APP_NAME, APP_VERSION} from '../constants/config';
 
 interface KeyOpts {
   seedType: string;
@@ -34,8 +35,8 @@ export class BwcProvider {
       verbose: true,
       timeout: 100000,
       transports: ['polling'],
-      // TODO bp_partner: this.appProvider.info.name
-      // TODO bp_partner_version : this.appProvider.info.version
+      bp_partner: APP_NAME,
+      bp_partner_version: APP_VERSION,
     });
     if (credentials) {
       bwc.fromString(credentials);
