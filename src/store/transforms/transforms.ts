@@ -5,6 +5,7 @@ import {BwcProvider} from '../../lib/bwc';
 import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import Flatted from 'flatted';
+import {LogActions} from '../log';
 const BWCProvider = BwcProvider.getInstance();
 
 export const bindWalletClient = createTransform(
@@ -56,13 +57,22 @@ export const bindWalletKeys = createTransform(
       for (const [id, key] of Object.entries(
         _outboundState as {[key in string]: Key},
       )) {
-        outboundState[id] = merge(key, {
-          methods: BWCProvider.createKey({
-            seedType: 'object',
-            seedData: key.properties,
-          }),
-        });
-        console.log(`bindWalletKey - ${id}`);
+        try {
+          outboundState[id] = merge(key, {
+            methods: BWCProvider.createKey({
+              seedType: 'object',
+              seedData: key.properties,
+            }),
+          });
+        } catch (err) {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          LogActions.error(
+            `bindWalletKeys error: ${errStr}`,
+            JSON.stringify(key),
+          );
+        }
+        LogActions.info(`bindWalletKey - ${id}`);
       }
 
       return outboundState;

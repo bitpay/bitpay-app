@@ -40,8 +40,22 @@ export const logReducer = (
 };
 
 function sanitizeLogMessage(message: string) {
-  message = message.replace('/xpriv.*/', '[...]');
-  message = message.replace('/walletPrivKey.*/', 'walletPrivKey:[...]');
-
-  return message;
+  let _message;
+  try {
+    _message = JSON.parse(message);
+    if (_message.xpriv) {
+      delete _message.xpriv;
+    }
+    if (_message.walletPrivKey) {
+      delete _message.walletPrivKey;
+    }
+    if (_message.mnemonic) {
+      delete _message.mnemonic;
+    }
+    message = JSON.stringify(_message);
+    return message;
+  } catch (error) {
+    // Could not parse. Continue
+    return message;
+  }
 }
