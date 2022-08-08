@@ -28,13 +28,6 @@ export type CurrencySelectionItem = Pick<
   disabled?: boolean;
 };
 
-export interface CurrencySelectionToggleProps {
-  id: string;
-  currencyAbbreviation: string;
-  currencyName: string;
-  isToken?: boolean;
-}
-
 export type CurrencySelectionRowProps = {
   currency: CurrencySelectionItem;
   tokens?: CurrencySelectionItem[];

@@ -81,9 +81,7 @@ import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {FlatList, ScrollView} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
-import CurrencySelectionRow, {
-  CurrencySelectionToggleProps,
-} from '../../../components/list/CurrencySelectionRow';
+import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {sleep} from '../../../utils/helper-methods';
 import {
@@ -274,14 +272,14 @@ const RecoveryPhrase = () => {
       const recoveryObj: ImportObj = {
         type: parsedCode[0],
         data: parsedCode[1],
-        hasPassphrase: parsedCode[4] == 'true' ? true : false,
+        hasPassphrase: parsedCode[4] === 'true' ? true : false,
       };
 
       if (!isValidPhrase(recoveryObj.data)) {
         showErrorModal(new Error(t('The recovery phrase is invalid.')));
         return;
       }
-      if (recoveryObj.type == '1' && recoveryObj.hasPassphrase) {
+      if (recoveryObj.type === '1' && recoveryObj.hasPassphrase) {
         dispatch(
           showBottomNotificationModal({
             type: 'info',
@@ -511,7 +509,7 @@ const RecoveryPhrase = () => {
 
   const renderItem = useCallback(
     ({item}) => {
-      const currencySelected = ({id}: CurrencySelectionToggleProps) => {
+      const currencySelected = (id: string) => {
         const _selectedCurrency = CurrencyOptions.filter(
           currency => currency.id === id,
         );
