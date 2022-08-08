@@ -64,7 +64,7 @@ const IconImage = styled(FastImage)`
 const CardOffers: React.VFC<CardOffersProps> = props => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const {contentCard, userEmail} = props;
+  const {contentCard} = props;
 
   let title = 'Card Offers';
   let description = 'Earn cash back when you shop at top retailers.';
@@ -96,7 +96,7 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
       );
     }
 
-    dispatch(CardEffects.startOpenDosh(userEmail || ''));
+    dispatch(CardEffects.startOpenDosh());
   };
 
   useFocusEffect(() => {
