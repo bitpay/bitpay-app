@@ -69,7 +69,6 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
-import _ from 'lodash';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -229,7 +228,7 @@ const TransactionProposalDetails = () => {
       );
       setTxs(_transaction);
       setLastSigner(
-        _.filter(_transaction.actions, {type: 'accept'}).length ===
+        _transaction.actions.filter((a: any) => a?.type === 'accept').length ===
           _transaction.requiredSignatures - 1,
       );
       await sleep(500);
