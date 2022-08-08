@@ -424,6 +424,7 @@ const goToConfirm =
           txDetails,
           amount,
           message: opts?.message || '',
+          sendMax: opts?.sendMax,
         },
       });
     } catch (err: any) {
