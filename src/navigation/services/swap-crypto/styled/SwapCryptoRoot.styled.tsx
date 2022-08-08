@@ -28,6 +28,7 @@ export const ArrowContainer = styled.View`
   display: flex;
   flex-direction: row;
   justify-content: center;
+  margin-left: 10px;
 `;
 
 export const SelectorArrowContainer = styled.View`
@@ -57,6 +58,7 @@ export const SelectedOptionText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 16px;
   font-weight: 500;
+  max-width: 120px;
 `;
 
 export const SelectedOptionCol = styled.View`
