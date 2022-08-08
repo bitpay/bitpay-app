@@ -413,8 +413,11 @@ export const GetTransactionHistory =
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
 
-      const {walletId, keyId} = wallet.credentials;
+      let {walletId, keyId} = wallet.credentials;
 
+      if (!keyId) {
+        keyId = wallet.keyId;
+      }
       if (!walletId || !wallet.isComplete()) {
         return resolve({transactions: [], loadMore: false});
       }

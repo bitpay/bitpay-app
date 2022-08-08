@@ -105,7 +105,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
   const {context, key} = route.params;
 
   const gotoBackup = () => {
-    const {id, mnemonic} = key.properties;
+    const {id, mnemonic} = key.properties!;
     navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
       screen: 'RecoveryPhrase',
       params: {

@@ -361,7 +361,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
-            {key.methods.isPrivKeyEncrypted() ? (
+            {key.methods?.isPrivKeyEncrypted() ? (
               theme.dark ? (
                 <EncryptPasswordDarkModeImg />
               ) : (
@@ -388,7 +388,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
                   <ProposalBadge>{pendingTxps.length}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {key?.methods.isPrivKeyEncrypted() ? (
+              {key?.methods?.isPrivKeyEncrypted() ? (
                 <CogIconContainer
                   onPress={() =>
                     navigation.navigate('KeySettings', {
@@ -460,21 +460,23 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
 
   const keyOptions: Array<Option> = [];
 
-  if (!key?.methods.isPrivKeyEncrypted()) {
-    keyOptions.push({
-      img: <Icons.Encrypt />,
-      title: t('Encrypt your Key'),
-      description: t(
-        'Prevent an unauthorized user from sending funds out of your wallet.',
-      ),
-      onPress: () => {
-        haptic('impactLight');
-        navigation.navigate('KeySettings', {
-          key,
-          context: 'createEncryptPassword',
-        });
-      },
-    });
+  if (!key?.methods?.isPrivKeyEncrypted()) {
+    if (!key?.isReadOnly) {
+      keyOptions.push({
+        img: <Icons.Encrypt />,
+        title: t('Encrypt your Key'),
+        description: t(
+          'Prevent an unauthorized user from sending funds out of your wallet.',
+        ),
+        onPress: () => {
+          haptic('impactLight');
+          navigation.navigate('KeySettings', {
+            key,
+            context: 'createEncryptPassword',
+          });
+        },
+      });
+    }
 
     keyOptions.push({
       img: <Icons.Settings />,

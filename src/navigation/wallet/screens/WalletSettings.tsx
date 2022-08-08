@@ -103,7 +103,7 @@ const WalletSettings = () => {
     return {
       onSubmitHandler: async (encryptPassword: string) => {
         try {
-          const decryptedKey = key.methods.get(encryptPassword);
+          const decryptedKey = key.methods!.get(encryptPassword);
           dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(300);
           cta(decryptedKey);
@@ -217,47 +217,52 @@ const WalletSettings = () => {
           </Setting>
           <Hr />
 
-          <Setting
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              const {
-                compliantDerivation,
-                fingerPrint,
-                id,
-                use0forBCH,
-                use44forMultisig,
-              } = key.methods;
-              const _keyObj = {
-                compliantDerivation,
-                fingerPrint,
-                id,
-                use0forBCH,
-                use44forMultisig,
-              };
-              if (key.methods.isPrivKeyEncrypted()) {
-                dispatch(
-                  showDecryptPasswordModal(
-                    buildEncryptModalConfig(async decryptedKey => {
-                      navigation.navigate('Wallet', {
-                        screen: 'ExportWallet',
-                        params: {
-                          wallet,
-                          keyObj: {...decryptedKey, ..._keyObj},
-                        },
-                      });
-                    }),
-                  ),
-                );
-              } else {
-                navigation.navigate('Wallet', {
-                  screen: 'ExportWallet',
-                  params: {wallet, keyObj: {...key.methods.get(), ..._keyObj}},
-                });
-              }
-            }}>
-            <WalletSettingsTitle>{t('Export Wallet')}</WalletSettingsTitle>
-          </Setting>
+          {!key.isReadOnly ? (
+            <Setting
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                haptic('impactLight');
+                const {
+                  compliantDerivation,
+                  fingerPrint,
+                  id,
+                  use0forBCH,
+                  use44forMultisig,
+                } = key.methods!;
+                const _keyObj = {
+                  compliantDerivation,
+                  fingerPrint,
+                  id,
+                  use0forBCH,
+                  use44forMultisig,
+                };
+                if (key.methods!.isPrivKeyEncrypted()) {
+                  dispatch(
+                    showDecryptPasswordModal(
+                      buildEncryptModalConfig(async decryptedKey => {
+                        navigation.navigate('Wallet', {
+                          screen: 'ExportWallet',
+                          params: {
+                            wallet,
+                            keyObj: {...decryptedKey, ..._keyObj},
+                          },
+                        });
+                      }),
+                    ),
+                  );
+                } else {
+                  navigation.navigate('Wallet', {
+                    screen: 'ExportWallet',
+                    params: {
+                      wallet,
+                      keyObj: {...key.methods!.get(), ..._keyObj},
+                    },
+                  });
+                }
+              }}>
+              <WalletSettingsTitle>{t('Export Wallet')}</WalletSettingsTitle>
+            </Setting>
+          ) : null}
         </VerticalPadding>
       </ScrollView>
     </WalletSettingsContainer>

@@ -91,9 +91,9 @@ const CreateEncryptionPassword = () => {
       if (key) {
         logger.debug(`Encrypting private key for: ${key.keyName}`);
 
-        key.methods.encrypt(password);
+        key.methods!.encrypt(password);
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));
-        key.isPrivKeyEncrypted = key.methods.isPrivKeyEncrypted();
+        key.isPrivKeyEncrypted = key.methods!.isPrivKeyEncrypted();
         navigation.navigate('Wallet', {
           screen: 'KeySettings',
           params: {key},

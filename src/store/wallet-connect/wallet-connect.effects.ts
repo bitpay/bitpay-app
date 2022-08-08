@@ -393,8 +393,8 @@ const getPrivKey =
         }
 
         const xPrivKey = password
-          ? key.methods.get(password).xPrivKey
-          : key.properties.xPrivKey;
+          ? key.methods!.get(password).xPrivKey
+          : key.properties!.xPrivKey;
         const bitcore = BWC.getBitcore();
         const xpriv = new bitcore.HDPrivateKey(xPrivKey);
         const priv = xpriv.deriveChild("m/44'/60'/0'/0/0").privateKey;

@@ -103,7 +103,7 @@ export const addWalletJoinMultisig =
        */
         opts.n = 2;
         const newWallet = (await joinMultisigWallet({
-          key: key.methods,
+          key: key.methods!,
           opts,
         })) as Wallet;
 
