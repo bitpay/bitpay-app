@@ -76,15 +76,15 @@ const CurrencyTokenSelectionScreen: React.VFC<
   const theme = useTheme();
   const {params} = route;
   const [chain, setChain] = useState(params.currency);
-  const [items, setItems] = useState(params.tokens);
+  const [tokens, setTokens] = useState(params.tokens);
   const [searchFilter, setSearchFilter] = useState('');
 
   const filteredItems = useMemo(() => {
     if (!searchFilter) {
-      return items;
+      return tokens;
     }
 
-    return items.reduce<CurrencySelectionItem[]>((accum, item) => {
+    return tokens.reduce<CurrencySelectionItem[]>((accum, item) => {
       if (
         item.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
         item.currencyName.toLowerCase().includes(searchFilter)
@@ -94,7 +94,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
 
       return accum;
     }, []);
-  }, [searchFilter, items]);
+  }, [searchFilter, tokens]);
 
   const onAddCustomTokenPress = () => {
     if (params.key) {
@@ -109,23 +109,36 @@ const CurrencyTokenSelectionScreen: React.VFC<
   const onChainToggle = (id: string) => {
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
 
-    if (params.selectionMode === 'single' && items.some(i => i.selected)) {
-      setItems(prev =>
-        prev.map(item => {
-          return item.selected
-            ? {
-                ...item,
-                selected: false,
-              }
-            : item;
-        }),
-      );
+    if (params.selectionMode === 'multi') {
+      if (!tokens.some(token => token.selected)) {
+        setChain({
+          ...chain,
+          selected: !chain.selected,
+        });
+      }
     }
 
-    setChain({
-      ...chain,
-      selected: !chain.selected,
-    });
+    if (params.selectionMode === 'single') {
+      if (!chain.selected) {
+        setChain({
+          ...chain,
+          selected: !chain.selected,
+        });
+      }
+
+      if (tokens.some(token => token.selected)) {
+        setTokens(prev =>
+          prev.map(token =>
+            token.selected
+              ? {
+                  ...token,
+                  selected: false,
+                }
+              : token,
+          ),
+        );
+      }
+    }
 
     params.onToggle(id);
   };
@@ -141,35 +154,54 @@ const CurrencyTokenSelectionScreen: React.VFC<
   const onTokenToggle = (id: string) => {
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
 
-    if (params.selectionMode === 'single' && chain.selected) {
-      setChain({
-        ...chain,
-        selected: false,
-      });
+    if (params.selectionMode === 'multi') {
+      if (!chain.selected) {
+        setChain(prev => ({
+          ...prev,
+          selected: true,
+        }));
+      }
+
+      setTokens(prev =>
+        prev.map(token =>
+          token.id === id
+            ? {
+                ...token,
+                selected: !token.selected,
+              }
+            : token,
+        ),
+      );
     }
 
-    setItems(prev =>
-      prev.reduce<CurrencySelectionItem[]>((accum, token) => {
-        if (token.id === id) {
-          accum.push({
-            ...token,
-            selected: !token.selected,
-          });
-        } else {
-          if (params.selectionMode === 'single' && token.selected) {
-            accum.push({
-              ...token,
-              selected: false,
-            });
-          } else {
-            accum.push(token);
-          }
-        }
+    if (params.selectionMode === 'single') {
+      if (chain.selected) {
+        setChain({
+          ...chain,
+          selected: false,
+        });
+      }
 
-        return accum;
-      }, []),
-    );
-    params.onToggle(id);
+      setTokens(prev =>
+        prev.map(token => {
+          if (token.id === id) {
+            return {
+              ...token,
+              selected: !token.selected,
+            };
+          }
+
+          return token.selected
+            ? {
+                ...token,
+                selected: false,
+              }
+            : token;
+        }),
+      );
+
+      params.onToggle(id);
+    }
   };
 
   const onTokenToggleRef = useRef(onTokenToggle);

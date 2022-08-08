@@ -533,13 +533,27 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         // if multi, just toggle the selected item and rerender
         if (selectionMode === 'multi') {
           if (isCurrencyMatch) {
-            item.currency = {
-              ...item.currency,
-              selected: !item.currency.selected,
-            };
+            const hasSelectedTokens = item.tokens.some(token => token.selected);
+
+            if (item.currency.selected && hasSelectedTokens) {
+              // do nothing
+            } else {
+              item.currency = {
+                ...item.currency,
+                selected: !item.currency.selected,
+              };
+            }
           }
 
           if (tokenMatch) {
+            // if selecting a token, make sure its chain is also selected
+            if (!item.currency.selected) {
+              item.currency = {
+                ...item.currency,
+                selected: true,
+              };
+            }
+
             const updatedToken = {
               ...tokenMatch,
               selected: !tokenMatch.selected,
