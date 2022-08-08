@@ -13,7 +13,6 @@ import {
   SettingTitle,
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
-import {AppActions} from '../../../store/app';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {Black, Feather, LightBlack, White} from '../../../styles/colors';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -119,10 +118,6 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const pinLockActive = useAppSelector(({APP}: RootState) => APP.pinLockActive);
-  const biometricLockActive = useAppSelector(
-    ({APP}: RootState) => APP.biometricLockActive,
-  );
   const hideList = useAppSelector(({APP}) => APP.settingsListConfig);
   const memoizedSettingsConfigs: HomeSetting[] = useMemo(
     () => [
@@ -153,14 +148,7 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
       {
         id: 'Security',
         title: t('Security'),
-        onPress: () => {
-          if (biometricLockActive) {
-            dispatch(AppActions.showBiometricModal());
-          }
-          if (pinLockActive) {
-            dispatch(AppActions.showPinModal({type: 'check'}));
-          }
-        },
+        onPress: () => {},
         subListComponent: <Security />,
       },
       {
@@ -188,7 +176,7 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
         subListComponent: <About />,
       },
     ],
-    [t],
+    [t, redirectTo],
   );
 
   const memoizedSettingsList = useMemo(() => {
