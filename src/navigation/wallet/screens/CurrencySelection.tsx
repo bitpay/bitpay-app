@@ -671,6 +671,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       navigation.navigate('Wallet', {
         screen: WalletScreens.CURRENCY_TOKEN_SELECTION,
         params: {
+          key,
           currency: {...currency},
           tokens: sortedTokens,
           description: item.description,
@@ -679,7 +680,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         },
       });
     };
-  }, [memoizedOnToggle, navigation, selectionMode]);
+  }, [memoizedOnToggle, navigation, key, selectionMode]);
 
   const renderItem: ListRenderItem<CurrencySelectionListItem> = useCallback(
     ({item}) => {

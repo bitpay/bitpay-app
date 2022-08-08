@@ -19,8 +19,9 @@ import {
   TokensHeading,
 } from '../../../components/list/CurrencySelectionRow';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {HeaderTitle} from '../../../components/styled/Text';
+import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {IS_ANDROID} from '../../../constants';
+import {Key} from '../../../store/wallet/wallet.models';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
@@ -32,6 +33,7 @@ import {
 } from './CurrencySelection';
 
 export type CurrencyTokenSelectionScreenParamList = {
+  key?: Key;
   currency: CurrencySelectionItem;
   tokens: CurrencySelectionItem[];
   description?: string;
@@ -39,6 +41,12 @@ export type CurrencyTokenSelectionScreenParamList = {
   selectionMode?: CurrencySelectionMode;
   onToggle: (id: string) => any;
 };
+
+const SearchContainerLinkRow = styled.View`
+  align-items: flex-end;
+  margin-bottom: 8px;
+  width: 100%;
+`;
 
 const ListContainer = styled.View`
   flex-shrink: 1;
@@ -87,6 +95,16 @@ const CurrencyTokenSelectionScreen: React.VFC<
       return accum;
     }, []);
   }, [searchFilter, items]);
+
+  const onAddCustomTokenPress = () => {
+    if (params.key) {
+      navigation.navigate('AddWallet', {
+        key: params.key,
+        isCustomToken: true,
+        isToken: true,
+      });
+    }
+  };
 
   const onChainToggle = (id: string) => {
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
@@ -225,6 +243,12 @@ const CurrencyTokenSelectionScreen: React.VFC<
   return (
     <CurrencySelectionContainer>
       <SearchContainer>
+        {params.key ? (
+          <SearchContainerLinkRow>
+            <Link onPress={onAddCustomTokenPress}>{t('Add Custom Token')}</Link>
+          </SearchContainerLinkRow>
+        ) : null}
+
         <CurrencySelectionSearchInput
           onSearch={setSearchFilter}
           debounceWait={300}
