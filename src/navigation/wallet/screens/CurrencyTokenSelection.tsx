@@ -19,7 +19,7 @@ import {
   TokensHeading,
 } from '../../../components/list/CurrencySelectionRow';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
+import {HeaderTitle, Link} from '../../../components/styled/Text';
 import {IS_ANDROID} from '../../../constants';
 import {Key} from '../../../store/wallet/wallet.models';
 import {LightBlack, Slate30} from '../../../styles/colors';

@@ -24,7 +24,12 @@ import {
   SupportedCurrencies,
 } from '../../../constants/currencies';
 import {startCreateKey} from '../../../store/wallet/effects';
-import {FlatList, ListRenderItem} from 'react-native';
+import {
+  FlatList,
+  ImageRequireSource,
+  ImageSourcePropType,
+  ListRenderItem,
+} from 'react-native';
 import {
   logSegmentEvent,
   startOnGoingProcessModal,
@@ -43,12 +48,12 @@ import {
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {Key} from '../../../store/wallet/wallet.models';
+import {Key, Token} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
 import {sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
-import {BitpaySupportedTokenOpts, TokenEx} from '../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
@@ -239,7 +244,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     );
 
     // For each token, add it to the token list for its parent chain object
-    const allTokenOptions: Record<string, TokenEx> = {
+    const allTokenOptions: Record<string, Token> = {
       ...BitpaySupportedTokenOpts,
       ...appTokenOptions,
       ...appCustomTokenOptions,
@@ -252,13 +257,17 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       const tokenData =
         Currencies[k] || appTokenData[k] || appCustomTokenData[k];
       const chainData = chainMap[tokenData.chain.toLowerCase()];
+      const imgSrc = SupportedCurrencyOptions.find(c => c.id === k)?.imgSrc;
+      const isReqSrc = (
+        src: ImageSourcePropType | undefined,
+      ): src is ImageRequireSource => typeof src === 'number';
 
       const token: CurrencySelectionItem = {
         id: k,
         currencyAbbreviation: tokenOpt.symbol,
         currencyName: tokenOpt.name,
         img: tokenOpt.logoURI || chainData.currency.img || '',
-        imgSrc: tokenOpt.logoSource || undefined,
+        imgSrc: isReqSrc(imgSrc) ? imgSrc : undefined,
         selected: false,
         disabled: false,
         isToken: true,
