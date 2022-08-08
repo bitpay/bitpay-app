@@ -14,7 +14,9 @@ import GiftCardDetails from './screens/GiftCardDetails';
 import EnterPhone from './screens/EnterPhone';
 import EnterEmail from './screens/EnterEmail';
 import {HeaderTitle} from '../../../../components/styled/Text';
-import Amount, {AmountParamList} from '../../../wallet/screens/Amount';
+import AmountScreen, {
+  AmountScreenParamList,
+} from '../../../wallet/screens/AmountScreen';
 import Confirm, {
   GiftCardConfirmParamList,
 } from '../../../wallet/screens/send/confirm/GiftCardConfirm';
@@ -43,7 +45,7 @@ export type GiftCardStackParamList = {
     }) => void;
   };
   GiftCardDetails: {cardConfig: CardConfig; giftCard: GiftCard};
-  GiftCardAmount: AmountParamList;
+  GiftCardAmount: AmountScreenParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
   GiftCardConfirmTwoFactor: PayProConfirmTwoFactorParamList;
 };
@@ -97,7 +99,7 @@ const GiftCardStack = () => {
       />
       <GiftCards.Screen
         name={GiftCardScreens.GIFT_CARD_AMOUNT}
-        component={Amount}
+        component={AmountScreen}
       />
       <GiftCards.Screen
         name={GiftCardScreens.GIFT_CARD_CONFIRM}

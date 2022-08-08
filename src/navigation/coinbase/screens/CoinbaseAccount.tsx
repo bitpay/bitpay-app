@@ -49,7 +49,7 @@ import {
   ToCashAddress,
   TranslateToBchCashAddress,
 } from '../../../store/wallet/effects/address/address';
-import Amount from '../../wallet/screens/Amount';
+import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
@@ -426,19 +426,6 @@ const CoinbaseAccount = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const AmountComponent = gestureHandlerRootHOC(() => {
-    return (
-      <AmountContainer>
-        <Amount
-          useAsModal={true}
-          hideSendMaxProp={true}
-          currencyAbbreviationProp={account?.balance.currency}
-          onDismiss={onEnteredAmount}
-        />
-      </AmountContainer>
-    );
-  });
-
   return (
     <AccountContainer>
       <BalanceContainer>
@@ -514,13 +501,12 @@ const CoinbaseAccount = ({
         </GlobalSelectContainer>
       </SheetModal>
 
-      <SheetModal
+      <AmountModal
         isVisible={amountModalVisible}
-        onBackdropPress={() => {
-          setAmountModalVisible(false);
-        }}>
-        <AmountComponent />
-      </SheetModal>
+        cryptoCurrencyAbbreviation={account?.balance.currency}
+        onClose={() => setAmountModalVisible(false)}
+        onSubmit={amt => onEnteredAmount(amt)}
+      />
     </AccountContainer>
   );
 };

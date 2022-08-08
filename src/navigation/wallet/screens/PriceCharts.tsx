@@ -20,7 +20,7 @@ import {
 import {SlateDark, White, Black, LuckySevens} from '../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import RangeDateSelector from '../components/RangeDateSelector';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {Currencies} from '../../../constants/currencies';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
@@ -291,7 +291,7 @@ const PriceCharts = () => {
       }),
     );
     navigation.navigate('Wallet', {
-      screen: 'Amount',
+      screen: WalletScreens.AMOUNT,
       params: {
         onAmountSelected: async (amount: string) => {
           navigation.navigate('BuyCrypto', {
@@ -302,10 +302,7 @@ const PriceCharts = () => {
             },
           });
         },
-        opts: {
-          hideSendMax: true,
-          context: 'buyCrypto',
-        },
+        context: 'buyCrypto',
       },
     });
   });

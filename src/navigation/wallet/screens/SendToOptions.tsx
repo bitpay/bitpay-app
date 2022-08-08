@@ -19,7 +19,7 @@ import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {TouchableOpacity} from 'react-native';
 import WalletIcons from '../components/WalletIcons';
 import _ from 'lodash';
-import AmountModal from '../components/AmountModal';
+import AmountModal from '../../../components/amount/AmountModal';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
@@ -297,21 +297,18 @@ const SendToOptions = () => {
 
       <AmountModal
         isVisible={recipientAmount.showModal}
-        opts={{
-          hideSendMax: true,
-          currencyAbbreviation:
-            params.wallet.currencyAbbreviation.toUpperCase(),
-        }}
-        onDismiss={(amount?: number) => {
+        cryptoCurrencyAbbreviation={params.wallet.currencyAbbreviation.toUpperCase()}
+        onClose={() => {
           setRecipientAmount({showModal: false});
-          if (amount) {
-            setRecipientListContext(
-              {...recipientAmount.recipient!, amount},
-              recipientAmount.index,
-              false,
-              recipientAmount.updateRecipient,
-            );
-          }
+        }}
+        onSubmit={amount => {
+          setRecipientAmount({showModal: false});
+          setRecipientListContext(
+            {...recipientAmount.recipient!, amount},
+            recipientAmount.index,
+            false,
+            recipientAmount.updateRecipient,
+          );
         }}
       />
     </SendToOptionsContext.Provider>
