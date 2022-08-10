@@ -5,7 +5,10 @@ import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
-import {subscribePushNotifications} from '../../../app/app.effects';
+import {
+  subscribePushNotifications,
+  subscribeEmailNotifications,
+} from '../../../app/app.effects';
 import {t} from 'i18next';
 
 const BWC = BwcProvider.getInstance();
@@ -16,7 +19,12 @@ export const startJoinMultisig =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
         } = getState();
         const walletData = BWC.parseSecret(opts.invitationCode as string);
         opts.networkName = walletData.network;
@@ -37,6 +45,19 @@ export const startJoinMultisig =
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(_wallet, brazeEid!));
+        }
+        // subscribe new wallet to email notifications
+        if (
+          emailNotifications &&
+          emailNotifications.accepted &&
+          emailNotifications.email
+        ) {
+          const prefs = {
+            email: emailNotifications.email,
+            language: defaultLanguage,
+            unit: 'btc', // deprecated
+          };
+          dispatch(subscribeEmailNotifications(_wallet, prefs));
         }
 
         // build out app specific props
@@ -66,7 +87,12 @@ export const addWalletJoinMultisig =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
         } = getState();
 
         const walletData = BWC.parseSecret(opts.invitationCode as string);
@@ -84,6 +110,19 @@ export const addWalletJoinMultisig =
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(newWallet, brazeEid!));
+        }
+        // subscribe new wallet to email notifications
+        if (
+          emailNotifications &&
+          emailNotifications.accepted &&
+          emailNotifications.email
+        ) {
+          const prefs = {
+            email: emailNotifications.email,
+            language: defaultLanguage,
+            unit: 'btc', // deprecated
+          };
+          dispatch(subscribeEmailNotifications(newWallet, prefs));
         }
 
         key.wallets.push(

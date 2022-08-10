@@ -25,9 +25,12 @@ interface CardOffersProps {
 
 const ICON_SIZE = 50;
 
-const CardOffersContainer = styled(CardContainer)`
-  flex-direction: row;
+const CardOffersOuterContainer = styled(CardContainer)`
   min-height: 78px;
+`;
+
+const CardOffersInnerContainer = styled(TouchableOpacity)`
+  flex-direction: row;
   padding-left: 16px;
   padding-right: 16px;
   width: 100%;
@@ -106,11 +109,11 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
   });
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={ActiveOpacity}>
-      <CardOffersContainer
-        style={{
-          ...(theme.dark ? {} : BoxShadow),
-        }}>
+    <CardOffersOuterContainer
+      style={{
+        ...(theme.dark ? {} : BoxShadow),
+      }}>
+      <CardOffersInnerContainer onPress={onPress} activeOpacity={ActiveOpacity}>
         <MainColumn>
           <TitleRow>{title}</TitleRow>
 
@@ -122,8 +125,8 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
             <IconImage source={iconSource} />
           </IconColumn>
         ) : null}
-      </CardOffersContainer>
-    </TouchableOpacity>
+      </CardOffersInnerContainer>
+    </CardOffersOuterContainer>
   );
 };
 
