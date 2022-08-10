@@ -1,11 +1,10 @@
 import {
-  useFocusEffect,
   useNavigation,
   useScrollToTop,
   useTheme,
 } from '@react-navigation/native';
-import {each, throttle} from 'lodash';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {each} from 'lodash';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
@@ -29,7 +28,11 @@ import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/st
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useBrazeRefreshOnFocus,
+} from '../../../utils/hooks';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
@@ -84,6 +87,7 @@ const HomeRoot = () => {
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
   const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
+  useBrazeRefreshOnFocus();
 
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
@@ -152,19 +156,6 @@ const HomeRoot = () => {
       } // portfolio balance is updated in app init
     });
   }, [dispatch, navigation]);
-
-  useFocusEffect(
-    useCallback(
-      throttle(
-        () => {
-          dispatch(requestBrazeContentRefresh());
-        },
-        10 * 1000,
-        {leading: true, trailing: false},
-      ),
-      [],
-    ),
-  );
 
   const onRefresh = async () => {
     setRefreshing(true);
