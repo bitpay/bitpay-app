@@ -463,7 +463,9 @@ const Confirm = () => {
 
         <PaymentSent
           isVisible={showPaymentSentModal}
-          title={wallet.credentials.n > 1 ? t('Proposal created') : t('Payment Sent')}
+          title={
+            wallet.credentials.n > 1 ? t('Proposal created') : t('Payment Sent')
+          }
           onCloseModal={async () => {
             setShowPaymentSentModal(false);
             if (recipient.type === 'coinbase') {

@@ -197,6 +197,7 @@ export interface _Credentials extends Credentials {
   secret: string;
   copayers: string[];
   status: string;
+  singleAddress: boolean; // TODO add to bwc credentials model
 }
 export interface Status {
   balance: Balance;

@@ -20,7 +20,7 @@ import {
 import {View} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
 import {sleep} from '../../../../utils/helper-methods';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
@@ -83,6 +83,7 @@ export const getLinkedWallet = (key: Key, wallet: Wallet) => {
 
 const WalletInformation = () => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletInformation'>>();
@@ -173,6 +174,9 @@ const WalletInformation = () => {
       },
       async (err: any, status: Status) => {
         if (err) {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error(`error [getStatus]: ${errStr}`);
           setIsLoading(false);
         } else if (status) {
           setCopayers(status.wallet.copayers);
