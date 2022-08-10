@@ -682,7 +682,7 @@ export const subscribeEmailNotifications =
 export const unSubscribeEmailNotifications =
   (walletClient: any): Effect<Promise<void>> =>
   async dispatch => {
-    walletClient.savePreferences({}, (err: any) => {
+    walletClient.savePreferences({email: ''}, (err: any) => {
       if (err) {
         dispatch(
           LogActions.error(
@@ -788,7 +788,7 @@ export const setEmailNotifications =
   (
     accepted: boolean,
     email: string | null,
-    agreedToMarketingCommunications: boolean,
+    agreedToMarketingCommunications?: boolean,
   ): Effect =>
   (dispatch, getState) => {
     const _email = accepted ? email : null;

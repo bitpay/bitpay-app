@@ -17,8 +17,13 @@ import {
   deleteKey,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
+import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {setHomeCarouselConfig} from '../../../store/app/app.actions';
+import {
+  unSubscribeEmailNotifications,
+  unSubscribePushNotifications,
+} from '../../../store/app/app.effects';
 import {useTranslation} from 'react-i18next';
 
 const DeleteKeyContainer = styled.SafeAreaView`
@@ -44,6 +49,11 @@ const DeleteKey = () => {
   const dispatch = useDispatch();
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
+  const {notificationsAccepted, emailNotifications, brazeEid} = useAppSelector(
+    ({APP}) => APP,
+  );
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+
   const {
     params: {keyId},
   } = useRoute<RouteProp<WalletStackParamList, 'DeleteKey'>>();
@@ -64,6 +74,23 @@ const DeleteKey = () => {
         t(OnGoingProcessMessages.DELETING_KEY),
       ),
     );
+
+    // Unsubscribe wallets to push/email notifications if enabled
+    const keyObj = await findKeyByKeyId(keyId, keys);
+    keyObj.wallets
+      .filter(
+        (wallet: any) =>
+          !wallet.credentials.token && wallet.credentials.isComplete(),
+      )
+      .forEach(walletClient => {
+        if (notificationsAccepted && brazeEid) {
+          dispatch(unSubscribePushNotifications(walletClient, brazeEid));
+        }
+        if (emailNotifications.accepted && emailNotifications.email) {
+          dispatch(unSubscribeEmailNotifications(walletClient));
+        }
+      });
+
     await sleep(300);
     dispatch(deleteKey({keyId}));
     dispatch(
