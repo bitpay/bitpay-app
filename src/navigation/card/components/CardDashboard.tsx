@@ -7,7 +7,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList} from 'react-native';
+import {FlatList, Linking} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
@@ -26,6 +26,7 @@ import {
 } from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
+import {APP_DEEPLINK_PREFIX} from '../../../constants/config';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -38,7 +39,7 @@ import {
   selectDashboardTransactions,
 } from '../../../store/card/card.selectors';
 import {isActivationRequired} from '../../../utils/card';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useMount} from '../../../utils/hooks';
 import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 import {WalletScreens} from '../../wallet/WalletStack';
 import {CardScreens, CardStackParamList} from '../CardStack';
@@ -236,6 +237,48 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       }
     }, [uninitializedId, autoInitState, dispatch]),
   );
+
+  // prevent handler from getting called multiple times
+  const [initialDeepLinkHandled, setInitialDeeplinkHandled] = useState(false);
+  const onInitialDeepLinkReceived = (url: string | null) => {
+    if (initialDeepLinkHandled || !url) {
+      return;
+    }
+
+    setInitialDeeplinkHandled(true);
+    return onDeepLinkReceived({url});
+  };
+  const onInitialDeepLinkReceivedRef = useRef(onInitialDeepLinkReceived);
+  onInitialDeepLinkReceivedRef.current = onInitialDeepLinkReceived;
+
+  const onDeepLinkReceived = ({url}: {url: string}) => {
+    try {
+      url = url.replace(APP_DEEPLINK_PREFIX, '');
+
+      // TODO: better way to deeplink to offers
+      if (url === 'card/offers') {
+        dispatch(CardEffects.startOpenDosh());
+      }
+    } catch (err) {
+      console.debug(err);
+    }
+  };
+  const onDeepLinkReceivedRef = useRef(onDeepLinkReceived);
+  onDeepLinkReceivedRef.current = onDeepLinkReceived;
+
+  useMount(() => {
+    // checking if app was opened via deeplink
+    Linking.getInitialURL()
+      .then(onInitialDeepLinkReceivedRef.current)
+      .catch(err => console.log(err));
+
+    const listenerFn = onDeepLinkReceivedRef.current;
+
+    // listen for deeplink events while app is open
+    Linking.addEventListener('url', listenerFn);
+
+    return () => Linking.removeEventListener('url', listenerFn);
+  });
 
   const listFooterComponent = useMemo(
     () => (

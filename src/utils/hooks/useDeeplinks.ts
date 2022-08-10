@@ -180,6 +180,10 @@ export const useDeeplinks = () => {
               path: 'wallet-card',
               screens: {
                 [CardScreens.PAIRING]: 'pairing',
+                [CardScreens.HOME]: {
+                  path: 'card/:action',
+                  exact: true,
+                },
               },
             },
             [TabsScreens.SETTINGS]: {
