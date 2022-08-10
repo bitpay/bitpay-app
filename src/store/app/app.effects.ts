@@ -64,7 +64,7 @@ import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import {debounce} from 'lodash';
-import {updatePortfolioBalance} from "../wallet/wallet.actions";
+import {updatePortfolioBalance} from '../wallet/wallet.actions';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
