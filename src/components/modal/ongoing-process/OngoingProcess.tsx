@@ -21,6 +21,7 @@ export enum OnGoingProcessMessages {
   FETCHING_PAYMENT_INFO = 'Fetching payment information...',
   JOIN_WALLET = 'Joining Wallet',
   SENDING_PAYMENT = 'Sending Payment',
+  ACCEPTING_PAYMENT = 'Accepting Payment',
   GENERATING_ADDRESS = 'Generating Address',
   GENERATING_GIFT_CARD = 'Generating Gift Card',
   SYNCING_WALLETS = 'Syncing Wallets...',

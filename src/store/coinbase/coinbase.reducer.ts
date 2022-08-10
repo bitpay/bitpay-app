@@ -413,7 +413,6 @@ export const coinbaseReducer = (
 
     // ------- Settings -------- //
     case CoinbaseActionTypes.TOGGLE_HIDE_TOTAL_BALANCE:
-      console.log(action.payload);
       return {
         ...state,
         hideTotalBalance: action.payload,

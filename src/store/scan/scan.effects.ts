@@ -424,8 +424,10 @@ const goToConfirm =
           txDetails,
           amount,
           message: opts?.message || '',
+          sendMax: opts?.sendMax,
         },
       });
+      sleep(300).then(() => setButtonState?.(null));
     } catch (err: any) {
       if (setButtonState) {
         setButtonState('failed');
@@ -498,7 +500,8 @@ export const goToAmount =
     navigationRef.navigate('Wallet', {
       screen: WalletScreens.AMOUNT,
       params: {
-        currencyAbbreviationRouteParam: coin.toUpperCase(),
+        sendMaxEnabled: true,
+        cryptoCurrencyAbbreviation: coin.toUpperCase(),
         onAmountSelected: async (amount, setButtonState, amountOpts) => {
           dispatch(
             goToConfirm({

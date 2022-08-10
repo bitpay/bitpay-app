@@ -47,9 +47,10 @@ const CloseText = styled(BaseText)`
 interface PaymentSentModal {
   isVisible: boolean;
   onCloseModal: () => void;
+  title?: string;
 }
 
-const PaymentSent = ({isVisible, onCloseModal}: PaymentSentModal) => {
+const PaymentSent = ({isVisible, onCloseModal, title}: PaymentSentModal) => {
   const {t} = useTranslation();
   return (
     <Modal
@@ -68,7 +69,7 @@ const PaymentSent = ({isVisible, onCloseModal}: PaymentSentModal) => {
       <PaymentSentContainer>
         <PaymentSentHero>
           <PaymentCompleteSvg />
-          <Title>{t('Payment Sent')}</Title>
+          <Title>{title || t('Payment Sent')}</Title>
         </PaymentSentHero>
         <PaymentSentFooter>
           <CloseButton

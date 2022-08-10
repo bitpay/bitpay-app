@@ -156,7 +156,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         screen: WalletScreens.AMOUNT,
         params: {
           fiatCurrencyAbbreviation: activeCard.currency.code,
-          opts: {hideSendMax: true},
           onAmountSelected: selectedAmount =>
             goToConfirmScreen(+selectedAmount),
         },
@@ -187,9 +186,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
                           amount: Number(amount),
                         },
                       });
-                    },
-                    opts: {
-                      hideSendMax: true,
                     },
                   },
                 });
@@ -350,19 +346,19 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     });
   }
 
-  // if (brazeCardOffers.length) {
-  //   additionalContent.push({
-  //     key: 'card-offers',
-  //     content: (
-  //       <CardOffersContainer>
-  //         <CardOffers
-  //           contentCard={brazeCardOffers[0]}
-  //           userEmail={user?.email}
-  //         />
-  //       </CardOffersContainer>
-  //     ),
-  //   });
-  // }
+  if (brazeCardOffers.length) {
+    additionalContent.push({
+      key: 'card-offers',
+      content: (
+        <CardOffersContainer>
+          <CardOffers
+            contentCard={brazeCardOffers[0]}
+            userEmail={user?.email}
+          />
+        </CardOffersContainer>
+      ),
+    });
+  }
 
   const flatListRef = useRef<FlatList>(null);
   useScrollToTop(flatListRef);

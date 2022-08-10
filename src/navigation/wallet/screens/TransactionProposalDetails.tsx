@@ -95,10 +95,6 @@ export const DetailRow = styled(Row)`
   justify-content: space-between;
 `;
 
-const TransactionIdText = styled(H7)`
-  max-width: 150px;
-`;
-
 export const DetailColumn = styled(Column)`
   align-items: flex-end;
 `;
@@ -198,7 +194,6 @@ const TransactionProposalDetails = () => {
     params: {transaction, wallet, key},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionProposalDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [txs, setTxs] = useState<any>();
@@ -206,6 +201,7 @@ const TransactionProposalDetails = () => {
   const title = getDetailsTitle(transaction, wallet);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [lastSigner, setLastSigner] = useState(false);
 
   let {
     currencyAbbreviation,
@@ -231,6 +227,10 @@ const TransactionProposalDetails = () => {
         }),
       );
       setTxs(_transaction);
+      setLastSigner(
+        _transaction.actions.filter((a: any) => a?.type === 'accept').length ===
+          _transaction.requiredSignatures - 1,
+      );
       await sleep(500);
       setIsLoading(false);
     } catch (e) {
@@ -434,6 +434,7 @@ const TransactionProposalDetails = () => {
                 />
               </DetailRow>
             </DetailContainer>
+            <Hr />
           </>
 
           {txs.creatorName && IsShared(wallet) ? (
@@ -492,14 +493,15 @@ const TransactionProposalDetails = () => {
       txs.pendingForUs &&
       (IsShared(wallet) || txs.multisigContractAddress) ? (
         <SwipeButton
-          title={t('Slide to send')}
+          title={lastSigner ? t('Slide to send') : t('Slide to accept')}
           forceReset={resetSwipeButton}
           onSwipeComplete={async () => {
             try {
               dispatch(
                 startOnGoingProcessModal(
-                  //  t('Sending Payment')
-                  t(OnGoingProcessMessages.SENDING_PAYMENT),
+                  lastSigner
+                    ? t(OnGoingProcessMessages.SENDING_PAYMENT)
+                    : t(OnGoingProcessMessages.ACCEPTING_PAYMENT),
                 ),
               );
               await sleep(400);
@@ -541,6 +543,7 @@ const TransactionProposalDetails = () => {
 
       <PaymentSent
         isVisible={showPaymentSentModal}
+        title={lastSigner ? t('Payment Sent') : t('Payment Accepted')}
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
           await sleep(300);

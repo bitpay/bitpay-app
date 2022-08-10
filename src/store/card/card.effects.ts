@@ -459,40 +459,16 @@ export const START_FETCH_REFERRED_USERS =
     }
   };
 
-export const startOpenDosh =
-  (email: string): Effect<void> =>
-  async dispatch => {
-    const isDoshWhitelisted = !!email && DoshWhitelist.includes(email);
-
-    if (!isDoshWhitelisted) {
-      dispatch(
-        AppActions.showBottomNotificationModal({
-          type: 'warning',
-          title: t('Unavailable'),
-          message: t('Cards Offers unavailable at this time'),
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-
-      return;
-    }
-
-    try {
-      Dosh.present();
-    } catch (err) {
-      dispatch(
-        LogActions.error('Something went wrong trying to open Dosh Rewards'),
-      );
-      dispatch(LogActions.error(JSON.stringify(err)));
-    }
-  };
+export const startOpenDosh = (): Effect<void> => async dispatch => {
+  try {
+    Dosh.present();
+  } catch (err) {
+    dispatch(
+      LogActions.error('Something went wrong trying to open Dosh Rewards'),
+    );
+    dispatch(LogActions.error(JSON.stringify(err)));
+  }
+};
 
 export const startAddToAppleWallet =
   ({
