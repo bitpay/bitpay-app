@@ -38,9 +38,12 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
     case 'wyre':
       return wyreSupportedFiatCurrencies;
     default:
-      const allSupportedFiatCurrencies = simplexSupportedFiatCurrencies.filter(
-        fiatCurrency => wyreSupportedFiatCurrencies.includes(fiatCurrency),
-      );
+      const allSupportedFiatCurrencies = [
+        ...new Set([
+          ...simplexSupportedFiatCurrencies,
+          ...wyreSupportedFiatCurrencies,
+        ]),
+      ];
       return allSupportedFiatCurrencies;
   }
 };
