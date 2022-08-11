@@ -267,7 +267,6 @@ export const startUpdateAllWalletStatusForKeys =
         const {APP, WALLET} = getState();
         const {defaultAltCurrency} = APP;
         const {rates, lastDayRates, balanceCacheKey} = WALLET;
-        const {bulkClient} = BwcProvider.getInstance().getClient();
 
         const keyUpdatesPromises: Promise<{
           keyId: string;
@@ -321,6 +320,7 @@ export const startUpdateAllWalletStatusForKeys =
             return;
           }
 
+          const {bulkClient} = BwcProvider.getInstance().getClient();
           keyUpdatesPromises.push(
             new Promise(resolveKeyBalanceStatus => {
               bulkClient.getStatusAll(
