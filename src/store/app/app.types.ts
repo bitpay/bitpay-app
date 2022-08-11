@@ -14,6 +14,7 @@ import {
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {ModalId} from './app.reducer';
+import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -214,6 +215,7 @@ interface PinBannedUntil {
 }
 interface ShowBiometricModal {
   type: typeof AppActionTypes.SHOW_BIOMETRIC_MODAL;
+  payload: BiometricModalConfig;
 }
 
 interface DismissBiometricModal {

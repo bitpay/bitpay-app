@@ -24,6 +24,7 @@ import PinDots from './PinDots';
 export interface PinModalConfig {
   type: 'set' | 'check';
   context?: 'onboarding';
+  onClose?: (checked?: boolean) => void;
 }
 
 const PinContainer = styled.View`
@@ -69,7 +70,8 @@ export const hashPin = (pin: string[]) => {
 const Pin = gestureHandlerRootHOC(() => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const {type, context} = useAppSelector(({APP}) => APP.pinModalConfig) || {};
+  const {type, context, onClose} =
+    useAppSelector(({APP}) => APP.pinModalConfig) || {};
   const [pin, setPin] = useState<Array<string | undefined>>([]);
   const [headerMargin, setHeaderMargin] = useState<string | undefined>();
   const [message, setMessage] = useState<string>(t('Please enter your PIN'));
@@ -115,6 +117,7 @@ const Pin = gestureHandlerRootHOC(() => {
           Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
+        onClose?.(true);
       } else {
         setShakeDots(true);
         setMessage(t('Incorrect PIN, try again'));

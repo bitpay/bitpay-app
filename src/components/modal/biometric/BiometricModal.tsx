@@ -70,10 +70,16 @@ const ImgContainer = styled(Animated.View)`
   width: 80px;
 `;
 
+export interface BiometricModalConfig {
+  onClose?: (checked?: boolean) => void;
+}
+
 const BiometricModal: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const isVisible = useSelector(({APP}: RootState) => APP.showBiometricModal);
+  const {onClose} =
+    useSelector(({APP}: RootState) => APP.biometricModalConfig) || {};
   const [animation, setAnimation] = useState(new Animated.Value(0));
   const inputRange = [0, 1];
   const outputRange = [1, 1.2];
@@ -116,6 +122,7 @@ const BiometricModal: React.FC = () => {
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.dismissBiometricModal());
         dispatch(AppActions.showBlur(false));
+        onClose?.(true);
       })
       .catch((error: BiometricError) => {
         console.log(error);
