@@ -3,8 +3,7 @@ import {
   useNavigation,
   useScrollToTop,
 } from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useCallback, useLayoutEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList, Linking} from 'react-native';
@@ -26,7 +25,6 @@ import {
 } from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
-import {APP_DEEPLINK_PREFIX} from '../../../constants/config';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
 import {AppEffects} from '../../../store/app';
@@ -44,11 +42,10 @@ import {
   useAppDispatch,
   useAppSelector,
   useBrazeRefreshOnFocus,
-  useMount,
 } from '../../../utils/hooks';
 import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 import {WalletScreens} from '../../wallet/WalletStack';
-import {CardScreens, CardStackParamList} from '../CardStack';
+import {CardHomeScreenProps} from '../screens/CardHome';
 import {
   EmptyGhostContainer,
   EmptyListContainer,
@@ -67,9 +64,8 @@ import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
 
-interface CardDashboardProps {
+interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
-  navigation: StackNavigationProp<CardStackParamList, CardScreens.HOME>;
 }
 
 const CardsRowContainer = styled.View`
@@ -89,7 +85,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const {t} = useTranslation();
-  const {id, navigation} = props;
+  const {id, navigation, route} = props;
   const carouselRef = useRef<Carousel<Card[]>>(null);
   const cardGroups = useAppSelector(selectCardGroups);
   const fetchOverviewStatus = useAppSelector(
@@ -104,6 +100,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
+  const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
   useBrazeRefreshOnFocus();
 
   const hasWalletsWithBalance = useMemo(
@@ -245,47 +242,11 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     }, [uninitializedId, autoInitState, dispatch]),
   );
 
-  // prevent handler from getting called multiple times
-  const [initialDeepLinkHandled, setInitialDeeplinkHandled] = useState(false);
-  const onInitialDeepLinkReceived = (url: string | null) => {
-    if (initialDeepLinkHandled || !url) {
-      return;
+  useEffect(() => {
+    if (appWasInit && route.params?.action === 'offers') {
+      dispatch(CardEffects.startOpenDosh());
     }
-
-    setInitialDeeplinkHandled(true);
-    return onDeepLinkReceived({url});
-  };
-  const onInitialDeepLinkReceivedRef = useRef(onInitialDeepLinkReceived);
-  onInitialDeepLinkReceivedRef.current = onInitialDeepLinkReceived;
-
-  const onDeepLinkReceived = ({url}: {url: string}) => {
-    try {
-      url = url.replace(APP_DEEPLINK_PREFIX, '');
-
-      // TODO: better way to deeplink to offers
-      if (url === 'card/offers') {
-        dispatch(CardEffects.startOpenDosh());
-      }
-    } catch (err) {
-      console.debug(err);
-    }
-  };
-  const onDeepLinkReceivedRef = useRef(onDeepLinkReceived);
-  onDeepLinkReceivedRef.current = onDeepLinkReceived;
-
-  useMount(() => {
-    // checking if app was opened via deeplink
-    Linking.getInitialURL()
-      .then(onInitialDeepLinkReceivedRef.current)
-      .catch(err => console.log(err));
-
-    const listenerFn = onDeepLinkReceivedRef.current;
-
-    // listen for deeplink events while app is open
-    Linking.addEventListener('url', listenerFn);
-
-    return () => Linking.removeEventListener('url', listenerFn);
-  });
+  }, [route.params, appWasInit]);
 
   const listFooterComponent = useMemo(
     () => (

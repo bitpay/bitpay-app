@@ -179,6 +179,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       if (biometricLockActive) {
         dispatch(AppActions.showBiometricModal());
       }
+
+      dispatch(AppActions.appInitComplete());
     });
   } catch (err: unknown) {
     let errorStr;

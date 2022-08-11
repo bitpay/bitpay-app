@@ -24,6 +24,10 @@ export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
 });
 
+export const appInitComplete = (): AppActionType => ({
+  type: AppActionTypes.APP_INIT_COMPLETE,
+});
+
 export const failedAppInit = (): AppActionType => ({
   type: AppActionTypes.FAILED_APP_INIT,
   payload: true,

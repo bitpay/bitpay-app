@@ -20,6 +20,7 @@ import uniqBy from 'lodash.uniqby';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
+  'appWasInit',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
   'showDecryptPasswordModal',
@@ -45,7 +46,15 @@ export interface AppState {
   };
   network: Network;
   baseBitPayURL: string;
+  /**
+   * Whether the app is still initializing data.
+   */
   appIsLoading: boolean;
+
+  /**
+   * Whether the app is done initializing data and animations are complete.
+   */
+  appWasInit: boolean;
   appFirstOpenData: AppFirstOpenData;
   introCompleted: boolean;
   onboardingCompleted: boolean;
@@ -110,6 +119,7 @@ const initialState: AppState = {
   network: APP_NETWORK,
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
+  appWasInit: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   introCompleted: false,
   onboardingCompleted: false,
@@ -173,6 +183,12 @@ export const appReducer = (
       return {
         ...state,
         appIsLoading: false,
+      };
+
+    case AppActionTypes.APP_INIT_COMPLETE:
+      return {
+        ...state,
+        appWasInit: true,
       };
 
     case AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE:

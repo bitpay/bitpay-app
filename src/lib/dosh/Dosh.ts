@@ -47,48 +47,40 @@ interface Dosh extends Omit<DoshModule, 'initializeDosh'> {
 
 const DoshModule = ReactNative.NativeModules.Dosh as DoshModule;
 
-const Dosh: Dosh = (() => {
-  let initializedPromise: Promise<boolean>;
+const Dosh: Dosh = {
+  initializeDosh(uiOptions?: DoshUiOptions) {
+    const _uiOptions: DoshUiOptions = {
+      feedTitle: 'Dosh Rewards',
+      logoStyle: 'CIRCLE',
+      brandDetailsHeaderStyle: 'RECTANGLE',
 
-  return {
-    initializeDosh(uiOptions?: DoshUiOptions) {
-      const _uiOptions: DoshUiOptions = {
-        feedTitle: 'Dosh Rewards',
-        logoStyle: 'CIRCLE',
-        brandDetailsHeaderStyle: 'RECTANGLE',
+      ...(uiOptions || {}),
+    };
 
-        ...(uiOptions || {}),
-      };
+    return DoshModule.initializeDosh(DOSH_APP_ID, _uiOptions);
+  },
 
-      initializedPromise = DoshModule.initializeDosh(DOSH_APP_ID, _uiOptions);
+  setDoshToken(token: string) {
+    return DoshModule.setDoshToken(token);
+  },
 
-      return initializedPromise;
-    },
+  present() {
+    return DoshModule.present();
+  },
 
-    setDoshToken(token: string) {
-      return DoshModule.setDoshToken(token);
-    },
+  clearUser() {
+    // TODO: iOS bridge method, let it throw for now
+    return DoshModule.clearUser();
+  },
 
-    async present() {
-      await initializedPromise;
+  presentIntegrationChecklist() {
+    if (Platform.OS === 'android') {
+      return DoshModule.presentIntegrationChecklist();
+    }
 
-      return DoshModule.present();
-    },
-
-    clearUser() {
-      // TODO: iOS bridge method, let it throw for now
-      return DoshModule.clearUser();
-    },
-
-    presentIntegrationChecklist() {
-      if (Platform.OS === 'android') {
-        return DoshModule.presentIntegrationChecklist();
-      }
-
-      // TODO: iOS bridge method, if exists. Since this is dev only, just resolve without error.
-      return Promise.resolve(true);
-    },
-  };
-})();
+    // TODO: iOS bridge method, if exists. Since this is dev only, just resolve without error.
+    return Promise.resolve(true);
+  },
+};
 
 export default Dosh;

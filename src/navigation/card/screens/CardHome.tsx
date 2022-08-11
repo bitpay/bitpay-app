@@ -10,9 +10,10 @@ import CardIntro from '../components/CardIntro';
 export type CardHomeScreenParamList =
   | {
       id: string | undefined | null;
+      action?: string | null;
     }
   | undefined;
-type CardHomeScreenProps = StackScreenProps<
+export type CardHomeScreenProps = StackScreenProps<
   CardStackParamList,
   CardScreens.HOME
 >;
@@ -32,7 +33,7 @@ const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
 
     return (
       <SafeAreaView>
-        <CardDashboard id={id} navigation={navigation} />
+        <CardDashboard id={id} navigation={navigation} route={route} />
       </SafeAreaView>
     );
   }
