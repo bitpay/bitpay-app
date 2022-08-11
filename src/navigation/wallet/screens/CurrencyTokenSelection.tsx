@@ -199,9 +199,9 @@ const CurrencyTokenSelectionScreen: React.VFC<
             : token;
         }),
       );
-
-      params.onToggle(id);
     }
+
+    params.onToggle(id);
   };
 
   const onTokenToggleRef = useRef(onTokenToggle);
