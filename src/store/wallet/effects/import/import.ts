@@ -14,6 +14,7 @@ import {
   buildWalletObj,
   findMatchedKeyAndUpdate,
   getMatchedKey,
+  getReadOnlyKey,
   isMatch,
   isMatchedWallet,
 } from '../../utils/wallet';
@@ -858,7 +859,9 @@ export const startImportFile =
         );
         let wallets = [wallet];
 
-        const matchedKey = getMatchedKey(_key, Object.values(WALLET.keys));
+        const matchedKey = _key
+          ? getMatchedKey(_key, Object.values(WALLET.keys))
+          : getReadOnlyKey(Object.values(WALLET.keys));
 
         if (matchedKey && !opts?.keyId) {
           _key = matchedKey.methods;

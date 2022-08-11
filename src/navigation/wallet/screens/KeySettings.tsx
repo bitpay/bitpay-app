@@ -162,7 +162,7 @@ const KeySettings = () => {
     return {
       onSubmitHandler: async (encryptPassword: string) => {
         try {
-          const decryptedKey = key.methods.get(encryptPassword);
+          const decryptedKey = key.methods!.get(encryptPassword);
           dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(300);
           cta(decryptedKey);
@@ -205,7 +205,7 @@ const KeySettings = () => {
       let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
         opts,
       );
-      if (_syncKey.fingerPrint === key.properties.fingerPrint) {
+      if (_syncKey.fingerPrint === key.properties!.fingerPrint) {
         // Filter for new wallets
         _syncWallets = _syncWallets
           .filter(
@@ -215,7 +215,7 @@ const KeySettings = () => {
           )
           .map(syncWallet => {
             // update to keyId
-            syncWallet.credentials.keyId = key.properties.id;
+            syncWallet.credentials.keyId = key.properties!.id;
             return merge(
               syncWallet,
               dispatch(buildWalletObj(syncWallet.credentials, _tokenOptions)),
@@ -358,201 +358,224 @@ const KeySettings = () => {
           ),
         )}
 
-        <VerticalPadding style={{alignItems: 'center'}}>
-          <AddWalletText
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'AddingOptions',
-                params: {key},
-              });
-            }}>
-            {t('Add Wallet')}
-          </AddWalletText>
-        </VerticalPadding>
-
-        <VerticalPadding>
-          <Title>{t('Security')}</Title>
-          <Setting
-            onPress={() => {
-              haptic('impactLight');
-              if (!_key.isPrivKeyEncrypted) {
+        {_key && !_key.isReadOnly ? (
+          <VerticalPadding style={{alignItems: 'center'}}>
+            <AddWalletText
+              onPress={() => {
+                haptic('impactLight');
                 navigation.navigate('Wallet', {
-                  screen: 'RecoveryPhrase',
-                  params: {
-                    keyId: key.id,
-                    words: getMnemonic(_key),
-                    walletTermsAccepted: true,
-                    context: 'keySettings',
-                    key,
-                  },
+                  screen: 'AddingOptions',
+                  params: {key},
                 });
-              } else {
-                dispatch(
-                  AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async ({mnemonic}) => {
-                      navigation.navigate('Wallet', {
-                        screen: 'RecoveryPhrase',
-                        params: {
-                          keyId: key.id,
-                          words: mnemonic.trim().split(' '),
-                          walletTermsAccepted: true,
-                          context: 'keySettings',
-                          key,
-                        },
-                      });
-                    }),
-                  ),
-                );
-              }
-            }}>
-            <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
-          </Setting>
+              }}>
+              {t('Add Wallet')}
+            </AddWalletText>
+          </VerticalPadding>
+        ) : null}
 
-          <Hr />
+        {_key && !_key.isReadOnly ? (
+          <VerticalPadding>
+            <Title>{t('Security')}</Title>
+            <Setting
+              onPress={() => {
+                haptic('impactLight');
+                if (!_key.isPrivKeyEncrypted) {
+                  navigation.navigate('Wallet', {
+                    screen: 'RecoveryPhrase',
+                    params: {
+                      keyId: key.id,
+                      words: getMnemonic(_key),
+                      walletTermsAccepted: true,
+                      context: 'keySettings',
+                      key,
+                    },
+                  });
+                } else {
+                  dispatch(
+                    AppActions.showDecryptPasswordModal(
+                      buildEncryptModalConfig(async ({mnemonic}) => {
+                        navigation.navigate('Wallet', {
+                          screen: 'RecoveryPhrase',
+                          params: {
+                            keyId: key.id,
+                            words: mnemonic.trim().split(' '),
+                            walletTermsAccepted: true,
+                            context: 'keySettings',
+                            key,
+                          },
+                        });
+                      }),
+                    ),
+                  );
+                }
+              }}>
+              <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
+            </Setting>
 
-          <SettingView>
-            <WalletSettingsTitle>
-              {t('Request Encrypt Password')}
-            </WalletSettingsTitle>
+            <Hr />
 
-            <RequestEncryptPasswordToggle currentKey={key} />
-          </SettingView>
+            <SettingView>
+              <WalletSettingsTitle>
+                {t('Request Encrypt Password')}
+              </WalletSettingsTitle>
 
-          <Info>
-            <InfoTriangle />
+              <RequestEncryptPasswordToggle currentKey={key} />
+            </SettingView>
 
-            <InfoHeader>
-              <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                <InfoSvg />
-              </InfoImageContainer>
+            <Info>
+              <InfoTriangle />
 
-              <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
-            </InfoHeader>
-            <InfoDescription>
-              {t(
-                'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
-              )}
-            </InfoDescription>
+              <InfoHeader>
+                <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                  <InfoSvg />
+                </InfoImageContainer>
 
-            <VerticalPadding>
-              <TouchableOpacity
-                activeOpacity={ActiveOpacity}
-                onPress={() => {
-                  haptic('impactLight');
-                  dispatch(openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD));
-                }}>
-                <Link>{t('Learn More')}</Link>
-              </TouchableOpacity>
-            </VerticalPadding>
-          </Info>
+                <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
+              </InfoHeader>
+              <InfoDescription>
+                {t(
+                  'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
+                )}
+              </InfoDescription>
 
-          <Hr />
-
-          {key.methods.isPrivKeyEncrypted() ? (
-            <>
-              <SettingView>
-                <Setting
+              <VerticalPadding>
+                <TouchableOpacity
                   activeOpacity={ActiveOpacity}
                   onPress={() => {
-                    navigation.navigate('Wallet', {
-                      screen: 'ClearEncryptPassword',
-                      params: {keyId: key.id},
-                    });
+                    haptic('impactLight');
+                    dispatch(
+                      openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD),
+                    );
                   }}>
-                  <WalletSettingsTitle>
-                    {t('Clear Encrypt Password')}
-                  </WalletSettingsTitle>
-                </Setting>
-              </SettingView>
-              <Hr />
-            </>
-          ) : null}
-        </VerticalPadding>
+                  <Link>{t('Learn More')}</Link>
+                </TouchableOpacity>
+              </VerticalPadding>
+            </Info>
+
+            <Hr />
+
+            {_key?.methods?.isPrivKeyEncrypted() ? (
+              <>
+                <SettingView>
+                  <Setting
+                    activeOpacity={ActiveOpacity}
+                    onPress={() => {
+                      navigation.navigate('Wallet', {
+                        screen: 'ClearEncryptPassword',
+                        params: {keyId: key.id},
+                      });
+                    }}>
+                    <WalletSettingsTitle>
+                      {t('Clear Encrypt Password')}
+                    </WalletSettingsTitle>
+                  </Setting>
+                </SettingView>
+                <Hr />
+              </>
+            ) : null}
+          </VerticalPadding>
+        ) : null}
 
         <VerticalPadding>
           <Title>{t('Advanced')}</Title>
-          <Setting
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              if (!_key.isPrivKeyEncrypted) {
-                startSyncWallets(_key.properties.mnemonic);
-              } else {
-                dispatch(
-                  AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async ({mnemonic}) => {
-                      startSyncWallets(mnemonic);
-                    }),
-                  ),
-                );
-              }
-            }}>
-            <WalletSettingsTitle>
-              {t('Sync Wallets Across Devices')}
-            </WalletSettingsTitle>
-          </Setting>
-          <Hr />
+          {_key && !_key.isReadOnly ? (
+            <>
+              <Setting
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  haptic('impactLight');
+                  if (!_key.isPrivKeyEncrypted) {
+                    startSyncWallets(_key.properties!.mnemonic);
+                  } else {
+                    dispatch(
+                      AppActions.showDecryptPasswordModal(
+                        buildEncryptModalConfig(async ({mnemonic}) => {
+                          startSyncWallets(mnemonic);
+                        }),
+                      ),
+                    );
+                  }
+                }}>
+                <WalletSettingsTitle>
+                  {t('Sync Wallets Across Devices')}
+                </WalletSettingsTitle>
+              </Setting>
+              <Hr />
+            </>
+          ) : null}
 
-          <Setting
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              if (!_key.isPrivKeyEncrypted) {
-                navigation.navigate('Wallet', {
-                  screen: 'ExportKey',
-                  params: {
-                    code: generateKeyExportCode(_key, _key.properties.mnemonic),
-                    keyName,
-                  },
-                });
-              } else {
-                dispatch(
-                  AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async ({mnemonic}) => {
-                      const code = generateKeyExportCode(key, mnemonic);
-                      navigation.navigate('Wallet', {
-                        screen: 'ExportKey',
-                        params: {code, keyName},
-                      });
-                    }),
-                  ),
-                );
-              }
-            }}>
-            <WalletSettingsTitle>{t('Export Key')}</WalletSettingsTitle>
-          </Setting>
-          <Hr />
+          {_key && !_key.isReadOnly ? (
+            <>
+              <Setting
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  haptic('impactLight');
+                  if (!_key.isPrivKeyEncrypted) {
+                    navigation.navigate('Wallet', {
+                      screen: 'ExportKey',
+                      params: {
+                        code: generateKeyExportCode(
+                          _key,
+                          _key.properties!.mnemonic,
+                        ),
+                        keyName,
+                      },
+                    });
+                  } else {
+                    dispatch(
+                      AppActions.showDecryptPasswordModal(
+                        buildEncryptModalConfig(async ({mnemonic}) => {
+                          const code = generateKeyExportCode(key, mnemonic);
+                          navigation.navigate('Wallet', {
+                            screen: 'ExportKey',
+                            params: {code, keyName},
+                          });
+                        }),
+                      ),
+                    );
+                  }
+                }}>
+                <WalletSettingsTitle>{t('Export Key')}</WalletSettingsTitle>
+              </Setting>
 
-          <Setting
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              if (!_key.isPrivKeyEncrypted) {
-                navigation.navigate('Wallet', {
-                  screen: 'ExtendedPrivateKey',
-                  params: {
-                    xPrivKey: _key.properties.xPrivKey,
-                  },
-                });
-              } else {
-                dispatch(
-                  AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async ({xPrivKey}) => {
-                      navigation.navigate('Wallet', {
-                        screen: 'ExtendedPrivateKey',
-                        params: {xPrivKey},
-                      });
-                    }),
-                  ),
-                );
-              }
-            }}>
-            <WalletSettingsTitle>
-              {t('Extended Private Key')}
-            </WalletSettingsTitle>
-          </Setting>
-          <Hr />
+              <Hr />
+            </>
+          ) : null}
+
+          {_key && !_key.isReadOnly ? (
+            <>
+              <Setting
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  haptic('impactLight');
+                  if (!_key.isPrivKeyEncrypted) {
+                    navigation.navigate('Wallet', {
+                      screen: 'ExtendedPrivateKey',
+                      params: {
+                        xPrivKey: _key.properties!.xPrivKey,
+                      },
+                    });
+                  } else {
+                    dispatch(
+                      AppActions.showDecryptPasswordModal(
+                        buildEncryptModalConfig(async ({xPrivKey}) => {
+                          navigation.navigate('Wallet', {
+                            screen: 'ExtendedPrivateKey',
+                            params: {xPrivKey},
+                          });
+                        }),
+                      ),
+                    );
+                  }
+                }}>
+                <WalletSettingsTitle>
+                  {t('Extended Private Key')}
+                </WalletSettingsTitle>
+              </Setting>
+
+              <Hr />
+            </>
+          ) : null}
 
           <Setting
             activeOpacity={ActiveOpacity}

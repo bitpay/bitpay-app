@@ -123,7 +123,7 @@ export const addWallet =
         if (isToken) {
           if (!associatedWallet) {
             associatedWallet = (await createWallet({
-              key: key.methods,
+              key: key.methods!,
               coin: 'eth',
               options,
             })) as Wallet;
@@ -143,7 +143,7 @@ export const addWallet =
           )) as Wallet;
         } else {
           newWallet = (await createWallet({
-            key: key.methods,
+            key: key.methods!,
             coin: currency as SupportedCoins,
             options,
           })) as Wallet;

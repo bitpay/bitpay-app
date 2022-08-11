@@ -483,7 +483,7 @@ const TransactionProposalDetails = () => {
         </ScrollView>
       ) : null}
 
-      {txs && !txs.removed && txs.pendingForUs ? (
+      {txs && !txs.removed && txs.pendingForUs && !key.isReadOnly ? (
         <SwipeButton
           title={lastSigner ? t('Slide to send') : t('Slide to accept')}
           forceReset={resetSwipeButton}

@@ -111,7 +111,7 @@ export const buildWalletObj =
       balance,
       tokens,
       network,
-      keyId,
+      keyId: keyId ? keyId : 'readonly',
       img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
         ? CurrencyListIcons[currencyAbbreviation]
         : tokenOpts && tokenOpts[currencyAbbreviation]?.logoURI
@@ -135,7 +135,7 @@ export const buildKeyObj = ({
   backupComplete = false,
   hideKeyBalance = false,
 }: {
-  key: KeyMethods;
+  key: KeyMethods | undefined;
   wallets: Wallet[];
   totalBalance?: number;
   totalBalanceLastDay?: number;
@@ -143,16 +143,17 @@ export const buildKeyObj = ({
   hideKeyBalance?: boolean;
 }): Key => {
   return {
-    id: key.id,
+    id: key?.id ? key.id : 'readonly',
     wallets,
-    properties: key.toObj(),
+    properties: key?.toObj(),
     methods: key,
     totalBalance,
     totalBalanceLastDay,
-    isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
+    isPrivKeyEncrypted: key?.isPrivKeyEncrypted(),
     backupComplete,
-    keyName: 'My Key',
+    keyName: key?.id ? 'My Key' : 'Read Only',
     hideKeyBalance,
+    isReadOnly: !key,
   };
 };
 
@@ -182,6 +183,7 @@ export const buildMigrationKeyObj = ({
     backupComplete,
     keyName,
     hideKeyBalance: false,
+    isReadOnly: !key,
   };
 };
 
@@ -257,13 +259,15 @@ export const isCacheKeyStale = (
 };
 
 export const checkEncryptPassword = (key: Key, password: string) =>
-  key.methods.checkPassword(password);
+  key.methods!.checkPassword(password);
 
 export const generateKeyExportCode = (
   key: Key,
   getKeyMnemonic?: string | undefined,
 ): string => {
-  return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonicHasPassphrase}|null`;
+  return `1|${getKeyMnemonic}|null|null|${
+    key.properties!.mnemonicHasPassphrase
+  }|null`;
 };
 
 export const isSegwit = (addressType: string): boolean => {
@@ -554,8 +558,8 @@ export const GetEstimatedTxSize = (
 
 export const isMatch = (key1: any, key2: Key) => {
   // return this.Key.match(key1, key2); TODO needs to be fixed on bwc
-  if (key1.fingerPrint && key2.properties.fingerPrint) {
-    return key1.fingerPrint === key2.properties.fingerPrint;
+  if (key1.fingerPrint && key2.properties!.fingerPrint) {
+    return key1.fingerPrint === key2.properties!.fingerPrint;
   } else {
     return key1.id === key2.id;
   }
@@ -563,6 +567,10 @@ export const isMatch = (key1: any, key2: Key) => {
 
 export const getMatchedKey = (key: any, keys: Key[]) => {
   return keys.find(k => isMatch(key, k));
+};
+
+export const getReadOnlyKey = (keys: Key[]) => {
+  return keys.find(k => k.id === 'readonly');
 };
 
 export const findMatchedKeyAndUpdate = (

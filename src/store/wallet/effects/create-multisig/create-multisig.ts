@@ -89,7 +89,7 @@ export const addWalletMultisig =
           },
         } = getState();
         const newWallet = (await createWalletWithOpts({
-          key: key.methods,
+          key: key.methods!,
           opts,
         })) as Wallet;
 

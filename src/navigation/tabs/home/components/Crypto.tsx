@@ -90,13 +90,13 @@ export const keyBackupRequired = (
       {
         text: t('Back up Key'),
         action: async () => {
-          if (key.properties.mnemonicEncrypted) {
+          if (key.properties!.mnemonicEncrypted) {
             await sleep(500);
             dispatch(
               showDecryptPasswordModal({
                 onSubmitHandler: async (encryptPassword: string) => {
                   try {
-                    const decryptedKey = key.methods.get(encryptPassword);
+                    const decryptedKey = key.methods!.get(encryptPassword);
                     await dispatch(dismissDecryptPasswordModal());
                     await sleep(300);
                     navigation.navigate('Wallet', {

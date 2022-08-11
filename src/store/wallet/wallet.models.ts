@@ -42,15 +42,16 @@ export interface KeyProperties {
 export interface Key {
   id: string;
   wallets: Wallet[];
-  properties: KeyProperties;
-  methods: KeyMethods;
+  properties: KeyProperties | undefined;
+  methods: KeyMethods | undefined;
   backupComplete?: boolean;
   show?: boolean;
   totalBalance: number;
   totalBalanceLastDay: number;
-  isPrivKeyEncrypted?: boolean;
+  isPrivKeyEncrypted?: boolean | undefined;
   keyName?: string;
   hideKeyBalance: boolean;
+  isReadOnly: boolean;
 }
 
 export interface Wallet extends WalletObj, API {}

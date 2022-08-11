@@ -67,15 +67,19 @@ export const bindWalletKeys = createTransform(
       for (const [id, key] of Object.entries(
         _outboundState as {[key in string]: Key},
       )) {
-        outboundState[id] = merge(key, {
-          methods: BWCProvider.createKey({
-            seedType: 'object',
-            seedData: key.properties,
-          }),
-        });
-        console.log(`bindWalletKey - ${id}`);
+        if (id === 'readonly') {
+          // read only wallet
+          outboundState[id] = key;
+        } else {
+          outboundState[id] = merge(key, {
+            methods: BWCProvider.createKey({
+              seedType: 'object',
+              seedData: key.properties,
+            }),
+          });
+        }
+        console.log(`bindKey - ${id}`);
       }
-
       return outboundState;
     }
     return _outboundState;

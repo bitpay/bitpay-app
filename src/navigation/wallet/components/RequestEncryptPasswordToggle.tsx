@@ -21,19 +21,19 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const logger = useLogger();
 
   const [passwordToggle, setPasswordToggle] = useState(
-    !!key.methods.isPrivKeyEncrypted(),
+    !!key.methods!.isPrivKeyEncrypted(),
   );
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
-      setPasswordToggle(!!key.methods.isPrivKeyEncrypted());
+      setPasswordToggle(!!key.methods!.isPrivKeyEncrypted());
     });
   }, [navigation, key.methods]);
 
   const onSubmitPassword = async (password: string) => {
     if (key) {
       try {
-        key.methods.decrypt(password);
+        key.methods!.decrypt(password);
         logger.debug('Key Decrypted');
         dispatch(
           WalletActions.successEncryptOrDecryptPassword({
