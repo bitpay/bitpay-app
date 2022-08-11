@@ -16,7 +16,6 @@ import {
   getDetailsTitle,
   IsMultisigEthInfo,
   IsReceived,
-  IsShared,
   NotZeroAmountEth,
   TxActions,
   RemoveTxProposal,
@@ -359,18 +358,15 @@ const TransactionProposalDetails = () => {
             ) : null}
           </>
 
-          {((txs && !txs.removed && txs.canBeRemoved) ||
-            (txs && txs.status == 'accepted' && !txs.broadcastedOn)) &&
-          (!IsShared(wallet) || !txs.multisigContractAddress) ? (
+          {(txs && !txs.removed && txs.canBeRemoved) ||
+          (txs && txs.status == 'accepted' && !txs.broadcastedOn) ? (
             <>
-              {IsShared(wallet) ? (
-                <Banner
-                  type={'info'}
-                  description={t(
-                    '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
-                  )}
-                />
-              ) : null}
+              <Banner
+                type={'info'}
+                description={t(
+                  '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
+                )}
+              />
               <Button
                 onPress={removePaymentProposal}
                 buttonType={'link'}
@@ -382,7 +378,6 @@ const TransactionProposalDetails = () => {
 
           {txs &&
           !txs.removed &&
-          IsShared(wallet) &&
           txs.pendingForUs &&
           !txs.multisigContractAddress ? (
             <Button
@@ -437,7 +432,7 @@ const TransactionProposalDetails = () => {
             <Hr />
           </>
 
-          {txs.creatorName && IsShared(wallet) ? (
+          {txs.creatorName ? (
             <>
               <DetailContainer>
                 <DetailRow>
@@ -488,10 +483,7 @@ const TransactionProposalDetails = () => {
         </ScrollView>
       ) : null}
 
-      {txs &&
-      !txs.removed &&
-      txs.pendingForUs &&
-      (IsShared(wallet) || txs.multisigContractAddress) ? (
+      {txs && !txs.removed && txs.pendingForUs ? (
         <SwipeButton
           title={lastSigner ? t('Slide to send') : t('Slide to accept')}
           forceReset={resetSwipeButton}

@@ -96,14 +96,20 @@ export const waitForTargetAmountAndUpdateWallet =
             multisigContractAddress: multisigEthInfo
               ? multisigEthInfo.multisigContractAddress
               : null,
+            network: wallet.network,
           },
-          async (err: Error, status: Status) => {
+          async (err: any, status: Status) => {
             if (err) {
-              console.error(err);
+              const errStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(
+                LogActions.error(
+                  `error [waitForTargetAmountAndUpdateWallet]: ${errStr}`,
+                ),
+              );
             }
-            const {totalAmount} = status.balance;
+            const {totalAmount} = status?.balance;
             // TODO ETH totalAmount !== targetAmount while the transaction is unconfirmed
-            // remove this for eth when status get updated with push notifications otherwise getStatus call will be duplicated
             // expected amount - update balance
             if (totalAmount === targetAmount) {
               dispatch(startUpdateWalletStatus({key, wallet}));
@@ -550,9 +556,13 @@ const updateWalletStatus =
           multisigContractAddress: multisigEthInfo
             ? multisigEthInfo.multisigContractAddress
             : null,
+          network: wallet.network,
         },
-        (err: Error, status: Status) => {
+        (err: any, status: Status) => {
           if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(LogActions.error(`error [updateWalletStatus]: ${errStr}`));
             return resolve({
               balance: {
                 ...cachedBalance,
