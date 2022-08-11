@@ -28,6 +28,7 @@ import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
+import {AppEffects} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Analytics} from '../../../store/app/app.effects';
 import {selectBrazeCardOffers} from '../../../store/app/app.selectors';
@@ -38,7 +39,11 @@ import {
   selectDashboardTransactions,
 } from '../../../store/card/card.selectors';
 import {isActivationRequired} from '../../../utils/card';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useBrazeRefreshOnFocus,
+} from '../../../utils/hooks';
 import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 import {WalletScreens} from '../../wallet/WalletStack';
 import {CardScreens, CardStackParamList} from '../CardStack';
@@ -97,6 +102,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
+  useBrazeRefreshOnFocus();
 
   const hasWalletsWithBalance = useMemo(
     () =>
@@ -306,6 +312,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   const onRefresh = () => {
     dispatch(CardEffects.startFetchOverview(activeCard.id));
+    dispatch(AppEffects.requestBrazeContentRefresh());
   };
 
   const fetchNextPage = () => {
@@ -346,19 +353,19 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     });
   }
 
-  // if (brazeCardOffers.length) {
-  //   additionalContent.push({
-  //     key: 'card-offers',
-  //     content: (
-  //       <CardOffersContainer>
-  //         <CardOffers
-  //           contentCard={brazeCardOffers[0]}
-  //           userEmail={user?.email}
-  //         />
-  //       </CardOffersContainer>
-  //     ),
-  //   });
-  // }
+  if (brazeCardOffers.length) {
+    additionalContent.push({
+      key: 'card-offers',
+      content: (
+        <CardOffersContainer>
+          <CardOffers
+            contentCard={brazeCardOffers[0]}
+            userEmail={user?.email}
+          />
+        </CardOffersContainer>
+      ),
+    });
+  }
 
   const flatListRef = useRef<FlatList>(null);
   useScrollToTop(flatListRef);

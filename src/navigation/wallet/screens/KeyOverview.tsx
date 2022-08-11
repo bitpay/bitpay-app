@@ -54,6 +54,7 @@ import {
   AppDispatch,
   useAppDispatch,
   useAppSelector,
+  useLogger,
 } from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
@@ -331,6 +332,7 @@ export const buildNestedWalletList = (
 const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -359,7 +361,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
-            {key.methods.isPrivKeyEncrypted() ? (
+            {key.methods?.isPrivKeyEncrypted() ? (
               theme.dark ? (
                 <EncryptPasswordDarkModeImg />
               ) : (
@@ -386,7 +388,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
                   <ProposalBadge>{pendingTxps.length}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {key?.methods.isPrivKeyEncrypted() ? (
+              {key?.methods?.isPrivKeyEncrypted() ? (
                 <CogIconContainer
                   onPress={() =>
                     navigation.navigate('KeySettings', {
@@ -415,16 +417,18 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   useEffect(() => {
     if (context === 'createNewMultisigKey') {
       key?.wallets[0].getStatus(
-        {network: 'livenet'},
+        {network: key?.wallets[0].network},
         (err: any, status: Status) => {
           if (err) {
-            // TODO
-            console.log(err);
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`error [getStatus]: ${errStr}`);
+          } else {
+            navigation.navigate('Copayers', {
+              wallet: key?.wallets[0],
+              status: status?.wallet,
+            });
           }
-          navigation.navigate('Copayers', {
-            wallet: key?.wallets[0],
-            status: status.wallet,
-          });
         },
       );
     }
@@ -456,21 +460,23 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
 
   const keyOptions: Array<Option> = [];
 
-  if (!key?.methods.isPrivKeyEncrypted()) {
-    keyOptions.push({
-      img: <Icons.Encrypt />,
-      title: t('Encrypt your Key'),
-      description: t(
-        'Prevent an unauthorized user from sending funds out of your wallet.',
-      ),
-      onPress: () => {
-        haptic('impactLight');
-        navigation.navigate('KeySettings', {
-          key,
-          context: 'createEncryptPassword',
-        });
-      },
-    });
+  if (!key?.methods?.isPrivKeyEncrypted()) {
+    if (!key?.isReadOnly) {
+      keyOptions.push({
+        img: <Icons.Encrypt />,
+        title: t('Encrypt your Key'),
+        description: t(
+          'Prevent an unauthorized user from sending funds out of your wallet.',
+        ),
+        onPress: () => {
+          haptic('impactLight');
+          navigation.navigate('KeySettings', {
+            key,
+            context: 'createEncryptPassword',
+          });
+        },
+      });
+    }
 
     keyOptions.push({
       img: <Icons.Settings />,
@@ -519,25 +525,27 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
             if (!fullWalletObj.isComplete()) {
               fullWalletObj.getStatus(
-                {network: 'livenet'},
+                {network: fullWalletObj.network},
                 (err: any, status: Status) => {
                   if (err) {
-                    // TODO
-                    console.log(err);
-                  }
-                  if (status.wallet.status === 'complete') {
-                    fullWalletObj.openWallet({}, () => {
-                      navigation.navigate('WalletDetails', {
-                        walletId: item.id,
-                        key,
+                    const errStr =
+                      err instanceof Error ? err.message : JSON.stringify(err);
+                    logger.error(`error [getStatus]: ${errStr}`);
+                  } else {
+                    if (status?.wallet?.status === 'complete') {
+                      fullWalletObj.openWallet({}, () => {
+                        navigation.navigate('WalletDetails', {
+                          walletId: item.id,
+                          key,
+                        });
                       });
+                      return;
+                    }
+                    navigation.navigate('Copayers', {
+                      wallet: fullWalletObj,
+                      status: status?.wallet,
                     });
-                    return;
                   }
-                  navigation.navigate('Copayers', {
-                    wallet: fullWalletObj,
-                    status: status.wallet,
-                  });
                 },
               );
             } else {

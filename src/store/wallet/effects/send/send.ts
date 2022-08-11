@@ -126,9 +126,11 @@ export const createProposalAndBuildTxDetails =
         }
 
         if (currencyAbbreviation === 'xrp') {
-          const instructions = payProDetails.instructions[0];
-          const {outputs} = instructions;
-          tx.invoiceID = outputs[0].invoiceID;
+          if (payProDetails) {
+            const instructions = payProDetails.instructions[0];
+            const {outputs} = instructions;
+            tx.invoiceID = outputs[0].invoiceID;
+          }
           tx.destinationTag = destinationTag || recipient.destinationTag;
 
           if (wallet.receiveAddress === recipient.address) {
@@ -855,6 +857,11 @@ export const publishAndSign =
           dispatch(LogActions.debug('success publish [publishAndSign]'));
         }
 
+        if (key.isReadOnly) {
+          // read only wallet
+          return resolve(publishedTx);
+        }
+
         const signedTx: any = await signTx(
           wallet,
           key,
@@ -1028,7 +1035,10 @@ export const createTxProposal = (
   });
 };
 
-export const publishTx = (wallet: Wallet, txp: any) => {
+export const publishTx = (
+  wallet: Wallet,
+  txp: any,
+): Promise<Partial<TransactionProposal>> => {
   return new Promise((resolve, reject) => {
     wallet.publishTxProposal({txp}, (err: Error, publishedProposal: any) => {
       if (err) {
@@ -1044,11 +1054,11 @@ export const signTx = (
   key: Key,
   txp: any,
   password?: string,
-) => {
+): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     try {
       const rootPath = wallet.getRootPath();
-      const signatures = key.methods.sign(rootPath, txp, password);
+      const signatures = key.methods!.sign(rootPath, txp, password);
       wallet.pushSignatures(
         txp,
         signatures,

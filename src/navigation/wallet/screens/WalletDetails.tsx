@@ -946,7 +946,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     ) : null}
                     {['xrp'].includes(fullWalletObj?.currencyAbbreviation) &&
                     Number(fullWalletObj?.balance?.cryptoConfirmedLocked) >=
-                      20 ? (
+                      10 ? (
                       <TypeContainer>
                         <TypeText>{t('Activated')}</TypeText>
                       </TypeContainer>

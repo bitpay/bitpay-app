@@ -35,6 +35,7 @@ import {IsUtxoCoin} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
 import {LogActions} from '../../../log';
+import _ from 'lodash';
 
 /*
  * post broadcasting of payment
@@ -96,14 +97,20 @@ export const waitForTargetAmountAndUpdateWallet =
             multisigContractAddress: multisigEthInfo
               ? multisigEthInfo.multisigContractAddress
               : null,
+            network: wallet.network,
           },
-          async (err: Error, status: Status) => {
+          async (err: any, status: Status) => {
             if (err) {
-              console.error(err);
+              const errStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(
+                LogActions.error(
+                  `error [waitForTargetAmountAndUpdateWallet]: ${errStr}`,
+                ),
+              );
             }
-            const {totalAmount} = status.balance;
+            const {totalAmount} = status?.balance;
             // TODO ETH totalAmount !== targetAmount while the transaction is unconfirmed
-            // remove this for eth when status get updated with push notifications otherwise getStatus call will be duplicated
             // expected amount - update balance
             if (totalAmount === targetAmount) {
               dispatch(startUpdateWalletStatus({key, wallet}));
@@ -261,7 +268,6 @@ export const startUpdateAllWalletStatusForKeys =
         const {APP, WALLET} = getState();
         const {defaultAltCurrency} = APP;
         const {rates, lastDayRates, balanceCacheKey} = WALLET;
-        const {bulkClient} = BwcProvider.getInstance().getClient();
 
         const keyUpdatesPromises: Promise<{
           keyId: string;
@@ -315,6 +321,7 @@ export const startUpdateAllWalletStatusForKeys =
             return;
           }
 
+          const {bulkClient} = BwcProvider.getInstance().getClient();
           keyUpdatesPromises.push(
             new Promise(resolveKeyBalanceStatus => {
               bulkClient.getStatusAll(
@@ -474,12 +481,46 @@ export const startUpdateAllWalletStatusForKeys =
     });
   };
 
+export const startUpdateAllWalletStatusForReadOnlyKeys =
+  ({readOnlyKeys}: {readOnlyKeys: Key[]}): Effect<Promise<void>> =>
+  async dispatch => {
+    try {
+      dispatch(
+        LogActions.info('starting [startUpdateAllWalletStatusForReadOnlyKeys]'),
+      );
+      const promises: any = [];
+      // update each read only wallet - getStatusAll checks if credentials are from the same key
+      readOnlyKeys.forEach((key, index) => {
+        promises.push(
+          dispatch(startUpdateWalletStatus({key, wallet: key.wallets[index]})),
+        );
+      });
+
+      await Promise.all(readOnlyKeys);
+      dispatch(
+        LogActions.info('success [startUpdateAllWalletStatusForReadOnlyKeys]'),
+      );
+      return Promise.resolve();
+    } catch (err) {
+      const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(
+        LogActions.error(
+          `failed [startUpdateAllWalletStatusForReadOnlyKeys]: ${errorStr}`,
+        ),
+      );
+    }
+  };
+
 export const startUpdateAllWalletStatusForKey =
   ({key}: {key: Key}): Effect<Promise<void>> =>
   dispatch => {
     const keys = [key];
 
-    return dispatch(startUpdateAllWalletStatusForKeys({keys}));
+    return !key.isReadOnly
+      ? dispatch(startUpdateAllWalletStatusForKeys({keys}))
+      : dispatch(
+          startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys: keys}),
+        );
   };
 
 export const startUpdateAllKeyAndWalletStatus =
@@ -490,7 +531,7 @@ export const startUpdateAllKeyAndWalletStatus =
           LogActions.info('starting [startUpdateAllKeyAndWalletStatus]'),
         );
         const {
-          WALLET: {keys, balanceCacheKey},
+          WALLET: {keys: _keys, balanceCacheKey},
         } = getState();
 
         if (!isCacheKeyStale(balanceCacheKey.all, BALANCE_CACHE_DURATION)) {
@@ -498,9 +539,13 @@ export const startUpdateAllKeyAndWalletStatus =
           return resolve();
         }
 
-        await dispatch(
-          startUpdateAllWalletStatusForKeys({keys: Object.values(keys)}),
-        );
+        const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
+
+        await Promise.all([
+          dispatch(startUpdateAllWalletStatusForKeys({keys})),
+          dispatch(startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys})),
+        ]);
+
         dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances
         dispatch(successUpdateAllKeysAndStatus());
         dispatch(LogActions.info('success [startUpdateAllKeyAndWalletStatus]'));
@@ -550,9 +595,13 @@ const updateWalletStatus =
           multisigContractAddress: multisigEthInfo
             ? multisigEthInfo.multisigContractAddress
             : null,
+          network: wallet.network,
         },
-        (err: Error, status: Status) => {
+        (err: any, status: Status) => {
           if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(LogActions.error(`error [updateWalletStatus]: ${errStr}`));
             return resolve({
               balance: {
                 ...cachedBalance,

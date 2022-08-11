@@ -28,6 +28,7 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
+import {useNavigation} from '@react-navigation/native';
 
 const EmailNotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -80,6 +81,7 @@ const EmailNotifications = () => {
   );
 
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const navigation = useNavigation();
 
   const dispatch = useAppDispatch();
 
@@ -102,6 +104,12 @@ const EmailNotifications = () => {
       dispatch(setEmailNotifications(accepted, email, true));
       setNotificationsAccepted(accepted);
     }
+  };
+
+  const unsubscribeAll = () => {
+    dispatch(setEmailNotifications(false, null, false));
+    setNotificationsAccepted(false);
+    navigation.goBack();
   };
 
   return (
@@ -210,6 +218,12 @@ const EmailNotifications = () => {
                     <Button onPress={onSubmit}>{t('Subscribe')}</Button>
                   </AuthActionRow>
                 </AuthActionsContainer>
+                <Button
+                  buttonType={'link'}
+                  buttonStyle={'danger'}
+                  onPress={unsubscribeAll}>
+                  {t('Unsubscribe all Email Notifications')}
+                </Button>
               </VerticalSpace>
             </EmailFormContainer>
           </ScrollView>

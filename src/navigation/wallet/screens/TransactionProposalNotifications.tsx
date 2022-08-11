@@ -27,7 +27,11 @@ import React, {
   useState,
 } from 'react';
 import _ from 'lodash';
-import {TransactionProposal, Wallet} from '../../../store/wallet/wallet.models';
+import {
+  Key,
+  TransactionProposal,
+  Wallet,
+} from '../../../store/wallet/wallet.models';
 import {RefreshControl, SectionList, View} from 'react-native';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
@@ -37,7 +41,10 @@ import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {useTranslation} from 'react-i18next';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {startGetRates} from '../../../store/wallet/effects';
-import {startUpdateAllWalletStatusForKeys} from '../../../store/wallet/effects/status/status';
+import {
+  startUpdateAllWalletStatusForKeys,
+  startUpdateAllWalletStatusForReadOnlyKeys,
+} from '../../../store/wallet/effects/status/status';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -189,10 +196,13 @@ const TransactionProposalNotifications = () => {
     setAllTxpsByWallet({txpsPending, txpsAccepted, txpsRejected});
   };
 
-  const getTxpToBeSigned = (txpsPerWallet: TransactionProposal[]): number => {
+  const getTxpToBeSigned = (
+    txpsPerWallet: TransactionProposal[],
+    canBeSigned: boolean,
+  ): number => {
     let i = 0;
     txpsPerWallet.forEach(txp => {
-      if (txp.statusForUs === 'pending') {
+      if (txp.statusForUs === 'pending' && canBeSigned) {
         i = i + 1;
       }
     });
@@ -215,7 +225,9 @@ const TransactionProposalNotifications = () => {
       }
     });
     Array.from(map).forEach(txpsPerWallet => {
-      const txpToBeSigned = getTxpToBeSigned(txpsPerWallet[1]);
+      const fullWalletObj = findWalletById(wallets, txpsPerWallet[0]) as Wallet;
+      const canBeSigned = !keys[fullWalletObj.keyId].isReadOnly;
+      const txpToBeSigned = getTxpToBeSigned(txpsPerWallet[1], canBeSigned);
       txpsByWallet.push({
         id: Math.random(),
         walletId: txpsPerWallet[0],
@@ -431,15 +443,20 @@ const TransactionProposalNotifications = () => {
 
   const updateWalletsWithProposals = async () => {
     const walletIdsWithProposals = _.uniq(pendingTxps.map(txp => txp.walletId));
-    const keyIdsWithProposals = walletIdsWithProposals.map(
+    const keyIdsWithProposals: string[] = walletIdsWithProposals.map(
       walletIdString => findWalletById(wallets, walletIdString)!.keyId,
     );
     const keyIds = _.uniq(keyIdsWithProposals);
-    await dispatch(
-      startUpdateAllWalletStatusForKeys({
-        keys: keyIds.map(keyIdString => keys[keyIdString]),
-      }),
+    const keysWithProposals: Key[] = keyIds.map(
+      (keyIdString: string) => keys[keyIdString],
     );
+
+    const [readOnlyKeys, _keys] = _.partition(keysWithProposals, 'isReadOnly');
+
+    Promise.all([
+      dispatch(startUpdateAllWalletStatusForKeys({keys: _keys})),
+      dispatch(startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys})),
+    ]);
   };
 
   const onRefresh = async () => {

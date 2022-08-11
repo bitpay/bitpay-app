@@ -14,6 +14,7 @@ import {
   buildWalletObj,
   findMatchedKeyAndUpdate,
   getMatchedKey,
+  getReadOnlyKey,
   isMatch,
   isMatchedWallet,
 } from '../../utils/wallet';
@@ -79,6 +80,7 @@ import {
   setConfirmTxNotifications,
   setNotifications,
   subscribePushNotifications,
+  subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
 
@@ -760,7 +762,12 @@ export const startImportMnemonic =
       try {
         const {
           WALLET,
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
         } = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
@@ -793,6 +800,19 @@ export const startImportMnemonic =
             if (notificationsAccepted) {
               dispatch(subscribePushNotifications(wallet, brazeEid!));
             }
+            // subscribe new wallet to email notifications
+            if (
+              emailNotifications &&
+              emailNotifications.accepted &&
+              emailNotifications.email
+            ) {
+              const prefs = {
+                email: emailNotifications.email,
+                language: defaultLanguage,
+                unit: 'btc', // deprecated
+              };
+              dispatch(subscribeEmailNotifications(wallet, prefs));
+            }
             return merge(
               wallet,
               dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
@@ -821,7 +841,12 @@ export const startImportFile =
       try {
         const {
           WALLET,
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
         } = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
@@ -834,7 +859,9 @@ export const startImportFile =
         );
         let wallets = [wallet];
 
-        const matchedKey = getMatchedKey(_key, Object.values(WALLET.keys));
+        const matchedKey = _key
+          ? getMatchedKey(_key, Object.values(WALLET.keys))
+          : getReadOnlyKey(Object.values(WALLET.keys));
 
         if (matchedKey && !opts?.keyId) {
           _key = matchedKey.methods;
@@ -862,6 +889,19 @@ export const startImportFile =
             // subscribe new wallet to push notifications
             if (notificationsAccepted) {
               dispatch(subscribePushNotifications(wallet, brazeEid!));
+            }
+            // subscribe new wallet to email notifications
+            if (
+              emailNotifications &&
+              emailNotifications.accepted &&
+              emailNotifications.email
+            ) {
+              const prefs = {
+                email: emailNotifications.email,
+                language: defaultLanguage,
+                unit: 'btc', // deprecated
+              };
+              dispatch(subscribeEmailNotifications(wallet, prefs));
             }
             return merge(
               wallet,
@@ -895,7 +935,12 @@ export const startImportWithDerivationPath =
       try {
         const {
           WALLET,
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
         } = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
@@ -931,6 +976,19 @@ export const startImportWithDerivationPath =
           // subscribe new wallet to push notifications
           if (notificationsAccepted) {
             dispatch(subscribePushNotifications(wallet, brazeEid!));
+          }
+          // subscribe new wallet to email notifications
+          if (
+            emailNotifications &&
+            emailNotifications.accepted &&
+            emailNotifications.email
+          ) {
+            const prefs = {
+              email: emailNotifications.email,
+              language: defaultLanguage,
+              unit: 'btc', // deprecated
+            };
+            dispatch(subscribeEmailNotifications(wallet, prefs));
           }
           const key = buildKeyObj({
             key: _key,

@@ -24,7 +24,10 @@ import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
-import {subscribePushNotifications} from '../../../app/app.effects';
+import {
+  subscribeEmailNotifications,
+  subscribePushNotifications,
+} from '../../../app/app.effects';
 import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
@@ -102,7 +105,12 @@ export const addWallet =
       try {
         let newWallet;
         const {
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
           WALLET,
         } = getState();
         const tokenOpts = {
@@ -115,7 +123,7 @@ export const addWallet =
         if (isToken) {
           if (!associatedWallet) {
             associatedWallet = (await createWallet({
-              key: key.methods,
+              key: key.methods!,
               coin: 'eth',
               options,
             })) as Wallet;
@@ -135,7 +143,7 @@ export const addWallet =
           )) as Wallet;
         } else {
           newWallet = (await createWallet({
-            key: key.methods,
+            key: key.methods!,
             coin: currency as SupportedCoins,
             options,
           })) as Wallet;
@@ -148,6 +156,19 @@ export const addWallet =
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(newWallet, brazeEid!));
+        }
+        // subscribe new wallet to email notifications
+        if (
+          emailNotifications &&
+          emailNotifications.accepted &&
+          emailNotifications.email
+        ) {
+          const prefs = {
+            email: emailNotifications.email,
+            language: defaultLanguage,
+            unit: 'btc', // deprecated
+          };
+          dispatch(subscribeEmailNotifications(newWallet, prefs));
         }
 
         key.wallets.push(
@@ -189,7 +210,12 @@ const createMultipleWallets =
   async (dispatch, getState) => {
     const {
       WALLET,
-      APP: {notificationsAccepted, brazeEid},
+      APP: {
+        notificationsAccepted,
+        emailNotifications,
+        brazeEid,
+        defaultLanguage,
+      },
     } = getState();
     const tokenOpts = {
       ...BitpaySupportedTokenOpts,
@@ -236,6 +262,19 @@ const createMultipleWallets =
       // subscribe new wallet to push notifications
       if (notificationsAccepted) {
         dispatch(subscribePushNotifications(wallet, brazeEid!));
+      }
+      // subscribe new wallet to email notifications
+      if (
+        emailNotifications &&
+        emailNotifications.accepted &&
+        emailNotifications.email
+      ) {
+        const prefs = {
+          email: emailNotifications.email,
+          language: defaultLanguage,
+          unit: 'btc', // deprecated
+        };
+        dispatch(subscribeEmailNotifications(wallet, prefs));
       }
       return merge(
         wallet,
@@ -370,7 +409,12 @@ export const startCreateKeyWithOpts =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
         } = getState();
         const _key = BWC.createKey({
           seedType: opts.seedType!,
@@ -385,6 +429,19 @@ export const startCreateKeyWithOpts =
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(_wallet, brazeEid!));
+        }
+        // subscribe new wallet to email notifications
+        if (
+          emailNotifications &&
+          emailNotifications.accepted &&
+          emailNotifications.email
+        ) {
+          const prefs = {
+            email: emailNotifications.email,
+            language: defaultLanguage,
+            unit: 'btc', // deprecated
+          };
+          dispatch(subscribeEmailNotifications(_wallet, prefs));
         }
 
         // build out app specific props

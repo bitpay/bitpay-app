@@ -213,7 +213,7 @@ export const findContact = (
 };
 
 export const getMnemonic = (key: Key) =>
-  key.properties.mnemonic.trim().split(' ');
+  key.properties!.mnemonic.trim().split(' ');
 
 export const shouldScale = (
   value: string | number | null | undefined,
