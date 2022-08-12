@@ -183,7 +183,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         dispatch(AppActions.showBiometricModal());
       }
 
-      dispatch(AppActions.appInitComplete());
+      dispatch(AppActions.appInitCompleted());
       DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
     });
   } catch (err: unknown) {

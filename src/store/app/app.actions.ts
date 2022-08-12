@@ -24,7 +24,7 @@ export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
 });
 
-export const appInitComplete = (): AppActionType => ({
+export const appInitCompleted = (): AppActionType => ({
   type: AppActionTypes.APP_INIT_COMPLETE,
 });
 

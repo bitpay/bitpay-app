@@ -85,7 +85,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const {t} = useTranslation();
-  const {id, navigation, route} = props;
+  const {id, navigation} = props;
   const carouselRef = useRef<Carousel<Card[]>>(null);
   const cardGroups = useAppSelector(selectCardGroups);
   const fetchOverviewStatus = useAppSelector(
