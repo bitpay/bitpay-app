@@ -73,22 +73,22 @@ const Dosh: Dosh = (() => {
 
     present() {
       return new Promise((res, rej) => {
-        if (!wasInit) {
-          const sub = DeviceEventEmitter.addListener(
-            DeviceEmitterEvents.DOSH_INITIALIZED,
-            success => {
-              sub.remove();
-
-              if (success) {
-                res(DoshModule.present());
-              } else {
-                rej(false);
-              }
-            },
-          );
+        if (wasInit) {
+          return res(DoshModule.present());
         }
 
-        return res(DoshModule.present());
+        const sub = DeviceEventEmitter.addListener(
+          DeviceEmitterEvents.DOSH_INITIALIZED,
+          success => {
+            sub.remove();
+
+            if (success) {
+              res(DoshModule.present());
+            } else {
+              rej(false);
+            }
+          },
+        );
       });
     },
 
