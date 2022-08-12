@@ -73,7 +73,9 @@ const Pin = gestureHandlerRootHOC(() => {
   const {type, context, onClose} =
     useAppSelector(({APP}) => APP.pinModalConfig) || {};
   const [pin, setPin] = useState<Array<string | undefined>>([]);
-  const [headerMargin, setHeaderMargin] = useState<string | undefined>();
+  const [headerMargin, setHeaderMargin] = useState<string>(
+    type === 'set' || onClose ? '10%' : '40%',
+  );
   const [message, setMessage] = useState<string>(t('Please enter your PIN'));
   const [shakeDots, setShakeDots] = useState(false);
   const insets = useSafeAreaInsets();
@@ -81,14 +83,10 @@ const Pin = gestureHandlerRootHOC(() => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (type === 'set') {
+    if (type === 'set' || onClose) {
       setShowBackButton(true);
     }
-  }, [type]);
-
-  useEffect(() => {
-    setHeaderMargin(type === 'set' ? '10%' : '40%');
-  }, [type]);
+  }, [type, onClose]);
 
   // checkPin
   const currentPin = useAppSelector(({APP}) => APP.currentPin);
