@@ -3,10 +3,10 @@ import {
   useNavigation,
   useScrollToTop,
 } from '@react-navigation/native';
-import React, {useCallback, useEffect, useLayoutEffect, useMemo} from 'react';
+import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList, Linking} from 'react-native';
+import {FlatList} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
