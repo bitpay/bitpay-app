@@ -3,10 +3,9 @@ import {
   LinkingOptions,
   useNavigation,
 } from '@react-navigation/native';
-import {useEffect} from 'react';
+import {useEffect, useRef} from 'react';
 import {Linking} from 'react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
-import {useDispatch} from 'react-redux';
 import {
   APP_CRYPTO_PREFIX,
   APP_DEEPLINK_PREFIX,
@@ -30,6 +29,8 @@ import {
   selectIntegrations,
 } from '../../store/shop/shop.selectors';
 import {LogActions} from '../../store/log';
+import {incomingLink} from '../../store/app/app.effects';
+import useAppDispatch from './useAppDispatch';
 
 const isUniversalLink = (url: string): boolean => {
   try {
@@ -54,13 +55,23 @@ const isCryptoLink = (url: string): boolean => {
 };
 
 export const useUrlEventHandler = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const urlEventHandler = ({url}: {url: string | null}) => {
     dispatch(LogActions.debug(`[deeplink] received: ${url}`));
+
     if (url && (isDeepLink(url) || isUniversalLink(url) || isCryptoLink(url))) {
       dispatch(LogActions.info(`[deeplink] valid: ${url}`));
       dispatch(showBlur(false));
-      dispatch(incomingData(url));
+
+      let handled = false;
+
+      if (!handled) {
+        handled = dispatch(incomingLink(url));
+      }
+
+      if (!handled) {
+        dispatch(incomingData(url));
+      }
 
       try {
         // clicking a deeplink from the IAB in iOS doesn't auto-close the IAB, so do it manually
@@ -77,7 +88,9 @@ export const useUrlEventHandler = () => {
       }
     }
   };
-  return urlEventHandler;
+  const handlerRef = useRef(urlEventHandler);
+
+  return handlerRef.current;
 };
 
 export const useShopDeepLinkHandler = () => {
@@ -149,7 +162,7 @@ export const useShopDeepLinkHandler = () => {
 };
 
 export const useDeeplinks = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const urlEventHandler = useUrlEventHandler();
 
   useEffect(() => {

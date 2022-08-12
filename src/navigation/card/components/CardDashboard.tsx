@@ -235,18 +235,12 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   useFocusEffect(
     useCallback(() => {
-      if (uninitializedId) {
+      if (appWasInit && uninitializedId) {
         setAutoInitState({...autoInitState, [uninitializedId]: true});
         dispatch(CardEffects.startFetchOverview(uninitializedId));
       }
-    }, [uninitializedId, autoInitState, dispatch]),
+    }, [uninitializedId, autoInitState, dispatch, appWasInit]),
   );
-
-  useEffect(() => {
-    if (appWasInit && route.params?.action === 'offers') {
-      dispatch(CardEffects.startOpenDosh());
-    }
-  }, [route.params, appWasInit]);
 
   const listFooterComponent = useMemo(
     () => (

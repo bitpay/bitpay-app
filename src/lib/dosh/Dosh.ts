@@ -1,5 +1,6 @@
 import {DOSH_APP_ID} from '@env';
-import ReactNative, {Platform} from 'react-native';
+import ReactNative, {DeviceEventEmitter, Platform} from 'react-native';
+import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import DoshUiOptions from './DoshUiOptions';
 
 /**
@@ -47,40 +48,64 @@ interface Dosh extends Omit<DoshModule, 'initializeDosh'> {
 
 const DoshModule = ReactNative.NativeModules.Dosh as DoshModule;
 
-const Dosh: Dosh = {
-  initializeDosh(uiOptions?: DoshUiOptions) {
-    const _uiOptions: DoshUiOptions = {
-      feedTitle: 'Dosh Rewards',
-      logoStyle: 'CIRCLE',
-      brandDetailsHeaderStyle: 'RECTANGLE',
+const Dosh: Dosh = (() => {
+  let wasInit = false;
 
-      ...(uiOptions || {}),
-    };
+  return {
+    async initializeDosh(uiOptions?: DoshUiOptions) {
+      const _uiOptions: DoshUiOptions = {
+        feedTitle: 'Dosh Rewards',
+        logoStyle: 'CIRCLE',
+        brandDetailsHeaderStyle: 'RECTANGLE',
 
-    return DoshModule.initializeDosh(DOSH_APP_ID, _uiOptions);
-  },
+        ...(uiOptions || {}),
+      };
 
-  setDoshToken(token: string) {
-    return DoshModule.setDoshToken(token);
-  },
+      const success = await DoshModule.initializeDosh(DOSH_APP_ID, _uiOptions);
+      wasInit = true;
+      DeviceEventEmitter.emit(DeviceEmitterEvents.DOSH_INITIALIZED, success);
+      return success;
+    },
 
-  present() {
-    return DoshModule.present();
-  },
+    setDoshToken(token: string) {
+      return DoshModule.setDoshToken(token);
+    },
 
-  clearUser() {
-    // TODO: iOS bridge method, let it throw for now
-    return DoshModule.clearUser();
-  },
+    present() {
+      return new Promise((res, rej) => {
+        if (!wasInit) {
+          const sub = DeviceEventEmitter.addListener(
+            DeviceEmitterEvents.DOSH_INITIALIZED,
+            success => {
+              sub.remove();
 
-  presentIntegrationChecklist() {
-    if (Platform.OS === 'android') {
-      return DoshModule.presentIntegrationChecklist();
-    }
+              if (success) {
+                res(DoshModule.present());
+              } else {
+                rej(false);
+              }
+            },
+          );
+        }
 
-    // TODO: iOS bridge method, if exists. Since this is dev only, just resolve without error.
-    return Promise.resolve(true);
-  },
-};
+        return res(DoshModule.present());
+      });
+    },
+
+    clearUser() {
+      // TODO: iOS bridge method, let it throw for now
+      return DoshModule.clearUser();
+    },
+
+    presentIntegrationChecklist() {
+      if (Platform.OS === 'android') {
+        return DoshModule.presentIntegrationChecklist();
+      }
+
+      // TODO: iOS bridge method, if exists. Since this is dev only, just resolve without error.
+      return Promise.resolve(true);
+    },
+  };
+})();
 
 export default Dosh;
