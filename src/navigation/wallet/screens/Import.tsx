@@ -39,12 +39,12 @@ const Import: React.FC<ImportScreenProps> = ({route}) => {
     <ImportContainer>
       <Tab.Navigator screenOptions={{...ScreenOptions(150)}}>
         <Tab.Screen
-          name={t('Recovery Phrase')}
+          name={t('Phrase')}
           component={RecoveryPhrase}
           initialParams={route.params}
         />
         <Tab.Screen
-          name={t('File/Text')}
+          name={t('Plain Text')}
           component={FileOrText}
           initialParams={route.params}
         />
