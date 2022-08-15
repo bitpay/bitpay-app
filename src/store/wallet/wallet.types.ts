@@ -1,14 +1,9 @@
 import {CurrencyOpts} from '../../constants/currencies';
 import {
-  CacheKeys,
-  DateRanges,
   Key,
-  PriceHistory,
-  Rates,
   Token,
   Wallet,
   TransactionProposal,
-  RatesByDateRange,
   CacheFeeLevel,
   CryptoBalance,
 } from './wallet.models';
@@ -24,11 +19,6 @@ export enum WalletActionTypes {
   SUCCESS_IMPORT = 'WALLET/SUCCESS_IMPORT',
   FAILED_IMPORT = 'WALLET/FAILED_IMPORT',
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
-  SUCCESS_GET_RATES = 'WALLET/SUCCESS_GET_RATES',
-  FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
-  UPDATE_CACHE_KEY = 'WALLET/UPDATE_CACHE_KEY',
-  SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
-  FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
   SUCCESS_GET_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_TOKEN_OPTIONS',
@@ -115,37 +105,6 @@ interface failedImport {
 interface setBackupComplete {
   type: typeof WalletActionTypes.SET_BACKUP_COMPLETE;
   payload: string;
-}
-
-interface successGetRates {
-  type: typeof WalletActionTypes.SUCCESS_GET_RATES;
-  payload: {
-    rates?: Rates;
-    ratesByDateRange?: RatesByDateRange;
-    lastDayRates?: Rates;
-    dateRange?: DateRanges;
-  };
-}
-
-interface failedGetRates {
-  type: typeof WalletActionTypes.FAILED_GET_RATES;
-}
-
-interface updateCacheKey {
-  type: typeof WalletActionTypes.UPDATE_CACHE_KEY;
-  payload: {
-    cacheKey: CacheKeys;
-    dateRange?: DateRanges;
-  };
-}
-
-interface successGetPriceHistory {
-  type: typeof WalletActionTypes.SUCCESS_GET_PRICE_HISTORY;
-  payload: Array<PriceHistory>;
-}
-
-interface failedGetPriceHistory {
-  type: typeof WalletActionTypes.FAILED_GET_PRICE_HISTORY;
 }
 
 interface successEncryptOrDecryptPassword {
@@ -344,11 +303,6 @@ export type WalletActionType =
   | successImport
   | failedImport
   | setBackupComplete
-  | successGetRates
-  | failedGetRates
-  | updateCacheKey
-  | successGetPriceHistory
-  | failedGetPriceHistory
   | deleteKey
   | successEncryptOrDecryptPassword
   | successGetTokenOptions

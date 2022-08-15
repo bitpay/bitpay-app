@@ -110,7 +110,7 @@ const HomeRoot = () => {
   }, [brazeDoMore, hasCards, themeType, defaultLanguage]);
 
   // Exchange Rates
-  const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
+  const priceHistory = useAppSelector(({RATE}) => RATE.priceHistory);
   const memoizedExchangeRates: Array<ExchangeRateItemProps> = useMemo(
     () =>
       priceHistory.reduce((ratesList, history) => {

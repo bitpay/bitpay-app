@@ -8,21 +8,21 @@ import {
   PriceHistory,
   Rate,
   Rates,
-} from '../../wallet.models';
+} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
 import {
-  DEFAULT_DATE_RANGE,
   HISTORIC_RATES_CACHE_DURATION,
   RATES_CACHE_DURATION,
 } from '../../../../constants/wallet';
+import {DEFAULT_DATE_RANGE} from '../../../../constants/rate';
 import {
   failedGetPriceHistory,
   failedGetRates,
   successGetPriceHistory,
   successGetRates,
   updateCacheKey,
-} from '../../wallet.actions';
-import {CacheKeys} from '../../wallet.models';
+} from '../../../rate/rate.actions';
+import {CacheKeys} from '../../../rate/rate.models';
 import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
@@ -73,7 +73,7 @@ export const startGetRates =
     return new Promise(async resolve => {
       dispatch(LogActions.info('starting [startGetRates]'));
       const {
-        WALLET: {ratesCacheKey, rates: cachedRates},
+        RATE: {ratesCacheKey, rates: cachedRates},
       } = getState();
       if (
         !isCacheKeyStale(
@@ -161,7 +161,7 @@ export const startGetRates =
         }
         dispatch(failedGetRates());
         dispatch(LogActions.error(`failed [startGetRates]: ${errorStr}`));
-        resolve(getState().WALLET.rates); // Return cached rates
+        resolve(getState().RATE.rates); // Return cached rates
       }
     });
   };
@@ -307,7 +307,7 @@ export const fetchHistoricalRates =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
-        WALLET: {ratesCacheKey, ratesByDateRange: cachedRates},
+        RATE: {ratesCacheKey, ratesByDateRange: cachedRates},
       } = getState();
 
       if (

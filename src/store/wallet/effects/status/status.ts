@@ -1,7 +1,6 @@
 import {Effect} from '../../../index';
 import {
   Wallet,
-  Rates,
   Key,
   WalletBalance,
   WalletStatus,
@@ -12,6 +11,7 @@ import {
   CryptoBalance,
   FiatBalance,
 } from '../../wallet.models';
+import {Rates} from '../../../rate/rate.models';
 import {
   failedUpdateAllKeysAndStatus,
   failedUpdateKey,
@@ -158,8 +158,9 @@ export const startUpdateWalletStatus =
 
       try {
         const {
-          WALLET: {rates, lastDayRates, balanceCacheKey},
+          WALLET: {balanceCacheKey},
           APP: {defaultAltCurrency},
+          RATE: {rates, lastDayRates},
         } = getState();
 
         const {
@@ -265,9 +266,10 @@ export const startUpdateAllWalletStatusForKeys =
         dispatch(
           LogActions.info('starting [startUpdateAllWalletStatusForKeys]'),
         );
-        const {APP, WALLET} = getState();
+        const {APP, RATE, WALLET} = getState();
         const {defaultAltCurrency} = APP;
-        const {rates, lastDayRates, balanceCacheKey} = WALLET;
+        const {balanceCacheKey} = WALLET;
+        const {rates, lastDayRates} = RATE;
 
         const keyUpdatesPromises: Promise<{
           keyId: string;
@@ -742,7 +744,7 @@ const buildFiatBalance =
     lastDayRates: Rates;
     cryptoBalance: CryptoBalance;
   }): Effect<FiatBalance> =>
-  (dispatch, getState) => {
+  dispatch => {
     const {
       currencyAbbreviation,
       credentials: {network},
@@ -864,7 +866,8 @@ export const FormatKeyBalances = (): Effect => async (dispatch, getState) => {
   return new Promise(async (resolve, reject) => {
     try {
       const {
-        WALLET: {keys, rates, lastDayRates},
+        WALLET: {keys},
+        RATE: {rates, lastDayRates},
         APP: {defaultAltCurrency},
       } = getState();
 
