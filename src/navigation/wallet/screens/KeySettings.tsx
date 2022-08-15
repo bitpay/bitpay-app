@@ -120,7 +120,7 @@ const KeySettings = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const {rates} = useAppSelector(({WALLET}) => WALLET);
+  const {rates} = useAppSelector(({RATE}) => RATE);
 
   const _wallets = key.wallets;
   const coins = _wallets.filter(wallet => !wallet.credentials.token);

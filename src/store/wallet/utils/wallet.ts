@@ -1,12 +1,12 @@
 import {
   Key,
   KeyMethods,
-  Rates,
   Token,
   Wallet,
   WalletBalance,
   WalletObj,
 } from '../wallet.models';
+import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
@@ -503,7 +503,7 @@ export const BuildPayProWalletSelectorList =
   (dispatch, getState) => {
     const {COINBASE} = getState();
     const {
-      WALLET: {rates},
+      RATE: {rates},
     } = getState();
     const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
     const coinbaseUser = COINBASE.user[COINBASE_ENV];

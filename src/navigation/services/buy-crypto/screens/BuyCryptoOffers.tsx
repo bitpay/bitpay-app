@@ -286,7 +286,7 @@ const BuyCryptoOffers: React.FC = () => {
   const [updateView, setUpdateView] = useState(false);
 
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
-  const allRates = useAppSelector(({WALLET}: RootState) => WALLET.rates);
+  const allRates = useAppSelector(({RATE}: RootState) => RATE.rates);
 
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
