@@ -21,6 +21,8 @@ export const LightBlack = '#252525';
 export const Black = '#000000';
 export const Grey = '#E7E7E7';
 export const White = '#FFFFFF';
+export const Slate10 = '#F5F7F8';
+export const Slate30 = '#E1E4E7';
 
 /* Interface */
 export const Caution = '#ef476f';
