@@ -89,7 +89,6 @@ const PayProConfirm = () => {
   const [txDetails, updateTxDetails] = useState(_txDetails);
   const [txp, updateTxp] = useState(_txp);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
-  const {fee, sendingFrom, subTotal, total} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
   const payProHost = payProOptions.payProUrl
@@ -343,21 +342,23 @@ const PayProConfirm = () => {
           />
           {wallet || coinbaseAccount ? (
             <>
-              {wallet ? (
-                <Fee
-                  fee={fee}
-                  hideFeeOptions
-                  feeOptions={dispatch(
-                    GetFeeOptions(wallet.currencyAbbreviation),
-                  )}
-                  hr
-                />
+              {wallet && txDetails ? (
+                <>
+                  <Fee
+                    fee={txDetails?.fee}
+                    hideFeeOptions
+                    feeOptions={dispatch(
+                      GetFeeOptions(wallet.currencyAbbreviation),
+                    )}
+                    hr
+                  />
+                  <SendingFrom
+                    sender={txDetails?.sendingFrom}
+                    onPress={openKeyWalletSelector}
+                    hr
+                  />
+                </>
               ) : null}
-              <SendingFrom
-                sender={sendingFrom!}
-                onPress={openKeyWalletSelector}
-                hr
-              />
               {invoice ? (
                 <RemainingTime
                   invoiceExpirationTime={invoice.expirationTime}
@@ -370,8 +371,16 @@ const PayProConfirm = () => {
                   onChange={message => updateTxp({...txp, message})}
                 />
               ) : null}
-              <Amount description={'SubTotal'} amount={subTotal} height={83} />
-              <Amount description={'Total'} amount={total} height={83} />
+              <Amount
+                description={'SubTotal'}
+                amount={txDetails?.subTotal}
+                height={83}
+              />
+              <Amount
+                description={'Total'}
+                amount={txDetails?.total}
+                height={83}
+              />
             </>
           ) : null}
         </DetailsList>
