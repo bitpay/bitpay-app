@@ -343,7 +343,7 @@ const PayProConfirm = () => {
           />
           {wallet || coinbaseAccount ? (
             <>
-              {wallet ? (
+              {wallet && fee ? (
                 <Fee
                   fee={fee}
                   hideFeeOptions
@@ -353,11 +353,13 @@ const PayProConfirm = () => {
                   hr
                 />
               ) : null}
-              <SendingFrom
-                sender={sendingFrom!}
-                onPress={openKeyWalletSelector}
-                hr
-              />
+              {sendingFrom ? (
+                <SendingFrom
+                  sender={sendingFrom}
+                  onPress={openKeyWalletSelector}
+                  hr
+                />
+              ) : null}
               {invoice ? (
                 <RemainingTime
                   invoiceExpirationTime={invoice.expirationTime}

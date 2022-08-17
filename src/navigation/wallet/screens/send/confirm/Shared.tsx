@@ -41,6 +41,7 @@ import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import AddressCard from '../../../components/AddressCard';
 import {LuckySevens} from '../../../../../styles/colors';
+import i18next from 'i18next';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -254,14 +255,13 @@ export const SendingFrom = ({
   onPress?: () => void;
   hr?: boolean;
 }): JSX.Element | null => {
-  const {t} = useTranslation();
   if (sender) {
     const {walletName, img} = sender;
     return (
       <>
         <DetailContainer height={83}>
           <DetailRow>
-            <H7>{t('Sending from')}</H7>
+            <H7>{i18next.t('Sending from')}</H7>
             <SendToPill
               onPress={onPress}
               icon={CurrencyImage({img, size: 18})}
