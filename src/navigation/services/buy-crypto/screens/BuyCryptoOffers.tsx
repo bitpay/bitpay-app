@@ -50,6 +50,10 @@ import {
 } from '../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
+import {
+  calculateAltFiatToUsd,
+  calculateUsdToAltFiat,
+} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {APP_DEEPLINK_PREFIX} from '../../../../constants/config';
@@ -186,6 +190,17 @@ const OfferDataInfoLabel = styled(H7)`
   margin-right: 10px;
 `;
 
+const OfferDataWarningContainer = styled.View`
+  max-width: 85%;
+  margin-top: 20px;
+`;
+
+const OfferDataWarningMsg = styled(BaseText)`
+  color: #df5264;
+  margin-right: 10px;
+  font-size: 12;
+`;
+
 const OfferDataInfoText = styled(BaseText)`
   font-size: 16px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
@@ -282,35 +297,6 @@ const BuyCryptoOffers: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
-  const allRates = useAppSelector(({RATE}: RootState) => RATE.rates);
-
-  const calculateAltFiatToUsd = (
-    amount: number,
-    fiatCurrency: string,
-  ): number | undefined => {
-    console.log(
-      `======== Calculating USD equivalent for ${amount} ${fiatCurrency}`,
-    );
-    if (fiatCurrency === 'USD') {
-      return amount;
-    }
-    const rateBtcUsd = allRates.btc.find(r => {
-      return r.code === 'USD';
-    });
-    const rateBtcAlt = allRates.btc.find(r => {
-      return r.code === fiatCurrency.toUpperCase();
-    });
-
-    if (rateBtcUsd && rateBtcAlt?.rate && rateBtcAlt.rate > 0) {
-      const rateAltUsd = rateBtcUsd.rate / rateBtcAlt.rate;
-      const equivalentAmount = +(amount * rateAltUsd).toFixed(2);
-      console.log(`======== Equivalent is: ${equivalentAmount} USD`);
-      return equivalentAmount;
-    } else {
-      logger.warn(`There are no rates for : ${fiatCurrency}-USD`);
-      return undefined;
-    }
-  };
 
   offersDefault.simplex.fiatCurrency = getAvailableFiatCurrencies(
     'simplex',
@@ -322,14 +308,6 @@ const BuyCryptoOffers: React.FC = () => {
   )
     ? fiatCurrency
     : 'USD';
-  offersDefault.simplex.fiatAmount =
-    offersDefault.simplex.fiatCurrency === fiatCurrency
-      ? amount
-      : calculateAltFiatToUsd(amount, fiatCurrency) || amount;
-  offersDefault.wyre.fiatAmount =
-    offersDefault.wyre.fiatCurrency === fiatCurrency
-      ? amount
-      : calculateAltFiatToUsd(amount, fiatCurrency) || amount;
   offersDefault.simplex.showOffer = isPaymentMethodSupported(
     'simplex',
     paymentMethod,
@@ -349,6 +327,11 @@ const BuyCryptoOffers: React.FC = () => {
 
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
+
+    offers.simplex.fiatAmount =
+      offers.simplex.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
 
     const simplexLimits = getSimplexFiatAmountLimits();
     offers.simplex.amountLimits = {
@@ -449,9 +432,6 @@ const BuyCryptoOffers: React.FC = () => {
     exchange?: string,
   ): number | undefined => {
     let baseFiatArray: string[];
-    console.log(
-      `======== Calculating ${fiatCurrency} equivalent for ${amount} USD`,
-    );
 
     switch (exchange) {
       case 'simplex':
@@ -468,26 +448,7 @@ const BuyCryptoOffers: React.FC = () => {
     if (baseFiatArray.includes(fiatCurrency)) {
       return amount;
     }
-
-    const rateBtcUsd = allRates.btc.find(r => {
-      return r.code === 'USD';
-    });
-    const rateBtcAlt = allRates.btc.find(r => {
-      return r.code === fiatCurrency.toUpperCase();
-    });
-
-    if (rateBtcUsd && rateBtcUsd.rate > 0 && rateBtcAlt) {
-      const rateAltUsd = rateBtcAlt.rate / rateBtcUsd.rate;
-      console.log(
-        `======== Equivalent is: ${+(amount * rateAltUsd).toFixed(
-          2,
-        )} ${fiatCurrency}`,
-      );
-      return +(amount * rateAltUsd).toFixed(2);
-    } else {
-      logger.warn(`There are no rates for : USD-${fiatCurrency}`);
-      return undefined;
-    }
+    return dispatch(calculateUsdToAltFiat(amount, fiatCurrency));
   };
 
   const showSimplexError = (err?: any, reason?: string) => {
@@ -567,6 +528,11 @@ const BuyCryptoOffers: React.FC = () => {
 
   const getWyreQuote = async () => {
     logger.debug('Wyre getting quote');
+
+    offers.wyre.fiatAmount =
+      offers.wyre.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
 
     const wyreLimits = getWyreFiatAmountLimits(country);
     offers.wyre.amountLimits = {
@@ -1050,18 +1016,13 @@ const BuyCryptoOffers: React.FC = () => {
                       {offer.logo}
                     </OfferDataInfoContainer>
                     {offer.fiatCurrency !== fiatCurrency ? (
-                      <OfferDataInfoContainer>
-                        <OfferDataInfoLabel
-                          style={{
-                            fontSize: 12,
-                            color: '#df5264',
-                            maxWidth: 230,
-                          }}>
+                      <OfferDataWarningContainer>
+                        <OfferDataWarningMsg>
                           {t(
                             `*This exchange doesn\'t support purchases with ${fiatCurrency} you could proceed paying in ${offer.fiatCurrency}.`,
                           )}
-                        </OfferDataInfoLabel>
-                      </OfferDataInfoContainer>
+                        </OfferDataWarningMsg>
+                      </OfferDataWarningContainer>
                     ) : null}
                   </OfferDataContainer>
                   {offer.fiatMoney && (
