@@ -14,10 +14,12 @@ import {
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {ModalId} from './app.reducer';
+import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
+  APP_INIT_COMPLETE = 'APP/APP_INIT_COMPLETE',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
@@ -76,6 +78,10 @@ interface NetworkChanged {
 
 interface SuccessAppInit {
   type: typeof AppActionTypes.SUCCESS_APP_INIT;
+}
+
+interface AppInitComplete {
+  type: typeof AppActionTypes.APP_INIT_COMPLETE;
 }
 
 interface FailedAppInit {
@@ -214,6 +220,7 @@ interface PinBannedUntil {
 }
 interface ShowBiometricModal {
   type: typeof AppActionTypes.SHOW_BIOMETRIC_MODAL;
+  payload: BiometricModalConfig;
 }
 
 interface DismissBiometricModal {
@@ -309,6 +316,7 @@ interface checkingBiometricForSending {
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
+  | AppInitComplete
   | FailedAppInit
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate

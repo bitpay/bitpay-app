@@ -255,7 +255,7 @@ export default () => {
 
       const showLockOption = () => {
         if (biometricLockActive) {
-          dispatch(AppActions.showBiometricModal());
+          dispatch(AppActions.showBiometricModal({}));
         } else if (pinLockActive) {
           dispatch(AppActions.showPinModal({type: 'check'}));
         } else {

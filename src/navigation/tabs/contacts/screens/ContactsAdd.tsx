@@ -40,9 +40,7 @@ import SearchSvg from '../../../../../assets/img/search.svg';
 import Icons from '../../../../components/modal/transact-menu/TransactMenuIcons';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {keyExtractor, findContact} from '../../../../utils/helper-methods';
-import CurrencySelectionRow, {
-  CurrencySelectionToggleProps,
-} from '../../../../components/list/CurrencySelectionRow';
+import CurrencySelectionRow from '../../../../components/list/CurrencySelectionRow';
 import NetworkSelectionRow, {
   NetworkSelectionProps,
 } from '../../../../components/list/NetworkSelectionRow';
@@ -369,7 +367,7 @@ const ContactsAdd = ({
     setSelectedCurrency(_selectedCurrency[0]);
   };
 
-  const currencySelected = ({id}: CurrencySelectionToggleProps) => {
+  const currencySelected = (id: string) => {
     _setSelectedCurrency(id);
     setCoinValue(id);
     setCurrencyModalVisible(false);
@@ -384,10 +382,10 @@ const ContactsAdd = ({
   const renderItem = useCallback(
     ({item}) => (
       <CurrencySelectionRow
-        item={item}
-        emit={currencySelected}
+        currency={item}
+        onToggle={currencySelected}
         key={item.id}
-        removeCheckbox={true}
+        hideCheckbox={true}
       />
     ),
     [],
@@ -420,10 +418,12 @@ const ContactsAdd = ({
   useEffect(() => {
     if (contact?.address) {
       setValue('address', contact.address, {shouldDirty: true});
-      setValue('name', contact.name);
+      setValue('name', contact.name || '');
       setValue('email', contact.email);
       setValue('destinationTag', contact.tag || contact.destinationTag);
-      currencySelected({id: contact.coin} as CurrencySelectionToggleProps);
+      if (contact.coin) {
+        currencySelected(contact.coin);
+      }
       processAddress(contact.address);
     }
   }, [contact]);

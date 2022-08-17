@@ -183,7 +183,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const [isTestnet, setIsTestnet] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const rates = useAppSelector(({WALLET}) => WALLET.rates);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const [customTokenAddress, setCustomTokenAddress] = useState<
     string | undefined
   >('');

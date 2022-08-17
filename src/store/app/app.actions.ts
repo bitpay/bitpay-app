@@ -1,6 +1,7 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
+import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
@@ -22,6 +23,10 @@ export const networkChanged = (network: Network): AppActionType => ({
 
 export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
+});
+
+export const appInitCompleted = (): AppActionType => ({
+  type: AppActionTypes.APP_INIT_COMPLETE,
 });
 
 export const failedAppInit = (): AppActionType => ({
@@ -205,8 +210,11 @@ export const setBrazeEid = (eid: string): AppActionType => ({
   payload: eid,
 });
 
-export const showBiometricModal = (): AppActionType => ({
+export const showBiometricModal = (
+  config: BiometricModalConfig,
+): AppActionType => ({
   type: AppActionTypes.SHOW_BIOMETRIC_MODAL,
+  payload: config,
 });
 
 export const dismissBiometricModal = (): AppActionType => ({

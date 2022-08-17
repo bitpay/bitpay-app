@@ -42,15 +42,16 @@ export interface KeyProperties {
 export interface Key {
   id: string;
   wallets: Wallet[];
-  properties: KeyProperties;
-  methods: KeyMethods;
+  properties: KeyProperties | undefined;
+  methods: KeyMethods | undefined;
   backupComplete?: boolean;
   show?: boolean;
   totalBalance: number;
   totalBalanceLastDay: number;
-  isPrivKeyEncrypted?: boolean;
+  isPrivKeyEncrypted?: boolean | undefined;
   keyName?: string;
   hideKeyBalance: boolean;
+  isReadOnly: boolean;
 }
 
 export interface Wallet extends WalletObj, API {}
@@ -112,14 +113,6 @@ export interface WalletObj {
   network: Network;
 }
 
-export interface PriceHistory {
-  coin: string;
-  priceDisplay: Array<number>;
-  percentChange: string;
-  currencyPair: string;
-  prices: Array<{price: number; time: string}>;
-}
-
 export interface KeyOptions {
   keyId: any;
   name: any;
@@ -155,34 +148,6 @@ export interface Token {
   logoURI?: string;
 }
 
-export interface Rate {
-  code: string;
-  fetchedOn: number;
-  name: string;
-  rate: number;
-  ts: number;
-}
-
-export interface HistoricRate {
-  fetchedOn: number;
-  rate: number;
-  ts: number;
-}
-
-export type Rates = {
-  [key in string]: Rate[];
-};
-
-export type RatesByDateRange = {
-  [key in DateRanges]: Rate[];
-};
-
-export enum DateRanges {
-  Day = 1,
-  Week = 7,
-  Month = 30,
-}
-
 export interface Balance {
   availableAmount: number;
   availableConfirmedAmount: number;
@@ -197,6 +162,7 @@ export interface _Credentials extends Credentials {
   secret: string;
   copayers: string[];
   status: string;
+  singleAddress: boolean; // TODO add to bwc credentials model
 }
 export interface Status {
   balance: Balance;
@@ -208,7 +174,6 @@ export interface Status {
 
 export enum CacheKeys {
   RATES = 'ratesCacheKey',
-  BALANCE = 'balanceCacheKey',
 }
 
 export interface Recipient {

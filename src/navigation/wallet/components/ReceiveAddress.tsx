@@ -23,7 +23,7 @@ import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
-import {Wallet} from '../../../store/wallet/wallet.models';
+import {Status, Wallet} from '../../../store/wallet/wallet.models';
 import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';
@@ -129,9 +129,12 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   };
 
   const setIsSingleAddress = () => {
-    wallet?.getStatus({network: wallet.network}, (err: any, status: any) => {
-      if (!err) {
-        setSingleAddress(status.wallet.singleAddress);
+    wallet?.getStatus({network: wallet.network}, (err: any, status: Status) => {
+      if (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`error [getStatus]: ${errStr}`);
+      } else {
+        setSingleAddress(status?.wallet?.singleAddress);
       }
     });
   };

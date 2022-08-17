@@ -32,7 +32,6 @@ import {SwapCryptoStackParamList} from '../SwapCryptoStack';
 import Button from '../../../../components/button/Button';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import WalletSelectorModal from '../components/WalletSelectorModal';
 import AmountModal from '../../../../components/amount/AmountModal';

@@ -1,10 +1,5 @@
-import {
-  HistoricRate,
-  Rates,
-  Wallet,
-  TransactionProposal,
-  Utxo,
-} from '../../wallet.models';
+import {Wallet, TransactionProposal, Utxo} from '../../wallet.models';
+import {HistoricRate, Rates} from '../../../rate/rate.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
@@ -413,8 +408,11 @@ export const GetTransactionHistory =
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
 
-      const {walletId, keyId} = wallet.credentials;
+      let {walletId, keyId} = wallet.credentials;
 
+      if (!keyId) {
+        keyId = wallet.keyId;
+      }
       if (!walletId || !wallet.isComplete()) {
         return resolve({transactions: [], loadMore: false});
       }

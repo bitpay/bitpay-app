@@ -62,9 +62,12 @@ import {
 } from '../wallet/effects/status/status';
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
-import {APP_ANALYTICS_ENABLED} from '../../constants/config';
+import {
+  APP_ANALYTICS_ENABLED,
+  APP_DEEPLINK_PREFIX,
+} from '../../constants/config';
 import {debounce} from 'lodash';
-import {updatePortfolioBalance} from "../wallet/wallet.actions";
+import {updatePortfolioBalance} from '../wallet/wallet.actions';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -177,8 +180,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         dispatch(AppActions.showPinModal({type: 'check'}));
       }
       if (biometricLockActive) {
-        dispatch(AppActions.showBiometricModal());
+        dispatch(AppActions.showBiometricModal({}));
       }
+
+      dispatch(AppActions.appInitCompleted());
+      DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
     });
   } catch (err: unknown) {
     let errorStr;
@@ -373,7 +379,7 @@ export const requestBrazeContentRefresh = (): Effect => async dispatch => {
 };
 
 export const startOnGoingProcessModal =
-  (message: OnGoingProcessMessages): Effect =>
+  (message: OnGoingProcessMessages): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
     const store: RootState = getState();
 
@@ -682,7 +688,7 @@ export const subscribeEmailNotifications =
 export const unSubscribeEmailNotifications =
   (walletClient: any): Effect<Promise<void>> =>
   async dispatch => {
-    walletClient.savePreferences({}, (err: any) => {
+    walletClient.savePreferences({email: ''}, (err: any) => {
       if (err) {
         dispatch(
           LogActions.error(
@@ -788,7 +794,7 @@ export const setEmailNotifications =
   (
     accepted: boolean,
     email: string | null,
-    agreedToMarketingCommunications: boolean,
+    agreedToMarketingCommunications?: boolean,
   ): Effect =>
   (dispatch, getState) => {
     const _email = accepted ? email : null;
@@ -923,3 +929,30 @@ export const resetAllSettings = (): Effect => dispatch => {
     dispatch(LogActions.info('Reset all settings'));
   });
 };
+
+export const incomingLink =
+  (url: string): Effect<boolean> =>
+  (dispatch, getState) => {
+    let handled = false;
+
+    const parsed = url.replace(APP_DEEPLINK_PREFIX, '');
+
+    if (parsed === 'card/offers') {
+      const {APP} = getState();
+
+      if (APP.appWasInit) {
+        dispatch(CardEffects.startOpenDosh());
+      } else {
+        DeviceEventEmitter.addListener(
+          DeviceEmitterEvents.APP_INIT_COMPLETED,
+          () => {
+            dispatch(CardEffects.startOpenDosh());
+          },
+        );
+      }
+
+      handled = true;
+    }
+
+    return handled;
+  };

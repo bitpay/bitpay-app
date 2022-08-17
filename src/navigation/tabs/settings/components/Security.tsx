@@ -157,11 +157,28 @@ const Security = () => {
 
   const onPressLockButton = () => {
     if (biometricLockActive) {
-      removeBiometric();
+      dispatch(
+        AppActions.showBiometricModal({
+          onClose: checked => {
+            if (checked) {
+              removeBiometric();
+            }
+          },
+        }),
+      );
       return;
     }
     if (pinLockActive) {
-      removePin();
+      dispatch(
+        AppActions.showPinModal({
+          type: 'check',
+          onClose: checked => {
+            if (checked) {
+              removePin();
+            }
+          },
+        }),
+      );
       return;
     }
     setModalVisible(true);

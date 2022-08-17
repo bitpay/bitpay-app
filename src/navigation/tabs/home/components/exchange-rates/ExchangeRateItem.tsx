@@ -75,7 +75,7 @@ const ExchangeRateItem = ({
   onPress: () => void;
   defaultAltCurrencyIsoCode: string;
 }) => {
-  const allRates = useAppSelector(({WALLET}) => WALLET.rates);
+  const allRates = useAppSelector(({RATE}) => RATE.rates);
   let currentPriceToShow: number | undefined;
   const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 

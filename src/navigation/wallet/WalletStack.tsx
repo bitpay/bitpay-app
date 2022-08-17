@@ -71,9 +71,13 @@ import PayProConfirmTwoFactor, {
 import {useTranslation} from 'react-i18next';
 import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
 import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
+import CurrencyTokenSelectionScreen, {
+  CurrencyTokenSelectionScreenParamList,
+} from './screens/CurrencyTokenSelection';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
+  WalletCurrencyTokenSelectionScreen: CurrencyTokenSelectionScreenParamList;
   AddWallet: AddWalletParamList;
   BackupKey: BackupParamList;
   RecoveryPhrase: RecoveryPhraseParamList;
@@ -140,6 +144,7 @@ export type WalletStackParamList = {
 
 export enum WalletScreens {
   CURRENCY_SELECTION = 'CurrencySelection',
+  CURRENCY_TOKEN_SELECTION = 'WalletCurrencyTokenSelectionScreen',
   ADD_WALLET = 'AddWallet',
   BACKUP_KEY = 'BackupKey',
   RECOVERY_PHRASE = 'RecoveryPhrase',
@@ -203,6 +208,10 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CURRENCY_SELECTION}
           component={CurrencySelection}
+        />
+        <Wallet.Screen
+          name={WalletScreens.CURRENCY_TOKEN_SELECTION}
+          component={CurrencyTokenSelectionScreen}
         />
         <Wallet.Screen
           options={{

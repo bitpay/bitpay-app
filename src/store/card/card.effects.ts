@@ -459,9 +459,14 @@ export const START_FETCH_REFERRED_USERS =
     }
   };
 
-export const startOpenDosh = (): Effect<void> => async dispatch => {
+export const startOpenDosh = (): Effect<void> => async (dispatch, getState) => {
   try {
-    Dosh.present();
+    const {APP, CARD} = getState();
+    const cards = CARD.cards[APP.network];
+
+    if (cards.length) {
+      Dosh.present();
+    }
   } catch (err) {
     dispatch(
       LogActions.error('Something went wrong trying to open Dosh Rewards'),

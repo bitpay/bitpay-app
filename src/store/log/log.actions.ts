@@ -28,9 +28,22 @@ function _log(
   ...messages: (string | null | undefined)[]
 ): LogActionType {
   if (__DEV__ && !!messages) {
-    messages.forEach(msg => {
-      console.log(`log[${LogLevel[level]}]`, msg);
-    });
+    switch (LogLevel[level]) {
+      case 'Debug':
+        console.debug('[Debug]', ...messages);
+        break;
+      case 'Info':
+        console.info('[Info]', ...messages);
+        break;
+      case 'Warn':
+        console.warn('[Warn]', ...messages);
+        break;
+      case 'Error':
+        console.error('[Error]', ...messages);
+        break;
+      default:
+        console.log('[Log]', ...messages);
+    }
   }
   return {
     type: LogActionTypes.ADD_LOG,
