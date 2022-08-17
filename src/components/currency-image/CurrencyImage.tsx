@@ -35,13 +35,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export const CurrencyImage = ({
+export const CurrencyImage: React.VFC<CurrencyImageProps> = ({
   img,
   imgSrc,
   badgeUri,
   badgeSrc,
   size = 40,
-}: CurrencyImageProps) => {
+}) => {
   const style = {width: size, height: size};
 
   const badge = useMemo(

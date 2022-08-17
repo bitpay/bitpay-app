@@ -245,36 +245,37 @@ export const Fee = ({
   }
 };
 
-export const SendingFrom = ({
+interface SendingFromProps {
+  onPress?: () => void;
+  sender: TxDetailsSendingFrom | undefined;
+  hr?: boolean;
+}
+
+export const SendingFrom: React.VFC<SendingFromProps> = ({
   sender,
   onPress,
   hr,
-}: {
-  sender: TxDetailsSendingFrom | undefined;
-  onPress?: () => void;
-  hr?: boolean;
-}): JSX.Element | null => {
+}) => {
   const {t} = useTranslation();
-  if (sender) {
-    const {walletName, img} = sender;
-    return (
-      <>
-        <DetailContainer height={83}>
-          <DetailRow>
-            <H7>{t('Sending from')}</H7>
-            <SendToPill
-              onPress={onPress}
-              icon={CurrencyImage({img, size: 18})}
-              description={walletName}
-            />
-          </DetailRow>
-        </DetailContainer>
-        {hr && <Hr />}
-      </>
-    );
-  } else {
+
+  if (!sender) {
     return null;
   }
+
+  const {walletName, img} = sender;
+  const icon = <CurrencyImage img={img} size={18} />;
+
+  return (
+    <>
+      <DetailContainer height={83}>
+        <DetailRow>
+          <H7>{t('Sending from')}</H7>
+          <SendToPill onPress={onPress} icon={icon} description={walletName} />
+        </DetailRow>
+      </DetailContainer>
+      {hr && <Hr />}
+    </>
+  );
 };
 
 export const Amount = ({
