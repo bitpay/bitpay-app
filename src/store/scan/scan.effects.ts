@@ -19,6 +19,8 @@ import {
   IsValidDogecoinUri,
   IsValidEthereumAddress,
   IsValidEthereumUri,
+  IsValidRSKAddress,
+  IsValidRSKUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
   IsValidLitecoinAddress,
@@ -98,6 +100,9 @@ export const incomingData =
         // Ethereum URI
       } else if (IsValidEthereumUri(data)) {
         dispatch(handleEthereumUri(data, opts?.wallet));
+         // RSK URI
+      } else if (IsValidRSKUri(data)) {
+        dispatch(handleRSKUri(data, opts?.wallet));
         // Ripple URI
       } else if (IsValidRippleUri(data)) {
         dispatch(handleRippleUri(data, opts?.wallet));
@@ -128,6 +133,9 @@ export const incomingData =
         // Address (Ethereum)
       } else if (IsValidEthereumAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'eth', opts));
+        // Address RSK
+      } else if (IsValidRSKAddress(data)) {
+          dispatch(handlePlainAddress(data, coin || 'rsk' || 'rbtc', opts));
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'xrp', opts));
@@ -720,6 +728,39 @@ const handleEthereumUri =
       );
     }
   };
+
+const handleRSKUri =
+  (data: string, wallet?: Wallet): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: RSK URI'));
+    const coin = 'rbtc';
+    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
+    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    let feePerKb;
+    if (gasPrice.exec(data)) {
+      feePerKb = Number(gasPrice.exec(data)![1]);
+    }
+    const address = ExtractBitPayUriAddress(data);
+    const recipient = {
+      type: 'address',
+      currency: coin,
+      address,
+    };
+    if (!value.exec(data)) {
+      dispatch(goToAmount({coin, recipient, wallet, opts: {feePerKb}}));
+    } else {
+      const parsedAmount = value.exec(data)![1];
+      const amount = Number(dispatch(FormatAmount(coin, Number(parsedAmount))));
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          opts: {feePerKb},
+        }),
+      );
+    }
+  }; 
 
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>

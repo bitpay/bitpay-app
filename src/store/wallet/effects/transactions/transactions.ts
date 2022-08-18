@@ -12,6 +12,7 @@ import {
   IsCustomERCToken,
   IsERCToken,
   IsUtxoCoin,
+  getRSKCurrencyAbbrevation,
 } from '../../utils/currency';
 import {ToAddress, ToLtcAddress} from '../address/address';
 import {
@@ -125,6 +126,7 @@ const ProcessTx =
     tx: TransactionProposal,
   ): Effect<TransactionProposal> =>
   dispatch => {
+    currencyAbbreviation = getRSKCurrencyAbbrevation(currencyAbbreviation);
     if (!tx || tx.action === 'invalid') {
       return tx;
     }
@@ -823,7 +825,8 @@ export const buildTransactionDetails =
           time,
           hasMultiplesOutputs,
         } = transaction;
-        const {coin: currency} = wallet.credentials;
+        let {coin: currency} = wallet.credentials;
+        currency = getRSKCurrencyAbbrevation(currency);
         const chain = dispatch(GetChain(currency)).toLowerCase();
         const _fee = fees || fee;
 

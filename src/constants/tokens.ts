@@ -32,6 +32,12 @@ export const BitpaySupportedTokenOpts: TokenOptsType = {
     decimals: 18,
     address: '0x4fabb145d64652a948d72533023f6e7a623c7c53',
   },
+  xusd: {
+    name: 'Sovryn XUSD',
+    symbol: 'XUSD',
+    decimals: 18,
+    address: '0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F',
+  },
   dai: {
     name: 'Dai',
     symbol: 'DAI',
@@ -88,6 +94,12 @@ export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
     symbol: 'BUSD',
     decimals: 18,
     address: '0x4fabb145d64652a948d72533023f6e7a623c7c53',
+  },
+  '0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F': {
+    name: 'Sovryn XUSD',
+    symbol: 'XUSD',
+    decimals: 18,
+    address: '0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F',
   },
   '0x6b175474e89094c44da98b954eedeac495271d0f': {
     name: 'Dai',

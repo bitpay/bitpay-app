@@ -62,6 +62,11 @@ export const IsValidEthereumUri = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateUri('ETH', data);
 };
 
+export const IsValidRSKUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!BWC.getCore().Validation.validateUri('RSK', data);
+};
+
 export const IsValidRippleUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getCore().Validation.validateUri('XRP', data);
@@ -102,6 +107,10 @@ export const IsValidBitcoinCashAddress = (data: string): boolean => {
 
 export const IsValidEthereumAddress = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateAddress('ETH', 'livenet', data);
+};
+
+export const IsValidRSKAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('RSK', 'livenet', data);
 };
 
 export const IsValidRippleAddress = (data: string): boolean => {
@@ -219,6 +228,14 @@ export const ValidateURI = (data: string): any => {
     };
   }
 
+  if (IsValidRSKUri(data)) {
+    return {
+      data,
+      type: 'RSKUri',
+      title: 'RSK URI',
+    };
+  }
+
   if (IsValidRippleUri(data)) {
     return {
       data,
@@ -272,6 +289,14 @@ export const ValidateURI = (data: string): any => {
       data,
       type: 'EthereumAddress',
       title: 'Ethereum Address',
+    };
+  }
+
+  if (IsValidRSKAddress(data)) {
+    return {
+      data,
+      type: 'RSKAddress',
+      title: 'RSK Address',
     };
   }
 
@@ -329,6 +354,7 @@ export const ValidateCoinAddress = (
       const addressLtc = BWC.getBitcoreLtc().Address;
       return !!addressLtc.isValid(str, network);
     case 'eth':
+    case 'rsk':
     case 'xrp':
       const {Validation} = BWC.getCore();
       return !!Validation.validateAddress(coin.toUpperCase(), network, str);

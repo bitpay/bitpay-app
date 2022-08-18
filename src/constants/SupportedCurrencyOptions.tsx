@@ -2,6 +2,8 @@ import React, {ReactElement} from 'react';
 import BtcIcon from '../../assets/img/currencies/btc.svg';
 import BchIcon from '../../assets/img/currencies/bch.svg';
 import EthIcon from '../../assets/img/currencies/eth.svg';
+import RbtcIcon from '../../assets/img/currencies/rbtc.svg';
+import XUSDIcon from '../../assets/img/currencies/xusd.svg';
 import DogeIcon from '../../assets/img/currencies/doge.svg';
 import LtcIcon from '../../assets/img/currencies/ltc.svg';
 import XrpIcon from '../../assets/img/currencies/xrp.svg';
@@ -32,6 +34,8 @@ export const CurrencyListIcons: {
   btc: props => <BtcIcon {...props} />,
   bch: props => <BchIcon {...props} />,
   eth: props => <EthIcon {...props} />,
+  rbtc: props => <RbtcIcon {...props} />,
+  xusd: props => <XUSDIcon {...props} />,
   doge: props => <DogeIcon {...props} />,
   ltc: props => <LtcIcon {...props} />,
   xrp: props => <XrpIcon {...props} />,
@@ -70,6 +74,14 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     currencyAbbreviation: 'ETH',
     hasMultisig: false, // TODO
     imgSrc: require('../../assets/img/currencies/png/ETH.png'),
+  },
+  {
+    id: 'rbtc',
+    img: CurrencyListIcons.rbtc,
+    currencyName: 'RSK',
+    currencyAbbreviation: 'RBTC',
+    hasMultisig: false, // TODO
+    imgSrc: require('../../assets/img/currencies/png/RBTC.png'),
   },
   {
     id: 'doge',
@@ -141,6 +153,14 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     currencyAbbreviation: 'BUSD',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/BUSD.png'),
+  },
+  {
+    id: 'xusd',
+    img: CurrencyListIcons.xusd,
+    currencyName: 'Sovryn XUSD',
+    currencyAbbreviation: 'XUSD',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/xusd.png'),
   },
   {
     id: 'dai',

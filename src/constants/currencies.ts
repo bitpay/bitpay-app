@@ -1,4 +1,4 @@
-export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
+export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth' | 'rbtc';
 export type SupportedTokens =
   | 'usdc'
   | 'gusd'
@@ -8,7 +8,8 @@ export type SupportedTokens =
   | 'wbtc'
   | 'shib'
   | 'ape'
-  | 'euroc';
+  | 'euroc'
+  | 'xusd';
 export type SupportedCurrencies = SupportedCoins | SupportedTokens;
 
 export interface CurrencyOpts {
@@ -166,6 +167,117 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       coinColor: '#6b71d6',
       backgroundColor: '#6b71d6',
       gradientBackgroundColor: '#6b71d6',
+    },
+  },
+  rbtc: {
+    name: 'Smart Bitcoin',
+    chain: 'RSK',
+    coin: 'rbtc',
+    unitInfo: {
+      unitName: 'RBTC',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'rbtc'
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: { livenet: 'rsk', testnet: 'rsk' },
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/rbtc',
+      blockExplorerUrls: 'explorer.rsk.co/',
+      blockExplorerUrlsTestnet: 'explorer.testet.rsk.co/'
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.53,
+      maxMerchantFee: 'urgent'
+    },
+    theme: {
+      coinColor: '#41d434',
+      backgroundColor: '#1e90ff',
+      gradientBackgroundColor: '#1e90ff'
+    }
+  },
+  rsk: { // This entry is because exchange-rates assumes that chain and coin are the same and asks for theme to 'rsk'
+    name: 'Smart Bitcoin',
+    chain: 'RSK',
+    coin: 'rbtc',
+    unitInfo: {
+      unitName: 'RBTC',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'rbtc'
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: { livenet: 'rsk', testnet: 'rsk' },
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
+      blockExplorerUrls: 'explorer.rsk.co/',
+      blockExplorerUrlsTestnet: 'explorer.testet.rsk.co/'
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.53,
+      maxMerchantFee: 'urgent'
+    },
+    theme: {
+      coinColor: '#41d434',
+      backgroundColor: '#1e90ff',
+      gradientBackgroundColor: '#1e90ff'
+    },
+  },
+  xusd: {
+    name: 'Sovryn XUSD',
+    chain: 'RSK',
+    coin: 'xusd',
+    unitInfo: {
+      unitName: 'XUSD',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'xusd',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: { livenet: 'rsk', testnet: 'rsk' },
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/xusd',
+      blockExplorerUrls: 'explorer.rsk.co/',
+      blockExplorerUrlsTestnet: 'explorer.testet.rsk.co/'
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#f3ba2d',
+      backgroundColor: 'rgba(135,206,250,1)',
+      gradientBackgroundColor: 'rgba(30,144,255, 0.2)',
     },
   },
   xrp: {
@@ -628,7 +740,7 @@ export const SUPPORTED_TOKENS = [
   'ape',
   'euroc',
 ];
-export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc', 'xrp'];
+export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'rbtc', 'doge', 'ltc', 'xrp'];
 export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];
 export const POPULAR_TOKENS = [
   'UNI',

@@ -11,7 +11,7 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix, getRSKChainAbbrevation} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {convertToFiat, formatFiatAmount} from '../../../utils/helper-methods';
@@ -45,6 +45,11 @@ const mapAbbreviationAndName =
           currencyAbbreviation: 'usdp',
           currencyName: dispatch(GetName(coin)),
         };
+      case 'rsk':
+        return {
+          currencyAbbreviation: 'rbtc',
+          currencyName: dispatch(GetName('rbtc')),
+        };  
       default:
         return {
           currencyAbbreviation: coin,
@@ -207,6 +212,7 @@ export const toFiat =
     customRate?: number,
   ): Effect<number> =>
   dispatch => {
+    currencyAbbreviation = getRSKChainAbbrevation(currencyAbbreviation);
     const ratesPerCurrency = rates[currencyAbbreviation];
 
     if (!ratesPerCurrency) {

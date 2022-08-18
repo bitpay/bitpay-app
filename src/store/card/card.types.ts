@@ -28,6 +28,7 @@ export type SupportedCurrencies =
   | 'BTC'
   | 'BCH'
   | 'ETH'
+  | 'RBTC'
   | 'GUSD'
   | 'USDP'
   | 'BUSD'

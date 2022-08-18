@@ -129,6 +129,7 @@ const DESCRIPTIONS: Record<string, string> = {
 
 const POPULAR_TOKENS: Record<string, string[]> = {
   eth: ['usdc', 'busd', 'ape'],
+  rsk: ['xusd'],
   matic: ['usdc', 'busd', 'gusd'],
 };
 
@@ -256,7 +257,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
       const tokenData =
         Currencies[k] || appTokenData[k] || appCustomTokenData[k];
-      const chainData = chainMap[tokenData.chain.toLowerCase()];
+      const chainData = chainMap[tokenData.chain.toLowerCase() === 'rsk' ? 'rbtc' : tokenData.chain.toLowerCase()];
       const imgSrc = SupportedCurrencyOptions.find(c => c.id === k)?.imgSrc;
       const isReqSrc = (
         src: ImageSourcePropType | undefined,
