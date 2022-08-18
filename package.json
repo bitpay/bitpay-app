@@ -7,7 +7,7 @@
     "ios": "react-native run-ios",
     "ios:device": "react-native run-ios --device",
     "start": "react-native start",
-    "test:coverage": "jest --coverage ./__tests__/unit/*.tsx",
+    "test:coverage": "jest --coverage --testMatch='**/*.spec.{js,tsx}' --config='jest.config.js'",
     "test:unit": "jest --watch --testMatch='**/*.spec.{js,tsx}' --config='jest.config.js'",
     "prebuild:android:debug": "yarn set:dev",
     "build:android:debug": "./scripts/android-debug.sh",
