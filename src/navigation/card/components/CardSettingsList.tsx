@@ -6,13 +6,15 @@ import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
-import {AppEffects} from '../../../store/app';
+import {BASE_BITPAY_URLS} from '../../../constants/config';
+import {AppActions, AppEffects} from '../../../store/app';
 import {Analytics} from '../../../store/app/app.effects';
 import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import ApplePayIcon from '../assets/settings/icon-apple-pay.svg';
 import CustomizeCardIcon from '../assets/settings/icon-card.svg';
+import OrderPhysicalCardIcon from '../assets/settings/icon-card.svg';
 import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
 import FaqsIcon from '../assets/settings/icon-faqs.svg';
 import GooglePayIcon from '../assets/settings/icon-google-pay.svg';
@@ -28,6 +30,7 @@ import {ToggleSpinnerState} from './ToggleSpinner';
 
 interface SettingsListProps {
   card: Card;
+  orderPhysical?: boolean;
   navigation: StackNavigationProp<CardStackParamList, 'Settings'>;
 }
 
@@ -56,10 +59,9 @@ const LINKS: {
 const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
-  const {card, navigation} = props;
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
+  const {card, orderPhysical, navigation} = props;
+  const network = useAppSelector(({APP}) => APP.network);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const [localLockState, setLocalLockState] = useState(card.lockedByUser);
   const [localLockStatus, setLocalLockStatus] =
     useState<ToggleSpinnerState>(null);
@@ -194,7 +196,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Styled.SettingsLink
             Icon={OffersIcon}
-            onPress={async () => {
+            onPress={() => {
               dispatch(
                 Analytics.track('Clicked Card Offer', {
                   context: 'Card Settings',
@@ -206,6 +208,44 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           </Styled.SettingsLink>
 
           <Hr />
+
+          {orderPhysical ? (
+            <>
+              <Styled.SettingsLink
+                Icon={OrderPhysicalCardIcon}
+                onPress={async () => {
+                  const baseUrl = BASE_BITPAY_URLS[network];
+                  const url = `${baseUrl}/wallet-card/?order-physical=true`;
+                  const canOpen = await Linking.canOpenURL(url);
+
+                  if (!canOpen) {
+                    dispatch(
+                      AppActions.showBottomNotificationModal({
+                        type: 'error',
+                        title: t('Error'),
+                        message: t('Unknown error'),
+                        enableBackdropDismiss: true,
+                        onBackdropDismiss: () => {},
+                        actions: [
+                          {
+                            text: t('OK'),
+                            action: () => {},
+                          },
+                        ],
+                      }),
+                    );
+
+                    return;
+                  }
+
+                  Linking.openURL(url);
+                }}>
+                {t('OrderPhysicalCard')}
+              </Styled.SettingsLink>
+
+              <Hr />
+            </>
+          ) : null}
 
           {card.cardType === 'virtual' ? (
             <>

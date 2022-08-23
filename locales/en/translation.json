@@ -1146,5 +1146,6 @@
   "InvalidInvitationCode": "Invalid invitation code",
   "MustBeLessThanArgCharacters": "Must be less than {{max}} characters",
   "MustBeGreaterThanArgCharacters": "Must be greater than {{min}} characters",
-  "IAgreeToTheArgAndArg": "I agree to the <0>{{0}}</0> and <1>{{1}}</1>."
+  "IAgreeToTheArgAndArg": "I agree to the <0>{{0}}</0> and <1>{{1}}</1>.",
+  "OrderPhysicalCard": "Order Physical Card"
 }
