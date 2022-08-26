@@ -25,9 +25,12 @@ interface CardOffersProps {
 
 const ICON_SIZE = 50;
 
-const CardOffersContainer = styled(CardContainer)`
-  flex-direction: row;
+const CardOffersOuterContainer = styled(CardContainer)`
   min-height: 78px;
+`;
+
+const CardOffersInnerContainer = styled(TouchableOpacity)`
+  flex-direction: row;
   padding-left: 16px;
   padding-right: 16px;
   width: 100%;
@@ -64,7 +67,7 @@ const IconImage = styled(FastImage)`
 const CardOffers: React.VFC<CardOffersProps> = props => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const {contentCard, userEmail} = props;
+  const {contentCard} = props;
 
   let title = 'Card Offers';
   let description = 'Earn cash back when you shop at top retailers.';
@@ -89,18 +92,14 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
       ReactAppboy.logContentCardClicked(contentCard.id);
 
       dispatch(
-        Analytics.track(
-          'Clicked Card Offer',
-          {
-            id: contentCard.id || '',
-            context: 'Card Offers component',
-          },
-          true,
-        ),
+        Analytics.track('Clicked Card Offer', {
+          id: contentCard.id || '',
+          context: 'Card Offers component',
+        }),
       );
     }
 
-    dispatch(CardEffects.startOpenDosh(userEmail || ''));
+    dispatch(CardEffects.startOpenDosh());
   };
 
   useFocusEffect(() => {
@@ -110,11 +109,11 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
   });
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={ActiveOpacity}>
-      <CardOffersContainer
-        style={{
-          ...(theme.dark ? {} : BoxShadow),
-        }}>
+    <CardOffersOuterContainer
+      style={{
+        ...(theme.dark ? {} : BoxShadow),
+      }}>
+      <CardOffersInnerContainer onPress={onPress} activeOpacity={ActiveOpacity}>
         <MainColumn>
           <TitleRow>{title}</TitleRow>
 
@@ -126,8 +125,8 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
             <IconImage source={iconSource} />
           </IconColumn>
         ) : null}
-      </CardOffersContainer>
-    </TouchableOpacity>
+      </CardOffersInnerContainer>
+    </CardOffersOuterContainer>
   );
 };
 

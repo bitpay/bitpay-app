@@ -1,4 +1,4 @@
-import {ColorSchemeName} from 'react-native';
+import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
@@ -14,10 +14,12 @@ import {
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {ModalId} from './app.reducer';
+import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
+  APP_INIT_COMPLETE = 'APP/APP_INIT_COMPLETE',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
@@ -34,8 +36,8 @@ export enum AppActionTypes {
   FAILED_GENERATE_APP_IDENTITY = 'APP/FAILED_GENERATE_APP_IDENTITY',
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
   SET_CONFIRMED_TX_ACCEPTED = 'APP/SET_CONFIRMED_TX_ACCEPTED',
-  SET_PRODUCTS_UPDATES_ACCEPTED = 'APP/SET_PRODUCTS_UPDATES_ACCEPTED',
-  SET_OFFERS_AND_PROMOTIONS_ACCEPTED = 'APP/SET_OFFERS_AND_PROMOTIONS_ACCEPTED',
+  SET_ANNOUNCEMENTS_ACCEPTED = 'APP/SET_ANNOUNCEMENTS_ACCEPTED',
+  SET_EMAIL_NOTIFICATIONS_ACCEPTED = 'APP/SET_EMAIL_NOTIFICATIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
   SHOW_DECRYPT_PASSWORD_MODAL = 'APP/SHOW_DECRYPT_PASSWORD_MODAL',
@@ -49,6 +51,7 @@ export enum AppActionTypes {
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
+  BRAZE_INITIALIZED = 'APP/BRAZE_INITIALIZED',
   BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
   SET_BRAZE_EID = 'APP/SET_BRAZE_EID',
   SHOW_BIOMETRIC_MODAL = 'APP/SHOW_BIOMETRIC_MODAL',
@@ -65,6 +68,7 @@ export enum AppActionTypes {
   SET_SHOW_KEY_MIGRATION_FAILURE_MODAL = 'APP/SET_SHOW_KEY_MIGRATION_FAILURE_MODAL',
   SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN = 'APP/SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN',
   ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
+  CHECKING_BIOMETRIC_FOR_SENDING = 'APP/CHECKING_BIOMETRIC_FOR_SENDING',
 }
 
 interface NetworkChanged {
@@ -76,8 +80,13 @@ interface SuccessAppInit {
   type: typeof AppActionTypes.SUCCESS_APP_INIT;
 }
 
+interface AppInitComplete {
+  type: typeof AppActionTypes.APP_INIT_COMPLETE;
+}
+
 interface FailedAppInit {
   type: typeof AppActionTypes.FAILED_APP_INIT;
+  payload: boolean;
 }
 
 interface setAppFirstOpenEventComplete {
@@ -147,14 +156,14 @@ interface SetConfirmedTxAccepted {
   payload: boolean;
 }
 
-interface SetProductsUpdatesAccepted {
-  type: typeof AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED;
+interface SetAnnouncementsAccepted {
+  type: typeof AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED;
   payload: boolean;
 }
 
-interface SetOffersAndPromotionsAccepted {
-  type: typeof AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED;
-  payload: boolean;
+interface SetEmailNotificationsAccepted {
+  type: typeof AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED;
+  payload: {accepted: boolean; email: string | null};
 }
 
 interface ShowOnboardingFinishModal {
@@ -211,6 +220,7 @@ interface PinBannedUntil {
 }
 interface ShowBiometricModal {
   type: typeof AppActionTypes.SHOW_BIOMETRIC_MODAL;
+  payload: BiometricModalConfig;
 }
 
 interface DismissBiometricModal {
@@ -234,6 +244,11 @@ interface ShowBlur {
 interface ShowPortfolioValue {
   type: typeof AppActionTypes.SHOW_PORTFOLIO_VALUE;
   payload: boolean;
+}
+
+interface BrazeInitialized {
+  type: typeof AppActionTypes.BRAZE_INITIALIZED;
+  payload: {contentCardSubscription: EventSubscription | null};
 }
 
 interface BrazeContentCardsFetched {
@@ -293,9 +308,15 @@ interface ActiveModalUpdated {
   payload: ModalId | null;
 }
 
+interface checkingBiometricForSending {
+  type: typeof AppActionTypes.CHECKING_BIOMETRIC_FOR_SENDING;
+  payload: boolean;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
+  | AppInitComplete
   | FailedAppInit
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
@@ -312,8 +333,8 @@ export type AppActionType =
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
   | SetConfirmedTxAccepted
-  | SetProductsUpdatesAccepted
-  | SetOffersAndPromotionsAccepted
+  | SetAnnouncementsAccepted
+  | SetEmailNotificationsAccepted
   | ShowOnboardingFinishModal
   | DismissOnboardingFinishModal
   | SetDefaultLanguage
@@ -327,6 +348,7 @@ export type AppActionType =
   | PinBannedUntil
   | ShowBlur
   | ShowPortfolioValue
+  | BrazeInitialized
   | BrazeContentCardsFetched
   | SetBrazeEid
   | ShowBiometricModal
@@ -342,4 +364,5 @@ export type AppActionType =
   | SetShowKeyMigrationFailureModal
   | SetKeyMigrationFailureModalHasBeenShown
   | SetDefaultAltCurrency
-  | ActiveModalUpdated;
+  | ActiveModalUpdated
+  | checkingBiometricForSending;

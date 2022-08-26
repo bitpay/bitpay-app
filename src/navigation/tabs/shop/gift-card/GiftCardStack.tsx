@@ -14,11 +14,16 @@ import GiftCardDetails from './screens/GiftCardDetails';
 import EnterPhone from './screens/EnterPhone';
 import EnterEmail from './screens/EnterEmail';
 import {HeaderTitle} from '../../../../components/styled/Text';
-import Amount, {AmountParamList} from '../../../wallet/screens/Amount';
+import AmountScreen, {
+  AmountScreenParamList,
+} from '../../../wallet/screens/AmountScreen';
 import Confirm, {
   GiftCardConfirmParamList,
 } from '../../../wallet/screens/send/confirm/GiftCardConfirm';
 import {useTranslation} from 'react-i18next';
+import PayProConfirmTwoFactor, {
+  PayProConfirmTwoFactorParamList,
+} from '../../../wallet/screens/send/confirm/PayProConfirmTwoFactor';
 
 export type GiftCardStackParamList = {
   BuyGiftCard: {cardConfig: CardConfig};
@@ -40,8 +45,9 @@ export type GiftCardStackParamList = {
     }) => void;
   };
   GiftCardDetails: {cardConfig: CardConfig; giftCard: GiftCard};
-  GiftCardAmount: AmountParamList;
+  GiftCardAmount: AmountScreenParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
+  GiftCardConfirmTwoFactor: PayProConfirmTwoFactorParamList;
 };
 
 export enum GiftCardScreens {
@@ -52,6 +58,7 @@ export enum GiftCardScreens {
   GIFT_CARD_DETAILS_MODAL = 'GiftCardDetailsModal',
   GIFT_CARD_AMOUNT = 'GiftCardAmount',
   GIFT_CARD_CONFIRM = 'GiftCardConfirm',
+  GIFT_CARD_CONFIRM_TWO_FACTOR = 'GiftCardConfirmTwoFactor',
 }
 
 const GiftCards = createStackNavigator<GiftCardStackParamList>();
@@ -92,10 +99,7 @@ const GiftCardStack = () => {
       />
       <GiftCards.Screen
         name={GiftCardScreens.GIFT_CARD_AMOUNT}
-        component={Amount}
-        options={{
-          gestureEnabled: false,
-        }}
+        component={AmountScreen}
       />
       <GiftCards.Screen
         name={GiftCardScreens.GIFT_CARD_CONFIRM}
@@ -103,6 +107,15 @@ const GiftCardStack = () => {
         options={{
           gestureEnabled: false,
         }}
+      />
+      <GiftCards.Screen
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Two-Step Verification')}</HeaderTitle>
+          ),
+        }}
+        name={GiftCardScreens.GIFT_CARD_CONFIRM_TWO_FACTOR}
+        component={PayProConfirmTwoFactor}
       />
     </GiftCards.Navigator>
   );

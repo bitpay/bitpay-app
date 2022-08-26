@@ -3,7 +3,9 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
 import {Caution} from '../../../styles/colors';
 
-const AuthFormContainer = styled.ScrollView`
+const AuthFormContainer = styled.ScrollView.attrs(() => ({
+  keyboardShouldPersistTaps: 'handled',
+}))`
   padding: 24px ${ScreenGutter};
 `;
 
@@ -19,6 +21,7 @@ export const CheckboxControl = styled.View`
 export const CheckboxLabel = styled(BaseText)`
   font-size: 16px;
   margin-left: ${ScreenGutter};
+  flex-shrink: 1;
 `;
 
 export const CheckboxError = styled(BaseText)`

@@ -130,12 +130,7 @@ const WalletConnectStart = () => {
       );
       setButtonState('success');
       dispatch(
-        logSegmentEvent(
-          'track',
-          'WalletConnect Session Request Approved',
-          {},
-          true,
-        ),
+        logSegmentEvent('track', 'WalletConnect Session Request Approved', {}),
       );
       dispatch(
         showBottomNotificationModal({

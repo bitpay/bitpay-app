@@ -20,7 +20,7 @@ import {
 import {SlateDark, White, Black, LuckySevens} from '../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import RangeDateSelector from '../components/RangeDateSelector';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {Currencies} from '../../../constants/currencies';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
@@ -41,7 +41,7 @@ import {
   VictoryGroup,
   VictoryTooltip,
 } from 'victory-native';
-import {DateRanges} from '../../../store/wallet/wallet.models';
+import {DateRanges} from '../../../store/rate/rate.models';
 import {Defs, Stop, LinearGradient} from 'react-native-svg';
 import _ from 'lodash';
 import GainArrow from '../../../../assets/img/home/exchange-rates/increment-arrow.svg';
@@ -165,9 +165,6 @@ const PriceCharts = () => {
     params: {item},
   } = useRoute<RouteProp<WalletStackParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
 
   const {
     average,
@@ -285,18 +282,13 @@ const PriceCharts = () => {
 
   const goToBuyCrypto = useRequireKeyAndWalletRedirect(() => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Buy Crypto',
-        {
-          context: 'PriceChart',
-          coin: currencyAbbreviation || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Buy Crypto', {
+        context: 'PriceChart',
+        coin: currencyAbbreviation || '',
+      }),
     );
     navigation.navigate('Wallet', {
-      screen: 'Amount',
+      screen: WalletScreens.AMOUNT,
       params: {
         onAmountSelected: async (amount: string) => {
           navigation.navigate('BuyCrypto', {
@@ -307,10 +299,7 @@ const PriceCharts = () => {
             },
           });
         },
-        opts: {
-          hideSendMax: true,
-          context: 'buyCrypto',
-        },
+        context: 'buyCrypto',
       },
     });
   });

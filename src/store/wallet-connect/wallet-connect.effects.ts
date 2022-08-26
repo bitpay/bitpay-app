@@ -24,6 +24,7 @@ import {checkEncryptPassword} from '../wallet/utils/wallet';
 import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
 import {LogActions} from '../log';
 import {t} from 'i18next';
+import {checkBiometricForSending} from '../wallet/effects/send/send';
 
 const BWC = BwcProvider.getInstance();
 
@@ -45,13 +46,19 @@ export const walletConnectInit = (): Effect => async (dispatch, getState) => {
     );
     dispatch(WalletConnectActions.successInitRequest(connectors || []));
     dispatch(walletConnectSubscribeToEvents());
-  } catch (err) {
+  } catch (err: unknown) {
+    let errorStr;
+    if (err instanceof Error) {
+      errorStr = err.message;
+    } else {
+      errorStr = JSON.stringify(err);
+    }
     dispatch(
       LogActions.error(
         '[WC/walletConnectInit]: an error occurred while initializing.',
       ),
     );
-    dispatch(LogActions.error(JSON.stringify(err)));
+    dispatch(LogActions.error(errorStr));
     dispatch(WalletConnectActions.failedInitRquest());
   }
 };
@@ -200,6 +207,7 @@ export const walletConnectSubscribeToEvents =
         updatedRequests.push({
           peerId,
           payload: payload,
+          createdOn: Date.now(),
         });
 
         dispatch(WalletConnectActions.callRequest(updatedRequests));
@@ -347,9 +355,18 @@ const getPrivKey =
     return new Promise(async (resolve, reject) => {
       try {
         const {keys} = getState().WALLET;
+        const {biometricLockActive} = getState().APP;
         const key: Key = keys[keyId];
 
         let password: string | undefined;
+
+        if (biometricLockActive) {
+          try {
+            await dispatch(checkBiometricForSending());
+          } catch (error) {
+            return reject(error);
+          }
+        }
 
         if (key.isPrivKeyEncrypted) {
           password = await new Promise<string>((_resolve, _reject) => {
@@ -376,8 +393,8 @@ const getPrivKey =
         }
 
         const xPrivKey = password
-          ? key.methods.get(password).xPrivKey
-          : key.properties.xPrivKey;
+          ? key.methods!.get(password).xPrivKey
+          : key.properties!.xPrivKey;
         const bitcore = BWC.getBitcore();
         const xpriv = new bitcore.HDPrivateKey(xPrivKey);
         const priv = xpriv.deriveChild("m/44'/60'/0'/0/0").privateKey;

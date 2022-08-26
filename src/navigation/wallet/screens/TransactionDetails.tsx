@@ -28,7 +28,6 @@ import {
   ActiveOpacity,
   Column,
   Hr,
-  ImportTextInput,
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
@@ -65,9 +64,13 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
-import {TransactionOptionsContext} from '../../../store/wallet/wallet.models';
+import {
+  Recipient,
+  TransactionOptionsContext,
+} from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
+import {Memo} from './send/confirm/Memo';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -90,11 +93,6 @@ export const DetailContainer = styled.View`
 `;
 
 const VerticalSpace = styled.View`
-  margin: 10px 0;
-`;
-
-const MemoHeader = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin: 10px 0;
 `;
 
@@ -153,10 +151,6 @@ const DetailLink = styled(Link)`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-`;
-
-const InputText = styled(ImportTextInput)`
-  height: 75px;
 `;
 
 const CopyImgContainer = styled.View`
@@ -221,7 +215,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 
 const TransactionDetails = () => {
   const {
-    params: {transaction, wallet},
+    params: {transaction, wallet, onMemoChange},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {t} = useTranslation();
@@ -272,16 +266,22 @@ const TransactionDetails = () => {
 
   const speedup = async () => {
     try {
-      const txp = await getTx(wallet, transaction.proposalId);
+      const txp = await getTx(wallet, transaction.proposalId); // only way to get actual inputs and ouputs
       const toAddress = transaction.outputs[0].address;
       const recipient = {
-        type: 'wallet',
-        name: walletName,
-        walletId,
-        keyId,
         address: toAddress,
       };
 
+      let recipientList: Recipient[] | undefined;
+      if (transaction.hasMultiplesOutputs) {
+        recipientList = [];
+        txp.outputs.forEach((output: any) => {
+          recipientList!.push({
+            address: output.toAddress,
+            amount: Number(dispatch(FormatAmount(coin, output.amount))),
+          });
+        });
+      }
       const tx = {
         wallet,
         walletId,
@@ -291,8 +291,10 @@ const TransactionDetails = () => {
         coin,
         network,
         inputs: txp.inputs,
+        recipientList,
         feeLevel: 'priority',
         recipient,
+        message: txp.message,
       };
 
       const {txDetails, txp: newTxp} = await dispatch(
@@ -304,6 +306,7 @@ const TransactionDetails = () => {
         params: {
           wallet,
           recipient,
+          recipientList,
           txp: newTxp,
           txDetails,
           amount: tx.amount,
@@ -366,17 +369,17 @@ const TransactionDetails = () => {
     dispatch(openUrlWithInAppBrowser(url));
   };
 
-  const saveMemo = async () => {
-    if (memo) {
-      try {
-        await EditTxNote(wallet, {txid: txs.txid, body: memo});
-        transaction.note = {
-          body: memo,
-        };
-        transaction.uiDescription = memo;
-      } catch (e) {
-        console.log('Edit note err: ', e);
-      }
+  const saveMemo = async (newMemo: string) => {
+    try {
+      await EditTxNote(wallet, {txid: txs.txid, body: newMemo});
+      transaction.note = {
+        body: newMemo,
+      };
+      transaction.uiDescription = newMemo;
+      setMemo(newMemo);
+      onMemoChange();
+    } catch (e) {
+      console.log('Edit note err: ', e);
     }
   };
 
@@ -385,7 +388,9 @@ const TransactionDetails = () => {
       {isLoading ? (
         <TransactionDetailSkeleton />
       ) : txs ? (
-        <ScrollView>
+        <ScrollView
+          keyboardShouldPersistTaps={'handled'}
+          extraScrollHeight={80}>
           <>
             {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
               <H2 medium={true}>{txs.amountStr}</H2>
@@ -486,6 +491,9 @@ const TransactionDetails = () => {
                     ) : (
                       <SubTitle>{t('Test Only - No Value')}</SubTitle>
                     )}
+                    {txs.feeRate ? (
+                      <SubTitle>{t('Fee rate: ') + txs.feeRate}</SubTitle>
+                    ) : null}
                   </DetailColumn>
                 </DetailRow>
               </DetailContainer>
@@ -546,9 +554,6 @@ const TransactionDetails = () => {
                     <DetailLink>{t('Unconfirmed')}?</DetailLink>
                   </TouchableOpacity>
                 ) : null}
-                {txs.feeRate ? (
-                  <SubTitle>{t('Fee rate: ') + txs.feeRate}</SubTitle>
-                ) : null}
                 {!!txs.confirmations && !txs.safeConfirmed ? (
                   <H7>{txs.conformations}</H7>
                 ) : null}
@@ -556,20 +561,6 @@ const TransactionDetails = () => {
               </DetailColumn>
             </DetailRow>
           </DetailContainer>
-
-          <Hr />
-
-          <VerticalSpace>
-            <MemoHeader>{t('MEMO')}</MemoHeader>
-
-            <InputText
-              multiline
-              numberOfLines={3}
-              value={memo}
-              onChangeText={text => setMemo(text)}
-              onEndEditing={saveMemo}
-            />
-          </VerticalSpace>
 
           <Hr />
 
@@ -603,6 +594,10 @@ const TransactionDetails = () => {
               <Hr />
             </>
           ) : null}
+
+          <VerticalSpace>
+            <Memo memo={memo || ''} onChange={text => saveMemo(text)} />
+          </VerticalSpace>
 
           <VerticalSpace>
             <Button buttonStyle={'secondary'} onPress={goToBlockchain}>

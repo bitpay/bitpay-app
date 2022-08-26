@@ -2,8 +2,8 @@ import React, {useState, useCallback, useEffect, useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import styled, {css, useTheme} from 'styled-components/native';
-import {TouchableOpacity, FlatList, Platform} from 'react-native';
+import styled, {useTheme} from 'styled-components/native';
+import {TouchableOpacity, FlatList, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {useForm, Controller} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/core';
@@ -27,17 +27,6 @@ import ContactRow, {
 
 const ContactsContainer = styled.SafeAreaView`
   flex: 1;
-`;
-
-const ContactsHeader = styled(BaseText)`
-  font-size: 18px;
-  font-weight: 700;
-  margin-top: ${Platform.select({
-    ios: css`20px`,
-    android: css`40px`,
-  })};
-  text-align: center;
-  margin-bottom: 30px;
 `;
 
 const NoContacts = styled.View`
@@ -155,7 +144,7 @@ const ContactsRoot: React.FC = () => {
         ) : null;
       },
     });
-  }, [navigation, contacts]);
+  }, [navigation, contacts, t]);
   useEffect(() => {
     // Sort list
     contacts.sort((x, y) => {
@@ -181,15 +170,17 @@ const ContactsRoot: React.FC = () => {
 
   const renderItem = useCallback(
     ({item}) => (
-      <ContactRow
-        contact={item}
-        onPress={() => {
-          navigation.navigate('Contacts', {
-            screen: 'ContactsDetails',
-            params: item,
-          });
-        }}
-      />
+      <View style={{paddingHorizontal: 20}}>
+        <ContactRow
+          contact={item}
+          onPress={() => {
+            navigation.navigate('Contacts', {
+              screen: 'ContactsDetails',
+              params: {contact: item},
+            });
+          }}
+        />
+      </View>
     ),
     [navigation],
   );

@@ -1,5 +1,4 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {Alert} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -33,6 +32,7 @@ import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
+import prompt from 'react-native-prompt-android';
 
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;
@@ -147,7 +147,7 @@ const CoinbaseWithdrawConfirm = () => {
   );
 
   const askForTwoFactor = useCallback(() => {
-    Alert.prompt(
+    prompt(
       t('Enter 2FA code'),
       t(
         'Two Factor verification code is required for sending this transaction.',
@@ -168,9 +168,13 @@ const CoinbaseWithdrawConfirm = () => {
           },
         },
       ],
-      'secure-text',
-      '',
-      'number-pad',
+      {
+        type: 'secure-text',
+        cancelable: true,
+        defaultValue: '',
+        // @ts-ignore
+        keyboardType: 'numeric',
+      },
     );
   }, [dispatch, showError, sendError, sendTransaction, t]);
 
@@ -194,6 +198,7 @@ const CoinbaseWithdrawConfirm = () => {
         if (sendError?.errors[0].id === 'two_factor_required') {
           askForTwoFactor();
         } else {
+          setResetSwipeButton(true);
           showError(sendError);
         }
       }

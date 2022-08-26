@@ -25,6 +25,7 @@ import {White, SlateDark} from '../../../styles/colors';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
+import {useLogger} from '../../../utils/hooks';
 
 const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 interface CopayersProps {
@@ -63,6 +64,7 @@ const CopayersContainer = styled(RowContainer)`
 
 const Copayers: React.FC<CopayersProps> = props => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const route = useRoute<RouteProp<WalletStackParamList, 'Copayers'>>();
   const {wallet, status} = route.params || {};
   const [walletStatus, setWalletStatus] = useState(status);
@@ -92,18 +94,24 @@ const Copayers: React.FC<CopayersProps> = props => {
 
   const updateWalletStatus = () => {
     return new Promise<void>(resolve => {
-      wallet?.getStatus({network: 'livenet'}, (err: any, status: any) => {
-        if (err) {
-          console.log(err);
-        }
-        setWalletStatus(status.wallet);
-        if (status.wallet && status.wallet.status === 'complete') {
-          wallet.openWallet({}, () => {
-            navigationRef.goBack();
-          });
-        }
-        return resolve();
-      });
+      wallet?.getStatus(
+        {network: wallet?.network},
+        (err: any, status: Status) => {
+          if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`error [getStatus]: ${errStr}`);
+          } else {
+            setWalletStatus(status?.wallet);
+            if (status?.wallet && status?.wallet?.status === 'complete') {
+              wallet.openWallet({}, () => {
+                navigationRef.goBack();
+              });
+            }
+          }
+          return resolve();
+        },
+      );
     });
   };
 

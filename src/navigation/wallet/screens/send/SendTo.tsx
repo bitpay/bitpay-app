@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -22,6 +22,7 @@ import {Effect, RootState} from '../../../../store';
 import {
   convertToFiat,
   formatFiatAmount,
+  getErrorString,
   sleep,
 } from '../../../../utils/helper-methods';
 import {Key, Rates} from '../../../../store/wallet/wallet.models';
@@ -72,11 +73,14 @@ import {
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
-import {GetChain} from '../../../../store/wallet/utils/currency';
+import {GetChain, IsUtxoCoin} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
-import SettingsContactRow from '../../../../components/list/SettingsContactRow';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
+import Settings from '../../../../components/settings/Settings';
+import OptionsSheet, {Option} from '../../components/OptionsSheet';
+import Icons from '../../components/WalletIcons';
+import ContactRow from '../../../../components/list/ContactRow';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -111,11 +115,7 @@ const PasteClipboardContainer = styled.TouchableOpacity`
   padding: 10px;
 `;
 
-const SendContactRow = styled.View`
-  padding: 10px 0px;
-`;
-
-const ContactTitleContainer = styled.View`
+export const ContactTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
   padding-bottom: 10px;
@@ -124,12 +124,12 @@ const ContactTitleContainer = styled.View`
   margin-bottom: 10px;
 `;
 
-const ContactTitle = styled(BaseText)`
+export const ContactTitle = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-left: 10px;
 `;
 
-const BuildKeyWalletRow = (
+export const BuildKeyWalletRow = (
   keys: {[key in string]: Key},
   currentWalletId: string,
   currentCurrencyAbbreviation: string,
@@ -208,20 +208,67 @@ const SendTo = () => {
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
   const [clipboardData, setClipboardData] = useState('');
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
-    });
-  });
+  const [showWalletOptions, setShowWalletOptions] = useState(false);
 
   const {wallet} = route.params;
-
   const {
     currencyAbbreviation,
     id,
     credentials: {network},
   } = wallet;
+
+  const isUtxo = IsUtxoCoin(wallet?.currencyAbbreviation);
+
+  const selectInputOption: Option = {
+    img: <Icons.SelectInputs />,
+    title: t('Select Inputs for this Transaction'),
+    description: t("Choose which inputs you'd like to use to send crypto."),
+    onPress: () => {
+      navigation.navigate('Wallet', {
+        screen: 'SendToOptions',
+        params: {
+          title: t('Select Inputs'),
+          wallet,
+          context: 'selectInputs',
+        },
+      });
+    },
+  };
+
+  const multisendOption: Option = {
+    img: <Icons.Multisend />,
+    title: t('Transfer to Multiple Recipients'),
+    description: t('Send crypto to multiple contacts or addresses.'),
+    onPress: () => {
+      navigation.navigate('Wallet', {
+        screen: 'SendToOptions',
+        params: {
+          title: t('Multiple Recipients'),
+          wallet,
+          context: 'multisend',
+        },
+      });
+    },
+  };
+
+  const assetOptions: Array<Option> = isUtxo
+    ? [multisendOption, selectInputOption]
+    : [];
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
+      headerRight: () =>
+        assetOptions.length ? (
+          <Settings
+            onPress={() => {
+              setShowWalletOptions(true);
+            }}
+          />
+        ) : null,
+    });
+  });
+
   const keyWallets: KeyWalletsRowProps<KeyWallet>[] = BuildKeyWalletRow(
     keys,
     id,
@@ -233,13 +280,15 @@ const SendTo = () => {
     dispatch,
   );
 
-  const contacts = allContacts.filter(
-    contact =>
-      contact.coin === currencyAbbreviation &&
-      contact.network === network &&
-      (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-        contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
-  );
+  const contacts = useMemo(() => {
+    return allContacts.filter(
+      contact =>
+        contact.coin === currencyAbbreviation.toLowerCase() &&
+        contact.network === network &&
+        (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+          contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
+    );
+  }, [allContacts, currencyAbbreviation, network, searchInput]);
 
   const onErrorMessageDismiss = () => {
     setSearchInput('');
@@ -308,6 +357,7 @@ const SendTo = () => {
     text: string,
     context?: string,
     name?: string,
+    destinationTag?: number,
   ) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
@@ -357,7 +407,7 @@ const SendTo = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
-        dispatch(incomingData(text, {wallet, context, name}));
+        dispatch(incomingData(text, {wallet, context, name, destinationTag}));
       }
     }
   };
@@ -403,8 +453,9 @@ const SendTo = () => {
       dispatch(
         goToAmount({coin: wallet.currencyAbbreviation, recipient, wallet}),
       );
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      logger.error(`Send To: ${getErrorString(err)}`);
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -484,28 +535,36 @@ const SendTo = () => {
 
             {contacts.map((item, index) => {
               return (
-                <SendContactRow key={index}>
-                  <SettingsContactRow
-                    contact={item}
-                    onPress={() => {
-                      try {
-                        if (item) {
-                          validateAndNavigateToConfirm(
-                            item.address,
-                            'contact',
-                            item.name,
-                          );
-                        }
-                      } catch (err) {
-                        console.log(err);
+                <ContactRow
+                  key={index}
+                  contact={item}
+                  onPress={() => {
+                    try {
+                      if (item) {
+                        validateAndNavigateToConfirm(
+                          item.address,
+                          'contact',
+                          item.name,
+                          item.tag || item.destinationTag,
+                        );
                       }
-                    }}
-                  />
-                </SendContactRow>
+                    } catch (err) {
+                      logger.error(
+                        `Send To [Contacts]: ${getErrorString(err)}`,
+                      );
+                    }
+                  }}
+                />
               );
             })}
           </>
         ) : null}
+
+        <OptionsSheet
+          isVisible={showWalletOptions}
+          closeModal={() => setShowWalletOptions(false)}
+          options={assetOptions}
+        />
 
         <View style={{marginTop: 10}}>
           <KeyWalletsRow

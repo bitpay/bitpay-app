@@ -86,6 +86,12 @@ import {
   CoinbaseReduxPersistBlackList,
   CoinbaseState,
 } from './coinbase/coinbase.reducer';
+import {
+  rateReducer,
+  rateReduxPersistBlackList,
+  RateState,
+} from './rate/rate.reducer';
+import {RateActionType} from './rate/rate.types';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -171,6 +177,14 @@ const reducers = {
       blacklist: walletReduxPersistBlackList,
     },
     walletReducer,
+  ),
+  RATE: persistReducer<RateState, RateActionType>(
+    {
+      ...basePersistConfig,
+      key: 'RATE',
+      blacklist: rateReduxPersistBlackList,
+    },
+    rateReducer,
   ),
   CONTACT: persistReducer<ContactState, ContactActionType>(
     {

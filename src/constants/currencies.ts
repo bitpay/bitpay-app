@@ -6,7 +6,9 @@ export type SupportedTokens =
   | 'busd'
   | 'dai'
   | 'wbtc'
-  | 'shib';
+  | 'shib'
+  | 'ape'
+  | 'euroc';
 export type SupportedCurrencies = SupportedCoins | SupportedTokens;
 
 export interface CurrencyOpts {
@@ -383,9 +385,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#00ddfa', // TODO: change to proper color after beta
-      backgroundColor: '#00dcfa', // TODO: change to proper color after beta
-      gradientBackgroundColor: '#00dcfa', // TODO: change to proper color after beta
+      coinColor: '#F5AC37',
+      backgroundColor: '#F5AC37',
+      gradientBackgroundColor: '#F5AC37',
     },
   },
   wbtc: {
@@ -420,9 +422,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#00ddfa', // TODO: change to proper color after beta
-      backgroundColor: '#00dcfa', // TODO: change to proper color after beta
-      gradientBackgroundColor: '#00dcfa', // TODO: change to proper color after beta
+      coinColor: '#282A47',
+      backgroundColor: '#282A47',
+      gradientBackgroundColor: '#282A47',
     },
   },
   doge: {
@@ -494,9 +496,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'normal',
     },
     theme: {
-      coinColor: '#f7931a',
-      backgroundColor: '#f7921a',
-      gradientBackgroundColor: '#f7921a',
+      coinColor: '#FFFFFF',
+      backgroundColor: '#A6A9AA',
+      gradientBackgroundColor: '#A6A9AA',
     },
   },
   shib: {
@@ -532,9 +534,85 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#2775ca',
-      backgroundColor: '#2775c9',
-      gradientBackgroundColor: '#2775c9',
+      coinColor: '#F00500',
+      backgroundColor: '#F00500',
+      gradientBackgroundColor: '#F00500',
+    },
+  },
+  ape: {
+    name: 'ApeCoin',
+    chain: 'ETH',
+    coin: 'ape',
+    unitInfo: {
+      unitName: 'APE',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'ape',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: false,
+      singleAddress: true,
+      isCustom: false,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape',
+      blockExplorerUrls: 'etherscan.io/',
+      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#0054F9',
+      backgroundColor: '#0054F9',
+      gradientBackgroundColor: '#0054F9',
+    },
+  },
+  euroc: {
+    name: 'Euro Coin',
+    chain: 'ETH',
+    coin: 'euroc',
+    unitInfo: {
+      unitName: 'EUROC',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'euroc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: false,
+      singleAddress: true,
+      isCustom: false,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/euroc',
+      blockExplorerUrls: 'etherscan.io/',
+      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#1AA3FF',
+      backgroundColor: '#1AA3FF',
+      gradientBackgroundColor: '#1AA3FF',
     },
   },
 };
@@ -547,6 +625,8 @@ export const SUPPORTED_TOKENS = [
   'dai',
   'wbtc',
   'shib',
+  'ape',
+  'euroc',
 ];
 export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc', 'xrp'];
 export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];

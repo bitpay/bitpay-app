@@ -39,7 +39,7 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
           onPress={() => {
             haptic('impactLight');
             dispatch(
-              logSegmentEvent('track', 'Clicked Exchange Rate Item', {
+              logSegmentEvent('track', 'Clicked Exchange Rate', {
                 coin: item.currencyAbbreviation || '',
               }),
             );

@@ -4,7 +4,6 @@ import {RootState} from '../../../../store';
 import {useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
 import {useNavigation} from '@react-navigation/native';
-import SettingsContactRow from '../../../../components/list/SettingsContactRow';
 import {
   ActiveOpacity,
   Hr,
@@ -14,6 +13,7 @@ import {View} from 'react-native';
 import styled from 'styled-components/native';
 import Icons from '../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
+import ContactRow from '../../../../components/list/ContactRow';
 
 const SeeAllLink = styled(Link)`
   font-weight: 500;
@@ -33,12 +33,12 @@ const Contacts = () => {
       {contacts.length
         ? contacts.slice(0, 2).map((item, index) => (
             <View key={index}>
-              <SettingsContactRow
+              <ContactRow
                 contact={item}
                 onPress={() => {
                   navigation.navigate('Contacts', {
                     screen: 'ContactsDetails',
-                    params: item,
+                    params: {contact: item},
                   });
                 }}
               />

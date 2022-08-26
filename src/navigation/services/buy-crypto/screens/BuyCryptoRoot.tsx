@@ -11,7 +11,7 @@ import {BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
 import WalletSelectorModal from '../components/WalletSelectorModal';
-import AmountModal from '../components/AmountModal';
+import AmountModal from '../../../../components/amount/AmountModal';
 import {
   BuyCryptoItemCard,
   BuyCryptoItemTitle,
@@ -23,8 +23,10 @@ import {
   CoinIconContainer,
 } from '../styled/BuyCryptoCard';
 import Button from '../../../../components/button/Button';
-import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
-import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
+import {
+  SupportedCurrencyOption,
+  SupportedCurrencyOptions,
+} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
 import {
@@ -74,7 +76,7 @@ const BuyCryptoRoot: React.FC<
 
   const [amount, setAmount] = useState<number>(fromAmount ? fromAmount : 0);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
-  const [walletData, setWalletData] = useState<ItemProps>();
+  const [walletData, setWalletData] = useState<SupportedCurrencyOption>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
     useState(false);
@@ -300,17 +302,12 @@ const BuyCryptoRoot: React.FC<
 
   const continueToViewOffers = () => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Buy Crypto "View Offers"',
-        {
-          fiatAmount: amount,
-          fiatCurrency,
-          paymentMethod: selectedPaymentMethod.method,
-          coin: selectedWallet!.currencyAbbreviation,
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Buy Crypto "View Offers"', {
+        fiatAmount: amount,
+        fiatCurrency,
+        paymentMethod: selectedPaymentMethod.method,
+        coin: selectedWallet!.currencyAbbreviation,
+      }),
     );
 
     navigation.navigate('BuyCryptoOffers', {
@@ -623,12 +620,12 @@ const BuyCryptoRoot: React.FC<
 
       <AmountModal
         isVisible={amountModalVisible}
-        onDismiss={(newAmount?: number) => {
-          if (newAmount) {
-            setAmount(newAmount);
-          }
+        context={'buyCrypto'}
+        onSubmit={newAmount => {
+          setAmount(newAmount);
           hideModal('amount');
         }}
+        onClose={() => hideModal('amount')}
       />
 
       <WalletSelectorModal

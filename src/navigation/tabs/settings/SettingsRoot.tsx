@@ -1,7 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {ReactElement, useMemo} from 'react';
+import React, {ReactElement, useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {View, LayoutAnimation} from 'react-native';
+import {View, LayoutAnimation, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
@@ -13,7 +13,6 @@ import {
   SettingTitle,
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
-import {AppActions} from '../../../store/app';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {Black, Feather, LightBlack, White} from '../../../styles/colors';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -33,6 +32,7 @@ import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
 import {SettingsStackParamList} from './SettingsStack';
+import {useScrollToTop} from '@react-navigation/native';
 
 interface HomeSetting {
   id: SettingsListType;
@@ -118,10 +118,6 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const pinLockActive = useAppSelector(({APP}: RootState) => APP.pinLockActive);
-  const biometricLockActive = useAppSelector(
-    ({APP}: RootState) => APP.biometricLockActive,
-  );
   const hideList = useAppSelector(({APP}) => APP.settingsListConfig);
   const memoizedSettingsConfigs: HomeSetting[] = useMemo(
     () => [
@@ -152,14 +148,7 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
       {
         id: 'Security',
         title: t('Security'),
-        onPress: () => {
-          if (biometricLockActive) {
-            dispatch(AppActions.showBiometricModal());
-          }
-          if (pinLockActive) {
-            dispatch(AppActions.showPinModal({type: 'check'}));
-          }
-        },
+        onPress: () => {},
         subListComponent: <Security />,
       },
       {
@@ -187,7 +176,7 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
         subListComponent: <About />,
       },
     ],
-    [t],
+    [t, redirectTo],
   );
 
   const memoizedSettingsList = useMemo(() => {
@@ -218,9 +207,12 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
     );
   }, [dispatch, memoizedSettingsConfigs, hideList]);
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollViewRef);
+
   return (
     <SettingsContainer>
-      <SettingsHome>
+      <SettingsHome ref={scrollViewRef}>
         <BitPayIdSettingsLink
           style={{paddingHorizontal: 15}}
           onPress={() => {

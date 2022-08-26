@@ -3,8 +3,8 @@ import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 
-export const sleep = async (duration: number) =>
-  await new Promise(resolve => setTimeout(resolve, duration));
+export const sleep = (duration: number) =>
+  new Promise<void>(resolve => setTimeout(resolve, duration));
 
 export const coinSupported = (coin: string): boolean => {
   return Object.keys(Currencies).some(
@@ -213,7 +213,7 @@ export const findContact = (
 };
 
 export const getMnemonic = (key: Key) =>
-  key.properties.mnemonic.trim().split(' ');
+  key.properties!.mnemonic.trim().split(' ');
 
 export const shouldScale = (
   value: string | number | null | undefined,
@@ -282,3 +282,7 @@ export const convertToFiat = (
   hideWallet: boolean | undefined,
   network: Network,
 ) => (network === Network.mainnet && !hideWallet ? fiat : 0);
+
+export const getErrorString = (err: any): string => {
+  return err instanceof Error ? err.message : JSON.stringify(err);
+};

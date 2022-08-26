@@ -1,6 +1,9 @@
 import React from 'react';
 import HomeCard from '../../../components/home-card/HomeCard';
-import {formatFiatAmount} from '../../../utils/helper-methods';
+import {
+  formatFiatAmount,
+  formatFiatAmountObj,
+} from '../../../utils/helper-methods';
 import {useNavigation} from '@react-navigation/native';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import styled, {useTheme} from 'styled-components/native';
@@ -9,7 +12,13 @@ import {useAppSelector} from '../../../utils/hooks';
 import {HomeCarouselLayoutType} from '../../../store/app/app.models';
 import {Balance, KeyName} from '../../wallet/components/KeyDropdownOption';
 import {BoxShadow} from '../../tabs/home/components/Styled';
-import {LightBlack, White} from '../../../styles/colors';
+import {BaseText, H3} from '../../../components/styled/Text';
+import {
+  LightBlack,
+  White,
+  NeutralSlate,
+  SlateDark,
+} from '../../../styles/colors';
 import {
   ActiveOpacity,
   Column,
@@ -46,6 +55,16 @@ const HeaderImgList = styled.View`
   justify-content: center;
 `;
 
+const BalanceCode = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
+  font-weight: 500;
+`;
+
+const BalanceCodeContainer = styled.View`
+  padding-left: 2px;
+`;
+
 const HeaderComponent = (
   <HeaderImg>
     <CoinbaseSvg width="22" height="22" />
@@ -68,14 +87,20 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   };
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const user = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideTotalBalance = useAppSelector(
+    ({COINBASE}) => COINBASE.hideTotalBalance,
+  );
+
+  const {amount, code} = formatFiatAmountObj(
+    balance,
+    defaultAltCurrency.isoCode,
+  );
 
   const body = {
     title: 'Coinbase',
-    value: formatFiatAmount(
-      balance,
-      user?.data?.native_currency?.toUpperCase(),
-    ),
+    value: formatFiatAmount(balance, defaultAltCurrency.isoCode),
+    hideKeyBalance: false, // TODO: adds this function to Coinbase Settings
   };
 
   if (layout === 'listView') {
@@ -90,7 +115,18 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
             <KeyName>Coinbase</KeyName>
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            <Balance>{body.value}</Balance>
+            {!hideTotalBalance ? (
+              <Balance>
+                {amount}
+                {code ? (
+                  <BalanceCodeContainer>
+                    <BalanceCode>{code}</BalanceCode>
+                  </BalanceCodeContainer>
+                ) : null}
+              </Balance>
+            ) : (
+              <H3>****</H3>
+            )}
           </Column>
         </Row>
       </ListCard>

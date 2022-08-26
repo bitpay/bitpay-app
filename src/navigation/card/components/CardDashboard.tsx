@@ -1,5 +1,8 @@
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
+import {
+  useFocusEffect,
+  useNavigation,
+  useScrollToTop,
+} from '@react-navigation/native';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -24,6 +27,7 @@ import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
+import {AppEffects} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Analytics} from '../../../store/app/app.effects';
 import {selectBrazeCardOffers} from '../../../store/app/app.selectors';
@@ -34,10 +38,14 @@ import {
   selectDashboardTransactions,
 } from '../../../store/card/card.selectors';
 import {isActivationRequired} from '../../../utils/card';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useBrazeRefreshOnFocus,
+} from '../../../utils/hooks';
 import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 import {WalletScreens} from '../../wallet/WalletStack';
-import {CardScreens, CardStackParamList} from '../CardStack';
+import {CardHomeScreenProps} from '../screens/CardHome';
 import {
   EmptyGhostContainer,
   EmptyListContainer,
@@ -56,9 +64,8 @@ import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
 
-interface CardDashboardProps {
+interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
-  navigation: StackNavigationProp<CardStackParamList, CardScreens.HOME>;
 }
 
 const CardsRowContainer = styled.View`
@@ -93,6 +100,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
+  const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
+  useBrazeRefreshOnFocus();
 
   const hasWalletsWithBalance = useMemo(
     () =>
@@ -118,7 +127,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const goToCardSettings = () => {
-    dispatch(Analytics.track('Clicked Card Settings', {}, true));
+    dispatch(Analytics.track('Clicked Card Settings', {}));
 
     navigation.navigate('Settings', {
       id: activeCard.id,
@@ -128,7 +137,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   goToCardSettingsRef.current = goToCardSettings;
 
   const goToReferAndEarn = () => {
-    dispatch(Analytics.track('Clicked Refer and Earn', {}, true));
+    dispatch(Analytics.track('Clicked Refer and Earn', {}));
 
     navigation.navigate('Referral', {card: activeCard});
   };
@@ -146,15 +155,12 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
 
   const goToAmountScreen = () => {
-    dispatch(
-      Analytics.track('Clicked Add Funds', {context: 'CardDashboard'}, true),
-    );
+    dispatch(Analytics.track('Clicked Add Funds', {context: 'CardDashboard'}));
     if (hasWalletsWithBalance) {
       navigator.navigate('Wallet', {
         screen: WalletScreens.AMOUNT,
         params: {
           fiatCurrencyAbbreviation: activeCard.currency.code,
-          opts: {hideSendMax: true},
           onAmountSelected: selectedAmount =>
             goToConfirmScreen(+selectedAmount),
         },
@@ -171,13 +177,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               text: t('Add funds'),
               action: () => {
                 dispatch(
-                  Analytics.track(
-                    'Clicked Buy Crypto',
-                    {
-                      context: 'CardDashboard - No funds availiable',
-                    },
-                    true,
-                  ),
+                  Analytics.track('Clicked Buy Crypto', {
+                    context: 'CardDashboard - No funds availiable',
+                  }),
                 );
                 navigator.navigate('Wallet', {
                   screen: WalletScreens.AMOUNT,
@@ -189,9 +191,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
                           amount: Number(amount),
                         },
                       });
-                    },
-                    opts: {
-                      hideSendMax: true,
                     },
                   },
                 });
@@ -236,11 +235,11 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   useFocusEffect(
     useCallback(() => {
-      if (uninitializedId) {
+      if (appWasInit && uninitializedId) {
         setAutoInitState({...autoInitState, [uninitializedId]: true});
         dispatch(CardEffects.startFetchOverview(uninitializedId));
       }
-    }, [uninitializedId, autoInitState, dispatch]),
+    }, [uninitializedId, autoInitState, dispatch, appWasInit]),
   );
 
   const listFooterComponent = useMemo(
@@ -312,6 +311,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   const onRefresh = () => {
     dispatch(CardEffects.startFetchOverview(activeCard.id));
+    dispatch(AppEffects.requestBrazeContentRefresh());
   };
 
   const fetchNextPage = () => {
@@ -365,6 +365,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       ),
     });
   }
+
+  const flatListRef = useRef<FlatList>(null);
+  useScrollToTop(flatListRef);
 
   return (
     <>
@@ -425,6 +428,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         }
         ListFooterComponent={listFooterComponent}
         ListEmptyComponent={listEmptyComponent}
+        ref={flatListRef}
       />
       <FloatingActionButtonContainer>
         <FloatingActionButton

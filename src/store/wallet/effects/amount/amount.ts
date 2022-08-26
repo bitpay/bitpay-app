@@ -35,7 +35,12 @@ export const ParseAmount =
         FormatAmountStr(currencyAbbreviation, amountSat, fullPrecision),
       ) || '';
 
-    _amount = (amountSat * satToUnit).toFixed(unitDecimals);
+    // workaround to prevent miscalculations with decimal numbers that javascript can't handle with precision
+    const amountDecimals = countDecimals(amount);
+    _amount = (amountSat * satToUnit).toFixed(
+      amountDecimals < unitDecimals ? amountDecimals : unitDecimals,
+    );
+
     const currency = currencyAbbreviation.toUpperCase();
 
     return {
@@ -45,6 +50,24 @@ export const ParseAmount =
       amountUnitStr,
     };
   };
+
+const countDecimals = (num: number): number => {
+  if (!num) {
+    return 0;
+  }
+  const strNum = num.toString();
+  // verify if number 0.000005 is represented as "5e-6"
+  if (strNum.indexOf('e-') > -1) {
+    const [base, trail] = strNum.split('e-');
+    const deg = parseInt(trail, 10);
+    return deg;
+  }
+  // count decimals for number in representation like "0.123456"
+  if (Math.floor(num) !== num) {
+    return num.toString().split('.')[1].length || 0;
+  }
+  return 0;
+};
 
 export const FormatAmountStr =
   (

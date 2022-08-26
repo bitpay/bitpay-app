@@ -16,7 +16,6 @@ import {
   getDetailsTitle,
   IsMultisigEthInfo,
   IsReceived,
-  IsShared,
   NotZeroAmountEth,
   TxActions,
   RemoveTxProposal,
@@ -70,7 +69,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
 
-const TxsDetailsContainer = styled.View`
+const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -93,10 +92,6 @@ export const DetailContainer = styled.View`
 export const DetailRow = styled(Row)`
   align-items: center;
   justify-content: space-between;
-`;
-
-const TransactionIdText = styled(H7)`
-  max-width: 150px;
 `;
 
 export const DetailColumn = styled(Column)`
@@ -198,7 +193,6 @@ const TransactionProposalDetails = () => {
     params: {transaction, wallet, key},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionProposalDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [txs, setTxs] = useState<any>();
@@ -206,6 +200,7 @@ const TransactionProposalDetails = () => {
   const title = getDetailsTitle(transaction, wallet);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [lastSigner, setLastSigner] = useState(false);
 
   let {
     currencyAbbreviation,
@@ -231,6 +226,10 @@ const TransactionProposalDetails = () => {
         }),
       );
       setTxs(_transaction);
+      setLastSigner(
+        _transaction.actions.filter((a: any) => a?.type === 'accept').length ===
+          _transaction.requiredSignatures - 1,
+      );
       await sleep(500);
       setIsLoading(false);
     } catch (e) {
@@ -359,18 +358,15 @@ const TransactionProposalDetails = () => {
             ) : null}
           </>
 
-          {((txs && !txs.removed && txs.canBeRemoved) ||
-            (txs && txs.status == 'accepted' && !txs.broadcastedOn)) &&
-          (!IsShared(wallet) || !txs.multisigContractAddress) ? (
+          {(txs && !txs.removed && txs.canBeRemoved) ||
+          (txs && txs.status == 'accepted' && !txs.broadcastedOn) ? (
             <>
-              {IsShared(wallet) ? (
-                <Banner
-                  type={'info'}
-                  description={t(
-                    '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
-                  )}
-                />
-              ) : null}
+              <Banner
+                type={'info'}
+                description={t(
+                  '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
+                )}
+              />
               <Button
                 onPress={removePaymentProposal}
                 buttonType={'link'}
@@ -382,7 +378,6 @@ const TransactionProposalDetails = () => {
 
           {txs &&
           !txs.removed &&
-          IsShared(wallet) &&
           txs.pendingForUs &&
           !txs.multisigContractAddress ? (
             <Button
@@ -434,9 +429,10 @@ const TransactionProposalDetails = () => {
                 />
               </DetailRow>
             </DetailContainer>
+            <Hr />
           </>
 
-          {txs.creatorName && IsShared(wallet) ? (
+          {txs.creatorName ? (
             <>
               <DetailContainer>
                 <DetailRow>
@@ -487,44 +483,41 @@ const TransactionProposalDetails = () => {
         </ScrollView>
       ) : null}
 
-      {txs &&
-      !txs.removed &&
-      txs.pendingForUs &&
-      (IsShared(wallet) || txs.multisigContractAddress) ? (
+      {txs && !txs.removed && txs.pendingForUs && !key.isReadOnly ? (
         <SwipeButton
-          title={t('Slide to send')}
+          title={lastSigner ? t('Slide to send') : t('Slide to accept')}
           forceReset={resetSwipeButton}
           onSwipeComplete={async () => {
             try {
               dispatch(
                 startOnGoingProcessModal(
-                  //  t('Sending Payment')
-                  t(OnGoingProcessMessages.SENDING_PAYMENT),
+                  lastSigner
+                    ? t(OnGoingProcessMessages.SENDING_PAYMENT)
+                    : t(OnGoingProcessMessages.ACCEPTING_PAYMENT),
                 ),
               );
               await sleep(400);
               await dispatch(publishAndSign({txp: txs, key, wallet}));
               dispatch(dismissOnGoingProcessModal());
               dispatch(
-                logSegmentEvent(
-                  'track',
-                  'Sent Crypto',
-                  {
-                    context: 'Transaction Proposal Details',
-                    coin: currencyAbbreviation || '',
-                  },
-                  true,
-                ),
+                logSegmentEvent('track', 'Sent Crypto', {
+                  context: 'Transaction Proposal Details',
+                  coin: currencyAbbreviation || '',
+                }),
               );
               await sleep(400);
               setShowPaymentSentModal(true);
             } catch (err) {
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);
+              setResetSwipeButton(true);
               switch (err) {
                 case 'invalid password':
                   dispatch(showBottomNotificationModal(WrongPasswordError()));
+                  break;
                 case 'password canceled':
+                  break;
+                case 'biometric check failed':
                   setResetSwipeButton(true);
                   break;
                 default:
@@ -542,6 +535,7 @@ const TransactionProposalDetails = () => {
 
       <PaymentSent
         isVisible={showPaymentSentModal}
+        title={lastSigner ? t('Payment Sent') : t('Payment Accepted')}
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
           await sleep(300);

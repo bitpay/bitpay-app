@@ -49,7 +49,7 @@ import {
 import {addWallet, getDecryptPassword} from '../../../store/wallet/effects';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {
   LightBlack,
@@ -183,7 +183,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const [isTestnet, setIsTestnet] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const rates = useAppSelector(({WALLET}) => WALLET.rates);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const [customTokenAddress, setCustomTokenAddress] = useState<
     string | undefined
   >('');
@@ -324,15 +324,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       );
 
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Create Basic Wallet success',
-          {
-            coin: currency,
-            isErc20Token: !!isToken,
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Created Basic Wallet', {
+          coin: currency,
+          isErc20Token: !!isToken,
+        }),
       );
 
       // adds wallet and binds to key obj - creates eth wallet if needed

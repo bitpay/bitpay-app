@@ -30,7 +30,7 @@ import {
   isValidWalletConnectUri,
   isValidWyreUri,
 } from '../wallet/utils/validations';
-import {APP_DEEPLINK_PREFIX, APP_NAME} from '../../constants/config';
+import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
   simplexIncomingData,
@@ -67,14 +67,16 @@ import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 export const incomingData =
   (
     data: string,
-    opts?: {wallet?: Wallet; context?: string; name?: string},
+    opts?: {
+      wallet?: Wallet;
+      context?: string;
+      name?: string;
+      destinationTag?: number;
+    },
   ): Effect<Promise<void>> =>
   async dispatch => {
-    if (data.includes(APP_DEEPLINK_PREFIX)) {
-      data = data.replace(APP_DEEPLINK_PREFIX, '');
-      // wait to close blur
-      await sleep(200);
-    }
+    // wait to close blur
+    await sleep(200);
 
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     try {
@@ -168,6 +170,8 @@ const getParameterByName = (name: string, url: string): string | undefined => {
 const goToPayPro =
   (data: string): Effect =>
   async dispatch => {
+    dispatch(dismissOnGoingProcessModal());
+
     dispatch(
       startOnGoingProcessModal(
         //  t('Fetching payment options...')
@@ -254,17 +258,15 @@ const handleUnlock =
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: t('Connect Your BitPay ID'),
+            title: t('Verification Required'),
             enableBackdropDismiss: false,
-            message: t(
-              'To complete this payment, please login with your BitPay ID.',
-            ),
+            message: t('To complete this payment please verify your account.'),
             actions: [
               {
-                text: t('CONTINUE'),
+                text: t('Verify'),
                 action: () => {
                   Linking.openURL(
-                    `https://${host}/id/verify?context=unlockAppV&id=${invoiceId}`,
+                    `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
                   );
                 },
               },
@@ -351,7 +353,12 @@ const goToConfirm =
     setButtonState,
     opts,
   }: {
-    recipient: {type: string; address: string; currency: string};
+    recipient: {
+      type: string;
+      address: string;
+      currency: string;
+      destinationTag?: number;
+    };
     amount: number;
     wallet?: Wallet;
     setButtonState?: (state: ButtonState) => void;
@@ -359,7 +366,6 @@ const goToConfirm =
       sendMax?: boolean | undefined;
       message?: string;
       feePerKb?: number;
-      destinationTag?: string;
     };
   }): Effect<Promise<void>> =>
   async dispatch => {
@@ -374,6 +380,7 @@ const goToConfirm =
               ...{
                 opts: {
                   showERC20Tokens: recipient.currency.toLowerCase() === 'eth', // no wallet selected - if ETH address show token wallets in next view
+                  message: opts?.message || '',
                 },
               },
             },
@@ -416,8 +423,11 @@ const goToConfirm =
           txp,
           txDetails,
           amount,
+          message: opts?.message || '',
+          sendMax: opts?.sendMax,
         },
       });
+      sleep(300).then(() => setButtonState?.(null));
     } catch (err: any) {
       if (setButtonState) {
         setButtonState('failed');
@@ -460,12 +470,12 @@ export const goToAmount =
       address: string;
       currency: string;
       network?: Network;
+      destinationTag?: number;
     };
     wallet?: Wallet;
     opts?: {
       message?: string;
       feePerKb?: number;
-      destinationTag?: string;
     };
   }): Effect<Promise<void>> =>
   async dispatch => {
@@ -490,7 +500,8 @@ export const goToAmount =
     navigationRef.navigate('Wallet', {
       screen: WalletScreens.AMOUNT,
       params: {
-        currencyAbbreviationRouteParam: coin.toUpperCase(),
+        sendMaxEnabled: true,
+        cryptoCurrencyAbbreviation: coin.toUpperCase(),
         onAmountSelected: async (amount, setButtonState, amountOpts) => {
           dispatch(
             goToConfirm({
@@ -509,12 +520,12 @@ export const goToAmount =
 const handleBitPayUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   (dispatch, getState) => {
-    console.log('### Incoming-data: BitPay URI');
+    dispatch(LogActions.info('[scan] Incoming-data: BitPay URI', data));
 
     // From Braze (push notifications)
-    if (data.indexOf('bitpay://wallet?') === 0) {
+    if (data.includes('wallet?')) {
       const params: URLSearchParams = new URLSearchParams(
-        data.replace('bitpay://wallet?', ''),
+        data.replace(APP_DEEPLINK_PREFIX + 'wallet?', ''),
       );
       const walletIdHashed = params.get('walletId')!;
       const tokenAddress = params.get('tokenAddress');
@@ -574,7 +585,7 @@ const handleBitPayUri =
 const handleBitcoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Bitcoin URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Bitcoin URI'));
     const coin = 'btc';
     const parsed = BwcProvider.getInstance().getBitcore().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -598,7 +609,7 @@ const handleBitcoinUri =
 const handleBitcoinCashUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: BitcoinCash URI');
+    dispatch(LogActions.info('[scan] Incoming-data: BitcoinCash URI'));
     const coin = 'bch';
     const parsed = BwcProvider.getInstance().getBitcoreCash().URI(data);
     const message = parsed.message;
@@ -628,7 +639,11 @@ const handleBitcoinCashUri =
 const handleBitcoinCashUriLegacyAddress =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Bitcoin Cash URI with legacy address');
+    dispatch(
+      LogActions.info(
+        '[scan] Incoming-data: Bitcoin Cash URI with legacy address',
+      ),
+    );
     const coin = 'bch';
     const parsed = BwcProvider.getInstance()
       .getBitcore()
@@ -636,7 +651,9 @@ const handleBitcoinCashUriLegacyAddress =
 
     const oldAddr = parsed.address ? parsed.address.toString() : '';
     if (!oldAddr) {
-      console.log('Could not parse Bitcoin Cash legacy address');
+      dispatch(
+        LogActions.info('[scan] Could not parse Bitcoin Cash legacy address'),
+      );
     }
 
     const a = BwcProvider.getInstance()
@@ -650,7 +667,11 @@ const handleBitcoinCashUriLegacyAddress =
     const message = parsed.message;
 
     // Translate address
-    console.log('Legacy Bitcoin Address translated to: ' + address);
+    dispatch(
+      LogActions.info(
+        '[scan] Legacy Bitcoin Address translated to: ' + address,
+      ),
+    );
     const recipient = {
       type: 'address',
       currency: coin,
@@ -670,7 +691,7 @@ const handleBitcoinCashUriLegacyAddress =
 const handleEthereumUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Ethereum URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Ethereum URI'));
     const coin = 'eth';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -703,7 +724,7 @@ const handleEthereumUri =
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Ripple URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Ripple URI'));
     const coin = 'xrp';
     const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
     const tagParam = /[\?\&]dt=(\d+([\,\.]\d+)?)/i;
@@ -717,9 +738,10 @@ const handleRippleUri =
       type: 'address',
       currency: coin,
       address,
+      destinationTag: Number(destinationTag),
     };
     if (!amountParam.exec(data)) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {destinationTag}}));
+      dispatch(goToAmount({coin, recipient, wallet}));
     } else {
       const parsedAmount = amountParam.exec(data)![1];
       const amount = Number(parsedAmount);
@@ -728,7 +750,6 @@ const handleRippleUri =
           recipient,
           amount,
           wallet,
-          opts: {destinationTag},
         }),
       );
     }
@@ -737,7 +758,7 @@ const handleRippleUri =
 const handleDogecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Dogecoin URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Dogecoin URI'));
     const coin = 'doge';
     const parsed = BwcProvider.getInstance().getBitcoreDoge().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -763,7 +784,7 @@ const handleDogecoinUri =
 const handleLitecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    console.log('Incoming-data: Litecoin URI');
+    dispatch(LogActions.info('[scan] Incoming-data: Litecoin URI'));
     const coin = 'ltc';
     const parsed = BwcProvider.getInstance().getBitcoreLtc().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
@@ -818,17 +839,12 @@ const handleSimplexUri =
     const order = BUY_CRYPTO.simplex[paymentId];
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Successfully Complete Crypto Purchase',
-        {
-          exchange: 'simplex',
-          fiatAmount: order?.fiat_total_amount || '',
-          fiatCurrency: order?.fiat_total_amount_currency || '',
-          coin: order?.coin || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Purchased Buy Crypto', {
+        exchange: 'simplex',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin || '',
+      }),
     );
 
     navigationRef.navigate('ExternalServicesSettings', {
@@ -844,7 +860,7 @@ const handleWyreUri =
   dispatch => {
     dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
 
-    if (data.indexOf(APP_NAME + '://wyreError') >= 0) {
+    if (data.indexOf('wyreError') >= 0) {
       navigationRef.navigate('ExternalServicesSettings', {
         screen: 'WyreSettings',
         params: {
@@ -854,7 +870,7 @@ const handleWyreUri =
       return;
     }
 
-    if (data === APP_NAME + '://wyre') {
+    if (data === 'wyre') {
       return;
     }
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
@@ -896,17 +912,12 @@ const handleWyreUri =
     );
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Successfully Complete Crypto Purchase',
-        {
-          exchange: 'wyre',
-          fiatAmount: sourceAmount || '',
-          fiatCurrency: sourceCurrency || '',
-          coin: destCurrency || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Purchased Buy Crypto', {
+        exchange: 'wyre',
+        fiatAmount: sourceAmount || '',
+        fiatCurrency: sourceCurrency || '',
+        coin: destCurrency || '',
+      }),
     );
 
     navigationRef.navigate('ExternalServicesSettings', {
@@ -930,10 +941,15 @@ const handlePlainAddress =
   (
     address: string,
     coin: string,
-    opts?: {wallet?: Wallet; context?: string; name?: string},
+    opts?: {
+      wallet?: Wallet;
+      context?: string;
+      name?: string;
+      destinationTag?: number;
+    },
   ): Effect<void> =>
   dispatch => {
-    console.log(`Incoming-data: ${coin} plain address`);
+    dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
@@ -943,6 +959,7 @@ const handlePlainAddress =
       currency: coin,
       address,
       network,
+      destinationTag: opts?.destinationTag,
     };
     dispatch(goToAmount({coin, recipient, wallet: opts?.wallet}));
   };
@@ -959,7 +976,11 @@ const goToImport = (importQrCodeData: string): void => {
 const goToJoinWallet =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    console.log('Incoming-data (redirect): Code to join to a multisig wallet');
+    dispatch(
+      LogActions.info(
+        '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
+      ),
+    );
     const keys = Object.values(getState().WALLET.keys);
     if (!keys.length) {
       navigationRef.navigate('Wallet', {

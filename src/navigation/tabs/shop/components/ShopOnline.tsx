@@ -28,7 +28,7 @@ import {
 } from './styled/ShopTabComponents';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const SearchResults = styled.View`
@@ -70,12 +70,7 @@ export const ShopOnline = ({
         );
         setSearchResults(newSearchResults);
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Searched Online Brands',
-            {search: text},
-            true,
-          ),
+          logSegmentEvent('track', 'Searched Online Brands', {search: text}),
         );
       }, 300),
     [dispatch, setSearchVal, integrations],
@@ -135,9 +130,11 @@ export const ShopOnline = ({
     </>
   );
 
+  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
+
   const memoizedFullIntegrationsList = useMemo(
     () => <FullIntegrationsList />,
-    [],
+    [defaultLanguage],
   );
 
   return (

@@ -1,3 +1,5 @@
+// @ts-ignore
+import {version} from '../../package.json'; // TODO: better way to get version
 import {Network} from '.';
 
 export const DEVTOOLS_ENABLED = false;
@@ -8,6 +10,7 @@ export const APP_ANALYTICS_ENABLED = !__DEV__;
 export const APP_NAME = 'bitpay';
 export const APP_NAME_UPPERCASE = 'BitPay';
 export const APP_NETWORK = Network.mainnet;
+export const APP_VERSION = version;
 export const BASE_BITPAY_URLS = {
   [Network.mainnet]: 'https://bitpay.com',
   [Network.testnet]: 'https://test.bitpay.com',
@@ -17,6 +20,13 @@ export const APP_UNIVERSAL_LINK_DOMAINS = [
   'link.bitpay.com',
   'link.test.bitpay.com',
   'link.staging.bitpay.com',
+];
+export const APP_CRYPTO_PREFIX = [
+  'bitcoin',
+  'bitcoincash',
+  'ethereum',
+  'dogecoin',
+  'litecoin',
 ];
 
 // BWC

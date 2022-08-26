@@ -33,7 +33,7 @@ import TermsOfUse, {
   TermsOfUseParamList,
 } from '../onboarding/screens/TermsOfUse';
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
-import Amount, {AmountParamList} from './screens/Amount';
+import AmountScreen, {AmountScreenParamList} from './screens/AmountScreen';
 import SendTo from './screens/send/SendTo';
 import Confirm, {ConfirmParamList} from './screens/send/confirm/Confirm';
 import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
@@ -44,6 +44,7 @@ import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 import TransactionDetails from './screens/TransactionDetails';
 import TransactionProposalDetails from './screens/TransactionProposalDetails';
+import TransactionProposalNotifications from './screens/TransactionProposalNotifications';
 import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 import KeyGlobalSelect, {
   KeyGlobalSelectParamList,
@@ -51,9 +52,6 @@ import KeyGlobalSelect, {
 import DebitCardConfirm, {
   DebitCardConfirmParamList,
 } from './screens/send/confirm/DebitCardConfirm';
-import GiftCardConfirm, {
-  GiftCardConfirmParamList,
-} from './screens/send/confirm/GiftCardConfirm';
 import WalletInformation from './screens/wallet-settings/WalletInformation';
 import ExportWallet from './screens/wallet-settings/ExportWallet';
 import Addresses from './screens/wallet-settings/Addresses';
@@ -67,11 +65,19 @@ import PriceCharts, {PriceChartsParamList} from './screens/PriceCharts';
 import ClearEncryptPassword, {
   ClearEncryptPasswordParamList,
 } from './screens/ClearEncryptPassword';
-import PayProConfirmTwoFactor from './screens/send/confirm/PayProConfirmTwoFactor';
+import PayProConfirmTwoFactor, {
+  PayProConfirmTwoFactorParamList,
+} from './screens/send/confirm/PayProConfirmTwoFactor';
 import {useTranslation} from 'react-i18next';
+import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
+import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
+import CurrencyTokenSelectionScreen, {
+  CurrencyTokenSelectionScreenParamList,
+} from './screens/CurrencyTokenSelection';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
+  WalletCurrencyTokenSelectionScreen: CurrencyTokenSelectionScreenParamList;
   AddWallet: AddWalletParamList;
   BackupKey: BackupParamList;
   RecoveryPhrase: RecoveryPhraseParamList;
@@ -97,22 +103,26 @@ export type WalletStackParamList = {
   ExtendedPrivateKey: {xPrivKey: string};
   DeleteKey: {keyId: string};
   ExportKey: {code: string; keyName: string | undefined};
-  Amount: AmountParamList;
+  WalletAmountScreen: AmountScreenParamList;
   SendTo: {
     wallet: WalletModel;
   };
   Confirm: ConfirmParamList;
   DebitCardConfirm: DebitCardConfirmParamList;
-  GiftCardConfirm: GiftCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
-  PayProConfirmTwoFactor: {onSubmit: (code: string) => Promise<void>};
+  PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
-  TransactionDetails: {wallet: WalletModel; transaction: any};
+  TransactionDetails: {
+    wallet: WalletModel;
+    transaction: any;
+    onMemoChange: () => void;
+  };
   TransactionProposalDetails: {wallet: WalletModel; transaction: any; key: Key};
+  TransactionProposalNotifications: {walletId?: string; keyId?: string};
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
   WalletInformation: {wallet: WalletModel};
@@ -128,10 +138,13 @@ export type WalletStackParamList = {
   AllAddresses: AllAddressesParamList;
   PriceCharts: PriceChartsParamList;
   ClearEncryptPassword: ClearEncryptPasswordParamList;
+  SendToOptions: SendToOptionsParamList;
+  SelectInputs: SelectInputsParamList;
 };
 
 export enum WalletScreens {
   CURRENCY_SELECTION = 'CurrencySelection',
+  CURRENCY_TOKEN_SELECTION = 'WalletCurrencyTokenSelectionScreen',
   ADD_WALLET = 'AddWallet',
   BACKUP_KEY = 'BackupKey',
   RECOVERY_PHRASE = 'RecoveryPhrase',
@@ -149,7 +162,7 @@ export enum WalletScreens {
   EXTENDED_PRIVATE_KEY = 'ExtendedPrivateKey',
   DELETE_KEY = 'DeleteKey',
   EXPORT_KEY = 'ExportKey',
-  AMOUNT = 'Amount',
+  AMOUNT = 'WalletAmountScreen',
   SEND_TO = 'SendTo',
   CONFIRM = 'Confirm',
   DEBIT_CARD_CONFIRM = 'DebitCardConfirm',
@@ -163,6 +176,7 @@ export enum WalletScreens {
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
   TRANSACTION_DETAILS = 'TransactionDetails',
   TRANSACTION_PROPOSAL_DETAILS = 'TransactionProposalDetails',
+  TRANSACTION_PROPOSAL_NOTIFICATIONS = 'TransactionProposalNotifications',
   GLOBAL_SELECT = 'GlobalSelect',
   KEY_GLOBAL_SELECT = 'KeyGlobalSelect',
   WALLET_INFORMATION = 'WalletInformation',
@@ -171,6 +185,8 @@ export enum WalletScreens {
   ALL_ADDRESSES = 'AllAddresses',
   PRICE_CHARTS = 'PriceCharts',
   CLEAR_ENCRYPT_PASSWORD = 'ClearEncryptPassword',
+  SEND_TO_OPTIONS = 'SendToOptions',
+  SELECT_INPUTS = 'SelectInputs',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -192,6 +208,10 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CURRENCY_SELECTION}
           component={CurrencySelection}
+        />
+        <Wallet.Screen
+          name={WalletScreens.CURRENCY_TOKEN_SELECTION}
+          component={CurrencyTokenSelectionScreen}
         />
         <Wallet.Screen
           options={{
@@ -267,7 +287,7 @@ const WalletStack = () => {
           name={WalletScreens.TERMS_OF_USE}
           component={TermsOfUse}
         />
-        <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
+        <Wallet.Screen name={WalletScreens.AMOUNT} component={AmountScreen} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
         <Wallet.Screen name={WalletScreens.CONFIRM} component={Confirm} />
         <Wallet.Screen
@@ -277,16 +297,6 @@ const WalletStack = () => {
           }}
           name={WalletScreens.DEBIT_CARD_CONFIRM}
           component={DebitCardConfirm}
-        />
-        <Wallet.Screen
-          options={{
-            headerTitle: () => (
-              <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>
-            ),
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
-          name={WalletScreens.GIFT_CARD_CONFIRM}
-          component={GiftCardConfirm}
         />
         <Wallet.Screen
           options={{
@@ -358,6 +368,13 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS}
+          component={TransactionProposalNotifications}
+        />
+        <Wallet.Screen
+          options={{
             headerTitle: () => (
               <HeaderTitle>{t('Select a currency')}</HeaderTitle>
             ),
@@ -403,6 +420,14 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CLEAR_ENCRYPT_PASSWORD}
           component={ClearEncryptPassword}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SEND_TO_OPTIONS}
+          component={SendToOptions}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SELECT_INPUTS}
+          component={SelectInputs}
         />
       </Wallet.Navigator>
     </>

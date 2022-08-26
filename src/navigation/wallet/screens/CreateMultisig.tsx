@@ -17,7 +17,7 @@ import {
   setHomeCarouselConfig,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
@@ -66,6 +66,7 @@ import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+
 export interface CreateMultisigProps {
   currency: string;
   key: Key;
@@ -98,7 +99,7 @@ const ErrorText = styled(BaseText)`
   color: ${Caution};
   font-size: 12px;
   font-weight: 500;
-  padding: 5px 0 0 10px;
+  padding: 5px 0 0 0;
 `;
 
 const CheckBoxContainer = styled.View`
@@ -266,16 +267,11 @@ const CreateMultisig = () => {
         )) as Wallet;
 
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Create Multisig Wallet success',
-            {
-              coin: currency?.toLowerCase(),
-              type: `${opts.m}-${opts.n}`,
-              addedToExistingKey: true,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Created Multisig Wallet', {
+            coin: currency?.toLowerCase(),
+            type: `${opts.m}-${opts.n}`,
+            addedToExistingKey: true,
+          }),
         );
 
         wallet.getStatus(
@@ -336,16 +332,18 @@ const CreateMultisig = () => {
         )) as Key;
 
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Create Multisig Wallet success',
-            {
-              coin: currency?.toLowerCase(),
-              type: `${opts.m}-${opts.n}`,
-              addedToExistingKey: false,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Created Multisig Wallet', {
+            coin: currency?.toLowerCase(),
+            type: `${opts.m}-${opts.n}`,
+            addedToExistingKey: false,
+          }),
+        );
+
+        dispatch(
+          logSegmentEvent('track', 'Created Key', {
+            context: 'createMultisig',
+            coins: [currency?.toLowerCase()],
+          }),
         );
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
@@ -393,18 +391,15 @@ const CreateMultisig = () => {
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 label={t('WALLET NAME')}
-                onChangeText={(text: string) => onChange(text)}
+                onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
+                error={errors.name?.message}
               />
             )}
             name="name"
             defaultValue=""
           />
-
-          {errors?.name?.message && (
-            <ErrorText>{errors?.name?.message}</ErrorText>
-          )}
         </InputContainer>
 
         <InputContainer>
@@ -413,18 +408,15 @@ const CreateMultisig = () => {
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 label={t('YOUR NAME')}
-                onChangeText={(text: string) => onChange(text)}
+                onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
+                error={errors.myName?.message}
               />
             )}
             name="myName"
             defaultValue=""
           />
-
-          {errors?.myName?.message && (
-            <ErrorText>{errors?.myName?.message}</ErrorText>
-          )}
         </InputContainer>
 
         <Controller

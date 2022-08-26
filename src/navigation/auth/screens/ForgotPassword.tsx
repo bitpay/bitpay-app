@@ -1,18 +1,20 @@
 import {yupResolver} from '@hookform/resolvers/yup';
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {Keyboard, SafeAreaView} from 'react-native';
-import * as yup from 'yup';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
+import yup from '../../../lib/yup';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch} from '../../../utils/hooks/useAppDispatch';
 import {useAppSelector} from '../../../utils/hooks/useAppSelector';
+import {AuthScreens, AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -23,14 +25,16 @@ import RecaptchaModal from '../components/RecaptchaModal';
 export type ForgotPasswordParamList = {} | undefined;
 
 const schema = yup.object().shape({
-  email: yup.string().email().required(),
+  email: yup.string().email().required().trim(),
 });
 
 interface ResetPasswordFormFieldValues {
   email: string;
 }
 
-const ForgotPassword = () => {
+const ForgotPasswordScreen: React.VFC<
+  StackScreenProps<AuthStackParamList, AuthScreens.FORGOT_PASSWORD>
+> = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
@@ -90,15 +94,20 @@ const ForgotPassword = () => {
     }
   }, [dispatch, forgotPasswordEmailStatus, t]);
 
-  const onSubmit = handleSubmit(({email}) => {
-    Keyboard.dismiss();
+  const onSubmit = handleSubmit(
+    ({email}) => {
+      Keyboard.dismiss();
 
-    if (session.captchaDisabled) {
-      dispatch(BitPayIdEffects.startSubmitForgotPasswordEmail({email}));
-    } else {
-      setCaptchaModalVisible(true);
-    }
-  });
+      if (session.captchaDisabled) {
+        dispatch(BitPayIdEffects.startSubmitForgotPasswordEmail({email}));
+      } else {
+        setCaptchaModalVisible(true);
+      }
+    },
+    () => {
+      Keyboard.dismiss();
+    },
+  );
 
   const onCaptchaResponse = async (gCaptchaResponse: string) => {
     const {email} = getValues();
@@ -154,4 +163,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default ForgotPasswordScreen;

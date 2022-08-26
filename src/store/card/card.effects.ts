@@ -79,24 +79,22 @@ export const startCardStoreInit =
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
       try {
-        Dosh.initializeDosh(options);
+        Dosh.initializeDosh(options).then(() => {
+          dispatch(LogActions.info('Successfully initialized Dosh.'));
 
-        dispatch(LogActions.info('Successfully initialized Dosh.'));
+          const {doshToken} = initialData;
+          if (!doshToken) {
+            dispatch(LogActions.debug('No doshToken provided.'));
+            return;
+          }
 
-        const {doshToken} = initialData;
-        if (!doshToken) {
-          dispatch(LogActions.debug('No doshToken provided.'));
-          return;
-        }
-
-        Dosh.setDoshToken(doshToken);
+          return Dosh.setDoshToken(doshToken);
+        });
       } catch (err: any) {
         dispatch(
           LogActions.error('An error occurred while initializing Dosh.'),
         );
 
-        // check for Android exception (see: DoshModule.java)
-        // TODO: iOS exceptions
         if ((err as any).message) {
           dispatch(LogActions.error((err as any).message));
         } else {
@@ -461,40 +459,21 @@ export const START_FETCH_REFERRED_USERS =
     }
   };
 
-export const startOpenDosh =
-  (email: string): Effect<void> =>
-  async dispatch => {
-    const isDoshWhitelisted = !!email && DoshWhitelist.includes(email);
+export const startOpenDosh = (): Effect<void> => async (dispatch, getState) => {
+  try {
+    const {APP, CARD} = getState();
+    const cards = CARD.cards[APP.network];
 
-    if (!isDoshWhitelisted) {
-      dispatch(
-        AppActions.showBottomNotificationModal({
-          type: 'warning',
-          title: t('Unavailable'),
-          message: t('Cards Offers unavailable at this time'),
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-
-      return;
-    }
-
-    try {
+    if (cards.length) {
       Dosh.present();
-    } catch (err) {
-      dispatch(
-        LogActions.error('Something went wrong trying to open Dosh Rewards'),
-      );
-      dispatch(LogActions.error(JSON.stringify(err)));
     }
-  };
+  } catch (err) {
+    dispatch(
+      LogActions.error('Something went wrong trying to open Dosh Rewards'),
+    );
+    dispatch(LogActions.error(JSON.stringify(err)));
+  }
+};
 
 export const startAddToAppleWallet =
   ({
@@ -589,11 +568,7 @@ export const completeAddApplePaymentPass =
       );
 
       dispatch(
-        Analytics.track(
-          'Added card to Apple Wallet',
-          {brand: brand || ''},
-          true,
-        ),
+        Analytics.track('Added card to Apple Wallet', {brand: brand || ''}),
       );
     } catch (e) {
       console.error(e);
@@ -636,11 +611,9 @@ export const startAddToGooglePay =
         );
 
         dispatch(
-          Analytics.track(
-            'Added card to Google Pay',
-            {brand: card?.brand || ''},
-            true,
-          ),
+          Analytics.track('Added card to Google Pay', {
+            brand: card?.brand || '',
+          }),
         );
       }
     } catch (e) {

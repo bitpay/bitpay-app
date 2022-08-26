@@ -15,7 +15,7 @@ import {
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import {FlatList} from 'react-native';
+import {FlatList, TouchableOpacity} from 'react-native';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -33,6 +33,7 @@ import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import ReceiveAddress from '../components/ReceiveAddress';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+import InfoSvg from '../../../../assets/img/info.svg';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
@@ -49,6 +50,7 @@ import {ButtonState} from '../../../components/button/Button';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
+import {LogActions} from '../../../store/log';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -73,6 +75,13 @@ const CloseModalButton = styled.TouchableOpacity`
   border-radius: 50px;
   background-color: #9ba3ae33;
   display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ModalTitleContainer = styled.View`
+  display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
 `;
@@ -115,11 +124,11 @@ export type GlobalSelectParamList = {
     name?: string;
     type?: string;
     network?: string;
+    destinationTag?: number;
     opts?: {
       sendMax?: boolean | undefined;
       message?: string;
       feePerKb?: number;
-      destinationTag?: string;
       showERC20Tokens?: boolean;
     };
   };
@@ -172,6 +181,7 @@ interface GlobalSelectProps {
   onDismiss?: (newWallet?: any) => void;
   modalContext?: GlobalSelectModalContext;
   livenetOnly?: boolean;
+  onHelpPress?: () => void;
 }
 
 const GlobalSelect: React.FC<GlobalSelectProps> = ({
@@ -181,6 +191,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   onDismiss,
   modalContext,
   livenetOnly,
+  onHelpPress,
 }) => {
   const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
@@ -341,7 +352,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
       }
       if (['coinbase', 'contact', 'scanner'].includes(context)) {
         setWalletSelectModalVisible(false);
-        const {name, address, type, opts} = recipient!;
+        const {name, address, type, destinationTag, opts} = recipient!;
         if (!address) {
           return;
         }
@@ -351,14 +362,14 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             name,
             type: type || context,
             address,
+            destinationTag,
           };
 
           if (!amount) {
             navigation.navigate('Wallet', {
               screen: WalletScreens.AMOUNT,
               params: {
-                opts: {hideSendMax: true},
-                currencyAbbreviationRouteParam:
+                cryptoCurrencyAbbreviation:
                   wallet.currencyAbbreviation.toUpperCase(),
                 onAmountSelected: async (amount, setButtonState, opts) => {
                   dispatch(
@@ -384,7 +395,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             );
           }
         } catch (err) {
-          console.error(err);
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         }
       } else if (context === 'send') {
         setWalletSelectModalVisible(false);
@@ -414,6 +427,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         name: string | undefined;
         type: string;
         address: string;
+        destinationTag?: number;
       };
       setButtonState?: (state: ButtonState) => void;
       opts: any;
@@ -452,9 +466,12 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             txp,
             txDetails,
             amount,
+            message: opts?.message,
           },
         });
       } catch (err: any) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         if (setButtonState) {
           setButtonState('failed');
         } else {
@@ -543,9 +560,20 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             </CloseModalButton>
           </CloseModalButtonContainer>
           {!!modalTitle && (
-            <TextAlign align={'center'}>
-              <H4>{modalTitle}</H4>
-            </TextAlign>
+            <ModalTitleContainer>
+              <TextAlign align={'center'}>
+                <H4>{modalTitle}</H4>
+              </TextAlign>
+              {onHelpPress ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    onHelpPress();
+                  }}
+                  style={{marginLeft: 5}}>
+                  <InfoSvg width={20} height={20} />
+                </TouchableOpacity>
+              ) : null}
+            </ModalTitleContainer>
           )}
         </ModalHeader>
       )}

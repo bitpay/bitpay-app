@@ -28,12 +28,14 @@ import {
 } from '../status/status';
 import {
   CustomErrorMessage,
+  ExcludedUtxosWarning,
   GeneralError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
+  checkingBiometricForSending,
   dismissBottomNotificationModal,
   dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
@@ -48,6 +50,16 @@ import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {LogActions} from '../../../log';
+import _ from 'lodash';
+import TouchID from 'react-native-touch-id-ng';
+import {
+  authOptionalConfigObject,
+  BiometricErrorNotification,
+  isSupportedOptionalConfigObject,
+  TO_HANDLE_ERRORS,
+} from '../../../../constants/BiometricError';
+import {Platform} from 'react-native';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -72,6 +84,8 @@ export const createProposalAndBuildTxDetails =
           invoice,
           payProUrl,
           dryRun = true,
+          destinationTag,
+          payProDetails,
         } = tx;
 
         let {credentials} = wallet;
@@ -111,24 +125,31 @@ export const createProposalAndBuildTxDetails =
           }
         }
 
-        if (
-          currencyAbbreviation === 'xrp' &&
-          wallet.receiveAddress === recipient.address
-        ) {
-          return reject({
-            err: new Error(
-              t(
-                'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+        if (currencyAbbreviation === 'xrp') {
+          if (payProDetails) {
+            const instructions = payProDetails.instructions[0];
+            const {outputs} = instructions;
+            tx.invoiceID = outputs[0].invoiceID;
+          }
+          tx.destinationTag = destinationTag || recipient.destinationTag;
+
+          if (wallet.receiveAddress === recipient.address) {
+            return reject({
+              err: new Error(
+                t(
+                  'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+                ),
               ),
-            ),
-          });
+            });
+          }
         }
 
+        const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
         const feeLevel =
           customFeeLevel ||
           cachedFeeLevel[currencyAbbreviation] ||
+          tokenFeeLevel ||
           FeeLevels.NORMAL;
-
         if (!feePerKb && tx.sendMax) {
           feePerKb = await getFeeRatePerKb({
             wallet,
@@ -194,7 +215,7 @@ export const createProposalAndBuildTxDetails =
 const setEthAddressNonce =
   (wallet: Wallet, tx: TransactionOptions): Effect<Promise<void>> =>
   async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       try {
         const {
           coin: currencyAbbreviation,
@@ -261,24 +282,28 @@ const setEthAddressNonce =
         if (pendingTxsNonce && pendingTxsNonce.length > 0) {
           pendingTxsNonce.sort((a, b) => a! - b!);
           for (let i = 0; i < pendingTxsNonce.length; i++) {
-            if (pendingTxsNonce[i]! + 1 != pendingTxsNonce[i + 1]) {
+            if (pendingTxsNonce[i]! + 1 !== pendingTxsNonce[i + 1]) {
               suggestedNonce = pendingTxsNonce[i]! + 1;
               break;
             }
           }
         }
 
-        console.log(
-          `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
-            suggestedNonce! - nonce
-          }`,
+        dispatch(
+          LogActions.info(
+            `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
+              suggestedNonce! - nonce
+            }`,
+          ),
         );
 
         tx.nonce = suggestedNonce;
 
         return resolve();
       } catch (error: any) {
-        console.log('Could not get address nonce', error.message);
+        const errString =
+          error instanceof Error ? error.message : JSON.stringify(error);
+        dispatch(LogActions.error(`Could not get address nonce ${errString}`));
         return resolve();
       }
     });
@@ -335,7 +360,7 @@ export const buildTxDetails =
     rates: Rates;
     defaultAltCurrencyIsoCode: string;
     wallet: Wallet | WalletRowProps;
-    recipient?: Recipient;
+    recipient: Recipient;
     invoice?: Invoice;
     context?: TransactionOptionsContext;
     feeLevel?: string;
@@ -353,13 +378,17 @@ export const buildTxDetails =
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
     const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
     const isERC20 = dispatch(IsERCToken(coin));
+    const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
-    if (context === 'fromReplaceByFee') {
+    if (context === 'paypro') {
+      amount = invoice!.paymentTotals[coin.toUpperCase()];
+    } else if (context === 'speedupBtcReceive') {
       amount = amount - fee;
     }
 
     const {type, name, address} = recipient || {};
     return {
+      context,
       currency: coin,
       sendingTo: {
         recipientType: type,
@@ -373,7 +402,13 @@ export const buildTxDetails =
         cryptoAmount: dispatch(FormatAmountStr(chain, fee)),
         fiatAmount: formatFiatAmount(
           dispatch(
-            toFiat(fee, defaultAltCurrencyIsoCode, chain, rates, effectiveRate),
+            toFiat(
+              fee,
+              defaultAltCurrencyIsoCode,
+              chain,
+              rates,
+              effectiveRateForFee,
+            ),
           ),
           defaultAltCurrencyIsoCode,
         ),
@@ -390,7 +425,7 @@ export const buildTxDetails =
                 defaultAltCurrencyIsoCode,
                 chain,
                 rates,
-                effectiveRate,
+                effectiveRateForFee,
               ),
             ),
             defaultAltCurrencyIsoCode,
@@ -438,7 +473,7 @@ export const buildTxDetails =
                 defaultAltCurrencyIsoCode,
                 chain,
                 rates,
-                effectiveRate,
+                effectiveRateForFee,
               ),
             ),
           defaultAltCurrencyIsoCode,
@@ -468,6 +503,8 @@ const buildTransactionProposal =
           payProUrl,
           sendMax,
           wallet,
+          inputs,
+          recipientList,
         } = tx;
         let {customData} = tx;
 
@@ -482,10 +519,12 @@ const buildTransactionProposal =
             };
           }
         }
+
+        const chain = dispatch(GetChain(currency!)).toLowerCase();
         // base tx
         const txp: Partial<TransactionProposal> = {
           coin: currency,
-          chain: dispatch(GetChain(currency!)).toLowerCase(),
+          chain,
           customData,
           feePerKb,
           ...(!feePerKb && {feeLevel}),
@@ -493,7 +532,7 @@ const buildTransactionProposal =
           message,
         };
         // currency specific
-        switch (dispatch(GetChain(currency!)).toLowerCase()) {
+        switch (chain) {
           case 'btc':
             txp.enableRBF = tx.enableRBF;
             txp.replaceTxByFee = tx.replaceTxByFee;
@@ -509,19 +548,56 @@ const buildTransactionProposal =
             txp.destinationTag = tx.destinationTag;
             break;
           case 'bch':
-            tx.toAddress = ToCashAddress(tx.toAddress!, false);
+            tx.toAddress = !recipientList
+              ? ToCashAddress(tx.toAddress!, false)
+              : undefined;
             break;
         }
 
         // unconfirmed funds
         txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
+        const verifyExcludedUtxos = (
+          sendMaxInfo: SendMaxInfo,
+          currencyAbbreviation: string,
+        ) => {
+          const warningMsg = [];
+          if (sendMaxInfo.utxosBelowFee > 0) {
+            const amountBelowFeeStr =
+              sendMaxInfo.amountBelowFee /
+              dispatch(GetPrecision(currencyAbbreviation))!.unitToSatoshi!;
+            const message = t(
+              'A total of were excluded. These funds come from UTXOs smaller than the network fee provided',
+              {
+                amountBelowFeeStr,
+                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+              },
+            );
+            warningMsg.push(message);
+          }
+
+          if (sendMaxInfo.utxosAboveMaxSize > 0) {
+            const amountAboveMaxSizeStr =
+              sendMaxInfo.amountAboveMaxSize /
+              dispatch(GetPrecision(currencyAbbreviation))!.unitToSatoshi;
+            const message = t(
+              'A total of were excluded. The maximum size allowed for a transaction was exceeded.',
+              {
+                amountAboveMaxSizeStr,
+                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+              },
+            );
+            warningMsg.push(message);
+          }
+          return warningMsg.join('\n');
+        };
+
         // send max
         if (sendMax && wallet) {
           if (dispatch(IsERCToken(wallet.currencyAbbreviation))) {
             txp.amount = tx.amount = wallet.balance.satAvailable;
           } else {
-            const {amount, inputs, fee} = await getSendMaxInfo({
+            const sendMaxInfo = await getSendMaxInfo({
               wallet,
               opts: {
                 feePerKb,
@@ -529,12 +605,28 @@ const buildTransactionProposal =
                 returnInputs: true,
               },
             });
+            const {amount, inputs, fee} = sendMaxInfo;
 
             txp.amount = tx.amount = amount;
             txp.inputs = inputs;
             // Either fee or feePerKb can be available
             txp.fee = fee;
             txp.feePerKb = undefined;
+
+            const warningMsg = verifyExcludedUtxos(
+              sendMaxInfo,
+              wallet.currencyAbbreviation,
+            );
+
+            if (!_.isEmpty(warningMsg)) {
+              dispatch(
+                showBottomNotificationModal(
+                  ExcludedUtxosWarning({
+                    errMsg: warningMsg,
+                  }),
+                ),
+              );
+            }
           }
         }
 
@@ -543,29 +635,72 @@ const buildTransactionProposal =
         txp.outputs = [];
         switch (context) {
           case 'multisend':
+            if (recipientList) {
+              recipientList.forEach(r => {
+                const formattedAmount = dispatch(
+                  ParseAmount(r.amount || 0, chain),
+                );
+                txp.outputs?.push({
+                  toAddress:
+                    chain === 'bch'
+                      ? ToCashAddress(r.address!, false)
+                      : r.address,
+                  amount: formattedAmount.amountSat,
+                  message: tx.description,
+                  data: tx.data,
+                });
+              });
+            }
             break;
           case 'paypro':
             txp.payProUrl = payProUrl;
-            txp.outputs.push({
-              toAddress: tx.toAddress,
-              amount: tx.amount!,
-              message: tx.message,
-              data: tx.data,
-              gasLimit: tx.gasLimit,
-            });
+            const {instructions} = tx.payProDetails;
+            for (const instruction of instructions) {
+              txp.outputs.push({
+                toAddress: instruction.toAddress,
+                amount: instruction.amount,
+                message: instruction.message,
+                data: instruction.data,
+                gasLimit: tx.gasLimit,
+              });
+            }
             break;
           case 'selectInputs':
-            break;
-          case 'fromReplaceByFee':
-            txp.inputs = tx.inputs;
-            txp.replaceTxByFee = true;
-
+            txp.inputs = inputs;
+            txp.fee = tx.fee;
+            txp.feeLevel = undefined;
+            if (tx.replaceTxByFee) {
+              txp.replaceTxByFee = true;
+            }
             txp.outputs.push({
               toAddress: tx.toAddress,
               amount: tx.amount!,
               message: tx.description,
               data: tx.data,
             });
+            break;
+          case 'fromReplaceByFee':
+            txp.inputs = tx.inputs;
+            txp.replaceTxByFee = true;
+            if (recipientList) {
+              recipientList.forEach(r => {
+                const formattedAmount = dispatch(
+                  ParseAmount(r.amount || 0, chain),
+                );
+                txp.outputs?.push({
+                  toAddress: r.address,
+                  amount: formattedAmount.amountSat,
+                  message: tx.description,
+                });
+              });
+            } else {
+              txp.outputs.push({
+                toAddress: tx.toAddress,
+                amount: tx.amount!,
+                message: tx.description,
+                data: tx.data,
+              });
+            }
             break;
           case 'speedupBtcReceive':
             txp.inputs = tx.inputs;
@@ -649,11 +784,6 @@ export const startSendPayment =
               );
               return resolve(broadcastedTx);
             } catch (e) {
-              try {
-                await removeTxp(wallet, proposal);
-              } catch (removeTxpErr) {
-                console.log('Could not delete payment proposal');
-              }
               return reject(e);
             }
           },
@@ -672,16 +802,30 @@ export const publishAndSign =
     key,
     wallet,
     recipient,
+    password,
+    signingMultipleProposals,
   }: {
-    txp: Partial<TransactionProposal>;
+    txp: TransactionProposal;
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
+    password?: string;
+    signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
-      let password;
-      if (key.isPrivKeyEncrypted) {
+      const {
+        APP: {biometricLockActive},
+      } = getState();
+
+      if (biometricLockActive && !signingMultipleProposals) {
+        try {
+          await dispatch(checkBiometricForSending());
+        } catch (error) {
+          return reject(error);
+        }
+      }
+      if (key.isPrivKeyEncrypted && !signingMultipleProposals) {
         try {
           password = await new Promise<string>((_resolve, _reject) => {
             dispatch(
@@ -710,7 +854,12 @@ export const publishAndSign =
         // Already published?
         if (txp.status !== 'pending') {
           publishedTx = await publishTx(wallet, txp);
-          console.log('-------- published');
+          dispatch(LogActions.debug('success publish [publishAndSign]'));
+        }
+
+        if (key.isReadOnly) {
+          // read only wallet
+          return resolve(publishedTx);
         }
 
         const signedTx: any = await signTx(
@@ -719,12 +868,10 @@ export const publishAndSign =
           publishedTx || txp,
           password,
         );
-        console.log('-------- signed');
-
+        dispatch(LogActions.debug('success sign [publishAndSign]'));
         if (signedTx.status === 'accepted') {
           broadcastedTx = await broadcastTx(wallet, signedTx);
-          console.log('-------- broadcastedTx');
-
+          dispatch(LogActions.debug('success broadcast [publishAndSign]'));
           const {fee, amount} = broadcastedTx as {
             fee: number;
             amount: number;
@@ -742,23 +889,130 @@ export const publishAndSign =
         } else {
           dispatch(startUpdateWalletStatus({key, wallet}));
         }
+
+        let resultTx = broadcastedTx ? broadcastedTx : signedTx;
+
         // Check if ConfirmTx notification is enabled
         const {APP} = getState();
         if (APP.confirmedTxAccepted) {
           wallet.txConfirmationSubscribe(
-            {txid: broadcastedTx?.id, amount: txp.amount},
+            {txid: resultTx?.id, amount: txp.amount},
             (err: any) => {
               if (err) {
-                console.log('-------- push notification', err);
+                dispatch(
+                  LogActions.error(
+                    '[publishAndSign] txConfirmationSubscribe err',
+                    err,
+                  ),
+                );
               }
             },
           );
         }
 
-        resolve(broadcastedTx);
+        resolve(resultTx);
       } catch (err) {
-        console.log(err);
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`[publishAndSign] err: ${errorStr}`));
+        // if broadcast fails, remove transaction proposal
+        try {
+          await removeTxp(wallet, txp);
+        } catch (removeTxpErr: any) {
+          dispatch(
+            LogActions.error(
+              `[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`,
+            ),
+          );
+        }
         reject(err);
+      }
+    });
+  };
+
+export const publishAndSignMultipleProposals =
+  ({
+    txps,
+    key,
+    wallet,
+    recipient,
+  }: {
+    txps: TransactionProposal[];
+    key: Key;
+    wallet: Wallet;
+    recipient?: Recipient;
+  }): Effect<Promise<(Partial<TransactionProposal> | void)[]>> =>
+  async (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const signingMultipleProposals = true;
+        let password: string;
+        const {
+          APP: {biometricLockActive},
+        } = getState();
+
+        if (biometricLockActive) {
+          try {
+            await dispatch(checkBiometricForSending());
+          } catch (error) {
+            return reject(error);
+          }
+        }
+        if (key.isPrivKeyEncrypted) {
+          try {
+            password = await new Promise<string>((_resolve, _reject) => {
+              dispatch(
+                showDecryptPasswordModal({
+                  onSubmitHandler: async (_password: string) => {
+                    dispatch(dismissDecryptPasswordModal());
+                    await sleep(500);
+                    checkEncryptPassword(key, _password)
+                      ? _resolve(_password)
+                      : _reject('invalid password');
+                  },
+                  onCancelHandler: () => {
+                    _reject('password canceled');
+                  },
+                }),
+              );
+            });
+          } catch (error) {
+            return reject(error);
+          }
+        }
+        const promises: Promise<Partial<TransactionProposal> | void>[] = [];
+
+        txps.forEach(async txp => {
+          promises.push(
+            dispatch(
+              publishAndSign({
+                txp,
+                key,
+                wallet,
+                recipient,
+                password,
+                signingMultipleProposals,
+              }),
+            ).catch(err => {
+              const errorStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(
+                LogActions.error(
+                  `Error signing transaction proposal: ${errorStr}`,
+                ),
+              );
+              return err;
+            }),
+          );
+        });
+        return resolve(await Promise.all(promises));
+      } catch (err) {
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error(`Error signing transaction proposal: ${errorStr}`),
+        );
+        return reject(err);
       }
     });
   };
@@ -781,7 +1035,10 @@ export const createTxProposal = (
   });
 };
 
-export const publishTx = (wallet: Wallet, txp: any) => {
+export const publishTx = (
+  wallet: Wallet,
+  txp: any,
+): Promise<Partial<TransactionProposal>> => {
   return new Promise((resolve, reject) => {
     wallet.publishTxProposal({txp}, (err: Error, publishedProposal: any) => {
       if (err) {
@@ -797,24 +1054,23 @@ export const signTx = (
   key: Key,
   txp: any,
   password?: string,
-) => {
+): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     try {
       const rootPath = wallet.getRootPath();
-      const signatures = key.methods.sign(rootPath, txp, password);
+      const signatures = key.methods!.sign(rootPath, txp, password);
       wallet.pushSignatures(
         txp,
         signatures,
         (err: Error, signedTxp: any) => {
           if (err) {
-            throw err;
+            reject(err);
           }
           resolve(signedTxp);
         },
         null,
       );
     } catch (err) {
-      console.error(err);
       reject(err);
     }
   });
@@ -948,6 +1204,7 @@ export const createPayProTxProposal =
         wallet,
         ...(feePerKb && {feePerKb}),
         payProUrl: paymentUrl,
+        payProDetails,
         recipient: {address},
         gasLimit,
         data,
@@ -1140,4 +1397,34 @@ export const showNoWalletsModal =
         ],
       }),
     );
+  };
+
+export const checkBiometricForSending =
+  (): Effect<Promise<any>> => async dispatch => {
+    // preventing for asking biometric again when the app goes to background ( ios only )
+    if (Platform.OS === 'ios') {
+      dispatch(checkingBiometricForSending(true));
+    }
+    await TouchID.isSupported(isSupportedOptionalConfigObject)
+      .then(biometryType => {
+        if (biometryType === 'FaceID') {
+          console.log('FaceID is supported.');
+        } else {
+          console.log('TouchID is supported.');
+        }
+        return TouchID.authenticate(
+          'Authentication Check',
+          authOptionalConfigObject,
+        );
+      })
+      .catch(error => {
+        if (error.code && TO_HANDLE_ERRORS[error.code]) {
+          const err = TO_HANDLE_ERRORS[error.code];
+          dispatch(
+            showBottomNotificationModal(BiometricErrorNotification(err)),
+          );
+        }
+        return Promise.reject('biometric check failed');
+      });
+    return Promise.resolve();
   };

@@ -26,6 +26,8 @@ import Clipboard from '@react-native-community/clipboard';
 import {useAppDispatch} from '../../../utils/hooks';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
+import AddContactIcon from '../../../components/icons/add-contacts/AddContacts';
+import {useNavigation} from '@react-navigation/native';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -36,10 +38,11 @@ const MultiOptionsContainer = styled.TouchableOpacity`
   border-radius: 10px;
   margin-bottom: 5px;
   padding: 10px;
+  flex: 1;
 `;
 
 const MultiOptionsText = styled(H7)`
-  width: 55%;
+  max-width: 50%;
   margin: 0 5px;
 `;
 
@@ -51,13 +54,20 @@ const MultiOptionsMessage = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const ContactsIconContainer = styled.TouchableOpacity`
+  margin-left: 5px;
+`;
+
 const MultipleOutputsTx = ({tx}: {tx: any}) => {
   const {t} = useTranslation();
   let {coin, network} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const dispatch = useAppDispatch();
+  const navigation = useNavigation();
 
   const [copied, setCopied] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState<string>();
+
   useEffect(() => {
     if (!copied) {
       return;
@@ -71,6 +81,7 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
 
   const copyText = (text: string) => {
     if (!copied && !!text) {
+      setCopiedAddress(text);
       Clipboard.setString(text);
       setCopied(true);
     }
@@ -116,11 +127,24 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     );
   };
 
+  const gotoAddContacts = (address: string) => {
+    const {network} = tx;
+    navigation.navigate('Contacts', {
+      screen: 'ContactsAdd',
+      params: {
+        contact: {
+          address,
+          network,
+        },
+      },
+    });
+  };
+
   return (
     <>
       <DetailContainer>
         <DetailRow>
-          <H7>{t('Sending to')}</H7>
+          <H7>{t('Sent to')}</H7>
 
           <DetailColumn>
             {tx.misunderstoodOutputs ? (
@@ -147,6 +171,18 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
                     }
                   />
                 )}
+
+                {!tx.outputs[0].contactName ? (
+                  <ContactsIconContainer
+                    activeOpacity={ActiveOpacity}
+                    onPress={() =>
+                      gotoAddContacts(
+                        tx.outputs[0].addressToShow || tx.outputs[0].address,
+                      )
+                    }>
+                    <AddContactIcon />
+                  </ContactsIconContainer>
+                ) : null}
               </DetailRow>
             ) : null}
 
@@ -166,34 +202,53 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
       {tx.hasMultiplesOutputs &&
         showMultiOptions &&
         tx.outputs.map((output: any, i: number) => (
-          <MultiOptionsContainer
-            key={i}
-            activeOpacity={ActiveOpacity}
-            onPress={() => copyText(output.toAddress || output.address)}>
-            <DetailRow>
-              {getIcon()}
-              <MultiOptionsText numberOfLines={1} ellipsizeMode={'tail'}>
-                {output.contactName ||
-                  output.addressToShow ||
-                  output.toAddress ||
-                  output.address}
-              </MultiOptionsText>
-              <DetailColumn>
-                <H7 medium={true}>{output.amountStr}</H7>
-                {output.alternativeAmountStr ? (
-                  <H7>{output.alternativeAmountStr}</H7>
-                ) : null}
-              </DetailColumn>
-            </DetailRow>
+          <DetailRow>
+            <MultiOptionsContainer
+              key={i}
+              activeOpacity={ActiveOpacity}
+              onPress={() => copyText(output.toAddress || output.address)}>
+              <DetailRow>
+                {getIcon()}
+                <MultiOptionsText numberOfLines={1} ellipsizeMode={'tail'}>
+                  {output.contactName ||
+                    output.addressToShow ||
+                    output.toAddress ||
+                    output.address}
+                </MultiOptionsText>
 
-            {output.message ? (
-              <MultiOptionsMessageContainer>
-                <MultiOptionsMessage numberOfLines={2} ellipsizeMode={'tail'}>
-                  {output.message}
-                </MultiOptionsMessage>
-              </MultiOptionsMessageContainer>
+                {copied &&
+                (copiedAddress === output.toAddress ||
+                  copiedAddress === output.address) ? (
+                  <CopiedSvg />
+                ) : null}
+
+                <DetailColumn>
+                  <H7 medium={true}>{output.amountStr}</H7>
+                  {output.alternativeAmountStr ? (
+                    <H7>{output.alternativeAmountStr}</H7>
+                  ) : null}
+                </DetailColumn>
+              </DetailRow>
+
+              {output.message ? (
+                <MultiOptionsMessageContainer>
+                  <MultiOptionsMessage numberOfLines={2} ellipsizeMode={'tail'}>
+                    {output.message}
+                  </MultiOptionsMessage>
+                </MultiOptionsMessageContainer>
+              ) : null}
+            </MultiOptionsContainer>
+
+            {!output.contactName ? (
+              <ContactsIconContainer
+                activeOpacity={ActiveOpacity}
+                onPress={() =>
+                  gotoAddContacts(output.addressToShow || output.address)
+                }>
+                <AddContactIcon />
+              </ContactsIconContainer>
             ) : null}
-          </MultiOptionsContainer>
+          </DetailRow>
         ))}
 
       {tx.misunderstoodOutputs ? (

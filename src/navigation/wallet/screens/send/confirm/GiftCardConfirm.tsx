@@ -2,7 +2,6 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
-import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {H4} from '../../../../../components/styled/Text';
 import {
@@ -56,6 +55,10 @@ import {
 import {startGetRates} from '../../../../../store/wallet/effects';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
+import {
+  GiftCardScreens,
+  GiftCardStackParamList,
+} from '../../../../tabs/shop/gift-card/GiftCardStack';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -95,7 +98,8 @@ const Confirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'GiftCardConfirm'>>();
+  const route =
+    useRoute<RouteProp<GiftCardStackParamList, 'GiftCardConfirm'>>();
   const {
     amount,
     cardConfig,
@@ -314,17 +318,12 @@ const Confirm = () => {
         ? 'Failed Gift Card'
         : 'Purchased Gift Card';
     dispatch(
-      logSegmentEvent(
-        'track',
-        purchaseEventName,
-        {
-          giftCardAmount: amount,
-          giftCardBrand: cardConfig.name,
-          giftCardCurrency: cardConfig.currency,
-          coin: getTransactionCurrency(),
-        },
-        true,
-      ),
+      logSegmentEvent('track', purchaseEventName, {
+        giftCardAmount: amount,
+        giftCardBrand: cardConfig.name,
+        giftCardCurrency: cardConfig.currency,
+        coin: getTransactionCurrency(),
+      }),
     );
   };
 
@@ -364,11 +363,13 @@ const Confirm = () => {
       defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => openWalletSelector(400),
     });
+    await sleep(400);
+    setResetSwipeButton(true);
   };
 
   const request2FA = async () => {
-    navigation.navigate('Wallet', {
-      screen: WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR,
+    navigation.navigate('GiftCard', {
+      screen: GiftCardScreens.GIFT_CARD_CONFIRM_TWO_FACTOR,
       params: {
         onSubmit: async twoFactorCode => {
           try {

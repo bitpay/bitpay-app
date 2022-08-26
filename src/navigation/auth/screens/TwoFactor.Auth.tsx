@@ -3,15 +3,16 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
+import {Keyboard} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import * as yup from 'yup';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
+import yup from '../../../lib/yup';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {TwoFactorAuthStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
-import {AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthFormParagraph,
@@ -26,7 +27,7 @@ export type TwoFactorAuthenticationParamList =
 
 type TwoFactorAuthenticationScreenProps = StackScreenProps<
   AuthStackParamList,
-  'TwoFactorAuthentication'
+  AuthScreens.TWO_FACTOR_AUTH
 >;
 
 interface TwoFactorAuthFieldValues {
@@ -34,10 +35,10 @@ interface TwoFactorAuthFieldValues {
 }
 
 const schema = yup.object().shape({
-  code: yup.string().required('Required'),
+  code: yup.string().required(),
 });
 
-const TwoFactorAuthentication: React.FC<
+const TwoFactorAuthentication: React.VFC<
   TwoFactorAuthenticationScreenProps
 > = props => {
   const {t} = useTranslation();
@@ -109,13 +110,20 @@ const TwoFactorAuthentication: React.FC<
     onLoginSuccess,
   ]);
 
-  const onSubmit = handleSubmit(({code}) => {
-    if (!code) {
-      return;
-    }
+  const onSubmit = handleSubmit(
+    ({code}) => {
+      Keyboard.dismiss();
 
-    dispatch(BitPayIdEffects.startTwoFactorAuth(code));
-  });
+      if (!code) {
+        return;
+      }
+
+      dispatch(BitPayIdEffects.startTwoFactorAuth(code));
+    },
+    () => {
+      Keyboard.dismiss();
+    },
+  );
 
   return (
     <AuthFormContainer>

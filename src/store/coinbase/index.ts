@@ -31,6 +31,7 @@ export {
   payInvoiceFailed,
 } from './coinbase.actions';
 export {
+  isInvalidTokenError,
   coinbaseParseErrorToString,
   coinbaseInitialize,
   coinbaseLinkAccount,

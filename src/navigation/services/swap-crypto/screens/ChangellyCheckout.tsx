@@ -14,6 +14,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
+import ChangellyCheckoutSkeleton from './ChangellyCheckoutSkeleton';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Slate, Caution} from '../../../../styles/colors';
@@ -87,6 +88,7 @@ import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
 import {Currencies} from '../../../../constants/currencies';
+import {swapCryptoCoin} from './SwapCryptoRoot';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -97,8 +99,8 @@ export const SwapCheckoutContainer = styled.SafeAreaView`
 export interface ChangellyCheckoutProps {
   fromWalletSelected: Wallet;
   toWalletSelected: Wallet;
-  fromWalletData: any;
-  toWalletData: any;
+  fromWalletData: swapCryptoCoin;
+  toWalletData: swapCryptoCoin;
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;
@@ -125,6 +127,7 @@ const ChangellyCheckout: React.FC = () => {
   const theme = useTheme();
   const BWC = BwcProvider.getInstance();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [amountExpectedFrom, setAmountExpectedFrom] =
@@ -206,10 +209,12 @@ const ChangellyCheckout: React.FC = () => {
               const msg = t(
                 'Failed to create transaction for Changelly, please try again later.',
               );
-              showError(msg);
+              const reason = 'Rate expired or already used';
+              showError(msg, reason);
             }
           } else {
-            showError(data.error.message);
+            const reason = 'createFixTransaction Error';
+            showError(data.error.message, reason);
           }
           return;
         }
@@ -296,6 +301,7 @@ const ChangellyCheckout: React.FC = () => {
             };
             setTxData(_txData);
 
+            setIsLoading(false);
             dispatch(dismissOnGoingProcessModal());
             await sleep(400);
 
@@ -304,14 +310,17 @@ const ChangellyCheckout: React.FC = () => {
             }
             return;
           })
-          .catch(async err => {
-            logger.error(err.message);
-            const msg = t('Error creating transaction');
-            showError(msg);
+          .catch(err => {
+            let msg = t('Error creating transaction');
+            if (typeof err?.message === 'string') {
+              msg = msg + `: ${err.message}`;
+            }
+            const reason = 'createTx Error';
+            showError(msg, reason);
             return;
           });
       })
-      .catch(async err => {
+      .catch(err => {
         logger.error(
           'Changelly createFixTransaction Error: ' + JSON.stringify(err),
         );
@@ -347,19 +356,14 @@ const ChangellyCheckout: React.FC = () => {
         clearInterval(countDown);
       }
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Failed Swap Crypto',
-          {
-            exchange: 'changelly',
-            context: 'ChangellyCheckout',
-            message: 'The time to make the payment expired',
-            amountFrom: amountFrom || '',
-            fromCoin: fromWalletSelected.currencyAbbreviation || '',
-            toCoin: toWalletSelected.currencyAbbreviation || '',
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Failed Crypto Swap', {
+          exchange: 'changelly',
+          context: 'ChangellyCheckout',
+          reasonForFailure: 'Time to make the payment expired',
+          amountFrom: amountFrom || '',
+          fromCoin: fromWalletSelected.currencyAbbreviation || '',
+          toCoin: toWalletSelected.currencyAbbreviation || '',
+        }),
       );
       return;
     }
@@ -385,7 +389,8 @@ const ChangellyCheckout: React.FC = () => {
         if (data.error) {
           const msg =
             t('Changelly getFixRateForAmount Error: ') + data.error.message;
-          showError(msg);
+          const reason = 'getFixRateForAmount Error';
+          showError(msg, reason);
           return;
         }
         fixedRateId = data.result[0].id;
@@ -398,7 +403,8 @@ const ChangellyCheckout: React.FC = () => {
         let msg = t(
           'Changelly is not available at this moment. Please try again later.',
         );
-        showError(msg);
+        const reason = 'getFixRateForAmount Error';
+        showError(msg, reason);
       });
   };
 
@@ -471,12 +477,15 @@ const ChangellyCheckout: React.FC = () => {
       }
 
       if (destTag) {
-        txp.destinationTag = destTag;
+        txp.destinationTag = Number(destTag);
       }
 
       const ctxp = await createTxProposal(wallet, txp);
       return Promise.resolve(ctxp);
-    } catch (err) {
+    } catch (err: any) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      const log = `createTxProposal error: ${errStr}`;
+      logger.error(log);
       return Promise.reject({
         title: t('Could not create transaction'),
         message: BWCErrorMessage(err),
@@ -487,10 +496,7 @@ const ChangellyCheckout: React.FC = () => {
   const makePayment = async () => {
     try {
       dispatch(
-        startOnGoingProcessModal(
-          // t('Sending Payment')
-          t(OnGoingProcessMessages.SENDING_PAYMENT),
-        ),
+        startOnGoingProcessModal(t(OnGoingProcessMessages.SENDING_PAYMENT)),
       );
       await sleep(400);
 
@@ -504,21 +510,21 @@ const ChangellyCheckout: React.FC = () => {
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
+      setResetSwipeButton(true);
       switch (err) {
         case 'invalid password':
           dispatch(showBottomNotificationModal(WrongPasswordError()));
+          break;
         case 'password canceled':
+          break;
+        case 'biometric check failed':
           setResetSwipeButton(true);
           break;
         default:
           logger.error(JSON.stringify(err));
-        // TODO: handle this case
-        // await showErrorMessage(
-        //   CustomErrorMessage({
-        //     errMsg: BWCErrorMessage(err),
-        //     title: 'Uh oh, something went wrong',
-        //   }),
-        // );
+          const msg = t('Uh oh, something went wrong. Please try again later');
+          const reason = 'publishAndSign Error';
+          showError(msg, reason);
       }
     }
   };
@@ -549,17 +555,12 @@ const ChangellyCheckout: React.FC = () => {
     logger.debug('Saved swap with: ' + JSON.stringify(newData));
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Successful Crypto Swap',
-        {
-          fromCoin: fromWalletSelected.currencyAbbreviation,
-          toCoin: toWalletSelected.currencyAbbreviation,
-          amountFrom: amountFrom,
-          exchange: 'changelly',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Successful Crypto Swap', {
+        fromCoin: fromWalletSelected.currencyAbbreviation,
+        toCoin: toWalletSelected.currencyAbbreviation,
+        amountFrom: amountFrom,
+        exchange: 'changelly',
+      }),
     );
   };
 
@@ -598,43 +599,37 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, title?: string, actions?: any) => {
+  const showError = async (msg?: string, reason?: string) => {
+    setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Failed Swap Crypto',
-        {
-          exchange: 'changelly',
-          context: 'ChangellyCheckout',
-          message: msg || '',
-          amountFrom: amountFrom || '',
-          fromCoin: fromWalletSelected.currencyAbbreviation || '',
-          toCoin: toWalletSelected.currencyAbbreviation || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Failed Crypto Swap', {
+        exchange: 'changelly',
+        context: 'ChangellyCheckout',
+        reasonForFailure: reason || 'unknown',
+        amountFrom: amountFrom || '',
+        fromCoin: fromWalletSelected.currencyAbbreviation || '',
+        toCoin: toWalletSelected.currencyAbbreviation || '',
+      }),
     );
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: title ? title : t('Error'),
+        title: t('Error'),
         message: msg ? msg : t('Unknown Error'),
-        enableBackdropDismiss: true,
-        actions: actions
-          ? actions
-          : [
-              {
-                text: t('OK'),
-                action: async () => {
-                  dispatch(dismissBottomNotificationModal());
-                  await sleep(1000);
-                  navigation.goBack();
-                },
-                primary: true,
-              },
-            ],
+        enableBackdropDismiss: false,
+        actions: [
+          {
+            text: t('OK'),
+            action: async () => {
+              dispatch(dismissBottomNotificationModal());
+              await sleep(1000);
+              navigation.goBack();
+            },
+            primary: true,
+          },
+        ],
       }),
     );
   };
@@ -673,7 +668,7 @@ const ChangellyCheckout: React.FC = () => {
             <SelectedOptionCol>
               {fromWalletData && (
                 <CoinIconContainer>
-                  <CurrencyImage img={fromWalletData.img} size={20} />
+                  <CurrencyImage img={fromWalletData.logoUri} size={20} />
                 </CoinIconContainer>
               )}
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
@@ -691,7 +686,7 @@ const ChangellyCheckout: React.FC = () => {
             <SelectedOptionCol>
               {toWalletData && (
                 <CoinIconContainer>
-                  <CurrencyImage img={toWalletData.img} size={20} />
+                  <CurrencyImage img={toWalletData.logoUri} size={20} />
                 </CoinIconContainer>
               )}
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
@@ -703,101 +698,114 @@ const ChangellyCheckout: React.FC = () => {
           </SelectedOptionContainer>
         </RowDataContainer>
         <ItemDivisor />
-        <RowDataContainer>
-          <RowLabel>{t('Paying')}</RowLabel>
-          {amountFrom ? (
-            <RowData>
-              {Number(amountFrom.toFixed(6))}{' '}
-              {fromWalletSelected.currencyAbbreviation.toUpperCase()}
-            </RowData>
-          ) : null}
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer>
-          <RowLabel>{t('Miner Fee')}</RowLabel>
-          {fee && (
-            <RowData>
-              {dispatch(
-                FormatAmountStr(
-                  dispatch(
-                    GetChain(fromWalletSelected.currencyAbbreviation),
-                  ).toLowerCase(),
-                  fee,
-                ),
-              )}
-            </RowData>
-          )}
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer>
-          <RowLabel>{t('Exchange Fee')}</RowLabel>
-          {!!totalExchangeFee && (
-            <RowData>
-              {' '}
-              {Number(totalExchangeFee).toFixed(6)}{' '}
-              {toWalletSelected.currencyAbbreviation.toUpperCase()}
-            </RowData>
-          )}
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer>
-          <RowLabel>{t('Expires')}</RowLabel>
-          {!!remainingTimeStr && (
-            <RowData
-              style={{
-                color: paymentExpired ? Caution : theme.dark ? White : Black,
-              }}>
-              {remainingTimeStr}
-            </RowData>
-          )}
-        </RowDataContainer>
-        <ItemDivisor />
-        <RowDataContainer style={{marginTop: 25, marginBottom: 5}}>
-          <H7>{t('TOTAL TO RECEIVE')}</H7>
-          {!!amountTo && (
-            <H5>
-              {amountTo} {toWalletSelected.currencyAbbreviation.toUpperCase()}
-            </H5>
-          )}
-        </RowDataContainer>
-        {!!fiatAmountTo && (
+        {isLoading ? (
+          <ChangellyCheckoutSkeleton />
+        ) : (
           <>
-            <FiatAmountContainer>
-              <FiatAmount>
-                ~{fiatAmountTo} {alternativeIsoCode}
-              </FiatAmount>
-            </FiatAmountContainer>
+            <RowDataContainer>
+              <RowLabel>{t('Paying')}</RowLabel>
+              {amountFrom ? (
+                <RowData>
+                  {Number(amountFrom.toFixed(6))}{' '}
+                  {fromWalletSelected.currencyAbbreviation.toUpperCase()}
+                </RowData>
+              ) : null}
+            </RowDataContainer>
+            <ItemDivisor />
+            <RowDataContainer>
+              <RowLabel>{t('Miner Fee')}</RowLabel>
+              {fee ? (
+                <RowData>
+                  {dispatch(
+                    FormatAmountStr(
+                      dispatch(
+                        GetChain(fromWalletSelected.currencyAbbreviation),
+                      ).toLowerCase(),
+                      fee,
+                    ),
+                  )}
+                </RowData>
+              ) : (
+                <RowData>...</RowData>
+              )}
+            </RowDataContainer>
+            <ItemDivisor />
+            <RowDataContainer>
+              <RowLabel>{t('Exchange Fee')}</RowLabel>
+              {!!totalExchangeFee && (
+                <RowData>
+                  {' '}
+                  {Number(totalExchangeFee).toFixed(6)}{' '}
+                  {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                </RowData>
+              )}
+            </RowDataContainer>
+            <ItemDivisor />
+            <RowDataContainer>
+              <RowLabel>{t('Expires')}</RowLabel>
+              {!!remainingTimeStr && (
+                <RowData
+                  style={{
+                    color: paymentExpired
+                      ? Caution
+                      : theme.dark
+                      ? White
+                      : Black,
+                  }}>
+                  {remainingTimeStr}
+                </RowData>
+              )}
+            </RowDataContainer>
+            <ItemDivisor />
+            <RowDataContainer style={{marginTop: 25, marginBottom: 5}}>
+              <H7>{t('TOTAL TO RECEIVE')}</H7>
+              {!!amountTo && (
+                <H5>
+                  {amountTo}{' '}
+                  {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                </H5>
+              )}
+            </RowDataContainer>
+            {!!fiatAmountTo && (
+              <>
+                <FiatAmountContainer>
+                  <FiatAmount>
+                    ~{fiatAmountTo} {alternativeIsoCode}
+                  </FiatAmount>
+                </FiatAmountContainer>
+              </>
+            )}
+            <CheckBoxContainer>
+              <Checkbox
+                radio={false}
+                onPress={() => {
+                  setTermsAccepted(!termsAccepted);
+                }}
+                checked={termsAccepted}
+              />
+              <CheckboxText>
+                {t(
+                  'Exchange services provided by Changelly. By clicking “Accept”, I acknowledge and understand that my transaction may trigger AML/KYC verification according to Changelly AML/KYC',
+                )}
+              </CheckboxText>
+            </CheckBoxContainer>
+            <PoliciesContainer
+              onPress={() => {
+                setChangellyPoliciesModalVisible(true);
+              }}>
+              <PoliciesText>{t('Review Changelly policies')}</PoliciesText>
+              <ArrowContainer>
+                <SelectorArrowRight
+                  {...{
+                    width: 13,
+                    height: 13,
+                    color: theme.dark ? White : Slate,
+                  }}
+                />
+              </ArrowContainer>
+            </PoliciesContainer>
           </>
         )}
-        <CheckBoxContainer>
-          <Checkbox
-            radio={false}
-            onPress={() => {
-              setTermsAccepted(!termsAccepted);
-            }}
-            checked={termsAccepted}
-          />
-          <CheckboxText>
-            {t(
-              'Exchange services provided by Changelly. By clicking “Accept”, I acknowledge and understand that my transaction may trigger AML/KYC verification according to Changelly AML/KYC',
-            )}
-          </CheckboxText>
-        </CheckBoxContainer>
-        <PoliciesContainer
-          onPress={() => {
-            setChangellyPoliciesModalVisible(true);
-          }}>
-          <PoliciesText>{t('Review Changelly policies')}</PoliciesText>
-          <ArrowContainer>
-            <SelectorArrowRight
-              {...{
-                width: 13,
-                height: 13,
-                color: theme.dark ? White : Slate,
-              }}
-            />
-          </ArrowContainer>
-        </PoliciesContainer>
       </ScrollView>
 
       {termsAccepted && !paymentExpired && !!exchangeTxId && (

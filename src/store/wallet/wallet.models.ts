@@ -42,15 +42,16 @@ export interface KeyProperties {
 export interface Key {
   id: string;
   wallets: Wallet[];
-  properties: KeyProperties;
-  methods: KeyMethods;
+  properties: KeyProperties | undefined;
+  methods: KeyMethods | undefined;
   backupComplete?: boolean;
   show?: boolean;
   totalBalance: number;
   totalBalanceLastDay: number;
-  isPrivKeyEncrypted?: boolean;
+  isPrivKeyEncrypted?: boolean | undefined;
   keyName?: string;
   hideKeyBalance: boolean;
+  isReadOnly: boolean;
 }
 
 export interface Wallet extends WalletObj, API {}
@@ -112,14 +113,6 @@ export interface WalletObj {
   network: Network;
 }
 
-export interface PriceHistory {
-  coin: string;
-  priceDisplay: Array<number>;
-  percentChange: string;
-  currencyPair: string;
-  prices: Array<{price: number; time: string}>;
-}
-
 export interface KeyOptions {
   keyId: any;
   name: any;
@@ -155,34 +148,6 @@ export interface Token {
   logoURI?: string;
 }
 
-export interface Rate {
-  code: string;
-  fetchedOn: number;
-  name: string;
-  rate: number;
-  ts: number;
-}
-
-export interface HistoricRate {
-  fetchedOn: number;
-  rate: number;
-  ts: number;
-}
-
-export type Rates = {
-  [key in string]: Rate[];
-};
-
-export type RatesByDateRange = {
-  [key in DateRanges]: Rate[];
-};
-
-export enum DateRanges {
-  Day = 1,
-  Week = 7,
-  Month = 30,
-}
-
 export interface Balance {
   availableAmount: number;
   availableConfirmedAmount: number;
@@ -197,6 +162,7 @@ export interface _Credentials extends Credentials {
   secret: string;
   copayers: string[];
   status: string;
+  singleAddress: boolean; // TODO add to bwc credentials model
 }
 export interface Status {
   balance: Balance;
@@ -208,7 +174,6 @@ export interface Status {
 
 export enum CacheKeys {
   RATES = 'ratesCacheKey',
-  BALANCE = 'balanceCacheKey',
 }
 
 export interface Recipient {
@@ -217,6 +182,8 @@ export interface Recipient {
   walletId?: string;
   keyId?: string;
   address: string;
+  amount?: number;
+  destinationTag?: number;
 }
 
 export interface CustomTransactionData {
@@ -253,6 +220,7 @@ export interface TransactionOptions {
   customData?: CustomTransactionData;
   payProUrl?: string;
   sendMax?: boolean;
+  payProDetails?: any;
   // btc
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
@@ -266,12 +234,16 @@ export interface TransactionOptions {
   isTokenSwap?: boolean;
   multisigContractAddress?: string;
   // xrp
-  destinationTag?: string;
+  destinationTag?: number;
   invoiceID?: string;
   useUnconfirmedFunds?: boolean;
   // fromReplaceByFee
   fee?: number;
-  inputs?: any[];
+  outputs?: Utxo[];
+  // selectInputs
+  inputs?: Utxo[];
+  // multisend
+  recipientList?: Recipient[];
 }
 
 export interface Action {
@@ -296,6 +268,8 @@ export interface TransactionProposal {
   fees: number;
   feeRate: string;
   from: string;
+  copayerId: string;
+  walletId: string;
   nonce?: number;
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
@@ -319,7 +293,7 @@ export interface TransactionProposal {
   feeLevel: string;
   dryRun: boolean;
   tokenAddress?: string;
-  destinationTag?: string;
+  destinationTag?: number;
   invoiceID?: string;
   multisigGnosisContractAddress?: string;
   multisigContractAddress?: string;
@@ -374,6 +348,10 @@ export interface TxDetailsSendingTo {
   recipientAddress?: string;
   img: string | ((props?: any) => ReactElement);
   recipientFullAddress?: string;
+  recipientAmountStr?: string;
+  currencyAbbreviation?: string;
+  recipientAltAmountStr?: string;
+  recipientCoin?: string;
 }
 
 export interface TxDetailsSendingFrom {
@@ -386,6 +364,7 @@ export interface TxDetails {
   sendingTo: TxDetailsSendingTo;
   fee: TxDetailsFee;
   networkCost?: TxDetailsAmount;
+  context?: TransactionOptionsContext;
   // eth
   gasPrice?: number;
   gasLimit?: number;
@@ -395,7 +374,7 @@ export interface TxDetails {
   subTotal: TxDetailsAmount;
   total: TxDetailsAmount;
   // xrp
-  destinationTag?: string;
+  destinationTag?: number;
 }
 
 export interface SendMaxInfo {
@@ -419,4 +398,19 @@ export interface BulkStatus {
   success: boolean;
   walletId: string;
   tokenAddress?: string;
+}
+
+export interface Utxo {
+  address: string;
+  amount: number;
+  confirmations: number;
+  locked: boolean;
+  path: string;
+  publicKeys: Array<string>;
+  satoshis: number;
+  scriptPubKey: string;
+  spent: boolean;
+  txid: string;
+  vout: number;
+  checked?: boolean;
 }

@@ -81,8 +81,7 @@ const NotificationsScreen: React.VFC<
       if (systemEnabled) {
         dispatch(AppEffects.setNotifications(accepted));
         dispatch(AppEffects.setConfirmTxNotifications(accepted));
-        dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
-        dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
+        dispatch(AppEffects.setAnnouncementsNotifications(accepted));
       }
       navigation.navigate('Pin');
     };

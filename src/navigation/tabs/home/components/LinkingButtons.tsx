@@ -11,6 +11,7 @@ import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {WalletScreens} from '../../../wallet/WalletStack';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -136,17 +137,12 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       ? buy.cta
       : () => {
           dispatch(
-            logSegmentEvent(
-              'track',
-              'Clicked Buy Crypto',
-              {
-                context: 'LinkingButtons',
-              },
-              true,
-            ),
+            logSegmentEvent('track', 'Clicked Buy Crypto', {
+              context: 'LinkingButtons',
+            }),
           );
           navigation.navigate('Wallet', {
-            screen: 'Amount',
+            screen: WalletScreens.AMOUNT,
             params: {
               onAmountSelected: async (amount: string) => {
                 navigation.navigate('BuyCrypto', {
@@ -156,10 +152,7 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
                   },
                 });
               },
-              opts: {
-                hideSendMax: true,
-                context: 'buyCrypto',
-              },
+              context: 'buyCrypto',
             },
           });
         },
@@ -169,20 +162,14 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       ? swap.cta
       : () => {
           dispatch(
-            logSegmentEvent(
-              'track',
-              'Clicked Swap Crypto',
-              {
-                context: 'LinkingButtons',
-              },
-              true,
-            ),
+            logSegmentEvent('track', 'Clicked Swap Crypto', {
+              context: 'LinkingButtons',
+            }),
           );
           navigation.navigate('SwapCrypto', {screen: 'Root'});
         },
   );
   const buttonsList: Array<ButtonListProps> = [
-    // TODO: update icons
     {
       label: t('buy'),
       img: <BuySvg />,

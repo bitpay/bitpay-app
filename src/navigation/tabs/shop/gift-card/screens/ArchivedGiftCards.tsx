@@ -1,11 +1,11 @@
-import React, {useCallback, useEffect} from 'react';
-import {useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useRef} from 'react';
+import {useNavigation, useScrollToTop} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {SectionContainer} from '../../components/styled/ShopTabComponents';
 import {GiftCardScreens} from '../GiftCardStack';
 import {CardConfig, GiftCard} from '../../../../../store/shop/shop.models';
 import GiftCardCreditsItem from '../../components/GiftCardCreditsItem';
-import {FlatList, TouchableWithoutFeedback} from 'react-native';
+import {FlatList, TouchableOpacity} from 'react-native';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {sortByDescendingDate} from '../../../../../lib/gift-cards/gift-card';
@@ -39,7 +39,8 @@ const ArchivedGiftCards = ({
     ({item: giftCard}: {item: GiftCard}) => {
       const cardConfig = supportedGiftCardMap[giftCard.name];
       return (
-        <TouchableWithoutFeedback
+        <TouchableOpacity
+          activeOpacity={0.8}
           key={giftCard.invoiceId}
           onPress={() =>
             navigator.navigate('GiftCard', {
@@ -51,17 +52,22 @@ const ArchivedGiftCards = ({
             cardConfig={cardConfig}
             amount={giftCard.amount}
           />
-        </TouchableWithoutFeedback>
+        </TouchableOpacity>
       );
     },
     [navigator, supportedGiftCardMap],
   );
+
+  const flatListRef = useRef<FlatList>(null);
+  useScrollToTop(flatListRef);
+
   return (
     <SectionContainer>
       <FlatList
         data={giftCards}
         renderItem={renderItem}
         keyExtractor={item => item.invoiceId}
+        ref={flatListRef}
       />
     </SectionContainer>
   );

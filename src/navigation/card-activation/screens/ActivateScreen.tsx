@@ -2,26 +2,28 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {t} from 'i18next';
-import {TextInput} from 'react-native';
-import * as yup from 'yup';
+import {useTranslation} from 'react-i18next';
+import {Keyboard, TextInput} from 'react-native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {BaseText} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {ProviderConfig} from '../../../constants/config.card';
+import yup from '../../../lib/yup';
 import {CardActions, CardEffects} from '../../../store/card';
 import {StartActivateCardParams} from '../../../store/card/card.effects';
 import {Card} from '../../../store/card/card.models';
 import {isActivationRequired} from '../../../utils/card';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {arrayToSentence} from '../../../utils/text';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
   AuthRowContainer,
 } from '../../auth/components/AuthFormContainer';
-import {CardActivationStackParamList} from '../CardActivationStack';
+import {
+  CardActivationScreens,
+  CardActivationStackParamList,
+} from '../CardActivationStack';
 
 export type ActivateScreenParamList = {
   card: Card;
@@ -34,17 +36,17 @@ const getDisplayFields = (card: Card) => {
   return fields || {};
 };
 
-const getDescription = (card: Card) => {
+const getFieldKeys = (card: Card) => {
   // the order should match the template
-  const fieldToText: Record<string, string> = {
-    cardNumber: t('your card number'),
-    lastFourDigits: t('the last 4 digits of your card number'),
-    expirationDate: t('the expiration date'),
-    cvv: t('the cvv'),
+  const fieldToI18nKey: Record<string, string> = {
+    cardNumber: 'your card number',
+    lastFourDigits: 'the last 4 digits of your card number',
+    expirationDate: 'the expiration date',
+    cvv: 'the cvv',
   };
 
   const fieldKeys = Object.keys(getDisplayFields(card));
-  const textKeys = Object.keys(fieldToText);
+  const textKeys = Object.keys(fieldToI18nKey);
   const orderOf = (k: string) => textKeys.indexOf(k);
 
   fieldKeys.sort((a, b) => {
@@ -57,9 +59,7 @@ const getDescription = (card: Card) => {
     return 0;
   });
 
-  const textArray = fieldKeys.map(field => fieldToText[field]);
-
-  return `Enter ${arrayToSentence(textArray)} to activate your card.`;
+  return fieldKeys.map(k => fieldToI18nKey[k]);
 };
 
 const schemas = {
@@ -117,9 +117,10 @@ const formatExpirationDateForBackend = (expirationDate: string) => {
   return `${expYear}${expMonth}`;
 };
 
-const ActivateScreen: React.FC<
-  StackScreenProps<CardActivationStackParamList, 'Activate'>
+const ActivateScreen: React.VFC<
+  StackScreenProps<CardActivationStackParamList, CardActivationScreens.ACTIVATE>
 > = ({navigation, route}) => {
+  const {t} = useTranslation();
   const {card} = route.params;
   const dispatch = useAppDispatch();
   const {
@@ -134,10 +135,25 @@ const ActivateScreen: React.FC<
   const activateStatus = useAppSelector(({CARD}) => CARD.activateCardStatus);
   const [buttonState, setButtonState] = useState<ButtonState>();
   const displayFields = getDisplayFields(card);
-  const description = getDescription(card);
   const lastFourRef = useRef<TextInput>(null);
   const expDateRef = useRef<TextInput>(null);
   const cvvRef = useRef<TextInput>(null);
+
+  const fieldKeys = getFieldKeys(card);
+  const descriptionKey =
+    fieldKeys.length === 3
+      ? 'EnterArgArgArgToActivateYourCard'
+      : fieldKeys.length === 2
+      ? 'EnterArgArgToActivateYourCard'
+      : fieldKeys.length === 1
+      ? 'EnterArgToActivateYourCard'
+      : 'EnterYourInformationToActivateYourCard';
+  const descriptionArgs = fieldKeys.reduce((accum, key, idx) => {
+    accum[idx] = t(key);
+
+    return accum;
+  }, {} as Record<string, string>);
+  const description = t(descriptionKey, descriptionArgs);
 
   const init = () => {
     if (!isActivationRequired(card)) {
@@ -147,27 +163,34 @@ const ActivateScreen: React.FC<
   const initRef = useRef(init);
   initRef.current = init;
 
-  const onSubmit = handleSubmit(formData => {
-    setButtonState('loading');
-    const {cvv, expirationDate} = formData;
-    const payload: StartActivateCardParams = {
-      cvv: cvv,
-      expirationDate: formatExpirationDateForBackend(expirationDate),
-    };
+  const onSubmit = handleSubmit(
+    formData => {
+      Keyboard.dismiss();
 
-    if (isGalileoForm(formData)) {
-      const {lastFourDigits} = formData;
+      setButtonState('loading');
+      const {cvv, expirationDate} = formData;
+      const payload: StartActivateCardParams = {
+        cvv: cvv,
+        expirationDate: formatExpirationDateForBackend(expirationDate),
+      };
 
-      payload.lastFourDigits = lastFourDigits;
-    } else if (isFirstViewForm(formData)) {
-      const {cardNumber} = formData;
+      if (isGalileoForm(formData)) {
+        const {lastFourDigits} = formData;
 
-      payload.cardNumber = cardNumber;
-      payload.lastFourDigits = cardNumber.slice(-4);
-    }
+        payload.lastFourDigits = lastFourDigits;
+      } else if (isFirstViewForm(formData)) {
+        const {cardNumber} = formData;
 
-    dispatch(CardEffects.startActivateCard(card.id, payload));
-  });
+        payload.cardNumber = cardNumber;
+        payload.lastFourDigits = cardNumber.slice(-4);
+      }
+
+      dispatch(CardEffects.startActivateCard(card.id, payload));
+    },
+    () => {
+      Keyboard.dismiss();
+    },
+  );
 
   useLayoutEffect(() => {
     initRef.current();

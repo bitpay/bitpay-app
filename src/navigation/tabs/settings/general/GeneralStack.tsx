@@ -39,9 +39,6 @@ const GeneralSettingsStack = () => {
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.THEME}
         component={Theme}
-        options={{
-          headerTitle: () => <HeaderTitle>{t('Theme')}</HeaderTitle>,
-        }}
       />
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.CUSTOMIZE_HOME}
@@ -57,15 +54,14 @@ const GeneralSettingsStack = () => {
           headerTitle: () => <HeaderTitle>{t('Display Currency')}</HeaderTitle>,
         }}
       />
-      {__DEV__ ? (
-        <GeneralSettings.Screen
-          name={GeneralSettingsScreens.LANGUAGE_SETTINGS}
-          component={LanguageSettings}
-          options={{
-            headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
-          }}
-        />
-      ) : null}
+
+      <GeneralSettings.Screen
+        name={GeneralSettingsScreens.LANGUAGE_SETTINGS}
+        component={LanguageSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
+        }}
+      />
     </GeneralSettings.Navigator>
   );
 };

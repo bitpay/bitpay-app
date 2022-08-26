@@ -10,13 +10,20 @@ import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
-import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
+import {
+  BaseText,
+  H2,
+  H5,
+  HeaderTitle,
+  ProposalBadge,
+} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
 import {
   Hr,
   ActiveOpacity,
   ScreenGutter,
-  HeaderRightContainer,
+  HeaderRightContainer as _HeaderRightContainer,
+  ProposalBadgeContainer,
 } from '../../../components/styled/Containers';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
@@ -24,7 +31,8 @@ import {
   toggleHideKeyBalance,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
-import {Wallet, Status, Rates} from '../../../store/wallet/wallet.models';
+import {Wallet, Status} from '../../../store/wallet/wallet.models';
+import {Rates} from '../../../store/rate/rate.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -37,7 +45,6 @@ import {
   shouldScale,
   sleep,
 } from '../../../utils/helper-methods';
-import {Dispatch} from 'redux';
 import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
@@ -48,6 +55,7 @@ import {
   AppDispatch,
   useAppDispatch,
   useAppSelector,
+  useLogger,
 } from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
@@ -56,6 +64,8 @@ import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
+import _ from 'lodash';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -137,6 +147,11 @@ const CogIconContainer = styled.TouchableOpacity`
 `;
 
 const HeaderTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const HeaderRightContainer = styled(_HeaderRightContainer)`
   flex-direction: row;
   align-items: center;
 `;
@@ -318,17 +333,24 @@ export const buildNestedWalletList = (
 const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {id, context} = route.params;
-  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
   const hasMultipleKeys =
     Object.values(keys).filter(k => k.backupComplete).length > 1;
-
+  let pendingTxps: any = [];
+  _.each(key?.wallets, x => {
+    if (x.pendingTxps) {
+      pendingTxps = pendingTxps.concat(x.pendingTxps);
+    }
+  });
   useLayoutEffect(() => {
     if (!key) {
       return;
@@ -341,7 +363,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
-            {key.methods.isPrivKeyEncrypted() ? (
+            {key.methods?.isPrivKeyEncrypted() ? (
               theme.dark ? (
                 <EncryptPasswordDarkModeImg />
               ) : (
@@ -358,25 +380,36 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
       headerRight: () => {
-        return key?.methods.isPrivKeyEncrypted() ? (
-          <HeaderRightContainer>
-            <CogIconContainer
-              onPress={() =>
-                navigation.navigate('KeySettings', {
-                  key,
-                })
-              }
-              activeOpacity={ActiveOpacity}>
-              <Icons.Cog />
-            </CogIconContainer>
-          </HeaderRightContainer>
-        ) : (
+        return (
           <>
-            <Settings
-              onPress={() => {
-                setShowKeyOptions(true);
-              }}
-            />
+            <HeaderRightContainer>
+              {pendingTxps.length ? (
+                <ProposalBadgeContainer
+                  style={{marginRight: 10}}
+                  onPress={onPressTxpBadge}>
+                  <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                </ProposalBadgeContainer>
+              ) : null}
+              {key?.methods?.isPrivKeyEncrypted() ? (
+                <CogIconContainer
+                  onPress={() =>
+                    navigation.navigate('KeySettings', {
+                      key,
+                    })
+                  }
+                  activeOpacity={ActiveOpacity}>
+                  <Icons.Cog />
+                </CogIconContainer>
+              ) : (
+                <>
+                  <Settings
+                    onPress={() => {
+                      setShowKeyOptions(true);
+                    }}
+                  />
+                </>
+              )}
+            </HeaderRightContainer>
           </>
         );
       },
@@ -385,20 +418,26 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
 
   useEffect(() => {
     if (context === 'createNewMultisigKey') {
-      key.wallets[0].getStatus(
-        {network: 'livenet'},
+      key?.wallets[0].getStatus(
+        {network: key?.wallets[0].network},
         (err: any, status: Status) => {
           if (err) {
-            // TODO
-            console.log(err);
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`error [getStatus]: ${errStr}`);
+          } else {
+            navigation.navigate('Copayers', {
+              wallet: key?.wallets[0],
+              status: status?.wallet,
+            });
           }
-          navigation.navigate('Copayers', {
-            wallet: key.wallets[0],
-            status: status.wallet,
-          });
         },
       );
     }
+  }, [navigation, key?.wallets, context]);
+
+  useEffect(() => {
+    dispatch(logSegmentEvent('track', 'View Key'));
   }, []);
 
   const {wallets = [], totalBalance} =
@@ -419,25 +458,27 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       rates,
       dispatch,
     );
-  }, [keys, wallets, defaultAltCurrency.isoCode]);
+  }, [dispatch, wallets, defaultAltCurrency.isoCode, rates]);
 
   const keyOptions: Array<Option> = [];
 
-  if (!key?.methods.isPrivKeyEncrypted()) {
-    keyOptions.push({
-      img: <Icons.Encrypt />,
-      title: t('Encrypt your Key'),
-      description: t(
-        'Prevent an unauthorized user from sending funds out of your wallet.',
-      ),
-      onPress: () => {
-        haptic('impactLight');
-        navigation.navigate('KeySettings', {
-          key,
-          context: 'createEncryptPassword',
-        });
-      },
-    });
+  if (!key?.methods?.isPrivKeyEncrypted()) {
+    if (!key?.isReadOnly) {
+      keyOptions.push({
+        img: <Icons.Encrypt />,
+        title: t('Encrypt your Key'),
+        description: t(
+          'Prevent an unauthorized user from sending funds out of your wallet.',
+        ),
+        onPress: () => {
+          haptic('impactLight');
+          navigation.navigate('KeySettings', {
+            key,
+            context: 'createEncryptPassword',
+          });
+        },
+      });
+    }
 
     keyOptions.push({
       img: <Icons.Settings />,
@@ -451,6 +492,13 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       },
     });
   }
+
+  const onPressTxpBadge = useMemo(
+    () => () => {
+      navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
+    },
+    [],
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -476,28 +524,30 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
           wallet={item}
           onPress={() => {
             haptic('impactLight');
-            const fullWalletObj = key.wallets.find(({id}) => id === item.id)!;
+            const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
             if (!fullWalletObj.isComplete()) {
               fullWalletObj.getStatus(
-                {network: 'livenet'},
+                {network: fullWalletObj.network},
                 (err: any, status: Status) => {
                   if (err) {
-                    // TODO
-                    console.log(err);
-                  }
-                  if (status.wallet.status === 'complete') {
-                    fullWalletObj.openWallet({}, () => {
-                      navigation.navigate('WalletDetails', {
-                        walletId: item.id,
-                        key,
+                    const errStr =
+                      err instanceof Error ? err.message : JSON.stringify(err);
+                    logger.error(`error [getStatus]: ${errStr}`);
+                  } else {
+                    if (status?.wallet?.status === 'complete') {
+                      fullWalletObj.openWallet({}, () => {
+                        navigation.navigate('WalletDetails', {
+                          walletId: item.id,
+                          key,
+                        });
                       });
+                      return;
+                    }
+                    navigation.navigate('Copayers', {
+                      wallet: fullWalletObj,
+                      status: status?.wallet,
                     });
-                    return;
                   }
-                  navigation.navigate('Copayers', {
-                    wallet: fullWalletObj,
-                    status: status.wallet,
-                  });
                 },
               );
             } else {

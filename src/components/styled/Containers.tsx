@@ -9,6 +9,7 @@ import {
   White,
   Slate,
   NotificationPrimary,
+  Action,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -49,7 +50,7 @@ export const SubTextContainer = styled.View`
 `;
 
 export const CtaContainer = styled.View`
-  padding: 10px;
+  padding: 10px ${ScreenGutter};
   align-self: stretch;
   flex-direction: column;
   margin-top: 30px;
@@ -96,7 +97,7 @@ export const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   margin: 10px 0;
-  padding: 0 10px 0 10px;
+  padding: 0 10px;
 `;
 
 export const CurrencyColumn = styled(Column)`
@@ -155,6 +156,11 @@ export const SettingTitle = styled(BaseText)`
   letter-spacing: 0;
   text-align: left;
   margin-right: 5px;
+`;
+
+export const SettingDescription = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  font-size: 14px;
 `;
 
 interface SettingIconProps {
@@ -242,7 +248,7 @@ export const ImportContainer = styled.View`
 `;
 
 export const ImportTextInput = styled.TextInput`
-  height: 100px;
+  height: 80px;
   color: ${({theme}) => theme.colors.text};
   background: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};
@@ -250,6 +256,7 @@ export const ImportTextInput = styled.TextInput`
   border-top-left-radius: 4px;
   text-align-vertical: top;
   padding: 5px;
+  font-size: 16px;
 `;
 
 export const InfoImageContainer = styled.View<{infoMargin: string}>`
@@ -361,4 +368,14 @@ export const NoResultsImgContainer = styled.View`
 
 export const NoResultsDescription = styled(BaseText)`
   font-size: 16px;
+`;
+
+export const ProposalBadgeContainer = styled.TouchableOpacity`
+  background: ${Action};
+  border-radius: 10px;
+  height: 30px;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;

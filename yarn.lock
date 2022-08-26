@@ -2287,6 +2287,11 @@
   resolved "https://registry.yarnpkg.com/@react-native-community/eslint-plugin/-/eslint-plugin-1.1.0.tgz#e42b1bef12d2415411519fd528e64b593b1363dc"
   integrity sha512-W/J0fNYVO01tioHjvYWQ9m6RgndVtbElzYozBq1ZPrHO/iCzlqoySHl4gO/fpCl9QEFjvJfjPgtPMTMlsoq5DQ==
 
+"@react-native-community/slider@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@react-native-community/slider/-/slider-4.2.4.tgz#8d88adceeb32f7997a122feba48d7186fca80346"
+  integrity sha512-uY51UoipQW4ELnFWMU6rTHRc4EUYaW+Z1O9Teijej6NYVYdUcUKq+t7WeBGjMAEc1ipyooMeBqRXToWO5zAU2Q==
+
 "@react-native-masked-view/masked-view@0.2.6":
   version "0.2.6"
   resolved "https://registry.yarnpkg.com/@react-native-masked-view/masked-view/-/masked-view-0.2.6.tgz#b26c52d5db3ad0926b13deea79c69620966a9221"
@@ -3493,7 +3498,7 @@
   dependencies:
     "@walletconnect/window-getters" "^1.0.0"
 
-"@yarnpkg/lockfile@^1.0.0":
+"@yarnpkg/lockfile@^1.0.0", "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@yarnpkg/lockfile/-/lockfile-1.1.0.tgz#e77a97fbd345b76d83245edcd17d393b1b41fb31"
   integrity sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==
@@ -4246,12 +4251,12 @@ bitauth@0.4.1:
     bs58 "^2.0.0"
     secp256k1 "3.7.1"
 
-bitcore-lib-cash@^8.25.30:
-  version "8.25.30"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-8.25.30.tgz#23b133cfb0c77662c69f3aa701a4028e8cf0263a"
-  integrity sha512-E+2YfvM2OKCZiEId6B4WR8YEAP10wSo16VQFTiPnWAANqez2kvHSh34L+gRGdzeqJHZDPOrl+ZuO7IB8+tv8gw==
+bitcore-lib-cash@^8.25.36:
+  version "8.25.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-8.25.36.tgz#d5df9f1e5bdbfe271a04711b00a1ecbb220544e7"
+  integrity sha512-ck/V+2Otv8YyWtKfoAgiZ+zqo1yMZ4FqcRPVxAAlj9aYTy8zQB0Rx+1Psbhb6djmyOC/Hod+UMNt8bVYlGBDSA==
   dependencies:
-    bitcore-lib "^8.25.30"
+    bitcore-lib "^8.25.36"
     bn.js "=4.11.8"
     bs58 "^4.0.1"
     buffer-compare "=1.1.1"
@@ -4259,10 +4264,10 @@ bitcore-lib-cash@^8.25.30:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-lib-doge@^8.25.30:
-  version "8.25.30"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-8.25.30.tgz#6570700b99fd738f2ca885871e9f8b2e8aa8e25f"
-  integrity sha512-O9uIFoDkOUJggAj29Psg6atg5A/Paf1u8OZKKtGwaDVbZlzeIxHCSAsB5jO/gdfovCwFW1YNhlJT3Xj4OTWZVA==
+bitcore-lib-doge@^8.25.36:
+  version "8.25.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-8.25.36.tgz#6faabbbf2bd2e96f3eb51e5ad5c73d870049415d"
+  integrity sha512-mPzwdQSa92BGiRGckC8Qi+zj27H8as4LITEi2ps9GqZ1L7QzNwZnmNAI+6bgN0uQarP2vwuyUOO3Ng+++yMHYg==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -4272,10 +4277,10 @@ bitcore-lib-doge@^8.25.30:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib-ltc@^8.25.30:
-  version "8.25.30"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-8.25.30.tgz#1dca2bb65224a63bf66507c53ebc6bef67011570"
-  integrity sha512-PBcPCIe2vsPZ4sozRM9f5hVw4VgQM68LVNnz3Vom1kMOV/VSEbh476h8rVKDQqjpDAzZ1fsxavvBVsTmWTgUIA==
+bitcore-lib-ltc@^8.25.36:
+  version "8.25.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-8.25.36.tgz#9bc48bc1422ef822d6a763aad0bfeac844c924d8"
+  integrity sha512-bnIeQELQC4IVRpUp+OVuxXsJk8fX7wAMYGqJ3fZwoi3YM9w4RC0MiEEQB1R6Hjm53QW6xCjwTCzpV2eC5I43cw==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -4286,10 +4291,10 @@ bitcore-lib-ltc@^8.25.30:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib@^8.25.30:
-  version "8.25.30"
-  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-8.25.30.tgz#0a0e71ac4e15d3168a5f7206e082cad2bac632e4"
-  integrity sha512-e4j5xw76/S+T/dEeQCPizDF3GXpa1g7sdPUVwn/MgHs3+RCaIjn6ChxrZkpBnP/ecBjwT8yfzeUScovxyLRlSA==
+bitcore-lib@^8.25.36:
+  version "8.25.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-8.25.36.tgz#2933e90dd268d58ba3af65d37c01f869b9799df8"
+  integrity sha512-am/XH25YzhNmY+nDt92z1OcWDBo//kFKHT3OTsguOlmd+0Bm7J34M2TIFj6hRBjCDONwqsfL//ebuIV+6ScHIQ==
   dependencies:
     bech32 "=2.0.0"
     bip-schnorr "=0.6.4"
@@ -4300,25 +4305,25 @@ bitcore-lib@^8.25.30:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-mnemonic@^8.25.30:
-  version "8.25.30"
-  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-8.25.30.tgz#09365c245f21592af78e143a8deb88d3c6ea4a58"
-  integrity sha512-46WYKmUof6OUGG5O8a40aWuKSZZ5j+F0F8MdCl9Qp4Jlpgoe13KCX5jYFv3lRM/AShmDxjaLsd4CJgSnBriAUg==
+bitcore-mnemonic@^8.25.36:
+  version "8.25.36"
+  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-8.25.36.tgz#4d4e17dbfa82143bd5bc1e84a4a15eed67a04110"
+  integrity sha512-nWVLXsqF7qo1lR/pxGV8Z3NL1QnhpeJaOf0R1/7Y/bvx/aADSBBhW6rv/kOw1L9vKUURt0ieQC+avsIZMyebfg==
   dependencies:
-    bitcore-lib "^8.25.30"
+    bitcore-lib "^8.25.36"
     unorm "^1.4.1"
 
-bitcore-wallet-client@8.25.30:
-  version "8.25.30"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-8.25.30.tgz#f7b1498d9db33c1c3a0698ed716a80da7fe7aa15"
-  integrity sha512-ZBAFgnX0Ics4DgfDtUK5aBcAey+AdNknq5v8DjzAeOzxGauaUBgF8hM1Js6qWIXmXITJmnNhlBPf4LsXw4ts5A==
+bitcore-wallet-client@8.25.36:
+  version "8.25.36"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-8.25.36.tgz#58cc4adbe3ccbbd1cbae934a0fb4b1fed77e5ad1"
+  integrity sha512-QmejI+3IwJg6aLhrlwMOsYl9Tt6dKiFOBRu0USp855nFlcXmi0hBQ3Tcsj9sffLFEMedpFT5F8MXPofTGOA4Zg==
   dependencies:
     ajv "^6.10.0"
     async "^0.9.0"
     awesome-typescript-loader "^5.2.1"
     bip38 "^1.3.0"
-    bitcore-mnemonic "^8.25.30"
-    crypto-wallet-core "^8.25.30"
+    bitcore-mnemonic "^8.25.36"
+    crypto-wallet-core "^8.25.36"
     json-stable-stringify "^1.0.1"
     lodash "^4.17.20"
     preconditions "^2.2.3"
@@ -5354,7 +5359,7 @@ create-react-context@0.3.0:
     gud "^1.0.0"
     warning "^4.0.3"
 
-cross-spawn@^6.0.0:
+cross-spawn@^6.0.0, cross-spawn@^6.0.5:
   version "6.0.5"
   resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-6.0.5.tgz#4a5ec7c64dfae22c3a14124dbacdee846d80cbc4"
   integrity sha512-eTVLrBSt7fjbDygz805pMnstIs2VTBNkRm0qxZd+M7A5XDdxVRWO5MxGBXZhjY4cqLYLdtrGqRf8mBPmzwSpWQ==
@@ -5396,15 +5401,15 @@ crypto-js@3.1.9-1:
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
   integrity sha1-/aGedh/Ad+Af+/3G6f38WeiAbNg=
 
-crypto-wallet-core@^8.25.30:
-  version "8.25.30"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-8.25.30.tgz#599bd4f9c901f983f4425061c2272c88af0cfbc9"
-  integrity sha512-4GSklorFr2hXaOaRlBLJ4phvXXzRvqy8Dwy4YkhL2LVhDMYdXq31dA8KoLQL1UfeyULv15grh5zQO/RiUCUwMQ==
+crypto-wallet-core@^8.25.36:
+  version "8.25.36"
+  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-8.25.36.tgz#257526225a8e250ee3307aae2050c0ebe55ad0d3"
+  integrity sha512-0lgE3R6pd3QPRD5fCD5J3EcY+zi98Zih5AAagZREvmsoJBONMZ1IiOlJ5QflgUab7xSkOrP3rgaFZO0M0ddMpg==
   dependencies:
-    bitcore-lib "^8.25.30"
-    bitcore-lib-cash "^8.25.30"
-    bitcore-lib-doge "^8.25.30"
-    bitcore-lib-ltc "^8.25.30"
+    bitcore-lib "^8.25.36"
+    bitcore-lib-cash "^8.25.36"
+    bitcore-lib-doge "^8.25.36"
+    bitcore-lib-ltc "^8.25.36"
     ethers "^5.0.12"
     info "0.0.6-beta.0"
     ripple-binary-codec "0.2.6"
@@ -6944,6 +6949,13 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
+find-yarn-workspace-root@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/find-yarn-workspace-root/-/find-yarn-workspace-root-2.0.0.tgz#f47fb8d239c900eb78179aa81b66673eac88f7bd"
+  integrity sha512-1IMnbjt4KzsQfnhnzNd8wUEgXZ44IzZaZmnLYx7D5FZlaHt2gW20Cri8Q+E/t5tIj4+epTBub+2Zxu/vNILzqQ==
+  dependencies:
+    micromatch "^4.0.2"
+
 findit@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/findit/-/findit-2.0.0.tgz#6509f0126af4c178551cfa99394e032e13a4d56e"
@@ -7095,6 +7107,15 @@ fs-extra@^4.0.2:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-4.0.3.tgz#0d852122e5bc5beb453fb028e9c0c9bf36340c94"
   integrity sha512-q6rbdDd1o2mAnQreO7YADIxf/Whx4AHBiRf6d+/cVT8h44ss+lHgxf1FemcqDnQt9X3ct4McHr+JMGlYSsK7Cg==
+  dependencies:
+    graceful-fs "^4.1.2"
+    jsonfile "^4.0.0"
+    universalify "^0.1.0"
+
+fs-extra@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-7.0.1.tgz#4f189c44aa123b895f722804f55ea23eadc348e9"
+  integrity sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw==
   dependencies:
     graceful-fs "^4.1.2"
     jsonfile "^4.0.0"
@@ -7970,6 +7991,11 @@ is-directory@^0.3.1:
   resolved "https://registry.yarnpkg.com/is-directory/-/is-directory-0.3.1.tgz#61339b6f2475fc772fd9c9d83f5c8575dc154ae1"
   integrity sha1-YTObbyR1/Hcv2cnYP1yFddwVSuE=
 
+is-docker@^2.0.0:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/is-docker/-/is-docker-2.2.1.tgz#33eeabe23cfe86f14bde4408a02c0cfb853acdaa"
+  integrity sha512-F+i2BKsFrH66iaUFc0woD8sLy8getkwTwtOBjvs56Cx4CgJDeKQeqfz8wAYiSb8JOprWhHH5p77PbmYCvvUuXQ==
+
 is-dom@^1.0.9:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/is-dom/-/is-dom-1.1.0.tgz#af1fced292742443bb59ca3f76ab5e80907b4e8a"
@@ -8218,6 +8244,13 @@ is-wsl@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/is-wsl/-/is-wsl-1.1.0.tgz#1f16e4aa22b04d1336b66188a66af3c600c3a66d"
   integrity sha1-HxbkqiKwTRM2tmGIpmrzxgDDpm0=
+
+is-wsl@^2.1.1:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/is-wsl/-/is-wsl-2.2.0.tgz#74a4c76e77ca9fd3f932f290c17ea326cd157271"
+  integrity sha512-fKzAra0rGJUUBwGBgNkHZuToZcn+TtXHpeCgmkMJMMYx1sQDYaCSyjJBSCa2nH1DGm7s3n1oBnohoVTBaN7Lww==
+  dependencies:
+    is-docker "^2.0.0"
 
 is@~0.2.6:
   version "0.2.7"
@@ -9102,6 +9135,13 @@ kind-of@^6.0.0, kind-of@^6.0.2:
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.3.tgz#07c05034a6c349fa06e24fa35aa76db4580ce4dd"
   integrity sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==
+
+klaw-sync@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/klaw-sync/-/klaw-sync-6.0.0.tgz#1fd2cfd56ebb6250181114f0a581167099c2b28c"
+  integrity sha512-nIeuVSzdCCs6TDPTqI8w1Yre34sSq7AkZ4B3sfOBbI2CgVSB4Du4aLQijFU2+lhAFCwt9+42Hel6lQNIv6AntQ==
+  dependencies:
+    graceful-fs "^4.1.11"
 
 klaw@^1.0.0:
   version "1.3.1"
@@ -10428,6 +10468,14 @@ open@^6.2.0:
   dependencies:
     is-wsl "^1.1.0"
 
+open@^7.4.2:
+  version "7.4.2"
+  resolved "https://registry.yarnpkg.com/open/-/open-7.4.2.tgz#b8147e26dcf3e426316c730089fd71edd29c2321"
+  integrity sha512-MVHddDVweXZF3awtlAS+6pgKLlm/JgxZ90+/NBurBoQctVOOB/zDdVjcyPzQ+0laDGbsWgrRkflI65sQeOgT9Q==
+  dependencies:
+    is-docker "^2.0.0"
+    is-wsl "^2.1.1"
+
 opencollective-postinstall@^2.0.2:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/opencollective-postinstall/-/opencollective-postinstall-2.0.3.tgz#7a0fff978f6dbfa4d006238fbac98ed4198c3259"
@@ -10469,7 +10517,7 @@ ordered-read-streams@^1.0.0:
   dependencies:
     readable-stream "^2.0.1"
 
-os-tmpdir@^1.0.0:
+os-tmpdir@^1.0.0, os-tmpdir@~1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/os-tmpdir/-/os-tmpdir-1.0.2.tgz#bbe67406c79aa85c5cfec766fe5734555dfa1274"
   integrity sha1-u+Z0BseaqFxc/sdm/lc0VV36EnQ=
@@ -10632,6 +10680,25 @@ pascalcase@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/pascalcase/-/pascalcase-0.1.1.tgz#b363e55e8006ca6fe21784d2db22bd15d7917f14"
   integrity sha1-s2PlXoAGym/iF4TS2yK9FdeRfxQ=
+
+patch-package@6.4.7:
+  version "6.4.7"
+  resolved "https://registry.yarnpkg.com/patch-package/-/patch-package-6.4.7.tgz#2282d53c397909a0d9ef92dae3fdeb558382b148"
+  integrity sha512-S0vh/ZEafZ17hbhgqdnpunKDfzHQibQizx9g8yEf5dcVk3KOflOfdufRXQX8CSEkyOQwuM/bNz1GwKvFj54kaQ==
+  dependencies:
+    "@yarnpkg/lockfile" "^1.1.0"
+    chalk "^2.4.2"
+    cross-spawn "^6.0.5"
+    find-yarn-workspace-root "^2.0.0"
+    fs-extra "^7.0.1"
+    is-ci "^2.0.0"
+    klaw-sync "^6.0.0"
+    minimist "^1.2.0"
+    open "^7.4.2"
+    rimraf "^2.6.3"
+    semver "^5.6.0"
+    slash "^2.0.0"
+    tmp "^0.0.33"
 
 path-browserify@1.0.1:
   version "1.0.1"
@@ -11482,6 +11549,11 @@ react-native-localize@2.1.7:
   resolved "https://registry.yarnpkg.com/react-native-localize/-/react-native-localize-2.1.7.tgz#f1dda0c6fd58ab06b5b119cb4a507ab8800b9823"
   integrity sha512-phimOUtDLiqY2ba7Rjk9KpuaVSo7iGMNnwr7rjBVqlhmtTF3ShQ1FPFPxOyUrzDU9jLtj1xMi7MXWYuiVg660Q==
 
+react-native-mail@6.1.1:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/react-native-mail/-/react-native-mail-6.1.1.tgz#f1b1f8034c84d2510a93e4a2a795f0db5a13595e"
+  integrity sha512-pTs180wwyh7hN/iyTC9SfOX579U4YhDlHOLxi47IGvhPJENqO/QFdBq+wWKxyhNqdQuVSy+LoeIxLreWnIeYmg==
+
 react-native-markdown-display@7.0.0-alpha.2:
   version "7.0.0-alpha.2"
   resolved "https://registry.yarnpkg.com/react-native-markdown-display/-/react-native-markdown-display-7.0.0-alpha.2.tgz#a48a70d3cb5c510a52ecf7f1509a4a3d14d728aa"
@@ -11537,6 +11609,11 @@ react-native-progress@5.0.0:
   dependencies:
     prop-types "^15.7.2"
 
+react-native-prompt-android@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/react-native-prompt-android/-/react-native-prompt-android-1.1.0.tgz#3c5168029075cb9f72549fd5f92403372fb234e9"
+  integrity sha512-4JoyEaT2ZnK9IH+tDFpbTiQBgva8UIFGQf4/Uw/tnEVWBERlVlzcs5B82T9BkeEhEqXhp89JaiSBnLWj30lciw==
+
 react-native-qrcode-svg@6.1.2:
   version "6.1.2"
   resolved "https://registry.yarnpkg.com/react-native-qrcode-svg/-/react-native-qrcode-svg-6.1.2.tgz#a7cb6c10199ab01418a7f7700ce17a6a014f544e"
@@ -11553,6 +11630,11 @@ react-native-randombytes@3.6.1:
     buffer "^4.9.1"
     sjcl "^1.0.3"
 
+react-native-rate@1.2.9:
+  version "1.2.9"
+  resolved "https://registry.yarnpkg.com/react-native-rate/-/react-native-rate-1.2.9.tgz#dc9fed2c8026602827c71d9a133104f98ce0c62a"
+  integrity sha512-XBA5XdcWYtRyVuGFKJrsufFfaA9fSwOI/bzzDsfcovJQbYMJ0KIXMD3dFmsxAn0Kd3LDKwnHqnpjrmXOSF9rcQ==
+
 react-native-reanimated@2.5.0:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/react-native-reanimated/-/react-native-reanimated-2.5.0.tgz#315de3a23269afd150df5359252e62937a1a8068"
@@ -11565,6 +11647,11 @@ react-native-reanimated@2.5.0:
     react-native-screens "^3.11.1"
     setimmediate "^1.0.5"
     string-hash-64 "^1.0.3"
+
+react-native-restart@0.0.24:
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/react-native-restart/-/react-native-restart-0.0.24.tgz#c7036f25d900d9221b84d3e5129b02d4289d4e94"
+  integrity sha512-pvJNU3NwQk6bCG2gOWcQpZ4IxhtELB0K9gzmtixfsaTFbW1UXXHkJNjk1kHazcbH5hrD7QbUkR63fsAVh8X4VQ==
 
 react-native-rounded-checkbox@0.3.3:
   version "0.3.3"
@@ -11645,10 +11732,10 @@ react-native-timeago@0.5.0:
   resolved "https://registry.yarnpkg.com/react-native-timeago/-/react-native-timeago-0.5.0.tgz#1b08057e3473dbb5b6720ee5cde4e544a7c250f0"
   integrity sha512-GYrV36FK8ttkl7BIAdh77OlYLYGIKLGNviJqzPUtKaO8ANEtI8ph7UkSTRv9oMKfvDnA5VKV9hVX7GtYoAztRg==
 
-react-native-touch-id@4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/react-native-touch-id/-/react-native-touch-id-4.4.1.tgz#8b1bb2d04c30bac36bb9696d2d723e719c4a8b08"
-  integrity sha512-1jTl8fC+0fxvqegy/XXTyo6vMvPhjzkoDdaqoYZx0OH8AT250NuXnNPyKktvigIcys3+2acciqOeaCall7lrvg==
+react-native-touch-id-ng@5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-touch-id-ng/-/react-native-touch-id-ng-5.0.1.tgz#acb229e3f3d70a7fee75153296e07778763b8032"
+  integrity sha512-J8V10YnIfRvNNJ0hVUX889qqmu6lgs5O1baFars3q1qUgVqj0l4MAsrBF5tpyo5K89LFyLGWAt5XH7/0zNOPvA==
 
 react-native-tracking-transparency@0.1.1:
   version "0.1.1"
@@ -12242,7 +12329,7 @@ ret@~0.1.10:
   resolved "https://registry.yarnpkg.com/ret/-/ret-0.1.15.tgz#b8a4825d5bdb1fc3f6f53c2bc33f81388681c7bc"
   integrity sha512-TTlYpa+OL+vMMNG24xSlQGEJ3B/RzEfUlLct7b5G/ytav+wPrplCpVMFuwzXbkecJrb6IYo1iFb0S9v37754mg==
 
-rimraf@^2.2.8, rimraf@^2.5.4:
+rimraf@^2.2.8, rimraf@^2.5.4, rimraf@^2.6.3:
   version "2.7.1"
   resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-2.7.1.tgz#35797f13a7fdadc566142c29d4f07ccad483e3ec"
   integrity sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==
@@ -12784,6 +12871,11 @@ sjcl@^1.0.3:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/sjcl/-/sjcl-1.0.8.tgz#f2ec8d7dc1f0f21b069b8914a41a8f236b0e252a"
   integrity sha512-LzIjEQ0S0DpIgnxMEayM1rq9aGwGRG4OnZhCdjx7glTaJtf4zRfpg87ImfjSJjoW9vKpagd82McDOwbRT5kQKQ==
+
+slash@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/slash/-/slash-2.0.0.tgz#de552851a1759df3a8f206535442f5ec4ddeab44"
+  integrity sha512-ZYKh3Wh2z1PpEXWr0MpSBZ0V6mZHAQfYevttO11c51CaWjGTaadiKZ+wVt1PbMlDV5qhMFslpZCemhwOK7C89A==
 
 slash@^3.0.0:
   version "3.0.0"
@@ -13397,6 +13489,13 @@ tinycolor2@^1.4.1:
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.4.2.tgz#3f6a4d1071ad07676d7fa472e1fac40a719d8803"
   integrity sha512-vJhccZPs965sV/L2sU4oRQVAos0pQXwsvTLkWYdqJ+a8Q5kPFzJTuOFwy7UniPli44NKQGAglksjvOcpo95aZA==
+
+tmp@^0.0.33:
+  version "0.0.33"
+  resolved "https://registry.yarnpkg.com/tmp/-/tmp-0.0.33.tgz#6d34335889768d21b2bcda0aa277ced3b1bfadf9"
+  integrity sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==
+  dependencies:
+    os-tmpdir "~1.0.2"
 
 tmpl@1.0.5:
   version "1.0.5"

@@ -38,11 +38,11 @@ import {
 } from '../../../../styles/colors';
 import {
   getPaymentUrl,
-  simplexFiatAmountLimits,
+  getSimplexFiatAmountLimits,
   simplexPaymentRequest,
   simplexEnv,
 } from '../utils/simplex-utils';
-import {wyreFiatAmountLimits} from '../utils/wyre-utils';
+import {getWyreFiatAmountLimits} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import {
@@ -57,7 +57,7 @@ import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {APP_NAME} from '../../../../constants/config';
+import {APP_DEEPLINK_PREFIX} from '../../../../constants/config';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
@@ -157,7 +157,6 @@ const OfferDataContainer = styled.View`
 `;
 
 const OfferDataCryptoAmount = styled(H5)`
-  line-height: 20px;
   color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
 
@@ -287,11 +286,24 @@ const BuyCryptoOffers: React.FC = () => {
   const [updateView, setUpdateView] = useState(false);
 
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
+  const allRates = useAppSelector(({RATE}: RootState) => RATE.rates);
 
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
 
-    offers.simplex.amountLimits = simplexFiatAmountLimits;
+    const simplexLimits = getSimplexFiatAmountLimits();
+    offers.simplex.amountLimits = {
+      min: calculateAltFiatEquivalent(
+        simplexLimits.min,
+        fiatCurrency,
+        'simplex',
+      ),
+      max: calculateAltFiatEquivalent(
+        simplexLimits.max,
+        fiatCurrency,
+        'simplex',
+      ),
+    };
 
     if (
       amount < offers.simplex.amountLimits.min ||
@@ -366,17 +378,57 @@ const BuyCryptoOffers: React.FC = () => {
             let err = t(
               "Can't get rates at this moment. Please try again later",
             );
-            showSimplexError(err);
+            const reason = 'simplexGetQuote Error. "quote_id" not included.';
+            showSimplexError(err, reason);
           }
         })
         .catch((err: any) => {
           console.log('Simplex getting quote: FAILED', err);
-          showSimplexError(err);
+          const reason = 'simplexGetQuote Error';
+          showSimplexError(err, reason);
         });
     }
   };
 
-  const showSimplexError = (err?: any) => {
+  const calculateAltFiatEquivalent = (
+    amount: number,
+    fiatCurrency: string,
+    exchange?: string,
+  ): number | undefined => {
+    let baseFiatArray: string[];
+    switch (exchange) {
+      case 'simplex':
+        baseFiatArray = ['USD'];
+        break;
+      case 'wyre':
+        baseFiatArray = ['USD', 'EUR'];
+        break;
+      default:
+        baseFiatArray = ['USD'];
+        break;
+    }
+
+    if (baseFiatArray.includes(fiatCurrency)) {
+      return amount;
+    }
+
+    const rateBtcUsd = allRates.btc.find(r => {
+      return r.code === 'USD';
+    });
+    const rateBtcAlt = allRates.btc.find(r => {
+      return r.code === fiatCurrency.toUpperCase();
+    });
+
+    if (rateBtcUsd && rateBtcUsd.rate > 0 && rateBtcAlt) {
+      const rateAltUsd = +(rateBtcAlt.rate / rateBtcUsd.rate).toFixed(2);
+      return amount * rateAltUsd;
+    } else {
+      logger.warn(`There are no rates for : ${fiatCurrency}-USD`);
+      return undefined;
+    }
+  };
+
+  const showSimplexError = (err?: any, reason?: string) => {
     let msg = t('Could not get crypto offer. Please try again later.');
     if (err) {
       if (typeof err === 'string') {
@@ -393,20 +445,15 @@ const BuyCryptoOffers: React.FC = () => {
     logger.error('Simplex error: ' + msg);
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Failed Buy Crypto',
-        {
-          exchange: 'simplex',
-          context: 'BuyCryptoOffers',
-          message: msg || '',
-          paymentMethod: paymentMethod.method || '',
-          amount: Number(amount) || '',
-          coin: coin || '',
-          fiatCurrency: fiatCurrency || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Failed Buy Crypto', {
+        exchange: 'simplex',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(amount) || '',
+        coin: coin || '',
+        fiatCurrency: fiatCurrency || '',
+      }),
     );
 
     offers.simplex.errorMsg = msg;
@@ -415,7 +462,7 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
-  const showWyreError = (err?: any) => {
+  const showWyreError = (err?: any, reason?: string) => {
     let msg = t('Could not get crypto offer. Please try again later.');
     if (err) {
       if (typeof err === 'string') {
@@ -438,20 +485,15 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Failed Buy Crypto',
-        {
-          exchange: 'wyre',
-          context: 'BuyCryptoOffers',
-          message: msg || '',
-          paymentMethod: paymentMethod.method || '',
-          amount: Number(amount) || '',
-          coin: coin || '',
-          fiatCurrency: fiatCurrency || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Failed Buy Crypto', {
+        exchange: 'wyre',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(amount) || '',
+        coin: coin || '',
+        fiatCurrency: fiatCurrency || '',
+      }),
     );
 
     logger.error('Crypto offer error: ' + msg);
@@ -464,7 +506,11 @@ const BuyCryptoOffers: React.FC = () => {
   const getWyreQuote = async () => {
     logger.debug('Wyre getting quote');
 
-    offers.wyre.amountLimits = wyreFiatAmountLimits;
+    const wyreLimits = getWyreFiatAmountLimits(country);
+    offers.wyre.amountLimits = {
+      min: calculateAltFiatEquivalent(wyreLimits.min, fiatCurrency, 'wyre'),
+      max: calculateAltFiatEquivalent(wyreLimits.max, fiatCurrency, 'wyre'),
+    };
 
     if (
       amount < offers.wyre.amountLimits.min ||
@@ -486,7 +532,8 @@ const BuyCryptoOffers: React.FC = () => {
         )) as string;
       } catch (err) {
         console.error(err);
-        showWyreError(err);
+        const reason = 'createWalletAddress Error';
+        showWyreError(err, reason);
       }
 
       const dest = setPrefix(address, coin, selectedWallet.credentials.network);
@@ -516,7 +563,8 @@ const BuyCryptoOffers: React.FC = () => {
         .wyreWalletOrderQuotation(requestData)
         .then(data => {
           if (data && (data.exceptionId || data.error)) {
-            showWyreError(data);
+            const reason = 'wyreWalletOrderQuotation Error';
+            showWyreError(data, reason);
             return;
           }
 
@@ -528,7 +576,8 @@ const BuyCryptoOffers: React.FC = () => {
             const err =
               t('Wyre has returned a wrong value for the fee. Fee: ') +
               offers.wyre.fee;
-            showWyreError(err);
+            const reason = 'Fee not included';
+            showWyreError(err, reason);
             return;
           }
 
@@ -544,7 +593,8 @@ const BuyCryptoOffers: React.FC = () => {
         })
         .catch((err: any) => {
           console.log('Wyre getting quote: FAILED', err);
-          showWyreError(err);
+          const reason = 'wyreWalletOrderQuotation Error';
+          showWyreError(err, reason);
         });
     }
   };
@@ -568,7 +618,8 @@ const BuyCryptoOffers: React.FC = () => {
       )) as string;
     } catch (err) {
       console.error(err);
-      showSimplexError(err);
+      const reason = 'createWalletAddress Error';
+      showSimplexError(err, reason);
     }
 
     const quoteData = {
@@ -581,7 +632,8 @@ const BuyCryptoOffers: React.FC = () => {
     simplexPaymentRequest(selectedWallet, address, quoteData, createdOn)
       .then(req => {
         if (req && req.error) {
-          showSimplexError(req.error);
+          const reason = 'simplexPaymentRequest Error';
+          showSimplexError(req.error, reason);
           return;
         }
 
@@ -617,18 +669,13 @@ const BuyCryptoOffers: React.FC = () => {
         );
 
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Requested Crypto Purchase',
-            {
-              exchange: 'simplex',
-              fiatAmount: amount,
-              fiatCurrency: fiatCurrency,
-              paymentMethod: paymentMethod.method,
-              coin: selectedWallet.currencyAbbreviation,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Requested Crypto Purchase', {
+            exchange: 'simplex',
+            fiatAmount: amount,
+            fiatCurrency: fiatCurrency,
+            paymentMethod: paymentMethod.method,
+            coin: selectedWallet.currencyAbbreviation,
+          }),
         );
 
         const paymentUrl: string = getPaymentUrl(
@@ -644,7 +691,8 @@ const BuyCryptoOffers: React.FC = () => {
           .catch(err => console.error("Couldn't load page", err));
       })
       .catch(err => {
-        showSimplexError(err);
+        const reason = 'simplexPaymentRequest Error';
+        showSimplexError(err, reason);
       });
   };
 
@@ -656,7 +704,8 @@ const BuyCryptoOffers: React.FC = () => {
       )) as string;
     } catch (err) {
       console.error(err);
-      showWyreError(err);
+      const reason = 'createWalletAddress Error';
+      showWyreError(err, reason);
     }
     let _paymentMethod: string;
     switch (paymentMethod.method) {
@@ -667,14 +716,13 @@ const BuyCryptoOffers: React.FC = () => {
         _paymentMethod = 'debit-card';
         break;
     }
-    const appName = APP_NAME;
     const redirectUrl =
-      APP_NAME +
-      '://wyre?walletId=' +
+      APP_DEEPLINK_PREFIX +
+      'wyre?walletId=' +
       selectedWallet.id +
       '&destAmount=' +
       offers.wyre.amountReceiving;
-    const failureRedirectUrl = appName + '://wyreError';
+    const failureRedirectUrl = APP_DEEPLINK_PREFIX + 'wyreError';
     const dest = setPrefix(address, coin, selectedWallet.credentials.network);
     const requestData = {
       sourceAmount: amount.toString(),
@@ -694,7 +742,8 @@ const BuyCryptoOffers: React.FC = () => {
       .wyreWalletOrderReservation(requestData)
       .then((data: any) => {
         if (data && (data.exceptionId || data.error)) {
-          showWyreError(data);
+          const reason = 'wyreWalletOrderReservation Error';
+          showWyreError(data, reason);
           return;
         }
 
@@ -702,24 +751,20 @@ const BuyCryptoOffers: React.FC = () => {
         openPopUpConfirmation('wyre', paymentUrl);
       })
       .catch((err: any) => {
-        showWyreError(err);
+        const reason = 'wyreWalletOrderReservation Error';
+        showWyreError(err, reason);
       });
   };
 
   const continueToWyre = (paymentUrl: string) => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Requested Crypto Purchase',
-        {
-          exchange: 'wyre',
-          fiatAmount: amount,
-          fiatCurrency: fiatCurrency,
-          paymentMethod: paymentMethod.method,
-          coin: selectedWallet.currencyAbbreviation,
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Requested Crypto Purchase', {
+        exchange: 'wyre',
+        fiatAmount: amount,
+        fiatCurrency: fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation,
+      }),
     );
     Linking.openURL(paymentUrl)
       .then(() => {

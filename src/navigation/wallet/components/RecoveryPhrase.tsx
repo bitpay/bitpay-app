@@ -12,6 +12,7 @@ import {
   ActiveOpacity,
   CtaContainer as _CtaContainer,
   HeaderContainer,
+  ScreenGutter,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
@@ -21,7 +22,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
 import {
   BaseText,
@@ -52,7 +53,6 @@ import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {
   ImportTextInput,
-  ImportContainer,
   AdvancedOptionsContainer,
   AdvancedOptionsButton,
   AdvancedOptionsButtonText,
@@ -79,11 +79,9 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {FlatList} from 'react-native';
+import {FlatList, ScrollView} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
-import CurrencySelectionRow, {
-  CurrencySelectionToggleProps,
-} from '../../../components/list/CurrencySelectionRow';
+import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {sleep} from '../../../utils/helper-methods';
 import {
@@ -91,10 +89,14 @@ import {
   isSingleAddressCoin,
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
-const ScrollViewContainer = styled.ScrollView`
+const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
-  padding: 0 15px;
+`;
+
+const ContentView = styled(ScrollView)`
+  padding: 0 ${ScreenGutter};
 `;
 
 const PasswordParagraph = styled(BaseText)`
@@ -270,14 +272,14 @@ const RecoveryPhrase = () => {
       const recoveryObj: ImportObj = {
         type: parsedCode[0],
         data: parsedCode[1],
-        hasPassphrase: parsedCode[4] == 'true' ? true : false,
+        hasPassphrase: parsedCode[4] === 'true' ? true : false,
       };
 
       if (!isValidPhrase(recoveryObj.data)) {
         showErrorModal(new Error(t('The recovery phrase is invalid.')));
         return;
       }
-      if (recoveryObj.type == '1' && recoveryObj.hasPassphrase) {
+      if (recoveryObj.type === '1' && recoveryObj.hasPassphrase) {
         dispatch(
           showBottomNotificationModal({
             type: 'info',
@@ -423,15 +425,10 @@ const RecoveryPhrase = () => {
         key,
       });
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Import Key success',
-          {
-            context: route.params?.context || '',
-            type: 'RecoveryPhrase',
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Imported Key', {
+          context: route.params?.context || '',
+          source: 'RecoveryPhrase',
+        }),
       );
       dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
@@ -512,7 +509,7 @@ const RecoveryPhrase = () => {
 
   const renderItem = useCallback(
     ({item}) => {
-      const currencySelected = ({id}: CurrencySelectionToggleProps) => {
+      const currencySelected = (id: string) => {
         const _selectedCurrency = CurrencyOptions.filter(
           currency => currency.id === id,
         );
@@ -538,10 +535,10 @@ const RecoveryPhrase = () => {
 
       return (
         <CurrencySelectionRow
-          item={item}
-          emit={currencySelected}
+          currency={item}
+          onToggle={currencySelected}
           key={item.id}
-          removeCheckbox={true}
+          hideCheckbox={true}
         />
       );
     },
@@ -562,8 +559,10 @@ const RecoveryPhrase = () => {
   }, []);
 
   return (
-    <ScrollViewContainer>
-      <ImportContainer>
+    <ScrollViewContainer
+      extraScrollHeight={90}
+      keyboardShouldPersistTaps={'handled'}>
+      <ContentView keyboardShouldPersistTaps={'handled'}>
         <Paragraph>
           {t(
             'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
@@ -600,19 +599,19 @@ const RecoveryPhrase = () => {
             <ImportTextInput
               multiline
               autoCapitalize={'none'}
-              numberOfLines={5}
+              numberOfLines={3}
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
+              autoCorrect={false}
+              spellCheck={false}
             />
           )}
           name="text"
           defaultValue=""
         />
 
-        {errors?.text?.message && (
-          <ErrorText>{t('Recovery phrase is required.')}</ErrorText>
-        )}
+        {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
 
         <CtaContainer>
           <AdvancedOptionsContainer>
@@ -773,12 +772,10 @@ const RecoveryPhrase = () => {
           </AdvancedOptionsContainer>
         </CtaContainer>
 
-        <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-            {t('Import Wallet')}
-          </Button>
-        </CtaContainer>
-      </ImportContainer>
+        <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+          {t('Import Wallet')}
+        </Button>
+      </ContentView>
     </ScrollViewContainer>
   );
 };

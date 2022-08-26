@@ -1,36 +1,38 @@
+import i18n from 'i18next';
+import {sortBy} from 'lodash';
 import React, {useState} from 'react';
 import {View} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
-import {AppActions} from '../../../../../store/app';
-import {RootState} from '../../../../../store';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import ReactAppboy from 'react-native-appboy-sdk';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
   Hr,
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
+import {AppActions} from '../../../../../store/app';
+import {Analytics} from '../../../../../store/app/app.effects';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';
-import i18n from 'i18next';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
-const LanguageSettings: React.FC = () => {
-  const dispatch = useDispatch();
-  const appLanguage = useSelector(({APP}: RootState) => APP.defaultLanguage);
+const LanguageSettingsScreen: React.VFC = () => {
+  const dispatch = useAppDispatch();
+  const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const [selected, setSelected] = useState(appLanguage);
+
   const onSetLanguage = (lng: string) => {
     setSelected(lng);
     i18n.changeLanguage(lng);
+    ReactAppboy.setLanguage(lng);
     dispatch(AppActions.setDefaultLanguage(lng));
-    dispatch(
-      logSegmentEvent('track', 'Saved Language', {
-        language: lng,
-      }),
-    );
+    dispatch(Analytics.track('Saved Language', {language: lng}));
   };
+
   return (
     <SettingsContainer>
       <Settings>
+        <Hr />
+
         {LanguageList.map(({name, isoCode}) => {
           return (
             <View key={isoCode}>
@@ -51,4 +53,4 @@ const LanguageSettings: React.FC = () => {
   );
 };
 
-export default LanguageSettings;
+export default LanguageSettingsScreen;

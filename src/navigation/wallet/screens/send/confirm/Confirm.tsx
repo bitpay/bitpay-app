@@ -7,6 +7,7 @@ import {
   Recipient,
   TransactionProposal,
   TxDetails,
+  Utxo,
   Wallet,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
@@ -16,7 +17,7 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
-import {sleep} from '../../../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {
   logSegmentEvent,
   openUrlWithInAppBrowser,
@@ -43,6 +44,7 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../../../components/ErrorMessages';
+import {URL} from '../../../../../constants';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
 import {
@@ -61,10 +63,13 @@ import {
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {Alert, TouchableOpacity} from 'react-native';
+import {Platform, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
+import {toFiat} from '../../../../../store/wallet/utils/wallet';
+import {GetPrecision} from '../../../../../store/wallet/utils/currency';
+import prompt from 'react-native-prompt-android';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -72,11 +77,15 @@ const VerticalPadding = styled.View`
 export interface ConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
+  recipientList?: Recipient[];
   txp: Partial<TransactionProposal>;
   txDetails: TxDetails;
   amount: number;
   speedup?: boolean;
   sendMax?: boolean;
+  inputs?: Utxo[];
+  selectInputs?: boolean;
+  message?: string | undefined;
 }
 
 export const Setting = styled.TouchableOpacity`
@@ -106,11 +115,15 @@ const Confirm = () => {
   const {
     wallet,
     recipient,
+    recipientList,
     txDetails,
     txp: _txp,
     amount,
     speedup,
     sendMax,
+    inputs,
+    selectInputs,
+    message,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -118,6 +131,8 @@ const Confirm = () => {
     ({WALLET}) => WALLET.enableReplaceByFee,
   );
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
+  const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
@@ -135,6 +150,7 @@ const Confirm = () => {
     nonce: _nonce,
     total: _total,
     destinationTag: _destinationTag,
+    context,
   } = txDetails;
 
   const [fee, setFee] = useState(_fee);
@@ -143,9 +159,12 @@ const Confirm = () => {
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
-  const [destinationTag, setDestinationTag] = useState(_destinationTag);
+  const [destinationTag, setDestinationTag] = useState(
+    recipient?.destinationTag || _destinationTag,
+  );
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
+  const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation)) || {};
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -177,7 +196,7 @@ const Confirm = () => {
   };
 
   const editValue = (title: string, type: string) => {
-    Alert.prompt(
+    prompt(
       title,
       '',
       [
@@ -192,7 +211,7 @@ const Confirm = () => {
             const opts: {
               nonce?: number;
               gasLimit?: number;
-              destinationTag?: string;
+              destinationTag?: number;
             } = {};
             switch (type) {
               case 'nonce':
@@ -202,7 +221,7 @@ const Confirm = () => {
                 opts.gasLimit = Number(value);
                 break;
               case 'destinationTag':
-                opts.destinationTag = value;
+                opts.destinationTag = Number(value);
                 break;
               default:
                 break;
@@ -211,9 +230,13 @@ const Confirm = () => {
           },
         },
       ],
-      'plain-text',
-      '',
-      'number-pad',
+      {
+        type: Platform.OS === 'ios' ? 'plain-text' : 'numeric',
+        cancelable: true,
+        defaultValue: '',
+        // @ts-ignore
+        keyboardType: 'numeric',
+      },
     );
   };
 
@@ -235,8 +258,11 @@ const Confirm = () => {
         createProposalAndBuildTxDetails({
           wallet,
           recipient,
+          recipientList,
           amount,
           sendMax,
+          inputs,
+          context,
           ...txp,
           ...newOpts,
         }),
@@ -292,7 +318,25 @@ const Confirm = () => {
     [dispatch],
   );
 
-  let recipientData;
+  let recipientData, recipientListData;
+
+  if (recipientList) {
+    recipientListData = recipientList.map(r => {
+      const amountSat = Number(r.amount! * unitToSatoshi!);
+      return {
+        recipientName: r.name,
+        recipientAddress: r.address,
+        img: r.type === 'contact' ? r.type : wallet.img,
+        recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
+        recipientAltAmountStr: formatFiatAmount(
+          dispatch(toFiat(amountSat, isoCode, currencyAbbreviation, rates)),
+          isoCode,
+        ),
+        recipientType: r.type,
+        recipientCoin: currencyAbbreviation,
+      };
+    });
+  }
 
   if (
     recipient.type &&
@@ -315,10 +359,14 @@ const Confirm = () => {
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header>Summary</Header>
-          <SendingTo recipient={recipientData} hr />
+          <SendingTo
+            recipient={recipientData}
+            recipientList={recipientListData}
+            hr
+          />
           <Fee
             onPress={
-              isTxLevelAvailable()
+              isTxLevelAvailable() && !selectInputs
                 ? () => setShowTransactionLevel(true)
                 : undefined
             }
@@ -326,7 +374,9 @@ const Confirm = () => {
             feeOptions={feeOptions}
             hr
           />
-          {enableReplaceByFee && currencyAbbreviation === 'btc' ? (
+          {enableReplaceByFee &&
+          !selectInputs &&
+          currencyAbbreviation === 'btc' ? (
             <>
               <Setting activeOpacity={1}>
                 <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
@@ -392,10 +442,10 @@ const Confirm = () => {
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
-                        openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'),
+                        openUrlWithInAppBrowser(URL.HELP_DESTINATION_TAG),
                       );
                     }}>
-                    <Link>Learn More</Link>
+                    <Link>{t('Learn More')}</Link>
                   </TouchableOpacity>
                 </VerticalPadding>
               </Info>
@@ -403,7 +453,7 @@ const Confirm = () => {
           ) : null}
           {txp && currencyAbbreviation !== 'xrp' ? (
             <Memo
-              memo={txp.message || ''}
+              memo={txp.message || message || ''}
               onChange={message => setTxp({...txp, message})}
             />
           ) : null}
@@ -413,6 +463,9 @@ const Confirm = () => {
 
         <PaymentSent
           isVisible={showPaymentSentModal}
+          title={
+            wallet.credentials.n > 1 ? t('Proposal created') : t('Payment Sent')
+          }
           onCloseModal={async () => {
             setShowPaymentSentModal(false);
             if (recipient.type === 'coinbase') {
@@ -433,8 +486,6 @@ const Confirm = () => {
                   ],
                 }),
               );
-            } else if (recipient.type === 'contact') {
-              navigation.dispatch(StackActions.popToTop());
             } else {
               navigation.dispatch(StackActions.popToTop());
               navigation.dispatch(
@@ -480,25 +531,24 @@ const Confirm = () => {
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
             dispatch(
-              logSegmentEvent(
-                'track',
-                'Sent Crypto',
-                {
-                  context: 'Confirm',
-                  coin: currencyAbbreviation || '',
-                },
-                true,
-              ),
+              logSegmentEvent('track', 'Sent Crypto', {
+                context: 'Confirm',
+                coin: currencyAbbreviation || '',
+              }),
             );
             await sleep(400);
             setShowPaymentSentModal(true);
           } catch (err) {
             dispatch(dismissOnGoingProcessModal());
             await sleep(500);
+            setResetSwipeButton(true);
             switch (err) {
               case 'invalid password':
                 dispatch(showBottomNotificationModal(WrongPasswordError()));
+                break;
               case 'password canceled':
+                break;
+              case 'biometric check failed':
                 setResetSwipeButton(true);
                 break;
               default:
@@ -508,8 +558,6 @@ const Confirm = () => {
                     title: t('Uh oh, something went wrong'),
                   }),
                 );
-                await sleep(500);
-                setResetSwipeButton(true);
             }
           }
         }}

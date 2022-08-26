@@ -1,7 +1,6 @@
 import {Effect} from '../../../index';
 import {
   Wallet,
-  Rates,
   Key,
   WalletBalance,
   WalletStatus,
@@ -12,6 +11,7 @@ import {
   CryptoBalance,
   FiatBalance,
 } from '../../wallet.models';
+import {Rates} from '../../../rate/rate.models';
 import {
   failedUpdateAllKeysAndStatus,
   failedUpdateKey,
@@ -34,6 +34,8 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {IsUtxoCoin} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
+import {LogActions} from '../../../log';
+import _ from 'lodash';
 
 /*
  * post broadcasting of payment
@@ -95,14 +97,20 @@ export const waitForTargetAmountAndUpdateWallet =
             multisigContractAddress: multisigEthInfo
               ? multisigEthInfo.multisigContractAddress
               : null,
+            network: wallet.network,
           },
-          async (err: Error, status: Status) => {
+          async (err: any, status: Status) => {
             if (err) {
-              console.error(err);
+              const errStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(
+                LogActions.error(
+                  `error [waitForTargetAmountAndUpdateWallet]: ${errStr}`,
+                ),
+              );
             }
-            const {totalAmount} = status.balance;
+            const {totalAmount} = status?.balance;
             // TODO ETH totalAmount !== targetAmount while the transaction is unconfirmed
-            // remove this for eth when status get updated with push notifications otherwise getStatus call will be duplicated
             // expected amount - update balance
             if (totalAmount === targetAmount) {
               dispatch(startUpdateWalletStatus({key, wallet}));
@@ -150,8 +158,9 @@ export const startUpdateWalletStatus =
 
       try {
         const {
-          WALLET: {rates, lastDayRates, balanceCacheKey},
+          WALLET: {balanceCacheKey},
           APP: {defaultAltCurrency},
+          RATE: {rates, lastDayRates},
         } = getState();
 
         const {
@@ -254,10 +263,13 @@ export const startUpdateAllWalletStatusForKeys =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const {APP, WALLET} = getState();
+        dispatch(
+          LogActions.info('starting [startUpdateAllWalletStatusForKeys]'),
+        );
+        const {APP, RATE, WALLET} = getState();
         const {defaultAltCurrency} = APP;
-        const {rates, lastDayRates, balanceCacheKey} = WALLET;
-        const {bulkClient} = BwcProvider.getInstance().getClient();
+        const {balanceCacheKey} = WALLET;
+        const {rates, lastDayRates} = RATE;
 
         const keyUpdatesPromises: Promise<{
           keyId: string;
@@ -311,6 +323,7 @@ export const startUpdateAllWalletStatusForKeys =
             return;
           }
 
+          const {bulkClient} = BwcProvider.getInstance().getClient();
           keyUpdatesPromises.push(
             new Promise(resolveKeyBalanceStatus => {
               bulkClient.getStatusAll(
@@ -325,7 +338,19 @@ export const startUpdateAllWalletStatusForKeys =
                     const {balance: cachedBalance} = wallet;
 
                     if (err || !bulkStatus) {
-                      console.log('getStatusAll error', err);
+                      if (err) {
+                        let errorStr;
+                        if (err instanceof Error) {
+                          errorStr = err.message;
+                        } else {
+                          errorStr = JSON.stringify(err);
+                        }
+                        dispatch(
+                          LogActions.error(
+                            `[startUpdateAllWalletStatusForKeys] - failed getStatusAll: ${errorStr}`,
+                          ),
+                        );
+                      }
                       return {
                         ...cachedBalance,
                         ...dispatch(
@@ -398,8 +423,10 @@ export const startUpdateAllWalletStatusForKeys =
                         }),
                       );
 
-                      console.log(
-                        `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
+                      dispatch(
+                        LogActions.info(
+                          `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
+                        ),
                       );
 
                       return newBalance;
@@ -434,12 +461,56 @@ export const startUpdateAllWalletStatusForKeys =
         const keyUpdates = await Promise.all(keyUpdatesPromises);
 
         dispatch(successUpdateKeysTotalBalance(keyUpdates));
+        dispatch(
+          LogActions.info('success [startUpdateAllWalletStatusForKeys]'),
+        );
         resolve();
       } catch (err) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
         dispatch(failedUpdateKeyTotalBalance());
+        dispatch(
+          LogActions.error(
+            `failed [startUpdateAllWalletStatusForKeys]: ${errorStr}`,
+          ),
+        );
         reject(err);
       }
     });
+  };
+
+export const startUpdateAllWalletStatusForReadOnlyKeys =
+  ({readOnlyKeys}: {readOnlyKeys: Key[]}): Effect<Promise<void>> =>
+  async dispatch => {
+    try {
+      dispatch(
+        LogActions.info('starting [startUpdateAllWalletStatusForReadOnlyKeys]'),
+      );
+      const promises: any = [];
+      // update each read only wallet - getStatusAll checks if credentials are from the same key
+      readOnlyKeys.forEach((key, index) => {
+        promises.push(
+          dispatch(startUpdateWalletStatus({key, wallet: key.wallets[index]})),
+        );
+      });
+
+      await Promise.all(readOnlyKeys);
+      dispatch(
+        LogActions.info('success [startUpdateAllWalletStatusForReadOnlyKeys]'),
+      );
+      return Promise.resolve();
+    } catch (err) {
+      const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(
+        LogActions.error(
+          `failed [startUpdateAllWalletStatusForReadOnlyKeys]: ${errorStr}`,
+        ),
+      );
+    }
   };
 
 export const startUpdateAllWalletStatusForKey =
@@ -447,15 +518,22 @@ export const startUpdateAllWalletStatusForKey =
   dispatch => {
     const keys = [key];
 
-    return dispatch(startUpdateAllWalletStatusForKeys({keys}));
+    return !key.isReadOnly
+      ? dispatch(startUpdateAllWalletStatusForKeys({keys}))
+      : dispatch(
+          startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys: keys}),
+        );
   };
 
 export const startUpdateAllKeyAndWalletStatus =
   (): Effect => async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
+        dispatch(
+          LogActions.info('starting [startUpdateAllKeyAndWalletStatus]'),
+        );
         const {
-          WALLET: {keys, balanceCacheKey},
+          WALLET: {keys: _keys, balanceCacheKey},
         } = getState();
 
         if (!isCacheKeyStale(balanceCacheKey.all, BALANCE_CACHE_DURATION)) {
@@ -463,14 +541,30 @@ export const startUpdateAllKeyAndWalletStatus =
           return resolve();
         }
 
-        await dispatch(
-          startUpdateAllWalletStatusForKeys({keys: Object.values(keys)}),
-        );
+        const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
+
+        await Promise.all([
+          dispatch(startUpdateAllWalletStatusForKeys({keys})),
+          dispatch(startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys})),
+        ]);
+
         dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances
         dispatch(successUpdateAllKeysAndStatus());
+        dispatch(LogActions.info('success [startUpdateAllKeyAndWalletStatus]'));
         resolve();
       } catch (err) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
         dispatch(failedUpdateAllKeysAndStatus());
+        dispatch(
+          LogActions.error(
+            `failed [startUpdateAllKeyAndWalletStatus]: ${errorStr}`,
+          ),
+        );
         reject(err);
       }
     });
@@ -503,9 +597,13 @@ const updateWalletStatus =
           multisigContractAddress: multisigEthInfo
             ? multisigEthInfo.multisigContractAddress
             : null,
+          network: wallet.network,
         },
-        (err: Error, status: Status) => {
+        (err: any, status: Status) => {
           if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(LogActions.error(`error [updateWalletStatus]: ${errStr}`));
             return resolve({
               balance: {
                 ...cachedBalance,
@@ -646,7 +744,7 @@ const buildFiatBalance =
     lastDayRates: Rates;
     cryptoBalance: CryptoBalance;
   }): Effect<FiatBalance> =>
-  (dispatch, getState) => {
+  dispatch => {
     const {
       currencyAbbreviation,
       credentials: {network},
@@ -768,7 +866,8 @@ export const FormatKeyBalances = (): Effect => async (dispatch, getState) => {
   return new Promise(async (resolve, reject) => {
     try {
       const {
-        WALLET: {keys, rates, lastDayRates},
+        WALLET: {keys},
+        RATE: {rates, lastDayRates},
         APP: {defaultAltCurrency},
       } = getState();
 

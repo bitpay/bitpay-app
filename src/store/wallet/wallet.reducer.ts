@@ -1,19 +1,18 @@
-import {DateRanges, Key, PriceHistory, Rates, Token} from './wallet.models';
+import {Key, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
-import {DEFAULT_DATE_RANGE} from '../../constants/wallet';
 import {CurrencyOpts} from '../../constants/currencies';
 
-type WalletReduxPersistBlackList = [];
-export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
+type WalletReduxPersistBlackList = string[];
+export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
+  'tokenData',
+  'tokenOptions',
+  'tokenOptionsByAddress',
+];
 
 export interface WalletState {
   createdOn: number;
   keys: {[key in string]: Key};
-  lastDayRates: Rates;
-  rates: Rates;
-  ratesByDateRange: {[key in DateRanges]: Rates};
-  priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
@@ -27,7 +26,6 @@ export interface WalletState {
     previous: number;
   };
   balanceCacheKey: {[key in string]: number | undefined};
-  ratesCacheKey: {[key in number]: DateRanges | undefined};
   feeLevel: {[key in string]: FeeLevels};
   useUnconfirmedFunds: boolean;
   customizeNonce: boolean;
@@ -38,14 +36,6 @@ export interface WalletState {
 const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
-  rates: {},
-  ratesByDateRange: {
-    1: {},
-    7: {},
-    30: {},
-  },
-  lastDayRates: {},
-  priceHistory: [],
   tokenOptions: {},
   tokenData: {},
   tokenOptionsByAddress: {},
@@ -59,7 +49,6 @@ const initialState: WalletState = {
     previous: 0,
   },
   balanceCacheKey: {},
-  ratesCacheKey: {},
   feeLevel: {
     btc: FeeLevels.NORMAL,
     eth: FeeLevels.NORMAL,
@@ -93,41 +82,6 @@ export const walletReducer = (
       return {
         ...state,
         keys: {...state.keys, [id]: updatedKey},
-      };
-    }
-
-    case WalletActionTypes.SUCCESS_GET_RATES: {
-      const {
-        rates,
-        ratesByDateRange,
-        lastDayRates,
-        dateRange = DEFAULT_DATE_RANGE,
-      } = action.payload;
-
-      return {
-        ...state,
-        rates: {...state.rates, ...rates},
-        ratesByDateRange: {
-          ...state.ratesByDateRange,
-          [dateRange]: {...ratesByDateRange},
-        },
-        ratesCacheKey: {...state.ratesCacheKey, [dateRange]: Date.now()},
-        lastDayRates: {...state.lastDayRates, ...lastDayRates},
-      };
-    }
-
-    case WalletActionTypes.UPDATE_CACHE_KEY: {
-      const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
-      return {
-        ...state,
-        [cacheKey]: {...state.ratesCacheKey, [dateRange]: Date.now()},
-      };
-    }
-
-    case WalletActionTypes.SUCCESS_GET_PRICE_HISTORY: {
-      return {
-        ...state,
-        priceHistory: action.payload,
       };
     }
 
@@ -240,7 +194,7 @@ export const walletReducer = (
     case WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD: {
       const {key} = action.payload;
       const keyToUpdate = state.keys[key.id];
-      keyToUpdate.isPrivKeyEncrypted = !!key.methods.isPrivKeyEncrypted();
+      keyToUpdate.isPrivKeyEncrypted = !!key.methods!.isPrivKeyEncrypted();
 
       return {
         ...state,
@@ -248,7 +202,7 @@ export const walletReducer = (
           ...state.keys,
           [key.id]: {
             ...keyToUpdate,
-            properties: key.methods.toObj(),
+            properties: key.methods!.toObj(),
           },
         },
       };

@@ -12,6 +12,8 @@ import DaiIcon from '../../assets/img/currencies/dai.svg';
 import UsdpIcon from '../../assets/img/currencies/usdp.svg';
 import WbtcIcon from '../../assets/img/currencies/wbtc.svg';
 import ShibIcon from '../../assets/img/currencies/shib.svg';
+import ApeIcon from '../../assets/img/currencies/ape.svg';
+import EurocIcon from '../../assets/img/currencies/euroc.svg';
 import {ImageSourcePropType} from 'react-native';
 
 export interface SupportedCurrencyOption {
@@ -40,6 +42,8 @@ export const CurrencyListIcons: {
   usdp: props => <UsdpIcon {...props} />,
   wbtc: props => <WbtcIcon {...props} />,
   shib: props => <ShibIcon {...props} />,
+  ape: props => <ApeIcon {...props} />,
+  euroc: props => <EurocIcon {...props} />,
 };
 
 export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
@@ -91,20 +95,36 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     imgSrc: require('../../assets/img/currencies/png/XRP.png'),
   },
   {
-    id: 'shib',
-    img: CurrencyListIcons.shib,
-    currencyName: 'Shiba Inu',
-    currencyAbbreviation: 'SHIB',
-    isToken: true,
-    imgSrc: require('../../assets/img/currencies/png/SHIB.png'),
-  },
-  {
     id: 'usdc',
     img: CurrencyListIcons.usdc,
     currencyName: 'USD Coin',
     currencyAbbreviation: 'USDC',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDC.png'),
+  },
+  {
+    id: 'ape',
+    img: CurrencyListIcons.ape,
+    currencyName: 'ApeCoin',
+    currencyAbbreviation: 'APE',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/APE.png'),
+  },
+  {
+    id: 'euroc',
+    img: CurrencyListIcons.euroc,
+    currencyName: 'Euro Coin',
+    currencyAbbreviation: 'EUROC',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/EUROC.png'),
+  },
+  {
+    id: 'shib',
+    img: CurrencyListIcons.shib,
+    currencyName: 'Shiba Inu',
+    currencyAbbreviation: 'SHIB',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/SHIB.png'),
   },
   {
     id: 'gusd',

@@ -9,39 +9,54 @@ const BWCProvider = BwcProvider.getInstance();
 
 export const bindWalletClient = createTransform(
   // transform state on its way to being serialized and persisted.
-  inboundState => inboundState,
-  // transform state being rehydrated
-  (_outboundState, key) => {
-    if (key === 'keys') {
-      const outboundState: {[key in string]: Key} = {};
-      // eslint-disable-next-line no-shadow
-      for (const [id, key] of Object.entries(
-        _outboundState as {[key in string]: Key},
-      )) {
-        const wallets = key.wallets.map(wallet => {
-          const {img, currencyAbbreviation} = wallet;
-          if (!img && SUPPORTED_CURRENCIES.includes(currencyAbbreviation)) {
-            wallet.img = CurrencyListIcons[currencyAbbreviation];
-          }
-          // reset transaction history
-          wallet.transactionHistory = {transactions: [], loadMore: true};
-          console.log(`bindWalletClient - ${wallet.id}`);
-          return merge(
-            BWCProvider.getClient(JSON.stringify(wallet.credentials)),
-            wallet,
-          );
-        });
-
-        outboundState[id] = {
-          ...key,
-          wallets,
-        };
-      }
-
-      return outboundState;
+  inboundState => {
+    const newInboundState: {[key in string]: any} = {};
+    for (const [id, key] of Object.entries(
+      inboundState as {[key in string]: Key},
+    )) {
+      const wallets = key.wallets.map(wallet => ({
+        ...wallet,
+        transactionHistory: undefined,
+      }));
+      newInboundState[id] = {
+        ...key,
+        wallets,
+      };
     }
-    return _outboundState;
+    return newInboundState;
   },
+  // transform state being rehydrated
+  _outboundState => {
+    const outboundState: {[key in string]: Key} = {};
+    for (const [id, key] of Object.entries(
+      _outboundState as {[key in string]: Key},
+    )) {
+      const wallets = key.wallets.map(wallet => {
+        const {img, currencyAbbreviation} = wallet;
+        if (!img && SUPPORTED_CURRENCIES.includes(currencyAbbreviation)) {
+          wallet.img = CurrencyListIcons[currencyAbbreviation];
+        }
+        // reset transaction history
+        wallet.transactionHistory = {
+          transactions: [],
+          loadMore: true,
+          hasConfirmingTxs: false,
+        };
+        console.log(`bindWalletClient - ${wallet.id}`);
+        return merge(
+          BWCProvider.getClient(JSON.stringify(wallet.credentials)),
+          wallet,
+        );
+      });
+
+      outboundState[id] = {
+        ...key,
+        wallets,
+      };
+    }
+    return outboundState;
+  },
+  {whitelist: ['keys']},
 );
 
 export const bindWalletKeys = createTransform(
@@ -52,15 +67,19 @@ export const bindWalletKeys = createTransform(
       for (const [id, key] of Object.entries(
         _outboundState as {[key in string]: Key},
       )) {
-        outboundState[id] = merge(key, {
-          methods: BWCProvider.createKey({
-            seedType: 'object',
-            seedData: key.properties,
-          }),
-        });
-        console.log(`bindWalletKey - ${id}`);
+        if (id === 'readonly') {
+          // read only wallet
+          outboundState[id] = key;
+        } else {
+          outboundState[id] = merge(key, {
+            methods: BWCProvider.createKey({
+              seedType: 'object',
+              seedData: key.properties,
+            }),
+          });
+        }
+        console.log(`bindKey - ${id}`);
       }
-
       return outboundState;
     }
     return _outboundState;

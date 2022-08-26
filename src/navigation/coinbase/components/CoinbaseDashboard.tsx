@@ -1,9 +1,9 @@
-import React, {useCallback, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {FlatList, RefreshControl, View} from 'react-native';
 import styled from 'styled-components/native';
 import WalletRow from '../../../components/list/WalletRow';
-import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
+import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {SlateDark, White, LightBlack} from '../../../styles/colors';
@@ -14,6 +14,8 @@ import {
   coinbaseGetTransactionsByAccount,
   coinbaseParseErrorToString,
   coinbaseGetAccountsAndBalance,
+  coinbaseDisconnectAccount,
+  isInvalidTokenError,
 } from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {useNavigation, useTheme} from '@react-navigation/native';
@@ -77,12 +79,19 @@ const CoinbaseDashboard = () => {
     ({COINBASE}) => COINBASE.isApiLoading,
   );
   const exchangeRates = useAppSelector(({COINBASE}) => COINBASE.exchangeRates);
-  const user = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
   const accounts = useAppSelector(
     ({COINBASE}) => COINBASE.accounts[COINBASE_ENV],
   );
+  const accountsError = useAppSelector(
+    ({COINBASE}) => COINBASE.getAccountsError,
+  );
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+
+  const hideTotalBalance = useAppSelector(
+    ({COINBASE}) => COINBASE.hideTotalBalance,
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -120,7 +129,11 @@ const CoinbaseDashboard = () => {
 
   const renderItem = useCallback(
     ({item}: any) => {
-      const walletItem = coinbaseAccountToWalletRow(item, exchangeRates);
+      const walletItem = coinbaseAccountToWalletRow(
+        item,
+        exchangeRates,
+        defaultAltCurrency.isoCode,
+      );
       return (
         <WalletRow
           id={walletItem.id}
@@ -136,29 +149,48 @@ const CoinbaseDashboard = () => {
         />
       );
     },
-    [dispatch, navigation, exchangeRates],
+    [dispatch, navigation, exchangeRates, defaultAltCurrency.isoCode],
   );
 
-  const showError = async (error: CoinbaseErrorsProps) => {
-    const errMsg = coinbaseParseErrorToString(error);
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title: t('Coinbase error'),
-        message: errMsg,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('OK'),
-            action: () => {
-              navigation.navigate('Tabs', {screen: 'Home'});
+  const showError = useCallback(
+    (error: CoinbaseErrorsProps) => {
+      const errMsg = coinbaseParseErrorToString(error);
+      if (errMsg === 'Network Error') {
+        return;
+      }
+      const isInvalidToken = isInvalidTokenError(error);
+      const textAction = isInvalidToken ? t('Re-Connect') : t('OK');
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: t('Coinbase error'),
+          message: errMsg,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: textAction,
+              action: async () => {
+                if (isInvalidToken) {
+                  await dispatch(coinbaseDisconnectAccount());
+                  navigation.goBack();
+                } else {
+                  navigation.navigate('Tabs', {screen: 'Home'});
+                }
+              },
+              primary: true,
             },
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
+            {
+              text: t('Back'),
+              action: () => {
+                navigation.goBack();
+              },
+            },
+          ],
+        }),
+      );
+    },
+    [dispatch, navigation, t],
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -173,16 +205,25 @@ const CoinbaseDashboard = () => {
     setRefreshing(false);
   };
 
+  useEffect(() => {
+    if (accountsError) {
+      showError(accountsError);
+    }
+  }, [accountsError, showError]);
+
   return (
     <OverviewContainer>
       <BalanceContainer>
-        {balance ? (
-          <Balance scale={shouldScale(balance)}>
-            {formatFiatAmount(
-              balance,
-              user?.data?.native_currency?.toUpperCase(),
+        {balance !== null ? (
+          <>
+            {!hideTotalBalance ? (
+              <Balance scale={shouldScale(balance)}>
+                {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
+              </Balance>
+            ) : (
+              <H2 style={{textAlign: 'center'}}>****</H2>
             )}
-          </Balance>
+          </>
         ) : (
           <SkeletonPlaceholder
             backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}

@@ -1,6 +1,7 @@
-import {ColorSchemeName} from 'react-native';
+import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
+import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
@@ -24,8 +25,13 @@ export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
 });
 
+export const appInitCompleted = (): AppActionType => ({
+  type: AppActionTypes.APP_INIT_COMPLETE,
+});
+
 export const failedAppInit = (): AppActionType => ({
   type: AppActionTypes.FAILED_APP_INIT,
+  payload: true,
 });
 
 export const setAppFirstOpenEventComplete = (): AppActionType => ({
@@ -106,18 +112,19 @@ export const setConfirmedTxAccepted = (
   payload: confirmedTxAccepted,
 });
 
-export const setProductsUpdatesAccepted = (
-  productsUpdatesAccepted: boolean,
+export const setAnnouncementsAccepted = (
+  announcementsAccepted: boolean,
 ): AppActionType => ({
-  type: AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED,
-  payload: productsUpdatesAccepted,
+  type: AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED,
+  payload: announcementsAccepted,
 });
 
-export const setOffersAndPromotionsAccepted = (
-  offersAndPromotionsAccepted: boolean,
+export const setEmailNotificationsAccepted = (
+  accepted: boolean,
+  email: string | null,
 ): AppActionType => ({
-  type: AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED,
-  payload: offersAndPromotionsAccepted,
+  type: AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED,
+  payload: {accepted, email},
 });
 
 export const showOnboardingFinishModal = (): AppActionType => ({
@@ -184,6 +191,13 @@ export const showPortfolioValue = (value: boolean): AppActionType => ({
   payload: value,
 });
 
+export const brazeInitialized = (
+  contentCardSubscription: EventSubscription | null,
+): AppActionType => ({
+  type: AppActionTypes.BRAZE_INITIALIZED,
+  payload: {contentCardSubscription},
+});
+
 export const brazeContentCardsFetched = (
   contentCards: ContentCard[],
 ): AppActionType => ({
@@ -196,8 +210,11 @@ export const setBrazeEid = (eid: string): AppActionType => ({
   payload: eid,
 });
 
-export const showBiometricModal = (): AppActionType => ({
+export const showBiometricModal = (
+  config: BiometricModalConfig,
+): AppActionType => ({
   type: AppActionTypes.SHOW_BIOMETRIC_MODAL,
+  payload: config,
 });
 
 export const dismissBiometricModal = (): AppActionType => ({
@@ -273,4 +290,11 @@ export const setKeyMigrationFailureModalHasBeenShown = (): AppActionType => ({
 export const activeModalUpdated = (id: ModalId | null): AppActionType => ({
   type: AppActionTypes.ACTIVE_MODAL_UPDATED,
   payload: id,
+});
+
+export const checkingBiometricForSending = (
+  payload: boolean,
+): AppActionType => ({
+  type: AppActionTypes.CHECKING_BIOMETRIC_FOR_SENDING,
+  payload,
 });

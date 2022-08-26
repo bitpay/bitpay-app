@@ -33,7 +33,7 @@ export const DecryptError = (): BottomNotificationConfig => {
 export const GeneralError = (): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: t('Uh oh, Something went wrong'),
+    title: t('Uh oh, something went wrong'),
     message: t('Please try again later.'),
     enableBackdropDismiss: true,
     actions: [
@@ -349,6 +349,30 @@ export const SpeedupInvalidTx = (): BottomNotificationConfig => {
       {
         text: t('Ok'),
         action: () => {},
+        primary: true,
+      },
+    ],
+  };
+};
+
+export const ExcludedUtxosWarning = ({
+  errMsg,
+  gotIt = () => null,
+}: {
+  errMsg: string;
+  gotIt?: () => void;
+}): BottomNotificationConfig => {
+  return {
+    type: 'warning',
+    title: t('Warning!'),
+    message: errMsg,
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: t('Got It'),
+        action: () => {
+          gotIt();
+        },
         primary: true,
       },
     ],

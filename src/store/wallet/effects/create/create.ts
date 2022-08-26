@@ -24,13 +24,17 @@ import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
-import {subscribePushNotifications} from '../../../app/app.effects';
+import {
+  subscribeEmailNotifications,
+  subscribePushNotifications,
+} from '../../../app/app.effects';
 import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
+import {LogActions} from '../../../log';
 
 export interface CreateOptions {
   network?: Network;
@@ -44,8 +48,8 @@ export interface CreateOptions {
 const BWC = BwcProvider.getInstance();
 
 export const startCreateKey =
-  (currencies: string[]): Effect =>
-  async (dispatch, getState): Promise<Key> => {
+  (currencies: string[]): Effect<Promise<Key>> =>
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         const state = getState();
@@ -101,7 +105,12 @@ export const addWallet =
       try {
         let newWallet;
         const {
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
           WALLET,
         } = getState();
         const tokenOpts = {
@@ -114,7 +123,7 @@ export const addWallet =
         if (isToken) {
           if (!associatedWallet) {
             associatedWallet = (await createWallet({
-              key: key.methods,
+              key: key.methods!,
               coin: 'eth',
               options,
             })) as Wallet;
@@ -129,14 +138,12 @@ export const addWallet =
             );
           }
 
-          newWallet = (await createTokenWallet(
-            associatedWallet,
-            currency,
-            tokenOpts,
+          newWallet = (await dispatch(
+            createTokenWallet(associatedWallet, currency, tokenOpts),
           )) as Wallet;
         } else {
           newWallet = (await createWallet({
-            key: key.methods,
+            key: key.methods!,
             coin: currency as SupportedCoins,
             options,
           })) as Wallet;
@@ -149,6 +156,19 @@ export const addWallet =
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(newWallet, brazeEid!));
+        }
+        // subscribe new wallet to email notifications
+        if (
+          emailNotifications &&
+          emailNotifications.accepted &&
+          emailNotifications.email
+        ) {
+          const prefs = {
+            email: emailNotifications.email,
+            language: defaultLanguage,
+            unit: 'btc', // deprecated
+          };
+          dispatch(subscribeEmailNotifications(newWallet, prefs));
         }
 
         key.wallets.push(
@@ -163,11 +183,13 @@ export const addWallet =
         );
 
         dispatch(successAddWallet({key}));
-        console.log('Added Wallet', currency);
+        dispatch(LogActions.info(`Added Wallet ${currency}`));
         resolve(newWallet);
       } catch (err) {
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(failedAddWallet());
-        console.error(err);
+        dispatch(LogActions.error(`Error adding wallet: ${errstring}`));
         reject();
       }
     });
@@ -188,7 +210,12 @@ const createMultipleWallets =
   async (dispatch, getState) => {
     const {
       WALLET,
-      APP: {notificationsAccepted, brazeEid},
+      APP: {
+        notificationsAccepted,
+        emailNotifications,
+        brazeEid,
+        defaultLanguage,
+      },
     } = getState();
     const tokenOpts = {
       ...BitpaySupportedTokenOpts,
@@ -222,7 +249,9 @@ const createMultipleWallets =
           tokenAddresses: [],
         };
         for (const token of tokens) {
-          const tokenWallet = await createTokenWallet(wallet, token, tokenOpts);
+          const tokenWallet = await dispatch(
+            createTokenWallet(wallet, token, tokenOpts),
+          );
           wallets.push(tokenWallet);
         }
       }
@@ -233,6 +262,19 @@ const createMultipleWallets =
       // subscribe new wallet to push notifications
       if (notificationsAccepted) {
         dispatch(subscribePushNotifications(wallet, brazeEid!));
+      }
+      // subscribe new wallet to email notifications
+      if (
+        emailNotifications &&
+        emailNotifications.accepted &&
+        emailNotifications.email
+      ) {
+        const prefs = {
+          email: emailNotifications.email,
+          language: defaultLanguage,
+          unit: 'btc', // deprecated
+        };
+        dispatch(subscribeEmailNotifications(wallet, prefs));
       }
       return merge(
         wallet,
@@ -322,38 +364,42 @@ const createWallet = (params: {
 
 /////////////////////////////////////////////////////////////
 
-const createTokenWallet = (
-  wallet: Wallet,
-  token: string,
-  tokenOpts: {[key in string]: Token},
-): Promise<API> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const bwcClient = BWC.getClient();
-      const tokenCredentials: Credentials =
-        wallet.credentials.getTokenCredentials(tokenOpts[token]);
-      bwcClient.fromObj(tokenCredentials);
-      // push walletId as reference - this is used later to build out nested overview lists
-      wallet.tokens = wallet.tokens || [];
-      wallet.tokens.push(tokenCredentials.walletId);
-      // Add the token info to the ethWallet for BWC/BWS
-      wallet.preferences?.tokenAddresses?.push(
-        // @ts-ignore
-        tokenCredentials.token.address,
-      );
-      wallet.savePreferences(wallet.preferences, (err: any) => {
-        if (err) {
-          console.error(`Error saving token: ${token}`);
-        }
-        console.log('added token', token);
-        resolve(bwcClient);
-      });
-    } catch (err) {
-      console.error(err);
-      reject();
-    }
-  });
-};
+const createTokenWallet =
+  (
+    wallet: Wallet,
+    token: string,
+    tokenOpts: {[key in string]: Token},
+  ): Effect<Promise<API>> =>
+  async (dispatch): Promise<API> => {
+    return new Promise((resolve, reject) => {
+      try {
+        const bwcClient = BWC.getClient();
+        const tokenCredentials: Credentials =
+          wallet.credentials.getTokenCredentials(tokenOpts[token]);
+        bwcClient.fromObj(tokenCredentials);
+        // push walletId as reference - this is used later to build out nested overview lists
+        wallet.tokens = wallet.tokens || [];
+        wallet.tokens.push(tokenCredentials.walletId);
+        // Add the token info to the ethWallet for BWC/BWS
+        wallet.preferences?.tokenAddresses?.push(
+          // @ts-ignore
+          tokenCredentials.token.address,
+        );
+        wallet.savePreferences(wallet.preferences, (err: any) => {
+          if (err) {
+            dispatch(LogActions.error(`Error saving token: ${token}`));
+          }
+          dispatch(LogActions.info(`Added token ${token}`));
+          resolve(bwcClient);
+        });
+      } catch (err) {
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`Error creating token wallet: ${errstring}`));
+        reject();
+      }
+    });
+  };
 
 /////////////////////////////////////////////////////////////
 
@@ -363,7 +409,12 @@ export const startCreateKeyWithOpts =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {notificationsAccepted, brazeEid},
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
         } = getState();
         const _key = BWC.createKey({
           seedType: opts.seedType!,
@@ -378,6 +429,19 @@ export const startCreateKeyWithOpts =
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(_wallet, brazeEid!));
+        }
+        // subscribe new wallet to email notifications
+        if (
+          emailNotifications &&
+          emailNotifications.accepted &&
+          emailNotifications.email
+        ) {
+          const prefs = {
+            email: emailNotifications.email,
+            language: defaultLanguage,
+            unit: 'btc', // deprecated
+          };
+          dispatch(subscribeEmailNotifications(_wallet, prefs));
         }
 
         // build out app specific props

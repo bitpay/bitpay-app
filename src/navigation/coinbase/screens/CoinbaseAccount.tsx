@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
@@ -48,7 +49,7 @@ import {
   ToCashAddress,
   TranslateToBchCashAddress,
 } from '../../../store/wallet/effects/address/address';
-import Amount from '../../wallet/screens/Amount';
+import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
@@ -153,8 +154,8 @@ const CoinbaseAccount = ({
 
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
 
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const exchangeRates = useAppSelector(({COINBASE}) => COINBASE.exchangeRates);
-  const user = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
   const transactions = useAppSelector(
     ({COINBASE}) => COINBASE.transactions[COINBASE_ENV],
   );
@@ -279,7 +280,6 @@ const CoinbaseAccount = ({
           exchangeRates,
         );
         setFiatAmount(fa);
-        console.log(fa);
         setCryptoAmount(account.balance.amount.toString());
       } else {
         setFiatAmount(0);
@@ -289,7 +289,6 @@ const CoinbaseAccount = ({
 
     if (transactions && transactions[accountId]) {
       const tx = transactions[accountId].data;
-      console.log(tx);
       setTxs(tx);
     }
 
@@ -326,14 +325,9 @@ const CoinbaseAccount = ({
       ),
     );
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Receive',
-        {
-          context: 'CoinbaseAccount',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Receive', {
+        context: 'CoinbaseAccount',
+      }),
     );
     dispatch(coinbaseCreateAddress(accountId))
       .then(async newAddress => {
@@ -368,14 +362,9 @@ const CoinbaseAccount = ({
   const onSelectedWallet = async (newWallet?: Wallet) => {
     setWalletModalVisible(false);
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Send',
-        {
-          context: 'CoinbaseAccount',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Send', {
+        context: 'CoinbaseAccount',
+      }),
     );
     if (newWallet) {
       setSelectedWallet(newWallet);
@@ -396,6 +385,9 @@ const CoinbaseAccount = ({
 
   const showError = async (error: CoinbaseErrorsProps) => {
     const errMsg = coinbaseParseErrorToString(error);
+    if (errMsg === 'Network Error') {
+      return;
+    }
     dispatch(
       showBottomNotificationModal({
         type: 'error',
@@ -447,10 +439,7 @@ const CoinbaseAccount = ({
         <Row>
           <H5>
             {fiatAmount
-              ? formatFiatAmount(
-                  fiatAmount,
-                  user?.data?.native_currency?.toUpperCase(),
-                )
+              ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
               : '0'}
           </H5>
           {account?.primary && <Type>Primary</Type>}
@@ -512,20 +501,12 @@ const CoinbaseAccount = ({
         </GlobalSelectContainer>
       </SheetModal>
 
-      <SheetModal
+      <AmountModal
         isVisible={amountModalVisible}
-        onBackdropPress={() => {
-          setAmountModalVisible(false);
-        }}>
-        <AmountContainer>
-          <Amount
-            useAsModal={true}
-            hideSendMaxProp={true}
-            currencyAbbreviationProp={account?.balance.currency}
-            onDismiss={onEnteredAmount}
-          />
-        </AmountContainer>
-      </SheetModal>
+        cryptoCurrencyAbbreviation={account?.balance.currency}
+        onClose={() => setAmountModalVisible(false)}
+        onSubmit={amt => onEnteredAmount(amt)}
+      />
     </AccountContainer>
   );
 };

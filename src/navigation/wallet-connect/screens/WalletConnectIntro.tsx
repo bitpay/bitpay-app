@@ -35,7 +35,7 @@ const WalletConnectIntro = () => {
   const showWalletSelector = () => setWalletSelectorModalVisible(true);
   const hideWalletSelector = () => setWalletSelectorModalVisible(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const rates = useAppSelector(({WALLET}) => WALLET.rates);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   let allEthWallets: WalletRowProps[] = [];
   Object.entries(allKeys).map(([_, value]) => {

@@ -97,6 +97,9 @@ import CardActivationStack, {
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
 import {Analytics, handleBwsEvent} from './store/app/app.effects';
+import NotificationsSettingsStack, {
+  NotificationsSettingsStackParamsList,
+} from './navigation/tabs/settings/notifications/NotificationsStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -121,6 +124,7 @@ export type RootStackParamList = {
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
   WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
   Debug: DebugScreenParamList;
+  NotificationsSettings: NavigatorScreenParams<NotificationsSettingsStackParamsList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -146,6 +150,7 @@ export enum RootStacks {
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT = 'WalletConnect',
   DEBUG = 'Debug',
+  NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
 }
 
 // ROOT NAVIGATION CONFIG
@@ -165,7 +170,8 @@ export type NavScreenParams = NavigatorScreenParams<
     BuyCryptoStackParamList &
     SwapCryptoStackParamList &
     ScanStackParamList &
-    WalletConnectStackParamList
+    WalletConnectStackParamList &
+    NotificationsSettingsStackParamsList
 >;
 
 declare global {
@@ -210,11 +216,15 @@ export default () => {
   );
   const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
+  const checkingBiometricForSending = useAppSelector(
+    ({APP}) => APP.checkingBiometricForSending,
+  );
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
   const currentRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
+  const failedAppInit = useAppSelector(({APP}) => APP.failedAppInit);
   const biometricLockActive = useAppSelector(
     ({APP}) => APP.biometricLockActive,
   );
@@ -224,8 +234,12 @@ export default () => {
 
   // MAIN APP INIT
   useEffect(() => {
-    dispatch(AppEffects.startAppInit());
-  }, [dispatch]);
+    if (!failedAppInit) {
+      dispatch(AppEffects.startAppInit());
+    } else {
+      navigationRef.navigate(RootStacks.DEBUG, {name: 'Failed app init'});
+    }
+  }, [dispatch, failedAppInit]);
 
   // LANGUAGE
   useEffect(() => {
@@ -241,7 +255,7 @@ export default () => {
 
       const showLockOption = () => {
         if (biometricLockActive) {
-          dispatch(AppActions.showBiometricModal());
+          dispatch(AppActions.showBiometricModal({}));
         } else if (pinLockActive) {
           dispatch(AppActions.showPinModal({type: 'check'}));
         } else {
@@ -250,7 +264,10 @@ export default () => {
       };
 
       if (onboardingCompleted) {
-        if (status === 'active' && !appIsLoading) {
+        if (status === 'active' && checkingBiometricForSending) {
+          dispatch(AppActions.checkingBiometricForSending(false));
+          dispatch(AppActions.showBlur(false));
+        } else if (status === 'active' && !appIsLoading) {
           if (lockAuthorizedUntil) {
             const now = Math.floor(Date.now() / 1000);
             const totalSecs = lockAuthorizedUntil - now;
@@ -266,6 +283,8 @@ export default () => {
           } else {
             showLockOption();
           }
+        } else if (failedAppInit) {
+          dispatch(AppActions.showBlur(false));
         } else {
           dispatch(AppActions.showBlur(true));
         }
@@ -279,7 +298,9 @@ export default () => {
     pinLockActive,
     lockAuthorizedUntil,
     biometricLockActive,
+    checkingBiometricForSending,
     appIsLoading,
+    failedAppInit,
   ]);
 
   // Silent Push Notifications
@@ -294,7 +315,7 @@ export default () => {
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
-  }, []);
+  }, [dispatch]);
 
   // THEME
   useEffect(() => {
@@ -372,6 +393,10 @@ export default () => {
                   name = `${tabName} Tab`;
                 }
 
+                if (name === 'Shop Tab') {
+                  dispatch(Analytics.track('Clicked Shop tab', {}));
+                }
+
                 dispatch(
                   Analytics.screen(name, {screen: params?.screen || ''}),
                 );
@@ -389,8 +414,8 @@ export default () => {
               component={DebugScreen}
               options={{
                 ...baseNavigatorOptions,
-                headerShown: true,
-                headerTitle: 'Debug',
+                gestureEnabled: false,
+                animationEnabled: false,
               }}
             />
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
@@ -412,7 +437,7 @@ export default () => {
             />
             <Root.Screen
               options={{
-                gestureEnabled: false,
+                gestureEnabled: true,
               }}
               name={RootStacks.WALLET}
               component={WalletStack}
@@ -428,6 +453,9 @@ export default () => {
             <Root.Screen
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
+              options={{
+                gestureEnabled: false,
+              }}
             />
             <Root.Screen
               name={RootStacks.GIFT_CARD_DEEPLINK}
@@ -443,6 +471,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
               component={ExternalServicesSettingsStack}
+            />
+            <Root.Screen
+              name={RootStacks.NOTIFICATIONS_SETTINGS}
+              component={NotificationsSettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
             <Root.Screen name={RootStacks.COINBASE} component={CoinbaseStack} />
