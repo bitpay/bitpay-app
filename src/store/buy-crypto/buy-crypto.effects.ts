@@ -8,7 +8,7 @@ export const calculateAltFiatToUsd =
   ): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
-    const allRates = state.WALLET.rates;
+    const allRates = state.RATE.rates;
 
     if (altFiatCurrency.toUpperCase() === 'USD') {
       return altFiatAmount;
@@ -41,7 +41,7 @@ export const calculateUsdToAltFiat =
   (usdAmount: number, altFiatCurrency: string): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
-    const allRates = state.WALLET.rates;
+    const allRates = state.RATE.rates;
 
     const rateBtcUsd = allRates.btc.find(r => {
       return r.code === 'USD';
