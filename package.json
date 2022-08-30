@@ -148,7 +148,7 @@
     "yup": "0.32.11"
   },
   "devDependencies": {
-    "@babel/core": "7.16.0",
+    "@babel/core": "7.18.13",
     "@babel/plugin-proposal-export-namespace-from": "7.16.0",
     "@babel/plugin-proposal-nullish-coalescing-operator": "7.16.7",
     "@babel/plugin-proposal-optional-chaining": "7.16.7",
@@ -156,7 +156,7 @@
     "@babel/plugin-transform-shorthand-properties": "7.16.7",
     "@babel/plugin-transform-template-literals": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
-    "@babel/runtime": "7.16.3",
+    "@babel/runtime": "7.18.9",
     "@jest/create-cache-key-function": "26.5.0",
     "@react-native-community/eslint-config": "2.0.0",
     "@storybook/addon-actions": "5.3.21",
