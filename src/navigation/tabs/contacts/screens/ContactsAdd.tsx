@@ -133,7 +133,7 @@ const NetworkName = styled(BaseText)`
 `;
 
 const schema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required().trim(),
   email: yup.string().email().trim(),
   destinationTag: yup.number(),
   address: yup.string().required(),
