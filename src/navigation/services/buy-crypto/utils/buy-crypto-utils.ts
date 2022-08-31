@@ -57,7 +57,8 @@ export const isPaymentMethodSupported = (
   return (
     paymentMethod.supportedExchanges[exchange] &&
     isCoinSupportedBy(exchange, coin) &&
-    isCurrencySupportedBy(exchange, currency)
+    (isCurrencySupportedBy(exchange, currency) ||
+      isCurrencySupportedBy(exchange, 'USD'))
   );
 };
 

@@ -889,7 +889,7 @@ const BuyCryptoOffers: React.FC = () => {
           {
             text: t('GO BACK'),
             action: () => {
-              console.log('Continue to the exchange website CANCELED');
+              logger.debug('Continue to the exchange website CANCELED');
             },
           },
         ],
@@ -1007,6 +1007,15 @@ const BuyCryptoOffers: React.FC = () => {
                               offer.fiatCurrency,
                             )}
                           </OfferDataRate>
+                          {offer.fiatCurrency !== fiatCurrency ? (
+                            <OfferDataWarningContainer>
+                              <OfferDataWarningMsg>
+                                {t(
+                                  `*This exchange doesn\'t support purchases with ${fiatCurrency} you could proceed paying in ${offer.fiatCurrency}.`,
+                                )}
+                              </OfferDataWarningMsg>
+                            </OfferDataWarningContainer>
+                          ) : null}
                         </>
                       )}
                     <OfferDataInfoContainer>
@@ -1015,15 +1024,6 @@ const BuyCryptoOffers: React.FC = () => {
                       </OfferDataInfoLabel>
                       {offer.logo}
                     </OfferDataInfoContainer>
-                    {offer.fiatCurrency !== fiatCurrency ? (
-                      <OfferDataWarningContainer>
-                        <OfferDataWarningMsg>
-                          {t(
-                            `*This exchange doesn\'t support purchases with ${fiatCurrency} you could proceed paying in ${offer.fiatCurrency}.`,
-                          )}
-                        </OfferDataWarningMsg>
-                      </OfferDataWarningContainer>
-                    ) : null}
                   </OfferDataContainer>
                   {offer.fiatMoney && (
                     <SummaryCtaContainer>
