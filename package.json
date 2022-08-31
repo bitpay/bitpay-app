@@ -76,7 +76,7 @@
     "lodash.uniqby": "4.7.0",
     "moment": "2.29.1",
     "path-browserify": "1.0.1",
-    "react": "17.0.1",
+    "react": "18.2.0",
     "react-hook-form": "7.19.5",
     "react-i18next": "11.15.2",
     "react-native": "0.67.4",
