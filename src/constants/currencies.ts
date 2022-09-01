@@ -496,7 +496,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'normal',
     },
     theme: {
-      coinColor: '#FFFFFF',
+      coinColor: '#A6A9AA',
       backgroundColor: '#A6A9AA',
       gradientBackgroundColor: '#A6A9AA',
     },

@@ -1,6 +1,6 @@
 import React, {memo, useCallback} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ImageRequireSource} from 'react-native';
+import {ImageRequireSource, View} from 'react-native';
 import styled from 'styled-components/native';
 import {IS_ANDROID} from '../../constants';
 import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
@@ -49,7 +49,7 @@ export const CurrencySelectionRowContainer = styled.View`
   padding: 16px;
 `;
 
-const FlexRow = styled.View`
+const FlexRow = styled.TouchableOpacity`
   flex-direction: row;
 `;
 
@@ -115,7 +115,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
     } = currency;
 
     return (
-      <FlexRow>
+      <FlexRow onPress={() => onToggle?.(currency.id)}>
         <CurrencyColumn>
           <CurrencyImage img={img} imgSrc={imgSrc} />
         </CurrencyColumn>
@@ -154,7 +154,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
     const {chainImg, token, hideCheckbox, selectionMode, onToggle} = props;
 
     return (
-      <FlexRow style={{marginBottom: 24}}>
+      <FlexRow style={{marginBottom: 24}} onPress={() => onToggle?.(token.id)}>
         <CurrencyColumn style={{marginRight: 16}}>
           <NestedArrowIcon />
         </CurrencyColumn>
@@ -192,9 +192,9 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
 
 export const DescriptionRow: React.FC = ({children}) => {
   return (
-    <FlexRow style={{marginTop: 16}}>
+    <View style={{marginTop: 16}}>
       <ChainDescription>{children}</ChainDescription>
-    </FlexRow>
+    </View>
   );
 };
 
