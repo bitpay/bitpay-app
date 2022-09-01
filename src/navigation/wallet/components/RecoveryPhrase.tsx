@@ -35,9 +35,9 @@ import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
+  deferredImportMnemonic,
   startCreateKeyWithOpts,
   startGetRates,
-  startImportMnemonic,
   startImportWithDerivationPath,
 } from '../../../store/wallet/effects';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -403,34 +403,38 @@ const RecoveryPhrase = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      await dispatch(
-        startOnGoingProcessModal(
-          // t('Importing')
-          t(OnGoingProcessMessages.IMPORTING),
-        ),
-      );
-      const key = !derivationPathEnabled
-        ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
-        : ((await dispatch<any>(
-            startImportWithDerivationPath(importData, opts),
-          )) as Key);
-      await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey({key}));
-      await dispatch(updatePortfolioBalance());
-      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
-      backupRedirect({
-        context: route.params?.context,
-        navigation,
-        walletTermsAccepted,
-        key,
-      });
-      dispatch(
-        logSegmentEvent('track', 'Imported Key', {
-          context: route.params?.context || '',
-          source: 'RecoveryPhrase',
-        }),
-      );
-      dispatch(dismissOnGoingProcessModal());
+      if (!derivationPathEnabled) {
+        dispatch(
+          deferredImportMnemonic(importData, opts, route.params?.context),
+        );
+      } else {
+        await dispatch(
+          startOnGoingProcessModal(
+            // t('Importing')
+            t(OnGoingProcessMessages.IMPORTING),
+          ),
+        );
+        const key = (await dispatch<any>(
+          startImportWithDerivationPath(importData, opts),
+        )) as Key;
+        await dispatch(startGetRates({}));
+        await dispatch(startUpdateAllWalletStatusForKey({key}));
+        await dispatch(updatePortfolioBalance());
+        dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+        backupRedirect({
+          context: route.params?.context,
+          navigation,
+          walletTermsAccepted,
+          key,
+        });
+        dispatch(
+          logSegmentEvent('track', 'Imported Key', {
+            context: route.params?.context || '',
+            source: 'RecoveryPhrase',
+          }),
+        );
+        dispatch(dismissOnGoingProcessModal());
+      }
     } catch (e: any) {
       logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());

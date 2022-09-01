@@ -298,3 +298,12 @@ export const checkingBiometricForSending = (
   type: AppActionTypes.CHECKING_BIOMETRIC_FOR_SENDING,
   payload,
 });
+
+export const updateOnCompleteOnboarding = (payload: string): AppActionType => ({
+  type: AppActionTypes.UPDATE_ON_COMPLETE_ONBOARDING_LIST,
+  payload,
+});
+
+export const clearOnCompleteOnboadringList = (): AppActionType => ({
+  type: AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST,
+});

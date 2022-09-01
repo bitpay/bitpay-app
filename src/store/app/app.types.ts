@@ -69,6 +69,8 @@ export enum AppActionTypes {
   SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN = 'APP/SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN',
   ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
   CHECKING_BIOMETRIC_FOR_SENDING = 'APP/CHECKING_BIOMETRIC_FOR_SENDING',
+  UPDATE_ON_COMPLETE_ONBOARDING_LIST = 'APP/UPDATE_ON_COMPLETE_ONBOARDING_LIST',
+  CLEAR_ON_COMPLETE_ONBOARDING_LIST = 'APP/CLEAR_ON_COMPLETE_ONBOARDING_LIST',
 }
 
 interface NetworkChanged {
@@ -313,6 +315,15 @@ interface checkingBiometricForSending {
   payload: boolean;
 }
 
+interface updateOnCompleteOnboarding {
+  type: typeof AppActionTypes.UPDATE_ON_COMPLETE_ONBOARDING_LIST;
+  payload: string;
+}
+
+interface clearOnCompleteOnboadringList {
+  type: typeof AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -365,4 +376,6 @@ export type AppActionType =
   | SetKeyMigrationFailureModalHasBeenShown
   | SetDefaultAltCurrency
   | ActiveModalUpdated
-  | checkingBiometricForSending;
+  | checkingBiometricForSending
+  | updateOnCompleteOnboarding
+  | clearOnCompleteOnboadringList;

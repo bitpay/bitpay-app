@@ -414,3 +414,8 @@ export interface Utxo {
   vout: number;
   checked?: boolean;
 }
+
+export interface DeferredImport {
+  importData: {words?: string; xPrivKey?: string};
+  opts: Partial<KeyOptions>;
+}

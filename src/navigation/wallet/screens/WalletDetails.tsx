@@ -444,12 +444,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         copayerId: fullWalletObj.credentials.copayerId,
       });
 
-      if ((!action || action.type === 'failed') && txp.status == 'pending') {
+      if ((!action || action.type === 'failed') && txp.status === 'pending') {
         txpsPending.push(txp);
       }
 
       // For unsent transactions
-      if (action && txp.status == 'accepted') {
+      if (action && txp.status === 'accepted') {
         txpsPending.push(txp);
       }
     });

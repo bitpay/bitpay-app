@@ -1,4 +1,4 @@
-import {Key, Token} from './wallet.models';
+import {DeferredImport, Key, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
@@ -31,6 +31,7 @@ export interface WalletState {
   customizeNonce: boolean;
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
+  deferredImport: null | DeferredImport;
 }
 
 const initialState: WalletState = {
@@ -57,6 +58,7 @@ const initialState: WalletState = {
   customizeNonce: false,
   queuedTransactions: false,
   enableReplaceByFee: false,
+  deferredImport: null,
 };
 
 export const walletReducer = (
@@ -480,6 +482,20 @@ export const walletReducer = (
       return {
         ...state,
         feeLevel: newFeeLevel,
+      };
+    }
+
+    case WalletActionTypes.UPDATE_DEFERRED_IMPORT: {
+      return {
+        ...state,
+        deferredImport: action.payload,
+      };
+    }
+
+    case WalletActionTypes.CLEAR_DEFERRED_IMPORT: {
+      return {
+        ...state,
+        deferredImport: null,
       };
     }
 
