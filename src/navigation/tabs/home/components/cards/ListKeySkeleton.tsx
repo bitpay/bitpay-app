@@ -23,7 +23,7 @@ const ListKeySkeleton = () => {
       <SkeletonPlaceholder
         backgroundColor={theme.dark ? '#111111' : Feather}
         highlightColor={theme.dark ? LightBlack : White}>
-        <SkeletonPlaceholder.Item borderRadius={4} height={15} width={100} />
+        <SkeletonPlaceholder.Item borderRadius={4} height={15} width={125} />
         <SkeletonPlaceholder.Item
           height={15}
           borderRadius={4}
