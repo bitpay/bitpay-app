@@ -4,11 +4,12 @@ buildscript {
     ext {
         buildToolsVersion = "30.0.2"
         minSdkVersion = 21
-        compileSdkVersion = 30
-        targetSdkVersion = 30
+        compileSdkVersion = 31
+        targetSdkVersion = 31
         ndkVersion = "21.4.7075529"
         androidXAnnotation = "1.2.0"
         androidXBrowser = "1.3.0"
+        kotlin_version = "1.7.10"
     }
     repositories {
         google()
@@ -20,6 +21,7 @@ buildscript {
         // in the individual module build.gradle files
         classpath 'com.google.android.gms:strict-version-matcher-plugin:1.2.1'
         classpath 'com.google.gms:google-services:4.3.10'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
