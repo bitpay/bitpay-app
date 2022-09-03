@@ -5,7 +5,8 @@ export const wyreSupportedCoins = [
   'eth',
   'usdc',
   'gusd',
-  'pax',
+  'usdp',
+  'pax', // backward compatibility
   'busd',
   'dai',
   'wbtc',

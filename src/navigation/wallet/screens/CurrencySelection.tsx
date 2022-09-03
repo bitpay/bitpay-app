@@ -250,7 +250,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       ...appCustomTokenOptions,
     };
     Object.entries(allTokenOptions).forEach(([k, tokenOpt]) => {
-      if (!(Currencies[k] || appTokenData[k] || appCustomTokenData[k])) {
+      if (
+        !(Currencies[k] || appTokenData[k] || appCustomTokenData[k]) ||
+        k === 'pax'
+      ) {
         return;
       }
 

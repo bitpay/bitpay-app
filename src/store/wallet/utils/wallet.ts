@@ -43,7 +43,7 @@ const mapAbbreviationAndName =
       case 'pax':
         return {
           currencyAbbreviation: 'usdp',
-          currencyName: dispatch(GetName(coin)),
+          currencyName: dispatch(GetName('usdp')),
         };
       default:
         return {
