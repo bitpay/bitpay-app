@@ -131,7 +131,7 @@ const Confirm = () => {
     ({WALLET}) => WALLET.enableReplaceByFee,
   );
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
-  const rates = useAppSelector(({WALLET}) => WALLET.rates);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const key = allKeys[wallet?.keyId!];

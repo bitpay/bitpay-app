@@ -31,7 +31,8 @@ import {
   toggleHideKeyBalance,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
-import {Wallet, Status, Rates} from '../../../store/wallet/wallet.models';
+import {Wallet, Status} from '../../../store/wallet/wallet.models';
+import {Rates} from '../../../store/rate/rate.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -337,7 +338,8 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {id, context} = route.params;
-  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];

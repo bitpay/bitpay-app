@@ -41,7 +41,7 @@ import {
   VictoryGroup,
   VictoryTooltip,
 } from 'victory-native';
-import {DateRanges} from '../../../store/wallet/wallet.models';
+import {DateRanges} from '../../../store/rate/rate.models';
 import {Defs, Stop, LinearGradient} from 'react-native-svg';
 import _ from 'lodash';
 import GainArrow from '../../../../assets/img/home/exchange-rates/increment-arrow.svg';
@@ -165,9 +165,6 @@ const PriceCharts = () => {
     params: {item},
   } = useRoute<RouteProp<WalletStackParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
 
   const {
     average,

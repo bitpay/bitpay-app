@@ -1,159 +1,307 @@
-import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import styled from 'styled-components/native';
 import {
-  ActiveOpacity,
-  CtaContainerAbsolute,
+  CtaContainer,
   HeaderRightContainer,
-  SearchInput,
-  NoResultsContainer,
-  NoResultsImgContainer,
-  NoResultsDescription,
+  ScreenGutter,
 } from '../../../components/styled/Containers';
 import CurrencySelectionRow, {
-  CurrencySelectionToggleProps,
+  CurrencySelectionItem,
+  CurrencySelectionRowProps,
 } from '../../../components/list/CurrencySelectionRow';
 
 import Button from '../../../components/button/Button';
 import {
-  SUPPORTED_CURRENCIES,
+  Currencies,
   SUPPORTED_TOKENS,
   SupportedCurrencies,
 } from '../../../constants/currencies';
 import {startCreateKey} from '../../../store/wallet/effects';
-import {FlatList, TouchableOpacity} from 'react-native';
+import {
+  FlatList,
+  ImageRequireSource,
+  ImageSourcePropType,
+  ListRenderItem,
+} from 'react-native';
 import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
-import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
+import {useNavigation} from '@react-navigation/native';
+import {HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
-  SupportedCurrencyOptions,
   SupportedCurrencyOption,
+  SupportedCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
-import {RootState} from '../../../store';
-import {WalletStackParamList} from '../WalletStack';
-import {Dispatch} from 'redux';
-import {RootStackParamList} from '../../../Root';
+import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {Key} from '../../../store/wallet/wallet.models';
+import {Key, Token} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
-import {keyExtractor} from '../../../utils/helper-methods';
 import {sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {NeutralSlate} from '../../../styles/colors';
-import debounce from 'lodash.debounce';
-import Icons from '../components/WalletIcons';
-import SearchSvg from '../../../../assets/img/search.svg';
-import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
+import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
+import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
-  'CurrencySelection'
+  WalletScreens.CURRENCY_SELECTION
 >;
 
-type CurrencySelectionContext =
-  | 'onboarding'
-  | 'createNewKey'
-  | 'addWallet'
-  | 'addWalletMultisig'
-  | 'joinWalletMultisig';
+type CurrencySelectionContextWithoutKey = 'onboarding' | 'createNewKey';
+type CurrencySelectionContextWithKey = 'addWallet' | 'addWalletMultisig';
+export type CurrencySelectionParamList =
+  | {
+      context: CurrencySelectionContextWithoutKey;
+      key?: undefined;
+    }
+  | {
+      context: CurrencySelectionContextWithKey;
+      key: Key;
+    };
 
-export type CurrencySelectionParamList = {
-  context: CurrencySelectionContext;
-  key?: Key;
+type CurrencySelectionListItem = CurrencySelectionRowProps & {
+  /**
+   * All tokens for this chain currency.
+   */
+  tokens: CurrencySelectionItem[];
+
+  /**
+   * Popular tokens for this chain currency. Needs to be kept in sync with tokens.
+   * Using a separate property instead of deriving due to performance reasons.
+   */
+  popularTokens: CurrencySelectionItem[];
 };
 
+export type CurrencySelectionMode = 'single' | 'multi';
+
 interface ContextHandler {
-  currencies: SupportedCurrencyOption[];
   headerTitle?: string;
   ctaTitle?: string;
-  bottomCta?: (props: {
-    selectedCurrencies: string[];
-    dispatch: Dispatch<any>;
-    navigation: NavigationProp<RootStackParamList>;
-  }) => void;
-  selectionCta?: (props: {
-    currencyAbbreviation: string;
-    currencyName: string;
-    isToken?: boolean;
-    navigation: NavigationProp<RootStackParamList>;
-  }) => void;
-  hideBottomCta?: boolean;
-  removeCheckbox?: boolean;
+  onCtaPress?: () => void;
+  selectionMode: CurrencySelectionMode;
 }
 
-const CurrencySelectionContainer = styled.View`
+export const CurrencySelectionContainer = styled.View`
   flex: 1;
 `;
 
 const ListContainer = styled.View`
-  margin-top: 20px;
+  flex-shrink: 1;
 `;
 
-const SearchContainer = styled.View`
-  flex-direction: row;
-  border: 1px solid #9ba3ae;
+export const SearchContainer = styled.View`
   align-items: center;
-  border-top-right-radius: 4px;
-  border-top-left-radius: 4px;
   padding: 4px 0;
-  margin: 20px 10px 0;
-  height: 60px;
+  margin: 20px ${ScreenGutter} 20px;
 `;
 
-const SearchImageContainer = styled.View`
-  width: 50px;
-  align-items: center;
-`;
+const SupportedChainCurrencyOptions = SupportedCurrencyOptions.filter(
+  currency => {
+    return !currency.isToken;
+  },
+);
 
-const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
+const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
+  SupportedCurrencyOptions.filter(currency => {
+    return currency.hasMultisig;
+  });
+
+const DESCRIPTIONS: Record<string, string> = {
+  eth: 'TokensOnEthereumNetworkDescription',
+  matic: 'TokensOnPolygonNetworkDescription',
+};
+
+const POPULAR_TOKENS: Record<string, string[]> = {
+  eth: ['usdc', 'busd', 'ape'],
+  matic: ['usdc', 'busd', 'gusd'],
+};
+
+const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
+
+const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
+  route,
+}) => {
   const {t} = useTranslation();
-  // setting context
   const navigation = useNavigation();
   const {context, key} = route.params;
   const logger = useLogger();
   const dispatch = useAppDispatch();
-
-  const theme = useTheme();
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
-  const [searchInput, setSearchInput] = useState('');
-
-  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
-    };
-  });
-
-  const ALL_CUSTOM_TOKENS = useMemo(
-    () =>
-      Object.values(tokenOptions)
-        .filter(
-          token => !SUPPORTED_CURRENCIES.includes(token.symbol.toLowerCase()),
-        )
-        .map(({symbol, name, logoURI}) => {
-          return {
-            id: Math.random(),
-            currencyAbbreviation: symbol,
-            currencyName: name,
-            img: logoURI,
-            isToken: true,
-            checked: false,
-          };
-        }),
-    [tokenOptions],
+  const [searchFilter, setSearchFilter] = useState('');
+  const appTokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+  const appTokenData = useAppSelector(({WALLET}) => WALLET.tokenData);
+  const appCustomTokenOptions = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptions,
   );
+  const appCustomTokenData = useAppSelector(
+    ({WALLET}) => WALLET.customTokenData,
+  );
+
+  /**
+   * Source of truth for which currencies are selected.
+   */
+  const [allListItems, setAllListItems] = useState<CurrencySelectionListItem[]>(
+    [],
+  );
+  const allListItemsRef = useRef(allListItems);
+  allListItemsRef.current = allListItems;
+
+  /**
+   * Derived from allListItems, but with search filter applied.
+   */
+  const filteredListItems = useMemo(() => {
+    // If no filter, return reference to allListItems.
+    if (!searchFilter) {
+      return allListItems;
+    }
+
+    // Else return a new array to trigger a rerender.
+    return allListItems.reduce<CurrencySelectionListItem[]>((accum, item) => {
+      const isCurrencyMatch =
+        item.currency.currencyAbbreviation
+          .toLowerCase()
+          .includes(searchFilter) ||
+        item.currency.currencyName.toLowerCase().includes(searchFilter);
+      const matchingTokens = item.popularTokens.filter(
+        token =>
+          token.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
+          token.currencyName.toLowerCase().includes(searchFilter),
+      );
+
+      // Display the item if the currency itself matches the filter or one of its tokens matches
+      if (isCurrencyMatch || matchingTokens.length) {
+        accum.push({
+          ...item,
+          popularTokens: matchingTokens,
+        });
+      }
+
+      return accum;
+    }, []);
+  }, [searchFilter, allListItems]);
+
+  // Initialize supported currencies and tokens into row item format.
+  // Resets if tokenOptions or tokenData updates.
+  useEffect(() => {
+    if (context === 'addWalletMultisig') {
+      const items = SupportedMultisigCurrencyOptions.map(currency => {
+        const item: CurrencySelectionListItem = {
+          currency: {
+            ...currency,
+            imgSrc: undefined,
+            selected: false,
+            disabled: false,
+          },
+          tokens: [],
+          popularTokens: [],
+        };
+
+        return item;
+      });
+
+      setAllListItems(items);
+      return;
+    }
+
+    const chainMap: Record<string, CurrencySelectionListItem> = {};
+
+    // Add all chain currencies to list
+    const list: CurrencySelectionListItem[] = SupportedChainCurrencyOptions.map(
+      ({id, currencyAbbreviation, currencyName, img}) => {
+        const item: CurrencySelectionListItem = {
+          currency: {
+            id,
+            currencyAbbreviation,
+            currencyName,
+            img,
+            selected: false,
+            disabled: false,
+          },
+          tokens: [],
+          popularTokens: [],
+          description: DESCRIPTIONS[id] ? t(DESCRIPTIONS[id]) : '',
+        };
+
+        chainMap[id.toLowerCase()] = item;
+
+        return item;
+      },
+    );
+
+    // For each token, add it to the token list for its parent chain object
+    const allTokenOptions: Record<string, Token> = {
+      ...BitpaySupportedTokenOpts,
+      ...appTokenOptions,
+      ...appCustomTokenOptions,
+    };
+    Object.entries(allTokenOptions).forEach(([k, tokenOpt]) => {
+      if (!(Currencies[k] || appTokenData[k] || appCustomTokenData[k])) {
+        return;
+      }
+
+      const tokenData =
+        Currencies[k] || appTokenData[k] || appCustomTokenData[k];
+      const chainData = chainMap[tokenData.chain.toLowerCase()];
+      const imgSrc = SupportedCurrencyOptions.find(c => c.id === k)?.imgSrc;
+      const isReqSrc = (
+        src: ImageSourcePropType | undefined,
+      ): src is ImageRequireSource => typeof src === 'number';
+
+      const token: CurrencySelectionItem = {
+        id: k,
+        currencyAbbreviation: tokenOpt.symbol,
+        currencyName: tokenOpt.name,
+        img: tokenOpt.logoURI || chainData.currency.img || '',
+        imgSrc: isReqSrc(imgSrc) ? imgSrc : undefined,
+        selected: false,
+        disabled: false,
+        isToken: true,
+      };
+
+      if (chainData) {
+        if (!chainData.tokens) {
+          chainData.tokens = [];
+        }
+
+        chainData.tokens.push(token);
+
+        if (POPULAR_TOKENS[tokenData.chain.toLowerCase()].includes(token.id)) {
+          chainData.popularTokens.push(token);
+        }
+      } else {
+        // Parent chain currency not found, just push to the main list.
+        list.push({
+          currency: token,
+          tokens: [],
+          popularTokens: [],
+        });
+      }
+    });
+
+    setAllListItems(list);
+  }, [
+    t,
+    appTokenOptions,
+    appTokenData,
+    appCustomTokenOptions,
+    appCustomTokenData,
+    context,
+  ]);
 
   const showErrorModal = (e: string) => {
     dispatch(
@@ -173,55 +321,60 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     );
   };
 
-  const _SupportedCurrencyOptions = useMemo(
-    () =>
-      SupportedCurrencyOptions.map(currency => {
-        return {
-          ...currency,
-          checked: false,
-        };
-      }),
-    [],
-  );
-
-  const _currencies = useMemo(
-    () => [..._SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
-    [_SupportedCurrencyOptions, ALL_CUSTOM_TOKENS],
-  );
-
-  const _multiSigCurrencies = useMemo(
-    () => SupportedCurrencyOptions.filter(currency => currency.hasMultisig),
-    [],
-  );
-
   const checkEthIfTokenSelected = (
     currencies: Array<string>,
   ): Array<string> => {
-    if (!currencies.includes('ETH')) {
-      for (const selected of currencies) {
-        if (
-          SUPPORTED_TOKENS.includes(selected.toLowerCase()) ||
-          ALL_CUSTOM_TOKENS.some(
-            token => token.currencyAbbreviation === selected,
-          )
-        ) {
-          currencies = [...currencies, 'ETH'];
-          break;
-        }
-      }
+    const isEthSelected = currencies.some(c => c.toLowerCase() === 'eth');
+
+    if (isEthSelected) {
+      return currencies;
     }
+
+    const ethState = allListItems.find(
+      item => item.currency.id.toLowerCase() === 'eth',
+    );
+
+    const isEthTokenSelected = currencies.some(c => {
+      const selectedLower = c.toLowerCase();
+
+      return (
+        SUPPORTED_TOKENS.includes(selectedLower) ||
+        ethState?.tokens.some(token => {
+          return token.id.toLowerCase() === selectedLower && token.selected;
+        })
+      );
+    });
+
+    if (isEthTokenSelected) {
+      currencies.push('ETH');
+    }
+
     return currencies;
   };
+
+  const selectedCurrencies = useMemo(() => {
+    return allListItems.reduce<string[]>((accum, item) => {
+      if (item.currency.selected) {
+        accum.push(item.currency.currencyAbbreviation);
+      }
+
+      item.tokens.forEach(token => {
+        if (token.selected) {
+          accum.push(token.currencyAbbreviation);
+        }
+      });
+      return accum;
+    }, []);
+  }, [allListItems]);
 
   const contextHandler = (): ContextHandler | undefined => {
     switch (context) {
       case 'onboarding':
       case 'createNewKey': {
         return {
-          // @ts-ignore
-          currencies: _currencies,
+          selectionMode: 'multi',
           ctaTitle: t('Create Key'),
-          bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
+          onCtaPress: async () => {
             try {
               const currencies = checkEthIfTokenSelected(
                 selectedCurrencies,
@@ -231,21 +384,18 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
 
               await dispatch(
                 startOnGoingProcessModal(
-                  // t('Creating Key')
                   t(OnGoingProcessMessages.CREATING_KEY),
                 ),
               );
-              const key = (await dispatch<any>(
-                startCreateKey(currencies),
-              )) as Key;
+              const createdKey = await dispatch(startCreateKey(currencies));
 
-              dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+              dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
 
               navigation.navigate(
                 context === 'onboarding' ? 'Onboarding' : 'Wallet',
                 {
                   screen: 'BackupKey',
-                  params: {context, key},
+                  params: {context, key: createdKey},
                 },
               );
               dispatch(
@@ -267,39 +417,75 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
 
       case 'addWallet': {
         return {
-          // @ts-ignore
-          currencies: _currencies,
+          selectionMode: 'single',
           headerTitle: t('Select Currency'),
-          hideBottomCta: true,
-          removeCheckbox: true,
-          selectionCta: async ({
-            currencyAbbreviation,
-            currencyName,
-            isToken,
-            navigation,
-          }) => {
+          ctaTitle: t('Add Wallet'),
+          onCtaPress: async () => {
             if (!key) {
               // TODO
               console.error('add wallet - key not found');
-            } else {
-              navigation.navigate('Wallet', {
-                screen: 'AddWallet',
-                params: {key, currencyAbbreviation, currencyName, isToken},
-              });
+              return;
             }
+
+            if (!selectedCurrencies.length) {
+              showErrorModal(t('Select a currency'));
+              return;
+            }
+
+            const selectedId = selectedCurrencies[0];
+            const item = allListItems.find(
+              i =>
+                i.currency.currencyAbbreviation === selectedId ||
+                i.tokens.some(
+                  token => token.currencyAbbreviation === selectedId,
+                ),
+            );
+            let currency: CurrencySelectionItem | undefined;
+
+            if (!item) {
+              showErrorModal(t('Select a currency'));
+              return;
+            }
+
+            if (item.currency.currencyAbbreviation === selectedId) {
+              currency = item.currency;
+            } else {
+              currency = item.tokens.find(
+                token => token.currencyAbbreviation === selectedId,
+              );
+            }
+
+            if (!currency) {
+              showErrorModal(t('Select a currency'));
+              return;
+            }
+
+            navigation.navigate('Wallet', {
+              screen: 'AddWallet',
+              params: {
+                key,
+                currencyAbbreviation: currency.currencyAbbreviation,
+                currencyName: currency.currencyName,
+                isToken: !!currency.isToken,
+              },
+            });
           },
         };
       }
       case 'addWalletMultisig': {
         return {
-          currencies: _multiSigCurrencies,
+          selectionMode: 'single',
           headerTitle: t('Select Currency'),
-          hideBottomCta: true,
-          removeCheckbox: true,
-          selectionCta: async ({currencyAbbreviation, navigation}) => {
+          ctaTitle: t('Create Wallet'),
+          onCtaPress: async () => {
+            if (!selectedCurrencies.length) {
+              showErrorModal(t('Select a currency'));
+              return;
+            }
+
             navigation.navigate('Wallet', {
               screen: 'CreateMultisig',
-              params: {currency: currencyAbbreviation, key},
+              params: {currency: selectedCurrencies[0], key},
             });
           },
         };
@@ -307,15 +493,8 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     }
   };
 
-  const {
-    currencies = [],
-    bottomCta,
-    ctaTitle,
-    headerTitle,
-    hideBottomCta,
-    selectionCta,
-    removeCheckbox,
-  } = contextHandler() || {};
+  const {onCtaPress, ctaTitle, headerTitle, selectionMode} =
+    contextHandler() || {};
 
   // Configuring Header
   useLayoutEffect(() => {
@@ -343,175 +522,244 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
           </HeaderRightContainer>
         ),
     });
-  }, [navigation, t]);
+  }, [navigation, t, context, headerTitle]);
 
-  const [selectedCurrencies, setSelectedCurrencies] = useState<Array<string>>(
-    [],
-  );
+  const onToggle = (id: string) => {
+    setAllListItems(previous =>
+      previous.map(item => {
+        const isCurrencyMatch = item.currency.id === id;
+        const tokenMatch = item.tokens.find(token => token.id === id);
 
-  const DEFAULT_CURRENCY_OPTIONS = useMemo(
-    () => currencies || [],
-    [currencies],
-  );
+        // if multi, just toggle the selected item and rerender
+        if (selectionMode === 'multi') {
+          if (isCurrencyMatch) {
+            const hasSelectedTokens = item.tokens.some(token => token.selected);
 
-  const [currencyOptions, setCurrencyOptions] = useState<Array<any>>([
-    ...DEFAULT_CURRENCY_OPTIONS,
-  ]);
-
-  const currencyToggled = ({
-    currencyAbbreviation,
-    currencyName,
-    checked,
-    isToken,
-  }: CurrencySelectionToggleProps) => {
-    if (selectionCta) {
-      resetSearch();
-      selectionCta({currencyAbbreviation, currencyName, isToken, navigation});
-    } else {
-      setSelectedCurrencies(currencies => {
-        // reset asset in list
-        currencies = currencies.filter(
-          selected => selected !== currencyAbbreviation,
-        );
-        // add if checked
-        if (checked) {
-          currencies = [...currencies, currencyAbbreviation];
-        }
-
-        return currencies;
-      });
-    }
-  };
-  // Flat list
-  const renderItem = useCallback(
-    ({item}) => (
-      <CurrencySelectionRow
-        item={item}
-        emit={currencyToggled}
-        key={item.id}
-        removeCheckbox={removeCheckbox}
-      />
-    ),
-    [],
-  );
-
-  const resetSearch = () => {
-    setSearchInput('');
-    onSearchInputChange('');
-  };
-
-  const onSearchInputChange = useMemo(
-    () =>
-      debounce((search: string) => {
-        let _searchList: Array<any> = [];
-
-        if (search) {
-          search = search.toLowerCase();
-          _searchList = DEFAULT_CURRENCY_OPTIONS.filter(
-            ({currencyAbbreviation, currencyName}) =>
-              currencyAbbreviation.toLowerCase().includes(search) ||
-              currencyName.toLowerCase().includes(search),
-          );
-        } else {
-          _searchList = DEFAULT_CURRENCY_OPTIONS;
-        }
-
-        _searchList.forEach(currency => {
-          if (selectedCurrencies.includes(currency.currencyAbbreviation)) {
-            currency.checked = true;
-            currency.id = Math.random();
-          } else {
-            currency.checked = false;
+            if (item.currency.selected && hasSelectedTokens) {
+              // do nothing
+            } else {
+              item.currency = {
+                ...item.currency,
+                selected: !item.currency.selected,
+              };
+            }
           }
-          return currency;
-        });
 
-        setCurrencyOptions(_searchList);
-      }, 300),
-    [currencies, selectedCurrencies],
+          if (tokenMatch) {
+            // if selecting a token, make sure its chain is also selected
+            if (!item.currency.selected) {
+              item.currency = {
+                ...item.currency,
+                selected: true,
+              };
+            }
+
+            const updatedToken = {
+              ...tokenMatch,
+              selected: !tokenMatch.selected,
+            };
+
+            // update token state
+            item.tokens = item.tokens.map(token => {
+              return token.id === id ? updatedToken : token;
+            });
+
+            // update popular token state
+            // append tokens once selected so user can see their entire selection
+            let appendToPopular = true;
+            item.popularTokens = item.popularTokens.map(token => {
+              if (token.id === id) {
+                appendToPopular = false;
+              }
+
+              return token.id === id ? updatedToken : token;
+            });
+
+            if (appendToPopular) {
+              item.popularTokens.push(updatedToken);
+            }
+          }
+        }
+
+        // if single, toggle the selected item, deselect any selected items, and rerender
+        if (selectionMode === 'single') {
+          if (isCurrencyMatch) {
+            // if single selection mode, don't toggle if already selected
+            if (item.currency.selected) {
+              return item;
+            }
+
+            item.currency = {
+              ...item.currency,
+              selected: !item.currency.selected,
+            };
+
+            // deselect any selected tokens
+            if (item.tokens.some(token => token.selected)) {
+              item.tokens = item.tokens.map(token => {
+                return token.selected ? {...token, selected: false} : token;
+              });
+            }
+
+            // deselect any selected popular tokens
+            if (item.popularTokens.some(token => token.selected)) {
+              item.popularTokens = item.popularTokens.map(token => {
+                return token.selected ? {...token, selected: false} : token;
+              });
+            }
+          } else {
+            // deselect this item's currency
+            if (item.currency.selected) {
+              item.currency = {
+                ...item.currency,
+                selected: false,
+              };
+            }
+          }
+
+          if (tokenMatch) {
+            // if single selection mode, don't toggle if already selected
+            if (tokenMatch.selected) {
+              return item;
+            }
+
+            const updatedToken = {
+              ...tokenMatch,
+              selected: !tokenMatch.selected,
+            };
+
+            // update token state
+            item.tokens = item.tokens.map(token => {
+              if (token.id === id) {
+                return updatedToken;
+              }
+
+              return token.selected ? {...token, selected: false} : token;
+            });
+
+            // update popular token state
+            // append tokens once selected so user can see their entire selection
+            let appendToPopular = true;
+            item.popularTokens = item.popularTokens.map(token => {
+              if (token.id === id) {
+                appendToPopular = false;
+                return updatedToken;
+              }
+
+              return token.selected ? {...token, selected: false} : token;
+            });
+
+            if (appendToPopular) {
+              item.popularTokens.push(updatedToken);
+            }
+          }
+        }
+
+        return item;
+      }),
+    );
+  };
+
+  const onToggleRef = useRef(onToggle);
+  onToggleRef.current = onToggle;
+
+  const memoizedOnToggle = useCallback((id: string) => {
+    onToggleRef.current(id);
+  }, []);
+
+  const memoizedOnViewAllPressed = useMemo(() => {
+    return (currency: CurrencySelectionItem) => {
+      const item = allListItemsRef.current.find(
+        i => i.currency.id === currency.id,
+      );
+
+      if (!item) {
+        return;
+      }
+
+      const sortedTokens = item.tokens.map(token => ({...token}));
+
+      // sorted selected tokens to the top for ease of use
+      sortedTokens.sort((a, b) => {
+        if (a.selected && !b.selected) {
+          return -1;
+        }
+        if (b.selected && !a.selected) {
+          return 1;
+        }
+
+        return 0;
+      });
+
+      navigation.navigate('Wallet', {
+        screen: WalletScreens.CURRENCY_TOKEN_SELECTION,
+        params: {
+          key,
+          currency: {...currency},
+          tokens: sortedTokens,
+          description: item.description,
+          selectionMode,
+          onToggle: memoizedOnToggle,
+        },
+      });
+    };
+  }, [memoizedOnToggle, navigation, key, selectionMode]);
+
+  const renderItem: ListRenderItem<CurrencySelectionListItem> = useCallback(
+    ({item}) => {
+      return (
+        <CurrencySelectionRow
+          key={item.currency.id}
+          currency={item.currency}
+          tokens={item.popularTokens}
+          description={item.description}
+          selectionMode={selectionMode}
+          onToggle={memoizedOnToggle}
+          onViewAllTokensPressed={memoizedOnViewAllPressed}
+        />
+      );
+    },
+    [memoizedOnToggle, memoizedOnViewAllPressed, selectionMode],
   );
 
   return (
     <CurrencySelectionContainer>
       <SearchContainer>
-        <SearchInput
-          placeholder={t('Search Currency')}
-          placeholderTextColor={placeHolderTextColor}
-          value={searchInput}
-          onChangeText={(text: string) => {
-            setSearchInput(text);
-            onSearchInputChange(text);
-          }}
+        <CurrencySelectionSearchInput
+          onSearch={setSearchFilter}
+          debounceWait={300}
         />
-        <SearchImageContainer>
-          {!searchInput ? (
-            <SearchSvg />
-          ) : (
-            <TouchableOpacity
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                setSearchInput('');
-                onSearchInputChange('');
-              }}>
-              <Icons.Delete />
-            </TouchableOpacity>
-          )}
-        </SearchImageContainer>
       </SearchContainer>
 
-      {currencyOptions.length ? (
+      {filteredListItems.length ? (
         <ListContainer>
-          <FlatList
-            contentContainerStyle={{paddingBottom: 100}}
-            data={currencyOptions}
+          <FlatList<CurrencySelectionListItem>
+            data={filteredListItems}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
         </ListContainer>
       ) : (
-        <NoResultsContainer>
-          <NoResultsImgContainer>
-            <GhostSvg style={{marginTop: 20}} />
-          </NoResultsImgContainer>
-          <NoResultsDescription>
-            {t("We couldn't find a match for ")}
-            <BaseText style={{fontWeight: 'bold'}}>{searchInput}</BaseText>.
-          </NoResultsDescription>
-          {key ? (
-            <Link
-              style={{marginTop: 10, height: 50}}
-              onPress={() => {
-                haptic('soft');
-                navigation.navigate('Wallet', {
-                  screen: 'AddWallet',
-                  params: {key, isCustomToken: true, isToken: true},
-                });
-              }}>
-              {t('Add custom token')}
-            </Link>
-          ) : null}
-        </NoResultsContainer>
+        <CurrencySelectionNoResults query={searchFilter} walletKey={key} />
       )}
 
-      {bottomCta && !hideBottomCta && (
-        <CtaContainerAbsolute
-          background={true}
+      {onCtaPress && (
+        <CtaContainer
           style={{
             shadowColor: '#000',
             shadowOffset: {width: 0, height: 4},
             shadowOpacity: 0.1,
             shadowRadius: 12,
             elevation: 5,
+            marginTop: 16,
           }}>
           <Button
-            onPress={() =>
-              bottomCta({selectedCurrencies, dispatch, navigation})
-            }
+            onPress={onCtaPress}
             buttonStyle={'primary'}
             disabled={!selectedCurrencies.length}>
-            {ctaTitle}
+            {ctaTitle || t('Continue')}
           </Button>
-        </CtaContainerAbsolute>
+        </CtaContainer>
       )}
     </CurrencySelectionContainer>
   );

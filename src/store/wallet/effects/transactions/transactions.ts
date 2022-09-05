@@ -1,10 +1,5 @@
-import {
-  HistoricRate,
-  Rates,
-  Wallet,
-  TransactionProposal,
-  Utxo,
-} from '../../wallet.models';
+import {Wallet, TransactionProposal, Utxo} from '../../wallet.models';
+import {HistoricRate, Rates} from '../../../rate/rate.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';

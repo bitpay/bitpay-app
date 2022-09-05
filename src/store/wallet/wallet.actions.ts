@@ -1,14 +1,9 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
-  CacheKeys,
-  DateRanges,
   Key,
-  PriceHistory,
-  Rates,
   Token,
   Wallet,
   TransactionProposal,
-  RatesByDateRange,
   CacheFeeLevel,
   CryptoBalance,
 } from './wallet.models';
@@ -61,39 +56,6 @@ export const failedImport = (): WalletActionType => ({
 export const setBackupComplete = (keyId: string): WalletActionType => ({
   type: WalletActionTypes.SET_BACKUP_COMPLETE,
   payload: keyId,
-});
-
-export const successGetRates = (payload: {
-  rates?: Rates;
-  ratesByDateRange?: RatesByDateRange;
-  lastDayRates?: Rates;
-  dateRange?: number;
-}): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_GET_RATES,
-  payload,
-});
-
-export const failedGetRates = (): WalletActionType => ({
-  type: WalletActionTypes.FAILED_GET_RATES,
-});
-
-export const updateCacheKey = (payload: {
-  cacheKey: CacheKeys;
-  dateRange?: DateRanges;
-}): WalletActionType => ({
-  type: WalletActionTypes.UPDATE_CACHE_KEY,
-  payload,
-});
-
-export const successGetPriceHistory = (
-  payload: Array<PriceHistory>,
-): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_GET_PRICE_HISTORY,
-  payload,
-});
-
-export const failedGetPriceHistory = (): WalletActionType => ({
-  type: WalletActionTypes.FAILED_GET_PRICE_HISTORY,
 });
 
 export const successEncryptOrDecryptPassword = (payload: {

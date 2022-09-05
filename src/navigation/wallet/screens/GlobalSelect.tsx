@@ -201,7 +201,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   }
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {rates} = useAppSelector(({RATE}) => RATE);
   const tokens = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOpts,

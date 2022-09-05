@@ -21,6 +21,7 @@ export const CheckboxControl = styled.View`
 export const CheckboxLabel = styled(BaseText)`
   font-size: 16px;
   margin-left: ${ScreenGutter};
+  flex-shrink: 1;
 `;
 
 export const CheckboxError = styled(BaseText)`

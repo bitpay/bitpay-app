@@ -113,15 +113,17 @@ export const Header = ({
   }
 };
 
-export const SendingTo = ({
-  recipient,
-  recipientList,
-  hr,
-}: {
+interface SendingToProps {
   recipient: TxDetailsSendingTo | undefined;
   recipientList?: TxDetailsSendingTo[];
   hr?: boolean;
-}): JSX.Element | null => {
+}
+
+export const SendingTo: React.VFC<SendingToProps> = ({
+  recipient,
+  recipientList,
+  hr,
+}) => {
   const {t} = useTranslation();
   const [copied, setCopied] = useState(false);
   const [showRecipientCards, setShowRecipientCards] = useState(true);
@@ -137,62 +139,62 @@ export const SendingTo = ({
     return () => clearTimeout(timer);
   }, [copied]);
 
-  if (recipient) {
-    const {recipientName, recipientAddress, img, recipientFullAddress} =
-      recipient;
-
-    const copyText = (text: string) => {
-      if (!copied && !!text) {
-        Clipboard.setString(text);
-        setCopied(true);
-      }
-    };
-
-    let description;
-    if (recipientList) {
-      description =
-        recipientList.length +
-        ' ' +
-        (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
-    } else {
-      description = recipientName || recipientAddress || '';
-    }
-
-    return (
-      <>
-        <DetailContainer height={83}>
-          <DetailRow>
-            <H7>{t('Sending to')}</H7>
-            <SendToPill
-              onPress={() =>
-                !recipientList
-                  ? copyText(recipientFullAddress || '')
-                  : setShowRecipientCards(!showRecipientCards)
-              }
-              icon={
-                copied ? (
-                  <CopiedSvg width={18} />
-                ) : (
-                  <CurrencyImage img={img} size={18} />
-                )
-              }
-              description={description}
-              dropDown={!!recipientList}
-            />
-          </DetailRow>
-        </DetailContainer>
-        {hr && <Hr />}
-        {showRecipientCards && recipientList
-          ? recipientList.map((r, i) => (
-              <AddressCard key={i.toString()} recipient={r} />
-            ))
-          : null}
-        {showRecipientCards && recipientList && <Hr />}
-      </>
-    );
-  } else {
+  if (!recipient) {
     return null;
   }
+
+  const {recipientName, recipientAddress, img, recipientFullAddress} =
+    recipient;
+
+  const copyText = (text: string) => {
+    if (!copied && !!text) {
+      Clipboard.setString(text);
+      setCopied(true);
+    }
+  };
+
+  let description;
+  if (recipientList) {
+    description =
+      recipientList.length +
+      ' ' +
+      (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
+  } else {
+    description = recipientName || recipientAddress || '';
+  }
+
+  return (
+    <>
+      <DetailContainer height={83}>
+        <DetailRow>
+          <H7>{t('Sending to')}</H7>
+          <SendToPill
+            onPress={() =>
+              !recipientList
+                ? copyText(recipientFullAddress || '')
+                : setShowRecipientCards(!showRecipientCards)
+            }
+            icon={
+              copied ? (
+                <CopiedSvg width={18} />
+              ) : (
+                <CurrencyImage img={img} size={18} />
+              )
+            }
+            description={description}
+            dropDown={!!recipientList}
+          />
+        </DetailRow>
+      </DetailContainer>
+      {hr && <Hr />}
+      {showRecipientCards && recipientList
+        ? recipientList.map((r, i) => (
+            <AddressCard key={i.toString()} recipient={r} />
+          ))
+        : null}
+      {showRecipientCards && recipientList && <Hr />}
+    </>
+  );
 };
 
 export const Fee = ({
@@ -245,36 +247,37 @@ export const Fee = ({
   }
 };
 
-export const SendingFrom = ({
+interface SendingFromProps {
+  onPress?: () => void;
+  sender: TxDetailsSendingFrom | undefined;
+  hr?: boolean;
+}
+
+export const SendingFrom: React.VFC<SendingFromProps> = ({
   sender,
   onPress,
   hr,
-}: {
-  sender: TxDetailsSendingFrom | undefined;
-  onPress?: () => void;
-  hr?: boolean;
-}): JSX.Element | null => {
+}) => {
   const {t} = useTranslation();
-  if (sender) {
-    const {walletName, img} = sender;
-    return (
-      <>
-        <DetailContainer height={83}>
-          <DetailRow>
-            <H7>{t('Sending from')}</H7>
-            <SendToPill
-              onPress={onPress}
-              icon={CurrencyImage({img, size: 18})}
-              description={walletName}
-            />
-          </DetailRow>
-        </DetailContainer>
-        {hr && <Hr />}
-      </>
-    );
-  } else {
+
+  if (!sender) {
     return null;
   }
+
+  const {walletName, img} = sender;
+  const icon = <CurrencyImage img={img} size={18} />;
+
+  return (
+    <>
+      <DetailContainer height={83}>
+        <DetailRow>
+          <H7>{t('Sending from')}</H7>
+          <SendToPill onPress={onPress} icon={icon} description={walletName} />
+        </DetailRow>
+      </DetailContainer>
+      {hr && <Hr />}
+    </>
+  );
 };
 
 export const Amount = ({

@@ -50,7 +50,6 @@ import {
   LightBlack,
   LuckySevens,
   SlateDark,
-  Action,
   White,
 } from '../../../styles/colors';
 import {shouldScale, sleep} from '../../../utils/helper-methods';
@@ -281,7 +280,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, skipInitializeHistory} = route.params;
-  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {rates} = useAppSelector(({RATE}) => RATE);
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 

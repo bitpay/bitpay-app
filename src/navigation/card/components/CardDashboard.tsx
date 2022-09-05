@@ -3,7 +3,6 @@ import {
   useNavigation,
   useScrollToTop,
 } from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -46,7 +45,7 @@ import {
 } from '../../../utils/hooks';
 import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 import {WalletScreens} from '../../wallet/WalletStack';
-import {CardScreens, CardStackParamList} from '../CardStack';
+import {CardHomeScreenProps} from '../screens/CardHome';
 import {
   EmptyGhostContainer,
   EmptyListContainer,
@@ -65,9 +64,8 @@ import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
 
-interface CardDashboardProps {
+interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
-  navigation: StackNavigationProp<CardStackParamList, CardScreens.HOME>;
 }
 
 const CardsRowContainer = styled.View`
@@ -102,6 +100,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
+  const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
   useBrazeRefreshOnFocus();
 
   const hasWalletsWithBalance = useMemo(
@@ -236,11 +235,11 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   useFocusEffect(
     useCallback(() => {
-      if (uninitializedId) {
+      if (appWasInit && uninitializedId) {
         setAutoInitState({...autoInitState, [uninitializedId]: true});
         dispatch(CardEffects.startFetchOverview(uninitializedId));
       }
-    }, [uninitializedId, autoInitState, dispatch]),
+    }, [uninitializedId, autoInitState, dispatch, appWasInit]),
   );
 
   const listFooterComponent = useMemo(

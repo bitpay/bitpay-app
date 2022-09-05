@@ -102,7 +102,7 @@ const Amount: React.VFC<AmountProps> = ({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const allRates = useAppSelector(({WALLET}) => WALLET.rates);
+  const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
 
   const fiatCurrency = useMemo(() => {
