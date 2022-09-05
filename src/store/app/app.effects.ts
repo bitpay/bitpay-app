@@ -269,7 +269,7 @@ export const initializeBrazeContent =
       let contentCardSubscription = APP.brazeContentCardSubscription;
 
       if (contentCardSubscription) {
-        contentCardSubscription.subscriber.removeAllSubscriptions();
+        contentCardSubscription.subscriber?.removeAllSubscriptions();
         contentCardSubscription = null;
       }
 
@@ -938,7 +938,6 @@ export const incomingLink =
     const parsed = url.replace(APP_DEEPLINK_PREFIX, '');
 
     if (parsed === 'card/offers') {
-      handled = true;
       const {APP, CARD} = getState();
       const cards = CARD.cards[APP.network];
 
