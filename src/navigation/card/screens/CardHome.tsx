@@ -10,7 +10,6 @@ import CardIntro from '../components/CardIntro';
 export type CardHomeScreenParamList =
   | {
       id: string | undefined | null;
-      action?: string | null;
     }
   | undefined;
 export type CardHomeScreenProps = StackScreenProps<

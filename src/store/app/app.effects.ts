@@ -3,6 +3,7 @@ import Segment, {JsonMap} from '@segment/analytics-react-native';
 import {Options} from '@segment/analytics-react-native/build/esm/bridge';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
+import {debounce} from 'lodash';
 import {DeviceEventEmitter, Linking, Platform} from 'react-native';
 import AdID from 'react-native-advertising-id-bp';
 import ReactAppboy, {
@@ -27,6 +28,8 @@ import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import {CardScreens} from '../../navigation/card/CardStack';
+import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
@@ -55,7 +58,7 @@ import {
   findWalletByIdHashed,
   getAllWalletClients,
 } from '../wallet/utils/wallet';
-import {SilentPushEvent} from '../../Root';
+import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
@@ -66,7 +69,6 @@ import {
   APP_ANALYTICS_ENABLED,
   APP_DEEPLINK_PREFIX,
 } from '../../constants/config';
-import {debounce} from 'lodash';
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
 
 // Subscription groups (Braze)
@@ -938,17 +940,43 @@ export const incomingLink =
     const parsed = url.replace(APP_DEEPLINK_PREFIX, '');
 
     if (parsed === 'card/offers') {
-      const {APP} = getState();
+      handled = true;
+      const {APP, CARD} = getState();
+      const cards = CARD.cards[APP.network];
 
-      if (APP.appWasInit) {
-        dispatch(CardEffects.startOpenDosh());
+      if (cards.length) {
+        if (APP.appWasInit) {
+          setTimeout(() => {
+            handleDosh();
+          }, 500);
+        } else {
+          DeviceEventEmitter.addListener(
+            DeviceEmitterEvents.APP_INIT_COMPLETED,
+            () => {
+              handleDosh();
+            },
+          );
+        }
+
+        function handleDosh() {
+          navigationRef.navigate(RootStacks.TABS, {
+            screen: TabsScreens.CARD,
+            params: {
+              screen: CardScreens.SETTINGS,
+              params: {
+                id: cards[0].id,
+              },
+            },
+          });
+          dispatch(CardEffects.startOpenDosh());
+        }
       } else {
-        DeviceEventEmitter.addListener(
-          DeviceEmitterEvents.APP_INIT_COMPLETED,
-          () => {
-            dispatch(CardEffects.startOpenDosh());
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.CARD,
+          params: {
+            screen: CardScreens.HOME,
           },
-        );
+        });
       }
 
       handled = true;
