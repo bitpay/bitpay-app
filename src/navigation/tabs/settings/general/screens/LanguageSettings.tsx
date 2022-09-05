@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import {sortBy} from 'lodash';
 import React, {useState} from 'react';
 import {View} from 'react-native';
-import ReactAppboy from 'react-native-appboy-sdk';
+import Braze from 'react-native-appboy-sdk';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
   Hr,
@@ -23,7 +23,7 @@ const LanguageSettingsScreen: React.VFC = () => {
   const onSetLanguage = (lng: string) => {
     setSelected(lng);
     i18n.changeLanguage(lng);
-    ReactAppboy.setLanguage(lng);
+    Braze.setLanguage(lng);
     dispatch(AppActions.setDefaultLanguage(lng));
     dispatch(Analytics.track('Saved Language', {language: lng}));
   };

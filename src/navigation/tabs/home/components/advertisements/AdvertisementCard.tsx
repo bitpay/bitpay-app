@@ -1,7 +1,7 @@
 import {useFocusEffect, useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
-import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
+import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
@@ -107,7 +107,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     haptic('impactLight');
 
     if (!contentCard.id.startsWith('dev_')) {
-      ReactAppboy.logContentCardClicked(contentCard.id);
+      Braze.logContentCardClicked(contentCard.id);
     }
 
     if (ctaOverride) {
@@ -165,7 +165,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
 
   useFocusEffect(() => {
     if (!contentCard.id.startsWith('dev_')) {
-      ReactAppboy.logContentCardImpression(contentCard.id);
+      Braze.logContentCardImpression(contentCard.id);
     }
   });
 
