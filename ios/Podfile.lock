@@ -1,5 +1,4 @@
 PODS:
-  - Analytics (4.1.6)
   - Appboy-iOS-SDK (4.3.4):
     - Appboy-iOS-SDK/UI (= 4.3.4)
   - Appboy-iOS-SDK/ContentCards (4.3.4):
@@ -495,12 +494,9 @@ PODS:
     - React-jsi (= 0.67.4)
     - React-logger (= 0.67.4)
     - React-perflogger (= 0.67.4)
-  - RNAnalytics (1.5.2):
-    - Analytics
-    - React-Core
   - RNBootSplash (3.2.6):
     - React-Core
-  - RNCAsyncStorage (1.15.14):
+  - RNCAsyncStorage (1.17.10):
     - React-Core
   - RNCClipboard (1.5.1):
     - React-Core
@@ -516,7 +512,7 @@ PODS:
     - React-Core
   - RNGestureHandler (2.4.1):
     - React-Core
-  - RNInAppBrowser (3.6.3):
+  - RNInAppBrowser (3.7.0):
     - React-Core
   - RNLocalize (2.1.7):
     - React-Core
@@ -568,7 +564,12 @@ PODS:
   - SDWebImageWebPCoder (0.8.4):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.10)
+  - segment-analytics-react-native (2.7.1):
+    - React-Core
+    - sovran-react-native
   - SocketRocket (0.6.0)
+  - sovran-react-native (0.4.4):
+    - React-Core
   - TouchID (5.0.1):
     - React
   - Yoga (1.14.0)
@@ -651,7 +652,6 @@ DEPENDENCIES:
   - React-RCTVibration (from `../node_modules/react-native/Libraries/Vibration`)
   - React-runtimeexecutor (from `../node_modules/react-native/ReactCommon/runtimeexecutor`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
-  - "RNAnalytics (from `../node_modules/@segment/analytics-react-native`)"
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-community/clipboard`)"
@@ -670,12 +670,13 @@ DEPENDENCIES:
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSharedElement (from `../node_modules/react-native-shared-element`)
   - RNSVG (from `../node_modules/react-native-svg`)
+  - "segment-analytics-react-native (from `../node_modules/@segment/analytics-react-native`)"
+  - "sovran-react-native (from `../node_modules/@segment/sovran-react-native`)"
   - TouchID (from `../node_modules/react-native-touch-id-ng`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   trunk:
-    - Analytics
     - Appboy-iOS-SDK
     - AppsFlyerFramework
     - CocoaAsyncSocket
@@ -810,8 +811,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/runtimeexecutor"
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
-  RNAnalytics:
-    :path: "../node_modules/@segment/analytics-react-native"
   RNBootSplash:
     :path: "../node_modules/react-native-bootsplash"
   RNCAsyncStorage:
@@ -848,13 +847,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-shared-element"
   RNSVG:
     :path: "../node_modules/react-native-svg"
+  segment-analytics-react-native:
+    :path: "../node_modules/@segment/analytics-react-native"
+  sovran-react-native:
+    :path: "../node_modules/@segment/sovran-react-native"
   TouchID:
     :path: "../node_modules/react-native-touch-id-ng"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  Analytics: eefe524436f904b8bb3f8c8c3425280e43b34efc
   Appboy-iOS-SDK: dd22a28a003c5a1331080ecec398eaa4d7ef4569
   AppsFlyerFramework: 9f304d91cc80b6579b1206a59220383056b58b47
   boost: a7c83b31436843459a1961bfd74b96033dc77234
@@ -935,16 +937,15 @@ SPEC CHECKSUMS:
   React-RCTVibration: 3b52a7dced19cdb025b4f88ab26ceb2d85f30ba2
   React-runtimeexecutor: a9d3c82ddf7ffdad9fbe6a81c6d6f8c06385464d
   ReactCommon: 07d0c460b9ba9af3eaf1b8f5abe7daaad28c9c4e
-  RNAnalytics: fcf308eeac6d34a74c158ec74d733c877f26fb96
   RNBootSplash: 51eef7e143faeab63f81ddbb7c1de38b8fba66ed
-  RNCAsyncStorage: ea6b5c280997b2b32a587793163b1f10e580c4f7
+  RNCAsyncStorage: 0c357f3156fcb16c8589ede67cc036330b6698ca
   RNCClipboard: 41d8d918092ae8e676f18adada19104fa3e68495
   RNCMaskedView: c298b644a10c0c142055b3ae24d83879ecb13ccd
   RNDeviceInfo: b32d24c84e40d54b736e62a7d2abd15e1225258d
   RNFastImage: 1f2cab428712a4baaf78d6169eaec7f622556dd7
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: 4f4986408310a43f1606c391f38f76e0d6e790d5
-  RNInAppBrowser: 3ff3a3b8f458aaf25aaee879d057352862edf357
+  RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNLocalize: f567ea0e35116a641cdffe6683b0d212d568f32a
   RNOS: 6f2f9a70895bbbfbdad7196abd952e7b01d45027
   RNPermissions: f7ebe52db07c00901127966ca080b4ec6a6ceb0a
@@ -956,7 +957,9 @@ SPEC CHECKSUMS:
   RNSVG: 302bfc9905bd8122f08966dc2ce2d07b7b52b9f8
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: f93010f3f6c031e2f8fb3081ca4ee6966c539815
+  segment-analytics-react-native: d3600ae853119d465d7f5b5884ef1c776796138a
   SocketRocket: fccef3f9c5cedea1353a9ef6ada904fde10d6608
+  sovran-react-native: 5f9715a62b50008d72c0cf904cb08c8377777b62
   TouchID: 175fa9c0b2b2651f25aaef4aa6bb42ce4d580c6e
   Yoga: d6b6a80659aa3e91aaba01d0012e7edcbedcbecd
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
