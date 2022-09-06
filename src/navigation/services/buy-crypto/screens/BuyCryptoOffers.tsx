@@ -1011,7 +1011,11 @@ const BuyCryptoOffers: React.FC = () => {
                             <OfferDataWarningContainer>
                               <OfferDataWarningMsg>
                                 {t(
-                                  `*This exchange doesn\'t support purchases with ${fiatCurrency} you could proceed paying in ${offer.fiatCurrency}.`,
+                                  "This exchange doesn't support purchases with , tap 'Buy' to continue paying in .",
+                                  {
+                                    altFiatCurrency: fiatCurrency,
+                                    availableFiatCurrency: offer.fiatCurrency,
+                                  },
                                 )}
                               </OfferDataWarningMsg>
                             </OfferDataWarningContainer>
