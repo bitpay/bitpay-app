@@ -2542,7 +2542,7 @@
     nanoid "^3.1.25"
     promise.allsettled "^1.0.5"
 
-"@segment/sovran-react-native@^0.4.4":
+"@segment/sovran-react-native@0.4.4", "@segment/sovran-react-native@^0.4.4":
   version "0.4.4"
   resolved "https://registry.yarnpkg.com/@segment/sovran-react-native/-/sovran-react-native-0.4.4.tgz#2f1e1c0280d2cc3f242970b7c76f8e1dd3ddd18e"
   integrity sha512-YnXhHfFIdqjMb+6ejMA+1oO0KeJPK3Hv0dHYgcWmq5oxVAWrJNTK8rGiRVuVaVQHfSkGg0zQ/nGB09oMUVteDg==
