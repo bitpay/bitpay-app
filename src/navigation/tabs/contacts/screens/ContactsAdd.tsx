@@ -37,7 +37,7 @@ import {
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import SuccessIcon from '../../../../../assets/img/success.svg';
 import SearchSvg from '../../../../../assets/img/search.svg';
-import Icons from '../../../../components/modal/transact-menu/TransactMenuIcons';
+import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {keyExtractor, findContact} from '../../../../utils/helper-methods';
 import CurrencySelectionRow from '../../../../components/list/CurrencySelectionRow';
@@ -83,7 +83,7 @@ const AddressBadge = styled.View`
 const ScanButtonContainer = styled.TouchableOpacity`
   position: absolute;
   right: 5px;
-  top: 27.5px;
+  top: 32px;
 `;
 
 const CurrencySelectionModalContainer = styled(SheetContainer)`
@@ -491,7 +491,7 @@ const ContactsAdd = ({
             </AddressBadge>
           ) : (
             <ScanButtonContainer onPress={goToScan}>
-              <Icons.Scan />
+              <ScanSvg />
             </ScanButtonContainer>
           )}
         </InputContainer>
