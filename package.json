@@ -38,7 +38,7 @@
   "dependencies": {
     "@freakycoder/react-native-bounceable": "0.2.5",
     "@hookform/resolvers": "2.8.3",
-    "@react-native-async-storage/async-storage": "1.15.14",
+    "@react-native-async-storage/async-storage": "1.17.10",
     "@react-native-community/blur": "3.6.0",
     "@react-native-community/clipboard": "1.5.1",
     "@react-native-community/slider": "4.2.4",
