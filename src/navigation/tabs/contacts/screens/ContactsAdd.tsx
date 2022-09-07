@@ -155,6 +155,7 @@ const ContactsAdd = ({
     formState: {errors, dirtyFields},
   } = useForm<ContactRowProps>({resolver: yupResolver(schema)});
   const {contact, context, onEditComplete} = route.params || {};
+  const isDev = __DEV__;
 
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
@@ -555,7 +556,8 @@ const ContactsAdd = ({
         </CurrencySelectorContainer>
       ) : null}
 
-      <CurrencySelectorContainer hideSelector={true}>
+      <CurrencySelectorContainer
+        hideSelector={!isDev || !(xrpValidAddress || ethValidAddress)}>
         <Label>{t('NETWORK')}</Label>
         <CurrencyContainer
           activeOpacity={ActiveOpacity}
