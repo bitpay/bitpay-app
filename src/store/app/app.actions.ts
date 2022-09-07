@@ -304,6 +304,6 @@ export const updateOnCompleteOnboarding = (payload: string): AppActionType => ({
   payload,
 });
 
-export const clearOnCompleteOnboadringList = (): AppActionType => ({
+export const clearOnCompleteOnboardingList = (): AppActionType => ({
   type: AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST,
 });

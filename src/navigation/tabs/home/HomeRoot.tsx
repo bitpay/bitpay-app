@@ -9,7 +9,7 @@ import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
-  clearOnCompleteOnboadringList,
+  clearOnCompleteOnboardingList,
   setKeyMigrationFailureModalHasBeenShown,
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
@@ -207,7 +207,7 @@ const HomeRoot = () => {
       onCompleteOnboardingList.includes('deferredImportErrorNotification')
     ) {
       dispatch(deferredImportErrorNotification());
-      dispatch(clearOnCompleteOnboadringList());
+      dispatch(clearOnCompleteOnboardingList());
     }
   }, [dispatch, onCompleteOnboardingList]);
 

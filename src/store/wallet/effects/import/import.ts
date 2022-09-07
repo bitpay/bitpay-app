@@ -854,16 +854,15 @@ export const deferredImportMnemonic =
         }),
       );
 
-      // TODO: Update language
       dispatch(
         showBottomNotificationModal({
-          type: 'info',
-          title: t('Key import complete'),
-          message: 'Your key has been imported successfully.',
+          type: 'success',
+          title: t('Key imported'),
+          message: 'Your key has successfully been imported.',
           enableBackdropDismiss: true,
           actions: [
             {
-              text: t('OK'),
+              text: t('GOT IT'),
               action: () => {
                 backupRedirect({
                   context: !continueTapped ? context : _context,
@@ -1333,7 +1332,6 @@ export const serverAssistedImport = async (
             return reject(new Error('WALLET_DOES_NOT_EXIST'));
           } else {
             // TODO CUSTOM TOKENS
-            console.log(new Date());
             const tokens: Wallet[] = wallets.filter(
               (wallet: Wallet) => !!wallet.credentials.token,
             );
@@ -1368,5 +1366,3 @@ const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
 
   return wallets;
 };
-
-const createKey = async (opts: Partial<KeyOptions>): Promise<any> => {};

@@ -320,7 +320,7 @@ interface updateOnCompleteOnboarding {
   payload: string;
 }
 
-interface clearOnCompleteOnboadringList {
+interface clearOnCompleteOnboardingList {
   type: typeof AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST;
 }
 
@@ -378,4 +378,4 @@ export type AppActionType =
   | ActiveModalUpdated
   | checkingBiometricForSending
   | updateOnCompleteOnboarding
-  | clearOnCompleteOnboadringList;
+  | clearOnCompleteOnboardingList;
