@@ -7,7 +7,7 @@ module.exports = {
   ],
   transformIgnorePatterns: [
     '\\.snap$',
-    'node_modules/(?!(@freakycoder|@react-native|react-native|@react-navigation|react-navigation-backhandler|react-native-gesture-handler))',
+    'node_modules/(?!(@freakycoder|@react-native|react-native|(react-native(-.*))|@react-navigation|(react-navigation(-.*))|victory|(victory(-.*))))',
   ],
   globals: {
     'ts-jest': {
@@ -15,17 +15,18 @@ module.exports = {
     },
   },
   transform: {
-    '^.+\\.svg$': 'jest-svg-transformer',
-    '^.+\\.jsx$': 'babel-jest',
+    '^.+\\.svg$': 'jest-transform-stub',
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
     '^.+\\.tsx?$': 'ts-jest',
   },
-  testRegex: '(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$',
   cacheDirectory: '.jest/cache',
   setupFilesAfterEnv: ['<rootDir>/test/afterEnv.ts'],
   moduleNameMapper: {
     '\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       '<rootDir>/test/mock.js',
     '\\.(css|less)$': '<rootDir>/test/mock.js',
+    '@/(.*)': '<rootDir>/src/$1',
+    '@test/(.*)': '<rootDir>/test/$1',
   },
-  resetMocks: true,
+  roots: ['<rootDir>/src/'],
 };

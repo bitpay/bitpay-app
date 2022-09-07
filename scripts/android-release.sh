@@ -1,2 +1,2 @@
 #!/bin/bash
-cd android && ./gradlew assembleRelease
+cd android && ./gradlew app:assembleRelease
