@@ -196,7 +196,8 @@ const CustomizeHome = () => {
             },
           }}>
           <Tab.Screen
-            name={LayoutTypes.CAROUSEL}
+            /*  t('Carousel')*/
+            name={t(LayoutTypes.CAROUSEL)}
             component={Noop}
             options={{
               tabBarIcon: ({focused}) => (
@@ -205,7 +206,8 @@ const CustomizeHome = () => {
             }}
           />
           <Tab.Screen
-            name={LayoutTypes.LIST_VIEW}
+            /*  t('List View')*/
+            name={t(LayoutTypes.LIST_VIEW)}
             component={Noop}
             options={{
               tabBarIcon: ({focused}) => (
