@@ -257,6 +257,14 @@ const fetchPinChangeRequestInfo = async (token: string, id: string) => {
   return data;
 };
 
+const startConfirmPinChange = async (token: string, id: string) => {
+  const query = CardMutations.START_CONFIRM_PIN_CHANGE(token, id);
+
+  const {data} = await GraphQlApi.getInstance().request(query);
+
+  return data;
+};
+
 const CardApi = {
   activateCard,
   fetchAll,
@@ -267,10 +275,11 @@ const CardApi = {
   fetchReferredUsers,
   fetchSettledTransactions,
   fetchVirtualCardImageUrls,
-  updateCardLock,
-  updateCardName,
+  startConfirmPinChange,
   startCreateAppleWalletProvisioningRequest,
   startCreateGooglePayProvisioningRequest,
+  updateCardLock,
+  updateCardName,
 };
 
 export default CardApi;

@@ -20,7 +20,7 @@ type ActivateCardInputType = {
 };
 
 type GoogleProvisioningInputType = {
-  walletProvider: 'google',
+  walletProvider: 'google';
 };
 
 export const NAME_CARD = (
@@ -166,12 +166,34 @@ export const START_CREATE_GOOGLE_PAY_PROVISIONING_REQUEST = (
   };
 };
 
+const START_CONFIRM_PIN_CHANGE = (
+  token: string,
+  id: string,
+): GqlQueryParams => {
+  return {
+    query: `
+      mutation START_CONFIRM_PIN_CHANGE($token:String!, $csrf:String, $cardId:String!) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          card:debitCard(cardId:$cardId) {
+            confirmPinChange
+          }
+        }
+      }
+    `,
+    variables: {
+      token,
+      cardId: id,
+    },
+  };
+};
+
 const CardMutations = {
   NAME_CARD,
   LOCK_CARD,
   ACTIVATE_CARD,
   START_CREATE_APPLE_WALLET_PROVISIONING_REQUEST,
   START_CREATE_GOOGLE_PAY_PROVISIONING_REQUEST,
+  START_CONFIRM_PIN_CHANGE,
 };
 
 export default CardMutations;
