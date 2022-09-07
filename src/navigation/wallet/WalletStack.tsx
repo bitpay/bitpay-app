@@ -289,7 +289,11 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={AmountScreen} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
-        <Wallet.Screen name={WalletScreens.CONFIRM} component={Confirm} />
+        <Wallet.Screen
+          options={{gestureEnabled: false}}
+          name={WalletScreens.CONFIRM}
+          component={Confirm}
+        />
         <Wallet.Screen
           options={{
             headerTitle: () => <HeaderTitle>{t('Add Funds')}</HeaderTitle>,

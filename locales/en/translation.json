@@ -325,6 +325,8 @@
   "Unable to read QR code": "Unable to read QR code",
   "Order Summary": "Order Summary",
   "Offers": "Offers",
+  "Other Payment Methods": "Other Payment Methods",
+  "By selecting \"Other\" as your payment method, you will have access to all payment methods enabled by Simplex based on your country of residence and your selected fiat currency.": "By selecting \"Other\" as your payment method, you will have access to all payment methods enabled by Simplex based on your country of residence and your selected fiat currency.",
   "Payment Method": "Payment Method",
   "Close": "Close",
   "Provided by": "Provided by",
@@ -345,6 +347,7 @@
   "Crypto": "Crypto",
   "Payment Type": "Payment Type",
   "Error: ": "Error: ",
+  "This exchange doesn't support purchases with , tap 'Buy' to continue paying in .": "This exchange doesn't support purchases with {{altFiatCurrency}}, tap 'Buy' to continue paying in {{availableFiatCurrency}}.",
   "Provided By": "Provided By",
   "Buy Amount": "Buy Amount",
   "Fee": "Fee",
@@ -1002,6 +1005,10 @@
   "Payment Proposal": "Payment Proposal",
   "Accepted": "Accepted",
   "Rejected": "Rejected",
+  "Select All": "Select All",
+  "Sign selected": "Sign selected",
+  "proposals signed": "{{sucess}} proposals signed",
+  "Proposal signed": "Proposal signed",
   "Update Name": "Update {{context}} Name",
   "My Key": "My Key",
   "My Wallet": "My Wallet",
@@ -1146,5 +1153,6 @@
   "InvalidInvitationCode": "Invalid invitation code",
   "MustBeLessThanArgCharacters": "Must be less than {{max}} characters",
   "MustBeGreaterThanArgCharacters": "Must be greater than {{min}} characters",
-  "IAgreeToTheArgAndArg": "I agree to the <0>{{0}}</0> and <1>{{1}}</1>."
+  "IAgreeToTheArgAndArg": "I agree to the <0>{{0}}</0> and <1>{{1}}</1>.",
+  "OrderPhysicalCard": "Order Physical Card"
 }

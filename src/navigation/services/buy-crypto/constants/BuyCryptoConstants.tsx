@@ -62,4 +62,14 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     },
     enabled: true,
   },
+  other: {
+    label: 'Other',
+    method: 'other',
+    imgSrc: <CreditCardIcon width={40} height={40} />,
+    supportedExchanges: {
+      simplex: true,
+      wyre: false,
+    },
+    enabled: true,
+  },
 };

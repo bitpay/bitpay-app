@@ -437,7 +437,7 @@ export default () => {
             />
             <Root.Screen
               options={{
-                gestureEnabled: true,
+                gestureEnabled: false,
               }}
               name={RootStacks.WALLET}
               component={WalletStack}

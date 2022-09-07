@@ -1,3 +1,4 @@
+export const wyreEnv = __DEV__ ? 'sandbox' : 'production';
 export const wyreSupportedFiatCurrencies = ['AUD', 'CAD', 'EUR', 'GBP', 'USD'];
 export const wyreSupportedCoins = [
   'btc',
