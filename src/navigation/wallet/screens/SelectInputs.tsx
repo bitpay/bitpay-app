@@ -182,7 +182,12 @@ const SelectInputs = () => {
     try {
       haptic('impactLight');
       dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
-      const estimatedFee = await GetMinFee(wallet, 1, inputs.length);
+      const selectedInputs = inputs.filter(input => input.checked);
+      logger.debug(
+        `Estimating fee for: ${selectedInputs.length} selected inputs`,
+      );
+      const estimatedFee = await GetMinFee(wallet, 1, selectedInputs.length);
+      logger.debug(`Estimated fee: ${estimatedFee}`);
       const formattedestimatedFee = dispatch(
         SatToUnit(estimatedFee, currencyAbbreviation),
       );
