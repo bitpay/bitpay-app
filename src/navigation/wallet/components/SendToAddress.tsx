@@ -98,7 +98,8 @@ const SendToAddress = () => {
   const [searchInput, setSearchInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const {keys, rates} = useAppSelector(({WALLET}: RootState) => WALLET);
+  const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
+  const {rates} = useAppSelector(({RATE}) => RATE);
   const {
     recipientList,
     setRecipientListContext,

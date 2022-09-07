@@ -305,5 +305,10 @@ export type Effect<ReturnType = void> = ThunkAction<
 export default getStore;
 
 export function configureTestStore(initialState: any) {
-  return createStore(rootReducer, initialState);
+  const middlewares = [thunkMiddleware];
+  const middlewareEnhancers = composeWithDevTools({
+    trace: true,
+    traceLimit: 25,
+  })(applyMiddleware(...middlewares));
+  return createStore(rootReducer, initialState, middlewareEnhancers);
 }

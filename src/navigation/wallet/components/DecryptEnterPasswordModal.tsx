@@ -124,7 +124,6 @@ const DecryptEnterPasswordModal = () => {
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
-                  placeholder={'strongPassword123'}
                   label={'ENCRYPTION PASSWORD'}
                   type={'password'}
                   onBlur={onBlur}

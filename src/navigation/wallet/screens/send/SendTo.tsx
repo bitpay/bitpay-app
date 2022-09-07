@@ -25,7 +25,8 @@ import {
   getErrorString,
   sleep,
 } from '../../../../utils/helper-methods';
-import {Key, Rates} from '../../../../store/wallet/wallet.models';
+import {Key} from '../../../../store/wallet/wallet.models';
+import {Rates} from '../../../../store/rate/rate.models';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
@@ -201,7 +202,9 @@ const SendTo = () => {
   const logger = useLogger();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
 
-  const {keys, rates} = useAppSelector(({WALLET}: RootState) => WALLET);
+  const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
+  const {rates} = useAppSelector(({RATE}) => RATE);
+
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const theme = useTheme();

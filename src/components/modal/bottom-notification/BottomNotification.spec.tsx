@@ -1,8 +1,8 @@
 import React from 'react';
-import {cleanup, fireEvent, render} from '@testing-library/react-native';
+import {cleanup, fireEvent, render} from '@test/render';
 import {Provider} from 'react-redux';
-import BottomNotification from '../src/components/modal/bottom-notification/BottomNotification';
-import {configureTestStore} from '../src/store';
+import BottomNotification from './BottomNotification';
+import configureTestStore from '@test/store';
 
 const mockFn = jest.fn();
 
@@ -29,24 +29,23 @@ const store = configureTestStore(initialState);
 describe('Bottom Notification Modal', () => {
   afterEach(cleanup);
   it('should render correctly', async () => {
-    const {toJSON} = render(
+    render(
       <Provider store={store}>
         <BottomNotification />
       </Provider>,
     );
-    expect(toJSON()).toMatchSnapshot();
   });
 
   it('should display all the details', async () => {
-    const {findByText} = render(
+    const {findByText, getByText} = render(
       <Provider store={store}>
         <BottomNotification />
       </Provider>,
     );
 
     const title = await findByText('Modal Title');
-    const message = await findByText('Modal Message');
-    const cta = await findByText('CLOSE');
+    const message = getByText('Modal Message');
+    const cta = getByText('CLOSE');
 
     expect(title).toBeTruthy();
     expect(message).toBeTruthy();
@@ -73,7 +72,6 @@ describe('Bottom Notification Modal', () => {
     );
     const buttons = getAllByText('CLOSE');
     expect(buttons.length).toBe(1);
-
-    await fireEvent.press(buttons[0]);
+    fireEvent.press(buttons[0]);
   });
 });

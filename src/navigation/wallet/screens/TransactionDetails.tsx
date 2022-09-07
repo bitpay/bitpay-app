@@ -555,7 +555,7 @@ const TransactionDetails = () => {
                   </TouchableOpacity>
                 ) : null}
                 {!!txs.confirmations && !txs.safeConfirmed ? (
-                  <H7>{txs.conformations}</H7>
+                  <H7>{txs.confirmations}</H7>
                 ) : null}
                 {txs.safeConfirmed ? <H7>{txs.safeConfirmed}</H7> : null}
               </DetailColumn>

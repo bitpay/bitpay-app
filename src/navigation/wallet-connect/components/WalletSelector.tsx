@@ -78,7 +78,8 @@ export default ({
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const [uri, setUri] = useState(dappUri);
-  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   let allWallets = Object.values(keys)
