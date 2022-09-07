@@ -201,7 +201,11 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
               key={c.id}
               entering={transitionEnter}
               exiting={transitionLeave}>
-              <SettingsList card={c} navigation={navigation} />
+              <SettingsList
+                card={c}
+                orderPhysical={isVirtual && !physicalCard}
+                navigation={navigation}
+              />
             </Animated.View>
           ) : null;
         })}
