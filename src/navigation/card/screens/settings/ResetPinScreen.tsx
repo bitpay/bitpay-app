@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
 import styled from 'styled-components/native';
 import Spinner from '../../../../components/spinner/Spinner';
@@ -46,6 +46,14 @@ const ResetPinScreen: React.VFC<
   const fetchUriStatus = useAppSelector(
     ({CARD}) => CARD.pinChangeRequestInfoStatus[id],
   );
+  const confirmPinChangeStatus = useAppSelector(
+    ({CARD}) => CARD.confirmPinChangeStatus[id],
+  );
+  const confirmPinChangeError = useAppSelector(
+    ({CARD}) => CARD.confirmPinChangeError[id],
+  );
+  const confirmPinChangeErrorRef = useRef(confirmPinChangeError);
+  confirmPinChangeErrorRef.current = confirmPinChangeError;
   const [isStaleUri, setStaleUri] = useState(false && !!uri);
 
   // only loading the iframe with a valid uri / fresh token
@@ -63,26 +71,22 @@ const ResetPinScreen: React.VFC<
     try {
       const {data} = JSON.parse(e.nativeEvent.data) as {data: number};
       const statusCode = data;
+      dispatch(
+        LogActions.debug(
+          `Received statusCode ${statusCode} (${
+            StatusTextMap[statusCode] || 'Unknown'
+          }) while resetting PIN for card ${id}.`,
+        ),
+      );
 
       switch (statusCode) {
         case StatusCodes.SUCCESS:
-          dispatch(LogActions.debug(`PIN successfully reset for card ${id}.`));
           dispatch(
-            AppActions.showBottomNotificationModal({
-              type: 'success',
-              title: 'Reset Success',
-              message: 'PIN was successfully reset.',
-              enableBackdropDismiss: true,
-              actions: [
-                {
-                  text: 'OK',
-                  action: () => {},
-                },
-              ],
-            }),
+            LogActions.info(
+              `Successfully submitted PIN change request for card ${id}, waiting for confirmation.`,
+            ),
           );
-
-          goBackToSettingsScreen();
+          dispatch(CardEffects.startConfirmPinChange(id));
           break;
 
         case StatusCodes.TOKEN_CHANGED:
@@ -198,6 +202,58 @@ const ResetPinScreen: React.VFC<
       );
     }
   }, [dispatch, goBackToSettingsScreen, fetchUriStatus, id]);
+
+  useEffect(() => {
+    if (confirmPinChangeStatus === 'failed') {
+      dispatch(
+        LogActions.error(`Failed to confirm PIN change for card ${id}.`),
+      );
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'error',
+          title: 'Error',
+          message:
+            confirmPinChangeErrorRef.current ||
+            'An unexpected error occurred. Please try again later.',
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {
+                goBackToSettingsScreen();
+              },
+            },
+          ],
+        }),
+      );
+
+      goBackToSettingsScreen();
+    } else if (confirmPinChangeStatus === 'success') {
+      const clearStatus = () =>
+        dispatch(CardActions.confirmPinChangeStatusUpdated(id, null));
+
+      dispatch(
+        LogActions.info(`Successfully confirmed PIN change for card ${id}.`),
+      );
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'success',
+          title: 'Reset Success',
+          message: 'PIN was successfully reset.',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => clearStatus(),
+            },
+          ],
+          onBackdropDismiss: () => clearStatus(),
+        }),
+      );
+
+      goBackToSettingsScreen();
+    }
+  }, [dispatch, goBackToSettingsScreen, confirmPinChangeStatus, id]);
 
   return (
     <>
