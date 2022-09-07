@@ -29,6 +29,8 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
   'pinChangeRequestInfo',
   'pinChangeRequestInfoStatus',
   'pinChangeRequestInfoError',
+  'confirmPinChangeStatus',
+  'confirmPinChangeError',
 ];
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
@@ -40,6 +42,7 @@ export type UpdateCardNameStatus = 'success' | 'failed' | null;
 export type referredUsersStatus = 'loading' | 'failed';
 export type ActivateCardStatus = 'success' | 'failed' | null;
 export type FetchPinChangeRequestInfoStatus = 'success' | 'failed' | null;
+export type ConfirmPinChangeStatus = 'success' | 'failed' | null;
 
 export interface CardState {
   lastUpdates: {
@@ -90,6 +93,8 @@ export interface CardState {
   pinChangeRequestInfo: Record<string, string | null>;
   pinChangeRequestInfoStatus: Record<string, FetchPinChangeRequestInfoStatus>;
   pinChangeRequestInfoError: Record<string, string | null>;
+  confirmPinChangeStatus: Record<string, ConfirmPinChangeStatus>;
+  confirmPinChangeError: Record<string, string | null>;
 }
 
 const initialState: CardState = {
@@ -120,6 +125,8 @@ const initialState: CardState = {
   pinChangeRequestInfo: {},
   pinChangeRequestInfoStatus: {},
   pinChangeRequestInfoError: {},
+  confirmPinChangeStatus: {},
+  confirmPinChangeError: {},
 };
 
 export const cardReducer = (
@@ -505,6 +512,38 @@ export const cardReducer = (
         pinChangeRequestInfoError: {
           ...state.pinChangeRequestInfoError,
           [action.payload.id]: null,
+        },
+      };
+    case CardActionTypes.CONFIRM_PIN_CHANGE_SUCCESS:
+      return {
+        ...state,
+        confirmPinChangeStatus: {
+          ...state.confirmPinChangeStatus,
+          [action.payload.id]: 'success',
+        },
+        confirmPinChangeError: {
+          ...state.confirmPinChangeError,
+          [action.payload.id]: null,
+        },
+      };
+    case CardActionTypes.CONFIRM_PIN_CHANGE_FAILED:
+      return {
+        ...state,
+        confirmPinChangeStatus: {
+          ...state.confirmPinChangeStatus,
+          [action.payload.id]: 'failed',
+        },
+        confirmPinChangeError: {
+          ...state.confirmPinChangeError,
+          [action.payload.id]: action.payload.error,
+        },
+      };
+    case CardActionTypes.CONFIRM_PIN_CHANGE_STATUS_UPDATED:
+      return {
+        ...state,
+        confirmPinChangeStatus: {
+          ...state.confirmPinChangeStatus,
+          [action.payload.id]: action.payload.status,
         },
       };
 

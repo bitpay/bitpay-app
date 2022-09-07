@@ -9,6 +9,7 @@ import {
 } from './card.models';
 import {
   ActivateCardStatus,
+  ConfirmPinChangeStatus,
   FetchCardsStatus,
   FetchOverviewStatus,
   FetchPinChangeRequestInfoStatus,
@@ -257,4 +258,25 @@ export const updateFetchPinChangeRequestInfoStatus = (
 export const resetPinChangeRequestInfo = (id: string): CardActionType => ({
   type: CardActionTypes.RESET_PIN_CHANGE_REQUEST_INFO,
   payload: {id},
+});
+
+export const confirmPinChangeSuccess = (id: string): CardActionType => ({
+  type: CardActionTypes.CONFIRM_PIN_CHANGE_SUCCESS,
+  payload: {id},
+});
+
+export const confirmPinChangeError = (
+  id: string,
+  error: string,
+): CardActionType => ({
+  type: CardActionTypes.CONFIRM_PIN_CHANGE_FAILED,
+  payload: {id, error},
+});
+
+export const confirmPinChangeStatusUpdated = (
+  id: string,
+  status: ConfirmPinChangeStatus,
+): CardActionType => ({
+  type: CardActionTypes.CONFIRM_PIN_CHANGE_STATUS_UPDATED,
+  payload: {id, status},
 });

@@ -661,3 +661,30 @@ export const startFetchPinChangeRequestInfo =
       );
     }
   };
+
+export const startConfirmPinChange =
+  (id: string): Effect =>
+  async (dispatch, getState) => {
+    dispatch(CardActions.confirmPinChangeStatusUpdated(id, null));
+
+    const {APP, BITPAY_ID} = getState();
+    const token = BITPAY_ID.apiToken[APP.network];
+
+    const res = await CardApi.startConfirmPinChange(token, id);
+
+    if (!res.data) {
+      let errMsg;
+
+      if (res.errors) {
+        errMsg = res.errors.map(e => e.message).join(', ');
+      } else {
+        errMsg =
+          t('An unexpected error occurred while confirming PIN change for') +
+          ` ${id}.`;
+      }
+
+      dispatch(CardActions.confirmPinChangeError(id, errMsg));
+    } else {
+      dispatch(CardActions.confirmPinChangeSuccess(id));
+    }
+  };
