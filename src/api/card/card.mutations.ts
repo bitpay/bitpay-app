@@ -19,6 +19,10 @@ type ActivateCardInputType = {
   lastFourDigits: string | undefined;
 };
 
+type GoogleProvisioningInputType = {
+  walletProvider: 'google',
+};
+
 export const NAME_CARD = (
   token: string,
   id: string,
@@ -139,7 +143,7 @@ export const START_CREATE_APPLE_WALLET_PROVISIONING_REQUEST = (
 export const START_CREATE_GOOGLE_PAY_PROVISIONING_REQUEST = (
   token: string,
   id: string,
-) => {
+): GqlQueryParams<GoogleProvisioningInputType> => {
   return {
     query: `
       mutation START_CREATE_PROVISIONING_REQUEST($token:String!, $csrf:String, $cardId:String!, $input:ProvisionInputType!) {
