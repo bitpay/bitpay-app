@@ -6,6 +6,7 @@ import {
   TransactionProposal,
   CacheFeeLevel,
   CryptoBalance,
+  DeferredImport,
 } from './wallet.models';
 
 export enum WalletActionTypes {
@@ -48,6 +49,8 @@ export enum WalletActionTypes {
   TOGGLE_HIDE_BALANCE = 'WALLET/TOGGLE_HIDE_BALANCE',
   TOGGLE_HIDE_KEY_BALANCE = 'WALLET/TOGGLE_HIDE_KEY_BALANCE',
   UPDATE_CACHE_FEE_LEVEL = 'WALLET/UPDATE_CACHE_FEE_LEVEL',
+  UPDATE_DEFERRED_IMPORT = 'WALLET/UPDATE_DEFERRED_IMPORT',
+  CLEAR_DEFERRED_IMPORT = 'WALLET/CLEAR_DEFERRED_IMPORT',
 }
 
 interface successWalletStoreInit {
@@ -291,6 +294,15 @@ interface updateCacheFeeLevel {
   payload: CacheFeeLevel;
 }
 
+interface updateDeferredImport {
+  type: typeof WalletActionTypes.UPDATE_DEFERRED_IMPORT;
+  payload: DeferredImport | null;
+}
+
+interface clearDeferredImport {
+  type: typeof WalletActionTypes.CLEAR_DEFERRED_IMPORT;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -329,4 +341,6 @@ export type WalletActionType =
   | toggleHideWallet
   | toggleHideBalance
   | toggleHideKeyBalance
-  | updateCacheFeeLevel;
+  | updateCacheFeeLevel
+  | updateDeferredImport
+  | clearDeferredImport;

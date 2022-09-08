@@ -1,11 +1,12 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
-  Key,
-  Token,
-  Wallet,
-  TransactionProposal,
   CacheFeeLevel,
   CryptoBalance,
+  DeferredImport,
+  Key,
+  Token,
+  TransactionProposal,
+  Wallet,
 } from './wallet.models';
 import {CurrencyOpts} from '../../constants/currencies';
 
@@ -245,4 +246,15 @@ export const updateCacheFeeLevel = (
 ): WalletActionType => ({
   type: WalletActionTypes.UPDATE_CACHE_FEE_LEVEL,
   payload,
+});
+
+export const updateDeferredImport = (
+  payload: DeferredImport,
+): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_DEFERRED_IMPORT,
+  payload,
+});
+
+export const clearDeferredImport = (): WalletActionType => ({
+  type: WalletActionTypes.CLEAR_DEFERRED_IMPORT,
 });

@@ -16,7 +16,11 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletStackParamList} from '../WalletStack';
 import {Key} from '../../../store/wallet/wallet.models';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {
+  NavigationContainerRefWithCurrent,
+  NavigationProp,
+  useNavigation,
+} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {StackScreenProps} from '@react-navigation/stack';
@@ -56,7 +60,7 @@ export const backupRedirect = ({
   key,
 }: {
   context: string | undefined;
-  navigation: NavigationProp<any>;
+  navigation: NavigationProp<any> | NavigationContainerRefWithCurrent<any>;
   walletTermsAccepted: boolean;
   key?: Key;
 }) => {
@@ -68,8 +72,18 @@ export const backupRedirect = ({
     navigation.navigate('Wallet', {screen: 'KeySettings', params: {key}});
   } else if (context === 'settings') {
     navigation.navigate('Tabs', {screen: 'Settings', params: {key}});
+  } else if (context === 'deferredImport' && !walletTermsAccepted) {
+    navigation.navigate('Wallet', {
+      screen: 'TermsOfUse',
+      params: {context},
+    });
   } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
+  } else if (context === 'deferredImport') {
+    navigation.navigate('Wallet', {
+      screen: 'KeyOverview',
+      params: {id: key.id},
+    });
   } else if (!walletTermsAccepted) {
     navigation.navigate('Wallet', {
       screen: 'TermsOfUse',

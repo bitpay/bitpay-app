@@ -38,7 +38,11 @@ import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {startMigration, startWalletStoreInit} from '../wallet/effects';
+import {
+  deferredImportMnemonic,
+  startMigration,
+  startWalletStoreInit,
+} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -82,7 +86,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.clear());
     dispatch(LogActions.info(`Initializing app (${__DEV__ ? 'D' : 'P'})...`));
 
-    const {APP, BITPAY_ID} = getState();
+    const {APP, BITPAY_ID, WALLET} = getState();
     const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
 
     dispatch(LogActions.debug(`Network: ${network}`));
@@ -167,6 +171,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
+
+    // Deferred Import
+    if (WALLET.deferredImport) {
+      const {importData, opts} = WALLET.deferredImport;
+      dispatch(deferredImportMnemonic(importData, opts, undefined, true));
+    }
+
     dispatch(showBlur(pinLockActive || biometricLockActive));
     dispatch(AppActions.successAppInit());
     await sleep(500);

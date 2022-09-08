@@ -10,7 +10,7 @@ import {
   SettingTitle,
   SettingView,
 } from '../../../../components/styled/Containers';
-import {Linking, TouchableOpacity, View} from 'react-native';
+import {Linking, View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {SlateDark, White} from '../../../../styles/colors';

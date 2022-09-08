@@ -1,5 +1,4 @@
 import i18n from 'i18next';
-import {sortBy} from 'lodash';
 import React, {useState} from 'react';
 import {View} from 'react-native';
 import Braze from 'react-native-appboy-sdk';

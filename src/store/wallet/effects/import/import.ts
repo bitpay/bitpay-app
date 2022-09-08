@@ -20,6 +20,7 @@ import {
 } from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
 import {
+  clearDeferredImport,
   deleteKey,
   failedImport,
   setCustomizeNonce,
@@ -28,6 +29,8 @@ import {
   setWalletTermsAccepted,
   successImport,
   updateCacheFeeLevel,
+  updateDeferredImport,
+  updatePortfolioBalance,
 } from '../../wallet.actions';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {Platform} from 'react-native';
@@ -35,6 +38,7 @@ import RNFS from 'react-native-fs';
 import {
   biometricLockActive,
   currentPin,
+  dismissOnGoingProcessModal,
   pinLockActive,
   setAnnouncementsAccepted,
   setColorScheme,
@@ -43,15 +47,20 @@ import {
   setIntroCompleted,
   setKeyMigrationFailure,
   setOnboardingCompleted,
+  showBottomNotificationModal,
   showPortfolioValue,
   successGenerateAppIdentity,
+  updateOnCompleteOnboarding,
 } from '../../../app/app.actions';
 import {createContact} from '../../../contact/contact.actions';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
-import {startUpdateAllKeyAndWalletStatus} from '../status/status';
+import {
+  startUpdateAllKeyAndWalletStatus,
+  startUpdateAllWalletStatusForKey,
+} from '../status/status';
 import {startGetRates} from '../rates/rates';
 import {
   accessTokenSuccess,
@@ -81,8 +90,11 @@ import {
   setNotifications,
   subscribePushNotifications,
   subscribeEmailNotifications,
+  logSegmentEvent,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
+import {sleep} from '../../../../utils/helper-methods';
+import {backupRedirect} from '../../../../navigation/wallet/screens/Backup';
 
 const BWC = BwcProvider.getInstance();
 
@@ -750,6 +762,142 @@ export const migrateKeyAndWallets =
         reject(e);
       }
     });
+  };
+
+export const deferredImportErrorNotification = (): Effect => async dispatch => {
+  dispatch(dismissOnGoingProcessModal());
+  await sleep(600);
+  dispatch(
+    showBottomNotificationModal({
+      type: 'error',
+      title: t('Problem importing key'),
+      message: t('There was an issue importing your key. Please try again.'),
+      enableBackdropDismiss: false,
+      actions: [
+        {
+          text: t('IMPORT KEY'),
+          action: () => {
+            navigationRef.navigate('Wallet', {screen: 'CreationOptions'});
+          },
+          primary: true,
+        },
+        {
+          text: t('MAYBE LATER'),
+          action: () => {},
+          primary: false,
+        },
+      ],
+    }),
+  );
+};
+
+export const deferredImportMnemonic =
+  (
+    importData: {words?: string; xPrivKey?: string},
+    opts: Partial<KeyOptions>,
+    context?: string,
+    skipNotification?: boolean,
+  ): Effect =>
+  async (dispatch, getState): Promise<void> => {
+    try {
+      const {WALLET} = getState();
+      let _context = context;
+      if (_context !== 'onboarding') {
+        _context = 'deferredImport';
+      }
+      let continueTapped = false;
+
+      if (!skipNotification) {
+        dispatch(
+          showBottomNotificationModal({
+            type: 'wait',
+            title: t('Please wait'),
+            message: t(
+              'Your key is still being imported and will be available shortly. ',
+            ),
+            enableBackdropDismiss: false,
+            actions: [
+              {
+                text: t('GOT IT'),
+                action: () => {
+                  continueTapped = true;
+                  backupRedirect({
+                    context: _context,
+                    navigation: navigationRef,
+                    walletTermsAccepted: WALLET.walletTermsAccepted,
+                  });
+                },
+                primary: true,
+              },
+            ],
+          }),
+        );
+      }
+
+      dispatch(updateDeferredImport({importData, opts}));
+
+      const key = (await dispatch<any>(
+        startImportMnemonic(importData, opts),
+      )) as Key;
+      await dispatch(startGetRates({}));
+      await dispatch(startUpdateAllWalletStatusForKey({key}));
+      await dispatch(updatePortfolioBalance());
+      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(600);
+      dispatch(clearDeferredImport());
+      dispatch(
+        logSegmentEvent('track', 'Imported Key', {
+          context: context || '',
+          source: 'RecoveryPhrase',
+        }),
+      );
+
+      dispatch(
+        showBottomNotificationModal({
+          type: 'success',
+          title: t('Key imported'),
+          message: 'Your key has successfully been imported.',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('GOT IT'),
+              action: () => {
+                backupRedirect({
+                  context: !continueTapped ? context : _context,
+                  navigation: navigationRef,
+                  walletTermsAccepted: WALLET.walletTermsAccepted,
+                  key,
+                });
+              },
+              primary: true,
+            },
+          ],
+        }),
+      );
+    } catch (e: any) {
+      dispatch(clearDeferredImport());
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(LogActions.error('[Import Mnemonic]: ', errorStr));
+      try {
+        const {
+          APP: {onboardingCompleted},
+        } = getState();
+        if (onboardingCompleted) {
+          dispatch(deferredImportErrorNotification());
+        } else {
+          dispatch(
+            updateOnCompleteOnboarding('deferredImportErrorNotification'),
+          );
+        }
+      } catch (e) {}
+    }
   };
 
 export const startImportMnemonic =
