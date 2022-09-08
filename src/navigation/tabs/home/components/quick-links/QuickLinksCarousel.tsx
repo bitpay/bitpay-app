@@ -5,7 +5,7 @@ import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
 import {CarouselItemContainer} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {useAppSelector} from '../../../../../utils/hooks';
 
 interface QuickLinksCarouselProps {
   contentCards: ContentCard[];
@@ -34,9 +34,6 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
 
   return (
     <Carousel<ContentCard>
-      containerCustomStyle={{
-        marginTop: 20,
-      }}
       vertical={false}
       layout={'default'}
       useExperimentalSnap={true}

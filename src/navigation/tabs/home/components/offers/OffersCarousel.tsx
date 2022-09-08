@@ -20,9 +20,6 @@ const OffersCarousel: React.FC<OfferSlidesProps> = props => {
 
   return (
     <Carousel<ContentCard>
-      containerCustomStyle={{
-        marginTop: 20,
-      }}
       vertical={false}
       layout={'default'}
       useExperimentalSnap={true}

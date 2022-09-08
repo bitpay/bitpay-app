@@ -53,7 +53,7 @@ import CarouselKeySkeleton from './cards/CarouselKeySkeleton';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
-  padding: 20px 0 12px;
+  padding: 10px 0 12px;
 `;
 
 const CarouselContainer = styled.View`
