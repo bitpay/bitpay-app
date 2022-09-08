@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {selectSettingsNotificationState} from '../../../../../store/app/app.selectors';
 import {View, DeviceEventEmitter} from 'react-native';
@@ -49,6 +49,9 @@ const PushNotifications = () => {
       checked: pushNotifications,
       onPress: async () => {
         const accepted = !pushNotifications;
+        setPushNotifications(accepted);
+        setAnnouncements(accepted);
+        setConfirmedTx(accepted);
         DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
           accepted,
         });
@@ -85,12 +88,6 @@ const PushNotifications = () => {
       },
     },
   ];
-
-  useEffect(() => {
-    setPushNotifications(notificationsState.pushNotifications);
-    setConfirmedTx(notificationsState.confirmedTx);
-    setAnnouncements(notificationsState.announcements);
-  }, [notificationsState]);
 
   return (
     <SettingsContainer>
