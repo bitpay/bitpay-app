@@ -1,18 +1,18 @@
 PODS:
   - Analytics (4.1.6)
-  - Appboy-iOS-SDK (4.3.4):
-    - Appboy-iOS-SDK/UI (= 4.3.4)
-  - Appboy-iOS-SDK/ContentCards (4.3.4):
+  - Appboy-iOS-SDK (4.5.0):
+    - Appboy-iOS-SDK/UI (= 4.5.0)
+  - Appboy-iOS-SDK/ContentCards (4.5.0):
     - Appboy-iOS-SDK/Core
     - SDWebImage (< 6, >= 5.8.2)
-  - Appboy-iOS-SDK/Core (4.3.4)
-  - Appboy-iOS-SDK/InAppMessage (4.3.4):
+  - Appboy-iOS-SDK/Core (4.5.0)
+  - Appboy-iOS-SDK/InAppMessage (4.5.0):
     - Appboy-iOS-SDK/Core
     - SDWebImage (< 6, >= 5.8.2)
-  - Appboy-iOS-SDK/NewsFeed (4.3.4):
+  - Appboy-iOS-SDK/NewsFeed (4.5.0):
     - Appboy-iOS-SDK/Core
     - SDWebImage (< 6, >= 5.8.2)
-  - Appboy-iOS-SDK/UI (4.3.4):
+  - Appboy-iOS-SDK/UI (4.5.0):
     - Appboy-iOS-SDK/ContentCards
     - Appboy-iOS-SDK/Core
     - Appboy-iOS-SDK/InAppMessage
@@ -387,8 +387,8 @@ PODS:
     - glog
   - react-native-advertising-id-bp (1.0.13):
     - React
-  - react-native-appboy-sdk (1.34.1):
-    - Appboy-iOS-SDK (~> 4.3.4)
+  - react-native-appboy-sdk (1.38.0):
+    - Appboy-iOS-SDK (~> 4.5.0)
     - React
   - react-native-appsflyer (6.5.20):
     - AppsFlyerFramework (= 6.5.2)
@@ -855,7 +855,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Analytics: eefe524436f904b8bb3f8c8c3425280e43b34efc
-  Appboy-iOS-SDK: dd22a28a003c5a1331080ecec398eaa4d7ef4569
+  Appboy-iOS-SDK: 640c2d51cec128008da5c4c680df3d76e8c137bc
   AppsFlyerFramework: 9f304d91cc80b6579b1206a59220383056b58b47
   boost: a7c83b31436843459a1961bfd74b96033dc77234
   BVLinearGradient: e3aad03778a456d77928f594a649e96995f1c872
@@ -908,7 +908,7 @@ SPEC CHECKSUMS:
   React-jsinspector: f4775ea9118cbe1f72b834f0f842baa7a99508d8
   React-logger: a1f028f6d8639a3f364ef80419e5e862e1115250
   react-native-advertising-id-bp: e14b0f4622895d3db1ecb1041f7eb262f8b53d4b
-  react-native-appboy-sdk: 17ffa89260876bf981a91b41239a8fc7e55622d9
+  react-native-appboy-sdk: fda756a8584dcb328be47c76a34d896dea84da91
   react-native-appsflyer: fac6d94b40ce52dc69a07c242317b83c7b9e0cc2
   react-native-blur: cad4d93b364f91e7b7931b3fa935455487e5c33c
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f

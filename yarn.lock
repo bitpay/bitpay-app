@@ -11577,10 +11577,10 @@ react-native-animatable@1.3.3:
   dependencies:
     prop-types "^15.7.2"
 
-react-native-appboy-sdk@1.34.1:
-  version "1.34.1"
-  resolved "https://registry.yarnpkg.com/react-native-appboy-sdk/-/react-native-appboy-sdk-1.34.1.tgz#656acd45960021f31ccc7fc74b3f66bea48568c3"
-  integrity sha512-IGmzz4wvro9Ghrq3qYBNrs02G5Rlr04oINQOP2L4IT1il0vmQ4/oE6a2wKXVjf14feHdtB0RSvuzXSktJ0+6Gw==
+react-native-appboy-sdk@1.38.0:
+  version "1.38.0"
+  resolved "https://registry.yarnpkg.com/react-native-appboy-sdk/-/react-native-appboy-sdk-1.38.0.tgz#24c674e7e4c376849181f02b9c5fa6f2a39877e7"
+  integrity sha512-eqxWMmr3cwu3Z3zbykirOUyeqBKlLF6KipvD01pEYGKZbC2Pf0vJOd58uG5IOScfus/maxM/uMe05wnkJ1gUZA==
 
 react-native-appsflyer@6.5.20:
   version "6.5.20"

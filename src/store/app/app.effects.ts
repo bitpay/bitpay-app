@@ -3,11 +3,10 @@ import Segment, {JsonMap} from '@segment/analytics-react-native';
 import {Options} from '@segment/analytics-react-native/build/esm/bridge';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
+import {debounce} from 'lodash';
 import {DeviceEventEmitter, Linking, Platform} from 'react-native';
 import AdID from 'react-native-advertising-id-bp';
-import ReactAppboy, {
-  NotificationSubscriptionTypes,
-} from 'react-native-appboy-sdk';
+import Braze, {NotificationSubscriptionTypes} from 'react-native-appboy-sdk';
 import AppsFlyer from 'react-native-appsflyer';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
@@ -27,6 +26,8 @@ import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import {CardScreens} from '../../navigation/card/CardStack';
+import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
@@ -55,7 +56,7 @@ import {
   findWalletByIdHashed,
   getAllWalletClients,
 } from '../wallet/utils/wallet';
-import {SilentPushEvent} from '../../Root';
+import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
@@ -66,7 +67,6 @@ import {
   APP_ANALYTICS_ENABLED,
   APP_DEEPLINK_PREFIX,
 } from '../../constants/config';
-import {debounce} from 'lodash';
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
 
 // Subscription groups (Braze)
@@ -269,7 +269,7 @@ export const initializeBrazeContent =
       let contentCardSubscription = APP.brazeContentCardSubscription;
 
       if (contentCardSubscription) {
-        contentCardSubscription.subscriber.removeAllSubscriptions();
+        contentCardSubscription.subscriber?.removeAllSubscriptions();
         contentCardSubscription = null;
       }
 
@@ -278,8 +278,8 @@ export const initializeBrazeContent =
       const MAX_RETRIES = 3;
       let currentRetry = 0;
 
-      contentCardSubscription = ReactAppboy.addListener(
-        ReactAppboy.Events.CONTENT_CARDS_UPDATED,
+      contentCardSubscription = Braze.addListener(
+        Braze.Events.CONTENT_CARDS_UPDATED,
         async () => {
           const isInitializing = currentRetry < MAX_RETRIES;
 
@@ -293,7 +293,7 @@ export const initializeBrazeContent =
                 ),
           );
 
-          const contentCards = await ReactAppboy.getContentCards();
+          const contentCards = await Braze.getContentCards();
 
           if (contentCards.length) {
             currentRetry = MAX_RETRIES;
@@ -306,7 +306,7 @@ export const initializeBrazeContent =
                   `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
                 ),
               );
-              ReactAppboy.requestContentCardsRefresh();
+              Braze.requestContentCardsRefresh();
               return;
             }
           }
@@ -323,8 +323,8 @@ export const initializeBrazeContent =
       );
 
       if (user) {
-        ReactAppboy.changeUser(user.eid);
-        ReactAppboy.setEmail(user.email);
+        Braze.changeUser(user.eid);
+        Braze.setEmail(user.email);
         dispatch(setBrazeEid(user.eid));
       } else {
         let eid: string;
@@ -337,7 +337,7 @@ export const initializeBrazeContent =
           eid = uuid.v4().toString();
         }
 
-        ReactAppboy.changeUser(eid);
+        Braze.changeUser(eid);
         dispatch(setBrazeEid(eid));
       }
 
@@ -365,7 +365,7 @@ export const requestBrazeContentRefresh = (): Effect => async dispatch => {
   try {
     dispatch(LogActions.info('Refreshing Braze content...'));
 
-    ReactAppboy.requestContentCardsRefresh();
+    Braze.requestContentCardsRefresh();
   } catch (err) {
     const errMsg = 'Something went wrong while refreshing Braze content.';
 
@@ -748,10 +748,10 @@ export const setNotifications =
   (dispatch, getState) => {
     dispatch(setNotificationsAccepted(accepted));
     const value = accepted
-      ? ReactAppboy.NotificationSubscriptionTypes.SUBSCRIBED
-      : ReactAppboy.NotificationSubscriptionTypes.UNSUBSCRIBED;
+      ? Braze.NotificationSubscriptionTypes.SUBSCRIBED
+      : Braze.NotificationSubscriptionTypes.UNSUBSCRIBED;
 
-    ReactAppboy.setPushNotificationSubscriptionType(value);
+    Braze.setPushNotificationSubscriptionType(value);
     const {
       WALLET: {keys},
       APP,
@@ -782,11 +782,11 @@ export const setAnnouncementsNotifications =
   async dispatch => {
     dispatch(setAnnouncementsAccepted(accepted));
     if (accepted) {
-      ReactAppboy.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
-      ReactAppboy.addToSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+      Braze.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+      Braze.addToSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
     } else {
-      ReactAppboy.removeFromSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
-      ReactAppboy.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+      Braze.removeFromSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+      Braze.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
     }
   };
 
@@ -801,11 +801,11 @@ export const setEmailNotifications =
     dispatch(setEmailNotificationsAccepted(accepted, _email));
 
     if (agreedToMarketingCommunications) {
-      ReactAppboy.setEmailNotificationSubscriptionType(
+      Braze.setEmailNotificationSubscriptionType(
         NotificationSubscriptionTypes.OPTED_IN,
       );
     } else {
-      ReactAppboy.setEmailNotificationSubscriptionType(
+      Braze.setEmailNotificationSubscriptionType(
         NotificationSubscriptionTypes.SUBSCRIBED,
       );
     }
@@ -938,17 +938,42 @@ export const incomingLink =
     const parsed = url.replace(APP_DEEPLINK_PREFIX, '');
 
     if (parsed === 'card/offers') {
-      const {APP} = getState();
+      const {APP, CARD} = getState();
+      const cards = CARD.cards[APP.network];
 
-      if (APP.appWasInit) {
-        dispatch(CardEffects.startOpenDosh());
+      if (cards.length) {
+        if (APP.appWasInit) {
+          setTimeout(() => {
+            handleDosh();
+          }, 500);
+        } else {
+          DeviceEventEmitter.addListener(
+            DeviceEmitterEvents.APP_INIT_COMPLETED,
+            () => {
+              handleDosh();
+            },
+          );
+        }
+
+        function handleDosh() {
+          navigationRef.navigate(RootStacks.TABS, {
+            screen: TabsScreens.CARD,
+            params: {
+              screen: CardScreens.SETTINGS,
+              params: {
+                id: cards[0].id,
+              },
+            },
+          });
+          dispatch(CardEffects.startOpenDosh());
+        }
       } else {
-        DeviceEventEmitter.addListener(
-          DeviceEmitterEvents.APP_INIT_COMPLETED,
-          () => {
-            dispatch(CardEffects.startOpenDosh());
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.CARD,
+          params: {
+            screen: CardScreens.HOME,
           },
-        );
+        });
       }
 
       handled = true;
