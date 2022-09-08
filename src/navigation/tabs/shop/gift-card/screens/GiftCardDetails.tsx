@@ -195,11 +195,13 @@ const GiftCardDetails = ({
   const showCopiedNotification = (
     copiedValue: string,
     cardConfig: CardConfig,
+    customMessage?: string,
   ) =>
     AppActions.showBottomNotificationModal({
       type: 'success',
       title: t('Copied: ', {copiedValue}),
       message:
+        customMessage ||
         cardConfig.redeemInstructions ||
         t(
           'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
@@ -243,9 +245,9 @@ const GiftCardDetails = ({
     },
   ];
 
-  const copyToClipboard = (value: string) => {
+  const copyToClipboard = (value: string, customMessage?: string) => {
     Clipboard.setString(value);
-    dispatch(showCopiedNotification(value, cardConfig));
+    dispatch(showCopiedNotification(value, cardConfig, customMessage));
   };
 
   const toggleArchiveStatus = () => {
@@ -425,8 +427,19 @@ const GiftCardDetails = ({
                       }>
                       {t('contact BitPay Support')}
                     </Link>
-                    .
+                    {t(', and provide this invoice ID: ')}
                   </Paragraph>
+                  <TouchableWithoutFeedback
+                    onPress={() =>
+                      copyToClipboard(
+                        giftCard.invoiceId,
+                        t(
+                          'Please share this invoice ID with BitPay Support to help them locate your purchase.',
+                        ),
+                      )
+                    }>
+                    <Paragraph>{giftCard.invoiceId}</Paragraph>
+                  </TouchableWithoutFeedback>
                 </TextAlign>
               </>
             )}
