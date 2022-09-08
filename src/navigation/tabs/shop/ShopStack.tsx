@@ -32,19 +32,14 @@ const ShopStack = () => {
         ...baseScreenOptions,
         gestureEnabled: false,
       }}>
-      <Shop.Screen
-        name={ShopScreens.HOME}
-        component={ShopHome}
-        options={{
-          headerLeft: () => null,
-          headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
-        }}
-      />
+      <Shop.Screen name={ShopScreens.HOME} component={ShopHome} />
       <Shop.Screen
         name={ShopScreens.ARCHIVED_GIFT_CARDS}
         component={ArchivedGiftCards}
         options={{
-          headerTitle: () => <HeaderTitle>Archived Gift Cards</HeaderTitle>,
+          headerTitle: () => (
+            <HeaderTitle>{t('Archived Gift Cards')}</HeaderTitle>
+          ),
         }}
       />
     </Shop.Navigator>
