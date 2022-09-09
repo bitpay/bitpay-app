@@ -780,6 +780,9 @@ export const CanSpeedupTx =
 ///////////////////////////////////////// Transaction Details ////////////////////////////////////////////////
 
 export const getDetailsTitle = (transaction: any, wallet: Wallet) => {
+  if (!transaction) {
+    return;
+  }
   const {action, error} = transaction;
   const {coin} = wallet.credentials;
 
