@@ -418,7 +418,7 @@ const RecoveryPhrase = () => {
           startImportWithDerivationPath(importData, opts),
         )) as Key;
         await dispatch(startGetRates({}));
-        await dispatch(startUpdateAllWalletStatusForKey({key}));
+        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
         await dispatch(updatePortfolioBalance());
         dispatch(setHomeCarouselConfig({id: key.id, show: true}));
         backupRedirect({
@@ -488,7 +488,7 @@ const RecoveryPhrase = () => {
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
       await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey({key}));
+      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));

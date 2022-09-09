@@ -472,8 +472,10 @@ const TransactionProposalNotifications = () => {
     const [readOnlyKeys, _keys] = _.partition(keysWithProposals, 'isReadOnly');
 
     Promise.all([
-      dispatch(startUpdateAllWalletStatusForKeys({keys: _keys})),
-      dispatch(startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys})),
+      dispatch(startUpdateAllWalletStatusForKeys({keys: _keys, force: true})),
+      dispatch(
+        startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys, force: true}),
+      ),
     ]);
   };
 

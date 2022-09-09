@@ -233,7 +233,7 @@ export const startMigration =
 
         // update store with token rates from coin gecko and update balances
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllKeyAndWalletStatus());
+        await dispatch(startUpdateAllKeyAndWalletStatus({force: true}));
         dispatch(
           LogActions.info(
             '[startMigration] - success migration keys and wallets',
@@ -840,7 +840,7 @@ export const deferredImportMnemonic =
         startImportMnemonic(importData, opts),
       )) as Key;
       await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey({key}));
+      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 

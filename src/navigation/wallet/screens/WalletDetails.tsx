@@ -398,7 +398,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({force: true}));
       await Promise.all([
-        await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj})),
+        await dispatch(
+          startUpdateWalletStatus({key, wallet: fullWalletObj, force: true}),
+        ),
         await loadHistory(true),
         sleep(1000),
       ]);
