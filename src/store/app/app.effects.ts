@@ -1,10 +1,8 @@
-import {APPSFLYER_API_KEY, APPSFLYER_APP_ID, SEGMENT_API_KEY} from '@env';
-import Segment, {JsonMap} from '@segment/analytics-react-native';
-import {Options} from '@segment/analytics-react-native/build/esm/bridge';
+import {APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
+import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
 import {DeviceEventEmitter, Linking, Platform} from 'react-native';
-import AdID from 'react-native-advertising-id-bp';
 import ReactAppboy, {
   NotificationSubscriptionTypes,
 } from 'react-native-appboy-sdk';
@@ -27,6 +25,7 @@ import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import Segment from '../../lib/segment';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
@@ -456,7 +455,10 @@ export const askForTrackingPermissionAndEnableSdks =
     );
     const trackingStatus = await requestTrackingPermission();
 
-    if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
+    if (
+      ['authorized', 'unavailable'].includes(trackingStatus) &&
+      APP_ANALYTICS_ENABLED
+    ) {
       dispatch(
         LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
       );
@@ -484,16 +486,7 @@ export const askForTrackingPermissionAndEnableSdks =
       }
 
       try {
-        await Segment.setup(SEGMENT_API_KEY, {
-          recordScreenViews: false,
-          trackAppLifecycleEvents: true,
-          ios: {
-            trackAdvertising: true,
-          },
-        });
-
-        const {advertisingId} = await AdID.getAdvertisingId();
-        Segment.setIDFA(advertisingId);
+        Segment.init();
 
         if (appInit) {
           const {appFirstOpenData} = getState().APP;
@@ -518,41 +511,20 @@ export const askForTrackingPermissionAndEnableSdks =
       }
     }
     dispatch(
-      LogActions.info('success [askForTrackingPermissionAndEnableSdks]'),
+      LogActions.info('complete [askForTrackingPermissionAndEnableSdks]'),
     );
   };
 
-export const logSegmentEvent =
-  (
-    _eventType: 'track',
-    eventName: string,
-    eventProperties: JsonMap = {},
-  ): Effect<Promise<void>> =>
-  (_dispatch, getState) => {
-    if (APP_ANALYTICS_ENABLED) {
-      if (!eventProperties?.userId) {
-        const {BITPAY_ID, APP} = getState();
-        const user = BITPAY_ID.user[APP.network];
-        eventProperties.userId = user?.eid || '';
-      }
-
-      const eventOptions: Options = {
-        integrations: {
-          AppsFlyer: {
-            appsFlyerId: APPSFLYER_APP_ID,
-          },
-        },
-      };
-
-      return Segment.track(
-        `BitPay App - ${eventName}`,
-        eventProperties,
-        eventOptions,
-      );
-    }
-
-    return Promise.resolve();
-  };
+/**
+ * @deprecated Use `dispatch(Analytics.track(event, properties))` instead.
+ */
+export const logSegmentEvent = (
+  _eventType: 'track',
+  event: string,
+  properties: JsonMap = {},
+) => {
+  return Analytics.track(event, properties);
+};
 
 export const Analytics = {
   /**
@@ -564,15 +536,12 @@ export const Analytics = {
    * @param traits A dictionary of traits you know about the user. Things like: email, name, plan, etc.
    */
   identify:
-    (user: string | null, traits?: JsonMap): Effect<Promise<void>> =>
+    (
+      user: string | undefined,
+      traits?: UserTraits | undefined,
+    ): Effect<Promise<void>> =>
     () => {
-      if (APP_ANALYTICS_ENABLED) {
-        const options: Options = {};
-
-        return Segment.identify(user, traits, options);
-      }
-
-      return Promise.resolve();
+      return Segment.identify(user, traits);
     },
 
   /**
@@ -585,23 +554,11 @@ export const Analytics = {
   screen:
     (name: string, properties: JsonMap = {}): Effect<Promise<void>> =>
     (_dispatch, getState) => {
-      if (APP_ANALYTICS_ENABLED) {
-        const {BITPAY_ID, APP} = getState();
-        const user = BITPAY_ID.user[APP.network];
-        properties.userId = user?.eid || '';
+      const {BITPAY_ID, APP} = getState();
+      const user = BITPAY_ID.user[APP.network];
+      properties.userId = user?.eid || '';
 
-        const options: Options = {
-          integrations: {
-            AppsFlyer: {
-              appsFlyerId: APPSFLYER_APP_ID,
-            },
-          },
-        };
-
-        return Segment.screen(name, properties, options);
-      }
-
-      return Promise.resolve();
+      return Segment.screen(name, properties);
     },
 
   /**
@@ -615,9 +572,17 @@ export const Analytics = {
    * @param properties A dictionary of properties for the event.
    * If the event was 'Added to Shopping Cart', it might have properties like price, productType, etc.
    */
-  track: (event: string, properties: JsonMap = {}) => {
-    return logSegmentEvent('track', event, properties);
-  },
+  track:
+    (event: string, properties: JsonMap = {}): Effect<Promise<void>> =>
+    (_dispatch, getState) => {
+      if (!properties?.userId) {
+        const {BITPAY_ID, APP} = getState();
+        const user = BITPAY_ID.user[APP.network];
+        properties.userId = user?.eid || '';
+      }
+
+      return Segment.track(`BitPay App - ${event}`, properties);
+    },
 };
 
 export const subscribePushNotifications =
