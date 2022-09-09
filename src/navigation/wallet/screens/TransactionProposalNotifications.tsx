@@ -233,7 +233,7 @@ const TransactionProposalNotifications = () => {
         id: Math.random(),
         walletId: txpsPerWallet[0],
         txps: txpsPerWallet[1],
-        multipleSignAvailable: txpToBeSigned > 1,
+        needSign: txpToBeSigned > 0,
       });
     });
     return txpsByWallet;
@@ -391,7 +391,7 @@ const TransactionProposalNotifications = () => {
                 {currencyAbbreviation.toUpperCase()} {`- Multisig ${m}/${n}`}
               </ListItemSubText>
             </CurrencyColumn>
-            {item.multipleSignAvailable ? (
+            {item.needSign && item.txps.length > 1 ? (
               <Link
                 onPress={() => {
                   txpSelectAll(item.txps, _walletId);
@@ -413,14 +413,16 @@ const TransactionProposalNotifications = () => {
                       hideIcon={true}
                     />
                   </ProposalsInfoContainer>
-                  <CheckBoxContainer>
-                    <Checkbox
-                      checked={!!txpChecked[txp.id]}
-                      onPress={() => {
-                        txpSelectionChange(txp, _walletId);
-                      }}
-                    />
-                  </CheckBoxContainer>
+                  {item.needSign ? (
+                    <CheckBoxContainer>
+                      <Checkbox
+                        checked={!!txpChecked[txp.id]}
+                        onPress={() => {
+                          txpSelectionChange(txp, _walletId);
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  ) : null}
                 </ProposalsContainer>
               ))
             : null}
@@ -574,6 +576,8 @@ const TransactionProposalNotifications = () => {
                   wallet,
                 }),
               )) as (TransactionProposal | Error)[];
+              dispatch(dismissOnGoingProcessModal());
+              await sleep(400);
               const count = countSuccessAndFailed(data);
               if (count.failed > 0) {
                 const errMsg = `There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`;
@@ -584,7 +588,6 @@ const TransactionProposalNotifications = () => {
                   }),
                 );
               }
-              dispatch(dismissOnGoingProcessModal());
 
               if (count.success > 0) {
                 dispatch(
