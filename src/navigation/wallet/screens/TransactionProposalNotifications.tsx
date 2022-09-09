@@ -285,7 +285,11 @@ const TransactionProposalNotifications = () => {
       const key = keys[fullWalletObj.keyId];
       navigation.navigate('Wallet', {
         screen: 'TransactionProposalDetails',
-        params: {wallet: fullWalletObj, transaction, key},
+        params: {
+          walletId: fullWalletObj.id,
+          transactionId: transaction.id,
+          keyId: key.id,
+        },
       });
     },
     [keys, navigation],

@@ -808,7 +808,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     () => (transaction: any) => {
       navigation.navigate('Wallet', {
         screen: 'TransactionProposalDetails',
-        params: {wallet: fullWalletObj, transaction, key},
+        params: {
+          walletId: fullWalletObj.id,
+          transactionId: transaction.id,
+          keyId: key.id,
+        },
       });
     },
     [],
