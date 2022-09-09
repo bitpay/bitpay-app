@@ -5,6 +5,7 @@ import {
   SegmentClient,
   UserTraits,
 } from '@segment/analytics-react-native';
+import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 
 /**
@@ -50,6 +51,10 @@ const lib = (() => {
         return;
       }
 
+      if (_client) {
+        return;
+      }
+
       _client = createClient({
         // Required ---------------
 
@@ -69,6 +74,11 @@ const lib = (() => {
          * Track app lifecycle events, such as application installed, opened, updated, backgrounded.
          */
         trackAppLifecycleEvents: true, // default: false
+      });
+
+      // add plugins
+      _client.add({
+        plugin: new IdfaPlugin(),
       });
     },
 
