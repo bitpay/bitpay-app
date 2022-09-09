@@ -2523,6 +2523,11 @@
     color "^3.1.3"
     warn-once "^0.1.0"
 
+"@segment/analytics-react-native-plugin-idfa@0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@segment/analytics-react-native-plugin-idfa/-/analytics-react-native-plugin-idfa-0.4.1.tgz#884a25ecbed3a09f94b637d68b08a6868b20076c"
+  integrity sha512-qwjNMZeq2MnKqaLcufdf5m7sIzzxFn8Ib3r9w9YpoBX6TM4HddTZv5jFsqQyJTk8WNtJsXsFgIJnWqkCF9xt0g==
+
 "@segment/analytics-react-native@2.7.1":
   version "2.7.1"
   resolved "https://registry.yarnpkg.com/@segment/analytics-react-native/-/analytics-react-native-2.7.1.tgz#ca611731dc7bdedd2ded7f8bf6a5de2b42e871f4"

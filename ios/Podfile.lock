@@ -567,6 +567,8 @@ PODS:
   - segment-analytics-react-native (2.7.1):
     - React-Core
     - sovran-react-native
+  - segment-analytics-react-native-plugin-idfa (0.4.1):
+    - React-Core
   - SocketRocket (0.6.0)
   - sovran-react-native (0.4.4):
     - React-Core
@@ -671,6 +673,7 @@ DEPENDENCIES:
   - RNSharedElement (from `../node_modules/react-native-shared-element`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - "segment-analytics-react-native (from `../node_modules/@segment/analytics-react-native`)"
+  - "segment-analytics-react-native-plugin-idfa (from `../node_modules/@segment/analytics-react-native-plugin-idfa`)"
   - "sovran-react-native (from `../node_modules/@segment/sovran-react-native`)"
   - TouchID (from `../node_modules/react-native-touch-id-ng`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -849,6 +852,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-svg"
   segment-analytics-react-native:
     :path: "../node_modules/@segment/analytics-react-native"
+  segment-analytics-react-native-plugin-idfa:
+    :path: "../node_modules/@segment/analytics-react-native-plugin-idfa"
   sovran-react-native:
     :path: "../node_modules/@segment/sovran-react-native"
   TouchID:
@@ -958,6 +963,7 @@ SPEC CHECKSUMS:
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: f93010f3f6c031e2f8fb3081ca4ee6966c539815
   segment-analytics-react-native: d3600ae853119d465d7f5b5884ef1c776796138a
+  segment-analytics-react-native-plugin-idfa: 68fbc668f277eaf2e1e2673c6a5543ea857a1671
   SocketRocket: fccef3f9c5cedea1353a9ef6ada904fde10d6608
   sovran-react-native: 5f9715a62b50008d72c0cf904cb08c8377777b62
   TouchID: 175fa9c0b2b2651f25aaef4aa6bb42ce4d580c6e
