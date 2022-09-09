@@ -852,7 +852,7 @@ const _createWalletAddress = debounce(
 
 const _startUpdateWalletStatus = debounce(
   async (dispatch, keyObj, wallet) => {
-    await dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
+    await dispatch(startUpdateWalletStatus({key: keyObj, wallet}, true));
     dispatch(updatePortfolioBalance());
     DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
   },
