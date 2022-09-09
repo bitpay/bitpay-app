@@ -887,7 +887,7 @@ export const publishAndSign =
             }),
           );
         } else {
-          dispatch(startUpdateWalletStatus({key, wallet}));
+          dispatch(startUpdateWalletStatus({key, wallet, force: true}));
         }
 
         let resultTx = broadcastedTx ? broadcastedTx : signedTx;

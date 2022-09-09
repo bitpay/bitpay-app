@@ -264,7 +264,7 @@ const TransactionProposalDetails = () => {
               text: t('YES'),
               action: async () => {
                 await RemoveTxProposal(wallet, txs);
-                dispatch(startUpdateWalletStatus({key, wallet}));
+                dispatch(startUpdateWalletStatus({key, wallet, force: true}));
                 navigation.goBack();
               },
               primary: true,
@@ -295,7 +295,7 @@ const TransactionProposalDetails = () => {
               text: t('YES'),
               action: async () => {
                 await RejectTxProposal(wallet, txs);
-                dispatch(startUpdateWalletStatus({key, wallet}));
+                dispatch(startUpdateWalletStatus({key, wallet, force: true}));
                 navigation.goBack();
               },
               primary: true,
