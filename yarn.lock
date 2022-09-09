@@ -11667,11 +11667,6 @@ react-lifecycles-compat@^3.0.4:
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
-react-native-advertising-id-bp@1.0.13:
-  version "1.0.13"
-  resolved "https://registry.yarnpkg.com/react-native-advertising-id-bp/-/react-native-advertising-id-bp-1.0.13.tgz#d18d06a5da3784b53a1e66a4dbada06c1c0094b7"
-  integrity sha512-s+m+LeTI7ic7ds1fTAYx4AKCQdJKulLa/VvD6mDdfMKknDZM5Aafb/mBOW/e7rdHd/82TT5ry2JiW4woimZX3w==
-
 react-native-animatable@1.3.3:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/react-native-animatable/-/react-native-animatable-1.3.3.tgz#a13a4af8258e3bb14d0a9d839917e9bb9274ec8a"

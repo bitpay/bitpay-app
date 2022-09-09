@@ -384,8 +384,6 @@ PODS:
   - React-jsinspector (0.67.4)
   - React-logger (0.67.4):
     - glog
-  - react-native-advertising-id-bp (1.0.13):
-    - React
   - react-native-appboy-sdk (1.34.1):
     - Appboy-iOS-SDK (~> 4.3.4)
     - React
@@ -626,7 +624,6 @@ DEPENDENCIES:
   - React-jsiexecutor (from `../node_modules/react-native/ReactCommon/jsiexecutor`)
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
-  - react-native-advertising-id-bp (from `../node_modules/react-native-advertising-id-bp`)
   - react-native-appboy-sdk (from `../node_modules/react-native-appboy-sdk`)
   - react-native-appsflyer (from `../node_modules/react-native-appsflyer`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
@@ -758,8 +755,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/jsinspector"
   React-logger:
     :path: "../node_modules/react-native/ReactCommon/logger"
-  react-native-advertising-id-bp:
-    :path: "../node_modules/react-native-advertising-id-bp"
   react-native-appboy-sdk:
     :path: "../node_modules/react-native-appboy-sdk"
   react-native-appsflyer:
@@ -914,7 +909,6 @@ SPEC CHECKSUMS:
   React-jsiexecutor: cbdf37cebdc4f5d8b3d0bf5ccaa6147fd9de9f3d
   React-jsinspector: f4775ea9118cbe1f72b834f0f842baa7a99508d8
   React-logger: a1f028f6d8639a3f364ef80419e5e862e1115250
-  react-native-advertising-id-bp: e14b0f4622895d3db1ecb1041f7eb262f8b53d4b
   react-native-appboy-sdk: 17ffa89260876bf981a91b41239a8fc7e55622d9
   react-native-appsflyer: fac6d94b40ce52dc69a07c242317b83c7b9e0cc2
   react-native-blur: cad4d93b364f91e7b7931b3fa935455487e5c33c
