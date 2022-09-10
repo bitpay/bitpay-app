@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.appboy.Constants;
+import com.braze.Constants;
 import com.braze.push.BrazeNotificationUtils;
 import com.braze.support.BrazeLogger;
 import com.facebook.react.bridge.Arguments;
@@ -25,7 +25,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
 
         switch (action) {
             case Constants.BRAZE_PUSH_INTENT_NOTIFICATION_RECEIVED:
-                Bundle extras = intent.getBundleExtra(Constants.APPBOY_PUSH_EXTRAS_KEY);
+                Bundle extras = intent.getBundleExtra(Constants.BRAZE_PUSH_EXTRAS_KEY);
                 if (extras != null) {
                     WritableMap extraParams = Arguments.createMap();
                     for (String key : extras.keySet()) {

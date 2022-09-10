@@ -48,10 +48,12 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
+import ListKeySkeleton from './cards/ListKeySkeleton';
+import CarouselKeySkeleton from './cards/CarouselKeySkeleton';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
-  padding: 20px 0 12px;
+  padding: 10px 0 12px;
 `;
 
 const CarouselContainer = styled.View`
@@ -147,6 +149,7 @@ const createHomeCardList = ({
   linkedCoinbase,
   homeCarouselConfig,
   homeCarouselLayoutType,
+  deferredImport,
 }: {
   navigation: NavigationProp<any>;
   keys: Key[];
@@ -154,6 +157,7 @@ const createHomeCardList = ({
   linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
+  deferredImport?: boolean;
 }) => {
   let list: {id: string; component: JSX.Element}[] = [];
   const defaults: {id: string; component: JSX.Element}[] = [];
@@ -229,7 +233,24 @@ const createHomeCardList = ({
     item =>
       homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
   );
+
+  if (deferredImport) {
+    if (homeCarouselLayoutType === 'listView') {
+      list.push({
+        id: 'deferredImport',
+        component: <ListKeySkeleton />,
+      });
+    } else {
+      list.push({
+        id: 'deferredImport',
+        component: <CarouselKeySkeleton />,
+      });
+    }
+  }
+
   const order = homeCarouselConfig.map(item => item.id);
+  order.push('deferredImport'); // Display placeholder at the end of the list
+
   return {
     list: [..._.sortBy(list, item => _.indexOf(order, item.id))],
     defaults,
@@ -248,6 +269,7 @@ const Crypto = () => {
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
+  const deferredImport = useAppSelector(({WALLET}) => WALLET.deferredImport);
   const hasKeys = Object.values(keys).length;
   const [cardsList, setCardsList] = useState(
     createHomeCardList({
@@ -257,6 +279,7 @@ const Crypto = () => {
       linkedCoinbase: false,
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
+      deferredImport: !!deferredImport,
     }),
   );
 
@@ -269,6 +292,7 @@ const Crypto = () => {
         linkedCoinbase,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
+        deferredImport: !!deferredImport,
       }),
     );
   }, [
@@ -278,9 +302,10 @@ const Crypto = () => {
     linkedCoinbase,
     homeCarouselConfig,
     homeCarouselLayoutType,
+    deferredImport,
   ]);
 
-  if (!hasKeys && !linkedCoinbase) {
+  if (!hasKeys && !linkedCoinbase && !deferredImport) {
     return (
       <CryptoContainer>
         <SectionHeaderContainer style={{marginBottom: 0}}>

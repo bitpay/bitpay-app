@@ -255,7 +255,6 @@ const SendToOptions = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{params.title}</HeaderTitle>,
       headerTitleAlign: 'center',
     });

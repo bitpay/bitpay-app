@@ -68,6 +68,8 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -189,19 +191,22 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 
 const TransactionProposalDetails = () => {
   const {t} = useTranslation();
-  const {
-    params: {transaction, wallet, key},
-  } = useRoute<RouteProp<WalletStackParamList, 'TransactionProposalDetails'>>();
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {
+    params: {transactionId, walletId, keyId},
+  } = useRoute<RouteProp<WalletStackParamList, 'TransactionProposalDetails'>>();
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]) as Key;
+  const wallet = findWalletById(key.wallets, walletId) as Wallet;
+  const transaction = wallet.pendingTxps.find(txp => txp.id === transactionId);
   const [txs, setTxs] = useState<any>();
   const [isLoading, setIsLoading] = useState(true);
-  const title = getDetailsTitle(transaction, wallet);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [lastSigner, setLastSigner] = useState(false);
 
+  const title = getDetailsTitle(transaction, wallet);
   let {
     currencyAbbreviation,
     credentials: {network},
@@ -218,6 +223,10 @@ const TransactionProposalDetails = () => {
 
   const init = async () => {
     try {
+      if (!transaction) {
+        navigation.goBack();
+        return;
+      }
       const _transaction = await dispatch(
         buildTransactionDetails({
           transaction,
@@ -241,7 +250,7 @@ const TransactionProposalDetails = () => {
 
   useEffect(() => {
     init();
-  }, []);
+  }, [transaction, wallet]);
 
   const getIcon = () => {
     return SUPPORTED_CURRENCIES.includes(txs.coin) ? (
@@ -264,7 +273,7 @@ const TransactionProposalDetails = () => {
               text: t('YES'),
               action: async () => {
                 await RemoveTxProposal(wallet, txs);
-                dispatch(startUpdateWalletStatus({key, wallet}));
+                dispatch(startUpdateWalletStatus({key, wallet, force: true}));
                 navigation.goBack();
               },
               primary: true,
@@ -295,7 +304,7 @@ const TransactionProposalDetails = () => {
               text: t('YES'),
               action: async () => {
                 await RejectTxProposal(wallet, txs);
-                dispatch(startUpdateWalletStatus({key, wallet}));
+                dispatch(startUpdateWalletStatus({key, wallet, force: true}));
                 navigation.goBack();
               },
               primary: true,

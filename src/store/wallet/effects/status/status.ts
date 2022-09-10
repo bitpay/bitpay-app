@@ -113,7 +113,7 @@ export const waitForTargetAmountAndUpdateWallet =
             // TODO ETH totalAmount !== targetAmount while the transaction is unconfirmed
             // expected amount - update balance
             if (totalAmount === targetAmount) {
-              dispatch(startUpdateWalletStatus({key, wallet}));
+              dispatch(startUpdateWalletStatus({key, wallet, force: true}));
 
               // update recipient balance if local
               if (recipient) {
@@ -129,6 +129,7 @@ export const waitForTargetAmountAndUpdateWallet =
                       startUpdateWalletStatus({
                         key: recipientKey,
                         wallet: recipientWallet,
+                        force: true,
                       }),
                     );
                     console.log('updated recipient wallet');
@@ -149,7 +150,7 @@ export const waitForTargetAmountAndUpdateWallet =
   };
 
 export const startUpdateWalletStatus =
-  ({key, wallet}: {key: Key; wallet: Wallet}): Effect =>
+  ({key, wallet, force}: {key: Key; wallet: Wallet; force?: boolean}): Effect =>
   async (dispatch, getState) => {
     return new Promise<WalletBalance | void>(async (resolve, reject) => {
       if (!key || !wallet) {
@@ -169,7 +170,10 @@ export const startUpdateWalletStatus =
           credentials: {network},
         } = wallet;
 
-        if (!isCacheKeyStale(balanceCacheKey[id], BALANCE_CACHE_DURATION)) {
+        if (
+          !isCacheKeyStale(balanceCacheKey[id], BALANCE_CACHE_DURATION) &&
+          !force
+        ) {
           console.log(`Wallet: ${id} - skipping balance update`);
           return resolve();
         }
@@ -259,7 +263,7 @@ export const startUpdateWalletStatus =
   };
 
 export const startUpdateAllWalletStatusForKeys =
-  ({keys}: {keys: Key[]}): Effect<Promise<void>> =>
+  ({keys, force}: {keys: Key[]; force?: boolean}): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -279,7 +283,8 @@ export const startUpdateAllWalletStatusForKeys =
 
         keys.forEach(key => {
           if (
-            !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION)
+            !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION) &&
+            !force
           ) {
             console.log(`Key: ${key.id} - skipping balance update`);
             return;
@@ -484,7 +489,13 @@ export const startUpdateAllWalletStatusForKeys =
   };
 
 export const startUpdateAllWalletStatusForReadOnlyKeys =
-  ({readOnlyKeys}: {readOnlyKeys: Key[]}): Effect<Promise<void>> =>
+  ({
+    readOnlyKeys,
+    force,
+  }: {
+    readOnlyKeys: Key[];
+    force?: boolean;
+  }): Effect<Promise<void>> =>
   async dispatch => {
     try {
       dispatch(
@@ -494,7 +505,9 @@ export const startUpdateAllWalletStatusForReadOnlyKeys =
       // update each read only wallet - getStatusAll checks if credentials are from the same key
       readOnlyKeys.forEach((key, index) => {
         promises.push(
-          dispatch(startUpdateWalletStatus({key, wallet: key.wallets[index]})),
+          dispatch(
+            startUpdateWalletStatus({key, wallet: key.wallets[index], force}),
+          ),
         );
       });
 
@@ -514,19 +527,23 @@ export const startUpdateAllWalletStatusForReadOnlyKeys =
   };
 
 export const startUpdateAllWalletStatusForKey =
-  ({key}: {key: Key}): Effect<Promise<void>> =>
+  ({key, force}: {key: Key; force?: boolean}): Effect<Promise<void>> =>
   dispatch => {
     const keys = [key];
 
     return !key.isReadOnly
-      ? dispatch(startUpdateAllWalletStatusForKeys({keys}))
+      ? dispatch(startUpdateAllWalletStatusForKeys({keys, force}))
       : dispatch(
-          startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys: keys}),
+          startUpdateAllWalletStatusForReadOnlyKeys({
+            readOnlyKeys: keys,
+            force,
+          }),
         );
   };
 
 export const startUpdateAllKeyAndWalletStatus =
-  (): Effect => async (dispatch, getState) => {
+  ({force}: {force?: boolean}): Effect =>
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         dispatch(
@@ -536,7 +553,10 @@ export const startUpdateAllKeyAndWalletStatus =
           WALLET: {keys: _keys, balanceCacheKey},
         } = getState();
 
-        if (!isCacheKeyStale(balanceCacheKey.all, BALANCE_CACHE_DURATION)) {
+        if (
+          !isCacheKeyStale(balanceCacheKey.all, BALANCE_CACHE_DURATION) &&
+          !force
+        ) {
           console.log('All: skipping balance update');
           return resolve();
         }
@@ -544,8 +564,10 @@ export const startUpdateAllKeyAndWalletStatus =
         const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
 
         await Promise.all([
-          dispatch(startUpdateAllWalletStatusForKeys({keys})),
-          dispatch(startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys})),
+          dispatch(startUpdateAllWalletStatusForKeys({keys, force})),
+          dispatch(
+            startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys, force}),
+          ),
         ]);
 
         dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances

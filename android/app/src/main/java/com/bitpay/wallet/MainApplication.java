@@ -18,7 +18,7 @@ import com.swmansion.reanimated.ReanimatedJSIModulePackage;
 import com.facebook.react.views.text.ReactFontManager;
 
 // Braze
-import com.appboy.AppboyLifecycleCallbackListener;
+import com.braze.BrazeActivityLifecycleCallbackListener;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -69,7 +69,7 @@ public class MainApplication extends Application implements ReactApplication {
     ReactFontManager.getInstance().addCustomFont(this, "Heebo", R.font.heebo);
 
     // Braze
-    registerActivityLifecycleCallbacks(new AppboyLifecycleCallbackListener());
+    registerActivityLifecycleCallbacks(new BrazeActivityLifecycleCallbackListener());
   }
 
   /**

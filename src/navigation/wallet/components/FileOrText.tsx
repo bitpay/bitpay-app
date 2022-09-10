@@ -57,11 +57,6 @@ const ErrorText = styled(BaseText)`
   padding: 5px 0 0 0;
 `;
 
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
-  margin-top: 6px;
-`;
-
 const FormRow = styled.View`
   margin-bottom: 24px;
 `;
@@ -107,7 +102,7 @@ const FileOrText = () => {
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
 
       await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey({key}));
+      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 

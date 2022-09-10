@@ -6,7 +6,6 @@ import {
   LightBlack,
   LinkBlue,
   NeutralSlate,
-  White,
 } from '../../../styles/colors';
 
 const AddContactsSvg: React.FC<{isDark: boolean}> = ({isDark}) => {

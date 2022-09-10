@@ -75,6 +75,10 @@ const TxSpeedContainer = styled(SheetContainer)`
   padding: 0 0 20px 0;
 `;
 
+const TxSpeedScroll = styled(KeyboardAwareScrollView)`
+  margin-top: 0;
+`;
+
 const SheetHeaderContainer = styled.View`
   margin-bottom: 15px;
   align-items: center;
@@ -463,7 +467,9 @@ const TransactionLevel = ({
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
       <TxSpeedContainer>
-        <KeyboardAwareScrollView>
+        <TxSpeedScroll
+          extraScrollHeight={150}
+          keyboardShouldPersistTaps={'handled'}>
           <SheetHeaderContainer style={{marginTop: insets.top}}>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
@@ -641,7 +647,7 @@ const TransactionLevel = ({
               </>
             ) : null}
           </View>
-        </KeyboardAwareScrollView>
+        </TxSpeedScroll>
       </TxSpeedContainer>
     </SheetModal>
   );

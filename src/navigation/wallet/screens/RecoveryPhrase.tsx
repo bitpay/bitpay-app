@@ -43,7 +43,7 @@ export interface RecoveryPhraseParamList {
   walletTermsAccepted: boolean;
 }
 
-const RecoveryPhraseContainer = styled.ScrollView`
+const RecoveryPhraseContainer = styled.View`
   flex: 1;
 `;
 
@@ -51,7 +51,7 @@ export const ProgressBarContainer = styled.View`
   padding: 15px 0;
 `;
 
-export const BodyContainer = styled.View`
+export const BodyContainer = styled.ScrollView`
   margin-top: 50px;
 `;
 

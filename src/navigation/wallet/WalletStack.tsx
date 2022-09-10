@@ -121,7 +121,11 @@ export type WalletStackParamList = {
     transaction: any;
     onMemoChange: () => void;
   };
-  TransactionProposalDetails: {wallet: WalletModel; transaction: any; key: Key};
+  TransactionProposalDetails: {
+    walletId: string;
+    transactionId: string;
+    keyId: string;
+  };
   TransactionProposalNotifications: {walletId?: string; keyId?: string};
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
@@ -289,7 +293,11 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={AmountScreen} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
-        <Wallet.Screen name={WalletScreens.CONFIRM} component={Confirm} />
+        <Wallet.Screen
+          options={{gestureEnabled: false}}
+          name={WalletScreens.CONFIRM}
+          component={Confirm}
+        />
         <Wallet.Screen
           options={{
             headerTitle: () => <HeaderTitle>{t('Add Funds')}</HeaderTitle>,

@@ -17,6 +17,7 @@ import {
   UpdateCardLockStatus,
   referredUsersStatus,
   FetchPinChangeRequestInfoStatus,
+  ConfirmPinChangeStatus,
 } from './card.reducer';
 
 export const TTL = {
@@ -71,6 +72,9 @@ export enum CardActionTypes {
   FAILED_FETCH_PIN_CHANGE_REQUEST_INFO = 'CARD/FAILED_FETCH_PIN_CHANGE_REQUEST_INFO',
   UPDATE_FETCH_PIN_CHANGE_REQUEST_INFO_STATUS = 'CARD/UPDATE_FETCH_PIN_CHANGE_REQUEST_INFO_STATUS',
   RESET_PIN_CHANGE_REQUEST_INFO = 'CARD/RESET_PIN_CHANGE_REQUEST_INFO',
+  CONFIRM_PIN_CHANGE_SUCCESS = 'CARD/CONFIRM_PIN_CHANGE_SUCCESS',
+  CONFIRM_PIN_CHANGE_FAILED = 'CARD/CONFIRM_PIN_CHANGE_FAILED',
+  CONFIRM_PIN_CHANGE_STATUS_UPDATED = 'CARD/CONFIRM_PIN_CHANGE_STATUS_UPDATED',
 }
 
 interface SuccessInitializeStore {
@@ -241,6 +245,21 @@ interface ResetPinChangeRequestInfo {
   payload: {id: string};
 }
 
+interface ConfirmPinChangeSuccess {
+  type: CardActionTypes.CONFIRM_PIN_CHANGE_SUCCESS;
+  payload: {id: string};
+}
+
+interface ConfirmPinChangeFailed {
+  type: CardActionTypes.CONFIRM_PIN_CHANGE_FAILED;
+  payload: {id: string; error: string};
+}
+
+interface ConfirmPinChangeStatusUpdated {
+  type: CardActionTypes.CONFIRM_PIN_CHANGE_STATUS_UPDATED;
+  payload: {id: string; status: ConfirmPinChangeStatus};
+}
+
 export type CardActionType =
   | SuccessInitializeStore
   | SuccessFetchCards
@@ -273,4 +292,7 @@ export type CardActionType =
   | SuccessFetchPinChangeRequestInfo
   | FailedFetchPinChangeRequestInfo
   | UpdateFetchPinChangeRequestInfoStatus
-  | ResetPinChangeRequestInfo;
+  | ResetPinChangeRequestInfo
+  | ConfirmPinChangeSuccess
+  | ConfirmPinChangeFailed
+  | ConfirmPinChangeStatusUpdated;

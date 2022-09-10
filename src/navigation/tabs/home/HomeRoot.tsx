@@ -9,6 +9,7 @@ import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
+  clearOnCompleteOnboardingList,
   setKeyMigrationFailureModalHasBeenShown,
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
@@ -23,7 +24,11 @@ import {
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
 import {selectCardGroups} from '../../../store/card/card.selectors';
-import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
+import {
+  deferredImportErrorNotification,
+  getPriceHistory,
+  startGetRates,
+} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
@@ -81,6 +86,9 @@ const HomeRoot = () => {
   );
   const keyMigrationFailureModalHasBeenShown = useAppSelector(
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
+  );
+  const onCompleteOnboardingList = useAppSelector(
+    ({APP}) => APP.onCompleteOnboardingList,
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hasKeys = Object.values(keys).length;
@@ -163,7 +171,7 @@ const HomeRoot = () => {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({force: true}));
       await Promise.all([
-        dispatch(startUpdateAllKeyAndWalletStatus()),
+        dispatch(startUpdateAllKeyAndWalletStatus({force: true})),
         dispatch(requestBrazeContentRefresh()),
         sleep(1000),
       ]);
@@ -192,6 +200,16 @@ const HomeRoot = () => {
       });
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
+
+  useEffect(() => {
+    if (
+      onCompleteOnboardingList?.length &&
+      onCompleteOnboardingList.includes('deferredImportErrorNotification')
+    ) {
+      dispatch(deferredImportErrorNotification());
+      dispatch(clearOnCompleteOnboardingList());
+    }
+  }, [dispatch, onCompleteOnboardingList]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);

@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, SafeAreaView} from 'react-native';
+import {ScrollView, SafeAreaView, View} from 'react-native';
 import styled from 'styled-components/native';
 import {
   ModalContainer,
@@ -18,8 +18,10 @@ import Button from '../../../../components/button/Button';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {AppActions} from '../../../../store/app';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -71,6 +73,10 @@ const PaymentMethodProviderText = styled(BaseText)`
   margin-right: 6px;
 `;
 
+const PaymentMethodProviderLink = styled(BaseText)`
+  color: ${Action};
+`;
+
 const PaymentMethodsModal = ({
   isVisible,
   onPress,
@@ -80,6 +86,7 @@ const PaymentMethodsModal = ({
   currency,
 }: PaymentMethodsModalProps) => {
   const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
 
   const EnabledPaymentMethods = getEnabledPaymentMethods(
@@ -87,6 +94,26 @@ const PaymentMethodsModal = ({
     currency,
     coin,
   );
+
+  const showOtherPaymentMethodsInfoSheet = () => {
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title: t('Other Payment Methods'),
+        message: t(
+          'By selecting "Other" as your payment method, you will have access to all payment methods enabled by Simplex based on your country of residence and your selected fiat currency.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('GOT IT'),
+            action: () => null,
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
 
   return (
     <SheetModal
@@ -111,7 +138,11 @@ const PaymentMethodsModal = ({
               return (
                 <PaymentMethodCard
                   key={paymentMethod.method}
-                  onPress={() => onPress?.(paymentMethod)}>
+                  onPress={() => {
+                    paymentMethod.method !== 'other'
+                      ? onPress?.(paymentMethod)
+                      : null;
+                  }}>
                   <PaymentMethodCardContainer>
                     <Checkbox
                       radio={true}
@@ -124,6 +155,27 @@ const PaymentMethodsModal = ({
                       <PaymentMethodLabel>
                         {paymentMethod.label}
                       </PaymentMethodLabel>
+
+                      {paymentMethod.method === 'other' ? (
+                        <TouchableOpacity
+                          onPress={() => {
+                            showOtherPaymentMethodsInfoSheet();
+                          }}>
+                          <View
+                            style={{
+                              marginBottom: 10,
+                              marginTop: -10,
+                              flexDirection: 'row',
+                            }}>
+                            <PaymentMethodProviderText>
+                              See
+                            </PaymentMethodProviderText>
+                            <PaymentMethodProviderLink>
+                              other supported payment methods
+                            </PaymentMethodProviderLink>
+                          </View>
+                        </TouchableOpacity>
+                      ) : null}
 
                       <PaymentMethodProvider>
                         <PaymentMethodProviderText>

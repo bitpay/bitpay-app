@@ -887,7 +887,7 @@ export const publishAndSign =
             }),
           );
         } else {
-          dispatch(startUpdateWalletStatus({key, wallet}));
+          dispatch(startUpdateWalletStatus({key, wallet, force: true}));
         }
 
         let resultTx = broadcastedTx ? broadcastedTx : signedTx;
@@ -917,7 +917,10 @@ export const publishAndSign =
         dispatch(LogActions.error(`[publishAndSign] err: ${errorStr}`));
         // if broadcast fails, remove transaction proposal
         try {
-          await removeTxp(wallet, txp);
+          // except for multisig pending transactions
+          if (txp.status !== 'pending') {
+            await removeTxp(wallet, txp);
+          }
         } catch (removeTxpErr: any) {
           dispatch(
             LogActions.error(

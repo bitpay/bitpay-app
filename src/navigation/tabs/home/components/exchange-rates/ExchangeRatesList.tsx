@@ -18,7 +18,7 @@ export interface ExchangeRateItemProps {
 }
 
 const ExchangeRateListContainer = styled.View`
-  margin: 35px ${ScreenGutter} 10px;
+  margin: 10px ${ScreenGutter} 10px;
 `;
 interface ExchangeRateProps {
   items: Array<ExchangeRateItemProps>;
