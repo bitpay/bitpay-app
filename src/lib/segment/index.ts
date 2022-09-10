@@ -5,6 +5,7 @@ import {
   SegmentClient,
   UserTraits,
 } from '@segment/analytics-react-native';
+import {AppsflyerPlugin} from '@segment/analytics-react-native-plugin-appsflyer';
 import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 
@@ -14,6 +15,14 @@ import {APP_ANALYTICS_ENABLED} from '../../constants/config';
  */
 const lib = (() => {
   let _client: SegmentClient | null = null;
+
+  const _addPluginsToClient = (client: SegmentClient) => {
+    const SEGMENT_PLUGINS = [new AppsflyerPlugin(), new IdfaPlugin()];
+
+    SEGMENT_PLUGINS.forEach(plugin => {
+      client.add({plugin});
+    });
+  };
 
   /**
    * Guard wrapper that checks if analytics are enabled and client has been initialized before executing the provided callback.
@@ -76,10 +85,7 @@ const lib = (() => {
         trackAppLifecycleEvents: true, // default: false
       });
 
-      // add plugins
-      _client.add({
-        plugin: new IdfaPlugin(),
-      });
+      _addPluginsToClient(_client);
     },
 
     /**
