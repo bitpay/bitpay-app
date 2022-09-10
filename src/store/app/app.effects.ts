@@ -103,7 +103,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
-      dispatch(askForTrackingPermissionAndEnableSdks(true));
+      await dispatch(askForTrackingPermissionAndEnableSdks(true));
     }
 
     if (!migrationComplete) {
