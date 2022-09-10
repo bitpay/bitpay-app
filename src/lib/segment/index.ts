@@ -2,11 +2,13 @@ import {SEGMENT_API_KEY} from '@env';
 import {
   createClient,
   JsonMap,
+  Plugin,
   SegmentClient,
   UserTraits,
 } from '@segment/analytics-react-native';
 import {AppsflyerPlugin} from '@segment/analytics-react-native-plugin-appsflyer';
 import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
+import {IS_IOS} from '../../constants';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 
 /**
@@ -17,7 +19,11 @@ const lib = (() => {
   let _client: SegmentClient | null = null;
 
   const _addPluginsToClient = (client: SegmentClient) => {
-    const SEGMENT_PLUGINS = [new AppsflyerPlugin(), new IdfaPlugin()];
+    const SEGMENT_PLUGINS: Plugin[] = [new AppsflyerPlugin()];
+
+    if (IS_IOS) {
+      SEGMENT_PLUGINS.push(new IdfaPlugin());
+    }
 
     SEGMENT_PLUGINS.forEach(plugin => {
       client.add({plugin});
