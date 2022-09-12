@@ -34,6 +34,10 @@ export const startBitPayIdStoreInit =
     const {basicInfo: user} = initialData;
 
     if (user) {
+      const {eid, email, name} = user;
+
+      dispatch(Analytics.identify(eid, {email, name}));
+
       dispatch(
         BitPayIdActions.successInitializeStore(APP.network, initialData),
       );
@@ -423,12 +427,6 @@ const startPairAndLoadUser =
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(AppEffects.initializeBrazeContent());
       dispatch(ShopEffects.startFetchCatalog());
-
-      if (data.user.basicInfo) {
-        const {eid, email, name} = data.user.basicInfo;
-
-        dispatch(Analytics.identify(eid, {email, name}));
-      }
     } catch (err) {
       let errMsg;
 

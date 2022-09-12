@@ -1,5 +1,12 @@
 import debounce from 'lodash.debounce';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import styled from 'styled-components/native';
 import {Keyboard, ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
@@ -24,8 +31,13 @@ import {useAppSelector} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
-import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useScrollToTop,
+} from '@react-navigation/native';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import {HeaderTitle} from '../../../components/styled/Text';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -120,6 +132,8 @@ const ShopHome: React.FC<
     () => getGiftCardConfigList(supportedCardMap || availableCardMap),
     [supportedCardMap, availableCardMap],
   );
+  const navigation = useNavigation();
+
   const curations = useMemo(
     () =>
       getGiftCardCurations(
@@ -130,6 +144,12 @@ const ShopHome: React.FC<
     [availableGiftCards, categoriesAndCurations, purchasedGiftCards],
   );
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => null,
+      headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
+    });
+  }, [navigation, t]);
   const integrations = useAppSelector(selectIntegrations);
   const categories = useAppSelector(selectCategories);
   const categoriesWitIntegrations = useAppSelector(

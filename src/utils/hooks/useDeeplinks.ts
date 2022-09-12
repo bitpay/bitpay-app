@@ -191,12 +191,9 @@ export const useDeeplinks = () => {
           screens: {
             [TabsScreens.CARD]: {
               path: 'wallet-card',
+              initialRouteName: CardScreens.HOME,
               screens: {
                 [CardScreens.PAIRING]: 'pairing',
-                [CardScreens.HOME]: {
-                  path: 'card/:action',
-                  exact: true,
-                },
               },
             },
             [TabsScreens.SETTINGS]: {

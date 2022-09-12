@@ -233,7 +233,7 @@ const TransactionProposalNotifications = () => {
         id: Math.random(),
         walletId: txpsPerWallet[0],
         txps: txpsPerWallet[1],
-        multipleSignAvailable: txpToBeSigned > 1,
+        needSign: txpToBeSigned > 0,
       });
     });
     return txpsByWallet;
@@ -285,7 +285,11 @@ const TransactionProposalNotifications = () => {
       const key = keys[fullWalletObj.keyId];
       navigation.navigate('Wallet', {
         screen: 'TransactionProposalDetails',
-        params: {wallet: fullWalletObj, transaction, key},
+        params: {
+          walletId: fullWalletObj.id,
+          transactionId: transaction.id,
+          keyId: key.id,
+        },
       });
     },
     [keys, navigation],
@@ -391,7 +395,7 @@ const TransactionProposalNotifications = () => {
                 {currencyAbbreviation.toUpperCase()} {`- Multisig ${m}/${n}`}
               </ListItemSubText>
             </CurrencyColumn>
-            {item.multipleSignAvailable ? (
+            {item.needSign && item.txps.length > 1 ? (
               <Link
                 onPress={() => {
                   txpSelectAll(item.txps, _walletId);
@@ -413,14 +417,16 @@ const TransactionProposalNotifications = () => {
                       hideIcon={true}
                     />
                   </ProposalsInfoContainer>
-                  <CheckBoxContainer>
-                    <Checkbox
-                      checked={!!txpChecked[txp.id]}
-                      onPress={() => {
-                        txpSelectionChange(txp, _walletId);
-                      }}
-                    />
-                  </CheckBoxContainer>
+                  {item.needSign ? (
+                    <CheckBoxContainer>
+                      <Checkbox
+                        checked={!!txpChecked[txp.id]}
+                        onPress={() => {
+                          txpSelectionChange(txp, _walletId);
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  ) : null}
                 </ProposalsContainer>
               ))
             : null}
@@ -472,8 +478,10 @@ const TransactionProposalNotifications = () => {
     const [readOnlyKeys, _keys] = _.partition(keysWithProposals, 'isReadOnly');
 
     Promise.all([
-      dispatch(startUpdateAllWalletStatusForKeys({keys: _keys})),
-      dispatch(startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys})),
+      dispatch(startUpdateAllWalletStatusForKeys({keys: _keys, force: true})),
+      dispatch(
+        startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys, force: true}),
+      ),
     ]);
   };
 
@@ -574,6 +582,8 @@ const TransactionProposalNotifications = () => {
                   wallet,
                 }),
               )) as (TransactionProposal | Error)[];
+              dispatch(dismissOnGoingProcessModal());
+              await sleep(400);
               const count = countSuccessAndFailed(data);
               if (count.failed > 0) {
                 const errMsg = `There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`;
@@ -584,7 +594,6 @@ const TransactionProposalNotifications = () => {
                   }),
                 );
               }
-              dispatch(dismissOnGoingProcessModal());
 
               if (count.success > 0) {
                 dispatch(

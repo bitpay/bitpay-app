@@ -29,13 +29,19 @@ const HomeRowContainer = styled.View<{slim?: boolean}>`
 `;
 
 const Header = styled.View<{slim?: boolean}>`
+  display: flex;
   flex-direction: row;
   margin: 0 ${ScreenGutter} ${({slim}) => (slim ? 0 : 12)}px 16px;
   justify-content: space-between;
   align-items: center;
-  position: absolute;
-  left: 0;
-  right: 0;
+`;
+
+const HomeSectionTitleContainer = styled.View`
+  width: 80%;
+`;
+
+const HeaderLinkContainer = styled.View`
+  margin-left: auto;
 `;
 
 const HeaderLink = styled(Link)`
@@ -69,17 +75,27 @@ const HomeSection: React.FC<HomeRowProps> = props => {
 
   return (
     <HomeRowContainer style={style} slim={slimContainer}>
-      <Header slim={slimHeader}>
-        <HomeSectionTitle>{title || ''}</HomeSectionTitle>
-        <TouchableOpacity activeOpacity={ActiveOpacity} onPress={onActionPress}>
-          <HeaderLink>{action || ''}</HeaderLink>
-        </TouchableOpacity>
-        {label ? (
-          <HeaderLabelContainer>
-            <HeaderLabel>{label}</HeaderLabel>
-          </HeaderLabelContainer>
-        ) : null}
-      </Header>
+      {title ? (
+        <Header slim={slimHeader}>
+          <HomeSectionTitleContainer>
+            <HomeSectionTitle>{title}</HomeSectionTitle>
+          </HomeSectionTitleContainer>
+          {action ? (
+            <HeaderLinkContainer>
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={onActionPress}>
+                <HeaderLink>{action}</HeaderLink>
+              </TouchableOpacity>
+            </HeaderLinkContainer>
+          ) : null}
+          {label ? (
+            <HeaderLabelContainer>
+              <HeaderLabel>{label}</HeaderLabel>
+            </HeaderLabelContainer>
+          ) : null}
+        </Header>
+      ) : null}
       {children}
     </HomeRowContainer>
   );

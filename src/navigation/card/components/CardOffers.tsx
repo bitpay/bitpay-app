@@ -1,6 +1,6 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
-import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
+import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled, {useTheme} from 'styled-components/native';
@@ -89,7 +89,7 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
 
   const onPress = () => {
     if (!contentCard.id.startsWith('dev_')) {
-      ReactAppboy.logContentCardClicked(contentCard.id);
+      Braze.logContentCardClicked(contentCard.id);
 
       dispatch(
         Analytics.track('Clicked Card Offer', {
@@ -104,7 +104,7 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
 
   useFocusEffect(() => {
     if (!contentCard.id.startsWith('dev_')) {
-      ReactAppboy.logContentCardImpression(contentCard.id);
+      Braze.logContentCardImpression(contentCard.id);
     }
   });
 

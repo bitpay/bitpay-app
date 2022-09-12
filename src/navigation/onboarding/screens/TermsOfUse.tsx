@@ -4,7 +4,6 @@ import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Linking, ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';
@@ -15,6 +14,7 @@ import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import TermsBox from '../components/TermsBox';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import {useAppDispatch} from '../../../utils/hooks';
 
 type TermsOfUseScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -66,9 +66,10 @@ const TermsContainer = styled.View`
 const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const {key, context} = route.params || {};
   const [agreed, setAgreed] = useState<number[]>([]);
+
   const Terms: Array<TermsOfUseModel> = [
     {
       id: 1,
@@ -119,7 +120,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   const [termsList] = useState(() => {
     if (context === 'TOUOnly') {
       return Terms.filter(term => term.id === 3);
-    } else if (key) {
+    } else if (key || context === 'deferredImport') {
       return Terms.filter(term => term.id !== 3);
     }
 

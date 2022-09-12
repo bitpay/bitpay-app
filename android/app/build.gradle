@@ -231,7 +231,6 @@ dependencies {
       exclude group:'com.squareup.okhttp3', module:'okhttp'
     }
 
-    implementation project(':react-native-advertising-id-bp')
     // AppsFlyer
     compile project(':react-native-appsflyer')
     // Dosh SDK requires updated okhttp version

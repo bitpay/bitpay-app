@@ -21,6 +21,7 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
 import ErrorSvg from '../../../../assets/img/error.svg';
 import QuestionSvg from '../../../../assets/img/question.svg';
+import WaitSvg from '../../../../assets/img/wait.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Theme, useNavigation, useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
@@ -28,7 +29,7 @@ import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions
 import {HEIGHT} from '../../styled/Containers';
 
 export interface BottomNotificationConfig {
-  type: 'success' | 'info' | 'warning' | 'error' | 'question';
+  type: 'success' | 'info' | 'warning' | 'error' | 'question' | 'wait';
   title: string;
   message: string;
   actions: Array<{
@@ -52,6 +53,7 @@ const notificationType = {
   warning: <WarningSvg {...svgProps} />,
   error: <ErrorSvg {...svgProps} />,
   question: <QuestionSvg {...svgProps} />,
+  wait: <WaitSvg {...svgProps} />,
 };
 
 const BottomNotificationContainer = styled.View`

@@ -104,6 +104,7 @@ export interface AppState {
   activeModalId: ModalId | null;
   failedAppInit: boolean;
   checkingBiometricForSending: boolean;
+  onCompleteOnboardingList: Array<string>;
 }
 
 const initialState: AppState = {
@@ -170,6 +171,7 @@ const initialState: AppState = {
   activeModalId: null,
   failedAppInit: false,
   checkingBiometricForSending: false,
+  onCompleteOnboardingList: [],
 };
 
 export const appReducer = (
@@ -533,6 +535,22 @@ export const appReducer = (
       return {
         ...state,
         checkingBiometricForSending: action.payload,
+      };
+
+    case AppActionTypes.UPDATE_ON_COMPLETE_ONBOARDING_LIST:
+      const _onCompleteOnboardingList = state.onCompleteOnboardingList;
+      if (!_onCompleteOnboardingList.includes(action.payload)) {
+        _onCompleteOnboardingList.push(action.payload);
+      }
+      return {
+        ...state,
+        onCompleteOnboardingList: _onCompleteOnboardingList,
+      };
+
+    case AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST:
+      return {
+        ...state,
+        onCompleteOnboardingList: [],
       };
 
     default:

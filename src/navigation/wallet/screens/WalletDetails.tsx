@@ -398,7 +398,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({force: true}));
       await Promise.all([
-        await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj})),
+        await dispatch(
+          startUpdateWalletStatus({key, wallet: fullWalletObj, force: true}),
+        ),
         await loadHistory(true),
         sleep(1000),
       ]);
@@ -444,12 +446,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         copayerId: fullWalletObj.credentials.copayerId,
       });
 
-      if ((!action || action.type === 'failed') && txp.status == 'pending') {
+      if ((!action || action.type === 'failed') && txp.status === 'pending') {
         txpsPending.push(txp);
       }
 
       // For unsent transactions
-      if (action && txp.status == 'accepted') {
+      if (action && txp.status === 'accepted') {
         txpsPending.push(txp);
       }
     });
@@ -806,7 +808,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     () => (transaction: any) => {
       navigation.navigate('Wallet', {
         screen: 'TransactionProposalDetails',
-        params: {wallet: fullWalletObj, transaction, key},
+        params: {
+          walletId: fullWalletObj.id,
+          transactionId: transaction.id,
+          keyId: key.id,
+        },
       });
     },
     [],

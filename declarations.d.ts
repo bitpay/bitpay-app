@@ -14,10 +14,3 @@ declare module '@env' {
   export const SEGMENT_API_KEY: string;
   export const GIT_COMMIT_HASH: string;
 }
-
-declare module 'react-native-advertising-id-bp' {
-  export const getAdvertisingId: () => Promise<{
-    advertisingId: string;
-    isLimitAdTrackingEnabled: boolean;
-  }>;
-}

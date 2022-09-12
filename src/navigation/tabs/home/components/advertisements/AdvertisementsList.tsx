@@ -13,7 +13,7 @@ interface AdvertisementListProps {
 }
 
 const AdvertisementListContainer = styled.View`
-  margin-top: 40px;
+  margin-top: 10px;
   margin-bottom: 20px;
 `;
 

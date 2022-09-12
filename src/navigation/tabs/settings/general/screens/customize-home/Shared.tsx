@@ -3,7 +3,7 @@ import {Theme} from '@react-navigation/native';
 import {LightBlack, White} from '../../../../../../styles/colors';
 import React from 'react';
 import styled from 'styled-components/native';
-import {H5, H7} from '../../../../../../components/styled/Text';
+import {H7} from '../../../../../../components/styled/Text';
 import {ScreenGutter} from '../../../../../../components/styled/Containers';
 import {TouchableOpacity} from 'react-native';
 import {Key, Wallet} from '../../../../../../store/wallet/wallet.models';

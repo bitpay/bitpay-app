@@ -5,7 +5,7 @@ import {Path, Svg} from 'react-native-svg';
 import {White} from '../../../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../../../store/app/app.effects';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 
 const image = (theme: Theme) => {
   return (
@@ -24,9 +24,11 @@ const CreateWallet = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const deferredImport = useAppSelector(({WALLET}) => WALLET.deferredImport);
 
   return (
     <LinkCard
+      disabled={!!deferredImport}
       image={image}
       description={t('Create, import or join a shared wallet')}
       onPress={() => {
