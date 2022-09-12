@@ -3,8 +3,11 @@ import styled, {css, useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import DeleteIcon from '../icons/delete/Delete';
+import {PixelRatio} from 'react-native';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
-export const VIRTUAL_KEYBOARD_BUTTON_SIZE = 85;
+const PIXEL_DENSITY_LIMIT = 3;
+export const VIRTUAL_KEYBOARD_BUTTON_SIZE =
+  PixelRatio.get() < PIXEL_DENSITY_LIMIT ? 70 : 85;
 
 interface SymbolContainerProps {
   showLetters?: boolean;
@@ -24,12 +27,15 @@ const CellContainer = styled.View`
   align-items: center;
 `;
 
-const CellValue = styled(BaseText)<{darkModeOnly?: boolean}>`
-  font-size: 32.08px;
+const CellValue = styled(BaseText)<{
+  darkModeOnly?: boolean;
+  isSmallScreen?: boolean;
+}>`
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? 26 : 32.08)}px;
   font-weight: 500;
   color: ${({theme, darkModeOnly}) =>
     darkModeOnly ? White : theme.colors.text};
-  line-height: 65px;
+  line-height: ${({isSmallScreen}) => (isSmallScreen ? 50 : 65)}px;
 `;
 
 const CellLetter = styled(BaseText)`
@@ -79,7 +85,13 @@ const Cell: React.FC<CellProps> = ({
         onPress={() => onCellPress?.(value)}
         backgroundColor={backgroundColor}>
         <>
-          <CellValue darkModeOnly={darkModeOnly}>{value}</CellValue>
+          <CellValue
+            darkModeOnly={darkModeOnly}
+            isSmallScreen={
+              PixelRatio.get() < PIXEL_DENSITY_LIMIT ? true : false
+            }>
+            {value}
+          </CellValue>
           {letters ? <CellLetter>{letters}</CellLetter> : null}
         </>
       </VirtualKeyboardButtonAnimation>
