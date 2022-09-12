@@ -7,6 +7,7 @@ import {
 import styled, {useTheme} from 'styled-components/native';
 import {Feather, LightBlack, White} from '../../../../../styles/colors';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import {BoxShadow} from '../Styled';
 
 const Container = styled(CardContainer)`
   height: 200px;
@@ -19,7 +20,7 @@ const CarouselKeySkeleton = () => {
   const theme = useTheme();
 
   return (
-    <Container>
+    <Container style={!theme.dark && BoxShadow}>
       <SkeletonPlaceholder
         backgroundColor={theme.dark ? '#111111' : Feather}
         highlightColor={theme.dark ? LightBlack : White}>

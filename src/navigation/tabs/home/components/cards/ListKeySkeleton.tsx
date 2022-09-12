@@ -3,6 +3,7 @@ import styled, {useTheme} from 'styled-components/native';
 import {LightBlack, White, Feather} from '../../../../../styles/colors';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import {BoxShadow} from '../Styled';
 
 const ListCard = styled.View`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
@@ -19,7 +20,7 @@ const ListKeySkeleton = () => {
   const theme = useTheme();
 
   return (
-    <ListCard>
+    <ListCard style={!theme.dark && BoxShadow}>
       <SkeletonPlaceholder
         backgroundColor={theme.dark ? '#111111' : Feather}
         highlightColor={theme.dark ? LightBlack : White}>

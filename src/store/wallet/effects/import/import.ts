@@ -842,11 +842,11 @@ export const deferredImportMnemonic =
       await dispatch(startGetRates({}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
+      dispatch(clearDeferredImport());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
       dispatch(dismissOnGoingProcessModal());
       await sleep(600);
-      dispatch(clearDeferredImport());
       dispatch(
         logSegmentEvent('track', 'Imported Key', {
           context: context || '',
