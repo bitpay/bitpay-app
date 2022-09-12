@@ -87,9 +87,7 @@ const Cell: React.FC<CellProps> = ({
         <>
           <CellValue
             darkModeOnly={darkModeOnly}
-            isSmallScreen={
-              PixelRatio.get() < PIXEL_DENSITY_LIMIT ? true : false
-            }>
+            isSmallScreen={PixelRatio.get() < PIXEL_DENSITY_LIMIT}>
             {value}
           </CellValue>
           {letters ? <CellLetter>{letters}</CellLetter> : null}
