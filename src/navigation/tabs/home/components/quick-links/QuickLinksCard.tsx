@@ -54,7 +54,8 @@ const TitleText = styled(BaseText)`
   font-style: normal;
   font-weight: 700;
   font-size: 12px;
-  line-height: 25px;
+  line-height: 15px;
+  margin-bottom: 8px;
   color: ${({theme: {dark}}) => (dark ? White : Action)};
 `;
 const DescriptionText = styled(BaseText)`
