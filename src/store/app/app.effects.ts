@@ -4,7 +4,7 @@ import BitAuth from 'bitauth';
 import i18n from 'i18next';
 import {debounce} from 'lodash';
 import {DeviceEventEmitter, Linking, Platform} from 'react-native';
-import Braze, {NotificationSubscriptionTypes} from 'react-native-appboy-sdk';
+import Braze from 'react-native-appboy-sdk';
 import AppsFlyer from 'react-native-appsflyer';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
@@ -778,11 +778,11 @@ export const setEmailNotifications =
 
     if (agreedToMarketingCommunications) {
       Braze.setEmailNotificationSubscriptionType(
-        NotificationSubscriptionTypes.OPTED_IN,
+        Braze.NotificationSubscriptionTypes.OPTED_IN,
       );
     } else {
       Braze.setEmailNotificationSubscriptionType(
-        NotificationSubscriptionTypes.SUBSCRIBED,
+        Braze.NotificationSubscriptionTypes.SUBSCRIBED,
       );
     }
 
