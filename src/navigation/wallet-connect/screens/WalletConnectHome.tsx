@@ -62,7 +62,7 @@ const SummaryContainer = styled.View`
 `;
 
 const NoteContainer = styled.TouchableOpacity<{isDappUri?: boolean}>`
-  background-color: ${props => (props.theme.dark ? LightBlack : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   max-width: ${({isDappUri}) => (isDappUri ? '175px' : '126px')};
   justify-content: center;
@@ -104,108 +104,86 @@ const WalletConnectHome = () => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
 
-  const goToConfirmView = (request: IWCRequest) => {
-    dispatch(
-      showBottomNotificationModal({
-        type: 'question',
-        title: t('Confirm request'),
-        message: t(
-          'Please check on that the request is still waiting for confirmation and the swap amount is correct before proceeding to the confirmation step.',
-          {name: session?.peerMeta?.name},
+  const goToConfirmView = async (request: IWCRequest) => {
+    try {
+      dispatch(dismissBottomNotificationModal());
+      await sleep(500);
+      dispatch(
+        showOnGoingProcessModal(
+          // t('Loading')
+          t(OnGoingProcessMessages.LOADING),
         ),
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('CONTINUE'),
-            action: async () => {
-              try {
-                dispatch(dismissBottomNotificationModal());
-                await sleep(500);
-                dispatch(
-                  showOnGoingProcessModal(
-                    // t('Loading')
-                    t(OnGoingProcessMessages.LOADING),
-                  ),
-                );
+      );
 
-                const {
-                  to: toAddress,
-                  from,
-                  gasPrice,
-                  gas,
-                  value = '0x0',
-                  nonce,
-                  data,
-                } = request.payload.params[0];
-                const recipient = {
-                  address: toAddress,
-                };
-                const amountStr = value
-                  ? dispatch(FormatAmount('eth', parseInt(value, 16)))
-                  : 0;
-                const tx = {
-                  wallet,
-                  recipient,
-                  toAddress,
-                  from,
-                  amount: Number(amountStr),
-                  gasPrice: gasPrice && convertHexToNumber(gasPrice),
-                  nonce: nonce && convertHexToNumber(nonce),
-                  gasLimit: gas && convertHexToNumber(gas),
-                  data,
-                  customData: {
-                    service: 'walletConnect',
-                  },
-                };
-                const {txDetails, txp} = (await dispatch<any>(
-                  createProposalAndBuildTxDetails(tx),
-                )) as any;
-                dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
-                navigation.navigate('WalletConnect', {
-                  screen: 'WalletConnectConfirm',
-                  params: {
-                    wallet,
-                    recipient,
-                    txp,
-                    txDetails,
-                    request,
-                    amount: tx.amount,
-                    data,
-                  },
-                });
-              } catch (err: any) {
-                const errorMessageConfig = (
-                  await Promise.all([
-                    dispatch(handleCreateTxProposalError(err)),
-                    sleep(500),
-                  ])
-                )[0];
-                dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
-                dispatch(
-                  showBottomNotificationModal({
-                    ...errorMessageConfig,
-                    enableBackdropDismiss: false,
-                    actions: [
-                      {
-                        text: t('OK'),
-                        action: () => {},
-                      },
-                    ],
-                  }),
-                );
-              }
+      const {
+        to: toAddress,
+        from,
+        gasPrice,
+        gas,
+        value = '0x0',
+        nonce,
+        data,
+      } = request.payload.params[0];
+      const recipient = {
+        address: toAddress,
+      };
+      const amountStr = value
+        ? dispatch(FormatAmount('eth', parseInt(value, 16)))
+        : 0;
+      const tx = {
+        wallet,
+        recipient,
+        toAddress,
+        from,
+        amount: Number(amountStr),
+        gasPrice: gasPrice && convertHexToNumber(gasPrice),
+        nonce: nonce && convertHexToNumber(nonce),
+        gasLimit: gas && convertHexToNumber(gas),
+        data,
+        customData: {
+          service: 'walletConnect',
+        },
+      };
+      const {txDetails, txp} = (await dispatch<any>(
+        createProposalAndBuildTxDetails(tx),
+      )) as any;
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      navigation.navigate('WalletConnect', {
+        screen: 'WalletConnectConfirm',
+        params: {
+          wallet,
+          recipient,
+          txp,
+          txDetails,
+          request,
+          amount: tx.amount,
+          data,
+          peerName: session?.peerMeta?.name,
+        },
+      });
+    } catch (err: any) {
+      const errorMessageConfig = (
+        await Promise.all([
+          dispatch(handleCreateTxProposalError(err)),
+          sleep(500),
+        ])
+      )[0];
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {},
             },
-            primary: true,
-          },
-          {
-            text: t('GO BACK'),
-            action: () => {},
-          },
-        ],
-      }),
-    );
+          ],
+        }),
+      );
+    }
   };
 
   const copyToClipboard = (value: string, type: string) => {

@@ -52,9 +52,12 @@ import {
 } from '../../wallet/screens/send/confirm/Shared';
 import TransactionLevel from '../../wallet/screens/send/TransactionLevel';
 import {GetFeeOptions} from '../../../store/wallet/effects/fee/fee';
-import {useTranslation} from 'react-i18next';
+import {Trans, useTranslation} from 'react-i18next';
 import prompt from 'react-native-prompt-android';
 import {Platform} from 'react-native';
+import Banner from '../../../components/banner/Banner';
+import {BaseText} from '../../../components/styled/Text';
+import {Hr} from '../../../components/styled/Containers';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
@@ -68,6 +71,7 @@ export interface WalletConnectConfirmParamList {
   request: IWCRequest;
   amount: number;
   data: string;
+  peerName?: string;
 }
 
 const WalletConnectConfirm = () => {
@@ -84,6 +88,7 @@ const WalletConnectConfirm = () => {
     request,
     amount,
     data,
+    peerName,
   } = route.params;
 
   const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
@@ -329,6 +334,18 @@ const WalletConnectConfirm = () => {
     <ConfirmContainer>
       <DetailsList>
         <Header>Summary</Header>
+        <Banner
+          type={'warning'}
+          description={''}
+          transComponent={
+            <Trans
+              i18nKey="WalletConnectBannerConfirm"
+              values={{peerName}}
+              components={[<BaseText style={{fontWeight: 'bold'}} />]}
+            />
+          }
+        />
+        <Hr />
         <SendingTo recipient={sendingTo} hr />
         <Fee
           onPress={() => setShowTransactionLevel(true)}
