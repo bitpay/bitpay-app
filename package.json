@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.6.5",
+  "version": "14.6.6",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -176,7 +176,7 @@
     "@types/lodash.isequal": "4.5.5",
     "@types/lodash.merge": "4.6.6",
     "@types/lodash.throttle": "4.1.6",
-    "@types/react-native": "0.64.19",
+    "@types/react-native": "0.67.4",
     "@types/react-native-dotenv": "0.2.0",
     "@types/react-native-snap-carousel": "3.8.5",
     "@types/react-redux": "7.1.20",
