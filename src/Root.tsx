@@ -294,9 +294,7 @@ export default () => {
       'change',
       onAppStateChange,
     );
-    return () => {
-      subscriptionAppStateChange.remove();
-    };
+    return () => subscriptionAppStateChange.remove();
   }, [
     dispatch,
     onboardingCompleted,
