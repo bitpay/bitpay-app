@@ -31,6 +31,8 @@ import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
+import _ from 'lodash';
+
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
@@ -370,10 +372,25 @@ const IsFirstInGroup = (index: number, history: any[]) => {
 };
 
 export const GroupTransactionHistory = (history: any[]) => {
-  return history
-    .sort((x, y) => y.time - x.time)
+  // workaround to show pending transactions first even if it was broadcasted earlier that the confirmed ones
+  const [_pendingTransactions, _confirmedTransactions] = _.partition(
+    history.sort((x, y) => y.time - x.time),
+    t => {
+      return t.confirmations === 0;
+    },
+  );
+  const pendingTransactionsGroup =
+    _pendingTransactions.length > 0
+      ? [
+          {
+            title: t('Pending Transactions'),
+            data: _pendingTransactions,
+          },
+        ]
+      : [];
+  const confirmedTransactionsGroup = _confirmedTransactions
     .reduce((groups, tx, txInd) => {
-      IsFirstInGroup(txInd, history)
+      IsFirstInGroup(txInd, _confirmedTransactions)
         ? groups.push([tx])
         : groups[groups.length - 1].push(tx);
       return groups;
@@ -385,6 +402,7 @@ export const GroupTransactionHistory = (history: any[]) => {
         : moment(time).format('MMMM');
       return {title, data: group};
     });
+  return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
 };
 
 export const GetTransactionHistory =
