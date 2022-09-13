@@ -174,7 +174,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // Deferred Import
     if (WALLET.deferredImport) {
       const {importData, opts} = WALLET.deferredImport;
-      dispatch(deferredImportMnemonic(importData, opts, undefined, true));
+      dispatch(
+        deferredImportMnemonic(importData, opts, 'deferredImport', true),
+      );
     }
 
     dispatch(showBlur(pinLockActive || biometricLockActive));

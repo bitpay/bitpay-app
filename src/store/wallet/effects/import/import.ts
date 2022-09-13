@@ -90,7 +90,7 @@ import {
   setNotifications,
   subscribePushNotifications,
   subscribeEmailNotifications,
-  logSegmentEvent,
+  Analytics,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
 import {sleep} from '../../../../utils/helper-methods';
@@ -764,16 +764,20 @@ export const migrateKeyAndWallets =
     });
   };
 
-export const deferredImportErrorNotification = (): Effect => async dispatch => {
-  dispatch(dismissOnGoingProcessModal());
-  await sleep(600);
-  dispatch(
-    showBottomNotificationModal({
-      type: 'error',
-      title: t('Problem importing key'),
-      message: t('There was an issue importing your key. Please try again.'),
-      enableBackdropDismiss: false,
-      actions: [
+export const deferredImportErrorNotification =
+  (onRecoveryScreen = false): Effect =>
+  async dispatch => {
+    let actions;
+    if (onRecoveryScreen) {
+      actions = [
+        {
+          text: t('OK'),
+          action: () => {},
+          primary: false,
+        },
+      ];
+    } else {
+      actions = [
         {
           text: t('IMPORT KEY'),
           action: () => {
@@ -786,10 +790,20 @@ export const deferredImportErrorNotification = (): Effect => async dispatch => {
           action: () => {},
           primary: false,
         },
-      ],
-    }),
-  );
-};
+      ];
+    }
+    dispatch(dismissOnGoingProcessModal());
+    await sleep(600);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title: t('Problem importing key'),
+        message: t('There was an issue importing your key. Please try again.'),
+        enableBackdropDismiss: false,
+        actions,
+      }),
+    );
+  };
 
 export const deferredImportMnemonic =
   (
@@ -799,13 +813,14 @@ export const deferredImportMnemonic =
     skipNotification?: boolean,
   ): Effect =>
   async (dispatch, getState): Promise<void> => {
+    let continueTapped = false;
+
     try {
       const {WALLET} = getState();
       let _context = context;
       if (_context !== 'onboarding') {
         _context = 'deferredImport';
       }
-      let continueTapped = false;
 
       if (!skipNotification) {
         dispatch(
@@ -848,7 +863,7 @@ export const deferredImportMnemonic =
       dispatch(dismissOnGoingProcessModal());
       await sleep(600);
       dispatch(
-        logSegmentEvent('track', 'Imported Key', {
+        Analytics.track('Imported Key', {
           context: context || '',
           source: 'RecoveryPhrase',
         }),
@@ -890,7 +905,7 @@ export const deferredImportMnemonic =
           APP: {onboardingCompleted},
         } = getState();
         if (onboardingCompleted) {
-          dispatch(deferredImportErrorNotification());
+          dispatch(deferredImportErrorNotification(!continueTapped));
         } else {
           dispatch(
             updateOnCompleteOnboarding('deferredImportErrorNotification'),
