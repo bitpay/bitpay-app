@@ -290,8 +290,11 @@ export default () => {
         }
       }
     }
-    AppState.addEventListener('change', onAppStateChange);
-    return () => AppState.removeEventListener('change', onAppStateChange);
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+    return () => subscriptionAppStateChange.remove();
   }, [
     dispatch,
     onboardingCompleted,
