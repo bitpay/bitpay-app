@@ -91,8 +91,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    await dispatch(startWalletStoreInit());
-
     const {appFirstOpenData, onboardingCompleted, migrationComplete} =
       getState().APP;
 
@@ -105,6 +103,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (onboardingCompleted) {
       await dispatch(askForTrackingPermissionAndEnableSdks(true));
     }
+
+    await dispatch(startWalletStoreInit());
 
     if (!migrationComplete) {
       await dispatch(startMigration());
@@ -461,15 +461,16 @@ export const openUrlWithInAppBrowser =
 export const askForTrackingPermissionAndEnableSdks =
   (appInit: boolean = false): Effect<Promise<void>> =>
   async (dispatch, getState) => {
+    console.log('askForTrackingPermissionAndEnableSdks++');
     dispatch(
       LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
     );
     const trackingStatus = await requestTrackingPermission();
+    const isAuthorizedByUser = ['authorized', 'unavailable'].includes(
+      trackingStatus,
+    );
 
-    if (
-      ['authorized', 'unavailable'].includes(trackingStatus) &&
-      APP_ANALYTICS_ENABLED
-    ) {
+    if (APP_ANALYTICS_ENABLED && isAuthorizedByUser) {
       dispatch(
         LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
       );
@@ -497,7 +498,7 @@ export const askForTrackingPermissionAndEnableSdks =
       }
 
       try {
-        Segment.init();
+        await Segment.init();
 
         if (appInit) {
           const {appFirstOpenData} = getState().APP;

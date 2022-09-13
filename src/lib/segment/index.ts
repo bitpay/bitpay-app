@@ -17,6 +17,7 @@ import {APP_ANALYTICS_ENABLED} from '../../constants/config';
  */
 const lib = (() => {
   let _client: SegmentClient | null = null;
+  const _queue: Array<(client: SegmentClient) => Promise<any>> = [];
 
   const _addPluginsToClient = (client: SegmentClient) => {
     const SEGMENT_PLUGINS: Plugin[] = [new AppsflyerPlugin()];
@@ -33,7 +34,7 @@ const lib = (() => {
   /**
    * Guard wrapper that checks if analytics are enabled and client has been initialized before executing the provided callback.
    * @param cb Function to execute if all guards pass.
-   * @returns Resolves if analytics disabled, rejects if client uninitialized, else returns the callback's return value;
+   * @returns Resolves as void if analytics disabled or if client uninitialized, else returns the callback's return value;
    */
   const guard = <T>(
     cb: (client: SegmentClient) => Promise<T>,
@@ -43,7 +44,9 @@ const lib = (() => {
     }
 
     if (!_client) {
-      return Promise.reject('Uninitialized');
+      // Queue up any actions that happen before we get a chance to initialize.
+      _queue.push(cb);
+      return Promise.resolve();
     }
 
     return cb(_client);
@@ -61,7 +64,7 @@ const lib = (() => {
     /**
      * Creates and initializes the Segment SDK. Must be called first.
      */
-    init() {
+    async init() {
       if (!APP_ANALYTICS_ENABLED) {
         return;
       }
@@ -92,6 +95,11 @@ const lib = (() => {
       });
 
       _addPluginsToClient(_client);
+
+      // Clear the queue and run any deferred actions that were called before we got a chance to initialize
+      for (let fn = _queue.shift(); fn; fn = _queue.shift()) {
+        await fn(_client).catch(() => 0);
+      }
     },
 
     /**
