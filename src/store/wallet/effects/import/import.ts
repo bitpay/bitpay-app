@@ -764,24 +764,20 @@ export const migrateKeyAndWallets =
     });
   };
 
-export const deferredImportErrorNotification =
-  (onRecoveryScreen = false): Effect =>
-  async dispatch => {
-    let actions;
-    if (onRecoveryScreen) {
-      actions = [
-        {
-          text: t('OK'),
-          action: () => {},
-          primary: false,
-        },
-      ];
-    } else {
-      actions = [
+export const deferredImportErrorNotification = (): Effect => async dispatch => {
+  dispatch(dismissOnGoingProcessModal());
+  await sleep(600);
+  dispatch(
+    showBottomNotificationModal({
+      type: 'error',
+      title: t('Problem importing key'),
+      message: t('There was an issue importing your key. Please try again.'),
+      enableBackdropDismiss: false,
+      actions: [
         {
           text: t('IMPORT KEY'),
           action: () => {
-            navigationRef.navigate('Wallet', {screen: 'CreationOptions'});
+            navigationRef.navigate('Wallet', {screen: 'Import'});
           },
           primary: true,
         },
@@ -790,73 +786,29 @@ export const deferredImportErrorNotification =
           action: () => {},
           primary: false,
         },
-      ];
-    }
-    dispatch(dismissOnGoingProcessModal());
-    await sleep(600);
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title: t('Problem importing key'),
-        message: t('There was an issue importing your key. Please try again.'),
-        enableBackdropDismiss: false,
-        actions,
-      }),
-    );
-  };
+      ],
+    }),
+  );
+};
 
 export const deferredImportMnemonic =
   (
     importData: {words?: string; xPrivKey?: string},
     opts: Partial<KeyOptions>,
     context?: string,
-    skipNotification?: boolean,
   ): Effect =>
   async (dispatch, getState): Promise<void> => {
-    let continueTapped = false;
-
     try {
       const {WALLET} = getState();
-      let _context = context;
-      if (_context !== 'onboarding') {
-        _context = 'deferredImport';
-      }
-
-      if (!skipNotification) {
-        dispatch(
-          showBottomNotificationModal({
-            type: 'wait',
-            title: t('Please wait'),
-            message: t(
-              'Your key is still being imported and will be available shortly. ',
-            ),
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: t('GOT IT'),
-                action: () => {
-                  continueTapped = true;
-                  backupRedirect({
-                    context: _context,
-                    navigation: navigationRef,
-                    walletTermsAccepted: WALLET.walletTermsAccepted,
-                  });
-                },
-                primary: true,
-              },
-            ],
-          }),
-        );
-      }
-
       dispatch(updateDeferredImport({importData, opts}));
 
+      await sleep(500);
       const key = (await dispatch<any>(
         startImportMnemonic(importData, opts),
       )) as Key;
       await dispatch(startGetRates({}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      await dispatch(updatePortfolioBalance());
+      dispatch(updatePortfolioBalance());
       dispatch(clearDeferredImport());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
@@ -874,13 +826,13 @@ export const deferredImportMnemonic =
           type: 'success',
           title: t('Key imported'),
           message: 'Your key has successfully been imported.',
-          enableBackdropDismiss: true,
+          enableBackdropDismiss: false,
           actions: [
             {
               text: t('GOT IT'),
               action: () => {
                 backupRedirect({
-                  context: !continueTapped ? context : _context,
+                  context,
                   navigation: navigationRef,
                   walletTermsAccepted: WALLET.walletTermsAccepted,
                   key,
@@ -905,7 +857,7 @@ export const deferredImportMnemonic =
           APP: {onboardingCompleted},
         } = getState();
         if (onboardingCompleted) {
-          dispatch(deferredImportErrorNotification(!continueTapped));
+          dispatch(deferredImportErrorNotification());
         } else {
           dispatch(
             updateOnCompleteOnboarding('deferredImportErrorNotification'),

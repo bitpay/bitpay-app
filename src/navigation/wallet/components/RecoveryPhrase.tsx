@@ -405,7 +405,32 @@ const RecoveryPhrase = () => {
     try {
       if (!derivationPathEnabled) {
         dispatch(
-          deferredImportMnemonic(importData, opts, route.params?.context),
+          showBottomNotificationModal({
+            type: 'wait',
+            title: t('Please wait'),
+            message: t(
+              'Your key is still being imported and will be available shortly. ',
+            ),
+            enableBackdropDismiss: false,
+            actions: [
+              {
+                text: t('GOT IT'),
+                action: () => {
+                  let _context = route.params?.context;
+                  if (_context !== 'onboarding') {
+                    _context = 'deferredImport';
+                  }
+                  backupRedirect({
+                    context: _context,
+                    navigation,
+                    walletTermsAccepted,
+                  });
+                  dispatch(deferredImportMnemonic(importData, opts, _context));
+                },
+                primary: true,
+              },
+            ],
+          }),
         );
       } else {
         await dispatch(
