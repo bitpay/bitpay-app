@@ -70,7 +70,7 @@ const Scan = () => {
             }
           }
         },
-        500,
+        800,
         {
           leading: true,
           trailing: false,
