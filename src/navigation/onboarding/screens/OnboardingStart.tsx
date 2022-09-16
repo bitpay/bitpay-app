@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useCallback, useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
@@ -16,10 +16,13 @@ import {
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Link} from '../../../components/styled/Text';
-import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {Action, LuckySevens} from '../../../styles/colors';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useRequestTrackingPermissionHandler,
+} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
@@ -127,14 +130,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useCallback(
-    async (cb: () => void) => {
-      haptic('impactLight');
-      await dispatch(askForTrackingPermissionAndEnableSdks(true));
-      cb();
-    },
-    [dispatch],
-  );
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const onLoginPress = () => {
     askForTrackingThenNavigate(() => {
@@ -178,7 +174,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, isPaired, dispatch, askForTrackingThenNavigate, t]);
+  }, [navigation, isPaired, t]);
 
   const carouselRef = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);

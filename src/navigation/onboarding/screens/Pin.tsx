@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import TouchID from 'react-native-touch-id-ng';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -24,7 +24,10 @@ import {
 } from '../../../constants/BiometricError';
 import {AppActions} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {useAppDispatch} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useRequestTrackingPermissionHandler,
+} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {OnboardingImage} from '../components/Containers';
@@ -59,18 +62,20 @@ const PinScreen: React.VFC<
 
   useAndroidBackHandler(() => true);
 
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
+
+  const onSkipPressRef = useRef(async () => {
+    haptic('impactLight');
+    askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
+  });
+
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button
-            buttonType={'pill'}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('CreateKey');
-            }}>
+          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -80,7 +85,9 @@ const PinScreen: React.VFC<
 
   const onSetPinPress = () => {
     haptic('impactLight');
-    dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
+    askForTrackingThenNavigate(() => {
+      dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
+    });
   };
 
   const onSetBiometricPress = () => {
@@ -99,7 +106,7 @@ const PinScreen: React.VFC<
       })
       .then(() => {
         dispatch(AppActions.biometricLockActive(true));
-        navigation.navigate('CreateKey');
+        askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
       })
       .catch((error: BiometricError) => {
         if (error.code && TO_HANDLE_ERRORS[error.code]) {

@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useRef} from 'react';
 import {Platform, ScrollView} from 'react-native';
 import {requestNotifications, RESULTS} from 'react-native-permissions';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -17,7 +17,10 @@ import {
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {AppEffects} from '../../../store/app';
-import {useAppDispatch} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useRequestTrackingPermissionHandler,
+} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {OnboardingImage} from '../components/Containers';
@@ -55,18 +58,20 @@ const NotificationsScreen: React.VFC<
 
   useAndroidBackHandler(() => true);
 
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
+
+  const onSkipPressRef = useRef(async () => {
+    haptic('impactLight');
+    await askForTrackingThenNavigate(() => navigation.navigate('Pin'));
+  });
+
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button
-            buttonType={'pill'}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('Pin');
-            }}>
+          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -83,7 +88,7 @@ const NotificationsScreen: React.VFC<
         dispatch(AppEffects.setConfirmTxNotifications(accepted));
         dispatch(AppEffects.setAnnouncementsNotifications(accepted));
       }
-      navigation.navigate('Pin');
+      await askForTrackingThenNavigate(() => navigation.navigate('Pin'));
     };
 
     if (!notificationsAccepted) {
