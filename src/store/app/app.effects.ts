@@ -474,31 +474,20 @@ export const askForTrackingPermissionAndEnableSdks =
       dispatch(
         LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
       );
-      try {
-        await new Promise<void>((resolve, reject) => {
-          AppsFlyer.initSdk(
-            {
-              devKey: APPSFLYER_API_KEY,
-              isDebug: __DEV__,
-              appId: APPSFLYER_APP_ID, // iOS app id
-            },
-            result => {
-              console.log(result);
-              resolve();
-            },
-            error => {
-              console.log(error);
-              reject(error);
-            },
-          );
-        });
-      } catch (err) {
+
+      await AppsFlyer.initSdk({
+        devKey: APPSFLYER_API_KEY,
+        isDebug: __DEV__,
+        appId: APPSFLYER_APP_ID, // iOS app id
+      }).catch(err => {
         dispatch(LogActions.error('Appsflyer setup failed'));
         dispatch(LogActions.error(JSON.stringify(err)));
-      }
+      });
 
       try {
-        await Segment.init();
+        if (!Segment.client()) {
+          await Segment.init();
+        }
 
         if (appInit) {
           const {appFirstOpenData} = getState().APP;
@@ -683,16 +672,10 @@ export const unSubscribeEmailNotifications =
     });
   };
 
-export const checkNotificationsPermissions = (): Promise<boolean> => {
-  return new Promise(async resolve => {
-    checkNotifications().then(({status}) => {
-      if (status === RESULTS.GRANTED) {
-        return resolve(true);
-      } else {
-        return resolve(false);
-      }
-    });
-  });
+export const checkNotificationsPermissions = async (): Promise<boolean> => {
+  const {status} = await checkNotifications().catch(() => ({status: null}));
+
+  return status === RESULTS.GRANTED;
 };
 
 export const renewSubscription = (): Effect => (dispatch, getState) => {
@@ -708,16 +691,14 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
   });
 };
 
-export const requestNotificationsPermissions = (): Promise<boolean> => {
-  return new Promise(async resolve => {
-    requestNotifications(['alert', 'badge', 'sound']).then(({status}) => {
-      if (status === RESULTS.GRANTED) {
-        return resolve(true);
-      } else {
-        return resolve(false);
-      }
-    });
-  });
+export const requestNotificationsPermissions = async (): Promise<boolean> => {
+  const {status} = await requestNotifications([
+    'alert',
+    'badge',
+    'sound',
+  ]).catch(() => ({status: null}));
+
+  return status === RESULTS.GRANTED;
 };
 
 export const setNotifications =
