@@ -57,7 +57,7 @@ const lib = (() => {
      * Returns an instance of the underlying Segment SDK client, or null if not initialized.
      * @returns {SegmentClient | null} The Segment SDK client.
      */
-    client(): SegmentClient | null {
+    getClient(): SegmentClient | null {
       return _client;
     },
 

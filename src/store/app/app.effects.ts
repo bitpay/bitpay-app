@@ -485,7 +485,7 @@ export const askForTrackingPermissionAndEnableSdks =
       });
 
       try {
-        if (!Segment.client()) {
+        if (!Segment.getClient()) {
           await Segment.init();
         }
 
