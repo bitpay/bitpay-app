@@ -790,7 +790,9 @@ export const startSendPayment =
           null,
         );
       } catch (err) {
-        console.log(err);
+        const errString =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`startSendPayment: ${errString}`));
         reject(err);
       }
     });
@@ -1408,17 +1410,16 @@ export const checkBiometricForSending =
     if (Platform.OS === 'ios') {
       dispatch(checkingBiometricForSending(true));
     }
-    await TouchID.isSupported(isSupportedOptionalConfigObject)
-      .then(biometryType => {
-        if (biometryType === 'FaceID') {
-          console.log('FaceID is supported.');
+    return TouchID.authenticate(
+      'Authentication Check',
+      authOptionalConfigObject,
+    )
+      .then(success => {
+        if (success) {
+          return Promise.resolve();
         } else {
-          console.log('TouchID is supported.');
+          return Promise.reject('biometric check failed');
         }
-        return TouchID.authenticate(
-          'Authentication Check',
-          authOptionalConfigObject,
-        );
       })
       .catch(error => {
         if (error.code && TO_HANDLE_ERRORS[error.code]) {
@@ -1429,5 +1430,4 @@ export const checkBiometricForSending =
         }
         return Promise.reject('biometric check failed');
       });
-    return Promise.resolve();
   };

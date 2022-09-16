@@ -267,6 +267,8 @@ export default () => {
         if (status === 'active' && checkingBiometricForSending) {
           dispatch(AppActions.checkingBiometricForSending(false));
           dispatch(AppActions.showBlur(false));
+        } else if (status === 'inactive' && checkingBiometricForSending) {
+          dispatch(AppActions.showBlur(false));
         } else if (status === 'active' && !appIsLoading) {
           if (lockAuthorizedUntil) {
             const now = Math.floor(Date.now() / 1000);

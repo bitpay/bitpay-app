@@ -527,7 +527,7 @@ const Confirm = () => {
                 t(OnGoingProcessMessages.SENDING_PAYMENT),
               ),
             );
-            await sleep(400);
+            await sleep(500);
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
             dispatch(
@@ -536,7 +536,7 @@ const Confirm = () => {
                 coin: currencyAbbreviation || '',
               }),
             );
-            await sleep(400);
+            await sleep(500);
             setShowPaymentSentModal(true);
           } catch (err) {
             dispatch(dismissOnGoingProcessModal());
