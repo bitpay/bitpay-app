@@ -57,6 +57,7 @@ import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
+import {orderBy} from 'lodash';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -677,19 +678,12 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         return;
       }
 
-      const sortedTokens = item.tokens.map(token => ({...token}));
-
       // sorted selected tokens to the top for ease of use
-      sortedTokens.sort((a, b) => {
-        if (a.selected && !b.selected) {
-          return -1;
-        }
-        if (b.selected && !a.selected) {
-          return 1;
-        }
-
-        return 0;
-      });
+      const sortedTokens = orderBy(
+        item.tokens.map(token => ({...token})),
+        'selected',
+        'desc',
+      );
 
       navigation.navigate('Wallet', {
         screen: WalletScreens.CURRENCY_TOKEN_SELECTION,

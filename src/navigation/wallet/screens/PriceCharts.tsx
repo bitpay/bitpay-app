@@ -18,7 +18,11 @@ import {
   HeaderTitle,
 } from '../../../components/styled/Text';
 import {SlateDark, White, Black, LuckySevens} from '../../../styles/colors';
-import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
+import {
+  calculatePercentageDifference,
+  formatFiatAmount,
+  sleep,
+} from '../../../utils/helper-methods';
 import RangeDateSelector from '../components/RangeDateSelector';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {Currencies} from '../../../constants/currencies';
@@ -69,6 +73,7 @@ interface ChartDomainType {
 interface ChartDataType {
   data: ChartDisplayDataType[];
   domain?: ChartDomainType;
+  percentChange: number;
 }
 
 const MAX_POINTS = 200;
@@ -80,14 +85,15 @@ const defaultDisplayData: ChartDataType = {
       y: 0,
     },
   ],
+  percentChange: 0,
 };
 
 const defaultCachedRates: {
   [key in DateRanges]: ChartDataType;
 } = {
-  [DateRanges.Day]: {data: []},
-  [DateRanges.Week]: {data: []},
-  [DateRanges.Month]: {data: []},
+  [DateRanges.Day]: {data: [], percentChange: 0},
+  [DateRanges.Week]: {data: [], percentChange: 0},
+  [DateRanges.Month]: {data: [], percentChange: 0},
 };
 
 const SafeAreaView = styled.SafeAreaView`
@@ -118,14 +124,14 @@ const RowContainer = styled.View`
   flex-direction: row;
 `;
 
-const showLossGainOrNeutralArrow = (average: number | undefined) => {
-  if (average === undefined) {
+const showLossGainOrNeutralArrow = (percentChange: number | undefined) => {
+  if (percentChange === undefined) {
     return;
   }
 
-  if (average > 0) {
+  if (percentChange > 0) {
     return <GainArrow style={{marginRight: 5}} width={20} height={20} />;
-  } else if (average < 0) {
+  } else if (percentChange < 0) {
     return <LossArrow style={{marginRight: 5}} width={20} height={20} />;
   } else {
     return <NeutralArrow style={{marginRight: 5}} width={20} height={20} />;
@@ -144,6 +150,11 @@ const getFormattedData = (rates: Array<number>): ChartDataType => {
   const min = _.minBy(data);
   const max = _.maxBy(data);
 
+  const percentChange = calculatePercentageDifference(
+    rates[rates.length - 1],
+    rates[0],
+  );
+
   return {
     data: data.map((value, key) => ({
       x: key,
@@ -153,6 +164,7 @@ const getFormattedData = (rates: Array<number>): ChartDataType => {
       x: [0, data.length - 1],
       y: [min!, max! + max! / 100],
     },
+    percentChange,
   };
 };
 
@@ -167,7 +179,6 @@ const PriceCharts = () => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const {
-    average,
     currencyName,
     currentPrice,
     priceDisplay,
@@ -259,11 +270,13 @@ const PriceCharts = () => {
           ),
         );
         await sleep(500);
-        let {data, domain}: ChartDataType = await getHistoricalFiatRates(
-          dateRange,
-        );
-        setCachedRates({...cachedRates, ...{[dateRange]: {data, domain}}});
-        setDisplayData({data, domain});
+        let {data, domain, percentChange}: ChartDataType =
+          await getHistoricalFiatRates(dateRange);
+        setCachedRates({
+          ...cachedRates,
+          ...{[dateRange]: {data, domain, percentChange}},
+        });
+        setDisplayData({data, domain, percentChange});
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
       } catch (e) {
@@ -327,8 +340,10 @@ const PriceCharts = () => {
           </H2>
         )}
         <RowContainer>
-          {showLossGainOrNeutralArrow(average)}
-          <CurrencyAverageText>{Math.abs(average || 0)}%</CurrencyAverageText>
+          {showLossGainOrNeutralArrow(displayData.percentChange)}
+          <CurrencyAverageText>
+            {Math.abs(displayData.percentChange || 0)}%
+          </CurrencyAverageText>
         </RowContainer>
       </HeaderContainer>
 

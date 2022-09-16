@@ -1,8 +1,9 @@
 import React from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {LightBlack, White, Feather} from '../../../../../styles/colors';
+import {LightBlack, Slate30, White} from '../../../../../styles/colors';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import {BoxShadow} from '../Styled';
 
 const ListCard = styled.View`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
@@ -19,10 +20,10 @@ const ListKeySkeleton = () => {
   const theme = useTheme();
 
   return (
-    <ListCard>
+    <ListCard style={!theme.dark && BoxShadow}>
       <SkeletonPlaceholder
-        backgroundColor={theme.dark ? '#111111' : Feather}
-        highlightColor={theme.dark ? LightBlack : White}>
+        backgroundColor={theme.dark ? '#363636' : '#FAFAFB'}
+        highlightColor={theme.dark ? '#575757' : Slate30}>
         <SkeletonPlaceholder.Item borderRadius={4} height={15} width={125} />
         <SkeletonPlaceholder.Item
           height={15}
@@ -33,8 +34,8 @@ const ListKeySkeleton = () => {
       </SkeletonPlaceholder>
 
       <SkeletonPlaceholder
-        backgroundColor={theme.dark ? '#111111' : Feather}
-        highlightColor={theme.dark ? LightBlack : White}>
+        backgroundColor={theme.dark ? '#363636' : '#FAFAFB'}
+        highlightColor={theme.dark ? '#575757' : Slate30}>
         <SkeletonPlaceholder.Item borderRadius={4} height={15} width={50} />
         <SkeletonPlaceholder.Item
           borderRadius={4}

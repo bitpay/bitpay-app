@@ -35,7 +35,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
-  startImportMnemonic,
+  deferredImportMnemonic,
   startCreateKeyWithOpts,
   startGetRates,
   startImportWithDerivationPath,
@@ -403,34 +403,63 @@ const RecoveryPhrase = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      await dispatch(
-        startOnGoingProcessModal(
-          // t('Importing')
-          t(OnGoingProcessMessages.IMPORTING),
-        ),
-      );
-      const key = !derivationPathEnabled
-        ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
-        : ((await dispatch<any>(
-            startImportWithDerivationPath(importData, opts),
-          )) as Key);
-      await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey({key}));
-      await dispatch(updatePortfolioBalance());
-      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
-      backupRedirect({
-        context: route.params?.context,
-        navigation,
-        walletTermsAccepted,
-        key,
-      });
-      dispatch(
-        logSegmentEvent('track', 'Imported Key', {
-          context: route.params?.context || '',
-          source: 'RecoveryPhrase',
-        }),
-      );
-      dispatch(dismissOnGoingProcessModal());
+      if (!derivationPathEnabled) {
+        dispatch(
+          showBottomNotificationModal({
+            type: 'wait',
+            title: t('Please wait'),
+            message: t(
+              'Your key is still being imported and will be available shortly. ',
+            ),
+            enableBackdropDismiss: false,
+            actions: [
+              {
+                text: t('GOT IT'),
+                action: () => {
+                  let _context = route.params?.context;
+                  if (_context !== 'onboarding') {
+                    _context = 'deferredImport';
+                  }
+                  backupRedirect({
+                    context: _context,
+                    navigation,
+                    walletTermsAccepted,
+                  });
+                  dispatch(deferredImportMnemonic(importData, opts, _context));
+                },
+                primary: true,
+              },
+            ],
+          }),
+        );
+      } else {
+        await dispatch(
+          startOnGoingProcessModal(
+            // t('Importing')
+            t(OnGoingProcessMessages.IMPORTING),
+          ),
+        );
+        const key = (await dispatch<any>(
+          startImportWithDerivationPath(importData, opts),
+        )) as Key;
+        await dispatch(startGetRates({}));
+        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await dispatch(updatePortfolioBalance());
+        dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+        backupRedirect({
+          context: route.params?.context,
+          navigation,
+          walletTermsAccepted,
+          key,
+        });
+        dispatch(
+          logSegmentEvent('track', 'Imported Key', {
+            context: route.params?.context || '',
+            source: 'RecoveryPhrase',
+          }),
+        );
+        dispatch(dismissOnGoingProcessModal());
+      }
     } catch (e: any) {
       logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());

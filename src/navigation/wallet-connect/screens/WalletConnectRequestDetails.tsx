@@ -64,7 +64,7 @@ const AddressContainer = styled.View`
 `;
 
 const AddressTextContainer = styled.TouchableOpacity`
-  background-color: ${props => (props.theme.dark ? LightBlack : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   height: 37px;
   width: 103px;

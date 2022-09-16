@@ -240,7 +240,7 @@ export const calculatePercentageDifference = (
   lastDayBalance: number,
 ): number => {
   return Number(
-    (((currentBalance - lastDayBalance) * 100) / currentBalance).toFixed(2),
+    (((currentBalance - lastDayBalance) * 100) / lastDayBalance).toFixed(2),
   );
 };
 
