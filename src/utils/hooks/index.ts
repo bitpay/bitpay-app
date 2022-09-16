@@ -4,3 +4,4 @@ export * from './useBrazeRefreshOnFocus';
 export * from './useDeeplinks';
 export * from './useLogger';
 export * from './useMount';
+export * from './useRequestTrackingPermissionHandler';
