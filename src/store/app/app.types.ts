@@ -97,6 +97,7 @@ interface setAppFirstOpenEventComplete {
 
 interface setAppFirstOpenDate {
   type: typeof AppActionTypes.SET_APP_FIRST_OPEN_DATE;
+  payload: number;
 }
 
 interface SetIntroCompleted {

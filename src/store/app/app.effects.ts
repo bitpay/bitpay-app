@@ -95,7 +95,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       getState().APP;
 
     if (!appFirstOpenData?.firstOpenDate) {
-      dispatch(setAppFirstOpenEventDate());
+      dispatch(setAppFirstOpenEventDate(Math.floor(Date.now() / 1000)));
       dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
     }
 

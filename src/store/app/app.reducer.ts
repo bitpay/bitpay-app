@@ -211,7 +211,7 @@ export const appReducer = (
         ...state,
         appFirstOpenData: {
           ...state.appFirstOpenData,
-          firstOpenDate: Math.floor(Date.now() / 1000),
+          firstOpenDate: action.payload,
         },
       };
 
