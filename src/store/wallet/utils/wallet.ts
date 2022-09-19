@@ -17,7 +17,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {convertToFiat, formatFiatAmount} from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
-import {PayProOptions} from '../effects/paypro/paypro';
+import {GetInvoiceCurrency, PayProOptions} from '../effects/paypro/paypro';
 import {Effect} from '../..';
 import {
   CoinbaseAccountProps,
@@ -418,7 +418,7 @@ export const BuildKeysAndWalletsList = ({
               return paymentOptions.some(
                 ({currency, network: optionNetwork}) => {
                   return (
-                    wallet.currencyAbbreviation === currency.toLowerCase() &&
+                    GetInvoiceCurrency(wallet.currencyAbbreviation).toLowerCase() === currency.toLowerCase() &&
                     wallet.network === optionNetwork
                   );
                 },
