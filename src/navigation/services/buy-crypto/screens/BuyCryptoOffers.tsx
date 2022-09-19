@@ -1022,6 +1022,10 @@ const BuyCryptoOffers: React.FC = () => {
                             {formatFiatAmount(
                               Number(offer.fiatMoney),
                               offer.fiatCurrency,
+                              {
+                                customPrecision: undefined,
+                                currencyAbbreviation: coin,
+                              },
                             )}
                           </OfferDataRate>
                           {offer.fiatCurrency !== fiatCurrency ? (
