@@ -35,9 +35,10 @@ const BannerDescription = styled(H7)`
 
 interface BannerProps {
   title?: string;
-  description: string;
+  description?: string;
   type: string;
   link?: {onPress: () => void; text: string};
+  transComponent: JSX.Element;
 }
 
 const getBgColor = (type: string) => {
@@ -52,7 +53,13 @@ const getBgColor = (type: string) => {
       return Slate;
   }
 };
-const Banner = ({title, description, type, link}: BannerProps) => {
+const Banner = ({
+  title,
+  description,
+  type,
+  link,
+  transComponent,
+}: BannerProps) => {
   const bgColor = getBgColor(type);
 
   return (
@@ -62,7 +69,12 @@ const Banner = ({title, description, type, link}: BannerProps) => {
 
         <Description>
           {title ? <H7 medium={true}>{title}</H7> : null}
-          <BannerDescription>{description}</BannerDescription>
+          {description ? (
+            <BannerDescription>{description}</BannerDescription>
+          ) : null}
+          {transComponent ? (
+            <BannerDescription>{transComponent}</BannerDescription>
+          ) : null}
           {link ? (
             <ActionContainer>
               <TouchableOpacity

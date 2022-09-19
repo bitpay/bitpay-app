@@ -20,8 +20,8 @@ import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-l
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {AppActions} from '../../../../store/app';
+import {PaymentMethod} from '../constants/BuyCryptoConstants';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -95,7 +95,10 @@ const PaymentMethodsModal = ({
     coin,
   );
 
-  const showOtherPaymentMethodsInfoSheet = () => {
+  const showOtherPaymentMethodsInfoSheet = (
+    paymentMethod: PaymentMethod,
+    onPress?: Function,
+  ) => {
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
@@ -107,8 +110,13 @@ const PaymentMethodsModal = ({
         actions: [
           {
             text: t('GOT IT'),
-            action: () => null,
+            action: () => onPress?.(paymentMethod),
             primary: true,
+          },
+          {
+            text: t('CANCEL'),
+            action: () => {},
+            primary: false,
           },
         ],
       }),
@@ -141,7 +149,10 @@ const PaymentMethodsModal = ({
                   onPress={() => {
                     paymentMethod.method !== 'other'
                       ? onPress?.(paymentMethod)
-                      : null;
+                      : showOtherPaymentMethodsInfoSheet(
+                          paymentMethod,
+                          onPress,
+                        );
                   }}>
                   <PaymentMethodCardContainer>
                     <Checkbox
@@ -157,24 +168,18 @@ const PaymentMethodsModal = ({
                       </PaymentMethodLabel>
 
                       {paymentMethod.method === 'other' ? (
-                        <TouchableOpacity
-                          onPress={() => {
-                            showOtherPaymentMethodsInfoSheet();
+                        <View
+                          style={{
+                            marginBottom: 10,
+                            flexDirection: 'row',
                           }}>
-                          <View
-                            style={{
-                              marginBottom: 10,
-                              marginTop: -10,
-                              flexDirection: 'row',
-                            }}>
-                            <PaymentMethodProviderText>
-                              See
-                            </PaymentMethodProviderText>
-                            <PaymentMethodProviderLink>
-                              other supported payment methods
-                            </PaymentMethodProviderLink>
-                          </View>
-                        </TouchableOpacity>
+                          <PaymentMethodProviderText>
+                            See
+                          </PaymentMethodProviderText>
+                          <PaymentMethodProviderLink>
+                            other supported payment methods
+                          </PaymentMethodProviderLink>
+                        </View>
                       ) : null}
 
                       <PaymentMethodProvider>

@@ -91,8 +91,11 @@ const Notifications = () => {
         setNotificationValue(notificationsState.pushNotifications);
       }
     }
-    AppState.addEventListener('change', onAppStateChange);
-    return () => AppState.removeEventListener('change', onAppStateChange);
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+    return () => subscriptionAppStateChange.remove();
   }, [dispatch, setNotificationValue, notificationsState]);
 
   useEffect(() => {

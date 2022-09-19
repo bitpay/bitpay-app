@@ -290,8 +290,11 @@ export default () => {
         }
       }
     }
-    AppState.addEventListener('change', onAppStateChange);
-    return () => AppState.removeEventListener('change', onAppStateChange);
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+    return () => subscriptionAppStateChange.remove();
   }, [
     dispatch,
     onboardingCompleted,
@@ -327,9 +330,12 @@ export default () => {
       }
     }
 
-    AppState.addEventListener('change', onAppStateChange);
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
 
-    return () => AppState.removeEventListener('change', onAppStateChange);
+    return () => subscriptionAppStateChange.remove();
   }, [rerender, appColorScheme]);
 
   const scheme = appColorScheme || Appearance.getColorScheme();
