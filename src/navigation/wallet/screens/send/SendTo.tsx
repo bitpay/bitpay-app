@@ -27,6 +27,7 @@ import {
 } from '../../../../utils/helper-methods';
 import {Key} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
+import {showNoSelectedWalletOnInvoiceModal} from '../../../../store/wallet/effects/send/send';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
@@ -375,10 +376,7 @@ const SendTo = () => {
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
         const selected = payProOptions.paymentOptions.find(
-          (option: PayProPaymentOption) =>
-            option.selected &&
-            GetInvoiceCurrency(currencyAbbreviation).toUpperCase() ===
-              option.currency,
+          (option: PayProPaymentOption) => option.selected,
         );
         if (selected) {
           const isValid = dispatch(checkCoinAndNetwork(selected, true));
@@ -392,7 +390,7 @@ const SendTo = () => {
             });
           }
         } else {
-          // TODO: handle me
+          dispatch(showNoSelectedWalletOnInvoiceModal());
         }
       } catch (err) {
         const formattedErrMsg = BWCErrorMessage(err);
@@ -511,7 +509,11 @@ const SendTo = () => {
                         validateAndNavigateToConfirm(data);
                       }
                     } catch (err) {
-                      console.log(err);
+                      const errorStr =
+                        err instanceof Error
+                          ? err.message
+                          : JSON.stringify(err);
+                      logger.error('[SendTo] ' + errorStr);
                     }
                   },
                 },

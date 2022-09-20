@@ -1381,6 +1381,29 @@ export const getTx = (wallet: Wallet, txpid: string): Promise<any> => {
   });
 };
 
+export const showNoSelectedWalletOnInvoiceModal =
+  (): Effect<void> => async dispatch => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title: t('Error processing payment'),
+        message: t(
+          'This invoice has not a wallet selected to complete this payment.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Got it'),
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+            },
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
 export const showNoWalletsModal =
   ({navigation}: {navigation: any}): Effect<void> =>
   async dispatch => {
