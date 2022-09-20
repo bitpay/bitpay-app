@@ -24,7 +24,8 @@ public class MainActivity extends ReactActivity {
 
   @Override
     protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
+      super.onCreate(null);
+      ((MainApplication) getApplication()).addActivityToStack(this.getClass());
       RNBootSplash.init(R.drawable.bootsplash, MainActivity.this);
       Window win = getWindow();
       win.setFlags(
@@ -75,5 +76,11 @@ public class MainActivity extends ReactActivity {
     super.onPause();
     // Unregisters the BrazeInAppMessageManager for the current Activity.
     BrazeInAppMessageManager.getInstance().unregisterInAppMessageManager(MainActivity.this);
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    ((MainApplication) getApplication()).removeActivityFromStack(this.getClass());
   }
 }
