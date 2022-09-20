@@ -43,6 +43,10 @@ export const setAppFirstOpenEventDate = (date: number): AppActionType => ({
   payload: date,
 });
 
+export const appOpeningWasTracked = (): AppActionType => ({
+  type: AppActionTypes.APP_OPENING_WAS_TRACKED,
+});
+
 export const setIntroCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_INTRO_COMPLETED,
 });

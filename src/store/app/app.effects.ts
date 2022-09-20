@@ -478,20 +478,23 @@ export const askForTrackingPermissionAndEnableSdks =
         }
 
         if (appInit) {
-          const {appFirstOpenData} = getState().APP;
+          const {appFirstOpenData, appOpeningWasTracked} = getState().APP;
 
-          if (
-            appFirstOpenData?.firstOpenDate &&
-            !appFirstOpenData?.firstOpenEventComplete
-          ) {
-            dispatch(setAppFirstOpenEventComplete());
-            dispatch(
-              Analytics.track('First Opened App', {
-                date: appFirstOpenData?.firstOpenDate || '',
-              }),
-            );
-          } else {
-            dispatch(Analytics.track('Last Opened App', {}));
+          if (!appOpeningWasTracked && appFirstOpenData) {
+            const {firstOpenDate, firstOpenEventComplete} = appFirstOpenData;
+
+            if (firstOpenDate && !firstOpenEventComplete) {
+              dispatch(setAppFirstOpenEventComplete());
+              dispatch(
+                Analytics.track('First Opened App', {
+                  date: firstOpenDate || '',
+                }),
+              );
+            } else {
+              dispatch(Analytics.track('Last Opened App', {}));
+            }
+
+            dispatch(AppActions.appOpeningWasTracked());
           }
         }
       } catch (err) {
