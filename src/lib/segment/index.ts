@@ -2,7 +2,6 @@ import {SEGMENT_API_KEY} from '@env';
 import {
   createClient,
   JsonMap,
-  Plugin,
   SegmentClient,
   UserTraits,
 } from '@segment/analytics-react-native';
@@ -20,15 +19,13 @@ const lib = (() => {
   const _queue: Array<(client: SegmentClient) => Promise<any>> = [];
 
   const _addPluginsToClient = (client: SegmentClient) => {
-    const SEGMENT_PLUGINS: Plugin[] = [new AppsflyerPlugin()];
+    client.add({
+      plugin: new AppsflyerPlugin(),
+    });
 
     if (IS_IOS) {
-      SEGMENT_PLUGINS.push(new IdfaPlugin());
+      client.add({plugin: new IdfaPlugin()});
     }
-
-    SEGMENT_PLUGINS.forEach(plugin => {
-      client.add({plugin});
-    });
   };
 
   /**

@@ -1,11 +1,9 @@
-import {APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
 import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
 import {debounce} from 'lodash';
 import {DeviceEventEmitter, Linking, Platform} from 'react-native';
 import Braze, {NotificationSubscriptionTypes} from 'react-native-appboy-sdk';
-import AppsFlyer from 'react-native-appsflyer';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
   InAppBrowserOptions,
@@ -474,15 +472,6 @@ export const askForTrackingPermissionAndEnableSdks =
       dispatch(
         LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
       );
-
-      await AppsFlyer.initSdk({
-        devKey: APPSFLYER_API_KEY,
-        isDebug: __DEV__,
-        appId: APPSFLYER_APP_ID, // iOS app id
-      }).catch(err => {
-        dispatch(LogActions.error('Appsflyer setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-      });
 
       try {
         if (!Segment.getClient()) {
