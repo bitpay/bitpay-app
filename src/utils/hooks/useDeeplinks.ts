@@ -166,10 +166,11 @@ export const useDeeplinks = () => {
   const urlEventHandler = useUrlEventHandler();
 
   useEffect(() => {
-    Linking.addEventListener('url', urlEventHandler);
-    return () => {
-      Linking.removeEventListener('url', urlEventHandler);
-    };
+    const subscribeLinkingEvent = Linking.addEventListener(
+      'url',
+      urlEventHandler,
+    );
+    return () => subscribeLinkingEvent.remove();
   }, [dispatch, urlEventHandler]);
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {

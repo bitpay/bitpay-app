@@ -53,7 +53,7 @@ const CHAIN_ID: {[key in string]: any} = {
 };
 
 const UriContainer = styled.View`
-  background-color: ${props => (props.theme.dark ? LightBlack : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 6px;
   height: 64px;
   margin-top: 25px;

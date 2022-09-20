@@ -90,7 +90,7 @@ import {
   setNotifications,
   subscribePushNotifications,
   subscribeEmailNotifications,
-  logSegmentEvent,
+  Analytics,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
 import {sleep} from '../../../../utils/helper-methods';
@@ -777,7 +777,7 @@ export const deferredImportErrorNotification = (): Effect => async dispatch => {
         {
           text: t('IMPORT KEY'),
           action: () => {
-            navigationRef.navigate('Wallet', {screen: 'CreationOptions'});
+            navigationRef.navigate('Wallet', {screen: 'Import'});
           },
           primary: true,
         },
@@ -796,59 +796,26 @@ export const deferredImportMnemonic =
     importData: {words?: string; xPrivKey?: string},
     opts: Partial<KeyOptions>,
     context?: string,
-    skipNotification?: boolean,
   ): Effect =>
   async (dispatch, getState): Promise<void> => {
     try {
       const {WALLET} = getState();
-      let _context = context;
-      if (_context !== 'onboarding') {
-        _context = 'deferredImport';
-      }
-      let continueTapped = false;
-
-      if (!skipNotification) {
-        dispatch(
-          showBottomNotificationModal({
-            type: 'wait',
-            title: t('Please wait'),
-            message: t(
-              'Your key is still being imported and will be available shortly. ',
-            ),
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: t('GOT IT'),
-                action: () => {
-                  continueTapped = true;
-                  backupRedirect({
-                    context: _context,
-                    navigation: navigationRef,
-                    walletTermsAccepted: WALLET.walletTermsAccepted,
-                  });
-                },
-                primary: true,
-              },
-            ],
-          }),
-        );
-      }
-
       dispatch(updateDeferredImport({importData, opts}));
 
+      await sleep(500);
       const key = (await dispatch<any>(
         startImportMnemonic(importData, opts),
       )) as Key;
       await dispatch(startGetRates({}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      await dispatch(updatePortfolioBalance());
+      dispatch(updatePortfolioBalance());
+      dispatch(clearDeferredImport());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
       dispatch(dismissOnGoingProcessModal());
       await sleep(600);
-      dispatch(clearDeferredImport());
       dispatch(
-        logSegmentEvent('track', 'Imported Key', {
+        Analytics.track('Imported Key', {
           context: context || '',
           source: 'RecoveryPhrase',
         }),
@@ -859,13 +826,13 @@ export const deferredImportMnemonic =
           type: 'success',
           title: t('Key imported'),
           message: 'Your key has successfully been imported.',
-          enableBackdropDismiss: true,
+          enableBackdropDismiss: false,
           actions: [
             {
               text: t('GOT IT'),
               action: () => {
                 backupRedirect({
-                  context: !continueTapped ? context : _context,
+                  context,
                   navigation: navigationRef,
                   walletTermsAccepted: WALLET.walletTermsAccepted,
                   key,
