@@ -64,7 +64,8 @@ export const simplexSupportedCoins = [
   'btc',
   'bch',
   'eth',
-  'pax',
+  'usdp',
+  'pax', // backward compatibility
   'busd',
   'doge',
   'dai',

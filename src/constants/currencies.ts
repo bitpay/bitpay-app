@@ -2,7 +2,8 @@ export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
 export type SupportedTokens =
   | 'usdc'
   | 'gusd'
-  | 'pax'
+  | 'usdp'
+  | 'pax' // backward compatibility
   | 'busd'
   | 'dai'
   | 'wbtc'
@@ -242,7 +243,45 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: 'rgba(30,144,255, 0.2)',
     },
   },
+  usdp: {
+    name: 'Paxos Dollar',
+    chain: 'ETH',
+    coin: 'usdp',
+    unitInfo: {
+      unitName: 'USDP',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'usdp',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdp',
+      blockExplorerUrls: 'etherscan.io/',
+      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#e6f3f9',
+      backgroundColor: '#00845d',
+      gradientBackgroundColor: '#00845d',
+    },
+  },
   pax: {
+    // backward compatibility
     name: 'Paxos Standard',
     chain: 'ETH',
     coin: 'pax',

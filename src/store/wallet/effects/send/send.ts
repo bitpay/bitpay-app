@@ -33,7 +33,12 @@ import {
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
-import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
+import {
+  GetPayProDetails,
+  HandlePayPro,
+  PayProOptions,
+  GetInvoiceCurrency,
+} from '../paypro/paypro';
 import {
   checkingBiometricForSending,
   dismissBottomNotificationModal,
@@ -88,8 +93,8 @@ export const createProposalAndBuildTxDetails =
           payProDetails,
         } = tx;
 
-        let {credentials} = wallet;
-        const {coin: currencyAbbreviation, token} = credentials;
+        let {credentials, currencyAbbreviation} = wallet;
+        const {token} = credentials;
         const formattedAmount = dispatch(
           ParseAmount(amount, currencyAbbreviation),
         );
@@ -360,7 +365,7 @@ export const buildTxDetails =
     rates: Rates;
     defaultAltCurrencyIsoCode: string;
     wallet: Wallet | WalletRowProps;
-    recipient: Recipient;
+    recipient?: Recipient;
     invoice?: Invoice;
     context?: TransactionOptionsContext;
     feeLevel?: string;
@@ -370,18 +375,19 @@ export const buildTxDetails =
       coin: invoice!.buyerProvidedInfo!.selectedTransactionCurrency!.toLowerCase(),
       fee: 0,
     };
+    const invoiceCoin = GetInvoiceCurrency(coin).toLowerCase();
     let {amount} = proposal || {
-      amount: invoice!.paymentTotals[coin.toUpperCase()],
+      amount: invoice!.paymentTotals[invoiceCoin.toUpperCase()],
     };
     const effectiveRate =
-      invoice && dispatch(getInvoiceEffectiveRate(invoice, coin));
-    const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
+      invoice && dispatch(getInvoiceEffectiveRate(invoice, invoiceCoin));
+    const networkCost = invoice?.minerFees[invoiceCoin.toUpperCase()]?.totalFee;
     const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
     const isERC20 = dispatch(IsERCToken(coin));
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
     if (context === 'paypro') {
-      amount = invoice!.paymentTotals[coin.toUpperCase()];
+      amount = invoice!.paymentTotals[invoiceCoin.toUpperCase()];
     } else if (context === 'speedupBtcReceive') {
       amount = amount - fee;
     }
