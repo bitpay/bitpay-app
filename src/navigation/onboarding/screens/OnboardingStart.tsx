@@ -130,9 +130,10 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
 
   const onLoginPress = () => {
+    haptic('impactLight');
     askForTrackingThenNavigate(() => {
       navigation.navigate('Auth', {
         screen: 'Login',
@@ -270,6 +271,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
+                  haptic('impactLight');
                   askForTrackingThenNavigate(() => {
                     navigation.navigate('Auth', {
                       screen: 'CreateAccount',
@@ -282,6 +284,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
+                  haptic('impactLight');
                   askForTrackingThenNavigate(() => {
                     navigation.navigate('Onboarding', {
                       screen: 'Notifications',

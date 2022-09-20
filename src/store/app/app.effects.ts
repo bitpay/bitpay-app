@@ -459,7 +459,6 @@ export const openUrlWithInAppBrowser =
 export const askForTrackingPermissionAndEnableSdks =
   (appInit: boolean = false): Effect<Promise<void>> =>
   async (dispatch, getState) => {
-    console.log('askForTrackingPermissionAndEnableSdks++');
     dispatch(
       LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
     );

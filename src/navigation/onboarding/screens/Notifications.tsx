@@ -58,7 +58,7 @@ const NotificationsScreen: React.VFC<
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
