@@ -43,6 +43,7 @@ import KeyWalletsRow, {
 } from '../../../../components/list/KeyWalletsRow';
 import {
   GetPayProOptions,
+  GetInvoiceCurrency,
   PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
@@ -379,7 +380,8 @@ const SendTo = () => {
         const selected = payProOptions.paymentOptions.find(
           (option: PayProPaymentOption) =>
             option.selected &&
-            currencyAbbreviation.toUpperCase() === option.currency,
+            GetInvoiceCurrency(currencyAbbreviation).toUpperCase() ===
+              option.currency,
         );
         if (selected) {
           const isValid = dispatch(checkCoinAndNetwork(selected, true));

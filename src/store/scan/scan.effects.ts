@@ -63,6 +63,7 @@ import BitPayIdApi from '../../api/bitpay';
 import axios from 'axios';
 import {t} from 'i18next';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
+import {StackActions} from '@react-navigation/native';
 
 export const incomingData =
   (
@@ -168,7 +169,7 @@ const getParameterByName = (name: string, url: string): string | undefined => {
 };
 
 const goToPayPro =
-  (data: string): Effect =>
+  (data: string, replaceNavigationRoute?: boolean): Effect =>
   async dispatch => {
     dispatch(dismissOnGoingProcessModal());
 
@@ -184,6 +185,18 @@ const goToPayPro =
     try {
       const payProOptions = await GetPayProOptions(payProUrl);
       dispatch(dismissOnGoingProcessModal());
+
+      if (replaceNavigationRoute) {
+        navigationRef.dispatch(
+          StackActions.replace('Wallet', {
+            screen: WalletScreens.PAY_PRO_CONFIRM,
+            params: {
+              payProOptions,
+            },
+          }),
+        );
+        return;
+      }
 
       InteractionManager.runAfterInteractions(() => {
         navigationRef.navigate('Wallet', {
@@ -230,12 +243,34 @@ const handleUnlock =
     }
 
     const {host} = new URL(GetPayProUrl(data));
+
     try {
       const invoice = await axios.get(
         `https://${host}/invoiceData/${invoiceId}`,
       );
       if (invoice) {
-        dispatch(goToPayPro(data));
+        const context = getParameterByName('c', data);
+        if (context === 'u') {
+          const {
+            data: {
+              invoice: {
+                buyerProvidedInfo: {emailAddress},
+                buyerProvidedEmail,
+                status,
+              },
+            },
+          } = invoice;
+          if (emailAddress || buyerProvidedEmail || status !== 'new') {
+            dispatch(goToPayPro(data));
+          } else {
+            navigationRef.navigate('Wallet', {
+              screen: 'EnterBuyerProvidedEmail',
+              params: {data},
+            });
+          }
+        } else {
+          dispatch(goToPayPro(data));
+        }
         return;
       }
     } catch {}
@@ -893,6 +928,7 @@ const handleWyreUri =
       walletId,
       dest: getParameterByName('dest', res),
       destAmount: getParameterByName('destAmount', res),
+      destChain: getParameterByName('destChain', res),
       destCurrency,
       purchaseAmount: getParameterByName('purchaseAmount', res),
       sourceAmount,
@@ -1036,3 +1072,32 @@ const findWallet = (
 
   return wallet;
 };
+
+export const setBuyerProvidedEmail =
+  (data: string, email: string): Effect<Promise<void>> =>
+  async dispatch => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const invoiceId = data.split('/i/')[1].split('?')[0];
+        const {host} = new URL(GetPayProUrl(data));
+        const body = {
+          buyerProvidedEmail: email,
+          invoiceId,
+        };
+        const {
+          data: {status},
+        } = await axios.post(
+          `https://${host}/invoiceData/setBuyerProvidedEmail`,
+          body,
+        );
+        if (status === 'success') {
+          dispatch(goToPayPro(data, true));
+          return resolve();
+        } else {
+          return reject();
+        }
+      } catch (e) {
+        return reject();
+      }
+    });
+  };

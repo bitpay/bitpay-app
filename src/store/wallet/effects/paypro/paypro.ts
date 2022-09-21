@@ -107,7 +107,9 @@ export const HandlePayPro = async ({
     }
     const paymentOptions = payProOptions.paymentOptions;
     const {estimatedAmount, minerFee} = paymentOptions.find(
-      option => option?.currency.toLowerCase() === coin.toLowerCase(),
+      option =>
+        option?.currency.toLowerCase() ===
+        GetInvoiceCurrency(coin).toLowerCase(),
     ) as PayProPaymentOption;
     const {outputs, toAddress, data, gasLimit} = payProDetails.instructions[0];
     if (coin === 'xrp' && outputs) {
@@ -130,5 +132,14 @@ export const HandlePayPro = async ({
     return confirmScreenParams;
   } catch (err) {
     //Todo: handle me
+  }
+};
+
+export const GetInvoiceCurrency = (c: string) => {
+  switch (c.toUpperCase()) {
+    case 'USDP':
+      return 'PAX'; // TODO workaround. Remove this when usdp is accepted as an option
+    default:
+      return c;
   }
 };

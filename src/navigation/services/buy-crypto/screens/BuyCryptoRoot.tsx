@@ -37,7 +37,7 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import {simplexSupportedCoins} from '../utils/simplex-utils';
+import {getSimplexSupportedCoins} from '../utils/simplex-utils';
 import {wyreSupportedCoins} from '../utils/wyre-utils';
 import {sleep} from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
@@ -88,7 +88,7 @@ const BuyCryptoRoot: React.FC<
       : PaymentMethodsAvailable.debitCard,
   );
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
-    ...new Set([...simplexSupportedCoins, ...wyreSupportedCoins]),
+    ...new Set([...getSimplexSupportedCoins(), ...wyreSupportedCoins]),
   ]);
   const fiatCurrency = getAvailableFiatCurrencies().includes(
     defaultAltCurrency.isoCode,
@@ -526,11 +526,9 @@ const BuyCryptoRoot: React.FC<
             <ActionsContainer>
               <SelectedOptionContainer style={{minWidth: 120}}>
                 <SelectedOptionCol>
-                  {walletData && (
-                    <CoinIconContainer>
-                      <CurrencyImage img={walletData.img} size={20} />
-                    </CoinIconContainer>
-                  )}
+                  <CoinIconContainer>
+                    <CurrencyImage img={selectedWallet.img} size={20} />
+                  </CoinIconContainer>
                   <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                     {selectedWallet.credentials.coin.toUpperCase()}
                   </SelectedOptionText>

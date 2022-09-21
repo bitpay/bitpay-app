@@ -4,7 +4,7 @@ import {
   PaymentMethodsAvailable,
 } from '../constants/BuyCryptoConstants';
 import {
-  simplexSupportedCoins,
+  getSimplexSupportedCoins,
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
 import {wyreSupportedCoins, wyreSupportedFiatCurrencies} from './wyre-utils';
@@ -69,7 +69,7 @@ export const isCoinSupportedToBuy = (coin: string): boolean => {
 const isCoinSupportedBy = (exchange: string, coin: string): boolean => {
   switch (exchange) {
     case 'simplex':
-      return simplexSupportedCoins.includes(coin.toLowerCase());
+      return getSimplexSupportedCoins().includes(coin.toLowerCase());
     case 'wyre':
       return wyreSupportedCoins.includes(coin.toLowerCase());
     default:

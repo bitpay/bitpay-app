@@ -36,10 +36,11 @@ import {
   getSimplexFiatAmountLimits,
   simplexPaymentRequest,
   simplexEnv,
+  getSimplexCoinFormat,
 } from '../utils/simplex-utils';
 import {getWyreFiatAmountLimits, wyreEnv} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
-import {GetPrecision} from '../../../../store/wallet/utils/currency';
+import {GetChain, GetPrecision} from '../../../../store/wallet/utils/currency';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -363,7 +364,7 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     } else {
       const requestData: SimplexGetQuoteRequestData = {
-        digital_currency: coin.toUpperCase(),
+        digital_currency: getSimplexCoinFormat(coin),
         fiat_currency: offers.simplex.fiatCurrency.toUpperCase(),
         requested_currency: offers.simplex.fiatCurrency.toUpperCase(),
         requested_amount: offers.simplex.fiatAmount,
@@ -683,10 +684,15 @@ const BuyCryptoOffers: React.FC = () => {
           payment_id: req.payment_id,
         };
 
+        const destinationChain = dispatch(
+          GetChain(selectedWallet.currencyAbbreviation),
+        );
+
         const newData: simplexPaymentData = {
           address,
           created_on: Date.now(),
           crypto_amount: offers.simplex.quoteData.digital_money.amount,
+          chain: destinationChain,
           coin: coin.toUpperCase(),
           env: __DEV__ ? 'dev' : 'prod',
           fiat_base_amount: offers.simplex.quoteData.fiat_money.base_amount,
@@ -711,6 +717,7 @@ const BuyCryptoOffers: React.FC = () => {
             fiatCurrency: offers.simplex.fiatCurrency,
             paymentMethod: paymentMethod.method,
             coin: selectedWallet.currencyAbbreviation,
+            chain: destinationChain,
           }),
         );
 
@@ -718,6 +725,7 @@ const BuyCryptoOffers: React.FC = () => {
           selectedWallet,
           quoteData,
           remoteData,
+          destinationChain,
         );
 
         Linking.openURL(paymentUrl)
@@ -752,12 +760,17 @@ const BuyCryptoOffers: React.FC = () => {
         _paymentMethod = 'debit-card';
         break;
     }
+    const destinationChain = dispatch(
+      GetChain(selectedWallet.currencyAbbreviation),
+    );
     const redirectUrl =
       APP_DEEPLINK_PREFIX +
       'wyre?walletId=' +
       selectedWallet.id +
       '&destAmount=' +
-      offers.wyre.amountReceiving;
+      offers.wyre.amountReceiving +
+      '&destChain=' +
+      destinationChain;
     const failureRedirectUrl = APP_DEEPLINK_PREFIX + 'wyreError';
     const dest = setPrefix(address, coin, selectedWallet.credentials.network);
     const requestData = {
@@ -793,6 +806,9 @@ const BuyCryptoOffers: React.FC = () => {
   };
 
   const continueToWyre = (paymentUrl: string) => {
+    const destinationChain = dispatch(
+      GetChain(selectedWallet.currencyAbbreviation),
+    );
     dispatch(
       logSegmentEvent('track', 'Requested Crypto Purchase', {
         exchange: 'wyre',
@@ -800,6 +816,7 @@ const BuyCryptoOffers: React.FC = () => {
         fiatCurrency: offers.wyre.fiatCurrency,
         paymentMethod: paymentMethod.method,
         coin: selectedWallet.currencyAbbreviation,
+        chain: destinationChain,
       }),
     );
     Linking.openURL(paymentUrl)
@@ -1005,6 +1022,10 @@ const BuyCryptoOffers: React.FC = () => {
                             {formatFiatAmount(
                               Number(offer.fiatMoney),
                               offer.fiatCurrency,
+                              {
+                                customPrecision: undefined,
+                                currencyAbbreviation: coin,
+                              },
                             )}
                           </OfferDataRate>
                           {offer.fiatCurrency !== fiatCurrency ? (
