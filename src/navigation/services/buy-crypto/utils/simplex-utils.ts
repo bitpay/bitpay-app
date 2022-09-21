@@ -1,6 +1,5 @@
 import UserAgent from 'react-native-user-agent';
 import {APP_NAME, APP_VERSION} from '../../../../constants/config';
-import {Currencies} from '../../../../constants/currencies';
 
 const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/simplex/';
 const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/simplex/';
@@ -64,17 +63,99 @@ export const simplexSupportedCoins = [
   'btc',
   'bch',
   'eth',
-  'usdp',
-  'pax', // backward compatibility
-  'busd',
   'doge',
-  'dai',
-  'usdc',
   'ltc',
-  'shib',
   'xrp',
-  'ape',
 ];
+
+export const simplexSupportedErc20Tokens = [
+  '1earth',
+  '1inch',
+  'aave',
+  'ape',
+  'axs',
+  'bat',
+  'busd',
+  'cel',
+  'chz',
+  'comp',
+  'coti',
+  'cro',
+  'dai',
+  'dep',
+  'dft',
+  'elon',
+  'enj',
+  'eqx',
+  'fei',
+  'ftt',
+  'gala',
+  'ghx',
+  'gmt',
+  'govi',
+  'grt',
+  'hedg',
+  'hex',
+  'hgold',
+  'ht',
+  'husd',
+  'hzm',
+  'kcs',
+  'link',
+  'ltx',
+  'mana',
+  'matic',
+  'mkr',
+  'pax', // backward compatibility
+  'prt',
+  'qnt',
+  'revv',
+  'rfox',
+  'rfuel',
+  'rly',
+  'sand',
+  'satt',
+  'shib',
+  'skl',
+  'sushi',
+  'tlos',
+  'tru',
+  'tusd',
+  'uni',
+  'uos',
+  'usdc',
+  'usdk',
+  'usdp',
+  'usdt',
+  'vndc',
+  'wbtc',
+  'xaut',
+  'xyo',
+  'yoshi',
+];
+
+export const simplexErc20TokensWithSuffix = [
+  'axs',
+  'coti',
+  'cro',
+  'gmt',
+  'matic',
+  'rly',
+  'satt',
+  'tlos',
+  'uos',
+  'yoshi',
+];
+
+export const getSimplexSupportedCoins = (): string[] => {
+  return simplexSupportedCoins.concat(simplexSupportedErc20Tokens);
+};
+
+export const getSimplexCoinFormat = (coin: string): string => {
+  return simplexErc20TokensWithSuffix.includes(coin.toLowerCase())
+    ? `${coin.toUpperCase()}-ERC20`
+    : coin.toUpperCase();
+};
 
 export const getSimplexFiatAmountLimits = () => {
   return {
@@ -143,11 +224,15 @@ export const simplexPaymentRequest = (
           amount: quoteData.fiatTotalAmount,
         },
         requested_digital_amount: {
-          currency: checkSimplexCoin(wallet.currencyAbbreviation.toUpperCase()),
+          currency: checkSimplexCoin(
+            getSimplexCoinFormat(wallet.currencyAbbreviation),
+          ),
           amount: quoteData.cryptoAmount,
         },
         destination_wallet: {
-          currency: checkSimplexCoin(wallet.currencyAbbreviation.toUpperCase()),
+          currency: checkSimplexCoin(
+            getSimplexCoinFormat(wallet.currencyAbbreviation),
+          ),
           address,
           tag: '',
         },
@@ -163,6 +248,7 @@ export const getPaymentUrl = (
   wallet: any,
   quoteData: any,
   remoteData: any,
+  chain: string,
 ): string => {
   const dataSrc: any = {
     version: '1',
@@ -192,13 +278,11 @@ export const getPaymentUrl = (
     payment_id: remoteData.payment_id,
     user_id: wallet.id,
     'destination_wallet[address]': remoteData.address,
-    'destination_wallet[currency]':
-      Currencies[wallet.currencyAbbreviation.toLowerCase()].chain,
+    'destination_wallet[currency]': chain,
     'fiat_total_amount[amount]': quoteData.fiatTotalAmount,
     'fiat_total_amount[currency]': quoteData.currency,
     'digital_total_amount[amount]': quoteData.cryptoAmount,
-    'digital_total_amount[currency]':
-      Currencies[wallet.currencyAbbreviation.toLowerCase()].chain,
+    'digital_total_amount[currency]': chain,
   };
 
   let str = '';

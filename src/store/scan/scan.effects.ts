@@ -928,6 +928,7 @@ const handleWyreUri =
       walletId,
       dest: getParameterByName('dest', res),
       destAmount: getParameterByName('destAmount', res),
+      destChain: getParameterByName('destChain', res),
       destCurrency,
       purchaseAmount: getParameterByName('purchaseAmount', res),
       sourceAmount,

@@ -131,7 +131,10 @@ export const isValidDerivationPathCoin = (
 export const keyExtractor = (item: {id: string}) => item.id;
 
 export const getSignificantDigits = (currencyAbbreviation?: string) => {
-  return currencyAbbreviation === 'DOGE' || currencyAbbreviation === 'XRP'
+  return currencyAbbreviation &&
+    ['doge', 'xrp', 'shib', 'elon', 'prt', 'rfox', 'rfuel', 'xyo'].includes(
+      currencyAbbreviation.toLowerCase(),
+    )
     ? 4
     : undefined;
 };
