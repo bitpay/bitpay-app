@@ -3,7 +3,6 @@ import {
   CustomTransactionData,
   Key,
   ProposalErrorHandlerProps,
-  Rates,
   Recipient,
   TransactionOptions,
   SendMaxInfo,
@@ -65,6 +64,7 @@ import {
   TO_HANDLE_ERRORS,
 } from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
+import {Rates} from '../../../rate/rate.models';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -738,7 +738,7 @@ const buildTransactionProposal =
               if (!output.data) {
                 output.data = BwcProvider.getInstance()
                   .getCore()
-                  .Transactions.get({chain: 'ERC20'})
+                  .Transactions.get({chain: 'ETHERC20'})
                   .encodeData({
                     recipients: [
                       {address: output.toAddress, amount: output.amount},
