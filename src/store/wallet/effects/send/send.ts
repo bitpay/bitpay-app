@@ -65,6 +65,7 @@ import {
 } from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
+import BigNumber from 'bignumber.js';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -741,7 +742,10 @@ const buildTransactionProposal =
                   .Transactions.get({chain: 'ETHERC20'})
                   .encodeData({
                     recipients: [
-                      {address: output.toAddress, amount: output.amount},
+                      {
+                        address: output.toAddress,
+                        amount: new BigNumber(output.amount),
+                      },
                     ],
                     tokenAddress: tx.tokenAddress,
                   });
