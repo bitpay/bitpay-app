@@ -714,6 +714,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ? `https://${Currencies.eth.paymentInfo.blockExplorerUrls}address/${address}`
             : `https://${Currencies.eth.paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
       }
+      if (coin === 'rbtc') {
+        url =
+          fullWalletObj.network === 'livenet'
+            ? `https://${Currencies.rbtc.paymentInfo.blockExplorerUrls}address/${address}`
+            : `https://${Currencies.rbtc.paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
+      }
       if (dispatch(IsERCToken(coin))) {
         url =
           fullWalletObj.network === 'livenet'

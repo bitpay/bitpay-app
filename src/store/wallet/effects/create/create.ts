@@ -15,6 +15,7 @@ import {
   buildWalletObj,
   checkEncryptPassword,
 } from '../../utils/wallet';
+import { getRSKChainAbbrevation } from '../../utils/currency';
 import {
   failedAddWallet,
   successAddWallet,
@@ -244,7 +245,7 @@ const createMultipleWallets =
       })) as Wallet;
       wallets.push(wallet);
 
-      if (coin === 'eth') {
+      if (coin === 'eth' || coin === 'rbtc') {
         wallet.preferences = wallet.preferences || {
           tokenAddresses: [],
         };
@@ -307,7 +308,7 @@ const createWallet = (params: {
 
     bwcClient.fromString(
       key.createCredentials(password, {
-        coin,
+        coin: getRSKChainAbbrevation(coin),
         network,
         account,
         n: 1,
@@ -323,7 +324,7 @@ const createWallet = (params: {
       {
         network,
         singleAddress,
-        coin,
+        coin: getRSKChainAbbrevation(coin),
         useNativeSegwit,
       },
       (err: any) => {

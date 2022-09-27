@@ -34,7 +34,7 @@ export const GetPrecision =
       WALLET: {tokenData, customTokenData},
     } = getState();
     const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
+    const currency = getRSKCurrencyAbbrevation(currencyAbbreviation.toLowerCase());
     return Currencies[currency]?.unitInfo || tokens[currency]?.unitInfo;
   };
 
@@ -76,6 +76,7 @@ export const IsERCToken =
 export const GetBlockExplorerUrl =
   (currencyAbbreviation: string, network: string = 'livenet'): Effect<string> =>
   (dispatch, getState) => {
+    currencyAbbreviation = getRSKCurrencyAbbrevation(currencyAbbreviation);
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
@@ -147,3 +148,19 @@ export const isSingleAddressCoin =
       tokens[currency]?.properties.singleAddress
     );
   };
+
+  /**
+   * In case of rsk chain and currency having different names. 
+   * This function will return the currency name for rsk.
+   */
+  export const getRSKCurrencyAbbrevation = (name: string) => {
+    return name === 'rsk' ? 'rbtc': name;
+  }
+
+  /**
+   * In case of rsk chain and currency having different names.
+   * This function will return the chain name for rsk.
+   */
+  export const getRSKChainAbbrevation = (name: string) => {
+    return name === 'rbtc' ? 'rsk': name;
+  }

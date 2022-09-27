@@ -64,6 +64,9 @@ export const getNetworkName = (path: string): string => {
     case "60'": // for ETH
       networkName = 'livenet';
       break;
+    case "137'": // for RSK
+      networkName = 'livenet';
+      break;  
     case "144'": // for XRP
       networkName = 'livenet';
       break;
@@ -114,6 +117,9 @@ export const isValidDerivationPathCoin = (
     case 'eth':
       isValid = ["60'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
+    case 'rbtc':
+      isValid = ["137'", "0'", "1'"].indexOf(coinCode) > -1;
+      break;  
     case 'xrp':
       isValid = ["144'", "0'", "1'"].indexOf(coinCode) > -1;
       break;

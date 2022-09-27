@@ -2,6 +2,7 @@ export enum DefaultDerivationPath {
   defaultBTC = "m/44'/0'/0'",
   defaultBCH = "m/44'/145'/0'",
   defaultETH = "m/44'/60'/0'",
+  defaultRBTC = "m/44'/137'/0'",
   defaultXRP = "m/44'/144'/0'",
   defaultDOGE = "m/44'/3'/0'",
   defaultLTC = "m/44'/2'/0'",
