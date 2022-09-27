@@ -83,6 +83,7 @@ const CurrencyText = styled(BaseText)`
 export interface AmountProps {
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
+  chain?: string;
   context?: string;
   buttonState?: ButtonState;
 
@@ -95,6 +96,7 @@ export interface AmountProps {
 const Amount: React.VFC<AmountProps> = ({
   cryptoCurrencyAbbreviation,
   fiatCurrencyAbbreviation,
+  chain,
   context,
   buttonState,
   onSubmit,
@@ -150,7 +152,7 @@ const Amount: React.VFC<AmountProps> = ({
   const updateAmount = (_val: string) => {
     const val = Number(_val);
 
-    if (isNaN(val) || !cryptoCurrencyAbbreviation) {
+    if (isNaN(val) || !cryptoCurrencyAbbreviation || !chain) {
       updateAmountConfig(current => ({
         ...current,
         displayAmount: _val,
@@ -167,6 +169,7 @@ const Amount: React.VFC<AmountProps> = ({
             ParseAmount(
               primaryIsFiat ? val / rate : val,
               cryptoCurrencyAbbreviation.toLowerCase(),
+              chain,
             ),
           ).amount;
 

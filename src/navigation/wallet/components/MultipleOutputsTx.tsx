@@ -28,6 +28,9 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import AddContactIcon from '../../../components/icons/add-contacts/AddContacts';
 import {useNavigation} from '@react-navigation/native';
+import {getBadgeImg} from '../../../utils/helper-methods';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -60,8 +63,18 @@ const ContactsIconContainer = styled.TouchableOpacity`
 
 const MultipleOutputsTx = ({tx}: {tx: any}) => {
   const {t} = useTranslation();
-  let {coin, network} = tx;
+  let {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
+  const {tokenOptions, customTokenOptions} = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptions,
+  );
+  const tokenOpts = {
+    eth: {
+      ...BitpaySupportedEthereumTokenOpts,
+      ...tokenOptions,
+      ...customTokenOptions,
+    },
+  };
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
 
@@ -96,7 +109,7 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     }
 
     const addressToShow = dispatch(
-      GetProtocolPrefixAddress(coin, network, outputAddr),
+      GetProtocolPrefixAddress(coin, network, outputAddr, chain),
     );
 
     output.addressToShow =
@@ -118,10 +131,23 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   const [showMultiOptions, setShowMultiOptions] = useState(false);
 
   const getIcon = () => {
+    const img = SUPPORTED_CURRENCIES.includes(tx.coin)
+      ? CurrencyListIcons[tx.coin]
+      : tokenOpts &&
+        // @ts-ignore
+        tokenOpts[tx.chain] &&
+        // @ts-ignore
+        tokenOpts[tx.chain][tx.coin]?.logoURI
+      ? // @ts-ignore
+        (tokenOpts[tx.chain][tx.coin].logoURI as string)
+      : '';
+    const badgeImg = getBadgeImg(tx.coin, chain);
+    const icon = <CurrencyImage img={img} size={18} badgeUri={badgeImg} />;
+
     return tx.customData?.service === 'debitcard' ? (
       <CardSvg width={18} height={18} />
-    ) : SUPPORTED_CURRENCIES.includes(coin) ? (
-      CurrencyListIcons[coin]({width: 18, height: 18})
+    ) : icon ? (
+      icon
     ) : (
       <DefaultSvg width={18} height={18} />
     );

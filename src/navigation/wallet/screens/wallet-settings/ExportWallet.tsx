@@ -91,9 +91,7 @@ const ExportWallet = () => {
     params: {wallet, keyObj},
   } = useRoute<RouteProp<WalletStackParamList, 'ExportWallet'>>();
 
-  const {
-    credentials: {network},
-  } = wallet;
+  const {network} = wallet;
 
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);

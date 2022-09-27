@@ -102,6 +102,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
         key: params.key,
         isCustomToken: true,
         isToken: true,
+        chain: chain.chain,
       });
     }
   };
@@ -151,7 +152,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
     [],
   );
 
-  const onTokenToggle = (id: string) => {
+  const onTokenToggle = (currencyAbbreviation: string) => {
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
 
     if (params.selectionMode === 'multi') {
@@ -164,7 +165,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
 
       setTokens(prev =>
         prev.map(token =>
-          token.id === id
+          token.currencyAbbreviation === currencyAbbreviation
             ? {
                 ...token,
                 selected: !token.selected,
@@ -184,7 +185,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
 
       setTokens(prev =>
         prev.map(token => {
-          if (token.id === id) {
+          if (token.currencyAbbreviation === currencyAbbreviation) {
             return {
               ...token,
               selected: !token.selected,
@@ -201,7 +202,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
       );
     }
 
-    params.onToggle(id);
+    params.onToggle(currencyAbbreviation);
   };
 
   const onTokenToggleRef = useRef(onTokenToggle);
@@ -245,7 +246,6 @@ const CurrencyTokenSelectionScreen: React.VFC<
       return (
         <TokenSelectionRow
           key={item.id}
-          chainImg={chain.img}
           token={item}
           hideCheckbox={params.hideCheckbox}
           selectionMode={params.selectionMode}

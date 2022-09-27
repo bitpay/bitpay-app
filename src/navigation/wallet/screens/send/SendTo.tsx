@@ -56,7 +56,7 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
-import {Currencies} from '../../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {
   AppDispatch,
   useAppDispatch,
@@ -75,7 +75,7 @@ import {
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
-import {GetChain, IsUtxoCoin} from '../../../../store/wallet/utils/currency';
+import {IsUtxoCoin} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
@@ -147,7 +147,7 @@ export const BuildKeyWalletRow = (
     value.wallets
       .filter(({hideWallet}) => !hideWallet)
       .filter(
-        ({currencyAbbreviation, id, credentials: {network, walletName}}) =>
+        ({currencyAbbreviation, id, network, credentials: {walletName}}) =>
           currencyAbbreviation.toLowerCase() ===
             currentCurrencyAbbreviation.toLowerCase() &&
           id !== currentWalletId &&
@@ -159,7 +159,9 @@ export const BuildKeyWalletRow = (
           balance,
           hideWallet,
           currencyAbbreviation,
-          credentials: {network, walletName: fallbackName},
+          network,
+          chain,
+          credentials: {walletName: fallbackName},
           walletName,
         } = wallet;
         // Clone wallet to avoid altering store values
@@ -173,6 +175,7 @@ export const BuildKeyWalletRow = (
                   balance.sat,
                   defaultAltCurrencyIsoCode,
                   currencyAbbreviation,
+                  chain,
                   rates,
                 ),
               ),
@@ -215,11 +218,7 @@ const SendTo = () => {
   const [showWalletOptions, setShowWalletOptions] = useState(false);
 
   const {wallet} = route.params;
-  const {
-    currencyAbbreviation,
-    id,
-    credentials: {network},
-  } = wallet;
+  const {currencyAbbreviation, id, chain, network} = wallet;
 
   const isUtxo = IsUtxoCoin(wallet?.currencyAbbreviation);
 
@@ -316,14 +315,13 @@ const SendTo = () => {
       let isValid, addrData: CoinNetwork | null;
       if (isPayPro) {
         isValid =
-          data?.chain ===
-            Currencies[currencyAbbreviation.toLowerCase()].chain &&
-          data?.network === network;
+          data?.chain?.toLowerCase() === chain.toLowerCase() &&
+          data?.network.toLowerCase() === network.toLowerCase();
       } else {
         addrData = GetCoinAndNetwork(data, network);
         isValid =
-          dispatch(GetChain(currencyAbbreviation)).toLowerCase() ===
-            addrData?.coin.toLowerCase() && addrData?.network === network;
+          chain === addrData?.coin.toLowerCase() &&
+          addrData?.network === network;
       }
 
       if (isValid) {
@@ -456,7 +454,12 @@ const SendTo = () => {
       };
 
       dispatch(
-        goToAmount({coin: wallet.currencyAbbreviation, recipient, wallet}),
+        goToAmount({
+          coin: wallet.currencyAbbreviation,
+          chain: wallet.chain,
+          recipient,
+          wallet,
+        }),
       );
     } catch (err: any) {
       logger.error(`Send To: ${getErrorString(err)}`);

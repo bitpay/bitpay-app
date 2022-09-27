@@ -164,8 +164,8 @@ const ContactsRoot: React.FC = () => {
     setSearchResults(results);
   }, 300);
 
-  const keyExtractor = (item: ContactRowProps) => {
-    return item.address + item.coin + item.network;
+  const keyExtractor = (item: ContactRowProps, index: number) => {
+    return item.address + item.coin + item.network + index;
   };
 
   const renderItem = useCallback(

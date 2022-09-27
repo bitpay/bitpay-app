@@ -32,6 +32,7 @@ const RowContainer = styled.View`
 export interface ContactRowProps {
   address: string;
   coin: string;
+  chain: string;
   network: string;
   name: string;
   tag?: number; // backward compatibility
@@ -47,12 +48,12 @@ interface Props {
 const ContactRow = ({contact, onPress}: Props) => {
   const theme = useTheme();
   const underlayColor = theme.dark ? '#121212' : '#fbfbff';
-  const {coin, name, email, address} = contact;
+  const {coin, name, email, address, chain} = contact;
   return (
     <ContactContainer underlayColor={underlayColor} onPress={onPress}>
       <RowContainer>
         <ContactImageContainer>
-          <ContactIcon name={name} coin={coin} size={45} />
+          <ContactIcon name={name} coin={coin} size={45} chain={chain} />
         </ContactImageContainer>
         <ContactColumn>
           <H5>{name}</H5>

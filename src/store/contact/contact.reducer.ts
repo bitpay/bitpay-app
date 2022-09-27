@@ -24,6 +24,7 @@ export const contactReducer = (
           action.contact.address,
           action.contact.coin,
           action.contact.network,
+          action.contact.chain,
         )
       ) {
         return {
@@ -34,14 +35,15 @@ export const contactReducer = (
       return {...state};
 
     case ContactActionTypes.UPDATE_CONTACT:
-      const {address, coin, network} = action.contact;
+      const {address, coin, chain, network} = action.contact;
       return {
         ...state,
         list: state.list.map((contact: ContactRowProps) => {
           if (
             contact.address === address &&
             contact.coin === coin &&
-            contact.network === network
+            contact.network === network &&
+            contact.chain === chain
           ) {
             contact = action.contact;
           }
@@ -56,7 +58,8 @@ export const contactReducer = (
           return (
             contact.address !== action.address ||
             contact.coin !== action.coin ||
-            contact.network !== action.network
+            contact.network !== action.network ||
+            contact.chain !== action.chain
           );
         }),
       };

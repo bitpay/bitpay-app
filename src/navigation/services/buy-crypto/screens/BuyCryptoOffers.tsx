@@ -20,7 +20,10 @@ import {
 } from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {Currencies} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedEthereumTokens,
+} from '../../../../constants/currencies';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
@@ -40,7 +43,7 @@ import {
 } from '../utils/simplex-utils';
 import {getWyreFiatAmountLimits, wyreEnv} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
-import {GetChain, GetPrecision} from '../../../../store/wallet/utils/currency';
+import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -70,6 +73,7 @@ export interface BuyCryptoOffersProps {
   amount: number;
   fiatCurrency: string;
   coin: string;
+  chain: string;
   country: string;
   selectedWallet: Wallet;
   paymentMethod: PaymentMethod;
@@ -288,6 +292,7 @@ const BuyCryptoOffers: React.FC = () => {
       amount,
       fiatCurrency,
       coin,
+      chain,
       country,
       selectedWallet,
       paymentMethod,
@@ -388,7 +393,7 @@ const BuyCryptoOffers: React.FC = () => {
             offers.simplex.fee =
               data.fiat_money.total_amount - data.fiat_money.base_amount;
 
-            const precision = dispatch(GetPrecision(coin));
+            const precision = dispatch(GetPrecision(coin, chain));
             if (offers.simplex.buyAmount && coin && precision) {
               offers.simplex.fiatMoney = Number(
                 offers.simplex.buyAmount / data.digital_money.amount,
@@ -420,7 +425,6 @@ const BuyCryptoOffers: React.FC = () => {
           }
         })
         .catch((err: any) => {
-          console.log('Simplex getting quote: FAILED', err);
           const reason = 'simplexGetQuote Error';
           showSimplexError(err, reason);
         });
@@ -573,7 +577,7 @@ const BuyCryptoOffers: React.FC = () => {
         showWyreError(err, reason);
       }
 
-      const dest = setPrefix(address, coin, selectedWallet.credentials.network);
+      const dest = setPrefix(address, coin, selectedWallet.network);
 
       let walletType: string;
       switch (paymentMethod.method) {
@@ -629,7 +633,6 @@ const BuyCryptoOffers: React.FC = () => {
           setFinishedWyre(!finishedWyre);
         })
         .catch((err: any) => {
-          console.log('Wyre getting quote: FAILED', err);
           const reason = 'wyreWalletOrderQuotation Error';
           showWyreError(err, reason);
         });
@@ -641,8 +644,10 @@ const BuyCryptoOffers: React.FC = () => {
     coin: string,
     network: 'livenet' | 'testnet',
   ): string => {
+    const _coin = coin.toLowerCase();
     const prefix =
-      Currencies[coin.toLocaleLowerCase()].paymentInfo.protocolPrefix[network];
+      BitpaySupportedCoins[_coin].paymentInfo.protocolPrefix[network] ||
+      BitpaySupportedEthereumTokens[_coin].paymentInfo.protocolPrefix[network];
     const addr = `${prefix}:${address}`;
     return addr;
   };
@@ -684,9 +689,7 @@ const BuyCryptoOffers: React.FC = () => {
           payment_id: req.payment_id,
         };
 
-        const destinationChain = dispatch(
-          GetChain(selectedWallet.currencyAbbreviation),
-        );
+        const destinationChain = selectedWallet.chain;
 
         const newData: simplexPaymentData = {
           address,
@@ -760,9 +763,7 @@ const BuyCryptoOffers: React.FC = () => {
         _paymentMethod = 'debit-card';
         break;
     }
-    const destinationChain = dispatch(
-      GetChain(selectedWallet.currencyAbbreviation),
-    );
+    const destinationChain = selectedWallet.chain;
     const redirectUrl =
       APP_DEEPLINK_PREFIX +
       'wyre?walletId=' +
@@ -772,7 +773,7 @@ const BuyCryptoOffers: React.FC = () => {
       '&destChain=' +
       destinationChain;
     const failureRedirectUrl = APP_DEEPLINK_PREFIX + 'wyreError';
-    const dest = setPrefix(address, coin, selectedWallet.credentials.network);
+    const dest = setPrefix(address, coin, selectedWallet.network);
     const requestData = {
       sourceAmount: offers.wyre.fiatAmount.toString(),
       dest,
@@ -806,9 +807,7 @@ const BuyCryptoOffers: React.FC = () => {
   };
 
   const continueToWyre = (paymentUrl: string) => {
-    const destinationChain = dispatch(
-      GetChain(selectedWallet.currencyAbbreviation),
-    );
+    const destinationChain = selectedWallet.chain;
     dispatch(
       logSegmentEvent('track', 'Requested Crypto Purchase', {
         exchange: 'wyre',

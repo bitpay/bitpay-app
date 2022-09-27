@@ -95,9 +95,11 @@ const Addresses = () => {
   } = useRoute<RouteProp<WalletStackParamList, 'Addresses'>>();
 
   const {
-    credentials: {token, multisigEthInfo, coin},
+    credentials: {token, multisigEthInfo},
     walletName,
     currencyName,
+    currencyAbbreviation,
+    chain,
   } = wallet;
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
@@ -197,9 +199,23 @@ const Addresses = () => {
           setLowUtxosNb(response.lowUtxos.length);
           setAllUtxosNb(response.allUtxos.length);
 
-          setLowUtxosSum(dispatch(FormatAmountStr(coin, _lowUtoxosSum)));
-          setAllUtxosSum(dispatch(FormatAmountStr(coin, allSum)));
-          setMinFee(dispatch(FormatAmountStr(coin, response.minFee || 0)));
+          setLowUtxosSum(
+            dispatch(
+              FormatAmountStr(currencyAbbreviation, chain, _lowUtoxosSum),
+            ),
+          );
+          setAllUtxosSum(
+            dispatch(FormatAmountStr(currencyAbbreviation, chain, allSum)),
+          );
+          setMinFee(
+            dispatch(
+              FormatAmountStr(
+                currencyAbbreviation,
+                chain,
+                response.minFee || 0,
+              ),
+            ),
+          );
           setMinFeePer(per.toFixed(2) + '%');
         }
       } catch (e) {
@@ -219,13 +235,16 @@ const Addresses = () => {
   };
 
   const buildUiFormatList = (list: any, wallet: Wallet) => {
-    const {
-      credentials: {coin, network},
-    } = wallet;
+    const {currencyAbbreviation, network, chain} = wallet;
     list.forEach((item: any) => {
       item.path = item.path ? item.path.replace(/^m/g, 'xpub') : null;
       item.address = dispatch(
-        GetProtocolPrefixAddress(coin, network, item.address),
+        GetProtocolPrefixAddress(
+          currencyAbbreviation,
+          network,
+          item.address,
+          chain,
+        ),
       );
 
       if (item.createdOn) {
@@ -316,7 +335,8 @@ const Addresses = () => {
                   navigation.navigate('Wallet', {
                     screen: 'AllAddresses',
                     params: {
-                      currencyAbbreviation: coin,
+                      currencyAbbreviation,
+                      chain,
                       walletName: walletName || currencyName,
                       usedAddresses: usedAddress,
                       unusedAddresses: unusedAddress,
@@ -396,7 +416,15 @@ const Addresses = () => {
                           </CopyImgContainerRight>
                         </CopyRow>
 
-                        <H7>{dispatch(FormatAmountStr(coin, amount))}</H7>
+                        <H7>
+                          {dispatch(
+                            FormatAmountStr(
+                              currencyAbbreviation,
+                              chain,
+                              amount,
+                            ),
+                          )}
+                        </H7>
                       </SettingView>
 
                       <Hr />

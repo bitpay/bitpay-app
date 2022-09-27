@@ -192,17 +192,16 @@ const TransactionLevel = ({
   feeLevel,
   feePerSatByte: paramFeePerSatByte,
 }: TransactionSpeedParamList) => {
-  const {
-    img,
-    credentials: {coin, network},
-  } = wallet;
+  const {img, currencyAbbreviation, network, chain} = wallet;
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
 
   const [speedUpMinFeePerKb, setSpeedUpMinFeePerKb] = useState<number>();
-  const {feeUnit, feeUnitAmount, blockTime} = dispatch(GetFeeUnits(coin));
+  const {feeUnit, feeUnitAmount, blockTime} = dispatch(
+    GetFeeUnits(currencyAbbreviation, chain),
+  );
   const [feeOptions, setFeeOptions] = useState<any[]>();
   const [feePerSatByte, setFeePerSatByte] = useState<
     number | string | undefined
@@ -218,16 +217,17 @@ const TransactionLevel = ({
   const minFeeAllowed = FEE_MIN;
   const [maxFeeAllowed, setMaxFeeAllowed] = useState<number>();
 
-  const {coinColor: backgroundColor} =
-    coin === 'btc' ? dispatch(GetTheme(coin)) : dispatch(GetTheme('eth'));
+  const {coinColor: backgroundColor} = dispatch(
+    GetTheme(currencyAbbreviation, chain),
+  );
 
   const themedBackground = theme.dark ? '#464646' : NeutralSlate;
 
   const setSpeedUpMinFee = (_feeLevels: Fee[]): number | undefined => {
-    const minFeeLevel = coin === 'btc' ? 'custom' : 'priority';
+    const minFeeLevel = currencyAbbreviation === 'btc' ? 'custom' : 'priority';
     let feeLevelsAllowed: Fee[] = [];
     let _speedUpMinFeePerKb;
-    if (coin === 'btc') {
+    if (currencyAbbreviation === 'btc') {
       feeLevelsAllowed = _feeLevels.filter(
         (f: Fee) => f.feePerKb >= customFeePerKB,
       );
@@ -260,15 +260,15 @@ const TransactionLevel = ({
         ...fee,
         feeUnit,
         // @ts-ignore
-        uiLevel: dispatch(GetFeeOptions(coin))[level],
+        uiLevel: GetFeeOptions(currencyAbbreviation, chain)[level],
       };
 
       feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
       feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
-        coin === 'btc' ? t('Satoshis per byte') : feeUnit
+        currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
       }`;
 
-      if (coin === 'eth' || dispatch(IsERCToken(coin))) {
+      if (currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation)) {
         // @ts-ignore
         feeOption.avgConfirmationTime = ethAvgTime[level];
       } else {
@@ -496,7 +496,7 @@ const TransactionLevel = ({
                       <CurrencyImage img={img} size={20} />
                     </CurrencyImageContainer>
                     <H4>
-                      {coin === 'btc' ? 'Bitcoin' : 'Ethereum'}{' '}
+                      {currencyAbbreviation === 'btc' ? 'Bitcoin' : 'Ethereum'}{' '}
                       {t('Network Fee Policy')}
                     </H4>
                   </FeeLevelStepsHeader>

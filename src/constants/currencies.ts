@@ -1,5 +1,5 @@
 export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
-export type SupportedTokens =
+export type SupportedEthereumTokens =
   | 'usdc'
   | 'gusd'
   | 'usdp'
@@ -10,7 +10,9 @@ export type SupportedTokens =
   | 'shib'
   | 'ape'
   | 'euroc';
-export type SupportedCurrencies = SupportedCoins | SupportedTokens;
+export type SupportedCurrencies = SupportedCoins | SupportedEthereumTokens;
+export type EVM_CHAINS = 'eth';
+export type UTXO_CHAINS = 'btc' | 'bch' | 'doge' | 'ltc';
 
 export interface CurrencyOpts {
   // Bitcore-node
@@ -55,160 +57,13 @@ export interface CurrencyOpts {
     backgroundColor: string;
     gradientBackgroundColor: string;
   };
+  tokens?: {[key in string]: CurrencyOpts};
 }
 
-export const Currencies: {[key in string]: CurrencyOpts} = {
-  btc: {
-    name: 'Bitcoin',
-    chain: 'BTC',
-    coin: 'btc',
-    unitInfo: {
-      unitName: 'BTC',
-      unitToSatoshi: 100000000,
-      unitDecimals: 8,
-      unitCode: 'btc',
-    },
-    properties: {
-      hasMultiSig: true,
-      hasMultiSend: true,
-      isUtxo: true,
-      isERCToken: false,
-      isStableCoin: false,
-      singleAddress: false,
-    },
-    paymentInfo: {
-      paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'bitcoin', testnet: 'bitcoin'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
-      blockExplorerUrls: 'bitpay.com/insight/#/BTC/mainnet/',
-      blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BTC/testnet/',
-    },
-    feeInfo: {
-      feeUnit: 'sat/byte',
-      feeUnitAmount: 1000,
-      blockTime: 10,
-      maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#f7931a',
-      backgroundColor: '#f7921a',
-      gradientBackgroundColor: '#f7921a',
-    },
-  },
-  bch: {
-    name: 'Bitcoin Cash',
-    chain: 'BCH',
-    coin: 'bch',
-    unitInfo: {
-      unitName: 'BCH',
-      unitToSatoshi: 100000000,
-      unitDecimals: 8,
-      unitCode: 'bch',
-    },
-    properties: {
-      hasMultiSig: true,
-      hasMultiSend: true,
-      isUtxo: true,
-      isERCToken: false,
-      isStableCoin: false,
-      singleAddress: false,
-    },
-    paymentInfo: {
-      paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'bitcoincash', testnet: 'bchtest'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/bch',
-      blockExplorerUrls: 'bitpay.com/insight/#/BCH/mainnet/',
-      blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BCH/testnet/',
-    },
-    feeInfo: {
-      feeUnit: 'sat/byte',
-      feeUnitAmount: 1000,
-      blockTime: 10,
-      maxMerchantFee: 'normal',
-    },
-    theme: {
-      coinColor: '#2fcf6e',
-      backgroundColor: '#2fcf6e',
-      gradientBackgroundColor: '#2fcf6e',
-    },
-  },
-  eth: {
-    name: 'Ethereum',
-    chain: 'ETH',
-    coin: 'eth',
-    unitInfo: {
-      unitName: 'ETH',
-      unitToSatoshi: 1e18,
-      unitDecimals: 18,
-      unitCode: 'eth',
-    },
-    properties: {
-      hasMultiSig: true,
-      hasMultiSend: false,
-      isUtxo: false,
-      isERCToken: false,
-      isStableCoin: false,
-      singleAddress: true,
-    },
-    paymentInfo: {
-      paymentCode: 'EIP681',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
-    },
-    feeInfo: {
-      feeUnit: 'Gwei',
-      feeUnitAmount: 1e9,
-      blockTime: 0.2,
-      maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#6b71d6',
-      backgroundColor: '#6b71d6',
-      gradientBackgroundColor: '#6b71d6',
-    },
-  },
-  xrp: {
-    name: 'XRP',
-    chain: 'XRP',
-    coin: 'xrp',
-    unitInfo: {
-      unitName: 'XRP',
-      unitToSatoshi: 1e6,
-      unitDecimals: 6,
-      unitCode: 'xrp',
-    },
-    properties: {
-      hasMultiSig: false,
-      hasMultiSend: false,
-      isUtxo: false,
-      isERCToken: false,
-      isStableCoin: false,
-      singleAddress: true,
-    },
-    paymentInfo: {
-      paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'ripple', testnet: 'ripple'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/xrp',
-      blockExplorerUrls: 'xrpscan.com/',
-      blockExplorerUrlsTestnet: 'test.bithomp.com/explorer/',
-    },
-    feeInfo: {
-      feeUnit: 'drops',
-      feeUnitAmount: 1e6,
-      blockTime: 0.05,
-      maxMerchantFee: 'normal',
-    },
-    theme: {
-      coinColor: '#000000',
-      backgroundColor: '#565d6d',
-      gradientBackgroundColor: '#565d6d',
-    },
-  },
+export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
   busd: {
     name: 'Binance USD Coin',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'busd',
     unitInfo: {
       unitName: 'BUSD',
@@ -245,7 +100,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
   usdp: {
     name: 'Paxos Dollar',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'usdp',
     unitInfo: {
       unitName: 'USDP',
@@ -283,7 +138,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   pax: {
     // backward compatibility
     name: 'Paxos Standard',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'pax',
     unitInfo: {
       unitName: 'PAX',
@@ -320,7 +175,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
   usdc: {
     name: 'USD Coin',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'usdc',
     unitInfo: {
       unitName: 'USDC',
@@ -357,7 +212,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
   gusd: {
     name: 'Gemini Dollar',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'gusd',
     unitInfo: {
       unitName: 'GUSD',
@@ -394,7 +249,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
   dai: {
     name: 'DAI',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'dai',
     unitInfo: {
       unitName: 'DAI',
@@ -431,7 +286,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
   wbtc: {
     name: 'Wrapped Bitcoin',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'wbtc',
     unitInfo: {
       unitName: 'WBTC',
@@ -466,83 +321,9 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#282A47',
     },
   },
-  doge: {
-    name: 'Dogecoin',
-    chain: 'DOGE',
-    coin: 'doge',
-    unitInfo: {
-      unitName: 'DOGE',
-      unitToSatoshi: 1e8,
-      unitDecimals: 8,
-      unitCode: 'doge',
-    },
-    properties: {
-      hasMultiSig: true,
-      hasMultiSend: true,
-      isUtxo: true,
-      isERCToken: false,
-      isStableCoin: false,
-      singleAddress: false,
-    },
-    paymentInfo: {
-      paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'dogecoin', testnet: 'dogecoin'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/doge',
-      blockExplorerUrls: 'blockchair.com/',
-      blockExplorerUrlsTestnet: 'sochain.com/',
-    },
-    feeInfo: {
-      feeUnit: 'sat/byte',
-      feeUnitAmount: 1e8,
-      blockTime: 10,
-      maxMerchantFee: 'normal',
-    },
-    theme: {
-      coinColor: '#d8c172',
-      backgroundColor: '#d8c172',
-      gradientBackgroundColor: '#d8c172',
-    },
-  },
-  ltc: {
-    name: 'Litecoin',
-    chain: 'LTC',
-    coin: 'ltc',
-    unitInfo: {
-      unitName: 'LTC',
-      unitToSatoshi: 100000000,
-      unitDecimals: 8,
-      unitCode: 'ltc',
-    },
-    properties: {
-      hasMultiSig: true,
-      hasMultiSend: true,
-      isUtxo: true,
-      isERCToken: false,
-      isStableCoin: false,
-      singleAddress: false,
-    },
-    paymentInfo: {
-      paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'litecoin', testnet: 'litecoin'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ltc',
-      blockExplorerUrls: 'bitpay.com/insight/#/LTC/mainnet/',
-      blockExplorerUrlsTestnet: 'bitpay.com/insight/#/LTC/testnet/',
-    },
-    feeInfo: {
-      feeUnit: 'sat/byte',
-      feeUnitAmount: 1000,
-      blockTime: 2.5,
-      maxMerchantFee: 'normal',
-    },
-    theme: {
-      coinColor: '#A6A9AA',
-      backgroundColor: '#A6A9AA',
-      gradientBackgroundColor: '#A6A9AA',
-    },
-  },
   shib: {
     name: 'SHIBA INU',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'shib',
     unitInfo: {
       unitName: 'SHIB',
@@ -580,7 +361,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
   ape: {
     name: 'ApeCoin',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'ape',
     unitInfo: {
       unitName: 'APE',
@@ -618,7 +399,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
   euroc: {
     name: 'Euro Coin',
-    chain: 'ETH',
+    chain: 'eth',
     coin: 'euroc',
     unitInfo: {
       unitName: 'EUROC',
@@ -656,19 +437,239 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
 };
 
-export const SUPPORTED_TOKENS = [
-  'usdc',
-  'gusd',
-  'usdp',
-  'busd',
-  'dai',
-  'wbtc',
-  'shib',
-  'ape',
-  'euroc',
-];
-export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc', 'xrp'];
-export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];
+export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
+  btc: {
+    name: 'Bitcoin',
+    chain: 'btc',
+    coin: 'btc',
+    unitInfo: {
+      unitName: 'BTC',
+      unitToSatoshi: 100000000,
+      unitDecimals: 8,
+      unitCode: 'btc',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: true,
+      isUtxo: true,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: false,
+    },
+    paymentInfo: {
+      paymentCode: 'BIP73',
+      protocolPrefix: {livenet: 'bitcoin', testnet: 'bitcoin'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
+      blockExplorerUrls: 'bitpay.com/insight/#/BTC/mainnet/',
+      blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BTC/testnet/',
+    },
+    feeInfo: {
+      feeUnit: 'sat/byte',
+      feeUnitAmount: 1000,
+      blockTime: 10,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#f7931a',
+      backgroundColor: '#f7921a',
+      gradientBackgroundColor: '#f7921a',
+    },
+  },
+  bch: {
+    name: 'Bitcoin Cash',
+    chain: 'bch',
+    coin: 'bch',
+    unitInfo: {
+      unitName: 'BCH',
+      unitToSatoshi: 100000000,
+      unitDecimals: 8,
+      unitCode: 'bch',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: true,
+      isUtxo: true,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: false,
+    },
+    paymentInfo: {
+      paymentCode: 'BIP73',
+      protocolPrefix: {livenet: 'bitcoincash', testnet: 'bchtest'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/bch',
+      blockExplorerUrls: 'bitpay.com/insight/#/BCH/mainnet/',
+      blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BCH/testnet/',
+    },
+    feeInfo: {
+      feeUnit: 'sat/byte',
+      feeUnitAmount: 1000,
+      blockTime: 10,
+      maxMerchantFee: 'normal',
+    },
+    theme: {
+      coinColor: '#2fcf6e',
+      backgroundColor: '#2fcf6e',
+      gradientBackgroundColor: '#2fcf6e',
+    },
+  },
+  xrp: {
+    name: 'XRP',
+    chain: 'xrp',
+    coin: 'xrp',
+    unitInfo: {
+      unitName: 'XRP',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'xrp',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'BIP73',
+      protocolPrefix: {livenet: 'ripple', testnet: 'ripple'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/xrp',
+      blockExplorerUrls: 'xrpscan.com/',
+      blockExplorerUrlsTestnet: 'test.bithomp.com/explorer/',
+    },
+    feeInfo: {
+      feeUnit: 'drops',
+      feeUnitAmount: 1e6,
+      blockTime: 0.05,
+      maxMerchantFee: 'normal',
+    },
+    theme: {
+      coinColor: '#000000',
+      backgroundColor: '#565d6d',
+      gradientBackgroundColor: '#565d6d',
+    },
+  },
+  doge: {
+    name: 'Dogecoin',
+    chain: 'doge',
+    coin: 'doge',
+    unitInfo: {
+      unitName: 'DOGE',
+      unitToSatoshi: 1e8,
+      unitDecimals: 8,
+      unitCode: 'doge',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: true,
+      isUtxo: true,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: false,
+    },
+    paymentInfo: {
+      paymentCode: 'BIP73',
+      protocolPrefix: {livenet: 'dogecoin', testnet: 'dogecoin'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/doge',
+      blockExplorerUrls: 'blockchair.com/',
+      blockExplorerUrlsTestnet: 'sochain.com/',
+    },
+    feeInfo: {
+      feeUnit: 'sat/byte',
+      feeUnitAmount: 1e8,
+      blockTime: 10,
+      maxMerchantFee: 'normal',
+    },
+    theme: {
+      coinColor: '#d8c172',
+      backgroundColor: '#d8c172',
+      gradientBackgroundColor: '#d8c172',
+    },
+  },
+  ltc: {
+    name: 'Litecoin',
+    chain: 'ltc',
+    coin: 'ltc',
+    unitInfo: {
+      unitName: 'LTC',
+      unitToSatoshi: 100000000,
+      unitDecimals: 8,
+      unitCode: 'ltc',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: true,
+      isUtxo: true,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: false,
+    },
+    paymentInfo: {
+      paymentCode: 'BIP73',
+      protocolPrefix: {livenet: 'litecoin', testnet: 'litecoin'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ltc',
+      blockExplorerUrls: 'bitpay.com/insight/#/LTC/mainnet/',
+      blockExplorerUrlsTestnet: 'bitpay.com/insight/#/LTC/testnet/',
+    },
+    feeInfo: {
+      feeUnit: 'sat/byte',
+      feeUnitAmount: 1000,
+      blockTime: 2.5,
+      maxMerchantFee: 'normal',
+    },
+    theme: {
+      coinColor: '#A6A9AA',
+      backgroundColor: '#A6A9AA',
+      gradientBackgroundColor: '#A6A9AA',
+    },
+  },
+};
+export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
+  eth: {
+    name: 'Ethereum',
+    chain: 'eth',
+    coin: 'eth',
+    unitInfo: {
+      unitName: 'ETH',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'eth',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
+      blockExplorerUrls: 'etherscan.io/',
+      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#6b71d6',
+      backgroundColor: '#6b71d6',
+      gradientBackgroundColor: '#6b71d6',
+    },
+    tokens: BitpaySupportedEthereumTokens,
+  },
+};
+
+export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
+  ...BitpaySupportedUtxoCoins,
+  ...BitpaySupportedEvmCoins,
+};
+
 export const POPULAR_TOKENS = [
   'UNI',
   'SUSHI',
@@ -691,4 +692,13 @@ export const POPULAR_TOKENS = [
   'YFI',
   'CRV',
   'RUNE',
+];
+
+export const SUPPORTED_ETHEREUM_TOKENS = Object.keys(
+  BitpaySupportedEthereumTokens,
+);
+export const SUPPORTED_COINS = Object.keys(BitpaySupportedCoins);
+export const SUPPORTED_CURRENCIES = [
+  ...SUPPORTED_COINS,
+  ...SUPPORTED_ETHEREUM_TOKENS,
 ];

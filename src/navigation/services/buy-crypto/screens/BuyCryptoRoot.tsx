@@ -133,7 +133,9 @@ const BuyCryptoRoot: React.FC<
       setWalletData(
         SupportedCurrencyOptions.find(
           currency =>
-            selectedWallet && currency.id == selectedWallet.credentials.coin,
+            selectedWallet &&
+            currency.currencyAbbreviation ==
+              selectedWallet.currencyAbbreviation,
         ),
       );
     }
@@ -202,14 +204,14 @@ const BuyCryptoRoot: React.FC<
   const walletIsSupported = (wallet: Wallet): boolean => {
     return (
       wallet.credentials &&
-      ((wallet.credentials.network === 'livenet' &&
+      ((wallet.network === 'livenet' &&
         buyCryptoSupportedCoins.includes(
-          wallet.credentials.coin.toLowerCase(),
+          wallet.currencyAbbreviation.toLowerCase(),
         )) ||
         (__DEV__ &&
-          wallet.credentials.network === 'testnet' &&
+          wallet.network === 'testnet' &&
           wyreSupportedCoins.includes(
-            wallet.credentials.coin.toLowerCase(),
+            wallet.currencyAbbreviation.toLowerCase(),
           ))) &&
       wallet.isComplete() &&
       (!fromCurrencyAbbreviation ||
@@ -220,13 +222,15 @@ const BuyCryptoRoot: React.FC<
   const setWallet = (wallet: Wallet) => {
     if (
       wallet.credentials &&
-      ((wallet.credentials.network === 'livenet' &&
+      ((wallet.network === 'livenet' &&
         buyCryptoSupportedCoins.includes(
-          wallet.credentials.coin.toLowerCase(),
+          wallet.currencyAbbreviation.toLowerCase(),
         )) ||
         (__DEV__ &&
-          wallet.credentials.network === 'testnet' &&
-          wyreSupportedCoins.includes(wallet.credentials.coin.toLowerCase())))
+          wallet.network === 'testnet' &&
+          wyreSupportedCoins.includes(
+            wallet.currencyAbbreviation.toLowerCase(),
+          )))
     ) {
       if (wallet.isComplete()) {
         if (allKeys[wallet.keyId].backupComplete) {
@@ -290,10 +294,7 @@ const BuyCryptoRoot: React.FC<
       await sleep(600);
       showTokensInfoSheet();
     };
-    if (
-      !!selectedWallet &&
-      dispatch(IsERCToken(selectedWallet.currencyAbbreviation))
-    ) {
+    if (!!selectedWallet && IsERCToken(selectedWallet.currencyAbbreviation)) {
       tokensWarn();
     } else {
       continueToViewOffers();
@@ -314,6 +315,7 @@ const BuyCryptoRoot: React.FC<
       amount,
       fiatCurrency,
       coin: selectedWallet?.currencyAbbreviation || '',
+      chain: selectedWallet?.chain || '',
       country: countryData?.shortCode || 'US',
       selectedWallet,
       paymentMethod: selectedPaymentMethod,
@@ -530,7 +532,7 @@ const BuyCryptoRoot: React.FC<
                     <CurrencyImage img={selectedWallet.img} size={20} />
                   </CoinIconContainer>
                   <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
-                    {selectedWallet.credentials.coin.toUpperCase()}
+                    {selectedWallet.currencyAbbreviation.toUpperCase()}
                   </SelectedOptionText>
                 </SelectedOptionCol>
                 <ArrowContainer>

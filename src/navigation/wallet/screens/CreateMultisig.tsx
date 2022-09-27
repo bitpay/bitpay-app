@@ -43,7 +43,7 @@ import {
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
-import {Currencies} from '../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {WalletStackParamList} from '../WalletStack';
 import {
@@ -203,7 +203,8 @@ const CreateMultisig = () => {
   } = useForm({resolver: yupResolver(schema)});
 
   const singleAddressCurrency =
-    Currencies[currency?.toLowerCase() as string].properties.singleAddress;
+    BitpaySupportedCoins[currency?.toLowerCase() as string].properties
+      .singleAddress;
 
   const showErrorModal = (e: string) => {
     dispatch(

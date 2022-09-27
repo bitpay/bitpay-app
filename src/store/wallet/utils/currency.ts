@@ -1,25 +1,45 @@
 import {Effect} from '../..';
-import {Currencies} from '../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedEthereumTokens,
+  SUPPORTED_COINS,
+} from '../../../constants/currencies';
 
 export const GetProtocolPrefix =
-  (currencyAbbreviation: string, network: string = 'livenet'): Effect<string> =>
+  (
+    currencyAbbreviation: string,
+    network: string = 'livenet',
+    chain: string,
+  ): Effect<string> =>
   (dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
+
+    let tokens;
     const currency = currencyAbbreviation.toLowerCase();
-    return (
-      // @ts-ignore
-      Currencies[currency]?.paymentInfo.protocolPrefix[network] ||
-      // @ts-ignore
-      tokens[currency]?.paymentInfo.protocolPrefix[network]
-    );
+    if (IsERCToken(currencyAbbreviation)) {
+      switch (chain) {
+        case 'eth':
+          tokens = {...tokenData, ...customTokenData};
+          return (
+            // @ts-ignore
+            BitpaySupportedEthereumTokens[currency]?.paymentInfo.protocolPrefix[
+              network
+            ] ||
+            // @ts-ignore
+            tokens[currency]?.paymentInfo.protocolPrefix[network]
+          );
+      }
+    }
+    // @ts-ignore
+    return BitpaySupportedCoins[currency]?.paymentInfo.protocolPrefix[network];
   };
 
 export const GetPrecision =
   (
     currencyAbbreviation: string,
+    chain: string,
   ): Effect<
     | {
         unitName: string;
@@ -33,9 +53,20 @@ export const GetPrecision =
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
+
+    let tokens;
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.unitInfo || tokens[currency]?.unitInfo;
+    if (IsERCToken(currencyAbbreviation)) {
+      switch (chain) {
+        case 'eth':
+          tokens = {...tokenData, ...customTokenData};
+          return (
+            BitpaySupportedEthereumTokens[currency]?.unitInfo ||
+            tokens[currency]?.unitInfo
+          );
+      }
+    }
+    return BitpaySupportedCoins[currency]?.unitInfo;
   };
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
@@ -45,52 +76,52 @@ export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
 };
 
 export const IsCustomERCToken = (currencyAbbreviation: string) => {
-  return !Currencies[currencyAbbreviation.toLowerCase()];
+  return (
+    !BitpaySupportedCoins[currencyAbbreviation.toLowerCase()] ||
+    !BitpaySupportedEthereumTokens[currencyAbbreviation.toLowerCase()]
+  );
 };
 
-export const GetChain =
-  (currencyAbbreviation: string): Effect<string> =>
-  (dispatch, getState) => {
-    const {
-      WALLET: {tokenData, customTokenData},
-    } = getState();
-    const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.chain || tokens[currency]?.chain;
-  };
-
-export const IsERCToken =
-  (currencyAbbreviation: string): Effect<boolean> =>
-  (dispatch, getState) => {
-    const {
-      WALLET: {tokenData, customTokenData},
-    } = getState();
-    const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
-    return (
-      Currencies[currency]?.properties.isERCToken ||
-      tokens[currency]?.properties.isERCToken
-    );
-  };
+export const IsERCToken = (currencyAbbreviation: string): boolean => {
+  const currency = currencyAbbreviation.toLowerCase();
+  return !SUPPORTED_COINS.includes(currency);
+};
 
 export const GetBlockExplorerUrl =
-  (currencyAbbreviation: string, network: string = 'livenet'): Effect<string> =>
+  (
+    currencyAbbreviation: string,
+    network: string = 'livenet',
+    chain: string,
+  ): Effect<string> =>
   (dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
+
+    let tokens;
     const currency = currencyAbbreviation.toLowerCase();
+    if (IsERCToken(currencyAbbreviation)) {
+      switch (chain) {
+        case 'eth':
+          tokens = {...tokenData, ...customTokenData};
+          return network === 'livenet'
+            ? BitpaySupportedEthereumTokens[currency]?.paymentInfo
+                .blockExplorerUrls ||
+                tokens[currency]?.paymentInfo.blockExplorerUrls
+            : BitpaySupportedEthereumTokens[currency]?.paymentInfo
+                .blockExplorerUrlsTestnet ||
+                tokens[currency]?.paymentInfo.blockExplorerUrlsTestnet;
+      }
+    }
     return network === 'livenet'
-      ? Currencies[currency]?.paymentInfo.blockExplorerUrls ||
-          tokens[currency]?.paymentInfo.blockExplorerUrls
-      : Currencies[currency]?.paymentInfo.blockExplorerUrlsTestnet ||
-          tokens[currency]?.paymentInfo.blockExplorerUrlsTestnet;
+      ? BitpaySupportedCoins[currency]?.paymentInfo.blockExplorerUrls
+      : BitpaySupportedCoins[currency]?.paymentInfo.blockExplorerUrlsTestnet;
   };
 
 export const GetFeeUnits =
   (
     currencyAbbreviation: string,
+    chain: string,
   ): Effect<{
     feeUnit: string;
     feeUnitAmount: number;
@@ -101,14 +132,25 @@ export const GetFeeUnits =
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
+    let tokens;
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.feeInfo || tokens[currency]?.feeInfo;
+    if (IsERCToken(currencyAbbreviation)) {
+      switch (chain) {
+        case 'eth':
+          tokens = {...tokenData, ...customTokenData};
+          return (
+            BitpaySupportedEthereumTokens[currency]?.feeInfo ||
+            tokens[currency]?.feeInfo
+          );
+      }
+    }
+    return BitpaySupportedCoins[currency]?.feeInfo;
   };
 
 export const GetTheme =
   (
     currencyAbbreviation: string,
+    chain: string,
   ): Effect<{
     coinColor: string;
     backgroundColor: string;
@@ -118,32 +160,59 @@ export const GetTheme =
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
+    let tokens;
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.theme || tokens[currency]?.theme;
+    if (IsERCToken(currencyAbbreviation)) {
+      switch (chain) {
+        case 'eth':
+          tokens = {...tokenData, ...customTokenData};
+          return (
+            BitpaySupportedEthereumTokens[currency]?.theme ||
+            tokens[currency]?.theme
+          );
+      }
+    }
+    return BitpaySupportedCoins[currency]?.theme;
   };
 
 export const GetName =
-  (currencyAbbreviation: string): Effect<string> =>
+  (currencyAbbreviation: string, chain: string): Effect<string> =>
   (dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
+    let tokens;
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.name || tokens[currency]?.name;
+    if (IsERCToken(currencyAbbreviation)) {
+      switch (chain) {
+        case 'eth':
+          tokens = {...tokenData, ...customTokenData};
+          return (
+            BitpaySupportedEthereumTokens[currency]?.name ||
+            tokens[currency]?.name
+          );
+      }
+    }
+    return BitpaySupportedCoins[currency]?.name;
   };
 
 export const isSingleAddressCoin =
-  (currencyAbbreviation: string): Effect<boolean> =>
+  (currencyAbbreviation: string, chain: string): Effect<boolean> =>
   (dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
+    let tokens;
     const currency = currencyAbbreviation.toLowerCase();
-    return (
-      Currencies[currency]?.properties.singleAddress ||
-      tokens[currency]?.properties.singleAddress
-    );
+    if (IsERCToken(currencyAbbreviation)) {
+      switch (chain) {
+        case 'eth':
+          tokens = {...tokenData, ...customTokenData};
+          return (
+            BitpaySupportedEthereumTokens[currency]?.properties.singleAddress ||
+            tokens[currency]?.properties.singleAddress
+          );
+      }
+    }
+    return BitpaySupportedCoins[currency]?.properties.singleAddress;
   };

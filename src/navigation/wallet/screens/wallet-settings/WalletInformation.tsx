@@ -89,14 +89,15 @@ const WalletInformation = () => {
   } = useRoute<RouteProp<WalletStackParamList, 'WalletInformation'>>();
 
   const {
+    chain,
+    currencyAbbreviation,
+    network,
     credentials: {
       walletName,
-      coin,
       walletId,
       token,
       m,
       n,
-      network,
       addressType,
       rootPath,
       keyId,
@@ -161,7 +162,7 @@ const WalletInformation = () => {
     return () => clearTimeout(timer);
   }, [copiedAddress]);
 
-  const {unitToSatoshi, unitDecimals} = dispatch(GetPrecision(coin))!;
+  const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation, chain))!;
 
   const [copayers, setCopayers] = useState<any[]>();
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();
@@ -208,7 +209,7 @@ const WalletInformation = () => {
               <SettingTitle>{t('Coin')}</SettingTitle>
 
               <InfoLabel>
-                <H7>{coin.toUpperCase()}</H7>
+                <H7>{currencyAbbreviation.toUpperCase()}</H7>
               </InfoLabel>
             </InfoSettingsRow>
             <Hr />
@@ -268,7 +269,7 @@ const WalletInformation = () => {
             </InfoSettingsRow>
             <Hr />
 
-            {IsUtxoCoin(coin) ? (
+            {IsUtxoCoin(currencyAbbreviation) ? (
               <>
                 <InfoSettingsRow>
                   <SettingTitle>{t('Address Type')}</SettingTitle>
@@ -411,7 +412,7 @@ const WalletInformation = () => {
                       <InfoLabel>
                         <H7>
                           {(a.amount / unitToSatoshi).toFixed(8)}{' '}
-                          {coin.toUpperCase()}
+                          {currencyAbbreviation.toUpperCase()}
                         </H7>
                       </InfoLabel>
                     </InfoSettingsRow>

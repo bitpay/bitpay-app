@@ -27,7 +27,7 @@ import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 import {LogActions} from '../../../log';
-import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
+import {BitpaySupportedEthereumTokenOptsByAddress} from '../../../../constants/tokens';
 
 export const getPriceHistory =
   (defaultAltCurrencyIsoCode: string): Effect =>
@@ -206,7 +206,7 @@ export const getTokenRates =
         } = getState();
 
         const tokens = {
-          ...BitpaySupportedTokenOptsByAddress,
+          ...BitpaySupportedEthereumTokenOptsByAddress,
           ...tokenOptionsByAddress,
           ...customTokenOptionsByAddress,
         };

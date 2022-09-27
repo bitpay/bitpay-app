@@ -123,7 +123,7 @@ const HomeRoot = () => {
     () =>
       priceHistory.reduce((ratesList, history) => {
         const option = SupportedCurrencyOptions.find(
-          ({id}) => id === history.coin,
+          ({currencyAbbreviation}) => currencyAbbreviation === history.coin,
         );
 
         if (option) {

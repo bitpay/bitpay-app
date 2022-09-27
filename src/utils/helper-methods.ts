@@ -1,16 +1,13 @@
-import {Currencies} from '../constants/currencies';
+import {SUPPORTED_COINS} from '../constants/currencies';
 import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
+import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
+import {ReactElement} from 'react';
+import {IsERCToken} from '../store/wallet/utils/currency';
 
 export const sleep = (duration: number) =>
   new Promise<void>(resolve => setTimeout(resolve, duration));
-
-export const coinSupported = (coin: string): boolean => {
-  return Object.keys(Currencies).some(
-    availableCoin => availableCoin === coin.toLowerCase(),
-  );
-};
 
 export const titleCasing = (str: string) =>
   `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
@@ -205,13 +202,21 @@ export const findContact = (
   address: string,
   coin: string,
   network: string,
+  chain: string,
 ) => {
-  const foundContacts = contactList.filter(
-    (contact: ContactRowProps) =>
+  const foundContacts = contactList.filter((contact: ContactRowProps) => {
+    const chain = contact.chain
+      ? contact.chain
+      : IsERCToken(contact.coin)
+      ? 'eth'
+      : contact.coin;
+    return (
       contact.address === address &&
       contact.coin === coin &&
-      contact.network === network,
-  );
+      contact.network === network &&
+      chain === chain
+    );
+  });
   return !!foundContacts.length;
 };
 
@@ -288,4 +293,13 @@ export const convertToFiat = (
 
 export const getErrorString = (err: any): string => {
   return err instanceof Error ? err.message : JSON.stringify(err);
+};
+
+export const getBadgeImg = (
+  currencyAbbreviation: string,
+  chain: string,
+): string | ((props?: any) => ReactElement) => {
+  return !SUPPORTED_COINS.includes(currencyAbbreviation)
+    ? CurrencyListIcons[chain]
+    : '';
 };

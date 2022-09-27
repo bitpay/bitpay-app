@@ -30,7 +30,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Network} from '../../../constants';
-import {Currencies} from '../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {IWCCustomData} from '../../../store/wallet-connect/wallet-connect.models';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
@@ -110,8 +110,8 @@ const WalletConnectStart = () => {
         throw 'MISSING_WALLET_ADDRESS';
       }
 
-      const {chain} = Currencies[wallet.currencyAbbreviation];
-      const chainId = CHAIN_ID[chain][wallet.credentials.network];
+      const {chain} = BitpaySupportedCoins[wallet.currencyAbbreviation];
+      const chainId = CHAIN_ID[chain][wallet.network];
       const accounts = [address];
       const customData: IWCCustomData = {
         keyId: wallet.keyId,

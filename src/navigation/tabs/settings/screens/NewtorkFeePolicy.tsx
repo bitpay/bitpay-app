@@ -212,10 +212,10 @@ const NetworkFeePolicy = () => {
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useAppDispatch();
 
-  const initFeeLevel = async (currencyAbbreviation: string) => {
+  const initFeeLevel = async (currencyAbbreviation: string, chain: string) => {
     let feeOptions: any[] = [];
     const {feeUnit, feeUnitAmount, blockTime} = dispatch(
-      GetFeeUnits(currencyAbbreviation),
+      GetFeeUnits(currencyAbbreviation, chain),
     );
     try {
       const _feeLevels = await getFeeLevelsUsingBwcClient(
@@ -232,7 +232,7 @@ const NetworkFeePolicy = () => {
           ...fee,
           feeUnit,
           // @ts-ignore
-          uiLevel: dispatch(GetFeeOptions(currencyAbbreviation))[level],
+          uiLevel: GetFeeOptions(currencyAbbreviation)[level],
         };
         feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
         feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
@@ -241,7 +241,7 @@ const NetworkFeePolicy = () => {
 
         if (
           currencyAbbreviation === 'eth' ||
-          dispatch(IsERCToken(currencyAbbreviation))
+          IsERCToken(currencyAbbreviation)
         ) {
           // @ts-ignore
           feeOption.avgConfirmationTime = ethAvgTime[level];
