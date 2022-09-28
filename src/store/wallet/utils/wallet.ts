@@ -8,10 +8,14 @@ import {
 } from '../wallet.models';
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedEthereumTokens,
+  SUPPORTED_CURRENCIES,
+} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix, IsERCToken} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -327,14 +331,21 @@ export const coinbaseAccountToWalletRow = (
   const cryptoAmount = Number(account.balance.amount)
     ? account.balance.amount
     : '0';
-
+  const currencyAbbreviation = account.currency.code;
+  const chain =
+    BitpaySupportedCoins[currencyAbbreviation.toLowerCase()]?.chain ||
+    BitpaySupportedEthereumTokens[currencyAbbreviation.toLowerCase()]?.chain ||
+    '';
+  const badgeImg = IsERCToken(currencyAbbreviation)
+    ? getBadgeImg(currencyAbbreviation, chain)
+    : undefined;
   const walletItem = {
     id: account.id,
     currencyName: account.currency.name,
-    currencyAbbreviation: account.currency.code,
+    currencyAbbreviation,
     coinbaseAccount: account,
     walletName: account.currency.name,
-    img: CurrencyListIcons[account.currency.code.toLowerCase()],
+    img: CurrencyListIcons[currencyAbbreviation.toLowerCase()],
     cryptoBalance: cryptoAmount,
     cryptoLockedBalance: '',
     fiatBalance: formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode),
@@ -342,6 +353,8 @@ export const coinbaseAccountToWalletRow = (
     isToken: false,
     network: Network.mainnet,
     pendingTxps: [],
+    chain,
+    badgeImg,
   };
   return walletItem as WalletRowProps;
 };

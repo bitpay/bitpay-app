@@ -111,7 +111,7 @@ const WalletConnectStart = () => {
       }
 
       const {chain} = BitpaySupportedCoins[wallet.currencyAbbreviation];
-      const chainId = CHAIN_ID[chain][wallet.network];
+      const chainId = CHAIN_ID[chain.toUpperCase()][wallet.network];
       const accounts = [address];
       const customData: IWCCustomData = {
         keyId: wallet.keyId,
