@@ -169,8 +169,9 @@ export const createProposalAndBuildTxDetails =
               chain,
               tokenAddress: token ? token.address : null,
               toAddress: recipient.address,
-              amount: formattedAmount.amountSat,
-              network,
+              amount: formattedAmount.amount,
+              amountSat: formattedAmount.amountSat,
+              network: network,
               payProUrl,
               feePerKb,
               feeLevel,
@@ -652,21 +653,24 @@ const buildTransactionProposal =
         }
 
         const {context} = tx;
+        const formattedAmount = dispatch(
+          ParseAmount(tx.amount || 0, currency!, chain!),
+        );
         // outputs
         txp.outputs = [];
         switch (context) {
           case 'multisend':
             if (recipientList) {
               recipientList.forEach(r => {
-                const formattedAmount = dispatch(
-                  ParseAmount(r.amount || 0, chain!, chain!),
+                const _formattedAmount = dispatch(
+                  ParseAmount(r.amount || 0, currency!, chain!),
                 );
                 txp.outputs?.push({
                   toAddress:
                     chain === 'bch'
                       ? ToCashAddress(r.address!, false)
                       : r.address,
-                  amount: formattedAmount.amountSat,
+                  amount: _formattedAmount.amountSat,
                   message: tx.description,
                   data: tx.data,
                 });
@@ -695,7 +699,7 @@ const buildTransactionProposal =
             }
             txp.outputs.push({
               toAddress: tx.toAddress,
-              amount: tx.amount!,
+              amount: formattedAmount.amountSat,
               message: tx.description,
               data: tx.data,
             });
@@ -705,19 +709,19 @@ const buildTransactionProposal =
             txp.replaceTxByFee = true;
             if (recipientList) {
               recipientList.forEach(r => {
-                const formattedAmount = dispatch(
-                  ParseAmount(r.amount || 0, chain!, chain!),
+                const _formattedAmount = dispatch(
+                  ParseAmount(r.amount || 0, currency!, chain!),
                 );
                 txp.outputs?.push({
                   toAddress: r.address,
-                  amount: formattedAmount.amountSat,
+                  amount: _formattedAmount.amountSat,
                   message: tx.description,
                 });
               });
             } else {
               txp.outputs.push({
                 toAddress: tx.toAddress,
-                amount: tx.amount!,
+                amount: formattedAmount.amountSat,
                 message: tx.description,
                 data: tx.data,
               });
@@ -731,7 +735,7 @@ const buildTransactionProposal =
 
             txp.outputs.push({
               toAddress: tx.toAddress,
-              amount: tx.amount!,
+              amount: formattedAmount.amountSat,
               message: tx.description,
               data: tx.data,
             });
@@ -739,7 +743,7 @@ const buildTransactionProposal =
           default:
             txp.outputs.push({
               toAddress: tx.toAddress,
-              amount: tx.amount!,
+              amount: formattedAmount.amountSat,
               message: tx.description,
               data: tx.data,
               gasLimit: tx.gasLimit,
@@ -1129,7 +1133,7 @@ export const removeTxp = (wallet: Wallet, txp: TransactionProposal) => {
 
 export const handleCreateTxProposalError =
   (proposalErrorProps: ProposalErrorHandlerProps): Effect<Promise<any>> =>
-  async dispatch => {
+  async () => {
     try {
       const {err} = proposalErrorProps;
 
@@ -1141,7 +1145,7 @@ export const handleCreateTxProposalError =
             return GeneralError();
           }
 
-          const {wallet, amount} = tx;
+          const {wallet, amountSat} = tx;
           const {feeLevel} = txp;
 
           const feeRatePerKb = await getFeeRatePerKb({
@@ -1151,11 +1155,7 @@ export const handleCreateTxProposalError =
 
           if (
             !getState().WALLET.useUnconfirmedFunds &&
-            wallet.balance.sat >=
-              dispatch(
-                ParseAmount(amount, wallet.currencyAbbreviation, wallet.chain),
-              ).amountSat +
-                feeRatePerKb
+            wallet.balance.sat >= Number(amountSat) + feeRatePerKb
           ) {
             return CustomErrorMessage({
               title: t('Insufficient confirmed funds'),

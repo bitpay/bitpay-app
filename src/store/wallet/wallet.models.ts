@@ -213,6 +213,7 @@ export interface TransactionOptions {
   invoice?: Invoice;
   recipient: Recipient;
   amount: number;
+  amountSat?: number | string;
   context?: TransactionOptionsContext;
   currency?: string;
   chain?: string;
@@ -281,7 +282,7 @@ export interface TransactionProposal {
   replaceTxByFee?: boolean;
   toAddress: string;
   outputs: Array<{
-    amount: number;
+    amount: number | string;
     address?: string;
     addressToShow?: string;
     toAddress?: string;
@@ -388,6 +389,7 @@ export interface TxDetails {
 
 export interface SendMaxInfo {
   amount: number;
+  amountSat?: number | string;
   amountAboveMaxSize: number;
   amountBelowFee: number;
   fee: number;
@@ -412,6 +414,7 @@ export interface BulkStatus {
 export interface Utxo {
   address: string;
   amount: number;
+  amountSat?: number | string;
   confirmations: number;
   locked: boolean;
   path: string;

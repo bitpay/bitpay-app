@@ -8,9 +8,9 @@ const TOTAL_LOW_WARNING_RATIO = 0.3;
 import {GetUtxos} from '../transactions/transactions';
 
 export interface FormattedAmountObj {
-  amount: string;
+  amount: number;
   currency: string;
-  amountSat: number;
+  amountSat: number | string;
   amountUnitStr: string;
 }
 
@@ -22,53 +22,29 @@ export const ParseAmount =
     fullPrecision?: boolean,
   ): Effect<FormattedAmountObj> =>
   dispatch => {
-    // @ts-ignore
-    const {unitToSatoshi, unitDecimals} = dispatch(
-      GetPrecision(currencyAbbreviation, chain),
-    );
-    const satToUnit = 1 / unitToSatoshi;
-    let amountUnitStr;
-    let amountSat;
-    let _amount;
-    amountSat = Number((amount * unitToSatoshi).toFixed(0));
-    amountUnitStr =
-      dispatch(
-        FormatAmountStr(currencyAbbreviation, chain, amountSat, fullPrecision),
-      ) || '';
+    const {unitDecimals} =
+      dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
 
-    // workaround to prevent miscalculations with decimal numbers that javascript can't handle with precision
-    const amountDecimals = countDecimals(amount);
-    _amount = (amountSat * satToUnit).toFixed(
-      amountDecimals < unitDecimals ? amountDecimals : unitDecimals,
-    );
+    const _amount = amount * 10 ** (unitDecimals || 0);
+    const amountSat = _amount.toLocaleString('fullwide', {
+      useGrouping: false,
+      maximumFractionDigits: 0,
+    });
+
+    const amountUnitStr =
+      dispatch(
+        FormatAmountStr(currencyAbbreviation, chain, _amount, fullPrecision),
+      ) || '';
 
     const currency = currencyAbbreviation.toUpperCase();
 
     return {
-      amount: _amount,
+      amount,
       currency,
-      amountSat,
+      amountSat: (unitDecimals || 0) >= 18 ? amountSat : _amount,
       amountUnitStr,
     };
   };
-
-const countDecimals = (num: number): number => {
-  if (!num) {
-    return 0;
-  }
-  const strNum = num.toString();
-  // verify if number 0.000005 is represented as "5e-6"
-  if (strNum.indexOf('e-') > -1) {
-    const [base, trail] = strNum.split('e-');
-    const deg = parseInt(trail, 10);
-    return deg;
-  }
-  // count decimals for number in representation like "0.123456"
-  if (Math.floor(num) !== num) {
-    return num.toString().split('.')[1].length || 0;
-  }
-  return 0;
-};
 
 export const FormatAmountStr =
   (
@@ -78,10 +54,6 @@ export const FormatAmountStr =
     fullPrecision?: boolean,
   ): Effect<string> =>
   dispatch => {
-    if (isNaN(satoshis)) {
-      throw Error('Nan');
-    }
-
     try {
       return (
         dispatch(
