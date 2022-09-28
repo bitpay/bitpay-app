@@ -154,13 +154,15 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   };
 
   const gotoAddContacts = (address: string) => {
-    const {network} = tx;
+    const {network, coin, chain} = tx;
     navigation.navigate('Contacts', {
       screen: 'ContactsAdd',
       params: {
         contact: {
           address,
           network,
+          coin,
+          chain,
         },
       },
     });

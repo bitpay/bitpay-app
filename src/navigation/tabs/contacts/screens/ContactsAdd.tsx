@@ -68,7 +68,6 @@ import {
   SupportedTokenOptions,
 } from '../../../../constants/SupportedCurrencyOptions';
 import Checkbox from '../../../../components/checkbox/Checkbox';
-import {IsERCToken} from '../../../../store/wallet/utils/currency';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -310,7 +309,12 @@ const ContactsAdd = ({
     }
   };
 
-  const processAddress = (address?: string) => {
+  const processAddress = (
+    address?: string,
+    coin?: string,
+    network?: string,
+    chain?: string,
+  ) => {
     if (address) {
       const coinAndNetwork = GetCoinAndNetwork(address);
       if (coinAndNetwork) {
@@ -322,9 +326,9 @@ const ContactsAdd = ({
         if (isValid) {
           setValidValues(
             address,
-            coinAndNetwork.coin,
-            coinAndNetwork.network,
-            coinAndNetwork.coin,
+            coin || coinAndNetwork.coin,
+            network || coinAndNetwork.network,
+            chain || coinAndNetwork.coin,
           );
         } else {
           // try testnet
@@ -336,9 +340,9 @@ const ContactsAdd = ({
           if (isValidTest) {
             setValidValues(
               address,
-              coinAndNetwork.coin,
-              'testnet',
-              coinAndNetwork.coin,
+              coin || coinAndNetwork.coin,
+              network || 'testnet',
+              chain || coinAndNetwork.coin,
             );
           }
         }
@@ -493,25 +497,18 @@ const ContactsAdd = ({
   };
 
   useEffect(() => {
-    if (contact?.address && contact?.coin) {
-      const chain = contact.chain
-        ? contact.chain
-        : IsERCToken(contact.coin)
-        ? 'eth'
-        : contact.coin;
-      setValue('address', contact.address, {shouldDirty: true});
+    if (contact) {
+      processAddress(
+        contact.address,
+        contact.coin,
+        contact.network,
+        contact.chain,
+      );
+      setValue('address', contact.address!, {shouldDirty: true});
       setValue('name', contact.name || '');
       setValue('email', contact.email);
-      setValue('chain', chain);
+      setValue('chain', contact.chain!);
       setValue('destinationTag', contact.tag || contact.destinationTag);
-      if (contact.coin && contact.chain) {
-        setIsTokenAddress(true);
-        tokenSelected(contact.coin);
-        currencySelected(contact.chain, true);
-      } else {
-        currencySelected(contact.coin, false);
-      }
-      processAddress(contact.address);
     }
   }, [contact]);
 
