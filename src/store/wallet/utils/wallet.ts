@@ -22,6 +22,7 @@ import {
   convertToFiat,
   formatFiatAmount,
   getBadgeImg,
+  getRateByCurrencyName,
 } from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
@@ -220,7 +221,11 @@ export const toFiat =
     customRate?: number,
   ): Effect<number> =>
   dispatch => {
-    const ratesPerCurrency = rates[currencyAbbreviation.toLowerCase()];
+    const ratesPerCurrency = getRateByCurrencyName(
+      rates,
+      currencyAbbreviation,
+      chain,
+    );
 
     if (!ratesPerCurrency) {
       // Rate not found return 0

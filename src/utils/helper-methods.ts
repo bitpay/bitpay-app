@@ -5,6 +5,7 @@ import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
 import {IsERCToken} from '../store/wallet/utils/currency';
+import {Rate, Rates} from '../store/rate/rate.models';
 
 export const sleep = (duration: number) =>
   new Promise<void>(resolve => setTimeout(resolve, duration));
@@ -302,4 +303,15 @@ export const getBadgeImg = (
   return !SUPPORTED_COINS.includes(currencyAbbreviation)
     ? CurrencyListIcons[chain]
     : '';
+};
+
+export const getRateByCurrencyName = (
+  rates: Rates,
+  currencyAbbreviation: string,
+  chain: string,
+): Rate[] => {
+  const _rates = !IsERCToken(currencyAbbreviation)
+    ? rates[currencyAbbreviation.toLowerCase()]
+    : rates[`${currencyAbbreviation.toLowerCase()}_${chain.charAt(0)}`];
+  return _rates;
 };

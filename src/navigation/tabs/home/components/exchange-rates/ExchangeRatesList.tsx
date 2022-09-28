@@ -11,6 +11,7 @@ export interface ExchangeRateItemProps {
   id: string;
   img: string | ((props: any) => ReactElement);
   currencyName: string;
+  chain: string;
   currencyAbbreviation: string;
   average?: number;
   currentPrice?: number;

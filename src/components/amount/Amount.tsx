@@ -10,7 +10,10 @@ import VirtualKeyboard from '../../components/virtual-keyboard/VirtualKeyboard';
 import {getAvailableFiatCurrencies} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import {ParseAmount} from '../../store/wallet/effects/amount/amount';
 import {NeutralSlate, SlateDark} from '../../styles/colors';
-import {formatFiatAmount} from '../../utils/helper-methods';
+import {
+  formatFiatAmount,
+  getRateByCurrencyName,
+} from '../../utils/helper-methods';
 import {useAppDispatch} from '../../utils/hooks';
 import useAppSelector from '../../utils/hooks/useAppSelector';
 
@@ -132,7 +135,9 @@ const Amount: React.VFC<AmountProps> = ({
     currency: cryptoCurrencyAbbreviation
       ? cryptoCurrencyAbbreviation
       : fiatCurrency,
-    primaryIsFiat: cryptoCurrencyAbbreviation === fiatCurrency,
+    primaryIsFiat:
+      !cryptoCurrencyAbbreviation ||
+      cryptoCurrencyAbbreviation === fiatCurrency,
   });
 
   const swapList = useMemo(() => {
@@ -219,10 +224,15 @@ const Amount: React.VFC<AmountProps> = ({
     }
     updateAmount('0');
     // if added for dev (hot reload)
-    if (!primaryIsFiat && allRates[currency.toLowerCase()]) {
-      const fiatRate = allRates[currency.toLowerCase()].find(
-        r => r.code === fiatCurrency,
-      )!.rate;
+    if (
+      !primaryIsFiat &&
+      getRateByCurrencyName(allRates, currency.toLowerCase(), chain!)
+    ) {
+      const fiatRate = getRateByCurrencyName(
+        allRates,
+        currency.toLowerCase(),
+        chain!,
+      ).find(r => r.code === fiatCurrency)!.rate;
       setRate(fiatRate);
     }
   };

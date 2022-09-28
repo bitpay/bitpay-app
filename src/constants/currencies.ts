@@ -694,6 +694,7 @@ export const POPULAR_TOKENS = [
   'RUNE',
 ];
 
+export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
 export const SUPPORTED_ETHEREUM_TOKENS = Object.keys(
   BitpaySupportedEthereumTokens,
 );
