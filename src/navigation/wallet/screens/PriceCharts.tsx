@@ -205,7 +205,7 @@ const PriceCharts = () => {
         <HeaderTitle style={{paddingLeft: 4, paddingRight: 8}}>
           {currencyName}
         </HeaderTitle>
-        <Badge>{currencyAbbreviation}</Badge>
+        <Badge>{currencyAbbreviation.toUpperCase()}</Badge>
       </RowContainer>
     );
   };
