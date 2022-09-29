@@ -44,7 +44,7 @@ const CreationOptions: React.FC = () => {
       id: 'basic',
       title: t('New Key'),
       description: t(
-        'Add coins like Bitcoin and Dogecoin and also tokens like USDC and PAX',
+        'Add coins like Bitcoin and Dogecoin and also tokens like USDC and APE',
       ),
       cta: () => {
         dispatch(

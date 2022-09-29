@@ -451,7 +451,7 @@ const ChangellyCheckout: React.FC = () => {
             for (const output of txp.outputs) {
               if (!output.data) {
                 output.data = BWC.getCore()
-                  .Transactions.get({chain: 'ERC20'})
+                  .Transactions.get({chain: 'ETHERC20'})
                   .encodeData({
                     recipients: [
                       {address: output.toAddress, amount: output.amount},
