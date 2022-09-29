@@ -676,11 +676,9 @@ export const migrateKeyAndWallets =
         const state = getState();
         const {backupComplete, keyName} = migrationData.keyConfig;
         const tokenOpts = {
-          eth: {
-            ...BitpaySupportedEthereumTokenOpts,
-            ...state.WALLET.tokenOptions,
-            ...state.WALLET.customTokenOptions,
-          },
+          ...BitpaySupportedEthereumTokenOpts,
+          ...state.WALLET.tokenOptions,
+          ...state.WALLET.customTokenOptions,
         };
         const keyObj = merge(migrationData.key, {
           methods: BWC.createKey({
@@ -901,11 +899,9 @@ export const startImportMnemonic =
           },
         } = getState();
         const tokenOpts = {
-          eth: {
-            ...BitpaySupportedEthereumTokenOpts,
-            ...WALLET.tokenOptions,
-            ...WALLET.customTokenOptions,
-          },
+          ...BitpaySupportedEthereumTokenOpts,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         const {words, xPrivKey} = importData;
         opts.words = normalizeMnemonic(words);
@@ -991,11 +987,9 @@ export const startImportFile =
           },
         } = getState();
         const tokenOpts = {
-          eth: {
-            ...BitpaySupportedEthereumTokenOpts,
-            ...WALLET.tokenOptions,
-            ...WALLET.customTokenOptions,
-          },
+          ...BitpaySupportedEthereumTokenOpts,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         let {key: _key, wallet} = await createKeyAndCredentialsWithFile(
           decryptBackupText,
@@ -1096,11 +1090,9 @@ export const startImportWithDerivationPath =
           },
         } = getState();
         const tokenOpts = {
-          eth: {
-            ...BitpaySupportedEthereumTokenOpts,
-            ...WALLET.tokenOptions,
-            ...WALLET.customTokenOptions,
-          },
+          ...BitpaySupportedEthereumTokenOpts,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         const {words, xPrivKey} = importData;
         opts.mnemonic = words;

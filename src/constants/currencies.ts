@@ -1,15 +1,15 @@
 export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
 export type SupportedEthereumTokens =
-  | 'usdc'
-  | 'gusd'
-  | 'usdp'
-  | 'pax' // backward compatibility
-  | 'busd'
-  | 'dai'
-  | 'wbtc'
-  | 'shib'
-  | 'ape'
-  | 'euroc';
+  | 'usdc_e'
+  | 'gusd_e'
+  | 'usdp_e'
+  | 'pax_e' // backward compatibility
+  | 'busd_e'
+  | 'dai_e'
+  | 'wbtc_e'
+  | 'shib_e'
+  | 'ape_e'
+  | 'euroc_e';
 export type SupportedCurrencies = SupportedCoins | SupportedEthereumTokens;
 export type EVM_CHAINS = 'eth';
 export type UTXO_CHAINS = 'btc' | 'bch' | 'doge' | 'ltc';
@@ -61,7 +61,7 @@ export interface CurrencyOpts {
 }
 
 export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
-  busd: {
+  busd_e: {
     name: 'Binance USD Coin',
     chain: 'eth',
     coin: 'busd',
@@ -98,7 +98,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: 'rgba(30,144,255, 0.2)',
     },
   },
-  usdp: {
+  usdp_e: {
     name: 'Paxos Dollar',
     chain: 'eth',
     coin: 'usdp',
@@ -135,7 +135,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#00845d',
     },
   },
-  pax: {
+  pax_e: {
     // backward compatibility
     name: 'Paxos Standard',
     chain: 'eth',
@@ -173,7 +173,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#00845d',
     },
   },
-  usdc: {
+  usdc_e: {
     name: 'USD Coin',
     chain: 'eth',
     coin: 'usdc',
@@ -210,7 +210,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#2775c9',
     },
   },
-  gusd: {
+  gusd_e: {
     name: 'Gemini Dollar',
     chain: 'eth',
     coin: 'gusd',
@@ -247,7 +247,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#00dcfa',
     },
   },
-  dai: {
+  dai_e: {
     name: 'DAI',
     chain: 'eth',
     coin: 'dai',
@@ -284,7 +284,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#F5AC37',
     },
   },
-  wbtc: {
+  wbtc_e: {
     name: 'Wrapped Bitcoin',
     chain: 'eth',
     coin: 'wbtc',
@@ -321,7 +321,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#282A47',
     },
   },
-  shib: {
+  shib_e: {
     name: 'SHIBA INU',
     chain: 'eth',
     coin: 'shib',
@@ -359,7 +359,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#F00500',
     },
   },
-  ape: {
+  ape_e: {
     name: 'ApeCoin',
     chain: 'eth',
     coin: 'ape',
@@ -397,7 +397,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#0054F9',
     },
   },
-  euroc: {
+  euroc_e: {
     name: 'Euro Coin',
     chain: 'eth',
     coin: 'euroc',
@@ -665,9 +665,19 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
   },
 };
 
+export const BitpaySupportedTokens: {[key in string]: CurrencyOpts} = {
+  ...BitpaySupportedEthereumTokens,
+  // TODO MATIC
+};
+
 export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedUtxoCoins,
   ...BitpaySupportedEvmCoins,
+};
+
+export const BitpaySupportedCurrencies: {[key in string]: CurrencyOpts} = {
+  ...BitpaySupportedCoins,
+  ...BitpaySupportedTokens,
 };
 
 export const POPULAR_TOKENS = [
@@ -698,8 +708,6 @@ export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
 export const SUPPORTED_ETHEREUM_TOKENS = Object.keys(
   BitpaySupportedEthereumTokens,
 );
+// TODO MATIC
 export const SUPPORTED_COINS = Object.keys(BitpaySupportedCoins);
-export const SUPPORTED_CURRENCIES = [
-  ...SUPPORTED_COINS,
-  ...SUPPORTED_ETHEREUM_TOKENS,
-];
+export const SUPPORTED_CURRENCIES = Object.keys(BitpaySupportedCurrencies);

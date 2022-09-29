@@ -43,6 +43,7 @@ import {
   keyExtractor,
   findContact,
   getBadgeImg,
+  getCurrencyAbbreviation,
 } from '../../../../utils/helper-methods';
 import CurrencySelectionRow, {
   TokenSelectionRow,
@@ -68,6 +69,7 @@ import {
   SupportedTokenOptions,
 } from '../../../../constants/SupportedCurrencyOptions';
 import Checkbox from '../../../../components/checkbox/Checkbox';
+import {IsERCToken} from '../../../../store/wallet/utils/currency';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -204,7 +206,9 @@ const ContactsAdd = ({
   const [tokenModalVisible, setTokenModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [networkModalVisible, setNetworkModalVisible] = useState(false);
-  const [isTokenAddress, setIsTokenAddress] = useState(false);
+  const [isTokenAddress, setIsTokenAddress] = useState(
+    IsERCToken(contact?.coin || ''),
+  );
 
   const ethereumTokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
@@ -214,28 +218,28 @@ const ContactsAdd = ({
     };
   });
 
-  const ALL_CUSTOM_ETHEREUM_TOKENS = useMemo(
-    () =>
-      Object.values(ethereumTokenOptions)
-        .filter(
-          token =>
-            !SUPPORTED_ETHEREUM_TOKENS.includes(token.symbol.toLowerCase()),
-        )
-        .map(({symbol, name, logoURI}) => {
-          const chain = 'eth';
-          return {
-            id: Math.random().toString(),
-            coin: symbol.toLowerCase(),
-            currencyAbbreviation: symbol,
-            currencyName: name,
-            img: logoURI || '',
-            isToken: true,
-            chain,
-            badgeUri: getBadgeImg(symbol.toLowerCase(), chain),
-          } as SupportedCurrencyOption;
-        }),
-    [ethereumTokenOptions],
-  );
+  const ALL_CUSTOM_ETHEREUM_TOKENS = useMemo(() => {
+    const chain = 'eth';
+    return Object.values(ethereumTokenOptions)
+      .filter(
+        token =>
+          !SUPPORTED_ETHEREUM_TOKENS.includes(
+            getCurrencyAbbreviation(token.symbol.toLowerCase(), chain),
+          ),
+      )
+      .map(({symbol, name, logoURI}) => {
+        return {
+          id: Math.random().toString(),
+          coin: symbol.toLowerCase(),
+          currencyAbbreviation: symbol,
+          currencyName: name,
+          img: logoURI || '',
+          isToken: true,
+          chain,
+          badgeUri: getBadgeImg(symbol.toLowerCase(), chain),
+        } as SupportedCurrencyOption;
+      });
+  }, [ethereumTokenOptions]);
 
   const ALL_ETHEREUM_TOKENS = useMemo(
     () => [...SupportedTokenOptions, ...ALL_CUSTOM_ETHEREUM_TOKENS],
@@ -662,7 +666,7 @@ const ContactsAdd = ({
         </CurrencySelectorContainer>
       ) : null}
 
-      {!contact && isTokenAddress ? (
+      {isTokenAddress ? (
         <CurrencySelectorContainer hideSelector={!ethValidAddress}>
           <Label>{t('TOKEN')}</Label>
           <CurrencyContainer

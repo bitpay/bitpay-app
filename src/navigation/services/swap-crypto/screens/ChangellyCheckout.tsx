@@ -49,7 +49,7 @@ import {
   changellyCreateFixTransaction,
   changellyGetFixRateForAmount,
 } from '../utils/changelly-utils';
-import {sleep} from '../../../../utils/helper-methods';
+import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import ChangellyPoliciesModal from '../components/ChangellyPoliciesModal';
 import {
   ItemDivisor,
@@ -446,10 +446,10 @@ const ChangellyCheckout: React.FC = () => {
       };
 
       if (IsERCToken(wallet.currencyAbbreviation)) {
-        let tokens = Object.values(BitpaySupportedEthereumTokenOpts);
-        const token = tokens.find(
-          token => token.symbol === wallet.currencyAbbreviation.toUpperCase(),
-        );
+        const token =
+          BitpaySupportedEthereumTokenOpts[
+            getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain)
+          ];
 
         if (token && token.address) {
           txp.tokenAddress = token.address;

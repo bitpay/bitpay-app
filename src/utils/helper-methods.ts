@@ -310,8 +310,16 @@ export const getRateByCurrencyName = (
   currencyAbbreviation: string,
   chain: string,
 ): Rate[] => {
-  const _rates = !IsERCToken(currencyAbbreviation)
-    ? rates[currencyAbbreviation.toLowerCase()]
-    : rates[`${currencyAbbreviation.toLowerCase()}_${chain.charAt(0)}`];
-  return _rates;
+  const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+  return rates[currencyName];
+};
+
+export const addTokenChainSuffix = (name: string, chain: string) => {
+  return `${name.toLowerCase()}_${chain.charAt(0)}`;
+};
+
+export const getCurrencyAbbreviation = (name: string, chain: string) => {
+  return IsERCToken(name.toLowerCase())
+    ? addTokenChainSuffix(name, chain)
+    : name.toLowerCase();
 };

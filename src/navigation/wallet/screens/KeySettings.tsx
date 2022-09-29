@@ -181,11 +181,9 @@ const KeySettings = () => {
 
   const _tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
-      eth: {
-        ...BitpaySupportedEthereumTokenOpts,
-        ...WALLET.tokenOptions,
-        ...WALLET.customTokenOptions,
-      },
+      ...BitpaySupportedEthereumTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
     };
   });
 

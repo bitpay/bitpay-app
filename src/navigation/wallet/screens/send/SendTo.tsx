@@ -56,7 +56,6 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {
   AppDispatch,
   useAppDispatch,

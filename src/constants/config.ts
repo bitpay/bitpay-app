@@ -47,3 +47,10 @@ export const TWO_FACTOR_EMAIL_POLL_TIMEOUT = 1000 * 60 * 5;
 export const COINGECKO_BLOCKCHAIN_NETWORK = {
   eth: 'ethereum',
 };
+
+// 1Inch
+export const ONEINCH_BLOCKCHAIN_ID: {[key in string]: number} = {
+  eth: 1,
+  // TODO MATIC
+  // matic: 137,
+};

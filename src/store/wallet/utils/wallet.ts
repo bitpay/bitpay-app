@@ -9,8 +9,7 @@ import {
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {
-  BitpaySupportedCoins,
-  BitpaySupportedEthereumTokens,
+  BitpaySupportedCurrencies,
   SUPPORTED_CURRENCIES,
 } from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
@@ -22,6 +21,7 @@ import {
   convertToFiat,
   formatFiatAmount,
   getBadgeImg,
+  getCurrencyAbbreviation,
   getRateByCurrencyName,
 } from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
@@ -107,11 +107,15 @@ export const buildWalletObj = (
     currencyAbbreviation: string;
     currencyName: string;
   },
-  tokenOpts?: {[key in string]: {[key in string]: Token}},
+  tokenOpts?: {[key in string]: Token},
   otherOpts?: {
     walletName?: string;
   },
 ): WalletObj => {
+  const _currencyAbbreviation = getCurrencyAbbreviation(
+    currencyAbbreviation,
+    chain,
+  );
   return {
     id: walletId,
     currencyName,
@@ -122,14 +126,12 @@ export const buildWalletObj = (
     tokens,
     network,
     keyId: keyId ? keyId : 'readonly',
-    img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
-      ? CurrencyListIcons[currencyAbbreviation]
-      : tokenOpts &&
-        tokenOpts[chain] &&
-        tokenOpts[chain][currencyAbbreviation]?.logoURI
-      ? (tokenOpts[chain][currencyAbbreviation].logoURI as string)
+    img: SUPPORTED_CURRENCIES.includes(_currencyAbbreviation)
+      ? CurrencyListIcons[_currencyAbbreviation]
+      : tokenOpts && tokenOpts[_currencyAbbreviation]?.logoURI
+      ? (tokenOpts[_currencyAbbreviation]?.logoURI as string)
       : '',
-    badgeImg: getBadgeImg(currencyAbbreviation, chain),
+    badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
     m,
     isRefreshing: false,
@@ -338,9 +340,7 @@ export const coinbaseAccountToWalletRow = (
     : '0';
   const currencyAbbreviation = account.currency.code;
   const chain =
-    BitpaySupportedCoins[currencyAbbreviation.toLowerCase()]?.chain ||
-    BitpaySupportedEthereumTokens[currencyAbbreviation.toLowerCase()]?.chain ||
-    '';
+    BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.chain;
   const badgeImg = IsERCToken(currencyAbbreviation)
     ? getBadgeImg(currencyAbbreviation, chain)
     : undefined;
