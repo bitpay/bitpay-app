@@ -18,10 +18,7 @@ import CurrencySelectionRow, {
 } from '../../../components/list/CurrencySelectionRow';
 
 import Button from '../../../components/button/Button';
-import {
-  BitpaySupportedCoins,
-  BitpaySupportedEthereumTokens,
-} from '../../../constants/currencies';
+import {BitpaySupportedCurrencies} from '../../../constants/currencies';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {
   FlatList,
@@ -51,7 +48,7 @@ import {
 } from '../../../store/app/app.actions';
 import {Key, Token} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
-import {sleep} from '../../../utils/helper-methods';
+import {getCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
@@ -250,8 +247,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     Object.entries(ethereumTokenOptions).forEach(([k, tokenOpt]) => {
       if (
         !(
-          BitpaySupportedCoins[k] ||
-          BitpaySupportedEthereumTokens[k] ||
+          BitpaySupportedCurrencies[k] ||
           appTokenData[k] ||
           appCustomTokenData[k]
         ) ||
@@ -261,13 +257,14 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
       }
 
       const tokenData =
-        BitpaySupportedCoins[k] ||
-        BitpaySupportedEthereumTokens[k] ||
+        BitpaySupportedCurrencies[k] ||
         appTokenData[k] ||
         appCustomTokenData[k];
       const chainData = chainMap[tokenData.chain.toLowerCase()];
       const imgSrc = SupportedTokenOptions.find(
-        c => c.currencyAbbreviation === k,
+        c =>
+          getCurrencyAbbreviation(c.currencyAbbreviation, tokenData.chain) ===
+          k,
       )?.imgSrc;
       const isReqSrc = (
         src: ImageSourcePropType | undefined,

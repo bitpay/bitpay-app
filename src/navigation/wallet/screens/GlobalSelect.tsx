@@ -15,6 +15,7 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
   formatFiatAmount,
+  getCurrencyAbbreviation,
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
@@ -154,7 +155,9 @@ const buildList = (category: string[], wallets: Wallet[]) => {
 
   category.forEach(coin => {
     const availableWallets = wallets.filter(
-      wallet => wallet.currencyAbbreviation === coin,
+      wallet =>
+        getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
+        coin,
     );
     if (availableWallets.length) {
       const {currencyName, img, badgeImg} = availableWallets[0];
@@ -229,7 +232,12 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
 
   const NON_BITPAY_SUPPORTED_ETHEREUM_TOKENS = Object.keys(
     ethereumTokens,
-  ).filter(token => !SUPPORTED_ETHEREUM_TOKENS.includes(token));
+  ).filter(
+    token =>
+      !SUPPORTED_ETHEREUM_TOKENS.includes(
+        getCurrencyAbbreviation(token, 'eth'),
+      ),
+  );
 
   // all wallets
   let wallets = Object.values(keys)

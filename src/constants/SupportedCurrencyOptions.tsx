@@ -37,15 +37,15 @@ export const CurrencyListIcons: {
   doge: props => <DogeIcon {...props} />,
   ltc: props => <LtcIcon {...props} />,
   xrp: props => <XrpIcon {...props} />,
-  usdc: props => <UsdcIcon {...props} />,
-  gusd: props => <GusdIcon {...props} />,
-  busd: props => <BusdIcon {...props} />,
-  dai: props => <DaiIcon {...props} />,
-  usdp: props => <UsdpIcon {...props} />,
-  wbtc: props => <WbtcIcon {...props} />,
-  shib: props => <ShibIcon {...props} />,
-  ape: props => <ApeIcon {...props} />,
-  euroc: props => <EurocIcon {...props} />,
+  usdc_e: props => <UsdcIcon {...props} />,
+  gusd_e: props => <GusdIcon {...props} />,
+  busd_e: props => <BusdIcon {...props} />,
+  dai_e: props => <DaiIcon {...props} />,
+  usdp_e: props => <UsdpIcon {...props} />,
+  wbtc_e: props => <WbtcIcon {...props} />,
+  shib_e: props => <ShibIcon {...props} />,
+  ape_e: props => <ApeIcon {...props} />,
+  euroc_e: props => <EurocIcon {...props} />,
 };
 
 export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
@@ -104,7 +104,7 @@ export const SupportedEvmCurrencyOptions: Array<SupportedCurrencyOption> = [
 export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.usdc,
+    img: CurrencyListIcons.usdc_e,
     currencyName: 'USD Coin',
     currencyAbbreviation: 'usdc',
     isToken: true,
@@ -114,7 +114,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.ape,
+    img: CurrencyListIcons.ape_e,
     currencyName: 'ApeCoin',
     currencyAbbreviation: 'ape',
     isToken: true,
@@ -124,7 +124,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.euroc,
+    img: CurrencyListIcons.euroc_e,
     currencyName: 'Euro Coin',
     currencyAbbreviation: 'euroc',
     isToken: true,
@@ -134,7 +134,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.shib,
+    img: CurrencyListIcons.shib_e,
     currencyName: 'Shiba Inu',
     currencyAbbreviation: 'shib',
     isToken: true,
@@ -144,7 +144,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.gusd,
+    img: CurrencyListIcons.gusd_e,
     currencyName: 'Gemini Dollar',
     currencyAbbreviation: 'gusd',
     isToken: true,
@@ -154,7 +154,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.busd,
+    img: CurrencyListIcons.busd_e,
     currencyName: 'Binance USD Coin',
     currencyAbbreviation: 'busd',
     isToken: true,
@@ -164,7 +164,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.dai,
+    img: CurrencyListIcons.dai_e,
     currencyName: 'Dai',
     currencyAbbreviation: 'dai',
     isToken: true,
@@ -174,7 +174,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.usdp,
+    img: CurrencyListIcons.usdp_e,
     currencyName: 'Pax Dollar',
     currencyAbbreviation: 'usdp',
     isToken: true,
@@ -184,7 +184,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.wbtc,
+    img: CurrencyListIcons.wbtc_e,
     currencyName: 'Wrapped Bitcoin',
     currencyAbbreviation: 'wbtc',
     isToken: true,

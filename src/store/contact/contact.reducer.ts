@@ -35,13 +35,12 @@ export const contactReducer = (
       return {...state};
 
     case ContactActionTypes.UPDATE_CONTACT:
-      const {address, coin, chain, network} = action.contact;
+      const {address, chain, network} = action.contact;
       return {
         ...state,
         list: state.list.map((contact: ContactRowProps) => {
           if (
             contact.address === address &&
-            contact.coin === coin &&
             contact.network === network &&
             contact.chain === chain
           ) {

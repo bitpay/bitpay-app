@@ -34,6 +34,10 @@ import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 import {LogActions} from '../../../log';
 import {BitpaySupportedEthereumTokenOptsByAddress} from '../../../../constants/tokens';
+import {
+  getCurrencyAbbreviation,
+  addTokenChainSuffix,
+} from '../../../../utils/helper-methods';
 
 export const getPriceHistory =
   (defaultAltCurrencyIsoCode: string): Effect =>
@@ -213,12 +217,10 @@ export const getTokenRates =
           WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
         } = getState();
 
-        const tokens = {
-          eth: {
-            ...BitpaySupportedEthereumTokenOptsByAddress,
-            ...tokenOptionsByAddress,
-            ...customTokenOptionsByAddress,
-          },
+        const tokensOptsByAddress = {
+          ...BitpaySupportedEthereumTokenOptsByAddress,
+          ...tokenOptionsByAddress,
+          ...customTokenOptionsByAddress,
         };
 
         dispatch(
@@ -244,13 +246,14 @@ export const getTokenRates =
           dispatch(LogActions.debug('getTokenRates: success get request'));
 
           Object.entries(data).map(([key, value]: [string, any]) => {
+            const formattedTokenAddress = addTokenChainSuffix(key, chain);
+
             // only save token rates if exist in tokens list
-            // @ts-ignore
-            if (tokens[chain][key]) {
-              // @ts-ignore
-              const tokenName = `${tokens[chain][
-                key
-              ]?.symbol?.toLowerCase()}_${chain.charAt(0)}`;
+            if (tokensOptsByAddress[formattedTokenAddress]) {
+              const tokenName = getCurrencyAbbreviation(
+                tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                chain,
+              );
               tokenRates[tokenName] = [];
               tokenLastDayRates[tokenName] = [];
 
@@ -258,7 +261,7 @@ export const getTokenRates =
                 tokenRates[tokenName].push({
                   code: altCurrency.toUpperCase(),
                   fetchedOn: value.last_updated_at,
-                  name: tokenName,
+                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
                   rate: value[altCurrency],
                   ts: value.last_updated_at,
                 });
@@ -270,7 +273,7 @@ export const getTokenRates =
                 tokenLastDayRates[tokenName].push({
                   code: altCurrency.toUpperCase(),
                   fetchedOn: yesterday,
-                  name: tokenName,
+                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
                   rate:
                     value[altCurrency] +
                     (value[altCurrency] * value[`${altCurrency}_24h_change`]) /

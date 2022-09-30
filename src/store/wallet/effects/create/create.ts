@@ -1,7 +1,6 @@
 import {
   BitpaySupportedCoins,
   SupportedCoins,
-  SUPPORTED_COINS,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
@@ -30,7 +29,7 @@ import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {sleep} from '../../../../utils/helper-methods';
+import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 
@@ -120,11 +119,9 @@ export const addWallet =
           WALLET,
         } = getState();
         const tokenOpts = {
-          eth: {
-            ...BitpaySupportedEthereumTokenOpts,
-            ...WALLET.tokenOptions,
-            ...WALLET.customTokenOptions,
-          },
+          ...BitpaySupportedEthereumTokenOpts,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         const {walletName} = options;
 
@@ -254,11 +251,9 @@ const createMultipleWallets =
       },
     } = getState();
     const tokenOpts = {
-      eth: {
-        ...BitpaySupportedEthereumTokenOpts,
-        ...WALLET.tokenOptions,
-        ...WALLET.customTokenOptions,
-      },
+      ...BitpaySupportedEthereumTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
     };
     const wallets: API[] = [];
     const tokens = currencies.filter(({isToken}) => isToken);
@@ -410,8 +405,8 @@ const createWallet = (params: {
 const createTokenWallet =
   (
     wallet: Wallet,
-    token: string,
-    tokenOpts: {[key in string]: {[key in string]: Token}},
+    tokenName: string,
+    tokenOpts: {[key in string]: Token},
   ): Effect<Promise<API>> =>
   async (dispatch): Promise<API> => {
     return new Promise((resolve, reject) => {
@@ -419,7 +414,9 @@ const createTokenWallet =
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
           wallet.credentials.getTokenCredentials(
-            tokenOpts[wallet.credentials.chain][token],
+            tokenOpts[
+              getCurrencyAbbreviation(tokenName, wallet.credentials.chain)
+            ],
             wallet.credentials.chain,
           );
         bwcClient.fromObj(tokenCredentials);
@@ -433,9 +430,9 @@ const createTokenWallet =
         );
         wallet.savePreferences(wallet.preferences, (err: any) => {
           if (err) {
-            dispatch(LogActions.error(`Error saving token: ${token}`));
+            dispatch(LogActions.error(`Error saving token: ${tokenName}`));
           }
-          dispatch(LogActions.info(`Added token ${token}`));
+          dispatch(LogActions.info(`Added token ${tokenName}`));
           resolve(bwcClient);
         });
       } catch (err) {

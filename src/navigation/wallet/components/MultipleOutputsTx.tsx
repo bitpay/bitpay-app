@@ -28,7 +28,10 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import AddContactIcon from '../../../components/icons/add-contacts/AddContacts';
 import {useNavigation} from '@react-navigation/native';
-import {getBadgeImg} from '../../../utils/helper-methods';
+import {
+  getBadgeImg,
+  getCurrencyAbbreviation,
+} from '../../../utils/helper-methods';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
 
@@ -69,11 +72,9 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     ({WALLET}) => WALLET.customTokenOptions,
   );
   const tokenOpts = {
-    eth: {
-      ...BitpaySupportedEthereumTokenOpts,
-      ...tokenOptions,
-      ...customTokenOptions,
-    },
+    ...BitpaySupportedEthereumTokenOpts,
+    ...tokenOptions,
+    ...customTokenOptions,
   };
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -131,17 +132,16 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   const [showMultiOptions, setShowMultiOptions] = useState(false);
 
   const getIcon = () => {
-    const img = SUPPORTED_CURRENCIES.includes(tx.coin)
-      ? CurrencyListIcons[tx.coin]
+    const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
+    const img = SUPPORTED_CURRENCIES.includes(coin)
+      ? CurrencyListIcons[coin]
       : tokenOpts &&
         // @ts-ignore
-        tokenOpts[tx.chain] &&
-        // @ts-ignore
-        tokenOpts[tx.chain][tx.coin]?.logoURI
+        tokenOpts[coin]?.logoURI
       ? // @ts-ignore
-        (tokenOpts[tx.chain][tx.coin].logoURI as string)
+        (tokenOpts[coin].logoURI as string)
       : '';
-    const badgeImg = getBadgeImg(tx.coin, chain);
+    const badgeImg = getBadgeImg(coin, chain);
     const icon = <CurrencyImage img={img} size={18} badgeUri={badgeImg} />;
 
     return tx.customData?.service === 'debitcard' ? (
