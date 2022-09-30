@@ -168,7 +168,7 @@ export const createProposalAndBuildTxDetails =
             buildTransactionProposal({
               ...tx,
               context,
-              currency: currencyAbbreviation,
+              currency: currencyAbbreviation.toLowerCase(),
               tokenAddress: token ? token.address : null,
               toAddress: recipient.address,
               amount: formattedAmount.amountSat,

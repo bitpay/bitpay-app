@@ -121,7 +121,7 @@ export const FormatAmount =
 
     return BwcProvider.getInstance()
       .getUtils()
-      .formatAmount(satoshis, currencyAbbreviation, opts); // This util returns a string
+      .formatAmount(satoshis, currencyAbbreviation.toLowerCase(), opts); // This util returns a string
   };
 
 export const SatToUnit =
