@@ -114,27 +114,17 @@ export const GetFeeUnits =
     );
   };
 
-export const GetTheme =
-  (
-    currencyAbbreviation: string,
-    chain: string,
-  ): Effect<{
-    coinColor: string;
-    backgroundColor: string;
-    gradientBackgroundColor: string;
-  }> =>
-  (_dispatch, getState) => {
-    const {
-      WALLET: {tokenData, customTokenData},
-    } = getState();
-    const tokens = {...tokenData, ...customTokenData};
-    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
-
-    return (
-      BitpaySupportedCurrencies[currencyName]?.theme ||
-      tokens[currencyName]?.theme
-    );
-  };
+export const GetTheme = (
+  currencyAbbreviation: string,
+):
+  | {
+      coinColor: string;
+      backgroundColor: string;
+      gradientBackgroundColor: string;
+    }
+  | undefined => {
+  return BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.theme;
+};
 
 export const GetName =
   (currencyAbbreviation: string, chain: string): Effect<string> =>

@@ -54,3 +54,10 @@ export const ONEINCH_BLOCKCHAIN_ID: {[key in string]: number} = {
   // TODO MATIC
   // matic: 137,
 };
+
+export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
+  eth: {
+    [Network.mainnet]: 'etherscan.io/',
+    [Network.testnet]: 'kovan.etherscan.io/',
+  },
+};

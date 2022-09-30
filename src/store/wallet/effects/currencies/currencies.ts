@@ -12,7 +12,10 @@ import {
   SUPPORTED_EVM_COINS,
 } from '../../../../constants/currencies';
 import {LogActions} from '../../../log';
-import {ONEINCH_BLOCKCHAIN_ID} from '../../../../constants/config';
+import {
+  EVM_BLOCKCHAIN_EXPLORERS,
+  ONEINCH_BLOCKCHAIN_ID,
+} from '../../../../constants/config';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
 export const startGetTokenOptions =
@@ -136,21 +139,16 @@ const populateTokenInfo = ({
     paymentInfo: {
       // TODO MATIC
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: chain, testnet: chain},
       ratesApi: '',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS[chain].livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS[chain].testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#2775ca',
-      backgroundColor: '#2775c9',
-      gradientBackgroundColor: '#2775c9',
     },
   };
 };

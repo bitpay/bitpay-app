@@ -217,10 +217,7 @@ const TransactionLevel = ({
   const minFeeAllowed = FEE_MIN;
   const [maxFeeAllowed, setMaxFeeAllowed] = useState<number>();
 
-  const {coinColor: backgroundColor} = dispatch(
-    GetTheme(currencyAbbreviation, chain),
-  );
-
+  const {coinColor: backgroundColor} = GetTheme(currencyAbbreviation)!;
   const themedBackground = theme.dark ? '#464646' : NeutralSlate;
 
   const setSpeedUpMinFee = (_feeLevels: Fee[]): number | undefined => {

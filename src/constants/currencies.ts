@@ -1,3 +1,5 @@
+import {EVM_BLOCKCHAIN_EXPLORERS} from './config';
+
 export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
 export type SupportedEthereumTokens =
   | 'usdc_e'
@@ -52,7 +54,7 @@ export interface CurrencyOpts {
     blockTime: number;
     maxMerchantFee: string;
   };
-  theme: {
+  theme?: {
     coinColor: string;
     backgroundColor: string;
     gradientBackgroundColor: string;
@@ -83,19 +85,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#f3ba2d',
-      backgroundColor: 'rgba(135,206,250,1)',
-      gradientBackgroundColor: 'rgba(30,144,255, 0.2)',
     },
   },
   usdp_e: {
@@ -120,19 +117,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdp',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#e6f3f9',
-      backgroundColor: '#00845d',
-      gradientBackgroundColor: '#00845d',
     },
   },
   pax_e: {
@@ -158,19 +150,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/pax',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#e6f3f9',
-      backgroundColor: '#00845d',
-      gradientBackgroundColor: '#00845d',
     },
   },
   usdc_e: {
@@ -195,19 +182,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#2775ca',
-      backgroundColor: '#2775c9',
-      gradientBackgroundColor: '#2775c9',
     },
   },
   gusd_e: {
@@ -232,19 +214,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#00ddfa',
-      backgroundColor: '#00dcfa',
-      gradientBackgroundColor: '#00dcfa',
     },
   },
   dai_e: {
@@ -269,19 +246,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#F5AC37',
-      backgroundColor: '#F5AC37',
-      gradientBackgroundColor: '#F5AC37',
     },
   },
   wbtc_e: {
@@ -306,19 +278,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#282A47',
-      backgroundColor: '#282A47',
-      gradientBackgroundColor: '#282A47',
     },
   },
   shib_e: {
@@ -344,19 +311,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1000000000,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#F00500',
-      backgroundColor: '#F00500',
-      gradientBackgroundColor: '#F00500',
     },
   },
   ape_e: {
@@ -382,19 +344,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1000000000,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#0054F9',
-      backgroundColor: '#0054F9',
-      gradientBackgroundColor: '#0054F9',
     },
   },
   euroc_e: {
@@ -420,19 +377,14 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/euroc',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1000000000,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#1AA3FF',
-      backgroundColor: '#1AA3FF',
-      gradientBackgroundColor: '#1AA3FF',
     },
   },
 };
@@ -661,7 +613,6 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
       backgroundColor: '#6b71d6',
       gradientBackgroundColor: '#6b71d6',
     },
-    tokens: BitpaySupportedEthereumTokens,
   },
 };
 
@@ -679,30 +630,6 @@ export const BitpaySupportedCurrencies: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedCoins,
   ...BitpaySupportedTokens,
 };
-
-export const POPULAR_TOKENS = [
-  'UNI',
-  'SUSHI',
-  'BAT',
-  'MATIC',
-  '1INCH',
-  'USDT',
-  'LINK',
-  'COMP',
-  'MKR',
-  'DYDX',
-  'WDOGE',
-  'renBTC',
-  'WETH',
-  'EURT',
-  'YGG',
-  'CRO',
-  'AAVE',
-  'GRT',
-  'YFI',
-  'CRV',
-  'RUNE',
-];
 
 export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
 export const SUPPORTED_ETHEREUM_TOKENS = Object.keys(

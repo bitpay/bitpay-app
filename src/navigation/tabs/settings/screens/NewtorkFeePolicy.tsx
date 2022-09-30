@@ -96,9 +96,7 @@ const FeeOptions = ({
   };
 
   const getBackgroundColor = (index?: number) => {
-    const {coinColor: backgroundColor} = dispatch(
-      GetTheme(currencyAbbreviation),
-    );
+    const {coinColor: backgroundColor} = GetTheme(currencyAbbreviation)!;
 
     if (index !== undefined) {
       const selectedIndex =
