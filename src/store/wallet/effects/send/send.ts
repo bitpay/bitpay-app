@@ -536,7 +536,7 @@ const buildTransactionProposal =
 
         // base tx
         const txp: Partial<TransactionProposal> = {
-          coin: currency,
+          coin: currency?.toLowerCase(),
           chain,
           customData,
           feePerKb,
