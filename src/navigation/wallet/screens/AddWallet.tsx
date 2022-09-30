@@ -200,7 +200,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
   const singleAddressCurrency =
     BitpaySupportedCurrencies[currencyAbbreviation?.toLowerCase() as string]
-      .properties.singleAddress;
+      ?.properties?.singleAddress;
   const nativeSegwitCurrency = _currencyAbbreviation
     ? ['btc', 'ltc'].includes(_currencyAbbreviation.toLowerCase())
     : false;

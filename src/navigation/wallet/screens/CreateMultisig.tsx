@@ -203,8 +203,8 @@ const CreateMultisig = () => {
   } = useForm({resolver: yupResolver(schema)});
 
   const singleAddressCurrency =
-    BitpaySupportedCurrencies[currency?.toLowerCase() as string].properties
-      .singleAddress;
+    BitpaySupportedCurrencies[currency?.toLowerCase() as string]?.properties
+      ?.singleAddress;
 
   const showErrorModal = (e: string) => {
     dispatch(
