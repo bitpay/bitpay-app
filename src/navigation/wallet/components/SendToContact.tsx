@@ -56,10 +56,7 @@ const SendToContact = () => {
     goToConfirmView,
     goToSelectInputsView,
   } = useContext(SendToOptionsContext);
-  const {
-    currencyAbbreviation,
-    credentials: {network},
-  } = wallet;
+  const {currencyAbbreviation, network} = wallet;
 
   const contacts = useMemo(() => {
     return allContacts.filter(

@@ -116,7 +116,7 @@ const WalletConnectConfirm = () => {
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
 
-  const feeOptions = dispatch(GetFeeOptions(wallet.currencyAbbreviation));
+  const feeOptions = GetFeeOptions(wallet.currencyAbbreviation);
 
   const approveCallRequest = async () => {
     try {

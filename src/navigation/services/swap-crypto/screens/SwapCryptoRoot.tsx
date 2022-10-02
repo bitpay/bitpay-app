@@ -4,7 +4,10 @@ import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import cloneDeep from 'lodash.clonedeep';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
-import {Currencies} from '../../../../constants/currencies';
+import {
+  SUPPORTED_COINS,
+  SUPPORTED_ETHEREUM_TOKENS,
+} from '../../../../constants/currencies';
 import {
   Action,
   SlateDark,
@@ -42,7 +45,7 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {GetChain, IsERCToken} from '../../../../store/wallet/utils/currency';
+import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
 import {Wallet, SendMaxInfo} from '../../../../store/wallet/wallet.models';
 import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
@@ -73,6 +76,7 @@ export interface RateData {
 
 export interface swapCryptoCoin {
   currencyAbbreviation: string;
+  chain: string;
   name: string;
   protocol?: string;
   logoUri?: any;
@@ -113,10 +117,9 @@ const SwapCryptoRoot: React.FC = () => {
   const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
 
   const selectedWallet = route.params?.selectedWallet;
-  const SupportedCurrencies: string[] = Object.keys(Currencies);
-  const SupportedChains: string[] = [
-    ...new Set(Object.values(Currencies).map(({chain}: any) => chain)),
-  ];
+  const SupportedCoins: string[] = SUPPORTED_COINS;
+  const SupportedEthereumTokens: string[] = SUPPORTED_ETHEREUM_TOKENS;
+  const SupportedChains: string[] = SUPPORTED_COINS;
   let minAmount: number, maxAmount: number;
 
   const showModal = (id: string) => {
@@ -236,6 +239,7 @@ const SwapCryptoRoot: React.FC = () => {
         SatToUnit(
           fromWalletSelected.balance.satSpendable,
           fromWalletSelected.currencyAbbreviation,
+          fromWalletSelected.chain,
         ),
       );
 
@@ -425,6 +429,7 @@ const SwapCryptoRoot: React.FC = () => {
               const warningMsg = dispatch(
                 GetExcludedUtxosMessage(
                   fromWalletSelected.currencyAbbreviation,
+                  fromWalletSelected.chain,
                   sendMaxInfo,
                 ),
               );
@@ -435,6 +440,7 @@ const SwapCryptoRoot: React.FC = () => {
               SatToUnit(
                 sendMaxInfo.fee,
                 fromWalletSelected.currencyAbbreviation,
+                fromWalletSelected.chain,
               ),
             );
             const coin = fromWalletSelected.currencyAbbreviation.toUpperCase();
@@ -481,10 +487,6 @@ const SwapCryptoRoot: React.FC = () => {
       });
   };
 
-  const getChain = (coin: string): string => {
-    return dispatch(GetChain(coin)).toLowerCase();
-  };
-
   const getSendMaxData = (): Promise<any> => {
     return new Promise(async (resolve, reject) => {
       if (!fromWalletSelected) {
@@ -493,7 +495,7 @@ const SwapCryptoRoot: React.FC = () => {
       try {
         const feeLevel =
           fromWalletSelected.currencyAbbreviation == 'btc' ||
-          getChain(fromWalletSelected.currencyAbbreviation) == 'eth'
+          fromWalletSelected.chain == 'eth'
             ? 'priority'
             : 'normal';
 
@@ -593,7 +595,7 @@ const SwapCryptoRoot: React.FC = () => {
     };
     if (
       !!toWalletSelected &&
-      dispatch(IsERCToken(toWalletSelected.currencyAbbreviation))
+      IsERCToken(toWalletSelected.currencyAbbreviation)
     ) {
       tokensWarn();
     } else {
@@ -619,9 +621,7 @@ const SwapCryptoRoot: React.FC = () => {
         toWalletData: toWalletData!,
         fixedRateId: rateData!.fixedRateId,
         amountFrom: amountFrom,
-        useSendMax: dispatch(
-          IsERCToken(fromWalletSelected!.currencyAbbreviation.toLowerCase()),
-        )
+        useSendMax: IsERCToken(fromWalletSelected!.currencyAbbreviation)
           ? false
           : useSendMax,
         sendMaxInfo: sendMaxInfo,
@@ -635,10 +635,14 @@ const SwapCryptoRoot: React.FC = () => {
     if (changellyCurrenciesData?.result?.length) {
       const getLogoUri = (coin: string) => {
         if (
-          SupportedCurrencyOptions.find(({id}) => id === coin.toLowerCase())
+          SupportedCurrencyOptions.find(
+            ({currencyAbbreviation}) =>
+              currencyAbbreviation === coin.toLowerCase(),
+          )
         ) {
           return SupportedCurrencyOptions.find(
-            ({id}) => id === coin.toLowerCase(),
+            ({currencyAbbreviation}) =>
+              currencyAbbreviation === coin.toLowerCase(),
           )!.img;
         } else if (tokenData[coin.toLowerCase()]?.logoURI) {
           return tokenData[coin.toLowerCase()]?.logoURI;
@@ -654,9 +658,9 @@ const SwapCryptoRoot: React.FC = () => {
           (coin: any) =>
             coin.enabled &&
             coin.fixRateEnabled &&
-            [...SupportedChains, 'ERC20'].includes(
+            [...SupportedChains, 'erc20'].includes(
               // TODO: add MATIC
-              coin.protocol?.toUpperCase(),
+              coin.protocol?.toLowerCase(),
             ),
         )
         .map(
@@ -673,6 +677,9 @@ const SwapCryptoRoot: React.FC = () => {
           }) => ({
             currencyAbbreviation: name,
             name: fullName,
+            chain: (protocol?.toLowerCase() === 'erc20'
+              ? 'eth'
+              : protocol?.toLowerCase())!,
             protocol,
             logoUri: getLogoUri(name),
             contractAddress,
@@ -684,12 +691,20 @@ const SwapCryptoRoot: React.FC = () => {
       // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
       let supportedCoins = supportedCoinsWithFixRateEnabled.sort((a, b) => {
         if (
-          SupportedCurrencies.includes(b.currencyAbbreviation) ||
-          SupportedCurrencies.includes(a.currencyAbbreviation)
+          SupportedCoins.includes(b.currencyAbbreviation) ||
+          SupportedCoins.includes(a.currencyAbbreviation)
         ) {
           return (
-            +SupportedCurrencies.includes(b.currencyAbbreviation) -
-            +SupportedCurrencies.includes(a.currencyAbbreviation)
+            +SupportedCoins.includes(b.currencyAbbreviation) -
+            +SupportedCoins.includes(a.currencyAbbreviation)
+          );
+        } else if (
+          SupportedEthereumTokens.includes(b.currencyAbbreviation) ||
+          SupportedEthereumTokens.includes(a.currencyAbbreviation)
+        ) {
+          return (
+            +SupportedEthereumTokens.includes(b.currencyAbbreviation) -
+            +SupportedEthereumTokens.includes(a.currencyAbbreviation)
           );
         } else {
           return a.name.localeCompare(b.name);
@@ -981,6 +996,7 @@ const SwapCryptoRoot: React.FC = () => {
       <AmountModal
         isVisible={amountModalVisible}
         cryptoCurrencyAbbreviation={fromWalletData?.currencyAbbreviation.toUpperCase()}
+        chain={fromWalletData?.chain}
         onClose={() => hideModal('amount')}
         onSubmit={newAmount => {
           hideModal('amount');
@@ -997,11 +1013,7 @@ const SwapCryptoRoot: React.FC = () => {
 
           let newAmount: number | undefined;
 
-          if (
-            dispatch(
-              IsERCToken(fromWalletSelected.currencyAbbreviation.toLowerCase()),
-            )
-          ) {
+          if (IsERCToken(fromWalletSelected.currencyAbbreviation)) {
             setUseSendMax(true);
             setSendMaxInfo(undefined);
             newAmount = Number(fromWalletSelected.balance.cryptoSpendable);
@@ -1013,7 +1025,8 @@ const SwapCryptoRoot: React.FC = () => {
               newAmount = dispatch(
                 SatToUnit(
                   data.amount,
-                  fromWalletSelected.currencyAbbreviation.toLowerCase(),
+                  fromWalletSelected.currencyAbbreviation,
+                  fromWalletSelected.chain,
                 ),
               );
             }

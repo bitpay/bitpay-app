@@ -50,6 +50,7 @@ import {
 import {
   buildWalletObj,
   generateKeyExportCode,
+  mapAbbreviationAndName,
 } from '../../../store/wallet/utils/wallet';
 import {Key} from '../../../store/wallet/wallet.models';
 import {
@@ -64,7 +65,7 @@ import {
 } from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
-import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
 
@@ -180,7 +181,7 @@ const KeySettings = () => {
 
   const _tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
+      ...BitpaySupportedEthereumTokenOpts,
       ...WALLET.tokenOptions,
       ...WALLET.customTokenOptions,
     };
@@ -216,9 +217,18 @@ const KeySettings = () => {
           .map(syncWallet => {
             // update to keyId
             syncWallet.credentials.keyId = key.properties!.id;
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                syncWallet.credentials.coin,
+                syncWallet.credentials.chain,
+              ),
+            );
             return merge(
               syncWallet,
-              dispatch(buildWalletObj(syncWallet.credentials, _tokenOptions)),
+              buildWalletObj(
+                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                _tokenOptions,
+              ),
             );
           });
 

@@ -10,8 +10,9 @@ import ExchangeRateItem from './ExchangeRateItem';
 export interface ExchangeRateItemProps {
   id: string;
   img: string | ((props: any) => ReactElement);
-  currencyName?: string;
-  currencyAbbreviation?: string;
+  currencyName: string;
+  chain: string;
+  currencyAbbreviation: string;
   average?: number;
   currentPrice?: number;
   priceDisplay: Array<any>;

@@ -42,3 +42,22 @@ export const DOWNLOAD_BITPAY_URL = 'https://bitpay.com/wallet';
 // Auth
 export const TWO_FACTOR_EMAIL_POLL_INTERVAL = 1000 * 3;
 export const TWO_FACTOR_EMAIL_POLL_TIMEOUT = 1000 * 60 * 5;
+
+// Coingecko
+export const COINGECKO_BLOCKCHAIN_NETWORK = {
+  eth: 'ethereum',
+};
+
+// 1Inch
+export const ONEINCH_BLOCKCHAIN_ID: {[key in string]: number} = {
+  eth: 1,
+  // TODO MATIC
+  // matic: 137,
+};
+
+export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
+  eth: {
+    [Network.mainnet]: 'etherscan.io/',
+    [Network.testnet]: 'kovan.etherscan.io/',
+  },
+};

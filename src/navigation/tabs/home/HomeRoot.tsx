@@ -7,7 +7,7 @@ import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   clearOnCompleteOnboardingList,
   setKeyMigrationFailureModalHasBeenShown,
@@ -122,8 +122,8 @@ const HomeRoot = () => {
   const memoizedExchangeRates: Array<ExchangeRateItemProps> = useMemo(
     () =>
       priceHistory.reduce((ratesList, history) => {
-        const option = SupportedCurrencyOptions.find(
-          ({id}) => id === history.coin,
+        const option = SupportedCoinsOptions.find(
+          ({currencyAbbreviation}) => currencyAbbreviation === history.coin,
         );
 
         if (option) {
@@ -134,6 +134,7 @@ const HomeRoot = () => {
             img,
             currencyName,
             currencyAbbreviation,
+            chain: currencyAbbreviation.toLowerCase(), // currencyAbbreviation same as chain for rates coins
             average: +history.percentChange,
             currentPrice: +history.prices[history.prices.length - 1].price,
             priceDisplay: history.priceDisplay,

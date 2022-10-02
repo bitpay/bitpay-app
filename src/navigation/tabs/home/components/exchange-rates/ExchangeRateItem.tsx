@@ -8,7 +8,10 @@ import {
   CurrencyImageContainer,
 } from '../../../../../components/styled/Containers';
 import {H7, Smallest, BaseText} from '../../../../../components/styled/Text';
-import {formatFiatAmountObj} from '../../../../../utils/helper-methods';
+import {
+  formatFiatAmountObj,
+  getRateByCurrencyName,
+} from '../../../../../utils/helper-methods';
 import GainArrow from '../../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
 import LossArrow from '../../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import NeutralArrow from '../../../../../../assets/img/home/exchange-rates/flat-arrow.svg';
@@ -77,7 +80,14 @@ const ExchangeRateItem = ({
 }) => {
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   let currentPriceToShow: number | undefined;
-  const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
+  const {
+    img,
+    currencyName,
+    currentPrice,
+    average,
+    currencyAbbreviation,
+    chain,
+  } = item;
 
   // Avoid displaying rounded values for low amounts
   // TODO: https://bitpay.com/currencies/prices?currencyPairs["DOGE:USD"]
@@ -86,11 +96,13 @@ const ExchangeRateItem = ({
     currencyAbbreviation &&
     allRates &&
     ['doge', 'xrp'].includes(currencyAbbreviation.toLowerCase()) &&
-    allRates[currencyAbbreviation.toLowerCase()]
+    getRateByCurrencyName(allRates, currencyAbbreviation.toLowerCase(), chain)
   ) {
-    currentPriceToShow = allRates[currencyAbbreviation.toLowerCase()].find(
-      r => r.code === defaultAltCurrencyIsoCode,
-    )!.rate;
+    currentPriceToShow = getRateByCurrencyName(
+      allRates,
+      currencyAbbreviation.toLowerCase(),
+      chain,
+    ).find(r => r.code === defaultAltCurrencyIsoCode)!.rate;
   } else {
     currentPriceToShow = currentPrice;
   }

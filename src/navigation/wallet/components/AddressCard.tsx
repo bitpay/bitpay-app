@@ -52,6 +52,7 @@ const AddressCard: React.FC<AddressCardComponentProps> = ({recipient}) => {
               <ContactIcon
                 name={recipient.recipientName || recipient.recipientAddress}
                 coin={recipient.recipientCoin!}
+                chain={recipient.recipientChain || ''}
                 size={30}
               />
             ) : (

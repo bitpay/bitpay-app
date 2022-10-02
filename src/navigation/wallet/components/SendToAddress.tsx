@@ -33,7 +33,6 @@ import {
   GetCoinAndNetwork,
   TranslateToBchCashAddress,
 } from '../../../store/wallet/effects/address/address';
-import {GetChain} from '../../../store/wallet/utils/currency';
 import {APP_NAME_UPPERCASE} from '../../../constants/config';
 import {
   dismissOnGoingProcessModal,
@@ -110,11 +109,7 @@ const SendToAddress = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
   const {wallet, context} = route.params;
-  const {
-    currencyAbbreviation,
-    id,
-    credentials: {network},
-  } = wallet;
+  const {currencyAbbreviation, id, network, chain} = wallet;
 
   const keyWallets: KeyWalletsRowProps<KeyWallet>[] = BuildKeyWalletRow(
     keys,
@@ -148,8 +143,7 @@ const SendToAddress = () => {
     dispatch => {
       const addrData = GetCoinAndNetwork(data, network);
       const isValid =
-        dispatch(GetChain(currencyAbbreviation)).toLowerCase() ===
-          addrData?.coin.toLowerCase() && addrData?.network === network;
+        chain === addrData?.coin.toLowerCase() && addrData?.network === network;
 
       if (isValid) {
         return true;

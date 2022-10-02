@@ -98,8 +98,8 @@ const SelectInputs = () => {
   );
   const [inputs, setInputs] = useState<Utxo[]>([]);
   const {wallet, recipient} = route.params;
-  const {currencyAbbreviation} = wallet;
-  const precision = dispatch(GetPrecision(wallet?.credentials.coin));
+  const {currencyAbbreviation, chain} = wallet;
+  const precision = dispatch(GetPrecision(currencyAbbreviation, chain));
   const [totalAmount, setTotalAmount] = useState(
     Number(0).toFixed(precision?.unitDecimals),
   );
@@ -117,7 +117,7 @@ const SelectInputs = () => {
     recipientData = {
       recipientName: recipient.name,
       recipientAddress: recipient.address,
-      img: wallet?.img || wallet?.credentials.coin,
+      img: wallet?.img || currencyAbbreviation,
     };
   }
 
@@ -189,7 +189,7 @@ const SelectInputs = () => {
       const estimatedFee = await GetMinFee(wallet, 1, selectedInputs.length);
       logger.debug(`Estimated fee: ${estimatedFee}`);
       const formattedestimatedFee = dispatch(
-        SatToUnit(estimatedFee, currencyAbbreviation),
+        SatToUnit(estimatedFee, currencyAbbreviation, chain),
       );
 
       const amount = Number(totalAmount) - formattedestimatedFee!;

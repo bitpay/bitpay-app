@@ -162,9 +162,10 @@ const Confirm = () => {
   const [destinationTag, setDestinationTag] = useState(
     recipient?.destinationTag || _destinationTag,
   );
-  const {currencyAbbreviation} = wallet;
-  const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
-  const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation)) || {};
+  const {currencyAbbreviation, chain} = wallet;
+  const feeOptions = GetFeeOptions(currencyAbbreviation);
+  const {unitToSatoshi} =
+    dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -329,11 +330,14 @@ const Confirm = () => {
         img: r.type === 'contact' ? r.type : wallet.img,
         recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
         recipientAltAmountStr: formatFiatAmount(
-          dispatch(toFiat(amountSat, isoCode, currencyAbbreviation, rates)),
+          dispatch(
+            toFiat(amountSat, isoCode, currencyAbbreviation, chain, rates),
+          ),
           isoCode,
         ),
         recipientType: r.type,
         recipientCoin: currencyAbbreviation,
+        recipientChain: r.chain,
       };
     });
   }
@@ -346,6 +350,7 @@ const Confirm = () => {
       recipientName: recipient.name,
       recipientAddress: sendingTo.recipientAddress,
       img: recipient.type,
+      recipientChain: recipient.chain,
     };
   } else {
     recipientData = sendingTo;

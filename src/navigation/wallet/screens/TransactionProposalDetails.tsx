@@ -207,10 +207,7 @@ const TransactionProposalDetails = () => {
   const [lastSigner, setLastSigner] = useState(false);
 
   const title = getDetailsTitle(transaction, wallet);
-  let {
-    currencyAbbreviation,
-    credentials: {network},
-  } = wallet;
+  let {currencyAbbreviation, network} = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
   const isTestnet = network === 'testnet';
 
