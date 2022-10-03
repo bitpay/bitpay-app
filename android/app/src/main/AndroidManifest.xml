@@ -21,7 +21,7 @@
             android:theme="@style/AppTheme"
             android:networkSecurityConfig="@xml/network_security_config">
 
-        <activity android:name=".LaunchActivity">
+        <activity android:name=".LaunchActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
