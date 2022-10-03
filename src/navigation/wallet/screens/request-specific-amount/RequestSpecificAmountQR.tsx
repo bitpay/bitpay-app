@@ -107,8 +107,10 @@ const RequestSpecificAmountQR = () => {
     useRoute<RouteProp<WalletStackParamList, 'RequestSpecificAmountQR'>>();
   const {wallet, requestAmount} = route.params;
   const {
-    credentials: {walletName, network},
+    credentials: {walletName},
     currencyAbbreviation,
+    network,
+    chain,
   } = wallet;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -145,12 +147,12 @@ const RequestSpecificAmountQR = () => {
 
       let _qrValue;
       _qrValue =
-        dispatch(GetProtocolPrefix(currencyAbbreviation, network)) +
+        dispatch(GetProtocolPrefix(currencyAbbreviation, network, chain)) +
         ':' +
         address;
 
       const _formattedAmountObj = dispatch(
-        ParseAmount(requestAmount, currencyAbbreviation),
+        ParseAmount(requestAmount, currencyAbbreviation, chain),
       );
 
       if (IsUtxoCoin(currencyAbbreviation) || currencyAbbreviation === 'xrp') {

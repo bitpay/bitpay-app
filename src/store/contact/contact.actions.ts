@@ -15,9 +15,11 @@ export const deleteContact = (
   address: string,
   coin: string,
   network: string,
+  chain: string,
 ): ContactActionType => ({
   type: ContactActionTypes.DELETE_CONTACT,
-  address: address,
-  coin: coin,
-  network: network,
+  address,
+  coin,
+  network,
+  chain,
 });

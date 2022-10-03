@@ -7,12 +7,7 @@ import {
   DEFAULT_RBF_SEQ_NUMBER,
   SAFE_CONFIRMATIONS,
 } from '../../../../constants/wallet';
-import {
-  GetChain,
-  IsCustomERCToken,
-  IsERCToken,
-  IsUtxoCoin,
-} from '../../utils/currency';
+import {IsCustomERCToken, IsERCToken, IsUtxoCoin} from '../../utils/currency';
 import {ToAddress, ToLtcAddress} from '../address/address';
 import {
   IsDateInCurrentMonth,
@@ -39,13 +34,11 @@ const Errors = BWC.getErrors();
 export const TX_HISTORY_LIMIT = 25;
 
 const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
-  const {
-    credentials: {coin, network},
-  } = wallet;
+  const {currencyAbbreviation, network} = wallet;
   return new Promise((resolve, reject) => {
     wallet.getCoinsForTx(
       {
-        coin,
+        coin: currencyAbbreviation,
         network,
         txId,
       },
@@ -85,10 +78,10 @@ export const ProcessPendingTxps =
   (txps: TransactionProposal[], wallet: any): Effect<any> =>
   dispatch => {
     const now = Math.floor(Date.now() / 1000);
-    const {currencyAbbreviation} = wallet;
+    const {currencyAbbreviation, chain} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
-      tx = dispatch(ProcessTx(currencyAbbreviation, tx));
+      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx));
 
       // no future transactions...
       if (tx.createdOn > now) {
@@ -124,6 +117,7 @@ export const ProcessPendingTxps =
 const ProcessTx =
   (
     currencyAbbreviation: string,
+    chain: string,
     tx: TransactionProposal,
   ): Effect<TransactionProposal> =>
   dispatch => {
@@ -143,7 +137,7 @@ const ProcessTx =
         }
         tx.amount = tx.outputs.reduce((total: number, o: any) => {
           o.amountStr = dispatch(
-            FormatAmountStr(currencyAbbreviation, o.amount),
+            FormatAmountStr(currencyAbbreviation, chain, o.amount),
           );
           return total + o.amount;
         }, 0);
@@ -172,14 +166,14 @@ const ProcessTx =
       ];
     }
 
-    tx.amountStr = dispatch(FormatAmountStr(currencyAbbreviation, tx.amount));
-
-    const chain = dispatch(GetChain(currencyAbbreviation)).toLowerCase();
+    tx.amountStr = dispatch(
+      FormatAmountStr(currencyAbbreviation, chain, tx.amount),
+    );
 
     tx.feeStr = tx.fee
-      ? dispatch(FormatAmountStr(chain, tx.fee))
+      ? dispatch(FormatAmountStr(chain, chain, tx.fee))
       : tx.fees
-      ? dispatch(FormatAmountStr(chain, tx.fees))
+      ? dispatch(FormatAmountStr(chain, chain, tx.fees))
       : 'N/A';
 
     if (tx.amountStr) {
@@ -204,10 +198,10 @@ const ProcessNewTxs =
     const now = Math.floor(Date.now() / 1000);
     const txHistoryUnique: any = {};
     const ret = [];
-    const {currencyAbbreviation} = wallet;
+    const {currencyAbbreviation, chain} = wallet;
 
     for (let tx of txs) {
-      tx = dispatch(ProcessTx(currencyAbbreviation, tx));
+      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx));
 
       // no future transactions...
       if (tx.time > now) {
@@ -477,7 +471,7 @@ export const GetTransactionHistory =
           let transactionHistory;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
-          if (dispatch(IsERCToken(wallet.currencyAbbreviation))) {
+          if (IsERCToken(wallet.currencyAbbreviation)) {
             const {WALLET} = getState();
             const key = WALLET.keys[keyId];
             const linkedWallet = key.wallets.find(({tokens}) =>
@@ -761,39 +755,37 @@ export const BuildUiFriendlyList = (
   });
 };
 
-export const CanSpeedupTx =
-  (tx: any, currencyAbbreviation: string): Effect<boolean> =>
-  dispatch => {
-    const isERC20Wallet = dispatch(IsERCToken(currencyAbbreviation));
-    const isEthWallet = currencyAbbreviation === 'eth';
+export const CanSpeedupTx = (
+  tx: any,
+  currencyAbbreviation: string,
+): boolean => {
+  const isERC20Wallet = IsERCToken(currencyAbbreviation);
+  const isEthWallet = currencyAbbreviation === 'eth';
 
-    if (currencyAbbreviation !== 'btc' && isEthWallet && isERC20Wallet) {
-      return false;
-    }
+  if (currencyAbbreviation !== 'btc' && isEthWallet && isERC20Wallet) {
+    return false;
+  }
 
-    const {action, abiType, confirmations} = tx || {};
-    const isERC20Transfer = abiType?.name === 'transfer';
-    const isUnconfirmed = !confirmations || confirmations === 0;
+  const {action, abiType, confirmations} = tx || {};
+  const isERC20Transfer = abiType?.name === 'transfer';
+  const isUnconfirmed = !confirmations || confirmations === 0;
 
-    if (
-      (isEthWallet && !isERC20Transfer) ||
-      (isERC20Wallet && isERC20Transfer)
-    ) {
-      // Can speed up the eth/erc20 tx instantly
-      return isUnconfirmed && (IsSent(action) || IsMoved(action));
-    } else {
-      const currentTime = moment();
-      const txTime = moment(tx.time * 1000);
+  if ((isEthWallet && !isERC20Transfer) || (isERC20Wallet && isERC20Transfer)) {
+    // Can speed up the eth/erc20 tx instantly
+    return isUnconfirmed && (IsSent(action) || IsMoved(action));
+  } else {
+    const currentTime = moment();
+    const txTime = moment(tx.time * 1000);
 
-      // Can speed up the btc tx after 1 hours without confirming
-      return (
-        currentTime.diff(txTime, 'hours') >= 1 &&
-        isUnconfirmed &&
-        IsReceived(action) &&
-        currencyAbbreviation === 'btc'
-      );
-    }
-  };
+    // Can speed up the btc tx after 1 hours without confirming
+    return (
+      currentTime.diff(txTime, 'hours') >= 1 &&
+      isUnconfirmed &&
+      IsReceived(action) &&
+      currencyAbbreviation === 'btc'
+    );
+  }
+};
 
 ///////////////////////////////////////// Transaction Details ////////////////////////////////////////////////
 
@@ -830,7 +822,8 @@ export const buildTransactionDetails =
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
-        const _transaction = {...transaction};
+        const {coin, chain} = wallet.credentials;
+        const _transaction = {...transaction, coin, chain};
         const {
           fees,
           fee,
@@ -841,8 +834,6 @@ export const buildTransactionDetails =
           time,
           hasMultiplesOutputs,
         } = transaction;
-        const {coin: currency} = wallet.credentials;
-        const chain = dispatch(GetChain(currency)).toLowerCase();
         const _fee = fees || fee;
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
@@ -850,7 +841,7 @@ export const buildTransactionDetails =
         const rates = await dispatch(startGetRates({}));
 
         _transaction.feeFiatStr = formatFiatAmount(
-          dispatch(toFiat(_fee, alternativeCurrency, chain, rates)),
+          dispatch(toFiat(_fee, alternativeCurrency, chain, chain, rates)),
           alternativeCurrency,
         );
 
@@ -859,7 +850,7 @@ export const buildTransactionDetails =
             _transaction.outputs = _transaction.outputs.map((o: any) => {
               o.alternativeAmountStr = formatFiatAmount(
                 dispatch(
-                  toFiat(o.amount, alternativeCurrency, currency, rates),
+                  toFiat(o.amount, alternativeCurrency, coin, chain, rates),
                 ),
                 alternativeCurrency,
               );
@@ -868,7 +859,7 @@ export const buildTransactionDetails =
           }
         }
 
-        if (IsUtxoCoin(currency)) {
+        if (IsUtxoCoin(coin)) {
           _transaction.feeRateStr =
             ((_fee / (amount + _fee)) * 100).toFixed(2) + '%';
           try {
@@ -891,7 +882,7 @@ export const buildTransactionDetails =
 
         const historicFiatRate = await getHistoricFiatRate(
           alternativeCurrency,
-          currency,
+          coin,
           (time * 1000).toString(),
         );
         _transaction.fiatRateStr = dispatch(
@@ -899,8 +890,9 @@ export const buildTransactionDetails =
             historicFiatRate,
             transaction,
             rates,
-            currency,
+            coin,
             alternativeCurrency,
+            chain,
           ),
         );
 
@@ -918,6 +910,7 @@ const UpdateFiatRate =
     rates: Rates = {},
     currency: string,
     alternativeCurrency: string,
+    chain: string,
   ): Effect<string> =>
   dispatch => {
     const {amountValueStr, amount} = transaction;
@@ -935,7 +928,7 @@ const UpdateFiatRate =
     } else {
       // Get current fiat value when historic rates are unavailable
       fiatRateStr = dispatch(
-        toFiat(amount, alternativeCurrency, currency, rates),
+        toFiat(amount, alternativeCurrency, currency, chain, rates),
       );
       fiatRateStr =
         formatFiatAmount(fiatRateStr, alternativeCurrency) +

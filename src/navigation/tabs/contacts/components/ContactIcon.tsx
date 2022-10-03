@@ -8,12 +8,15 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
 import {useAppSelector} from '../../../../utils/hooks';
 import {RootState} from '../../../../store';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedEthereumTokenOpts} from '../../../../constants/tokens';
+import {Token} from '../../../../store/wallet/wallet.models';
+import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
 interface ContactIconProps {
   size?: number;
   name?: string;
   coin: string;
+  chain: string;
 }
 
 interface BadgeProps {
@@ -39,18 +42,26 @@ const CoinBadge: React.FC<BadgeProps> = ({size = 20, img}) => {
   );
 };
 
-const ContactIcon: React.FC<ContactIconProps> = ({coin, size = 50, name}) => {
+const ContactIcon: React.FC<ContactIconProps> = ({
+  coin,
+  chain,
+  size = 50,
+  name,
+}) => {
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
+      ...BitpaySupportedEthereumTokenOpts,
       ...WALLET.tokenOptions,
       ...WALLET.customTokenOptions,
     };
-  });
+  }) as {[key in string]: Token};
+
   const img = SUPPORTED_CURRENCIES.includes(coin)
     ? CurrencyListIcons[coin]
-    : tokenOptions && tokenOptions[coin]?.logoURI
-    ? (tokenOptions[coin].logoURI as string)
+    : tokenOptions &&
+      tokenOptions[getCurrencyAbbreviation(coin, chain)] &&
+      tokenOptions[getCurrencyAbbreviation(coin, chain)]?.logoURI
+    ? (tokenOptions[getCurrencyAbbreviation(coin, chain)].logoURI as string)
     : '';
 
   const badge = coin ? <CoinBadge size={size / 2.5} img={img} /> : null;

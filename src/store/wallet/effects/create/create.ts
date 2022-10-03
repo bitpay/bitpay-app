@@ -1,10 +1,6 @@
 import {
-  Currencies,
-  SUPPORTED_COINS,
-  SUPPORTED_CURRENCIES,
-  SUPPORTED_TOKENS,
+  BitpaySupportedCoins,
   SupportedCoins,
-  SupportedTokens,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
@@ -14,6 +10,7 @@ import {
   buildKeyObj,
   buildWalletObj,
   checkEncryptPassword,
+  mapAbbreviationAndName,
 } from '../../utils/wallet';
 import {
   failedAddWallet,
@@ -23,7 +20,7 @@ import {
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedEthereumTokenOpts} from '../../../../constants/tokens';
 import {
   subscribeEmailNotifications,
   subscribePushNotifications,
@@ -32,7 +29,7 @@ import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {sleep} from '../../../../utils/helper-methods';
+import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 
@@ -48,7 +45,13 @@ export interface CreateOptions {
 const BWC = BwcProvider.getInstance();
 
 export const startCreateKey =
-  (currencies: string[]): Effect<Promise<Key>> =>
+  (
+    currencies: Array<{
+      chain: string;
+      currencyAbbreviation: string;
+      isToken: boolean;
+    }>,
+  ): Effect<Promise<Key>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -91,13 +94,15 @@ export const addWallet =
     key,
     currency,
     associatedWallet,
-    isToken,
     options,
   }: {
     key: Key;
-    currency: string;
+    currency: {
+      chain: string;
+      currencyAbbreviation: string;
+      isToken: boolean;
+    };
     associatedWallet?: Wallet;
-    isToken?: boolean;
     options: CreateOptions;
   }): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
@@ -114,37 +119,52 @@ export const addWallet =
           WALLET,
         } = getState();
         const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
+          ...BitpaySupportedEthereumTokenOpts,
           ...WALLET.tokenOptions,
           ...WALLET.customTokenOptions,
         };
         const {walletName} = options;
 
-        if (isToken) {
+        if (currency.isToken) {
           if (!associatedWallet) {
             associatedWallet = (await createWallet({
               key: key.methods!,
-              coin: 'eth',
+              coin: currency.chain as SupportedCoins,
               options,
             })) as Wallet;
 
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                associatedWallet.credentials.coin,
+                associatedWallet.credentials.chain,
+              ),
+            );
             key.wallets.push(
               merge(
                 associatedWallet,
-                dispatch(
-                  buildWalletObj(associatedWallet.credentials, tokenOpts),
+                buildWalletObj(
+                  {
+                    ...associatedWallet.credentials,
+                    currencyAbbreviation,
+                    currencyName,
+                  },
+                  tokenOpts,
                 ),
               ),
             );
           }
 
           newWallet = (await dispatch(
-            createTokenWallet(associatedWallet, currency, tokenOpts),
+            createTokenWallet(
+              associatedWallet,
+              currency.currencyAbbreviation.toLowerCase(),
+              tokenOpts,
+            ),
           )) as Wallet;
         } else {
           newWallet = (await createWallet({
             key: key.methods!,
-            coin: currency as SupportedCoins,
+            coin: currency.currencyAbbreviation as SupportedCoins,
             options,
           })) as Wallet;
         }
@@ -171,13 +191,22 @@ export const addWallet =
           dispatch(subscribeEmailNotifications(newWallet, prefs));
         }
 
+        const {currencyAbbreviation, currencyName} = dispatch(
+          mapAbbreviationAndName(
+            newWallet.credentials.coin,
+            newWallet.credentials.chain,
+          ),
+        );
+
         key.wallets.push(
           merge(
             newWallet,
-            dispatch(
-              buildWalletObj(newWallet.credentials, tokenOpts, {
+            buildWalletObj(
+              {...newWallet.credentials, currencyAbbreviation, currencyName},
+              tokenOpts,
+              {
                 walletName,
-              }),
+              },
             ),
           ),
         );
@@ -204,7 +233,11 @@ const createMultipleWallets =
     options,
   }: {
     key: KeyMethods;
-    currencies: string[];
+    currencies: Array<{
+      chain: string;
+      currencyAbbreviation: string;
+      isToken: boolean;
+    }>;
     options: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
@@ -218,39 +251,35 @@ const createMultipleWallets =
       },
     } = getState();
     const tokenOpts = {
-      ...BitpaySupportedTokenOpts,
+      ...BitpaySupportedEthereumTokenOpts,
       ...WALLET.tokenOptions,
       ...WALLET.customTokenOptions,
     };
-    const supportedCoins = currencies.filter(
-      (currency): currency is SupportedCoins =>
-        SUPPORTED_COINS.includes(currency),
-    );
-    const supportedTokens = currencies.filter(
-      (currency): currency is SupportedTokens =>
-        SUPPORTED_TOKENS.includes(currency),
-    );
-    const customTokens = currencies.filter(
-      currency => !SUPPORTED_CURRENCIES.includes(currency),
-    );
-    const tokens = [...supportedTokens, ...customTokens];
     const wallets: API[] = [];
-
-    for (const coin of supportedCoins) {
+    const tokens = currencies.filter(({isToken}) => isToken);
+    const coins = currencies.filter(({isToken}) => !isToken);
+    for (const coin of coins) {
       const wallet = (await createWallet({
         key,
-        coin,
-        options: {...options, useNativeSegwit: ['btc', 'ltc'].includes(coin)},
+        coin: coin.currencyAbbreviation as SupportedCoins,
+        options: {
+          ...options,
+          useNativeSegwit: ['btc', 'ltc'].includes(coin.currencyAbbreviation),
+        },
       })) as Wallet;
       wallets.push(wallet);
 
-      if (coin === 'eth') {
-        wallet.preferences = wallet.preferences || {
-          tokenAddresses: [],
-        };
+      if (coin.chain === 'eth') {
         for (const token of tokens) {
+          wallet.preferences = wallet.preferences || {
+            tokenAddresses: [],
+          };
           const tokenWallet = await dispatch(
-            createTokenWallet(wallet, token, tokenOpts),
+            createTokenWallet(
+              wallet,
+              token.currencyAbbreviation.toLowerCase(),
+              tokenOpts,
+            ),
           );
           wallets.push(tokenWallet);
         }
@@ -276,9 +305,18 @@ const createMultipleWallets =
         };
         dispatch(subscribeEmailNotifications(wallet, prefs));
       }
+      const {currencyAbbreviation, currencyName} = dispatch(
+        mapAbbreviationAndName(
+          wallet.credentials.coin,
+          wallet.credentials.chain,
+        ),
+      );
       return merge(
         wallet,
-        dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
+        buildWalletObj(
+          {...wallet.credentials, currencyAbbreviation, currencyName},
+          tokenOpts,
+        ),
       );
     });
   };
@@ -315,8 +353,9 @@ const createWallet = (params: {
       }),
     );
 
+    const name = BitpaySupportedCoins[coin.toLowerCase()].name;
     bwcClient.createWallet(
-      Currencies[coin.toLowerCase()].name,
+      name,
       'me',
       1,
       1,
@@ -328,7 +367,6 @@ const createWallet = (params: {
       },
       (err: any) => {
         if (err) {
-          console.log(err);
           switch (err.name) {
             case 'bwc.ErrorCOPAYER_REGISTERED': {
               // eslint-disable-next-line no-shadow
@@ -367,7 +405,7 @@ const createWallet = (params: {
 const createTokenWallet =
   (
     wallet: Wallet,
-    token: string,
+    tokenName: string,
     tokenOpts: {[key in string]: Token},
   ): Effect<Promise<API>> =>
   async (dispatch): Promise<API> => {
@@ -375,7 +413,12 @@ const createTokenWallet =
       try {
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
-          wallet.credentials.getTokenCredentials(tokenOpts[token]);
+          wallet.credentials.getTokenCredentials(
+            tokenOpts[
+              getCurrencyAbbreviation(tokenName, wallet.credentials.chain)
+            ],
+            wallet.credentials.chain,
+          );
         bwcClient.fromObj(tokenCredentials);
         // push walletId as reference - this is used later to build out nested overview lists
         wallet.tokens = wallet.tokens || [];
@@ -387,9 +430,9 @@ const createTokenWallet =
         );
         wallet.savePreferences(wallet.preferences, (err: any) => {
           if (err) {
-            dispatch(LogActions.error(`Error saving token: ${token}`));
+            dispatch(LogActions.error(`Error saving token: ${tokenName}`));
           }
-          dispatch(LogActions.info(`Added token ${token}`));
+          dispatch(LogActions.info(`Added token ${tokenName}`));
           resolve(bwcClient);
         });
       } catch (err) {
@@ -444,10 +487,21 @@ export const startCreateKeyWithOpts =
           dispatch(subscribeEmailNotifications(_wallet, prefs));
         }
 
+        const {currencyAbbreviation, currencyName} = dispatch(
+          mapAbbreviationAndName(
+            _wallet.credentials.coin,
+            _wallet.credentials.chain,
+          ),
+        );
+
         // build out app specific props
         const wallet = merge(
           _wallet,
-          dispatch(buildWalletObj(_wallet.credentials)),
+          buildWalletObj({
+            ..._wallet.credentials,
+            currencyAbbreviation,
+            currencyName,
+          }),
         ) as Wallet;
 
         const key = buildKeyObj({
@@ -502,7 +556,6 @@ export const createWalletWithOpts = (params: {
         },
         (err: Error) => {
           if (err) {
-            console.log(err);
             switch (err.name) {
               case 'bwc.ErrorCOPAYER_REGISTERED': {
                 const account = opts.account || 0;

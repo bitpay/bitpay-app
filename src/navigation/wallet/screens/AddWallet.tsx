@@ -62,7 +62,11 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow from '../../../components/list/WalletRow';
 import {FlatList, Keyboard} from 'react-native';
-import {keyExtractor, sleep} from '../../../utils/helper-methods';
+import {
+  getCurrencyAbbreviation,
+  keyExtractor,
+  sleep,
+} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import Icons from '../components/WalletIcons';
@@ -75,7 +79,7 @@ import {WrongPasswordError} from '../components/ErrorMessages';
 import {getTokenContractInfo} from '../../../store/wallet/effects/status/status';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
-import {Currencies} from '../../../constants/currencies';
+import {BitpaySupportedCurrencies} from '../../../constants/currencies';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
@@ -85,6 +89,7 @@ type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
 export type AddWalletParamList = {
   key: Key;
+  chain?: string;
   currencyAbbreviation?: string;
   currencyName?: string;
   isToken?: boolean;
@@ -173,6 +178,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const {
     currencyAbbreviation: _currencyAbbreviation,
     currencyName: _currencyName,
+    chain,
     key,
     isToken,
     isCustomToken,
@@ -193,8 +199,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   );
 
   const singleAddressCurrency =
-    Currencies[_currencyAbbreviation?.toLowerCase() as string]?.properties
-      ?.singleAddress;
+    BitpaySupportedCurrencies[currencyAbbreviation?.toLowerCase() as string]
+      ?.properties?.singleAddress;
   const nativeSegwitCurrency = _currencyAbbreviation
     ? ['btc', 'ltc'].includes(_currencyAbbreviation.toLowerCase())
     : false;
@@ -335,8 +341,11 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         addWallet({
           key,
           associatedWallet: _associatedWallet,
-          isToken,
-          currency,
+          currency: {
+            chain: chain!,
+            currencyAbbreviation: currencyAbbreviation!,
+            isToken: isToken!,
+          },
           options: {
             password,
             network: isTestnet ? Network.testnet : network,
@@ -392,8 +401,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           setAssociatedWallet(item);
           if (isCustomToken && !!customTokenAddress) {
             setCustomTokenAddress(undefined);
-            setCurrencyAbbreviation(undefined);
-            setCurrencyName(undefined);
           }
           setAssociatedWalletModalVisible(false);
         }}
@@ -410,8 +417,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       }
 
       setCustomTokenAddress(tokenAddress);
-      setCurrencyAbbreviation(undefined);
-      setCurrencyName(undefined);
 
       const opts = {
         tokenAddress,

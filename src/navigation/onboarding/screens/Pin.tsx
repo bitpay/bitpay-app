@@ -87,11 +87,6 @@ const PinScreen: React.VFC<
     haptic('impactLight');
     TouchID.isSupported(isSupportedOptionalConfigObject)
       .then(biometryType => {
-        if (biometryType === 'FaceID') {
-          console.log('FaceID is supported.');
-        } else {
-          console.log('TouchID is supported.');
-        }
         return TouchID.authenticate(
           'Authentication Check',
           authOptionalConfigObject,

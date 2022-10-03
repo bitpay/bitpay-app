@@ -18,12 +18,13 @@ export const ParseAmount =
   (
     amount: number,
     currencyAbbreviation: string,
+    chain: string,
     fullPrecision?: boolean,
   ): Effect<FormattedAmountObj> =>
   dispatch => {
     // @ts-ignore
     const {unitToSatoshi, unitDecimals} = dispatch(
-      GetPrecision(currencyAbbreviation),
+      GetPrecision(currencyAbbreviation, chain),
     );
     const satToUnit = 1 / unitToSatoshi;
     let amountUnitStr;
@@ -32,7 +33,7 @@ export const ParseAmount =
     amountSat = Number((amount * unitToSatoshi).toFixed(0));
     amountUnitStr =
       dispatch(
-        FormatAmountStr(currencyAbbreviation, amountSat, fullPrecision),
+        FormatAmountStr(currencyAbbreviation, chain, amountSat, fullPrecision),
       ) || '';
 
     // workaround to prevent miscalculations with decimal numbers that javascript can't handle with precision
@@ -72,6 +73,7 @@ const countDecimals = (num: number): number => {
 export const FormatAmountStr =
   (
     currencyAbbreviation: string,
+    chain: string,
     satoshis: number,
     fullPrecision?: boolean,
   ): Effect<string> =>
@@ -82,7 +84,9 @@ export const FormatAmountStr =
 
     try {
       return (
-        dispatch(FormatAmount(currencyAbbreviation, satoshis, fullPrecision)) +
+        dispatch(
+          FormatAmount(currencyAbbreviation, chain, satoshis, fullPrecision),
+        ) +
         ' ' +
         currencyAbbreviation.toUpperCase()
       );
@@ -94,6 +98,7 @@ export const FormatAmountStr =
 export const FormatAmount =
   (
     currencyAbbreviation: string,
+    chain: string,
     satoshis: number,
     fullPrecision?: boolean,
   ): Effect<string> =>
@@ -105,7 +110,7 @@ export const FormatAmount =
 
     if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation)) {
       opts.toSatoshis = dispatch(
-        GetPrecision(currencyAbbreviation),
+        GetPrecision(currencyAbbreviation, chain),
       )?.unitToSatoshi;
       opts.decimals = {
         full: {
@@ -125,10 +130,14 @@ export const FormatAmount =
   };
 
 export const SatToUnit =
-  (amount: number, currencyAbbreviation: string): Effect<number | undefined> =>
+  (
+    amount: number,
+    currencyAbbreviation: string,
+    chain: string,
+  ): Effect<number | undefined> =>
   dispatch => {
     const {unitToSatoshi, unitDecimals} =
-      dispatch(GetPrecision(currencyAbbreviation.toLowerCase())) || {};
+      dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
     let spendableAmount: number | undefined;
     if (unitToSatoshi && unitDecimals) {
       const satToUnit = 1 / unitToSatoshi;
@@ -139,12 +148,12 @@ export const SatToUnit =
   };
 
 export const GetExcludedUtxosMessage =
-  (coin: string, sendMaxInfo: SendMaxInfo): Effect<string> =>
+  (coin: string, chain: string, sendMaxInfo: SendMaxInfo): Effect<string> =>
   dispatch => {
     const warningMsg = [];
     if (sendMaxInfo.utxosBelowFee > 0) {
       const amountBelowFeeStr = dispatch(
-        SatToUnit(sendMaxInfo.amountBelowFee, coin),
+        SatToUnit(sendMaxInfo.amountBelowFee, coin, chain),
       );
       const message = `A total of ${amountBelowFeeStr} ${coin.toUpperCase()} were excluded. These funds come from UTXOs smaller than the network fee provided.`;
       warningMsg.push(message);
@@ -152,7 +161,7 @@ export const GetExcludedUtxosMessage =
 
     if (sendMaxInfo.utxosAboveMaxSize > 0) {
       const amountAboveMaxSizeStr = dispatch(
-        SatToUnit(sendMaxInfo.amountAboveMaxSize, coin),
+        SatToUnit(sendMaxInfo.amountAboveMaxSize, coin, chain),
       );
       const message = `A total of ${amountAboveMaxSizeStr} ${coin.toUpperCase()} were excluded. The maximum size allowed for a transaction was exceeded.`;
       warningMsg.push(message);

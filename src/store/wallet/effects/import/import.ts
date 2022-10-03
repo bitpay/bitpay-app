@@ -17,6 +17,7 @@ import {
   getReadOnlyKey,
   isMatch,
   isMatchedWallet,
+  mapAbbreviationAndName,
 } from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
 import {
@@ -32,7 +33,7 @@ import {
   updateDeferredImport,
   updatePortfolioBalance,
 } from '../../wallet.actions';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedEthereumTokenOpts} from '../../../../constants/tokens';
 import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
 import {
@@ -95,6 +96,7 @@ import {
 import {t} from 'i18next';
 import {sleep} from '../../../../utils/helper-methods';
 import {backupRedirect} from '../../../../navigation/wallet/screens/Backup';
+import {SUPPORTED_COINS} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 
@@ -674,7 +676,7 @@ export const migrateKeyAndWallets =
         const state = getState();
         const {backupComplete, keyName} = migrationData.keyConfig;
         const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
+          ...BitpaySupportedEthereumTokenOpts,
           ...state.WALLET.tokenOptions,
           ...state.WALLET.customTokenOptions,
         };
@@ -706,14 +708,26 @@ export const migrateKeyAndWallets =
           } catch (e) {
             // not found. Continue anyway
           }
+
+          const {currencyAbbreviation, currencyName} = dispatch(
+            mapAbbreviationAndName(
+              walletObj.credentials.coin,
+              walletObj.credentials.chain,
+            ),
+          );
+
           wallets.push(
             merge(
               walletObj,
-              dispatch(
-                buildWalletObj(
-                  {...walletObj.credentials, hideBalance, hideWallet},
-                  tokenOpts,
-                ),
+              buildWalletObj(
+                {
+                  ...walletObj.credentials,
+                  hideBalance,
+                  hideWallet,
+                  currencyAbbreviation,
+                  currencyName,
+                },
+                tokenOpts,
               ),
             ),
           );
@@ -885,7 +899,7 @@ export const startImportMnemonic =
           },
         } = getState();
         const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
+          ...BitpaySupportedEthereumTokenOpts,
           ...WALLET.tokenOptions,
           ...WALLET.customTokenOptions,
         };
@@ -928,9 +942,18 @@ export const startImportMnemonic =
               };
               dispatch(subscribeEmailNotifications(wallet, prefs));
             }
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                wallet.credentials.coin,
+                wallet.credentials.chain,
+              ),
+            );
             return merge(
               wallet,
-              dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
+              buildWalletObj(
+                {...wallet.credentials, currencyAbbreviation, currencyName},
+                tokenOpts,
+              ),
             );
           }),
           backupComplete: true,
@@ -964,7 +987,7 @@ export const startImportFile =
           },
         } = getState();
         const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
+          ...BitpaySupportedEthereumTokenOpts,
           ...WALLET.tokenOptions,
           ...WALLET.customTokenOptions,
         };
@@ -1018,9 +1041,18 @@ export const startImportFile =
               };
               dispatch(subscribeEmailNotifications(wallet, prefs));
             }
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                wallet.credentials.coin,
+                wallet.credentials.chain,
+              ),
+            );
             return merge(
               wallet,
-              dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
+              buildWalletObj(
+                {...wallet.credentials, currencyAbbreviation, currencyName},
+                tokenOpts,
+              ),
             );
           }),
           backupComplete: true,
@@ -1058,7 +1090,7 @@ export const startImportWithDerivationPath =
           },
         } = getState();
         const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
+          ...BitpaySupportedEthereumTokenOpts,
           ...WALLET.tokenOptions,
           ...WALLET.customTokenOptions,
         };
@@ -1105,12 +1137,21 @@ export const startImportWithDerivationPath =
             };
             dispatch(subscribeEmailNotifications(wallet, prefs));
           }
+          const {currencyAbbreviation, currencyName} = dispatch(
+            mapAbbreviationAndName(
+              wallet.credentials.coin,
+              wallet.credentials.chain,
+            ),
+          );
           const key = buildKeyObj({
             key: _key,
             wallets: [
               merge(
                 wallet,
-                dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
+                buildWalletObj(
+                  {...wallet.credentials, currencyAbbreviation, currencyName},
+                  tokenOpts,
+                ),
               ),
             ],
             backupComplete: true,

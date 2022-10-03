@@ -64,6 +64,7 @@ import axios from 'axios';
 import {t} from 'i18next';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
+import {BitpaySupportedEvmCoins} from '../../constants/currencies';
 
 export const incomingData =
   (
@@ -80,6 +81,7 @@ export const incomingData =
     await sleep(200);
 
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
+    const chain = opts?.wallet?.credentials?.chain.toLowerCase();
     try {
       if (IsValidBitPayInvoice(data)) {
         dispatch(handleUnlock(data));
@@ -122,22 +124,24 @@ export const incomingData =
         dispatch(handleBitPayUri(data, opts?.wallet));
         // Plain Address (Bitcoin)
       } else if (IsValidBitcoinAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'btc', opts));
+        dispatch(handlePlainAddress(data, coin || 'btc', chain || 'btc', opts));
         // Plain Address (Bitcoin Cash)
       } else if (IsValidBitcoinCashAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'bch', opts));
+        dispatch(handlePlainAddress(data, coin || 'bch', chain || 'bch', opts));
         // Address (Ethereum)
       } else if (IsValidEthereumAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'eth', opts));
+        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts));
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'xrp', opts));
+        dispatch(handlePlainAddress(data, coin || 'xrp', chain || 'xrp', opts));
         // Plain Address (Doge)
       } else if (IsValidDogecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'doge', opts));
+        dispatch(
+          handlePlainAddress(data, coin || 'doge', chain || 'doge', opts),
+        );
         // Plain Address (Litecoin)
       } else if (IsValidLitecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'ltc', opts));
+        dispatch(handlePlainAddress(data, coin || 'ltc', chain || 'ltc', opts));
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
         goToImport(data);
@@ -414,7 +418,8 @@ const goToConfirm =
               ...recipient,
               ...{
                 opts: {
-                  showERC20Tokens: recipient.currency.toLowerCase() === 'eth', // no wallet selected - if ETH address show token wallets in next view
+                  showERC20Tokens:
+                    !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if ETH address show token wallets in next view
                   message: opts?.message || '',
                 },
               },
@@ -495,11 +500,13 @@ const goToConfirm =
 export const goToAmount =
   ({
     coin,
+    chain,
     recipient,
     wallet,
     opts: urlOpts,
   }: {
     coin: string;
+    chain: string;
     recipient: {
       type: string;
       address: string;
@@ -523,7 +530,8 @@ export const goToAmount =
             ...recipient,
             ...{
               opts: {
-                showERC20Tokens: recipient.currency.toLowerCase() === 'eth', // no wallet selected - if ETH address show token wallets in next view
+                showERC20Tokens:
+                  !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if ETH address show token wallets in next view
               },
             },
           },
@@ -531,12 +539,12 @@ export const goToAmount =
       });
       return Promise.resolve();
     }
-
     navigationRef.navigate('Wallet', {
       screen: WalletScreens.AMOUNT,
       params: {
         sendMaxEnabled: true,
         cryptoCurrencyAbbreviation: coin.toUpperCase(),
+        chain,
         onAmountSelected: async (amount, setButtonState, amountOpts) => {
           dispatch(
             goToConfirm({
@@ -602,7 +610,8 @@ const handleBitPayUri =
       };
 
       if (!params.get('amount')) {
-        dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
+        const chain = wallet!.chain;
+        dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
       } else {
         const amount = Number(params.get('amount'));
         dispatch(
@@ -622,6 +631,7 @@ const handleBitcoinUri =
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Bitcoin URI'));
     const coin = 'btc';
+    const chain = 'btc';
     const parsed = BwcProvider.getInstance().getBitcore().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
     const message = parsed.message;
@@ -634,9 +644,9 @@ const handleBitcoinUri =
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, parsed.amount, true)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -646,6 +656,7 @@ const handleBitcoinCashUri =
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: BitcoinCash URI'));
     const coin = 'bch';
+    const chain = 'bch';
     const parsed = BwcProvider.getInstance().getBitcoreCash().URI(data);
     const message = parsed.message;
     let address = parsed.address ? parsed.address.toString() : '';
@@ -664,9 +675,9 @@ const handleBitcoinCashUri =
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, parsed.amount, true)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -680,6 +691,7 @@ const handleBitcoinCashUriLegacyAddress =
       ),
     );
     const coin = 'bch';
+    const chain = 'bch';
     const parsed = BwcProvider.getInstance()
       .getBitcore()
       .URI(data.replace(/^(bitcoincash:|bchtest:)/, 'bitcoin:'));
@@ -716,9 +728,9 @@ const handleBitcoinCashUriLegacyAddress =
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, parsed.amount, true)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -728,6 +740,7 @@ const handleEthereumUri =
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Ethereum URI'));
     const coin = 'eth';
+    const chain = 'eth';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
     let feePerKb;
@@ -741,10 +754,12 @@ const handleEthereumUri =
       address,
     };
     if (!value.exec(data)) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {feePerKb}}));
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
     } else {
       const parsedAmount = value.exec(data)![1];
-      const amount = Number(dispatch(FormatAmount(coin, Number(parsedAmount))));
+      const amount = Number(
+        dispatch(FormatAmount(coin, chain, Number(parsedAmount))),
+      );
       dispatch(
         goToConfirm({
           recipient,
@@ -761,6 +776,7 @@ const handleRippleUri =
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Ripple URI'));
     const coin = 'xrp';
+    const chain = 'xrp';
     const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
     const tagParam = /[\?\&]dt=(\d+([\,\.]\d+)?)/i;
     let destinationTag;
@@ -776,7 +792,7 @@ const handleRippleUri =
       destinationTag: Number(destinationTag),
     };
     if (!amountParam.exec(data)) {
-      dispatch(goToAmount({coin, recipient, wallet}));
+      dispatch(goToAmount({coin, chain, recipient, wallet}));
     } else {
       const parsedAmount = amountParam.exec(data)![1];
       const amount = Number(parsedAmount);
@@ -795,6 +811,7 @@ const handleDogecoinUri =
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Dogecoin URI'));
     const coin = 'doge';
+    const chain = 'doge';
     const parsed = BwcProvider.getInstance().getBitcoreDoge().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
     const message = parsed.message;
@@ -809,9 +826,9 @@ const handleDogecoinUri =
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, parsed.amount, true)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -821,6 +838,7 @@ const handleLitecoinUri =
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Litecoin URI'));
     const coin = 'ltc';
+    const chain = 'ltc';
     const parsed = BwcProvider.getInstance().getBitcoreLtc().URI(data);
     const address = parsed.address ? parsed.address.toString() : '';
     const message = parsed.message;
@@ -834,9 +852,9 @@ const handleLitecoinUri =
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
     } else if (!parsed.amount) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, parsed.amount, true)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -977,6 +995,7 @@ const handlePlainAddress =
   (
     address: string,
     coin: string,
+    chain: string,
     opts?: {
       wallet?: Wallet;
       context?: string;
@@ -997,7 +1016,7 @@ const handlePlainAddress =
       network,
       destinationTag: opts?.destinationTag,
     };
-    dispatch(goToAmount({coin, recipient, wallet: opts?.wallet}));
+    dispatch(goToAmount({coin, chain, recipient, wallet: opts?.wallet}));
   };
 
 const goToImport = (importQrCodeData: string): void => {

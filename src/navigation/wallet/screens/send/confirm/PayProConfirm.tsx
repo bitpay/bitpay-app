@@ -347,9 +347,7 @@ const PayProConfirm = () => {
                 <Fee
                   fee={fee}
                   hideFeeOptions
-                  feeOptions={dispatch(
-                    GetFeeOptions(wallet.currencyAbbreviation),
-                  )}
+                  feeOptions={GetFeeOptions(wallet.currencyAbbreviation)}
                   hr
                 />
               ) : null}

@@ -21,8 +21,8 @@ const CurrencyImageContainer = styled.View`
 `;
 
 const BadgeContainer = styled.View<{size?: number}>`
-  height: ${({size = 56}) => size}%;
-  width: ${({size = 56}) => size}%;
+  height: ${({size = 54}) => size}%;
+  width: ${({size = 54}) => size}%;
   position: absolute;
   right: 0;
   bottom: 0;
