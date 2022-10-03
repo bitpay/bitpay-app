@@ -7,6 +7,7 @@ import {
   LightBlack,
   NeutralSlate,
   Slate,
+  Slate30,
   SlateDark,
   White,
 } from '../../../../styles/colors';
@@ -29,6 +30,7 @@ import {View} from 'react-native';
 import Percentage from '../../../../components/percentage/Percentage';
 import {useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import AngleRightSvg from '../../../../../assets/img/angle-right.svg';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -39,6 +41,7 @@ interface WalletCardComponentProps {
   keyName: string | undefined;
   layout: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
+  context?: 'keySelector';
 }
 
 export const HeaderImg = styled.View`
@@ -47,10 +50,13 @@ export const HeaderImg = styled.View`
   flex-direction: row;
 `;
 
-export const ListCard = styled.TouchableOpacity`
+export const ListCard = styled.TouchableOpacity<{outlineStyle?: boolean}>`
+  border: ${({outlineStyle, theme}) =>
+    outlineStyle ? `1px solid ${theme.dark ? SlateDark : Slate30}` : 'none'};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 12px;
-  margin: 10px ${ScreenGutter};
+  margin: ${({outlineStyle}) =>
+    outlineStyle ? `0px 0px ${ScreenGutter} 0px` : `10px ${ScreenGutter}`};
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -78,7 +84,7 @@ const NeedBackupText = styled(BaseText)`
   text-align: center;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   padding: 2px 4px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? White : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? White : Slate30)};
   border-radius: 3px;
 `;
 
@@ -104,6 +110,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   keyName = 'My Key',
   hideKeyBalance,
   layout,
+  context,
 }) => {
   const {t} = useTranslation();
   const theme = useTheme();
@@ -143,7 +150,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       <ListCard
         activeOpacity={ActiveOpacity}
         onPress={onPress}
-        style={!theme.dark ? BoxShadow : null}>
+        style={!theme.dark && context !== 'keySelector' ? BoxShadow : null}
+        outlineStyle={context === 'keySelector'}>
         <Row style={{alignItems: 'center', justifyContent: 'center'}}>
           <Column>
             {HeaderComponent}
@@ -151,7 +159,14 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
             {needsBackup ? (
-              <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+              <Row style={{alignItems: 'center'}}>
+                <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+                {context === 'keySelector' ? (
+                  <AngleRightSvg style={{marginLeft: 10}} />
+                ) : null}
+              </Row>
+            ) : context === 'keySelector' ? (
+              <AngleRightSvg />
             ) : !hideKeyBalance ? (
               <>
                 <Balance>

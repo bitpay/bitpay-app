@@ -86,7 +86,7 @@ import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models'
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
-import {swapCryptoCoin} from './SwapCryptoRoot';
+import {SwapCryptoCoin} from './SwapCryptoRoot';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -97,8 +97,8 @@ export const SwapCheckoutContainer = styled.SafeAreaView`
 export interface ChangellyCheckoutProps {
   fromWalletSelected: Wallet;
   toWalletSelected: Wallet;
-  fromWalletData: swapCryptoCoin;
-  toWalletData: swapCryptoCoin;
+  fromWalletData: SwapCryptoCoin;
+  toWalletData: SwapCryptoCoin;
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;

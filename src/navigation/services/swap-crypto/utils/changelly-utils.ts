@@ -5,17 +5,111 @@ export const changellySupportedCoins = [
   'btc',
   'bch',
   'eth',
-  'busd',
-  'usdc',
-  'dai',
   'doge',
   'ltc',
-  'usdt',
-  'bat',
-  'shib',
   'xrp',
+];
+
+export const changellySupportedEthErc20Tokens = [
+  'busd',
+  'usdp',
+  'usdc',
+  'gusd',
+  'dai',
   'wbtc',
+  'shib',
   'ape',
+  '1inch',
+  'aave',
+  'alcx',
+  'alpha',
+  'amp',
+  'ankr',
+  'ant',
+  'arpa',
+  'audio',
+  'axs',
+  'bal',
+  'band',
+  'bat',
+  'blz',
+  'bnt',
+  'celr',
+  'chr',
+  'chz',
+  'comp',
+  'croold',
+  'crv',
+  'cvc',
+  'dnt',
+  'dodo',
+  'dydx',
+  'enj',
+  'ens',
+  'eurs',
+  'farm',
+  'ftm',
+  'ftt',
+  'gala',
+  'glm',
+  'grt',
+  'hot',
+  'ht',
+  'ilv',
+  'imx',
+  'knc',
+  'ldo',
+  'leo',
+  'lina',
+  'link',
+  'loom',
+  'lpt',
+  'lrc',
+  'mana',
+  'mask',
+  'matic', // erc20
+  'mir',
+  'mkr',
+  'nexo',
+  'nmr',
+  'ocean',
+  'ogn',
+  'omg',
+  'paxg',
+  'poly',
+  'powr',
+  'qnt',
+  'rad',
+  'rare',
+  'reef',
+  'ren',
+  'rep',
+  'req',
+  'rlc',
+  'rndr',
+  'sand',
+  'snx',
+  'stmx',
+  'storj',
+  'stpt',
+  'sushi',
+  'tusd',
+  'tvk',
+  'uma',
+  'uni',
+  'uos',
+  'usdt20', // usdt
+  'vgx',
+  'vib',
+  'vidt',
+  'yfi',
+  'yfii',
+  'zrx',
+];
+
+export const changellySupportedMaticErc20Tokens = [
+  'maticpolygon', // matic
+  'usdcmatic', // usdc
 ];
 
 export const generateMessageId = (walletId?: string) => {
@@ -26,6 +120,28 @@ export const generateMessageId = (walletId?: string) => {
   const randomInt = Math.floor(1e8 * Math.random());
   return `${randomInt}-${now}`;
 };
+
+export interface ChangellyCurrency {
+  name: string;
+  fullName: string;
+  enabled: boolean;
+  fixRateEnabled: boolean;
+  protocol?: string;
+  ticker?: string;
+  enabledFrom?: boolean;
+  enabledTo?: boolean;
+  payinConfirmations?: number;
+  extraIdName?: string;
+  addressUrl?: string;
+  transactionUrl?: string;
+  image?: string;
+  fixedTime?: number;
+  blockchain?: string;
+  notifications?: {
+    payin?: string;
+  };
+  contractAddress?: string;
+}
 
 export interface ChangellyFixRateDataType {
   amountFrom: number;
@@ -47,8 +163,21 @@ export interface ChangellyFixTransactionDataType {
   refundAddress: string;
 }
 
-export const isCoinSupportedToSwap = (coin: string): boolean => {
-  return changellySupportedCoins.includes(coin.toLowerCase());
+export const isCoinSupportedToSwap = (coin: string, chain: string): boolean => {
+  if (chain === undefined) {
+    return [
+      ...changellySupportedCoins,
+      ...changellySupportedEthErc20Tokens,
+    ].includes(coin.toLowerCase());
+  }
+  switch (chain) {
+    case 'eth':
+      return changellySupportedEthErc20Tokens.includes(coin.toLowerCase());
+    case 'matic':
+      return changellySupportedMaticErc20Tokens.includes(coin.toLowerCase());
+    default:
+      return changellySupportedCoins.includes(coin.toLowerCase());
+  }
 };
 
 export const changellyGetFixRateForAmount = async (
