@@ -83,7 +83,7 @@
     "react-hook-form": "7.19.5",
     "react-i18next": "11.15.2",
     "react-native": "0.67.4",
-    "react-native-appboy-sdk": "1.38.0",
+    "react-native-appboy-sdk": "1.38.1",
     "react-native-appsflyer": "6.5.20",
     "react-native-bootsplash": "3.2.6",
     "react-native-camera": "4.2.1",
