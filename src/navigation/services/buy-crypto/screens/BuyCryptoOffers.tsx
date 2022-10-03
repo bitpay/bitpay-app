@@ -318,12 +318,14 @@ const BuyCryptoOffers: React.FC = () => {
     'simplex',
     paymentMethod,
     coin,
+    chain,
     offersDefault.simplex.fiatCurrency,
   );
   offersDefault.wyre.showOffer = isPaymentMethodSupported(
     'wyre',
     paymentMethod,
     coin,
+    chain,
     offersDefault.wyre.fiatCurrency,
   );
   const [offers, setOffers] = useState(cloneDeep(offersDefault));

@@ -966,6 +966,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     buy={{
                       hide: !isCoinSupportedToBuy(
                         fullWalletObj.currencyAbbreviation,
+                        fullWalletObj.chain,
                       ),
                       cta: () => {
                         dispatch(

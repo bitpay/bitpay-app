@@ -4,27 +4,32 @@ import {
   PaymentMethodsAvailable,
 } from '../constants/BuyCryptoConstants';
 import {
-  getSimplexSupportedCoins,
+  getSimplexSupportedCurrencies,
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
-import {wyreSupportedCoins, wyreSupportedFiatCurrencies} from './wyre-utils';
+import {
+  getWyreSupportedCurrencies,
+  wyreSupportedFiatCurrencies,
+} from './wyre-utils';
 import * as _ from 'lodash';
 import {CountryData} from '../../../../store/location/location.models';
+import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
 export const getEnabledPaymentMethods = (
   countryData?: CountryData | null,
   currency?: string,
   coin?: string,
+  chain?: string,
 ): PaymentMethods => {
-  if (!currency || !coin) {
+  if (!currency || !coin || !chain) {
     return {};
   }
   PaymentMethodsAvailable.sepaBankTransfer.enabled = !!countryData?.isEuCountry;
   const EnabledPaymentMethods = _.pickBy(PaymentMethodsAvailable, method => {
     return (
       method.enabled &&
-      (isPaymentMethodSupported('simplex', method, coin, currency) ||
-        isPaymentMethodSupported('wyre', method, coin, currency))
+      (isPaymentMethodSupported('simplex', method, coin, chain, currency) ||
+        isPaymentMethodSupported('wyre', method, coin, chain, currency))
     );
   });
 
@@ -52,32 +57,47 @@ export const isPaymentMethodSupported = (
   exchange: string,
   paymentMethod: PaymentMethod,
   coin: string,
+  chain: string,
   currency: string,
 ): boolean => {
   return (
     paymentMethod.supportedExchanges[exchange] &&
-    isCoinSupportedBy(exchange, coin) &&
-    (isCurrencySupportedBy(exchange, currency) ||
-      isCurrencySupportedBy(exchange, 'USD'))
+    isCoinSupportedBy(exchange, coin, chain) &&
+    (isFiatCurrencySupportedBy(exchange, currency) ||
+      isFiatCurrencySupportedBy(exchange, 'USD'))
   );
 };
 
-export const isCoinSupportedToBuy = (coin: string): boolean => {
-  return isCoinSupportedBy('simplex', coin) || isCoinSupportedBy('wyre', coin);
+export const isCoinSupportedToBuy = (coin: string, chain: string): boolean => {
+  return (
+    isCoinSupportedBy('simplex', coin, chain) ||
+    isCoinSupportedBy('wyre', coin, chain)
+  );
 };
 
-const isCoinSupportedBy = (exchange: string, coin: string): boolean => {
+const isCoinSupportedBy = (
+  exchange: string,
+  coin: string,
+  chain: string,
+): boolean => {
   switch (exchange) {
     case 'simplex':
-      return getSimplexSupportedCoins().includes(coin.toLowerCase());
+      return getSimplexSupportedCurrencies().includes(
+        getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
+      );
     case 'wyre':
-      return wyreSupportedCoins.includes(coin.toLowerCase());
+      return getWyreSupportedCurrencies().includes(
+        getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
+      );
     default:
       return false;
   }
 };
 
-const isCurrencySupportedBy = (exchange: string, currency: string): boolean => {
+const isFiatCurrencySupportedBy = (
+  exchange: string,
+  currency: string,
+): boolean => {
   switch (exchange) {
     case 'simplex':
       return simplexSupportedFiatCurrencies.includes(currency.toUpperCase());

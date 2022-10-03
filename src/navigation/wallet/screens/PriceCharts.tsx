@@ -178,8 +178,14 @@ const PriceCharts = () => {
   } = useRoute<RouteProp<WalletStackParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
-  const {currencyName, currentPrice, priceDisplay, currencyAbbreviation, img} =
-    item;
+  const {
+    currencyName,
+    chain,
+    currentPrice,
+    priceDisplay,
+    currencyAbbreviation,
+    img,
+  } = item;
 
   const {coinColor, gradientBackgroundColor} =
     BitpaySupportedCoins[currencyAbbreviation.toLowerCase()].theme;
@@ -292,6 +298,7 @@ const PriceCharts = () => {
       logSegmentEvent('track', 'Clicked Buy Crypto', {
         context: 'PriceChart',
         coin: currencyAbbreviation || '',
+        chain: chain || '',
       }),
     );
     navigation.navigate('Wallet', {
@@ -303,6 +310,7 @@ const PriceCharts = () => {
             params: {
               amount: Number(amount),
               currencyAbbreviation,
+              chain,
             },
           });
         },

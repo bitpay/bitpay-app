@@ -29,6 +29,7 @@ interface PaymentMethodsModalProps {
   onPress?: (paymentMethod: any) => any;
   selectedPaymentMethod: any;
   coin?: string;
+  chain?: string;
   currency?: string;
 }
 
@@ -84,6 +85,7 @@ const PaymentMethodsModal = ({
   selectedPaymentMethod,
   coin,
   currency,
+  chain,
 }: PaymentMethodsModalProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -93,6 +95,7 @@ const PaymentMethodsModal = ({
     countryData,
     currency,
     coin,
+    chain,
   );
 
   const showOtherPaymentMethodsInfoSheet = (
@@ -188,20 +191,24 @@ const PaymentMethodsModal = ({
                         </PaymentMethodProviderText>
                         {coin &&
                         currency &&
+                        chain &&
                         isPaymentMethodSupported(
                           'simplex',
                           paymentMethod,
                           coin,
+                          chain,
                           currency,
                         ) ? (
                           <SimplexLogo width={60} height={20} />
                         ) : null}
                         {coin &&
                         currency &&
+                        chain &&
                         isPaymentMethodSupported(
                           'wyre',
                           paymentMethod,
                           coin,
+                          chain,
                           currency,
                         ) ? (
                           <WyreLogo width={60} height={15} />
