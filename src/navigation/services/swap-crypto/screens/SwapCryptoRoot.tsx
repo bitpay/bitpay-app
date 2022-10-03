@@ -43,7 +43,7 @@ import {
   changellyGetFixRateForAmount,
 } from '../utils/changelly-utils';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {sleep} from '../../../../utils/helper-methods';
+import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
@@ -76,6 +76,7 @@ export interface RateData {
 
 export interface swapCryptoCoin {
   currencyAbbreviation: string;
+  symbol: string;
   chain: string;
   name: string;
   protocol?: string;
@@ -674,16 +675,22 @@ const SwapCryptoRoot: React.FC = () => {
             fullName: string;
             protocol?: string;
             contractAddress?: string;
-          }) => ({
-            currencyAbbreviation: name,
-            name: fullName,
-            chain: (protocol?.toLowerCase() === 'erc20'
-              ? 'eth'
-              : protocol?.toLowerCase())!,
-            protocol,
-            logoUri: getLogoUri(name),
-            contractAddress,
-          }),
+          }) => {
+            const chain = (
+              protocol?.toLowerCase() === 'erc20'
+                ? 'eth'
+                : protocol?.toLowerCase()
+            )!;
+            return {
+              currencyAbbreviation: name,
+              symbol: getCurrencyAbbreviation(name, chain),
+              name: fullName,
+              chain,
+              protocol,
+              logoUri: getLogoUri(name),
+              contractAddress,
+            };
+          },
         );
 
       // TODO: add support to float-rate coins supported by Changelly
@@ -699,12 +706,12 @@ const SwapCryptoRoot: React.FC = () => {
             +SupportedCoins.includes(a.currencyAbbreviation)
           );
         } else if (
-          SupportedEthereumTokens.includes(b.currencyAbbreviation) ||
-          SupportedEthereumTokens.includes(a.currencyAbbreviation)
+          SupportedEthereumTokens.includes(b.symbol) ||
+          SupportedEthereumTokens.includes(a.symbol)
         ) {
           return (
-            +SupportedEthereumTokens.includes(b.currencyAbbreviation) -
-            +SupportedEthereumTokens.includes(a.currencyAbbreviation)
+            +SupportedEthereumTokens.includes(b.symbol) -
+            +SupportedEthereumTokens.includes(a.symbol)
           );
         } else {
           return a.name.localeCompare(b.name);
