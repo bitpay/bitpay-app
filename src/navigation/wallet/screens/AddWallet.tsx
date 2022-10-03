@@ -79,11 +79,15 @@ import {WrongPasswordError} from '../components/ErrorMessages';
 import {getTokenContractInfo} from '../../../store/wallet/effects/status/status';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
-import {BitpaySupportedCurrencies} from '../../../constants/currencies';
+import {
+  BitpaySupportedCurrencies,
+  SUPPORTED_EVM_COINS,
+} from '../../../constants/currencies';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
+import _ from 'lodash';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -223,15 +227,17 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     });
   }, [navigation, t]);
 
-  // find all eth wallets for key
-  const ethWallets = key.wallets.filter(
-    wallet => wallet.currencyAbbreviation === 'eth',
+  // find all evm wallets for key
+  const evmWallets = key.wallets.filter(
+    wallet =>
+      SUPPORTED_EVM_COINS.includes(chain || '') &&
+      wallet.currencyAbbreviation === chain,
   );
 
   // formatting for the bottom modal
-  const UIFormattedEthWallets = useMemo(
+  const UIFormattedEvmWallets = useMemo(
     () =>
-      ethWallets.map(wallet =>
+      evmWallets.map(wallet =>
         buildUIFormattedWallet(
           wallet,
           defaultAltCurrency.isoCode,
@@ -244,7 +250,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
   // associatedWallet
   const [associatedWallet, setAssociatedWallet] = useState(
-    UIFormattedEthWallets[0],
+    UIFormattedEvmWallets[0],
   );
 
   const [
@@ -259,7 +265,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     useState(true);
 
   useEffect(() => {
-    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 1 && isToken);
+    setShowAssociatedWalletSelectionDropdown(evmWallets.length > 1 && isToken);
     if (isToken) {
       setShowWalletAdvancedOptions(false);
     }
@@ -277,7 +283,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       let _associatedWallet: Wallet | undefined;
 
       if (isToken) {
-        _associatedWallet = ethWallets.find(
+        _associatedWallet = evmWallets.find(
           wallet => wallet.id === associatedWallet.id,
         );
 
@@ -424,7 +430,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       const fullWalletObj = key.wallets.find(
         ({id}) => id === associatedWallet.id,
       )!;
-      const {network, currencyAbbreviation} = fullWalletObj;
+      const {network, currencyAbbreviation, chain} = fullWalletObj;
       const addrData = GetCoinAndNetwork(tokenAddress, network);
       const isValid =
         currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
@@ -443,7 +449,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       };
       setCurrencyAbbreviation(tokenContractInfo.symbol);
       setCurrencyName(tokenContractInfo.name);
-      dispatch(addCustomTokenOption(customToken));
+      dispatch(addCustomTokenOption(customToken, chain));
       Keyboard.dismiss();
     } catch (error) {
       Keyboard.dismiss();
@@ -648,7 +654,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
             </TextAlign>
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-              data={UIFormattedEthWallets}
+              data={UIFormattedEvmWallets}
               keyExtractor={keyExtractor}
               renderItem={renderItem}
             />

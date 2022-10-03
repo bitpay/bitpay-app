@@ -453,7 +453,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const {wallets = [], totalBalance} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
-  const memoizedWalletList = useMemo(() => {
+  const memorizedWalletList = useMemo(() => {
     const coins = wallets.filter(
       wallet => !wallet.credentials.token && !wallet.hideWallet,
     );
@@ -626,7 +626,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             </WalletListFooter>
           );
         }}
-        data={memoizedWalletList}
+        data={memorizedWalletList}
         renderItem={memoizedRenderItem}
       />
 

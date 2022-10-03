@@ -33,7 +33,7 @@ import {
   updateDeferredImport,
   updatePortfolioBalance,
 } from '../../wallet.actions';
-import {BitpaySupportedEthereumTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
 import {
@@ -899,7 +899,7 @@ export const startImportMnemonic =
           },
         } = getState();
         const tokenOpts = {
-          ...BitpaySupportedEthereumTokenOpts,
+          ...BitpaySupportedTokenOpts,
           ...WALLET.tokenOptions,
           ...WALLET.customTokenOptions,
         };
@@ -987,7 +987,7 @@ export const startImportFile =
           },
         } = getState();
         const tokenOpts = {
-          ...BitpaySupportedEthereumTokenOpts,
+          ...BitpaySupportedTokenOpts,
           ...WALLET.tokenOptions,
           ...WALLET.customTokenOptions,
         };
@@ -1090,7 +1090,7 @@ export const startImportWithDerivationPath =
           },
         } = getState();
         const tokenOpts = {
-          ...BitpaySupportedEthereumTokenOpts,
+          ...BitpaySupportedTokenOpts,
           ...WALLET.tokenOptions,
           ...WALLET.customTokenOptions,
         };

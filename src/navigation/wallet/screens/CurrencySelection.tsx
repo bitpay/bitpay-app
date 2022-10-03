@@ -51,7 +51,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {getCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
-import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
@@ -239,12 +239,13 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     );
 
     // For each token, add it to the token list for its parent chain object
-    const ethereumTokenOptions: Record<string, Token> = {
-      ...BitpaySupportedEthereumTokenOpts,
+    const tokenOptions: Record<string, Token> = {
+      ...BitpaySupportedTokenOpts,
       ...appTokenOptions,
       ...appCustomTokenOptions,
     };
-    Object.entries(ethereumTokenOptions).forEach(([k, tokenOpt]) => {
+
+    Object.entries(tokenOptions).forEach(([k, tokenOpt]) => {
       if (
         !(
           BitpaySupportedCurrencies[k] ||
@@ -421,13 +422,19 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               return;
             }
 
-            const selectedId = selectedCurrencies[0].currencyAbbreviation;
+            const selectedId = getCurrencyAbbreviation(
+              selectedCurrencies[0].currencyAbbreviation,
+              selectedCurrencies[0].chain,
+            );
             const item = allListItems.find(
               i =>
                 i.currency.currencyAbbreviation.toLowerCase() === selectedId ||
                 i.tokens.some(
                   token =>
-                    token.currencyAbbreviation.toLowerCase() === selectedId,
+                    getCurrencyAbbreviation(
+                      token.currencyAbbreviation,
+                      token.chain,
+                    ) === selectedId,
                 ),
             );
             let currency: CurrencySelectionItem | undefined;
@@ -444,7 +451,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             } else {
               currency = item.tokens.find(
                 token =>
-                  token.currencyAbbreviation.toLowerCase() === selectedId,
+                  getCurrencyAbbreviation(
+                    token.currencyAbbreviation,
+                    token.chain,
+                  ) === selectedId,
               );
             }
 
@@ -522,13 +532,16 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     });
   }, [navigation, t, context, headerTitle]);
 
-  const onToggle = (currencyAbbreviation: string) => {
+  const onToggle = (currencyAbbreviation: string, chain?: string) => {
     setAllListItems(previous =>
       previous.map(item => {
         const isCurrencyMatch =
-          item.currency.currencyAbbreviation === currencyAbbreviation;
+          item.currency.currencyAbbreviation === currencyAbbreviation &&
+          item.currency.chain === chain;
         const tokenMatch = item.tokens.find(
-          token => token.currencyAbbreviation === currencyAbbreviation,
+          token =>
+            token.currencyAbbreviation === currencyAbbreviation &&
+            item.currency.chain === chain,
         );
 
         // if multi, just toggle the selected item and rerender
@@ -658,6 +671,21 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               item.popularTokens.push(updatedToken);
             }
           }
+
+          // if selecting a token, make sure deselect any other token selected
+          if (
+            !tokenMatch &&
+            !isCurrencyMatch &&
+            item.currency.chain !== chain &&
+            item.tokens.length > 0
+          ) {
+            item.popularTokens = item.popularTokens.map(token => {
+              return token.selected ? {...token, selected: false} : token;
+            });
+            item.tokens = item.tokens.map(token => {
+              return token.selected ? {...token, selected: false} : token;
+            });
+          }
         }
 
         return item;
@@ -668,9 +696,12 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   const onToggleRef = useRef(onToggle);
   onToggleRef.current = onToggle;
 
-  const memoizedOnToggle = useCallback((currencyAbbreviation: string) => {
-    onToggleRef.current(currencyAbbreviation);
-  }, []);
+  const memoizedOnToggle = useCallback(
+    (currencyAbbreviation: string, chain?: string) => {
+      onToggleRef.current(currencyAbbreviation, chain);
+    },
+    [],
+  );
 
   const memoizedOnViewAllPressed = useMemo(() => {
     return (currency: CurrencySelectionItem) => {

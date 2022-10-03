@@ -54,8 +54,8 @@ import NetworkSelectionRow, {
 import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
-import {SUPPORTED_ETHEREUM_TOKENS} from '../../../../constants/currencies';
-import {BitpaySupportedEthereumTokenOpts} from '../../../../constants/tokens';
+import {SUPPORTED_TOKENS} from '../../../../constants/currencies';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import debounce from 'lodash.debounce';
@@ -195,7 +195,7 @@ const ContactsAdd = ({
 
   const [validAddress, setValidAddress] = useState(false);
   const [xrpValidAddress, setXrpValidAddress] = useState(false);
-  const [ethValidAddress, setEthValidAddress] = useState(false);
+  const [evmValidAddress, setEvmValidAddress] = useState(false);
   const [searchInput, setSearchInput] = useState('');
 
   const [addressValue, setAddressValue] = useState('');
@@ -210,24 +210,40 @@ const ContactsAdd = ({
     IsERCToken(contact?.coin || ''),
   );
 
-  const ethereumTokenOptions = useAppSelector(({WALLET}: RootState) => {
+  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedEthereumTokenOpts,
+      ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
       ...WALLET.customTokenOptions,
     };
   });
 
-  const ALL_CUSTOM_ETHEREUM_TOKENS = useMemo(() => {
-    const chain = 'eth';
-    return Object.values(ethereumTokenOptions)
+  const getChainUsingSuffix = (symbol: string) => {
+    const suffix = symbol.charAt(symbol.length - 1);
+    switch (suffix) {
+      case 'e':
+        return 'eth';
+        break;
+
+      default:
+        return 'eth';
+        break;
+    }
+  };
+
+  const ALL_CUSTOM_TOKENS = useMemo(() => {
+    return Object.values(tokenOptions)
       .filter(
         token =>
-          !SUPPORTED_ETHEREUM_TOKENS.includes(
-            getCurrencyAbbreviation(token.symbol.toLowerCase(), chain),
+          !SUPPORTED_TOKENS.includes(
+            getCurrencyAbbreviation(
+              token.symbol.toLowerCase(),
+              getChainUsingSuffix(token.symbol),
+            ),
           ),
       )
       .map(({symbol, name, logoURI}) => {
+        const chain = getChainUsingSuffix(symbol);
         return {
           id: Math.random().toString(),
           coin: symbol.toLowerCase(),
@@ -239,16 +255,16 @@ const ContactsAdd = ({
           badgeUri: getBadgeImg(symbol.toLowerCase(), chain),
         } as SupportedCurrencyOption;
       });
-  }, [ethereumTokenOptions]);
+  }, [tokenOptions]);
 
-  const ALL_ETHEREUM_TOKENS = useMemo(
-    () => [...SupportedTokenOptions, ...ALL_CUSTOM_ETHEREUM_TOKENS],
-    [ALL_CUSTOM_ETHEREUM_TOKENS],
+  const ALL_TOKENS = useMemo(
+    () => [...SupportedTokenOptions, ...ALL_CUSTOM_TOKENS],
+    [ALL_CUSTOM_TOKENS],
   );
 
-  const [ethTokenOptions, setEthTokenOptions] = useState(ALL_ETHEREUM_TOKENS);
+  const [allTokenOptions, setAllTokenOptions] = useState(ALL_TOKENS);
 
-  const [selectedToken, setSelectedToken] = useState(ALL_ETHEREUM_TOKENS[0]);
+  const [selectedToken, setSelectedToken] = useState(ALL_TOKENS[0]);
   const [selectedCurrency, setSelectedCurrency] = useState(
     SupportedEvmCurrencyOptions[0],
   );
@@ -274,17 +290,17 @@ const ContactsAdd = ({
         let _searchList: Array<any> = [];
         if (search) {
           search = search.toLowerCase();
-          _searchList = ethTokenOptions.filter(
+          _searchList = allTokenOptions.filter(
             ({currencyAbbreviation, currencyName}) =>
               currencyAbbreviation.toLowerCase().includes(search) ||
               currencyName.toLowerCase().includes(search),
           );
         } else {
-          _searchList = ethTokenOptions;
+          _searchList = allTokenOptions;
         }
-        setEthTokenOptions(_searchList);
+        setAllTokenOptions(_searchList);
       }, 300),
-    [ethTokenOptions],
+    [allTokenOptions],
   );
 
   const setValidValues = (
@@ -303,7 +319,7 @@ const ContactsAdd = ({
 
     switch (chain) {
       case 'eth':
-        setEthValidAddress(true);
+        setEvmValidAddress(true);
         return;
       case 'xrp':
         setXrpValidAddress(true);
@@ -355,7 +371,7 @@ const ContactsAdd = ({
         setNetworkValue('');
         setAddressValue('');
         setValidAddress(false);
-        setEthValidAddress(false);
+        setEvmValidAddress(false);
         setXrpValidAddress(false);
       }
     }
@@ -411,11 +427,13 @@ const ContactsAdd = ({
     navigation.goBack();
   });
 
-  const _setSelectedToken = (currencyAbbreviation: string) => {
-    const _selectedToken = ethTokenOptions.find(
-      token => token.currencyAbbreviation === currencyAbbreviation,
+  const _setSelectedToken = (currencyAbbreviation: string, chain: string) => {
+    const _selectedToken = allTokenOptions.find(
+      token =>
+        token.currencyAbbreviation === currencyAbbreviation &&
+        token.chain === chain,
     );
-    setSelectedToken(_selectedToken || ethTokenOptions[0]);
+    setSelectedToken(_selectedToken || allTokenOptions[0]);
   };
 
   const _setSelectedCurrency = (currencyAbbreviation: string) => {
@@ -425,8 +443,8 @@ const ContactsAdd = ({
     setSelectedCurrency(_selectedCurrency[0]);
   };
 
-  const tokenSelected = (currencyAbbreviation: string) => {
-    _setSelectedToken(currencyAbbreviation);
+  const tokenSelected = (currencyAbbreviation: string, chain: string) => {
+    _setSelectedToken(currencyAbbreviation, chain);
     setCoinValue(currencyAbbreviation);
     setTokenModalVisible(false);
   };
@@ -436,9 +454,16 @@ const ContactsAdd = ({
     isTokenAddress: boolean,
   ) => {
     _setSelectedCurrency(currencyAbbreviation);
-    isTokenAddress
-      ? setCoinValue(currencyAbbreviation)
-      : setChainValue(currencyAbbreviation);
+    if (isTokenAddress) {
+      setChainValue(currencyAbbreviation);
+      tokenSelected(
+        allTokenOptions.find(t => t.chain === currencyAbbreviation)
+          ?.currencyAbbreviation!,
+        currencyAbbreviation,
+      );
+    } else {
+      setCoinValue(currencyAbbreviation);
+    }
     setCurrencyModalVisible(false);
   };
 
@@ -596,7 +621,7 @@ const ContactsAdd = ({
         </InputContainer>
       )}
 
-      {!contact && ethValidAddress ? (
+      {!contact && evmValidAddress ? (
         <IsTokenAddressContainer
           onPress={() => {
             setIsTokenAddress(!isTokenAddress);
@@ -638,7 +663,7 @@ const ContactsAdd = ({
       </InputContainer>
 
       {!contact ? (
-        <CurrencySelectorContainer hideSelector={!ethValidAddress}>
+        <CurrencySelectorContainer hideSelector={!evmValidAddress}>
           <Label>{isTokenAddress ? t('CHAIN') : t('CURRENCY')}</Label>
           <CurrencyContainer
             activeOpacity={ActiveOpacity}
@@ -667,7 +692,7 @@ const ContactsAdd = ({
       ) : null}
 
       {isTokenAddress ? (
-        <CurrencySelectorContainer hideSelector={!ethValidAddress}>
+        <CurrencySelectorContainer hideSelector={!evmValidAddress}>
           <Label>{t('TOKEN')}</Label>
           <CurrencyContainer
             activeOpacity={ActiveOpacity}
@@ -698,7 +723,7 @@ const ContactsAdd = ({
       ) : null}
 
       <CurrencySelectorContainer
-        hideSelector={!isDev || !(xrpValidAddress || ethValidAddress)}>
+        hideSelector={!isDev || !(xrpValidAddress || evmValidAddress)}>
         <Label>{t('NETWORK')}</Label>
         <CurrencyContainer
           activeOpacity={ActiveOpacity}
@@ -772,7 +797,7 @@ const ContactsAdd = ({
           </SearchContainer>
           <FlatList
             contentContainerStyle={{minHeight: '100%'}}
-            data={ethTokenOptions}
+            data={allTokenOptions.filter(t => t.chain === chainValue)}
             keyExtractor={keyExtractor}
             renderItem={renderTokenItem}
           />

@@ -15,6 +15,7 @@ import ShibIcon from '../../assets/img/currencies/shib.svg';
 import ApeIcon from '../../assets/img/currencies/ape.svg';
 import EurocIcon from '../../assets/img/currencies/euroc.svg';
 import {ImageSourcePropType} from 'react-native';
+import {orderBy} from 'lodash';
 
 export interface SupportedCurrencyOption {
   id: string;
@@ -22,10 +23,12 @@ export interface SupportedCurrencyOption {
   currencyName: string;
   hasMultisig?: boolean;
   currencyAbbreviation: string;
+  chain?: string;
   isToken?: boolean;
   imgSrc?: ImageSourcePropType;
   badgeUri?: string | ((props?: any) => ReactElement);
   badgeSrc?: ImageSourcePropType;
+  priority?: number;
 }
 
 export const CurrencyListIcons: {
@@ -52,6 +55,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.btc,
+    priority: 1,
     currencyName: 'Bitcoin',
     currencyAbbreviation: 'btc',
     hasMultisig: true,
@@ -60,6 +64,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.bch,
+    priority: 2,
     currencyName: 'Bitcoin Cash',
     currencyAbbreviation: 'bch',
     hasMultisig: true,
@@ -68,6 +73,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.doge,
+    priority: 3,
     currencyName: 'Dogecoin',
     currencyAbbreviation: 'doge',
     hasMultisig: true,
@@ -77,6 +83,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.ltc,
     currencyName: 'Litecoin',
+    priority: 5,
     currencyAbbreviation: 'ltc',
     hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/LTC.png'),
@@ -84,6 +91,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.xrp,
+    priority: 6,
     currencyName: 'XRP',
     currencyAbbreviation: 'xrp',
     imgSrc: require('../../assets/img/currencies/png/XRP.png'),
@@ -93,6 +101,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
 export const SupportedEvmCurrencyOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
+    priority: 4,
     img: CurrencyListIcons.eth,
     currencyName: 'Ethereum',
     currencyAbbreviation: 'eth',
@@ -107,6 +116,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.usdc_e,
     currencyName: 'USD Coin',
     currencyAbbreviation: 'usdc',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDC.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -117,6 +127,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.ape_e,
     currencyName: 'ApeCoin',
     currencyAbbreviation: 'ape',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/APE.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -127,6 +138,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.euroc_e,
     currencyName: 'Euro Coin',
     currencyAbbreviation: 'euroc',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/EUROC.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -137,6 +149,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.shib_e,
     currencyName: 'Shiba Inu',
     currencyAbbreviation: 'shib',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/SHIB.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -147,6 +160,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.gusd_e,
     currencyName: 'Gemini Dollar',
     currencyAbbreviation: 'gusd',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/GUSD.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -157,6 +171,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.busd_e,
     currencyName: 'Binance USD Coin',
     currencyAbbreviation: 'busd',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/BUSD.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -167,6 +182,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.dai_e,
     currencyName: 'Dai',
     currencyAbbreviation: 'dai',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/DAI.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -177,6 +193,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.usdp_e,
     currencyName: 'Pax Dollar',
     currencyAbbreviation: 'usdp',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDP.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -187,6 +204,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.wbtc_e,
     currencyName: 'Wrapped Bitcoin',
     currencyAbbreviation: 'wbtc',
+    chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/WBTC.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
@@ -194,10 +212,10 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
 ];
 
-export const SupportedCoinsOptions: Array<SupportedCurrencyOption> = [
-  ...SupportedUtxoCurrencyOptions,
-  ...SupportedEvmCurrencyOptions,
-];
+export const SupportedCoinsOptions: Array<SupportedCurrencyOption> = orderBy(
+  [...SupportedUtxoCurrencyOptions, ...SupportedEvmCurrencyOptions],
+  'priority',
+);
 
 export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
   ...SupportedCoinsOptions,
