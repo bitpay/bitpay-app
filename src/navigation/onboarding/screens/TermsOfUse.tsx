@@ -14,7 +14,10 @@ import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import TermsBox from '../components/TermsBox';
 import {OnboardingStackParamList} from '../OnboardingStack';
-import {useAppDispatch} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useRequestTrackingPermissionHandler,
+} from '../../../utils/hooks';
 
 type TermsOfUseScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -69,6 +72,8 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   const dispatch = useAppDispatch();
   const {key, context} = route.params || {};
   const [agreed, setAgreed] = useState<number[]>([]);
+
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
 
   const Terms: Array<TermsOfUseModel> = [
     {
@@ -137,6 +142,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   }, [navigation, t]);
 
   useAndroidBackHandler(() => true);
+
   const setChecked = (id: number) => {
     setAgreed([...agreed, id]);
   };
@@ -155,20 +161,22 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
       <CtaContainerAbsolute>
         <Button
           onPress={() => {
-            if (agreed.length >= 2) {
-              dispatch(setWalletTermsAccepted());
-            }
-            if (key) {
-              navigation.dispatch(
-                StackActions.replace('Wallet', {
-                  screen: 'KeyOverview',
-                  params: {id: key.id},
-                }),
-              );
-            } else {
-              navigation.navigate('Tabs', {screen: 'Home'});
-            }
-            dispatch(setOnboardingCompleted());
+            askForTrackingThenNavigate(() => {
+              if (agreed.length >= 2) {
+                dispatch(setWalletTermsAccepted());
+              }
+              if (key) {
+                navigation.dispatch(
+                  StackActions.replace('Wallet', {
+                    screen: 'KeyOverview',
+                    params: {id: key.id},
+                  }),
+                );
+              } else {
+                navigation.navigate('Tabs', {screen: 'Home'});
+              }
+              dispatch(setOnboardingCompleted());
+            });
           }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>

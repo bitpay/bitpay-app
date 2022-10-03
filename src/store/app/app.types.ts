@@ -21,6 +21,7 @@ export enum AppActionTypes {
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   APP_INIT_COMPLETE = 'APP/APP_INIT_COMPLETE',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
+  APP_OPENING_WAS_TRACKED = 'APP/OPENING_WAS_TRACKED',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
   SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
@@ -97,6 +98,11 @@ interface setAppFirstOpenEventComplete {
 
 interface setAppFirstOpenDate {
   type: typeof AppActionTypes.SET_APP_FIRST_OPEN_DATE;
+  payload: number;
+}
+
+interface AppOpeningWasTracked {
+  type: typeof AppActionTypes.APP_OPENING_WAS_TRACKED;
 }
 
 interface SetIntroCompleted {
@@ -331,6 +337,7 @@ export type AppActionType =
   | FailedAppInit
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
+  | AppOpeningWasTracked
   | SetIntroCompleted
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal

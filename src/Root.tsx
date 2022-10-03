@@ -1,11 +1,12 @@
 import {
   createNavigationContainerRef,
   NavigationContainer,
+  NavigationState,
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   Appearance,
   AppState,
@@ -44,7 +45,10 @@ import BitpayIdStack, {
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
-import TabsStack, {TabsStackParamList} from './navigation/tabs/TabsStack';
+import TabsStack, {
+  TabsScreens,
+  TabsStackParamList,
+} from './navigation/tabs/TabsStack';
 import WalletStack, {
   WalletStackParamList,
 } from './navigation/wallet/WalletStack';
@@ -220,7 +224,7 @@ export default () => {
     ({APP}) => APP.checkingBiometricForSending,
   );
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
-  const currentRoute = useAppSelector(({APP}) => APP.currentRoute);
+  const cachedRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
@@ -230,6 +234,56 @@ export default () => {
   );
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
+  );
+
+  const debouncedOnStateChange = useMemo(
+    () =>
+      debounce((state: NavigationState | undefined) => {
+        // storing current route
+        if (state) {
+          const parentRoute = state.routes[state.index];
+
+          if (parentRoute.state) {
+            const childRoute =
+              parentRoute.state.routes[parentRoute.state.index || 0];
+
+            dispatch(
+              AppActions.setCurrentRoute([
+                parentRoute.name,
+                {
+                  screen: childRoute.name,
+                  params: childRoute.params,
+                },
+              ]),
+            );
+            dispatch(
+              LogActions.info(`Navigation event... ${parentRoute.name}`),
+            );
+
+            if (APP_ANALYTICS_ENABLED) {
+              let stackName;
+              let screenName;
+
+              if (parentRoute.name === RootStacks.TABS) {
+                const tabStack =
+                  parentRoute.state.routes[parentRoute.state.index || 0];
+
+                stackName = tabStack.name + ' Tab';
+
+                if (tabStack.name === TabsScreens.SHOP) {
+                  dispatch(Analytics.track('Clicked Shop tab', {}));
+                }
+              } else {
+                stackName = parentRoute.name;
+                screenName = childRoute.name;
+              }
+
+              dispatch(Analytics.screen(stackName, {screen: screenName || ''}));
+            }
+          }
+        }
+      }, 300),
+    [dispatch],
   );
 
   // MAIN APP INIT
@@ -368,13 +422,13 @@ export default () => {
           linking={linking}
           onReady={async () => {
             // routing to previous route if onboarding
-            if (currentRoute && !onboardingCompleted) {
-              const [currentStack, params] = currentRoute;
-              navigationRef.navigate(currentStack, params);
+            if (cachedRoute && !onboardingCompleted) {
+              const [cachedStack, cachedParams] = cachedRoute;
+              navigationRef.navigate(cachedStack, cachedParams);
               dispatch(
                 LogActions.info(
-                  `Navigating to cached route... ${currentStack} ${JSON.stringify(
-                    params,
+                  `Navigating to cached route... ${cachedStack} ${JSON.stringify(
+                    cachedParams,
                   )}`,
                 ),
               );
@@ -384,31 +438,7 @@ export default () => {
               urlEventHandler({url});
             }
           }}
-          onStateChange={debounce(navEvent => {
-            // storing current route
-            if (navEvent) {
-              const {routes} = navEvent;
-              let {name, params} = navEvent.routes[routes.length - 1];
-              dispatch(AppActions.setCurrentRoute([name, params]));
-              dispatch(LogActions.info(`Navigation event... ${name}`));
-
-              if (APP_ANALYTICS_ENABLED) {
-                if (name === 'Tabs') {
-                  const {history} = navEvent.routes[routes.length - 1].state;
-                  const tabName = history[history.length - 1].key.split('-')[0];
-                  name = `${tabName} Tab`;
-                }
-
-                if (name === 'Shop Tab') {
-                  dispatch(Analytics.track('Clicked Shop tab', {}));
-                }
-
-                dispatch(
-                  Analytics.screen(name, {screen: params?.screen || ''}),
-                );
-              }
-            }
-          }, 300)}>
+          onStateChange={debouncedOnStateChange}>
           <Root.Navigator
             screenOptions={{
               ...baseScreenOptions,
