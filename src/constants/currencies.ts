@@ -618,7 +618,6 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
 
 export const BitpaySupportedTokens: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedEthereumTokens,
-  // TODO MATIC
 };
 
 export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
@@ -635,6 +634,7 @@ export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
 export const SUPPORTED_ETHEREUM_TOKENS = Object.keys(
   BitpaySupportedEthereumTokens,
 );
-// TODO MATIC
+export const SUPPORTED_TOKENS = [...SUPPORTED_ETHEREUM_TOKENS];
+
 export const SUPPORTED_COINS = Object.keys(BitpaySupportedCoins);
 export const SUPPORTED_CURRENCIES = Object.keys(BitpaySupportedCurrencies);

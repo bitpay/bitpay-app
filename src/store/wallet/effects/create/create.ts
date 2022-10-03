@@ -20,7 +20,7 @@ import {
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
-import {BitpaySupportedEthereumTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {
   subscribeEmailNotifications,
   subscribePushNotifications,
@@ -119,7 +119,7 @@ export const addWallet =
           WALLET,
         } = getState();
         const tokenOpts = {
-          ...BitpaySupportedEthereumTokenOpts,
+          ...BitpaySupportedTokenOpts,
           ...WALLET.tokenOptions,
           ...WALLET.customTokenOptions,
         };
@@ -251,7 +251,7 @@ const createMultipleWallets =
       },
     } = getState();
     const tokenOpts = {
-      ...BitpaySupportedEthereumTokenOpts,
+      ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
       ...WALLET.customTokenOptions,
     };
@@ -268,9 +268,8 @@ const createMultipleWallets =
         },
       })) as Wallet;
       wallets.push(wallet);
-
-      if (coin.chain === 'eth') {
-        for (const token of tokens) {
+      for (const token of tokens) {
+        if (token.chain === coin.chain) {
           wallet.preferences = wallet.preferences || {
             tokenAddresses: [],
           };

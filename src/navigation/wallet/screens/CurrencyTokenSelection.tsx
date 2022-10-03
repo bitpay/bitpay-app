@@ -39,7 +39,7 @@ export type CurrencyTokenSelectionScreenParamList = {
   description?: string;
   hideCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
-  onToggle: (id: string) => any;
+  onToggle: (id: string, chain?: string) => any;
 };
 
 const SearchContainerLinkRow = styled.View`
@@ -141,7 +141,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
       }
     }
 
-    params.onToggle(id);
+    params.onToggle(id, chain.chain);
   };
 
   const onChainToggleRef = useRef(onChainToggle);
@@ -152,7 +152,10 @@ const CurrencyTokenSelectionScreen: React.VFC<
     [],
   );
 
-  const onTokenToggle = (currencyAbbreviation: string) => {
+  const onTokenToggle = (
+    currencyAbbreviation: string,
+    currencyChain?: string,
+  ) => {
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
 
     if (params.selectionMode === 'multi') {
@@ -202,14 +205,14 @@ const CurrencyTokenSelectionScreen: React.VFC<
       );
     }
 
-    params.onToggle(currencyAbbreviation);
+    params.onToggle(currencyAbbreviation, currencyChain);
   };
 
   const onTokenToggleRef = useRef(onTokenToggle);
   onTokenToggleRef.current = onTokenToggle;
 
   const memoizedOnTokenToggle = useCallback(
-    id => onTokenToggleRef.current(id),
+    (id, chain) => onTokenToggleRef.current(id, chain),
     [],
   );
 

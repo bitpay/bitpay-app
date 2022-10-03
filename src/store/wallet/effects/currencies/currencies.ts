@@ -14,7 +14,7 @@ import {
 import {LogActions} from '../../../log';
 import {
   EVM_BLOCKCHAIN_EXPLORERS,
-  ONEINCH_BLOCKCHAIN_ID,
+  EVM_BLOCKCHAIN_ID,
 } from '../../../../constants/config';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
@@ -30,7 +30,7 @@ export const startGetTokenOptions =
           data: {tokens},
         } = await axios.get<{
           tokens: {[key in string]: Token};
-        }>(`https://api.1inch.io/v4.0/${ONEINCH_BLOCKCHAIN_ID[chain]}/tokens`);
+        }>(`https://api.1inch.io/v4.0/${EVM_BLOCKCHAIN_ID[chain]}/tokens`);
         Object.values(tokens).forEach(token => {
           if (
             BitpaySupportedCurrencies[
@@ -137,7 +137,6 @@ const populateTokenInfo = ({
       isCustom: true,
     },
     paymentInfo: {
-      // TODO MATIC
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: chain, testnet: chain},
       ratesApi: '',

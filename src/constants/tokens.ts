@@ -48,7 +48,7 @@ export const BitpaySupportedEthereumTokenOpts: TokenOptsType = {
   wbtc_e: {
     name: 'Wrapped Bitcoin',
     symbol: 'WBTC',
-    decimals: 9,
+    decimals: 8,
     address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
   },
   shib_e: {
@@ -69,6 +69,10 @@ export const BitpaySupportedEthereumTokenOpts: TokenOptsType = {
     decimals: 18,
     address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
   },
+};
+
+export const BitpaySupportedTokenOpts: TokenOptsType = {
+  ...BitpaySupportedEthereumTokenOpts,
 };
 
 export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
@@ -126,4 +130,8 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
     decimals: 18,
     address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
   },
+};
+
+export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
+  ...BitpaySupportedEthereumTokenOptsByAddress,
 };

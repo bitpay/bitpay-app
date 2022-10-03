@@ -2,7 +2,7 @@ import {Effect} from '../../../index';
 import axios from 'axios';
 import {
   BASE_BWS_URL,
-  COINGECKO_BLOCKCHAIN_NETWORK,
+  EVM_BLOCKCHAIN_NETWORK,
 } from '../../../../constants/config';
 import {
   SUPPORTED_COINS,
@@ -234,7 +234,7 @@ export const getTokenRates =
           const contractAddresses = dispatch(getContractAddresses(chain));
           const url = `https://api.coingecko.com/api/v3/simple/token_price/${
             // @ts-ignore
-            COINGECKO_BLOCKCHAIN_NETWORK[chain]
+            EVM_BLOCKCHAIN_NETWORK[chain]
           }?contract_addresses=${contractAddresses.join(
             ',',
           )}&vs_currencies=${altCurrencies.join(

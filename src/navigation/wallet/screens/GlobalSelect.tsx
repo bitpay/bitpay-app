@@ -7,10 +7,7 @@ import React, {
 } from 'react';
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {
-  SUPPORTED_COINS,
-  SUPPORTED_ETHEREUM_TOKENS,
-} from '../../../constants/currencies';
+import {SUPPORTED_COINS, SUPPORTED_TOKENS} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
@@ -47,7 +44,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Effect, RootState} from '../../../store';
-import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {ButtonState} from '../../../components/button/Button';
@@ -212,9 +209,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const dispatch = useAppDispatch();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const ethereumTokens = useAppSelector(({WALLET}: RootState) => {
+  const allTokens = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedEthereumTokenOpts,
+      ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
       ...WALLET.customTokenOptions,
     };
@@ -230,13 +227,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
 
-  const NON_BITPAY_SUPPORTED_ETHEREUM_TOKENS = Object.keys(
-    ethereumTokens,
-  ).filter(
-    token =>
-      !SUPPORTED_ETHEREUM_TOKENS.includes(
-        getCurrencyAbbreviation(token, 'eth'),
-      ),
+  const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(allTokens).filter(
+    token => !SUPPORTED_TOKENS.includes(token),
   );
 
   // all wallets
@@ -276,26 +268,24 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         customSupportedCurrencies ? customSupportedCurrencies : SUPPORTED_COINS,
         wallets,
       ),
-    [wallets, customSupportedCurrencies],
+    [wallets, customSupportedCurrencies, SUPPORTED_COINS],
   );
 
-  const ethereumCoins = useMemo(
-    () =>
-      buildList(
-        customSupportedCurrencies ? [] : SUPPORTED_ETHEREUM_TOKENS,
-        wallets,
-      ),
-    [wallets, customSupportedCurrencies, SUPPORTED_ETHEREUM_TOKENS],
+  const supportedTokens = useMemo(
+    () => buildList(customSupportedCurrencies ? [] : SUPPORTED_TOKENS, wallets),
+    [wallets, customSupportedCurrencies, SUPPORTED_TOKENS],
   );
 
-  const otherEthereumCoins = useMemo(
+  const otherTokens = useMemo(
     () =>
       buildList(
-        customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_ETHEREUM_TOKENS,
+        customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_TOKENS,
         wallets,
       ),
-    [wallets, customSupportedCurrencies, NON_BITPAY_SUPPORTED_ETHEREUM_TOKENS],
+    [wallets, customSupportedCurrencies, NON_BITPAY_SUPPORTED_TOKENS],
   );
+
+  const data = [...supportedCoins, ...supportedTokens, ...otherTokens];
 
   const openKeyWalletSelector = useCallback(
     (selectObj: GlobalSelectObj) => {
@@ -602,24 +592,21 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        {[...supportedCoins, ...ethereumCoins, ...otherEthereumCoins].length >
-          0 && (
+        {data.length > 0 && (
           <FlatList
             contentContainerStyle={{paddingBottom: 100}}
-            data={[...supportedCoins, ...ethereumCoins, ...otherEthereumCoins]}
+            data={data}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
         )}
-        {[...supportedCoins, ...ethereumCoins, ...otherEthereumCoins].length ===
-          0 &&
-          context === 'send' && (
-            <NoWalletsMsg>
-              {t(
-                'There are no wallets with funds available to use this feature.',
-              )}
-            </NoWalletsMsg>
-          )}
+        {data.length === 0 && context === 'send' && (
+          <NoWalletsMsg>
+            {t(
+              'There are no wallets with funds available to use this feature.',
+            )}
+          </NoWalletsMsg>
+        )}
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => setWalletSelectModalVisible(false)}>

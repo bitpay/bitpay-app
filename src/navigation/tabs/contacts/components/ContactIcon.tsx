@@ -8,9 +8,12 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
 import {useAppSelector} from '../../../../utils/hooks';
 import {RootState} from '../../../../store';
-import {BitpaySupportedEthereumTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {Token} from '../../../../store/wallet/wallet.models';
-import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {
+  getBadgeImg,
+  getCurrencyAbbreviation,
+} from '../../../../utils/helper-methods';
 
 interface ContactIconProps {
   size?: number;
@@ -21,6 +24,7 @@ interface ContactIconProps {
 
 interface BadgeProps {
   img: string | ((props?: any) => ReactElement);
+  badgeImg: string | ((props?: any) => ReactElement);
   size?: number;
 }
 
@@ -34,10 +38,10 @@ const CoinBadgeContainer = styled.View`
   bottom: -1px;
 `;
 
-const CoinBadge: React.FC<BadgeProps> = ({size = 20, img}) => {
+const CoinBadge: React.FC<BadgeProps> = ({size = 20, img, badgeImg}) => {
   return (
     <CoinBadgeContainer>
-      <CurrencyImage img={img} size={size} />
+      <CurrencyImage img={img} badgeUri={badgeImg} size={size} />
     </CoinBadgeContainer>
   );
 };
@@ -50,7 +54,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
 }) => {
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedEthereumTokenOpts,
+      ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
       ...WALLET.customTokenOptions,
     };
@@ -64,7 +68,13 @@ const ContactIcon: React.FC<ContactIconProps> = ({
     ? (tokenOptions[getCurrencyAbbreviation(coin, chain)].logoURI as string)
     : '';
 
-  const badge = coin ? <CoinBadge size={size / 2.5} img={img} /> : null;
+  const badge = coin ? (
+    <CoinBadge
+      size={size / 2.5}
+      img={img}
+      badgeImg={getBadgeImg(coin, chain)}
+    />
+  ) : null;
   const initials = name
     ? name
         .trim()

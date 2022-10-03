@@ -65,7 +65,7 @@ import {
 } from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
-import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
 
@@ -181,7 +181,7 @@ const KeySettings = () => {
 
   const _tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedEthereumTokenOpts,
+      ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
       ...WALLET.customTokenOptions,
     };
