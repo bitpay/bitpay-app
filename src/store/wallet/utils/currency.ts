@@ -1,25 +1,37 @@
 import {Effect} from '../..';
-import {Currencies} from '../../../constants/currencies';
+import {
+  BitpaySupportedCurrencies,
+  SUPPORTED_COINS,
+} from '../../../constants/currencies';
+import {getCurrencyAbbreviation} from '../../../utils/helper-methods';
 
 export const GetProtocolPrefix =
-  (currencyAbbreviation: string, network: string = 'livenet'): Effect<string> =>
-  (dispatch, getState) => {
+  (
+    currencyAbbreviation: string,
+    network: string = 'livenet',
+    chain: string,
+  ): Effect<string> =>
+  (_dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
     const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
+    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+
     return (
       // @ts-ignore
-      Currencies[currency]?.paymentInfo.protocolPrefix[network] ||
+      BitpaySupportedCurrencies[currencyName]?.paymentInfo.protocolPrefix[
+        network
+      ] ||
       // @ts-ignore
-      tokens[currency]?.paymentInfo.protocolPrefix[network]
+      tokens[currencyName]?.paymentInfo.protocolPrefix[network]
     );
   };
 
 export const GetPrecision =
   (
     currencyAbbreviation: string,
+    chain: string,
   ): Effect<
     | {
         unitName: string;
@@ -29,13 +41,17 @@ export const GetPrecision =
       }
     | undefined
   > =>
-  (dispatch, getState) => {
+  (_dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
     const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.unitInfo || tokens[currency]?.unitInfo;
+    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+
+    return (
+      BitpaySupportedCurrencies[currencyName]?.unitInfo ||
+      tokens[currencyName]?.unitInfo
+    );
   };
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
@@ -45,105 +61,97 @@ export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
 };
 
 export const IsCustomERCToken = (currencyAbbreviation: string) => {
-  return !Currencies[currencyAbbreviation.toLowerCase()];
+  return !BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()];
 };
 
-export const GetChain =
-  (currencyAbbreviation: string): Effect<string> =>
-  (dispatch, getState) => {
-    const {
-      WALLET: {tokenData, customTokenData},
-    } = getState();
-    const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.chain || tokens[currency]?.chain;
-  };
-
-export const IsERCToken =
-  (currencyAbbreviation: string): Effect<boolean> =>
-  (dispatch, getState) => {
-    const {
-      WALLET: {tokenData, customTokenData},
-    } = getState();
-    const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
-    return (
-      Currencies[currency]?.properties.isERCToken ||
-      tokens[currency]?.properties.isERCToken
-    );
-  };
+export const IsERCToken = (currencyAbbreviation: string): boolean => {
+  const currency = currencyAbbreviation.toLowerCase();
+  return !SUPPORTED_COINS.includes(currency);
+};
 
 export const GetBlockExplorerUrl =
-  (currencyAbbreviation: string, network: string = 'livenet'): Effect<string> =>
-  (dispatch, getState) => {
+  (
+    currencyAbbreviation: string,
+    network: string = 'livenet',
+    chain: string,
+  ): Effect<string> =>
+  (_dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
     const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
+    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+
     return network === 'livenet'
-      ? Currencies[currency]?.paymentInfo.blockExplorerUrls ||
-          tokens[currency]?.paymentInfo.blockExplorerUrls
-      : Currencies[currency]?.paymentInfo.blockExplorerUrlsTestnet ||
-          tokens[currency]?.paymentInfo.blockExplorerUrlsTestnet;
+      ? BitpaySupportedCurrencies[currencyName]?.paymentInfo
+          .blockExplorerUrls ||
+          tokens[currencyName]?.paymentInfo.blockExplorerUrls
+      : BitpaySupportedCurrencies[currencyName]?.paymentInfo
+          .blockExplorerUrlsTestnet ||
+          tokens[currencyName]?.paymentInfo.blockExplorerUrlsTestnet;
   };
 
 export const GetFeeUnits =
   (
     currencyAbbreviation: string,
+    chain: string,
   ): Effect<{
     feeUnit: string;
     feeUnitAmount: number;
     blockTime: number;
     maxMerchantFee: string;
   }> =>
-  (dispatch, getState) => {
+  (_dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
     const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.feeInfo || tokens[currency]?.feeInfo;
+    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+
+    return (
+      BitpaySupportedCurrencies[currencyName]?.feeInfo ||
+      tokens[currencyName]?.feeInfo
+    );
   };
 
-export const GetTheme =
-  (
-    currencyAbbreviation: string,
-  ): Effect<{
-    coinColor: string;
-    backgroundColor: string;
-    gradientBackgroundColor: string;
-  }> =>
-  (dispatch, getState) => {
-    const {
-      WALLET: {tokenData, customTokenData},
-    } = getState();
-    const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.theme || tokens[currency]?.theme;
-  };
+export const GetTheme = (
+  currencyAbbreviation: string,
+):
+  | {
+      coinColor: string;
+      backgroundColor: string;
+      gradientBackgroundColor: string;
+    }
+  | undefined => {
+  return BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.theme;
+};
 
 export const GetName =
-  (currencyAbbreviation: string): Effect<string> =>
-  (dispatch, getState) => {
+  (currencyAbbreviation: string, chain: string): Effect<string> =>
+  (_dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
     const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.name || tokens[currency]?.name;
+    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+
+    return (
+      BitpaySupportedCurrencies[currencyName]?.name ||
+      tokens[currencyName]?.name
+    );
   };
 
 export const isSingleAddressCoin =
-  (currencyAbbreviation: string): Effect<boolean> =>
-  (dispatch, getState) => {
+  (currencyAbbreviation: string, chain: string): Effect<boolean> =>
+  (_dispatch, getState) => {
     const {
       WALLET: {tokenData, customTokenData},
     } = getState();
     const tokens = {...tokenData, ...customTokenData};
-    const currency = currencyAbbreviation.toLowerCase();
+    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+
     return (
-      Currencies[currency]?.properties.singleAddress ||
-      tokens[currency]?.properties.singleAddress
+      BitpaySupportedCurrencies[currencyName]?.properties.singleAddress ||
+      tokens[currencyName]?.properties.singleAddress
     );
   };

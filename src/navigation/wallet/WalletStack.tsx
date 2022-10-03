@@ -74,6 +74,7 @@ import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
 import CurrencyTokenSelectionScreen, {
   CurrencyTokenSelectionScreenParamList,
 } from './screens/CurrencyTokenSelection';
+import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -144,6 +145,7 @@ export type WalletStackParamList = {
   ClearEncryptPassword: ClearEncryptPasswordParamList;
   SendToOptions: SendToOptionsParamList;
   SelectInputs: SelectInputsParamList;
+  EnterBuyerProvidedEmail: {data: string};
 };
 
 export enum WalletScreens {
@@ -191,6 +193,7 @@ export enum WalletScreens {
   CLEAR_ENCRYPT_PASSWORD = 'ClearEncryptPassword',
   SEND_TO_OPTIONS = 'SendToOptions',
   SELECT_INPUTS = 'SelectInputs',
+  ENTER_BUYER_PROVIDED_EMAIL = 'EnterBuyerProvidedEmail',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -436,6 +439,13 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.SELECT_INPUTS}
           component={SelectInputs}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>{t('Enter Email')}</HeaderTitle>,
+          }}
+          name={WalletScreens.ENTER_BUYER_PROVIDED_EMAIL}
+          component={EnterBuyerProvidedEmail}
         />
       </Wallet.Navigator>
     </>

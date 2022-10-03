@@ -1,5 +1,6 @@
 export interface simplexPaymentData {
   address: string;
+  chain: string;
   created_on: number;
   crypto_amount: number;
   coin: string;
@@ -29,6 +30,7 @@ export interface wyrePaymentData {
   createdAt?: string;
   dest?: string;
   destAmount?: string;
+  destChain?: string;
   destCurrency?: string;
   fee?: number;
   fiatBaseAmount?: number;

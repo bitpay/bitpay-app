@@ -23,6 +23,7 @@ export type BuyCryptoStackParamList = {
     amount: number;
     fiatCurrency: string;
     coin: string;
+    chain: string;
     country: string;
     selectedWallet: any;
     paymentMethod: any;

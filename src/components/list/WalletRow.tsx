@@ -32,8 +32,10 @@ const NestedArrowContainer = styled.View`
 export interface WalletRowProps {
   id: string;
   img: string | ((props: any) => ReactElement);
+  badgeImg?: string | ((props: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
+  chain: string;
   walletName?: string;
   cryptoBalance: string;
   cryptoLockedBalance?: string;
@@ -85,6 +87,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
     currencyAbbreviation,
     walletName,
     img,
+    badgeImg,
     cryptoBalance,
     fiatBalance,
     isToken,
@@ -104,7 +107,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
         </NestedArrowContainer>
       )}
       <CurrencyImageContainer>
-        <CurrencyImage img={img} size={45} />
+        <CurrencyImage img={img} badgeUri={badgeImg} size={45} />
       </CurrencyImageContainer>
       <CurrencyColumn>
         <Row>

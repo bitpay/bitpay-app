@@ -278,7 +278,7 @@ export const coinbaseGetAccountsAndBalance =
 
     const supportedCurrency: string[] = [];
     for (let i = 0; i < SupportedCurrencyOptions.length; i++) {
-      supportedCurrency.push(SupportedCurrencyOptions[i].id);
+      supportedCurrency.push(SupportedCurrencyOptions[i].currencyAbbreviation);
     }
 
     try {

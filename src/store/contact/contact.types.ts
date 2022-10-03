@@ -21,6 +21,7 @@ interface DeleteContact {
   address: string;
   coin: string;
   network: string;
+  chain?: string;
 }
 
 export type ContactActionType = CreateContact | UpdateContact | DeleteContact;
