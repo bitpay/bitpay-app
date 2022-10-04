@@ -33,7 +33,10 @@ import {
   updateDeferredImport,
   updatePortfolioBalance,
 } from '../../wallet.actions';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {
+  BitpaySupportedEthereumTokenOpts,
+  BitpaySupportedTokenOpts,
+} from '../../../../constants/tokens';
 import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
 import {
@@ -813,7 +816,6 @@ export const deferredImportMnemonic =
   ): Effect =>
   async (dispatch, getState): Promise<void> => {
     try {
-      const {WALLET} = getState();
       dispatch(updateDeferredImport({importData, opts}));
 
       await sleep(500);
@@ -845,8 +847,12 @@ export const deferredImportMnemonic =
             {
               text: t('GOT IT'),
               action: () => {
+                const {WALLET} = getState();
+
                 backupRedirect({
-                  context,
+                  context: WALLET.walletTermsAccepted
+                    ? 'deferredImport'
+                    : context,
                   navigation: navigationRef,
                   walletTermsAccepted: WALLET.walletTermsAccepted,
                   key,
