@@ -9,6 +9,7 @@ import {AppsflyerPlugin} from '@segment/analytics-react-native-plugin-appsflyer'
 import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
 import {IS_IOS} from '../../constants';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
+import {BpBrazePlugin} from './plugins/braze';
 
 /**
  * Client wrapper for the Segment SDK configured for use with the BitPay app.
@@ -21,6 +22,9 @@ const lib = (() => {
   const _addPluginsToClient = (client: SegmentClient) => {
     client.add({
       plugin: new AppsflyerPlugin(),
+    });
+    client.add({
+      plugin: new BpBrazePlugin(),
     });
 
     if (IS_IOS) {

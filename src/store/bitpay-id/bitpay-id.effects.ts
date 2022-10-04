@@ -36,6 +36,7 @@ export const startBitPayIdStoreInit =
     if (user) {
       const {eid, email, name} = user;
 
+      dispatch(AppActions.setBrazeEid(eid));
       dispatch(Analytics.identify(eid, {email, name}));
 
       dispatch(

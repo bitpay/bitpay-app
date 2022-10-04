@@ -271,8 +271,7 @@ export const initializeBrazeContent =
   (): Effect => async (dispatch, getState) => {
     try {
       dispatch(LogActions.info('Initializing Braze content...'));
-      const {APP, BITPAY_ID} = getState();
-      const user = BITPAY_ID.user[APP.network];
+      const {APP} = getState();
 
       let contentCardSubscription = APP.brazeContentCardSubscription;
 
@@ -330,21 +329,9 @@ export const initializeBrazeContent =
         },
       );
 
-      if (user) {
-        Braze.changeUser(user.eid);
-        Braze.setEmail(user.email);
-        dispatch(setBrazeEid(user.eid));
-      } else {
-        let eid: string;
-
-        if (APP.brazeEid) {
-          dispatch(LogActions.debug('Braze EID exists.'));
-          eid = APP.brazeEid;
-        } else {
-          dispatch(LogActions.debug('Generating a new Braze EID...'));
-          eid = uuid.v4().toString();
-        }
-
+      if (!APP.brazeEid) {
+        dispatch(LogActions.debug('Generating EID for anonymous user...'));
+        const eid = uuid.v4().toString();
         Braze.changeUser(eid);
         dispatch(setBrazeEid(eid));
       }
