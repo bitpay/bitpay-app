@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
@@ -18,6 +18,7 @@ import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useTranslation} from 'react-i18next';
+import {useRequestTrackingPermissionHandler} from '../../../utils/hooks';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -43,7 +44,17 @@ const CreateOrImportKey: React.VFC<
 > = ({navigation}) => {
   const {t} = useTranslation();
   const themeType = useThemeType();
+
   useAndroidBackHandler(() => true);
+
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+
+  const onSkipPressRef = useRef(() => {
+    haptic('impactLight');
+    askForTrackingThenNavigate(() => {
+      navigation.navigate('TermsOfUse', {context: 'TOUOnly'});
+    });
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -51,14 +62,7 @@ const CreateOrImportKey: React.VFC<
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button
-            buttonType={'pill'}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('TermsOfUse', {
-                context: 'TOUOnly',
-              });
-            }}>
+          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -91,22 +95,26 @@ const CreateOrImportKey: React.VFC<
           <ActionContainer>
             <Button
               buttonStyle={'primary'}
-              onPress={() =>
-                navigation.navigate('CurrencySelection', {
-                  context: 'onboarding',
-                })
-              }>
+              onPress={() => {
+                askForTrackingThenNavigate(() =>
+                  navigation.navigate('CurrencySelection', {
+                    context: 'onboarding',
+                  }),
+                );
+              }}>
               {t('Create a Key')}
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button
               buttonStyle={'secondary'}
-              onPress={() =>
-                navigation.navigate('Import', {
-                  context: 'onboarding',
-                })
-              }>
+              onPress={() => {
+                askForTrackingThenNavigate(() =>
+                  navigation.navigate('Import', {
+                    context: 'onboarding',
+                  }),
+                );
+              }}>
               {t('I already have a Key')}
             </Button>
           </ActionContainer>

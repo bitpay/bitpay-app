@@ -25,7 +25,7 @@ import {
 } from '../../../utils/helper-methods';
 import RangeDateSelector from '../components/RangeDateSelector';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
-import {Currencies} from '../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -180,15 +180,15 @@ const PriceCharts = () => {
 
   const {
     currencyName,
+    chain,
     currentPrice,
     priceDisplay,
-    id,
     currencyAbbreviation,
     img,
   } = item;
 
   const {coinColor, gradientBackgroundColor} =
-    Currencies[id.toLowerCase()].theme;
+    BitpaySupportedCoins[currencyAbbreviation.toLowerCase()].theme;
 
   const chartStyle = {
     data: {
@@ -211,7 +211,7 @@ const PriceCharts = () => {
         <HeaderTitle style={{paddingLeft: 4, paddingRight: 8}}>
           {currencyName}
         </HeaderTitle>
-        <Badge>{currencyAbbreviation}</Badge>
+        <Badge>{currencyAbbreviation.toUpperCase()}</Badge>
       </RowContainer>
     );
   };
@@ -298,6 +298,7 @@ const PriceCharts = () => {
       logSegmentEvent('track', 'Clicked Buy Crypto', {
         context: 'PriceChart',
         coin: currencyAbbreviation || '',
+        chain: chain || '',
       }),
     );
     navigation.navigate('Wallet', {
@@ -309,6 +310,7 @@ const PriceCharts = () => {
             params: {
               amount: Number(amount),
               currencyAbbreviation,
+              chain,
             },
           });
         },

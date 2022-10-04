@@ -42,3 +42,18 @@ export const DOWNLOAD_BITPAY_URL = 'https://bitpay.com/wallet';
 // Auth
 export const TWO_FACTOR_EMAIL_POLL_INTERVAL = 1000 * 3;
 export const TWO_FACTOR_EMAIL_POLL_TIMEOUT = 1000 * 60 * 5;
+
+export const EVM_BLOCKCHAIN_NETWORK = {
+  eth: 'ethereum',
+};
+
+export const EVM_BLOCKCHAIN_ID: {[key in string]: number} = {
+  eth: 1,
+};
+
+export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
+  eth: {
+    [Network.mainnet]: 'etherscan.io/',
+    [Network.testnet]: 'kovan.etherscan.io/',
+  },
+};

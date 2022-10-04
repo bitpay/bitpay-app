@@ -6,7 +6,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import Clipboard from '@react-native-community/clipboard';
 import {useDispatch} from 'react-redux';
 import {ContactsStackParamList} from '../ContactsStack';
-import {sleep} from '../../../../utils/helper-methods';
+import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import {BaseText, TextAlign} from '../../../../components/styled/Text';
 import {Hr} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -32,6 +32,7 @@ import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
+import {IsERCToken} from '../../../../store/wallet/utils/currency';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -244,7 +245,14 @@ const ContactsDetails = ({
 
   const deleteContactView = async () => {
     await sleep(500);
-    dispatch(deleteContact(contact.address, contact.coin, contact.network));
+    dispatch(
+      deleteContact(
+        contact.address,
+        contact.coin,
+        contact.network,
+        contact.chain,
+      ),
+    );
     navigation.goBack();
   };
 
@@ -279,7 +287,12 @@ const ContactsDetails = ({
     <ContactsDetailsContainer>
       <DetailsScrollContainer>
         <ContactImageHeader>
-          <ContactIcon coin={contact.coin} size={100} name={contact.name} />
+          <ContactIcon
+            coin={getCurrencyAbbreviation(contact.coin, contact.chain)}
+            size={100}
+            name={contact.name}
+            chain={contact.chain}
+          />
         </ContactImageHeader>
         <Details>
           {contact.email ? (
@@ -325,6 +338,17 @@ const ContactsDetails = ({
                 <Title>{t('Coin')}</Title>
                 <DetailInfo align="right">
                   {contact.coin.toUpperCase()}
+                </DetailInfo>
+              </Detail>
+            </>
+          ) : null}
+          {contact.chain && IsERCToken(contact.coin) ? (
+            <>
+              <Hr />
+              <Detail>
+                <Title>{t('Chain')}</Title>
+                <DetailInfo align="right">
+                  {contact.chain.toUpperCase()}
                 </DetailInfo>
               </Detail>
             </>

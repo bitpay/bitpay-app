@@ -8,13 +8,22 @@ import {
 } from '../wallet.models';
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {
+  BitpaySupportedCurrencies,
+  SUPPORTED_CURRENCIES,
+} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix, IsERCToken} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {convertToFiat, formatFiatAmount} from '../../../utils/helper-methods';
+import {
+  convertToFiat,
+  formatFiatAmount,
+  getBadgeImg,
+  getCurrencyAbbreviation,
+  getRateByCurrencyName,
+} from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
 import {GetInvoiceCurrency, PayProOptions} from '../effects/paypro/paypro';
@@ -34,97 +43,103 @@ import {
 import {AppDispatch} from '../../../utils/hooks';
 import {find, isEqual} from 'lodash';
 
-const mapAbbreviationAndName =
+export const mapAbbreviationAndName =
   (
     coin: string,
+    chain: string,
   ): Effect<{currencyAbbreviation: string; currencyName: string}> =>
   dispatch => {
     switch (coin) {
       case 'pax':
         return {
           currencyAbbreviation: 'usdp',
-          currencyName: dispatch(GetName('usdp')),
+          currencyName: dispatch(GetName('usdp', chain)),
         };
       default:
         return {
           currencyAbbreviation: coin,
-          currencyName: dispatch(GetName(coin)),
+          currencyName: dispatch(GetName(coin, chain)),
         };
     }
   };
 
 // Formatted wallet obj - this is merged with BWC client
-export const buildWalletObj =
-  (
-    {
-      walletId,
-      coin,
-      balance = {
-        crypto: '0.00',
-        cryptoLocked: '0.00',
-        cryptoConfirmedLocked: '0.00',
-        cryptoSpendable: '0.00',
-        cryptoPending: '0.00',
-        fiat: 0,
-        fiatLastDay: 0,
-        fiatLocked: 0,
-        fiatConfirmedLocked: 0,
-        fiatSpendable: 0,
-        fiatPending: 0,
-        sat: 0,
-        satAvailable: 0,
-        satLocked: 0,
-        satConfirmedLocked: 0,
-        satConfirmed: 0,
-        satConfirmedAvailable: 0,
-        satSpendable: 0,
-        satPending: 0,
-      },
-      tokens,
-      keyId,
-      network,
-      n,
-      m,
-      hideWallet = false,
-      hideBalance = false,
-    }: Credentials & {
-      balance?: WalletBalance;
-      tokens?: any;
-      hideWallet?: boolean; // ionic migration only
-      hideBalance?: boolean; // ionic migration only
-      network: Network;
+export const buildWalletObj = (
+  {
+    walletId,
+    chain,
+    balance = {
+      crypto: '0.00',
+      cryptoLocked: '0.00',
+      cryptoConfirmedLocked: '0.00',
+      cryptoSpendable: '0.00',
+      cryptoPending: '0.00',
+      fiat: 0,
+      fiatLastDay: 0,
+      fiatLocked: 0,
+      fiatConfirmedLocked: 0,
+      fiatSpendable: 0,
+      fiatPending: 0,
+      sat: 0,
+      satAvailable: 0,
+      satLocked: 0,
+      satConfirmedLocked: 0,
+      satConfirmed: 0,
+      satConfirmedAvailable: 0,
+      satSpendable: 0,
+      satPending: 0,
     },
-    tokenOpts?: {[key in string]: Token},
-    otherOpts?: {
-      walletName?: string;
-    },
-  ): Effect<WalletObj> =>
-  dispatch => {
-    const {currencyName, currencyAbbreviation} = dispatch(
-      mapAbbreviationAndName(coin),
-    );
-    return {
-      id: walletId,
-      currencyName,
-      currencyAbbreviation,
-      walletName: otherOpts?.walletName,
-      balance,
-      tokens,
-      network,
-      keyId: keyId ? keyId : 'readonly',
-      img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
-        ? CurrencyListIcons[currencyAbbreviation]
-        : tokenOpts && tokenOpts[currencyAbbreviation]?.logoURI
-        ? (tokenOpts[currencyAbbreviation].logoURI as string)
-        : '',
-      n,
-      m,
-      isRefreshing: false,
-      hideWallet,
-      hideBalance,
-      pendingTxps: [],
-    };
+    tokens,
+    keyId,
+    network,
+    n,
+    m,
+    hideWallet = false,
+    hideBalance = false,
+    currencyAbbreviation,
+    currencyName,
+  }: Credentials & {
+    balance?: WalletBalance;
+    tokens?: any;
+    hideWallet?: boolean; // ionic migration only
+    hideBalance?: boolean; // ionic migration only
+    network: Network;
+    currencyAbbreviation: string;
+    currencyName: string;
+  },
+  tokenOpts?: {[key in string]: Token},
+  otherOpts?: {
+    walletName?: string;
+  },
+): WalletObj => {
+  const _currencyAbbreviation = getCurrencyAbbreviation(
+    currencyAbbreviation,
+    chain,
+  );
+  return {
+    id: walletId,
+    currencyName,
+    currencyAbbreviation,
+    chain,
+    walletName: otherOpts?.walletName,
+    balance,
+    tokens,
+    network,
+    keyId: keyId ? keyId : 'readonly',
+    img: SUPPORTED_CURRENCIES.includes(_currencyAbbreviation)
+      ? CurrencyListIcons[_currencyAbbreviation]
+      : tokenOpts && tokenOpts[_currencyAbbreviation]?.logoURI
+      ? (tokenOpts[_currencyAbbreviation]?.logoURI as string)
+      : '',
+    badgeImg: getBadgeImg(_currencyAbbreviation, chain),
+    n,
+    m,
+    isRefreshing: false,
+    hideWallet,
+    hideBalance,
+    pendingTxps: [],
   };
+};
 
 // Formatted key Obj
 export const buildKeyObj = ({
@@ -203,11 +218,16 @@ export const toFiat =
     totalAmount: number,
     fiatCode: string = 'USD',
     currencyAbbreviation: string,
+    chain: string,
     rates: Rates = {},
     customRate?: number,
   ): Effect<number> =>
   dispatch => {
-    const ratesPerCurrency = rates[currencyAbbreviation];
+    const ratesPerCurrency = getRateByCurrencyName(
+      rates,
+      currencyAbbreviation,
+      chain,
+    );
 
     if (!ratesPerCurrency) {
       // Rate not found return 0
@@ -229,7 +249,7 @@ export const toFiat =
       return 0;
     }
 
-    const precision = dispatch(GetPrecision(currencyAbbreviation));
+    const precision = dispatch(GetPrecision(currencyAbbreviation, chain));
 
     if (!precision) {
       // precision not found return 0
@@ -279,12 +299,21 @@ export const isSegwit = (addressType: string): boolean => {
 };
 
 export const GetProtocolPrefixAddress =
-  (coin: string, network: string, address: string): Effect<string> =>
+  (
+    currencyAbbreviation: string,
+    network: string,
+    address: string,
+    chain: string,
+  ): Effect<string> =>
   dispatch => {
-    if (coin !== 'bch') {
+    if (currencyAbbreviation !== 'bch') {
       return address;
     }
-    return dispatch(GetProtocolPrefix(coin, network)) + ':' + address;
+    return (
+      dispatch(GetProtocolPrefix(currencyAbbreviation, network, chain)) +
+      ':' +
+      address
+    );
   };
 
 export const getRemainingWalletCount = (
@@ -309,14 +338,23 @@ export const coinbaseAccountToWalletRow = (
   const cryptoAmount = Number(account.balance.amount)
     ? account.balance.amount
     : '0';
-
+  const _currencyAbbreviation = account.currency.code;
+  const currencyAbbreviation = getCurrencyAbbreviation(
+    _currencyAbbreviation.toLowerCase(),
+    'eth',
+  );
+  const chain =
+    BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.chain;
+  const badgeImg = IsERCToken(currencyAbbreviation)
+    ? getBadgeImg(currencyAbbreviation, chain)
+    : undefined;
   const walletItem = {
     id: account.id,
     currencyName: account.currency.name,
-    currencyAbbreviation: account.currency.code,
+    currencyAbbreviation: _currencyAbbreviation,
     coinbaseAccount: account,
     walletName: account.currency.name,
-    img: CurrencyListIcons[account.currency.code.toLowerCase()],
+    img: CurrencyListIcons[currencyAbbreviation.toLowerCase()],
     cryptoBalance: cryptoAmount,
     cryptoLockedBalance: '',
     fiatBalance: formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode),
@@ -324,6 +362,8 @@ export const coinbaseAccountToWalletRow = (
     isToken: false,
     network: Network.mainnet,
     pendingTxps: [],
+    chain,
+    badgeImg,
   };
   return walletItem as WalletRowProps;
 };
@@ -418,7 +458,9 @@ export const BuildKeysAndWalletsList = ({
               return paymentOptions.some(
                 ({currency, network: optionNetwork}) => {
                   return (
-                    GetInvoiceCurrency(wallet.currencyAbbreviation).toLowerCase() === currency.toLowerCase() &&
+                    GetInvoiceCurrency(
+                      wallet.currencyAbbreviation,
+                    ).toLowerCase() === currency.toLowerCase() &&
                     wallet.network === optionNetwork
                   );
                 },
@@ -434,7 +476,9 @@ export const BuildKeysAndWalletsList = ({
               currencyAbbreviation,
               hideWallet,
               balance,
-              credentials: {network, walletName: fallbackName},
+              network,
+              chain,
+              credentials: {walletName: fallbackName},
               walletName,
             } = walletObj;
             return merge(cloneDeep(walletObj), {
@@ -446,6 +490,7 @@ export const BuildKeysAndWalletsList = ({
                       balance.sat,
                       defaultAltCurrencyIsoCode,
                       currencyAbbreviation,
+                      chain,
                       rates,
                     ),
                   ),
@@ -462,6 +507,7 @@ export const BuildKeysAndWalletsList = ({
                       balance.satLocked,
                       defaultAltCurrencyIsoCode,
                       currencyAbbreviation,
+                      chain,
                       rates,
                     ),
                   ),

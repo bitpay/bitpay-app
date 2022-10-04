@@ -1,7 +1,11 @@
 import {Effect} from '../../../index';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
+import {
+  buildKeyObj,
+  buildWalletObj,
+  mapAbbreviationAndName,
+} from '../../utils/wallet';
 import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
@@ -59,11 +63,21 @@ export const startJoinMultisig =
           };
           dispatch(subscribeEmailNotifications(_wallet, prefs));
         }
+        const {currencyAbbreviation, currencyName} = dispatch(
+          mapAbbreviationAndName(
+            _wallet.credentials.coin,
+            _wallet.credentials.chain,
+          ),
+        );
 
         // build out app specific props
         const wallet = merge(
           _wallet,
-          dispatch(buildWalletObj(_wallet.credentials)),
+          buildWalletObj({
+            ..._wallet.credentials,
+            currencyAbbreviation,
+            currencyName,
+          }),
         ) as Wallet;
 
         const key = buildKeyObj({key: _key, wallets: [wallet]});
@@ -125,10 +139,21 @@ export const addWalletJoinMultisig =
           dispatch(subscribeEmailNotifications(newWallet, prefs));
         }
 
+        const {currencyAbbreviation, currencyName} = dispatch(
+          mapAbbreviationAndName(
+            newWallet.credentials.coin,
+            newWallet.credentials.chain,
+          ),
+        );
+
         key.wallets.push(
           merge(
             newWallet,
-            dispatch(buildWalletObj(newWallet.credentials)),
+            buildWalletObj({
+              ...newWallet.credentials,
+              currencyAbbreviation,
+              currencyName,
+            }),
           ) as Wallet,
         );
 

@@ -7,11 +7,12 @@ import React, {
 } from 'react';
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {SUPPORTED_COINS, SUPPORTED_TOKENS} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
   formatFiatAmount,
+  getCurrencyAbbreviation,
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
@@ -139,6 +140,7 @@ export interface GlobalSelectObj {
   id: string;
   currencyName: string;
   img: string | ((props?: any) => ReactElement);
+  badgeImg?: string | ((props?: any) => ReactElement);
   total: number;
   availableWalletsByKey: {
     [key in string]: Wallet[];
@@ -147,16 +149,20 @@ export interface GlobalSelectObj {
 
 const buildList = (category: string[], wallets: Wallet[]) => {
   const coins: GlobalSelectObj[] = [];
+
   category.forEach(coin => {
     const availableWallets = wallets.filter(
-      wallet => wallet.currencyAbbreviation === coin,
+      wallet =>
+        getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
+        coin,
     );
     if (availableWallets.length) {
-      const {currencyName, img} = availableWallets[0];
+      const {currencyName, img, badgeImg} = availableWallets[0];
       coins.push({
         id: Math.random().toString(),
         currencyName,
         img,
+        badgeImg,
         total: availableWallets.length,
         availableWalletsByKey: _.groupBy(
           availableWallets,
@@ -203,7 +209,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const dispatch = useAppDispatch();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const tokens = useAppSelector(({WALLET}: RootState) => {
+  const allTokens = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
@@ -221,8 +227,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
 
-  const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(tokens).filter(
-    token => !SUPPORTED_CURRENCIES.includes(token),
+  const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(allTokens).filter(
+    token => !SUPPORTED_TOKENS.includes(token),
   );
 
   // all wallets
@@ -244,33 +250,33 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         wallet =>
           wallet.currencyAbbreviation === recipient?.currency ||
           (recipient?.opts?.showERC20Tokens &&
-            dispatch(IsERCToken(wallet.currencyAbbreviation))),
+            IsERCToken(wallet.currencyAbbreviation)),
       );
     }
     if (recipient?.network) {
-      wallets = wallets.filter(
-        wallet => wallet.credentials.network === recipient?.network,
-      );
+      wallets = wallets.filter(wallet => wallet.network === recipient?.network);
     }
   }
 
   if (livenetOnly) {
-    wallets = wallets.filter(
-      wallet => wallet.credentials.network === 'livenet',
-    );
+    wallets = wallets.filter(wallet => wallet.network === 'livenet');
   }
 
   const supportedCoins = useMemo(
     () =>
       buildList(
-        customSupportedCurrencies
-          ? customSupportedCurrencies
-          : SUPPORTED_CURRENCIES,
+        customSupportedCurrencies ? customSupportedCurrencies : SUPPORTED_COINS,
         wallets,
       ),
-    [wallets, customSupportedCurrencies],
+    [wallets, customSupportedCurrencies, SUPPORTED_COINS],
   );
-  const otherCoins = useMemo(
+
+  const supportedTokens = useMemo(
+    () => buildList(customSupportedCurrencies ? [] : SUPPORTED_TOKENS, wallets),
+    [wallets, customSupportedCurrencies, SUPPORTED_TOKENS],
+  );
+
+  const otherTokens = useMemo(
     () =>
       buildList(
         customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_TOKENS,
@@ -278,6 +284,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
       ),
     [wallets, customSupportedCurrencies, NON_BITPAY_SUPPORTED_TOKENS],
   );
+
+  const data = [...supportedCoins, ...supportedTokens, ...otherTokens];
 
   const openKeyWalletSelector = useCallback(
     (selectObj: GlobalSelectObj) => {
@@ -294,7 +302,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                   balance,
                   hideWallet,
                   currencyAbbreviation,
-                  credentials: {network, walletName: fallbackName},
+                  network,
+                  chain,
+                  credentials: {walletName: fallbackName},
                   walletName,
                 } = wallet;
                 return merge(cloneDeep(wallet), {
@@ -307,6 +317,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                           balance.sat,
                           defaultAltCurrency.isoCode,
                           currencyAbbreviation,
+                          chain,
                           rates,
                         ),
                       ),
@@ -322,6 +333,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                           balance.satLocked,
                           defaultAltCurrency.isoCode,
                           currencyAbbreviation,
+                          chain,
                           rates,
                         ),
                       ),
@@ -372,6 +384,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               params: {
                 cryptoCurrencyAbbreviation:
                   wallet.currencyAbbreviation.toUpperCase(),
+                chain: wallet.chain,
                 onAmountSelected: async (amount, setButtonState, opts) => {
                   dispatch(
                     _createProposalAndBuildTxDetails({
@@ -579,22 +592,21 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        {[...supportedCoins, ...otherCoins].length > 0 && (
+        {data.length > 0 && (
           <FlatList
             contentContainerStyle={{paddingBottom: 100}}
-            data={[...supportedCoins, ...otherCoins]}
+            data={data}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
         )}
-        {[...supportedCoins, ...otherCoins].length === 0 &&
-          context === 'send' && (
-            <NoWalletsMsg>
-              {t(
-                'There are no wallets with funds available to use this feature.',
-              )}
-            </NoWalletsMsg>
-          )}
+        {data.length === 0 && context === 'send' && (
+          <NoWalletsMsg>
+            {t(
+              'There are no wallets with funds available to use this feature.',
+            )}
+          </NoWalletsMsg>
+        )}
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => setWalletSelectModalVisible(false)}>

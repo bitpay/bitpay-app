@@ -6,34 +6,48 @@ import {
   successGetCustomTokenOptions,
   successGetTokenOptions,
 } from '../../wallet.actions';
-import {Currencies, CurrencyOpts} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCurrencies,
+  CurrencyOpts,
+  SUPPORTED_EVM_COINS,
+} from '../../../../constants/currencies';
 import {LogActions} from '../../../log';
+import {
+  EVM_BLOCKCHAIN_EXPLORERS,
+  EVM_BLOCKCHAIN_ID,
+} from '../../../../constants/config';
+import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
     try {
       dispatch(LogActions.info('starting [startGetTokenOptions]'));
-      const {
-        data: {tokens},
-      } = await axios.get<{
-        tokens: {[key in string]: Token};
-      }>('https://api.1inch.io/v4.0/1/tokens');
-
-      const tokenOptions: {[key in string]: Token} = {};
-      const tokenOptionsByAddress: {[key in string]: Token} = {};
-      const tokenData: {[key in string]: CurrencyOpts} = {};
-      Object.values(tokens).forEach(token => {
-        if (Currencies[token.symbol.toLowerCase()]) {
-          return;
-        } // remove bitpay supported tokens and currencies
-        populateTokenInfo({
-          token,
-          tokenOptions,
-          tokenData,
-          tokenOptionsByAddress,
+      let tokenOptions: {[key in string]: Token} = {};
+      let tokenOptionsByAddress: {[key in string]: Token} = {};
+      let tokenData: {[key in string]: CurrencyOpts} = {};
+      for await (const chain of SUPPORTED_EVM_COINS) {
+        let {
+          data: {tokens},
+        } = await axios.get<{
+          tokens: {[key in string]: Token};
+        }>(`https://api.1inch.io/v4.0/${EVM_BLOCKCHAIN_ID[chain]}/tokens`);
+        Object.values(tokens).forEach(token => {
+          if (
+            BitpaySupportedCurrencies[
+              getCurrencyAbbreviation(token.symbol, chain)
+            ]
+          ) {
+            return;
+          } // remove bitpay supported tokens and currencies
+          populateTokenInfo({
+            chain,
+            token,
+            tokenOptions,
+            tokenData,
+            tokenOptionsByAddress,
+          });
         });
-      });
-
+      }
       dispatch(
         successGetTokenOptions({
           tokenOptions,
@@ -55,16 +69,19 @@ export const startGetTokenOptions =
   };
 
 export const addCustomTokenOption =
-  (token: Token): Effect =>
+  (token: Token, chain: string): Effect =>
   async dispatch => {
     try {
       const customTokenOptions: {[key in string]: Token} = {};
       const customTokenOptionsByAddress: {[key in string]: Token} = {};
       const customTokenData: {[key in string]: CurrencyOpts} = {};
-      if (Currencies[token.symbol.toLowerCase()]) {
+      if (
+        BitpaySupportedCurrencies[getCurrencyAbbreviation(token.symbol, chain)]
+      ) {
         return;
       } // remove bitpay supported tokens and currencies
       populateTokenInfo({
+        chain,
         token,
         tokenOptions: customTokenOptions,
         tokenData: customTokenData,
@@ -85,21 +102,23 @@ export const addCustomTokenOption =
   };
 
 const populateTokenInfo = ({
+  chain,
   token,
   tokenOptions,
   tokenData,
   tokenOptionsByAddress,
 }: {
+  chain: string;
   token: Token;
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
 }) => {
-  tokenOptions[token.symbol.toLowerCase()] = token;
-  tokenOptionsByAddress[token.address.toLowerCase()] = token;
-  tokenData[token.symbol.toLowerCase()] = {
+  tokenOptions[getCurrencyAbbreviation(token.symbol, chain)] = token;
+  tokenOptionsByAddress[getCurrencyAbbreviation(token.address, chain)] = token;
+  tokenData[getCurrencyAbbreviation(token.symbol, chain)] = {
     name: token.name,
-    chain: 'ETH',
+    chain,
     coin: token.symbol,
     logoURI: token.logoURI,
     unitInfo: {
@@ -119,21 +138,16 @@ const populateTokenInfo = ({
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: chain, testnet: chain},
       ratesApi: '',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS[chain].livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS[chain].testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
-    },
-    theme: {
-      coinColor: '#2775ca',
-      backgroundColor: '#2775c9',
-      gradientBackgroundColor: '#2775c9',
     },
   };
 };

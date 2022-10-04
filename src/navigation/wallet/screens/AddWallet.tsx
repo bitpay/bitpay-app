@@ -62,7 +62,11 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow from '../../../components/list/WalletRow';
 import {FlatList, Keyboard} from 'react-native';
-import {keyExtractor, sleep} from '../../../utils/helper-methods';
+import {
+  getCurrencyAbbreviation,
+  keyExtractor,
+  sleep,
+} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import Icons from '../components/WalletIcons';
@@ -75,16 +79,21 @@ import {WrongPasswordError} from '../components/ErrorMessages';
 import {getTokenContractInfo} from '../../../store/wallet/effects/status/status';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
-import {Currencies} from '../../../constants/currencies';
+import {
+  BitpaySupportedCurrencies,
+  SUPPORTED_EVM_COINS,
+} from '../../../constants/currencies';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
+import _ from 'lodash';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
 export type AddWalletParamList = {
   key: Key;
+  chain?: string;
   currencyAbbreviation?: string;
   currencyName?: string;
   isToken?: boolean;
@@ -173,6 +182,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const {
     currencyAbbreviation: _currencyAbbreviation,
     currencyName: _currencyName,
+    chain,
     key,
     isToken,
     isCustomToken,
@@ -193,8 +203,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   );
 
   const singleAddressCurrency =
-    Currencies[_currencyAbbreviation?.toLowerCase() as string]?.properties
-      ?.singleAddress;
+    BitpaySupportedCurrencies[currencyAbbreviation?.toLowerCase() as string]
+      ?.properties?.singleAddress;
   const nativeSegwitCurrency = _currencyAbbreviation
     ? ['btc', 'ltc'].includes(_currencyAbbreviation.toLowerCase())
     : false;
@@ -217,15 +227,17 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     });
   }, [navigation, t]);
 
-  // find all eth wallets for key
-  const ethWallets = key.wallets.filter(
-    wallet => wallet.currencyAbbreviation === 'eth',
+  // find all evm wallets for key
+  const evmWallets = key.wallets.filter(
+    wallet =>
+      SUPPORTED_EVM_COINS.includes(chain || '') &&
+      wallet.currencyAbbreviation === chain,
   );
 
   // formatting for the bottom modal
-  const UIFormattedEthWallets = useMemo(
+  const UIFormattedEvmWallets = useMemo(
     () =>
-      ethWallets.map(wallet =>
+      evmWallets.map(wallet =>
         buildUIFormattedWallet(
           wallet,
           defaultAltCurrency.isoCode,
@@ -238,7 +250,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
   // associatedWallet
   const [associatedWallet, setAssociatedWallet] = useState(
-    UIFormattedEthWallets[0],
+    UIFormattedEvmWallets[0],
   );
 
   const [
@@ -253,7 +265,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     useState(true);
 
   useEffect(() => {
-    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 1 && isToken);
+    setShowAssociatedWalletSelectionDropdown(evmWallets.length > 1 && isToken);
     if (isToken) {
       setShowWalletAdvancedOptions(false);
     }
@@ -271,7 +283,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       let _associatedWallet: Wallet | undefined;
 
       if (isToken) {
-        _associatedWallet = ethWallets.find(
+        _associatedWallet = evmWallets.find(
           wallet => wallet.id === associatedWallet.id,
         );
 
@@ -335,8 +347,11 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         addWallet({
           key,
           associatedWallet: _associatedWallet,
-          isToken,
-          currency,
+          currency: {
+            chain: chain!,
+            currencyAbbreviation: currencyAbbreviation!,
+            isToken: isToken!,
+          },
           options: {
             password,
             network: isTestnet ? Network.testnet : network,
@@ -392,8 +407,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           setAssociatedWallet(item);
           if (isCustomToken && !!customTokenAddress) {
             setCustomTokenAddress(undefined);
-            setCurrencyAbbreviation(undefined);
-            setCurrencyName(undefined);
           }
           setAssociatedWalletModalVisible(false);
         }}
@@ -410,8 +423,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       }
 
       setCustomTokenAddress(tokenAddress);
-      setCurrencyAbbreviation(undefined);
-      setCurrencyName(undefined);
 
       const opts = {
         tokenAddress,
@@ -419,7 +430,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       const fullWalletObj = key.wallets.find(
         ({id}) => id === associatedWallet.id,
       )!;
-      const {network, currencyAbbreviation} = fullWalletObj;
+      const {network, currencyAbbreviation, chain} = fullWalletObj;
       const addrData = GetCoinAndNetwork(tokenAddress, network);
       const isValid =
         currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
@@ -438,7 +449,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       };
       setCurrencyAbbreviation(tokenContractInfo.symbol);
       setCurrencyName(tokenContractInfo.name);
-      dispatch(addCustomTokenOption(customToken));
+      dispatch(addCustomTokenOption(customToken, chain));
       Keyboard.dismiss();
     } catch (error) {
       Keyboard.dismiss();
@@ -643,7 +654,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
             </TextAlign>
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-              data={UIFormattedEthWallets}
+              data={UIFormattedEvmWallets}
               keyExtractor={keyExtractor}
               renderItem={renderItem}
             />

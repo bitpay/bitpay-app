@@ -1,5 +1,6 @@
 import UserAgent from 'react-native-user-agent';
 import {APP_NAME, APP_VERSION} from '../../../../constants/config';
+import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
 const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/simplex/';
 const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/simplex/';
@@ -147,8 +148,13 @@ export const simplexErc20TokensWithSuffix = [
   'yoshi',
 ];
 
-export const getSimplexSupportedCoins = (): string[] => {
-  return simplexSupportedCoins.concat(simplexSupportedErc20Tokens);
+export const getSimplexSupportedCurrencies = (): string[] => {
+  const simplexSupportedCurrencies = simplexSupportedCoins.concat(
+    simplexSupportedErc20Tokens.map(token => {
+      return getCurrencyAbbreviation(token, 'eth');
+    }),
+  );
+  return simplexSupportedCurrencies;
 };
 
 export const getSimplexCoinFormat = (coin: string): string => {

@@ -1,11 +1,9 @@
-import {APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
 import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
 import {debounce} from 'lodash';
 import {DeviceEventEmitter, Linking, Platform} from 'react-native';
 import Braze from 'react-native-appboy-sdk';
-import AppsFlyer from 'react-native-appsflyer';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
   InAppBrowserOptions,
@@ -91,13 +89,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    await dispatch(startWalletStoreInit());
-
     const {appFirstOpenData, onboardingCompleted, migrationComplete} =
       getState().APP;
 
     if (!appFirstOpenData?.firstOpenDate) {
-      dispatch(setAppFirstOpenEventDate());
+      dispatch(setAppFirstOpenEventDate(Math.floor(Date.now() / 1000)));
       dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
     }
 
@@ -105,6 +101,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (onboardingCompleted) {
       await dispatch(askForTrackingPermissionAndEnableSdks(true));
     }
+
+    await dispatch(startWalletStoreInit());
 
     if (!migrationComplete) {
       await dispatch(startMigration());
@@ -465,55 +463,38 @@ export const askForTrackingPermissionAndEnableSdks =
       LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
     );
     const trackingStatus = await requestTrackingPermission();
+    const isAuthorizedByUser = ['authorized', 'unavailable'].includes(
+      trackingStatus,
+    );
 
-    if (
-      ['authorized', 'unavailable'].includes(trackingStatus) &&
-      APP_ANALYTICS_ENABLED
-    ) {
+    if (APP_ANALYTICS_ENABLED && isAuthorizedByUser) {
       dispatch(
         LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
       );
-      try {
-        await new Promise<void>((resolve, reject) => {
-          AppsFlyer.initSdk(
-            {
-              devKey: APPSFLYER_API_KEY,
-              isDebug: __DEV__,
-              appId: APPSFLYER_APP_ID, // iOS app id
-            },
-            result => {
-              console.log(result);
-              resolve();
-            },
-            error => {
-              console.log(error);
-              reject(error);
-            },
-          );
-        });
-      } catch (err) {
-        dispatch(LogActions.error('Appsflyer setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-      }
 
       try {
-        Segment.init();
+        if (!Segment.getClient()) {
+          await Segment.init();
+        }
 
         if (appInit) {
-          const {appFirstOpenData} = getState().APP;
+          const {appFirstOpenData, appOpeningWasTracked} = getState().APP;
 
-          if (
-            appFirstOpenData?.firstOpenDate &&
-            !appFirstOpenData?.firstOpenEventComplete
-          ) {
-            dispatch(setAppFirstOpenEventComplete());
-            dispatch(
-              Analytics.track('First Opened App', {
-                date: appFirstOpenData?.firstOpenDate || '',
-              }),
-            );
-          } else {
-            dispatch(Analytics.track('Last Opened App', {}));
+          if (!appOpeningWasTracked && appFirstOpenData) {
+            const {firstOpenDate, firstOpenEventComplete} = appFirstOpenData;
+
+            if (firstOpenDate && !firstOpenEventComplete) {
+              dispatch(setAppFirstOpenEventComplete());
+              dispatch(
+                Analytics.track('First Opened App', {
+                  date: firstOpenDate || '',
+                }),
+              );
+            } else {
+              dispatch(Analytics.track('Last Opened App', {}));
+            }
+
+            dispatch(AppActions.appOpeningWasTracked());
           }
         }
       } catch (err) {
@@ -682,16 +663,10 @@ export const unSubscribeEmailNotifications =
     });
   };
 
-export const checkNotificationsPermissions = (): Promise<boolean> => {
-  return new Promise(async resolve => {
-    checkNotifications().then(({status}) => {
-      if (status === RESULTS.GRANTED) {
-        return resolve(true);
-      } else {
-        return resolve(false);
-      }
-    });
-  });
+export const checkNotificationsPermissions = async (): Promise<boolean> => {
+  const {status} = await checkNotifications().catch(() => ({status: null}));
+
+  return status === RESULTS.GRANTED;
 };
 
 export const renewSubscription = (): Effect => (dispatch, getState) => {
@@ -707,16 +682,14 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
   });
 };
 
-export const requestNotificationsPermissions = (): Promise<boolean> => {
-  return new Promise(async resolve => {
-    requestNotifications(['alert', 'badge', 'sound']).then(({status}) => {
-      if (status === RESULTS.GRANTED) {
-        return resolve(true);
-      } else {
-        return resolve(false);
-      }
-    });
-  });
+export const requestNotificationsPermissions = async (): Promise<boolean> => {
+  const {status} = await requestNotifications([
+    'alert',
+    'badge',
+    'sound',
+  ]).catch(() => ({status: null}));
+
+  return status === RESULTS.GRANTED;
 };
 
 export const setNotifications =

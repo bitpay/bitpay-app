@@ -171,7 +171,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   };
 
   const createAddress = async (newAddress: boolean = false) => {
-    let {coin, network} = wallet.credentials;
+    let {currencyAbbreviation, network, chain} = wallet;
     const prefix = 'Could not create address';
 
     try {
@@ -179,8 +179,10 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
         createWalletAddress({wallet, newAddress}),
       )) as string;
       setLoading(false);
-      if (coin === 'bch') {
-        const protocolPrefix = dispatch(GetProtocolPrefix(coin, network));
+      if (currencyAbbreviation === 'bch') {
+        const protocolPrefix = dispatch(
+          GetProtocolPrefix(currencyAbbreviation, network, chain),
+        );
         const formattedAddr = protocolPrefix + ':' + walletAddress;
         setAddress(formattedAddr);
         setBchAddress(formattedAddr);

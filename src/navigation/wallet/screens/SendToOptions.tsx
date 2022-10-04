@@ -85,7 +85,7 @@ export const RecipientList: React.FC<RecipientListProps> = ({
     recipientData = {
       recipientName: recipient.name,
       recipientAddress: recipient.address,
-      img: wallet?.img || wallet?.credentials.coin,
+      img: wallet?.img || wallet?.currencyAbbreviation,
     };
   }
 
@@ -297,6 +297,7 @@ const SendToOptions = () => {
       <AmountModal
         isVisible={recipientAmount.showModal}
         cryptoCurrencyAbbreviation={params.wallet.currencyAbbreviation.toUpperCase()}
+        chain={params.wallet.chain}
         onClose={() => {
           setRecipientAmount({showModal: false});
         }}

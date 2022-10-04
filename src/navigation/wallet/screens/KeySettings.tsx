@@ -50,6 +50,7 @@ import {
 import {
   buildWalletObj,
   generateKeyExportCode,
+  mapAbbreviationAndName,
 } from '../../../store/wallet/utils/wallet';
 import {Key} from '../../../store/wallet/wallet.models';
 import {
@@ -216,9 +217,18 @@ const KeySettings = () => {
           .map(syncWallet => {
             // update to keyId
             syncWallet.credentials.keyId = key.properties!.id;
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                syncWallet.credentials.coin,
+                syncWallet.credentials.chain,
+              ),
+            );
             return merge(
               syncWallet,
-              dispatch(buildWalletObj(syncWallet.credentials, _tokenOptions)),
+              buildWalletObj(
+                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                _tokenOptions,
+              ),
             );
           });
 

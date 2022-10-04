@@ -29,6 +29,7 @@ export type AllAddressesParamList = {
   usedAddresses?: any[];
   unusedAddresses?: any[];
   currencyAbbreviation: string;
+  chain: string;
 };
 
 const AddressesContainer = styled.SafeAreaView`
@@ -66,7 +67,13 @@ const CopyImgContainerRight = styled.View`
 const AllAddresses = () => {
   const {t} = useTranslation();
   const {
-    params: {walletName, currencyAbbreviation, usedAddresses, unusedAddresses},
+    params: {
+      walletName,
+      currencyAbbreviation,
+      usedAddresses,
+      unusedAddresses,
+      chain,
+    },
   } = useRoute<RouteProp<WalletStackParamList, 'AllAddresses'>>();
 
   const navigation = useNavigation();
@@ -166,7 +173,9 @@ const AllAddresses = () => {
                     </CopyRow>
 
                     <H7>
-                      {dispatch(FormatAmountStr(currencyAbbreviation, amount))}
+                      {dispatch(
+                        FormatAmountStr(currencyAbbreviation, chain, amount),
+                      )}
                     </H7>
                   </SettingView>
 

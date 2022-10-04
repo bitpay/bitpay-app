@@ -16,13 +16,15 @@ export type BuyCryptoStackParamList = {
         amount: number;
         fromWallet?: any;
         buyCryptoOpts?: any;
-        currencyAbbreviation?: string; // TODO: handle flow from charts.
+        currencyAbbreviation?: string; // used from charts.
+        chain?: string; // used from charts.
       }
     | undefined;
   BuyCryptoOffers: {
     amount: number;
     fiatCurrency: string;
     coin: string;
+    chain: string;
     country: string;
     selectedWallet: any;
     paymentMethod: any;

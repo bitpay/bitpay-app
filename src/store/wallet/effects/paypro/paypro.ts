@@ -1,5 +1,5 @@
 import {BwcProvider} from '../../../../lib/bwc';
-import {Currencies} from '../../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 export interface PayProPaymentOption {
@@ -45,15 +45,15 @@ export const GetPayProOptions = async (
 export const GetPayProDetails = async (params: {
   paymentUrl: string;
   coin: string;
+  chain: string;
   payload?: {address?: string};
   attempt?: number;
 }): Promise<any> => {
-  let {paymentUrl, coin, payload, attempt = 1} = params;
+  let {paymentUrl, coin, chain, payload, attempt = 1} = params;
   const bwc = BWC.getPayProV2();
-  const chain = Currencies[coin.toLowerCase()].chain;
   const options: any = {
     paymentUrl,
-    chain,
+    chain: chain.toUpperCase(),
     currency: coin.toUpperCase(),
     payload,
   };
@@ -82,11 +82,13 @@ export const HandlePayPro = async ({
   payProOptions,
   url,
   coin,
+  chain,
 }: {
   payProDetails: any;
   payProOptions?: PayProOptions;
   url: string;
   coin: string;
+  chain: string;
 }) => {
   if (!payProDetails) {
     return;
@@ -95,7 +97,8 @@ export const HandlePayPro = async ({
   let requiredFeeRate;
 
   if (payProDetails.requiredFeeRate) {
-    requiredFeeRate = !Currencies[coin.toLowerCase()].properties.isUtxo
+    requiredFeeRate = !BitpaySupportedCoins[chain.toLowerCase()].properties
+      .isUtxo
       ? parseInt((payProDetails.requiredFeeRate * 1.1).toFixed(0), 10) // Workaround to avoid gas price supplied is lower than requested error
       : Math.ceil(payProDetails.requiredFeeRate * 1000);
   }

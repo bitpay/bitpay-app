@@ -227,8 +227,9 @@ const TransactionDetails = () => {
   const title = getDetailsTitle(transaction, wallet);
   let {
     currencyAbbreviation,
-    keyId,
-    credentials: {network, coin, walletName, walletId},
+    network,
+    chain,
+    credentials: {walletId},
   } = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
   const isTestnet = network === 'testnet';
@@ -278,7 +279,11 @@ const TransactionDetails = () => {
         txp.outputs.forEach((output: any) => {
           recipientList!.push({
             address: output.toAddress,
-            amount: Number(dispatch(FormatAmount(coin, output.amount))),
+            amount: Number(
+              dispatch(
+                FormatAmount(currencyAbbreviation, chain, output.amount),
+              ),
+            ),
           });
         });
       }
@@ -286,9 +291,13 @@ const TransactionDetails = () => {
         wallet,
         walletId,
         context: 'fromReplaceByFee' as TransactionOptionsContext,
-        amount: Number(dispatch(FormatAmount(coin, transaction.amount))),
+        amount: Number(
+          dispatch(
+            FormatAmount(currencyAbbreviation, chain, transaction.amount),
+          ),
+        ),
         toAddress,
-        coin,
+        currencyAbbreviation,
         network,
         inputs: txp.inputs,
         recipientList,
@@ -354,7 +363,9 @@ const TransactionDetails = () => {
   }, [copied]);
 
   const goToBlockchain = () => {
-    let url = dispatch(GetBlockExplorerUrl(currencyAbbreviation, network));
+    let url = dispatch(
+      GetBlockExplorerUrl(currencyAbbreviation, network, chain),
+    );
     switch (currencyAbbreviation) {
       case 'doge':
         url =
@@ -413,7 +424,7 @@ const TransactionDetails = () => {
 
           {/* --------- Info ----------------*/}
           {(currencyAbbreviation === 'eth' ||
-            dispatch(IsERCToken(currencyAbbreviation))) &&
+            IsERCToken(currencyAbbreviation)) &&
           txs.error ? (
             <Banner
               type={'error'}

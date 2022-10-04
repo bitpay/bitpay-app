@@ -36,7 +36,7 @@ import prompt from 'react-native-prompt-android';
 
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;
-  wallet: Wallet | undefined;
+  wallet: Wallet;
   amount: number;
 }
 
@@ -67,12 +67,12 @@ const CoinbaseWithdrawConfirm = () => {
 
   const apiLoading = useAppSelector(({COINBASE}) => COINBASE.isApiLoading);
 
-  const currency = wallet?.credentials.coin;
+  const currency = wallet.currencyAbbreviation;
 
   const recipientData = {
-    recipientName: wallet?.credentials.walletName || 'BitPay Wallet',
+    recipientName: wallet.credentials.walletName || 'BitPay Wallet',
     recipientAddress: receiveAddress,
-    img: wallet?.img || wallet?.credentials.coin,
+    img: wallet.img || wallet.currencyAbbreviation,
   };
 
   const sendingFrom = {

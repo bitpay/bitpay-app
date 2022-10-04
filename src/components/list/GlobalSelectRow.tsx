@@ -30,11 +30,12 @@ export const AvailableWalletsPill = styled.View`
 
 const GlobalSelectRow = ({item, emit}: Props) => {
   const {t} = useTranslation();
-  const {currencyName, total, img} = item;
+  const {currencyName, total, img, badgeImg} = item;
+
   return (
     <RowContainer activeOpacity={ActiveOpacity} onPress={() => emit(item)}>
       <CurrencyImageContainer>
-        <CurrencyImage img={img} />
+        <CurrencyImage img={img} badgeUri={badgeImg} />
       </CurrencyImageContainer>
       <CurrencyColumn>
         <H5>{currencyName}</H5>

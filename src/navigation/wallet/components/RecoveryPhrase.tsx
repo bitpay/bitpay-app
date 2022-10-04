@@ -197,6 +197,7 @@ const RecoveryPhrase = () => {
   const [advancedOptions, setAdvancedOptions] = useState({
     derivationPath: DefaultDerivationPath.defaultBTC as string,
     coin: CurrencyOptions[0].currencyAbbreviation,
+    chain: CurrencyOptions[0].currencyAbbreviation, // chain = currency for all currencies if tokens not included
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
@@ -307,6 +308,7 @@ const RecoveryPhrase = () => {
     advancedOpts: {
       derivationPath: string;
       coin: string;
+      chain: string;
       passphrase: string | undefined;
       isMultisig: boolean;
     },
@@ -337,7 +339,7 @@ const RecoveryPhrase = () => {
 
       keyOpts.coin = advancedOpts.coin.toLowerCase();
       keyOpts.singleAddress = dispatch(
-        isSingleAddressCoin(advancedOpts.coin.toLowerCase()),
+        isSingleAddressCoin(advancedOpts.coin, advancedOpts.chain),
       );
 
       // set opts.useLegacyPurpose
@@ -474,13 +476,14 @@ const RecoveryPhrase = () => {
     advancedOpts: {
       derivationPath: string;
       coin: string;
+      chain: string;
       passphrase: string | undefined;
       isMultisig: boolean;
     },
   ): Promise<void> => {
     try {
       let keyOpts: Partial<KeyOptions> = {
-        name: dispatch(GetName(advancedOpts.coin!)),
+        name: dispatch(GetName(advancedOpts.coin!, advancedOpts.chain)),
       };
 
       try {

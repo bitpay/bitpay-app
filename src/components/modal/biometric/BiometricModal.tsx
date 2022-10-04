@@ -125,7 +125,6 @@ const BiometricModal: React.FC = () => {
         onClose?.(true);
       })
       .catch((error: BiometricError) => {
-        console.log(error);
         if (error.code && TO_HANDLE_ERRORS[error.code]) {
           const err = TO_HANDLE_ERRORS[error.code];
           dispatch(

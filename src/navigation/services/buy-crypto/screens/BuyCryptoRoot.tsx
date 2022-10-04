@@ -37,9 +37,9 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import {getSimplexSupportedCoins} from '../utils/simplex-utils';
-import {wyreSupportedCoins} from '../utils/wyre-utils';
-import {sleep} from '../../../../utils/helper-methods';
+import {getSimplexSupportedCurrencies} from '../utils/simplex-utils';
+import {getWyreSupportedCurrencies} from '../utils/wyre-utils';
+import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {
@@ -73,6 +73,7 @@ const BuyCryptoRoot: React.FC<
   const fromAmount = route.params?.amount;
   const fromCurrencyAbbreviation =
     route.params?.currencyAbbreviation?.toLowerCase();
+  const fromChain = route.params?.chain?.toLowerCase();
 
   const [amount, setAmount] = useState<number>(fromAmount ? fromAmount : 0);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
@@ -88,7 +89,10 @@ const BuyCryptoRoot: React.FC<
       : PaymentMethodsAvailable.debitCard,
   );
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
-    ...new Set([...getSimplexSupportedCoins(), ...wyreSupportedCoins]),
+    ...new Set([
+      ...getSimplexSupportedCurrencies(),
+      ...getWyreSupportedCurrencies(),
+    ]),
   ]);
   const fiatCurrency = getAvailableFiatCurrencies().includes(
     defaultAltCurrency.isoCode,
@@ -133,7 +137,9 @@ const BuyCryptoRoot: React.FC<
       setWalletData(
         SupportedCurrencyOptions.find(
           currency =>
-            selectedWallet && currency.id == selectedWallet.credentials.coin,
+            selectedWallet &&
+            currency.currencyAbbreviation ==
+              selectedWallet.currencyAbbreviation,
         ),
       );
     }
@@ -177,10 +183,16 @@ const BuyCryptoRoot: React.FC<
 
         if (
           fromCurrencyAbbreviation &&
-          buyCryptoSupportedCoins.includes(fromCurrencyAbbreviation)
+          buyCryptoSupportedCoins.includes(
+            fromChain
+              ? getCurrencyAbbreviation(fromCurrencyAbbreviation, fromChain)
+              : fromCurrencyAbbreviation,
+          )
         ) {
           allowedWallets = allowedWallets.filter(
-            wallet => wallet.currencyAbbreviation === fromCurrencyAbbreviation,
+            wallet =>
+              wallet.currencyAbbreviation === fromCurrencyAbbreviation &&
+              (fromChain ? wallet.chain === fromChain : true),
           );
         }
         allowedWallets[0]
@@ -202,31 +214,46 @@ const BuyCryptoRoot: React.FC<
   const walletIsSupported = (wallet: Wallet): boolean => {
     return (
       wallet.credentials &&
-      ((wallet.credentials.network === 'livenet' &&
+      ((wallet.network === 'livenet' &&
         buyCryptoSupportedCoins.includes(
-          wallet.credentials.coin.toLowerCase(),
+          getCurrencyAbbreviation(
+            wallet.currencyAbbreviation.toLowerCase(),
+            wallet.chain,
+          ),
         )) ||
         (__DEV__ &&
-          wallet.credentials.network === 'testnet' &&
-          wyreSupportedCoins.includes(
-            wallet.credentials.coin.toLowerCase(),
+          wallet.network === 'testnet' &&
+          getWyreSupportedCurrencies().includes(
+            getCurrencyAbbreviation(
+              wallet.currencyAbbreviation.toLowerCase(),
+              wallet.chain,
+            ),
           ))) &&
       wallet.isComplete() &&
       (!fromCurrencyAbbreviation ||
-        wallet.currencyAbbreviation === fromCurrencyAbbreviation)
+        (wallet.currencyAbbreviation === fromCurrencyAbbreviation &&
+          (fromChain ? wallet.chain === fromChain : true)))
     );
   };
 
   const setWallet = (wallet: Wallet) => {
     if (
       wallet.credentials &&
-      ((wallet.credentials.network === 'livenet' &&
+      ((wallet.network === 'livenet' &&
         buyCryptoSupportedCoins.includes(
-          wallet.credentials.coin.toLowerCase(),
+          getCurrencyAbbreviation(
+            wallet.currencyAbbreviation.toLowerCase(),
+            wallet.chain,
+          ),
         )) ||
         (__DEV__ &&
-          wallet.credentials.network === 'testnet' &&
-          wyreSupportedCoins.includes(wallet.credentials.coin.toLowerCase())))
+          wallet.network === 'testnet' &&
+          getWyreSupportedCurrencies().includes(
+            getCurrencyAbbreviation(
+              wallet.currencyAbbreviation.toLowerCase(),
+              wallet.chain,
+            ),
+          )))
     ) {
       if (wallet.isComplete()) {
         if (allKeys[wallet.keyId].backupComplete) {
@@ -290,10 +317,7 @@ const BuyCryptoRoot: React.FC<
       await sleep(600);
       showTokensInfoSheet();
     };
-    if (
-      !!selectedWallet &&
-      dispatch(IsERCToken(selectedWallet.currencyAbbreviation))
-    ) {
+    if (!!selectedWallet && IsERCToken(selectedWallet.currencyAbbreviation)) {
       tokensWarn();
     } else {
       continueToViewOffers();
@@ -314,6 +338,7 @@ const BuyCryptoRoot: React.FC<
       amount,
       fiatCurrency,
       coin: selectedWallet?.currencyAbbreviation || '',
+      chain: selectedWallet?.chain || '',
       country: countryData?.shortCode || 'US',
       selectedWallet,
       paymentMethod: selectedPaymentMethod,
@@ -327,12 +352,14 @@ const BuyCryptoRoot: React.FC<
           'simplex',
           PaymentMethodsAvailable.applePay,
           selectedWallet.currencyAbbreviation,
+          selectedWallet.chain,
           fiatCurrency,
         ) ||
           isPaymentMethodSupported(
             'wyre',
             PaymentMethodsAvailable.applePay,
             selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
             fiatCurrency,
           )
           ? PaymentMethodsAvailable.applePay
@@ -359,12 +386,14 @@ const BuyCryptoRoot: React.FC<
         'simplex',
         selectedPaymentMethod,
         selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
         fiatCurrency,
       ) ||
       isPaymentMethodSupported(
         'wyre',
         selectedPaymentMethod,
         selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
         fiatCurrency,
       )
     ) {
@@ -530,7 +559,7 @@ const BuyCryptoRoot: React.FC<
                     <CurrencyImage img={selectedWallet.img} size={20} />
                   </CoinIconContainer>
                   <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
-                    {selectedWallet.credentials.coin.toUpperCase()}
+                    {selectedWallet.currencyAbbreviation.toUpperCase()}
                   </SelectedOptionText>
                 </SelectedOptionCol>
                 <ArrowContainer>
@@ -652,6 +681,7 @@ const BuyCryptoRoot: React.FC<
         onBackdropPress={() => hideModal('paymentMethod')}
         selectedPaymentMethod={selectedPaymentMethod}
         coin={selectedWallet?.currencyAbbreviation}
+        chain={selectedWallet?.chain}
         currency={fiatCurrency}
       />
     </>

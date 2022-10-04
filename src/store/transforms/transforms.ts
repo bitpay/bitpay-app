@@ -5,6 +5,7 @@ import {BwcProvider} from '../../lib/bwc';
 import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import Flatted from 'flatted';
+import {buildWalletObj} from '../wallet/utils/wallet';
 const BWCProvider = BwcProvider.getInstance();
 
 export const bindWalletClient = createTransform(
@@ -32,7 +33,7 @@ export const bindWalletClient = createTransform(
       _outboundState as {[key in string]: Key},
     )) {
       const wallets = key.wallets.map(wallet => {
-        const {img, currencyAbbreviation} = wallet;
+        const {img, currencyAbbreviation, currencyName} = wallet;
         if (!img && SUPPORTED_CURRENCIES.includes(currencyAbbreviation)) {
           wallet.img = CurrencyListIcons[currencyAbbreviation];
         }
@@ -43,9 +44,17 @@ export const bindWalletClient = createTransform(
           hasConfirmingTxs: false,
         };
         console.log(`bindWalletClient - ${wallet.id}`);
-        return merge(
-          BWCProvider.getClient(JSON.stringify(wallet.credentials)),
+        const _wallet = merge(
+          buildWalletObj({
+            ...wallet.credentials,
+            currencyAbbreviation,
+            currencyName,
+          }),
           wallet,
+        );
+        return merge(
+          BWCProvider.getClient(JSON.stringify(_wallet.credentials)),
+          _wallet,
         );
       });
 

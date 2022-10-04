@@ -5,13 +5,12 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
-import {sleep} from '../../../utils/helper-methods';
+import {getCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
@@ -53,6 +52,7 @@ import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import {BitpaySupportedCurrencies} from '../../../constants/currencies';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -190,6 +190,9 @@ const CoinbaseAccount = ({
     return CoinbaseIcon(coinbaseTx);
   };
 
+  const [currencyAbbreviation, setCurrencyAbbreviation] = useState('');
+  const [chain, setChain] = useState('');
+
   const onPressTransaction = useMemo(
     () => (transaction: any) => {
       navigation.navigate('Coinbase', {
@@ -269,6 +272,14 @@ const CoinbaseAccount = ({
     }
 
     if (account && account.balance) {
+      const _currencyAbbreviation = getCurrencyAbbreviation(
+        account.balance.currency.toLowerCase(),
+        'eth',
+      );
+      const _chain =
+        BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.chain;
+      setCurrencyAbbreviation(_currencyAbbreviation);
+      setChain(_chain);
       const currencies: string[] = [];
       currencies.push(account.balance.currency.toLowerCase());
       setCustomSupportedCurrencies(currencies);
@@ -310,6 +321,8 @@ const CoinbaseAccount = ({
     accountId,
     exchangeRates,
     keys,
+    currencyAbbreviation,
+    chain,
   ]);
 
   const deposit = async () => {
@@ -375,7 +388,7 @@ const CoinbaseAccount = ({
 
   const onEnteredAmount = (newAmount?: number) => {
     setAmountModalVisible(false);
-    if (newAmount) {
+    if (newAmount && selectedWallet) {
       navigation.navigate('Coinbase', {
         screen: 'CoinbaseWithdraw',
         params: {accountId, wallet: selectedWallet, amount: newAmount},
@@ -503,7 +516,9 @@ const CoinbaseAccount = ({
 
       <AmountModal
         isVisible={amountModalVisible}
-        cryptoCurrencyAbbreviation={account?.balance.currency}
+        cryptoCurrencyAbbreviation={currencyAbbreviation}
+        fiatCurrencyAbbreviation={defaultAltCurrency.isoCode}
+        chain={chain}
         onClose={() => setAmountModalVisible(false)}
         onSubmit={amt => onEnteredAmount(amt)}
       />

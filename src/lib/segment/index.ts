@@ -2,7 +2,6 @@ import {SEGMENT_API_KEY} from '@env';
 import {
   createClient,
   JsonMap,
-  Plugin,
   SegmentClient,
   UserTraits,
 } from '@segment/analytics-react-native';
@@ -17,23 +16,22 @@ import {APP_ANALYTICS_ENABLED} from '../../constants/config';
  */
 const lib = (() => {
   let _client: SegmentClient | null = null;
+  const _queue: Array<(client: SegmentClient) => Promise<any>> = [];
 
   const _addPluginsToClient = (client: SegmentClient) => {
-    const SEGMENT_PLUGINS: Plugin[] = [new AppsflyerPlugin()];
+    client.add({
+      plugin: new AppsflyerPlugin(),
+    });
 
     if (IS_IOS) {
-      SEGMENT_PLUGINS.push(new IdfaPlugin());
+      client.add({plugin: new IdfaPlugin()});
     }
-
-    SEGMENT_PLUGINS.forEach(plugin => {
-      client.add({plugin});
-    });
   };
 
   /**
    * Guard wrapper that checks if analytics are enabled and client has been initialized before executing the provided callback.
    * @param cb Function to execute if all guards pass.
-   * @returns Resolves if analytics disabled, rejects if client uninitialized, else returns the callback's return value;
+   * @returns Resolves as void if analytics disabled or if client uninitialized, else returns the callback's return value;
    */
   const guard = <T>(
     cb: (client: SegmentClient) => Promise<T>,
@@ -43,7 +41,9 @@ const lib = (() => {
     }
 
     if (!_client) {
-      return Promise.reject('Uninitialized');
+      // Queue up any actions that happen before we get a chance to initialize.
+      _queue.push(cb);
+      return Promise.resolve();
     }
 
     return cb(_client);
@@ -54,14 +54,14 @@ const lib = (() => {
      * Returns an instance of the underlying Segment SDK client, or null if not initialized.
      * @returns {SegmentClient | null} The Segment SDK client.
      */
-    client(): SegmentClient | null {
+    getClient(): SegmentClient | null {
       return _client;
     },
 
     /**
      * Creates and initializes the Segment SDK. Must be called first.
      */
-    init() {
+    async init() {
       if (!APP_ANALYTICS_ENABLED) {
         return;
       }
@@ -92,6 +92,11 @@ const lib = (() => {
       });
 
       _addPluginsToClient(_client);
+
+      // Clear the queue and run any deferred actions that were called before we got a chance to initialize
+      for (let fn = _queue.shift(); fn; fn = _queue.shift()) {
+        await fn(_client).catch(() => 0);
+      }
     },
 
     /**

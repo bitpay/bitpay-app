@@ -1,7 +1,13 @@
 import {Effect} from '../../../index';
 import axios from 'axios';
-import {BASE_BWS_URL} from '../../../../constants/config';
-import {SUPPORTED_COINS} from '../../../../constants/currencies';
+import {
+  BASE_BWS_URL,
+  EVM_BLOCKCHAIN_NETWORK,
+} from '../../../../constants/config';
+import {
+  SUPPORTED_COINS,
+  SUPPORTED_EVM_COINS,
+} from '../../../../constants/currencies';
 import {
   DateRanges,
   HistoricRate,
@@ -27,7 +33,11 @@ import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 import {LogActions} from '../../../log';
-import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
+import {BitpaySupportedEthereumTokenOptsByAddress} from '../../../../constants/tokens';
+import {
+  getCurrencyAbbreviation,
+  addTokenChainSuffix,
+} from '../../../../utils/helper-methods';
 
 export const getPriceHistory =
   (defaultAltCurrencyIsoCode: string): Effect =>
@@ -167,7 +177,8 @@ export const startGetRates =
   };
 
 export const getContractAddresses =
-  (): Effect<Array<string | undefined>> => (dispatch, getState) => {
+  (chain: string): Effect<Array<string | undefined>> =>
+  (dispatch, getState) => {
     dispatch(LogActions.info('getContractAddresses: starting...'));
     const {
       WALLET: {keys},
@@ -176,7 +187,8 @@ export const getContractAddresses =
 
     Object.values(keys).forEach(key => {
       key.wallets.forEach(wallet => {
-        if (wallet.currencyAbbreviation === 'eth' && wallet.tokens) {
+        if (wallet.currencyAbbreviation === chain && wallet.tokens) {
+          // workaround to get linked wallets
           const tokenAddresses = wallet.tokens.map(t =>
             t.replace(`${wallet.id}-`, ''),
           );
@@ -205,8 +217,8 @@ export const getTokenRates =
           WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
         } = getState();
 
-        const tokens = {
-          ...BitpaySupportedTokenOptsByAddress,
+        const tokensOptsByAddress = {
+          ...BitpaySupportedEthereumTokenOptsByAddress,
           ...tokenOptionsByAddress,
           ...customTokenOptionsByAddress,
         };
@@ -217,51 +229,61 @@ export const getTokenRates =
         const altCurrencies = altCurrencyList.map(altCurrency =>
           altCurrency.isoCode.toLowerCase(),
         );
-        const contractAddresses = dispatch(getContractAddresses());
 
-        const url = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${contractAddresses.join(
-          ',',
-        )}&vs_currencies=${altCurrencies.join(
-          ',',
-        )}&include_24hr_change=true&include_last_updated_at=true`;
+        for (const chain of SUPPORTED_EVM_COINS) {
+          const contractAddresses = dispatch(getContractAddresses(chain));
+          const url = `https://api.coingecko.com/api/v3/simple/token_price/${
+            // @ts-ignore
+            EVM_BLOCKCHAIN_NETWORK[chain]
+          }?contract_addresses=${contractAddresses.join(
+            ',',
+          )}&vs_currencies=${altCurrencies.join(
+            ',',
+          )}&include_24hr_change=true&include_last_updated_at=true`;
 
-        dispatch(LogActions.debug(`getTokenRates: get request to: ${url}`));
-        const {data} = await axios.get(url);
-        dispatch(LogActions.debug('getTokenRates: success get request'));
+          dispatch(LogActions.debug(`getTokenRates: get request to: ${url}`));
+          const {data} = await axios.get(url);
+          dispatch(LogActions.debug('getTokenRates: success get request'));
 
-        Object.entries(data).map(([key, value]: [string, any]) => {
-          // only save token rates if exist in tokens list
-          if (tokens[key]) {
-            const tokenName = tokens[key]?.symbol?.toLowerCase();
-            tokenRates[tokenName] = [];
-            tokenLastDayRates[tokenName] = [];
+          Object.entries(data).map(([key, value]: [string, any]) => {
+            const formattedTokenAddress = addTokenChainSuffix(key, chain);
 
-            altCurrencies.forEach(altCurrency => {
-              tokenRates[tokenName].push({
-                code: altCurrency.toUpperCase(),
-                fetchedOn: value.last_updated_at,
-                name: tokenName,
-                rate: value[altCurrency],
-                ts: value.last_updated_at,
+            // only save token rates if exist in tokens list
+            if (tokensOptsByAddress[formattedTokenAddress]) {
+              const tokenName = getCurrencyAbbreviation(
+                tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                chain,
+              );
+              tokenRates[tokenName] = [];
+              tokenLastDayRates[tokenName] = [];
+
+              altCurrencies.forEach(altCurrency => {
+                tokenRates[tokenName].push({
+                  code: altCurrency.toUpperCase(),
+                  fetchedOn: value.last_updated_at,
+                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                  rate: value[altCurrency],
+                  ts: value.last_updated_at,
+                });
+
+                const yesterday = moment
+                  .unix(value.last_updated_at)
+                  .subtract(1, 'days')
+                  .unix();
+                tokenLastDayRates[tokenName].push({
+                  code: altCurrency.toUpperCase(),
+                  fetchedOn: yesterday,
+                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                  rate:
+                    value[altCurrency] +
+                    (value[altCurrency] * value[`${altCurrency}_24h_change`]) /
+                      100,
+                  ts: yesterday,
+                });
               });
-
-              const yesterday = moment
-                .unix(value.last_updated_at)
-                .subtract(1, 'days')
-                .unix();
-              tokenLastDayRates[tokenName].push({
-                code: altCurrency.toUpperCase(),
-                fetchedOn: yesterday,
-                name: tokenName,
-                rate:
-                  value[altCurrency] +
-                  (value[altCurrency] * value[`${altCurrency}_24h_change`]) /
-                    100,
-                ts: yesterday,
-              });
-            });
-          }
-        });
+            }
+          });
+        }
 
         dispatch(LogActions.info('getTokenRates: success'));
         resolve({tokenRates, tokenLastDayRates});
