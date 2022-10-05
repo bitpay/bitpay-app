@@ -5,11 +5,12 @@ import {
   SegmentClient,
   UserTraits,
 } from '@segment/analytics-react-native';
-import {AppsflyerPlugin} from '@segment/analytics-react-native-plugin-appsflyer';
 import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
 import {IS_IOS} from '../../constants';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
+import {BpAppsFlyerPlugin} from './plugins/appsflyer';
 import {BpBrazePlugin} from './plugins/braze';
+import {getAppsFlyerId} from './utils/getAppsFlyerId';
 import {getBrazeIdForAnonymousUser} from './utils/getBrazeIdForAnonymousUser';
 
 /**
@@ -62,6 +63,7 @@ const lib = (() => {
         return;
       }
 
+      const appsFlyerId = await getAppsFlyerId();
       const brazeId = await getBrazeIdForAnonymousUser();
 
       _client = createClient({
@@ -85,9 +87,11 @@ const lib = (() => {
         trackAppLifecycleEvents: true, // default: false
       });
 
+      // extend AppsFlyer features with BitPay specific logic, mainly passing appsFlyerId to support cloud-mode events
       _client.add({
-        plugin: new AppsflyerPlugin(),
+        plugin: new BpAppsFlyerPlugin({appsFlyerId}),
       });
+      // extend Braze features with BitPay specific logic, mainly passing braze_id for anonymous users to support cloud-mode events
       _client.add({
         plugin: new BpBrazePlugin({brazeId}),
       });
