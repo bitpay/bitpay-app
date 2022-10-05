@@ -26,12 +26,11 @@ export class BpBrazePlugin extends EventPlugin {
   type = PluginType.enrichment;
   key = 'Appboy';
   private lastSeenTraits: UserInfoState | undefined;
-
-  private opts?: BpBrazePluginOpts;
+  private brazeId?: string;
 
   constructor(opts?: BpBrazePluginOpts) {
     super();
-    this.opts = opts;
+    this.brazeId = opts?.brazeId;
   }
 
   /**
@@ -93,9 +92,9 @@ export class BpBrazePlugin extends EventPlugin {
       event.integrations[this.key] = {};
     }
 
-    if (this.opts?.brazeId) {
+    if (this.brazeId) {
       Object.assign(event.integrations[this.key], {
-        braze_id: this.opts.brazeId,
+        braze_id: this.brazeId,
       });
     }
 
