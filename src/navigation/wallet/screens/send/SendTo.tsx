@@ -317,10 +317,10 @@ const SendTo = () => {
           data?.chain?.toLowerCase() === chain.toLowerCase() &&
           data?.network.toLowerCase() === network.toLowerCase();
       } else {
-        addrData = GetCoinAndNetwork(data, network);
+        addrData = GetCoinAndNetwork(data, network, chain);
         isValid =
           chain === addrData?.coin.toLowerCase() &&
-          addrData?.network === network;
+          network === addrData?.network;
       }
 
       if (isValid) {

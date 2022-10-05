@@ -336,7 +336,7 @@ const ContactsAdd = ({
     chain?: string,
   ) => {
     if (address) {
-      const coinAndNetwork = GetCoinAndNetwork(address);
+      const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
       if (coinAndNetwork) {
         const isValid = ValidateCoinAddress(
           address,
