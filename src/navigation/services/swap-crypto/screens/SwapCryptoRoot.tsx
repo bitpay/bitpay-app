@@ -540,7 +540,7 @@ const SwapCryptoRoot: React.FC = () => {
             }
           }
         }
-        // updateReceivingAmount();
+        updateReceivingAmount();
       })
       .catch(err => {
         logger.error('Changelly getPairsParams Error: ' + JSON.stringify(err));
@@ -1178,7 +1178,9 @@ const SwapCryptoRoot: React.FC = () => {
         isVisible={amountModalVisible}
         modalTitle={t('Swap Amount')}
         swapOpts={{
-          maxWalletAmount: fromWalletSelected?.balance?.cryptoSpendable,
+          // @ts-ignore
+          maxWalletAmount:
+            fromWalletSelected?.balance?.cryptoSpendable?.replaceAll(',', ''),
           swapLimits,
         }}
         cryptoCurrencyAbbreviation={fromWalletData?.currencyAbbreviation.toUpperCase()}
@@ -1202,7 +1204,10 @@ const SwapCryptoRoot: React.FC = () => {
           if (IsERCToken(fromWalletSelected.currencyAbbreviation)) {
             setUseSendMax(true);
             setSendMaxInfo(undefined);
-            newAmount = Number(fromWalletSelected.balance.cryptoSpendable);
+            newAmount = Number(
+              // @ts-ignore
+              fromWalletSelected.balance.cryptoSpendable.replaceAll(',', ''),
+            );
           } else {
             setUseSendMax(true);
             const data = await getSendMaxData();
