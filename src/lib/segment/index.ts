@@ -10,6 +10,7 @@ import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
 import {IS_IOS} from '../../constants';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import {BpBrazePlugin} from './plugins/braze';
+import {getBrazeIdForAnonymousUser} from './utils/getBrazeIdForAnonymousUser';
 
 /**
  * Client wrapper for the Segment SDK configured for use with the BitPay app.
@@ -18,19 +19,6 @@ import {BpBrazePlugin} from './plugins/braze';
 const lib = (() => {
   let _client: SegmentClient | null = null;
   const _queue: Array<(client: SegmentClient) => Promise<any>> = [];
-
-  const _addPluginsToClient = (client: SegmentClient) => {
-    client.add({
-      plugin: new AppsflyerPlugin(),
-    });
-    client.add({
-      plugin: new BpBrazePlugin(),
-    });
-
-    if (IS_IOS) {
-      client.add({plugin: new IdfaPlugin()});
-    }
-  };
 
   /**
    * Guard wrapper that checks if analytics are enabled and client has been initialized before executing the provided callback.
@@ -74,6 +62,8 @@ const lib = (() => {
         return;
       }
 
+      const brazeId = await getBrazeIdForAnonymousUser();
+
       _client = createClient({
         // Required ---------------
 
@@ -95,7 +85,16 @@ const lib = (() => {
         trackAppLifecycleEvents: true, // default: false
       });
 
-      _addPluginsToClient(_client);
+      _client.add({
+        plugin: new AppsflyerPlugin(),
+      });
+      _client.add({
+        plugin: new BpBrazePlugin({brazeId}),
+      });
+
+      if (IS_IOS) {
+        _client.add({plugin: new IdfaPlugin()});
+      }
 
       // Clear the queue and run any deferred actions that were called before we got a chance to initialize
       for (let fn = _queue.shift(); fn; fn = _queue.shift()) {

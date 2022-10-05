@@ -1,23 +1,38 @@
 import {
-  DestinationPlugin,
+  EventPlugin,
   IdentifyEventType,
+  PluginType,
+  ScreenEventType,
+  TrackEventType,
   UserInfoState,
 } from '@segment/analytics-react-native';
 import flush from './methods/flush';
 import identify from './methods/identify';
 
+type BpBrazePluginOpts = {
+  brazeId?: string;
+};
+
 /**
- * This is a modified version of the Segment's official Braze plugin.
+ * This is a modified version of the Segment's official Braze plugin (https://www.npmjs.com/package/@segment/analytics-react-native-plugin-braze).
  * Our Braze implementation is a combination cloud-mode/device-mode: cloud-mode to support funneling events through Segment and device-mode to take advantage of Braze device features such as notifications, content cards, etc.
- * As such, we (currently) only need to extend the identity call to identify logged in users so that content cards and such are tracked against the identified user.
+ * Extending the DestinationPlugin and/or using type = PluginType.destination prevents cloud-mode event forwarding, so we are using PluginType.enrichment kinda like middleware to hook into the Segment methods.
  *
- * Segment's Braze plugin:
- * https://www.npmjs.com/package/@segment/analytics-react-native-plugin-braze
+ * Additionally, to support cloud-mode events for anonymous users, a braze_id needs to be passed in the integrations object (https://segment.com/docs/connections/destinations/catalog/braze).
  *
  * Source can be seen after installing via node_modules.
  */
-export class BpBrazePlugin extends DestinationPlugin {
+export class BpBrazePlugin extends EventPlugin {
+  type = PluginType.enrichment;
+  key = 'Appboy';
   private lastSeenTraits: UserInfoState | undefined;
+
+  private opts?: BpBrazePluginOpts;
+
+  constructor(opts?: BpBrazePluginOpts) {
+    super();
+    this.opts = opts;
+  }
 
   /**
    * Modified version of Segment's official Braze plugin identify logic.
@@ -43,10 +58,47 @@ export class BpBrazePlugin extends DestinationPlugin {
         traits: event.traits,
       };
     }
-    return event;
+    return this._enrich(event);
+  }
+
+  track(
+    event: TrackEventType,
+  ): TrackEventType | Promise<TrackEventType | undefined> | undefined {
+    return this._enrich(event);
+  }
+
+  screen(
+    event: ScreenEventType,
+  ): ScreenEventType | Promise<ScreenEventType | undefined> | undefined {
+    return this._enrich(event);
   }
 
   flush() {
     flush();
+  }
+
+  private _enrich<
+    T extends IdentifyEventType | ScreenEventType | TrackEventType,
+  >(event: T) {
+    // no need to apply braze_id if user has been identified
+    if (event.userId) {
+      return event;
+    }
+
+    if (!event.integrations) {
+      event.integrations = {};
+    }
+
+    if (!event.integrations[this.key]) {
+      event.integrations[this.key] = {};
+    }
+
+    if (this.opts?.brazeId) {
+      Object.assign(event.integrations[this.key], {
+        braze_id: this.opts.brazeId,
+      });
+    }
+
+    return event;
   }
 }
