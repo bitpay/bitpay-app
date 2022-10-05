@@ -33,7 +33,7 @@ import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 import {LogActions} from '../../../log';
-import {BitpaySupportedEthereumTokenOptsByAddress} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {
   getCurrencyAbbreviation,
   addTokenChainSuffix,
@@ -218,7 +218,7 @@ export const getTokenRates =
         } = getState();
 
         const tokensOptsByAddress = {
-          ...BitpaySupportedEthereumTokenOptsByAddress,
+          ...BitpaySupportedTokenOptsByAddress,
           ...tokenOptionsByAddress,
           ...customTokenOptionsByAddress,
         };
@@ -240,7 +240,6 @@ export const getTokenRates =
           )}&vs_currencies=${altCurrencies.join(
             ',',
           )}&include_24hr_change=true&include_last_updated_at=true`;
-
           dispatch(LogActions.debug(`getTokenRates: get request to: ${url}`));
           const {data} = await axios.get(url);
           dispatch(LogActions.debug('getTokenRates: success get request'));

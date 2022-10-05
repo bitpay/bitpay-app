@@ -431,10 +431,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         ({id}) => id === associatedWallet.id,
       )!;
       const {network, currencyAbbreviation, chain} = fullWalletObj;
-      const addrData = GetCoinAndNetwork(tokenAddress, network);
+      const addrData = GetCoinAndNetwork(tokenAddress, network, chain);
       const isValid =
         currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
-        addrData?.network === network;
+        network === addrData?.network;
 
       if (!isValid) {
         return;
@@ -494,7 +494,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               <Row
                 style={{alignItems: 'center', justifyContent: 'space-between'}}>
                 <Row style={{alignItems: 'center'}}>
-                  <CurrencyImage img={CurrencyListIcons.eth} size={30} />
+                  <CurrencyImage
+                    img={CurrencyListIcons[associatedWallet.chain]}
+                    size={30}
+                  />
                   <AssociateWalletName>
                     {associatedWallet?.walletName ||
                       `${associatedWallet.currencyAbbreviation.toUpperCase()} Wallet`}
