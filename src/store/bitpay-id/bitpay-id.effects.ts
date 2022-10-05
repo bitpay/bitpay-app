@@ -426,7 +426,6 @@ const startPairAndLoadUser =
 
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
-      dispatch(AppEffects.initializeBrazeContent());
       dispatch(ShopEffects.startFetchCatalog());
     } catch (err) {
       let errMsg;

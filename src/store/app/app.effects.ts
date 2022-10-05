@@ -329,12 +329,16 @@ export const initializeBrazeContent =
         },
       );
 
-      if (!APP.brazeEid) {
+      let eid = APP.brazeEid;
+
+      if (!eid) {
         dispatch(LogActions.debug('Generating EID for anonymous user...'));
-        const eid = uuid.v4().toString();
-        Braze.changeUser(eid);
+        eid = uuid.v4().toString();
         dispatch(setBrazeEid(eid));
       }
+
+      // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
+      dispatch(Analytics.identify(eid));
 
       dispatch(LogActions.info('Successfully initialized Braze.'));
       dispatch(AppActions.brazeInitialized(contentCardSubscription));
