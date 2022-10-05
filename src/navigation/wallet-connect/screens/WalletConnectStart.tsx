@@ -46,9 +46,13 @@ export type WalletConnectStartParamList = {
 };
 
 const CHAIN_ID: {[key in string]: any} = {
-  ETH: {
+  eth: {
     [Network.mainnet]: 1,
     [Network.testnet]: 42,
+  },
+  matic: {
+    [Network.mainnet]: 137,
+    [Network.testnet]: 80001,
   },
 };
 
@@ -111,7 +115,7 @@ const WalletConnectStart = () => {
       }
 
       const {chain} = BitpaySupportedCoins[wallet.currencyAbbreviation];
-      const chainId = CHAIN_ID[chain.toUpperCase()][wallet.network];
+      const chainId = CHAIN_ID[chain.toLowerCase()][wallet.network];
       const accounts = [address];
       const customData: IWCCustomData = {
         keyId: wallet.keyId,
