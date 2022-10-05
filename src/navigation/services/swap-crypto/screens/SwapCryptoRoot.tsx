@@ -44,6 +44,8 @@ import {
   changellyGetPairsParams,
   changellyGetFixRateForAmount,
   ChangellyCurrency,
+  getChangellyCurrenciesFixedProps,
+  getChangellyFixedCurrencyAbbreviation,
 } from '../utils/changelly-utils';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
@@ -308,8 +310,14 @@ const SwapCryptoRoot: React.FC = () => {
 
     const data = {
       amountFrom: amountFrom,
-      coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
-      coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
+      coinFrom: getChangellyFixedCurrencyAbbreviation(
+        fromWalletSelected.currencyAbbreviation.toLowerCase(),
+        fromWalletSelected.chain,
+      ),
+      coinTo: getChangellyFixedCurrencyAbbreviation(
+        toWalletSelected.currencyAbbreviation.toLowerCase(),
+        toWalletSelected.chain,
+      ),
     };
     changellyGetFixRateForAmount(fromWalletSelected, data)
       .then((data: any) => {
@@ -353,8 +361,14 @@ const SwapCryptoRoot: React.FC = () => {
     logger.debug('Updating max and min with pair: ' + pair);
 
     const data = {
-      coinFrom: fromWalletSelected.currencyAbbreviation,
-      coinTo: toWalletSelected.currencyAbbreviation,
+      coinFrom: getChangellyFixedCurrencyAbbreviation(
+        fromWalletSelected.currencyAbbreviation,
+        fromWalletSelected.chain,
+      ),
+      coinTo: getChangellyFixedCurrencyAbbreviation(
+        toWalletSelected.currencyAbbreviation,
+        toWalletSelected.chain,
+      ),
     };
     changellyGetPairsParams(fromWalletSelected, data)
       .then(async (data: any) => {
@@ -742,47 +756,59 @@ const SwapCryptoRoot: React.FC = () => {
         }
       };
 
-      const supportedCoinsWithFixRateEnabled: SwapCryptoCoin[] = (
-        changellyCurrenciesData.result as any[]
-      )
-        .filter((changellyCurrency: ChangellyCurrency) =>
-          filterChangellyCurrenciesConditions(changellyCurrency),
-        )
-        .map(
-          ({
-            name,
-            fullName,
-            protocol,
-            contractAddress,
-          }: {
-            name: string;
-            fullName: string;
-            protocol?: string;
-            contractAddress?: string;
-          }) => {
-            const chain = getChainFromChangellyProtocol(name, protocol);
-            return {
-              currencyAbbreviation: name,
-              symbol: getCurrencyAbbreviation(name, chain),
-              name: fullName,
-              chain,
-              protocol,
-              logoUri: getLogoUri(name, chain),
-              contractAddress,
-            };
-          },
+      const changellyCurrenciesDataFixedNames: ChangellyCurrency[] =
+        getChangellyCurrenciesFixedProps(
+          changellyCurrenciesData.result as ChangellyCurrency[],
         );
+
+      const supportedCoinsWithFixRateEnabled: SwapCryptoCoin[] =
+        changellyCurrenciesDataFixedNames
+          .filter((changellyCurrency: ChangellyCurrency) =>
+            filterChangellyCurrenciesConditions(changellyCurrency),
+          )
+          .map(
+            ({
+              name,
+              fullName,
+              protocol,
+              contractAddress,
+            }: {
+              name: string;
+              fullName: string;
+              protocol?: string;
+              contractAddress?: string;
+            }) => {
+              const chain = getChainFromChangellyProtocol(name, protocol);
+              return {
+                currencyAbbreviation: name,
+                symbol: getCurrencyAbbreviation(name, chain),
+                name: fullName,
+                chain,
+                protocol,
+                logoUri: getLogoUri(name, chain),
+                contractAddress,
+              };
+            },
+          );
 
       // TODO: add support to float-rate coins supported by Changelly
 
       // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+      const orderedArray = SupportedCurrencyOptions.map(currency =>
+        currency.chain
+          ? getCurrencyAbbreviation(
+              currency.currencyAbbreviation,
+              currency.chain,
+            )
+          : currency.currencyAbbreviation,
+      );
       let supportedCoins = orderBy(
         supportedCoinsWithFixRateEnabled,
         [
           coin => {
-            return SupportedCurrencies.includes(coin.symbol)
-              ? SupportedCurrencies.indexOf(coin.symbol)
-              : SupportedCurrencies.length;
+            return orderedArray.includes(coin.symbol)
+              ? orderedArray.indexOf(coin.symbol)
+              : orderedArray.length;
           },
           'name',
         ],

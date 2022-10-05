@@ -13,6 +13,7 @@ import {
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {H4, H5, SubText, TextAlign} from '../../../../components/styled/Text';
 import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
+import {getBadgeImg} from '../../../../utils/helper-methods';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -98,7 +99,13 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
               {customSupportedCurrencies?.map((currency, index) => (
                 <RowContainer key={index}>
                   <CurrencyImageContainer>
-                    <CurrencyImage img={currency.logoUri} />
+                    <CurrencyImage
+                      img={currency.logoUri}
+                      badgeUri={getBadgeImg(
+                        currency.currencyAbbreviation,
+                        currency.chain,
+                      )}
+                    />
                   </CurrencyImageContainer>
                   <CurrencyColumn>
                     <H5>{currency.name}</H5>

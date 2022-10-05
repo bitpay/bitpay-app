@@ -98,7 +98,7 @@ export const changellySupportedEthErc20Tokens = [
   'uma',
   'uni',
   'uos',
-  'usdt20', // usdt
+  'usdt', // usdt20 in Changelly
   'vgx',
   'vib',
   'vidt',
@@ -108,8 +108,8 @@ export const changellySupportedEthErc20Tokens = [
 ];
 
 export const changellySupportedMaticErc20Tokens = [
-  'maticpolygon', // matic
-  'usdcmatic', // usdc
+  'matic', // maticpolygon in Changelly
+  'usdc', // usdcmatic in Changelly
 ];
 
 export const generateMessageId = (walletId?: string) => {
@@ -122,7 +122,7 @@ export const generateMessageId = (walletId?: string) => {
 };
 
 export interface ChangellyCurrency {
-  name: string;
+  name: string; // currencyAbbreviation
   fullName: string;
   enabled: boolean;
   fixRateEnabled: boolean;
@@ -162,6 +162,47 @@ export interface ChangellyFixTransactionDataType {
   fixedRateId: string;
   refundAddress: string;
 }
+
+export const getChangellyCurrenciesFixedProps = (
+  changellyCurrenciesData: ChangellyCurrency[],
+): ChangellyCurrency[] => {
+  changellyCurrenciesData.forEach((currency: ChangellyCurrency) => {
+    if (
+      currency.name.toLowerCase() === 'usdt20' &&
+      currency.protocol?.toLowerCase() === 'erc20' &&
+      currency.contractAddress === '0xdac17f958d2ee523a2206206994597c13d831ec7'
+    ) {
+      currency.name = 'usdt';
+      currency.fullName = 'Tether USD';
+    } else if (
+      currency.name.toLowerCase() === 'maticpolygon' &&
+      currency.protocol?.toLowerCase() === 'matic'
+    ) {
+      currency.name = 'matic';
+    } else if (
+      currency.name.toLowerCase() === 'usdcmatic' &&
+      currency.protocol?.toLowerCase() === 'matic'
+    ) {
+      currency.name = 'usdc';
+    }
+  });
+  return changellyCurrenciesData;
+};
+
+export const getChangellyFixedCurrencyAbbreviation = (
+  currency: string,
+  chain: string,
+): string => {
+  if (currency === 'usdt' && chain === 'eth') {
+    return 'usdt20';
+  } else if (currency === 'maticpolygon' && chain === 'matic') {
+    return 'matic';
+  } else if (currency === 'usdcmatic' && chain === 'matic') {
+    return 'usdc';
+  } else {
+    return currency;
+  }
+};
 
 export const isCoinSupportedToSwap = (coin: string, chain: string): boolean => {
   if (chain === undefined) {
