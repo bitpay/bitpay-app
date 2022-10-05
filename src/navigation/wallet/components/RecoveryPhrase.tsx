@@ -2,17 +2,26 @@ import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Caution,
-  SlateDark,
-  White,
   LightBlack,
   NeutralSlate,
+  SlateDark,
+  White,
 } from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {
   ActiveOpacity,
+  AdvancedOptions,
+  AdvancedOptionsButton,
+  AdvancedOptionsButtonText,
+  AdvancedOptionsContainer,
+  Column,
   CtaContainer as _CtaContainer,
   HeaderContainer,
+  ImportTextInput,
+  Row,
+  ScanContainer,
   ScreenGutter,
+  SheetContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
@@ -20,16 +29,17 @@ import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
+  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
-import {useForm, Controller} from 'react-hook-form';
+import {Controller, useForm} from 'react-hook-form';
 import {
   BaseText,
-  ImportTitle,
-  TextAlign,
   H4,
+  ImportTitle,
   Paragraph,
+  TextAlign,
 } from '../../../components/styled/Text';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
@@ -51,27 +61,18 @@ import {
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
-import {
-  ImportTextInput,
-  AdvancedOptionsContainer,
-  AdvancedOptionsButton,
-  AdvancedOptionsButtonText,
-  AdvancedOptions,
-  Column,
-  Row,
-  SheetContainer,
-  ScanContainer,
-} from '../../../components/styled/Containers';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {
-  getDerivationStrategy,
-  isValidDerivationPathCoin,
-  parsePath,
   getAccount,
+  getDerivationStrategy,
   getNetworkName,
+  isValidDerivationPathCoin,
+  keyExtractor,
+  parsePath,
+  sleep,
 } from '../../../utils/helper-methods';
 import {DefaultDerivationPath} from '../../../constants/defaultDerivationPath';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
@@ -80,10 +81,8 @@ import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOpti
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {FlatList, ScrollView} from 'react-native';
-import {keyExtractor} from '../../../utils/helper-methods';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {sleep} from '../../../utils/helper-methods';
 import {
   GetName,
   isSingleAddressCoin,
@@ -400,6 +399,28 @@ const RecoveryPhrase = () => {
     }
   };
 
+  const startDeferredImport = async (
+    importData: {words?: string | undefined; xPrivKey?: string | undefined},
+    opts: Partial<KeyOptions>,
+  ) => {
+    await sleep(0);
+    dispatch(showOnGoingProcessModal(OnGoingProcessMessages.REDIRECTING));
+    await sleep(350);
+
+    let _context = route.params?.context;
+    if (_context !== 'onboarding') {
+      _context = 'deferredImport';
+    }
+
+    dispatch(deferredImportMnemonic(importData, opts, _context));
+    dispatch(dismissOnGoingProcessModal());
+    backupRedirect({
+      context: _context,
+      navigation,
+      walletTermsAccepted,
+    });
+  };
+
   const importWallet = async (
     importData: {words?: string | undefined; xPrivKey?: string | undefined},
     opts: Partial<KeyOptions>,
@@ -418,16 +439,7 @@ const RecoveryPhrase = () => {
               {
                 text: t('GOT IT'),
                 action: () => {
-                  let _context = route.params?.context;
-                  if (_context !== 'onboarding') {
-                    _context = 'deferredImport';
-                  }
-                  backupRedirect({
-                    context: _context,
-                    navigation,
-                    walletTermsAccepted,
-                  });
-                  dispatch(deferredImportMnemonic(importData, opts, _context));
+                  startDeferredImport(importData, opts);
                 },
                 primary: true,
               },

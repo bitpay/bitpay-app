@@ -3,7 +3,6 @@ import {FeeOptions, Wallet} from '../../wallet.models';
 import {GetEstimatedTxSize} from '../../utils/wallet';
 import {IsERCToken} from '../../utils/currency';
 import {BwcProvider} from '../../../../lib/bwc';
-import {Effect} from '../../..';
 const BWC = BwcProvider.getInstance();
 import {t} from 'i18next';
 

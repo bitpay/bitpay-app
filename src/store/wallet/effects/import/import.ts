@@ -99,7 +99,6 @@ import {
 import {t} from 'i18next';
 import {sleep} from '../../../../utils/helper-methods';
 import {backupRedirect} from '../../../../navigation/wallet/screens/Backup';
-import {SUPPORTED_COINS} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 
@@ -808,20 +807,127 @@ export const deferredImportErrorNotification = (): Effect => async dispatch => {
   );
 };
 
+const onFailedDeferredImport =
+  (e: any): Effect =>
+  async (dispatch, getState) => {
+    try {
+      dispatch(clearDeferredImport());
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(LogActions.error('[Import Mnemonic]: ', errorStr));
+      const {
+        APP: {onboardingCompleted},
+      } = getState();
+      if (onboardingCompleted) {
+        dispatch(deferredImportErrorNotification());
+      } else {
+        dispatch(updateOnCompleteOnboarding('deferredImportErrorNotification'));
+      }
+    } catch (e) {}
+  };
+
 export const deferredImportMnemonic =
   (
     importData: {words?: string; xPrivKey?: string},
     opts: Partial<KeyOptions>,
     context?: string,
   ): Effect =>
-  async (dispatch, getState): Promise<void> => {
+  dispatch => {
     try {
       dispatch(updateDeferredImport({importData, opts}));
 
-      await sleep(500);
-      const key = (await dispatch<any>(
-        startImportMnemonic(importData, opts),
-      )) as Key;
+      const {words, xPrivKey} = importData;
+      opts.words = normalizeMnemonic(words);
+      opts.xPrivKey = xPrivKey;
+      dispatch(serverAssistedImport(opts, context));
+    } catch (e: any) {
+      dispatch(onFailedDeferredImport(e));
+    }
+  };
+
+const onSuccessServerAssistedImport =
+  (
+    data: {key: KeyMethods; wallets: Wallet[]},
+    opts: Partial<KeyOptions>,
+    context?: string,
+  ): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {
+        WALLET,
+        APP: {
+          notificationsAccepted,
+          emailNotifications,
+          brazeEid,
+          defaultLanguage,
+        },
+      } = getState();
+      const tokenOpts = {
+        ...BitpaySupportedTokenOpts,
+        ...WALLET.tokenOptions,
+        ...WALLET.customTokenOptions,
+      };
+
+      // To Avoid Duplicate wallet import
+      const {key: _key, wallets} = findMatchedKeyAndUpdate(
+        data.wallets,
+        data.key,
+        Object.values(WALLET.keys),
+        opts,
+      );
+
+      // To clear encrypt password
+      if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
+        dispatch(deleteKey({keyId: opts.keyId}));
+      }
+
+      const key = buildKeyObj({
+        key: _key,
+        wallets: wallets.map(wallet => {
+          // subscribe new wallet to push notifications
+          if (notificationsAccepted) {
+            dispatch(subscribePushNotifications(wallet, brazeEid!));
+          }
+          // subscribe new wallet to email notifications
+          if (
+            emailNotifications &&
+            emailNotifications.accepted &&
+            emailNotifications.email
+          ) {
+            const prefs = {
+              email: emailNotifications.email,
+              language: defaultLanguage,
+              unit: 'btc', // deprecated
+            };
+            dispatch(subscribeEmailNotifications(wallet, prefs));
+          }
+          const {currencyAbbreviation, currencyName} = dispatch(
+            mapAbbreviationAndName(
+              wallet.credentials.coin,
+              wallet.credentials.chain,
+            ),
+          );
+          return merge(
+            wallet,
+            buildWalletObj(
+              {...wallet.credentials, currencyAbbreviation, currencyName},
+              tokenOpts,
+            ),
+          );
+        }),
+        backupComplete: true,
+      });
+
+      dispatch(
+        successImport({
+          key,
+        }),
+      );
+
       await dispatch(startGetRates({}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       dispatch(updatePortfolioBalance());
@@ -847,14 +953,14 @@ export const deferredImportMnemonic =
             {
               text: t('GOT IT'),
               action: () => {
-                const {WALLET} = getState();
+                const {WALLET: _WALLET} = getState();
 
                 backupRedirect({
-                  context: WALLET.walletTermsAccepted
+                  context: _WALLET.walletTermsAccepted
                     ? 'deferredImport'
                     : context,
                   navigation: navigationRef,
-                  walletTermsAccepted: WALLET.walletTermsAccepted,
+                  walletTermsAccepted: _WALLET.walletTermsAccepted,
                   key,
                 });
               },
@@ -863,119 +969,9 @@ export const deferredImportMnemonic =
           ],
         }),
       );
-    } catch (e: any) {
-      dispatch(clearDeferredImport());
-      let errorStr;
-      if (e instanceof Error) {
-        errorStr = e.message;
-      } else {
-        errorStr = JSON.stringify(e);
-      }
-      dispatch(LogActions.error('[Import Mnemonic]: ', errorStr));
-      try {
-        const {
-          APP: {onboardingCompleted},
-        } = getState();
-        if (onboardingCompleted) {
-          dispatch(deferredImportErrorNotification());
-        } else {
-          dispatch(
-            updateOnCompleteOnboarding('deferredImportErrorNotification'),
-          );
-        }
-      } catch (e) {}
+    } catch (e) {
+      dispatch(onFailedDeferredImport(e));
     }
-  };
-
-export const startImportMnemonic =
-  (
-    importData: {words?: string; xPrivKey?: string},
-    opts: Partial<KeyOptions>,
-  ): Effect =>
-  async (dispatch, getState): Promise<Key> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const {
-          WALLET,
-          APP: {
-            notificationsAccepted,
-            emailNotifications,
-            brazeEid,
-            defaultLanguage,
-          },
-        } = getState();
-        const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
-          ...WALLET.tokenOptions,
-          ...WALLET.customTokenOptions,
-        };
-        const {words, xPrivKey} = importData;
-        opts.words = normalizeMnemonic(words);
-        opts.xPrivKey = xPrivKey;
-
-        const data = await serverAssistedImport(opts);
-
-        // To Avoid Duplicate wallet import
-        const {key: _key, wallets} = findMatchedKeyAndUpdate(
-          data.wallets,
-          data.key,
-          Object.values(WALLET.keys),
-          opts,
-        );
-
-        // To clear encrypt password
-        if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
-          dispatch(deleteKey({keyId: opts.keyId}));
-        }
-
-        const key = buildKeyObj({
-          key: _key,
-          wallets: wallets.map(wallet => {
-            // subscribe new wallet to push notifications
-            if (notificationsAccepted) {
-              dispatch(subscribePushNotifications(wallet, brazeEid!));
-            }
-            // subscribe new wallet to email notifications
-            if (
-              emailNotifications &&
-              emailNotifications.accepted &&
-              emailNotifications.email
-            ) {
-              const prefs = {
-                email: emailNotifications.email,
-                language: defaultLanguage,
-                unit: 'btc', // deprecated
-              };
-              dispatch(subscribeEmailNotifications(wallet, prefs));
-            }
-            const {currencyAbbreviation, currencyName} = dispatch(
-              mapAbbreviationAndName(
-                wallet.credentials.coin,
-                wallet.credentials.chain,
-              ),
-            );
-            return merge(
-              wallet,
-              buildWalletObj(
-                {...wallet.credentials, currencyAbbreviation, currencyName},
-                tokenOpts,
-              ),
-            );
-          }),
-          backupComplete: true,
-        });
-
-        dispatch(
-          successImport({
-            key,
-          }),
-        );
-        resolve(key);
-      } catch (e) {
-        dispatch(failedImport());
-        reject(e);
-      }
-    });
   };
 
 export const startImportFile =
@@ -1329,40 +1325,48 @@ const createKeyAndCredentialsWithFile = async (
   return Promise.resolve({wallet: bwcClient, key});
 };
 
-export const serverAssistedImport = async (
-  opts: Partial<KeyOptions>,
-): Promise<{key: KeyMethods; wallets: Wallet[]}> => {
-  return new Promise((resolve, reject) => {
-    try {
-      BwcProvider.API.serverAssistedImport(
-        opts,
-        {baseUrl: 'https://bws.bitpay.com/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
-        // @ts-ignore
-        async (err, key, wallets) => {
-          if (err) {
-            return reject(err);
-          }
-          if (wallets.length === 0) {
-            return reject(new Error('WALLET_DOES_NOT_EXIST'));
-          } else {
-            // TODO CUSTOM TOKENS
-            const tokens: Wallet[] = wallets.filter(
-              (wallet: Wallet) => !!wallet.credentials.token,
-            );
-
-            if (tokens && !!tokens.length) {
-              wallets = linkTokenToWallet(tokens, wallets);
+export const serverAssistedImport =
+  (opts: Partial<KeyOptions>, context?: string): Effect =>
+  (dispatch): Promise<{key: KeyMethods; wallets: Wallet[]}> => {
+    return new Promise((resolve, reject) => {
+      try {
+        BwcProvider.API.serverAssistedImport(
+          opts,
+          {baseUrl: 'https://bws.bitpay.com/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
+          // @ts-ignore
+          async (err, key, wallets) => {
+            if (err) {
+              return reject(err);
             }
+            if (wallets.length === 0) {
+              return reject(new Error('WALLET_DOES_NOT_EXIST'));
+            } else {
+              // TODO CUSTOM TOKENS
+              const tokens: Wallet[] = wallets.filter(
+                (wallet: Wallet) => !!wallet.credentials.token,
+              );
 
-            return resolve({key, wallets});
-          }
-        },
-      );
-    } catch (err) {
-      return reject(err);
-    }
-  });
-};
+              if (tokens && !!tokens.length) {
+                wallets = linkTokenToWallet(tokens, wallets);
+              }
+
+              if (context) {
+                dispatch(
+                  onSuccessServerAssistedImport({key, wallets}, opts, context),
+                );
+              }
+              return resolve({key, wallets});
+            }
+          },
+        );
+      } catch (err) {
+        if (context) {
+          dispatch(onFailedDeferredImport(err));
+        }
+        return reject(err);
+      }
+    });
+  };
 
 const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
   tokens.forEach(token => {
