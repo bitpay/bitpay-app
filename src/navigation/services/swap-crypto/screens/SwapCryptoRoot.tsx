@@ -7,7 +7,6 @@ import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyO
 import {
   SUPPORTED_COINS,
   SUPPORTED_ETHEREUM_TOKENS,
-  SUPPORTED_CURRENCIES,
 } from '../../../../constants/currencies';
 import {
   Action,
@@ -155,10 +154,8 @@ const SwapCryptoRoot: React.FC = () => {
   const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
 
   const selectedWallet = route.params?.selectedWallet;
-  // const SupportedCoins: string[] = SUPPORTED_COINS;
   const SupportedEthereumTokens: string[] = SUPPORTED_ETHEREUM_TOKENS;
   const SupportedChains: string[] = SUPPORTED_COINS;
-  const SupportedCurrencies: string[] = SUPPORTED_CURRENCIES;
   const [swapLimits, setSwapLimits] = useState<SwapLimits>({
     minAmount: undefined,
     maxAmount: undefined,
@@ -543,7 +540,7 @@ const SwapCryptoRoot: React.FC = () => {
             }
           }
         }
-        updateReceivingAmount();
+        // updateReceivingAmount();
       })
       .catch(err => {
         logger.error('Changelly getPairsParams Error: ' + JSON.stringify(err));
@@ -1133,6 +1130,7 @@ const SwapCryptoRoot: React.FC = () => {
           } else if (createToWalletData) {
             try {
               if (createToWalletData.key.isPrivKeyEncrypted) {
+                logger.debug('Key is Encrypted. Trying to decrypt...');
                 await sleep(500);
                 const password = await dispatch(
                   getDecryptPassword(createToWalletData.key),
@@ -1149,6 +1147,16 @@ const SwapCryptoRoot: React.FC = () => {
 
               const createdToWallet = await dispatch(
                 addWallet(createToWalletData),
+              );
+              logger.debug(
+                `Added ${createdToWallet?.currencyAbbreviation} wallet from Swap Crypto`,
+              );
+              dispatch(
+                logSegmentEvent('track', 'Created Basic Wallet', {
+                  coin: createToWalletData.currency.currencyAbbreviation,
+                  isErc20Token: createToWalletData.currency.isToken,
+                  context: 'swapCrypto',
+                }),
               );
               setToWallet(createdToWallet);
               await sleep(300);

@@ -21,6 +21,7 @@ import {
 import {useAppDispatch} from '../../utils/hooks';
 import useAppSelector from '../../utils/hooks/useAppSelector';
 import CurrencySymbol from '../icons/currency-symbol/CurrencySymbol';
+import {useLogger} from '../../utils/hooks/useLogger';
 
 const AmountContainer = styled.View`
   flex: 1;
@@ -125,6 +126,7 @@ const Amount: React.VFC<AmountProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+  const logger = useLogger();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
@@ -240,6 +242,9 @@ const Amount: React.VFC<AmountProps> = ({
   }, []);
 
   const swapCryptoSendMax = () => {
+    logger.debug(
+      `Handling swapCryptoSendMax with: ${JSON.stringify(swapOpts)}`,
+    );
     if (!swapOpts?.swapLimits || !swapOpts?.maxWalletAmount) {
       return;
     }

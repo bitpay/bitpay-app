@@ -342,8 +342,12 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   ) => {
     setKeySelectorModalVisible(false);
     if (selectedKey.backupComplete) {
+      logger.debug(
+        `Key selected. Adding ${selectedCurrency.currencyAbbreviation} wallet.`,
+      );
       handleBasicWalletCreation(selectedCurrency, selectedKey);
     } else {
+      logger.debug('Key selected. Needs backup.');
       if (onDismiss) {
         onDismiss();
       }
@@ -438,6 +442,9 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
       onWalletSelect(undefined, undefined);
       return;
     }
+    logger.debug(
+      `Linked wallet selected. Adding ${addTokenToLinkedWallet.currencyAbbreviation} wallet.`,
+    );
 
     // Needed to prevent pointer issues
     const associatedWallet = findWalletById(
