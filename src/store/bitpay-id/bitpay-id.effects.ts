@@ -34,10 +34,15 @@ export const startBitPayIdStoreInit =
     const {basicInfo: user} = initialData;
 
     if (user) {
-      const {eid, email, name} = user;
-
+      const {eid, email, name, referralCode} = user;
       dispatch(AppActions.setBrazeEid(eid));
-      dispatch(Analytics.identify(eid, {email, name}));
+      dispatch(
+        Analytics.identify(eid, {
+          email,
+          name,
+          'Cardholder Unique Referral Code': referralCode,
+        }),
+      );
 
       dispatch(
         BitPayIdActions.successInitializeStore(APP.network, initialData),
