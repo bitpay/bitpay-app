@@ -2,8 +2,7 @@ import {
   EventPlugin,
   IdentifyEventType,
   PluginType,
-  ScreenEventType,
-  TrackEventType,
+  SegmentEvent,
   UserInfoState,
 } from '@segment/analytics-react-native';
 import flush from './methods/flush';
@@ -34,6 +33,20 @@ export class BpBrazePlugin extends EventPlugin {
   }
 
   /**
+   * Executes the Segment method (identify, track, etc.). As this is called for every method, call the enrich method here.
+   *
+   * @param event SegmentEvent
+   * @returns
+   */
+  execute(
+    event: SegmentEvent,
+  ): SegmentEvent | Promise<SegmentEvent | undefined> | undefined {
+    super.execute(event);
+
+    return this._enrich(event);
+  }
+
+  /**
    * Modified version of Segment's official Braze plugin identify logic.
    *
    * Braze identify call is expensive, only call it if something changed.
@@ -57,30 +70,16 @@ export class BpBrazePlugin extends EventPlugin {
         traits: event.traits,
       };
     }
-    return this._enrich(event);
-  }
-
-  track(
-    event: TrackEventType,
-  ): TrackEventType | Promise<TrackEventType | undefined> | undefined {
-    return this._enrich(event);
-  }
-
-  screen(
-    event: ScreenEventType,
-  ): ScreenEventType | Promise<ScreenEventType | undefined> | undefined {
-    return this._enrich(event);
+    return event;
   }
 
   flush() {
     flush();
   }
 
-  private _enrich<
-    T extends IdentifyEventType | ScreenEventType | TrackEventType,
-  >(event: T) {
-    // no need to apply braze_id if user has been identified
-    if (event.userId) {
+  private _enrich<T extends SegmentEvent>(event: T) {
+    // no need to apply braze_id if user has been identified or if no braze_id
+    if (event.userId || !this.brazeId) {
       return event;
     }
 
@@ -92,11 +91,9 @@ export class BpBrazePlugin extends EventPlugin {
       event.integrations[this.key] = {};
     }
 
-    if (this.brazeId) {
-      Object.assign(event.integrations[this.key], {
-        braze_id: this.brazeId,
-      });
-    }
+    Object.assign(event.integrations[this.key], {
+      braze_id: this.brazeId,
+    });
 
     return event;
   }
