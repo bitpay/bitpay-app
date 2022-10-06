@@ -579,7 +579,6 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                     style={{marginBottom: 24}}
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
-                      // setSelectedCurrency(token);
                       handleCurrencyOnPress(token);
                     }}>
                     <CurrencyImageContainer
@@ -627,8 +626,6 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
    * Derived from allListItems, but with search filter applied.
    */
   const filteredListItems = useMemo(() => {
-    // supportedCoins
-
     // If no filter, return reference to allListItems.
     if (!searchFilter) {
       return supportedCoins;
@@ -669,7 +666,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
 
       return accum;
     }, []);
-  }, [searchFilter, supportedCoins]); //allListItems]);
+  }, [searchFilter, supportedCoins]);
 
   useEffect(() => {
     if (isVisible) {
@@ -718,11 +715,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
             )}
           </ModalHeader>
           <TextAlign style={{marginTop: 15}} align={'center'}>
-            <SubText>
-              Below are the available coins/tokens that you can swap to. If you
-              are not able to see some of your wallets, remember that your key
-              must be backed up.
-            </SubText>
+            <SubText>{t('swapToWalletsConditionMessage')}</SubText>
           </TextAlign>
           <SearchContainer>
             <CurrencySelectionSearchInput

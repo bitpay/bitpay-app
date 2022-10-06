@@ -337,7 +337,7 @@ const SwapCryptoRoot: React.FC = () => {
         logger.error(
           'Changelly getFixRateForAmount Error: ' + JSON.stringify(err),
         );
-        const title = 'Changelly Error';
+        const title = t('Changelly Error');
         const msg = t(
           'Changelly is not available at this moment. Please try again later.',
         );
@@ -813,8 +813,9 @@ const SwapCryptoRoot: React.FC = () => {
       );
 
       if (supportedCoins.length === 0) {
-        const msg =
-          'Our partner Changelly is not currently available. Please try again later.';
+        const msg = t(
+          'Our partner Changelly is not currently available. Please try again later.',
+        );
         showError(msg, undefined, undefined, true);
       }
 
@@ -965,7 +966,7 @@ const SwapCryptoRoot: React.FC = () => {
                           }}>
                           {useSendMax ? (
                             <DataText style={{fontSize: 14}}>
-                              Maximum Amount
+                              {t('Maximum Amount')}
                             </DataText>
                           ) : (
                             <DataText>
@@ -1106,7 +1107,7 @@ const SwapCryptoRoot: React.FC = () => {
         customSupportedCurrencies={swapCryptoSupportedCoinsFrom}
         livenetOnly={true}
         modalContext={'send'}
-        modalTitle={'Swap From'}
+        modalTitle={t('Swap From')}
         onDismiss={(fromWallet: Wallet) => {
           hideModal('fromWalletSelector');
           if (fromWallet?.currencyAbbreviation) {
@@ -1119,7 +1120,7 @@ const SwapCryptoRoot: React.FC = () => {
         isVisible={toWalletSelectorModalVisible}
         customSupportedCurrencies={swapCryptoSupportedCoinsTo}
         livenetOnly={true}
-        modalTitle={'Swap To'}
+        modalTitle={t('Swap To')}
         onDismiss={async (
           toWallet?: Wallet,
           createToWalletData?: AddWalletData,

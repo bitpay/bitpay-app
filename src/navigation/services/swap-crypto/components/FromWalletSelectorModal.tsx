@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import GlobalSelect, {
   GlobalSelectModalContext,
 } from '../../../wallet/screens/GlobalSelect';
@@ -55,6 +56,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
   modalContext,
   modalTitle,
 }) => {
+  const {t} = useTranslation();
   const [swapCryptoHelpVisible, setSwapCryptoHelpVisible] = useState(false);
 
   const _customSupportedCurrencies = customSupportedCurrencies?.map(
@@ -83,16 +85,11 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
           onBackdropPress={() => setSwapCryptoHelpVisible(false)}>
           <SwapCryptoHelpContainer>
             <TextAlign align={'center'}>
-              <H4>What can I swap?</H4>
+              <H4>{t('What can I swap?')}</H4>
             </TextAlign>
             <TextAlign align={'center'}>
               {modalContext === 'send' ? (
-                <SubText>
-                  Below are the available coins/tokens that you can swap from.
-                  If you are not able to see some of your wallets, remember that
-                  your key must be backed up and have funds not locked due to
-                  pending transactions.
-                </SubText>
+                <SubText>{t('swapFromWalletsConditionMessage')}</SubText>
               ) : null}
             </TextAlign>
             <ScrollView style={{marginTop: 20}}>
