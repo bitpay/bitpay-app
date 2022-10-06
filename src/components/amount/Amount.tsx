@@ -285,6 +285,12 @@ const Amount: React.VFC<AmountProps> = ({
       +amount > Number(swapOpts.maxWalletAmount)
     ) {
       return true;
+    } else if (
+      swapOpts?.swapLimits.maxAmount &&
+      +amount > 0 &&
+      +amount > swapOpts.swapLimits.maxAmount
+    ) {
+      return true;
     } else {
       return !+amount && buttonState !== 'loading'; // Default case
     }
@@ -349,7 +355,10 @@ const Amount: React.VFC<AmountProps> = ({
                   'minimum'}
               </WarnMsgText>
             ) : null}
-            {+amount > 0 && +amount > Number(swapOpts?.maxWalletAmount) ? (
+            {swapOpts?.swapLimits.minAmount &&
+            +amount > 0 &&
+            +amount > Number(swapOpts?.maxWalletAmount) &&
+            +amount >= swapOpts.swapLimits.minAmount ? (
               <WarnMsgText>{'Not enough funds'}</WarnMsgText>
             ) : null}
           </Row>
