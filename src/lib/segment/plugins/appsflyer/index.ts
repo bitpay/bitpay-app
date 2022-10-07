@@ -88,22 +88,22 @@ export class BpAppsFlyerPlugin extends AppsflyerPlugin {
   }
 
   private _enrich<T extends SegmentEvent>(event: T) {
-    if (this.appsFlyerId) {
-      if (!event.integrations) {
-        event.integrations = {};
-      }
+    if (!event.integrations) {
+      event.integrations = {};
+    }
 
-      if (!event.integrations[this.key]) {
-        event.integrations[this.key] = {};
-      }
+    if (!event.integrations[this.key]) {
+      event.integrations[this.key] = {};
+    }
 
-      if (shouldNotSendViaCloudMode(event)) {
-        event.integrations[this.key] = false;
-      } else {
-        Object.assign(event.integrations[this.key], {
-          appsFlyerId: this.appsFlyerId,
-        });
-      }
+    if (shouldNotSendViaCloudMode(event)) {
+      // set to false to prevent Segment from forwarding event via cloud-mode
+      event.integrations[this.key] = false;
+    } else if (this.appsFlyerId) {
+      // set the appsFlyerId so AppsFlyer can associate the event with the correct user
+      Object.assign(event.integrations[this.key], {
+        appsFlyerId: this.appsFlyerId,
+      });
     }
 
     return event;
