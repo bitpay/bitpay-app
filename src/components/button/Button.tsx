@@ -48,6 +48,7 @@ interface ButtonProps extends BaseButtonProps {
   debounceTime?: number;
   state?: ButtonState;
   style?: StyleProp<ViewStyle>;
+  action?: boolean;
 }
 
 interface ButtonOptionProps {
@@ -56,6 +57,7 @@ interface ButtonOptionProps {
   cancel?: boolean;
   danger?: boolean;
   disabled?: boolean;
+  action?: boolean;
 }
 
 export const DURATION = 100;
@@ -125,13 +127,17 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 `;
 
 const PillContent = styled.View<ButtonOptionProps>`
-  background: ${({secondary, cancel, theme}) => {
+  background: ${({secondary, cancel, theme, action}) => {
     if (secondary) {
       return 'transparent';
     }
 
     if (cancel) {
       return theme?.dark ? LightBlack : NeutralSlate;
+    }
+
+    if (action) {
+      return Action;
     }
 
     return theme?.dark ? Midnight : Air;
@@ -163,13 +169,17 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
   line-height: 22.03px;
   text-align: center;
 
-  color: ${({disabled, cancel, theme}) => {
+  color: ${({disabled, cancel, theme, action}) => {
     if (disabled) {
       return DisabledDark;
     }
 
     if (cancel) {
       return theme?.dark ? White : SlateDark;
+    }
+
+    if (action) {
+      return White;
     }
 
     return theme?.dark ? White : Action;
@@ -209,6 +219,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     debounceTime,
     state,
     style,
+    action,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -282,13 +293,15 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         secondary={secondary}
         outline={outline}
         cancel={cancel}
-        disabled={disabled}>
+        disabled={disabled}
+        action={action}>
         <Animated.View style={childrenStyle}>
           <ButtonTypeText
             secondary={secondary}
             cancel={cancel}
             danger={danger}
-            disabled={disabled}>
+            disabled={disabled}
+            action={action}>
             {children}
           </ButtonTypeText>
         </Animated.View>

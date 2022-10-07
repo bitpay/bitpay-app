@@ -1064,6 +1064,7 @@ const BuyCryptoOffers: React.FC = () => {
                   {offer.fiatMoney && (
                     <SummaryCtaContainer>
                       <Button
+                        action={true}
                         buttonType={'pill'}
                         onPress={() => {
                           haptic('impactLight');
