@@ -464,13 +464,14 @@ export const askForTrackingPermissionAndEnableSdks =
       );
 
       try {
+        const {appFirstOpenData, appOpeningWasTracked, brazeEid} =
+          getState().APP;
+
         if (!Segment.getClient()) {
-          await Segment.init();
+          await Segment.init({eid: brazeEid});
         }
 
         if (appInit) {
-          const {appFirstOpenData, appOpeningWasTracked} = getState().APP;
-
           if (!appOpeningWasTracked && appFirstOpenData) {
             const {firstOpenDate, firstOpenEventComplete} = appFirstOpenData;
 

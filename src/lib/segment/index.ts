@@ -66,7 +66,7 @@ const lib = (() => {
     /**
      * Creates and initializes the Segment SDK. Must be called first.
      */
-    async init() {
+    async init({eid}: {eid?: string} = {}) {
       if (!APP_ANALYTICS_ENABLED) {
         return;
       }
@@ -76,7 +76,8 @@ const lib = (() => {
       }
 
       const appsFlyerId = await getAppsFlyerId();
-      const brazeId = await getBrazeIdForAnonymousUser();
+      // don't need to fetch brazeId if user is already identified (has an eid)
+      const brazeId = eid ? undefined : await getBrazeIdForAnonymousUser();
 
       _client = createClient({
         // Required ---------------
