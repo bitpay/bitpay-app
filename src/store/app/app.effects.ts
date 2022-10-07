@@ -536,11 +536,7 @@ export const Analytics = {
    */
   screen:
     (name: string, properties: JsonMap = {}): Effect<Promise<void>> =>
-    (_dispatch, getState) => {
-      const {BITPAY_ID, APP} = getState();
-      const user = BITPAY_ID.user[APP.network];
-      properties.userId = user?.eid || '';
-
+    () => {
       return Segment.screen(name, properties);
     },
 
@@ -557,13 +553,7 @@ export const Analytics = {
    */
   track:
     (event: string, properties: JsonMap = {}): Effect<Promise<void>> =>
-    (_dispatch, getState) => {
-      if (!properties?.userId) {
-        const {BITPAY_ID, APP} = getState();
-        const user = BITPAY_ID.user[APP.network];
-        properties.userId = user?.eid || '';
-      }
-
+    () => {
       return Segment.track(`BitPay App - ${event}`, properties);
     },
 };
