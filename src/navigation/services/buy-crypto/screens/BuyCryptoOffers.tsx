@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   ScrollView,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
 import styled from 'styled-components/native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
@@ -738,11 +737,7 @@ const BuyCryptoOffers: React.FC = () => {
           destinationChain,
         );
 
-        Linking.openURL(paymentUrl)
-          .then(() => {
-            navigation.goBack();
-          })
-          .catch(err => console.error("Couldn't load page", err));
+        dispatch(openUrlWithInAppBrowser(paymentUrl));
       })
       .catch(err => {
         const reason = 'simplexPaymentRequest Error';
@@ -830,11 +825,7 @@ const BuyCryptoOffers: React.FC = () => {
         chain: destinationChain,
       }),
     );
-    Linking.openURL(paymentUrl)
-      .then(() => {
-        navigation.goBack();
-      })
-      .catch(err => console.error("Couldn't load page", err));
+    dispatch(openUrlWithInAppBrowser(paymentUrl));
   };
 
   const goTo = (key: string): void => {
@@ -903,11 +894,7 @@ const BuyCryptoOffers: React.FC = () => {
 
                 default:
                   if (url) {
-                    Linking.openURL(url)
-                      .then(() => {
-                        navigation.goBack();
-                      })
-                      .catch(err => console.error("Couldn't load page", err));
+                    dispatch(openUrlWithInAppBrowser(url));
                   }
                   break;
               }
