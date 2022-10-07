@@ -16,8 +16,8 @@ type BpAppsFlyerPluginOpts = {
  * Getting some errors when sending via cloud-mode, so send these over device-mode.
  */
 const DEVICE_MODE_EVENTS = [
-  'application installed', // missing properties context.AppsFlyer.counter and context.AppsFlyer.install_date, but adding these doesn't seem to fix
-  'application opened', // unknown error
+  //'application installed', // missing properties context.AppsFlyer.counter and context.AppsFlyer.install_date, but adding these doesn't seem to fix
+  //'application opened', // unknown error
 
   // we invoke the AppsFlyer plugin to send these, so don't send via cloud-mode
   'deep link opened',
