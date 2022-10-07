@@ -1,11 +1,11 @@
 import {
-  EventPlugin,
   IdentifyEventType,
   PluginType,
   SegmentEvent,
+  TrackEventType,
   UserInfoState,
 } from '@segment/analytics-react-native';
-import flush from './methods/flush';
+import {BrazePlugin} from '@segment/analytics-react-native-plugin-braze';
 import identify from './methods/identify';
 
 type BpBrazePluginOpts = {
@@ -13,18 +13,16 @@ type BpBrazePluginOpts = {
 };
 
 /**
- * This is a modified version of the Segment's official Braze plugin (https://www.npmjs.com/package/@segment/analytics-react-native-plugin-braze).
+ * Extends the official Segment Braze plugin.
  * Our Braze implementation is a combination cloud-mode/device-mode: cloud-mode to support funneling events through Segment and device-mode to take advantage of Braze device features such as notifications, content cards, etc.
- * Extending the DestinationPlugin and/or using type = PluginType.destination prevents cloud-mode event forwarding, so we are using PluginType.enrichment kinda like middleware to hook into the Segment methods.
+ * type = PluginType.destination prevents cloud-mode event forwarding, so we are using PluginType.enrichment kinda like middleware to hook into the Segment methods.
  *
  * Additionally, to support cloud-mode events for anonymous users, a braze_id needs to be passed in the integrations object (https://segment.com/docs/connections/destinations/catalog/braze).
- *
- * Source can be seen after installing via node_modules.
  */
-export class BpBrazePlugin extends EventPlugin {
+export class BpBrazePlugin extends BrazePlugin {
   type = PluginType.enrichment;
-  key = 'Appboy';
-  private lastSeenTraits: UserInfoState | undefined;
+
+  private bpLastSeenTraits: UserInfoState | undefined;
   private brazeId?: string;
 
   constructor(opts?: BpBrazePluginOpts) {
@@ -38,33 +36,29 @@ export class BpBrazePlugin extends EventPlugin {
    * @param event SegmentEvent
    * @returns
    */
-  execute(
-    event: SegmentEvent,
-  ): SegmentEvent | Promise<SegmentEvent | undefined> | undefined {
+  async execute(event: SegmentEvent): Promise<SegmentEvent | undefined> {
     super.execute(event);
 
     return this._enrich(event);
   }
 
   /**
-   * Modified version of Segment's official Braze plugin identify logic.
+   * Override BrazePlugin implementation. Mostly the same, but only supporting a subset of user properties.
    *
    * Braze identify call is expensive, only call it if something changed.
    */
-  identify(
-    event: IdentifyEventType,
-  ): IdentifyEventType | Promise<IdentifyEventType | undefined> | undefined {
+  identify(event: IdentifyEventType): IdentifyEventType | undefined {
     //check to see if anything has changed.
     //if it hasn't changed don't send event
     if (
-      this.lastSeenTraits?.userId === event.userId &&
-      this.lastSeenTraits?.anonymousId === event.anonymousId &&
-      this.lastSeenTraits?.traits === event.traits
+      this.bpLastSeenTraits?.userId === event.userId &&
+      this.bpLastSeenTraits?.anonymousId === event.anonymousId &&
+      this.bpLastSeenTraits?.traits === event.traits
     ) {
       return;
     } else {
       identify(event);
-      this.lastSeenTraits = {
+      this.bpLastSeenTraits = {
         anonymousId: event.anonymousId ?? '',
         userId: event.userId,
         traits: event.traits,
@@ -73,8 +67,11 @@ export class BpBrazePlugin extends EventPlugin {
     return event;
   }
 
-  flush() {
-    flush();
+  /**
+   * Override BrazePlugin implementation. Don't send track events via device-mode.
+   */
+  track(event: TrackEventType): TrackEventType {
+    return event;
   }
 
   private _enrich<T extends SegmentEvent>(event: T) {
