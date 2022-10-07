@@ -1,9 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
@@ -40,10 +36,6 @@ import {
 import {getWyreFiatAmountLimits, wyreEnv} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
-import {
-  showBottomNotificationModal,
-  dismissBottomNotificationModal,
-} from '../../../../store/app/app.actions';
 import {
   logSegmentEvent,
   openUrlWithInAppBrowser,
@@ -804,8 +796,8 @@ const BuyCryptoOffers: React.FC = () => {
           return;
         }
 
-        const paymentUrl = data.url;
-        openPopUpConfirmation('wyre', paymentUrl);
+        const {url} = data;
+        continueToWyre(url);
       })
       .catch((err: any) => {
         const reason = 'wyreWalletOrderReservation Error';
@@ -844,72 +836,7 @@ const BuyCryptoOffers: React.FC = () => {
     if (offers.simplex.errorMsg || offers.simplex.outOfLimitMsg) {
       return;
     }
-    openPopUpConfirmation('simplex');
-  };
-
-  const openPopUpConfirmation = (exchange: string, url?: string): void => {
-    let title, message;
-
-    switch (exchange) {
-      case 'simplex':
-        title = t('Continue to Simplex');
-        message = t(
-          "In order to finish the payment process you will be redirected to Simplex's page",
-        );
-        break;
-
-      case 'wyre':
-        title = t('Continue to Wyre');
-        message = t(
-          "In order to finish the payment process you will be redirected to Wyre's page",
-        );
-        break;
-
-      default:
-        title = t('Continue to the exchange page');
-        message = t(
-          'In order to finish the payment process you will be redirected to the exchange page',
-        );
-        break;
-    }
-
-    dispatch(
-      showBottomNotificationModal({
-        type: 'question',
-        title,
-        message,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('CONTINUE'),
-            action: () => {
-              dispatch(dismissBottomNotificationModal());
-              switch (exchange) {
-                case 'simplex':
-                  continueToSimplex();
-                  break;
-                case 'wyre':
-                  url ? continueToWyre(url) : () => {};
-                  break;
-
-                default:
-                  if (url) {
-                    dispatch(openUrlWithInAppBrowser(url));
-                  }
-                  break;
-              }
-            },
-            primary: true,
-          },
-          {
-            text: t('GO BACK'),
-            action: () => {
-              logger.debug('Continue to the exchange website CANCELED');
-            },
-          },
-        ],
-      }),
-    );
+    continueToSimplex();
   };
 
   const expandCard = (offer: CryptoOffer) => {
