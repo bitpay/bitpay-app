@@ -48,6 +48,7 @@ import {
 import {
   changellyCreateFixTransaction,
   changellyGetFixRateForAmount,
+  getChangellyFixedCurrencyAbbreviation,
 } from '../utils/changelly-utils';
 import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import ChangellyPoliciesModal from '../components/ChangellyPoliciesModal';
@@ -86,7 +87,7 @@ import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models'
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
-import {swapCryptoCoin} from './SwapCryptoRoot';
+import {SwapCryptoCoin} from './SwapCryptoRoot';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -97,8 +98,8 @@ export const SwapCheckoutContainer = styled.SafeAreaView`
 export interface ChangellyCheckoutProps {
   fromWalletSelected: Wallet;
   toWalletSelected: Wallet;
-  fromWalletData: swapCryptoCoin;
-  toWalletData: swapCryptoCoin;
+  fromWalletData: SwapCryptoCoin;
+  toWalletData: SwapCryptoCoin;
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;
@@ -181,8 +182,14 @@ const ChangellyCheckout: React.FC = () => {
 
     const createFixTxData = {
       amountFrom: amountExpectedFrom,
-      coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
-      coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
+      coinFrom: getChangellyFixedCurrencyAbbreviation(
+        fromWalletSelected.currencyAbbreviation.toLowerCase(),
+        fromWalletSelected.chain,
+      ),
+      coinTo: getChangellyFixedCurrencyAbbreviation(
+        toWalletSelected.currencyAbbreviation.toLowerCase(),
+        toWalletSelected.chain,
+      ),
       addressTo: cloneDeep(addressTo),
       refundAddress: cloneDeep(addressFrom),
       fixedRateId: cloneDeep(fixedRateId),
@@ -387,8 +394,14 @@ const ChangellyCheckout: React.FC = () => {
     }
     const fixRateForAmountData = {
       amountFrom: amountExpectedFrom,
-      coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
-      coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
+      coinFrom: getChangellyFixedCurrencyAbbreviation(
+        fromWalletSelected.currencyAbbreviation.toLowerCase(),
+        fromWalletSelected.chain,
+      ),
+      coinTo: getChangellyFixedCurrencyAbbreviation(
+        toWalletSelected.currencyAbbreviation.toLowerCase(),
+        toWalletSelected.chain,
+      ),
     };
     changellyGetFixRateForAmount(fromWalletSelected, fixRateForAmountData)
       .then(data => {

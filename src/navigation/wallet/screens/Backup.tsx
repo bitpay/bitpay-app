@@ -96,6 +96,8 @@ export const backupRedirect = ({
         params: {id: key.id, context},
       }),
     );
+  } else if (context === 'swapCrypto') {
+    navigation.navigate('SwapCrypto', {screen: 'Root'});
   } else {
     navigation.dispatch(
       StackActions.replace('Wallet', {

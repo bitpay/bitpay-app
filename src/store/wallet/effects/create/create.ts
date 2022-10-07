@@ -42,6 +42,17 @@ export interface CreateOptions {
   password?: string;
 }
 
+export interface AddWalletData {
+  key: Key;
+  currency: {
+    chain: string;
+    currencyAbbreviation: string;
+    isToken?: boolean;
+  };
+  associatedWallet?: Wallet;
+  options: CreateOptions;
+}
+
 const BWC = BwcProvider.getInstance();
 
 export const startCreateKey =
@@ -95,16 +106,7 @@ export const addWallet =
     currency,
     associatedWallet,
     options,
-  }: {
-    key: Key;
-    currency: {
-      chain: string;
-      currencyAbbreviation: string;
-      isToken: boolean;
-    };
-    associatedWallet?: Wallet;
-    options: CreateOptions;
-  }): Effect<Promise<Wallet>> =>
+  }: AddWalletData): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -427,6 +429,7 @@ const createTokenWallet =
           // @ts-ignore
           tokenCredentials.token.address,
         );
+
         wallet.savePreferences(wallet.preferences, (err: any) => {
           if (err) {
             dispatch(LogActions.error(`Error saving token: ${tokenName}`));

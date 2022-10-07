@@ -388,6 +388,8 @@
   "Select Destination": "Seleccionar destino",
   "View Offers": "Ver ofertas",
   "AML/KYC Policy": "Política de AML/KYC",
+  "swapFromWalletsConditionMessage": "A continuación se muestran las monedas/tokens disponibles que puede intercambiar. Si no puede ver algunas de sus billeteras, recuerde que su clave debe tener una copia de seguridad y que los fondos no estén bloqueados debido a transacciones pendientes.",
+  "swapToWalletsConditionMessage": "A continuación se muestran las monedas/tokens disponibles que puede intercambiar. Si no puede ver algunas de sus billeteras, recuerde que su clave debe tener una copia de seguridad.",
   "Failed to create transaction for Changelly, please try again later.": "Error al crear la transacción para Changelly. Por favor, inténtelo de nuevo más tarde.",
   "Error creating transaction": "Error al crear la transacción",
   "Changelly is not available at this moment. Please try again later.": "Changelly no está disponible en este momento. Por favor inténtelo de nuevo más tarde.",
