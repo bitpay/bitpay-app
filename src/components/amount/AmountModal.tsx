@@ -8,16 +8,26 @@ import {BaseText} from '../../components/styled/Text';
 import {Black, White} from '../../styles/colors';
 import SheetModal from '../modal/base/sheet/SheetModal';
 import Amount, {AmountProps} from './Amount';
+import {useTranslation} from 'react-i18next';
+import {SwapOpts} from '../../navigation/services/swap-crypto/screens/SwapCryptoRoot';
 
+const ModalHeaderText = styled(BaseText)`
+  font-size: 18px;
+  font-weight: bold;
+`;
 const ModalHeader = styled.View`
   height: 50px;
-  margin-right: 10px;
+  margin: 10px 10px 10px 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  position: relative;
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
   position: absolute;
-  left: 20px;
-  top: 20px;
+  left: 10px;
   height: 41px;
   width: 41px;
   border-radius: 50px;
@@ -30,7 +40,6 @@ const CloseModalButton = styled.TouchableOpacity`
 const ModalHeaderRight = styled(BaseText)`
   position: absolute;
   right: 5px;
-  top: 20px;
 `;
 
 const StyledAmountModalContainer = styled.SafeAreaView`
@@ -42,6 +51,8 @@ const StyledAmountModalContainer = styled.SafeAreaView`
 type AmountModalProps = AmountProps & {
   isVisible: boolean;
   onClose: () => void;
+  modalTitle?: string;
+  swapOpts?: SwapOpts;
   onSendMaxPressed?: () => any;
 };
 
@@ -52,8 +63,16 @@ const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
 });
 
 const AmountModal: React.VFC<AmountModalProps> = props => {
-  const {onClose, onSendMaxPressed, isVisible, ...amountProps} = props;
+  const {
+    onClose,
+    onSendMaxPressed,
+    isVisible,
+    modalTitle,
+    swapOpts,
+    ...amountProps
+  } = props;
   const theme = useTheme();
+  const {t} = useTranslation();
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
@@ -71,8 +90,8 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
               }}
             />
           </CloseModalButton>
-
-          {onSendMaxPressed ? (
+          {modalTitle ? <ModalHeaderText>{modalTitle}</ModalHeaderText> : null}
+          {onSendMaxPressed && !swapOpts?.swapLimits.maxAmount ? (
             <ModalHeaderRight>
               <Button
                 buttonType="pill"
@@ -84,7 +103,11 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
           ) : null}
         </ModalHeader>
 
-        <Amount {...amountProps} />
+        <Amount
+          {...amountProps}
+          swapOpts={swapOpts}
+          onSendMaxPressed={onSendMaxPressed}
+        />
       </AmountModalContainerHOC>
     </SheetModal>
   );

@@ -999,6 +999,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         fullWalletObj.credentials?.network === 'testnet' ||
                         !isCoinSupportedToSwap(
                           fullWalletObj.currencyAbbreviation,
+                          fullWalletObj.credentials?.chain,
                         ),
                       cta: () => {
                         dispatch(

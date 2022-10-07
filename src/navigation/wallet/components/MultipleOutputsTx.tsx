@@ -104,7 +104,7 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   tx.outputs.forEach((output: any) => {
     const outputAddr = output.toAddress ? output.toAddress : output.address;
     if (!coin || !network) {
-      const coinAndNetwork = GetCoinAndNetwork(outputAddr, network);
+      const coinAndNetwork = GetCoinAndNetwork(outputAddr, network, chain);
       coin = coin || coinAndNetwork?.coin;
       network = network || coinAndNetwork?.network;
     }

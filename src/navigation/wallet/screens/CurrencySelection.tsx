@@ -115,7 +115,7 @@ const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
     return currency.hasMultisig;
   });
 
-const DESCRIPTIONS: Record<string, string> = {
+export const DESCRIPTIONS: Record<string, string> = {
   eth: 'TokensOnEthereumNetworkDescription',
   matic: 'TokensOnPolygonNetworkDescription',
 };

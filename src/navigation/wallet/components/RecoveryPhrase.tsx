@@ -543,7 +543,7 @@ const RecoveryPhrase = () => {
     ({item}) => {
       const currencySelected = (id: string) => {
         const _selectedCurrency = CurrencyOptions.filter(
-          currency => currency.id === id,
+          currency => currency.currencyAbbreviation === id,
         );
         const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
         const defaultCoin = `default${currencyAbbreviation.toUpperCase()}`;
@@ -708,7 +708,7 @@ const RecoveryPhrase = () => {
                       <Row style={{alignItems: 'center'}}>
                         <CurrencyImage img={selectedCurrency.img} size={30} />
                         <CurrencyName>
-                          {selectedCurrency?.currencyAbbreviation}
+                          {selectedCurrency?.currencyAbbreviation?.toUpperCase()}
                         </CurrencyName>
                       </Row>
                       <Icons.DownToggle />
