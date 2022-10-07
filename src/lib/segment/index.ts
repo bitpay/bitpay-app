@@ -1,4 +1,4 @@
-import {SEGMENT_API_KEY} from '@env';
+import {SEGMENT_API_KEY_ANDROID, SEGMENT_API_KEY_IOS} from '@env';
 import {
   createClient,
   JsonMap,
@@ -6,12 +6,24 @@ import {
   UserTraits,
 } from '@segment/analytics-react-native';
 import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
-import {IS_IOS} from '../../constants';
+import {IS_ANDROID, IS_IOS} from '../../constants';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import {BpAppsFlyerPlugin} from './plugins/appsflyer';
 import {BpBrazePlugin} from './plugins/braze';
 import {getAppsFlyerId} from './utils/getAppsFlyerId';
 import {getBrazeIdForAnonymousUser} from './utils/getBrazeIdForAnonymousUser';
+
+const getSegmentWriteKey = () => {
+  let key = '';
+
+  if (IS_ANDROID) {
+    key = SEGMENT_API_KEY_ANDROID;
+  } else if (IS_IOS) {
+    key = SEGMENT_API_KEY_IOS;
+  }
+
+  return key;
+};
 
 /**
  * Client wrapper for the Segment SDK configured for use with the BitPay app.
@@ -72,7 +84,7 @@ const lib = (() => {
         /**
          * The Segment write key.
          */
-        writeKey: SEGMENT_API_KEY,
+        writeKey: getSegmentWriteKey(),
 
         // Optional ---------------
 
