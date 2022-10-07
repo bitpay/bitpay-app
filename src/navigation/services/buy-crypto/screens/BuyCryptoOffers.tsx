@@ -56,6 +56,7 @@ import {
 import {
   formatFiatAmount,
   getCurrencyAbbreviation,
+  sleep,
 } from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import {useTranslation} from 'react-i18next';
@@ -670,7 +671,7 @@ const BuyCryptoOffers: React.FC = () => {
     };
 
     simplexPaymentRequest(selectedWallet, address, quoteData, createdOn)
-      .then(req => {
+      .then(async req => {
         if (req && req.error) {
           const reason = 'simplexPaymentRequest Error';
           showSimplexError(req.error, reason);
@@ -730,6 +731,8 @@ const BuyCryptoOffers: React.FC = () => {
         );
 
         dispatch(openUrlWithInAppBrowser(paymentUrl));
+        await sleep(500);
+        navigation.goBack();
       })
       .catch(err => {
         const reason = 'simplexPaymentRequest Error';
@@ -805,7 +808,7 @@ const BuyCryptoOffers: React.FC = () => {
       });
   };
 
-  const continueToWyre = (paymentUrl: string) => {
+  const continueToWyre = async (paymentUrl: string) => {
     const destinationChain = selectedWallet.chain;
     dispatch(
       logSegmentEvent('track', 'Requested Crypto Purchase', {
@@ -818,6 +821,8 @@ const BuyCryptoOffers: React.FC = () => {
       }),
     );
     dispatch(openUrlWithInAppBrowser(paymentUrl));
+    await sleep(500);
+    navigation.goBack();
   };
 
   const goTo = (key: string): void => {
