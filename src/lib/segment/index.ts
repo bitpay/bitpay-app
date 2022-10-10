@@ -5,12 +5,11 @@ import {
   SegmentClient,
   UserTraits,
 } from '@segment/analytics-react-native';
+import {AppsflyerPlugin} from '@segment/analytics-react-native-plugin-appsflyer';
 import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
 import {IS_ANDROID, IS_IOS} from '../../constants';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
-import {BpAppsFlyerPlugin} from './plugins/appsflyer';
 import {BpBrazePlugin} from './plugins/braze';
-import {getAppsFlyerId} from './utils/getAppsFlyerId';
 import {getBrazeIdForAnonymousUser} from './utils/getBrazeIdForAnonymousUser';
 
 const getSegmentWriteKey = () => {
@@ -75,7 +74,6 @@ const lib = (() => {
         return;
       }
 
-      const appsFlyerId = await getAppsFlyerId();
       // don't need to fetch brazeId if user is already identified (has an eid)
       const brazeId = eid ? undefined : await getBrazeIdForAnonymousUser();
 
@@ -102,7 +100,7 @@ const lib = (() => {
 
       // extend AppsFlyer features with BitPay specific logic, mainly passing appsFlyerId to support cloud-mode events
       _client.add({
-        plugin: new BpAppsFlyerPlugin({appsFlyerId}),
+        plugin: new AppsflyerPlugin(),
       });
       // extend Braze features with BitPay specific logic, mainly passing braze_id for anonymous users to support cloud-mode events
       _client.add({
