@@ -338,6 +338,7 @@ const KeySettings = () => {
           ({
             id,
             currencyName,
+            chain,
             img,
             isToken,
             network,
@@ -358,6 +359,7 @@ const KeySettings = () => {
                 id={id}
                 img={img}
                 currencyName={currencyName}
+                chain={chain}
                 key={id}
                 isToken={isToken}
                 network={network}

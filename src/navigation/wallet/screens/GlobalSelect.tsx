@@ -265,7 +265,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         wallet =>
           wallet.currencyAbbreviation === recipient?.currency ||
           (recipient?.opts?.showERC20Tokens &&
-            IsERCToken(wallet.currencyAbbreviation)),
+            IsERCToken(wallet.currencyAbbreviation, wallet.chain)),
       );
     }
     if (recipient?.network) {

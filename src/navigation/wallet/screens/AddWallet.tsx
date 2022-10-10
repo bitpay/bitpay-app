@@ -62,7 +62,11 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow from '../../../components/list/WalletRow';
 import {FlatList, Keyboard} from 'react-native';
-import {keyExtractor, sleep} from '../../../utils/helper-methods';
+import {
+  getProtocolName,
+  keyExtractor,
+  sleep,
+} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import Icons from '../components/WalletIcons';
@@ -586,9 +590,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
                   }}>
                   <Column>
                     <OptionTitle>
-                      {isToken || currencyAbbreviation === 'ETH'
-                        ? 'Kovan'
-                        : 'Testnet'}
+                      {getProtocolName(chain || '', 'testnet')}
                     </OptionTitle>
                   </Column>
                   <CheckBoxContainer>

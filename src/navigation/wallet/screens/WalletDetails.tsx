@@ -52,7 +52,11 @@ import {
   SlateDark,
   White,
 } from '../../../styles/colors';
-import {shouldScale, sleep} from '../../../utils/helper-methods';
+import {
+  getProtocolName,
+  shouldScale,
+  sleep,
+} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {
   BalanceUpdateError,
@@ -108,7 +112,10 @@ import KeySvg from '../../../../assets/img/key.svg';
 import TimerSvg from '../../../../assets/img/timer.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import {BitpaySupportedCoins} from '../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  SUPPORTED_EVM_COINS,
+} from '../../../constants/currencies';
 import i18next from 'i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import _ from 'lodash';
@@ -410,6 +417,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     fiatLockedBalance,
     fiatSpendableBalance,
     currencyAbbreviation,
+    chain,
     network,
     hideBalance,
     pendingTxps,
@@ -574,10 +582,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const speedupTransaction = async (transaction: any) => {
     try {
       let tx: any;
-      if (
-        currencyAbbreviation.toLowerCase() === 'eth' ||
-        IsERCToken(currencyAbbreviation)
-      ) {
+      if (chain.toLowerCase() === 'eth') {
         tx = await dispatch(
           buildEthERCTokenSpeedupTx(fullWalletObj, transaction),
         );
@@ -681,7 +686,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const viewOnBlockchain = async () => {
     const coin = fullWalletObj.currencyAbbreviation.toLowerCase();
-    if (['eth', 'xrp'].includes(coin) || IsERCToken(coin)) {
+    const chain = fullWalletObj.chain.toLowerCase();
+
+    if (['eth', 'xrp'].includes(coin) || IsERCToken(coin, chain)) {
       let address;
       try {
         address = (await dispatch<any>(
@@ -698,17 +705,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ? `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrls}account/${address}`
             : `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
       }
-      if (coin === 'eth') {
+      if (SUPPORTED_EVM_COINS.includes(coin)) {
         url =
           fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins.eth.paymentInfo.blockExplorerUrls}address/${address}`
-            : `https://${BitpaySupportedCoins.eth.paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
+            ? `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrls}address/${address}`
+            : `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
       }
-      if (IsERCToken(coin)) {
+      if (IsERCToken(coin, chain)) {
         url =
           fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins.eth?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
-            : `https://${BitpaySupportedCoins.eth?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
+            ? `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
+            : `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
       }
 
       if (url) {
@@ -767,8 +774,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ),
           ),
         );
-      } else if (CanSpeedupTx(transaction, currency)) {
-        if (currency === 'eth' || IsERCToken(currency)) {
+      } else if (CanSpeedupTx(transaction, currency, chain)) {
+        if (chain === 'eth') {
           dispatch(
             showBottomNotificationModal(
               SpeedupEthTransaction(
@@ -865,21 +872,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  const getNetworkName = (
-    currencyAbbreviation: string,
-    network: string,
-  ): string | undefined => {
-    if (currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation)) {
-      return network === 'testnet' ? 'Kovan' : 'Ethereum Mainnet';
-    }
-
-    return network === 'testnet' ? 'Testnet' : undefined;
-  };
-
-  const networkName = getNetworkName(
-    currencyAbbreviation.toLowerCase(),
-    network,
-  );
+  const protocolName = getProtocolName(chain, network);
 
   return (
     <WalletDetailsContainer>
@@ -942,12 +935,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         <TypeText>{walletType.title}</TypeText>
                       </TypeContainer>
                     )}
-                    {networkName ? (
+                    {protocolName ? (
                       <TypeContainer>
                         <IconContainer>
                           <Icons.Network />
                         </IconContainer>
-                        <TypeText>{networkName}</TypeText>
+                        <TypeText>{protocolName}</TypeText>
                       </TypeContainer>
                     ) : null}
                     {IsShared(fullWalletObj) ? (

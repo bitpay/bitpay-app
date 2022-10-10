@@ -57,3 +57,14 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
     [Network.testnet]: 'kovan.etherscan.io/',
   },
 };
+
+export const PROTOCOL_NAME: {[key in string]: any} = {
+  eth: {
+    [Network.mainnet]: 'Ethereum Mainnet',
+    [Network.testnet]: 'Kovan',
+  },
+  default: {
+    [Network.mainnet]: 'Mainnet',
+    [Network.testnet]: 'Testnet',
+  },
+};

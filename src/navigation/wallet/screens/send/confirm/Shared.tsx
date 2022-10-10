@@ -163,7 +163,11 @@ export const SendingTo: React.VFC<SendingToProps> = ({
 
   let badgeImg;
 
-  if (recipientCoin && recipientChain && IsERCToken(recipientCoin)) {
+  if (
+    recipientCoin &&
+    recipientChain &&
+    IsERCToken(recipientCoin, recipientChain)
+  ) {
     const _recipientCoin = getCurrencyAbbreviation(
       recipientCoin,
       recipientChain,

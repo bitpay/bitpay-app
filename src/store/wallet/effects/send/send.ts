@@ -235,7 +235,7 @@ const setEthAddressNonce =
         let nonceWallet: Wallet;
         // linked eth wallet could have pendings txs from different tokens
         // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
-        if (IsERCToken(currencyAbbreviation)) {
+        if (IsERCToken(currencyAbbreviation, chain)) {
           const {WALLET} = getState();
           const key = WALLET.keys[keyId];
           const linkedWallet = key.wallets.find(({tokens}) =>
@@ -383,7 +383,7 @@ export const buildTxDetails =
     const effectiveRate =
       invoice && dispatch(getInvoiceEffectiveRate(invoice, invoiceCoin, chain));
     const networkCost = invoice?.minerFees[invoiceCoin.toUpperCase()]?.totalFee;
-    const isERC20 = IsERCToken(coin);
+    const isERC20 = IsERCToken(coin, chain);
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
     if (context === 'paypro') {
@@ -614,7 +614,7 @@ const buildTransactionProposal =
 
         // send max
         if (sendMax && wallet) {
-          if (IsERCToken(wallet.currencyAbbreviation)) {
+          if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
             txp.amount = tx.amount = wallet.balance.satAvailable;
           } else {
             const sendMaxInfo = await getSendMaxInfo({

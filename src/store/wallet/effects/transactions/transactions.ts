@@ -27,6 +27,7 @@ import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {partition} from 'lodash';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -471,7 +472,7 @@ export const GetTransactionHistory =
           let transactionHistory;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
-          if (IsERCToken(wallet.currencyAbbreviation)) {
+          if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
             const {WALLET} = getState();
             const key = WALLET.keys[keyId];
             const linkedWallet = key.wallets.find(({tokens}) =>
@@ -761,8 +762,9 @@ export const BuildUiFriendlyList = (
 export const CanSpeedupTx = (
   tx: any,
   currencyAbbreviation: string,
+  chain: string,
 ): boolean => {
-  const isERC20Wallet = IsERCToken(currencyAbbreviation);
+  const isERC20Wallet = IsERCToken(currencyAbbreviation, chain);
   const isEthWallet = currencyAbbreviation === 'eth';
 
   if (currencyAbbreviation !== 'btc' && isEthWallet && isERC20Wallet) {
@@ -800,7 +802,7 @@ export const getDetailsTitle = (transaction: any, wallet: Wallet) => {
   const {coin} = wallet.credentials;
 
   if (!IsInvalid(action)) {
-    if (coin === 'eth' && error) {
+    if (SUPPORTED_EVM_COINS.includes(coin) && error) {
       return t('Failed');
     } else if (IsSent(action)) {
       return t('Sent');

@@ -668,7 +668,7 @@ const SwapCryptoRoot: React.FC = () => {
     };
     if (
       !!toWalletSelected &&
-      IsERCToken(toWalletSelected.currencyAbbreviation)
+      IsERCToken(toWalletSelected.currencyAbbreviation, toWalletSelected.chain)
     ) {
       tokensWarn();
     } else {
@@ -694,7 +694,10 @@ const SwapCryptoRoot: React.FC = () => {
         toWalletData: toWalletData!,
         fixedRateId: rateData!.fixedRateId,
         amountFrom: amountFrom,
-        useSendMax: IsERCToken(fromWalletSelected!.currencyAbbreviation)
+        useSendMax: IsERCToken(
+          fromWalletSelected!.currencyAbbreviation,
+          fromWalletSelected!.chain,
+        )
           ? false
           : useSendMax,
         sendMaxInfo: sendMaxInfo,
@@ -1202,7 +1205,12 @@ const SwapCryptoRoot: React.FC = () => {
 
           let newAmount: number | undefined;
 
-          if (IsERCToken(fromWalletSelected.currencyAbbreviation)) {
+          if (
+            IsERCToken(
+              fromWalletSelected.currencyAbbreviation,
+              fromWalletSelected.chain,
+            )
+          ) {
             setUseSendMax(true);
             setSendMaxInfo(undefined);
             newAmount = Number(
