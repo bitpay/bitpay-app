@@ -98,7 +98,6 @@ const lib = (() => {
         trackAppLifecycleEvents: true, // default: false
       });
 
-      // extend AppsFlyer features with BitPay specific logic, mainly passing appsFlyerId to support cloud-mode events
       _client.add({
         plugin: new AppsflyerPlugin(),
       });
