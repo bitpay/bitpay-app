@@ -1,10 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-} from 'react-native';
+import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
@@ -42,10 +37,6 @@ import {getWyreFiatAmountLimits, wyreEnv} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import {
-  showBottomNotificationModal,
-  dismissBottomNotificationModal,
-} from '../../../../store/app/app.actions';
-import {
   logSegmentEvent,
   openUrlWithInAppBrowser,
 } from '../../../../store/app/app.effects';
@@ -65,6 +56,7 @@ import {
 import {
   formatFiatAmount,
   getCurrencyAbbreviation,
+  sleep,
 } from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import {useTranslation} from 'react-i18next';
@@ -679,7 +671,7 @@ const BuyCryptoOffers: React.FC = () => {
     };
 
     simplexPaymentRequest(selectedWallet, address, quoteData, createdOn)
-      .then(req => {
+      .then(async req => {
         if (req && req.error) {
           const reason = 'simplexPaymentRequest Error';
           showSimplexError(req.error, reason);
@@ -738,11 +730,9 @@ const BuyCryptoOffers: React.FC = () => {
           destinationChain,
         );
 
-        Linking.openURL(paymentUrl)
-          .then(() => {
-            navigation.goBack();
-          })
-          .catch(err => console.error("Couldn't load page", err));
+        dispatch(openUrlWithInAppBrowser(paymentUrl));
+        await sleep(500);
+        navigation.goBack();
       })
       .catch(err => {
         const reason = 'simplexPaymentRequest Error';
@@ -809,8 +799,8 @@ const BuyCryptoOffers: React.FC = () => {
           return;
         }
 
-        const paymentUrl = data.url;
-        openPopUpConfirmation('wyre', paymentUrl);
+        const {url} = data;
+        continueToWyre(url);
       })
       .catch((err: any) => {
         const reason = 'wyreWalletOrderReservation Error';
@@ -818,7 +808,7 @@ const BuyCryptoOffers: React.FC = () => {
       });
   };
 
-  const continueToWyre = (paymentUrl: string) => {
+  const continueToWyre = async (paymentUrl: string) => {
     const destinationChain = selectedWallet.chain;
     dispatch(
       logSegmentEvent('track', 'Requested Crypto Purchase', {
@@ -830,11 +820,9 @@ const BuyCryptoOffers: React.FC = () => {
         chain: destinationChain,
       }),
     );
-    Linking.openURL(paymentUrl)
-      .then(() => {
-        navigation.goBack();
-      })
-      .catch(err => console.error("Couldn't load page", err));
+    dispatch(openUrlWithInAppBrowser(paymentUrl));
+    await sleep(500);
+    navigation.goBack();
   };
 
   const goTo = (key: string): void => {
@@ -853,76 +841,7 @@ const BuyCryptoOffers: React.FC = () => {
     if (offers.simplex.errorMsg || offers.simplex.outOfLimitMsg) {
       return;
     }
-    openPopUpConfirmation('simplex');
-  };
-
-  const openPopUpConfirmation = (exchange: string, url?: string): void => {
-    let title, message;
-
-    switch (exchange) {
-      case 'simplex':
-        title = t('Continue to Simplex');
-        message = t(
-          "In order to finish the payment process you will be redirected to Simplex's page",
-        );
-        break;
-
-      case 'wyre':
-        title = t('Continue to Wyre');
-        message = t(
-          "In order to finish the payment process you will be redirected to Wyre's page",
-        );
-        break;
-
-      default:
-        title = t('Continue to the exchange page');
-        message = t(
-          'In order to finish the payment process you will be redirected to the exchange page',
-        );
-        break;
-    }
-
-    dispatch(
-      showBottomNotificationModal({
-        type: 'question',
-        title,
-        message,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('CONTINUE'),
-            action: () => {
-              dispatch(dismissBottomNotificationModal());
-              switch (exchange) {
-                case 'simplex':
-                  continueToSimplex();
-                  break;
-                case 'wyre':
-                  url ? continueToWyre(url) : () => {};
-                  break;
-
-                default:
-                  if (url) {
-                    Linking.openURL(url)
-                      .then(() => {
-                        navigation.goBack();
-                      })
-                      .catch(err => console.error("Couldn't load page", err));
-                  }
-                  break;
-              }
-            },
-            primary: true,
-          },
-          {
-            text: t('GO BACK'),
-            action: () => {
-              logger.debug('Continue to the exchange website CANCELED');
-            },
-          },
-        ],
-      }),
-    );
+    continueToSimplex();
   };
 
   const expandCard = (offer: CryptoOffer) => {
@@ -1064,6 +983,7 @@ const BuyCryptoOffers: React.FC = () => {
                   {offer.fiatMoney && (
                     <SummaryCtaContainer>
                       <Button
+                        action={true}
                         buttonType={'pill'}
                         onPress={() => {
                           haptic('impactLight');
