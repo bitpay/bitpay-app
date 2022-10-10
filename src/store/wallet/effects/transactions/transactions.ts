@@ -648,9 +648,10 @@ export const BuildUiFriendlyList = (
       transaction.uiIcon = TransactionIcons.confirming;
 
       if (notZeroAmountEth) {
-        if (contactName) {
+        if (contactName || transaction.customData?.recipientEmail) {
           if (isSent || isMoved) {
-            transaction.uiDescription = contactName;
+            transaction.uiDescription =
+              contactName || transaction.customData?.recipientEmail;
           }
         } else {
           if (isSent) {
@@ -686,8 +687,9 @@ export const BuildUiFriendlyList = (
             transaction.uiDescription = noteBody;
           } else if (message) {
             transaction.uiDescription = message;
-          } else if (contactName) {
-            transaction.uiDescription = contactName;
+          } else if (contactName || transaction.customData?.recipientEmail) {
+            transaction.uiDescription =
+              contactName || transaction.customData?.recipientEmail;
           } else if (toWalletName) {
             // t('SentToWalletName')
             transaction.uiDescription = t('SentToWalletName', {
@@ -719,7 +721,8 @@ export const BuildUiFriendlyList = (
         } else if (message) {
           transaction.uiDescription = message;
         } else {
-          transaction.uiDescription = t('Sent to self');
+          transaction.uiDescription =
+            transaction.customData?.recipientEmail || t('Sent to self');
         }
       }
 

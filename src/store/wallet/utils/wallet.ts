@@ -522,10 +522,6 @@ export const BuildKeysAndWalletsList = ({
           }),
       };
     })
-    .map(key => {
-      key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
-      return key;
-    })
     .filter(key => key.wallets.length);
 };
 
@@ -561,6 +557,9 @@ export const BuildPayProWalletSelectorList =
       defaultAltCurrencyIsoCode,
       rates,
       dispatch,
+    }).map(key => {
+      key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
+      return key;
     });
     const coinbaseWallets = BuildCoinbaseWalletsList({
       coinbaseAccounts,

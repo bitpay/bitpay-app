@@ -9,17 +9,29 @@ import {WalletRowProps} from './WalletRow';
 import WalletRow from './WalletRow';
 import {SvgProps} from 'react-native-svg';
 
-const RowContainer = styled.View`
-  margin-bottom: 20px;
+interface KeyWalletsRowContainerProps {
+  isLast?: boolean;
+}
+
+const KeyWalletsRowContainer = styled.View<KeyWalletsRowContainerProps>`
+  margin-bottom: 0px;
+  border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-width: 0;
 `;
 
-const KeyNameContainer = styled.View`
+interface KeyNameContainerProps {
+  noBorder?: boolean;
+}
+
+const KeyNameContainer = styled.View<KeyNameContainerProps>`
   flex-direction: row;
   align-items: center;
-  padding-bottom: 10px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
-  border-bottom-width: 1px;
-  margin-bottom: 10px;
+  border-bottom-width: ${({noBorder}) => (noBorder ? 0 : 1)}px;
+  margin-top: 20px;
+  ${({noBorder}) => (noBorder ? 'margin-left: 10px;' : '')}
+  padding-bottom: ${({noBorder}) => (noBorder ? 0 : 10)}px;
 `;
 
 const KeyName = styled(BaseText)`
@@ -48,34 +60,45 @@ interface KeyWalletProps<T extends WalletRowType> {
   keyWallets: KeyWalletsRowProps<T>[];
   keySvg?: React.FC<SvgProps>;
   onPress: (wallet: T) => void;
+  currency?: string;
 }
 
 const KeyWalletsRow = <T extends WalletRowType>({
   keyWallets,
   keySvg = KeySvg,
   onPress,
+  currency,
 }: KeyWalletProps<T>) => {
   return (
     <View>
-      {keyWallets.map(key => (
-        <RowContainer key={key.key}>
-          <KeyNameContainer>
-            {keySvg({})}
-            <KeyName>{key.keyName || 'My Key'}</KeyName>
-          </KeyNameContainer>
+      {keyWallets.map((key, keyIndex) => (
+        <KeyWalletsRowContainer
+          key={key.key}
+          isLast={keyIndex === keyWallets.length - 1}>
+          {keyWallets.length > 1 ? (
+            <KeyNameContainer noBorder={!!currency}>
+              {keySvg({})}
+              <KeyName>{key.keyName || 'My Key'}</KeyName>
+            </KeyNameContainer>
+          ) : null}
 
-          {key.wallets.map(w => (
+          {key.wallets.map((w, walletIndex) => (
             <NoGutter key={w.id}>
               <WalletRow
                 wallet={w}
                 id={w.id}
+                hideIcon={!!currency}
+                isLast={
+                  walletIndex === key.wallets.length - 1 &&
+                  keyIndex === keyWallets.length - 1
+                }
                 onPress={() => {
                   onPress(w);
                 }}
               />
             </NoGutter>
           ))}
-        </RowContainer>
+        </KeyWalletsRowContainer>
       ))}
     </View>
   );

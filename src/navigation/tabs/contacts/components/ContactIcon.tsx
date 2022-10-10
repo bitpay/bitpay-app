@@ -18,8 +18,9 @@ import {
 interface ContactIconProps {
   size?: number;
   name?: string;
-  coin: string;
-  chain: string;
+  coin?: string;
+  chain?: string;
+  badge?: JSX.Element;
 }
 
 interface BadgeProps {
@@ -51,6 +52,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   chain,
   size = 50,
   name,
+  badge,
 }) => {
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
@@ -60,21 +62,25 @@ const ContactIcon: React.FC<ContactIconProps> = ({
     };
   }) as {[key in string]: Token};
 
-  const img = SUPPORTED_CURRENCIES.includes(coin)
-    ? CurrencyListIcons[coin]
-    : tokenOptions &&
-      tokenOptions[getCurrencyAbbreviation(coin, chain)] &&
-      tokenOptions[getCurrencyAbbreviation(coin, chain)]?.logoURI
-    ? (tokenOptions[getCurrencyAbbreviation(coin, chain)].logoURI as string)
-    : '';
+  const img =
+    coin &&
+    chain &&
+    (SUPPORTED_CURRENCIES.includes(coin)
+      ? CurrencyListIcons[coin]
+      : tokenOptions &&
+        tokenOptions[getCurrencyAbbreviation(coin, chain)] &&
+        tokenOptions[getCurrencyAbbreviation(coin, chain)]?.logoURI
+      ? (tokenOptions[getCurrencyAbbreviation(coin, chain)].logoURI as string)
+      : '');
 
-  const badge = coin ? (
+  const coinBadge = img ? (
     <CoinBadge
       size={size / 2.5}
       img={img}
       badgeImg={getBadgeImg(coin, chain)}
     />
   ) : null;
+
   const initials = name
     ? name
         .trim()
@@ -86,7 +92,11 @@ const ContactIcon: React.FC<ContactIconProps> = ({
 
   return (
     <ContactIconContainer>
-      <Avatar size={size} initials={initials} badge={() => badge} />
+      <Avatar
+        size={size}
+        initials={initials}
+        badge={() => badge || coinBadge}
+      />
     </ContactIconContainer>
   );
 };

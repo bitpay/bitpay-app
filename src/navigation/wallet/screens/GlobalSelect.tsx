@@ -96,19 +96,34 @@ const GlobalSelectContainer = styled.View`
 `;
 
 export const WalletSelectMenuContainer = styled.View`
-  padding: 0 ${ScreenGutter};
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   max-height: 75%;
+  padding-bottom: 20px;
 `;
 
-export const WalletSelectMenuHeaderContainer = styled.View`
+export interface WalletSelectMenuHeaderContainerParams {
+  currency?: string;
+}
+
+export const WalletSelectMenuHeaderContainer = styled.View<WalletSelectMenuHeaderContainerParams>`
   padding: 20px;
+  padding-left: 12px;
+  padding-bottom: ${({currency}) => (currency ? 14 : 0)}px;
+  flex-direction: row;
+  justify-content: ${({currency}) => (currency ? 'flex-start' : 'center')};
+  align-items: center;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-width: ${({currency}) => (currency ? 1 : 0)}px;
+`;
+
+export const WalletSelectMenuHeaderIconContainer = styled.View`
+  padding-right: 0px;
 `;
 
 export const WalletSelectMenuBodyContainer = styled.ScrollView`
-  padding-bottom: 20px;
+  padding: 0 ${ScreenGutter} 2px;
 `;
 
 const NoWalletsMsg = styled(BaseText)`
