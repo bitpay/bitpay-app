@@ -813,7 +813,6 @@ export const deferredImportMnemonic =
   ): Effect =>
   async (dispatch, getState): Promise<void> => {
     try {
-      const {WALLET} = getState();
       dispatch(updateDeferredImport({importData, opts}));
 
       await sleep(500);
@@ -835,6 +834,10 @@ export const deferredImportMnemonic =
         }),
       );
 
+      const {
+        WALLET: {walletTermsAccepted},
+      } = getState();
+
       dispatch(
         showBottomNotificationModal({
           type: 'success',
@@ -848,7 +851,7 @@ export const deferredImportMnemonic =
                 backupRedirect({
                   context,
                   navigation: navigationRef,
-                  walletTermsAccepted: WALLET.walletTermsAccepted,
+                  walletTermsAccepted: walletTermsAccepted,
                   key,
                 });
               },
