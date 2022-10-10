@@ -35,11 +35,24 @@ export const startBitPayIdStoreInit =
 
     if (user) {
       const {eid, email, name, referralCode} = user;
+      let {givenName, familyName} = user;
+
+      if (!givenName && !familyName && name) {
+        const [first, ...rest] = name.split(' ');
+
+        givenName = first;
+
+        if (rest.length) {
+          familyName = rest[rest.length - 1];
+        }
+      }
+
       dispatch(AppActions.setBrazeEid(eid));
       dispatch(
         Analytics.identify(eid, {
           email,
-          name,
+          firstName: givenName,
+          lastName: familyName,
           'Cardholder Unique Referral Code': referralCode,
         }),
       );
