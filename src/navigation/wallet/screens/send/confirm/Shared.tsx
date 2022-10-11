@@ -568,12 +568,13 @@ export const CurrencyIconAndBadge = ({
   size,
 }: {
   coin: string;
-  chain?: string;
+  chain: string;
   size: number;
 }) => {
-  chain = chain || 'eth';
   const fullCurrencyAbbreviation = getCurrencyAbbreviation(coin, chain);
-  const badgeImg = IsERCToken(coin) ? getBadgeImg(coin, chain) : undefined;
+  const badgeImg = IsERCToken(coin, chain)
+    ? getBadgeImg(coin, chain)
+    : undefined;
   const CurrencyIcon = CurrencyListIcons[fullCurrencyAbbreviation];
 
   return (

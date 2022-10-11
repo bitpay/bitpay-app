@@ -146,10 +146,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   const apiToken = useAppSelector(({BITPAY_ID}) => BITPAY_ID.apiToken[network]);
   const receivingAddresses = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.receivingAddresses[network],
-  ).map(address => ({
-    ...address,
-    chain: getReceivingAddressChain(address),
-  }));
+  );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [twoFactorModalRequiredVisible, setTwoFactorModalRequiredVisible] =
@@ -245,6 +242,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
       ...activeAddresses,
       [wallet.currencyAbbreviation]: {
         id: '',
+        chain: wallet.chain,
         label: wallet.walletName || wallet.currencyAbbreviation.toUpperCase(),
         address,
         provider: 'BitPay',

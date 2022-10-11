@@ -1,8 +1,5 @@
 import {Effect} from '../..';
-import {
-  BitpaySupportedCurrencies,
-  SUPPORTED_COINS,
-} from '../../../constants/currencies';
+import {BitpaySupportedCurrencies} from '../../../constants/currencies';
 import {getCurrencyAbbreviation} from '../../../utils/helper-methods';
 
 export const GetProtocolPrefix =
