@@ -207,7 +207,7 @@ const TransactionProposalDetails = () => {
   const [lastSigner, setLastSigner] = useState(false);
 
   const title = getDetailsTitle(transaction, wallet);
-  let {currencyAbbreviation, network} = wallet;
+  let {currencyAbbreviation, chain, network} = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
   const isTestnet = network === 'testnet';
 
@@ -349,7 +349,7 @@ const TransactionProposalDetails = () => {
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
-            {!IsCustomERCToken(currencyAbbreviation) ? (
+            {!IsCustomERCToken(currencyAbbreviation, chain) ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'

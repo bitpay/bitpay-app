@@ -455,6 +455,7 @@ export const GetTransactionHistory =
         transactions = BuildUiFriendlyList(
           transactions,
           wallet.currencyAbbreviation,
+          wallet.chain,
           contactList,
           getGiftCardIcons(SHOP.supportedCardMap),
         );
@@ -603,6 +604,7 @@ export const IsMultisigEthInfo = (wallet: Wallet): boolean => {
 export const BuildUiFriendlyList = (
   transactionList: any[] = [],
   currencyAbbreviation: string,
+  chain: string,
   contactList: any[] = [],
   giftCardIcons: {[cardName: string]: string},
 ): any[] => {
@@ -674,7 +676,7 @@ export const BuildUiFriendlyList = (
       if (isSent) {
         if (
           (currencyAbbreviation === 'eth' ||
-            IsCustomERCToken(currencyAbbreviation)) &&
+            IsCustomERCToken(currencyAbbreviation, chain)) &&
           error
         ) {
           transaction.uiIcon = TransactionIcons.error;

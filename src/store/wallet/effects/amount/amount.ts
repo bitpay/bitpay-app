@@ -108,7 +108,7 @@ export const FormatAmount =
       fullPrecision: !!fullPrecision,
     };
 
-    if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation)) {
+    if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation, chain)) {
       opts.toSatoshis = dispatch(
         GetPrecision(currencyAbbreviation, chain),
       )?.unitToSatoshi;
