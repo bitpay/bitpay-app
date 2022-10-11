@@ -124,8 +124,14 @@ const FooterButton = styled(CtaContainerAbsolute)`
 
 const numVisibleCurrencyIcons = 3;
 
+const getReceivingAddressKey = (currency: string, chain: string) => {
+  return `${currency.toLowerCase()}_${chain.toLowerCase()}`;
+};
+
 const createAddressMap = (receivingAddresses: ReceivingAddress[]) => {
-  return _.keyBy(receivingAddresses, address => address.currency.toLowerCase());
+  return _.keyBy(receivingAddresses, ({currency, chain}) =>
+    getReceivingAddressKey(currency, chain),
+  );
 };
 
 type ReceiveSettingsProps = StackScreenProps<
@@ -153,10 +159,8 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
     useState(false);
   const [addressModalActiveAddress, setAddressModalActiveAddress] =
     useState<ReceivingAddress>();
-  const [walletSelectorCurrency, setWalletSelectorCurrency] = useState('btc');
-  const [walletSelectorChain, setWalletSelectorChain] = useState<
-    string | undefined
-  >();
+  const [walletSelectorCurrency, setWalletSelectorCurrency] = useState('BTC');
+  const [walletSelectorChain, setWalletSelectorChain] = useState<string>('BTC');
   const [activeAddresses, setActiveAddresses] = useState<
     _.Dictionary<ReceivingAddress>
   >(createAddressMap(receivingAddresses));
@@ -164,7 +168,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
     Object.values(keys)
       .flatMap(key => key.wallets)
       .filter(wallet => wallet.network === Network.mainnet),
-    wallet => `${wallet.currencyAbbreviation}_${wallet.chain}`,
+    wallet => getReceivingAddressKey(wallet.currencyAbbreviation, wallet.chain),
   );
   const uniqueActiveCurrencies = uniqueActiveWallets.map(
     wallet => wallet.currencyAbbreviation,
@@ -194,7 +198,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   const keyWalletsByCurrency = uniqueActiveWallets.reduce(
     (keyWalletMap, {currencyAbbreviation, chain}) => ({
       ...keyWalletMap,
-      [`${currencyAbbreviation}_${chain}`]: keyWallets
+      [getReceivingAddressKey(currencyAbbreviation, chain)]: keyWallets
         .map(keyWallet => ({
           ...keyWallet,
           wallets: keyWallet.wallets.filter(
@@ -240,7 +244,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
     await dispatch(dismissOnGoingProcessModal());
     setActiveAddresses({
       ...activeAddresses,
-      [wallet.currencyAbbreviation]: {
+      [getReceivingAddressKey(wallet.currencyAbbreviation, wallet.chain)]: {
         id: '',
         chain: wallet.chain,
         label: wallet.walletName || wallet.currencyAbbreviation.toUpperCase(),
@@ -304,7 +308,9 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   };
 
   const removeAddress = (activeAddress: ReceivingAddress) => {
-    delete activeAddresses[activeAddress.currency.toLowerCase()];
+    delete activeAddresses[
+      getReceivingAddressKey(activeAddress.currency, activeAddress.chain)
+    ];
     setActiveAddresses({...activeAddresses});
   };
 
@@ -323,8 +329,8 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
             <>
               <SectionHeader>{t('Active Addresses')}</SectionHeader>
               {Object.values(activeAddresses).map(({currency, chain}) => {
-                const currencyAbbreviation = currency.toLowerCase();
-                const activeAddress = activeAddresses[currencyAbbreviation];
+                const activeAddress =
+                  activeAddresses[getReceivingAddressKey(currency, chain)];
                 return (
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
@@ -443,7 +449,10 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
           walletsAndAccounts={{
             keyWallets:
               keyWalletsByCurrency[
-                `${walletSelectorCurrency}_${walletSelectorChain}`
+                getReceivingAddressKey(
+                  walletSelectorCurrency,
+                  walletSelectorChain,
+                )
               ],
             coinbaseWallets: [],
           }}
