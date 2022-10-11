@@ -23,6 +23,7 @@ const PrimaryActionContainer = styled.View`
 
 export interface PayProConfirmTwoFactorParamList {
   onSubmit: (code: string) => Promise<void>;
+  twoFactorCodeLength?: number;
 }
 
 interface TwoFactorCodeFormValues {
@@ -37,7 +38,7 @@ const PayProConfirmTwoFactor = ({
   route,
 }: StackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>) => {
   const {t} = useTranslation();
-  const {onSubmit} = route.params;
+  const {onSubmit, twoFactorCodeLength} = route.params;
   const codeRef = useRef<TextInput>(null);
   const [submitDisabled, setSubmitDisabled] = useState(false);
 
@@ -71,12 +72,14 @@ const PayProConfirmTwoFactor = ({
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              placeholder={'1231234'}
+              placeholder={twoFactorCodeLength === 6 ? '123123' : '1231234'}
               label={t('TWO-STEP VERIFICATION CODE')}
               onBlur={onBlur}
               onChangeText={(text: string) => {
                 onChange(text);
-                if (text.length === COINBASE_SMS_2FA_CODE_LENGTH) {
+                const codeLength =
+                  twoFactorCodeLength || COINBASE_SMS_2FA_CODE_LENGTH;
+                if (text.length === codeLength) {
                   submitForm(text);
                 }
               }}

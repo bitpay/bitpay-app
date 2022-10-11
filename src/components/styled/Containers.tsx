@@ -93,11 +93,17 @@ export const ListContainer = styled.View`
   flex: 1;
 `;
 
-export const RowContainer = styled.TouchableOpacity`
+interface RowContainerProps {
+  isLast?: boolean;
+}
+
+export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
   flex-direction: row;
   align-items: center;
-  margin: 10px 0;
-  padding: 0 10px;
+  padding: 10px 4px;
+  margin: 0 6px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-width: ${({isLast}) => (isLast || true ? 0 : 1)}px;
 `;
 
 export const CurrencyColumn = styled(Column)`

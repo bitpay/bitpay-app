@@ -46,6 +46,7 @@ interface ButtonProps extends BaseButtonProps {
   onPress?: () => any;
   disabled?: boolean;
   debounceTime?: number;
+  height?: number;
   state?: ButtonState;
   style?: StyleProp<ViewStyle>;
   action?: boolean;
@@ -58,10 +59,12 @@ interface ButtonOptionProps {
   danger?: boolean;
   disabled?: boolean;
   action?: boolean;
+  height?: number;
 }
 
 export const DURATION = 100;
 export const BUTTON_RADIUS = 6;
+export const BUTTON_HEIGHT = 63;
 export const PILL_RADIUS = 50;
 export const LINK_RADIUS = 0;
 
@@ -82,7 +85,7 @@ const ButtonContainer = styled.TouchableOpacity<ButtonProps>`
 `;
 
 const ButtonContent = styled.View<ButtonOptionProps>`
-  background: ${({disabled, theme, secondary}) => {
+  background: ${({danger, disabled, theme, secondary}) => {
     if (secondary) {
       return 'transparent';
     }
@@ -91,10 +94,14 @@ const ButtonContent = styled.View<ButtonOptionProps>`
       return theme.dark ? DisabledDark : Disabled;
     }
 
+    if (danger) {
+      return theme.dark ? '#8B1C1C' : '#FFCDCD';
+    }
+
     return Action;
   }};
   border: 2px solid
-    ${({disabled, secondary, theme}) => {
+    ${({danger, disabled, secondary, theme}) => {
       if (disabled) {
         return theme.dark ? DisabledDark : Disabled;
       }
@@ -103,23 +110,32 @@ const ButtonContent = styled.View<ButtonOptionProps>`
         return Action;
       }
 
+      if (danger) {
+        return theme.dark ? '#8B1C1C' : '#FFCDCD';
+      }
+
       return Action;
     }};
   border-radius: ${BUTTON_RADIUS}px;
-  padding: 18px;
+  height: ${({height}) => height || BUTTON_HEIGHT}px;
+  justify-content: center;
 `;
 
 const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
   font-size: 18px;
   font-weight: 500;
 
-  color: ${({disabled, secondary, theme}) => {
+  color: ${({danger, disabled, secondary, theme}) => {
     if (disabled) {
       return theme.dark ? '#656565' : '#bebec0';
     }
 
     if (secondary) {
       return theme?.dark ? theme.colors.text : Action;
+    }
+
+    if (danger) {
+      return theme.dark ? White : '#8B1C1C';
     }
 
     return White;
@@ -206,6 +222,8 @@ const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
 
     return Action;
   }};
+  font-size: 18px;
+  font-weight: 500;
 `;
 
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
@@ -217,6 +235,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     children,
     disabled,
     debounceTime,
+    height,
     state,
     style,
     action,
@@ -290,6 +309,8 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
       activeOpacity={disabled ? 1 : ActiveOpacity}
       testID={'button'}>
       <ButtonTypeContainer
+        height={height}
+        danger={danger}
         secondary={secondary}
         outline={outline}
         cancel={cancel}

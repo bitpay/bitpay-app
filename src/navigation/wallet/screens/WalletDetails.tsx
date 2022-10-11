@@ -112,6 +112,9 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import i18next from 'i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import _ from 'lodash';
+import ContactIcon from '../../tabs/contacts/components/ContactIcon';
+import {TRANSACTION_ICON_SIZE} from '../../../constants/TransactionIcons';
+import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -818,7 +821,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
-        icon={item.uiIcon}
+        icon={
+          item.customData?.recipientEmail ? (
+            <ContactIcon
+              name={item.customData?.recipientEmail}
+              size={TRANSACTION_ICON_SIZE}
+              badge={<SentBadgeSvg />}
+            />
+          ) : (
+            item.uiIcon
+          )
+        }
         iconURI={item.uiIconURI}
         description={item.uiDescription}
         time={item.uiTime}

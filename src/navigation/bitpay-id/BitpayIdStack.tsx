@@ -18,16 +18,37 @@ import PairingScreen, {
   BitPayIdPairingScreenParamList,
 } from './screens/BitPayIdPairingScreen';
 import Profile from './screens/ProfileSettings';
+import ReceiveSettings from './screens/ReceiveSettings';
 import {useTranslation} from 'react-i18next';
+import ReceivingEnabled from './screens/ReceivingEnabled';
+import PayProConfirmTwoFactor, {
+  PayProConfirmTwoFactorParamList,
+} from '../wallet/screens/send/confirm/PayProConfirmTwoFactor';
+import EnableTwoFactor, {
+  EnableTwoFactorScreenParamList,
+} from './screens/EnableTwoFactor';
+import TwoFactorEnabled, {
+  TwoFactorEnabledScreenParamList,
+} from './screens/TwoFactorEnabled';
 
 export type BitpayIdStackParamList = {
   BitPayIdPairingScreen: BitPayIdPairingScreenParamList;
   Profile: undefined;
+  ReceiveSettings: undefined;
+  ReceivingEnabled: undefined;
+  TwoFactor: PayProConfirmTwoFactorParamList;
+  EnableTwoFactor: EnableTwoFactorScreenParamList;
+  TwoFactorEnabled: TwoFactorEnabledScreenParamList;
 };
 
 export enum BitpayIdScreens {
   PAIRING = 'BitPayIdPairingScreen',
   PROFILE = 'Profile',
+  RECEIVE_SETTINGS = 'ReceiveSettings',
+  RECEIVING_ENABLED = 'ReceivingEnabled',
+  ENABLE_TWO_FACTOR = 'EnableTwoFactor',
+  TWO_FACTOR = 'TwoFactor',
+  TWO_FACTOR_ENABLED = 'TwoFactorEnabled',
 }
 
 const BitpayId = createStackNavigator<BitpayIdStackParamList>();
@@ -81,6 +102,43 @@ const BitpayIdStack = () => {
               </HeaderRightContainer>
             );
           },
+        }}
+      />
+      <BitpayId.Screen
+        name={BitpayIdScreens.RECEIVE_SETTINGS}
+        component={ReceiveSettings}
+        options={{
+          ...baseScreenOptions,
+          headerTitle: () => <HeaderTitle>{t('Receive Settings')}</HeaderTitle>,
+        }}
+      />
+      <BitpayId.Screen
+        name={BitpayIdScreens.RECEIVING_ENABLED}
+        component={ReceivingEnabled}
+        options={{
+          ...baseScreenOptions,
+        }}
+      />
+      <BitpayId.Screen
+        name={BitpayIdScreens.TWO_FACTOR}
+        component={PayProConfirmTwoFactor}
+        options={{
+          ...baseScreenOptions,
+        }}
+      />
+      <BitpayId.Screen
+        name={BitpayIdScreens.ENABLE_TWO_FACTOR}
+        component={EnableTwoFactor}
+        options={{
+          ...baseScreenOptions,
+        }}
+      />
+      <BitpayId.Screen
+        name={BitpayIdScreens.TWO_FACTOR_ENABLED}
+        component={TwoFactorEnabled}
+        options={{
+          ...baseScreenOptions,
+          headerLeft: () => null,
         }}
       />
     </BitpayId.Navigator>

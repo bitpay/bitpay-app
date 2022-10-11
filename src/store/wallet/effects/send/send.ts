@@ -392,13 +392,14 @@ export const buildTxDetails =
       amount = amount - fee;
     }
 
-    const {type, name, address} = recipient || {};
+    const {type, name, address, email} = recipient || {};
     return {
       context,
       currency: coin,
       sendingTo: {
         recipientType: type,
         recipientName: name,
+        recipientEmail: email,
         recipientAddress: address && formatCryptoAddress(address),
         img: wallet.img,
         recipientFullAddress: address,
@@ -530,6 +531,10 @@ const buildTransactionProposal =
           } else if (tx.recipient?.type === 'coinbase') {
             customData = {
               service: 'coinbase',
+            };
+          } else if (tx.recipient?.email) {
+            customData = {
+              recipientEmail: tx.recipient.email,
             };
           }
         }

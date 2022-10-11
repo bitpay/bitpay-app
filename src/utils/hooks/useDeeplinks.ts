@@ -186,6 +186,7 @@ export const useDeeplinks = () => {
           path: 'id',
           screens: {
             [BitpayIdScreens.PAIRING]: 'pair',
+            [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
           },
         },
         [RootStacks.TABS]: {

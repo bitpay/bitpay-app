@@ -1,5 +1,6 @@
 import {upperFirst} from 'lodash';
 import {batch} from 'react-redux';
+import _ from 'lodash';
 import AuthApi from '../../api/auth';
 import {
   LoginErrorResponse,
@@ -20,6 +21,8 @@ import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
+import BitPayIdApi from '../../api/bitpay';
+import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 
 interface StartLoginParams {
   email: string;
@@ -500,6 +503,121 @@ export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
     });
   }
 };
+
+export const startFetchSecuritySettings =
+  (): Effect<Promise<SecuritySettings>> => async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const securitySettings = await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          'getSecuritySettings',
+        );
+        dispatch(
+          BitPayIdActions.successFetchSecuritySettings(
+            APP.network,
+            securitySettings,
+          ),
+        );
+        return securitySettings;
+      } catch (err) {
+        batch(() => {
+          dispatch(LogActions.error('Failed to fetch security settings.'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        });
+        throw err;
+      }
+    })();
+
+export const startToggleTwoFactorAuthEnabled =
+  (twoFactorCode: string): Effect<Promise<void>> =>
+  async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const newSecuritySettings = await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          'toggleTwoFactorAuthEnabled',
+          {code: twoFactorCode},
+        );
+        dispatch(
+          BitPayIdActions.successFetchSecuritySettings(
+            APP.network,
+            newSecuritySettings,
+          ),
+        );
+      } catch (err) {
+        batch(() => {
+          dispatch(LogActions.error('Failed to toggle two-factor settings.'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        });
+        throw err;
+      }
+    })();
+
+export const startFetchReceivingAddresses =
+  (params?: {
+    email?: string;
+    currency?: string;
+  }): Effect<Promise<ReceivingAddress[]>> =>
+  async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const accountAddresses: ReceivingAddress[] = await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          params ? 'findWalletsByEmail' : 'findWallets',
+          params,
+        );
+        const receivingAddresses = accountAddresses.filter(
+          address => address.usedFor?.payToEmail,
+        );
+        dispatch(
+          BitPayIdActions.successFetchReceivingAddresses(
+            APP.network,
+            receivingAddresses,
+          ),
+        );
+        return receivingAddresses;
+      } catch (err) {
+        batch(() => {
+          dispatch(LogActions.error('Failed to fetch receiving addresses.'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        });
+        throw err;
+      }
+    })();
+
+export const startUpdateReceivingAddresses =
+  (
+    newReceivingAddresses: ReceivingAddress[],
+    twoFactorCode: string,
+  ): Effect<Promise<void>> =>
+  async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const wallets = newReceivingAddresses.map(address => ({
+          ...address,
+          use: 'payToEmail',
+        }));
+        await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          'setPayToEmailWallets',
+          {
+            wallets,
+            twoFactorCode,
+          },
+        );
+        await dispatch(startFetchReceivingAddresses());
+      } catch (err) {
+        batch(() => {
+          dispatch(LogActions.error('Failed to update receiving addresses.'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        });
+        throw err;
+      }
+    })();
 
 export const startSubmitForgotPasswordEmail =
   ({
