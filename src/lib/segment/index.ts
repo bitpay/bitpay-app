@@ -1,4 +1,4 @@
-import {SEGMENT_API_KEY} from '@env';
+import {SEGMENT_API_KEY_ANDROID, SEGMENT_API_KEY_IOS} from '@env';
 import {
   createClient,
   JsonMap,
@@ -7,8 +7,22 @@ import {
 } from '@segment/analytics-react-native';
 import {AppsflyerPlugin} from '@segment/analytics-react-native-plugin-appsflyer';
 import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
-import {IS_IOS} from '../../constants';
+import {IS_ANDROID, IS_IOS} from '../../constants';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
+import {BpBrazePlugin} from './plugins/braze';
+import {getBrazeIdForAnonymousUser} from './utils/getBrazeIdForAnonymousUser';
+
+const getSegmentWriteKey = () => {
+  let key = '';
+
+  if (IS_ANDROID) {
+    key = SEGMENT_API_KEY_ANDROID;
+  } else if (IS_IOS) {
+    key = SEGMENT_API_KEY_IOS;
+  }
+
+  return key;
+};
 
 /**
  * Client wrapper for the Segment SDK configured for use with the BitPay app.
@@ -17,16 +31,6 @@ import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 const lib = (() => {
   let _client: SegmentClient | null = null;
   const _queue: Array<(client: SegmentClient) => Promise<any>> = [];
-
-  const _addPluginsToClient = (client: SegmentClient) => {
-    client.add({
-      plugin: new AppsflyerPlugin(),
-    });
-
-    if (IS_IOS) {
-      client.add({plugin: new IdfaPlugin()});
-    }
-  };
 
   /**
    * Guard wrapper that checks if analytics are enabled and client has been initialized before executing the provided callback.
@@ -61,7 +65,7 @@ const lib = (() => {
     /**
      * Creates and initializes the Segment SDK. Must be called first.
      */
-    async init() {
+    async init({eid}: {eid?: string} = {}) {
       if (!APP_ANALYTICS_ENABLED) {
         return;
       }
@@ -70,13 +74,16 @@ const lib = (() => {
         return;
       }
 
+      // don't need to fetch brazeId if user is already identified (has an eid)
+      const brazeId = eid ? undefined : await getBrazeIdForAnonymousUser();
+
       _client = createClient({
         // Required ---------------
 
         /**
          * The Segment write key.
          */
-        writeKey: SEGMENT_API_KEY,
+        writeKey: getSegmentWriteKey(),
 
         // Optional ---------------
 
@@ -91,7 +98,17 @@ const lib = (() => {
         trackAppLifecycleEvents: true, // default: false
       });
 
-      _addPluginsToClient(_client);
+      _client.add({
+        plugin: new AppsflyerPlugin(),
+      });
+      // extend Braze features with BitPay specific logic, mainly passing braze_id for anonymous users to support cloud-mode events
+      _client.add({
+        plugin: new BpBrazePlugin({brazeId}),
+      });
+
+      if (IS_IOS) {
+        _client.add({plugin: new IdfaPlugin()});
+      }
 
       // Clear the queue and run any deferred actions that were called before we got a chance to initialize
       for (let fn = _queue.shift(); fn; fn = _queue.shift()) {

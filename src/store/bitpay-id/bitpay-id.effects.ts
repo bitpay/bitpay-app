@@ -37,9 +37,28 @@ export const startBitPayIdStoreInit =
     const {basicInfo: user} = initialData;
 
     if (user) {
-      const {eid, email, name} = user;
+      const {eid, email, name, referralCode} = user;
+      let {givenName, familyName} = user;
 
-      dispatch(Analytics.identify(eid, {email, name}));
+      if (!givenName && !familyName && name) {
+        const [first, ...rest] = name.split(' ');
+
+        givenName = first;
+
+        if (rest.length) {
+          familyName = rest[rest.length - 1];
+        }
+      }
+
+      dispatch(AppActions.setBrazeEid(eid));
+      dispatch(
+        Analytics.identify(eid, {
+          email,
+          firstName: givenName,
+          lastName: familyName,
+          'Cardholder Unique Referral Code': referralCode,
+        }),
+      );
 
       dispatch(
         BitPayIdActions.successInitializeStore(APP.network, initialData),
@@ -428,7 +447,6 @@ const startPairAndLoadUser =
 
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
-      dispatch(AppEffects.initializeBrazeContent());
       dispatch(ShopEffects.startFetchCatalog());
     } catch (err) {
       let errMsg;
