@@ -346,7 +346,7 @@ export const coinbaseAccountToWalletRow = (
     badgeImg = undefined;
     currencyImg = CurrencyListIcons[_currencyAbbreviation.toLowerCase()];
   } else {
-    badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), 'eth');
+    badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), chain);
     const tokenAbbreviation = getCurrencyAbbreviation(
       _currencyAbbreviation.toLowerCase(),
       chain,
