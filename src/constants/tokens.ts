@@ -69,10 +69,56 @@ export const BitpaySupportedEthereumTokenOpts: TokenOptsType = {
     decimals: 18,
     address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
   },
+  matic_e: {
+    name: 'Matic Token',
+    symbol: 'MATIC',
+    decimals: 18,
+    address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
+  },
+};
+
+export const BitpaySupportedMaticTokenOpts: TokenOptsType = {
+  usdc_m: {
+    name: 'USD Coin (PoS)',
+    symbol: 'USDC',
+    decimals: 6,
+    address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
+  },
+  busd_m: {
+    name: 'binance-usd',
+    symbol: 'BUSD',
+    decimals: 18,
+    address: '0xdab529f40e671a1d4bf91361c21bf9f0c9712ab7',
+  },
+  dai_m: {
+    name: '(PoS) Dai Stablecoin',
+    symbol: 'DAI',
+    decimals: 18,
+    address: '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063',
+  },
+  wbtc_m: {
+    name: '(PoS) Wrapped BTC',
+    symbol: 'WBTC',
+    decimals: 8,
+    address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
+  },
+  shib_m: {
+    name: 'SHIBA INU (PoS)',
+    symbol: 'SHIB',
+    decimals: 18,
+    address: '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec',
+  },
+  ape_m: {
+    name: 'ApeCoin (PoS)',
+    symbol: 'APE',
+    decimals: 18,
+    address: '0xb7b31a6bc18e48888545ce79e83e06003be70930',
+  },
 };
 
 export const BitpaySupportedTokenOpts: TokenOptsType = {
   ...BitpaySupportedEthereumTokenOpts,
+  ...BitpaySupportedMaticTokenOpts,
 };
 
 export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
@@ -130,8 +176,54 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
     decimals: 18,
     address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
   },
+  '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0_e': {
+    name: 'Matic Token',
+    symbol: 'MATIC',
+    decimals: 18,
+    address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
+  },
+};
+
+export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
+  '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m': {
+    name: 'USD Coin (PoS)',
+    symbol: 'USDC',
+    decimals: 6,
+    address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
+  },
+  '0xdab529f40e671a1d4bf91361c21bf9f0c9712ab7_m': {
+    name: 'binance-usd',
+    symbol: 'BUSD',
+    decimals: 18,
+    address: '0xdab529f40e671a1d4bf91361c21bf9f0c9712ab7',
+  },
+  '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063_m': {
+    name: '(PoS) Dai Stablecoin',
+    symbol: 'DAI',
+    decimals: 18,
+    address: '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063',
+  },
+  '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6_m': {
+    name: '(PoS) Wrapped BTC',
+    symbol: 'WBTC',
+    decimals: 8,
+    address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
+  },
+  '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec_m': {
+    name: 'SHIBA INU (PoS)',
+    symbol: 'SHIB',
+    decimals: 18,
+    address: '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec',
+  },
+  '0xb7b31a6bc18e48888545ce79e83e06003be70930_m': {
+    name: 'ApeCoin (PoS)',
+    symbol: 'APE',
+    decimals: 18,
+    address: '0xb7b31a6bc18e48888545ce79e83e06003be70930',
+  },
 };
 
 export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
   ...BitpaySupportedEthereumTokenOptsByAddress,
+  ...BitpaySupportedMaticTokenOptsByAddress,
 };

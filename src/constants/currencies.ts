@@ -11,9 +11,20 @@ export type SupportedEthereumTokens =
   | 'wbtc_e'
   | 'shib_e'
   | 'ape_e'
-  | 'euroc_e';
-export type SupportedCurrencies = SupportedCoins | SupportedEthereumTokens;
-export type EVM_CHAINS = 'eth';
+  | 'euroc_e'
+  | 'matic_e';
+export type SupportedMaticTokens =
+  | 'usdc_m'
+  | 'busd_m'
+  | 'dai_m'
+  | 'wbtc_m'
+  | 'shib_m'
+  | 'ape_m';
+export type SupportedCurrencies =
+  | SupportedCoins
+  | SupportedEthereumTokens
+  | SupportedMaticTokens;
+export type EVM_CHAINS = 'eth' | 'matic';
 export type UTXO_CHAINS = 'btc' | 'bch' | 'doge' | 'ltc';
 
 export interface CurrencyOpts {
@@ -387,6 +398,236 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
+  matic_e: {
+    name: 'Matic Token',
+    chain: 'eth',
+    coin: 'matic',
+    unitInfo: {
+      unitName: 'MATIC',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'matic',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: false,
+      singleAddress: true,
+      isCustom: false,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/matic_e',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+};
+
+export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
+  busd_m: {
+    name: 'Binance USD Coin',
+    chain: 'matic',
+    coin: 'busd',
+    unitInfo: {
+      unitName: 'BUSD',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'busd',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  usdc_m: {
+    name: 'USD Coin',
+    chain: 'matic',
+    coin: 'usdc',
+    unitInfo: {
+      unitName: 'USDC',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  dai_m: {
+    name: 'DAI',
+    chain: 'matic',
+    coin: 'dai',
+    unitInfo: {
+      unitName: 'DAI',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'dai',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  wbtc_m: {
+    name: 'Wrapped Bitcoin',
+    chain: 'matic',
+    coin: 'wbtc',
+    unitInfo: {
+      unitName: 'WBTC',
+      unitToSatoshi: 1e8,
+      unitDecimals: 8,
+      unitCode: 'wbtc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/wbtc_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  shib_m: {
+    name: 'SHIBA INU',
+    chain: 'matic',
+    coin: 'shib',
+    unitInfo: {
+      unitName: 'SHIB',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'shib',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: false,
+      singleAddress: true,
+      isCustom: false,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  ape_m: {
+    name: 'ApeCoin',
+    chain: 'matic',
+    coin: 'ape',
+    unitInfo: {
+      unitName: 'APE',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'ape',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: false,
+      singleAddress: true,
+      isCustom: false,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
 };
 
 export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
@@ -599,8 +840,45 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
-      blockExplorerUrls: 'etherscan.io/',
-      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#6b71d6',
+      backgroundColor: '#6b71d6',
+      gradientBackgroundColor: '#6b71d6',
+    },
+  },
+  matic: {
+    name: 'Matic',
+    chain: 'matic',
+    coin: 'matic',
+    unitInfo: {
+      unitName: 'Matic',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'matic',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/maitc',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -618,6 +896,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
 
 export const BitpaySupportedTokens: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedEthereumTokens,
+  ...BitpaySupportedMaticTokens,
 };
 
 export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
@@ -634,7 +913,12 @@ export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
 export const SUPPORTED_ETHEREUM_TOKENS = Object.keys(
   BitpaySupportedEthereumTokens,
 );
-export const SUPPORTED_TOKENS = [...SUPPORTED_ETHEREUM_TOKENS];
+
+export const SUPPORTED_MATIC_TOKENS = Object.keys(BitpaySupportedMaticTokens);
+export const SUPPORTED_TOKENS = [
+  ...SUPPORTED_ETHEREUM_TOKENS,
+  ...SUPPORTED_MATIC_TOKENS,
+];
 
 export const SUPPORTED_COINS = Object.keys(BitpaySupportedCoins);
 export const SUPPORTED_CURRENCIES = Object.keys(BitpaySupportedCurrencies);

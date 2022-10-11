@@ -31,7 +31,7 @@ import {
   ProposalBadge,
   Small,
 } from '../../../components/styled/Text';
-import {Network} from '../../../constants';
+import {Network, URL} from '../../../constants';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
@@ -337,7 +337,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     } catch (e) {}
   };
 
-  const assetOptions: Array<Option> = [
+  const assetOptions: Array<Option> = _.compact([
+    SUPPORTED_EVM_COINS.includes(fullWalletObj.currencyAbbreviation)
+      ? {
+          img: <Icons.BridgeToPolygon />,
+          title: t('Bridge to Polygon'),
+          description: t('Transfer your Ethereum to Polygon'),
+          onPress: () => {
+            Linking.openURL(URL.POLYGON_BRIDGE);
+          },
+        }
+      : undefined,
     {
       img: <Icons.RequestAmount />,
       title: t('Request a specific amount'),
@@ -385,7 +395,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           },
         }),
     },
-  ];
+  ]);
 
   const onRefresh = async () => {
     setRefreshing(true);

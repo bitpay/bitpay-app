@@ -54,7 +54,11 @@ import NetworkSelectionRow, {
 import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
-import {SUPPORTED_TOKENS} from '../../../../constants/currencies';
+import {
+  BitpaySupportedMaticTokens,
+  SUPPORTED_ETHEREUM_TOKENS,
+  SUPPORTED_TOKENS,
+} from '../../../../constants/currencies';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {TouchableOpacity} from 'react-native-gesture-handler';
@@ -224,7 +228,9 @@ const ContactsAdd = ({
       case 'e':
         return 'eth';
         break;
-
+      case 'm':
+        return 'matic';
+        break;
       default:
         return 'eth';
         break;
@@ -319,6 +325,7 @@ const ContactsAdd = ({
 
     switch (chain) {
       case 'eth':
+      case 'matic':
         setEvmValidAddress(true);
         return;
       case 'xrp':

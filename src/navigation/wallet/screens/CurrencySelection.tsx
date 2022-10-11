@@ -126,6 +126,7 @@ export const DESCRIPTIONS: Record<string, string> = {
 
 const POPULAR_TOKENS: Record<string, string[]> = {
   eth: ['usdc', 'busd', 'ape'],
+  matic: ['usdc', 'busd', 'ape'],
 };
 
 const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
@@ -473,7 +474,6 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             } else {
               currency = item.currency;
             }
-
             if (!currency) {
               showErrorModal(t('Select a currency'));
               return;
