@@ -21,9 +21,8 @@ export interface Fee {
   nbBlocks: number;
 }
 
-export const GetFeeOptions = (currencyAbbreviation: string): FeeOptions => {
-  const isEthOrToken =
-    currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation);
+export const GetFeeOptions = (chain: string): FeeOptions => {
+  const isEthOrToken = chain === 'eth';
   return {
     urgent: isEthOrToken ? t('High') : t('Urgent'),
     priority: isEthOrToken ? t('Average') : t('Priority'),

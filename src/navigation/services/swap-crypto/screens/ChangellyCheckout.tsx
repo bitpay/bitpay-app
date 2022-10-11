@@ -458,7 +458,7 @@ const ChangellyCheckout: React.FC = () => {
         },
       };
 
-      if (IsERCToken(wallet.currencyAbbreviation)) {
+      if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
         const token =
           BitpaySupportedEthereumTokenOpts[
             getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain)

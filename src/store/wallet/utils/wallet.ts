@@ -345,7 +345,7 @@ export const coinbaseAccountToWalletRow = (
   );
   const chain =
     BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.chain;
-  const badgeImg = IsERCToken(currencyAbbreviation)
+  const badgeImg = IsERCToken(currencyAbbreviation, chain)
     ? getBadgeImg(currencyAbbreviation, chain)
     : undefined;
   const walletItem = {

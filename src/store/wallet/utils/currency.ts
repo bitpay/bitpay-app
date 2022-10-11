@@ -64,9 +64,11 @@ export const IsCustomERCToken = (currencyAbbreviation: string) => {
   return !BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()];
 };
 
-export const IsERCToken = (currencyAbbreviation: string): boolean => {
-  const currency = currencyAbbreviation.toLowerCase();
-  return !SUPPORTED_COINS.includes(currency);
+export const IsERCToken = (
+  currencyAbbreviation: string,
+  chain: string,
+): boolean => {
+  return currencyAbbreviation.toLowerCase() !== chain.toLowerCase();
 };
 
 export const GetBlockExplorerUrl =

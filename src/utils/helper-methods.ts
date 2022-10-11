@@ -6,6 +6,7 @@ import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
 import {IsERCToken} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
+import {PROTOCOL_NAME} from '../constants/config';
 
 export const sleep = (duration: number) =>
   new Promise<void>(resolve => setTimeout(resolve, duration));
@@ -208,7 +209,7 @@ export const findContact = (
   const foundContacts = contactList.filter((contact: ContactRowProps) => {
     const chain = contact.chain
       ? contact.chain
-      : IsERCToken(contact.coin)
+      : IsERCToken(contact.coin, contact.chain)
       ? 'eth'
       : contact.coin;
     return (
@@ -319,7 +320,20 @@ export const addTokenChainSuffix = (name: string, chain: string) => {
 };
 
 export const getCurrencyAbbreviation = (name: string, chain: string) => {
-  return IsERCToken(name.toLowerCase())
+  return IsERCToken(name.toLowerCase(), chain.toLowerCase())
     ? addTokenChainSuffix(name, chain)
     : name.toLowerCase();
+};
+
+export const getProtocolName = (
+  chain: string,
+  network: string,
+): string | undefined => {
+  const _chain = chain.toLowerCase();
+  const _network = network.toLowerCase();
+  return PROTOCOL_NAME[_chain]?.[_network]
+    ? PROTOCOL_NAME[_chain][_network]
+    : _network === 'testnet'
+    ? PROTOCOL_NAME.default[_network]
+    : undefined;
 };

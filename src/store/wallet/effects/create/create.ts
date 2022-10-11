@@ -29,7 +29,7 @@ import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 
@@ -415,9 +415,7 @@ const createTokenWallet =
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
           wallet.credentials.getTokenCredentials(
-            tokenOpts[
-              getCurrencyAbbreviation(tokenName, wallet.credentials.chain)
-            ],
+            tokenOpts[addTokenChainSuffix(tokenName, wallet.credentials.chain)],
             wallet.credentials.chain,
           );
         bwcClient.fromObj(tokenCredentials);

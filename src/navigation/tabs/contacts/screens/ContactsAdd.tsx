@@ -207,7 +207,7 @@ const ContactsAdd = ({
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [networkModalVisible, setNetworkModalVisible] = useState(false);
   const [isTokenAddress, setIsTokenAddress] = useState(
-    IsERCToken(contact?.coin || ''),
+    IsERCToken(contact?.coin || '', contact?.chain || ''),
   );
 
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {

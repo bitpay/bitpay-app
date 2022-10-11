@@ -163,7 +163,7 @@ const Confirm = () => {
     recipient?.destinationTag || _destinationTag,
   );
   const {currencyAbbreviation, chain} = wallet;
-  const feeOptions = GetFeeOptions(currencyAbbreviation);
+  const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
     dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
   useLayoutEffect(() => {

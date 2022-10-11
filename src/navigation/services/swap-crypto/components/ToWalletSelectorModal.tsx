@@ -80,6 +80,7 @@ import {
   TokensHeading,
 } from '../../../../components/list/CurrencySelectionRow';
 import {IsUtxoCoin} from '../../../../store/wallet/utils/currency';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -219,16 +220,11 @@ const buildList = (category: SwapCryptoCoin[], wallets: Wallet[]) => {
 
   chains = coins.filter(coin => coin.chain === coin.currencyAbbreviation);
   chains.forEach(chain => {
-    if (chain.currencyAbbreviation === 'eth') {
+    if (SUPPORTED_EVM_COINS.includes(chain.currencyAbbreviation)) {
       chain.tokens = coins.filter(
         coin =>
-          coin.chain === 'eth' && coin.chain !== coin.currencyAbbreviation,
-      );
-    }
-    if (chain.currencyAbbreviation === 'matic') {
-      chain.tokens = coins.filter(
-        coin =>
-          coin.chain === 'matic' && coin.chain !== coin.currencyAbbreviation,
+          coin.chain === chain.currencyAbbreviation &&
+          coin.chain !== coin.currencyAbbreviation,
       );
     }
   });
