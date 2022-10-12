@@ -648,7 +648,7 @@ const handleBitcoinUri =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -679,7 +679,7 @@ const handleBitcoinCashUri =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -732,7 +732,7 @@ const handleBitcoinCashUriLegacyAddress =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -830,7 +830,7 @@ const handleDogecoinUri =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -856,7 +856,7 @@ const handleLitecoinUri =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount, true)));
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
