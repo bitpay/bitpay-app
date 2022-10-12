@@ -876,7 +876,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/maitc',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/matic',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
