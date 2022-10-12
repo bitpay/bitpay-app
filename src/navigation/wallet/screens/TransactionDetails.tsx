@@ -408,7 +408,7 @@ const TransactionDetails = () => {
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
-            {!IsCustomERCToken(currencyAbbreviation) ? (
+            {!IsCustomERCToken(currencyAbbreviation, chain) ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'

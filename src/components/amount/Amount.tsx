@@ -368,7 +368,9 @@ const Amount: React.VFC<AmountProps> = ({
                 <CurrencySymbol />
                 <ButtonText>MAX</ButtonText>
               </SwapButtonContainer>
-            ) : null}
+            ) : (
+              <Row />
+            )}
             {swapList.length > 1 ? (
               <SwapButton
                 swapList={swapList}
