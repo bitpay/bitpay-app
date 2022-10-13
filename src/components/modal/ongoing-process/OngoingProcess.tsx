@@ -36,6 +36,7 @@ export enum OnGoingProcessMessages {
   UPDATING_TXP = 'Updating Transaction',
   CREATING_TXP = 'Creating Transaction',
   SENDING_EMAIL = 'Sending Email',
+  REDIRECTING = 'Redirecting',
 }
 
 const OnGoingProcessContainer = styled.View`

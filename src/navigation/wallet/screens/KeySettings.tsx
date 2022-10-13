@@ -52,7 +52,7 @@ import {
   generateKeyExportCode,
   mapAbbreviationAndName,
 } from '../../../store/wallet/utils/wallet';
-import {Key} from '../../../store/wallet/wallet.models';
+import {Key, KeyMethods} from '../../../store/wallet/wallet.models';
 import {
   normalizeMnemonic,
   serverAssistedImport,
@@ -68,6 +68,7 @@ import {RootState} from '../../../store';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
+import {Wallet} from '../../../store/wallet/wallet.models';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -203,9 +204,10 @@ const KeySettings = () => {
       mnemonic,
     };
     try {
-      let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
-        opts,
-      );
+      let {key: _syncKey, wallets: _syncWallets} = (await dispatch<any>(
+        serverAssistedImport(opts),
+      )) as {key: KeyMethods; wallets: Wallet[]};
+
       if (_syncKey.fingerPrint === key.properties!.fingerPrint) {
         // Filter for new wallets
         _syncWallets = _syncWallets

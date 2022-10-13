@@ -5,5 +5,8 @@ export function getReceivingAddressChain({
   chain,
   currency,
 }: ReceivingAddress): string {
-  return chain || (!SUPPORTED_COINS.includes(currency.toLowerCase()) ? 'ETH' : currency);
+  return (
+    chain ||
+    (!SUPPORTED_COINS.includes(currency.toLowerCase()) ? 'ETH' : currency)
+  );
 }
