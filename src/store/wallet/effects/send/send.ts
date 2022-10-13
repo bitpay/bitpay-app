@@ -60,7 +60,6 @@ import TouchID from 'react-native-touch-id-ng';
 import {
   authOptionalConfigObject,
   BiometricErrorNotification,
-  isSupportedOptionalConfigObject,
   TO_HANDLE_ERRORS,
 } from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';

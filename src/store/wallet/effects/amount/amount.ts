@@ -39,7 +39,7 @@ export const ParseAmount =
     const currency = currencyAbbreviation.toUpperCase();
 
     return {
-      amount,
+      amount: _amount,
       currency,
       amountSat: (unitDecimals || 0) >= 18 ? amountSat : _amount,
       amountUnitStr,
