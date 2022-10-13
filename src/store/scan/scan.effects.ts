@@ -395,7 +395,7 @@ const goToConfirm =
     recipient: {
       type: string;
       address: string;
-      email: string;
+      email?: string;
       currency: string;
       destinationTag?: number;
     };
