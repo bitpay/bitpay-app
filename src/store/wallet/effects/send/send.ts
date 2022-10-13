@@ -556,6 +556,7 @@ const buildTransactionProposal =
             txp.replaceTxByFee = tx.replaceTxByFee;
             break;
           case 'eth':
+          case 'matic':
             txp.from = tx.from;
             txp.nonce = tx.nonce;
             txp.gasLimit = tx.gasLimit;

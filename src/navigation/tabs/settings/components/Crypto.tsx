@@ -31,7 +31,7 @@ const Crypto = () => {
     ({WALLET}) => WALLET.enableReplaceByFee,
   );
   const [showInfoUnconfirmed, setShowInfoUnconfirmed] = useState(false);
-  const [showInfoCustomizeEth, setShowInfoCustomizeEth] = useState(false);
+  const [showInfoCustomizeEvm, setShowInfoCustomizeEvm] = useState(false);
   const [showInfoEthQueued, setShowInfoEthQueued] = useState(false);
   const [showInfoEnableRbf, setShowInfoEnableRbf] = useState(false);
   const navigation = useNavigation();
@@ -79,13 +79,13 @@ const Crypto = () => {
       <Hr />
       <Setting
         activeOpacity={1}
-        onPress={() => setShowInfoCustomizeEth(!showInfoCustomizeEth)}>
-        <SettingTitle>{t('Customize ETH Nonce')}</SettingTitle>
+        onPress={() => setShowInfoCustomizeEvm(!showInfoCustomizeEvm)}>
+        <SettingTitle>{t('Customize EVM Nonce')}</SettingTitle>
         <ToggleSwitch
           onChange={value => {
             dispatch(WalletActions.setCustomizeNonce(value));
             dispatch(
-              logSegmentEvent('track', 'Set Customize ETH Nonce', {
+              logSegmentEvent('track', 'Set Customize EVM Nonce', {
                 value,
               }),
             );
@@ -93,7 +93,7 @@ const Crypto = () => {
           isEnabled={customizeNonce}
         />
       </Setting>
-      {showInfoCustomizeEth ? (
+      {showInfoCustomizeEvm ? (
         <Info>
           <InfoTriangle />
           <InfoDescription>
