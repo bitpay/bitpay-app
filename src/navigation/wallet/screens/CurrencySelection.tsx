@@ -48,7 +48,11 @@ import {
 } from '../../../store/app/app.actions';
 import {Key, Token} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
-import {getCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
+import {
+  addTokenChainSuffix,
+  getCurrencyAbbreviation,
+  sleep,
+} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
@@ -115,7 +119,7 @@ const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
     return currency.hasMultisig;
   });
 
-const DESCRIPTIONS: Record<string, string> = {
+export const DESCRIPTIONS: Record<string, string> = {
   eth: 'TokensOnEthereumNetworkDescription',
   matic: 'TokensOnPolygonNetworkDescription',
 };
@@ -252,7 +256,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           appTokenData[k] ||
           appCustomTokenData[k]
         ) ||
-        k === 'pax'
+        k === 'pax_e'
       ) {
         return;
       }
@@ -263,9 +267,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         appCustomTokenData[k];
       const chainData = chainMap[tokenData.chain.toLowerCase()];
       const imgSrc = SupportedTokenOptions.find(
-        c =>
-          getCurrencyAbbreviation(c.currencyAbbreviation, tokenData.chain) ===
-          k,
+        c => addTokenChainSuffix(c.currencyAbbreviation, tokenData.chain) === k,
       )?.imgSrc;
       const isReqSrc = (
         src: ImageSourcePropType | undefined,
@@ -422,21 +424,37 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               return;
             }
 
-            const selectedId = getCurrencyAbbreviation(
-              selectedCurrencies[0].currencyAbbreviation,
-              selectedCurrencies[0].chain,
-            );
-            const item = allListItems.find(
-              i =>
-                i.currency.currencyAbbreviation.toLowerCase() === selectedId ||
-                i.tokens.some(
-                  token =>
-                    getCurrencyAbbreviation(
-                      token.currencyAbbreviation,
-                      token.chain,
-                    ) === selectedId,
-                ),
-            );
+            const chain = selectedCurrencies[0].chain;
+            const currencyAbbreviation =
+              selectedCurrencies[0].currencyAbbreviation;
+            const isToken = selectedCurrencies[0].isToken;
+
+            let selectedId: string;
+            if (isToken) {
+              selectedId = addTokenChainSuffix(currencyAbbreviation, chain);
+            } else {
+              selectedId = currencyAbbreviation.toLowerCase();
+            }
+
+            const item = allListItems.find(i => {
+              if (isToken) {
+                const hasToken = i.tokens.some(token => {
+                  const tokenAbbreviation = addTokenChainSuffix(
+                    token.currencyAbbreviation,
+                    token.chain,
+                  );
+                  return (
+                    tokenAbbreviation === selectedId && token.chain === chain
+                  );
+                });
+                return hasToken;
+              } else {
+                return (
+                  i.currency.currencyAbbreviation.toLowerCase() === selectedId
+                );
+              }
+            });
+
             let currency: CurrencySelectionItem | undefined;
 
             if (!item) {
@@ -444,18 +462,16 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               return;
             }
 
-            if (
-              item.currency.currencyAbbreviation.toLowerCase() === selectedId
-            ) {
-              currency = item.currency;
-            } else {
+            if (isToken) {
               currency = item.tokens.find(
                 token =>
-                  getCurrencyAbbreviation(
+                  addTokenChainSuffix(
                     token.currencyAbbreviation,
                     token.chain,
-                  ) === selectedId,
+                  ) === selectedId && token.chain === chain,
               );
+            } else {
+              currency = item.currency;
             }
 
             if (!currency) {

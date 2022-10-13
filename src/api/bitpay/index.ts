@@ -87,6 +87,17 @@ export class BitPayIdApi {
     return api;
   }
 
+  static apiCall(token: string, method: string, params?: {[k: string]: any}) {
+    return BitPayIdApi.getInstance()
+      .request(method, token, params)
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data || res.data;
+      });
+  }
+
   get host(): string {
     return this.overrideHost || BASE_BITPAY_URLS[this._network];
   }

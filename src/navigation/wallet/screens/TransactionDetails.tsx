@@ -71,6 +71,7 @@ import {
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {Memo} from './send/confirm/Memo';
+import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -407,7 +408,7 @@ const TransactionDetails = () => {
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
-            {!IsCustomERCToken(currencyAbbreviation) ? (
+            {!IsCustomERCToken(currencyAbbreviation, chain) ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'
@@ -423,9 +424,7 @@ const TransactionDetails = () => {
           </>
 
           {/* --------- Info ----------------*/}
-          {(currencyAbbreviation === 'eth' ||
-            IsERCToken(currencyAbbreviation)) &&
-          txs.error ? (
+          {SUPPORTED_EVM_COINS.includes(chain) && txs.error ? (
             <Banner
               type={'error'}
               title={t('Warning!')}

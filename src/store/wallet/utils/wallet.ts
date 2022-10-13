@@ -339,22 +339,27 @@ export const coinbaseAccountToWalletRow = (
     ? account.balance.amount
     : '0';
   const _currencyAbbreviation = account.currency.code;
-  const currencyAbbreviation = getCurrencyAbbreviation(
-    _currencyAbbreviation.toLowerCase(),
-    'eth',
-  );
-  const chain =
-    BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.chain;
-  const badgeImg = IsERCToken(currencyAbbreviation)
-    ? getBadgeImg(currencyAbbreviation, chain)
-    : undefined;
+  const chain = 'eth'; // TODO: force to use ETH network (only Coinbase)
+  let currencyImg;
+  let badgeImg;
+  if (BitpaySupportedCurrencies[_currencyAbbreviation.toLowerCase()]) {
+    badgeImg = undefined;
+    currencyImg = CurrencyListIcons[_currencyAbbreviation.toLowerCase()];
+  } else {
+    badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), chain);
+    const tokenAbbreviation = getCurrencyAbbreviation(
+      _currencyAbbreviation.toLowerCase(),
+      chain,
+    );
+    currencyImg = CurrencyListIcons[tokenAbbreviation.toLowerCase()];
+  }
   const walletItem = {
     id: account.id,
     currencyName: account.currency.name,
     currencyAbbreviation: _currencyAbbreviation,
     coinbaseAccount: account,
     walletName: account.currency.name,
-    img: CurrencyListIcons[currencyAbbreviation.toLowerCase()],
+    img: currencyImg,
     cryptoBalance: cryptoAmount,
     cryptoLockedBalance: '',
     fiatBalance: formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode),
@@ -522,10 +527,6 @@ export const BuildKeysAndWalletsList = ({
           }),
       };
     })
-    .map(key => {
-      key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
-      return key;
-    })
     .filter(key => key.wallets.length);
 };
 
@@ -561,6 +562,9 @@ export const BuildPayProWalletSelectorList =
       defaultAltCurrencyIsoCode,
       rates,
       dispatch,
+    }).map(key => {
+      key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
+      return key;
     });
     const coinbaseWallets = BuildCoinbaseWalletsList({
       coinbaseAccounts,

@@ -181,6 +181,7 @@ export enum CacheKeys {
 export interface Recipient {
   type?: string;
   name?: string;
+  email?: string;
   walletId?: string;
   keyId?: string;
   address: string;
@@ -191,6 +192,7 @@ export interface Recipient {
 
 export interface CustomTransactionData {
   service?: string;
+  recipientEmail?: string;
   giftCardName?: string;
   changelly?: string;
   oneInch?: string;
@@ -350,7 +352,8 @@ export interface TxDetailsSendingTo {
   recipientType?: string | undefined;
   recipientName?: string;
   recipientAddress?: string;
-  img: string | ((props?: any) => ReactElement);
+  recipientEmail?: string;
+  img?: string | ((props?: any) => ReactElement);
   recipientFullAddress?: string;
   recipientAmountStr?: string;
   currencyAbbreviation?: string;

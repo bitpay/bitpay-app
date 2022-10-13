@@ -29,7 +29,7 @@ import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 
@@ -40,6 +40,17 @@ export interface CreateOptions {
   singleAddress?: boolean;
   walletName?: string;
   password?: string;
+}
+
+export interface AddWalletData {
+  key: Key;
+  currency: {
+    chain: string;
+    currencyAbbreviation: string;
+    isToken?: boolean;
+  };
+  associatedWallet?: Wallet;
+  options: CreateOptions;
 }
 
 const BWC = BwcProvider.getInstance();
@@ -95,16 +106,7 @@ export const addWallet =
     currency,
     associatedWallet,
     options,
-  }: {
-    key: Key;
-    currency: {
-      chain: string;
-      currencyAbbreviation: string;
-      isToken: boolean;
-    };
-    associatedWallet?: Wallet;
-    options: CreateOptions;
-  }): Effect<Promise<Wallet>> =>
+  }: AddWalletData): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -413,9 +415,7 @@ const createTokenWallet =
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
           wallet.credentials.getTokenCredentials(
-            tokenOpts[
-              getCurrencyAbbreviation(tokenName, wallet.credentials.chain)
-            ],
+            tokenOpts[addTokenChainSuffix(tokenName, wallet.credentials.chain)],
             wallet.credentials.chain,
           );
         bwcClient.fromObj(tokenCredentials);
@@ -427,6 +427,7 @@ const createTokenWallet =
           // @ts-ignore
           tokenCredentials.token.address,
         );
+
         wallet.savePreferences(wallet.preferences, (err: any) => {
           if (err) {
             dispatch(LogActions.error(`Error saving token: ${tokenName}`));

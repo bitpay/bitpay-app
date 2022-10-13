@@ -19,6 +19,27 @@ export interface Session {
   verified?: true | undefined;
 }
 
+export interface ReceivingAddress {
+  id: string;
+  currency: string;
+  chain: string;
+  label: string;
+  address: string;
+  provider: String;
+  status: {
+    isActive: boolean;
+  };
+  usedFor: {
+    payToEmail: boolean;
+  };
+}
+
+export interface SecuritySettings {
+  otpAuthKey: string;
+  otpEnabled: boolean;
+  email: string;
+}
+
 export interface User {
   email: string;
   eid: string;

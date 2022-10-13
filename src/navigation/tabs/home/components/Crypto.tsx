@@ -142,7 +142,7 @@ export const keyBackupRequired = (
   };
 };
 
-const createHomeCardList = ({
+export const createHomeCardList = ({
   navigation,
   keys,
   dispatch,
@@ -150,6 +150,9 @@ const createHomeCardList = ({
   homeCarouselConfig,
   homeCarouselLayoutType,
   deferredImport,
+  context,
+  onPress,
+  currency,
 }: {
   navigation: NavigationProp<any>;
   keys: Key[];
@@ -158,6 +161,9 @@ const createHomeCardList = ({
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   deferredImport?: boolean;
+  context?: 'keySelector';
+  onPress?: (currency: any, selectedKey: Key) => any;
+  currency?: any;
 }) => {
   let list: {id: string; component: JSX.Element}[] = [];
   const defaults: {id: string; component: JSX.Element}[] = [];
@@ -191,21 +197,29 @@ const createHomeCardList = ({
             totalBalance={totalBalance}
             percentageDifference={percentageDifference}
             needsBackup={!backupComplete}
-            onPress={() => {
-              haptic('soft');
-              if (backupComplete) {
-                navigation.navigate('Wallet', {
-                  screen: 'KeyOverview',
-                  params: {id: key.id},
-                });
-              } else {
-                dispatch(
-                  showBottomNotificationModal(
-                    keyBackupRequired(key, navigation, dispatch),
-                  ),
-                );
-              }
-            }}
+            context={context}
+            onPress={
+              onPress
+                ? () => {
+                    haptic('soft');
+                    onPress(currency, key);
+                  }
+                : () => {
+                    haptic('soft');
+                    if (backupComplete) {
+                      navigation.navigate('Wallet', {
+                        screen: 'KeyOverview',
+                        params: {id: key.id},
+                      });
+                    } else {
+                      dispatch(
+                        showBottomNotificationModal(
+                          keyBackupRequired(key, navigation, dispatch),
+                        ),
+                      );
+                    }
+                  }
+            }
           />
         ),
       };

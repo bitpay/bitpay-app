@@ -141,7 +141,7 @@ const SendToAddress = () => {
   const checkCoinAndNetwork =
     (data: any): Effect<boolean> =>
     dispatch => {
-      const addrData = GetCoinAndNetwork(data, network);
+      const addrData = GetCoinAndNetwork(data, network, chain);
       const isValid =
         chain === addrData?.coin.toLowerCase() && addrData?.network === network;
 

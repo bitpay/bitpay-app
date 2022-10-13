@@ -134,6 +134,7 @@ export const GetAddressNetwork = (address: string, coin: keyof BitcoreLibs) => {
 export const GetCoinAndNetwork = (
   str: string,
   network: string = 'livenet',
+  evmChain?: string,
 ): CoinNetwork | null => {
   const address = ExtractCoinNetworkAddress(str);
   try {
@@ -144,12 +145,12 @@ export const GetCoinAndNetwork = (
     } catch (bchErr) {
       try {
         const isValidEthAddress = Core.Validation.validateAddress(
-          'ETH',
+          evmChain?.toUpperCase() || 'ETH',
           network,
           address,
         );
         if (isValidEthAddress) {
-          return {coin: 'eth', network};
+          return {coin: evmChain?.toLowerCase() || 'eth', network};
         } else {
           throw isValidEthAddress;
         }

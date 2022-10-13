@@ -230,17 +230,14 @@ const NetworkFeePolicy = () => {
           ...fee,
           feeUnit,
           // @ts-ignore
-          uiLevel: GetFeeOptions(currencyAbbreviation)[level],
+          uiLevel: GetFeeOptions(chain)[level],
         };
         feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
         feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
           currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
         }`;
 
-        if (
-          currencyAbbreviation === 'eth' ||
-          IsERCToken(currencyAbbreviation)
-        ) {
+        if (chain === 'eth') {
           // @ts-ignore
           feeOption.avgConfirmationTime = ethAvgTime[level];
         }
@@ -272,7 +269,7 @@ const NetworkFeePolicy = () => {
     }
   };
   const init = async () => {
-    ['btc', 'eth'].forEach((ca: string) => initFeeLevel(ca));
+    ['btc', 'eth'].forEach((ca: string) => initFeeLevel(ca, ca));
     await sleep(500);
     setIsLoading(false);
   };

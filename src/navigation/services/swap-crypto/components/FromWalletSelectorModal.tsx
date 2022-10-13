@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import GlobalSelect, {
   GlobalSelectModalContext,
-} from '../../../../navigation/wallet/screens/GlobalSelect';
+} from '../../../wallet/screens/GlobalSelect';
 import {Black, LightBlack, White} from '../../../../styles/colors';
 import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
@@ -12,7 +13,8 @@ import {
 } from '../../../../components/styled/Containers';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {H4, H5, SubText, TextAlign} from '../../../../components/styled/Text';
-import {swapCryptoCoin} from '../screens/SwapCryptoRoot';
+import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
+import {getBadgeImg} from '../../../../utils/helper-methods';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -37,16 +39,16 @@ const RowContainer = styled.View`
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
 `;
-interface WalletSelectorModalProps {
+interface FromWalletSelectorModalProps {
   isVisible: boolean;
-  customSupportedCurrencies?: swapCryptoCoin[];
+  customSupportedCurrencies?: SwapCryptoCoin[];
   livenetOnly?: boolean;
   onDismiss: (toWallet?: any) => void;
   modalContext?: GlobalSelectModalContext;
   modalTitle?: string;
 }
 
-const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
+const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
   isVisible,
   customSupportedCurrencies,
   livenetOnly,
@@ -54,6 +56,7 @@ const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   modalContext,
   modalTitle,
 }) => {
+  const {t} = useTranslation();
   const [swapCryptoHelpVisible, setSwapCryptoHelpVisible] = useState(false);
 
   const _customSupportedCurrencies = customSupportedCurrencies?.map(
@@ -82,29 +85,24 @@ const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
           onBackdropPress={() => setSwapCryptoHelpVisible(false)}>
           <SwapCryptoHelpContainer>
             <TextAlign align={'center'}>
-              <H4>What can I swap?</H4>
+              <H4>{t('What can I swap?')}</H4>
             </TextAlign>
             <TextAlign align={'center'}>
               {modalContext === 'send' ? (
-                <SubText>
-                  Below are the available coins/tokens that you can swap from.
-                  If you are not able to see some of your wallets, remember that
-                  your key must be backed up and have funds not locked due to
-                  pending transactions.
-                </SubText>
-              ) : (
-                <SubText>
-                  Below are the available coins/tokens that you can swap to. If
-                  you are not able to see some of your wallets, remember that
-                  your key must be backed up.
-                </SubText>
-              )}
+                <SubText>{t('swapFromWalletsConditionMessage')}</SubText>
+              ) : null}
             </TextAlign>
             <ScrollView style={{marginTop: 20}}>
               {customSupportedCurrencies?.map((currency, index) => (
                 <RowContainer key={index}>
                   <CurrencyImageContainer>
-                    <CurrencyImage img={currency.logoUri} />
+                    <CurrencyImage
+                      img={currency.logoUri}
+                      badgeUri={getBadgeImg(
+                        currency.currencyAbbreviation,
+                        currency.chain,
+                      )}
+                    />
                   </CurrencyImageContainer>
                   <CurrencyColumn>
                     <H5>{currency.name}</H5>
@@ -124,4 +122,4 @@ const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   );
 };
 
-export default WalletSelectorModal;
+export default FromWalletSelectorModal;

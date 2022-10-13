@@ -1,5 +1,6 @@
 import {upperFirst} from 'lodash';
 import {batch} from 'react-redux';
+import _ from 'lodash';
 import AuthApi from '../../api/auth';
 import {
   LoginErrorResponse,
@@ -20,6 +21,10 @@ import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
+import BitPayIdApi from '../../api/bitpay';
+import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
+import AddressCard from '../../navigation/wallet/components/AddressCard';
+import {getReceivingAddressChain} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 interface StartLoginParams {
   email: string;
@@ -34,9 +39,28 @@ export const startBitPayIdStoreInit =
     const {basicInfo: user} = initialData;
 
     if (user) {
-      const {eid, email, name} = user;
+      const {eid, email, name, referralCode} = user;
+      let {givenName, familyName} = user;
 
-      dispatch(Analytics.identify(eid, {email, name}));
+      if (!givenName && !familyName && name) {
+        const [first, ...rest] = name.split(' ');
+
+        givenName = first;
+
+        if (rest.length) {
+          familyName = rest[rest.length - 1];
+        }
+      }
+
+      dispatch(AppActions.setBrazeEid(eid));
+      dispatch(
+        Analytics.identify(eid, {
+          email,
+          firstName: givenName,
+          lastName: familyName,
+          'Cardholder Unique Referral Code': referralCode,
+        }),
+      );
 
       dispatch(
         BitPayIdActions.successInitializeStore(APP.network, initialData),
@@ -425,7 +449,6 @@ const startPairAndLoadUser =
 
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
-      dispatch(AppEffects.initializeBrazeContent());
       dispatch(ShopEffects.startFetchCatalog());
     } catch (err) {
       let errMsg;
@@ -500,6 +523,124 @@ export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
     });
   }
 };
+
+export const startFetchSecuritySettings =
+  (): Effect<Promise<SecuritySettings>> => async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const securitySettings = await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          'getSecuritySettings',
+        );
+        dispatch(
+          BitPayIdActions.successFetchSecuritySettings(
+            APP.network,
+            securitySettings,
+          ),
+        );
+        return securitySettings;
+      } catch (err) {
+        batch(() => {
+          dispatch(LogActions.error('Failed to fetch security settings.'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        });
+        throw err;
+      }
+    })();
+
+export const startToggleTwoFactorAuthEnabled =
+  (twoFactorCode: string): Effect<Promise<void>> =>
+  async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const newSecuritySettings = await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          'toggleTwoFactorAuthEnabled',
+          {code: twoFactorCode},
+        );
+        dispatch(
+          BitPayIdActions.successFetchSecuritySettings(
+            APP.network,
+            newSecuritySettings,
+          ),
+        );
+      } catch (err) {
+        batch(() => {
+          dispatch(LogActions.error('Failed to toggle two-factor settings.'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        });
+        throw err;
+      }
+    })();
+
+export const startFetchReceivingAddresses =
+  (params?: {
+    email?: string;
+    currency?: string;
+  }): Effect<Promise<ReceivingAddress[]>> =>
+  async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const accountAddresses: ReceivingAddress[] = await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          params ? 'findWalletsByEmail' : 'findWallets',
+          params,
+        );
+        const receivingAddresses = accountAddresses
+          .filter(address => address.usedFor?.payToEmail)
+          .map(address => ({
+            ...address,
+            chain: getReceivingAddressChain(address),
+          }));
+        dispatch(
+          BitPayIdActions.successFetchReceivingAddresses(
+            APP.network,
+            receivingAddresses,
+          ),
+        );
+        return receivingAddresses;
+      } catch (err) {
+        batch(() => {
+          dispatch(LogActions.error('Failed to fetch receiving addresses.'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        });
+        throw err;
+      }
+    })();
+
+export const startUpdateReceivingAddresses =
+  (
+    newReceivingAddresses: ReceivingAddress[],
+    twoFactorCode: string,
+  ): Effect<Promise<void>> =>
+  async (dispatch, getState) =>
+    (async () => {
+      try {
+        const {APP, BITPAY_ID} = getState();
+        const wallets = newReceivingAddresses.map(address => ({
+          ...address,
+          use: 'payToEmail',
+        }));
+        await BitPayIdApi.apiCall(
+          BITPAY_ID.apiToken[APP.network],
+          'setPayToEmailWallets',
+          {
+            wallets,
+            twoFactorCode,
+          },
+        );
+        await dispatch(startFetchReceivingAddresses());
+      } catch (err) {
+        batch(() => {
+          dispatch(LogActions.error('Failed to update receiving addresses.'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        });
+        throw err;
+      }
+    })();
 
 export const startSubmitForgotPasswordEmail =
   ({

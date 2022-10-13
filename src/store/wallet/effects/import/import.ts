@@ -99,6 +99,7 @@ import {
 import {t} from 'i18next';
 import {sleep} from '../../../../utils/helper-methods';
 import {backupRedirect} from '../../../../navigation/wallet/screens/Backup';
+import {SUPPORTED_COINS} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 

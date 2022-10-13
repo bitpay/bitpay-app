@@ -5,7 +5,7 @@ import {
   TxDetailsSendingFrom,
   TxDetailsSendingTo,
 } from '../../../../../store/wallet/wallet.models';
-import {H4, H5, H6, H7, TextAlign} from '../../../../../components/styled/Text';
+import {H4, H5, H6, H7} from '../../../../../components/styled/Text';
 import SendToPill from '../../../components/SendToPill';
 import {
   Column,
@@ -33,6 +33,7 @@ import {
   WalletSelectMenuBodyContainer,
   WalletSelectMenuContainer,
   WalletSelectMenuHeaderContainer,
+  WalletSelectMenuHeaderIconContainer,
 } from '../../GlobalSelect';
 import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
 import {useNavigation} from '@react-navigation/native';
@@ -46,6 +47,8 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import AddressCard from '../../../components/AddressCard';
 import {LuckySevens} from '../../../../../styles/colors';
 import {IsERCToken} from '../../../../../store/wallet/utils/currency';
+import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
+import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -151,6 +154,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
   const {
     recipientName,
     recipientAddress,
+    recipientEmail,
     img,
     recipientFullAddress,
     recipientCoin,
@@ -159,7 +163,11 @@ export const SendingTo: React.VFC<SendingToProps> = ({
 
   let badgeImg;
 
-  if (recipientCoin && recipientChain && IsERCToken(recipientCoin)) {
+  if (
+    recipientCoin &&
+    recipientChain &&
+    IsERCToken(recipientCoin, recipientChain)
+  ) {
     const _recipientCoin = getCurrencyAbbreviation(
       recipientCoin,
       recipientChain,
@@ -180,7 +188,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
       ' ' +
       (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
   } else {
-    description = recipientName || recipientAddress || '';
+    description = recipientName || recipientEmail || recipientAddress || '';
   }
 
   return (
@@ -197,6 +205,8 @@ export const SendingTo: React.VFC<SendingToProps> = ({
             icon={
               copied ? (
                 <CopiedSvg width={18} />
+              ) : recipientName || recipientEmail ? (
+                <ContactIcon name={description} size={20} />
               ) : (
                 <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
               )
@@ -438,6 +448,9 @@ export const WalletSelector = ({
   onBackdropPress,
   isVisible,
   setWalletSelectorVisible,
+  autoSelectIfOnlyOneWallet,
+  currency,
+  chain,
 }: {
   walletsAndAccounts: WalletsAndAccounts;
   onWalletSelect: (wallet: KeyWallet) => void;
@@ -445,12 +458,19 @@ export const WalletSelector = ({
   onBackdropPress: () => void;
   isVisible: boolean;
   setWalletSelectorVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  autoSelectIfOnlyOneWallet?: boolean;
+  currency?: string;
+  chain?: string;
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [selectorVisible, setSelectorVisible] = useState(false);
-  const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(true);
+  const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
+    typeof autoSelectIfOnlyOneWallet === 'undefined'
+      ? true
+      : autoSelectIfOnlyOneWallet,
+  );
 
   const selectOption = useCallback(
     async (onSelect: () => void, waitForClose?: boolean) => {
@@ -511,13 +531,17 @@ export const WalletSelector = ({
   return (
     <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>
       <WalletSelectMenuContainer>
-        <WalletSelectMenuHeaderContainer>
-          <TextAlign align={'center'}>
-            <H4>{t('Select a wallet')}</H4>
-          </TextAlign>
+        <WalletSelectMenuHeaderContainer currency={currency}>
+          {currency ? (
+            <WalletSelectMenuHeaderIconContainer>
+              <CurrencyIconAndBadge coin={currency} chain={chain} size={30} />
+            </WalletSelectMenuHeaderIconContainer>
+          ) : null}
+          <H4>{t('Select a Wallet')}</H4>
         </WalletSelectMenuHeaderContainer>
         <WalletSelectMenuBodyContainer>
           <KeyWalletsRow<KeyWallet>
+            currency={currency}
             keyWallets={walletsAndAccounts.keyWallets}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
           />
@@ -531,5 +555,35 @@ export const WalletSelector = ({
         </WalletSelectMenuBodyContainer>
       </WalletSelectMenuContainer>
     </SheetModal>
+  );
+};
+
+const CurrencyImageAndBadgeContainer = styled.View<{height: number}>`
+  height: ${({height}) => height}px;
+`;
+
+export const CurrencyIconAndBadge = ({
+  coin,
+  chain,
+  size,
+}: {
+  coin: string;
+  chain: string;
+  size: number;
+}) => {
+  const fullCurrencyAbbreviation = getCurrencyAbbreviation(coin, chain);
+  const badgeImg = IsERCToken(coin, chain)
+    ? getBadgeImg(coin, chain)
+    : undefined;
+  const CurrencyIcon = CurrencyListIcons[fullCurrencyAbbreviation];
+
+  return (
+    <CurrencyImageAndBadgeContainer height={size}>
+      <CurrencyImage
+        img={() => <CurrencyIcon height={size} />}
+        badgeUri={badgeImg}
+        size={size}
+      />
+    </CurrencyImageAndBadgeContainer>
   );
 };

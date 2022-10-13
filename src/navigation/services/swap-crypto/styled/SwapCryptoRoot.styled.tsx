@@ -50,7 +50,7 @@ export const SelectedOptionContainer = styled.TouchableOpacity`
   height: 40px;
   padding: 0px 14px;
   background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 12px;
+  border-radius: 52px;
   opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
 `;
 

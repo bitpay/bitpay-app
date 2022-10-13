@@ -63,7 +63,7 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow from '../../../components/list/WalletRow';
 import {FlatList, Keyboard} from 'react-native';
 import {
-  getCurrencyAbbreviation,
+  getProtocolName,
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
@@ -87,7 +87,7 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
-import _ from 'lodash';
+import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -176,6 +176,14 @@ const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
 `;
 
+const isWithinReceiveSettings = (parent: any): boolean => {
+  return parent
+    ?.getState()
+    .routes.some(
+      (r: any) => r.params?.screen === BitpayIdScreens.RECEIVING_ADDRESSES,
+    );
+};
+
 const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -210,6 +218,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     : false;
 
   const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
+
+  const withinReceiveSettings = isWithinReceiveSettings(navigation.getParent());
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -327,6 +337,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       }
 
       navigation.popToTop();
+      if (withinReceiveSettings) {
+        navigation.pop();
+      }
 
       await dispatch(
         startOnGoingProcessModal(
@@ -362,11 +375,13 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         }),
       );
 
-      navigation.navigate('WalletDetails', {
-        walletId: wallet.id,
-        key,
-        skipInitializeHistory: true,
-      });
+      if (!withinReceiveSettings) {
+        navigation.navigate('WalletDetails', {
+          walletId: wallet.id,
+          key,
+          skipInitializeHistory: true,
+        });
+      }
 
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
@@ -431,10 +446,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         ({id}) => id === associatedWallet.id,
       )!;
       const {network, currencyAbbreviation, chain} = fullWalletObj;
-      const addrData = GetCoinAndNetwork(tokenAddress, network);
+      const addrData = GetCoinAndNetwork(tokenAddress, network, chain);
       const isValid =
         currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
-        addrData?.network === network;
+        network === addrData?.network;
 
       if (!isValid) {
         return;
@@ -494,7 +509,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               <Row
                 style={{alignItems: 'center', justifyContent: 'space-between'}}>
                 <Row style={{alignItems: 'center'}}>
-                  <CurrencyImage img={CurrencyListIcons.eth} size={30} />
+                  <CurrencyImage
+                    img={CurrencyListIcons[associatedWallet.chain]}
+                    size={30}
+                  />
                   <AssociateWalletName>
                     {associatedWallet?.walletName ||
                       `${associatedWallet.currencyAbbreviation.toUpperCase()} Wallet`}
@@ -572,9 +590,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
                   }}>
                   <Column>
                     <OptionTitle>
-                      {isToken || currencyAbbreviation === 'ETH'
-                        ? 'Kovan'
-                        : 'Testnet'}
+                      {getProtocolName(chain || '', 'testnet')}
                     </OptionTitle>
                   </Column>
                   <CheckBoxContainer>

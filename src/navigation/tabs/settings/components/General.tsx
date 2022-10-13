@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Button from '../../../../components/button/Button';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
@@ -12,6 +12,7 @@ import {RootState} from '../../../../store';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
 import {useTranslation} from 'react-i18next';
 import {SettingsComponent} from '../SettingsRoot';
+import {LanguageList} from '../../../../constants/LanguageSelectionList';
 import {
   ActiveOpacity,
   Hr,
@@ -24,9 +25,22 @@ const General = () => {
   const showPortfolioValue = useAppSelector(
     ({APP}: RootState) => APP.showPortfolioValue,
   );
+  const selectedAltCurrency = useAppSelector(
+    ({APP}: RootState) => APP.defaultAltCurrency,
+  );
+  const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
+  const [appLanguageName, setAppLanguageName] = useState('');
 
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+
+  useEffect(() => {
+    LanguageList.forEach(lng => {
+      if (lng.isoCode === appLanguage) {
+        setAppLanguageName(lng.name);
+      }
+    });
+  }, [appLanguage]);
 
   return (
     <SettingsComponent>
@@ -77,7 +91,15 @@ const General = () => {
           })
         }>
         <SettingTitle>{t('Display Currency')}</SettingTitle>
-        <AngleRight />
+        <Button
+          buttonType={'pill'}
+          onPress={() =>
+            navigation.navigate('GeneralSettings', {
+              screen: 'AltCurrencySettings',
+            })
+          }>
+          {selectedAltCurrency.name}
+        </Button>
       </Setting>
       <Hr />
       {/*----------------------------------------------------------------------*/}
@@ -87,7 +109,15 @@ const General = () => {
           navigation.navigate('GeneralSettings', {screen: 'LanguageSettings'})
         }>
         <SettingTitle>{t('Language')}</SettingTitle>
-        <AngleRight />
+        <Button
+          buttonType={'pill'}
+          onPress={() =>
+            navigation.navigate('GeneralSettings', {
+              screen: 'LanguageSettings',
+            })
+          }>
+          {appLanguageName}
+        </Button>
       </Setting>
       <Hr />
       {/*----------------------------------------------------------------------*/}

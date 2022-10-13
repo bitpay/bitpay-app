@@ -12,6 +12,7 @@ export interface WalletSettingsRowProps {
   id: string;
   img: string | ((props: any) => ReactElement);
   currencyName: string;
+  chain: string;
   isToken?: boolean;
   network: string;
   hideWallet?: boolean;
@@ -43,6 +44,7 @@ const HiddenColumn = styled(Column)`
 const WalletSettingsRow = ({
   img,
   currencyName,
+  chain,
   isToken,
   network,
   hideWallet,
@@ -62,7 +64,7 @@ const WalletSettingsRow = ({
       <CurrencyName style={textStyle}>
         {walletName || currencyName} {isToken}
       </CurrencyName>
-      {buildTestBadge(network, currencyName, isToken)}
+      {buildTestBadge(network, chain, isToken)}
 
       {hideWallet ? (
         <HiddenColumn>

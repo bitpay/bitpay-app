@@ -14,6 +14,7 @@ import {Network} from '../../constants';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
 import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
+import {getProtocolName} from '../../utils/helper-methods';
 
 const BadgeContainer = styled.View`
   margin-left: 5px;
@@ -60,19 +61,21 @@ export interface WalletRowProps {
 interface Props {
   id: string;
   wallet: WalletRowProps;
+  hideIcon?: boolean;
+  isLast?: boolean;
   onPress: () => void;
 }
 
 export const buildTestBadge = (
   network: string,
-  currencyName: string,
+  chain: string,
   isToken: boolean | undefined,
 ): ReactElement | undefined => {
   if (isToken || ['livenet', 'mainnet'].includes(network)) {
     return;
   }
   // logic for mapping test networks to chain
-  const badgeLabel = currencyName === 'Ethereum' ? 'Kovan' : 'Testnet';
+  const badgeLabel = getProtocolName(chain, network);
 
   return (
     <BadgeContainer>
@@ -81,10 +84,11 @@ export const buildTestBadge = (
   );
 };
 
-const WalletRow = ({wallet, onPress}: Props) => {
+const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,
+    chain,
     walletName,
     img,
     badgeImg,
@@ -100,21 +104,26 @@ const WalletRow = ({wallet, onPress}: Props) => {
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
 
   return (
-    <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
+    <RowContainer
+      activeOpacity={ActiveOpacity}
+      onPress={onPress}
+      style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrowIcon />
         </NestedArrowContainer>
       )}
-      <CurrencyImageContainer>
-        <CurrencyImage img={img} badgeUri={badgeImg} size={45} />
-      </CurrencyImageContainer>
+      {!hideIcon ? (
+        <CurrencyImageContainer>
+          <CurrencyImage img={img} badgeUri={badgeImg} size={45} />
+        </CurrencyImageContainer>
+      ) : null}
       <CurrencyColumn>
         <Row>
           <H5 ellipsizeMode="tail" numberOfLines={1}>
             {walletName || currencyName}
           </H5>
-          {buildTestBadge(network, currencyName, isToken)}
+          {buildTestBadge(network, chain, isToken)}
         </Row>
         <ListItemSubText>
           {currencyAbbreviation.toUpperCase()} {multisig ? multisig : null}

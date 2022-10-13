@@ -1,9 +1,9 @@
 import {Effect} from '../..';
+import {BitpaySupportedCurrencies} from '../../../constants/currencies';
 import {
-  BitpaySupportedCurrencies,
-  SUPPORTED_COINS,
-} from '../../../constants/currencies';
-import {getCurrencyAbbreviation} from '../../../utils/helper-methods';
+  addTokenChainSuffix,
+  getCurrencyAbbreviation,
+} from '../../../utils/helper-methods';
 
 export const GetProtocolPrefix =
   (
@@ -60,13 +60,19 @@ export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
   );
 };
 
-export const IsCustomERCToken = (currencyAbbreviation: string) => {
-  return !BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()];
+export const IsCustomERCToken = (
+  currencyAbbreviation: string,
+  chain: string,
+) => {
+  const currency = addTokenChainSuffix(currencyAbbreviation, chain);
+  return !BitpaySupportedCurrencies[currency.toLowerCase()];
 };
 
-export const IsERCToken = (currencyAbbreviation: string): boolean => {
-  const currency = currencyAbbreviation.toLowerCase();
-  return !SUPPORTED_COINS.includes(currency);
+export const IsERCToken = (
+  currencyAbbreviation: string,
+  chain: string,
+): boolean => {
+  return currencyAbbreviation.toLowerCase() !== chain.toLowerCase();
 };
 
 export const GetBlockExplorerUrl =

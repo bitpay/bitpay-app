@@ -342,7 +342,7 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
-          {contact.chain && IsERCToken(contact.coin) ? (
+          {contact.chain && IsERCToken(contact.coin, contact.chain) ? (
             <>
               <Hr />
               <Detail>
