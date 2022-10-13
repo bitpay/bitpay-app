@@ -9,11 +9,7 @@ import {
   GetFeeOptions,
 } from '../../../../store/wallet/effects/fee/fee';
 import * as _ from 'lodash';
-import {
-  GetFeeUnits,
-  GetTheme,
-  IsERCToken,
-} from '../../../../store/wallet/utils/currency';
+import {GetFeeUnits, GetTheme} from '../../../../store/wallet/utils/currency';
 import {
   ethAvgTime,
   FeeLevelStep,
