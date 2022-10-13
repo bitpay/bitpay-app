@@ -178,6 +178,7 @@ export const BuildKeyWalletRow = (
   keys: {[key in string]: Key},
   currentWalletId: string,
   currentCurrencyAbbreviation: string,
+  currentChain: string,
   currentNetwork: string,
   defaultAltCurrencyIsoCode: string,
   searchInput: string,
@@ -190,9 +191,16 @@ export const BuildKeyWalletRow = (
     value.wallets
       .filter(({hideWallet}) => !hideWallet)
       .filter(
-        ({currencyAbbreviation, id, network, credentials: {walletName}}) =>
+        ({
+          currencyAbbreviation,
+          chain,
+          id,
+          network,
+          credentials: {walletName},
+        }) =>
           currencyAbbreviation.toLowerCase() ===
             currentCurrencyAbbreviation.toLowerCase() &&
+          chain.toLowerCase() === currentChain.toLowerCase() &&
           id !== currentWalletId &&
           network === currentNetwork &&
           walletName.toLowerCase().includes(searchInput.toLowerCase()),
@@ -323,6 +331,7 @@ const SendTo = () => {
     keys,
     id,
     currencyAbbreviation,
+    chain,
     network,
     defaultAltCurrency.isoCode,
     searchInput,
