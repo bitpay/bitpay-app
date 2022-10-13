@@ -330,6 +330,7 @@ export const ValidateCoinAddress = (
       return !!addressLtc.isValid(str, network);
     case 'eth':
     case 'xrp':
+    case 'matic':
       const {Validation} = BWC.getCore();
       return !!Validation.validateAddress(coin.toUpperCase(), network, str);
     default:

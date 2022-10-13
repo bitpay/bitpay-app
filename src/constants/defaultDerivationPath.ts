@@ -5,6 +5,7 @@ export enum DefaultDerivationPath {
   defaultXRP = "m/44'/144'/0'",
   defaultDOGE = "m/44'/3'/0'",
   defaultLTC = "m/44'/2'/0'",
+  defaultMATIC = "m/44'/60'/0'",
   defaultMultisigBTC = "m/48'/0'/0'",
   defaultMultisigBCH = "m/48'/145'/0'",
   defaultMultisigDOGE = "m/48'/3'/0'",

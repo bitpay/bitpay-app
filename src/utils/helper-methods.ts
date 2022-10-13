@@ -111,6 +111,7 @@ export const isValidDerivationPathCoin = (
       isValid = ["145'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
     case 'eth':
+    case 'matic':
       isValid = ["60'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
     case 'xrp':
