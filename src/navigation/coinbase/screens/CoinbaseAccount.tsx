@@ -258,7 +258,9 @@ const CoinbaseAccount = ({
         wallet.network === 'livenet' &&
         wallet.isComplete() &&
         wallet.currencyAbbreviation.toLowerCase() ===
-          account?.currency.code.toLocaleLowerCase(),
+          account?.currency.code.toLocaleLowerCase() &&
+        // TODO: disabled deposit/withdraw for now
+        wallet.currencyAbbreviation.toLowerCase() !== 'matic',
     );
 
     if (availableWallets.length) {
