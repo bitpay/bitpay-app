@@ -1,5 +1,6 @@
 import React from 'react';
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
+import MaticIcon from '../../../../assets/img/currencies/matic.svg';
 import {titleCasing} from '../../../utils/helper-methods';
 import {Badge, H5} from '../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -46,16 +47,24 @@ export default ({
   wallet: Wallet;
   connectors: IWCConnector[];
 }) => {
-  const {walletName, network} = wallet.credentials;
+  const {walletName, network, chain} = wallet.credentials;
   const networkName =
-    network === ('livenet' || 'mainnet') ? 'mainnet' : 'kovan';
+    network === ('livenet' || 'mainnet')
+      ? 'mainnet'
+      : chain === 'eth'
+      ? 'kovan'
+      : 'mumbai';
 
   return (
     <ConnectionsContainer>
       <ChainContainer>
         <ChainDetailsContainer>
           <ChainIconContainer>
-            <EthIcon width={37} height={37} />
+            {chain === 'eth' ? (
+              <EthIcon width={37} height={37} />
+            ) : (
+              <MaticIcon width={37} height={37} />
+            )}
           </ChainIconContainer>
           <ChainTextContainer>
             <H5>{walletName}</H5>

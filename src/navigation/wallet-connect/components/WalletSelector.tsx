@@ -44,6 +44,7 @@ import {logSegmentEvent} from '../../../store/app/app.effects';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {Platform} from 'react-native';
 import {WalletConnectCtaContainer} from '../styled/WalletConnectContainers';
+import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -110,7 +111,7 @@ export default ({
   };
 
   const supportedCoins = useMemo(
-    () => buildList(['eth'], allWallets),
+    () => buildList(SUPPORTED_EVM_COINS, allWallets),
     [allWallets],
   );
 
@@ -121,7 +122,7 @@ export default ({
       keyId => {
         const key = keys[keyId];
         return {
-          key: keyId,
+          key: Math.random().toString(),
           keyName: key.keyName || 'My Key',
           wallets: supportedCoin.availableWalletsByKey[keyId].map(wallet => {
             const {
@@ -245,9 +246,7 @@ export default ({
             </TextAlign>
 
             <DescriptionText>
-              {t(
-                'Which Ethereum wallet would you like to use for WalletConnect?',
-              )}
+              {t('Which wallet would you like to use for WalletConnect?')}
             </DescriptionText>
 
             <WalletSelectMenuBodyContainer>

@@ -4,6 +4,7 @@ import styled from 'styled-components/native';
 import {H7, Smallest} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
+import MaticIcon from '../../../../assets/img/currencies/matic.svg';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Hr} from '../../../components/styled/Containers';
@@ -267,7 +268,11 @@ const WalletConnectHome = () => {
                     copyToClipboard(session.accounts[0], 'address')
                   }>
                   <IconContainer>
-                    <EthIcon width={18} height={18} />
+                    {chain === 'eth' ? (
+                      <EthIcon width={18} height={18} />
+                    ) : (
+                      <MaticIcon width={18} height={18} />
+                    )}
                   </IconContainer>
                   <NoteLabel numberOfLines={1} ellipsizeMode={'middle'}>
                     {session.accounts[0]}
