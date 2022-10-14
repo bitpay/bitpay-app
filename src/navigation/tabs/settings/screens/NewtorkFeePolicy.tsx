@@ -11,7 +11,7 @@ import {
 import * as _ from 'lodash';
 import {GetFeeUnits, GetTheme} from '../../../../store/wallet/utils/currency';
 import {
-  ethAvgTime,
+  evmAvgTime,
   FeeLevelStep,
   FeeLevelStepCircle,
   FeeLevelStepContainer,
@@ -30,6 +30,7 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {updateCacheFeeLevel} from '../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import i18next from 'i18next';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
@@ -78,7 +79,7 @@ const FeeOptions = ({
   currencyName,
 }: {
   feeOptions: any[];
-  currencyAbbreviation: 'btc' | 'eth';
+  currencyAbbreviation: 'btc' | 'eth' | 'matic';
   currencyName: string;
 }) => {
   const dispatch = useAppDispatch();
@@ -202,6 +203,7 @@ const NetworkFeePolicy = () => {
   const {t} = useTranslation();
   const network = 'livenet';
   const [ethFeeOptions, setEthFeeOptions] = useState<any[]>();
+  const [maticFeeOptions, setMaticFeeOptions] = useState<any[]>();
   const [btcFeeOptions, setBtcFeeOptions] = useState<any[]>();
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useAppDispatch();
@@ -233,9 +235,9 @@ const NetworkFeePolicy = () => {
           currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
         }`;
 
-        if (chain === 'eth') {
+        if (SUPPORTED_EVM_COINS.includes(chain)) {
           // @ts-ignore
-          feeOption.avgConfirmationTime = ethAvgTime[level];
+          feeOption.avgConfirmationTime = evmAvgTime[level];
         }
 
         if (currencyAbbreviation === 'btc') {
@@ -255,17 +257,17 @@ const NetworkFeePolicy = () => {
 
       if (currencyAbbreviation === 'btc') {
         setBtcFeeOptions(feeOptions);
-      }
-
-      if (currencyAbbreviation === 'eth') {
+      } else if (currencyAbbreviation === 'eth') {
         setEthFeeOptions(feeOptions);
+      } else if (currencyAbbreviation === 'matic') {
+        setMaticFeeOptions(feeOptions);
       }
     } catch (e) {
       return;
     }
   };
   const init = async () => {
-    ['btc', 'eth'].forEach((ca: string) => initFeeLevel(ca, ca));
+    ['btc', 'eth', 'matic'].forEach((ca: string) => initFeeLevel(ca, ca));
     await sleep(500);
     setIsLoading(false);
   };
@@ -303,6 +305,16 @@ const NetworkFeePolicy = () => {
                   feeOptions={ethFeeOptions}
                   currencyAbbreviation={'eth'}
                   currencyName={'Ethereum'}
+                />
+              ) : null}
+            </View>
+
+            <View>
+              {maticFeeOptions && maticFeeOptions.length > 0 ? (
+                <FeeOptions
+                  feeOptions={maticFeeOptions}
+                  currencyAbbreviation={'matic'}
+                  currencyName={'Matic'}
                 />
               ) : null}
             </View>

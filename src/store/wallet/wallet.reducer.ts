@@ -53,6 +53,7 @@ const initialState: WalletState = {
   feeLevel: {
     btc: FeeLevels.NORMAL,
     eth: FeeLevels.NORMAL,
+    matic: FeeLevels.NORMAL,
   },
   useUnconfirmedFunds: false,
   customizeNonce: false,

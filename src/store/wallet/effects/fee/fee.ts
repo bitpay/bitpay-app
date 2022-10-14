@@ -84,7 +84,10 @@ export const getFeeLevels = ({
             return reject(err);
           }
 
-          if (wallet.credentials.coin === 'eth' || !!wallet.credentials.token) {
+          if (
+            SUPPORTED_EVM_COINS.includes(wallet.credentials.coin) ||
+            !!wallet.credentials.token
+          ) {
             feeLevels = removeLowFeeLevels(feeLevels);
           }
 
@@ -139,7 +142,7 @@ export const getFeeLevelsUsingBwcClient = (
           return reject(t('Could not get dynamic fee'));
         }
 
-        if (currencyAbbreviation.toLowerCase() === 'eth') {
+        if (SUPPORTED_EVM_COINS.includes(currencyAbbreviation.toLowerCase())) {
           feeLevels = removeLowFeeLevels(feeLevels);
         }
 
