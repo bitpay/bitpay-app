@@ -8,7 +8,6 @@ import {BaseText} from '../../components/styled/Text';
 import {Black, White} from '../../styles/colors';
 import SheetModal from '../modal/base/sheet/SheetModal';
 import Amount, {AmountProps} from './Amount';
-import {useTranslation} from 'react-i18next';
 import {SwapOpts} from '../../navigation/services/swap-crypto/screens/SwapCryptoRoot';
 
 const ModalHeaderText = styled(BaseText)`
@@ -72,7 +71,6 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
     ...amountProps
   } = props;
   const theme = useTheme();
-  const {t} = useTranslation();
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
