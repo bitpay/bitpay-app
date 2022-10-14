@@ -398,7 +398,7 @@ export interface SendMaxInfo {
 }
 
 export interface CacheFeeLevel {
-  currency: 'eth' | 'btc';
+  currency: 'eth' | 'btc' | 'matic';
   feeLevel: FeeLevels;
 }
 
