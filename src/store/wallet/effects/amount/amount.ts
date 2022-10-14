@@ -14,6 +14,16 @@ export interface FormattedAmountObj {
   amountUnitStr: string;
 }
 
+export const parseAmountToStringIfBN = (amount: number | string) => {
+  if (typeof amount === 'string') {
+    return amount;
+  }
+  return amount.toLocaleString('fullwide', {
+    useGrouping: false,
+    maximumFractionDigits: 0,
+  });
+};
+
 export const ParseAmount =
   (
     amount: number,

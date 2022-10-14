@@ -11,7 +11,12 @@ import {
   Wallet,
   TransactionOptionsContext,
 } from '../../wallet.models';
-import {FormatAmount, FormatAmountStr, ParseAmount} from '../amount/amount';
+import {
+  FormatAmount,
+  FormatAmountStr,
+  ParseAmount,
+  parseAmountToStringIfBN,
+} from '../amount/amount';
 import {FeeLevels, GetBitcoinSpeedUpTxFee, getFeeRatePerKb} from '../fee/fee';
 import {GetInput} from '../transactions/transactions';
 import {
@@ -60,7 +65,6 @@ import TouchID from 'react-native-touch-id-ng';
 import {
   authOptionalConfigObject,
   BiometricErrorNotification,
-  isSupportedOptionalConfigObject,
   TO_HANDLE_ERRORS,
 } from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
@@ -380,6 +384,7 @@ export const buildTxDetails =
     let {amount} = proposal || {
       amount: invoice!.paymentTotals[invoiceCoin.toUpperCase()],
     };
+    amount = Number(amount); // Support BN (use number instead string only for view)
     const effectiveRate =
       invoice && dispatch(getInvoiceEffectiveRate(invoice, invoiceCoin, chain));
     const networkCost = invoice?.minerFees[invoiceCoin.toUpperCase()]?.totalFee;
@@ -750,6 +755,9 @@ const buildTransactionProposal =
           txp.tokenAddress = tx.tokenAddress;
           if (tx.context !== 'paypro') {
             for (const output of txp.outputs) {
+              if (output.amount) {
+                output.amount = parseAmountToStringIfBN(output.amount);
+              }
               if (!output.data) {
                 output.data = BwcProvider.getInstance()
                   .getCore()
