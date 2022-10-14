@@ -575,7 +575,8 @@ export const CurrencyIconAndBadge = ({
   const badgeImg = IsERCToken(coin, chain)
     ? getBadgeImg(coin, chain)
     : undefined;
-  const CurrencyIcon = CurrencyListIcons[fullCurrencyAbbreviation];
+  const CurrencyIcon =
+    CurrencyListIcons[fullCurrencyAbbreviation.toLowerCase()];
 
   return (
     <CurrencyImageAndBadgeContainer height={size}>

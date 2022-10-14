@@ -93,7 +93,10 @@ import Icons from '../../components/WalletIcons';
 import ContactRow from '../../../../components/list/ContactRow';
 import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
-import {getReceivingAddressChain} from '../../../bitpay-id/utils/bitpay-id-utils';
+import {
+  getCoinAndChainFromCurrencyCode,
+  getCurrencyCodeFromCoinAndChain,
+} from '../../../bitpay-id/utils/bitpay-id-utils';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -554,7 +557,10 @@ const SendTo = () => {
       const searchPromise = dispatch(
         BitPayIdEffects.startFetchReceivingAddresses({
           email,
-          currency: currencyAbbreviation.toUpperCase(),
+          currency: getCurrencyCodeFromCoinAndChain(
+            currencyAbbreviation,
+            wallet.chain,
+          ),
         }),
       );
       setEmailAddressSearchPromise(searchPromise);
@@ -565,7 +571,13 @@ const SendTo = () => {
     } else {
       setEmailAddressSearchPromise(Promise.resolve([]));
     }
-  }, [searchIsEmailAddress, searchInput, dispatch, currencyAbbreviation]);
+  }, [
+    searchIsEmailAddress,
+    searchInput,
+    dispatch,
+    currencyAbbreviation,
+    wallet.chain,
+  ]);
 
   return (
     <SafeAreaView>
@@ -615,11 +627,9 @@ const SendTo = () => {
               const email = searchInput.toLowerCase();
               const emailReceivingAddresses = await emailAddressSearchPromise;
               const addressMatchingCurrency = emailReceivingAddresses.find(
-                address =>
-                  address.currency.toLowerCase() ===
-                    currencyAbbreviation.toLowerCase() &&
-                  getReceivingAddressChain(address).toLowerCase() ===
-                    chain.toLowerCase(),
+                ({coin, chain: addressChain}) =>
+                  currencyAbbreviation.toLowerCase() === coin.toLowerCase() &&
+                  chain.toLowerCase() === addressChain.toLowerCase(),
               );
               addressMatchingCurrency
                 ? validateAndNavigateToConfirm(
