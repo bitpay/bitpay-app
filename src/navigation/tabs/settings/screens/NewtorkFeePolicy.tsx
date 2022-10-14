@@ -11,7 +11,7 @@ import {
 import * as _ from 'lodash';
 import {GetFeeUnits, GetTheme} from '../../../../store/wallet/utils/currency';
 import {
-  ethAvgTime,
+  evmAvgTime,
   FeeLevelStep,
   FeeLevelStepCircle,
   FeeLevelStepContainer,
@@ -30,6 +30,7 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {updateCacheFeeLevel} from '../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import i18next from 'i18next';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
@@ -233,9 +234,9 @@ const NetworkFeePolicy = () => {
           currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
         }`;
 
-        if (chain === 'eth') {
+        if (SUPPORTED_EVM_COINS.includes(chain)) {
           // @ts-ignore
-          feeOption.avgConfirmationTime = ethAvgTime[level];
+          feeOption.avgConfirmationTime = evmAvgTime[level];
         }
 
         if (currencyAbbreviation === 'btc') {

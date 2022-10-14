@@ -177,7 +177,7 @@ const Confirm = () => {
   }, [navigation, speedup, t]);
 
   const isTxLevelAvailable = () => {
-    const includedCurrencies = ['btc', 'eth'];
+    const includedCurrencies = ['btc', 'eth', 'matic'];
     // TODO: exclude paypro, coinbase, usingMerchantFee txs,
     // const {payProUrl} = txDetails;
     return includedCurrencies.includes(currencyAbbreviation);
