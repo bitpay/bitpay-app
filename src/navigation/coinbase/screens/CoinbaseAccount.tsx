@@ -274,12 +274,9 @@ const CoinbaseAccount = ({
     }
 
     if (account && account.balance) {
-      const _currencyAbbreviation = getCurrencyAbbreviation(
-        account.balance.currency.toLowerCase(),
-        'eth',
-      );
+      const _currencyAbbreviation = account.balance.currency;
       const _chain =
-        BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.chain;
+        BitpaySupportedCurrencies[_currencyAbbreviation.toLowerCase()].chain;
       setCurrencyAbbreviation(_currencyAbbreviation);
       setChain(_chain);
       const currencies: string[] = [];
