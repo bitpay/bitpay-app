@@ -344,6 +344,9 @@ export const coinbaseAccountToWalletRow = (
   let badgeImg;
   if (BitpaySupportedCurrencies[_currencyAbbreviation.toLowerCase()]) {
     badgeImg = undefined;
+    if (_currencyAbbreviation.toLowerCase() === 'matic') {
+      badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase() + '_e', chain);
+    }
     currencyImg = CurrencyListIcons[_currencyAbbreviation.toLowerCase()];
   } else {
     badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), chain);
