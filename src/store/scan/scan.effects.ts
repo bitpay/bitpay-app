@@ -766,7 +766,7 @@ const handleEthereumUri =
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, Number(parsedAmount))),
+        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
       );
       dispatch(
         goToConfirm({

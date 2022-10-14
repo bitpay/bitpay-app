@@ -119,13 +119,15 @@ export const FormatAmount =
     };
 
     if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation, chain)) {
-      opts.toSatoshis = dispatch(
-        GetPrecision(currencyAbbreviation, chain),
-      )?.unitToSatoshi;
+      const {unitToSatoshi, unitDecimals} =
+        dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+      if (unitToSatoshi) {
+        opts.toSatoshis = unitToSatoshi;
+      }
       opts.decimals = {
         full: {
-          maxDecimals: 8,
-          minDecimals: 8,
+          maxDecimals: unitDecimals || 8,
+          minDecimals: unitDecimals || 8,
         },
         short: {
           maxDecimals: 6,
