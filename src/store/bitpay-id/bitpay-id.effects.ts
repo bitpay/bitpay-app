@@ -1,6 +1,5 @@
 import {upperFirst} from 'lodash';
 import {batch} from 'react-redux';
-import _ from 'lodash';
 import AuthApi from '../../api/auth';
 import {
   LoginErrorResponse,
@@ -23,8 +22,7 @@ import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
 import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
-import AddressCard from '../../navigation/wallet/components/AddressCard';
-import {getReceivingAddressChain} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
+import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 interface StartLoginParams {
   email: string;
@@ -591,10 +589,16 @@ export const startFetchReceivingAddresses =
         );
         const receivingAddresses = accountAddresses
           .filter(address => address.usedFor?.payToEmail)
-          .map(address => ({
-            ...address,
-            chain: getReceivingAddressChain(address),
-          }));
+          .map(address => {
+            const {coin, chain} = getCoinAndChainFromCurrencyCode(
+              address.currency,
+            );
+            return {
+              ...address,
+              coin,
+              chain,
+            };
+          });
         dispatch(
           BitPayIdActions.successFetchReceivingAddresses(
             APP.network,

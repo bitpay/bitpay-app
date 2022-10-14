@@ -149,7 +149,7 @@ const AddressModal = ({
           <>
             <HeaderContainer>
               <CurrencyIconAndBadge
-                coin={receivingAddress.currency}
+                coin={receivingAddress.coin}
                 chain={receivingAddress.chain}
                 size={30}
               />

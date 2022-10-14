@@ -50,7 +50,10 @@ import AddressModal from '../components/AddressModal';
 import {keyBackupRequired} from '../../tabs/home/components/Crypto';
 import {StackScreenProps} from '@react-navigation/stack';
 import TwoFactorRequiredModal from '../components/TwoFactorRequiredModal';
-import {getReceivingAddressChain} from '../utils/bitpay-id-utils';
+import {
+  getCoinAndChainFromCurrencyCode,
+  getCurrencyCodeFromCoinAndChain,
+} from '../utils/bitpay-id-utils';
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -124,13 +127,13 @@ const FooterButton = styled(CtaContainerAbsolute)`
 
 const numVisibleCurrencyIcons = 3;
 
-const getReceivingAddressKey = (currency: string, chain: string) => {
-  return `${currency.toLowerCase()}_${chain.toLowerCase()}`;
+const getReceivingAddressKey = (coin: string, chain: string) => {
+  return `${coin.toLowerCase()}_${chain.toLowerCase()}`;
 };
 
 const createAddressMap = (receivingAddresses: ReceivingAddress[]) => {
-  return _.keyBy(receivingAddresses, ({currency, chain}) =>
-    getReceivingAddressKey(currency, chain),
+  return _.keyBy(receivingAddresses, ({coin, chain}) =>
+    getReceivingAddressKey(coin, chain),
   );
 };
 
@@ -152,7 +155,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   const apiToken = useAppSelector(({BITPAY_ID}) => BITPAY_ID.apiToken[network]);
   const receivingAddresses = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.receivingAddresses[network],
-  );
+  ).map(address => ({...address, coin: address.coin || address.currency}));
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [twoFactorModalRequiredVisible, setTwoFactorModalRequiredVisible] =
@@ -176,9 +179,8 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   const unusedActiveWallets = uniqueActiveWallets.filter(
     wallet =>
       !Object.values(activeAddresses).some(
-        address =>
-          wallet.currencyAbbreviation === address.currency.toLowerCase() &&
-          wallet.chain === getReceivingAddressChain(address).toLowerCase(),
+        ({coin, chain}) =>
+          wallet.currencyAbbreviation === coin && wallet.chain === chain,
       ),
   );
   const inactiveCurrencyOptions = SupportedCurrencyOptions.filter(
@@ -246,11 +248,15 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
       ...activeAddresses,
       [getReceivingAddressKey(wallet.currencyAbbreviation, wallet.chain)]: {
         id: '',
+        coin: wallet.currencyAbbreviation,
         chain: wallet.chain,
         label: wallet.walletName || wallet.currencyAbbreviation.toUpperCase(),
         address,
         provider: 'BitPay',
-        currency: wallet.currencyAbbreviation.toUpperCase(),
+        currency: getCurrencyCodeFromCoinAndChain(
+          wallet.currencyAbbreviation,
+          wallet.chain,
+        ),
         status: {
           isActive: true,
         },
@@ -309,7 +315,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
 
   const removeAddress = (activeAddress: ReceivingAddress) => {
     delete activeAddresses[
-      getReceivingAddressKey(activeAddress.currency, activeAddress.chain)
+      getReceivingAddressKey(activeAddress.coin, activeAddress.chain)
     ];
     setActiveAddresses({...activeAddresses});
   };
@@ -328,9 +334,9 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
           {Object.keys(activeAddresses).length ? (
             <>
               <SectionHeader>{t('Active Addresses')}</SectionHeader>
-              {Object.values(activeAddresses).map(({currency, chain}) => {
+              {Object.values(activeAddresses).map(({coin, chain}) => {
                 const activeAddress =
-                  activeAddresses[getReceivingAddressKey(currency, chain)];
+                  activeAddresses[getReceivingAddressKey(coin, chain)];
                 return (
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
@@ -338,7 +344,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
                     onPress={() => showAddressModal(activeAddress)}>
                     <AddressItem>
                       <CurrencyIconAndBadge
-                        coin={currency}
+                        coin={coin}
                         chain={chain}
                         size={25}
                       />
@@ -362,33 +368,33 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
           {unusedActiveWallets.length + inactiveCurrencyOptions.length > 0 ? (
             <>
               <SectionHeader>{t('Receiving Addresses')}</SectionHeader>
-              {unusedActiveWallets.map(({currencyAbbreviation, chain}) => {
-                return (
-                  <TouchableOpacity
-                    activeOpacity={ActiveOpacity}
-                    key={currencyAbbreviation}
-                    onPress={() => {
-                      setWalletSelectorCurrency(currencyAbbreviation);
-                      setWalletSelectorChain(chain);
-                      setWalletSelectorVisible(true);
-                    }}>
-                    <AddressItem>
-                      <CurrencyIconAndBadge
-                        coin={currencyAbbreviation}
-                        chain={chain}
-                        size={25}
-                      />
-                      <AddressItemText>
-                        Select a{' '}
-                        <WalletName>
-                          {currencyAbbreviation.toUpperCase()} Wallet
-                        </WalletName>
-                      </AddressItemText>
-                      <ChevronRight />
-                    </AddressItem>
-                  </TouchableOpacity>
-                );
-              })}
+              {unusedActiveWallets.map(
+                ({currencyAbbreviation: coin, chain}) => {
+                  return (
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
+                      key={coin}
+                      onPress={() => {
+                        setWalletSelectorCurrency(coin);
+                        setWalletSelectorChain(chain);
+                        setWalletSelectorVisible(true);
+                      }}>
+                      <AddressItem>
+                        <CurrencyIconAndBadge
+                          coin={coin}
+                          chain={chain}
+                          size={25}
+                        />
+                        <AddressItemText>
+                          Select a{' '}
+                          <WalletName>{coin.toUpperCase()} Wallet</WalletName>
+                        </AddressItemText>
+                        <ChevronRight />
+                      </AddressItem>
+                    </TouchableOpacity>
+                  );
+                },
+              )}
               <TouchableOpacity
                 activeOpacity={ActiveOpacity}
                 onPress={() => {

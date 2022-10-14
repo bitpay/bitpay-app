@@ -22,6 +22,7 @@ export interface Session {
 export interface ReceivingAddress {
   id: string;
   currency: string;
+  coin: string;
   chain: string;
   label: string;
   address: string;
