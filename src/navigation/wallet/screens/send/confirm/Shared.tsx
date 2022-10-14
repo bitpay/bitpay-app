@@ -159,6 +159,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
     recipientFullAddress,
     recipientCoin,
     recipientChain,
+    recipientType,
   } = recipient;
 
   let badgeImg;
@@ -205,7 +206,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
             icon={
               copied ? (
                 <CopiedSvg width={18} />
-              ) : recipientName || recipientEmail ? (
+              ) : recipientType === 'contact' ? (
                 <ContactIcon name={description} size={20} />
               ) : (
                 <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
