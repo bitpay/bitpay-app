@@ -281,7 +281,7 @@ export interface TransactionProposal {
   replaceTxByFee?: boolean;
   toAddress: string;
   outputs: Array<{
-    amount: number;
+    amount: number | string; // Support BN
     address?: string;
     addressToShow?: string;
     toAddress?: string;
