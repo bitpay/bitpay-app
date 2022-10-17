@@ -283,12 +283,12 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         customSupportedCurrencies ? customSupportedCurrencies : SUPPORTED_COINS,
         wallets,
       ),
-    [wallets, customSupportedCurrencies, SUPPORTED_COINS],
+    [wallets, customSupportedCurrencies],
   );
 
   const supportedTokens = useMemo(
     () => buildList(customSupportedCurrencies ? [] : SUPPORTED_TOKENS, wallets),
-    [wallets, customSupportedCurrencies, SUPPORTED_TOKENS],
+    [wallets, customSupportedCurrencies],
   );
 
   const otherTokens = useMemo(

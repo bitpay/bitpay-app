@@ -10,7 +10,11 @@ import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
-import {getCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
+import {
+  getCurrencyAbbreviation,
+  getProtocolName,
+  sleep,
+} from '../../../utils/helper-methods';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
@@ -116,11 +120,6 @@ export const WalletSelectMenuHeaderContainer = styled.View`
   padding: 50px 0;
 `;
 
-const AmountContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
-`;
-
 export type CoinbaseAccountScreenParamList = {
   accountId: string;
   refresh?: boolean;
@@ -192,6 +191,7 @@ const CoinbaseAccount = ({
 
   const [currencyAbbreviation, setCurrencyAbbreviation] = useState('');
   const [chain, setChain] = useState('');
+  const [protocolName, setProtocolName] = useState('');
 
   const onPressTransaction = useMemo(
     () => (transaction: any) => {
@@ -252,27 +252,6 @@ const CoinbaseAccount = ({
       .filter(key => key.backupComplete)
       .flatMap(key => key.wallets);
 
-    availableWallets = availableWallets.filter(
-      wallet =>
-        !wallet.hideWallet &&
-        wallet.network === 'livenet' &&
-        wallet.isComplete() &&
-        wallet.currencyAbbreviation.toLowerCase() ===
-          account?.currency.code.toLocaleLowerCase() &&
-        // TODO: disabled deposit/withdraw for now
-        wallet.currencyAbbreviation.toLowerCase() !== 'matic',
-    );
-
-    if (availableWallets.length) {
-      if (Number(account?.balance.amount) > 0) {
-        setAvailableWalletToWithdraw(true);
-      }
-      // If has balance
-      if (availableWallets.filter(wallet => wallet.balance.sat > 0).length) {
-        setAvailableWalletToDeposit(true);
-      }
-    }
-
     if (account && account.balance) {
       const _currencyAbbreviation = account.balance.currency;
       const _chain =
@@ -280,10 +259,38 @@ const CoinbaseAccount = ({
         _currencyAbbreviation.toLowerCase() === 'xrp'
           ? _currencyAbbreviation.toLowerCase()
           : 'eth';
+
+      availableWallets = availableWallets.filter(
+        wallet =>
+          !wallet.hideWallet &&
+          wallet.network === 'livenet' &&
+          wallet.isComplete() &&
+          wallet.currencyAbbreviation.toLowerCase() ===
+            account.currency.code.toLocaleLowerCase() &&
+          wallet.chain === _chain,
+      );
+
+      if (availableWallets.length) {
+        if (Number(account.balance.amount) > 0) {
+          setAvailableWalletToWithdraw(true);
+        }
+        // If has balance
+        if (availableWallets.filter(wallet => wallet.balance.sat > 0).length) {
+          setAvailableWalletToDeposit(true);
+        }
+      }
+
       setCurrencyAbbreviation(_currencyAbbreviation);
       setChain(_chain);
+      setProtocolName(getProtocolName(_chain, 'livenet') || '');
+
+      const _currency = getCurrencyAbbreviation(
+        _currencyAbbreviation.toLowerCase(),
+        _chain,
+      );
+
       const currencies: string[] = [];
-      currencies.push(account.balance.currency.toLowerCase());
+      currencies.push(_currency);
       setCustomSupportedCurrencies(currencies);
 
       if (Number(account.balance.amount)) {
@@ -325,6 +332,7 @@ const CoinbaseAccount = ({
     keys,
     currencyAbbreviation,
     chain,
+    protocolName,
   ]);
 
   const deposit = async () => {
@@ -456,10 +464,9 @@ const CoinbaseAccount = ({
             <>
               <BalanceContainer>
                 <Row>
-                  {cryptoAmount && customSupportedCurrencies[0] && (
+                  {cryptoAmount && (
                     <Balance scale={shouldScale(cryptoAmount)}>
-                      {cryptoAmount}{' '}
-                      {customSupportedCurrencies[0].toUpperCase()}
+                      {cryptoAmount} {currencyAbbreviation}
                     </Balance>
                   )}
                 </Row>
@@ -514,6 +521,7 @@ const CoinbaseAccount = ({
             modalTitle={t('Select destination wallet')}
             customSupportedCurrencies={customSupportedCurrencies}
             useAsModal={true}
+            livenetOnly={true}
             onDismiss={onSelectedWallet}
           />
         </GlobalSelectContainer>
