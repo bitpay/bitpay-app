@@ -15,6 +15,7 @@ import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   convertToFiat,
   formatFiatAmount,
+  getCurrencyAbbreviation,
   keyExtractor,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -192,11 +193,12 @@ interface ToWalletSelectorChainObj extends ToWalletSelectorCoinObj {
 
 const buildList = (category: SwapCryptoCoin[], wallets: Wallet[]) => {
   let coins: ToWalletSelectorCoinObj[] = [];
-  // let chains: {[key in string]: ToWalletSelectorChainObj[]} = {};
   let chains: ToWalletSelectorChainObj[] = [];
   category.forEach(coin => {
     const availableWallets = wallets.filter(
-      wallet => wallet.currencyAbbreviation === coin.currencyAbbreviation,
+      wallet =>
+        getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
+        coin.symbol,
     );
 
     coins.push({
@@ -235,6 +237,7 @@ const buildList = (category: SwapCryptoCoin[], wallets: Wallet[]) => {
 interface ToWalletSelectorModalProps {
   isVisible: boolean;
   modalTitle?: string;
+  disabledChain?: string | undefined;
   customSupportedCurrencies?: SwapCryptoCoin[];
   onDismiss: (toWallet?: Wallet, createToWalletData?: AddWalletData) => void;
   modalContext?: string;
@@ -245,6 +248,7 @@ interface ToWalletSelectorModalProps {
 const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   isVisible,
   modalTitle,
+  disabledChain,
   customSupportedCurrencies = [],
   onDismiss,
   modalContext,
@@ -371,7 +375,9 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                   balance,
                   hideWallet,
                   currencyAbbreviation,
-                  credentials: {network, walletName: fallbackName},
+                  network,
+                  chain,
+                  credentials: {walletName: fallbackName},
                   walletName,
                 } = wallet;
                 return merge(cloneDeep(wallet), {
@@ -384,6 +390,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                           balance.sat,
                           defaultAltCurrency.isoCode,
                           currencyAbbreviation,
+                          chain,
                           rates,
                         ),
                       ),
@@ -399,6 +406,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                           balance.satLocked,
                           defaultAltCurrency.isoCode,
                           currencyAbbreviation,
+                          chain,
                           rates,
                         ),
                       ),
@@ -489,9 +497,28 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
     setKeySelectorModalVisible(true);
   };
 
+  const isChainDisabled = (currencySymbol: string): boolean => {
+    // disabledChain to prevent show chain selected as source, but show the available tokens
+    return (
+      !!disabledChain &&
+      SUPPORTED_EVM_COINS.includes(disabledChain) &&
+      disabledChain === currencySymbol.toLowerCase()
+    );
+  };
+
   const handleCurrencyOnPress = (
     currency: ToWalletSelectorChainObj | ToWalletSelectorCoinObj,
   ): void => {
+    if (
+      isChainDisabled(
+        getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain),
+      )
+    ) {
+      logger.warn(
+        `${disabledChain} is disabled, since it is the source of the Swap. Showing available tokens anyways`,
+      );
+      return;
+    }
     // if only one wallet - skip wallet selector
     const wallets = Object.values(currency.availableWalletsByKey).flat();
     if (wallets.length === 1) {
@@ -507,6 +534,22 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
           openKeyWalletSelector(linkedChain[0]);
         } else {
           // Case: no ETH wallets available and the user wants to add a new token
+          openKeySelector(currency);
+        }
+        // Case: MATIC Token => show linked Matic wallets
+      } else if (
+        currency.chain === 'matic' &&
+        currency.currencyAbbreviation !== 'matic'
+      ) {
+        const linkedChain = supportedCoins.filter(
+          coin =>
+            coin.currencyAbbreviation === 'matic' && coin.chain === 'matic',
+        );
+        if (Object.keys(linkedChain[0]?.availableWalletsByKey)[0]) {
+          setAddTokenToLinkedWallet(currency);
+          openKeyWalletSelector(linkedChain[0]);
+        } else {
+          // Case: no MATIC wallets available and the user wants to add a new token
           openKeySelector(currency);
         }
       } else {
@@ -545,23 +588,30 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
               {currencyAbbreviation.toUpperCase()}
             </CurrencySubTitle>
           </CurrencyColumn>
-          {total >= 1 && (
+          {total >= 1 &&
+          !isChainDisabled(
+            getCurrencyAbbreviation(currencyAbbreviation, item.chain),
+          ) ? (
             <AvailableWalletsPill>
               <H7 medium={true}>
                 {total} {total === 1 ? t('Wallet') : t('Wallets')}
               </H7>
             </AvailableWalletsPill>
-          )}
+          ) : null}
         </RowContainer>
-        {DESCRIPTIONS[currencyAbbreviation] ? (
-          <DescriptionRow>
-            {t(DESCRIPTIONS[currencyAbbreviation])}
-          </DescriptionRow>
-        ) : null}
-        {DESCRIPTIONS[currencyAbbreviation] ? (
-          <TokensHeading>
-            {t('PopularArgTokens', {currency: t(currencyName)})}
-          </TokensHeading>
+        {tokens && tokens.length > 0 ? (
+          <>
+            {DESCRIPTIONS[currencyAbbreviation] ? (
+              <DescriptionRow>
+                {t(DESCRIPTIONS[currencyAbbreviation])}
+              </DescriptionRow>
+            ) : null}
+            {DESCRIPTIONS[currencyAbbreviation] ? (
+              <TokensHeading>
+                {t('PopularArgTokens', {currency: t(currencyName)})}
+              </TokensHeading>
+            ) : null}
+          </>
         ) : null}
         {tokens
           ? tokens.map(

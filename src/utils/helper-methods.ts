@@ -338,3 +338,15 @@ export const getProtocolName = (
     ? PROTOCOL_NAME.default[_network]
     : undefined;
 };
+
+export const getCWCChain = (chain: string): string => {
+  switch (chain.toLowerCase()) {
+    case 'eth':
+      return 'ETHERC20';
+    case 'matic':
+      return 'MATICERC20';
+
+    default:
+      return 'ETHERC20';
+  }
+};

@@ -195,10 +195,10 @@ export const getChangellyFixedCurrencyAbbreviation = (
 ): string => {
   if (currency === 'usdt' && chain === 'eth') {
     return 'usdt20';
-  } else if (currency === 'maticpolygon' && chain === 'matic') {
-    return 'matic';
-  } else if (currency === 'usdcmatic' && chain === 'matic') {
-    return 'usdc';
+  } else if (currency === 'matic' && chain === 'matic') {
+    return 'maticpolygon';
+  } else if (currency === 'usdc' && chain === 'matic') {
+    return 'usdcmatic';
   } else {
     return currency;
   }

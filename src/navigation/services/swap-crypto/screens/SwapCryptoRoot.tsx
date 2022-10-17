@@ -7,6 +7,8 @@ import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyO
 import {
   SUPPORTED_COINS,
   SUPPORTED_ETHEREUM_TOKENS,
+  SUPPORTED_EVM_COINS,
+  SUPPORTED_MATIC_TOKENS,
 } from '../../../../constants/currencies';
 import {
   Action,
@@ -47,7 +49,11 @@ import {
   getChangellyFixedCurrencyAbbreviation,
 } from '../utils/changelly-utils';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {
+  getBadgeImg,
+  getCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
@@ -155,6 +161,7 @@ const SwapCryptoRoot: React.FC = () => {
 
   const selectedWallet = route.params?.selectedWallet;
   const SupportedEthereumTokens: string[] = SUPPORTED_ETHEREUM_TOKENS;
+  const SupportedMaticTokens: string[] = SUPPORTED_MATIC_TOKENS;
   const SupportedChains: string[] = SUPPORTED_COINS;
   const [swapLimits, setSwapLimits] = useState<SwapLimits>({
     minAmount: undefined,
@@ -230,8 +237,13 @@ const SwapCryptoRoot: React.FC = () => {
 
     const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
       coin =>
-        coin.currencyAbbreviation !==
-        fromWallet.currencyAbbreviation?.toLowerCase(),
+        SUPPORTED_EVM_COINS.includes(coin.currencyAbbreviation) ||
+        (!SUPPORTED_EVM_COINS.includes(coin.currencyAbbreviation) &&
+          coin.symbol !==
+            getCurrencyAbbreviation(
+              fromWallet.currencyAbbreviation,
+              fromWallet.chain,
+            )),
     );
 
     setSwapCryptoSupportedCoinsTo(coinsTo);
@@ -557,11 +569,11 @@ const SwapCryptoRoot: React.FC = () => {
         return resolve(undefined);
       }
       try {
-        const feeLevel =
-          fromWalletSelected.currencyAbbreviation == 'btc' ||
-          fromWalletSelected.chain == 'eth'
-            ? 'priority'
-            : 'normal';
+        const feeLevel = ['btc', 'eth', 'matic'].includes(
+          fromWalletSelected.chain,
+        )
+          ? 'priority'
+          : 'normal';
 
         const feeRate = await getFeeRatePerKb({
           wallet: fromWalletSelected,
@@ -712,23 +724,24 @@ const SwapCryptoRoot: React.FC = () => {
     const allSupportedTokens: string[] = [
       ...Object.keys(tokenOptions),
       ...SupportedEthereumTokens,
+      ...SupportedMaticTokens,
     ];
     return (
       currency.enabled &&
       currency.fixRateEnabled &&
       !!currency.protocol &&
-      [...SupportedChains, 'erc20'].includes(
-        // TODO: add matic
+      [...SupportedChains, 'erc20', 'matic'].includes(
         currency.protocol.toLowerCase(),
       ) &&
-      (['erc20', 'matic'].includes(currency.protocol.toLowerCase())
-        ? allSupportedTokens.includes(
-            getCurrencyAbbreviation(
-              currency.name,
-              getChainFromChangellyProtocol(currency.name, currency.protocol),
-            ),
-          )
-        : true)
+      (currency.ticker === 'maticpolygon' ||
+        (['erc20', 'matic'].includes(currency.protocol.toLowerCase())
+          ? allSupportedTokens.includes(
+              getCurrencyAbbreviation(
+                currency.name,
+                getChainFromChangellyProtocol(currency.name, currency.protocol),
+              ),
+            )
+          : true))
     );
   };
 
@@ -921,7 +934,17 @@ const SwapCryptoRoot: React.FC = () => {
                   <SelectedOptionCol>
                     {fromWalletData ? (
                       <CoinIconContainer>
-                        <CurrencyImage img={fromWalletData.logoUri} size={20} />
+                        <CurrencyImage
+                          img={fromWalletData.logoUri}
+                          badgeUri={getBadgeImg(
+                            getCurrencyAbbreviation(
+                              fromWalletSelected.currencyAbbreviation,
+                              fromWalletSelected.chain,
+                            ),
+                            fromWalletSelected.chain,
+                          )}
+                          size={20}
+                        />
                       </CoinIconContainer>
                     ) : null}
                     <SelectedOptionText
@@ -1042,7 +1065,17 @@ const SwapCryptoRoot: React.FC = () => {
                   <SelectedOptionCol>
                     {toWalletData && (
                       <CoinIconContainer>
-                        <CurrencyImage img={toWalletData.logoUri} size={20} />
+                        <CurrencyImage
+                          img={toWalletData.logoUri}
+                          badgeUri={getBadgeImg(
+                            getCurrencyAbbreviation(
+                              toWalletSelected.currencyAbbreviation,
+                              toWalletSelected.chain,
+                            ),
+                            toWalletSelected.chain,
+                          )}
+                          size={20}
+                        />
                       </CoinIconContainer>
                     )}
                     <SelectedOptionText
@@ -1121,6 +1154,15 @@ const SwapCryptoRoot: React.FC = () => {
 
       <ToWalletSelectorModal
         isVisible={toWalletSelectorModalVisible}
+        // disabledChain to prevent show chain selected as source, but show the available tokens
+        disabledChain={
+          fromWalletSelected
+            ? getCurrencyAbbreviation(
+                fromWalletSelected.currencyAbbreviation,
+                fromWalletSelected.chain,
+              )
+            : undefined
+        }
         customSupportedCurrencies={swapCryptoSupportedCoinsTo}
         livenetOnly={true}
         modalTitle={t('Swap To')}
@@ -1182,8 +1224,8 @@ const SwapCryptoRoot: React.FC = () => {
         isVisible={amountModalVisible}
         modalTitle={t('Swap Amount')}
         swapOpts={{
-          // @ts-ignore
           maxWalletAmount:
+            // @ts-ignore
             fromWalletSelected?.balance?.cryptoSpendable?.replaceAll(',', ''),
           swapLimits,
         }}
