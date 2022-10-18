@@ -240,8 +240,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   // find all evm wallets for key
   const evmWallets = key.wallets.filter(
     wallet =>
-      SUPPORTED_EVM_COINS.includes(chain || '') &&
-      wallet.currencyAbbreviation === chain,
+      SUPPORTED_EVM_COINS.includes(chain || '') && wallet.chain === chain,
   );
 
   // formatting for the bottom modal
