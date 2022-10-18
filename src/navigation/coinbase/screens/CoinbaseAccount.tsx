@@ -19,7 +19,14 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, Balance, H5} from '../../../components/styled/Text';
-import {Air, Black, LightBlack, SlateDark, White} from '../../../styles/colors';
+import {
+  Air,
+  Black,
+  LightBlack,
+  LuckySevens,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
@@ -57,30 +64,48 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import {IsUtxoCoin} from '../../../store/wallet/utils/currency';
+import Icons from '../../wallet/components/WalletIcons';
 
 const AccountContainer = styled.View`
   flex: 1;
 `;
 
 const Row = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
 `;
 
 const BalanceContainer = styled.View`
   margin: 20px 0;
   padding: 0 15px 10px;
-  flex-direction: column;
+`;
+
+const HeaderSubTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+`;
+
+const TypeContainer = styled(HeaderSubTitleContainer)`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+`;
+
+const TypeText = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
 `;
 
 const Type = styled(BaseText)`
   font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
-  padding: 2px 4px;
+  padding: 2px 5px;
   border-radius: 3px;
-  margin-bottom: 7px;
+  margin-top: 5px;
+  margin-bottom: 10px;
 `;
 
 const TransactionListHeader = styled.View`
@@ -106,6 +131,10 @@ const SkeletonContainer = styled.View`
 const GlobalSelectContainer = styled.View`
   flex: 1;
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+`;
+
+const IconContainer = styled.View`
+  margin-right: 5px;
 `;
 
 export const WalletSelectMenuContainer = styled.View`
@@ -271,11 +300,15 @@ const CoinbaseAccount = ({
       );
 
       if (availableWallets.length) {
-        if (Number(account.balance.amount) > 0) {
+        // Withdrawals to BitPay Wallet
+        if (account.allow_withdrawals && Number(account.balance.amount) > 0) {
           setAvailableWalletToWithdraw(true);
         }
-        // If has balance
-        if (availableWallets.filter(wallet => wallet.balance.sat > 0).length) {
+        // Deposit into Coinbase Account
+        if (
+          account.allow_deposits &&
+          availableWallets.filter(wallet => wallet.balance.sat > 0).length
+        ) {
           setAvailableWalletToDeposit(true);
         }
       }
@@ -476,7 +509,15 @@ const CoinbaseAccount = ({
                       ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
                       : '0'}
                   </H5>
-                  {account?.primary && <Type>Primary</Type>}
+                  {account?.primary ? <Type>Primary</Type> : null}
+                  {protocolName ? (
+                    <TypeContainer>
+                      <IconContainer>
+                        <Icons.Network />
+                      </IconContainer>
+                      <TypeText>{protocolName}</TypeText>
+                    </TypeContainer>
+                  ) : null}
                 </Row>
                 <LinkingButtons
                   receive={{
