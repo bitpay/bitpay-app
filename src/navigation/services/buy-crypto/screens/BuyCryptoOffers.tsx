@@ -15,7 +15,7 @@ import {
 } from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {BitpaySupportedCurrencies} from '../../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
@@ -578,9 +578,8 @@ const BuyCryptoOffers: React.FC = () => {
 
       const dest = setPrefix(
         address,
-        coin,
-        selectedWallet.network,
         selectedWallet.chain,
+        selectedWallet.network,
       );
 
       let walletType: string;
@@ -645,13 +644,11 @@ const BuyCryptoOffers: React.FC = () => {
 
   const setPrefix = (
     address: string,
-    coin: string,
-    network: 'livenet' | 'testnet',
     chain: string,
+    network: 'livenet' | 'testnet',
   ): string => {
-    const _coin = getCurrencyAbbreviation(coin, chain);
     const prefix =
-      BitpaySupportedCurrencies[_coin].paymentInfo.protocolPrefix[network];
+      BitpaySupportedCoins[chain].paymentInfo.protocolPrefix[network];
     const addr = `${prefix}:${address}`;
     return addr;
   };
@@ -777,9 +774,8 @@ const BuyCryptoOffers: React.FC = () => {
     const failureRedirectUrl = APP_DEEPLINK_PREFIX + 'wyreError';
     const dest = setPrefix(
       address,
-      coin,
-      selectedWallet.network,
       selectedWallet.chain,
+      selectedWallet.network,
     );
     const requestData = {
       sourceAmount: offers.wyre.fiatAmount.toString(),
