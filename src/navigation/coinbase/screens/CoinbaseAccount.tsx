@@ -322,9 +322,7 @@ const CoinbaseAccount = ({
         _chain,
       );
 
-      const currencies: string[] = [];
-      currencies.push(_currency);
-      setCustomSupportedCurrencies(currencies);
+      setCustomSupportedCurrencies([_currency]);
 
       if (Number(account.balance.amount)) {
         const fa = coinbaseGetFiatAmount(
@@ -403,7 +401,8 @@ const CoinbaseAccount = ({
             context: 'coinbase',
             recipient: {
               name: account.name || 'Coinbase',
-              currency: account.currency.code.toLowerCase(),
+              currency: currencyAbbreviation.toLowerCase(),
+              chain: chain,
               address: newAddress,
               network: 'livenet',
             },

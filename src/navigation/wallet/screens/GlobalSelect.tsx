@@ -137,6 +137,7 @@ export type GlobalSelectParamList = {
   recipient?: {
     address: string;
     currency: string;
+    chain?: string;
     name?: string;
     type?: string;
     network?: string;
@@ -263,9 +264,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     if (recipient?.currency) {
       wallets = wallets.filter(
         wallet =>
-          wallet.currencyAbbreviation === recipient?.currency ||
-          (recipient?.opts?.showERC20Tokens &&
-            IsERCToken(wallet.currencyAbbreviation, wallet.chain)),
+          wallet.currencyAbbreviation === recipient?.currency &&
+          wallet.chain === recipient?.chain,
       );
     }
     if (recipient?.network) {
