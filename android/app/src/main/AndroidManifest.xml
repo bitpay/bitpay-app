@@ -68,6 +68,7 @@
                 <data android:scheme="bitcoin"/>
                 <data android:scheme="bitcoincash"/>
                 <data android:scheme="ethereum"/>
+                <data android:scheme="matic"/>
                 <data android:scheme="dogecoin"/>
                 <data android:scheme="litecoin"/>
             </intent-filter>

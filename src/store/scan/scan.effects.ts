@@ -19,6 +19,8 @@ import {
   IsValidDogecoinUri,
   IsValidEthereumAddress,
   IsValidEthereumUri,
+  IsValidMaticUri,
+  IsValidMaticAddress,
   IsValidImportPrivateKey,
   IsValidJoinCode,
   IsValidLitecoinAddress,
@@ -98,6 +100,11 @@ export const incomingData =
         // Address (Ethereum)
       } else if (IsValidEthereumAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts));
+        // Address (Matic)
+      } else if (IsValidMaticAddress(data)) {
+        dispatch(
+          handlePlainAddress(data, coin || 'matic', chain || 'matic', opts),
+        );
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'xrp', chain || 'xrp', opts));
@@ -121,6 +128,9 @@ export const incomingData =
         // Ethereum URI
       } else if (IsValidEthereumUri(data)) {
         dispatch(handleEthereumUri(data, opts?.wallet));
+        // Matic URI
+      } else if (IsValidMaticUri(data)) {
+        dispatch(handleMaticUri(data, opts?.wallet));
         // Ripple URI
       } else if (IsValidRippleUri(data)) {
         dispatch(handleRippleUri(data, opts?.wallet));
@@ -749,6 +759,42 @@ const handleEthereumUri =
     dispatch(LogActions.info('[scan] Incoming-data: Ethereum URI'));
     const coin = 'eth';
     const chain = 'eth';
+    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
+    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    let feePerKb;
+    if (gasPrice.exec(data)) {
+      feePerKb = Number(gasPrice.exec(data)![1]);
+    }
+    const address = ExtractBitPayUriAddress(data);
+    const recipient = {
+      type: 'address',
+      currency: coin,
+      address,
+    };
+    if (!value.exec(data)) {
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+    } else {
+      const parsedAmount = value.exec(data)![1];
+      const amount = Number(
+        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
+      );
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          opts: {feePerKb},
+        }),
+      );
+    }
+  };
+
+const handleMaticUri =
+  (data: string, wallet?: Wallet): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: Matic URI'));
+    const coin = 'matic';
+    const chain = 'matic';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
     let feePerKb;

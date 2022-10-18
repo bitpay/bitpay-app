@@ -1,5 +1,6 @@
 import {BwcProvider} from '../../../../lib/bwc';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {getCurrencyCodeFromCoinAndChain} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 const BWC = BwcProvider.getInstance();
 export interface PayProPaymentOption {
@@ -54,7 +55,7 @@ export const GetPayProDetails = async (params: {
   const options: any = {
     paymentUrl,
     chain: chain.toUpperCase(),
-    currency: coin.toUpperCase(),
+    currency: getCurrencyCodeFromCoinAndChain(coin.toLowerCase(), chain),
     payload,
   };
 
@@ -108,11 +109,13 @@ export const HandlePayPro = async ({
     if (!payProOptions) {
       payProOptions = await GetPayProOptions(url);
     }
+    const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
+      GetInvoiceCurrency(coin).toLowerCase(),
+      chain,
+    );
     const paymentOptions = payProOptions.paymentOptions;
     const {estimatedAmount, minerFee} = paymentOptions.find(
-      option =>
-        option?.currency.toLowerCase() ===
-        GetInvoiceCurrency(coin).toLowerCase(),
+      option => option?.currency === invoiceCurrency,
     ) as PayProPaymentOption;
     const {outputs, toAddress, data, gasLimit} = payProDetails.instructions[0];
     if (coin === 'xrp' && outputs) {
