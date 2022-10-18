@@ -1012,10 +1012,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     }}
                     swap={{
                       hide:
-                        fullWalletObj.credentials?.network === 'testnet' ||
+                        fullWalletObj.network === 'testnet' ||
                         !isCoinSupportedToSwap(
                           fullWalletObj.currencyAbbreviation,
-                          fullWalletObj.credentials?.chain,
+                          fullWalletObj.chain,
                         ),
                       cta: () => {
                         dispatch(

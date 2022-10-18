@@ -48,6 +48,7 @@ import {
 } from '../utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -255,7 +256,7 @@ const BuyCryptoRoot: React.FC<
     }
   };
 
-  const getLinkedWalletName = () => {
+  const getLinkedWallet = () => {
     if (!selectedWallet) {
       return;
     }
@@ -264,26 +265,30 @@ const BuyCryptoRoot: React.FC<
       tokens?.includes(selectedWallet.id),
     );
 
-    const walletName =
-      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
-    return `${walletName}`;
+    return linkedWallet;
   };
 
   const showTokensInfoSheet = () => {
-    const linkedWalletName = getLinkedWalletName();
+    const linkedWallet = getLinkedWallet();
+    if (!linkedWallet) {
+      return;
+    }
+
+    const linkedWalletName =
+      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
+
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
         title: t('Reminder'),
-        message: t(
-          'Keep in mind that once the funds are received in your wallet, to move them you will need to have enough funds in your Ethereum linked wallet to pay the ETH miner fees.',
-          {
-            selectedWallet: selectedWallet?.currencyAbbreviation.toUpperCase(),
-            linkedWalletName: linkedWalletName
-              ? '(' + linkedWalletName + ')'
-              : ' ',
-          },
-        ),
+        message: t('linkedWalletWarnMsg', {
+          chain: BitpaySupportedCoins[linkedWallet.chain.toLowerCase()].name,
+          chainCoin: linkedWallet.currencyAbbreviation.toUpperCase(),
+          selectedWallet: selectedWallet?.currencyAbbreviation.toUpperCase(),
+          linkedWalletName: linkedWalletName
+            ? '(' + linkedWalletName + ')'
+            : ' ',
+        }),
         enableBackdropDismiss: true,
         actions: [
           {

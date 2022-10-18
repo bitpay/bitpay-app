@@ -365,7 +365,7 @@
   "The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.": "The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.",
   "Additional third-party fees may apply.": "Additional third-party fees may apply.",
   "Reminder": "Reminder",
-  "Keep in mind that once the funds are received in your wallet, to move them you will need to have enough funds in your Ethereum linked wallet to pay the ETH miner fees.": "Keep in mind that once the funds are received in your {{selectedWallet}} wallet, to move them you will need to have enough funds in your Ethereum linked wallet {{linkedWalletName}} to pay the ETH miner fees.",
+  "linkedWalletWarnMsg": "Keep in mind that once the funds are received in your {{selectedWallet}} wallet, to move them you will need to have enough funds in your {{chain}} linked wallet {{linkedWalletName}} to pay the {{chainCoin}} miner fees.",
   "GOT IT": "GOT IT",
   "Wallet not supported": "Wallet not supported",
   "The selected wallet is currently not supported for buying cryptocurrencies": "The selected wallet is currently not supported for buying cryptocurrencies",

@@ -105,8 +105,6 @@ export const SwapCheckoutContainer = styled.SafeAreaView`
 export interface ChangellyCheckoutProps {
   fromWalletSelected: Wallet;
   toWalletSelected: Wallet;
-  fromWalletData: SwapCryptoCoin;
-  toWalletData: SwapCryptoCoin;
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;
@@ -118,8 +116,6 @@ const ChangellyCheckout: React.FC = () => {
     params: {
       fromWalletSelected,
       toWalletSelected,
-      fromWalletData,
-      toWalletData,
       fixedRateId,
       amountFrom,
       useSendMax,
@@ -695,21 +691,19 @@ const ChangellyCheckout: React.FC = () => {
           <RowLabel>{t('Selling')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
-              {fromWalletData && (
-                <CoinIconContainer>
-                  <CurrencyImage
-                    img={fromWalletData.logoUri}
-                    badgeUri={getBadgeImg(
-                      getCurrencyAbbreviation(
-                        fromWalletSelected.currencyAbbreviation,
-                        fromWalletSelected.chain,
-                      ),
+              <CoinIconContainer>
+                <CurrencyImage
+                  img={fromWalletSelected.img}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      fromWalletSelected.currencyAbbreviation,
                       fromWalletSelected.chain,
-                    )}
-                    size={20}
-                  />
-                </CoinIconContainer>
-              )}
+                    ),
+                    fromWalletSelected.chain,
+                  )}
+                  size={20}
+                />
+              </CoinIconContainer>
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                 {fromWalletSelected.walletName
                   ? fromWalletSelected.walletName
@@ -723,21 +717,19 @@ const ChangellyCheckout: React.FC = () => {
           <RowLabel>{t('Receiving')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
-              {toWalletData && (
-                <CoinIconContainer>
-                  <CurrencyImage
-                    img={toWalletData.logoUri}
-                    badgeUri={getBadgeImg(
-                      getCurrencyAbbreviation(
-                        toWalletSelected.currencyAbbreviation,
-                        toWalletSelected.chain,
-                      ),
+              <CoinIconContainer>
+                <CurrencyImage
+                  img={toWalletSelected.img}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      toWalletSelected.currencyAbbreviation,
                       toWalletSelected.chain,
-                    )}
-                    size={20}
-                  />
-                </CoinIconContainer>
-              )}
+                    ),
+                    toWalletSelected.chain,
+                  )}
+                  size={20}
+                />
+              </CoinIconContainer>
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                 {toWalletSelected.walletName
                   ? toWalletSelected.walletName

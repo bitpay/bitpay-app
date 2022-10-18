@@ -5,6 +5,7 @@ import {RouteProp} from '@react-navigation/core';
 import cloneDeep from 'lodash.clonedeep';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {
+  BitpaySupportedCoins,
   SUPPORTED_COINS,
   SUPPORTED_ETHEREUM_TOKENS,
   SUPPORTED_EVM_COINS,
@@ -142,10 +143,8 @@ const SwapCryptoRoot: React.FC = () => {
   const [toWalletSelectorModalVisible, setToWalletSelectorModalVisible] =
     useState(false);
   const [fromWalletSelected, setFromWalletSelected] = useState<Wallet>();
-  const [fromWalletData, setFromWalletData] = useState<SwapCryptoCoin>();
   const [useDefaultToWallet, setUseDefaultToWallet] = useState<boolean>(false);
   const [toWalletSelected, setToWalletSelected] = useState<Wallet>();
-  const [toWalletData, setToWalletData] = useState<SwapCryptoCoin>();
   const [amountFrom, setAmountFrom] = useState<number>(0);
   const [swapCryptoAllSupportedCoins, setSwapCryptoAllSupportedCoins] =
     useState<SwapCryptoCoin[]>([]);
@@ -227,7 +226,6 @@ const SwapCryptoRoot: React.FC = () => {
   const setFromWallet = (fromWallet: Wallet) => {
     if (!useDefaultToWallet) {
       setToWalletSelected(undefined);
-      setToWalletData(undefined);
     }
     setAmountFrom(0);
     setUseSendMax(false);
@@ -257,27 +255,6 @@ const SwapCryptoRoot: React.FC = () => {
 
   const isToWalletEnabled = (): boolean => {
     return !!fromWalletSelected;
-  };
-
-  const updateWalletData = () => {
-    if (fromWalletSelected) {
-      setFromWalletData(
-        swapCryptoAllSupportedCoins.find(
-          ({currencyAbbreviation}) =>
-            currencyAbbreviation ===
-            fromWalletSelected.currencyAbbreviation.toLowerCase(),
-        ),
-      );
-    }
-    if (toWalletSelected) {
-      setToWalletData(
-        swapCryptoAllSupportedCoins.find(
-          ({currencyAbbreviation}) =>
-            currencyAbbreviation ===
-            toWalletSelected.currencyAbbreviation.toLowerCase(),
-        ),
-      );
-    }
   };
 
   const updateReceivingAmount = () => {
@@ -312,9 +289,15 @@ const SwapCryptoRoot: React.FC = () => {
     }
 
     const pair =
-      fromWalletSelected.currencyAbbreviation.toLowerCase() +
+      getCurrencyAbbreviation(
+        fromWalletSelected.currencyAbbreviation,
+        fromWalletSelected.chain,
+      ) +
       '_' +
-      toWalletSelected.currencyAbbreviation.toLowerCase();
+      getCurrencyAbbreviation(
+        toWalletSelected.currencyAbbreviation,
+        toWalletSelected.chain,
+      );
     logger.debug('Updating receiving amount with pair: ' + pair);
 
     const data = {
@@ -363,10 +346,16 @@ const SwapCryptoRoot: React.FC = () => {
       return;
     }
 
-    let pair =
-      fromWalletSelected.currencyAbbreviation.toLowerCase() +
+    const pair =
+      getCurrencyAbbreviation(
+        fromWalletSelected.currencyAbbreviation,
+        fromWalletSelected.chain,
+      ) +
       '_' +
-      toWalletSelected.currencyAbbreviation.toLowerCase();
+      getCurrencyAbbreviation(
+        toWalletSelected.currencyAbbreviation,
+        toWalletSelected.chain,
+      );
     logger.debug('Updating max and min with pair: ' + pair);
 
     const data = {
@@ -475,7 +464,7 @@ const SwapCryptoRoot: React.FC = () => {
               t('The amount entered is greater than the maximum allowed: ') +
               maxAmount +
               ' ' +
-              fromWalletData?.currencyAbbreviation.toUpperCase();
+              fromWalletSelected.currencyAbbreviation.toUpperCase();
             const actions = [
               {
                 text: t('OK'),
@@ -530,7 +519,7 @@ const SwapCryptoRoot: React.FC = () => {
                 t('The amount entered is lower than the minimum allowed: ') +
                 minAmount +
                 ' ' +
-                fromWalletData?.currencyAbbreviation.toUpperCase();
+                fromWalletSelected.currencyAbbreviation.toUpperCase();
               const actions = [
                 {
                   text: t('OK'),
@@ -628,7 +617,7 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
-  const getLinkedToWalletName = () => {
+  const getLinkedWallet = () => {
     if (!toWalletSelected) {
       return;
     }
@@ -637,27 +626,30 @@ const SwapCryptoRoot: React.FC = () => {
       tokens?.includes(toWalletSelected.id),
     );
 
-    const walletName =
-      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
-    return `${walletName}`;
+    return linkedWallet;
   };
 
   const showTokensInfoSheet = () => {
-    const linkedWalletName = getLinkedToWalletName();
+    const linkedWallet = getLinkedWallet();
+    if (!linkedWallet) {
+      return;
+    }
+
+    const linkedWalletName =
+      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
+
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
         title: t('Reminder'),
-        message: t(
-          'Keep in mind that once the funds are received in your wallet, to move them you will need to have enough funds in your Ethereum linked wallet to pay the ETH miner fees.',
-          {
-            selectedWallet:
-              toWalletSelected?.currencyAbbreviation.toUpperCase(),
-            linkedWalletName: linkedWalletName
-              ? '(' + linkedWalletName + ')'
-              : ' ',
-          },
-        ),
+        message: t('linkedWalletWarnMsg', {
+          chain: BitpaySupportedCoins[linkedWallet.chain.toLowerCase()].name,
+          chainCoin: linkedWallet.currencyAbbreviation.toUpperCase(),
+          selectedWallet: toWalletSelected?.currencyAbbreviation.toUpperCase(),
+          linkedWalletName: linkedWalletName
+            ? '(' + linkedWalletName + ')'
+            : ' ',
+        }),
         enableBackdropDismiss: true,
         actions: [
           {
@@ -702,8 +694,6 @@ const SwapCryptoRoot: React.FC = () => {
       params: {
         fromWalletSelected: fromWalletSelected!,
         toWalletSelected: toWalletSelected!,
-        fromWalletData: fromWalletData!,
-        toWalletData: toWalletData!,
         fixedRateId: rateData!.fixedRateId,
         amountFrom: amountFrom,
         useSendMax: IsERCToken(
@@ -885,10 +875,6 @@ const SwapCryptoRoot: React.FC = () => {
   }, [swapCryptoSupportedCoinsFrom]);
 
   useEffect(() => {
-    updateWalletData();
-  }, [swapCryptoSupportedCoinsFrom, fromWalletSelected, toWalletSelected]);
-
-  useEffect(() => {
     changellyGetPairParams();
   }, [fromWalletSelected, toWalletSelected]);
 
@@ -932,21 +918,19 @@ const SwapCryptoRoot: React.FC = () => {
                     showModal('fromWalletSelector');
                   }}>
                   <SelectedOptionCol>
-                    {fromWalletData ? (
-                      <CoinIconContainer>
-                        <CurrencyImage
-                          img={fromWalletData.logoUri}
-                          badgeUri={getBadgeImg(
-                            getCurrencyAbbreviation(
-                              fromWalletSelected.currencyAbbreviation,
-                              fromWalletSelected.chain,
-                            ),
+                    <CoinIconContainer>
+                      <CurrencyImage
+                        img={fromWalletSelected.img}
+                        badgeUri={getBadgeImg(
+                          getCurrencyAbbreviation(
+                            fromWalletSelected.currencyAbbreviation,
                             fromWalletSelected.chain,
-                          )}
-                          size={20}
-                        />
-                      </CoinIconContainer>
-                    ) : null}
+                          ),
+                          fromWalletSelected.chain,
+                        )}
+                        size={20}
+                      />
+                    </CoinIconContainer>
                     <SelectedOptionText
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
@@ -1011,7 +995,7 @@ const SwapCryptoRoot: React.FC = () => {
                 <ActionsContainer>
                   <BottomDataText>
                     {fromWalletSelected.balance.cryptoSpendable}{' '}
-                    {fromWalletData?.currencyAbbreviation.toUpperCase()}{' '}
+                    {fromWalletSelected.currencyAbbreviation.toUpperCase()}{' '}
                     {t('available to swap')}
                   </BottomDataText>
                 </ActionsContainer>
@@ -1063,21 +1047,19 @@ const SwapCryptoRoot: React.FC = () => {
                     showModal('toWalletSelector');
                   }}>
                   <SelectedOptionCol>
-                    {toWalletData && (
-                      <CoinIconContainer>
-                        <CurrencyImage
-                          img={toWalletData.logoUri}
-                          badgeUri={getBadgeImg(
-                            getCurrencyAbbreviation(
-                              toWalletSelected.currencyAbbreviation,
-                              toWalletSelected.chain,
-                            ),
+                    <CoinIconContainer>
+                      <CurrencyImage
+                        img={toWalletSelected.img}
+                        badgeUri={getBadgeImg(
+                          getCurrencyAbbreviation(
+                            toWalletSelected.currencyAbbreviation,
                             toWalletSelected.chain,
-                          )}
-                          size={20}
-                        />
-                      </CoinIconContainer>
-                    )}
+                          ),
+                          toWalletSelected.chain,
+                        )}
+                        size={20}
+                      />
+                    </CoinIconContainer>
                     <SelectedOptionText
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
@@ -1112,9 +1094,9 @@ const SwapCryptoRoot: React.FC = () => {
               {rateData?.rate && (
                 <ActionsContainer alignEnd={true}>
                   <BottomDataText>
-                    1 {fromWalletData?.currencyAbbreviation.toUpperCase()} ~{' '}
+                    1 {fromWalletSelected?.currencyAbbreviation.toUpperCase()} ~{' '}
                     {rateData?.rate}{' '}
-                    {toWalletData?.currencyAbbreviation.toUpperCase()}
+                    {toWalletSelected?.currencyAbbreviation.toUpperCase()}
                   </BottomDataText>
                 </ActionsContainer>
               )}
@@ -1229,8 +1211,8 @@ const SwapCryptoRoot: React.FC = () => {
             fromWalletSelected?.balance?.cryptoSpendable?.replaceAll(',', ''),
           swapLimits,
         }}
-        cryptoCurrencyAbbreviation={fromWalletData?.currencyAbbreviation.toUpperCase()}
-        chain={fromWalletData?.chain}
+        cryptoCurrencyAbbreviation={fromWalletSelected?.currencyAbbreviation.toUpperCase()}
+        chain={fromWalletSelected?.chain}
         onClose={() => hideModal('amount')}
         onSubmit={newAmount => {
           hideModal('amount');
