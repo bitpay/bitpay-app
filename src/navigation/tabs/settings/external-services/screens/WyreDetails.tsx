@@ -39,6 +39,7 @@ import {wyreGetWalletOrderDetails} from '../../../../../store/buy-crypto/effects
 import {handleWyreStatus} from '../../../../services/buy-crypto/utils/wyre-utils';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
+import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 
 export interface WyreDetailsProps {
   paymentRequest: wyrePaymentData;
@@ -174,6 +175,16 @@ const WyreDetails: React.FC = () => {
             {paymentData.sourceAmount} {paymentData.sourceCurrency}
           </RowData>
         </RowDataContainer>
+
+        {paymentData.destChain && (
+          <RowDataContainer>
+            <RowLabel>{t('Deposit Blockchain')}</RowLabel>
+            <RowData>
+              {BitpaySupportedCoins[paymentData.destChain.toLowerCase()]
+                ?.name || paymentData.destChain.toUpperCase()}
+            </RowData>
+          </RowDataContainer>
+        )}
 
         <RowDataContainer>
           <RowLabel>{t('Created')}</RowLabel>

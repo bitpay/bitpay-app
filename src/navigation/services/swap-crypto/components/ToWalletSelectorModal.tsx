@@ -786,7 +786,10 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
 
             <SheetModal
               isVisible={walletSelectModalVisible}
-              onBackdropPress={() => setWalletSelectModalVisible(false)}>
+              onBackdropPress={() => {
+                setAddTokenToLinkedWallet(undefined);
+                setWalletSelectModalVisible(false);
+              }}>
               <WalletSelectMenuContainer>
                 <WalletSelectMenuHeaderContainer>
                   <TextAlign align={'center'}>
