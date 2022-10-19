@@ -10,7 +10,7 @@ import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
-import {getCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
+import {sleep} from '../../../utils/helper-methods';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';

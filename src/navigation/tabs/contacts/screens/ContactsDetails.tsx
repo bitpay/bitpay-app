@@ -291,7 +291,7 @@ const ContactsDetails = ({
             coin={getCurrencyAbbreviation(contact.coin, contact.chain)}
             size={100}
             name={contact.name}
-            chain={contact.chain}
+            chain={contact.chain || contact.coin}
           />
         </ContactImageHeader>
         <Details>

@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {Action, LinkBlue, Midnight, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import ProfileIcon from './ProfileIcon';

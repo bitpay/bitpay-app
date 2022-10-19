@@ -70,9 +70,11 @@ export const IsCustomERCToken = (
 
 export const IsERCToken = (
   currencyAbbreviation: string,
-  chain: string,
+  chain?: string,
 ): boolean => {
-  return currencyAbbreviation.toLowerCase() !== chain.toLowerCase();
+  return !!(
+    chain && currencyAbbreviation.toLowerCase() !== chain.toLowerCase()
+  );
 };
 
 export const GetBlockExplorerUrl =

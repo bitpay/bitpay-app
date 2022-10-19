@@ -320,9 +320,9 @@ export const addTokenChainSuffix = (name: string, chain: string) => {
   return `${name.toLowerCase()}_${chain.charAt(0)}`;
 };
 
-export const getCurrencyAbbreviation = (name: string, chain: string) => {
-  return IsERCToken(name.toLowerCase(), chain.toLowerCase())
-    ? addTokenChainSuffix(name, chain)
+export const getCurrencyAbbreviation = (name: string, chain?: string) => {
+  return IsERCToken(name, chain)
+    ? addTokenChainSuffix(name, chain!)
     : name.toLowerCase();
 };
 
