@@ -107,6 +107,17 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
   },
 ];
 
+export const OtherSupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
+  {
+    id: Math.random().toString(),
+    img: CurrencyListIcons.xrp,
+    priority: 7,
+    currencyName: 'XRP',
+    currencyAbbreviation: 'xrp',
+    imgSrc: require('../../assets/img/currencies/png/XRP.png'),
+  },
+];
+
 export const SupportedEvmCurrencyOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
@@ -330,7 +341,11 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
 ];
 
 export const SupportedCoinsOptions: Array<SupportedCurrencyOption> = orderBy(
-  [...SupportedUtxoCurrencyOptions, ...SupportedEvmCurrencyOptions],
+  [
+    ...SupportedUtxoCurrencyOptions,
+    ...SupportedEvmCurrencyOptions,
+    ...OtherSupportedCurrencyOptions,
+  ],
   'priority',
 );
 
