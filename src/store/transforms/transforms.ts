@@ -2,10 +2,15 @@ import {createTransform} from 'redux-persist';
 import {Key} from '../wallet/wallet.models';
 import merge from 'lodash.merge';
 import {BwcProvider} from '../../lib/bwc';
-import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
+import {
+  BitpaySupportedUtxoCoins,
+  OtherBitpaySupportedCoins,
+  SUPPORTED_CURRENCIES,
+} from '../../constants/currencies';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import Flatted from 'flatted';
 import {buildWalletObj} from '../wallet/utils/wallet';
+import {ContactRowProps} from '../../components/list/ContactRow';
 const BWCProvider = BwcProvider.getInstance();
 
 export const bindWalletClient = createTransform(
@@ -98,4 +103,24 @@ export const bindWalletKeys = createTransform(
 export const transformCircular = createTransform(
   inboundState => Flatted.stringify(inboundState),
   outboundState => Flatted.parse(outboundState),
+);
+
+export const transformContacts = createTransform(
+  inboundState => inboundState,
+  (_outboundState, k) => {
+    if (k === 'list') {
+      const contacts = _outboundState as ContactRowProps[];
+      const migratedContacts = contacts.map(contact => ({
+        ...contact,
+        chain:
+          contact.chain ||
+          (OtherBitpaySupportedCoins[contact.coin] ||
+          BitpaySupportedUtxoCoins[contact.coin]
+            ? contact.coin
+            : 'eth'),
+      }));
+      return migratedContacts;
+    }
+    return _outboundState;
+  },
 );

@@ -69,6 +69,8 @@ import {
   APP_DEEPLINK_PREFIX,
 } from '../../constants/config';
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
+import {setContactMigrationComplete} from '../contact/contact.actions';
+import {startContactMigration} from '../contact/contact.effects';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -92,6 +94,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const {appFirstOpenData, onboardingCompleted, migrationComplete} =
       getState().APP;
 
+    const {contactMigrationComplete} = getState().CONTACT;
+
     if (!appFirstOpenData?.firstOpenDate) {
       dispatch(setAppFirstOpenEventDate(Math.floor(Date.now() / 1000)));
       dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
@@ -103,6 +107,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     await dispatch(startWalletStoreInit());
+
+    if (!contactMigrationComplete) {
+      await dispatch(startContactMigration());
+      dispatch(setContactMigrationComplete());
+      dispatch(LogActions.info('success [setContactMigrationComplete]'));
+    }
 
     if (!migrationComplete) {
       await dispatch(startMigration());
