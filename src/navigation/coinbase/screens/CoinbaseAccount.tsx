@@ -52,7 +52,7 @@ import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
-import {BitpaySupportedCurrencies} from '../../../constants/currencies';
+import {IsUtxoCoin} from '../../../store/wallet/utils/currency';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -276,7 +276,10 @@ const CoinbaseAccount = ({
     if (account && account.balance) {
       const _currencyAbbreviation = account.balance.currency;
       const _chain =
-        BitpaySupportedCurrencies[_currencyAbbreviation.toLowerCase()].chain;
+        IsUtxoCoin(_currencyAbbreviation.toLowerCase()) ||
+        _currencyAbbreviation.toLowerCase() === 'xrp'
+          ? _currencyAbbreviation.toLowerCase()
+          : 'eth';
       setCurrencyAbbreviation(_currencyAbbreviation);
       setChain(_chain);
       const currencies: string[] = [];
@@ -440,40 +443,6 @@ const CoinbaseAccount = ({
 
   return (
     <AccountContainer>
-      <BalanceContainer>
-        <Row>
-          {cryptoAmount && customSupportedCurrencies[0] && (
-            <Balance scale={shouldScale(cryptoAmount)}>
-              {cryptoAmount} {customSupportedCurrencies[0].toUpperCase()}
-            </Balance>
-          )}
-        </Row>
-        <Row>
-          <H5>
-            {fiatAmount
-              ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
-              : '0'}
-          </H5>
-          {account?.primary && <Type>Primary</Type>}
-        </Row>
-        <LinkingButtons
-          receive={{
-            cta: deposit,
-            label: t('deposit'),
-            hide: !availableWalletToDeposit,
-          }}
-          send={{
-            cta: () => {
-              setWalletModalVisible(true);
-            },
-            label: t('withdraw'),
-            hide: !availableWalletToWithdraw,
-          }}
-          buy={{cta: () => null, hide: true}}
-          swap={{cta: () => null, hide: true}}
-        />
-      </BalanceContainer>
-      <Hr />
       <FlatList
         refreshControl={
           <RefreshControl
@@ -483,15 +452,52 @@ const CoinbaseAccount = ({
           />
         }
         ListHeaderComponent={() => {
-          if (txs[0]) {
-            return (
-              <TransactionListHeader>
-                <H5>{t('Transactions')}</H5>
-              </TransactionListHeader>
-            );
-          } else {
-            return <></>;
-          }
+          return (
+            <>
+              <BalanceContainer>
+                <Row>
+                  {cryptoAmount && customSupportedCurrencies[0] && (
+                    <Balance scale={shouldScale(cryptoAmount)}>
+                      {cryptoAmount}{' '}
+                      {customSupportedCurrencies[0].toUpperCase()}
+                    </Balance>
+                  )}
+                </Row>
+                <Row>
+                  <H5>
+                    {fiatAmount
+                      ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
+                      : '0'}
+                  </H5>
+                  {account?.primary && <Type>Primary</Type>}
+                </Row>
+                <LinkingButtons
+                  receive={{
+                    cta: deposit,
+                    label: t('deposit'),
+                    hide: !availableWalletToDeposit,
+                  }}
+                  send={{
+                    cta: () => {
+                      setWalletModalVisible(true);
+                    },
+                    label: t('withdraw'),
+                    hide: !availableWalletToWithdraw,
+                  }}
+                  buy={{cta: () => null, hide: true}}
+                  swap={{cta: () => null, hide: true}}
+                />
+              </BalanceContainer>
+              <Hr />
+              {txs[0] ? (
+                <TransactionListHeader>
+                  <H5>{t('Transactions')}</H5>
+                </TransactionListHeader>
+              ) : (
+                <></>
+              )}
+            </>
+          );
         }}
         data={txs}
         renderItem={renderItem}
