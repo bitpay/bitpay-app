@@ -206,7 +206,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
             icon={
               copied ? (
                 <CopiedSvg width={18} />
-              ) : recipientType === 'contact' ? (
+              ) : recipientType === 'contact' || recipientEmail ? (
                 <ContactIcon name={description} size={20} />
               ) : (
                 <CurrencyImage img={img} size={18} badgeUri={badgeImg} />

@@ -351,6 +351,7 @@ const Confirm = () => {
       recipientAddress: sendingTo.recipientAddress,
       img: recipient.type,
       recipientChain: recipient.chain,
+      recipientType: recipient.type,
     };
   } else {
     recipientData = sendingTo;
