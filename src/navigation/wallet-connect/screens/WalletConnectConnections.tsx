@@ -2,9 +2,10 @@ import {useNavigation} from '@react-navigation/native';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {BaseText} from '../../../components/styled/Text';
+import {BaseText, H5} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 import KeyIcon from '../../../../assets/img/key.svg';
+import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import AddConnection from '../../../components/add/Add';
 import {Hr} from '../../../components/styled/Containers';
 import {HeaderTitle} from '../styled/WalletConnectText';
@@ -46,6 +47,12 @@ const KeyTitleText = styled(BaseText)`
 
 const AddConnectionContainer = styled.TouchableOpacity`
   margin-right: 15px;
+`;
+
+const EmptyListContainer = styled.View`
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 50px;
 `;
 
 const WalletConnectConnections = () => {
@@ -97,12 +104,12 @@ const WalletConnectConnections = () => {
       <ScrollView>
         <HeaderTitle>{t('Connections')}</HeaderTitle>
         {Object.entries(groupedConnectors).map(([keyId, connectorsByKey]) => {
-          return (
+          return allKeys[keyId] ? (
             <KeyConnectionsContainer key={keyId}>
               <KeyTitleContainer>
                 <KeyIcon />
                 <KeyTitleText>
-                  {allKeys[keyId].keyName || 'My Key'}
+                  {allKeys[keyId]?.keyName || 'My Key'}
                 </KeyTitleText>
               </KeyTitleContainer>
               <Hr />
@@ -121,6 +128,11 @@ const WalletConnectConnections = () => {
                 },
               )}
             </KeyConnectionsContainer>
+          ) : (
+            <EmptyListContainer>
+              <H5>{t("It's a ghost town in here")}</H5>
+              <GhostSvg style={{marginTop: 20}} />
+            </EmptyListContainer>
           );
         })}
         <WalletSelector
