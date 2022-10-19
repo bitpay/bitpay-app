@@ -1,5 +1,8 @@
 import {Effect} from '../..';
-import {BitpaySupportedCurrencies} from '../../../constants/currencies';
+import {
+  BitpaySupportedCurrencies,
+  BitpaySupportedUtxoCoins,
+} from '../../../constants/currencies';
 import {
   addTokenChainSuffix,
   getCurrencyAbbreviation,
@@ -55,7 +58,7 @@ export const GetPrecision =
   };
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
-  return ['btc', 'bch', 'doge', 'ltc'].includes(
+  return Object.keys(BitpaySupportedUtxoCoins).includes(
     currencyAbbreviation.toLowerCase(),
   );
 };

@@ -705,43 +705,6 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#2fcf6e',
     },
   },
-  xrp: {
-    name: 'XRP',
-    chain: 'xrp',
-    coin: 'xrp',
-    unitInfo: {
-      unitName: 'XRP',
-      unitToSatoshi: 1e6,
-      unitDecimals: 6,
-      unitCode: 'xrp',
-    },
-    properties: {
-      hasMultiSig: false,
-      hasMultiSend: false,
-      isUtxo: false,
-      isERCToken: false,
-      isStableCoin: false,
-      singleAddress: true,
-    },
-    paymentInfo: {
-      paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'ripple', testnet: 'ripple'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/xrp',
-      blockExplorerUrls: 'xrpscan.com/',
-      blockExplorerUrlsTestnet: 'test.bithomp.com/explorer/',
-    },
-    feeInfo: {
-      feeUnit: 'drops',
-      feeUnitAmount: 1e6,
-      blockTime: 0.05,
-      maxMerchantFee: 'normal',
-    },
-    theme: {
-      coinColor: '#000000',
-      backgroundColor: '#565d6d',
-      gradientBackgroundColor: '#565d6d',
-    },
-  },
   doge: {
     name: 'Dogecoin',
     chain: 'doge',
@@ -814,6 +777,46 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
       coinColor: '#A6A9AA',
       backgroundColor: '#A6A9AA',
       gradientBackgroundColor: '#A6A9AA',
+    },
+  },
+};
+
+export const OtherBitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
+  xrp: {
+    name: 'XRP',
+    chain: 'xrp',
+    coin: 'xrp',
+    unitInfo: {
+      unitName: 'XRP',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'xrp',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'BIP73',
+      protocolPrefix: {livenet: 'ripple', testnet: 'ripple'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/xrp',
+      blockExplorerUrls: 'xrpscan.com/',
+      blockExplorerUrlsTestnet: 'test.bithomp.com/explorer/',
+    },
+    feeInfo: {
+      feeUnit: 'drops',
+      feeUnitAmount: 1e6,
+      blockTime: 0.05,
+      maxMerchantFee: 'normal',
+    },
+    theme: {
+      coinColor: '#000000',
+      backgroundColor: '#565d6d',
+      gradientBackgroundColor: '#565d6d',
     },
   },
 };
@@ -902,6 +905,7 @@ export const BitpaySupportedTokens: {[key in string]: CurrencyOpts} = {
 export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedUtxoCoins,
   ...BitpaySupportedEvmCoins,
+  ...OtherBitpaySupportedCoins,
 };
 
 export const BitpaySupportedCurrencies: {[key in string]: CurrencyOpts} = {
