@@ -88,6 +88,7 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
+import {IsERCToken} from '../../../store/wallet/utils/currency';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -240,7 +241,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   // find all evm wallets for key
   const evmWallets = key.wallets.filter(
     wallet =>
-      SUPPORTED_EVM_COINS.includes(chain || '') && wallet.chain === chain,
+      SUPPORTED_EVM_COINS.includes(chain || '') &&
+      wallet.chain === chain &&
+      !IsERCToken(wallet.currencyAbbreviation, wallet.chain),
   );
 
   // formatting for the bottom modal
