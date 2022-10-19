@@ -265,6 +265,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
       wallets = wallets.filter(
         wallet =>
           wallet.currencyAbbreviation === recipient?.currency &&
+          recipient?.chain &&
           wallet.chain === recipient?.chain,
       );
     }
