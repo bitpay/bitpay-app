@@ -176,6 +176,8 @@ const WalletSettings = () => {
           </Info>
         ) : null}
 
+        <Hr />
+
         <SettingView>
           <WalletSettingsTitle>{t('Hide Balance')}</WalletSettingsTitle>
 
