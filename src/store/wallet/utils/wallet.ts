@@ -8,13 +8,10 @@ import {
 } from '../wallet.models';
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {
-  BitpaySupportedCurrencies,
-  SUPPORTED_CURRENCIES,
-} from '../../../constants/currencies';
+import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetName, GetPrecision, GetProtocolPrefix, IsERCToken} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix, IsUtxoCoin} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -338,28 +335,23 @@ export const coinbaseAccountToWalletRow = (
   const cryptoAmount = Number(account.balance.amount)
     ? account.balance.amount
     : '0';
-  const _currencyAbbreviation = account.currency.code;
-  const chain = 'eth'; // TODO: force to use ETH network (only Coinbase)
-  let currencyImg;
-  let badgeImg;
-  if (BitpaySupportedCurrencies[_currencyAbbreviation.toLowerCase()]) {
-    badgeImg = undefined;
-    if (_currencyAbbreviation.toLowerCase() === 'matic') {
-      badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase() + '_e', chain);
-    }
-    currencyImg = CurrencyListIcons[_currencyAbbreviation.toLowerCase()];
-  } else {
-    badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), chain);
-    const tokenAbbreviation = getCurrencyAbbreviation(
-      _currencyAbbreviation.toLowerCase(),
-      chain,
-    );
-    currencyImg = CurrencyListIcons[tokenAbbreviation.toLowerCase()];
-  }
+
+  const _chain =
+    IsUtxoCoin(account.currency.code.toLowerCase()) ||
+    account.currency.code.toLowerCase() === 'xrp'
+      ? account.currency.code.toLowerCase()
+      : 'eth';
+  const _currencyAbbreviation = getCurrencyAbbreviation(
+    account.currency.code.toLowerCase(),
+    _chain,
+  );
+  const badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), _chain);
+  const currencyImg = CurrencyListIcons[_currencyAbbreviation.toLowerCase()];
+
   const walletItem = {
     id: account.id,
     currencyName: account.currency.name,
-    currencyAbbreviation: _currencyAbbreviation,
+    currencyAbbreviation: account.currency.code,
     coinbaseAccount: account,
     walletName: account.currency.name,
     img: currencyImg,
@@ -370,7 +362,7 @@ export const coinbaseAccountToWalletRow = (
     isToken: false,
     network: Network.mainnet,
     pendingTxps: [],
-    chain,
+    chain: _chain,
     badgeImg,
   };
   return walletItem as WalletRowProps;
