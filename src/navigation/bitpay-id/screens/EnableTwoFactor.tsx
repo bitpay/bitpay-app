@@ -295,7 +295,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
                   </InstructionBodyText>
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
-                    onPress={() => copyToClipboard(twoFactorSetupCode)}>
+                    onPress={() => copyToClipboard(otpAuthKey!)}>
                     <QRContainer>
                       <QRCode value={twoFactorSetupCode} size={90} />
                     </QRContainer>
