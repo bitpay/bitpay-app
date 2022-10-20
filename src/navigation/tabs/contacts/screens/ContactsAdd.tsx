@@ -505,7 +505,7 @@ const ContactsAdd = ({
         hideCheckbox={true}
       />
     ),
-    [],
+    [isTokenAddress],
   );
 
   const renderNetworkItem = useCallback(
