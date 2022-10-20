@@ -566,6 +566,7 @@ const RecoveryPhrase = () => {
         const advancedOpts = {
           ...advancedOptions,
           coin: currencyAbbreviation,
+          chain: currencyAbbreviation, // chain = currency for all currencies if tokens not included
           derivationPath,
         };
         setAdvancedOptions(advancedOpts);
