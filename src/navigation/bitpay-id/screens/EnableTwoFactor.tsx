@@ -304,7 +304,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
                 <CopyButton
                   height={50}
                   buttonStyle={'secondary'}
-                  onPress={() => copyToClipboard(twoFactorSetupCode)}>
+                  onPress={() => copyToClipboard(otpAuthKey!)}>
                   {t('Copy 2FA Setup Key')}
                 </CopyButton>
               </InstructionBox>
