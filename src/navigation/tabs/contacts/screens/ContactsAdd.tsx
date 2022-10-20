@@ -479,6 +479,11 @@ const ContactsAdd = ({
     setNetworkModalVisible(false);
   };
 
+  const _setIsTokenAddress = () => {
+    setIsTokenAddress(!isTokenAddress);
+    currencySelected(selectedCurrency.currencyAbbreviation, true);
+  };
+
   // Flat list
   const renderTokenItem = useCallback(
     ({item}) => (
@@ -631,7 +636,7 @@ const ContactsAdd = ({
       {!contact && evmValidAddress ? (
         <IsTokenAddressContainer
           onPress={() => {
-            setIsTokenAddress(!isTokenAddress);
+            _setIsTokenAddress();
           }}>
           <Column>
             <IsTokenAddressTitle>
@@ -642,7 +647,7 @@ const ContactsAdd = ({
             <Checkbox
               checked={isTokenAddress}
               onPress={() => {
-                setIsTokenAddress(!isTokenAddress);
+                _setIsTokenAddress();
               }}
             />
           </CheckBoxContainer>
@@ -715,7 +720,12 @@ const ContactsAdd = ({
                 {selectedToken ? (
                   <View>
                     <CurrencyImage
-                      img={selectedToken.img}
+                      img={selectedToken?.img}
+                      imgSrc={
+                        typeof selectedToken?.imgSrc === 'number'
+                          ? selectedToken?.imgSrc
+                          : undefined
+                      }
                       size={30}
                       badgeUri={selectedToken?.badgeUri}
                     />
