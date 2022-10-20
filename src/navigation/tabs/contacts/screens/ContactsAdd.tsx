@@ -227,29 +227,18 @@ const ContactsAdd = ({
     switch (suffix) {
       case 'e':
         return 'eth';
-        break;
       case 'm':
         return 'matic';
-        break;
       default:
         return 'eth';
-        break;
     }
   };
 
   const ALL_CUSTOM_TOKENS = useMemo(() => {
-    return Object.values(tokenOptions)
-      .filter(
-        token =>
-          !SUPPORTED_TOKENS.includes(
-            getCurrencyAbbreviation(
-              token.symbol.toLowerCase(),
-              getChainUsingSuffix(token.symbol),
-            ),
-          ),
-      )
-      .map(({symbol, name, logoURI}) => {
-        const chain = getChainUsingSuffix(symbol);
+    return Object.entries(tokenOptions)
+      .filter(([k]) => !SUPPORTED_TOKENS.includes(k))
+      .map(([k, {symbol, name, logoURI}]) => {
+        const chain = getChainUsingSuffix(k);
         return {
           id: Math.random().toString(),
           coin: symbol.toLowerCase(),
