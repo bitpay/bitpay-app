@@ -15,7 +15,7 @@ import {
   useLogger,
 } from '../../../../utils/hooks';
 import ChangellyCheckoutSkeleton from './ChangellyCheckoutSkeleton';
-import {BitpaySupportedEthereumTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Slate, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -30,6 +30,7 @@ import {
   Wallet,
   TransactionProposal,
   SendMaxInfo,
+  Token,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -50,7 +51,12 @@ import {
   changellyGetFixRateForAmount,
   getChangellyFixedCurrencyAbbreviation,
 } from '../utils/changelly-utils';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {
+  getBadgeImg,
+  getCurrencyAbbreviation,
+  getCWCChain,
+  sleep,
+} from '../../../../utils/helper-methods';
 import ChangellyPoliciesModal from '../components/ChangellyPoliciesModal';
 import {
   ItemDivisor,
@@ -88,6 +94,7 @@ import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
 import {SwapCryptoCoin} from './SwapCryptoRoot';
+import {RootState} from '../../../../store';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -98,8 +105,6 @@ export const SwapCheckoutContainer = styled.SafeAreaView`
 export interface ChangellyCheckoutProps {
   fromWalletSelected: Wallet;
   toWalletSelected: Wallet;
-  fromWalletData: SwapCryptoCoin;
-  toWalletData: SwapCryptoCoin;
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;
@@ -111,8 +116,6 @@ const ChangellyCheckout: React.FC = () => {
     params: {
       fromWalletSelected,
       toWalletSelected,
-      fromWalletData,
-      toWalletData,
       fixedRateId,
       amountFrom,
       useSendMax,
@@ -141,8 +144,16 @@ const ChangellyCheckout: React.FC = () => {
   const [exchangeTxId, setExchangeTxId] = useState<string>();
   const [paymentExpired, setPaymentExpired] = useState(false);
   const key = useAppSelector(
-    ({WALLET}) => WALLET.keys[fromWalletSelected.keyId],
+    ({WALLET}: RootState) => WALLET.keys[fromWalletSelected.keyId],
   );
+  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
+    };
+  }) as {[key in string]: Token};
+
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<any>();
@@ -460,7 +471,7 @@ const ChangellyCheckout: React.FC = () => {
 
       if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
         const token =
-          BitpaySupportedEthereumTokenOpts[
+          tokenOptions[
             getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain)
           ];
 
@@ -470,7 +481,7 @@ const ChangellyCheckout: React.FC = () => {
             for (const output of txp.outputs) {
               if (!output.data) {
                 output.data = BWC.getCore()
-                  .Transactions.get({chain: 'ETHERC20'})
+                  .Transactions.get({chain: getCWCChain(wallet.chain)})
                   .encodeData({
                     recipients: [
                       {address: output.toAddress, amount: output.amount},
@@ -486,10 +497,7 @@ const ChangellyCheckout: React.FC = () => {
         txp.inputs = sendMaxInfo.inputs;
         txp.fee = sendMaxInfo.fee;
       } else {
-        if (
-          wallet.currencyAbbreviation.toLowerCase() === 'btc' ||
-          wallet.chain === 'eth'
-        ) {
+        if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
           txp.feeLevel = 'priority';
         } // Avoid expired order due to slow TX confirmation
       }
@@ -553,10 +561,12 @@ const ChangellyCheckout: React.FC = () => {
       date: Date.now(),
       amountTo: amountTo!,
       coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
+      chainTo: toWalletSelected.chain.toLowerCase(),
       addressTo: txData.addressTo,
       walletIdTo: toWalletSelected.id,
       amountFrom: amountFrom!,
       coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
+      chainFrom: fromWalletSelected.chain.toLowerCase(),
       refundAddress: txData.addressFrom,
       payinAddress: txData.payinAddress,
       payinExtraId: txData.payinExtraId,
@@ -683,11 +693,19 @@ const ChangellyCheckout: React.FC = () => {
           <RowLabel>{t('Selling')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
-              {fromWalletData && (
-                <CoinIconContainer>
-                  <CurrencyImage img={fromWalletData.logoUri} size={20} />
-                </CoinIconContainer>
-              )}
+              <CoinIconContainer>
+                <CurrencyImage
+                  img={fromWalletSelected.img}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      fromWalletSelected.currencyAbbreviation,
+                      fromWalletSelected.chain,
+                    ),
+                    fromWalletSelected.chain,
+                  )}
+                  size={20}
+                />
+              </CoinIconContainer>
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                 {fromWalletSelected.walletName
                   ? fromWalletSelected.walletName
@@ -701,11 +719,19 @@ const ChangellyCheckout: React.FC = () => {
           <RowLabel>{t('Receiving')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
-              {toWalletData && (
-                <CoinIconContainer>
-                  <CurrencyImage img={toWalletData.logoUri} size={20} />
-                </CoinIconContainer>
-              )}
+              <CoinIconContainer>
+                <CurrencyImage
+                  img={toWalletSelected.img}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      toWalletSelected.currencyAbbreviation,
+                      toWalletSelected.chain,
+                    ),
+                    toWalletSelected.chain,
+                  )}
+                  size={20}
+                />
+              </CoinIconContainer>
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                 {toWalletSelected.walletName
                   ? toWalletSelected.walletName

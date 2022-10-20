@@ -25,8 +25,6 @@ export type SwapCryptoStackParamList = {
     | {
         fromWalletSelected: Wallet;
         toWalletSelected: Wallet;
-        fromWalletData: any;
-        toWalletData: any;
         fixedRateId: string;
         amountFrom: number;
         useSendMax?: boolean;

@@ -6,6 +6,7 @@ export const changellySupportedCoins = [
   'bch',
   'eth',
   'doge',
+  'matic', // maticpolygon in Changelly
   'ltc',
   'xrp',
 ];
@@ -108,7 +109,6 @@ export const changellySupportedEthErc20Tokens = [
 ];
 
 export const changellySupportedMaticErc20Tokens = [
-  'matic', // maticpolygon in Changelly
   'usdc', // usdcmatic in Changelly
 ];
 
@@ -195,10 +195,10 @@ export const getChangellyFixedCurrencyAbbreviation = (
 ): string => {
   if (currency === 'usdt' && chain === 'eth') {
     return 'usdt20';
-  } else if (currency === 'maticpolygon' && chain === 'matic') {
-    return 'matic';
-  } else if (currency === 'usdcmatic' && chain === 'matic') {
-    return 'usdc';
+  } else if (currency === 'matic' && chain === 'matic') {
+    return 'maticpolygon';
+  } else if (currency === 'usdc' && chain === 'matic') {
+    return 'usdcmatic';
   } else {
     return currency;
   }
@@ -210,6 +210,9 @@ export const isCoinSupportedToSwap = (coin: string, chain: string): boolean => {
       ...changellySupportedCoins,
       ...changellySupportedEthErc20Tokens,
     ].includes(coin.toLowerCase());
+  }
+  if (coin.toLowerCase() === chain.toLowerCase()) {
+    return changellySupportedCoins.includes(coin.toLowerCase());
   }
   switch (chain) {
     case 'eth':

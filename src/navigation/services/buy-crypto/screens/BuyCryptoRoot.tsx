@@ -23,10 +23,6 @@ import {
   CoinIconContainer,
 } from '../styled/BuyCryptoCard';
 import Button from '../../../../components/button/Button';
-import {
-  SupportedCurrencyOption,
-  SupportedCurrencyOptions,
-} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
 import {
@@ -39,7 +35,11 @@ import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {getSimplexSupportedCurrencies} from '../utils/simplex-utils';
 import {getWyreSupportedCurrencies} from '../utils/wyre-utils';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {
+  getBadgeImg,
+  getCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {
@@ -48,6 +48,7 @@ import {
 } from '../utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -77,7 +78,6 @@ const BuyCryptoRoot: React.FC<
 
   const [amount, setAmount] = useState<number>(fromAmount ? fromAmount : 0);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
-  const [walletData, setWalletData] = useState<SupportedCurrencyOption>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
     useState(false);
@@ -129,19 +129,6 @@ const BuyCryptoRoot: React.FC<
         break;
       default:
         break;
-    }
-  };
-
-  const updateWalletData = () => {
-    if (selectedWallet) {
-      setWalletData(
-        SupportedCurrencyOptions.find(
-          currency =>
-            selectedWallet &&
-            currency.currencyAbbreviation ==
-              selectedWallet.currencyAbbreviation,
-        ),
-      );
     }
   };
 
@@ -269,7 +256,7 @@ const BuyCryptoRoot: React.FC<
     }
   };
 
-  const getLinkedWalletName = () => {
+  const getLinkedWallet = () => {
     if (!selectedWallet) {
       return;
     }
@@ -278,26 +265,30 @@ const BuyCryptoRoot: React.FC<
       tokens?.includes(selectedWallet.id),
     );
 
-    const walletName =
-      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
-    return `${walletName}`;
+    return linkedWallet;
   };
 
   const showTokensInfoSheet = () => {
-    const linkedWalletName = getLinkedWalletName();
+    const linkedWallet = getLinkedWallet();
+    if (!linkedWallet) {
+      return;
+    }
+
+    const linkedWalletName =
+      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
+
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
         title: t('Reminder'),
-        message: t(
-          'Keep in mind that once the funds are received in your wallet, to move them you will need to have enough funds in your Ethereum linked wallet to pay the ETH miner fees.',
-          {
-            selectedWallet: selectedWallet?.currencyAbbreviation.toUpperCase(),
-            linkedWalletName: linkedWalletName
-              ? '(' + linkedWalletName + ')'
-              : ' ',
-          },
-        ),
+        message: t('linkedWalletWarnMsg', {
+          chain: BitpaySupportedCoins[linkedWallet.chain.toLowerCase()].name,
+          chainCoin: linkedWallet.currencyAbbreviation.toUpperCase(),
+          selectedWallet: selectedWallet?.currencyAbbreviation.toUpperCase(),
+          linkedWalletName: linkedWalletName
+            ? '(' + linkedWalletName + ')'
+            : ' ',
+        }),
         enableBackdropDismiss: true,
         actions: [
           {
@@ -499,7 +490,6 @@ const BuyCryptoRoot: React.FC<
   }, []);
 
   useEffect(() => {
-    updateWalletData();
     checkPaymentMethod();
   }, [selectedWallet]);
 
@@ -559,7 +549,17 @@ const BuyCryptoRoot: React.FC<
               <SelectedOptionContainer style={{minWidth: 120}}>
                 <SelectedOptionCol>
                   <CoinIconContainer>
-                    <CurrencyImage img={selectedWallet.img} size={20} />
+                    <CurrencyImage
+                      img={selectedWallet.img}
+                      badgeUri={getBadgeImg(
+                        getCurrencyAbbreviation(
+                          selectedWallet.currencyAbbreviation,
+                          selectedWallet.chain,
+                        ),
+                        selectedWallet.chain,
+                      )}
+                      size={20}
+                    />
                   </CoinIconContainer>
                   <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                     {selectedWallet.currencyAbbreviation.toUpperCase()}

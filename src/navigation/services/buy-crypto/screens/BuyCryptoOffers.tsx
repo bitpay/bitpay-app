@@ -15,7 +15,7 @@ import {
 } from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {BitpaySupportedCurrencies} from '../../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
@@ -33,7 +33,11 @@ import {
   simplexEnv,
   getSimplexCoinFormat,
 } from '../utils/simplex-utils';
-import {getWyreFiatAmountLimits, wyreEnv} from '../utils/wyre-utils';
+import {
+  getWyreCoinFormat,
+  getWyreFiatAmountLimits,
+  wyreEnv,
+} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import {
@@ -55,6 +59,7 @@ import {
 } from '../utils/buy-crypto-utils';
 import {
   formatFiatAmount,
+  getBadgeImg,
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -363,7 +368,7 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     } else {
       const requestData: SimplexGetQuoteRequestData = {
-        digital_currency: getSimplexCoinFormat(coin),
+        digital_currency: getSimplexCoinFormat(coin, selectedWallet.chain),
         fiat_currency: offers.simplex.fiatCurrency.toUpperCase(),
         requested_currency: offers.simplex.fiatCurrency.toUpperCase(),
         requested_amount: offers.simplex.fiatAmount,
@@ -573,9 +578,8 @@ const BuyCryptoOffers: React.FC = () => {
 
       const dest = setPrefix(
         address,
-        coin,
-        selectedWallet.network,
         selectedWallet.chain,
+        selectedWallet.network,
       );
 
       let walletType: string;
@@ -591,7 +595,7 @@ const BuyCryptoOffers: React.FC = () => {
       const requestData = {
         sourceAmount: offers.wyre.fiatAmount.toString(),
         sourceCurrency: offers.wyre.fiatCurrency.toUpperCase(),
-        destCurrency: coin.toUpperCase(),
+        destCurrency: getWyreCoinFormat(coin, selectedWallet.chain),
         dest,
         country,
         amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
@@ -640,13 +644,11 @@ const BuyCryptoOffers: React.FC = () => {
 
   const setPrefix = (
     address: string,
-    coin: string,
-    network: 'livenet' | 'testnet',
     chain: string,
+    network: 'livenet' | 'testnet',
   ): string => {
-    const _coin = getCurrencyAbbreviation(coin, chain);
     const prefix =
-      BitpaySupportedCurrencies[_coin].paymentInfo.protocolPrefix[network];
+      BitpaySupportedCoins[chain].paymentInfo.protocolPrefix[network];
     const addr = `${prefix}:${address}`;
     return addr;
   };
@@ -772,14 +774,13 @@ const BuyCryptoOffers: React.FC = () => {
     const failureRedirectUrl = APP_DEEPLINK_PREFIX + 'wyreError';
     const dest = setPrefix(
       address,
-      coin,
-      selectedWallet.network,
       selectedWallet.chain,
+      selectedWallet.network,
     );
     const requestData = {
       sourceAmount: offers.wyre.fiatAmount.toString(),
       dest,
-      destCurrency: coin.toUpperCase(),
+      destCurrency: getWyreCoinFormat(coin, destinationChain),
       lockFields: ['dest', 'destCurrency', 'country'],
       paymentMethod: _paymentMethod,
       sourceCurrency: offers.wyre.fiatCurrency.toUpperCase(),
@@ -883,7 +884,17 @@ const BuyCryptoOffers: React.FC = () => {
           <SummaryTitle>{t('Crypto')}</SummaryTitle>
           <CoinContainer>
             <CoinIconContainer>
-              <CurrencyImage img={selectedWallet.img} size={20} />
+              <CurrencyImage
+                img={selectedWallet.img}
+                badgeUri={getBadgeImg(
+                  getCurrencyAbbreviation(
+                    selectedWallet.currencyAbbreviation,
+                    selectedWallet.chain,
+                  ),
+                  selectedWallet.chain,
+                )}
+                size={20}
+              />
             </CoinIconContainer>
             <SummaryData>{coin.toUpperCase()}</SummaryData>
           </CoinContainer>

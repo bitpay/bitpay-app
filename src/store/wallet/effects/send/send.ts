@@ -22,6 +22,7 @@ import {GetInput} from '../transactions/transactions';
 import {
   formatCryptoAddress,
   formatFiatAmount,
+  getCWCChain,
   sleep,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
@@ -761,7 +762,7 @@ const buildTransactionProposal =
               if (!output.data) {
                 output.data = BwcProvider.getInstance()
                   .getCore()
-                  .Transactions.get({chain: 'ETHERC20'})
+                  .Transactions.get({chain: getCWCChain(txp.chain!)})
                   .encodeData({
                     recipients: [
                       {address: output.toAddress, amount: output.amount},

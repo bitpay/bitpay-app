@@ -3,10 +3,12 @@ export interface changellyTxData {
   date: number;
   amountTo: number;
   coinTo: string;
+  chainTo?: string;
   addressTo: string;
   walletIdTo: string;
   amountFrom: number;
   coinFrom: string;
+  chainFrom?: string;
   refundAddress: string;
   payinAddress: string;
   payinExtraId?: string;
