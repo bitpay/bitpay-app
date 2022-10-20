@@ -285,17 +285,17 @@ const ContactsAdd = ({
         let _searchList: Array<any> = [];
         if (search) {
           search = search.toLowerCase();
-          _searchList = allTokenOptions.filter(
+          _searchList = ALL_TOKENS.filter(
             ({currencyAbbreviation, currencyName}) =>
               currencyAbbreviation.toLowerCase().includes(search) ||
               currencyName.toLowerCase().includes(search),
           );
         } else {
-          _searchList = allTokenOptions;
+          _searchList = ALL_TOKENS;
         }
         setAllTokenOptions(_searchList);
       }, 300),
-    [allTokenOptions],
+    [ALL_TOKENS],
   );
 
   const setValidValues = (
