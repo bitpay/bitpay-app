@@ -10,7 +10,6 @@ import {
 import {BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
-import WalletSelectorModal from '../components/WalletSelectorModal';
 import AmountModal from '../../../../components/amount/AmountModal';
 import {
   BuyCryptoItemCard,
@@ -28,6 +27,7 @@ import {RootState} from '../../../../store';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
+  dismissOnGoingProcessModal,
 } from '../../../../store/app/app.actions';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
@@ -47,8 +47,26 @@ import {
   isPaymentMethodSupported,
 } from '../utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedCurrencies,
+} from '../../../../constants/currencies';
+import ToWalletSelectorModal, {
+  ToWalletSelectorCustomCurrency,
+} from '../../components/ToWalletSelectorModal';
+import {
+  addWallet,
+  AddWalletData,
+  getDecryptPassword,
+} from '../../../../store/wallet/effects/create/create';
+import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
+import {getCoinAndChainFromCurrencyCode} from '../../../bitpay-id/utils/bitpay-id-utils';
+import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -66,7 +84,7 @@ const BuyCryptoRoot: React.FC<
   const theme = useTheme();
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
@@ -94,6 +112,8 @@ const BuyCryptoRoot: React.FC<
       ...getWyreSupportedCurrencies(),
     ]),
   ]);
+  const [buyCryptoSupportedCoinsFullObj, setBuyCryptoSupportedCoinsFullObj] =
+    useState<ToWalletSelectorCustomCurrency[]>([]);
   const fiatCurrency = getAvailableFiatCurrencies().includes(
     defaultAltCurrency.isoCode,
   )
@@ -217,6 +237,7 @@ const BuyCryptoRoot: React.FC<
             ),
           ))) &&
       wallet.isComplete() &&
+      !wallet.hideWallet &&
       (!fromCurrencyAbbreviation ||
         (wallet.currencyAbbreviation === fromCurrencyAbbreviation &&
           (fromChain ? wallet.chain === fromChain : true)))
@@ -261,8 +282,8 @@ const BuyCryptoRoot: React.FC<
       return;
     }
 
-    const linkedWallet = keys[selectedWallet.keyId].wallets.find(({tokens}) =>
-      tokens?.includes(selectedWallet.id),
+    const linkedWallet = allKeys[selectedWallet.keyId].wallets.find(
+      ({tokens}) => tokens?.includes(selectedWallet.id),
     );
 
     return linkedWallet;
@@ -325,6 +346,7 @@ const BuyCryptoRoot: React.FC<
         fiatCurrency,
         paymentMethod: selectedPaymentMethod.method,
         coin: selectedWallet!.currencyAbbreviation,
+        chain: selectedWallet!.chain,
       }),
     );
 
@@ -471,6 +493,26 @@ const BuyCryptoRoot: React.FC<
     );
   };
 
+  const getLogoUri = (coin: string, _chain: string) => {
+    if (
+      SupportedCurrencyOptions.find(
+        ({currencyAbbreviation, chain}) =>
+          currencyAbbreviation === coin.toLowerCase() &&
+          (!chain || chain === _chain),
+      )
+    ) {
+      return SupportedCurrencyOptions.find(
+        ({currencyAbbreviation, chain}) =>
+          currencyAbbreviation === coin.toLowerCase() &&
+          (!chain || chain === _chain),
+      )!.img;
+    } else if (tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI) {
+      return tokenData[getCurrencyAbbreviation(coin, _chain)].logoURI;
+    } else {
+      return undefined;
+    }
+  };
+
   useEffect(() => {
     const coinsToRemove =
       !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
@@ -485,6 +527,24 @@ const BuyCryptoRoot: React.FC<
       });
       setbuyCryptoSupportedCoins(buyCryptoSupportedCoins);
     }
+
+    const buyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
+      buyCryptoSupportedCoins
+        .map((symbol: string) => {
+          const {coin, chain} = getCoinAndChainFromCurrencyCode(symbol);
+          return {
+            currencyAbbreviation: coin,
+            symbol,
+            name:
+              BitpaySupportedCurrencies[symbol]?.name ||
+              tokenData[symbol]?.name,
+            chain,
+            logoUri: getLogoUri(coin, chain),
+          };
+        })
+        .filter(currency => !!currency.name);
+
+    setBuyCryptoSupportedCoinsFullObj(buyCryptoSupportedCoinsFullObj);
 
     selectFirstAvailableWallet();
   }, []);
@@ -595,46 +655,48 @@ const BuyCryptoRoot: React.FC<
           )}
         </BuyCryptoItemCard>
 
-        <BuyCryptoItemCard
-          onPress={() => {
-            showModal('paymentMethod');
-          }}>
-          <BuyCryptoItemTitle>{t('Payment Method')}</BuyCryptoItemTitle>
-          {!selectedPaymentMethod && (
-            <ActionsContainer>
-              <SelectedOptionContainer style={{backgroundColor: Action}}>
-                <SelectedOptionText
-                  style={{color: White}}
-                  numberOfLines={1}
-                  ellipsizeMode={'tail'}>
-                  t{'Select Payment Method'}
-                </SelectedOptionText>
-                <ArrowContainer>
-                  <SelectorArrowDown
-                    {...{width: 13, height: 13, color: White}}
-                  />
-                </ArrowContainer>
-              </SelectedOptionContainer>
-            </ActionsContainer>
-          )}
-          {selectedPaymentMethod && (
-            <ActionsContainer>
-              <DataText>{selectedPaymentMethod.label}</DataText>
-              <SelectedOptionCol>
-                {selectedPaymentMethod.imgSrc}
-                <ArrowContainer>
-                  <SelectorArrowRight
-                    {...{
-                      width: 13,
-                      height: 13,
-                      color: theme.dark ? White : Slate,
-                    }}
-                  />
-                </ArrowContainer>
-              </SelectedOptionCol>
-            </ActionsContainer>
-          )}
-        </BuyCryptoItemCard>
+        {!!selectedWallet && (
+          <BuyCryptoItemCard
+            onPress={() => {
+              showModal('paymentMethod');
+            }}>
+            <BuyCryptoItemTitle>{t('Payment Method')}</BuyCryptoItemTitle>
+            {!selectedPaymentMethod && (
+              <ActionsContainer>
+                <SelectedOptionContainer style={{backgroundColor: Action}}>
+                  <SelectedOptionText
+                    style={{color: White}}
+                    numberOfLines={1}
+                    ellipsizeMode={'tail'}>
+                    t{'Select Payment Method'}
+                  </SelectedOptionText>
+                  <ArrowContainer>
+                    <SelectorArrowDown
+                      {...{width: 13, height: 13, color: White}}
+                    />
+                  </ArrowContainer>
+                </SelectedOptionContainer>
+              </ActionsContainer>
+            )}
+            {selectedPaymentMethod && (
+              <ActionsContainer>
+                <DataText>{selectedPaymentMethod.label}</DataText>
+                <SelectedOptionCol>
+                  {selectedPaymentMethod.imgSrc}
+                  <ArrowContainer>
+                    <SelectorArrowRight
+                      {...{
+                        width: 13,
+                        height: 13,
+                        color: theme.dark ? White : Slate,
+                      }}
+                    />
+                  </ArrowContainer>
+                </SelectedOptionCol>
+              </ActionsContainer>
+            )}
+          </BuyCryptoItemCard>
+        )}
 
         <CtaContainer>
           <Button
@@ -658,19 +720,64 @@ const BuyCryptoRoot: React.FC<
         onClose={() => hideModal('amount')}
       />
 
-      <WalletSelectorModal
+      <ToWalletSelectorModal
         isVisible={walletSelectorModalVisible}
-        customSupportedCurrencies={
-          fromCurrencyAbbreviation
-            ? [fromCurrencyAbbreviation]
-            : buyCryptoSupportedCoins
-        }
+        modalContext={'buyCrypto'}
+        disabledChain={undefined}
+        customSupportedCurrencies={buyCryptoSupportedCoinsFullObj}
         livenetOnly={!__DEV__}
-        modalTitle={'Select Destination'}
-        onDismiss={(newWallet?: Wallet) => {
+        modalTitle={t('Select Destination')}
+        onDismiss={async (
+          newWallet?: Wallet,
+          createNewWalletData?: AddWalletData,
+        ) => {
           hideModal('walletSelector');
           if (newWallet?.currencyAbbreviation) {
             setWallet(newWallet);
+          } else if (createNewWalletData) {
+            try {
+              if (createNewWalletData.key.isPrivKeyEncrypted) {
+                logger.debug('Key is Encrypted. Trying to decrypt...');
+                await sleep(500);
+                const password = await dispatch(
+                  getDecryptPassword(createNewWalletData.key),
+                );
+                createNewWalletData.options.password = password;
+              }
+
+              await sleep(500);
+              await dispatch(
+                startOnGoingProcessModal(
+                  t(OnGoingProcessMessages.ADDING_WALLET),
+                ),
+              );
+
+              const createdToWallet = await dispatch(
+                addWallet(createNewWalletData),
+              );
+              logger.debug(
+                `Added ${createdToWallet?.currencyAbbreviation} wallet from Buy Crypto`,
+              );
+              dispatch(
+                logSegmentEvent('track', 'Created Basic Wallet', {
+                  coin: createNewWalletData.currency.currencyAbbreviation,
+                  chain: createNewWalletData.currency.chain,
+                  isErc20Token: createNewWalletData.currency.isToken,
+                  context: 'buyCrypto',
+                }),
+              );
+              setWallet(createdToWallet);
+              await sleep(300);
+              dispatch(dismissOnGoingProcessModal());
+            } catch (err: any) {
+              dispatch(dismissOnGoingProcessModal());
+              await sleep(500);
+              if (err.message === 'invalid password') {
+                dispatch(showBottomNotificationModal(WrongPasswordError()));
+              } else {
+                showError(err.message);
+              }
+            }
           }
         }}
       />
