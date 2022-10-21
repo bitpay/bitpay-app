@@ -6,33 +6,29 @@ import React, {
   useEffect,
 } from 'react';
 import styled from 'styled-components/native';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useLogger,
-} from '../../../../utils/hooks';
-import {Key, Wallet} from '../../../../store/wallet/wallet.models';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
   formatFiatAmount,
   getCurrencyAbbreviation,
   keyExtractor,
   sleep,
-} from '../../../../utils/helper-methods';
+} from '../../../utils/helper-methods';
 import {FlatList, TouchableOpacity, View} from 'react-native';
-import {AvailableWalletsPill} from '../../../../components/list/GlobalSelectRow';
-import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
+import {AvailableWalletsPill} from '../../../components/list/GlobalSelectRow';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
   ActiveOpacity,
   CurrencyColumn,
   CurrencyImageContainer,
   ScreenGutter,
-} from '../../../../components/styled/Containers';
+} from '../../../components/styled/Containers';
 import _ from 'lodash';
 import KeyWalletsRow, {
   KeyWallet,
   KeyWalletsRowProps,
-} from '../../../../components/list/KeyWalletsRow';
+} from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -42,7 +38,7 @@ import {
   Slate30,
   SlateDark,
   White,
-} from '../../../../styles/colors';
+} from '../../../styles/colors';
 import {
   H4,
   TextAlign,
@@ -50,38 +46,34 @@ import {
   H7,
   H6,
   SubText,
-} from '../../../../components/styled/Text';
+} from '../../../components/styled/Text';
 import {useNavigation, useTheme} from '@react-navigation/native';
-import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
-import InfoSvg from '../../../../../assets/img/info.svg';
-import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {RootState} from '../../../../store';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+import InfoSvg from '../../../../assets/img/info.svg';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {RootState} from '../../../store';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
-import {findWalletById, toFiat} from '../../../../store/wallet/utils/wallet';
-import {
-  getChainFromChangellyProtocol,
-  SwapCryptoCoin,
-} from '../screens/SwapCryptoRoot';
-import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import NestedArrowIcon from '../../../../components/nested-arrow/NestedArrow';
+import {findWalletById, toFiat} from '../../../store/wallet/utils/wallet';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import NestedArrowIcon from '../../../components/nested-arrow/NestedArrow';
 import {
   DESCRIPTIONS,
   SearchContainer,
-} from '../../../wallet/screens/CurrencySelection';
+} from '../../wallet/screens/CurrencySelection';
 import {
   createHomeCardList,
   keyBackupRequired,
-} from '../../../tabs/home/components/Crypto';
-import {AddWalletData} from '../../../../store/wallet/effects/create/create';
-import {Network} from '../../../../constants';
-import CurrencySelectionSearchInput from '../../../wallet/components/CurrencySelectionSearchInput';
+} from '../../tabs/home/components/Crypto';
+import {AddWalletData} from '../../../store/wallet/effects/create/create';
+import {Network} from '../../../constants';
+import CurrencySelectionSearchInput from '../../wallet/components/CurrencySelectionSearchInput';
 import {
   DescriptionRow,
   TokensHeading,
-} from '../../../../components/list/CurrencySelectionRow';
-import {IsUtxoCoin} from '../../../../store/wallet/utils/currency';
-import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+} from '../../../components/list/CurrencySelectionRow';
+import {IsUtxoCoin} from '../../../store/wallet/utils/currency';
+import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -175,6 +167,14 @@ const ViewAllLink = styled(H6)`
   text-align: center;
 `;
 
+export interface ToWalletSelectorCustomCurrency {
+  currencyAbbreviation: string;
+  symbol: string;
+  chain: string;
+  name: string;
+  logoUri?: any;
+}
+
 interface ToWalletSelectorCoinObj {
   id: string;
   chain: string;
@@ -191,7 +191,10 @@ interface ToWalletSelectorChainObj extends ToWalletSelectorCoinObj {
   tokens?: ToWalletSelectorCoinObj[];
 }
 
-const buildList = (category: SwapCryptoCoin[], wallets: Wallet[]) => {
+const buildList = (
+  category: ToWalletSelectorCustomCurrency[],
+  wallets: Wallet[],
+) => {
   let coins: ToWalletSelectorCoinObj[] = [];
   let chains: ToWalletSelectorChainObj[] = [];
   category.forEach(coin => {
@@ -208,10 +211,7 @@ const buildList = (category: SwapCryptoCoin[], wallets: Wallet[]) => {
         ? availableWallets[0].currencyName
         : coin.name,
       img: availableWallets.length ? availableWallets[0].img : coin.logoUri,
-      chain: getChainFromChangellyProtocol(
-        coin.currencyAbbreviation,
-        coin.protocol,
-      ),
+      chain: coin.chain,
       total: availableWallets.length,
       availableWalletsByKey: _.groupBy(
         availableWallets,
@@ -238,7 +238,7 @@ interface ToWalletSelectorModalProps {
   isVisible: boolean;
   modalTitle?: string;
   disabledChain?: string | undefined;
-  customSupportedCurrencies?: SwapCryptoCoin[];
+  customSupportedCurrencies?: ToWalletSelectorCustomCurrency[];
   onDismiss: (toWallet?: Wallet, createToWalletData?: AddWalletData) => void;
   modalContext?: string;
   livenetOnly?: boolean;
@@ -256,7 +256,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   onHelpPress,
 }) => {
   const {t} = useTranslation();
-  let context = modalContext;
+  const context = modalContext;
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -354,7 +354,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
       await sleep(1000);
       dispatch(
         showBottomNotificationModal(
-          keyBackupRequired(selectedKey, navigation, dispatch, 'swapCrypto'),
+          keyBackupRequired(selectedKey, navigation, dispatch, context),
         ),
       );
     }
@@ -760,9 +760,11 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
               </ModalTitleContainer>
             )}
           </ModalHeader>
-          <TextAlign style={{marginTop: 15}} align={'center'}>
-            <SubText>{t('swapToWalletsConditionMessage')}</SubText>
-          </TextAlign>
+          {context === 'swapCrypto' && (
+            <TextAlign style={{marginTop: 15}} align={'center'}>
+              <SubText>{t('swapToWalletsConditionMessage')}</SubText>
+            </TextAlign>
+          )}
           <SearchContainer>
             <CurrencySelectionSearchInput
               onSearch={setSearchFilter}
@@ -815,10 +817,18 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
               <WalletSelectMenuContainer>
                 <WalletSelectMenuHeaderContainer>
                   <TextAlign align={'center'}>
-                    <H4>{t('Swap to')}</H4>
+                    <H4>
+                      {context === 'swapCrypto'
+                        ? t('Swap to')
+                        : t('Select Destination')}
+                    </H4>
                   </TextAlign>
                   <NoWalletsMsg>
-                    {t('Choose a key you would like to swap the funds to')}
+                    {context === 'swapCrypto'
+                      ? t('Choose a key you would like to swap the funds to')
+                      : t(
+                          'Choose a key you would like to deposit the funds to',
+                        )}
                   </NoWalletsMsg>
                 </WalletSelectMenuHeaderContainer>
                 <WalletSelectMenuBodyContainer>

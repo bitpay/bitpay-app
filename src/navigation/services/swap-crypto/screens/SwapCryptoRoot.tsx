@@ -40,7 +40,7 @@ import ChangellyLogo from '../../../../components/icons/external-services/change
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import FromWalletSelectorModal from '../components/FromWalletSelectorModal';
-import ToWalletSelectorModal from '../components/ToWalletSelectorModal';
+import ToWalletSelectorModal from '../../components/ToWalletSelectorModal';
 import AmountModal from '../../../../components/amount/AmountModal';
 import {
   changellyGetPairsParams,
@@ -684,7 +684,9 @@ const SwapCryptoRoot: React.FC = () => {
     dispatch(
       logSegmentEvent('track', 'Requested Swap Crypto', {
         fromCoin: fromWalletSelected!.currencyAbbreviation,
+        fromChain: fromWalletSelected!.chain,
         toCoin: toWalletSelected!.currencyAbbreviation,
+        toChain: toWalletSelected!.chain,
         amountFrom: amountFrom,
         exchange: 'changelly',
       }),
@@ -1136,6 +1138,7 @@ const SwapCryptoRoot: React.FC = () => {
 
       <ToWalletSelectorModal
         isVisible={toWalletSelectorModalVisible}
+        modalContext={'swapCrypto'}
         // disabledChain to prevent show chain selected as source, but show the available tokens
         disabledChain={
           fromWalletSelected
@@ -1182,6 +1185,7 @@ const SwapCryptoRoot: React.FC = () => {
               dispatch(
                 logSegmentEvent('track', 'Created Basic Wallet', {
                   coin: createToWalletData.currency.currencyAbbreviation,
+                  chain: createToWalletData.currency.chain,
                   isErc20Token: createToWalletData.currency.isToken,
                   context: 'swapCrypto',
                 }),
