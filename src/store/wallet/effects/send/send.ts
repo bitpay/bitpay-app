@@ -928,6 +928,9 @@ export const publishAndSign =
         }
 
         let resultTx = broadcastedTx ? broadcastedTx : signedTx;
+        dispatch(
+          LogActions.info(`resultTx [publishAndSign]: ${resultTx?.txid}`),
+        );
 
         // Check if ConfirmTx notification is enabled
         const {APP} = getState();
