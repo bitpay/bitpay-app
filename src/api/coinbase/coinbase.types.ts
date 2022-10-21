@@ -45,6 +45,8 @@ export interface CoinbaseAccountProps {
   resource: string;
   resource_path: string;
   ready: boolean;
+  allow_deposits: boolean;
+  allow_withdrawals: boolean;
 }
 
 export interface CoinbaseUserProps {

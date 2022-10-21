@@ -137,6 +137,7 @@ export type GlobalSelectParamList = {
   recipient?: {
     address: string;
     currency: string;
+    chain?: string;
     name?: string;
     type?: string;
     network?: string;
@@ -263,9 +264,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     if (recipient?.currency) {
       wallets = wallets.filter(
         wallet =>
-          wallet.currencyAbbreviation === recipient?.currency ||
-          (recipient?.opts?.showERC20Tokens &&
-            IsERCToken(wallet.currencyAbbreviation, wallet.chain)),
+          wallet.currencyAbbreviation === recipient?.currency &&
+          recipient?.chain &&
+          wallet.chain === recipient?.chain,
       );
     }
     if (recipient?.network) {
@@ -283,12 +284,12 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         customSupportedCurrencies ? customSupportedCurrencies : SUPPORTED_COINS,
         wallets,
       ),
-    [wallets, customSupportedCurrencies, SUPPORTED_COINS],
+    [wallets, customSupportedCurrencies],
   );
 
   const supportedTokens = useMemo(
     () => buildList(customSupportedCurrencies ? [] : SUPPORTED_TOKENS, wallets),
-    [wallets, customSupportedCurrencies, SUPPORTED_TOKENS],
+    [wallets, customSupportedCurrencies],
   );
 
   const otherTokens = useMemo(
