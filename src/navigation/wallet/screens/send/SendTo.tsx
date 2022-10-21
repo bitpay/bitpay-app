@@ -93,10 +93,7 @@ import Icons from '../../components/WalletIcons';
 import ContactRow from '../../../../components/list/ContactRow';
 import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
-import {
-  getCoinAndChainFromCurrencyCode,
-  getCurrencyCodeFromCoinAndChain,
-} from '../../../bitpay-id/utils/bitpay-id-utils';
+import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -262,6 +259,8 @@ const SendTo = () => {
 
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
+  const appNetwork = useAppSelector(({APP}) => APP.network);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[appNetwork]);
 
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -424,7 +423,7 @@ const SendTo = () => {
     } = {},
   ) => {
     const {context, name, email, destinationTag} = opts;
-    if (isEmailAddress(text.trim())) {
+    if (user && isEmailAddress(text.trim())) {
       setSearchIsEmailAddress(true);
       return;
     }
