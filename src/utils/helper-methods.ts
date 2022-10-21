@@ -208,16 +208,11 @@ export const findContact = (
   chain: string,
 ) => {
   const foundContacts = contactList.filter((contact: ContactRowProps) => {
-    const chain = contact.chain
-      ? contact.chain
-      : IsERCToken(contact.coin, contact.chain)
-      ? 'eth'
-      : contact.coin;
     return (
       contact.address === address &&
       contact.coin === coin &&
       contact.network === network &&
-      chain === chain
+      contact.chain === chain
     );
   });
   return !!foundContacts.length;

@@ -6,10 +6,12 @@ import {findContact} from '../../utils/helper-methods';
 export const ContactReduxPersistBlackList = [];
 export interface ContactState {
   list: Array<ContactRowProps>;
+  contactMigrationComplete: boolean;
 }
 
 const initialState: ContactState = {
   list: [],
+  contactMigrationComplete: false,
 };
 
 export const contactReducer = (
@@ -61,6 +63,18 @@ export const contactReducer = (
             contact.chain !== action.chain
           );
         }),
+      };
+
+    case ContactActionTypes.MIGRATE_CONTACTS:
+      return {
+        ...state,
+        list: action.contacts,
+      };
+
+    case ContactActionTypes.SET_CONTACT_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        contactMigrationComplete: true,
       };
 
     default:
