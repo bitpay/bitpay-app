@@ -65,6 +65,7 @@ import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import {IsUtxoCoin} from '../../../store/wallet/utils/currency';
 import Icons from '../../wallet/components/WalletIcons';
+import {OtherBitpaySupportedCoins} from '../../../constants/currencies';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -285,7 +286,7 @@ const CoinbaseAccount = ({
       const _currencyAbbreviation = account.balance.currency;
       const _chain =
         IsUtxoCoin(_currencyAbbreviation.toLowerCase()) ||
-        _currencyAbbreviation.toLowerCase() === 'xrp'
+        OtherBitpaySupportedCoins[account.currency.code.toLowerCase()]
           ? _currencyAbbreviation.toLowerCase()
           : 'eth';
 

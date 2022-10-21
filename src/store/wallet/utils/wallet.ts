@@ -8,7 +8,10 @@ import {
 } from '../wallet.models';
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {
+  OtherBitpaySupportedCoins,
+  SUPPORTED_CURRENCIES,
+} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
 import {GetName, GetPrecision, GetProtocolPrefix, IsUtxoCoin} from './currency';
@@ -338,7 +341,7 @@ export const coinbaseAccountToWalletRow = (
 
   const _chain =
     IsUtxoCoin(account.currency.code.toLowerCase()) ||
-    account.currency.code.toLowerCase() === 'xrp'
+    OtherBitpaySupportedCoins[account.currency.code.toLowerCase()]
       ? account.currency.code.toLowerCase()
       : 'eth';
   const _currencyAbbreviation = getCurrencyAbbreviation(
