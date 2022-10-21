@@ -189,7 +189,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
           <CurrencyTitle>{token.currencyName}</CurrencyTitle>
 
           <CurrencySubTitle style={{flexShrink: 1, flexGrow: 1}}>
-            {token.currencyAbbreviation}
+            {token.currencyAbbreviation.toUpperCase()}
           </CurrencySubTitle>
         </CurrencyTitleColumn>
 
