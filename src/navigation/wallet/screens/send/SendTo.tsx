@@ -99,6 +99,7 @@ const ValidDataTypes: string[] = [
   'BitcoinAddress',
   'BitcoinCashAddress',
   'EthereumAddress',
+  'MaticAddress',
   'RippleAddress',
   'DogecoinAddress',
   'LitecoinAddress',
@@ -106,6 +107,7 @@ const ValidDataTypes: string[] = [
   'BitcoinUri',
   'BitcoinCashUri',
   'EthereumUri',
+  'MaticUri',
   'DogecoinUri',
   'LitecoinUri',
   'BitPayUri',
@@ -442,11 +444,13 @@ const SendTo = () => {
         const payProOptions = await GetPayProOptions(invoiceUrl);
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
+        const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
+          GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
+          chain,
+        );
         const selected = payProOptions.paymentOptions.find(
           (option: PayProPaymentOption) =>
-            option.selected &&
-            GetInvoiceCurrency(currencyAbbreviation).toUpperCase() ===
-              option.currency,
+            option.selected && invoiceCurrency === option.currency,
         );
         if (selected) {
           const isValid = dispatch(checkCoinAndNetwork(selected, true));

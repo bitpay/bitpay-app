@@ -70,6 +70,7 @@ import {
 } from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
+import {getCurrencyCodeFromCoinAndChain} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -381,19 +382,23 @@ export const buildTxDetails =
           invoice!.buyerProvidedInfo!.selectedTransactionCurrency!.toLowerCase(), // TODO POLYGON
         fee: 0,
       };
-    const invoiceCoin = GetInvoiceCurrency(coin).toLowerCase();
+    const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
+      GetInvoiceCurrency(coin).toLowerCase(),
+      chain,
+    );
     let {amount} = proposal || {
-      amount: invoice!.paymentTotals[invoiceCoin.toUpperCase()],
+      amount: invoice!.paymentTotals[invoiceCurrency],
     };
     amount = Number(amount); // Support BN (use number instead string only for view)
     const effectiveRate =
-      invoice && dispatch(getInvoiceEffectiveRate(invoice, invoiceCoin, chain));
-    const networkCost = invoice?.minerFees[invoiceCoin.toUpperCase()]?.totalFee;
+      invoice &&
+      dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain));
+    const networkCost = invoice?.minerFees[invoiceCurrency]?.totalFee;
     const isERC20 = IsERCToken(coin, chain);
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
     if (context === 'paypro') {
-      amount = invoice!.paymentTotals[invoiceCoin.toUpperCase()];
+      amount = invoice!.paymentTotals[invoiceCurrency];
     } else if (context === 'speedupBtcReceive') {
       amount = amount - fee;
     }

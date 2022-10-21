@@ -42,6 +42,7 @@ import {
 } from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
 import {find, isEqual} from 'lodash';
+import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 export const mapAbbreviationAndName =
   (
@@ -466,10 +467,12 @@ export const BuildKeysAndWalletsList = ({
               return paymentOptions.some(
                 ({currency, network: optionNetwork}) => {
                   return (
-                    GetInvoiceCurrency(
-                      wallet.currencyAbbreviation,
-                    ).toLowerCase() === currency.toLowerCase() &&
-                    wallet.network === optionNetwork
+                    getCurrencyCodeFromCoinAndChain(
+                      GetInvoiceCurrency(
+                        wallet.currencyAbbreviation,
+                      ).toLowerCase(),
+                      wallet.chain,
+                    ) === currency && wallet.network === optionNetwork
                   );
                 },
               );

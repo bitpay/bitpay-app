@@ -54,11 +54,7 @@ import NetworkSelectionRow, {
 import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
-import {
-  BitpaySupportedMaticTokens,
-  SUPPORTED_ETHEREUM_TOKENS,
-  SUPPORTED_TOKENS,
-} from '../../../../constants/currencies';
+import {SUPPORTED_TOKENS} from '../../../../constants/currencies';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {TouchableOpacity} from 'react-native-gesture-handler';

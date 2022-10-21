@@ -25,6 +25,7 @@ export const APP_CRYPTO_PREFIX = [
   'bitcoin',
   'bitcoincash',
   'ethereum',
+  'matic',
   'dogecoin',
   'litecoin',
 ];
