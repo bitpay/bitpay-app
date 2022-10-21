@@ -63,9 +63,11 @@ import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
-import {IsUtxoCoin} from '../../../store/wallet/utils/currency';
 import Icons from '../../wallet/components/WalletIcons';
-import {OtherBitpaySupportedCoins} from '../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  OtherBitpaySupportedCoins,
+} from '../../../constants/currencies';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -285,8 +287,8 @@ const CoinbaseAccount = ({
     if (account && account.balance) {
       const _currencyAbbreviation = account.balance.currency;
       const _chain =
-        IsUtxoCoin(_currencyAbbreviation.toLowerCase()) ||
-        OtherBitpaySupportedCoins[account.currency.code.toLowerCase()]
+        BitpaySupportedCoins[_currencyAbbreviation.toLowerCase()] ||
+        OtherBitpaySupportedCoins[_currencyAbbreviation.toLowerCase()]
           ? _currencyAbbreviation.toLowerCase()
           : 'eth';
 

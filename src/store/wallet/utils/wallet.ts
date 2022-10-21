@@ -9,12 +9,13 @@ import {
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {
+  BitpaySupportedCoins,
   OtherBitpaySupportedCoins,
   SUPPORTED_CURRENCIES,
 } from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetName, GetPrecision, GetProtocolPrefix, IsUtxoCoin} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -340,7 +341,7 @@ export const coinbaseAccountToWalletRow = (
     : '0';
 
   const _chain =
-    IsUtxoCoin(account.currency.code.toLowerCase()) ||
+    BitpaySupportedCoins[account.currency.code.toLowerCase()] ||
     OtherBitpaySupportedCoins[account.currency.code.toLowerCase()]
       ? account.currency.code.toLowerCase()
       : 'eth';
