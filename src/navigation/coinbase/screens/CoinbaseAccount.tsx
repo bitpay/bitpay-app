@@ -66,6 +66,7 @@ import {logSegmentEvent} from '../../../store/app/app.effects';
 import Icons from '../../wallet/components/WalletIcons';
 import {
   BitpaySupportedCoins,
+  BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
 
@@ -287,7 +288,7 @@ const CoinbaseAccount = ({
     if (account && account.balance) {
       const _currencyAbbreviation = account.balance.currency;
       const _chain =
-        BitpaySupportedCoins[_currencyAbbreviation.toLowerCase()] ||
+        BitpaySupportedUtxoCoins[_currencyAbbreviation.toLowerCase()] ||
         OtherBitpaySupportedCoins[_currencyAbbreviation.toLowerCase()]
           ? _currencyAbbreviation.toLowerCase()
           : 'eth';
