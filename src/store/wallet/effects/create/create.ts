@@ -272,9 +272,6 @@ const createMultipleWallets =
       wallets.push(wallet);
       for (const token of tokens) {
         if (token.chain === coin.chain) {
-          wallet.preferences = wallet.preferences || {
-            tokenAddresses: [],
-          };
           const tokenWallet = await dispatch(
             createTokenWallet(
               wallet,
@@ -423,7 +420,11 @@ const createTokenWallet =
         wallet.tokens = wallet.tokens || [];
         wallet.tokens.push(tokenCredentials.walletId);
         // Add the token info to the ethWallet for BWC/BWS
-        wallet.preferences?.tokenAddresses?.push(
+
+        wallet.preferences = wallet.preferences || {
+          tokenAddresses: [],
+        };
+        wallet.preferences.tokenAddresses?.push(
           // @ts-ignore
           tokenCredentials.token.address,
         );
