@@ -16,7 +16,7 @@ import {
   getDetailsTitle,
   IsMultisigEthInfo,
   IsReceived,
-  NotZeroAmountEth,
+  NotZeroAmountEVM,
   TxActions,
   RemoveTxProposal,
   RejectTxProposal,
@@ -345,7 +345,7 @@ const TransactionProposalDetails = () => {
       ) : txs ? (
         <ScrollView>
           <>
-            {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
+            {NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
@@ -359,7 +359,7 @@ const TransactionProposalDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
+            {!NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
               <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>
