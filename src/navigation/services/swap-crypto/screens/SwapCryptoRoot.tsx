@@ -33,6 +33,7 @@ import {
   ProviderContainer,
   ProviderLabel,
   SpinnerContainer,
+  BalanceContainer,
 } from '../styled/SwapCryptoRoot.styled';
 import {SwapCryptoStackParamList} from '../SwapCryptoStack';
 import Button from '../../../../components/button/Button';
@@ -71,6 +72,7 @@ import {
 } from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
+import InfoSvg from '../../../../../assets/img/info.svg';
 import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';
 import {getSendMaxInfo} from '../../../../store/wallet/effects/send/send';
@@ -88,6 +90,8 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {startUpdateWalletStatus} from '../../../../store/wallet/effects/status/status';
 import SwapCryptoLoadingWalletSkeleton from './SwapCryptoLoadingWalletSkeleton';
 import SwapCryptoBalanceSkeleton from './SwapCryptoBalanceSkeleton';
+import BalanceDetailsModal from '../../../wallet/components/BalanceDetailsModal';
+import {buildUIFormattedWallet} from '../../../wallet/screens/KeyOverview';
 
 export interface RateData {
   fixedRateId: string;
@@ -139,13 +143,18 @@ const SwapCryptoRoot: React.FC = () => {
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
   const tokenData = useAppSelector(({WALLET}) => WALLET.tokenData);
   const tokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+  const {rates} = useAppSelector(({RATE}) => RATE);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
     useState(false);
   const [toWalletSelectorModalVisible, setToWalletSelectorModalVisible] =
     useState(false);
+  const [balanceDetailsModalVisible, setBalanceDetailsModalVisible] =
+    useState<boolean>(false);
   const [fromWalletSelected, setFromWalletSelected] = useState<Wallet>();
+  const [uiFormattedWallet, setUiFormattedWallet] = useState<any>();
   const [useDefaultToWallet, setUseDefaultToWallet] = useState<boolean>(false);
   const [toWalletSelected, setToWalletSelected] = useState<Wallet>();
   const [amountFrom, setAmountFrom] = useState<number>(0);
@@ -885,6 +894,22 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
+  const openWalletBalanceModal = () => {
+    if (!fromWalletSelected) {
+      return;
+    }
+    const uiFormattedWallet = buildUIFormattedWallet(
+      fromWalletSelected,
+      defaultAltCurrency.isoCode,
+      rates,
+      dispatch,
+      'symbol',
+    );
+
+    setUiFormattedWallet(uiFormattedWallet);
+    setBalanceDetailsModalVisible(true);
+  };
+
   const init = async () => {
     try {
       dispatch(
@@ -1037,13 +1062,24 @@ const SwapCryptoRoot: React.FC = () => {
               </ActionsContainer>
               {fromWalletSelected?.balance?.cryptoSpendable &&
               !loadingWalletFromStatus ? (
-                <ActionsContainer>
+                <BalanceContainer style={{marginTop: 14}}>
                   <BottomDataText>
                     {fromWalletSelected.balance.cryptoSpendable}{' '}
                     {fromWalletSelected.currencyAbbreviation.toUpperCase()}{' '}
                     {t('available to swap')}
                   </BottomDataText>
-                </ActionsContainer>
+                  {fromWalletSelected.balance.cryptoSpendable !==
+                  fromWalletSelected.balance.crypto ? (
+                    <TouchableOpacity
+                      onPress={() => {
+                        logger.debug('Balance info clicked');
+                        openWalletBalanceModal();
+                      }}
+                      style={{marginLeft: 8}}>
+                      <InfoSvg width={20} height={20} />
+                    </TouchableOpacity>
+                  ) : null}
+                </BalanceContainer>
               ) : null}
 
               {loadingWalletFromStatus && <SwapCryptoBalanceSkeleton />}
@@ -1139,7 +1175,7 @@ const SwapCryptoRoot: React.FC = () => {
                 )}
               </ActionsContainer>
               {rateData?.rate && (
-                <ActionsContainer alignEnd={true}>
+                <ActionsContainer style={{marginTop: 14}} alignEnd={true}>
                   <BottomDataText>
                     1 {fromWalletSelected?.currencyAbbreviation.toUpperCase()} ~{' '}
                     {rateData?.rate}{' '}
@@ -1166,6 +1202,14 @@ const SwapCryptoRoot: React.FC = () => {
           <ChangellyLogo width={100} height={30} />
         </ProviderContainer>
       </ScrollView>
+
+      {uiFormattedWallet ? (
+        <BalanceDetailsModal
+          isVisible={balanceDetailsModalVisible}
+          closeModal={() => setBalanceDetailsModalVisible(false)}
+          wallet={uiFormattedWallet}
+        />
+      ) : null}
 
       <FromWalletSelectorModal
         isVisible={fromWalletSelectorModalVisible}
