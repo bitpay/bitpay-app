@@ -137,7 +137,7 @@ export type GlobalSelectParamList = {
   recipient?: {
     address: string;
     currency: string;
-    chain?: string;
+    chain: string;
     name?: string;
     type?: string;
     network?: string;
@@ -261,11 +261,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   }
 
   if (recipient && ['coinbase', 'contact', 'scanner'].includes(context)) {
-    if (recipient?.currency) {
+    if (recipient.currency && recipient.chain) {
       wallets = wallets.filter(
         wallet =>
           wallet.currencyAbbreviation === recipient?.currency &&
-          recipient?.chain &&
           wallet.chain === recipient?.chain,
       );
     }
