@@ -320,13 +320,14 @@ const setEthAddressNonce =
 
 export const getNonce = (
   wallet: Wallet,
-  coin: string,
+  chain: string,
   address: string,
 ): Promise<number> => {
   return new Promise((resolve, reject) => {
     wallet.getNonce(
       {
-        coin,
+        coin: chain, // use chain as coin for nonce
+        chain,
         network: wallet.network,
         address,
       },
