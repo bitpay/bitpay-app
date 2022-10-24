@@ -54,6 +54,10 @@ import {
   getCoinAndChainFromCurrencyCode,
   getCurrencyCodeFromCoinAndChain,
 } from '../utils/bitpay-id-utils';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedCurrencies,
+} from '../../../constants/currencies';
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -176,13 +180,22 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   const uniqueActiveCurrencies = uniqueActiveWallets.map(
     wallet => wallet.currencyAbbreviation,
   );
-  const unusedActiveWallets = uniqueActiveWallets.filter(
-    wallet =>
-      !Object.values(activeAddresses).some(
-        ({coin, chain}) =>
-          wallet.currencyAbbreviation === coin && wallet.chain === chain,
-      ),
+  const supportedCurrencies = Object.keys(BitpaySupportedCurrencies).map(
+    currencyCode => {
+      return currencyCode.split('_')[0];
+    },
   );
+  const unusedActiveWallets = uniqueActiveWallets
+    .filter(
+      wallet =>
+        !Object.values(activeAddresses).some(
+          ({coin, chain}) =>
+            wallet.currencyAbbreviation === coin && wallet.chain === chain,
+        ),
+    )
+    .filter(wallet =>
+      supportedCurrencies.includes(wallet.currencyAbbreviation),
+    );
   const inactiveCurrencyOptions = SupportedCurrencyOptions.filter(
     currencyOption =>
       !uniqueActiveCurrencies.includes(
