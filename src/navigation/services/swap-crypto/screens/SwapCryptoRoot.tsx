@@ -85,6 +85,9 @@ import {
   getDecryptPassword,
 } from '../../../../store/wallet/effects/create/create';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
+import {startUpdateWalletStatus} from '../../../../store/wallet/effects/status/status';
+import SwapCryptoLoadingWalletSkeleton from './SwapCryptoLoadingWalletSkeleton';
+import SwapCryptoBalanceSkeleton from './SwapCryptoBalanceSkeleton';
 
 export interface RateData {
   fixedRateId: string;
@@ -149,12 +152,14 @@ const SwapCryptoRoot: React.FC = () => {
   const [swapCryptoAllSupportedCoins, setSwapCryptoAllSupportedCoins] =
     useState<SwapCryptoCoin[]>([]);
   const [swapCryptoSupportedCoinsFrom, setSwapCryptoSupportedCoinsFrom] =
-    useState<SwapCryptoCoin[]>([]);
+    useState<SwapCryptoCoin[]>();
   const [swapCryptoSupportedCoinsTo, setSwapCryptoSupportedCoinsTo] = useState<
     SwapCryptoCoin[]
   >([]);
   const [rateData, setRateData] = useState<RateData>();
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingWalletFromStatus, setLoadingWalletFromStatus] =
+    useState<boolean>(false);
   const [useSendMax, setUseSendMax] = useState<boolean>(false);
   const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
 
@@ -210,10 +215,18 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
-  const setSelectedWallet = () => {
+  const setSelectedWallet = async () => {
     if (selectedWallet) {
+      const key = keys[selectedWallet.keyId];
+      try {
+        await dispatch(
+          startUpdateWalletStatus({key, wallet: selectedWallet, force: true}),
+        );
+      } catch (err) {
+        logger.warn('Failed to update balances from Swap Crypto');
+      }
       if (selectedWallet.balance?.satSpendable > 0) {
-        setFromWallet(selectedWallet);
+        setFromWallet(selectedWallet, true);
       } else if (selectedWallet.balance?.satSpendable === 0) {
         setToWallet(selectedWallet);
         setUseDefaultToWallet(true);
@@ -221,12 +234,33 @@ const SwapCryptoRoot: React.FC = () => {
         logger.warn('It was not possible to set the selected wallet');
       }
     }
+    dispatch(dismissOnGoingProcessModal());
   };
 
-  const setFromWallet = (fromWallet: Wallet) => {
+  const setFromWallet = async (
+    fromWallet: Wallet,
+    skipStatusUpdate?: boolean,
+  ) => {
+    if (!swapCryptoSupportedCoinsFrom) {
+      return;
+    }
     if (!useDefaultToWallet) {
       setToWalletSelected(undefined);
     }
+
+    if (!skipStatusUpdate) {
+      setLoadingWalletFromStatus(true);
+
+      const key = keys[fromWallet.keyId];
+      try {
+        await dispatch(
+          startUpdateWalletStatus({key, wallet: fromWallet, force: true}),
+        );
+      } catch (err) {
+        logger.warn('Failed to update balances from Swap Crypto');
+      }
+    }
+
     setAmountFrom(0);
     setUseSendMax(false);
     setSendMaxInfo(undefined);
@@ -246,6 +280,7 @@ const SwapCryptoRoot: React.FC = () => {
 
     setSwapCryptoSupportedCoinsTo(coinsTo);
     setFromWalletSelected(fromWallet);
+    setLoadingWalletFromStatus(false);
   };
 
   const setToWallet = (toWallet: Wallet) => {
@@ -856,7 +891,6 @@ const SwapCryptoRoot: React.FC = () => {
         startOnGoingProcessModal(t(OnGoingProcessMessages.GENERAL_AWAITING)),
       );
       await Promise.all([getChangellyCurrencies(), sleep(400)]);
-      dispatch(dismissOnGoingProcessModal());
     } catch (err) {
       logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
       const msg = t(
@@ -873,7 +907,9 @@ const SwapCryptoRoot: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setSelectedWallet();
+    if (swapCryptoSupportedCoinsFrom) {
+      setSelectedWallet();
+    }
   }, [swapCryptoSupportedCoinsFrom]);
 
   useEffect(() => {
@@ -889,11 +925,11 @@ const SwapCryptoRoot: React.FC = () => {
       <ScrollView>
         <SwapCryptoCard>
           <SummaryTitle>{t('From')}</SummaryTitle>
-          {!fromWalletSelected && (
+          {!fromWalletSelected && !loadingWalletFromStatus && (
             <ActionsContainer>
               <SelectedOptionContainer
                 style={{backgroundColor: Action}}
-                disabled={swapCryptoSupportedCoinsFrom.length === 0}
+                disabled={swapCryptoSupportedCoinsFrom?.length === 0}
                 onPress={() => {
                   showModal('fromWalletSelector');
                 }}>
@@ -911,7 +947,7 @@ const SwapCryptoRoot: React.FC = () => {
               </SelectedOptionContainer>
             </ActionsContainer>
           )}
-          {fromWalletSelected && (
+          {(fromWalletSelected || loadingWalletFromStatus) && (
             <>
               <ActionsContainer>
                 <SelectedOptionContainer
@@ -919,28 +955,34 @@ const SwapCryptoRoot: React.FC = () => {
                   onPress={() => {
                     showModal('fromWalletSelector');
                   }}>
-                  <SelectedOptionCol>
-                    <CoinIconContainer>
-                      <CurrencyImage
-                        img={fromWalletSelected.img}
-                        badgeUri={getBadgeImg(
-                          getCurrencyAbbreviation(
-                            fromWalletSelected.currencyAbbreviation,
+                  {fromWalletSelected && !loadingWalletFromStatus ? (
+                    <SelectedOptionCol>
+                      <CoinIconContainer>
+                        <CurrencyImage
+                          img={fromWalletSelected.img}
+                          badgeUri={getBadgeImg(
+                            getCurrencyAbbreviation(
+                              fromWalletSelected.currencyAbbreviation,
+                              fromWalletSelected.chain,
+                            ),
                             fromWalletSelected.chain,
-                          ),
-                          fromWalletSelected.chain,
-                        )}
-                        size={20}
-                      />
-                    </CoinIconContainer>
-                    <SelectedOptionText
-                      numberOfLines={1}
-                      ellipsizeMode={'tail'}>
-                      {fromWalletSelected.walletName
-                        ? fromWalletSelected.walletName
-                        : fromWalletSelected.currencyName}
-                    </SelectedOptionText>
-                  </SelectedOptionCol>
+                          )}
+                          size={20}
+                        />
+                      </CoinIconContainer>
+                      <SelectedOptionText
+                        numberOfLines={1}
+                        ellipsizeMode={'tail'}>
+                        {fromWalletSelected.walletName
+                          ? fromWalletSelected.walletName
+                          : fromWalletSelected.currencyName}
+                      </SelectedOptionText>
+                    </SelectedOptionCol>
+                  ) : (
+                    <SelectedOptionCol>
+                      <SwapCryptoLoadingWalletSkeleton />
+                    </SelectedOptionCol>
+                  )}
                   <ArrowContainer>
                     <SelectorArrowDown
                       {...{
@@ -993,7 +1035,8 @@ const SwapCryptoRoot: React.FC = () => {
                   </>
                 )}
               </ActionsContainer>
-              {fromWalletSelected.balance?.cryptoSpendable ? (
+              {fromWalletSelected?.balance?.cryptoSpendable &&
+              !loadingWalletFromStatus ? (
                 <ActionsContainer>
                   <BottomDataText>
                     {fromWalletSelected.balance.cryptoSpendable}{' '}
@@ -1002,6 +1045,8 @@ const SwapCryptoRoot: React.FC = () => {
                   </BottomDataText>
                 </ActionsContainer>
               ) : null}
+
+              {loadingWalletFromStatus && <SwapCryptoBalanceSkeleton />}
             </>
           )}
         </SwapCryptoCard>
