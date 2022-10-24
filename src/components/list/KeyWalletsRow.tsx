@@ -75,7 +75,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
         <KeyWalletsRowContainer
           key={key.key}
           isLast={keyIndex === keyWallets.length - 1}>
-          {keyWallets.length > 1 ? (
+          {key.wallets.length > 1 ? (
             <KeyNameContainer noBorder={!!currency}>
               {keySvg({})}
               <KeyName>{key.keyName || 'My Key'}</KeyName>
