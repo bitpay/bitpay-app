@@ -67,6 +67,7 @@ import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-proce
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {getCoinAndChainFromCurrencyCode} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
+import {orderBy} from 'lodash';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -528,8 +529,27 @@ const BuyCryptoRoot: React.FC<
       setbuyCryptoSupportedCoins(buyCryptoSupportedCoins);
     }
 
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    const supportedCoins = orderBy(
+      buyCryptoSupportedCoins,
+      [
+        (symbol: string) => {
+          return orderedArray.includes(symbol)
+            ? orderedArray.indexOf(symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+
     const buyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
-      buyCryptoSupportedCoins
+      supportedCoins
         .map((symbol: string) => {
           const {coin, chain} = getCoinAndChainFromCurrencyCode(symbol);
           return {
