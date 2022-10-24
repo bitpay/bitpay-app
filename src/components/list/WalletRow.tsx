@@ -132,7 +132,9 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
       <BalanceColumn>
         {!hideBalance ? (
           <>
-            <H5>{cryptoBalance}</H5>
+            <H5 numberOfLines={1} ellipsizeMode="tail">
+              {cryptoBalance}
+            </H5>
             {showFiatBalance && (
               <ListItemSubText textAlign={'right'}>
                 {network === 'testnet' ? 'Test - No Value' : fiatBalance}
