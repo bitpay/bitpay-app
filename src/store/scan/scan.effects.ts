@@ -407,6 +407,7 @@ const goToConfirm =
       address: string;
       email?: string;
       currency: string;
+      chain: string;
       destinationTag?: number;
     };
     amount: number;
@@ -523,6 +524,7 @@ export const goToAmount =
       email?: string;
       address: string;
       currency: string;
+      chain: string;
       network?: Network;
       destinationTag?: number;
     };
@@ -611,18 +613,20 @@ const handleBitPayUri =
       const message = params.get('message') || undefined;
       let feePerKb;
       const coin = params.get('coin')!;
+      const _chain = params.get('chain')!;
 
       if (params.get('gasPrice')) {
         feePerKb = Number(params.get('gasPrice'));
       }
-      const recipient = {
+      const chain = _chain || wallet!.chain;
+      let recipient = {
         type: 'address',
         currency: coin,
+        chain,
         address,
       };
 
       if (!params.get('amount')) {
-        const chain = wallet!.chain;
         dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
       } else {
         const amount = Number(params.get('amount'));
@@ -650,6 +654,7 @@ const handleBitcoinUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -683,6 +688,7 @@ const handleBitcoinCashUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -738,6 +744,7 @@ const handleBitcoinCashUriLegacyAddress =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -769,6 +776,7 @@ const handleEthereumUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
     };
     if (!value.exec(data)) {
@@ -805,6 +813,7 @@ const handleMaticUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
     };
     if (!value.exec(data)) {
@@ -842,6 +851,7 @@ const handleRippleUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       destinationTag: Number(destinationTag),
     };
@@ -873,6 +883,7 @@ const handleDogecoinUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -902,6 +913,7 @@ const handleLitecoinUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -1072,6 +1084,7 @@ const handlePlainAddress =
       name: opts?.name,
       email: opts?.email,
       currency: coin,
+      chain,
       address,
       network,
       destinationTag: opts?.destinationTag,

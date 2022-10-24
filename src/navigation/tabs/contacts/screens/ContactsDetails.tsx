@@ -177,6 +177,7 @@ const ContactsDetails = ({
               name: contact.name,
               address: newAddress,
               currency: contact.coin,
+              chain: contact.chain,
               network: contact.network,
               destinationTag: contact.tag || contact.destinationTag,
             },
