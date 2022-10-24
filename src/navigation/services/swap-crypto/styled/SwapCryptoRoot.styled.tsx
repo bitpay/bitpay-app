@@ -83,7 +83,6 @@ export const DataText = styled(BaseText)`
 export const BottomDataText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 14px;
-  margin-top: 14px;
 `;
 
 export const ProviderContainer = styled.View`
@@ -103,5 +102,12 @@ export const SpinnerContainer = styled.View`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+`;
+
+export const BalanceContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
   align-items: center;
 `;
