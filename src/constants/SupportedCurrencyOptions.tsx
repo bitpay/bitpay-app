@@ -133,7 +133,7 @@ export const SupportedEvmCurrencyOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.matic,
     priority: 5,
-    currencyName: 'Matic',
+    currencyName: 'Polygon',
     currencyAbbreviation: 'matic',
     hasMultisig: false,
     imgSrc: require('../../assets/img/currencies/png/MATIC.png'),

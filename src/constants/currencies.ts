@@ -860,7 +860,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
   },
   matic: {
-    name: 'Matic',
+    name: 'Polygon',
     chain: 'matic',
     coin: 'matic',
     unitInfo: {
