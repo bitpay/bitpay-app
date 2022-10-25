@@ -130,7 +130,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdp',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -163,7 +163,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/pax',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -195,7 +195,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -227,7 +227,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -259,7 +259,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -291,7 +291,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -324,7 +324,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -357,7 +357,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -390,7 +390,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/euroc',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -422,7 +422,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/matic_e',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
@@ -457,7 +457,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd_m',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
     feeInfo: {
@@ -489,7 +489,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc_m',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
     feeInfo: {
@@ -553,7 +553,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/wbtc_m',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
     feeInfo: {
@@ -586,7 +586,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib_m',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
     feeInfo: {
@@ -619,7 +619,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape_m',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
     feeInfo: {
@@ -845,7 +845,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
@@ -881,7 +881,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/matic',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
     feeInfo: {
