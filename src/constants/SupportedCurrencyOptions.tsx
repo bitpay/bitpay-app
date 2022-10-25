@@ -98,14 +98,6 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
     hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/LTC.png'),
   },
-  {
-    id: Math.random().toString(),
-    img: CurrencyListIcons.xrp,
-    priority: 7,
-    currencyName: 'XRP',
-    currencyAbbreviation: 'xrp',
-    imgSrc: require('../../assets/img/currencies/png/XRP.png'),
-  },
 ];
 
 export const OtherSupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
