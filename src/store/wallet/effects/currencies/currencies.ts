@@ -117,7 +117,7 @@ const populateTokenInfo = ({
   tokenOptions[getCurrencyAbbreviation(token.symbol, chain)] = token;
   tokenOptionsByAddress[getCurrencyAbbreviation(token.address, chain)] = token;
   tokenData[getCurrencyAbbreviation(token.symbol, chain)] = {
-    name: token.name.replace(' (PoS)', ''),
+    name: token.name.replace('(PoS)', '').trim(),
     chain,
     coin: token.symbol,
     logoURI: token.logoURI,
