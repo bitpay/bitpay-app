@@ -58,6 +58,7 @@ export const CurrencyListIcons: {
   wbtc_m: props => <WbtcIcon {...props} />,
   shib_m: props => <ShibIcon {...props} />,
   ape_m: props => <ApeIcon {...props} />,
+  euroc_m: props => <EurocIcon {...props} />,
 };
 
 export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
