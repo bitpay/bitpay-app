@@ -19,7 +19,8 @@ export type SupportedMaticTokens =
   | 'dai_m'
   | 'wbtc_m'
   | 'shib_m'
-  | 'ape_m';
+  | 'ape_m'
+  | 'euroc_m';
 export type SupportedCurrencies =
   | SupportedCoins
   | SupportedEthereumTokens

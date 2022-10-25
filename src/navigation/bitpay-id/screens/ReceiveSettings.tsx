@@ -50,10 +50,12 @@ import AddressModal from '../components/AddressModal';
 import {keyBackupRequired} from '../../tabs/home/components/Crypto';
 import {StackScreenProps} from '@react-navigation/stack';
 import TwoFactorRequiredModal from '../components/TwoFactorRequiredModal';
+import {getCurrencyCodeFromCoinAndChain} from '../utils/bitpay-id-utils';
 import {
-  getCoinAndChainFromCurrencyCode,
-  getCurrencyCodeFromCoinAndChain,
-} from '../utils/bitpay-id-utils';
+  BitpaySupportedCurrencies,
+  CurrencyOpts,
+} from '../../../constants/currencies';
+import DefaultImage from '../../../../assets/img/currencies/default.svg';
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -170,7 +172,14 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   const uniqueActiveWallets = _.uniqBy(
     Object.values(keys)
       .flatMap(key => key.wallets)
-      .filter(wallet => wallet.network === Network.mainnet),
+      .filter(
+        wallet =>
+          wallet.network === Network.mainnet &&
+          Object.values(BitpaySupportedCurrencies).some(
+            ({coin, chain}) =>
+              wallet.currencyAbbreviation === coin && wallet.chain === chain,
+          ),
+      ),
     wallet => getReceivingAddressKey(wallet.currencyAbbreviation, wallet.chain),
   );
   const uniqueActiveCurrencies = uniqueActiveWallets.map(
@@ -340,7 +349,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
                 return (
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
-                    key={activeAddress.currency}
+                    key={getReceivingAddressKey(coin, chain)}
                     onPress={() => showAddressModal(activeAddress)}>
                     <AddressItem>
                       <CurrencyIconAndBadge
@@ -373,7 +382,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
                   return (
                     <TouchableOpacity
                       activeOpacity={ActiveOpacity}
-                      key={coin}
+                      key={getReceivingAddressKey(coin, chain)}
                       onPress={() => {
                         setWalletSelectorCurrency(coin);
                         setWalletSelectorChain(chain);
@@ -423,13 +432,20 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
                     <UnusedCurrencyIcons>
                       {inactiveCurrencyOptions
                         .slice(0, numVisibleCurrencyIcons)
-                        .map(currencyOption => (
-                          <currencyOption.img
-                            key={currencyOption.currencyAbbreviation}
-                            height="25"
-                            style={{marginRight: -35}}
-                          />
-                        ))}
+                        .map(currencyOption => {
+                          return currencyOption.img ? (
+                            <currencyOption.img
+                              key={currencyOption.currencyAbbreviation}
+                              height="25"
+                              style={{marginRight: -35}}
+                            />
+                          ) : (
+                            <DefaultImage
+                              height={25}
+                              style={{marginRight: -35}}
+                            />
+                          );
+                        })}
                     </UnusedCurrencyIcons>
                     {inactiveCurrencyOptions.length >
                     numVisibleCurrencyIcons ? (

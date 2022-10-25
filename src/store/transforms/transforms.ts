@@ -5,9 +5,7 @@ import {BwcProvider} from '../../lib/bwc';
 import {
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
-  SUPPORTED_CURRENCIES,
 } from '../../constants/currencies';
-import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import Flatted from 'flatted';
 import {buildWalletObj} from '../wallet/utils/wallet';
 import {ContactRowProps} from '../../components/list/ContactRow';
@@ -38,28 +36,26 @@ export const bindWalletClient = createTransform(
       _outboundState as {[key in string]: Key},
     )) {
       const wallets = key.wallets.map(wallet => {
-        const {img, currencyAbbreviation, currencyName} = wallet;
-        if (!img && SUPPORTED_CURRENCIES.includes(currencyAbbreviation)) {
-          wallet.img = CurrencyListIcons[currencyAbbreviation];
-        }
+        const {currencyAbbreviation, currencyName} = wallet;
         // reset transaction history
         wallet.transactionHistory = {
           transactions: [],
           loadMore: true,
           hasConfirmingTxs: false,
         };
+        const walletClient = BWCProvider.getClient(
+          JSON.stringify(wallet.credentials),
+        );
         console.log(`bindWalletClient - ${wallet.id}`);
-        const _wallet = merge(
+        // build wallet obj with bwc client credentials
+        return merge(
+          walletClient,
           buildWalletObj({
-            ...wallet.credentials,
+            ...walletClient.credentials,
             currencyAbbreviation,
             currencyName,
           }),
           wallet,
-        );
-        return merge(
-          BWCProvider.getClient(JSON.stringify(_wallet.credentials)),
-          _wallet,
         );
       });
 

@@ -20,7 +20,7 @@ import {
   IsReceived,
   IsSent,
   IsShared,
-  NotZeroAmountEth,
+  NotZeroAmountEVM,
   TxActions,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
@@ -404,7 +404,7 @@ const TransactionDetails = () => {
           keyboardShouldPersistTaps={'handled'}
           extraScrollHeight={80}>
           <>
-            {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
+            {NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
@@ -418,7 +418,7 @@ const TransactionDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
+            {!NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
               <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>
