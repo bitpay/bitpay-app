@@ -85,7 +85,6 @@ export const walletConnectOnSessionRequest =
         if (error) {
           reject(error);
         }
-        console.log('--------payload', payload);
         const {pending} = getState().WALLET_CONNECT;
         dispatch(WalletConnectActions.sessionRequest([...pending, connector]));
         dispatch(
