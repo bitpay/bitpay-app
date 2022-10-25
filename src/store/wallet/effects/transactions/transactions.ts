@@ -582,11 +582,11 @@ export const IsInvalid = (action: string): boolean => {
   return action === 'invalid';
 };
 
-export const NotZeroAmountEth = (
+export const NotZeroAmountEVM = (
   amount: number,
   currencyAbbreviation: string,
 ): boolean => {
-  return !(amount === 0 && currencyAbbreviation === 'eth');
+  return !(amount === 0 && SUPPORTED_EVM_COINS.includes(currencyAbbreviation));
 };
 
 export const IsShared = (wallet: Wallet): boolean => {
@@ -631,7 +631,7 @@ export const BuildUiFriendlyList = (
     } = customData || {};
     const {body: noteBody} = note || {};
 
-    const notZeroAmountEth = NotZeroAmountEth(amount, currencyAbbreviation);
+    const notZeroAmountEVM = NotZeroAmountEVM(amount, currencyAbbreviation);
     let contactName;
 
     if (
@@ -650,7 +650,7 @@ export const BuildUiFriendlyList = (
     if (!confirmations || confirmations <= 0) {
       transaction.uiIcon = TransactionIcons.confirming;
 
-      if (notZeroAmountEth) {
+      if (notZeroAmountEVM) {
         if (contactName || transaction.customData?.recipientEmail) {
           if (isSent || isMoved) {
             transaction.uiDescription =
@@ -685,7 +685,7 @@ export const BuildUiFriendlyList = (
             TransactionIcons[customDataService] || TransactionIcons.sent;
           transaction.uiIconURI = giftCardIcons[giftCardName];
         }
-        if (notZeroAmountEth) {
+        if (notZeroAmountEVM) {
           if (noteBody) {
             transaction.uiDescription = noteBody;
           } else if (message) {
@@ -736,7 +736,7 @@ export const BuildUiFriendlyList = (
       }
     }
 
-    if (!notZeroAmountEth) {
+    if (!notZeroAmountEVM) {
       const {uiDescription} = transaction;
       transaction.uiIcon = TransactionIcons.contractInteraction;
 
@@ -749,7 +749,7 @@ export const BuildUiFriendlyList = (
     if (isInvalid) {
       transaction.uiValue = t('(possible double spend)');
     } else {
-      if (notZeroAmountEth) {
+      if (notZeroAmountEVM) {
         transaction.uiValue = amountStr;
       }
     }
