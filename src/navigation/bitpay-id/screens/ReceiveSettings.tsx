@@ -171,26 +171,26 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   const uniqueActiveWallets = _.uniqBy(
     Object.values(keys)
       .flatMap(key => key.wallets)
-      .filter(wallet => wallet.network === Network.mainnet),
+      .filter(
+        wallet =>
+          wallet.network === Network.mainnet &&
+          Object.values(BitpaySupportedCurrencies).some(
+            ({coin, chain}) =>
+              wallet.currencyAbbreviation === coin && wallet.chain === chain,
+          ),
+      ),
     wallet => getReceivingAddressKey(wallet.currencyAbbreviation, wallet.chain),
   );
   const uniqueActiveCurrencies = uniqueActiveWallets.map(
     wallet => wallet.currencyAbbreviation,
   );
-  const unusedActiveWallets = uniqueActiveWallets
-    .filter(
-      wallet =>
-        !Object.values(activeAddresses).some(
-          ({coin, chain}) =>
-            wallet.currencyAbbreviation === coin && wallet.chain === chain,
-        ),
-    )
-    .filter(wallet =>
-      Object.values(BitpaySupportedCurrencies).some(
+  const unusedActiveWallets = uniqueActiveWallets.filter(
+    wallet =>
+      !Object.values(activeAddresses).some(
         ({coin, chain}) =>
           wallet.currencyAbbreviation === coin && wallet.chain === chain,
       ),
-    );
+  );
   const inactiveCurrencyOptions = SupportedCurrencyOptions.filter(
     currencyOption =>
       !uniqueActiveCurrencies.includes(
