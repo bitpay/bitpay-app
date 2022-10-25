@@ -25,7 +25,7 @@ import {Network, URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
-import {getAppsFlyerId} from '../../../utils/appsflyer';
+import {getAppsFlyerId} from '../../../utils/appsFlyer';
 import {CardStackParamList} from '../CardStack';
 import CardFeatureTabs from './CardIntroFeatureTabs';
 import CardIntroHeroImg from './CardIntroHeroImage';

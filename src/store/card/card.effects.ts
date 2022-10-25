@@ -24,7 +24,7 @@ import {BASE_BITPAY_URLS} from '../../constants/config';
 import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
-import {getAppsFlyerId} from '../../utils/appsflyer';
+import {getAppsFlyerId} from '../../utils/appsFlyer';
 
 const DoshWhitelist: string[] = [];
 
