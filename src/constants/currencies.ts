@@ -76,7 +76,7 @@ export interface CurrencyOpts {
 
 export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
   busd_e: {
-    name: 'Binance USD Coin',
+    name: 'Binance USD',
     chain: 'eth',
     coin: 'busd',
     unitInfo: {
@@ -301,7 +301,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
   },
   shib_e: {
-    name: 'SHIBA INU',
+    name: 'Shiba Inu',
     chain: 'eth',
     coin: 'shib',
     unitInfo: {
@@ -436,7 +436,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
 
 export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
   busd_m: {
-    name: 'Binance USD Coin',
+    name: 'Binance USD',
     chain: 'matic',
     coin: 'busd',
     unitInfo: {
@@ -564,7 +564,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
   },
   shib_m: {
-    name: 'SHIBA INU',
+    name: 'Shiba Inu',
     chain: 'matic',
     coin: 'shib',
     unitInfo: {

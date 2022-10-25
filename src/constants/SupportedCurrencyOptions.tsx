@@ -147,7 +147,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.busd_e,
-    currencyName: 'Binance USD Coin',
+    currencyName: 'Binance USD',
     currencyAbbreviation: 'busd',
     chain: 'eth',
     isToken: true,
@@ -169,7 +169,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.dai_e,
-    currencyName: 'Dai',
+    currencyName: 'DAI',
     currencyAbbreviation: 'dai',
     chain: 'eth',
     isToken: true,
@@ -235,7 +235,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.usdc_m,
-    currencyName: 'USD Coin (PoS)',
+    currencyName: 'USD Coin',
     currencyAbbreviation: 'usdc',
     chain: 'matic',
     isToken: true,
@@ -246,7 +246,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.ape_m,
-    currencyName: 'ApeCoin (PoS)',
+    currencyName: 'ApeCoin',
     currencyAbbreviation: 'ape',
     chain: 'matic',
     isToken: true,
@@ -268,7 +268,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.shib_m,
-    currencyName: 'SHIBA INU (PoS)',
+    currencyName: 'Shiba Inu',
     currencyAbbreviation: 'shib',
     chain: 'matic',
     isToken: true,
@@ -290,7 +290,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.busd_m,
-    currencyName: 'binance-usd',
+    currencyName: 'Binance USD',
     currencyAbbreviation: 'busd',
     chain: 'matic',
     isToken: true,
@@ -301,7 +301,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.dai_m,
-    currencyName: '(PoS) Dai Stablecoin',
+    currencyName: 'DAI',
     currencyAbbreviation: 'dai',
     chain: 'matic',
     isToken: true,
@@ -312,7 +312,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.wbtc_m,
-    currencyName: '(PoS) Wrapped BTC',
+    currencyName: 'Wrapped Bitcoin',
     currencyAbbreviation: 'wbtc',
     chain: 'matic',
     isToken: true,
