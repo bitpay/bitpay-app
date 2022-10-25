@@ -367,12 +367,21 @@ const TransactionProposalDetails = () => {
           {(txs && !txs.removed && txs.canBeRemoved) ||
           (txs && txs.status == 'accepted' && !txs.broadcastedOn) ? (
             <>
-              <Banner
-                type={'info'}
-                description={t(
-                  '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
-                )}
-              />
+              {!txs.payProUrl ? (
+                <Banner
+                  type={'info'}
+                  description={t(
+                    '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
+                  )}
+                />
+              ) : (
+                <Banner
+                  type={'warning'}
+                  description={t(
+                    'Your payment proposal was rejected by the receiver. Please, delete it and try again.',
+                  )}
+                />
+              )}
               <Button
                 onPress={removePaymentProposal}
                 buttonType={'link'}

@@ -357,7 +357,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     Object.values(keys).filter(k => k.backupComplete).length > 1;
   let pendingTxps: any = [];
   _.each(key?.wallets, x => {
-    if (x.pendingTxps) {
+    if (x.pendingTxps && x.credentials.n > 1) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });

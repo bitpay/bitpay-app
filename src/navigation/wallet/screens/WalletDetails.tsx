@@ -446,24 +446,32 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
+  const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
     const txpsPending: TransactionProposal[] = [];
+    const txpsUnsent: TransactionProposal[] = [];
     pendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
         copayerId: fullWalletObj.credentials.copayerId,
       });
 
-      if ((!action || action.type === 'failed') && txp.status === 'pending') {
-        txpsPending.push(txp);
-      }
+      if (fullWalletObj.credentials.n > 1) {
+        if ((!action || action.type === 'failed') && txp.status === 'pending') {
+          txpsPending.push(txp);
+        }
 
-      // For unsent transactions
-      if (action && txp.status === 'accepted') {
-        txpsPending.push(txp);
+        if (action && txp.status === 'accepted') {
+          txpsPending.push(txp);
+        }
+
+        setNeedActionPendingTxps(txpsPending);
+        // For unsent transactions
+      } else if (action && txp.status === 'accepted') {
+        txpsUnsent.push(txp);
+        setNeedActionUnsentTxps(txpsUnsent);
       }
     });
-    setNeedActionPendingTxps(txpsPending);
   };
 
   const loadHistory = async (refresh?: boolean) => {
@@ -1065,20 +1073,37 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 <>
                   <TransactionSectionHeaderContainer>
                     <H5>
-                      {fullWalletObj.credentials.m > 1
+                      {fullWalletObj.credentials.n > 1
                         ? t('Pending Proposals')
                         : t('Unsent Transactions')}
                     </H5>
-                    <ProposalBadgeContainer onPress={onPressTxpBadge}>
-                      <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-                    </ProposalBadgeContainer>
+                    {fullWalletObj.credentials.n > 1 ? (
+                      <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                        <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                      </ProposalBadgeContainer>
+                    ) : null}
                   </TransactionSectionHeaderContainer>
-                  <FlatList
-                    contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-                    data={needActionPendingTxps}
-                    keyExtractor={pendingTxpsKeyExtractor}
-                    renderItem={renderTxp}
-                  />
+                  {fullWalletObj.credentials.n > 1 ? (
+                    <FlatList
+                      contentContainerStyle={{
+                        paddingTop: 20,
+                        paddingBottom: 20,
+                      }}
+                      data={needActionPendingTxps}
+                      keyExtractor={pendingTxpsKeyExtractor}
+                      renderItem={renderTxp}
+                    />
+                  ) : (
+                    <FlatList
+                      contentContainerStyle={{
+                        paddingTop: 20,
+                        paddingBottom: 20,
+                      }}
+                      data={needActionUnsentTxps}
+                      keyExtractor={pendingTxpsKeyExtractor}
+                      renderItem={renderTxp}
+                    />
+                  )}
                 </>
               ) : null}
 
