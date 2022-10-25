@@ -372,8 +372,8 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     coin: 'euroc',
     unitInfo: {
       unitName: 'EUROC',
-      unitToSatoshi: 1e18,
-      unitDecimals: 18,
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
       unitCode: 'euroc',
     },
     properties: {
@@ -621,6 +621,39 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  euroc_m: {
+    name: 'Euro Coin (PoS)',
+    chain: 'matic',
+    coin: 'euroc',
+    unitInfo: {
+      unitName: 'EUROC',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'euroc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: false,
+      singleAddress: true,
+      isCustom: false,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/euroc_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
     },
     feeInfo: {
       feeUnit: 'Gwei',

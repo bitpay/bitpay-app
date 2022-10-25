@@ -265,7 +265,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.euroc_m,
-    currencyName: 'Euro Coin',
+    currencyName: 'Euro Coin (PoS)',
     currencyAbbreviation: 'euroc',
     chain: 'matic',
     isToken: true,

@@ -66,7 +66,7 @@ export const BitpaySupportedEthereumTokenOpts: TokenOptsType = {
   euroc_e: {
     name: 'Euro Coin',
     symbol: 'EUROC',
-    decimals: 18,
+    decimals: 6,
     address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
   },
   matic_e: {
@@ -114,6 +114,12 @@ export const BitpaySupportedMaticTokenOpts: TokenOptsType = {
     decimals: 18,
     address: '0xb7b31a6bc18e48888545ce79e83e06003be70930',
   },
+  euroc_m: {
+    name: 'Euro Coin (PoS)',
+    symbol: 'EUROC',
+    decimals: 6,
+    address: '0x8a037dbca8134ffc72c362e394e35e0cad618f85',
+  },
 };
 
 export const BitpaySupportedTokenOpts: TokenOptsType = {
@@ -155,7 +161,7 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
   '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599_e': {
     name: 'Wrapped Bitcoin',
     symbol: 'WBTC',
-    decimals: 9,
+    decimals: 8,
     address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
   },
   '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce_e': {
@@ -173,7 +179,7 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
   '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c_e': {
     name: 'Euro Coin',
     symbol: 'EUROC',
-    decimals: 18,
+    decimals: 6,
     address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
   },
   '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0_e': {
@@ -220,6 +226,12 @@ export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
     symbol: 'APE',
     decimals: 18,
     address: '0xb7b31a6bc18e48888545ce79e83e06003be70930',
+  },
+  '0x8a037dbca8134ffc72c362e394e35e0cad618f85_m': {
+    name: 'Euro Coin (PoS)',
+    symbol: 'EUROC',
+    decimals: 6,
+    address: '0x8a037dbca8134ffc72c362e394e35e0cad618f85',
   },
 };
 
