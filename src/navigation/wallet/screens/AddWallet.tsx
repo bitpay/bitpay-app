@@ -181,7 +181,7 @@ const isWithinReceiveSettings = (parent: any): boolean => {
   return parent
     ?.getState()
     .routes.some(
-      (r: any) => r.params?.screen === BitpayIdScreens.RECEIVING_ADDRESSES,
+      (r: any) => r.params?.screen === BitpayIdScreens.RECEIVE_SETTINGS,
     );
 };
 

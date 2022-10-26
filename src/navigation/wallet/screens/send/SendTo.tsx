@@ -261,8 +261,6 @@ const SendTo = () => {
 
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const appNetwork = useAppSelector(({APP}) => APP.network);
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[appNetwork]);
 
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -425,7 +423,7 @@ const SendTo = () => {
     } = {},
   ) => {
     const {context, name, email, destinationTag} = opts;
-    if (user && isEmailAddress(text.trim())) {
+    if (isEmailAddress(text.trim())) {
       setSearchIsEmailAddress(true);
       return;
     }
@@ -565,7 +563,7 @@ const SendTo = () => {
             wallet.chain,
           ),
         }),
-      );
+      ).catch(_ => Promise.resolve([]));
       setEmailAddressSearchPromise(searchPromise);
       await searchPromise;
     };
@@ -584,7 +582,7 @@ const SendTo = () => {
 
   return (
     <SafeAreaView>
-      <ScrollView>
+      <ScrollView keyboardShouldPersistTaps={'handled'}>
         <SearchContainer>
           <SearchInput
             placeholder={t('Search contact or enter address')}
