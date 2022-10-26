@@ -30,7 +30,12 @@ const BWC = BwcProvider.getInstance();
 
 export const walletConnectInit = (): Effect => async (dispatch, getState) => {
   try {
-    const {sessions} = getState().WALLET_CONNECT;
+    const {sessions: _sessions, requests: _requests} =
+      getState().WALLET_CONNECT;
+    const keys = Object.values(getState().WALLET.keys);
+    const keyIds = keys.map(({id}) => id);
+    const sessions = _sessions.filter(s => keyIds.includes(s.customData.keyId));
+
     const connectors: IWCConnector[] =
       sessions &&
       (await Promise.all(
@@ -41,6 +46,12 @@ export const walletConnectInit = (): Effect => async (dispatch, getState) => {
           };
         }),
       ));
+
+    const peerIds = connectors.map(({connector}) => connector.peerId);
+    const requests = _requests.filter(r => peerIds.includes(r.peerId));
+
+    // remove sessions & pending requests if the user deletes the corresponding key or connection
+    dispatch(WalletConnectActions.updateStore(sessions, requests));
     dispatch(
       LogActions.info('[WC/walletConnectInit]: initialized successfully'),
     );
