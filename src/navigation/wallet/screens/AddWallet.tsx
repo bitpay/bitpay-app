@@ -46,7 +46,11 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {addWallet, getDecryptPassword} from '../../../store/wallet/effects';
+import {
+  addWallet,
+  getDecryptPassword,
+  startGetRates,
+} from '../../../store/wallet/effects';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
@@ -76,8 +80,14 @@ import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WrongPasswordError} from '../components/ErrorMessages';
-import {getTokenContractInfo} from '../../../store/wallet/effects/status/status';
-import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
+import {
+  getTokenContractInfo,
+  startUpdateAllWalletStatusForKey,
+} from '../../../store/wallet/effects/status/status';
+import {
+  createWalletAddress,
+  GetCoinAndNetwork,
+} from '../../../store/wallet/effects/address/address';
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
 import {
   BitpaySupportedCurrencies,
@@ -89,6 +99,8 @@ import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {LogActions} from '../../../store/log';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -377,13 +389,25 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         }),
       );
 
+      if (!wallet.receiveAddress) {
+        const walletAddress = (await dispatch<any>(
+          createWalletAddress({wallet, newAddress: true}),
+        )) as string;
+        dispatch(LogActions.info(`new address generated: ${walletAddress}`));
+      }
+
       if (!withinReceiveSettings) {
         navigation.navigate('WalletDetails', {
           walletId: wallet.id,
           key,
-          skipInitializeHistory: true,
+          skipInitializeHistory: false, // new wallet might have transactions
         });
       }
+
+      // new wallet might have funds
+      await dispatch(startGetRates({}));
+      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+      dispatch(updatePortfolioBalance());
 
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
