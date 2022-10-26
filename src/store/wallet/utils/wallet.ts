@@ -100,6 +100,7 @@ export const buildWalletObj = (
     hideBalance = false,
     currencyAbbreviation,
     currencyName,
+    img,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -108,6 +109,7 @@ export const buildWalletObj = (
     network: Network;
     currencyAbbreviation: string;
     currencyName: string;
+    img: any;
   },
   tokenOpts?: {[key in string]: Token},
   otherOpts?: {
@@ -132,7 +134,7 @@ export const buildWalletObj = (
       ? CurrencyListIcons[_currencyAbbreviation]
       : tokenOpts && tokenOpts[_currencyAbbreviation]?.logoURI
       ? (tokenOpts[_currencyAbbreviation]?.logoURI as string)
-      : '',
+      : img || '',
     badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
     m,
