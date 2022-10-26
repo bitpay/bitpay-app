@@ -50,12 +50,12 @@ export const bindWalletClient = createTransform(
         // build wallet obj with bwc client credentials
         return merge(
           walletClient,
+          wallet,
           buildWalletObj({
             ...walletClient.credentials,
             currencyAbbreviation,
             currencyName,
           }),
-          wallet,
         );
       });
 
