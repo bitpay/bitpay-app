@@ -199,6 +199,13 @@ const PriceCharts = () => {
     },
   };
 
+  const buttonLabel =
+    t('Buy ') +
+    (currencyAbbreviation === 'matic'
+      ? currencyAbbreviation.charAt(0).toUpperCase() +
+        currencyAbbreviation.slice(1)
+      : currencyName);
+
   const VictoryCursorVoronoiContainer: ComponentType<any> = createContainer(
     'cursor',
     'voronoi',
@@ -435,7 +442,7 @@ const PriceCharts = () => {
           </RangeDateSelectorContainer>
         ) : null}
         <Button onPress={goToBuyCrypto} buttonStyle={'primary'}>
-          {t('Buy ') + currencyName}
+          {buttonLabel}
         </Button>
       </CtaContainer>
     </SafeAreaView>
