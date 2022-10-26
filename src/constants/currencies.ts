@@ -372,8 +372,8 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     coin: 'euroc',
     unitInfo: {
       unitName: 'EUROC',
-      unitToSatoshi: 1e18,
-      unitDecimals: 18,
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
       unitCode: 'euroc',
     },
     properties: {
