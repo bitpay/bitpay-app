@@ -178,6 +178,7 @@ const joinMultisigWallet = (params: {
       bwcClient.fromString(
         key.createCredentials(opts.password, {
           coin: opts.coin,
+          chain: opts.coin, // chain === coin for stored clients
           network: opts.networkName,
           account: opts.account || 0,
           n: opts.n,
