@@ -50,6 +50,7 @@ import {t} from 'i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
 import ListKeySkeleton from './cards/ListKeySkeleton';
 import CarouselKeySkeleton from './cards/CarouselKeySkeleton';
+import {clearDeferredImport} from '../../../../store/wallet/wallet.actions';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -248,16 +249,46 @@ export const createHomeCardList = ({
       homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
   );
 
+  const onDeferredImportPress = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Cancel Import?'),
+        message: t('Would you like to cancel importing this key?'),
+        actions: [
+          {
+            text: t('Cancel Import'),
+            primary: true,
+            action: () => dispatch(clearDeferredImport()),
+          },
+        ],
+        enableBackdropDismiss: true,
+      }),
+    );
+  };
+
   if (deferredImport) {
     if (homeCarouselLayoutType === 'listView') {
       list.push({
         id: 'deferredImport',
-        component: <ListKeySkeleton />,
+        component: (
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => onDeferredImportPress()}>
+            <ListKeySkeleton />
+          </TouchableOpacity>
+        ),
       });
     } else {
       list.push({
         id: 'deferredImport',
-        component: <CarouselKeySkeleton />,
+        component: (
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => onDeferredImportPress()}>
+            <CarouselKeySkeleton />
+          </TouchableOpacity>
+        ),
       });
     }
   }
