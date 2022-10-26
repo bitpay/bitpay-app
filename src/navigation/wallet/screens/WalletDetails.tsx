@@ -412,7 +412,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
-      setNeedActionTxps(pendingTxps);
+      setNeedActionTxps(fullWalletObj.pendingTxps);
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
@@ -535,16 +535,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       }),
     );
     updateWalletStatusAndProfileBalance();
-    setNeedActionTxps(pendingTxps);
+    setNeedActionTxps(fullWalletObj.pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
       () => {
         loadHistoryRef.current(true);
-        setNeedActionTxps(pendingTxps);
+        setNeedActionTxps(fullWalletObj.pendingTxps);
       },
     );
     return () => subscription.remove();
-  }, []);
+  }, [key]);
 
   useEffect(() => {
     if (!skipInitializeHistory) {
