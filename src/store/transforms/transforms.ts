@@ -36,7 +36,7 @@ export const bindWalletClient = createTransform(
       _outboundState as {[key in string]: Key},
     )) {
       const wallets = key.wallets.map(wallet => {
-        const {currencyAbbreviation, currencyName} = wallet;
+        const {currencyAbbreviation, currencyName, img} = wallet;
         // reset transaction history
         wallet.transactionHistory = {
           transactions: [],
@@ -55,6 +55,7 @@ export const bindWalletClient = createTransform(
             ...walletClient.credentials,
             currencyAbbreviation,
             currencyName,
+            img,
           }),
         );
       });
