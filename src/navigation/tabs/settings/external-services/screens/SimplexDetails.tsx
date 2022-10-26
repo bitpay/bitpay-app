@@ -87,7 +87,7 @@ const SimplexDetails: React.FC = () => {
               <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
-          <SimplexLogo iconOnly={true} width={45} height={45} />
+          <SimplexLogo iconOnly={true} />
         </RowDataContainer>
 
         <RowDataContainer>

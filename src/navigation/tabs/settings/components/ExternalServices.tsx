@@ -54,7 +54,7 @@ const ExternalServices = () => {
         }}>
         <ExternalServicesItemContainer>
           <ExternalServicesIconContainer>
-            <SimplexLogo iconOnly={true} width={30} height={25} />
+            <SimplexLogo iconOnly={true} widthIcon={30} heightIcon={25} />
           </ExternalServicesIconContainer>
           <SettingTitle>Simplex</SettingTitle>
         </ExternalServicesItemContainer>

@@ -199,7 +199,7 @@ const PaymentMethodsModal = ({
                           chain,
                           currency,
                         ) ? (
-                          <SimplexLogo width={60} height={20} />
+                          <SimplexLogo widthIcon={20} heightIcon={20} />
                         ) : null}
                         {coin &&
                         currency &&
