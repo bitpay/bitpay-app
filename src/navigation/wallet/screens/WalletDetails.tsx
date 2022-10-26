@@ -338,16 +338,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const assetOptions: Array<Option> = _.compact([
-    SUPPORTED_EVM_COINS.includes(fullWalletObj.currencyAbbreviation)
-      ? {
-          img: <Icons.BridgeToPolygon />,
-          title: t('Bridge to Polygon'),
-          description: t('Transfer your Ethereum to Polygon'),
-          onPress: () => {
-            Linking.openURL(URL.POLYGON_BRIDGE);
-          },
-        }
-      : undefined,
     {
       img: <Icons.RequestAmount />,
       title: t('Request a specific amount'),
