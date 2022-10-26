@@ -1198,6 +1198,7 @@ const createKeyAndCredentials = async (
       bwcClient.fromString(
         key.createCredentials(undefined, {
           coin,
+          chain: coin, // chain === coin for stored clients
           network,
           account,
           n,
@@ -1218,6 +1219,7 @@ const createKeyAndCredentials = async (
       bwcClient.fromString(
         key.createCredentials(undefined, {
           coin,
+          chain: coin, // chain === coin for stored clients
           network,
           account,
           n,

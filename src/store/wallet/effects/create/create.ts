@@ -346,6 +346,7 @@ const createWallet = (params: {
     bwcClient.fromString(
       key.createCredentials(password, {
         coin,
+        chain: coin, // chain === coin for stored clients
         network,
         account,
         n: 1,
@@ -540,6 +541,7 @@ export const createWalletWithOpts = (params: {
       bwcClient.fromString(
         key.createCredentials(opts.password, {
           coin: opts.coin || 'btc',
+          chain: opts.coin || 'btc', // chain === coin for stored clients
           network: opts.networkName || 'livenet',
           account: opts.account || 0,
           n: opts.n || 1,

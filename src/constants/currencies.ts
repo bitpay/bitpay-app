@@ -1,6 +1,6 @@
 import {EVM_BLOCKCHAIN_EXPLORERS} from './config';
 
-export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
+export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth' | 'matic';
 export type SupportedEthereumTokens =
   | 'usdc_e'
   | 'gusd_e'
