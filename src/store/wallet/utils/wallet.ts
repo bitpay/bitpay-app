@@ -2,6 +2,7 @@ import {
   Key,
   KeyMethods,
   Token,
+  TransactionProposal,
   Wallet,
   WalletBalance,
   WalletObj,
@@ -101,6 +102,8 @@ export const buildWalletObj = (
     currencyAbbreviation,
     currencyName,
     img,
+    walletName,
+    pendingTxps = [],
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -110,11 +113,9 @@ export const buildWalletObj = (
     currencyAbbreviation: string;
     currencyName: string;
     img: any;
+    pendingTxps: TransactionProposal[];
   },
   tokenOpts?: {[key in string]: Token},
-  otherOpts?: {
-    walletName?: string;
-  },
 ): WalletObj => {
   const _currencyAbbreviation = getCurrencyAbbreviation(
     currencyAbbreviation,
@@ -125,7 +126,7 @@ export const buildWalletObj = (
     currencyName,
     currencyAbbreviation,
     chain,
-    walletName: otherOpts?.walletName,
+    walletName,
     balance,
     tokens,
     network,
@@ -141,7 +142,7 @@ export const buildWalletObj = (
     isRefreshing: false,
     hideWallet,
     hideBalance,
-    pendingTxps: [],
+    pendingTxps,
   };
 };
 

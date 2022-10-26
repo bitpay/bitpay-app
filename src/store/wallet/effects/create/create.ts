@@ -204,11 +204,13 @@ export const addWallet =
           merge(
             newWallet,
             buildWalletObj(
-              {...newWallet.credentials, currencyAbbreviation, currencyName},
-              tokenOpts,
               {
+                ...newWallet.credentials,
+                currencyAbbreviation,
+                currencyName,
                 walletName,
               },
+              tokenOpts,
             ),
           ),
         );
