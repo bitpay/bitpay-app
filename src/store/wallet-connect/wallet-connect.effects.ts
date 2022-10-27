@@ -495,81 +495,91 @@ export const walletConnectPersonalSign =
 export const walletConnectUpdateSession =
   (wallet: Wallet, chainId: string): Effect<Promise<any>> =>
   (dispatch, getState) => {
-    return new Promise(resolve => {
-      const {connectors: _connectors, sessions: _sessions} =
-        getState().WALLET_CONNECT;
-      const {keys} = getState().WALLET;
-      const _chainId = parseInt(chainId, 16);
-      const chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
-        key => EVM_BLOCKCHAIN_ID[key] === _chainId,
-      );
-
-      const newLinkedWallet = keys[wallet.keyId].wallets.find(
-        w =>
-          !IsERCToken(w.currencyAbbreviation, w.chain) &&
-          w.receiveAddress === wallet.receiveAddress &&
-          w.chain === chain,
-      );
-
-      if (newLinkedWallet) {
-        let sessionToUpdate: IWCSession;
-
-        const sessions = _sessions.map((s: IWCSession) => {
-          if (s?.customData.walletId === wallet.id) {
-            s.session.chainId = _chainId;
-            s.customData.walletId = newLinkedWallet.id;
-            sessionToUpdate = s;
-          }
-          return s;
-        });
-
-        const connectors = _connectors.map((c: IWCConnector) => {
-          if (c?.customData.walletId === sessionToUpdate?.customData.walletId) {
-            c.connector.chainId = _chainId;
-            c.customData.walletId = newLinkedWallet.id;
-            c.connector.updateSession(sessionToUpdate.session);
-          }
-          return c;
-        });
-
-        dispatch(WalletConnectActions.updateSession(connectors, sessions));
-        dispatch(
-          LogActions.info('[WC/walletConnectUpdateSession]: session update'),
+    return new Promise((resolve, reject) => {
+      try {
+        const {connectors: _connectors, sessions: _sessions} =
+          getState().WALLET_CONNECT;
+        const {keys} = getState().WALLET;
+        const _chainId = parseInt(chainId, 16);
+        const chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
+          key => EVM_BLOCKCHAIN_ID[key] === _chainId,
         );
-        resolve(newLinkedWallet);
-      } else {
-        const chainName = chain ? PROTOCOL_NAME[chain][wallet.network] : null;
-        dispatch(
-          showBottomNotificationModal({
-            type: 'info',
-            title: t('WCSwitchNetworkTitle', {chain: chainName}),
-            message: t('WCAddWalletMsg', {
-              chain: chainName,
-              currencyAbbreviation: chain?.toUpperCase(),
-            }),
-            enableBackdropDismiss: true,
-            actions: [
-              {
-                text: t('Add Wallet'),
-                action: async () => {
-                  dispatch(dismissBottomNotificationModal());
-                  await sleep(500);
-                  await dispatch(addNewLinkedWallet(wallet, chain!));
-                  await sleep(500);
-                  resolve(
-                    dispatch(walletConnectUpdateSession(wallet, chainId)),
-                  );
+
+        const newLinkedWallet = keys[wallet.keyId].wallets.find(
+          w =>
+            !IsERCToken(w.currencyAbbreviation, w.chain) &&
+            w.receiveAddress === wallet.receiveAddress &&
+            w.chain === chain,
+        );
+
+        if (newLinkedWallet) {
+          let sessionToUpdate: IWCSession;
+
+          const sessions = _sessions.map((s: IWCSession) => {
+            if (s?.customData.walletId === wallet.id) {
+              s.session.chainId = _chainId;
+              s.customData.walletId = newLinkedWallet.id;
+              sessionToUpdate = s;
+            }
+            return s;
+          });
+
+          const connectors = _connectors.map((c: IWCConnector) => {
+            if (
+              c?.customData.walletId === sessionToUpdate?.customData.walletId
+            ) {
+              c.connector.chainId = _chainId;
+              c.customData.walletId = newLinkedWallet.id;
+              c.connector.updateSession(sessionToUpdate.session);
+            }
+            return c;
+          });
+
+          dispatch(WalletConnectActions.updateSession(connectors, sessions));
+          dispatch(
+            LogActions.info('[WC/walletConnectUpdateSession]: session update'),
+          );
+          resolve(newLinkedWallet);
+        } else {
+          const chainName = chain ? PROTOCOL_NAME[chain][wallet.network] : null;
+          dispatch(
+            showBottomNotificationModal({
+              type: 'info',
+              title: t('WCSwitchNetworkTitle', {chain: chainName}),
+              message: t('WCAddWalletMsg', {
+                chain: chainName,
+                currencyAbbreviation: chain?.toUpperCase(),
+              }),
+              enableBackdropDismiss: true,
+              actions: [
+                {
+                  text: t('Add Wallet'),
+                  action: async () => {
+                    try {
+                      dispatch(dismissBottomNotificationModal());
+                      await sleep(500);
+                      await dispatch(addNewLinkedWallet(wallet, chain!));
+                      await sleep(500);
+                      resolve(
+                        dispatch(walletConnectUpdateSession(wallet, chainId)),
+                      );
+                    } catch (err) {
+                      reject(err);
+                    }
+                  },
+                  primary: true,
                 },
-                primary: true,
-              },
-              {
-                text: t('Cancel'),
-                action: () => resolve(null),
-                primary: false,
-              },
-            ],
-          }),
-        );
+                {
+                  text: t('Cancel'),
+                  action: () => resolve(null),
+                  primary: false,
+                },
+              ],
+            }),
+          );
+        }
+      } catch (err) {
+        reject(err);
       }
     });
   };
@@ -592,7 +602,7 @@ const addNewLinkedWallet =
         );
 
         const evmCoin = BitpaySupportedEvmCoins[chain];
-        const _wallet = await dispatch(
+        const _wallet = (await dispatch<any>(
           addWallet({
             key,
             currency: {
@@ -605,19 +615,20 @@ const addNewLinkedWallet =
               network: wallet.network,
               account: wallet.credentials.account,
             },
+            context: 'WalletConnect',
           }),
-        );
+        )) as any;
         (await dispatch<any>(createWalletAddress({wallet: _wallet}))) as string;
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
         resolve(null);
       } catch (err: any) {
-        if (err.message === 'invalid password') {
+        if (err && err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
         } else {
           dispatch(dismissOnGoingProcessModal());
           await sleep(500);
-          dispatch(showBottomNotificationModal(err.message));
+          dispatch(showBottomNotificationModal(err && err.message));
         }
         reject(err);
       }
