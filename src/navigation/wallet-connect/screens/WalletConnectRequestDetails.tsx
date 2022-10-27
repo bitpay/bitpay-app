@@ -117,9 +117,13 @@ const WalletConnectRequestDetails = () => {
   const [rejectButtonState, setRejectButtonState] = useState<ButtonState>();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
-  const request: IWCRequest | undefined = useAppSelector(({WALLET_CONNECT}) => {
-    return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
-  });
+  const _request: IWCRequest | undefined = useAppSelector(
+    ({WALLET_CONNECT}) => {
+      return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
+    },
+  );
+
+  const [request] = useState<IWCRequest | undefined>(_request);
 
   useEffect(() => {
     if (!request) {
@@ -378,7 +382,10 @@ const WalletConnectRequestDetails = () => {
                     onPress={() => {
                       copyToClipboard(message, 'message');
                     }}>
-                    <H7 numberOfLines={3} ellipsizeMode={'tail'}>
+                    <H7
+                      numberOfLines={3}
+                      ellipsizeMode={'tail'}
+                      style={{textAlign: 'right'}}>
                       {message}
                     </H7>
                   </MessageTextContainer>
