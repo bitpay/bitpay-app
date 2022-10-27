@@ -546,13 +546,15 @@ export const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
 
 export const GetContactName = (
   address: string | undefined,
+  chain: string,
   contactList: any[] = [],
 ) => {
   if (!address || !contactList.length) {
     return null;
   }
   const existsContact = contactList.find(
-    contact => contact.address === address,
+    contact =>
+      contact.address === address && contact.chain === chain.toLowerCase(),
   );
   if (existsContact) {
     return existsContact.name;
@@ -623,6 +625,7 @@ export const BuildUiFriendlyList = (
       note,
       message,
       creatorName,
+      chain,
     } = transaction || {};
     const {
       service: customDataService,
@@ -637,9 +640,9 @@ export const BuildUiFriendlyList = (
     if (
       contactList?.length &&
       outputs?.length &&
-      GetContactName(outputs[0]?.address, contactList)
+      GetContactName(outputs[0]?.address, chain, contactList)
     ) {
-      contactName = GetContactName(outputs[0]?.address, contactList);
+      contactName = GetContactName(outputs[0]?.address, chain, contactList);
     }
 
     const isSent = IsSent(action);
