@@ -7,10 +7,12 @@ import {buildTestBadge} from './WalletRow';
 import {Column, HiddenContainer} from '../styled/Containers';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {useTranslation} from 'react-i18next';
+import {getBadgeImg, getCurrencyAbbreviation} from '../../utils/helper-methods';
 
 export interface WalletSettingsRowProps {
   id: string;
   img: string | ((props: any) => ReactElement);
+  currencyAbbreviation: string;
   currencyName: string;
   chain: string;
   isToken?: boolean;
@@ -43,6 +45,7 @@ const HiddenColumn = styled(Column)`
 
 const WalletSettingsRow = ({
   img,
+  currencyAbbreviation,
   currencyName,
   chain,
   isToken,
@@ -60,7 +63,14 @@ const WalletSettingsRow = ({
           <NestedArrowIcon />
         </NestedArrowContainer>
       )}
-      <CurrencyImage img={img} size={40} />
+      <CurrencyImage
+        img={img}
+        size={40}
+        badgeUri={getBadgeImg(
+          getCurrencyAbbreviation(currencyAbbreviation, chain),
+          chain,
+        )}
+      />
       <CurrencyName style={textStyle}>
         {walletName || currencyName} {isToken}
       </CurrencyName>

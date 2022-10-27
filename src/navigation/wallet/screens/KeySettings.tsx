@@ -339,6 +339,7 @@ const KeySettings = () => {
         {wallets.map(
           ({
             id,
+            currencyAbbreviation,
             currencyName,
             chain,
             img,
@@ -360,6 +361,7 @@ const KeySettings = () => {
               <WalletSettingsRow
                 id={id}
                 img={img}
+                currencyAbbreviation={currencyAbbreviation}
                 currencyName={currencyName}
                 chain={chain}
                 key={id}
