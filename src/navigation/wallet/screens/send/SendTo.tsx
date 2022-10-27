@@ -345,6 +345,7 @@ const SendTo = () => {
     return allContacts.filter(
       contact =>
         contact.coin === currencyAbbreviation.toLowerCase() &&
+        contact.chain === chain.toLowerCase() &&
         contact.network === network &&
         (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
           contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
