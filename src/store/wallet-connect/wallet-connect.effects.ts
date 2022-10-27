@@ -16,15 +16,21 @@ import {
   signTypedData_v4,
 } from 'eth-sig-util';
 import {
-  dismissDecryptPasswordModal,
+  dismissBottomNotificationModal,
+  dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showDecryptPasswordModal,
 } from '../app/app.actions';
-import {checkEncryptPassword} from '../wallet/utils/wallet';
 import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
 import {LogActions} from '../log';
 import {t} from 'i18next';
 import {checkBiometricForSending} from '../wallet/effects/send/send';
+import {IsERCToken} from '../wallet/utils/currency';
+import {EVM_BLOCKCHAIN_ID, PROTOCOL_NAME} from '../../constants/config';
+import {startOnGoingProcessModal} from '../app/app.effects';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {addWallet, getDecryptPassword} from '../wallet/effects';
+import {BitpaySupportedEvmCoins} from '../../constants/currencies';
+import {createWalletAddress} from '../wallet/effects/address/address';
 
 const BWC = BwcProvider.getInstance();
 
@@ -381,27 +387,7 @@ const getPrivKey =
         }
 
         if (key.isPrivKeyEncrypted) {
-          password = await new Promise<string>((_resolve, _reject) => {
-            dispatch(
-              showDecryptPasswordModal({
-                onSubmitHandler: async (_password: string) => {
-                  if (checkEncryptPassword(key, _password)) {
-                    dispatch(dismissDecryptPasswordModal());
-                    await sleep(500);
-                    _resolve(_password);
-                  } else {
-                    dispatch(dismissDecryptPasswordModal());
-                    await sleep(500);
-                    dispatch(showBottomNotificationModal(WrongPasswordError()));
-                    _reject('invalid password');
-                  }
-                },
-                onCancelHandler: () => {
-                  _reject('password canceled');
-                },
-              }),
-            );
-          });
+          password = await dispatch(getDecryptPassword(key));
         }
 
         const xPrivKey = password
@@ -501,6 +487,138 @@ export const walletConnectPersonalSign =
           ),
         );
         dispatch(LogActions.error(JSON.stringify(err)));
+        reject(err);
+      }
+    });
+  };
+
+export const walletConnectUpdateSession =
+  (wallet: Wallet, chainId: string): Effect<Promise<any>> =>
+  (dispatch, getState) => {
+    return new Promise(resolve => {
+      const {connectors: _connectors, sessions: _sessions} =
+        getState().WALLET_CONNECT;
+      const {keys} = getState().WALLET;
+      const _chainId = parseInt(chainId, 16);
+      const chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
+        key => EVM_BLOCKCHAIN_ID[key] === _chainId,
+      );
+
+      const newLinkedWallet = keys[wallet.keyId].wallets.find(
+        w =>
+          !IsERCToken(w.currencyAbbreviation, w.chain) &&
+          w.receiveAddress === wallet.receiveAddress &&
+          w.chain === chain,
+      );
+
+      if (newLinkedWallet) {
+        let sessionToUpdate: IWCSession;
+
+        const sessions = _sessions.map((s: IWCSession) => {
+          if (s?.customData.walletId === wallet.id) {
+            s.session.chainId = _chainId;
+            s.customData.walletId = newLinkedWallet.id;
+            sessionToUpdate = s;
+          }
+          return s;
+        });
+
+        const connectors = _connectors.map((c: IWCConnector) => {
+          if (c?.customData.walletId === sessionToUpdate?.customData.walletId) {
+            c.connector.chainId = _chainId;
+            c.customData.walletId = newLinkedWallet.id;
+            c.connector.updateSession(sessionToUpdate.session);
+          }
+          return c;
+        });
+
+        dispatch(WalletConnectActions.updateSession(connectors, sessions));
+        dispatch(
+          LogActions.info('[WC/walletConnectUpdateSession]: session update'),
+        );
+        resolve(newLinkedWallet);
+      } else {
+        const chainName = chain ? PROTOCOL_NAME[chain][wallet.network] : null;
+        dispatch(
+          showBottomNotificationModal({
+            type: 'info',
+            title: t('WCSwitchNetworkTitle', {chain: chainName}),
+            message: t('WCAddWalletMsg', {
+              chain: chainName,
+              currencyAbbreviation: chain?.toUpperCase(),
+            }),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('Add Wallet'),
+                action: async () => {
+                  dispatch(dismissBottomNotificationModal());
+                  await sleep(500);
+                  await dispatch(addNewLinkedWallet(wallet, chain!));
+                  await sleep(500);
+                  resolve(
+                    dispatch(walletConnectUpdateSession(wallet, chainId)),
+                  );
+                },
+                primary: true,
+              },
+              {
+                text: t('Cancel'),
+                action: () => resolve(null),
+                primary: false,
+              },
+            ],
+          }),
+        );
+      }
+    });
+  };
+
+const addNewLinkedWallet =
+  (wallet: Wallet, chain: string): Effect<Promise<any>> =>
+  (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const {keys} = getState().WALLET;
+        const key: Key = keys[wallet.keyId];
+        let password: string | undefined;
+
+        if (key.isPrivKeyEncrypted) {
+          password = await dispatch(getDecryptPassword(key));
+        }
+
+        await dispatch(
+          startOnGoingProcessModal(t(OnGoingProcessMessages.ADDING_WALLET)),
+        );
+
+        const evmCoin = BitpaySupportedEvmCoins[chain];
+        const _wallet = await dispatch(
+          addWallet({
+            key,
+            currency: {
+              chain,
+              currencyAbbreviation: evmCoin.coin,
+              isToken: false,
+            },
+            options: {
+              password,
+              network: wallet.network,
+              account: wallet.credentials.account,
+            },
+          }),
+        );
+        (await dispatch<any>(createWalletAddress({wallet: _wallet}))) as string;
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        resolve(null);
+      } catch (err: any) {
+        if (err.message === 'invalid password') {
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        } else {
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          dispatch(showBottomNotificationModal(err.message));
+        }
         reject(err);
       }
     });

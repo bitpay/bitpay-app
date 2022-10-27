@@ -1161,5 +1161,9 @@
   "OrderPhysicalCard": "Order Physical Card",
   "WalletConnectBannerConfirm": "Before proceeding, verify the <0>{{peerName}}</0> request is still waiting for confirmation.",
   "MinAmountWarnMsg": "{{min}} {{currency}} minimum",
-  "MaxAmountWarnMsg": "{{max}} {{currency}} maximum"
+  "MaxAmountWarnMsg": "{{max}} {{currency}} maximum",
+  "WCNotSupportedChainMsg": "Sorry, {{peerName}} request to switch to a network that BitPay does not currently support.",
+  "WCSwitchEthereumChainMsg": "{{peerName}} requests a change of network to another different from the selected wallet.",
+  "WCSwitchNetworkTitle": "Switch network to {{chain}}",
+  "WCAddWalletMsg": "To make the switch you first need to have a {{currencyAbbreviation}} wallet equivalent to the current one in the {{chain}} network. Do you want to add this wallet to continue?"
 }

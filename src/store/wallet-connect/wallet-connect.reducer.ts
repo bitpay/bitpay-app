@@ -79,6 +79,12 @@ export const walletConnectReducer = (
         sessions: action.payload.sessions,
         requests: action.payload.requests,
       };
+    case WalletConnectActionTypes.UPDATE_SESSION:
+      return {
+        ...state,
+        connectors: action.payload.connectors,
+        sessions: action.payload.sessions,
+      };
     default:
       return state;
   }

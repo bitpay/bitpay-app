@@ -28,6 +28,7 @@ import {
   walletConnectApproveCallRequest,
   walletConnectPersonalSign,
   walletConnectRejectCallRequest,
+  walletConnectUpdateSession,
   walletConnectSignTypedData,
   walletConnectSignTypedDataLegacy,
 } from '../../../store/wallet-connect/wallet-connect.effects';
@@ -44,6 +45,7 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import {GetAmFormatDate} from '../../../store/wallet/utils/time';
+import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
 
 export type WalletConnectRequestDetailsParamList = {
   peerId: string;
@@ -109,7 +111,7 @@ const WalletConnectRequestDetails = () => {
   const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');
   const [message, setMessage] = useState('');
-  const [isMethodSupported, setIsMethodSupported] = useState<boolean>();
+  const [isSupported, setIsSupported] = useState<boolean>();
   const [methodNotSupportedMsg, setMethodNotSupportedMsg] = useState<string>();
   const [approveButtonState, setApproveButtonState] = useState<ButtonState>();
   const [rejectButtonState, setRejectButtonState] = useState<ButtonState>();
@@ -132,27 +134,30 @@ const WalletConnectRequestDetails = () => {
       case 'eth_sign':
         setAddress(request.payload.params[0]);
         setMessage(request.payload.params[1]);
-        setIsMethodSupported(true);
+        setIsSupported(true);
         break;
       case 'personal_sign':
         setAddress(request.payload.params[1]);
         setMessage(request.payload.params[0]);
-        setIsMethodSupported(true);
+        setIsSupported(true);
         break;
       case 'wallet_switchEthereumChain':
-        setIsMethodSupported(false);
-        setMethodNotSupportedMsg(
-          t(
-            'wants to change network to a different one than the selected wallet. Please, try connecting to a different DeFi or DApp.',
-            {peerName},
-          ),
+        const _chainId = parseInt(request.payload.params[0].chainId, 16);
+        const chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
+          key => EVM_BLOCKCHAIN_ID[key] === _chainId,
         );
+        setIsSupported(!!chain);
+        if (!chain) {
+          const msg = t('WCNotSupportedChainMsg', {peerName});
+          setMethodNotSupportedMsg(msg);
+        }
+        setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
         break;
       default:
         const defaultErrorMsg = t(
           'Sorry, we currently do not support this method.',
         );
-        setIsMethodSupported(false);
+        setIsSupported(false);
         setMethodNotSupportedMsg(defaultErrorMsg);
         break;
     }
@@ -161,7 +166,7 @@ const WalletConnectRequestDetails = () => {
     peerName,
     setAddress,
     setMessage,
-    setIsMethodSupported,
+    setIsSupported,
     setMethodNotSupportedMsg,
     t,
   ]);
@@ -189,9 +194,15 @@ const WalletConnectRequestDetails = () => {
     return () => clearTimeout(timer);
   }, [clipboardObj]);
 
-  const goToWalletConnectHome = async () => {
+  const goToWalletConnectHome = async (_wallet: Wallet) => {
     await sleep(500);
-    navigation.goBack();
+    navigation.navigate('WalletConnect', {
+      screen: 'WalletConnectHome',
+      params: {
+        peerId,
+        wallet: _wallet,
+      },
+    });
   };
 
   const rejectRequest = async () => {
@@ -204,7 +215,7 @@ const WalletConnectRequestDetails = () => {
       await dispatch(walletConnectRejectCallRequest(peerId, response));
       setRejectButtonState('success');
       dispatch(logSegmentEvent('track', 'WalletConnect Request Rejected', {}));
-      goToWalletConnectHome();
+      goToWalletConnectHome(wallet);
     } catch (e) {
       setRejectButtonState('failed');
       await showErrorMessage(
@@ -226,11 +237,12 @@ const WalletConnectRequestDetails = () => {
       if (!request) {
         return;
       }
-
       let result: any;
+      let newLinkedWallet;
       if (
-        wallet.receiveAddress &&
-        wallet.receiveAddress.toLowerCase() === address.toLowerCase()
+        (wallet.receiveAddress &&
+          wallet.receiveAddress.toLowerCase() === address.toLowerCase()) ||
+        request.payload.method === 'wallet_switchEthereumChain'
       ) {
         switch (request.payload.method) {
           case 'eth_signTypedData':
@@ -251,6 +263,26 @@ const WalletConnectRequestDetails = () => {
               walletConnectPersonalSign(message, wallet),
             )) as any;
             break;
+          case 'wallet_switchEthereumChain':
+            newLinkedWallet = (await dispatch<any>(
+              walletConnectUpdateSession(
+                wallet,
+                request.payload.params[0].chainId,
+              ),
+            )) as any;
+
+            if (newLinkedWallet) {
+              result = (await dispatch<any>(
+                walletConnectPersonalSign(
+                  request.payload.params[0].chainId,
+                  wallet,
+                ),
+              )) as any;
+            } else {
+              setApproveButtonState(undefined);
+              return;
+            }
+            break;
           default:
             throw methodNotSupportedMsg;
         }
@@ -265,7 +297,7 @@ const WalletConnectRequestDetails = () => {
       );
       setApproveButtonState('success');
       dispatch(logSegmentEvent('track', 'WalletConnect Request Approved', {}));
-      goToWalletConnectHome();
+      goToWalletConnectHome(newLinkedWallet);
     } catch (err) {
       setApproveButtonState('failed');
       switch (err) {
@@ -303,30 +335,36 @@ const WalletConnectRequestDetails = () => {
     <WalletConnectContainer>
       <ScrollView>
         <RequestDetailsContainer>
-          {isMethodSupported ? (
+          {isSupported ? (
             <>
               <HeaderTitle>{t('Summary')}</HeaderTitle>
               <Hr />
-              <ItemContainer>
-                <ItemTitleContainer>
-                  <H7>{t('Address')}</H7>
-                </ItemTitleContainer>
-                <AddressContainer>
-                  {clipboardObj.copied && clipboardObj.type === 'address' ? (
-                    <CopiedSvg width={17} />
-                  ) : null}
-                  <AddressTextContainer
-                    disabled={clipboardObj.copied}
-                    onPress={() => {
-                      copyToClipboard(address, 'address');
-                    }}>
-                    <H7 numberOfLines={1} ellipsizeMode={'middle'}>
-                      {address}
-                    </H7>
-                  </AddressTextContainer>
-                </AddressContainer>
-              </ItemContainer>
-              <Hr />
+              {address ? (
+                <>
+                  <ItemContainer>
+                    <ItemTitleContainer>
+                      <H7>{t('Address')}</H7>
+                    </ItemTitleContainer>
+                    <AddressContainer>
+                      {clipboardObj.copied &&
+                      clipboardObj.type === 'address' ? (
+                        <CopiedSvg width={17} />
+                      ) : null}
+                      <AddressTextContainer
+                        disabled={clipboardObj.copied}
+                        onPress={() => {
+                          copyToClipboard(address, 'address');
+                        }}>
+                        <H7 numberOfLines={1} ellipsizeMode={'middle'}>
+                          {address}
+                        </H7>
+                      </AddressTextContainer>
+                    </AddressContainer>
+                  </ItemContainer>
+                  <Hr />
+                </>
+              ) : null}
+
               <MessageTitleContainer>
                 <ItemTitleContainer>
                   <H7>{t('Message')}</H7>
@@ -375,7 +413,7 @@ const WalletConnectRequestDetails = () => {
         <CtaContainer>
           <ActionContainer>
             <Button
-              disabled={!isMethodSupported}
+              disabled={!isSupported}
               state={approveButtonState}
               buttonStyle={'primary'}
               onPress={approveRequest}>

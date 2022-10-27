@@ -47,7 +47,8 @@ export default ({
   wallet: Wallet;
   connectors: IWCConnector[];
 }) => {
-  const {walletName, network, chain} = wallet.credentials;
+  const {walletName, credentials} = wallet;
+  const {network, chain} = credentials;
   const networkName =
     network === ('livenet' || 'mainnet')
       ? 'mainnet'
@@ -67,7 +68,7 @@ export default ({
             )}
           </ChainIconContainer>
           <ChainTextContainer>
-            <H5>{walletName}</H5>
+            <H5>{walletName || credentials.walletName}</H5>
             {networkName ? (
               <Badge style={{marginLeft: 5}}>{titleCasing(networkName)}</Badge>
             ) : null}
