@@ -1163,7 +1163,7 @@
   "MinAmountWarnMsg": "{{min}} {{currency}} minimum",
   "MaxAmountWarnMsg": "{{max}} {{currency}} maximum",
   "WCNotSupportedChainMsg": "Sorry, {{peerName}} request to switch to a network that BitPay does not currently support.",
-  "WCSwitchEthereumChainMsg": "{{peerName}} requests a change of network to another different from the selected wallet.",
+  "WCSwitchEthereumChainMsg": "{{peerName}} requests to change network",
   "WCSwitchNetworkTitle": "Switch network to {{chain}}",
-  "WCAddWalletMsg": "To make the switch you first need to have a {{currencyAbbreviation}} wallet equivalent to the current one in the {{chain}} network. Do you want to add this wallet to continue?"
+  "WCAddWalletMsg": "To make the switch you first need to have a {{chain}} wallet. Do you want to add this wallet to continue?"
 }

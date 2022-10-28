@@ -547,8 +547,7 @@ export const walletConnectUpdateSession =
               type: 'info',
               title: t('WCSwitchNetworkTitle', {chain: chainName}),
               message: t('WCAddWalletMsg', {
-                chain: chainName,
-                currencyAbbreviation: chain?.toUpperCase(),
+                chain: chain?.toUpperCase(),
               }),
               enableBackdropDismiss: true,
               actions: [
