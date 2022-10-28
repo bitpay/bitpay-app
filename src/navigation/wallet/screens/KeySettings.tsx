@@ -342,6 +342,7 @@ const KeySettings = () => {
             currencyName,
             chain,
             img,
+            badgeImg,
             isToken,
             network,
             hideWallet,
@@ -360,6 +361,7 @@ const KeySettings = () => {
               <WalletSettingsRow
                 id={id}
                 img={img}
+                badgeImg={badgeImg}
                 currencyName={currencyName}
                 chain={chain}
                 key={id}
