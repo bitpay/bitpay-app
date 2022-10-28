@@ -4,10 +4,12 @@ import {
   PaymentMethodsAvailable,
 } from '../constants/BuyCryptoConstants';
 import {
+  getSimplexFiatAmountLimits,
   getSimplexSupportedCurrencies,
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
 import {
+  getWyreFiatAmountLimits,
   getWyreSupportedCurrencies,
   wyreSupportedFiatCurrencies,
 } from './wyre-utils';

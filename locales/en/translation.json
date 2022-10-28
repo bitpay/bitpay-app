@@ -1158,5 +1158,7 @@
   "MustBeGreaterThanArgCharacters": "Must be greater than {{min}} characters",
   "IAgreeToTheArgAndArg": "I agree to the <0>{{0}}</0> and <1>{{1}}</1>.",
   "OrderPhysicalCard": "Order Physical Card",
-  "WalletConnectBannerConfirm": "Before proceeding, verify the <0>{{peerName}}</0> request is still waiting for confirmation."
+  "WalletConnectBannerConfirm": "Before proceeding, verify the <0>{{peerName}}</0> request is still waiting for confirmation.",
+  "MinAmountWarnMsg": "{{min}} {{currency}} minimum",
+  "MaxAmountWarnMsg": "{{max}} {{currency}} maximum"
 }

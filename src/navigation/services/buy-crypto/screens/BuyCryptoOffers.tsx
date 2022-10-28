@@ -28,16 +28,11 @@ import {
 } from '../../../../styles/colors';
 import {
   getPaymentUrl,
-  getSimplexFiatAmountLimits,
   simplexPaymentRequest,
   simplexEnv,
   getSimplexCoinFormat,
 } from '../utils/simplex-utils';
-import {
-  getWyreCoinFormat,
-  getWyreFiatAmountLimits,
-  wyreEnv,
-} from '../utils/wyre-utils';
+import {getWyreCoinFormat, wyreEnv} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import {
@@ -45,10 +40,13 @@ import {
   openUrlWithInAppBrowser,
 } from '../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
-import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
+import {
+  BuyCryptoLimits,
+  simplexPaymentData,
+} from '../../../../store/buy-crypto/buy-crypto.models';
 import {
   calculateAltFiatToUsd,
-  calculateUsdToAltFiat,
+  getBuyCryptoFiatLimits,
 } from '../../../../store/buy-crypto/buy-crypto.effects';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {Wallet} from '../../../../store/wallet/wallet.models';
@@ -98,7 +96,7 @@ export type CryptoOffer = {
   fee?: number;
   fiatMoney?: string; // Rate without fees
   amountReceiving?: string;
-  amountLimits?: any;
+  amountLimits?: BuyCryptoLimits;
   errorMsg?: string;
   quoteData?: any; // Simplex
   outOfLimitMsg?: string;
@@ -345,23 +343,15 @@ const BuyCryptoOffers: React.FC = () => {
         ? amount
         : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
 
-    const simplexLimits = getSimplexFiatAmountLimits();
-    offers.simplex.amountLimits = {
-      min: calculateLimitEquivalent(
-        simplexLimits.min,
-        offers.simplex.fiatCurrency,
-        'simplex',
-      ),
-      max: calculateLimitEquivalent(
-        simplexLimits.max,
-        offers.simplex.fiatCurrency,
-        'simplex',
-      ),
-    };
+    offers.simplex.amountLimits = dispatch(
+      getBuyCryptoFiatLimits('simplex', offers.simplex.fiatCurrency),
+    );
 
     if (
-      offers.simplex.fiatAmount < offers.simplex.amountLimits.min ||
-      offers.simplex.fiatAmount > offers.simplex.amountLimits.max
+      (offers.simplex.amountLimits.min &&
+        offers.simplex.fiatAmount < offers.simplex.amountLimits.min) ||
+      (offers.simplex.amountLimits.max &&
+        offers.simplex.fiatAmount > offers.simplex.amountLimits.max)
     ) {
       offers.simplex.outOfLimitMsg = t(
         'There are no Simplex offers available, as the current purchase limits for this exchange must be between and',
@@ -435,31 +425,6 @@ const BuyCryptoOffers: React.FC = () => {
           showSimplexError(err, reason);
         });
     }
-  };
-
-  const calculateLimitEquivalent = (
-    amount: number,
-    fiatCurrency: string,
-    exchange?: string,
-  ): number | undefined => {
-    let baseFiatArray: string[];
-
-    switch (exchange) {
-      case 'simplex':
-        baseFiatArray = ['USD'];
-        break;
-      case 'wyre':
-        baseFiatArray = ['USD', 'EUR'];
-        break;
-      default:
-        baseFiatArray = ['USD'];
-        break;
-    }
-
-    if (baseFiatArray.includes(fiatCurrency)) {
-      return amount;
-    }
-    return dispatch(calculateUsdToAltFiat(amount, fiatCurrency));
   };
 
   const showSimplexError = (err?: any, reason?: string) => {
@@ -545,23 +510,15 @@ const BuyCryptoOffers: React.FC = () => {
         ? amount
         : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
 
-    const wyreLimits = getWyreFiatAmountLimits(country);
-    offers.wyre.amountLimits = {
-      min: calculateLimitEquivalent(
-        wyreLimits.min,
-        offers.wyre.fiatCurrency,
-        'wyre',
-      ),
-      max: calculateLimitEquivalent(
-        wyreLimits.max,
-        offers.wyre.fiatCurrency,
-        'wyre',
-      ),
-    };
+    offers.wyre.amountLimits = dispatch(
+      getBuyCryptoFiatLimits('wyre', offers.wyre.fiatCurrency),
+    );
 
     if (
-      offers.wyre.fiatAmount < offers.wyre.amountLimits.min ||
-      offers.wyre.fiatAmount > offers.wyre.amountLimits.max
+      (offers.wyre.amountLimits.min &&
+        offers.wyre.fiatAmount < offers.wyre.amountLimits.min) ||
+      (offers.wyre.amountLimits.max &&
+        offers.wyre.fiatAmount > offers.wyre.amountLimits.max)
     ) {
       offers.wyre.outOfLimitMsg = t(
         'There are no Wyre offers available, as the current purchase limits for this exchange must be between and',
@@ -1007,7 +964,7 @@ const BuyCryptoOffers: React.FC = () => {
                           haptic('impactLight');
                           goTo(offer.key);
                         }}>
-                        Buy
+                        {t('Buy')}
                       </Button>
                     </SummaryCtaContainer>
                   )}
