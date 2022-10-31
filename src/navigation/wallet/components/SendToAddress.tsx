@@ -1,15 +1,11 @@
-import React, {useCallback, useContext, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   ActiveOpacity,
-  CtaContainer as _CtaContainer,
-  HEIGHT,
-  Hr,
   SearchContainer,
   SearchInput,
 } from '../../../components/styled/Containers';
-import Button from '../../../components/button/Button';
 import styled, {useTheme} from 'styled-components/native';
-import {BaseText, H5, SubText} from '../../../components/styled/Text';
+import {BaseText} from '../../../components/styled/Text';
 import {Caution, NeutralSlate} from '../../../styles/colors';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -25,7 +21,7 @@ import {
   CheckIfLegacyBCH,
   ValidateURI,
 } from '../../../store/wallet/utils/validations';
-import {FlatList, TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {
@@ -47,11 +43,7 @@ import KeyWalletsRow, {
 } from '../../../components/list/KeyWalletsRow';
 import {BuildKeyWalletRow} from '../screens/send/SendTo';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {
-  RecipientList,
-  RecipientRowContainer,
-  SendToOptionsContext,
-} from '../screens/SendToOptions';
+import {SendToOptionsContext} from '../screens/SendToOptions';
 import {
   ExtractBitPayUriAddress,
   ExtractUriAmount,
@@ -85,10 +77,6 @@ const ErrorText = styled(BaseText)`
   padding: 5px 0 0 0;
 `;
 
-const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 16px;
-`;
-
 const SendToAddress = () => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
@@ -99,13 +87,8 @@ const SendToAddress = () => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const {
-    recipientList,
-    setRecipientListContext,
-    setRecipientAmountContext,
-    goToConfirmView,
-    goToSelectInputsView,
-  } = useContext(SendToOptionsContext);
+  const {setRecipientAmountContext, goToSelectInputsView} =
+    useContext(SendToOptionsContext);
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
   const {wallet, context} = route.params;
@@ -115,6 +98,7 @@ const SendToAddress = () => {
     keys,
     id,
     currencyAbbreviation,
+    wallet.chain,
     network,
     defaultAltCurrency.isoCode,
     searchInput,
@@ -245,21 +229,6 @@ const SendToAddress = () => {
     }
   };
 
-  const renderItem = useCallback(
-    ({item, index}) => {
-      return (
-        <RecipientList
-          recipient={item}
-          wallet={wallet}
-          deleteRecipient={() => setRecipientListContext(item, index, true)}
-          setAmount={() => setRecipientAmountContext(item, index, true)}
-          context={context}
-        />
-      );
-    },
-    [wallet, setRecipientListContext, setRecipientAmountContext],
-  );
-
   return (
     <>
       <SendToAddressContainer>
@@ -301,37 +270,6 @@ const SendToAddress = () => {
           </TouchableOpacity>
         </SearchContainer>
         {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
-
-        <View style={{marginTop: 30}}>
-          <H5>
-            {recipientList?.length > 1
-              ? t('Recipients') + ` (${recipientList?.length})`
-              : t('Recipient')}
-          </H5>
-          <Hr />
-          {recipientList && recipientList.length ? (
-            <View style={{maxHeight: HEIGHT * 0.18}}>
-              <FlatList
-                data={recipientList}
-                keyExtractor={(_item, index) => index.toString()}
-                renderItem={({item, index}: {item: Recipient; index: number}) =>
-                  renderItem({item, index})
-                }
-              />
-            </View>
-          ) : (
-            <>
-              <RecipientRowContainer>
-                <SubText>
-                  {t(
-                    'To get started, you’ll need to enter a valid address or select an existing contact or wallet.',
-                  )}
-                </SubText>
-              </RecipientRowContainer>
-              <Hr />
-            </>
-          )}
-        </View>
       </SendToAddressContainer>
       <ScrollViewContainer>
         <View style={{marginTop: 10}}>
@@ -343,20 +281,6 @@ const SendToAddress = () => {
           />
         </View>
       </ScrollViewContainer>
-
-      {context !== 'selectInputs' ? (
-        <CtaContainer>
-          <Button
-            buttonStyle={'primary'}
-            onPress={() => {
-              haptic('impactLight');
-              goToConfirmView();
-            }}
-            disabled={!recipientList[0]}>
-            {t('Continue')}
-          </Button>
-        </CtaContainer>
-      ) : null}
     </>
   );
 };

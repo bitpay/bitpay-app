@@ -1,8 +1,8 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
-import {H5, H7, HeaderTitle} from '../../../components/styled/Text';
+import {H5, H7, HeaderTitle, SubText} from '../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import {WalletStackParamList} from '../WalletStack';
@@ -15,8 +15,12 @@ import {
   Wallet,
 } from '../../../store/wallet/wallet.models';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
-import {TouchableOpacity} from 'react-native';
+import {
+  ActiveOpacity,
+  Hr,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
+import {TouchableOpacity, FlatList} from 'react-native';
 import WalletIcons from '../components/WalletIcons';
 import _ from 'lodash';
 import AmountModal from '../../../components/amount/AmountModal';
@@ -32,6 +36,8 @@ import {
 } from '../../../store/app/app.actions';
 import {useAppDispatch} from '../../../utils/hooks';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import haptic from '../../../components/haptic-feedback/haptic';
+import Button from '../../../components/button/Button';
 
 export type SendToOptionsParamList = {
   title: string;
@@ -55,6 +61,22 @@ const RecipientOptionsContainer = styled.View`
   justify-content: flex-end;
   flex-direction: row;
   align-items: center;
+  flex: 1;
+`;
+
+const RecipientsContainer = styled.View`
+  margin: 20px 0 10px 0;
+  padding: 0 15px 20px 15px;
+`;
+
+const CtaContainer = styled.View`
+  padding: 0 ${ScreenGutter};
+  align-self: stretch;
+  flex-direction: column;
+  margin-top: 20px;
+`;
+
+const SafeAreaContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -129,11 +151,6 @@ export const RecipientList: React.FC<RecipientListProps> = ({
   );
 };
 
-const ImportContainer = styled.SafeAreaView`
-  flex: 1;
-  margin-top: 10px;
-`;
-
 interface SendToOptionsContextProps {
   recipientList: Recipient[];
   setRecipientListContext: (
@@ -163,7 +180,7 @@ const SendToOptions = () => {
   const Tab = createMaterialTopTabNavigator();
   const navigation = useNavigation();
   const {params} = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
-  const {wallet} = params;
+  const {wallet, context} = params;
   const [recipientList, setRecipientList] = useState<Recipient[]>([]);
   const [recipientAmount, setRecipientAmount] = useState<{
     showModal: boolean;
@@ -270,16 +287,75 @@ const SendToOptions = () => {
     });
   };
 
+  const renderItem = useCallback(
+    ({item, index}) => {
+      return (
+        <RecipientList
+          recipient={item}
+          wallet={wallet}
+          deleteRecipient={() => setRecipientListContext(item, index, true)}
+          setAmount={() => setRecipientAmountContext(item, index, true)}
+          context={context}
+        />
+      );
+    },
+    [wallet, setRecipientListContext, setRecipientAmountContext],
+  );
+
   return (
-    <SendToOptionsContext.Provider
-      value={{
-        recipientList,
-        setRecipientListContext,
-        setRecipientAmountContext,
-        goToConfirmView,
-        goToSelectInputsView,
-      }}>
-      <ImportContainer>
+    <SafeAreaContainer>
+      <RecipientsContainer>
+        {recipientList && recipientList.length ? (
+          <>
+            <H5>
+              {recipientList?.length > 1
+                ? t('Recipients') + ` (${recipientList?.length})`
+                : t('Recipient')}
+            </H5>
+            <Hr />
+            <FlatList
+              data={recipientList}
+              keyExtractor={(_item, index) => index.toString()}
+              renderItem={({item, index}: {item: Recipient; index: number}) =>
+                renderItem({item, index})
+              }
+            />
+            {context !== 'selectInputs' ? (
+              <CtaContainer>
+                <Button
+                  buttonStyle={'primary'}
+                  buttonType={'link'}
+                  onPress={() => {
+                    haptic('impactLight');
+                    goToConfirmView();
+                  }}
+                  disabled={!recipientList[0]}>
+                  {t('Continue')}
+                </Button>
+              </CtaContainer>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <RecipientRowContainer>
+              <SubText>
+                {t(
+                  'To get started, you’ll need to enter a valid address or select an existing contact or wallet.',
+                )}
+              </SubText>
+            </RecipientRowContainer>
+            <Hr />
+          </>
+        )}
+      </RecipientsContainer>
+      <SendToOptionsContext.Provider
+        value={{
+          recipientList,
+          setRecipientListContext,
+          setRecipientAmountContext,
+          goToConfirmView,
+          goToSelectInputsView,
+        }}>
         <Tab.Navigator screenOptions={{...ScreenOptions(150)}}>
           <Tab.Screen
             name={t('Addresses')}
@@ -292,26 +368,26 @@ const SendToOptions = () => {
             initialParams={params}
           />
         </Tab.Navigator>
-      </ImportContainer>
 
-      <AmountModal
-        isVisible={recipientAmount.showModal}
-        cryptoCurrencyAbbreviation={params.wallet.currencyAbbreviation.toUpperCase()}
-        chain={params.wallet.chain}
-        onClose={() => {
-          setRecipientAmount({showModal: false});
-        }}
-        onSubmit={amount => {
-          setRecipientAmount({showModal: false});
-          setRecipientListContext(
-            {...recipientAmount.recipient!, amount},
-            recipientAmount.index,
-            false,
-            recipientAmount.updateRecipient,
-          );
-        }}
-      />
-    </SendToOptionsContext.Provider>
+        <AmountModal
+          isVisible={recipientAmount.showModal}
+          cryptoCurrencyAbbreviation={params.wallet.currencyAbbreviation.toUpperCase()}
+          chain={params.wallet.chain}
+          onClose={() => {
+            setRecipientAmount({showModal: false});
+          }}
+          onSubmit={amount => {
+            setRecipientAmount({showModal: false});
+            setRecipientListContext(
+              {...recipientAmount.recipient!, amount},
+              recipientAmount.index,
+              false,
+              recipientAmount.updateRecipient,
+            );
+          }}
+        />
+      </SendToOptionsContext.Provider>
+    </SafeAreaContainer>
   );
 };
 
