@@ -115,7 +115,7 @@ const SendToAddress = () => {
     keys,
     id,
     currencyAbbreviation,
-    wallet.chain,
+    chain,
     network,
     defaultAltCurrency.isoCode,
     searchInput,
