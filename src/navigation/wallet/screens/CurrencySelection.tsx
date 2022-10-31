@@ -618,11 +618,6 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         // if single, toggle the selected item, deselect any selected items, and rerender
         if (selectionMode === 'single') {
           if (isCurrencyMatch) {
-            // if single selection mode, don't toggle if already selected
-            if (item.currency.selected) {
-              return item;
-            }
-
             item.currency = {
               ...item.currency,
               selected: !item.currency.selected,
@@ -652,11 +647,6 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           }
 
           if (tokenMatch) {
-            // if single selection mode, don't toggle if already selected
-            if (tokenMatch.selected) {
-              return item;
-            }
-
             const updatedToken = {
               ...tokenMatch,
               selected: !tokenMatch.selected,
