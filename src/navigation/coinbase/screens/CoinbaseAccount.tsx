@@ -69,6 +69,7 @@ import {
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
+import {IsValidBitcoinCashAddress} from '../../../store/wallet/utils/validations';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -393,7 +394,10 @@ const CoinbaseAccount = ({
         if (!newAddress) {
           return;
         }
-        if (account?.currency.code === 'BCH') {
+        if (
+          account?.balance.currency === 'BCH' &&
+          !IsValidBitcoinCashAddress(newAddress)
+        ) {
           // Convert old format bch address to bch cash address
           newAddress = TranslateToBchCashAddress(newAddress);
           newAddress = ToCashAddress(newAddress, false);
