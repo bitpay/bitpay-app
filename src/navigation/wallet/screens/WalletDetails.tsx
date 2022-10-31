@@ -31,7 +31,7 @@ import {
   ProposalBadge,
   Small,
 } from '../../../components/styled/Text';
-import {Network} from '../../../constants';
+import {Network, URL} from '../../../constants';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
@@ -52,7 +52,11 @@ import {
   SlateDark,
   White,
 } from '../../../styles/colors';
-import {shouldScale, sleep} from '../../../utils/helper-methods';
+import {
+  getProtocolName,
+  shouldScale,
+  sleep,
+} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {
   BalanceUpdateError,
@@ -108,10 +112,16 @@ import KeySvg from '../../../../assets/img/key.svg';
 import TimerSvg from '../../../../assets/img/timer.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import {BitpaySupportedCoins} from '../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  SUPPORTED_EVM_COINS,
+} from '../../../constants/currencies';
 import i18next from 'i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import _ from 'lodash';
+import ContactIcon from '../../tabs/contacts/components/ContactIcon';
+import {TRANSACTION_ICON_SIZE} from '../../../constants/TransactionIcons';
+import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -327,7 +337,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     } catch (e) {}
   };
 
-  const assetOptions: Array<Option> = [
+  const assetOptions: Array<Option> = _.compact([
     {
       img: <Icons.RequestAmount />,
       title: t('Request a specific amount'),
@@ -375,7 +385,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           },
         }),
     },
-  ];
+  ]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -392,7 +402,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
-      setNeedActionTxps(pendingTxps);
+      setNeedActionTxps(fullWalletObj.pendingTxps);
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
@@ -407,6 +417,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     fiatLockedBalance,
     fiatSpendableBalance,
     currencyAbbreviation,
+    chain,
     network,
     hideBalance,
     pendingTxps,
@@ -425,24 +436,32 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
+  const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
     const txpsPending: TransactionProposal[] = [];
+    const txpsUnsent: TransactionProposal[] = [];
     pendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
         copayerId: fullWalletObj.credentials.copayerId,
       });
 
-      if ((!action || action.type === 'failed') && txp.status === 'pending') {
-        txpsPending.push(txp);
-      }
+      if (fullWalletObj.credentials.n > 1) {
+        if ((!action || action.type === 'failed') && txp.status === 'pending') {
+          txpsPending.push(txp);
+        }
 
-      // For unsent transactions
-      if (action && txp.status === 'accepted') {
-        txpsPending.push(txp);
+        if (action && txp.status === 'accepted') {
+          txpsPending.push(txp);
+        }
+
+        setNeedActionPendingTxps(txpsPending);
+        // For unsent transactions
+      } else if (action && txp.status === 'accepted') {
+        txpsUnsent.push(txp);
+        setNeedActionUnsentTxps(txpsUnsent);
       }
     });
-    setNeedActionPendingTxps(txpsPending);
   };
 
   const loadHistory = async (refresh?: boolean) => {
@@ -506,16 +525,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       }),
     );
     updateWalletStatusAndProfileBalance();
-    setNeedActionTxps(pendingTxps);
+    setNeedActionTxps(fullWalletObj.pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
       () => {
         loadHistoryRef.current(true);
-        setNeedActionTxps(pendingTxps);
+        setNeedActionTxps(fullWalletObj.pendingTxps);
       },
     );
     return () => subscription.remove();
-  }, []);
+  }, [key]);
 
   useEffect(() => {
     if (!skipInitializeHistory) {
@@ -571,10 +590,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const speedupTransaction = async (transaction: any) => {
     try {
       let tx: any;
-      if (
-        currencyAbbreviation.toLowerCase() === 'eth' ||
-        IsERCToken(currencyAbbreviation)
-      ) {
+      if (chain.toLowerCase() === 'eth') {
         tx = await dispatch(
           buildEthERCTokenSpeedupTx(fullWalletObj, transaction),
         );
@@ -678,7 +694,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const viewOnBlockchain = async () => {
     const coin = fullWalletObj.currencyAbbreviation.toLowerCase();
-    if (['eth', 'xrp'].includes(coin) || IsERCToken(coin)) {
+    const chain = fullWalletObj.chain.toLowerCase();
+
+    if (['eth', 'matic', 'xrp'].includes(coin) || IsERCToken(coin, chain)) {
       let address;
       try {
         address = (await dispatch<any>(
@@ -695,17 +713,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ? `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrls}account/${address}`
             : `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
       }
-      if (coin === 'eth') {
+      if (SUPPORTED_EVM_COINS.includes(coin)) {
         url =
           fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins.eth.paymentInfo.blockExplorerUrls}address/${address}`
-            : `https://${BitpaySupportedCoins.eth.paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
+            ? `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrls}address/${address}`
+            : `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
       }
-      if (IsERCToken(coin)) {
+      if (IsERCToken(coin, chain)) {
         url =
           fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins.eth?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
-            : `https://${BitpaySupportedCoins.eth?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
+            ? `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
+            : `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
       }
 
       if (url) {
@@ -764,8 +782,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ),
           ),
         );
-      } else if (CanSpeedupTx(transaction, currency)) {
-        if (currency === 'eth' || IsERCToken(currency)) {
+      } else if (CanSpeedupTx(transaction, currency, chain)) {
+        if (chain === 'eth') {
           dispatch(
             showBottomNotificationModal(
               SpeedupEthTransaction(
@@ -818,7 +836,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
-        icon={item.uiIcon}
+        icon={
+          item.customData?.recipientEmail ? (
+            <ContactIcon
+              name={item.customData?.recipientEmail}
+              size={TRANSACTION_ICON_SIZE}
+              badge={<SentBadgeSvg />}
+            />
+          ) : (
+            item.uiIcon
+          )
+        }
         iconURI={item.uiIconURI}
         description={item.uiDescription}
         time={item.uiTime}
@@ -852,21 +880,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  const getNetworkName = (
-    currencyAbbreviation: string,
-    network: string,
-  ): string | undefined => {
-    if (currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation)) {
-      return network === 'testnet' ? 'Kovan' : 'Ethereum Mainnet';
-    }
-
-    return network === 'testnet' ? 'Testnet' : undefined;
-  };
-
-  const networkName = getNetworkName(
-    currencyAbbreviation.toLowerCase(),
-    network,
-  );
+  const protocolName = getProtocolName(chain, network);
 
   return (
     <WalletDetailsContainer>
@@ -929,12 +943,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         <TypeText>{walletType.title}</TypeText>
                       </TypeContainer>
                     )}
-                    {networkName ? (
+                    {protocolName ? (
                       <TypeContainer>
                         <IconContainer>
                           <Icons.Network />
                         </IconContainer>
-                        <TypeText>{networkName}</TypeText>
+                        <TypeText>{protocolName}</TypeText>
                       </TypeContainer>
                     ) : null}
                     {IsShared(fullWalletObj) ? (
@@ -996,9 +1010,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     }}
                     swap={{
                       hide:
-                        fullWalletObj.credentials?.network === 'testnet' ||
+                        fullWalletObj.network === 'testnet' ||
                         !isCoinSupportedToSwap(
                           fullWalletObj.currencyAbbreviation,
+                          fullWalletObj.chain,
                         ),
                       cta: () => {
                         dispatch(
@@ -1048,20 +1063,37 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 <>
                   <TransactionSectionHeaderContainer>
                     <H5>
-                      {fullWalletObj.credentials.m > 1
+                      {fullWalletObj.credentials.n > 1
                         ? t('Pending Proposals')
                         : t('Unsent Transactions')}
                     </H5>
-                    <ProposalBadgeContainer onPress={onPressTxpBadge}>
-                      <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-                    </ProposalBadgeContainer>
+                    {fullWalletObj.credentials.n > 1 ? (
+                      <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                        <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                      </ProposalBadgeContainer>
+                    ) : null}
                   </TransactionSectionHeaderContainer>
-                  <FlatList
-                    contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-                    data={needActionPendingTxps}
-                    keyExtractor={pendingTxpsKeyExtractor}
-                    renderItem={renderTxp}
-                  />
+                  {fullWalletObj.credentials.n > 1 ? (
+                    <FlatList
+                      contentContainerStyle={{
+                        paddingTop: 20,
+                        paddingBottom: 20,
+                      }}
+                      data={needActionPendingTxps}
+                      keyExtractor={pendingTxpsKeyExtractor}
+                      renderItem={renderTxp}
+                    />
+                  ) : (
+                    <FlatList
+                      contentContainerStyle={{
+                        paddingTop: 20,
+                        paddingBottom: 20,
+                      }}
+                      data={needActionUnsentTxps}
+                      keyExtractor={pendingTxpsKeyExtractor}
+                      renderItem={renderTxp}
+                    />
+                  )}
                 </>
               ) : null}
 

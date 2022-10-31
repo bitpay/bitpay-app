@@ -5,8 +5,7 @@ import {Key} from '../../../store/wallet/wallet.models';
 import KeyGlobalSelectRow from '../../../components/list/KeyGlobalSelectRow';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {RouteProp, useRoute} from '@react-navigation/core';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
-import {useNavigation} from '@react-navigation/native';
+import {WalletStackParamList} from '../WalletStack';
 import {keyExtractor} from '../../../utils/helper-methods';
 import {FlatList} from 'react-native';
 
@@ -19,37 +18,28 @@ const GlobalSelectContainer = styled.View`
 `;
 
 export type KeyGlobalSelectParamList = {
-  context: 'join';
+  onKeySelect: (selectedKey: Key) => void;
   invitationCode?: string;
 };
 
 const KeyGlobalSelect: React.FC<KeyGlobalSelectParamList> = ({}) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'KeyGlobalSelect'>>();
-  let {context, invitationCode} = route.params || {};
+  let {onKeySelect} = route.params || {};
   const _keys = useAppSelector(({WALLET}) => WALLET.keys);
   const keys = Object.values(_keys).filter(key => key.backupComplete);
 
-  const navigation = useNavigation();
-
-  const renderItem = useCallback(({item}: {item: Key}) => {
-    return (
-      <KeyGlobalSelectRow
-        item={item}
-        emit={(selectKey: Key) => {
-          if (context === 'join') {
-            navigation.navigate('Wallet', {
-              screen: WalletScreens.JOIN_MULTISIG,
-              params: {
-                key: selectKey,
-                invitationCode,
-              },
-            });
-          }
-        }}
-        key={item.id}
-      />
-    );
-  }, []);
+  const renderItem = useCallback(
+    ({item}: {item: Key}) => {
+      return (
+        <KeyGlobalSelectRow
+          item={item}
+          emit={(selectedKey: Key) => onKeySelect(selectedKey)}
+          key={item.id}
+        />
+      );
+    },
+    [onKeySelect],
+  );
 
   return (
     <SafeAreaView>

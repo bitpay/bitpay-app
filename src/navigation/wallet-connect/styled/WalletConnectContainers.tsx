@@ -1,5 +1,6 @@
 import {Platform} from 'react-native';
 import styled, {css} from 'styled-components/native';
+import {ScreenGutter} from '../../../components/styled/Containers';
 
 export const WalletConnectContainer = styled.View`
   flex: 1;
@@ -64,6 +65,7 @@ export const IconContainer = styled.View`
 export const WalletConnectCtaContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
+  padding: 0 ${ScreenGutter};
   ${({platform}: {platform: string}) =>
     platform === 'ios' &&
     css`

@@ -16,7 +16,7 @@ import {
   getDetailsTitle,
   IsMultisigEthInfo,
   IsReceived,
-  NotZeroAmountEth,
+  NotZeroAmountEVM,
   TxActions,
   RemoveTxProposal,
   RejectTxProposal,
@@ -207,7 +207,7 @@ const TransactionProposalDetails = () => {
   const [lastSigner, setLastSigner] = useState(false);
 
   const title = getDetailsTitle(transaction, wallet);
-  let {currencyAbbreviation, network} = wallet;
+  let {currencyAbbreviation, chain, network} = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
   const isTestnet = network === 'testnet';
 
@@ -345,11 +345,11 @@ const TransactionProposalDetails = () => {
       ) : txs ? (
         <ScrollView>
           <>
-            {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
+            {NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
-            {!IsCustomERCToken(currencyAbbreviation) ? (
+            {!IsCustomERCToken(currencyAbbreviation, chain) ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'
@@ -359,7 +359,7 @@ const TransactionProposalDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
+            {!NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
               <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>
@@ -367,12 +367,21 @@ const TransactionProposalDetails = () => {
           {(txs && !txs.removed && txs.canBeRemoved) ||
           (txs && txs.status == 'accepted' && !txs.broadcastedOn) ? (
             <>
-              <Banner
-                type={'info'}
-                description={t(
-                  '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
-                )}
-              />
+              {!txs.payProUrl ? (
+                <Banner
+                  type={'info'}
+                  description={t(
+                    '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
+                  )}
+                />
+              ) : (
+                <Banner
+                  type={'warning'}
+                  description={t(
+                    'Your payment proposal was rejected by the receiver. Please, delete it and try again.',
+                  )}
+                />
+              )}
               <Button
                 onPress={removePaymentProposal}
                 buttonType={'link'}

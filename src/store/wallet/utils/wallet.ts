@@ -2,6 +2,7 @@ import {
   Key,
   KeyMethods,
   Token,
+  TransactionProposal,
   Wallet,
   WalletBalance,
   WalletObj,
@@ -9,12 +10,13 @@ import {
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {
-  BitpaySupportedCurrencies,
+  BitpaySupportedUtxoCoins,
+  OtherBitpaySupportedCoins,
   SUPPORTED_CURRENCIES,
 } from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetName, GetPrecision, GetProtocolPrefix, IsERCToken} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -42,6 +44,7 @@ import {
 } from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
 import {find, isEqual} from 'lodash';
+import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 export const mapAbbreviationAndName =
   (
@@ -98,6 +101,9 @@ export const buildWalletObj = (
     hideBalance = false,
     currencyAbbreviation,
     currencyName,
+    img,
+    walletName,
+    pendingTxps = [],
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -106,11 +112,10 @@ export const buildWalletObj = (
     network: Network;
     currencyAbbreviation: string;
     currencyName: string;
+    img: any;
+    pendingTxps: TransactionProposal[];
   },
   tokenOpts?: {[key in string]: Token},
-  otherOpts?: {
-    walletName?: string;
-  },
 ): WalletObj => {
   const _currencyAbbreviation = getCurrencyAbbreviation(
     currencyAbbreviation,
@@ -121,7 +126,7 @@ export const buildWalletObj = (
     currencyName,
     currencyAbbreviation,
     chain,
-    walletName: otherOpts?.walletName,
+    walletName,
     balance,
     tokens,
     network,
@@ -130,14 +135,14 @@ export const buildWalletObj = (
       ? CurrencyListIcons[_currencyAbbreviation]
       : tokenOpts && tokenOpts[_currencyAbbreviation]?.logoURI
       ? (tokenOpts[_currencyAbbreviation]?.logoURI as string)
-      : '',
+      : img || '',
     badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
     m,
     isRefreshing: false,
     hideWallet,
     hideBalance,
-    pendingTxps: [],
+    pendingTxps,
   };
 };
 
@@ -338,23 +343,26 @@ export const coinbaseAccountToWalletRow = (
   const cryptoAmount = Number(account.balance.amount)
     ? account.balance.amount
     : '0';
-  const _currencyAbbreviation = account.currency.code;
-  const currencyAbbreviation = getCurrencyAbbreviation(
-    _currencyAbbreviation.toLowerCase(),
-    'eth',
+
+  const _chain =
+    BitpaySupportedUtxoCoins[account.currency.code.toLowerCase()] ||
+    OtherBitpaySupportedCoins[account.currency.code.toLowerCase()]
+      ? account.currency.code.toLowerCase()
+      : 'eth';
+  const _currencyAbbreviation = getCurrencyAbbreviation(
+    account.currency.code.toLowerCase(),
+    _chain,
   );
-  const chain =
-    BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.chain;
-  const badgeImg = IsERCToken(currencyAbbreviation)
-    ? getBadgeImg(currencyAbbreviation, chain)
-    : undefined;
+  const badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), _chain);
+  const currencyImg = CurrencyListIcons[_currencyAbbreviation.toLowerCase()];
+
   const walletItem = {
     id: account.id,
     currencyName: account.currency.name,
-    currencyAbbreviation: _currencyAbbreviation,
+    currencyAbbreviation: account.currency.code,
     coinbaseAccount: account,
     walletName: account.currency.name,
-    img: CurrencyListIcons[currencyAbbreviation.toLowerCase()],
+    img: currencyImg,
     cryptoBalance: cryptoAmount,
     cryptoLockedBalance: '',
     fiatBalance: formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode),
@@ -362,7 +370,7 @@ export const coinbaseAccountToWalletRow = (
     isToken: false,
     network: Network.mainnet,
     pendingTxps: [],
-    chain,
+    chain: _chain,
     badgeImg,
   };
   return walletItem as WalletRowProps;
@@ -458,10 +466,12 @@ export const BuildKeysAndWalletsList = ({
               return paymentOptions.some(
                 ({currency, network: optionNetwork}) => {
                   return (
-                    GetInvoiceCurrency(
-                      wallet.currencyAbbreviation,
-                    ).toLowerCase() === currency.toLowerCase() &&
-                    wallet.network === optionNetwork
+                    getCurrencyCodeFromCoinAndChain(
+                      GetInvoiceCurrency(
+                        wallet.currencyAbbreviation,
+                      ).toLowerCase(),
+                      wallet.chain,
+                    ) === currency && wallet.network === optionNetwork
                   );
                 },
               );
@@ -522,10 +532,6 @@ export const BuildKeysAndWalletsList = ({
           }),
       };
     })
-    .map(key => {
-      key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
-      return key;
-    })
     .filter(key => key.wallets.length);
 };
 
@@ -561,6 +567,9 @@ export const BuildPayProWalletSelectorList =
       defaultAltCurrencyIsoCode,
       rates,
       dispatch,
+    }).map(key => {
+      key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
+      return key;
     });
     const coinbaseWallets = BuildCoinbaseWalletsList({
       coinbaseAccounts,

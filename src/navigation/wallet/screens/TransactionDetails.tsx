@@ -20,7 +20,7 @@ import {
   IsReceived,
   IsSent,
   IsShared,
-  NotZeroAmountEth,
+  NotZeroAmountEVM,
   TxActions,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
@@ -71,6 +71,7 @@ import {
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {Memo} from './send/confirm/Memo';
+import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -403,11 +404,11 @@ const TransactionDetails = () => {
           keyboardShouldPersistTaps={'handled'}
           extraScrollHeight={80}>
           <>
-            {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
+            {NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
-            {!IsCustomERCToken(currencyAbbreviation) ? (
+            {!IsCustomERCToken(currencyAbbreviation, chain) ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'
@@ -417,15 +418,13 @@ const TransactionDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
+            {!NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
               <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>
 
           {/* --------- Info ----------------*/}
-          {(currencyAbbreviation === 'eth' ||
-            IsERCToken(currencyAbbreviation)) &&
-          txs.error ? (
+          {SUPPORTED_EVM_COINS.includes(chain) && txs.error ? (
             <Banner
               type={'error'}
               title={t('Warning!')}

@@ -1,9 +1,12 @@
 import {Effect} from '../..';
 import {
   BitpaySupportedCurrencies,
-  SUPPORTED_COINS,
+  BitpaySupportedUtxoCoins,
 } from '../../../constants/currencies';
-import {getCurrencyAbbreviation} from '../../../utils/helper-methods';
+import {
+  addTokenChainSuffix,
+  getCurrencyAbbreviation,
+} from '../../../utils/helper-methods';
 
 export const GetProtocolPrefix =
   (
@@ -55,18 +58,24 @@ export const GetPrecision =
   };
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
-  return ['btc', 'bch', 'doge', 'ltc'].includes(
+  return Object.keys(BitpaySupportedUtxoCoins).includes(
     currencyAbbreviation.toLowerCase(),
   );
 };
 
-export const IsCustomERCToken = (currencyAbbreviation: string) => {
-  return !BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()];
+export const IsCustomERCToken = (
+  currencyAbbreviation: string,
+  chain: string,
+) => {
+  const currency = addTokenChainSuffix(currencyAbbreviation, chain);
+  return !BitpaySupportedCurrencies[currency.toLowerCase()];
 };
 
-export const IsERCToken = (currencyAbbreviation: string): boolean => {
-  const currency = currencyAbbreviation.toLowerCase();
-  return !SUPPORTED_COINS.includes(currency);
+export const IsERCToken = (
+  currencyAbbreviation: string,
+  chain: string,
+): boolean => {
+  return currencyAbbreviation.toLowerCase() !== chain.toLowerCase();
 };
 
 export const GetBlockExplorerUrl =

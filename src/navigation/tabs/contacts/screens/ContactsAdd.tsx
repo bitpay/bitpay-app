@@ -207,7 +207,7 @@ const ContactsAdd = ({
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [networkModalVisible, setNetworkModalVisible] = useState(false);
   const [isTokenAddress, setIsTokenAddress] = useState(
-    IsERCToken(contact?.coin || ''),
+    IsERCToken(contact?.coin || '', contact?.chain || ''),
   );
 
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {
@@ -223,27 +223,18 @@ const ContactsAdd = ({
     switch (suffix) {
       case 'e':
         return 'eth';
-        break;
-
+      case 'm':
+        return 'matic';
       default:
         return 'eth';
-        break;
     }
   };
 
   const ALL_CUSTOM_TOKENS = useMemo(() => {
-    return Object.values(tokenOptions)
-      .filter(
-        token =>
-          !SUPPORTED_TOKENS.includes(
-            getCurrencyAbbreviation(
-              token.symbol.toLowerCase(),
-              getChainUsingSuffix(token.symbol),
-            ),
-          ),
-      )
-      .map(({symbol, name, logoURI}) => {
-        const chain = getChainUsingSuffix(symbol);
+    return Object.entries(tokenOptions)
+      .filter(([k]) => !SUPPORTED_TOKENS.includes(k))
+      .map(([k, {symbol, name, logoURI}]) => {
+        const chain = getChainUsingSuffix(k);
         return {
           id: Math.random().toString(),
           coin: symbol.toLowerCase(),
@@ -290,17 +281,17 @@ const ContactsAdd = ({
         let _searchList: Array<any> = [];
         if (search) {
           search = search.toLowerCase();
-          _searchList = allTokenOptions.filter(
+          _searchList = ALL_TOKENS.filter(
             ({currencyAbbreviation, currencyName}) =>
               currencyAbbreviation.toLowerCase().includes(search) ||
               currencyName.toLowerCase().includes(search),
           );
         } else {
-          _searchList = allTokenOptions;
+          _searchList = ALL_TOKENS;
         }
         setAllTokenOptions(_searchList);
       }, 300),
-    [allTokenOptions],
+    [ALL_TOKENS],
   );
 
   const setValidValues = (
@@ -319,6 +310,7 @@ const ContactsAdd = ({
 
     switch (chain) {
       case 'eth':
+      case 'matic':
         setEvmValidAddress(true);
         return;
       case 'xrp':
@@ -336,7 +328,7 @@ const ContactsAdd = ({
     chain?: string,
   ) => {
     if (address) {
-      const coinAndNetwork = GetCoinAndNetwork(address);
+      const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
       if (coinAndNetwork) {
         const isValid = ValidateCoinAddress(
           address,
@@ -472,6 +464,11 @@ const ContactsAdd = ({
     setNetworkModalVisible(false);
   };
 
+  const _setIsTokenAddress = () => {
+    setIsTokenAddress(!isTokenAddress);
+    currencySelected(selectedCurrency.currencyAbbreviation, true);
+  };
+
   // Flat list
   const renderTokenItem = useCallback(
     ({item}) => (
@@ -498,7 +495,7 @@ const ContactsAdd = ({
         hideCheckbox={true}
       />
     ),
-    [],
+    [isTokenAddress],
   );
 
   const renderNetworkItem = useCallback(
@@ -624,7 +621,7 @@ const ContactsAdd = ({
       {!contact && evmValidAddress ? (
         <IsTokenAddressContainer
           onPress={() => {
-            setIsTokenAddress(!isTokenAddress);
+            _setIsTokenAddress();
           }}>
           <Column>
             <IsTokenAddressTitle>
@@ -635,7 +632,7 @@ const ContactsAdd = ({
             <Checkbox
               checked={isTokenAddress}
               onPress={() => {
-                setIsTokenAddress(!isTokenAddress);
+                _setIsTokenAddress();
               }}
             />
           </CheckBoxContainer>
@@ -708,7 +705,12 @@ const ContactsAdd = ({
                 {selectedToken ? (
                   <View>
                     <CurrencyImage
-                      img={selectedToken.img}
+                      img={selectedToken?.img}
+                      imgSrc={
+                        typeof selectedToken?.imgSrc === 'number'
+                          ? selectedToken?.imgSrc
+                          : undefined
+                      }
                       size={30}
                       badgeUri={selectedToken?.badgeUri}
                     />

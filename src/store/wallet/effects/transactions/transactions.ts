@@ -27,6 +27,7 @@ import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {partition} from 'lodash';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -454,6 +455,7 @@ export const GetTransactionHistory =
         transactions = BuildUiFriendlyList(
           transactions,
           wallet.currencyAbbreviation,
+          wallet.chain,
           contactList,
           getGiftCardIcons(SHOP.supportedCardMap),
         );
@@ -471,7 +473,7 @@ export const GetTransactionHistory =
           let transactionHistory;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
-          if (IsERCToken(wallet.currencyAbbreviation)) {
+          if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
             const {WALLET} = getState();
             const key = WALLET.keys[keyId];
             const linkedWallet = key.wallets.find(({tokens}) =>
@@ -580,11 +582,11 @@ export const IsInvalid = (action: string): boolean => {
   return action === 'invalid';
 };
 
-export const NotZeroAmountEth = (
+export const NotZeroAmountEVM = (
   amount: number,
   currencyAbbreviation: string,
 ): boolean => {
-  return !(amount === 0 && currencyAbbreviation === 'eth');
+  return !(amount === 0 && SUPPORTED_EVM_COINS.includes(currencyAbbreviation));
 };
 
 export const IsShared = (wallet: Wallet): boolean => {
@@ -602,6 +604,7 @@ export const IsMultisigEthInfo = (wallet: Wallet): boolean => {
 export const BuildUiFriendlyList = (
   transactionList: any[] = [],
   currencyAbbreviation: string,
+  chain: string,
   contactList: any[] = [],
   giftCardIcons: {[cardName: string]: string},
 ): any[] => {
@@ -628,7 +631,7 @@ export const BuildUiFriendlyList = (
     } = customData || {};
     const {body: noteBody} = note || {};
 
-    const notZeroAmountEth = NotZeroAmountEth(amount, currencyAbbreviation);
+    const notZeroAmountEVM = NotZeroAmountEVM(amount, currencyAbbreviation);
     let contactName;
 
     if (
@@ -647,10 +650,11 @@ export const BuildUiFriendlyList = (
     if (!confirmations || confirmations <= 0) {
       transaction.uiIcon = TransactionIcons.confirming;
 
-      if (notZeroAmountEth) {
-        if (contactName) {
+      if (notZeroAmountEVM) {
+        if (contactName || transaction.customData?.recipientEmail) {
           if (isSent || isMoved) {
-            transaction.uiDescription = contactName;
+            transaction.uiDescription =
+              contactName || transaction.customData?.recipientEmail;
           }
         } else {
           if (isSent) {
@@ -672,7 +676,7 @@ export const BuildUiFriendlyList = (
       if (isSent) {
         if (
           (currencyAbbreviation === 'eth' ||
-            IsCustomERCToken(currencyAbbreviation)) &&
+            IsCustomERCToken(currencyAbbreviation, chain)) &&
           error
         ) {
           transaction.uiIcon = TransactionIcons.error;
@@ -681,13 +685,14 @@ export const BuildUiFriendlyList = (
             TransactionIcons[customDataService] || TransactionIcons.sent;
           transaction.uiIconURI = giftCardIcons[giftCardName];
         }
-        if (notZeroAmountEth) {
+        if (notZeroAmountEVM) {
           if (noteBody) {
             transaction.uiDescription = noteBody;
           } else if (message) {
             transaction.uiDescription = message;
-          } else if (contactName) {
-            transaction.uiDescription = contactName;
+          } else if (contactName || transaction.customData?.recipientEmail) {
+            transaction.uiDescription =
+              contactName || transaction.customData?.recipientEmail;
           } else if (toWalletName) {
             // t('SentToWalletName')
             transaction.uiDescription = t('SentToWalletName', {
@@ -719,7 +724,8 @@ export const BuildUiFriendlyList = (
         } else if (message) {
           transaction.uiDescription = message;
         } else {
-          transaction.uiDescription = t('Sent to self');
+          transaction.uiDescription =
+            transaction.customData?.recipientEmail || t('Sent to self');
         }
       }
 
@@ -730,7 +736,7 @@ export const BuildUiFriendlyList = (
       }
     }
 
-    if (!notZeroAmountEth) {
+    if (!notZeroAmountEVM) {
       const {uiDescription} = transaction;
       transaction.uiIcon = TransactionIcons.contractInteraction;
 
@@ -743,7 +749,7 @@ export const BuildUiFriendlyList = (
     if (isInvalid) {
       transaction.uiValue = t('(possible double spend)');
     } else {
-      if (notZeroAmountEth) {
+      if (notZeroAmountEVM) {
         transaction.uiValue = amountStr;
       }
     }
@@ -758,8 +764,9 @@ export const BuildUiFriendlyList = (
 export const CanSpeedupTx = (
   tx: any,
   currencyAbbreviation: string,
+  chain: string,
 ): boolean => {
-  const isERC20Wallet = IsERCToken(currencyAbbreviation);
+  const isERC20Wallet = IsERCToken(currencyAbbreviation, chain);
   const isEthWallet = currencyAbbreviation === 'eth';
 
   if (currencyAbbreviation !== 'btc' && isEthWallet && isERC20Wallet) {
@@ -797,7 +804,7 @@ export const getDetailsTitle = (transaction: any, wallet: Wallet) => {
   const {coin} = wallet.credentials;
 
   if (!IsInvalid(action)) {
-    if (coin === 'eth' && error) {
+    if (SUPPORTED_EVM_COINS.includes(coin) && error) {
       return t('Failed');
     } else if (IsSent(action)) {
       return t('Sent');

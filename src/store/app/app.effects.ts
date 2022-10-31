@@ -69,6 +69,8 @@ import {
   APP_DEEPLINK_PREFIX,
 } from '../../constants/config';
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
+import {setContactMigrationComplete} from '../contact/contact.actions';
+import {startContactMigration} from '../contact/contact.effects';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -92,6 +94,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const {appFirstOpenData, onboardingCompleted, migrationComplete} =
       getState().APP;
 
+    const {contactMigrationComplete} = getState().CONTACT;
+
     if (!appFirstOpenData?.firstOpenDate) {
       dispatch(setAppFirstOpenEventDate(Math.floor(Date.now() / 1000)));
       dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
@@ -103,6 +107,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     await dispatch(startWalletStoreInit());
+
+    if (!contactMigrationComplete) {
+      await dispatch(startContactMigration());
+      dispatch(setContactMigrationComplete());
+      dispatch(LogActions.info('success [setContactMigrationComplete]'));
+    }
 
     if (!migrationComplete) {
       await dispatch(startMigration());
@@ -271,8 +281,7 @@ export const initializeBrazeContent =
   (): Effect => async (dispatch, getState) => {
     try {
       dispatch(LogActions.info('Initializing Braze content...'));
-      const {APP, BITPAY_ID} = getState();
-      const user = BITPAY_ID.user[APP.network];
+      const {APP} = getState();
 
       let contentCardSubscription = APP.brazeContentCardSubscription;
 
@@ -330,24 +339,16 @@ export const initializeBrazeContent =
         },
       );
 
-      if (user) {
-        Braze.changeUser(user.eid);
-        Braze.setEmail(user.email);
-        dispatch(setBrazeEid(user.eid));
-      } else {
-        let eid: string;
+      let eid = APP.brazeEid;
 
-        if (APP.brazeEid) {
-          dispatch(LogActions.debug('Braze EID exists.'));
-          eid = APP.brazeEid;
-        } else {
-          dispatch(LogActions.debug('Generating a new Braze EID...'));
-          eid = uuid.v4().toString();
-        }
-
-        Braze.changeUser(eid);
+      if (!eid) {
+        dispatch(LogActions.debug('Generating EID for anonymous user...'));
+        eid = uuid.v4().toString();
         dispatch(setBrazeEid(eid));
       }
+
+      // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
+      dispatch(Analytics.identify(eid));
 
       dispatch(LogActions.info('Successfully initialized Braze.'));
       dispatch(AppActions.brazeInitialized(contentCardSubscription));
@@ -473,13 +474,14 @@ export const askForTrackingPermissionAndEnableSdks =
       );
 
       try {
+        const {appFirstOpenData, appOpeningWasTracked, brazeEid} =
+          getState().APP;
+
         if (!Segment.getClient()) {
-          await Segment.init();
+          await Segment.init({eid: brazeEid});
         }
 
         if (appInit) {
-          const {appFirstOpenData, appOpeningWasTracked} = getState().APP;
-
           if (!appOpeningWasTracked && appFirstOpenData) {
             const {firstOpenDate, firstOpenEventComplete} = appFirstOpenData;
 
@@ -545,11 +547,7 @@ export const Analytics = {
    */
   screen:
     (name: string, properties: JsonMap = {}): Effect<Promise<void>> =>
-    (_dispatch, getState) => {
-      const {BITPAY_ID, APP} = getState();
-      const user = BITPAY_ID.user[APP.network];
-      properties.userId = user?.eid || '';
-
+    () => {
       return Segment.screen(name, properties);
     },
 
@@ -566,13 +564,7 @@ export const Analytics = {
    */
   track:
     (event: string, properties: JsonMap = {}): Effect<Promise<void>> =>
-    (_dispatch, getState) => {
-      if (!properties?.userId) {
-        const {BITPAY_ID, APP} = getState();
-        const user = BITPAY_ID.user[APP.network];
-        properties.userId = user?.eid || '';
-      }
-
+    () => {
       return Segment.track(`BitPay App - ${event}`, properties);
     },
 };

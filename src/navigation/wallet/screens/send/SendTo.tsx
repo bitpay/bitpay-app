@@ -1,17 +1,25 @@
 import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
-import {BaseText, HeaderTitle, Link} from '../../../../components/styled/Text';
+import {
+  BaseText,
+  HeaderTitle,
+  Link,
+  Paragraph,
+} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import Clipboard from '@react-native-community/clipboard';
 import {
+  ActiveOpacity,
   ScreenGutter,
   SearchContainer,
   SearchInput,
 } from '../../../../components/styled/Containers';
 import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
+import SendLightSvg from '../../../../../assets/img/send-icon-light.svg';
 import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
 import {
   LightBlack,
+  Midnight,
   NeutralSlate,
   SlateDark,
   White,
@@ -53,6 +61,7 @@ import {
 } from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
+  dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
@@ -82,11 +91,15 @@ import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
 import ContactRow from '../../../../components/list/ContactRow';
+import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
+import {BitPayIdEffects} from '../../../../store/bitpay-id';
+import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
   'BitcoinCashAddress',
   'EthereumAddress',
+  'MaticAddress',
   'RippleAddress',
   'DogecoinAddress',
   'LitecoinAddress',
@@ -94,6 +107,7 @@ const ValidDataTypes: string[] = [
   'BitcoinUri',
   'BitcoinCashUri',
   'EthereumUri',
+  'MaticUri',
   'DogecoinUri',
   'LitecoinUri',
   'BitPayUri',
@@ -130,10 +144,43 @@ export const ContactTitle = styled(BaseText)`
   margin-left: 10px;
 `;
 
+const EmailContainer = styled.View`
+  align-items: center;
+  flex-direction: row;
+  margin-top: 10px;
+`;
+
+const EmailIconContainer = styled.View`
+  align-items: center;
+  background-color: ${({theme}) => (theme.dark ? Midnight : '#EDF0FE')};
+  border-radius: 50px;
+  justify-content: center;
+  margin-right: 13px;
+  height: 50px;
+  width: 50px;
+`;
+
+const EmailText = styled(Paragraph)`
+  font-weight: 600;
+`;
+
+const InfoSheetMessage = styled.View`
+  padding: 20px 0;
+`;
+
+const isEmailAddress = (text: string) => {
+  if (!text.includes('@')) {
+    return false;
+  }
+  const reg = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w\w+)+$/;
+  return reg.test(text);
+};
+
 export const BuildKeyWalletRow = (
   keys: {[key in string]: Key},
   currentWalletId: string,
   currentCurrencyAbbreviation: string,
+  currentChain: string,
   currentNetwork: string,
   defaultAltCurrencyIsoCode: string,
   searchInput: string,
@@ -146,9 +193,16 @@ export const BuildKeyWalletRow = (
     value.wallets
       .filter(({hideWallet}) => !hideWallet)
       .filter(
-        ({currencyAbbreviation, id, network, credentials: {walletName}}) =>
+        ({
+          currencyAbbreviation,
+          chain,
+          id,
+          network,
+          credentials: {walletName},
+        }) =>
           currencyAbbreviation.toLowerCase() ===
             currentCurrencyAbbreviation.toLowerCase() &&
+          chain.toLowerCase() === currentChain.toLowerCase() &&
           id !== currentWalletId &&
           network === currentNetwork &&
           walletName.toLowerCase().includes(searchInput.toLowerCase()),
@@ -215,6 +269,10 @@ const SendTo = () => {
   const [searchInput, setSearchInput] = useState('');
   const [clipboardData, setClipboardData] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const [searchIsEmailAddress, setSearchIsEmailAddress] = useState(false);
+  const [emailAddressSearchPromise, setEmailAddressSearchPromise] = useState<
+    Promise<ReceivingAddress[]>
+  >(Promise.resolve([]));
 
   const {wallet} = route.params;
   const {currencyAbbreviation, id, chain, network} = wallet;
@@ -275,6 +333,7 @@ const SendTo = () => {
     keys,
     id,
     currencyAbbreviation,
+    chain,
     network,
     defaultAltCurrency.isoCode,
     searchInput,
@@ -317,10 +376,10 @@ const SendTo = () => {
           data?.chain?.toLowerCase() === chain.toLowerCase() &&
           data?.network.toLowerCase() === network.toLowerCase();
       } else {
-        addrData = GetCoinAndNetwork(data, network);
+        addrData = GetCoinAndNetwork(data, network, chain);
         isValid =
           chain === addrData?.coin.toLowerCase() &&
-          addrData?.network === network;
+          network === addrData?.network;
       }
 
       if (isValid) {
@@ -356,10 +415,19 @@ const SendTo = () => {
 
   const validateAndNavigateToConfirm = async (
     text: string,
-    context?: string,
-    name?: string,
-    destinationTag?: number,
+    opts: {
+      context?: string;
+      name?: string;
+      email?: string;
+      destinationTag?: number;
+    } = {},
   ) => {
+    const {context, name, email, destinationTag} = opts;
+    if (isEmailAddress(text.trim())) {
+      setSearchIsEmailAddress(true);
+      return;
+    }
+    setSearchIsEmailAddress(false);
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
@@ -374,11 +442,13 @@ const SendTo = () => {
         const payProOptions = await GetPayProOptions(invoiceUrl);
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
+        const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
+          GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
+          chain,
+        );
         const selected = payProOptions.paymentOptions.find(
           (option: PayProPaymentOption) =>
-            option.selected &&
-            GetInvoiceCurrency(currencyAbbreviation).toUpperCase() ===
-              option.currency,
+            option.selected && invoiceCurrency === option.currency,
         );
         if (selected) {
           const isValid = dispatch(checkCoinAndNetwork(selected, true));
@@ -409,7 +479,9 @@ const SendTo = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
-        dispatch(incomingData(text, {wallet, context, name, destinationTag}));
+        dispatch(
+          incomingData(text, {wallet, context, name, email, destinationTag}),
+        );
       }
     }
   };
@@ -480,9 +552,37 @@ const SendTo = () => {
     );
   }, [navigation]);
 
+  useEffect(() => {
+    const getReceivingAddresses = async () => {
+      const email = searchInput.trim().toLowerCase();
+      const searchPromise = dispatch(
+        BitPayIdEffects.startFetchReceivingAddresses({
+          email,
+          currency: getCurrencyCodeFromCoinAndChain(
+            currencyAbbreviation,
+            wallet.chain,
+          ),
+        }),
+      ).catch(_ => Promise.resolve([]));
+      setEmailAddressSearchPromise(searchPromise);
+      await searchPromise;
+    };
+    if (searchIsEmailAddress) {
+      getReceivingAddresses();
+    } else {
+      setEmailAddressSearchPromise(Promise.resolve([]));
+    }
+  }, [
+    searchIsEmailAddress,
+    searchInput,
+    dispatch,
+    currencyAbbreviation,
+    wallet.chain,
+  ]);
+
   return (
     <SafeAreaView>
-      <ScrollView>
+      <ScrollView keyboardShouldPersistTaps={'handled'}>
         <SearchContainer>
           <SearchInput
             placeholder={t('Search contact or enter address')}
@@ -521,6 +621,59 @@ const SendTo = () => {
           </TouchableOpacity>
         </SearchContainer>
 
+        {searchIsEmailAddress ? (
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={async () => {
+              const email = searchInput.toLowerCase();
+              const emailReceivingAddresses = await emailAddressSearchPromise;
+              const addressMatchingCurrency = emailReceivingAddresses.find(
+                ({coin, chain: addressChain}) =>
+                  currencyAbbreviation.toLowerCase() === coin.toLowerCase() &&
+                  chain.toLowerCase() === addressChain.toLowerCase(),
+              );
+              addressMatchingCurrency
+                ? validateAndNavigateToConfirm(
+                    addressMatchingCurrency.address,
+                    {email},
+                  )
+                : dispatch(
+                    showBottomNotificationModal({
+                      type: 'warning',
+                      title: 'Unable to Send to Contact',
+                      message: '',
+                      message2: (
+                        <InfoSheetMessage>
+                          <Paragraph>
+                            <EmailText>{email}</EmailText> is not yet able to
+                            receive crypto to their email.
+                          </Paragraph>
+                        </InfoSheetMessage>
+                      ),
+                      enableBackdropDismiss: true,
+                      actions: [
+                        {
+                          text: 'OK',
+                          action: async () => {
+                            dispatch(dismissBottomNotificationModal());
+                          },
+                          primary: true,
+                        },
+                      ],
+                    }),
+                  );
+            }}>
+            <EmailContainer>
+              <EmailIconContainer>
+                <SendLightSvg />
+              </EmailIconContainer>
+              <Paragraph>
+                Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
+              </Paragraph>
+            </EmailContainer>
+          </TouchableOpacity>
+        ) : null}
+
         {clipboardData ? (
           <PasteClipboardContainer
             activeOpacity={0.75}
@@ -548,12 +701,11 @@ const SendTo = () => {
                   onPress={() => {
                     try {
                       if (item) {
-                        validateAndNavigateToConfirm(
-                          item.address,
-                          'contact',
-                          item.name,
-                          item.tag || item.destinationTag,
-                        );
+                        validateAndNavigateToConfirm(item.address, {
+                          context: 'contact',
+                          name: item.name,
+                          destinationTag: item.tag || item.destinationTag,
+                        });
                       }
                     } catch (err) {
                       logger.error(

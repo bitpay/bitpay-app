@@ -5,7 +5,7 @@ import {LightBlack, NotificationPrimary, White} from '../../styles/colors';
 import haptic from '../haptic-feedback/haptic';
 import SwapHorizontal from '../icons/swap-horizontal/SwapHorizontal';
 
-const SwapButtonContainer = styled.TouchableOpacity`
+export const SwapButtonContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#edf1fe')};
@@ -14,7 +14,7 @@ const SwapButtonContainer = styled.TouchableOpacity`
   border-radius: 19.09px;
 `;
 
-const ButtonText = styled(BaseText)`
+export const ButtonText = styled(BaseText)`
   margin-left: 10px;
   font-size: 18px;
   font-weight: 500;

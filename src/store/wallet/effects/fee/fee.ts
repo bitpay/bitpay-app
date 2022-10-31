@@ -1,11 +1,10 @@
 import {Network} from '../../../../constants';
 import {FeeOptions, Wallet} from '../../wallet.models';
 import {GetEstimatedTxSize} from '../../utils/wallet';
-import {IsERCToken} from '../../utils/currency';
 import {BwcProvider} from '../../../../lib/bwc';
-import {Effect} from '../../..';
 const BWC = BwcProvider.getInstance();
 import {t} from 'i18next';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 
 export enum FeeLevels {
   URGENT = 'urgent',
@@ -21,13 +20,12 @@ export interface Fee {
   nbBlocks: number;
 }
 
-export const GetFeeOptions = (currencyAbbreviation: string): FeeOptions => {
-  const isEthOrToken =
-    currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation);
+export const GetFeeOptions = (chain: string): FeeOptions => {
+  const isEvmOrToken = SUPPORTED_EVM_COINS.includes(chain);
   return {
-    urgent: isEthOrToken ? t('High') : t('Urgent'),
-    priority: isEthOrToken ? t('Average') : t('Priority'),
-    normal: isEthOrToken ? t('Low') : t('Normal'),
+    urgent: isEvmOrToken ? t('High') : t('Urgent'),
+    priority: isEvmOrToken ? t('Average') : t('Priority'),
+    normal: isEvmOrToken ? t('Low') : t('Normal'),
     economy: t('Economy'),
     superEconomy: t('Super Economy'),
     custom: t('Custom'),
@@ -86,7 +84,10 @@ export const getFeeLevels = ({
             return reject(err);
           }
 
-          if (wallet.credentials.coin === 'eth' || !!wallet.credentials.token) {
+          if (
+            SUPPORTED_EVM_COINS.includes(wallet.credentials.coin) ||
+            !!wallet.credentials.token
+          ) {
             feeLevels = removeLowFeeLevels(feeLevels);
           }
 
@@ -141,7 +142,7 @@ export const getFeeLevelsUsingBwcClient = (
           return reject(t('Could not get dynamic fee'));
         }
 
-        if (currencyAbbreviation.toLowerCase() === 'eth') {
+        if (SUPPORTED_EVM_COINS.includes(currencyAbbreviation.toLowerCase())) {
           feeLevels = removeLowFeeLevels(feeLevels);
         }
 

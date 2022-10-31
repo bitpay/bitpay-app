@@ -28,7 +28,7 @@ export const IsValidBitPayInvoice = (data: string): boolean => {
 
 export const IsValidPayPro = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!/^(bitcoin|bitcoincash|bchtest|ethereum|ripple|dogecoin|litecoin)?:\?r=[\w+]/.exec(
+  return !!/^(bitcoin|bitcoincash|bchtest|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=[\w+]/.exec(
     data,
   );
 };
@@ -60,6 +60,11 @@ export const IsValidBitcoinCashUri = (data: string): boolean => {
 export const IsValidEthereumUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getCore().Validation.validateUri('ETH', data);
+};
+
+export const IsValidMaticUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!BWC.getCore().Validation.validateUri('MATIC', data);
 };
 
 export const IsValidRippleUri = (data: string): boolean => {
@@ -102,6 +107,10 @@ export const IsValidBitcoinCashAddress = (data: string): boolean => {
 
 export const IsValidEthereumAddress = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateAddress('ETH', 'livenet', data);
+};
+
+export const IsValidMaticAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('MATIC', 'livenet', data);
 };
 
 export const IsValidRippleAddress = (data: string): boolean => {
@@ -219,6 +228,14 @@ export const ValidateURI = (data: string): any => {
     };
   }
 
+  if (IsValidMaticUri(data)) {
+    return {
+      data,
+      type: 'MaticUri',
+      title: 'Matic URI',
+    };
+  }
+
   if (IsValidRippleUri(data)) {
     return {
       data,
@@ -272,6 +289,14 @@ export const ValidateURI = (data: string): any => {
       data,
       type: 'EthereumAddress',
       title: 'Ethereum Address',
+    };
+  }
+
+  if (IsValidMaticAddress(data)) {
+    return {
+      data,
+      type: 'MaticAddress',
+      title: 'Matic Address',
     };
   }
 
@@ -330,6 +355,7 @@ export const ValidateCoinAddress = (
       return !!addressLtc.isValid(str, network);
     case 'eth':
     case 'xrp':
+    case 'matic':
       const {Validation} = BWC.getCore();
       return !!Validation.validateAddress(coin.toUpperCase(), network, str);
     default:

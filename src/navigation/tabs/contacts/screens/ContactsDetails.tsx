@@ -177,6 +177,7 @@ const ContactsDetails = ({
               name: contact.name,
               address: newAddress,
               currency: contact.coin,
+              chain: contact.chain,
               network: contact.network,
               destinationTag: contact.tag || contact.destinationTag,
             },
@@ -342,7 +343,7 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
-          {contact.chain && IsERCToken(contact.coin) ? (
+          {contact.chain && IsERCToken(contact.coin, contact.chain) ? (
             <>
               <Hr />
               <Detail>

@@ -156,8 +156,8 @@ const BottomNotification = () => {
           <ImageContainer>{notificationType[type || 'info']}</ImageContainer>
           <H4>{title}</H4>
         </Row>
-        <MessageContainer>
-          {message ? (
+        {message ? (
+          <MessageContainer>
             <Markdown
               style={{
                 body: {
@@ -169,8 +169,8 @@ const BottomNotification = () => {
               }}>
               {message}
             </Markdown>
-          ) : null}
-        </MessageContainer>
+          </MessageContainer>
+        ) : null}
         {message2 ? message2 : null}
         <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>

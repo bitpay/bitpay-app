@@ -46,8 +46,10 @@ interface ButtonProps extends BaseButtonProps {
   onPress?: () => any;
   disabled?: boolean;
   debounceTime?: number;
+  height?: number;
   state?: ButtonState;
   style?: StyleProp<ViewStyle>;
+  action?: boolean;
 }
 
 interface ButtonOptionProps {
@@ -56,10 +58,13 @@ interface ButtonOptionProps {
   cancel?: boolean;
   danger?: boolean;
   disabled?: boolean;
+  action?: boolean;
+  height?: number;
 }
 
 export const DURATION = 100;
 export const BUTTON_RADIUS = 6;
+export const BUTTON_HEIGHT = 63;
 export const PILL_RADIUS = 50;
 export const LINK_RADIUS = 0;
 
@@ -80,7 +85,7 @@ const ButtonContainer = styled.TouchableOpacity<ButtonProps>`
 `;
 
 const ButtonContent = styled.View<ButtonOptionProps>`
-  background: ${({disabled, theme, secondary}) => {
+  background: ${({danger, disabled, theme, secondary}) => {
     if (secondary) {
       return 'transparent';
     }
@@ -89,10 +94,14 @@ const ButtonContent = styled.View<ButtonOptionProps>`
       return theme.dark ? DisabledDark : Disabled;
     }
 
+    if (danger) {
+      return theme.dark ? '#8B1C1C' : '#FFCDCD';
+    }
+
     return Action;
   }};
   border: 2px solid
-    ${({disabled, secondary, theme}) => {
+    ${({danger, disabled, secondary, theme}) => {
       if (disabled) {
         return theme.dark ? DisabledDark : Disabled;
       }
@@ -101,17 +110,22 @@ const ButtonContent = styled.View<ButtonOptionProps>`
         return Action;
       }
 
+      if (danger) {
+        return theme.dark ? '#8B1C1C' : '#FFCDCD';
+      }
+
       return Action;
     }};
   border-radius: ${BUTTON_RADIUS}px;
-  padding: 18px;
+  height: ${({height}) => height || BUTTON_HEIGHT}px;
+  justify-content: center;
 `;
 
 const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
   font-size: 18px;
   font-weight: 500;
 
-  color: ${({disabled, secondary, theme}) => {
+  color: ${({danger, disabled, secondary, theme}) => {
     if (disabled) {
       return theme.dark ? '#656565' : '#bebec0';
     }
@@ -120,18 +134,26 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
       return theme?.dark ? theme.colors.text : Action;
     }
 
+    if (danger) {
+      return theme.dark ? White : '#8B1C1C';
+    }
+
     return White;
   }};
 `;
 
 const PillContent = styled.View<ButtonOptionProps>`
-  background: ${({secondary, cancel, theme}) => {
+  background: ${({secondary, cancel, theme, action}) => {
     if (secondary) {
       return 'transparent';
     }
 
     if (cancel) {
       return theme?.dark ? LightBlack : NeutralSlate;
+    }
+
+    if (action) {
+      return Action;
     }
 
     return theme?.dark ? Midnight : Air;
@@ -163,13 +185,17 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
   line-height: 22.03px;
   text-align: center;
 
-  color: ${({disabled, cancel, theme}) => {
+  color: ${({disabled, cancel, theme, action}) => {
     if (disabled) {
       return DisabledDark;
     }
 
     if (cancel) {
       return theme?.dark ? White : SlateDark;
+    }
+
+    if (action) {
+      return White;
     }
 
     return theme?.dark ? White : Action;
@@ -196,6 +222,8 @@ const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
 
     return Action;
   }};
+  font-size: 18px;
+  font-weight: 500;
 `;
 
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
@@ -207,8 +235,10 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     children,
     disabled,
     debounceTime,
+    height,
     state,
     style,
+    action,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -279,16 +309,20 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
       activeOpacity={disabled ? 1 : ActiveOpacity}
       testID={'button'}>
       <ButtonTypeContainer
+        height={height}
+        danger={danger}
         secondary={secondary}
         outline={outline}
         cancel={cancel}
-        disabled={disabled}>
+        disabled={disabled}
+        action={action}>
         <Animated.View style={childrenStyle}>
           <ButtonTypeText
             secondary={secondary}
             cancel={cancel}
             danger={danger}
-            disabled={disabled}>
+            disabled={disabled}
+            action={action}>
             {children}
           </ButtonTypeText>
         </Animated.View>

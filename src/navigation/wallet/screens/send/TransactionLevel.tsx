@@ -49,6 +49,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import BoxInput from '../../../../components/form/BoxInput';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 
 const CIRCLE_SIZE = 20;
 
@@ -62,7 +63,7 @@ export type TransactionSpeedParamList = {
   onCloseModal: (level?: string, customFeePerKB?: number) => void;
 };
 
-export enum ethAvgTime {
+export enum evmAvgTime {
   normal = 'within 5 minutes',
   priority = 'within 2 minutes',
   urgent = 'ASAP',
@@ -257,7 +258,7 @@ const TransactionLevel = ({
         ...fee,
         feeUnit,
         // @ts-ignore
-        uiLevel: GetFeeOptions(currencyAbbreviation, chain)[level],
+        uiLevel: GetFeeOptions(chain)[level],
       };
 
       feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
@@ -265,9 +266,9 @@ const TransactionLevel = ({
         currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
       }`;
 
-      if (currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation)) {
+      if (SUPPORTED_EVM_COINS.includes(chain)) {
         // @ts-ignore
-        feeOption.avgConfirmationTime = ethAvgTime[level];
+        feeOption.avgConfirmationTime = evmAvgTime[level];
       } else {
         const min = nbBlocks * blockTime;
         const hours = Math.floor(min / 60);
@@ -493,7 +494,7 @@ const TransactionLevel = ({
                       <CurrencyImage img={img} size={20} />
                     </CurrencyImageContainer>
                     <H4>
-                      {currencyAbbreviation === 'btc' ? 'Bitcoin' : 'Ethereum'}{' '}
+                      {chain.charAt(0).toUpperCase() + chain.slice(1)}{' '}
                       {t('Network Fee Policy')}
                     </H4>
                   </FeeLevelStepsHeader>

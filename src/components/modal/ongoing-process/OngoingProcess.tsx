@@ -13,6 +13,7 @@ export enum OnGoingProcessMessages {
   LOGGING_IN = 'Logging In',
   PAIRING = 'Pairing',
   CREATING_ACCOUNT = 'Creating Account',
+  UPDATING_ACCOUNT = 'Updating Account',
   IMPORTING = 'Importing',
   DELETING_KEY = 'Deleting Key',
   ADDING_WALLET = 'Adding Wallet',
@@ -27,6 +28,7 @@ export enum OnGoingProcessMessages {
   SYNCING_WALLETS = 'Syncing Wallets...',
   REJECTING_CALL_REQUEST = 'Rejecting Call Request',
   SAVING_LAYOUT = 'Saving Layout',
+  SAVING_ADDRESSES = 'Saving Addresses',
   EXCHANGE_GETTING_DATA = 'Getting data from the exchange...',
   CALCULATING_FEE = 'Calculating Fee',
   CONNECTING_COINBASE = 'Connecting with Coinbase...',
@@ -34,6 +36,7 @@ export enum OnGoingProcessMessages {
   UPDATING_TXP = 'Updating Transaction',
   CREATING_TXP = 'Creating Transaction',
   SENDING_EMAIL = 'Sending Email',
+  REDIRECTING = 'Redirecting',
 }
 
 const OnGoingProcessContainer = styled.View`

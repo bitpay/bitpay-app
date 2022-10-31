@@ -1,5 +1,10 @@
 import {BitPayIdActionType, BitPayIdActionTypes} from './bitpay-id.types';
-import {Session, User} from './bitpay-id.models';
+import {
+  ReceivingAddress,
+  SecuritySettings,
+  Session,
+  User,
+} from './bitpay-id.models';
 import {Network} from '../../constants';
 
 export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
@@ -55,6 +60,12 @@ export interface BitPayIdState {
   user: {
     [key in Network]: User | null;
   };
+  receivingAddresses: {
+    [key in Network]: ReceivingAddress[];
+  };
+  securitySettings: {
+    [key in Network]: SecuritySettings | null;
+  };
   fetchSessionStatus: FetchSessionStatus;
   createAccountStatus: CreateAccountStatus;
   createAccountError: string | null;
@@ -88,6 +99,14 @@ const initialState: BitPayIdState = {
     [Network.testnet]: '',
   },
   user: {
+    [Network.mainnet]: null,
+    [Network.testnet]: null,
+  },
+  receivingAddresses: {
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
+  },
+  securitySettings: {
     [Network.mainnet]: null,
     [Network.testnet]: null,
   },
@@ -357,6 +376,26 @@ export const bitPayIdReducer = (
       return {
         ...state,
         forgotPasswordEmailStatus: null,
+      };
+    }
+
+    case BitPayIdActionTypes.SUCCESS_FETCH_RECEIVING_ADDRESSES: {
+      return {
+        ...state,
+        receivingAddresses: {
+          ...state.receivingAddresses,
+          [action.payload.network]: action.payload.receivingAddresses,
+        },
+      };
+    }
+
+    case BitPayIdActionTypes.SUCCESS_FETCH_SECURITY_SETTINGS: {
+      return {
+        ...state,
+        securitySettings: {
+          ...state.securitySettings,
+          [action.payload.network]: action.payload.securitySettings,
+        },
       };
     }
 

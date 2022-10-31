@@ -1,6 +1,11 @@
 import {InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
-import {Session, User} from './bitpay-id.models';
+import {
+  ReceivingAddress,
+  SecuritySettings,
+  Session,
+  User,
+} from './bitpay-id.models';
 import {
   CreateAccountStatus,
   EmailPairingStatus,
@@ -224,4 +229,20 @@ export const forgotPasswordEmailStatus = (
 
 export const resetForgotPasswordEmailStatus = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.RESET_FORGOT_PASSWORD_EMAIL_STATUS,
+});
+
+export const successFetchReceivingAddresses = (
+  network: Network,
+  receivingAddresses: ReceivingAddress[],
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_FETCH_RECEIVING_ADDRESSES,
+  payload: {network, receivingAddresses},
+});
+
+export const successFetchSecuritySettings = (
+  network: Network,
+  securitySettings: SecuritySettings,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_FETCH_SECURITY_SETTINGS,
+  payload: {network, securitySettings},
 });

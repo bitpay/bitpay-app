@@ -163,7 +163,7 @@ const Confirm = () => {
     recipient?.destinationTag || _destinationTag,
   );
   const {currencyAbbreviation, chain} = wallet;
-  const feeOptions = GetFeeOptions(currencyAbbreviation);
+  const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
     dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
   useLayoutEffect(() => {
@@ -177,10 +177,10 @@ const Confirm = () => {
   }, [navigation, speedup, t]);
 
   const isTxLevelAvailable = () => {
-    const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
+    const includedCurrencies = ['btc', 'eth', 'matic'];
     // TODO: exclude paypro, coinbase, usingMerchantFee txs,
     // const {payProUrl} = txDetails;
-    return !excludeCurrencies.includes(currencyAbbreviation);
+    return includedCurrencies.includes(currencyAbbreviation);
   };
 
   const onCloseTxLevelModal = async (
@@ -351,6 +351,7 @@ const Confirm = () => {
       recipientAddress: sendingTo.recipientAddress,
       img: recipient.type,
       recipientChain: recipient.chain,
+      recipientType: recipient.type,
     };
   } else {
     recipientData = sendingTo;
@@ -504,22 +505,25 @@ const Confirm = () => {
             }
           }}
         />
-
-        <TransactionLevel
-          feeLevel={fee.feeLevel}
-          wallet={wallet}
-          isVisible={showTransactionLevel}
-          onCloseModal={(selectedLevel, customFeePerKB) =>
-            onCloseTxLevelModal(selectedLevel, customFeePerKB)
-          }
-          customFeePerKB={fee.feeLevel === 'custom' ? txp?.feePerKb : undefined}
-          feePerSatByte={
-            fee.feeLevel === 'custom' && txp?.feePerKb
-              ? txp?.feePerKb / 1000
-              : undefined
-          }
-          isSpeedUpTx={speedup}
-        />
+        {isTxLevelAvailable() ? (
+          <TransactionLevel
+            feeLevel={fee.feeLevel}
+            wallet={wallet}
+            isVisible={showTransactionLevel}
+            onCloseModal={(selectedLevel, customFeePerKB) =>
+              onCloseTxLevelModal(selectedLevel, customFeePerKB)
+            }
+            customFeePerKB={
+              fee.feeLevel === 'custom' ? txp?.feePerKb : undefined
+            }
+            feePerSatByte={
+              fee.feeLevel === 'custom' && txp?.feePerKb
+                ? txp?.feePerKb / 1000
+                : undefined
+            }
+            isSpeedUpTx={speedup}
+          />
+        ) : null}
       </ConfirmScrollView>
       <SwipeButton
         title={speedup ? t('Speed Up') : t('Slide to send')}

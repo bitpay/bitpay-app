@@ -11,6 +11,17 @@ export const updateContact = (contact: ContactRowProps): ContactActionType => ({
   contact: contact,
 });
 
+export const migrateContacts = (
+  contacts: ContactRowProps[],
+): ContactActionType => ({
+  type: ContactActionTypes.MIGRATE_CONTACTS,
+  contacts: contacts,
+});
+
+export const setContactMigrationComplete = (): ContactActionType => ({
+  type: ContactActionTypes.SET_CONTACT_MIGRATION_COMPLETE,
+});
+
 export const deleteContact = (
   address: string,
   coin: string,

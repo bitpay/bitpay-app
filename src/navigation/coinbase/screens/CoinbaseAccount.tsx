@@ -10,12 +10,23 @@ import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
-import {getCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
+import {
+  getCurrencyAbbreviation,
+  getProtocolName,
+  sleep,
+} from '../../../utils/helper-methods';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, Balance, H5} from '../../../components/styled/Text';
-import {Air, Black, LightBlack, SlateDark, White} from '../../../styles/colors';
+import {
+  Air,
+  Black,
+  LightBlack,
+  LuckySevens,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
@@ -52,31 +63,53 @@ import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
-import {BitpaySupportedCurrencies} from '../../../constants/currencies';
+import Icons from '../../wallet/components/WalletIcons';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedUtxoCoins,
+  OtherBitpaySupportedCoins,
+} from '../../../constants/currencies';
 
 const AccountContainer = styled.View`
   flex: 1;
 `;
 
 const Row = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
 `;
 
 const BalanceContainer = styled.View`
   margin: 20px 0;
   padding: 0 15px 10px;
-  flex-direction: column;
+`;
+
+const HeaderSubTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+`;
+
+const TypeContainer = styled(HeaderSubTitleContainer)`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+`;
+
+const TypeText = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
 `;
 
 const Type = styled(BaseText)`
   font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
-  padding: 2px 4px;
+  padding: 2px 5px;
   border-radius: 3px;
-  margin-bottom: 7px;
+  margin-top: 5px;
+  margin-bottom: 10px;
 `;
 
 const TransactionListHeader = styled.View`
@@ -104,6 +137,10 @@ const GlobalSelectContainer = styled.View`
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
+const IconContainer = styled.View`
+  margin-right: 5px;
+`;
+
 export const WalletSelectMenuContainer = styled.View`
   padding: ${ScreenGutter};
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
@@ -114,11 +151,6 @@ export const WalletSelectMenuContainer = styled.View`
 
 export const WalletSelectMenuHeaderContainer = styled.View`
   padding: 50px 0;
-`;
-
-const AmountContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
 export type CoinbaseAccountScreenParamList = {
@@ -192,6 +224,7 @@ const CoinbaseAccount = ({
 
   const [currencyAbbreviation, setCurrencyAbbreviation] = useState('');
   const [chain, setChain] = useState('');
+  const [protocolName, setProtocolName] = useState('');
 
   const onPressTransaction = useMemo(
     () => (transaction: any) => {
@@ -252,37 +285,48 @@ const CoinbaseAccount = ({
       .filter(key => key.backupComplete)
       .flatMap(key => key.wallets);
 
-    availableWallets = availableWallets.filter(
-      wallet =>
-        !wallet.hideWallet &&
-        wallet.network === 'livenet' &&
-        wallet.isComplete() &&
-        wallet.currencyAbbreviation.toLowerCase() ===
-          account?.currency.code.toLocaleLowerCase(),
-    );
-
-    if (availableWallets.length) {
-      if (Number(account?.balance.amount) > 0) {
-        setAvailableWalletToWithdraw(true);
-      }
-      // If has balance
-      if (availableWallets.filter(wallet => wallet.balance.sat > 0).length) {
-        setAvailableWalletToDeposit(true);
-      }
-    }
-
     if (account && account.balance) {
-      const _currencyAbbreviation = getCurrencyAbbreviation(
-        account.balance.currency.toLowerCase(),
-        'eth',
-      );
+      const _currencyAbbreviation = account.balance.currency;
       const _chain =
-        BitpaySupportedCurrencies[currencyAbbreviation.toLowerCase()]?.chain;
+        BitpaySupportedUtxoCoins[_currencyAbbreviation.toLowerCase()] ||
+        OtherBitpaySupportedCoins[_currencyAbbreviation.toLowerCase()]
+          ? _currencyAbbreviation.toLowerCase()
+          : 'eth';
+
+      availableWallets = availableWallets.filter(
+        wallet =>
+          !wallet.hideWallet &&
+          wallet.network === 'livenet' &&
+          wallet.isComplete() &&
+          wallet.currencyAbbreviation.toLowerCase() ===
+            account.currency.code.toLocaleLowerCase() &&
+          wallet.chain === _chain,
+      );
+
+      if (availableWallets.length) {
+        // Withdrawals to BitPay Wallet
+        if (account.allow_withdrawals && Number(account.balance.amount) > 0) {
+          setAvailableWalletToWithdraw(true);
+        }
+        // Deposit into Coinbase Account
+        if (
+          account.allow_deposits &&
+          availableWallets.filter(wallet => wallet.balance.sat > 0).length
+        ) {
+          setAvailableWalletToDeposit(true);
+        }
+      }
+
       setCurrencyAbbreviation(_currencyAbbreviation);
       setChain(_chain);
-      const currencies: string[] = [];
-      currencies.push(account.balance.currency.toLowerCase());
-      setCustomSupportedCurrencies(currencies);
+      setProtocolName(getProtocolName(_chain, 'livenet') || '');
+
+      const _currency = getCurrencyAbbreviation(
+        _currencyAbbreviation.toLowerCase(),
+        _chain,
+      );
+
+      setCustomSupportedCurrencies([_currency]);
 
       if (Number(account.balance.amount)) {
         const fa = coinbaseGetFiatAmount(
@@ -323,6 +367,7 @@ const CoinbaseAccount = ({
     keys,
     currencyAbbreviation,
     chain,
+    protocolName,
   ]);
 
   const deposit = async () => {
@@ -360,7 +405,8 @@ const CoinbaseAccount = ({
             context: 'coinbase',
             recipient: {
               name: account.name || 'Coinbase',
-              currency: account.currency.code.toLowerCase(),
+              currency: currencyAbbreviation.toLowerCase(),
+              chain: chain,
               address: newAddress,
               network: 'livenet',
             },
@@ -441,40 +487,6 @@ const CoinbaseAccount = ({
 
   return (
     <AccountContainer>
-      <BalanceContainer>
-        <Row>
-          {cryptoAmount && customSupportedCurrencies[0] && (
-            <Balance scale={shouldScale(cryptoAmount)}>
-              {cryptoAmount} {customSupportedCurrencies[0].toUpperCase()}
-            </Balance>
-          )}
-        </Row>
-        <Row>
-          <H5>
-            {fiatAmount
-              ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
-              : '0'}
-          </H5>
-          {account?.primary && <Type>Primary</Type>}
-        </Row>
-        <LinkingButtons
-          receive={{
-            cta: deposit,
-            label: t('deposit'),
-            hide: !availableWalletToDeposit,
-          }}
-          send={{
-            cta: () => {
-              setWalletModalVisible(true);
-            },
-            label: t('withdraw'),
-            hide: !availableWalletToWithdraw,
-          }}
-          buy={{cta: () => null, hide: true}}
-          swap={{cta: () => null, hide: true}}
-        />
-      </BalanceContainer>
-      <Hr />
       <FlatList
         refreshControl={
           <RefreshControl
@@ -484,15 +496,59 @@ const CoinbaseAccount = ({
           />
         }
         ListHeaderComponent={() => {
-          if (txs[0]) {
-            return (
-              <TransactionListHeader>
-                <H5>{t('Transactions')}</H5>
-              </TransactionListHeader>
-            );
-          } else {
-            return <></>;
-          }
+          return (
+            <>
+              <BalanceContainer>
+                <Row>
+                  {cryptoAmount && (
+                    <Balance scale={shouldScale(cryptoAmount)}>
+                      {cryptoAmount} {currencyAbbreviation}
+                    </Balance>
+                  )}
+                </Row>
+                <Row>
+                  <H5>
+                    {fiatAmount
+                      ? formatFiatAmount(fiatAmount, defaultAltCurrency.isoCode)
+                      : '0'}
+                  </H5>
+                  {account?.primary ? <Type>Primary</Type> : null}
+                  {protocolName ? (
+                    <TypeContainer>
+                      <IconContainer>
+                        <Icons.Network />
+                      </IconContainer>
+                      <TypeText>{protocolName}</TypeText>
+                    </TypeContainer>
+                  ) : null}
+                </Row>
+                <LinkingButtons
+                  receive={{
+                    cta: deposit,
+                    label: t('deposit'),
+                    hide: !availableWalletToDeposit,
+                  }}
+                  send={{
+                    cta: () => {
+                      setWalletModalVisible(true);
+                    },
+                    label: t('withdraw'),
+                    hide: !availableWalletToWithdraw,
+                  }}
+                  buy={{cta: () => null, hide: true}}
+                  swap={{cta: () => null, hide: true}}
+                />
+              </BalanceContainer>
+              <Hr />
+              {txs[0] ? (
+                <TransactionListHeader>
+                  <H5>{t('Transactions')}</H5>
+                </TransactionListHeader>
+              ) : (
+                <></>
+              )}
+            </>
+          );
         }}
         data={txs}
         renderItem={renderItem}
@@ -509,6 +565,7 @@ const CoinbaseAccount = ({
             modalTitle={t('Select destination wallet')}
             customSupportedCurrencies={customSupportedCurrencies}
             useAsModal={true}
+            livenetOnly={true}
             onDismiss={onSelectedWallet}
           />
         </GlobalSelectContainer>

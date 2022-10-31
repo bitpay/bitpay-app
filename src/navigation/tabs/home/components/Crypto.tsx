@@ -50,6 +50,7 @@ import {t} from 'i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
 import ListKeySkeleton from './cards/ListKeySkeleton';
 import CarouselKeySkeleton from './cards/CarouselKeySkeleton';
+import {clearDeferredImport} from '../../../../store/wallet/wallet.actions';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -142,7 +143,7 @@ export const keyBackupRequired = (
   };
 };
 
-const createHomeCardList = ({
+export const createHomeCardList = ({
   navigation,
   keys,
   dispatch,
@@ -150,6 +151,9 @@ const createHomeCardList = ({
   homeCarouselConfig,
   homeCarouselLayoutType,
   deferredImport,
+  context,
+  onPress,
+  currency,
 }: {
   navigation: NavigationProp<any>;
   keys: Key[];
@@ -158,6 +162,9 @@ const createHomeCardList = ({
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   deferredImport?: boolean;
+  context?: 'keySelector';
+  onPress?: (currency: any, selectedKey: Key) => any;
+  currency?: any;
 }) => {
   let list: {id: string; component: JSX.Element}[] = [];
   const defaults: {id: string; component: JSX.Element}[] = [];
@@ -191,21 +198,29 @@ const createHomeCardList = ({
             totalBalance={totalBalance}
             percentageDifference={percentageDifference}
             needsBackup={!backupComplete}
-            onPress={() => {
-              haptic('soft');
-              if (backupComplete) {
-                navigation.navigate('Wallet', {
-                  screen: 'KeyOverview',
-                  params: {id: key.id},
-                });
-              } else {
-                dispatch(
-                  showBottomNotificationModal(
-                    keyBackupRequired(key, navigation, dispatch),
-                  ),
-                );
-              }
-            }}
+            context={context}
+            onPress={
+              onPress
+                ? () => {
+                    haptic('soft');
+                    onPress(currency, key);
+                  }
+                : () => {
+                    haptic('soft');
+                    if (backupComplete) {
+                      navigation.navigate('Wallet', {
+                        screen: 'KeyOverview',
+                        params: {id: key.id},
+                      });
+                    } else {
+                      dispatch(
+                        showBottomNotificationModal(
+                          keyBackupRequired(key, navigation, dispatch),
+                        ),
+                      );
+                    }
+                  }
+            }
           />
         ),
       };
@@ -234,16 +249,46 @@ const createHomeCardList = ({
       homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
   );
 
+  const onDeferredImportPress = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Cancel Import?'),
+        message: t('Would you like to cancel importing this key?'),
+        actions: [
+          {
+            text: t('Cancel Import'),
+            primary: true,
+            action: () => dispatch(clearDeferredImport()),
+          },
+        ],
+        enableBackdropDismiss: true,
+      }),
+    );
+  };
+
   if (deferredImport) {
     if (homeCarouselLayoutType === 'listView') {
       list.push({
         id: 'deferredImport',
-        component: <ListKeySkeleton />,
+        component: (
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => onDeferredImportPress()}>
+            <ListKeySkeleton />
+          </TouchableOpacity>
+        ),
       });
     } else {
       list.push({
         id: 'deferredImport',
-        component: <CarouselKeySkeleton />,
+        component: (
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => onDeferredImportPress()}>
+            <CarouselKeySkeleton />
+          </TouchableOpacity>
+        ),
       });
     }
   }

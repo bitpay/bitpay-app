@@ -11,12 +11,18 @@ import {
   Wallet,
   TransactionOptionsContext,
 } from '../../wallet.models';
-import {FormatAmount, FormatAmountStr, ParseAmount} from '../amount/amount';
+import {
+  FormatAmount,
+  FormatAmountStr,
+  ParseAmount,
+  parseAmountToStringIfBN,
+} from '../amount/amount';
 import {FeeLevels, GetBitcoinSpeedUpTxFee, getFeeRatePerKb} from '../fee/fee';
 import {GetInput} from '../transactions/transactions';
 import {
   formatCryptoAddress,
   formatFiatAmount,
+  getCWCChain,
   sleep,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
@@ -60,11 +66,11 @@ import TouchID from 'react-native-touch-id-ng';
 import {
   authOptionalConfigObject,
   BiometricErrorNotification,
-  isSupportedOptionalConfigObject,
   TO_HANDLE_ERRORS,
 } from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
+import {getCurrencyCodeFromCoinAndChain} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -165,7 +171,7 @@ export const createProposalAndBuildTxDetails =
             buildTransactionProposal({
               ...tx,
               context,
-              currency: currencyAbbreviation,
+              currency: currencyAbbreviation.toLowerCase(),
               chain,
               tokenAddress: token ? token.address : null,
               toAddress: recipient.address,
@@ -235,7 +241,7 @@ const setEthAddressNonce =
         let nonceWallet: Wallet;
         // linked eth wallet could have pendings txs from different tokens
         // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
-        if (IsERCToken(currencyAbbreviation)) {
+        if (IsERCToken(currencyAbbreviation, chain)) {
           const {WALLET} = getState();
           const key = WALLET.keys[keyId];
           const linkedWallet = key.wallets.find(({tokens}) =>
@@ -314,13 +320,14 @@ const setEthAddressNonce =
 
 export const getNonce = (
   wallet: Wallet,
-  coin: string,
+  chain: string,
   address: string,
 ): Promise<number> => {
   return new Promise((resolve, reject) => {
     wallet.getNonce(
       {
-        coin,
+        coin: chain, // use chain as coin for nonce
+        chain,
         network: wallet.network,
         address,
       },
@@ -376,29 +383,35 @@ export const buildTxDetails =
           invoice!.buyerProvidedInfo!.selectedTransactionCurrency!.toLowerCase(), // TODO POLYGON
         fee: 0,
       };
-    const invoiceCoin = GetInvoiceCurrency(coin).toLowerCase();
+    const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
+      GetInvoiceCurrency(coin).toLowerCase(),
+      chain,
+    );
     let {amount} = proposal || {
-      amount: invoice!.paymentTotals[invoiceCoin.toUpperCase()],
+      amount: invoice!.paymentTotals[invoiceCurrency],
     };
+    amount = Number(amount); // Support BN (use number instead string only for view)
     const effectiveRate =
-      invoice && dispatch(getInvoiceEffectiveRate(invoice, invoiceCoin, chain));
-    const networkCost = invoice?.minerFees[invoiceCoin.toUpperCase()]?.totalFee;
-    const isERC20 = IsERCToken(coin);
+      invoice &&
+      dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain));
+    const networkCost = invoice?.minerFees[invoiceCurrency]?.totalFee;
+    const isERC20 = IsERCToken(coin, chain);
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
     if (context === 'paypro') {
-      amount = invoice!.paymentTotals[invoiceCoin.toUpperCase()];
+      amount = invoice!.paymentTotals[invoiceCurrency];
     } else if (context === 'speedupBtcReceive') {
       amount = amount - fee;
     }
 
-    const {type, name, address} = recipient || {};
+    const {type, name, address, email} = recipient || {};
     return {
       context,
       currency: coin,
       sendingTo: {
         recipientType: type,
         recipientName: name,
+        recipientEmail: email,
         recipientAddress: address && formatCryptoAddress(address),
         img: wallet.img,
         recipientFullAddress: address,
@@ -531,6 +544,10 @@ const buildTransactionProposal =
             customData = {
               service: 'coinbase',
             };
+          } else if (tx.recipient?.email) {
+            customData = {
+              recipientEmail: tx.recipient.email,
+            };
           }
         }
 
@@ -551,6 +568,7 @@ const buildTransactionProposal =
             txp.replaceTxByFee = tx.replaceTxByFee;
             break;
           case 'eth':
+          case 'matic':
             txp.from = tx.from;
             txp.nonce = tx.nonce;
             txp.gasLimit = tx.gasLimit;
@@ -609,7 +627,7 @@ const buildTransactionProposal =
 
         // send max
         if (sendMax && wallet) {
-          if (IsERCToken(wallet.currencyAbbreviation)) {
+          if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
             txp.amount = tx.amount = wallet.balance.satAvailable;
           } else {
             const sendMaxInfo = await getSendMaxInfo({
@@ -744,10 +762,13 @@ const buildTransactionProposal =
           txp.tokenAddress = tx.tokenAddress;
           if (tx.context !== 'paypro') {
             for (const output of txp.outputs) {
+              if (output.amount) {
+                output.amount = parseAmountToStringIfBN(output.amount);
+              }
               if (!output.data) {
                 output.data = BwcProvider.getInstance()
                   .getCore()
-                  .Transactions.get({chain: 'ETHERC20'})
+                  .Transactions.get({chain: getCWCChain(txp.chain!)})
                   .encodeData({
                     recipients: [
                       {address: output.toAddress, amount: output.amount},
@@ -908,6 +929,9 @@ export const publishAndSign =
         }
 
         let resultTx = broadcastedTx ? broadcastedTx : signedTx;
+        dispatch(
+          LogActions.info(`resultTx [publishAndSign]: ${resultTx?.txid}`),
+        );
 
         // Check if ConfirmTx notification is enabled
         const {APP} = getState();

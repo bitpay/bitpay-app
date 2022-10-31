@@ -18,7 +18,6 @@ import {
   showBottomNotificationModal,
   showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
-import {LightBlack, White} from '../../../styles/colors';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {
@@ -26,10 +25,11 @@ import {
   BottomNotificationCta,
   BottomNotificationHr,
 } from '../../../components/modal/bottom-notification/BottomNotification';
-import {ScreenGutter} from '../../../components/styled/Containers';
 import {
   GlobalSelectObj,
   WalletSelectMenuBodyContainer,
+  WalletSelectMenuContainer,
+  WalletSelectMenuHeaderContainer,
 } from '../../wallet/screens/GlobalSelect';
 import KeyWalletsRow, {
   KeyWallet,
@@ -44,25 +44,18 @@ import {logSegmentEvent} from '../../../store/app/app.effects';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {Platform} from 'react-native';
 import {WalletConnectCtaContainer} from '../styled/WalletConnectContainers';
+import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
 };
-
-const WalletSelectorContainer = styled.View`
-  padding: ${ScreenGutter};
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  max-height: 75%;
-`;
 
 const DescriptionText = styled(BaseText)`
   font-style: normal;
   font-weight: normal;
   font-size: 16px;
   line-height: 24px;
-  margin: 22px 0;
+  margin: 12px;
 `;
 
 export default ({
@@ -90,7 +83,10 @@ export default ({
     const coins: GlobalSelectObj[] = [];
     category.forEach(coin => {
       const availableWallets = wallets.filter(
-        wallet => wallet.currencyAbbreviation === coin && !wallet.hideWallet,
+        wallet =>
+          wallet.currencyAbbreviation === coin &&
+          wallet.chain === coin &&
+          !wallet.hideWallet,
       );
       if (availableWallets.length) {
         const {currencyName, img} = availableWallets[0];
@@ -110,7 +106,7 @@ export default ({
   };
 
   const supportedCoins = useMemo(
-    () => buildList(['eth'], allWallets),
+    () => buildList(SUPPORTED_EVM_COINS, allWallets),
     [allWallets],
   );
 
@@ -121,7 +117,7 @@ export default ({
       keyId => {
         const key = keys[keyId];
         return {
-          key: keyId,
+          key: Math.random().toString(),
           keyName: key.keyName || 'My Key',
           wallets: supportedCoin.availableWalletsByKey[keyId].map(wallet => {
             const {
@@ -237,17 +233,16 @@ export default ({
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
-      <WalletSelectorContainer>
+      <WalletSelectMenuContainer>
         {keyWallets.length ? (
           <>
-            <TextAlign align={'center'}>
-              <H4>{t('Select a Wallet')}</H4>
-            </TextAlign>
-
+            <WalletSelectMenuHeaderContainer>
+              <TextAlign align={'center'}>
+                <H4>{t('Select a Wallet')}</H4>
+              </TextAlign>
+            </WalletSelectMenuHeaderContainer>
             <DescriptionText>
-              {t(
-                'Which Ethereum wallet would you like to use for WalletConnect?',
-              )}
+              {t('Which wallet would you like to use for WalletConnect?')}
             </DescriptionText>
 
             <WalletSelectMenuBodyContainer>
@@ -259,10 +254,11 @@ export default ({
           </>
         ) : (
           <>
-            <TextAlign align={'center'}>
-              <H4>{t('No compatible wallets')}</H4>
-            </TextAlign>
-
+            <WalletSelectMenuHeaderContainer>
+              <TextAlign align={'center'}>
+                <H4>{t('No compatible wallets')}</H4>
+              </TextAlign>
+            </WalletSelectMenuHeaderContainer>
             <DescriptionText>
               {t(
                 "You currently don't have any wallets capable of sending this payment. Would you like to import one?",
@@ -294,14 +290,13 @@ export default ({
                   haptic('impactLight');
                   onBackdropPress();
                   await sleep(0);
-                  navigation.goBack();
                 }}>
                 {t('MAYBE LATER')}
               </BottomNotificationCta>
             </WalletConnectCtaContainer>
           </>
         )}
-      </WalletSelectorContainer>
+      </WalletSelectMenuContainer>
     </SheetModal>
   );
 };

@@ -134,6 +134,12 @@ const CoinbaseDashboard = () => {
         exchangeRates,
         defaultAltCurrency.isoCode,
       );
+      if (
+        walletItem.coinbaseAccount &&
+        walletItem.coinbaseAccount.currency.name === 'Polygon'
+      ) {
+        walletItem.coinbaseAccount.currency.name = 'Matic Token';
+      }
       return (
         <WalletRow
           id={walletItem.id}

@@ -29,7 +29,7 @@ import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 
@@ -40,6 +40,17 @@ export interface CreateOptions {
   singleAddress?: boolean;
   walletName?: string;
   password?: string;
+}
+
+export interface AddWalletData {
+  key: Key;
+  currency: {
+    chain: string;
+    currencyAbbreviation: string;
+    isToken?: boolean;
+  };
+  associatedWallet?: Wallet;
+  options: CreateOptions;
 }
 
 const BWC = BwcProvider.getInstance();
@@ -95,16 +106,7 @@ export const addWallet =
     currency,
     associatedWallet,
     options,
-  }: {
-    key: Key;
-    currency: {
-      chain: string;
-      currencyAbbreviation: string;
-      isToken: boolean;
-    };
-    associatedWallet?: Wallet;
-    options: CreateOptions;
-  }): Effect<Promise<Wallet>> =>
+  }: AddWalletData): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -202,11 +204,13 @@ export const addWallet =
           merge(
             newWallet,
             buildWalletObj(
-              {...newWallet.credentials, currencyAbbreviation, currencyName},
-              tokenOpts,
               {
+                ...newWallet.credentials,
+                currencyAbbreviation,
+                currencyName,
                 walletName,
               },
+              tokenOpts,
             ),
           ),
         );
@@ -270,9 +274,6 @@ const createMultipleWallets =
       wallets.push(wallet);
       for (const token of tokens) {
         if (token.chain === coin.chain) {
-          wallet.preferences = wallet.preferences || {
-            tokenAddresses: [],
-          };
           const tokenWallet = await dispatch(
             createTokenWallet(
               wallet,
@@ -345,6 +346,7 @@ const createWallet = (params: {
     bwcClient.fromString(
       key.createCredentials(password, {
         coin,
+        chain: coin, // chain === coin for stored clients
         network,
         account,
         n: 1,
@@ -413,9 +415,7 @@ const createTokenWallet =
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
           wallet.credentials.getTokenCredentials(
-            tokenOpts[
-              getCurrencyAbbreviation(tokenName, wallet.credentials.chain)
-            ],
+            tokenOpts[addTokenChainSuffix(tokenName, wallet.credentials.chain)],
             wallet.credentials.chain,
           );
         bwcClient.fromObj(tokenCredentials);
@@ -423,10 +423,15 @@ const createTokenWallet =
         wallet.tokens = wallet.tokens || [];
         wallet.tokens.push(tokenCredentials.walletId);
         // Add the token info to the ethWallet for BWC/BWS
-        wallet.preferences?.tokenAddresses?.push(
+
+        wallet.preferences = wallet.preferences || {
+          tokenAddresses: [],
+        };
+        wallet.preferences.tokenAddresses?.push(
           // @ts-ignore
           tokenCredentials.token.address,
         );
+
         wallet.savePreferences(wallet.preferences, (err: any) => {
           if (err) {
             dispatch(LogActions.error(`Error saving token: ${tokenName}`));
@@ -536,6 +541,7 @@ export const createWalletWithOpts = (params: {
       bwcClient.fromString(
         key.createCredentials(opts.password, {
           coin: opts.coin || 'btc',
+          chain: opts.coin || 'btc', // chain === coin for stored clients
           network: opts.networkName || 'livenet',
           account: opts.account || 0,
           n: opts.n || 1,

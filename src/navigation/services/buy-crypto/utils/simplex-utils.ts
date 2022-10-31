@@ -66,6 +66,7 @@ export const simplexSupportedCoins = [
   'eth',
   'doge',
   'ltc',
+  'matic',
   'xrp',
 ];
 
@@ -135,6 +136,11 @@ export const simplexSupportedErc20Tokens = [
   'yoshi',
 ];
 
+export const simplexSupportedMaticTokens = [
+  'gmee',
+  'usdc', // USDC-MATIC
+];
+
 export const simplexErc20TokensWithSuffix = [
   'axs',
   'coti',
@@ -148,19 +154,42 @@ export const simplexErc20TokensWithSuffix = [
   'yoshi',
 ];
 
+export const simplexMaticTokensWithSuffix = [
+  'usdc', // USDC-MATIC
+];
+
 export const getSimplexSupportedCurrencies = (): string[] => {
-  const simplexSupportedCurrencies = simplexSupportedCoins.concat(
-    simplexSupportedErc20Tokens.map(token => {
-      return getCurrencyAbbreviation(token, 'eth');
-    }),
-  );
+  const simplexSupportedCurrencies = simplexSupportedCoins
+    .concat(
+      simplexSupportedErc20Tokens.map(ethToken => {
+        return getCurrencyAbbreviation(ethToken, 'eth');
+      }),
+    )
+    .concat(
+      simplexSupportedMaticTokens.map(maticToken => {
+        return getCurrencyAbbreviation(maticToken, 'matic');
+      }),
+    );
   return simplexSupportedCurrencies;
 };
 
-export const getSimplexCoinFormat = (coin: string): string => {
-  return simplexErc20TokensWithSuffix.includes(coin.toLowerCase())
-    ? `${coin.toUpperCase()}-ERC20`
-    : coin.toUpperCase();
+export const getSimplexCoinFormat = (coin: string, chain: string): string => {
+  let formattedCoin: string = coin.toUpperCase();
+  switch (chain) {
+    case 'eth':
+      if (simplexErc20TokensWithSuffix.includes(coin.toLowerCase())) {
+        formattedCoin = `${coin.toUpperCase()}-ERC20`;
+      }
+      break;
+    case 'matic':
+      if (simplexMaticTokensWithSuffix.includes(coin.toLowerCase())) {
+        formattedCoin = `${coin.toUpperCase()}-MATIC`;
+      }
+      break;
+    default:
+      formattedCoin = coin.toUpperCase();
+  }
+  return formattedCoin;
 };
 
 export const getSimplexFiatAmountLimits = () => {
@@ -231,13 +260,13 @@ export const simplexPaymentRequest = (
         },
         requested_digital_amount: {
           currency: checkSimplexCoin(
-            getSimplexCoinFormat(wallet.currencyAbbreviation),
+            getSimplexCoinFormat(wallet.currencyAbbreviation, wallet.chain),
           ),
           amount: quoteData.cryptoAmount,
         },
         destination_wallet: {
           currency: checkSimplexCoin(
-            getSimplexCoinFormat(wallet.currencyAbbreviation),
+            getSimplexCoinFormat(wallet.currencyAbbreviation, wallet.chain),
           ),
           address,
           tag: '',

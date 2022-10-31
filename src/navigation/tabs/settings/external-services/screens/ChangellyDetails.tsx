@@ -39,6 +39,7 @@ import {
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
+import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 
 export interface ChangellyDetailsProps {
   swapTx: changellyTxData;
@@ -189,12 +190,32 @@ const ChangellyDetails: React.FC = () => {
           </TouchableOpacity>
         </ColumnDataContainer>
 
-        <RowDataContainer style={{marginTop: 20}}>
+        {swapTx.chainTo && (
+          <RowDataContainer style={{marginTop: 20}}>
+            <RowLabel>{t('Deposit Blockchain')}</RowLabel>
+            <RowData>
+              {BitpaySupportedCoins[swapTx.chainTo.toLowerCase()]?.name ||
+                swapTx.chainTo.toUpperCase()}
+            </RowData>
+          </RowDataContainer>
+        )}
+
+        <RowDataContainer style={!swapTx.chainTo ? {marginTop: 20} : {}}>
           <RowLabel>{t('Paying')}</RowLabel>
           <RowData>
             {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
           </RowData>
         </RowDataContainer>
+
+        {swapTx.chainFrom && (
+          <RowDataContainer>
+            <RowLabel>{t('Source Blockchain')}</RowLabel>
+            <RowData>
+              {BitpaySupportedCoins[swapTx.chainFrom.toLowerCase()]?.name ||
+                swapTx.chainFrom.toUpperCase()}
+            </RowData>
+          </RowDataContainer>
+        )}
 
         <RowDataContainer>
           <RowLabel>{t('Created')}</RowLabel>

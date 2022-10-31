@@ -34,6 +34,7 @@ import {
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
+import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 export interface SimplexDetailsProps {
   paymentRequest: simplexPaymentData;
 }
@@ -86,7 +87,7 @@ const SimplexDetails: React.FC = () => {
               <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
-          <SimplexLogo iconOnly={true} width={45} height={45} />
+          <SimplexLogo iconOnly={true} />
         </RowDataContainer>
 
         <RowDataContainer>
@@ -111,6 +112,16 @@ const SimplexDetails: React.FC = () => {
             {paymentRequest.fiat_total_amount_currency}
           </RowData>
         </RowDataContainer>
+
+        {paymentRequest.chain && (
+          <RowDataContainer>
+            <RowLabel>{t('Deposit Blockchain')}</RowLabel>
+            <RowData>
+              {BitpaySupportedCoins[paymentRequest.chain.toLowerCase()]?.name ||
+                paymentRequest.chain.toUpperCase()}
+            </RowData>
+          </RowDataContainer>
+        )}
 
         <RowDataContainer>
           <RowLabel>{t('Created')}</RowLabel>

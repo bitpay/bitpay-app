@@ -14,6 +14,16 @@ export interface FormattedAmountObj {
   amountUnitStr: string;
 }
 
+export const parseAmountToStringIfBN = (amount: number | string) => {
+  if (typeof amount === 'string') {
+    return amount;
+  }
+  return amount.toLocaleString('fullwide', {
+    useGrouping: false,
+    maximumFractionDigits: 0,
+  });
+};
+
 export const ParseAmount =
   (
     amount: number,
@@ -108,14 +118,16 @@ export const FormatAmount =
       fullPrecision: !!fullPrecision,
     };
 
-    if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation)) {
-      opts.toSatoshis = dispatch(
-        GetPrecision(currencyAbbreviation, chain),
-      )?.unitToSatoshi;
+    if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation, chain)) {
+      const {unitToSatoshi, unitDecimals} =
+        dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+      if (unitToSatoshi) {
+        opts.toSatoshis = unitToSatoshi;
+      }
       opts.decimals = {
         full: {
-          maxDecimals: 8,
-          minDecimals: 8,
+          maxDecimals: unitDecimals || 8,
+          minDecimals: unitDecimals || 8,
         },
         short: {
           maxDecimals: 6,

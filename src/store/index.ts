@@ -12,6 +12,7 @@ import {
   bindWalletClient,
   bindWalletKeys,
   transformCircular,
+  transformContacts,
 } from './transforms/transforms';
 
 import {
@@ -190,6 +191,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'CONTACT',
+      transforms: [transformContacts],
       blacklist: ContactReduxPersistBlackList,
     },
     contactReducer,

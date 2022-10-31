@@ -4,6 +4,8 @@ export enum ContactActionTypes {
   CREATE_CONTACT = 'CONTACT/CREATE',
   UPDATE_CONTACT = 'CONTACT/UPDATE',
   DELETE_CONTACT = 'CONTACT/DELETE',
+  MIGRATE_CONTACTS = 'CONTACT/MIGRATE_CONTACTS',
+  SET_CONTACT_MIGRATION_COMPLETE = 'CONTACT/SET_CONTACT_MIGRATION_COMPLETE',
 }
 
 interface CreateContact {
@@ -24,4 +26,17 @@ interface DeleteContact {
   chain?: string;
 }
 
-export type ContactActionType = CreateContact | UpdateContact | DeleteContact;
+interface MigrateContacts {
+  type: typeof ContactActionTypes.MIGRATE_CONTACTS;
+  contacts: ContactRowProps[];
+}
+interface SetContactMigrationComplete {
+  type: typeof ContactActionTypes.SET_CONTACT_MIGRATION_COMPLETE;
+}
+
+export type ContactActionType =
+  | CreateContact
+  | UpdateContact
+  | DeleteContact
+  | MigrateContacts
+  | SetContactMigrationComplete;

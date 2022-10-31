@@ -19,6 +19,8 @@ import {
   IsValidDogecoinUri,
   IsValidEthereumAddress,
   IsValidEthereumUri,
+  IsValidMaticUri,
+  IsValidMaticAddress,
   IsValidImportPrivateKey,
   IsValidJoinCode,
   IsValidLitecoinAddress,
@@ -73,13 +75,13 @@ export const incomingData =
       wallet?: Wallet;
       context?: string;
       name?: string;
+      email?: string;
       destinationTag?: number;
     },
   ): Effect<Promise<void>> =>
   async dispatch => {
     // wait to close blur
     await sleep(200);
-
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     const chain = opts?.wallet?.credentials?.chain.toLowerCase();
     try {
@@ -89,6 +91,31 @@ export const incomingData =
       // Paypro
       else if (IsValidPayPro(data)) {
         dispatch(goToPayPro(data));
+        // Plain Address (Bitcoin)
+      } else if (IsValidBitcoinAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'btc', chain || 'btc', opts));
+        // Plain Address (Bitcoin Cash)
+      } else if (IsValidBitcoinCashAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'bch', chain || 'bch', opts));
+        // Address (Ethereum)
+      } else if (IsValidEthereumAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts));
+        // Address (Matic)
+      } else if (IsValidMaticAddress(data)) {
+        dispatch(
+          handlePlainAddress(data, coin || 'matic', chain || 'matic', opts),
+        );
+        // Address (Ripple)
+      } else if (IsValidRippleAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'xrp', chain || 'xrp', opts));
+        // Plain Address (Doge)
+      } else if (IsValidDogecoinAddress(data)) {
+        dispatch(
+          handlePlainAddress(data, coin || 'doge', chain || 'doge', opts),
+        );
+        // Plain Address (Litecoin)
+      } else if (IsValidLitecoinAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'ltc', chain || 'ltc', opts));
         // Bitcoin  URI
       } else if (IsValidBitcoinUri(data)) {
         dispatch(handleBitcoinUri(data, opts?.wallet));
@@ -101,6 +128,9 @@ export const incomingData =
         // Ethereum URI
       } else if (IsValidEthereumUri(data)) {
         dispatch(handleEthereumUri(data, opts?.wallet));
+        // Matic URI
+      } else if (IsValidMaticUri(data)) {
+        dispatch(handleMaticUri(data, opts?.wallet));
         // Ripple URI
       } else if (IsValidRippleUri(data)) {
         dispatch(handleRippleUri(data, opts?.wallet));
@@ -122,26 +152,6 @@ export const incomingData =
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
         dispatch(handleBitPayUri(data, opts?.wallet));
-        // Plain Address (Bitcoin)
-      } else if (IsValidBitcoinAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'btc', chain || 'btc', opts));
-        // Plain Address (Bitcoin Cash)
-      } else if (IsValidBitcoinCashAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'bch', chain || 'bch', opts));
-        // Address (Ethereum)
-      } else if (IsValidEthereumAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts));
-        // Address (Ripple)
-      } else if (IsValidRippleAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'xrp', chain || 'xrp', opts));
-        // Plain Address (Doge)
-      } else if (IsValidDogecoinAddress(data)) {
-        dispatch(
-          handlePlainAddress(data, coin || 'doge', chain || 'doge', opts),
-        );
-        // Plain Address (Litecoin)
-      } else if (IsValidLitecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'ltc', chain || 'ltc', opts));
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
         goToImport(data);
@@ -395,7 +405,9 @@ const goToConfirm =
     recipient: {
       type: string;
       address: string;
+      email?: string;
       currency: string;
+      chain: string;
       destinationTag?: number;
     };
     amount: number;
@@ -509,8 +521,10 @@ export const goToAmount =
     chain: string;
     recipient: {
       type: string;
+      email?: string;
       address: string;
       currency: string;
+      chain: string;
       network?: Network;
       destinationTag?: number;
     };
@@ -599,18 +613,20 @@ const handleBitPayUri =
       const message = params.get('message') || undefined;
       let feePerKb;
       const coin = params.get('coin')!;
+      const _chain = params.get('chain')!;
 
       if (params.get('gasPrice')) {
         feePerKb = Number(params.get('gasPrice'));
       }
-      const recipient = {
+      const chain = _chain || wallet!.chain;
+      let recipient = {
         type: 'address',
         currency: coin,
+        chain,
         address,
       };
 
       if (!params.get('amount')) {
-        const chain = wallet!.chain;
         dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
       } else {
         const amount = Number(params.get('amount'));
@@ -638,6 +654,7 @@ const handleBitcoinUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -646,7 +663,9 @@ const handleBitcoinUri =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(
+        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+      );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -669,6 +688,7 @@ const handleBitcoinCashUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -677,7 +697,9 @@ const handleBitcoinCashUri =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(
+        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+      );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -722,6 +744,7 @@ const handleBitcoinCashUriLegacyAddress =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -730,7 +753,9 @@ const handleBitcoinCashUriLegacyAddress =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(
+        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+      );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -751,6 +776,7 @@ const handleEthereumUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
     };
     if (!value.exec(data)) {
@@ -758,7 +784,44 @@ const handleEthereumUri =
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, Number(parsedAmount))),
+        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
+      );
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          opts: {feePerKb},
+        }),
+      );
+    }
+  };
+
+const handleMaticUri =
+  (data: string, wallet?: Wallet): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: Matic URI'));
+    const coin = 'matic';
+    const chain = 'matic';
+    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
+    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    let feePerKb;
+    if (gasPrice.exec(data)) {
+      feePerKb = Number(gasPrice.exec(data)![1]);
+    }
+    const address = ExtractBitPayUriAddress(data);
+    const recipient = {
+      type: 'address',
+      currency: coin,
+      chain,
+      address,
+    };
+    if (!value.exec(data)) {
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+    } else {
+      const parsedAmount = value.exec(data)![1];
+      const amount = Number(
+        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
       );
       dispatch(
         goToConfirm({
@@ -788,6 +851,7 @@ const handleRippleUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       destinationTag: Number(destinationTag),
     };
@@ -819,6 +883,7 @@ const handleDogecoinUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -828,7 +893,9 @@ const handleDogecoinUri =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(
+        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+      );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -846,6 +913,7 @@ const handleLitecoinUri =
     const recipient = {
       type: 'address',
       currency: coin,
+      chain,
       address,
       network: address && GetAddressNetwork(address, coin),
     };
@@ -854,7 +922,9 @@ const handleLitecoinUri =
     } else if (!parsed.amount) {
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
-      const amount = Number(dispatch(FormatAmount(coin, chain, parsed.amount)));
+      const amount = Number(
+        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+      );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
@@ -1000,6 +1070,7 @@ const handlePlainAddress =
       wallet?: Wallet;
       context?: string;
       name?: string;
+      email?: string;
       destinationTag?: number;
     },
   ): Effect<void> =>
@@ -1011,7 +1082,9 @@ const handlePlainAddress =
     const recipient = {
       type: opts?.context || 'address',
       name: opts?.name,
+      email: opts?.email,
       currency: coin,
+      chain,
       address,
       network,
       destinationTag: opts?.destinationTag,
@@ -1054,10 +1127,17 @@ const goToJoinWallet =
       });
     } else {
       navigationRef.navigate('Wallet', {
-        screen: 'KeyGlobalSelect',
+        screen: WalletScreens.KEY_GLOBAL_SELECT,
         params: {
-          context: 'join',
-          invitationCode: data,
+          onKeySelect: (selectedKey: Key) => {
+            navigationRef.navigate('Wallet', {
+              screen: WalletScreens.JOIN_MULTISIG,
+              params: {
+                key: selectedKey,
+                invitationCode: data,
+              },
+            });
+          },
         },
       });
     }
