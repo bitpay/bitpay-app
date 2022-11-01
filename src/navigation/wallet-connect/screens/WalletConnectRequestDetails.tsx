@@ -204,7 +204,7 @@ const WalletConnectRequestDetails = () => {
       screen: 'WalletConnectHome',
       params: {
         peerId,
-        wallet: _wallet,
+        wallet: _wallet || wallet,
       },
     });
   };
