@@ -394,7 +394,8 @@ const TransactionProposalDetails = () => {
           {txs &&
           !txs.removed &&
           txs.pendingForUs &&
-          !txs.multisigContractAddress ? (
+          !txs.multisigContractAddress &&
+          wallet.credentials.n > 1 ? (
             <Button
               onPress={rejectPaymentProposal}
               buttonType={'link'}

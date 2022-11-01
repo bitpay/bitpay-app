@@ -446,20 +446,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         copayerId: fullWalletObj.credentials.copayerId,
       });
 
-      if (fullWalletObj.credentials.n > 1) {
-        if ((!action || action.type === 'failed') && txp.status === 'pending') {
-          txpsPending.push(txp);
-        }
-
-        if (action && txp.status === 'accepted') {
-          txpsPending.push(txp);
-        }
-
+      const setPendingTx = (_txp: TransactionProposal) => {
+        fullWalletObj.credentials.n > 1
+          ? txpsPending.push(_txp)
+          : txpsUnsent.push(_txp);
         setNeedActionPendingTxps(txpsPending);
-        // For unsent transactions
-      } else if (action && txp.status === 'accepted') {
-        txpsUnsent.push(txp);
         setNeedActionUnsentTxps(txpsUnsent);
+      };
+      if ((!action || action.type === 'failed') && txp.status === 'pending') {
+        setPendingTx(txp);
+      }
+      // unsent transactions
+      if (action && txp.status === 'accepted') {
+        setPendingTx(txp);
       }
     });
   };
@@ -1067,11 +1066,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         ? t('Pending Proposals')
                         : t('Unsent Transactions')}
                     </H5>
-                    {fullWalletObj.credentials.n > 1 ? (
-                      <ProposalBadgeContainer onPress={onPressTxpBadge}>
-                        <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-                      </ProposalBadgeContainer>
-                    ) : null}
+                    <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                      <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                    </ProposalBadgeContainer>
                   </TransactionSectionHeaderContainer>
                   {fullWalletObj.credentials.n > 1 ? (
                     <FlatList

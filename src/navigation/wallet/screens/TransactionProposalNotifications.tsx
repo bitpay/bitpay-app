@@ -146,7 +146,7 @@ const TransactionProposalNotifications = () => {
 
   let pendingTxps: TransactionProposal[] = [];
   _.each(wallets, x => {
-    if (x.pendingTxps.length > 0 && x.credentials.n > 1) {
+    if (x.pendingTxps.length > 0) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
@@ -164,6 +164,7 @@ const TransactionProposalNotifications = () => {
   }, [navigation, t]);
 
   const setTxpsByStatus = (txps: TransactionProposal[]): void => {
+    let txpsUnsent: TransactionProposal[] = [];
     let txpsPending: TransactionProposal[] = [];
     let txpsAccepted: TransactionProposal[] = [];
     let txpsRejected: TransactionProposal[] = [];
@@ -183,7 +184,9 @@ const TransactionProposalNotifications = () => {
         txp.pendingForUs = true;
       }
 
-      if (action && action.type === 'accept') {
+      if (txp.requiredSignatures === 1) {
+        !txp.payProUrl ? txpsUnsent.push(txp) : txpsRejected.push(txp);
+      } else if (action && action.type === 'accept') {
         txp.statusForUs = 'accepted';
         txpsAccepted.push(txp);
       } else if (action && action.type === 'reject') {
@@ -194,7 +197,7 @@ const TransactionProposalNotifications = () => {
         txpsPending.push(txp);
       }
     });
-    setAllTxpsByWallet({txpsPending, txpsAccepted, txpsRejected});
+    setAllTxpsByWallet({txpsUnsent, txpsPending, txpsAccepted, txpsRejected});
   };
 
   const getTxpToBeSigned = (
@@ -240,15 +243,24 @@ const TransactionProposalNotifications = () => {
   };
 
   const setAllTxpsByWallet = ({
+    txpsUnsent,
     txpsPending,
     txpsAccepted,
     txpsRejected,
   }: {
+    txpsUnsent: TransactionProposal[];
     txpsPending: TransactionProposal[];
     txpsAccepted: TransactionProposal[];
     txpsRejected: TransactionProposal[];
   }): void => {
     let _allTxps = [];
+    if (txpsUnsent.length > 0) {
+      _allTxps.push({
+        title: t('Unsent Transactions'),
+        type: 'pending',
+        data: groupByWallets(txpsUnsent),
+      });
+    }
     if (txpsPending.length > 0) {
       _allTxps.push({
         title: t('Payment Proposal'),
@@ -377,6 +389,7 @@ const TransactionProposalNotifications = () => {
         img,
         currencyAbbreviation,
         currencyName,
+        keyId,
         credentials: {walletName, m, n, walletId: _walletId},
       } = fullWalletObj;
       return (
@@ -394,6 +407,7 @@ const TransactionProposalNotifications = () => {
               <ListItemSubText>
                 {currencyAbbreviation.toUpperCase()}{' '}
                 {n > 1 ? `- Multisig ${m}/${n}` : null}
+                {keyId === 'readonly' ? '- Read Only' : null}
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 ? (
