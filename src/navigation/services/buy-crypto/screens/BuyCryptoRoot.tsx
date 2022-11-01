@@ -346,8 +346,8 @@ const BuyCryptoRoot: React.FC<
         fiatAmount: amount,
         fiatCurrency,
         paymentMethod: selectedPaymentMethod.method,
-        coin: selectedWallet!.currencyAbbreviation,
-        chain: selectedWallet!.chain,
+        coin: selectedWallet!.currencyAbbreviation.toLowerCase(),
+        chain: selectedWallet!.chain?.toLowerCase(),
       }),
     );
 

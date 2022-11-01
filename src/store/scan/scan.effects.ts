@@ -966,7 +966,8 @@ const handleSimplexUri =
         exchange: 'simplex',
         fiatAmount: order?.fiat_total_amount || '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin || '',
+        coin: order?.coin?.toLowerCase() || '',
+        chain: order?.chain?.toLowerCase() || '',
       }),
     );
 
@@ -1005,6 +1006,7 @@ const handleWyreUri =
 
     const walletId = getParameterByName('walletId', res);
     const destCurrency = getParameterByName('destCurrency', res);
+    const destChain = getParameterByName('destChain', res);
     const sourceCurrency = getParameterByName('sourceCurrency', res);
     const sourceAmount = getParameterByName('sourceAmount', res);
 
@@ -1016,7 +1018,7 @@ const handleWyreUri =
       walletId,
       dest: getParameterByName('dest', res),
       destAmount: getParameterByName('destAmount', res),
-      destChain: getParameterByName('destChain', res),
+      destChain,
       destCurrency,
       purchaseAmount: getParameterByName('purchaseAmount', res),
       sourceAmount,
@@ -1040,7 +1042,8 @@ const handleWyreUri =
         exchange: 'wyre',
         fiatAmount: sourceAmount || '',
         fiatCurrency: sourceCurrency || '',
-        coin: destCurrency || '',
+        coin: destCurrency?.toLowerCase() || '',
+        chain: destChain?.toLowerCase() || '',
       }),
     );
 
