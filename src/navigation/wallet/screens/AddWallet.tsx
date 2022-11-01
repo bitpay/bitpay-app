@@ -277,38 +277,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     });
   }, [navigation, t]);
 
-  const addLinkedWallet = async () => {
+  const addAssociatedWallet = async () => {
     try {
-      let password: string | undefined;
-
-      if (key.isPrivKeyEncrypted) {
-        password = await dispatch(getDecryptPassword(key));
-      }
-      const currencyOpts = SupportedEvmCurrencyOptions.find(
-        currencyOpts => currencyOpts.currencyAbbreviation === chain,
-      );
-
-      dispatch(
-        startOnGoingProcessModal(t(OnGoingProcessMessages.ADDING_WALLET)),
-      );
-
-      const _associatedWallet = await dispatch(
-        addWallet({
-          key,
-          currency: {
-            chain,
-            currencyAbbreviation: currencyOpts?.currencyAbbreviation!,
-            isToken: false,
-          },
-          options: {
-            password,
-            network: isTestnet ? Network.testnet : network,
-            useNativeSegwit,
-            singleAddress,
-            walletName: currencyOpts?.currencyName,
-          },
-        }),
-      );
+      const _associatedWallet = await _addWallet();
       const UIFormattedWallet = buildUIFormattedWallet(
         _associatedWallet,
         defaultAltCurrency.isoCode,
@@ -319,13 +290,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       _setEvmWallets(chain);
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
-      if (err.message === 'invalid password') {
-        dispatch(showBottomNotificationModal(WrongPasswordError()));
-      } else {
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
-        showErrorModal(err.message);
-      }
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 
@@ -335,14 +300,14 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       showBottomNotificationModal({
         type: 'info',
         title: t('Missing wallet'),
-        message: DESCRIPTIONS[chain],
+        message: t(DESCRIPTIONS[chain]),
         actions: [
           {
             primary: true,
             action: async () => {
               dispatch(dismissBottomNotificationModal());
               await sleep(500);
-              addLinkedWallet();
+              addAssociatedWallet();
             },
             text: t('Create Wallet'),
           },
@@ -397,6 +362,85 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     formState: {errors},
   } = useForm<{walletName: string}>({resolver: yupResolver(schema)});
 
+  const _addWallet = async (
+    _associatedWallet?: Wallet,
+    walletName?: string,
+  ): Promise<Wallet> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let password, _currencyAbbreviation: string | undefined;
+        if (key.isPrivKeyEncrypted) {
+          password = await dispatch(getDecryptPassword(key));
+        }
+
+        if (_associatedWallet) {
+          _currencyAbbreviation = currencyAbbreviation!;
+          navigation.popToTop();
+          if (withinReceiveSettings) {
+            navigation.pop();
+          }
+        } else {
+          _currencyAbbreviation = SupportedEvmCurrencyOptions.find(
+            currencyOpts => currencyOpts.currencyAbbreviation === chain,
+          )?.currencyAbbreviation!;
+        }
+
+        dispatch(
+          logSegmentEvent('track', 'Created Basic Wallet', {
+            coin: _currencyAbbreviation.toLowerCase(),
+            isErc20Token: !!isToken,
+          }),
+        );
+        dispatch(
+          startOnGoingProcessModal(t(OnGoingProcessMessages.ADDING_WALLET)),
+        );
+        // adds wallet and binds to key obj - creates eth wallet if needed
+        const wallet = await dispatch(
+          addWallet({
+            key,
+            associatedWallet: _associatedWallet,
+            currency: {
+              chain,
+              currencyAbbreviation: _currencyAbbreviation,
+              isToken: _associatedWallet ? isToken! : false,
+            },
+            options: {
+              password,
+              network: isTestnet ? Network.testnet : network,
+              useNativeSegwit,
+              singleAddress,
+              walletName: walletName === currencyName ? undefined : walletName,
+            },
+          }),
+        );
+
+        if (!wallet.receiveAddress) {
+          const walletAddress = (await dispatch<any>(
+            createWalletAddress({wallet, newAddress: true}),
+          )) as string;
+          dispatch(LogActions.info(`new address generated: ${walletAddress}`));
+        }
+
+        // new wallet might have funds
+        await dispatch(startGetRates({}));
+        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        dispatch(updatePortfolioBalance());
+
+        dispatch(dismissOnGoingProcessModal());
+        resolve(wallet);
+      } catch (err: any) {
+        if (err.message === 'invalid password') {
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        } else {
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          showErrorModal(err.message);
+          reject(err);
+        }
+      }
+    });
+  };
+
   const add = handleSubmit(async ({walletName}) => {
     try {
       const currency = currencyAbbreviation!.toLowerCase();
@@ -440,57 +484,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         }
       }
 
-      let password: string | undefined;
-
-      if (key.isPrivKeyEncrypted) {
-        password = await dispatch(getDecryptPassword(key));
-      }
-
-      navigation.popToTop();
-      if (withinReceiveSettings) {
-        navigation.pop();
-      }
-
-      await dispatch(
-        startOnGoingProcessModal(
-          // t('Adding Wallet')
-          t(OnGoingProcessMessages.ADDING_WALLET),
-        ),
-      );
-
-      dispatch(
-        logSegmentEvent('track', 'Created Basic Wallet', {
-          coin: currency,
-          isErc20Token: !!isToken,
-        }),
-      );
-
-      // adds wallet and binds to key obj - creates eth wallet if needed
-      const wallet = await dispatch(
-        addWallet({
-          key,
-          associatedWallet: _associatedWallet,
-          currency: {
-            chain,
-            currencyAbbreviation: currencyAbbreviation!,
-            isToken: isToken!,
-          },
-          options: {
-            password,
-            network: isTestnet ? Network.testnet : network,
-            useNativeSegwit,
-            singleAddress,
-            walletName: walletName === currencyName ? undefined : walletName,
-          },
-        }),
-      );
-
-      if (!wallet.receiveAddress) {
-        const walletAddress = (await dispatch<any>(
-          createWalletAddress({wallet, newAddress: true}),
-        )) as string;
-        dispatch(LogActions.info(`new address generated: ${walletAddress}`));
-      }
+      const wallet = await _addWallet(_associatedWallet, walletName);
 
       if (!withinReceiveSettings) {
         navigation.navigate('WalletDetails', {
@@ -499,21 +493,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           skipInitializeHistory: false, // new wallet might have transactions
         });
       }
-
-      // new wallet might have funds
-      await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      dispatch(updatePortfolioBalance());
-
-      dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
-      if (err.message === 'invalid password') {
-        dispatch(showBottomNotificationModal(WrongPasswordError()));
-      } else {
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
-        showErrorModal(err.message);
-      }
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   });
 
@@ -581,14 +562,14 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       }
 
       setCustomTokenAddress(tokenAddress);
-
-      const opts = {
-        tokenAddress,
-      };
       const fullWalletObj = key.wallets.find(
         ({id}) => id === associatedWallet?.id,
       )!;
       const {network, currencyAbbreviation, chain} = fullWalletObj;
+      const opts = {
+        tokenAddress,
+        chain,
+      };
       const addrData = GetCoinAndNetwork(tokenAddress, network, chain);
       const isValid =
         currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
@@ -867,7 +848,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
         <ButtonContainer>
           <Button
-            disabled={!currencyAbbreviation || !currencyName}
+            disabled={
+              !currencyAbbreviation || !currencyName || !associatedWallet
+            }
             onPress={add}
             buttonStyle={'primary'}>
             {t('Add ') +
