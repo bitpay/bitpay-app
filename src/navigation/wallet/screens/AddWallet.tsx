@@ -269,8 +269,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
             {isCustomToken
               ? t('Add Custom Token')
               : isToken
-              ? t('Add Token', {currencyAbbreviation})
-              : t('AddWallet', {currencyAbbreviation})}
+              ? t('Add Token', {
+                  currencyAbbreviation: currencyAbbreviation?.toUpperCase(),
+                })
+              : t('AddWallet', {
+                  currencyAbbreviation: currencyAbbreviation?.toUpperCase(),
+                })}
           </HeaderTitle>
         );
       },
@@ -325,6 +329,13 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   };
 
   const _setEvmWallets = (chain: string) => {
+    if (!SUPPORTED_EVM_COINS.includes(chain)) {
+      return;
+    }
+    if (isCustomToken) {
+      setCustomTokenAddress(undefined);
+      setCurrencyName(undefined);
+    }
     // find all evm wallets for key
     const _evmWallets = key.wallets.filter(
       wallet =>
@@ -849,7 +860,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         <ButtonContainer>
           <Button
             disabled={
-              !currencyAbbreviation || !currencyName || !associatedWallet
+              !currencyAbbreviation ||
+              !currencyName ||
+              (!associatedWallet && isToken)
             }
             onPress={add}
             buttonStyle={'primary'}>
