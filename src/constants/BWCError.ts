@@ -92,11 +92,17 @@ const _getErrorMessage = (err: Error) => {
       return t('Insufficient funds for fee');
     case 'INSUFFICIENT_ETH_FEE':
       return t('Your linked ETH wallet does not have enough ETH for fee');
+    case 'INSUFFICIENT_MATIC_FEE':
+      return t('Your linked POLYGON wallet does not have enough ETH for fee');
     case 'LOCKED_FUNDS':
       return t('Funds are locked by pending spend proposals');
     case 'LOCKED_ETH_FEE':
       return t(
         'Your ETH linked wallet funds are locked by pending spend proposals',
+      );
+    case 'LOCKED_MATIC_FEE':
+      return t(
+        'Your POLYGON linked wallet funds are locked by pending spend proposals',
       );
     case 'COPAYER_VOTED':
       return t('Copayer already voted on this spend proposal');

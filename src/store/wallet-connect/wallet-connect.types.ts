@@ -20,6 +20,7 @@ export enum WalletConnectActionTypes {
   CALL_APPROVAL = 'WALLET_CONNECT/CALL_APPROVAL',
   CALL_REJECTION = 'WALLET_CONNECT/CALL_REJECTION',
   HANDLE_REQUEST_USER_APPROVAL = 'WALLET_CONNECT/HANDLE_REQUEST_USER_APPROVAL',
+  UPDATE_STORE = 'WALLET_CONNECT/UPDATE_STORE',
 }
 
 interface InitRequest {
@@ -106,6 +107,14 @@ interface HandleRequestUserApproval {
   };
 }
 
+interface UpdateStore {
+  type: typeof WalletConnectActionTypes.UPDATE_STORE;
+  payload: {
+    sessions: IWCSession[];
+    requests: IWCRequest[];
+  };
+}
+
 export type WalletConnectActionType =
   | InitRequest
   | SuccessInitRequest
@@ -119,4 +128,5 @@ export type WalletConnectActionType =
   | ApproveCallRequest
   | RejectCallRequest
   | KillSession
-  | SessionDisconnected;
+  | SessionDisconnected
+  | UpdateStore;

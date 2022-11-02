@@ -23,6 +23,8 @@ import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
 import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
+import axios from 'axios';
+import {BASE_BITPAY_URLS} from '../../constants/config';
 
 interface StartLoginParams {
   email: string;
@@ -582,11 +584,18 @@ export const startFetchReceivingAddresses =
     (async () => {
       try {
         const {APP, BITPAY_ID} = getState();
-        const accountAddresses: ReceivingAddress[] = await BitPayIdApi.apiCall(
-          BITPAY_ID.apiToken[APP.network],
-          params ? 'findWalletsByEmail' : 'findWallets',
-          params,
-        );
+        const accountAddresses: ReceivingAddress[] = BITPAY_ID.user[APP.network]
+          ? await BitPayIdApi.apiCall(
+              BITPAY_ID.apiToken[APP.network],
+              params ? 'findWalletsByEmail' : 'findWallets',
+              params,
+            )
+          : await axios
+              .post(`${BASE_BITPAY_URLS[APP.network]}/api/v2`, {
+                method: 'findWalletsByEmail',
+                params: JSON.stringify(params),
+              })
+              .then(res => res.data?.data || res.data);
         const receivingAddresses = accountAddresses
           .filter(address => address.usedFor?.payToEmail)
           .map(address => {

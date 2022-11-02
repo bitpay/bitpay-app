@@ -261,7 +261,14 @@ const offersDefault: {
     key: 'simplex',
     amountReceiving: '0',
     showOffer: true,
-    logo: <SimplexLogo width={70} height={20} />,
+    logo: (
+      <SimplexLogo
+        widthIcon={25}
+        heightIcon={25}
+        widthLogo={60}
+        heightLogo={30}
+      />
+    ),
     expanded: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,

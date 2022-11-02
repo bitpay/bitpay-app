@@ -68,15 +68,11 @@ const WalletConnectConnections = () => {
   );
 
   useEffect(() => {
-    if (!Object.keys(connectors).length) {
-      navigation.goBack();
-    } else {
-      const _groupedConnectors = _.mapValues(
-        _.groupBy(connectors, connector => connector.customData.keyId),
-        connector => _.groupBy(connector, c => c.customData.walletId),
-      );
-      setGroupedConnectors(_groupedConnectors);
-    }
+    const _groupedConnectors = _.mapValues(
+      _.groupBy(connectors, connector => connector.customData.keyId),
+      connector => _.groupBy(connector, c => c.customData.walletId),
+    );
+    setGroupedConnectors(_groupedConnectors);
   }, [connectors, navigation, setGroupedConnectors]);
 
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -103,38 +99,40 @@ const WalletConnectConnections = () => {
     <WalletConnectContainer>
       <ScrollView>
         <HeaderTitle>{t('Connections')}</HeaderTitle>
-        {Object.entries(groupedConnectors).map(([keyId, connectorsByKey]) => {
-          return allKeys[keyId] ? (
-            <KeyConnectionsContainer key={keyId}>
-              <KeyTitleContainer>
-                <KeyIcon />
-                <KeyTitleText>
-                  {allKeys[keyId]?.keyName || 'My Key'}
-                </KeyTitleText>
-              </KeyTitleContainer>
-              <Hr />
-              {Object.entries(connectorsByKey as any).map(
-                ([walletId, _connectors]) => {
-                  const wallet = getWallet(
-                    (_connectors as IWCConnector[])[0].customData,
-                  );
-                  return wallet ? (
-                    <Connections
-                      key={walletId}
-                      connectors={_connectors as IWCConnector[]}
-                      wallet={wallet}
-                    />
-                  ) : null;
-                },
-              )}
-            </KeyConnectionsContainer>
-          ) : (
-            <EmptyListContainer>
-              <H5>{t("It's a ghost town in here")}</H5>
-              <GhostSvg style={{marginTop: 20}} />
-            </EmptyListContainer>
-          );
-        })}
+        {Object.keys(groupedConnectors).length ? (
+          Object.entries(groupedConnectors).map(([keyId, connectorsByKey]) => {
+            return allKeys[keyId] ? (
+              <KeyConnectionsContainer key={keyId}>
+                <KeyTitleContainer>
+                  <KeyIcon />
+                  <KeyTitleText>
+                    {allKeys[keyId]?.keyName || 'My Key'}
+                  </KeyTitleText>
+                </KeyTitleContainer>
+                <Hr />
+                {Object.entries(connectorsByKey as any).map(
+                  ([walletId, _connectors]) => {
+                    const wallet = getWallet(
+                      (_connectors as IWCConnector[])[0].customData,
+                    );
+                    return wallet ? (
+                      <Connections
+                        key={walletId}
+                        connectors={_connectors as IWCConnector[]}
+                        wallet={wallet}
+                      />
+                    ) : null;
+                  },
+                )}
+              </KeyConnectionsContainer>
+            ) : null;
+          })
+        ) : (
+          <EmptyListContainer>
+            <H5>{t("It's a ghost town in here")}</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
         <WalletSelector
           isVisible={walletSelectorModalVisible}
           dappUri={''}

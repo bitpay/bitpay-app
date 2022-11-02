@@ -146,7 +146,7 @@ const TransactionProposalNotifications = () => {
 
   let pendingTxps: TransactionProposal[] = [];
   _.each(wallets, x => {
-    if (x.pendingTxps.length > 0) {
+    if (x.pendingTxps.length > 0 && x.credentials.n > 1) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
@@ -392,7 +392,8 @@ const TransactionProposalNotifications = () => {
                 </H5>
               </Row>
               <ListItemSubText>
-                {currencyAbbreviation.toUpperCase()} {`- Multisig ${m}/${n}`}
+                {currencyAbbreviation.toUpperCase()}{' '}
+                {n > 1 ? `- Multisig ${m}/${n}` : null}
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 ? (

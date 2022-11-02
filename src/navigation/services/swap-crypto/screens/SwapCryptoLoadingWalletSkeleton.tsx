@@ -15,8 +15,7 @@ const SwapCryptoLoadingWalletSkeleton = () => {
         <SkeletonPlaceholder.Item
           flexDirection={'row'}
           alignItems={'center'}
-          justifyContent={'flex-start'}
-        >
+          justifyContent={'flex-start'}>
           <SkeletonPlaceholder.Item
             width={20}
             height={20}

@@ -36,6 +36,7 @@ import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
+import {createWalletAddress} from '../address/address';
 
 /*
  * post broadcasting of payment
@@ -608,8 +609,19 @@ const updateWalletStatus =
         balance: cachedBalance,
         credentials: {token, multisigEthInfo},
         pendingTxps: cachedPendingTxps,
+        receiveAddress,
       } = wallet;
 
+      if (!receiveAddress) {
+        const walletAddress = (await dispatch<any>(
+          createWalletAddress({wallet, newAddress: true}),
+        )) as string;
+        dispatch(
+          LogActions.info(
+            `new address generated [updateWalletStatus]: ${walletAddress}`,
+          ),
+        );
+      }
       wallet.getStatus(
         {
           twoStep: true,

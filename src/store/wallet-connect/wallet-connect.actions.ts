@@ -101,3 +101,11 @@ export const handleRequestUserApproval = (
   type: WalletConnectActionTypes.HANDLE_REQUEST_USER_APPROVAL,
   payload: {approved, peerId, response},
 });
+
+export const updateStore = (
+  sessions: IWCSession[],
+  requests: IWCRequest[],
+): WalletConnectActionType => ({
+  type: WalletConnectActionTypes.UPDATE_STORE,
+  payload: {sessions, requests},
+});

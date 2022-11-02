@@ -314,7 +314,7 @@ const NetworkFeePolicy = () => {
                 <FeeOptions
                   feeOptions={maticFeeOptions}
                   currencyAbbreviation={'matic'}
-                  currencyName={'Matic'}
+                  currencyName={'Polygon'}
                 />
               ) : null}
             </View>

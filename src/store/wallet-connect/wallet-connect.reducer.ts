@@ -73,6 +73,12 @@ export const walletConnectReducer = (
         ...state,
         requests: action.payload.requests,
       };
+    case WalletConnectActionTypes.UPDATE_STORE:
+      return {
+        ...state,
+        sessions: action.payload.sessions,
+        requests: action.payload.requests,
+      };
     default:
       return state;
   }
