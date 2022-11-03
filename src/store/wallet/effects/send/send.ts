@@ -39,12 +39,7 @@ import {
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
-import {
-  GetPayProDetails,
-  HandlePayPro,
-  PayProOptions,
-  GetInvoiceCurrency,
-} from '../paypro/paypro';
+import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
   checkingBiometricForSending,
   dismissBottomNotificationModal,
@@ -71,7 +66,7 @@ import {
 } from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
-import {getCurrencyCodeFromCoinAndChain} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
+import {getCoinAndChainFromCurrencyCode} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -349,7 +344,10 @@ export const getInvoiceEffectiveRate =
     return (
       precision &&
       invoice.price /
-        (invoice.paymentSubtotals[coin.toUpperCase()] / precision.unitToSatoshi)
+        (invoice.paymentSubtotals[
+          invoice.buyerProvidedInfo!.selectedTransactionCurrency!
+        ] /
+          precision.unitToSatoshi)
     );
   };
 
@@ -377,24 +375,29 @@ export const buildTxDetails =
     feeLevel?: string;
   }): Effect<TxDetails> =>
   dispatch => {
-    const {coin, fee, gasPrice, gasLimit, nonce, destinationTag, chain} =
-      proposal || {
-        coin: invoice!.buyerProvidedInfo!.selectedTransactionCurrency!.toLowerCase(),
-        chain:
-          invoice!.buyerProvidedInfo!.selectedTransactionCurrency!.toLowerCase(), // TODO POLYGON
-        fee: 0,
-      };
-    const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
-      GetInvoiceCurrency(coin).toLowerCase(),
-      chain,
-    );
-    let {amount} = proposal || {
-      amount: invoice!.paymentTotals[invoiceCurrency],
-    };
+    const {gasPrice, gasLimit, nonce, destinationTag} = proposal || {};
+    const invoiceCurrency =
+      invoice?.buyerProvidedInfo!.selectedTransactionCurrency;
+    let {amount, coin, chain, fee} = proposal || {};
+    if (invoiceCurrency) {
+      amount = invoice.paymentTotals[invoiceCurrency] || 0;
+      const coinAndChain = getCoinAndChainFromCurrencyCode(
+        invoiceCurrency.toLowerCase(),
+      );
+      coin = coinAndChain.coin;
+      chain = coinAndChain.chain;
+      fee = invoice.minerFees[invoiceCurrency].totalFee || 0;
+    }
+
+    if (!coin || !chain) {
+      throw new Error('Invalid coin or chain');
+    }
+
     amount = Number(amount); // Support BN (use number instead string only for view)
     const effectiveRate =
-      invoice &&
-      dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain));
+      (invoiceCurrency &&
+        dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain))) ||
+      undefined;
     const opts = {
       effectiveRate,
       defaultAltCurrencyIsoCode,
@@ -403,12 +406,13 @@ export const buildTxDetails =
       chain,
     };
     const rateStr = getRateStr(opts);
-    const networkCost = invoice?.minerFees[invoiceCurrency]?.totalFee;
+    const networkCost =
+      invoiceCurrency && invoice?.minerFees[invoiceCurrency]?.totalFee;
     const isERC20 = IsERCToken(coin, chain);
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
-    if (context === 'paypro') {
-      amount = invoice!.paymentTotals[invoiceCurrency];
+    if (invoiceCurrency && context === 'paypro') {
+      amount = invoice.paymentTotals[invoiceCurrency];
     } else if (context === 'speedupBtcReceive') {
       amount = amount - fee;
     }

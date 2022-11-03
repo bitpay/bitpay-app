@@ -60,6 +60,7 @@ import {
   GiftCardScreens,
   GiftCardStackParamList,
 } from '../../../../tabs/shop/gift-card/GiftCardStack';
+import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -207,10 +208,15 @@ const Confirm = () => {
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
+    const transactionCurrency = dispatch(
+      getTransactionCurrencyForPayInvoice(
+        selectedCoinbaseAccount.currency.code,
+      ),
+    );
     try {
       const {invoice: newInvoice} = await createGiftCardInvoice({
         clientId: selectedCoinbaseAccount.id,
-        transactionCurrency: selectedCoinbaseAccount.currency.code,
+        transactionCurrency,
       });
       const rates = await dispatch(startGetRates({}));
       const newTxDetails = dispatch(

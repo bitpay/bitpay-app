@@ -46,6 +46,7 @@ import {SupportedCurrencyOptions} from '../../constants/SupportedCurrencyOptions
 import {LogActions} from '../log';
 import {setHomeCarouselConfig} from '../app/app.actions';
 import {logSegmentEvent} from '../app/app.effects';
+import {getCurrencyCodeFromCoinAndChain} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   return error?.errors?.some(err => err.id === 'revoked_token');
@@ -90,6 +91,16 @@ export const coinbaseParseErrorToString = (
     return 'Network Error';
   }
 };
+
+export const getTransactionCurrencyForPayInvoice =
+  (currency: string): Effect<string> =>
+  (dispatch, getState) => {
+    const {COINBASE} = getState();
+    return getCurrencyCodeFromCoinAndChain(
+      currency,
+      COINBASE.blockchainNetwork,
+    );
+  };
 
 export const coinbaseInitialize =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
@@ -512,12 +523,16 @@ export const coinbasePayInvoice =
       return;
     }
 
+    const transactionCurrency = dispatch(
+      getTransactionCurrencyForPayInvoice(currency),
+    );
+
     try {
       dispatch(LogActions.info('coinbasePayInvoice: starting...'));
       dispatch(payInvoicePending());
       await CoinbaseAPI.payInvoice(
         invoiceId,
-        currency,
+        transactionCurrency,
         COINBASE.token[COINBASE_ENV],
         code,
       );
