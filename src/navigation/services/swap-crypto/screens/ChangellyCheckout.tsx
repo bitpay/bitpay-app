@@ -460,6 +460,7 @@ const ChangellyCheckout: React.FC = () => {
       let txp: Partial<TransactionProposal> = {
         toAddress: payinAddress,
         amount: depositSat,
+        chain: wallet.chain,
         outputs,
         message: message,
         excludeUnconfirmedUtxos: true, // Do not use unconfirmed UTXOs
