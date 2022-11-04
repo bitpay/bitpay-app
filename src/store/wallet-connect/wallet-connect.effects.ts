@@ -29,7 +29,10 @@ import {EVM_BLOCKCHAIN_ID, PROTOCOL_NAME} from '../../constants/config';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {addWallet, getDecryptPassword} from '../wallet/effects';
-import {BitpaySupportedEvmCoins} from '../../constants/currencies';
+import {
+  BitpaySupportedEvmCoins,
+  SUPPORTED_EVM_COINS,
+} from '../../constants/currencies';
 import {createWalletAddress} from '../wallet/effects/address/address';
 
 const BWC = BwcProvider.getInstance();
@@ -630,6 +633,42 @@ const addNewLinkedWallet =
           dispatch(showBottomNotificationModal(err && err.message));
         }
         reject(err);
+      }
+    });
+  };
+
+export const walletConnectDecodeMethod =
+  (encodedData: string, wallet: Wallet): Effect<Promise<any>> =>
+  dispatch => {
+    return new Promise(async resolve => {
+      let decodedData;
+      try {
+        dispatch(LogActions.info('[walletConnectDecodeMethod]: starting'));
+        for await (const chain of SUPPORTED_EVM_COINS) {
+          const opts = {
+            chain,
+            data: encodedData,
+          };
+          decodedData = await wallet.decodeMethod(opts);
+          decodedData = {...decodedData, ...{chain}};
+        }
+        dispatch(
+          LogActions.info(
+            '[walletConnectDecodeMethod]: data decoded successfully',
+          ),
+        );
+        resolve(decodedData);
+      } catch (e) {
+        let errorStr;
+        if (e instanceof Error) {
+          errorStr = e.message;
+        } else {
+          errorStr = JSON.stringify(e);
+        }
+        dispatch(
+          LogActions.error(`[walletConnectDecodeMethod] failed: ${errorStr}`),
+        );
+        resolve({});
       }
     });
   };

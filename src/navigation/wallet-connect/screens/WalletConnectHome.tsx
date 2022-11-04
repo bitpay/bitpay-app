@@ -52,6 +52,8 @@ import {
   GetAmTimeAgo,
   WithinPastDay,
 } from '../../../store/wallet/utils/time';
+import {walletConnectDecodeMethod} from '../../../store/wallet-connect/wallet-connect.effects';
+import {RootState} from '../../../store';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -103,21 +105,49 @@ const WalletConnectHome = () => {
     },
   );
   const session: WalletConnect | undefined = wcConnector?.connector;
-  const requests: IWCRequest[] = useAppSelector(({WALLET_CONNECT}) => {
+  const _requests: IWCRequest[] = useAppSelector(({WALLET_CONNECT}) => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
 
+  const [requests, setRequests] = useState<IWCRequest[]>();
+
+  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+
+  const decodeData = async () => {
+    const promises = [];
+    for await (const r of _requests) {
+      const data = r.payload.params[0].data;
+      const decodedData = (await dispatch<any>(
+        walletConnectDecodeMethod(data, wallet),
+      )) as any;
+      promises.push({...r, ...{decodedData}});
+    }
+    const result = await Promise.all(promises);
+    setRequests(result);
+  };
+
+  useEffect(() => {
+    decodeData();
+  }, []);
+
   const goToConfirmView = async (request: IWCRequest) => {
     try {
+      let _wallet;
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
-      dispatch(
-        showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
-
+      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
+      if (
+        request.decodedData &&
+        request.decodedData.chain !== wallet.chain &&
+        wcConnector?.customData.keyId
+      ) {
+        _wallet = allKeys[wcConnector?.customData.keyId].wallets.find(w => {
+          return (
+            w.chain === request.decodedData.chain &&
+            w.credentials.account === wallet.credentials.account
+          );
+        });
+      }
       const {
         to: toAddress,
         from,
@@ -136,7 +166,7 @@ const WalletConnectHome = () => {
           )
         : 0;
       const tx = {
-        wallet,
+        wallet: _wallet || wallet,
         recipient,
         toAddress,
         from,
@@ -157,7 +187,7 @@ const WalletConnectHome = () => {
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConfirm',
         params: {
-          wallet,
+          wallet: _wallet || wallet,
           recipient,
           txp,
           txDetails,
@@ -291,8 +321,8 @@ const WalletConnectHome = () => {
               const {value = '0x0'} = request.payload.params[0];
               const amountStr = dispatch(
                 FormatAmountStr(
-                  currencyAbbreviation,
-                  chain,
+                  request?.decodedData?.chain || currencyAbbreviation,
+                  request?.decodedData?.chain || chain,
                   parseInt(value, 16),
                 ),
               );
@@ -323,7 +353,7 @@ const WalletConnectHome = () => {
                               style={{width: 25, height: 25}}
                             />
                           </IconContainer>
-                          <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
+                          <IconLabel numberOfLines={1} ellipsizeMode={'tail'}>
                             {session.peerMeta.name}
                           </IconLabel>
                         </>
@@ -334,13 +364,19 @@ const WalletConnectHome = () => {
                         <IconLabel>{amountStr}</IconLabel>
                         {request.createdOn &&
                           (WithinPastDay(request.createdOn) ? (
-                            <Smallest style={{marginRight: 12}}>
+                            <Smallest
+                              style={{marginRight: 12}}
+                              numberOfLines={1}
+                              ellipsizeMode={'tail'}>
                               {t('Created ', {
                                 date: GetAmTimeAgo(request.createdOn),
                               })}
                             </Smallest>
                           ) : (
-                            <Smallest style={{marginRight: 12}}>
+                            <Smallest
+                              style={{marginRight: 12}}
+                              numberOfLines={1}
+                              ellipsizeMode={'tail'}>
                               {t('Created on', {
                                 date: GetAmFormatDate(request.createdOn),
                               })}

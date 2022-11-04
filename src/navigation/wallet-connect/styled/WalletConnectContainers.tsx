@@ -29,7 +29,7 @@ export const ItemTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  max-width: 250px;
+  max-width: 40%;
 `;
 
 export const ItemTitleTouchableContainer = styled.TouchableOpacity`
@@ -42,6 +42,7 @@ export const ItemNoteContainer = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
+  max-width: 50%;
 `;
 
 export const ItemNoteTouchableContainer = styled.TouchableOpacity`

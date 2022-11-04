@@ -6,6 +6,7 @@ export interface IWCRequest {
   peerId: string;
   payload: IJsonRpcRequest;
   createdOn?: number;
+  decodedData?: any;
 }
 
 export interface IWCCustomData {
