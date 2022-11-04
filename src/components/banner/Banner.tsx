@@ -13,15 +13,20 @@ import {H7, Link} from '../styled/Text';
 import {ActionContainer, ActiveOpacity, Row} from '../styled/Containers';
 import {TouchableOpacity} from 'react-native';
 
-const BannerContainer = styled.View`
+const BANNER_HEIGHT = 80;
+
+const BannerContainer = styled.View<{height?: number}>`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 10px;
   margin: 15px 0;
   padding: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: ${({height}) => height || BANNER_HEIGHT}px;
 `;
 
 const Description = styled.View`
-  margin-left: 10px;
+  margin: 0 10px;
 `;
 
 const BannerRow = styled(Row)`
@@ -29,16 +34,13 @@ const BannerRow = styled(Row)`
   justify-content: space-between;
 `;
 
-const BannerDescription = styled(H7)`
-  margin-right: 20px;
-`;
-
 interface BannerProps {
   title?: string;
   description?: string;
   type: string;
   link?: {onPress: () => void; text: string};
-  transComponent: JSX.Element;
+  transComponent?: JSX.Element;
+  height?: number;
 }
 
 const getBgColor = (type: string) => {
@@ -59,22 +61,19 @@ const Banner = ({
   type,
   link,
   transComponent,
+  height,
 }: BannerProps) => {
   const bgColor = getBgColor(type);
 
   return (
-    <BannerContainer>
+    <BannerContainer height={height}>
       <BannerRow>
         <Info bgColor={bgColor} />
 
         <Description>
           {title ? <H7 medium={true}>{title}</H7> : null}
-          {description ? (
-            <BannerDescription>{description}</BannerDescription>
-          ) : null}
-          {transComponent ? (
-            <BannerDescription>{transComponent}</BannerDescription>
-          ) : null}
+          {description ? <H7>{description}</H7> : null}
+          {transComponent ? <H7>{transComponent}</H7> : null}
           {link ? (
             <ActionContainer>
               <TouchableOpacity

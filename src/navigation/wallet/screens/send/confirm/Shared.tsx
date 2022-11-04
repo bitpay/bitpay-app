@@ -535,7 +535,11 @@ export const WalletSelector = ({
         <WalletSelectMenuHeaderContainer currency={currency}>
           {currency ? (
             <WalletSelectMenuHeaderIconContainer>
-              <CurrencyIconAndBadge coin={currency} chain={chain} size={30} />
+              <CurrencyIconAndBadge
+                coin={currency}
+                chain={chain || ''}
+                size={30}
+              />
             </WalletSelectMenuHeaderIconContainer>
           ) : null}
           <H4>{t('Select a Wallet')}</H4>
