@@ -1001,9 +1001,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                                 },
                               });
                             },
-                            opts: {
-                              context: 'buyCrypto',
-                            },
+                            context: 'buyCrypto',
                           },
                         });
                       },

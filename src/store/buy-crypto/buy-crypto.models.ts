@@ -1,3 +1,8 @@
+export interface BuyCryptoLimits {
+  min?: number;
+  max?: number;
+}
+
 export interface simplexPaymentData {
   address: string;
   chain: string;
