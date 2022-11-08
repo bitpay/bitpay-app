@@ -67,7 +67,7 @@ export const IsCustomERCToken = (
   currencyAbbreviation: string,
   chain: string,
 ) => {
-  const currency = addTokenChainSuffix(currencyAbbreviation, chain);
+  const currency = getCurrencyAbbreviation(currencyAbbreviation, chain);
   return !BitpaySupportedCurrencies[currency.toLowerCase()];
 };
 
