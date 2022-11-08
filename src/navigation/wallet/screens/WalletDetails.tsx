@@ -78,6 +78,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
+  BuildUiFriendlyList,
   CanSpeedupTx,
   GetTransactionHistory,
   GroupTransactionHistory,
@@ -441,7 +442,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
     const txpsPending: TransactionProposal[] = [];
     const txpsUnsent: TransactionProposal[] = [];
-    pendingTxps.forEach((txp: any) => {
+    const formattedPendingTxps = BuildUiFriendlyList(
+      pendingTxps,
+      currencyAbbreviation,
+      chain,
+      [],
+      {},
+    );
+    formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
         copayerId: fullWalletObj.credentials.copayerId,
       });
