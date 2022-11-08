@@ -499,6 +499,7 @@ const SendTo = () => {
         keyId,
         walletName,
         receiveAddress,
+        chain,
       } = selectedWallet;
 
       let address = receiveAddress;
@@ -523,6 +524,7 @@ const SendTo = () => {
         keyId,
         address,
         currency: credentials.coin,
+        chain,
       };
 
       dispatch(

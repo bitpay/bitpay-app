@@ -33,7 +33,7 @@ const NestedArrowContainer = styled.View`
 export interface WalletRowProps {
   id: string;
   img: string | ((props: any) => ReactElement);
-  badgeImg?: string | ((props: any) => ReactElement);
+  badgeImg?: string | ((props?: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
   chain: string;
