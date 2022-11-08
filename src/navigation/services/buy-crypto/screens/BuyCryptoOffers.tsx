@@ -450,7 +450,8 @@ const BuyCryptoOffers: React.FC = () => {
         reason: reason || 'unknown',
         paymentMethod: paymentMethod.method || '',
         amount: Number(offers.simplex.fiatAmount) || '',
-        coin: coin || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
         fiatCurrency: offers.simplex.fiatCurrency || '',
       }),
     );
@@ -490,7 +491,8 @@ const BuyCryptoOffers: React.FC = () => {
         reason: reason || 'unknown',
         paymentMethod: paymentMethod.method || '',
         amount: Number(offers.wyre.fiatAmount) || '',
-        coin: coin || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
         fiatCurrency: offers.wyre.fiatCurrency || '',
       }),
     );
@@ -684,8 +686,8 @@ const BuyCryptoOffers: React.FC = () => {
             fiatAmount: offers.simplex.fiatAmount,
             fiatCurrency: offers.simplex.fiatCurrency,
             paymentMethod: paymentMethod.method,
-            coin: selectedWallet.currencyAbbreviation,
-            chain: destinationChain,
+            coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+            chain: destinationChain?.toLowerCase(),
           }),
         );
 
@@ -781,8 +783,8 @@ const BuyCryptoOffers: React.FC = () => {
         fiatAmount: offers.wyre.fiatAmount,
         fiatCurrency: offers.wyre.fiatCurrency,
         paymentMethod: paymentMethod.method,
-        coin: selectedWallet.currencyAbbreviation,
-        chain: destinationChain,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
       }),
     );
     dispatch(openUrlWithInAppBrowser(paymentUrl));
