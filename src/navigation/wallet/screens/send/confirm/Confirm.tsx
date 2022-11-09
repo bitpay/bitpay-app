@@ -33,6 +33,7 @@ import {
   ConfirmContainer,
   ConfirmScrollView,
   DetailsList,
+  ExchangeRate,
   Fee,
   Header,
   SendingFrom,
@@ -151,8 +152,8 @@ const Confirm = () => {
     total: _total,
     destinationTag: _destinationTag,
     context,
+    rateStr,
   } = txDetails;
-
   const [fee, setFee] = useState(_fee);
   const [total, setTotal] = useState(_total);
   const [subTotal, setSubTotal] = useState(_subTotal);
@@ -425,6 +426,9 @@ const Confirm = () => {
             />
           ) : null}
           <SendingFrom sender={sendingFrom} hr />
+          {rateStr ? (
+            <ExchangeRate description={t('Exchange Rate')} rateStr={rateStr} />
+          ) : null}
           {currencyAbbreviation === 'xrp' ? (
             <>
               <SharedDetailRow

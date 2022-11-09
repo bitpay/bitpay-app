@@ -23,6 +23,7 @@ import {
   formatCryptoAddress,
   formatFiatAmount,
   getCWCChain,
+  getRateByCurrencyName,
   sleep,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
@@ -394,12 +395,14 @@ export const buildTxDetails =
     const effectiveRate =
       invoice &&
       dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain));
-    const rateStr = effectiveRate
-      ? `1 ${coin.toUpperCase()} @ ${formatFiatAmount(
-          parseFloat(effectiveRate.toFixed(2)),
-          defaultAltCurrencyIsoCode,
-        )}`
-      : undefined;
+    const opts = {
+      effectiveRate,
+      defaultAltCurrencyIsoCode,
+      rates,
+      coin,
+      chain,
+    };
+    const rateStr = getRateStr(opts);
     const networkCost = invoice?.minerFees[invoiceCurrency]?.totalFee;
     const isERC20 = IsERCToken(coin, chain);
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
@@ -519,6 +522,25 @@ export const buildTxDetails =
     };
   };
 
+const getRateStr = (opts: {
+  effectiveRate: number | undefined;
+  rates: Rates;
+  defaultAltCurrencyIsoCode: string;
+  coin: string;
+  chain: string;
+}): string | undefined => {
+  const fiatRate = !opts.effectiveRate
+    ? getRateByCurrencyName(
+        opts.rates,
+        opts.coin.toLowerCase(),
+        opts.chain,
+      ).find(r => r.code === opts.defaultAltCurrencyIsoCode)!.rate
+    : opts.effectiveRate;
+  return `1 ${opts.coin.toUpperCase()} @ ${formatFiatAmount(
+    parseFloat(fiatRate.toFixed(2)),
+    opts.defaultAltCurrencyIsoCode,
+  )}`;
+};
 /*
  * txp options object for wallet.createTxProposal
  * */

@@ -44,6 +44,7 @@ import {
   Amount,
   ConfirmContainer,
   DetailsList,
+  ExchangeRate,
   Fee,
   Header,
   SendingFrom,
@@ -108,6 +109,7 @@ const WalletConnectConfirm = () => {
     gasPrice: _gasPrice,
     nonce: _nonce,
     total: _total,
+    rateStr,
   } = txDetails;
 
   const [fee, setFee] = useState(_fee);
@@ -377,6 +379,9 @@ const WalletConnectConfirm = () => {
           />
         ) : null}
         <SendingFrom sender={sendingFrom} hr />
+        {rateStr ? (
+          <ExchangeRate description={t('Exchange Rate')} rateStr={rateStr} />
+        ) : null}
         <Amount description={t('SubTotal')} amount={subTotal} />
         <Amount description={t('Total')} amount={total} />
       </DetailsList>
