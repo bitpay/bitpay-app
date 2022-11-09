@@ -43,7 +43,6 @@ import {
   keyExtractor,
   findContact,
   getBadgeImg,
-  getCurrencyAbbreviation,
 } from '../../../../utils/helper-methods';
 import CurrencySelectionRow, {
   TokenSelectionRow,
