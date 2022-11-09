@@ -1,5 +1,6 @@
 import {
   CoinbaseEnvironment,
+  CoinbaseSupportedNetwork,
   ConfigApiProps,
   CredentialsProps,
 } from './coinbase.types';
@@ -52,3 +53,7 @@ export const COINBASE_INVOICE_URL: string =
 export const COINBASE_ENV: CoinbaseEnvironment = __DEV__
   ? CoinbaseEnvironment.sandbox
   : CoinbaseEnvironment.production;
+export const COINBASE_HOST_NETWORK = {
+  ethereum: CoinbaseSupportedNetwork.ethereum,
+  polygon: CoinbaseSupportedNetwork.polygon,
+};
