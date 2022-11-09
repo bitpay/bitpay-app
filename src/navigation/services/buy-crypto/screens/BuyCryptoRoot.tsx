@@ -33,6 +33,7 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
+import {getMoonpaySupportedCurrencies} from '../utils/moonpay-utils';
 import {getSimplexSupportedCurrencies} from '../utils/simplex-utils';
 import {getWyreSupportedCurrencies} from '../utils/wyre-utils';
 import {
@@ -109,6 +110,7 @@ const BuyCryptoRoot: React.FC<
   );
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
     ...new Set([
+      ...getMoonpaySupportedCurrencies(),
       ...getSimplexSupportedCurrencies(),
       ...getWyreSupportedCurrencies(),
     ]),
@@ -366,12 +368,19 @@ const BuyCryptoRoot: React.FC<
     if (!!selectedWallet && Platform.OS === 'ios') {
       setSelectedPaymentMethod(
         isPaymentMethodSupported(
-          'simplex',
+          'moonpay',
           PaymentMethodsAvailable.applePay,
           selectedWallet.currencyAbbreviation,
           selectedWallet.chain,
           fiatCurrency,
         ) ||
+          isPaymentMethodSupported(
+            'simplex',
+            PaymentMethodsAvailable.applePay,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+          ) ||
           isPaymentMethodSupported(
             'wyre',
             PaymentMethodsAvailable.applePay,
@@ -399,6 +408,13 @@ const BuyCryptoRoot: React.FC<
       return;
     }
     if (
+      isPaymentMethodSupported(
+        'moonpay',
+        selectedPaymentMethod,
+        selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
+        fiatCurrency,
+      ) ||
       isPaymentMethodSupported(
         'simplex',
         selectedPaymentMethod,

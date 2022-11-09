@@ -1,3 +1,4 @@
+import {getMoonpayFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/moonpay-utils';
 import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/simplex-utils';
 import {getWyreFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/wyre-utils';
 import {Effect} from '../index';
@@ -85,6 +86,10 @@ export const getBuyCryptoFiatLimits =
     );
 
     switch (exchange) {
+      case 'moonpay':
+        baseFiatArray = ['USD', 'EUR'];
+        limits = getMoonpayFiatAmountLimits();
+        break;
       case 'simplex':
         baseFiatArray = ['USD'];
         limits = getSimplexFiatAmountLimits();
@@ -97,10 +102,12 @@ export const getBuyCryptoFiatLimits =
         baseFiatArray = ['USD', 'EUR'];
         limits = {
           min: Math.min(
+            getMoonpayFiatAmountLimits().min,
             getSimplexFiatAmountLimits().min,
             getWyreFiatAmountLimits(country?.shortCode || 'US').min,
           ),
           max: Math.max(
+            getMoonpayFiatAmountLimits().max,
             getSimplexFiatAmountLimits().max,
             getWyreFiatAmountLimits(country?.shortCode || 'US').max,
           ),

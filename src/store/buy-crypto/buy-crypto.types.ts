@@ -1,10 +1,15 @@
 import {
-  simplexPaymentData,
-  simplexIncomingData,
-  wyrePaymentData,
+  SimplexPaymentData,
+  SimplexIncomingData,
+  WyrePaymentData,
+  MoonpayPaymentData,
+  MoonpayIncomingData,
 } from './buy-crypto.models';
 
 export enum BuyCryptoActionTypes {
+  SUCCESS_PAYMENT_REQUEST_MOONPAY = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_MOONPAY',
+  UPDATE_PAYMENT_REQUEST_MOONPAY = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_MOONPAY',
+  REMOVE_PAYMENT_REQUEST_MOONPAY = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_MOONPAY',
   SUCCESS_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_SIMPLEX',
   UPDATE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_SIMPLEX',
   REMOVE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_SIMPLEX',
@@ -12,17 +17,38 @@ export enum BuyCryptoActionTypes {
   REMOVE_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_WYRE',
 }
 
+interface successPaymentRequestMoonpay {
+  type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_MOONPAY;
+  payload: {
+    moonpayPaymentData: MoonpayPaymentData;
+  };
+}
+
+interface updatePaymentRequestMoonpay {
+  type: typeof BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_MOONPAY;
+  payload: {
+    moonpayIncomingData: MoonpayIncomingData;
+  };
+}
+
+interface removePaymentRequestMoonpay {
+  type: typeof BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_MOONPAY;
+  payload: {
+    externalId: string;
+  };
+}
+
 interface successPaymentRequestSimplex {
   type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SIMPLEX;
   payload: {
-    simplexPaymentData: simplexPaymentData;
+    simplexPaymentData: SimplexPaymentData;
   };
 }
 
 interface updatePaymentRequestSimplex {
   type: typeof BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SIMPLEX;
   payload: {
-    simplexIncomingData: simplexIncomingData;
+    simplexIncomingData: SimplexIncomingData;
   };
 }
 
@@ -36,7 +62,7 @@ interface removePaymentRequestSimplex {
 interface successPaymentRequestWyre {
   type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE;
   payload: {
-    wyrePaymentData: wyrePaymentData;
+    wyrePaymentData: WyrePaymentData;
   };
 }
 
@@ -48,6 +74,9 @@ interface removePaymentRequestWyre {
 }
 
 export type BuyCryptoActionType =
+  | successPaymentRequestMoonpay
+  | updatePaymentRequestMoonpay
+  | removePaymentRequestMoonpay
   | successPaymentRequestSimplex
   | updatePaymentRequestSimplex
   | removePaymentRequestSimplex

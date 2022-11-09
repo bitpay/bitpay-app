@@ -21,6 +21,7 @@ import {
   IsValidEthereumUri,
   IsValidMaticUri,
   IsValidMaticAddress,
+  isValidMoonpayUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
   IsValidLitecoinAddress,
@@ -35,8 +36,9 @@ import {
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
-  simplexIncomingData,
-  wyrePaymentData,
+  MoonpayIncomingData,
+  SimplexIncomingData,
+  WyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
 import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
@@ -143,6 +145,9 @@ export const incomingData =
         // Wallet Connect URI
       } else if (isValidWalletConnectUri(data)) {
         handleWalletConnectUri(data);
+        // Moonpay
+      } else if (isValidMoonpayUri(data)) {
+        dispatch(handleMoonpayUri(data));
         // Simplex
       } else if (isValidSimplexUri(data)) {
         dispatch(handleSimplexUri(data));
@@ -929,6 +934,53 @@ const handleLitecoinUri =
     }
   };
 
+const handleMoonpayUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Moonpay URL: ' + data));
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const externalId = getParameterByName('externalId', res);
+    if (!externalId) {
+      dispatch(LogActions.warn('No externalId present. Do not redir'));
+      return;
+    }
+
+    const transactionId = getParameterByName('transactionId', res);
+    const status = getParameterByName('transactionStatus', res);
+
+    const stateParams: MoonpayIncomingData = {
+      externalId,
+      transactionId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestMoonpay({
+        moonpayIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.moonpay[externalId];
+
+    dispatch(
+      logSegmentEvent('track', 'Purchased Buy Crypto', {
+        exchange: 'moonpay',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin || '',
+      }),
+    );
+
+    navigationRef.navigate('ExternalServicesSettings', {
+      screen: 'MoonpaySettings',
+      params: {
+        incomingPaymentRequest: stateParams,
+      },
+    });
+  };
+
 const handleSimplexUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
@@ -945,7 +997,7 @@ const handleSimplexUri =
     const quoteId = getParameterByName('quoteId', res);
     const userId = getParameterByName('userId', res);
 
-    const stateParams: simplexIncomingData = {
+    const stateParams: SimplexIncomingData = {
       success,
       paymentId,
       quoteId,
@@ -1010,7 +1062,7 @@ const handleWyreUri =
     const sourceCurrency = getParameterByName('sourceCurrency', res);
     const sourceAmount = getParameterByName('sourceAmount', res);
 
-    const stateParams: wyrePaymentData = {
+    const stateParams: WyrePaymentData = {
       orderId,
       transferId: getParameterByName('transferId', res),
       owner: getParameterByName('owner', res),

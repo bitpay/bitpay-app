@@ -16,6 +16,7 @@ import {
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
@@ -42,7 +43,8 @@ import {
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {
   BuyCryptoLimits,
-  simplexPaymentData,
+  MoonpayPaymentData,
+  SimplexPaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {
   calculateAltFiatToUsd,
@@ -63,6 +65,7 @@ import {
 } from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import {useTranslation} from 'react-i18next';
+import {moonpayEnv} from '../utils/moonpay-utils';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -85,7 +88,7 @@ interface SimplexGetQuoteRequestData {
 }
 
 export type CryptoOffer = {
-  key: 'simplex' | 'wyre';
+  key: 'moonpay' | 'simplex' | 'wyre';
   showOffer: boolean;
   logo: JSX.Element;
   expanded: boolean;
@@ -98,7 +101,7 @@ export type CryptoOffer = {
   amountReceiving?: string;
   amountLimits?: BuyCryptoLimits;
   errorMsg?: string;
-  quoteData?: any; // Simplex
+  quoteData?: any; // Moonpay | Simplex
   outOfLimitMsg?: string;
 };
 
@@ -252,9 +255,22 @@ const ExchangeTermsText = styled(BaseText)`
 `;
 
 const offersDefault: {
+  moonpay: CryptoOffer;
   simplex: CryptoOffer;
   wyre: CryptoOffer;
 } = {
+  moonpay: {
+    key: 'moonpay',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <MoonpayLogo widthIcon={25} heightIcon={25} />,
+    expanded: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
   simplex: {
     key: 'simplex',
     amountReceiving: '0',
@@ -306,6 +322,11 @@ const BuyCryptoOffers: React.FC = () => {
   const dispatch = useAppDispatch();
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
 
+  offersDefault.moonpay.fiatCurrency = getAvailableFiatCurrencies(
+    'moonpay',
+  ).includes(fiatCurrency)
+    ? fiatCurrency
+    : 'USD';
   offersDefault.simplex.fiatCurrency = getAvailableFiatCurrencies(
     'simplex',
   ).includes(fiatCurrency)
@@ -316,6 +337,13 @@ const BuyCryptoOffers: React.FC = () => {
   )
     ? fiatCurrency
     : 'USD';
+  offersDefault.moonpay.showOffer = isPaymentMethodSupported(
+    'moonpay',
+    paymentMethod,
+    coin,
+    chain,
+    offersDefault.simplex.fiatCurrency,
+  );
   offersDefault.simplex.showOffer = isPaymentMethodSupported(
     'simplex',
     paymentMethod,
@@ -331,9 +359,87 @@ const BuyCryptoOffers: React.FC = () => {
     offersDefault.wyre.fiatCurrency,
   );
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
+  const [finishedMoonpay, setFinishedMoonpay] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
+
+  const getMoonpayQuote = (): void => {
+    logger.debug('Moonpay getting quote');
+
+    offers.moonpay.fiatAmount =
+      offers.moonpay.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    const requestData = {
+      currencyAbbreviation: coin.toLowerCase(),
+      baseCurrencyAmount: offers.moonpay.fiatAmount,
+      extraFeePercentage: 0,
+      baseCurrencyCode: offers.simplex.fiatCurrency.toLowerCase(),
+      paymentMethod: undefined,
+      areFeesIncluded: true,
+      env: moonpayEnv,
+    };
+
+    selectedWallet
+      .moonpayGetQuote(requestData)
+      .then(data => {
+        if (data) {
+          offers.moonpay.amountLimits = {
+            min: data.baseCurrency.minBuyAmount,
+            max: data.baseCurrency.maxBuyAmount,
+          };
+
+          if (
+            (offers.moonpay.amountLimits.min &&
+              offers.moonpay.fiatAmount < offers.moonpay.amountLimits.min) ||
+            (offers.moonpay.amountLimits.max &&
+              offers.moonpay.fiatAmount > offers.moonpay.amountLimits.max)
+          ) {
+            offers.moonpay.outOfLimitMsg = t(
+              'There are no Moonpay offers available, as the current purchase limits for this exchange must be between and',
+              {
+                min: offers.moonpay.amountLimits.min,
+                max: offers.moonpay.amountLimits.max,
+                fiatCurrency: offers.moonpay.fiatCurrency,
+              },
+            );
+            setFinishedMoonpay(!finishedMoonpay);
+            return;
+          } else {
+            offers.moonpay.outOfLimitMsg = undefined;
+            offers.moonpay.errorMsg = undefined;
+            offers.moonpay.quoteData = data;
+            offers.moonpay.amountCost = data.totalAmount;
+            offers.moonpay.buyAmount = data.baseCurrencyAmount;
+            offers.moonpay.fee =
+              Number(data.totalAmount) - Number(data.baseCurrencyAmount);
+
+            const precision = dispatch(GetPrecision(coin, chain));
+            if (offers.moonpay.buyAmount && coin && precision) {
+              offers.moonpay.fiatMoney = Number(
+                offers.moonpay.buyAmount / data.quoteCurrencyAmount,
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(
+                `Moonpay error: Could not get precision for ${coin}`,
+              );
+            }
+            offers.moonpay.amountReceiving =
+              data.quoteCurrencyAmount.toString();
+            logger.debug('Moonpay getting quote: SUCCESS');
+            setFinishedMoonpay(!finishedMoonpay);
+          }
+        } else {
+          // TODO: handle error no data
+        }
+      })
+      .catch(err => {
+        // TODO
+        console.log('=========== moonpayGetQuote err: ', err);
+      });
+  };
 
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
@@ -462,48 +568,6 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
-  const showWyreError = (err?: any, reason?: string) => {
-    let msg = t('Could not get crypto offer. Please try again later.');
-    if (err) {
-      if (typeof err === 'string') {
-        msg = err;
-      } else if (err.exceptionId && err.message) {
-        logger.error('Wyre error: ' + err.message);
-        if (err.errorCode) {
-          switch (err.errorCode) {
-            case 'validation.unsupportedCountry':
-              msg = t('Country not supported: ') + country;
-              break;
-            default:
-              msg = err.message;
-              break;
-          }
-        } else {
-          msg = err.message;
-        }
-      }
-    }
-
-    dispatch(
-      logSegmentEvent('track', 'Failed Buy Crypto', {
-        exchange: 'wyre',
-        context: 'BuyCryptoOffers',
-        reason: reason || 'unknown',
-        paymentMethod: paymentMethod.method || '',
-        amount: Number(offers.wyre.fiatAmount) || '',
-        coin: coin?.toLowerCase() || '',
-        chain: chain?.toLowerCase() || '',
-        fiatCurrency: offers.wyre.fiatCurrency || '',
-      }),
-    );
-
-    logger.error('Crypto offer error: ' + msg);
-    offers.wyre.errorMsg = msg;
-    offers.wyre.fiatMoney = undefined;
-    offers.wyre.expanded = false;
-    setUpdateView(!updateView);
-  };
-
   const getWyreQuote = async () => {
     logger.debug('Wyre getting quote');
 
@@ -608,6 +672,48 @@ const BuyCryptoOffers: React.FC = () => {
     }
   };
 
+  const showWyreError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else if (err.exceptionId && err.message) {
+        logger.error('Wyre error: ' + err.message);
+        if (err.errorCode) {
+          switch (err.errorCode) {
+            case 'validation.unsupportedCountry':
+              msg = t('Country not supported: ') + country;
+              break;
+            default:
+              msg = err.message;
+              break;
+          }
+        } else {
+          msg = err.message;
+        }
+      }
+    }
+
+    dispatch(
+      logSegmentEvent('track', 'Failed Buy Crypto', {
+        exchange: 'wyre',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.wyre.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.wyre.fiatCurrency || '',
+      }),
+    );
+
+    logger.error('Crypto offer error: ' + msg);
+    offers.wyre.errorMsg = msg;
+    offers.wyre.fiatMoney = undefined;
+    offers.wyre.expanded = false;
+    setUpdateView(!updateView);
+  };
+
   const setPrefix = (
     address: string,
     chain: string,
@@ -617,6 +723,104 @@ const BuyCryptoOffers: React.FC = () => {
       BitpaySupportedCoins[chain].paymentInfo.protocolPrefix[network];
     const addr = `${prefix}:${address}`;
     return addr;
+  };
+
+  const goTo = (key: string): void => {
+    switch (key) {
+      case 'moonpay':
+        goToMoonpayBuyPage();
+        break;
+
+      case 'simplex':
+        goToSimplexBuyPage();
+        break;
+
+      case 'wyre':
+        goToWyreBuyPage();
+        break;
+    }
+  };
+
+  const goToMoonpayBuyPage = () => {
+    if (offers.moonpay.errorMsg || offers.moonpay.outOfLimitMsg) {
+      return;
+    }
+    continueToMoonpay();
+  };
+
+  const continueToMoonpay = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showSimplexError(err, reason); // TODO handle moonpay errors
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const externalTransactionId = `${selectedWallet.id}-${Date.now()}`;
+
+    // TODO:
+    const newData: MoonpayPaymentData = {
+      address,
+      created_on: Date.now(),
+      crypto_amount: Number(offers.moonpay.amountReceiving),
+      chain: destinationChain,
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offers.moonpay.buyAmount!,
+      fiat_total_amount: offers.moonpay.amountCost!,
+      fiat_total_amount_currency: offers.moonpay.fiatCurrency,
+      external_id: externalTransactionId,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestMoonpay({
+        moonpayPaymentData: newData,
+      }),
+    );
+
+    dispatch(
+      logSegmentEvent('track', 'Requested Crypto Purchase', {
+        exchange: 'moonpay',
+        fiatAmount: offers.moonpay.fiatAmount,
+        fiatCurrency: offers.moonpay.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const quoteData = {
+      currencyCode: coin.toLowerCase(),
+      walletAddress: address,
+      baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
+      baseCurrencyAmount: offers.moonpay.fiatAmount,
+      externalTransactionId,
+      redirectURL:
+        APP_DEEPLINK_PREFIX + `moonpay?externalId=${externalTransactionId}`,
+      env: wyreEnv,
+      lockAmount: true,
+      showWalletAddressForm: true,
+    };
+
+    const data = await selectedWallet.moonpayGetSignedPaymentUrl(quoteData);
+
+    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    await sleep(500);
+    navigation.goBack();
+  };
+
+  const goToSimplexBuyPage = () => {
+    if (offers.simplex.errorMsg || offers.simplex.outOfLimitMsg) {
+      return;
+    }
+    continueToSimplex();
   };
 
   const continueToSimplex = async () => {
@@ -658,7 +862,7 @@ const BuyCryptoOffers: React.FC = () => {
 
         const destinationChain = selectedWallet.chain;
 
-        const newData: simplexPaymentData = {
+        const newData: SimplexPaymentData = {
           address,
           created_on: Date.now(),
           crypto_amount: offers.simplex.quoteData.digital_money.amount,
@@ -792,25 +996,6 @@ const BuyCryptoOffers: React.FC = () => {
     navigation.goBack();
   };
 
-  const goTo = (key: string): void => {
-    switch (key) {
-      case 'simplex':
-        goToSimplexBuyPage();
-        break;
-
-      case 'wyre':
-        goToWyreBuyPage();
-        break;
-    }
-  };
-
-  const goToSimplexBuyPage = () => {
-    if (offers.simplex.errorMsg || offers.simplex.outOfLimitMsg) {
-      return;
-    }
-    continueToSimplex();
-  };
-
   const expandCard = (offer: CryptoOffer) => {
     const key = offer.key;
     if (!offer.fiatMoney) {
@@ -823,6 +1008,9 @@ const BuyCryptoOffers: React.FC = () => {
   };
 
   useEffect(() => {
+    if (offers.moonpay.showOffer) {
+      getMoonpayQuote();
+    }
     if (offers.simplex.showOffer) {
       getSimplexQuote();
     }
@@ -833,7 +1021,7 @@ const BuyCryptoOffers: React.FC = () => {
 
   useEffect(() => {
     setOffers(offers);
-  }, [finishedSimplex, finishedWyre, updateView]);
+  }, [finishedMoonpay, finishedSimplex, finishedWyre, updateView]);
 
   return (
     <ScrollView>
@@ -1011,6 +1199,60 @@ const BuyCryptoOffers: React.FC = () => {
                         )}
                       </OfferDataInfoTotal>
                     </OfferExpandibleItem>
+                    {/* TODO */}
+                    {offer.key == 'moonpay' && (
+                      <ExchangeTermsContainer>
+                        <ExchangeTermsText>
+                          {t('What service fees am I paying?')}
+                        </ExchangeTermsText>
+                        {paymentMethod.method == 'sepaBankTransfer' && (
+                          <ExchangeTermsText>
+                            {t('1.5% of the amount.')}
+                          </ExchangeTermsText>
+                        )}
+                        {paymentMethod.method != 'sepaBankTransfer' && (
+                          <ExchangeTermsText>
+                            {t(
+                              'Can range from 3.5% to 5% of the transaction, depending on the volume of traffic (with a minimum of 10 USD or its equivalent in any other fiat currency) + 1% of the transaction.',
+                            )}
+                            <TouchableOpacity
+                              onPress={() => {
+                                haptic('impactLight');
+                                dispatch(
+                                  openUrlWithInAppBrowser(
+                                    'https://support.moonpay.com/hc/en-gb/articles/360011930117-What-fees-do-you-charge-',
+                                  ),
+                                );
+                              }}>
+                              <Link
+                                style={{fontSize: 12, marginLeft: 2, top: 2}}>
+                                {t('Read more')}
+                              </Link>
+                            </TouchableOpacity>
+                          </ExchangeTermsText>
+                        )}
+                        <ExchangeTermsText style={{marginTop: 4}}>
+                          {t(
+                            'This service is provided by a third party, and you are subject to their',
+                          )}
+                          <TouchableOpacity
+                            onPress={() => {
+                              haptic('impactLight');
+                              dispatch(
+                                openUrlWithInAppBrowser(
+                                  country == 'US'
+                                    ? 'https://www.moonpay.com/legal/terms_of_use_usa'
+                                    : 'https://www.moonpay.com/legal/terms_of_use',
+                                ),
+                              );
+                            }}>
+                            <Link style={{fontSize: 12, top: 2}}>
+                              {t('Terms of use')}
+                            </Link>
+                          </TouchableOpacity>
+                        </ExchangeTermsText>
+                      </ExchangeTermsContainer>
+                    )}
                     {offer.key == 'simplex' && (
                       <ExchangeTermsContainer>
                         <ExchangeTermsText>
