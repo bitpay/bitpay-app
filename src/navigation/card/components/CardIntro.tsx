@@ -1,3 +1,4 @@
+import {useScrollToTop} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -24,11 +25,11 @@ import {Network, URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
+import {getAppsFlyerId} from '../../../utils/appsFlyer';
 import {CardStackParamList} from '../CardStack';
 import CardFeatureTabs from './CardIntroFeatureTabs';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
-import {useScrollToTop} from '@react-navigation/native';
 
 interface CardIntroProps {
   navigation: StackNavigationProp<CardStackParamList, 'CardHome'>;
@@ -77,13 +78,15 @@ const CardIntro: React.FC<CardIntroProps> = props => {
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
   const insets = useSafeAreaInsets();
 
-  const onGetCardPress = async (context?: 'login' | 'createAccount') => {
+  const onGetCardPress = async (context: 'login' | 'createAccount') => {
     const baseUrl = BASE_BITPAY_URLS[network];
     const path = 'wallet-card';
-    let url = `${baseUrl}/${path}`;
+    const afid = await getAppsFlyerId();
 
-    if (context) {
-      url += `?context=${context}`;
+    let url = `${baseUrl}/${path}?context=${context}`;
+
+    if (afid) {
+      url += `&afid=${afid}`;
     }
 
     dispatch(AppEffects.openUrlWithInAppBrowser(url));

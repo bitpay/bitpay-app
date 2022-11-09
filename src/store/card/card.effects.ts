@@ -24,6 +24,7 @@ import {BASE_BITPAY_URLS} from '../../constants/config';
 import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
+import {getAppsFlyerId} from '../../utils/appsFlyer';
 
 const DoshWhitelist: string[] = [];
 
@@ -40,6 +41,7 @@ export interface StartActivateCardParams {
   expirationDate: string;
   lastFourDigits?: string;
   cardNumber?: string;
+  appsFlyerId?: string;
 }
 
 export interface AppleWalletProvisioningRequestParams {
@@ -359,6 +361,12 @@ export const startActivateCard =
       const {APP, BITPAY_ID} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
+      const appsFlyerId = await getAppsFlyerId();
+
+      payload = {
+        ...payload,
+        appsFlyerId,
+      };
 
       const {data, errors} = await CardApi.activateCard(token, id, payload);
 
