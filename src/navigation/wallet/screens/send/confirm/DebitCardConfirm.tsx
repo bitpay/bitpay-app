@@ -35,6 +35,7 @@ import {
   Amount,
   ConfirmContainer,
   DetailsList,
+  ExchangeRate,
   Header,
   RemainingTime,
   SendingFrom,
@@ -363,6 +364,12 @@ const Confirm = () => {
             ) : null}
 
             <Header hr>Summary</Header>
+            {invoice ? (
+              <RemainingTime
+                invoiceExpirationTime={invoice.expirationTime}
+                setDisableSwipeSendButton={setDisableSwipeSendButton}
+              />
+            ) : null}
             {memoizedKeysAndWalletsList.keyWallets.length === 1 &&
             memoizedKeysAndWalletsList.keyWallets[0].wallets.length === 1 ? (
               <SendingFrom sender={sendingFrom!} hr />
@@ -373,10 +380,10 @@ const Confirm = () => {
                 hr
               />
             )}
-            {invoice ? (
-              <RemainingTime
-                invoiceExpirationTime={invoice.expirationTime}
-                setDisableSwipeSendButton={setDisableSwipeSendButton}
+            {txDetails?.rateStr ? (
+              <ExchangeRate
+                description={t('Exchange Rate')}
+                rateStr={txDetails?.rateStr}
               />
             ) : null}
             <Amount
@@ -385,9 +392,9 @@ const Confirm = () => {
               fiatOnly
               hr
             />
-            <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
+            <Amount description={t('SubTotal')} amount={subTotal} hr />
 
-            <Amount description={t('SubTotal')} amount={subTotal} />
+            <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
 
             <Amount description={t('Total')} amount={total} />
 

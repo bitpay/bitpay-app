@@ -589,3 +589,13 @@ export const CurrencyIconAndBadge = ({
     </CurrencyImageAndBadgeContainer>
   );
 };
+
+export const ExchangeRate = ({
+  description,
+  rateStr,
+}: {
+  description: string;
+  rateStr: string;
+}): JSX.Element | null => {
+  return <SharedDetailRow description={description} value={rateStr} hr />;
+};

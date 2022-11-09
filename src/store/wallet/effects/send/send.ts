@@ -394,6 +394,12 @@ export const buildTxDetails =
     const effectiveRate =
       invoice &&
       dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain));
+    const rateStr = effectiveRate
+      ? `1 ${coin.toUpperCase()} @ ${formatFiatAmount(
+          parseFloat(effectiveRate.toFixed(2)),
+          defaultAltCurrencyIsoCode,
+        )}`
+      : undefined;
     const networkCost = invoice?.minerFees[invoiceCurrency]?.totalFee;
     const isERC20 = IsERCToken(coin, chain);
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
@@ -509,6 +515,7 @@ export const buildTxDetails =
       gasLimit,
       nonce,
       destinationTag,
+      rateStr,
     };
   };
 
