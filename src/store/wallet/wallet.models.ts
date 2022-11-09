@@ -382,6 +382,7 @@ export interface TxDetails {
   sendingFrom: TxDetailsSendingFrom;
   subTotal: TxDetailsAmount;
   total: TxDetailsAmount;
+  rateStr?: string;
   // xrp
   destinationTag?: number;
 }

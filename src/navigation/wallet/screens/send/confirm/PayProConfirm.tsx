@@ -33,6 +33,7 @@ import {
   ConfirmContainer,
   ConfirmScrollView,
   DetailsList,
+  ExchangeRate,
   Fee,
   Header,
   RemainingTime,
@@ -328,6 +329,12 @@ const PayProConfirm = () => {
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header hr>Summary</Header>
+          {invoice ? (
+            <RemainingTime
+              invoiceExpirationTime={invoice.expirationTime}
+              setDisableSwipeSendButton={setDisableSwipeSendButton}
+            />
+          ) : null}
           <SendingTo
             recipient={{
               recipientName: payProHost,
@@ -341,9 +348,32 @@ const PayProConfirm = () => {
             }}
             hr
           />
+          {txDetails?.rateStr ? (
+            <ExchangeRate
+              description={t('Exchange Rate')}
+              rateStr={txDetails?.rateStr}
+            />
+          ) : null}
           {wallet || coinbaseAccount ? (
             <>
-              {wallet ? (
+              <SendingFrom
+                sender={sendingFrom!}
+                onPress={openKeyWalletSelector}
+                hr
+              />
+              {txp ? (
+                <Memo
+                  memo={txp.message}
+                  onChange={message => updateTxp({...txp, message})}
+                />
+              ) : null}
+              <Amount
+                description={'SubTotal'}
+                amount={subTotal}
+                height={83}
+                hr
+              />
+              {wallet && fee ? (
                 <Fee
                   fee={fee}
                   hideFeeOptions
@@ -351,24 +381,6 @@ const PayProConfirm = () => {
                   hr
                 />
               ) : null}
-              <SendingFrom
-                sender={sendingFrom!}
-                onPress={openKeyWalletSelector}
-                hr
-              />
-              {invoice ? (
-                <RemainingTime
-                  invoiceExpirationTime={invoice.expirationTime}
-                  setDisableSwipeSendButton={setDisableSwipeSendButton}
-                />
-              ) : null}
-              {txp ? (
-                <Memo
-                  memo={txp.message}
-                  onChange={message => updateTxp({...txp, message})}
-                />
-              ) : null}
-              <Amount description={'SubTotal'} amount={subTotal} height={83} />
               <Amount description={'Total'} amount={total} height={83} />
             </>
           ) : null}

@@ -34,6 +34,7 @@ import {
   DetailContainer,
   DetailRow,
   DetailsList,
+  ExchangeRate,
   Header,
   SendingFrom,
   WalletSelector,
@@ -121,7 +122,7 @@ const Confirm = () => {
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
   const [txp, updateTxp] = useState(_txp);
-  const {fee, networkCost, sendingFrom, total} = txDetails || {};
+  const {fee, networkCost, sendingFrom, total, rateStr} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
   const unsoldGiftCard = giftCards.find(
@@ -407,6 +408,12 @@ const Confirm = () => {
               onPress={openWalletSelector}
               hr
             />
+            {rateStr ? (
+              <ExchangeRate
+                description={t('Exchange Rate')}
+                rateStr={rateStr}
+              />
+            ) : null}
             {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
               <Amount
                 description={'Discount'}
