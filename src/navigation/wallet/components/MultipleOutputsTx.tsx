@@ -230,9 +230,8 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
       {tx.hasMultiplesOutputs &&
         showMultiOptions &&
         tx.outputs.map((output: any, i: number) => (
-          <DetailRow>
+          <DetailRow key={i}>
             <MultiOptionsContainer
-              key={i}
               activeOpacity={ActiveOpacity}
               onPress={() => copyText(output.toAddress || output.address)}>
               <DetailRow>
