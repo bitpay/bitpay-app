@@ -317,6 +317,8 @@ export interface TransactionProposal {
   canBeRemoved: boolean;
   recipientCount: number;
   hasMultiplesOutputs: boolean;
+  requiredSignatures: number;
+  requiredRejections: number;
 }
 
 export interface ProposalErrorHandlerProps {
