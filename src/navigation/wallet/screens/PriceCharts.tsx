@@ -340,14 +340,14 @@ const PriceCharts = () => {
   return (
     <SafeAreaView>
       <HeaderContainer>
-        {currentPrice && (
+        {currentPrice ? (
           <H2>
             {formatFiatAmount(currentPrice, defaultAltCurrency.isoCode, {
               customPrecision: 'minimal',
               currencyAbbreviation,
             })}
           </H2>
-        )}
+        ) : null}
         <RowContainer>
           {showLossGainOrNeutralArrow(displayData.percentChange)}
           <CurrencyAverageText>

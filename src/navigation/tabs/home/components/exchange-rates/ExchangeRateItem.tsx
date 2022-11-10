@@ -130,7 +130,7 @@ const ExchangeRateItem = ({
         </ExchangeRateSubText>
       </CurrencyColumn>
       <NoteContainer>
-        {currentPrice && (
+        {currentPrice ? (
           <ExchangeRateText>
             {amount}
             {code ? (
@@ -139,7 +139,7 @@ const ExchangeRateItem = ({
               </View>
             ) : null}
           </ExchangeRateText>
-        )}
+        ) : null}
         <SubTextContainer>
           {showLossGainOrNeutralArrow(average)}
           <ExchangeRateSubText>{Math.abs(average || 0)}%</ExchangeRateSubText>
