@@ -348,12 +348,6 @@ const PayProConfirm = () => {
             }}
             hr
           />
-          {txDetails?.rateStr ? (
-            <ExchangeRate
-              description={t('Exchange Rate')}
-              rateStr={txDetails?.rateStr}
-            />
-          ) : null}
           {wallet || coinbaseAccount ? (
             <>
               <SendingFrom
@@ -361,6 +355,12 @@ const PayProConfirm = () => {
                 onPress={openKeyWalletSelector}
                 hr
               />
+              {txDetails?.rateStr ? (
+                <ExchangeRate
+                  description={t('Exchange Rate')}
+                  rateStr={txDetails?.rateStr}
+                />
+              ) : null}
               {txp ? (
                 <Memo
                   memo={txp.message}
