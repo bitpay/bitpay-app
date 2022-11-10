@@ -52,7 +52,6 @@ import {
   GetAmTimeAgo,
   WithinPastDay,
 } from '../../../store/wallet/utils/time';
-import {walletConnectDecodeMethod} from '../../../store/wallet-connect/wallet-connect.effects';
 import {RootState} from '../../../store';
 
 export type WalletConnectHomeParamList = {
@@ -105,30 +104,11 @@ const WalletConnectHome = () => {
     },
   );
   const session: WalletConnect | undefined = wcConnector?.connector;
-  const _requests: IWCRequest[] = useAppSelector(({WALLET_CONNECT}) => {
+  const requests: IWCRequest[] = useAppSelector(({WALLET_CONNECT}) => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
 
-  const [requests, setRequests] = useState<IWCRequest[]>();
-
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-
-  const decodeData = async () => {
-    const promises = [];
-    for await (const r of _requests) {
-      const data = r.payload.params[0].data;
-      const decodedData = (await dispatch<any>(
-        walletConnectDecodeMethod(data, wallet),
-      )) as any;
-      promises.push({...r, ...{decodedData}});
-    }
-    const result = await Promise.all(promises);
-    setRequests(result);
-  };
-
-  useEffect(() => {
-    decodeData();
-  }, []);
 
   const goToConfirmView = async (request: IWCRequest) => {
     try {
@@ -136,14 +116,10 @@ const WalletConnectHome = () => {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
       dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
-      if (
-        request.decodedData &&
-        request.decodedData.chain !== wallet.chain &&
-        wcConnector?.customData.keyId
-      ) {
+      if (request?.chain !== wallet.chain && wcConnector?.customData.keyId) {
         _wallet = allKeys[wcConnector?.customData.keyId].wallets.find(w => {
           return (
-            w.chain === request.decodedData.chain &&
+            w.chain === request?.chain &&
             w.credentials.account === wallet.credentials.account
           );
         });
@@ -321,8 +297,8 @@ const WalletConnectHome = () => {
               const {value = '0x0'} = request.payload.params[0];
               const amountStr = dispatch(
                 FormatAmountStr(
-                  request?.decodedData?.chain || currencyAbbreviation,
-                  request?.decodedData?.chain || chain,
+                  request?.chain || currencyAbbreviation,
+                  request?.chain || chain,
                   parseInt(value, 16),
                 ),
               );

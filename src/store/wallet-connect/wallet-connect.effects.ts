@@ -34,6 +34,8 @@ import {
   SUPPORTED_EVM_COINS,
 } from '../../constants/currencies';
 import {createWalletAddress} from '../wallet/effects/address/address';
+import {getTokenContractInfo} from '../wallet/effects/status/status';
+import {findWalletById} from '../wallet/utils/wallet';
 
 const BWC = BwcProvider.getInstance();
 
@@ -208,31 +210,43 @@ export const walletConnectSubscribeToEvents =
       const wcConnector: IWCConnector = connectors.filter(
         (c: IWCConnector) => c.connector.peerId === peerId,
       )[0];
+      const {keys} = getState().WALLET;
+      const {keyId, walletId} = wcConnector.customData;
+      const wallet = findWalletById(keys[keyId].wallets, walletId);
 
-      wcConnector.connector.on('call_request', (error: any, payload: any) => {
-        if (error) {
-          throw error;
-        }
-        dispatch(
-          LogActions.info(
-            `[WC/call_request]: new pending request: ${JSON.stringify(
-              payload,
-            )}`,
-          ),
-        );
-        const updatedRequests: IWCRequest[] = [
-          ...getState().WALLET_CONNECT.requests,
-          ...[
-            {
-              peerId,
-              payload: payload,
-              createdOn: Date.now(),
-            },
-          ],
-        ];
-
-        dispatch(WalletConnectActions.callRequest(updatedRequests));
-      });
+      wcConnector.connector.on(
+        'call_request',
+        async (error: any, payload: any) => {
+          if (error) {
+            throw error;
+          }
+          dispatch(
+            LogActions.info(
+              `[WC/call_request]: new pending request: ${JSON.stringify(
+                payload,
+              )}`,
+            ),
+          );
+          let _chain;
+          if (wallet && payload?.params[0]) {
+            _chain = await dispatch(
+              walletConnectGetChain(wallet, payload.params[0].to),
+            );
+          }
+          const updatedRequests: IWCRequest[] = [
+            ...getState().WALLET_CONNECT.requests,
+            ...[
+              {
+                peerId,
+                chain: _chain || wallet?.chain,
+                payload,
+                createdOn: Date.now(),
+              },
+            ],
+          ];
+          dispatch(WalletConnectActions.callRequest(updatedRequests));
+        },
+      );
 
       wcConnector.connector.on('disconnect', async (error: any) => {
         if (error) {
@@ -637,27 +651,35 @@ const addNewLinkedWallet =
     });
   };
 
-export const walletConnectDecodeMethod =
-  (encodedData: string, wallet: Wallet): Effect<Promise<any>> =>
+const walletConnectGetChain =
+  (wallet: Wallet, tokenAddress: string): Effect<Promise<string | undefined>> =>
   dispatch => {
     return new Promise(async resolve => {
-      let decodedData;
+      let contractAddressChain;
       try {
-        dispatch(LogActions.info('[walletConnectDecodeMethod]: starting'));
+        dispatch(LogActions.info('[walletConnectGetChain]: starting'));
         for await (const chain of SUPPORTED_EVM_COINS) {
-          const opts = {
-            chain,
-            data: encodedData,
-          };
-          decodedData = await wallet.decodeMethod(opts);
-          decodedData = {...decodedData, ...{chain}};
+          try {
+            const opts = {
+              tokenAddress,
+              chain,
+            };
+            const tokenContractInfo = await getTokenContractInfo(wallet, opts);
+            if (Object.keys(tokenContractInfo).length > 0) {
+              contractAddressChain = chain;
+            }
+          } catch (err) {
+            dispatch(
+              LogActions.debug(
+                `[walletConnectGetChain]: contract address not found in ${chain}`,
+              ),
+            );
+          }
         }
         dispatch(
-          LogActions.info(
-            '[walletConnectDecodeMethod]: data decoded successfully',
-          ),
+          LogActions.info('[walletConnectGetChain]: get chain successfully'),
         );
-        resolve(decodedData);
+        resolve(contractAddressChain);
       } catch (e) {
         let errorStr;
         if (e instanceof Error) {
@@ -666,9 +688,9 @@ export const walletConnectDecodeMethod =
           errorStr = JSON.stringify(e);
         }
         dispatch(
-          LogActions.error(`[walletConnectDecodeMethod] failed: ${errorStr}`),
+          LogActions.error(`[walletConnectGetChain] failed: ${errorStr}`),
         );
-        resolve({});
+        resolve(undefined);
       }
     });
   };
