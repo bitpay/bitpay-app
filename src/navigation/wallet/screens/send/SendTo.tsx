@@ -345,6 +345,7 @@ const SendTo = () => {
     return allContacts.filter(
       contact =>
         contact.coin === currencyAbbreviation.toLowerCase() &&
+        contact.chain === chain.toLowerCase() &&
         contact.network === network &&
         (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
           contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
@@ -498,6 +499,7 @@ const SendTo = () => {
         keyId,
         walletName,
         receiveAddress,
+        chain,
       } = selectedWallet;
 
       let address = receiveAddress;
@@ -522,6 +524,7 @@ const SendTo = () => {
         keyId,
         address,
         currency: credentials.coin,
+        chain,
       };
 
       dispatch(

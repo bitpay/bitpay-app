@@ -34,7 +34,6 @@ import {
 import {
   GetBlockExplorerUrl,
   IsCustomERCToken,
-  IsERCToken,
 } from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from 'react-native';
 import {TransactionIcons} from '../../../constants/TransactionIcons';

@@ -158,8 +158,6 @@ const SwapCryptoRoot: React.FC = () => {
   const [useDefaultToWallet, setUseDefaultToWallet] = useState<boolean>(false);
   const [toWalletSelected, setToWalletSelected] = useState<Wallet>();
   const [amountFrom, setAmountFrom] = useState<number>(0);
-  const [swapCryptoAllSupportedCoins, setSwapCryptoAllSupportedCoins] =
-    useState<SwapCryptoCoin[]>([]);
   const [swapCryptoSupportedCoinsFrom, setSwapCryptoSupportedCoinsFrom] =
     useState<SwapCryptoCoin[]>();
   const [swapCryptoSupportedCoinsTo, setSwapCryptoSupportedCoinsTo] = useState<
@@ -870,8 +868,6 @@ const SwapCryptoRoot: React.FC = () => {
         );
         showError(msg, undefined, undefined, true);
       }
-
-      setSwapCryptoAllSupportedCoins(supportedCoins);
 
       const coinsToRemove =
         !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];

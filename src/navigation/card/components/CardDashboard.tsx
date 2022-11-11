@@ -192,6 +192,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
                         },
                       });
                     },
+                    context: 'buyCrypto',
                   },
                 });
               },

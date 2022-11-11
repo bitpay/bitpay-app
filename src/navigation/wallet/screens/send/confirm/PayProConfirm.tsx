@@ -33,6 +33,7 @@ import {
   ConfirmContainer,
   ConfirmScrollView,
   DetailsList,
+  ExchangeRate,
   Fee,
   Header,
   RemainingTime,
@@ -328,6 +329,12 @@ const PayProConfirm = () => {
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header hr>Summary</Header>
+          {invoice ? (
+            <RemainingTime
+              invoiceExpirationTime={invoice.expirationTime}
+              setDisableSwipeSendButton={setDisableSwipeSendButton}
+            />
+          ) : null}
           <SendingTo
             recipient={{
               recipientName: payProHost,
@@ -343,23 +350,15 @@ const PayProConfirm = () => {
           />
           {wallet || coinbaseAccount ? (
             <>
-              {wallet ? (
-                <Fee
-                  fee={fee}
-                  hideFeeOptions
-                  feeOptions={GetFeeOptions(wallet.chain)}
-                  hr
-                />
-              ) : null}
               <SendingFrom
                 sender={sendingFrom!}
                 onPress={openKeyWalletSelector}
                 hr
               />
-              {invoice ? (
-                <RemainingTime
-                  invoiceExpirationTime={invoice.expirationTime}
-                  setDisableSwipeSendButton={setDisableSwipeSendButton}
+              {txDetails?.rateStr ? (
+                <ExchangeRate
+                  description={t('Exchange Rate')}
+                  rateStr={txDetails?.rateStr}
                 />
               ) : null}
               {txp ? (
@@ -368,7 +367,20 @@ const PayProConfirm = () => {
                   onChange={message => updateTxp({...txp, message})}
                 />
               ) : null}
-              <Amount description={'SubTotal'} amount={subTotal} height={83} />
+              <Amount
+                description={'SubTotal'}
+                amount={subTotal}
+                height={83}
+                hr
+              />
+              {wallet && fee ? (
+                <Fee
+                  fee={fee}
+                  hideFeeOptions
+                  feeOptions={GetFeeOptions(wallet.chain)}
+                  hr
+                />
+              ) : null}
               <Amount description={'Total'} amount={total} height={83} />
             </>
           ) : null}

@@ -7,6 +7,7 @@ import {
   CoinbaseTransactionsByAccountProps,
   CoinbaseEnvironment,
 } from '../../api/coinbase/coinbase.types';
+import {EVM_CHAINS} from '../../constants/currencies';
 
 export type ApiLoading = boolean;
 export type GetAccessTokenStatus = 'success' | 'failed' | null;
@@ -50,6 +51,7 @@ export enum CoinbaseActionTypes {
   PAY_INVOICE_SUCCESS = 'Coinbase/PAY_INVOICE_SUCCESS',
   PAY_INVOICE_FAILED = 'Coinbase/PAY_INVOICE_FAILED',
   TOGGLE_HIDE_TOTAL_BALANCE = 'Coinbase/TOGGLE_HIDE_TOTAL_BALANCE',
+  BLOCKCHAIN_NETWORK = 'Coinbase/BLOCKCHAIN_NETWORK',
 }
 
 // ------- Exchange Rate -------- //
@@ -219,6 +221,11 @@ interface ToggleHideCoinbaseTotalBalance {
   payload: boolean;
 }
 
+interface SetBlockchainNetwork {
+  type: typeof CoinbaseActionTypes.BLOCKCHAIN_NETWORK;
+  payload: EVM_CHAINS;
+}
+
 export type CoinbaseActionType =
   | ExchangeRatesPending
   | ExchangeRatesSuccess
@@ -250,4 +257,5 @@ export type CoinbaseActionType =
   | PayInvoiceSuccess
   | PayInvoiceFailed
   | ClearErrorStatus
-  | ToggleHideCoinbaseTotalBalance;
+  | ToggleHideCoinbaseTotalBalance
+  | SetBlockchainNetwork;

@@ -3,6 +3,7 @@ import {
   CoinbaseEnvironment,
   CoinbaseErrorsProps,
   CoinbaseExchangeRatesProps,
+  CoinbaseHostNetwork,
   CoinbaseTokenProps,
   CoinbaseTransactionsProps,
   CoinbaseUserProps,
@@ -204,4 +205,11 @@ export const toggleHideCoinbaseTotalBalance = (
 ): CoinbaseActionType => ({
   type: CoinbaseActionTypes.TOGGLE_HIDE_TOTAL_BALANCE,
   payload: hideTotalBalance,
+});
+
+export const selectHostNetwork = (
+  selectedHostNetwork: CoinbaseHostNetwork,
+): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.SELECTED_HOST_NETWORK,
+  payload: selectedHostNetwork,
 });

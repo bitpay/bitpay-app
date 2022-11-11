@@ -77,7 +77,7 @@ const HomeRoot = () => {
   const wallets = Object.values(keys).flatMap(k => k.wallets);
   let pendingTxps: any = [];
   each(wallets, x => {
-    if (x.pendingTxps && x.credentials.n > 1) {
+    if (x.pendingTxps) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });

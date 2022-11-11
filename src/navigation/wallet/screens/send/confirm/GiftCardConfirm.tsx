@@ -34,6 +34,7 @@ import {
   DetailContainer,
   DetailRow,
   DetailsList,
+  ExchangeRate,
   Header,
   SendingFrom,
   WalletSelector,
@@ -59,6 +60,7 @@ import {
   GiftCardScreens,
   GiftCardStackParamList,
 } from '../../../../tabs/shop/gift-card/GiftCardStack';
+import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -121,7 +123,7 @@ const Confirm = () => {
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
   const [txp, updateTxp] = useState(_txp);
-  const {fee, networkCost, sendingFrom, total} = txDetails || {};
+  const {fee, networkCost, sendingFrom, total, rateStr} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
   const unsoldGiftCard = giftCards.find(
@@ -206,10 +208,15 @@ const Confirm = () => {
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
+    const transactionCurrency = dispatch(
+      getTransactionCurrencyForPayInvoice(
+        selectedCoinbaseAccount.currency.code,
+      ),
+    );
     try {
       const {invoice: newInvoice} = await createGiftCardInvoice({
         clientId: selectedCoinbaseAccount.id,
-        transactionCurrency: selectedCoinbaseAccount.currency.code,
+        transactionCurrency,
       });
       const rates = await dispatch(startGetRates({}));
       const newTxDetails = dispatch(
@@ -407,6 +414,12 @@ const Confirm = () => {
               onPress={openWalletSelector}
               hr
             />
+            {rateStr ? (
+              <ExchangeRate
+                description={t('Exchange Rate')}
+                rateStr={rateStr}
+              />
+            ) : null}
             {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
               <Amount
                 description={'Discount'}

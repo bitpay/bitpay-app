@@ -201,3 +201,8 @@ export enum CoinbaseEnvironment {
   sandbox = 'sandbox',
   production = 'production',
 }
+
+export enum CoinbaseSupportedNetwork {
+  ethereum = 'eth',
+  polygon = 'matic',
+}

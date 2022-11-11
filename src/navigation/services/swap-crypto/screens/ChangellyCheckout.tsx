@@ -93,7 +93,6 @@ import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models'
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
-import {SwapCryptoCoin} from './SwapCryptoRoot';
 import {RootState} from '../../../../store';
 
 // Styled
@@ -460,6 +459,7 @@ const ChangellyCheckout: React.FC = () => {
       let txp: Partial<TransactionProposal> = {
         toAddress: payinAddress,
         amount: depositSat,
+        chain: wallet.chain,
         outputs,
         message: message,
         excludeUnconfirmedUtxos: true, // Do not use unconfirmed UTXOs

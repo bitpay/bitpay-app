@@ -369,6 +369,7 @@ const TransactionProposalDetails = () => {
             <>
               {!txs.payProUrl ? (
                 <Banner
+                  height={110}
                   type={'info'}
                   description={t(
                     '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
@@ -394,7 +395,8 @@ const TransactionProposalDetails = () => {
           {txs &&
           !txs.removed &&
           txs.pendingForUs &&
-          !txs.multisigContractAddress ? (
+          !txs.multisigContractAddress &&
+          wallet.credentials.n > 1 ? (
             <Button
               onPress={rejectPaymentProposal}
               buttonType={'link'}
@@ -472,15 +474,16 @@ const TransactionProposalDetails = () => {
           <Hr />
 
           {txs.message ? (
-            <DetailContainer>
-              <DetailRow>
-                <H7>{t('Memo')}</H7>
-                <H7>{txs.message}</H7>
-              </DetailRow>
-            </DetailContainer>
+            <>
+              <DetailContainer>
+                <DetailRow>
+                  <H7>{t('Memo')}</H7>
+                  <H7>{txs.message}</H7>
+                </DetailRow>
+              </DetailContainer>
+              <Hr />
+            </>
           ) : null}
-
-          <Hr />
 
           {/*  TODO: Add Notify unconfirmed transaction  row */}
 

@@ -4,10 +4,12 @@ import {
   CoinbaseEnvironment,
   CoinbaseErrorsProps,
   CoinbaseExchangeRatesProps,
+  CoinbaseSupportedNetwork,
   CoinbaseTokenProps,
   CoinbaseTransactionsByAccountProps,
   CoinbaseUserProps,
 } from '../../api/coinbase/coinbase.types';
+import {EVM_CHAINS} from '../../constants/currencies';
 import {
   ApiLoading,
   CoinbaseActionType,
@@ -62,6 +64,7 @@ export interface CoinbaseState {
   payInvoiceError: CoinbaseErrorsProps | null;
   exchangeRates: CoinbaseExchangeRatesProps | null;
   hideTotalBalance: boolean;
+  blockchainNetwork: EVM_CHAINS;
   token: {
     [key in CoinbaseEnvironment]: CoinbaseTokenProps | null;
   };
@@ -99,6 +102,8 @@ const initialState: CoinbaseState = {
   payInvoiceError: null,
   exchangeRates: null,
   hideTotalBalance: false,
+  // Other chain is not supported by Coinbase API
+  blockchainNetwork: CoinbaseSupportedNetwork.ethereum,
   token: {
     [CoinbaseEnvironment.production]: null,
     [CoinbaseEnvironment.sandbox]: null,
@@ -416,6 +421,12 @@ export const coinbaseReducer = (
       return {
         ...state,
         hideTotalBalance: action.payload,
+      };
+
+    case CoinbaseActionTypes.BLOCKCHAIN_NETWORK:
+      return {
+        ...state,
+        blockchainNetwork: action.payload,
       };
 
     default:

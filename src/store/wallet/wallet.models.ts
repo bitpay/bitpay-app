@@ -317,6 +317,8 @@ export interface TransactionProposal {
   canBeRemoved: boolean;
   recipientCount: number;
   hasMultiplesOutputs: boolean;
+  requiredSignatures: number;
+  requiredRejections: number;
 }
 
 export interface ProposalErrorHandlerProps {
@@ -382,6 +384,7 @@ export interface TxDetails {
   sendingFrom: TxDetailsSendingFrom;
   subTotal: TxDetailsAmount;
   total: TxDetailsAmount;
+  rateStr?: string;
   // xrp
   destinationTag?: number;
 }

@@ -78,6 +78,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
+  BuildUiFriendlyList,
   CanSpeedupTx,
   GetTransactionHistory,
   GroupTransactionHistory,
@@ -441,25 +442,31 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
     const txpsPending: TransactionProposal[] = [];
     const txpsUnsent: TransactionProposal[] = [];
-    pendingTxps.forEach((txp: any) => {
+    const formattedPendingTxps = BuildUiFriendlyList(
+      pendingTxps,
+      currencyAbbreviation,
+      chain,
+      [],
+      {},
+    );
+    formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
         copayerId: fullWalletObj.credentials.copayerId,
       });
 
-      if (fullWalletObj.credentials.n > 1) {
-        if ((!action || action.type === 'failed') && txp.status === 'pending') {
-          txpsPending.push(txp);
-        }
-
-        if (action && txp.status === 'accepted') {
-          txpsPending.push(txp);
-        }
-
+      const setPendingTx = (_txp: TransactionProposal) => {
+        fullWalletObj.credentials.n > 1
+          ? txpsPending.push(_txp)
+          : txpsUnsent.push(_txp);
         setNeedActionPendingTxps(txpsPending);
-        // For unsent transactions
-      } else if (action && txp.status === 'accepted') {
-        txpsUnsent.push(txp);
         setNeedActionUnsentTxps(txpsUnsent);
+      };
+      if ((!action || action.type === 'failed') && txp.status === 'pending') {
+        setPendingTx(txp);
+      }
+      // unsent transactions
+      if (action && txp.status === 'accepted') {
+        setPendingTx(txp);
       }
     });
   };
@@ -1001,9 +1008,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                                 },
                               });
                             },
-                            opts: {
-                              context: 'buyCrypto',
-                            },
+                            context: 'buyCrypto',
                           },
                         });
                       },
@@ -1067,11 +1072,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         ? t('Pending Proposals')
                         : t('Unsent Transactions')}
                     </H5>
-                    {fullWalletObj.credentials.n > 1 ? (
-                      <ProposalBadgeContainer onPress={onPressTxpBadge}>
-                        <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-                      </ProposalBadgeContainer>
-                    ) : null}
+                    <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                      <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                    </ProposalBadgeContainer>
                   </TransactionSectionHeaderContainer>
                   {fullWalletObj.credentials.n > 1 ? (
                     <FlatList
