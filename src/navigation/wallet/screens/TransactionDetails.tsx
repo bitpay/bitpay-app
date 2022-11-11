@@ -71,6 +71,7 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {Memo} from './send/confirm/Memo';
 import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
+import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -86,27 +87,12 @@ const SubTitle = styled(BaseText)`
   font-weight: 300;
 `;
 
-export const DetailContainer = styled.View`
-  min-height: 55px;
-  justify-content: center;
-  margin: 5px 0;
-`;
-
 const VerticalSpace = styled.View`
   margin: 10px 0;
 `;
 
-export const DetailRow = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-`;
-
 const TransactionIdText = styled(H7)`
   max-width: 150px;
-`;
-
-export const DetailColumn = styled(Column)`
-  align-items: flex-end;
 `;
 
 const TimelineContainer = styled.View`

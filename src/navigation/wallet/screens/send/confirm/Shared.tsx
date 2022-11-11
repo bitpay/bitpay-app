@@ -101,6 +101,10 @@ export const ConfirmSubText = styled(H7)`
   color: ${({theme}) => (theme.dark ? LuckySevens : theme.colors.text)};
 `;
 
+export const SendToPillContainer = styled.View`
+  height: 37px;
+`;
+
 // Row UI
 export const Header = ({
   children,
