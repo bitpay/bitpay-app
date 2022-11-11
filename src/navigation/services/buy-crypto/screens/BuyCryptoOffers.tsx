@@ -328,12 +328,29 @@ const BuyCryptoOffers: React.FC = () => {
         ? amount
         : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
 
+    let _paymentMethod: string | undefined;
+    switch (paymentMethod.method) {
+      case 'debitCard':
+      case 'creditCard':
+        _paymentMethod = 'credit_debit_card';
+        break;
+      case 'sepaBankTransfer':
+        _paymentMethod = 'sepa_bank_transfer';
+        break;
+      case 'applePay':
+        _paymentMethod = 'mobile_wallet';
+        break;
+      default:
+        _paymentMethod = undefined;
+        break;
+    }
+
     const requestData = {
       currencyAbbreviation: coin.toLowerCase(),
       baseCurrencyAmount: offers.moonpay.fiatAmount,
       extraFeePercentage: 0,
       baseCurrencyCode: offers.simplex.fiatCurrency.toLowerCase(),
-      paymentMethod: undefined,
+      paymentMethod: _paymentMethod,
       areFeesIncluded: true,
       env: moonpayEnv,
     };

@@ -23,7 +23,9 @@ const MoonpayTerms: React.FC<{
       <ExchangeTermsText>
         {t('What service fees am I paying?')}
       </ExchangeTermsText>
-      {['creditCard', 'debitCard', 'other'].includes(paymentMethod.method) ? (
+      {['applePay', 'creditCard', 'debitCard', 'other'].includes(
+        paymentMethod.method,
+      ) ? (
         <ExchangeTermsText>
           {t(
             'For card payments 4.5% of the transaction with a minimum of €3.99/£3.99/$3.99 or currency equivalent.',

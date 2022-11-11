@@ -27,7 +27,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     method: 'applePay',
     imgSrc: <ApplePayIcon width={40} height={40} />,
     supportedExchanges: {
-      moonpay: false,
+      moonpay: true,
       simplex: true,
       wyre: true,
     },
@@ -51,7 +51,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       simplex: true,
-      wyre: true,
+      wyre: false,
     },
     enabled: true,
   },
