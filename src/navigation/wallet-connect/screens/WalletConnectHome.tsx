@@ -370,9 +370,7 @@ const WalletConnectHome = () => {
             })
           ) : (
             <ItemContainer>
-              <ItemTitleContainer>
-                <H7>{t('No pending requests')}</H7>
-              </ItemTitleContainer>
+              <H7>{t('No pending requests')}</H7>
             </ItemContainer>
           )}
         </PRContainer>
