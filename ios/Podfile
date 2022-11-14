@@ -32,7 +32,18 @@ target 'BitPayApp' do
   use_flipper!({'Flipper' => '0.162.0'})
 
   post_install do |installer|
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '11.0'
+        config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+      end
+      if target.name == 'RCT-Folly'
+        target.build_configurations.each do |config|
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '9.0'
+        end
+      end
     react_native_post_install(installer)
     flipper_post_install(installer)
+    end
   end
 end
