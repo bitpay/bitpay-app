@@ -1165,5 +1165,6 @@
   "WCNotSupportedChainMsg": "Sorry, {{peerName}} request to switch to a network that BitPay does not currently support.",
   "WCSwitchEthereumChainMsg": "{{peerName}} requests to change network",
   "WCSwitchNetworkTitle": "Switch network to {{chain}}",
-  "WCAddWalletMsg": "To make the switch you first need to have a {{chain}} wallet. Do you want to add this wallet to continue?"
+  "WCAddWalletMsg": "To make the switch you first need to have a {{chain}} wallet. Do you want to add this wallet to continue?",
+  "WCNoWalletMsg": "The {{chain}} wallet needed to continue was not found on this device."
 }

@@ -1,5 +1,5 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {H7, Smallest} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
@@ -39,10 +39,7 @@ import {
   FormatAmount,
   FormatAmountStr,
 } from '../../../store/wallet/effects/amount/amount';
-import {
-  createProposalAndBuildTxDetails,
-  handleCreateTxProposalError,
-} from '../../../store/wallet/effects/send/send';
+import {createProposalAndBuildTxDetails} from '../../../store/wallet/effects/send/send';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {convertHexToNumber} from '@walletconnect/utils';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -53,6 +50,9 @@ import {
   WithinPastDay,
 } from '../../../store/wallet/utils/time';
 import {RootState} from '../../../store';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -110,19 +110,37 @@ const WalletConnectHome = () => {
 
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
 
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
   const goToConfirmView = async (request: IWCRequest) => {
     try {
       let _wallet;
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
       dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
-      if (request?.chain !== wallet.chain && wcConnector?.customData.keyId) {
+      if (
+        request.chain &&
+        request.chain !== wallet.chain &&
+        wcConnector?.customData.keyId
+      ) {
         _wallet = allKeys[wcConnector?.customData.keyId].wallets.find(w => {
           return (
             w.chain === request?.chain &&
             w.credentials.account === wallet.credentials.account
           );
         });
+        if (!_wallet) {
+          const errMsg = t('WCNoWalletMsg', {
+            chain: request.chain?.toUpperCase(),
+          });
+          throw new Error(errMsg);
+        }
       }
       const {
         to: toAddress,
@@ -173,25 +191,13 @@ const WalletConnectHome = () => {
           peerName: session?.peerMeta?.name,
         },
       });
-    } catch (err: any) {
-      const errorMessageConfig = (
-        await Promise.all([
-          dispatch(handleCreateTxProposalError(err)),
-          sleep(500),
-        ])
-      )[0];
+    } catch (error: any) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
-      dispatch(
-        showBottomNotificationModal({
-          ...errorMessageConfig,
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(error.err ? error.err : error),
+          title: t('Uh oh, something went wrong'),
         }),
       );
     }
