@@ -357,7 +357,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     setUIFormattedEvmWallets(_UIFormattedEvmWallets);
     setAssociatedWallet(_UIFormattedEvmWallets[0]);
 
-    if (!_evmWallets?.length) {
+    if (!_evmWallets?.length && isToken) {
       showMissingWalletMsg();
     }
     setShowAssociatedWalletSelectionDropdown(_evmWallets.length > 1 && isToken);

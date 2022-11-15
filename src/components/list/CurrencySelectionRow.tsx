@@ -117,7 +117,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
     } = currency;
 
     return (
-      <FlexRow onPress={() => onToggle?.(currency.id)}>
+      <FlexRow onPress={() => onToggle?.(currencyAbbreviation)}>
         <CurrencyColumn>
           <CurrencyImage img={img} imgSrc={imgSrc} />
         </CurrencyColumn>
@@ -136,7 +136,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
               checked={!!selected}
               radio={selectionMode === 'single'}
               disabled={!!disabled}
-              onPress={() => onToggle?.(currency.id)}
+              onPress={() => onToggle?.(currencyAbbreviation)}
             />
           </CurrencyColumn>
         )}

@@ -93,11 +93,18 @@ type CurrencySelectionListItem = CurrencySelectionRowProps & {
 
 export type CurrencySelectionMode = 'single' | 'multi';
 
-interface ContextHandler {
+interface SelectedCurrencies {
+  chain: string;
+  currencyAbbreviation: string;
+  isToken: boolean;
+}
+
+export interface ContextHandler {
   headerTitle?: string;
   ctaTitle?: string;
   onCtaPress?: () => void;
   selectionMode: CurrencySelectionMode;
+  selectedCurrencies: SelectedCurrencies[];
 }
 
 export const CurrencySelectionContainer = styled.View`
@@ -364,13 +371,18 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     }, []);
   }, [allListItems]);
 
-  const contextHandler = (): ContextHandler | undefined => {
+  const contextHandler = (): ContextHandler => {
     switch (context) {
       case 'onboarding':
       case 'createNewKey': {
         return {
           selectionMode: 'multi',
-          ctaTitle: t('Create Key'),
+          ctaTitle:
+            selectedCurrencies?.length > 1
+              ? t('AddArgWallets', {
+                  walletsLength: selectedCurrencies?.length,
+                })
+              : t('Add Wallet'),
           onCtaPress: async () => {
             try {
               await dispatch(
@@ -405,6 +417,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               showErrorModal(e.message);
             }
           },
+          selectedCurrencies,
         };
       }
 
@@ -491,6 +504,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               },
             });
           },
+          selectedCurrencies,
         };
       }
       case 'addWalletMultisig': {
@@ -512,10 +526,19 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               },
             });
           },
+          selectedCurrencies,
         };
       }
     }
   };
+
+  const contextHandlerRef = useRef(contextHandler);
+  contextHandlerRef.current = contextHandler;
+
+  const memoizedContextHandler = useCallback(
+    (): ContextHandler => contextHandlerRef.current(),
+    [],
+  );
 
   const {onCtaPress, ctaTitle, headerTitle, selectionMode} =
     contextHandler() || {};
@@ -735,10 +758,17 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           description: item.description,
           selectionMode,
           onToggle: memoizedOnToggle,
+          contextHandler: memoizedContextHandler,
         },
       });
     };
-  }, [memoizedOnToggle, navigation, key, selectionMode]);
+  }, [
+    memoizedOnToggle,
+    memoizedContextHandler,
+    navigation,
+    key,
+    selectionMode,
+  ]);
 
   const renderItem: ListRenderItem<CurrencySelectionListItem> = useCallback(
     ({item}) => {
@@ -778,7 +808,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         <CurrencySelectionNoResults query={searchFilter} walletKey={key} />
       )}
 
-      {onCtaPress && (
+      {onCtaPress && selectedCurrencies.length > 0 ? (
         <CtaContainer
           style={{
             shadowColor: '#000',
@@ -788,14 +818,11 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             elevation: 5,
             marginTop: 16,
           }}>
-          <Button
-            onPress={onCtaPress}
-            buttonStyle={'primary'}
-            disabled={!selectedCurrencies.length}>
+          <Button onPress={onCtaPress} buttonStyle={'primary'}>
             {ctaTitle || t('Continue')}
           </Button>
         </CtaContainer>
-      )}
+      ) : null}
     </CurrencySelectionContainer>
   );
 };
