@@ -348,7 +348,7 @@ const BuyCryptoOffers: React.FC = () => {
     const requestData = {
       currencyAbbreviation: coin.toLowerCase(),
       baseCurrencyAmount: offers.moonpay.fiatAmount,
-      extraFeePercentage: 0,
+      // extraFeePercentage: 0, // min: 0 max: 10. If not provided, will use the default value set to our account.
       baseCurrencyCode: offers.simplex.fiatCurrency.toLowerCase(),
       paymentMethod: _paymentMethod,
       areFeesIncluded: true,
