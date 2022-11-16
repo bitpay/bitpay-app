@@ -32,10 +32,9 @@ import {useTranslation} from 'react-i18next';
 
 export interface MoonpaySettingsProps {
   incomingPaymentRequest: {
-    success: string;
-    paymentId: string;
-    quoteId: string;
-    userId: string;
+    externalId: string;
+    transactionId?: string;
+    status?: string;
   };
 }
 
@@ -58,7 +57,13 @@ const MoonpaySettings: React.FC = () => {
   useEffect(() => {
     if (incomingPaymentRequest) {
       logger.debug(
-        `Coming from payment request: ${incomingPaymentRequest.paymentId}`,
+        `Coming from payment request: ExternalID: ${
+          incomingPaymentRequest.externalId
+        }${
+          incomingPaymentRequest.transactionId
+            ? ` - TransactionID: ${incomingPaymentRequest.transactionId}`
+            : ''
+        }`,
       );
     }
   }, []);
