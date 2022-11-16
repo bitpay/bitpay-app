@@ -224,6 +224,23 @@ const SwapCryptoRoot: React.FC = () => {
 
   const setSelectedWallet = async () => {
     if (selectedWallet) {
+      if (
+        swapCryptoSupportedCoinsFrom &&
+        !swapCryptoSupportedCoinsFrom
+          .map(c => c.symbol)
+          .includes(
+            getCurrencyAbbreviation(
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+            ),
+          )
+      ) {
+        const msg = t(
+          'The selected wallet currently does not support cryptocurrency swapping.',
+        );
+        showError(msg);
+        return;
+      }
       const key = keys[selectedWallet.keyId];
       try {
         await dispatch(
