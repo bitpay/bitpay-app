@@ -423,7 +423,7 @@ const BuyCryptoOffers: React.FC = () => {
         }
       })
       .catch(err => {
-        const reason = 'simplexGetQuote Error';
+        const reason = 'moonpayGetQuote Error';
         showMoonpayError(err, reason);
       });
   };
