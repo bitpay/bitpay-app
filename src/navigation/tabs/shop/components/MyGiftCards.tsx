@@ -58,7 +58,7 @@ const MyGiftCards = ({
   const giftCards = allGiftCards
     .filter(
       giftCard =>
-        giftCard.status === 'SUCCESS' ||
+        ['PENDING', 'SUCCESS', 'SYNCED'].includes(giftCard.status) ||
         redemptionFailuresLessThanADayOld(giftCard),
     )
     .sort(sortByDescendingDate);

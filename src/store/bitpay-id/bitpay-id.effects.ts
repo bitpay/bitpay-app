@@ -450,6 +450,7 @@ const startPairAndLoadUser =
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
+      dispatch(ShopEffects.startSyncGiftCards());
     } catch (err) {
       let errMsg;
 

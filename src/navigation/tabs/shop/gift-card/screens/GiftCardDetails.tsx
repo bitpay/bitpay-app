@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from 'styled-components';
 import Button from '../../../../../components/button/Button';
 import {
   CtaContainer,
@@ -161,6 +162,18 @@ const GiftCardDetails = ({
     );
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    const redeem = async () => {
+      const updatedGiftCard = await dispatch(
+        ShopEffects.startRedeemGiftCard(giftCard.invoiceId),
+      );
+      setGiftCard(updatedGiftCard);
+    };
+    if (giftCard.status === 'SYNCED') {
+      redeem();
+    }
+  }, [dispatch, giftCard.invoiceId, giftCard.status]);
 
   useEffect(() => {
     if (!giftCard.barcodeImage) {
@@ -401,9 +414,13 @@ const GiftCardDetails = ({
           </>
         ) : (
           <ClaimCodeBox>
-            {giftCard.status === 'PENDING' ? (
+            {['PENDING', 'SYNCED'].includes(giftCard.status) ? (
               <TextAlign align="center">
-                <Paragraph>{t('Awaiting payment to confirm')}</Paragraph>
+                <Paragraph>
+                  {giftCard.status === 'PENDING'
+                    ? t('Awaiting payment to confirm')
+                    : t('Fetching claim information...')}
+                </Paragraph>
               </TextAlign>
             ) : (
               <>

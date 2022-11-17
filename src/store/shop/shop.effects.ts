@@ -1,4 +1,6 @@
 import axios from 'axios';
+import moment from 'moment';
+import {keyBy} from 'lodash';
 import {ShopActions} from '.';
 import {Effect} from '..';
 import BitPayIdApi from '../../api/bitpay';
@@ -14,6 +16,7 @@ import {
 import {
   getCardConfigMapFromApiConfigMap,
   redemptionFailuresLessThanADayOld,
+  sortByDescendingDate,
 } from '../../lib/gift-cards/gift-card';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
@@ -58,6 +61,58 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
     dispatch(ShopActions.failedFetchCatalog());
   }
 };
+
+export const startSyncGiftCards =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    try {
+      const {BITPAY_ID, SHOP} = getState();
+      const user = BITPAY_ID.user[APP_NETWORK];
+      if (!user) {
+        return;
+      }
+      const savedGiftCards = SHOP.giftCards[APP_NETWORK];
+      const syncedGiftCards = savedGiftCards
+        .filter(giftCard => giftCard.userEid === user.eid)
+        .sort(sortByDescendingDate);
+      const latestSyncDate = syncedGiftCards[0]?.date;
+      const olderThanThreeDays = (dateString: string): boolean => {
+        const threeDaysAgo = moment().subtract(3, 'day').toDate();
+        return new Date(dateString) < threeDaysAgo;
+      };
+      const unsyncedGiftCards = await BitPayIdApi.apiCall(
+        BITPAY_ID.apiToken[APP_NETWORK],
+        'findGiftCards',
+        {dateStart: latestSyncDate},
+      ).then(
+        res =>
+          res.map((resObj: any) => ({
+            ...resObj,
+            brand: undefined,
+            createdOn: undefined,
+            name: resObj.brand,
+            date: resObj.createdOn,
+            userEid: user.eid,
+            archived: olderThanThreeDays(resObj.createdOn),
+            status: 'SYNCED',
+          })) as GiftCard[],
+      );
+      if (!unsyncedGiftCards.length) {
+        return;
+      }
+      const giftCardMap = keyBy(savedGiftCards, giftCard => giftCard.invoiceId);
+      const giftCards = unsyncedGiftCards.reduce(
+        (newSavedGiftCards, unsyncedGiftCard) =>
+          giftCardMap[unsyncedGiftCard.invoiceId]
+            ? newSavedGiftCards
+            : newSavedGiftCards.concat(unsyncedGiftCard),
+        savedGiftCards as GiftCard[],
+      );
+      dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
 
 export const startCreateGiftCardInvoice =
   (
