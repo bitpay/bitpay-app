@@ -86,7 +86,7 @@ export interface BitPayIdState {
   pairingBitPayIdError: string | null;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
   fetchDoshTokenStatus: FetchDoshTokenStatus;
-  fetchSupportedCurrenciesStatus: FetchDoshTokenStatus;
+  fetchSupportedCurrenciesStatus: FetchSupportedCurrenciesStatus;
   forgotPasswordEmailStatus: ForgotPasswordEmailStatus;
 }
 
@@ -389,6 +389,17 @@ export const bitPayIdReducer = (
         ...state,
         fetchSupportedCurrenciesStatus: 'failed',
       };
+
+    case BitPayIdActionTypes.RESET_FETCH_SUPPORTED_CURRENCIES: {
+      return {
+        ...state,
+        fetchSupportedCurrenciesStatus: null,
+        supportedCurrencies: {
+          [Network.mainnet]: null,
+          [Network.testnet]: null,
+        },
+      };
+    }
 
     case BitPayIdActionTypes.FORGOT_PASSWORD_EMAIL_STATUS: {
       return {

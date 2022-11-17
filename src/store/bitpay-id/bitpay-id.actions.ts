@@ -228,6 +228,10 @@ export const failedFetchSupportedCurrencies = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_FETCH_SUPPORTED_CURRENCIES,
 });
 
+export const resetFetchSupportedCurrencies = (): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.RESET_FETCH_SUPPORTED_CURRENCIES,
+});
+
 export const forgotPasswordEmailStatus = (
   status: 'success' | 'failed',
   message: string,

@@ -526,7 +526,18 @@ export const startDisconnectBitPayId =
       // log but swallow this error
       dispatch(LogActions.error('An error occured while clearing Dosh user.'));
       dispatch(LogActions.error(JSON.stringify(err)));
-      return;
+    }
+
+    try {
+      dispatch(BitPayIdActions.resetFetchSupportedCurrencies());
+    } catch (err) {
+      // log but swallow this error
+      dispatch(
+        LogActions.error(
+          'An error occured while clearing user supported currencies.',
+        ),
+      );
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 
