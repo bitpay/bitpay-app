@@ -16,6 +16,7 @@ import UsdcIcon from '../../../../../assets/img/currencies/usdc.svg';
 import UsdpIcon from '../../../../../assets/img/currencies/usdp.svg';
 import WbtcIcon from '../../../../../assets/img/currencies/wbtc.svg';
 import XrpIcon from '../../../../../assets/img/currencies/xrp.svg';
+import UsdtIcon from '../../../../../assets/img/currencies/usdt.svg';
 import Button from '../../../../components/button/Button';
 import {ActiveOpacity, Br} from '../../../../components/styled/Containers';
 import {Smallest} from '../../../../components/styled/Text';
@@ -138,6 +139,12 @@ const Icons: IconMap = {
     unselected: buildIconContainer(WbtcIcon),
     selected: buildCheckIconContainer(
       getCardCurrencyColorPalette('WBTC').stopColor1,
+    ),
+  },
+  USDT: {
+    unselected: buildIconContainer(UsdtIcon),
+    selected: buildCheckIconContainer(
+      getCardCurrencyColorPalette('USDT').stopColor1,
     ),
   },
 };

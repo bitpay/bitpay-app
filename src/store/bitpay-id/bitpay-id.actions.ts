@@ -216,6 +216,18 @@ export const updateFetchDoshTokenStatus = (
   payload: status,
 });
 
+export const successFetchSupportedCurrencies = (
+  network: Network,
+  supportedCurrencies: string[],
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_FETCH_SUPPORTED_CURRENCIES,
+  payload: {network, supportedCurrencies},
+});
+
+export const failedFetchSupportedCurrencies = (): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.FAILED_FETCH_SUPPORTED_CURRENCIES,
+});
+
 export const forgotPasswordEmailStatus = (
   status: 'success' | 'failed',
   message: string,

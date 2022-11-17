@@ -4,6 +4,7 @@ import {
   FetchBasicInfoResponse,
   FetchDoshTokenResponse,
   FetchInitialUserDataResponse,
+  FetchSupportedCurrenciesResponse,
 } from './user.types';
 
 const fetchInitialUserData = async (token: string) => {
@@ -54,10 +55,31 @@ const fetchDoshToken = async (token: string) => {
   return data.user.doshToken;
 };
 
+const fetchSupportedCurrencies = async (token: string) => {
+  const query = UserQueries.FETCH_SUPPORTED_CURRECIES(token);
+  const response =
+    await GraphQlApi.getInstance().request<FetchSupportedCurrenciesResponse>(
+      query,
+    );
+
+  const {errors, data} = response.data;
+
+  if (!data) {
+    const msg = errors
+      ? errors.map(e => e.message).join(', ')
+      : 'An error occurred while fetching initial user data.';
+
+    throw new Error(msg);
+  }
+
+  return response.data;
+};
+
 const UserApi = {
   fetchBasicInfo,
   fetchDoshToken,
   fetchInitialUserData,
+  fetchSupportedCurrencies,
 };
 
 export default UserApi;

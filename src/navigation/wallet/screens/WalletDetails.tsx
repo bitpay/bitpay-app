@@ -58,6 +58,7 @@ import {
   White,
 } from '../../../styles/colors';
 import {
+  getCoinsToRemove,
   getProtocolName,
   shouldScale,
   sleep,
@@ -285,7 +286,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {walletId, skipInitializeHistory} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const {countryData, isNyc} = useAppSelector(({LOCATION}) => LOCATION);
+  const supportedCurrencies = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.supportedCurrencies[APP.network],
+  );
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 
@@ -304,6 +308,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     useState(false);
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
+  const coinsToRemove = getCoinsToRemove({
+    supportedCurrencies,
+    countryData,
+    isNyc,
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -995,6 +1004,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       hide: !isCoinSupportedToBuy(
                         fullWalletObj.currencyAbbreviation,
                         fullWalletObj.chain,
+                        coinsToRemove,
                         countryData?.shortCode || 'US',
                       ),
                       cta: () => {
@@ -1027,6 +1037,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         !isCoinSupportedToSwap(
                           fullWalletObj.currencyAbbreviation,
                           fullWalletObj.chain,
+                          coinsToRemove,
                         ),
                       cta: () => {
                         dispatch(

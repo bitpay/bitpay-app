@@ -36,7 +36,7 @@ import {WalletScreens} from '../../navigation/wallet/WalletStack';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {Analytics} from '../analytics/analytics.effects';
-import {BitPayIdEffects} from '../bitpay-id';
+import {BitPayIdActions, BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
 import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
@@ -95,6 +95,7 @@ import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
+import {startFetchSupportedCurrencies} from '../bitpay-id/bitpay-id.effects';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -211,6 +212,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
           ),
         );
       }
+
+      dispatch(startFetchSupportedCurrencies(token));
     }
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here

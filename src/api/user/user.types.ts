@@ -42,3 +42,9 @@ export interface FetchDoshTokenResponse {
     doshToken: string;
   };
 }
+
+export interface FetchSupportedCurrenciesResponse {
+  user: {
+    currencies: string[];
+  };
+}

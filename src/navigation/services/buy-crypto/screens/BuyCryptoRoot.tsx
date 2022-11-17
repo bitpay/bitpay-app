@@ -40,6 +40,7 @@ import {getSimplexSupportedCurrencies} from '../utils/simplex-utils';
 import {getWyreSupportedCurrencies} from '../utils/wyre-utils';
 import {
   getBadgeImg,
+  getCoinsToRemove,
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -99,7 +100,10 @@ const BuyCryptoRoot: React.VFC<
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
-  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const {countryData, isNyc} = useAppSelector(({LOCATION}) => LOCATION);
+  const supportedCurrencies = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.supportedCurrencies[APP.network],
+  );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const fromWallet = route.params?.fromWallet;
@@ -492,8 +496,11 @@ const BuyCryptoRoot: React.VFC<
       setAmount(limits.max);
     }
 
-    const coinsToRemove =
-      !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
+    const coinsToRemove = getCoinsToRemove({
+      supportedCurrencies,
+      countryData,
+      isNyc,
+    });
 
     if (coinsToRemove.length > 0) {
       coinsToRemove.forEach((coin: string) => {

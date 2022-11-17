@@ -35,7 +35,8 @@ export type SupportedCurrencies =
   | 'XRP'
   | 'DOGE'
   | 'DAI'
-  | 'WBTC';
+  | 'WBTC'
+  | 'USDT';
 
 export type VirtualDesignCurrency = SupportedCurrencies | 'bitpay-b';
 

@@ -422,10 +422,10 @@ const startPairAndLoadUser =
       throw err;
     }
 
-    try {
-      const {APP, BITPAY_ID} = getState();
-      const token = BITPAY_ID.apiToken[APP.network];
+    const {APP, BITPAY_ID} = getState();
+    const token = BITPAY_ID.apiToken[APP.network];
 
+    try {
       const {errors, data} = await UserApi.fetchInitialUserData(token);
 
       // handle partial errors
@@ -457,6 +457,48 @@ const startPairAndLoadUser =
 
       dispatch(LogActions.error('An error occurred while fetching user data.'));
       dispatch(LogActions.error(errMsg));
+    }
+
+    dispatch(startFetchSupportedCurrencies(token));
+  };
+
+export const startFetchSupportedCurrencies =
+  (token: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      const {errors, data} = await UserApi.fetchSupportedCurrencies(token);
+
+      // handle partial errors
+      if (errors) {
+        const msg = errors
+          .map(e => `${e.path.join('.')}: ${e.message}`)
+          .join(',\n');
+
+        dispatch(
+          LogActions.error(
+            'One or more errors occurred while fetching user supported currencies data:\n' +
+              msg,
+          ),
+        );
+      }
+      dispatch(
+        BitPayIdActions.successFetchSupportedCurrencies(
+          APP.network,
+          data?.user?.currencies,
+        ),
+      );
+    } catch (err) {
+      if (isAxiosError(err)) {
+        dispatch(LogActions.error(`${err.name}: ${err.message}`));
+        dispatch(LogActions.error(err.config.url));
+        dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
+      } else if (err instanceof Error) {
+        dispatch(LogActions.error(`${err.name}: ${err.message}`));
+      } else {
+        dispatch(LogActions.error(JSON.stringify(err)));
+      }
+      dispatch(BitPayIdActions.failedFetchSupportedCurrencies());
     }
   };
 

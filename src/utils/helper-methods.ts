@@ -1,4 +1,4 @@
-import {SUPPORTED_COINS} from '../constants/currencies';
+import {SUPPORTED_COINS, SUPPORTED_EVM_COINS} from '../constants/currencies';
 import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
@@ -7,6 +7,8 @@ import {ReactElement} from 'react';
 import {IsERCToken} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
+import {CountryData} from '../store/location/location.models';
+import {getCurrencyCodeFromCoinAndChain} from '../navigation/bitpay-id/utils/bitpay-id-utils';
 
 export const sleep = (duration: number) =>
   new Promise<void>(resolve => setTimeout(resolve, duration));
@@ -344,4 +346,42 @@ export const getCWCChain = (chain: string): string => {
     default:
       return 'ETHERC20';
   }
+};
+
+export const getCoinsToRemove = ({
+  supportedCurrencies,
+  countryData,
+  isNyc,
+}: {
+  supportedCurrencies: string[] | null;
+  countryData: CountryData | null;
+  isNyc: boolean | null;
+}): string[] => {
+  let coinsToRemove = [];
+
+  if (!countryData || countryData.shortCode === 'US') {
+    coinsToRemove.push('xrp');
+  }
+  if (!supportedCurrencies) {
+    if (
+      isNyc ||
+      ((!countryData || countryData.shortCode === 'US') && isNyc === null)
+    ) {
+      // NY || US - unknown state
+      coinsToRemove = coinsToRemove.concat(['usdt', 'usdt_m', 'usdt_e']);
+    }
+  } else {
+    let removeUSDT = false;
+    SUPPORTED_EVM_COINS.forEach(chain => {
+      const coin = getCurrencyCodeFromCoinAndChain('usdt', chain);
+      if (!supportedCurrencies.includes(coin)) {
+        removeUSDT = true;
+      }
+    });
+    if (removeUSDT) {
+      coinsToRemove = coinsToRemove.concat(['usdt', 'usdt_m', 'usdt_e']);
+    }
+  }
+
+  return coinsToRemove;
 };

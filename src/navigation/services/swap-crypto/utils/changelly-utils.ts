@@ -204,7 +204,11 @@ export const getChangellyFixedCurrencyAbbreviation = (
   }
 };
 
-export const isCoinSupportedToSwap = (coin: string, chain: string): boolean => {
+export const isCoinSupportedToSwap = (
+  coin: string,
+  chain: string,
+  coinsToRemove: string[],
+): boolean => {
   if (chain === undefined) {
     return [
       ...changellySupportedCoins,
@@ -213,6 +217,9 @@ export const isCoinSupportedToSwap = (coin: string, chain: string): boolean => {
   }
   if (coin.toLowerCase() === chain.toLowerCase()) {
     return changellySupportedCoins.includes(coin.toLowerCase());
+  }
+  if (coinsToRemove.includes(coin.toLowerCase())) {
+    return false;
   }
   switch (chain) {
     case 'eth':

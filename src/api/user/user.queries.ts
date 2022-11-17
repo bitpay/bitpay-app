@@ -81,10 +81,26 @@ const FETCH_DOSH_TOKEN = (token: string): GqlQueryParams => {
   };
 };
 
+const FETCH_SUPPORTED_CURRECIES = (token: string): GqlQueryParams => {
+  return {
+    query: `
+      query FETCH_SUPPORTED_CURRECIES ($token:String!, $csrf:String) {
+        user:bitpayUser(token:$token, csrf: $csrf) {
+          currencies (product: "app")
+        }
+      }
+    `,
+    variables: {
+      token,
+    },
+  };
+};
+
 const UserQueries = {
   FETCH_ALL_USER_DATA,
   FETCH_BASIC_INFO,
   FETCH_DOSH_TOKEN,
+  FETCH_SUPPORTED_CURRECIES,
 };
 
 export default UserQueries;

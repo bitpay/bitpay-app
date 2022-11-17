@@ -6,10 +6,12 @@ export const locationReduxPersistBlackList: LocationPersistBlackList = [];
 
 export interface LocationState {
   countryData: CountryData | null;
+  isNyc: boolean | null;
 }
 
 const initialState: LocationState = {
   countryData: null,
+  isNyc: null,
 };
 
 export const locationReducer = (
@@ -18,9 +20,10 @@ export const locationReducer = (
 ): LocationState => {
   switch (action.type) {
     case LocationActionTypes.SUCCESS_GET_COUNTRY:
-      const {countryData} = action.payload;
+      const {countryData, isNyc} = action.payload;
       return {
         countryData: countryData,
+        isNyc,
       };
 
     default:

@@ -23,6 +23,8 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'fetchBasicInfoStatus',
   'doshToken',
   'fetchDoshTokenStatus',
+  'supportedCurrencies',
+  'fetchSupportedCurrenciesStatus',
   'forgotPasswordEmailStatus',
 ];
 
@@ -44,6 +46,7 @@ export type EmailPairingStatus = 'success' | 'failed' | null;
 export type PairingBitPayIdStatus = 'success' | 'failed' | null;
 export type FetchBasicInfoStatus = 'success' | 'failed' | null;
 export type FetchDoshTokenStatus = 'success' | 'failed' | null;
+export type FetchSupportedCurrenciesStatus = 'success' | 'failed' | null;
 export type ForgotPasswordEmailStatus = {
   status: 'success' | 'failed';
   message: string;
@@ -56,6 +59,9 @@ export interface BitPayIdState {
   };
   doshToken: {
     [key in Network]: string;
+  };
+  supportedCurrencies: {
+    [key in Network]: string[] | null;
   };
   user: {
     [key in Network]: User | null;
@@ -80,6 +86,7 @@ export interface BitPayIdState {
   pairingBitPayIdError: string | null;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
   fetchDoshTokenStatus: FetchDoshTokenStatus;
+  fetchSupportedCurrenciesStatus: FetchDoshTokenStatus;
   forgotPasswordEmailStatus: ForgotPasswordEmailStatus;
 }
 
@@ -97,6 +104,10 @@ const initialState: BitPayIdState = {
   doshToken: {
     [Network.mainnet]: '',
     [Network.testnet]: '',
+  },
+  supportedCurrencies: {
+    [Network.mainnet]: null,
+    [Network.testnet]: null,
   },
   user: {
     [Network.mainnet]: null,
@@ -124,6 +135,7 @@ const initialState: BitPayIdState = {
   pairingBitPayIdError: null,
   fetchBasicInfoStatus: null,
   fetchDoshTokenStatus: null,
+  fetchSupportedCurrenciesStatus: null,
   forgotPasswordEmailStatus: null,
 };
 
@@ -360,6 +372,22 @@ export const bitPayIdReducer = (
       return {
         ...state,
         fetchDoshTokenStatus: action.payload,
+      };
+
+    case BitPayIdActionTypes.SUCCESS_FETCH_SUPPORTED_CURRENCIES:
+      return {
+        ...state,
+        fetchSupportedCurrenciesStatus: 'success',
+        supportedCurrencies: {
+          ...state.supportedCurrencies,
+          [action.payload.network]: action.payload.supportedCurrencies,
+        },
+      };
+
+    case BitPayIdActionTypes.FAILED_FETCH_SUPPORTED_CURRENCIES:
+      return {
+        ...state,
+        fetchSupportedCurrenciesStatus: 'failed',
       };
 
     case BitPayIdActionTypes.FORGOT_PASSWORD_EMAIL_STATUS: {

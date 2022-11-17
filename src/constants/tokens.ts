@@ -75,6 +75,12 @@ export const BitpaySupportedEthereumTokenOpts: TokenOptsType = {
     decimals: 18,
     address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
   },
+  usdt_e: {
+    name: 'Tether USD',
+    symbol: 'USDT',
+    decimals: 6,
+    address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+  },
 };
 
 export const BitpaySupportedMaticTokenOpts: TokenOptsType = {
@@ -113,6 +119,12 @@ export const BitpaySupportedMaticTokenOpts: TokenOptsType = {
     symbol: 'APE',
     decimals: 18,
     address: '0xb7b31a6bc18e48888545ce79e83e06003be70930',
+  },
+  usdt_m: {
+    name: 'Tether USD',
+    symbol: 'USDT',
+    decimals: 6,
+    address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
   },
 };
 
@@ -182,6 +194,12 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
     decimals: 18,
     address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
   },
+  '0xdac17f958d2ee523a2206206994597c13d831ec7_e': {
+    name: 'Tether USD',
+    symbol: 'USDT',
+    decimals: 6,
+    address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+  },
 };
 
 export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
@@ -220,6 +238,12 @@ export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
     symbol: 'APE',
     decimals: 18,
     address: '0xb7b31a6bc18e48888545ce79e83e06003be70930',
+  },
+  '0xc2132d05d31c914a87c6611c10748aeb04b58e8f_m': {
+    name: 'Tether USD',
+    symbol: 'USDT',
+    decimals: 6,
+    address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
   },
 };
 

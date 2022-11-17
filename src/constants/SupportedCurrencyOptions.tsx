@@ -15,6 +15,7 @@ import ShibIcon from '../../assets/img/currencies/shib.svg';
 import ApeIcon from '../../assets/img/currencies/ape.svg';
 import EurocIcon from '../../assets/img/currencies/euroc.svg';
 import MaticIcon from '../../assets/img/currencies/matic.svg';
+import UsdtIcon from '../../assets/img/currencies/usdt.svg';
 import {ImageSourcePropType} from 'react-native';
 import {orderBy} from 'lodash';
 
@@ -52,6 +53,7 @@ export const CurrencyListIcons: {
   ape_e: props => <ApeIcon {...props} />,
   euroc_e: props => <EurocIcon {...props} />,
   matic_e: props => <MaticIcon {...props} />,
+  usdt_e: props => <UsdtIcon {...props} />,
   usdc_m: props => <UsdcIcon {...props} />,
   busd_m: props => <BusdIcon {...props} />,
   dai_m: props => <DaiIcon {...props} />,
@@ -59,6 +61,7 @@ export const CurrencyListIcons: {
   shib_m: props => <ShibIcon {...props} />,
   ape_m: props => <ApeIcon {...props} />,
   euroc_m: props => <EurocIcon {...props} />,
+  usdt_m: props => <UsdtIcon {...props} />,
 };
 
 export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
@@ -234,6 +237,28 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
+    img: CurrencyListIcons.matic_e,
+    currencyName: 'Matic Token',
+    currencyAbbreviation: 'matic',
+    chain: 'eth',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/MATIC.png'),
+    badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
+    badgeUri: CurrencyListIcons.matic,
+  },
+  {
+    id: Math.random().toString(),
+    img: CurrencyListIcons.usdt_e,
+    currencyName: 'Tether USD',
+    currencyAbbreviation: 'usdt',
+    chain: 'eth',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/USDT.png'),
+    badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
+    badgeUri: CurrencyListIcons.eth,
+  },
+  {
+    id: Math.random().toString(),
     img: CurrencyListIcons.usdc_m,
     currencyName: 'USD Coin',
     currencyAbbreviation: 'usdc',
@@ -322,13 +347,13 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.matic_e,
-    currencyName: 'Matic Token',
-    currencyAbbreviation: 'matic',
-    chain: 'eth',
+    img: CurrencyListIcons.usdt_m,
+    currencyName: 'Tether USD',
+    currencyAbbreviation: 'usdt',
+    chain: 'matic',
     isToken: true,
-    imgSrc: require('../../assets/img/currencies/png/MATIC.png'),
-    badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
+    imgSrc: require('../../assets/img/currencies/png/USDT.png'),
+    badgeSrc: require('../../assets/img/currencies/png/MATIC.png'),
     badgeUri: CurrencyListIcons.matic,
   },
 ];

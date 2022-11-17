@@ -12,7 +12,8 @@ export type SupportedEthereumTokens =
   | 'shib_e'
   | 'ape_e'
   | 'euroc_e'
-  | 'matic_e';
+  | 'matic_e'
+  | 'usdt_e';
 export type SupportedMaticTokens =
   | 'usdc_m'
   | 'busd_m'
@@ -20,7 +21,8 @@ export type SupportedMaticTokens =
   | 'wbtc_m'
   | 'shib_m'
   | 'ape_m'
-  | 'euroc_m';
+  | 'euroc_m'
+  | 'usdt_m';
 export type SupportedCurrencies =
   | SupportedCoins
   | SupportedEthereumTokens
@@ -421,13 +423,45 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/matic_e',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/matic',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  usdt_e: {
+    name: 'Tether USD',
+    chain: 'eth',
+    coin: 'usdt',
+    unitInfo: {
+      unitName: 'USDT',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'USDT',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdt',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
@@ -456,7 +490,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd_m',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
@@ -488,7 +522,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc_m',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
@@ -520,7 +554,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd_m',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
@@ -552,7 +586,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/wbtc_m',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/wbtc',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
@@ -585,7 +619,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib_m',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
@@ -618,13 +652,45 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape_m',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  usdt_m: {
+    name: 'Tether USD',
+    chain: 'matic',
+    coin: 'usdt',
+    unitInfo: {
+      unitName: 'USDT',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'USDT',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdt',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },

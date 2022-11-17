@@ -51,6 +51,8 @@ export enum BitPayIdActionTypes {
   SUCCESS_FETCH_DOSH_TOKEN = 'BitPayId/SUCCESS_FETCH_DOSH_TOKEN',
   FAILED_FETCH_DOSH_TOKEN = 'BitPayId/FAILED_FETCH_DOSH_TOKEN',
   UPDATE_FETCH_DOSH_TOKEN_STATUS = 'BitPayId/UPDATE_FETCH_DOSH_TOKEN_STATUS',
+  SUCCESS_FETCH_SUPPORTED_CURRENCIES = 'BitPayId/SUCCESS_FETCH_SUPPORTED_CURRENCIES',
+  FAILED_FETCH_SUPPORTED_CURRENCIES = 'BitPayId/FAILED_FETCH_SUPPORTED_CURRENCIES',
   FORGOT_PASSWORD_EMAIL_STATUS = 'BitPayId/FORGOT_PASSWORD_EMAIL_STATUS',
   RESET_FORGOT_PASSWORD_EMAIL_STATUS = 'BitPayId/RESET_FORGOT_PASSWORD_EMAIL_STATUS',
   SUCCESS_FETCH_RECEIVING_ADDRESSES = 'BitPayId/SUCCESS_FETCH_RECEIVING_ADDRESSES',
@@ -202,6 +204,13 @@ interface SuccessFetchDoshToken {
 interface FailedFetchDoshToken {
   type: typeof BitPayIdActionTypes.FAILED_FETCH_DOSH_TOKEN;
 }
+interface successFetchSupportedCurrencies {
+  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_SUPPORTED_CURRENCIES;
+  payload: {network: Network; supportedCurrencies: string[]};
+}
+interface FailedFetchSupportedCurrencies {
+  type: typeof BitPayIdActionTypes.FAILED_FETCH_SUPPORTED_CURRENCIES;
+}
 
 interface UpdateFetchDoshTokenStatus {
   type: typeof BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS;
@@ -281,6 +290,8 @@ export type BitPayIdActionType =
   | SuccessFetchDoshToken
   | FailedFetchDoshToken
   | UpdateFetchDoshTokenStatus
+  | successFetchSupportedCurrencies
+  | FailedFetchSupportedCurrencies
   | SuccessFetchReceivingAddresses
   | SuccessFetchSecuritySettings
   // Reset Password

@@ -1,9 +1,15 @@
 import {SUPPORTED_COINS} from '../../../constants/currencies';
 
 const chainSuffixMap: {[suffix: string]: string} = {
+  eth: 'e',
+  matic: 'm',
+};
+
+const suffixChainMap: {[suffix: string]: string} = {
   e: 'eth',
   m: 'matic',
 };
+
 export function getCoinAndChainFromCurrencyCode(currencyCode: string): {
   coin: string;
   chain: string;
@@ -11,13 +17,7 @@ export function getCoinAndChainFromCurrencyCode(currencyCode: string): {
   const [coin, suffix] = currencyCode
     .split('_')
     .map(item => item.toLowerCase());
-  if (suffix) {
-    return {coin, chain: chainSuffixMap[suffix]};
-  }
-  if (SUPPORTED_COINS.includes(coin)) {
-    return {coin, chain: coin};
-  }
-  return {coin, chain: 'eth'};
+  return {coin, chain: suffix ? suffixChainMap[suffix] : coin};
 }
 
 export function getCurrencyCodeFromCoinAndChain(
@@ -27,14 +27,9 @@ export function getCurrencyCodeFromCoinAndChain(
   if (coin.toLowerCase() === chain.toLowerCase()) {
     return coin.toUpperCase();
   }
-  const matchingSuffixEntry = Object.entries(chainSuffixMap).find(
-    ([_, chainCode]) => chain.toLowerCase() === chainCode,
-  ) as [string, string];
-  const suffix = matchingSuffixEntry && matchingSuffixEntry[0];
-  const coinIsAnotherChain = Object.values(chainSuffixMap).find(
-    chainCode => chainCode === coin.toLowerCase(),
-  );
-  if (suffix && (coinIsAnotherChain || chain.toLowerCase() !== 'eth')) {
+  const suffix = chainSuffixMap[chain.toLowerCase()];
+  const coinIsAChain = !!chainSuffixMap[coin.toLowerCase()];
+  if (suffix && (coinIsAChain || chain.toLowerCase() !== 'eth')) {
     return `${coin.toUpperCase()}_${suffix}`;
   }
   return coin.toUpperCase();

@@ -41,9 +41,20 @@ export interface SecuritySettings {
   email: string;
 }
 
+export interface UserAddress {
+  apartmentNumber: string;
+  city: string;
+  country: string;
+  postCode: string;
+  state: string;
+  street: string;
+  streetNumber: string;
+}
+
 export interface User {
   email: string;
   eid: string;
+  address: UserAddress;
   familyName?: string;
   givenName?: string;
   incentiveLevel?: string;

@@ -87,13 +87,14 @@ export const isPaymentMethodSupported = (
 export const isCoinSupportedToBuy = (
   coin: string,
   chain: string,
+  coinsToRemove: string[],
   country?: string,
 ): boolean => {
   return (
-    isCoinSupportedBy('moonpay', coin, chain, country) ||
+    !coinsToRemove.includes(coin) &&
+    (isCoinSupportedBy('moonpay', coin, chain, country) ||
     isCoinSupportedBy('simplex', coin, chain) ||
-    isCoinSupportedBy('wyre', coin, chain)
-  );
+    isCoinSupportedBy('wyre', coin, chain)))
 };
 
 const isCoinSupportedBy = (

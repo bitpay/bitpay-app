@@ -23,6 +23,7 @@ import {
   convertToFiat,
   formatFiatAmount,
   getBadgeImg,
+  getCoinsToRemove,
   getCurrencyAbbreviation,
   getRateByCurrencyName,
 } from '../../../utils/helper-methods';
@@ -245,7 +246,7 @@ export const toFiat =
     const rateObj = ratesPerCurrency.find(
       _currency => _currency.code === fiatCode,
     );
-    const rate = rateObj && !rateObj.rate ? 1 : rateObj?.rate;
+    const rate = rateObj && !rateObj.rate ? 0 : rateObj?.rate;
     const fiatRate = customRate || rate;
 
     if (!fiatRate) {
@@ -557,13 +558,22 @@ export const BuildPayProWalletSelectorList =
     defaultAltCurrencyIsoCode?: string;
   }): Effect<WalletsAndAccounts> =>
   (dispatch, getState) => {
-    const {COINBASE} = getState();
+    const {COINBASE, APP, BITPAY_ID} = getState();
     const {
       RATE: {rates},
+      LOCATION: {countryData, isNyc},
     } = getState();
+
+    const supportedCurrencies = BITPAY_ID.supportedCurrencies[APP.network];
     const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
     const coinbaseUser = COINBASE.user[COINBASE_ENV];
     const coinbaseExchangeRates = COINBASE.exchangeRates;
+    const coinsToRemove = getCoinsToRemove({
+      supportedCurrencies,
+      countryData,
+      isNyc,
+    });
+
     const keyWallets = BuildKeysAndWalletsList({
       keys,
       network,
@@ -572,7 +582,10 @@ export const BuildPayProWalletSelectorList =
       rates,
       dispatch,
     }).map(key => {
-      key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
+      key.wallets = key.wallets.filter(
+        ({balance, currencyAbbreviation}) =>
+          balance.sat > 0 && !coinsToRemove.includes(currencyAbbreviation),
+      );
       return key;
     });
     const coinbaseWallets = BuildCoinbaseWalletsList({
@@ -582,6 +595,12 @@ export const BuildPayProWalletSelectorList =
       network,
       payProOptions,
       defaultAltCurrencyIsoCode,
+    }).map(key => {
+      key.wallets = key.wallets.filter(
+        ({currencyAbbreviation}) =>
+          !coinsToRemove.includes(currencyAbbreviation),
+      );
+      return key;
     });
     return {keyWallets, coinbaseWallets};
   };

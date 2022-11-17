@@ -52,6 +52,7 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
   getBadgeImg,
+  getCoinsToRemove,
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -139,11 +140,15 @@ const SwapCryptoRoot: React.FC = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const {countryData, isNyc} = useAppSelector(({LOCATION}) => LOCATION);
   const tokenData = useAppSelector(({WALLET}) => WALLET.tokenData);
   const tokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const supportedCurrencies = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.supportedCurrencies[APP.network],
+  );
+
   const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
@@ -868,8 +873,12 @@ const SwapCryptoRoot: React.FC = () => {
         showError(msg, undefined, undefined, true);
       }
 
-      const coinsToRemove =
-        !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
+      const coinsToRemove = getCoinsToRemove({
+        supportedCurrencies,
+        countryData,
+        isNyc,
+      });
+
       if (selectedWallet?.balance?.satSpendable === 0) {
         coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
       }

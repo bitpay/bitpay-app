@@ -226,7 +226,6 @@ export default ({
     await sleep(500);
     uri ? goToStartView(wallet, uri) : goToScanView(wallet);
   };
-
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
       <WalletSelectMenuContainer>
