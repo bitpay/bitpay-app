@@ -76,6 +76,8 @@
                 <data android:scheme="https"
                     android:host="bitpay.onelink.me"
                     android:pathPrefix="/K4yy" />
+                <data android:scheme="https"
+                    android:host="bitpay.onelink.me" />
                 <data android:host="link.bitpay.com" android:pathPattern="*" android:pathPrefix="/i/"
                     android:scheme="https"/>
                 <data android:host="link.bitpay.com" android:pathPattern="*" android:pathPrefix="/wallet/wc"

@@ -96,6 +96,11 @@ const lib = (() => {
          * Track app lifecycle events, such as application installed, opened, updated, backgrounded.
          */
         trackAppLifecycleEvents: true, // default: false
+
+        /**
+         * Enable automatic tracking for when the user opens the app via a deep link
+         */
+        trackDeepLinks: true, // default: false
       });
 
       _client.add({
