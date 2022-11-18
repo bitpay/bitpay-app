@@ -111,9 +111,10 @@ static void InitializeFlipper(UIApplication *application) {
    openURL:(NSURL *)url
    options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
 {
+  [RCTLinkingManager application:application openURL:url options:options];
   [AnalyticsReactNative trackDeepLink:url withOptions:options];
   [[AppsFlyerAttribution shared] handleOpenUrl:url options:options];
-    return YES;
+  return YES;
   //return [RCTLinkingManager application:application openURL:url options:options];
 }
 
@@ -121,6 +122,9 @@ static void InitializeFlipper(UIApplication *application) {
 - (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity
  restorationHandler:(nonnull void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
 {
+  [RCTLinkingManager application:application
+                  continueUserActivity:userActivity
+                    restorationHandler:restorationHandler];
   [[AppsFlyerAttribution shared] continueUserActivity:userActivity restorationHandler:restorationHandler];
   return YES;
   //return [RCTLinkingManager application:application

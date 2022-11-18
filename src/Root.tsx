@@ -36,8 +36,10 @@ import {
   useAppSelector,
   useDeeplinks,
   useUrlEventHandler,
+  initAppFlyer,
 } from './utils/hooks';
 import i18n from 'i18next';
+import appsFlyer from 'react-native-appsflyer';
 
 import BitpayIdStack, {
   BitpayIdStackParamList,
@@ -375,6 +377,41 @@ export default () => {
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
   }, [dispatch]);
+
+  // AppsFlyer initialization
+  useEffect(() => {
+    const onInstallConversion = appsFlyer.onInstallConversionData(res => {
+      const isFirstLaunch = res?.data?.is_first_launch;
+
+      if (isFirstLaunch && JSON.parse(isFirstLaunch) === true) {
+        // TODO: First init
+      } else {
+        // TODO Not first launch
+      }
+    });
+
+    const onDeepLink = appsFlyer.onDeepLink(res => {
+      if (res?.deepLinkStatus !== 'NOT_FOUND') {
+        const page = res?.data?.page; // TODO: configure standar name for view
+        const params = res?.data?.params;
+        const deepLink = res?.data?.af_dp;
+        console.log('[appsFlyer] deeplink data', page, params, deepLink);
+        if (page && params) {
+          // TODO: redirect to view
+        } else if (deepLink) {
+          // TODO: handle deep link
+        } else {
+          // TODO: tbd
+        }
+      }
+    });
+    initAppFlyer();
+
+    return () => {
+      onInstallConversion();
+      onDeepLink();
+    };
+  }, []);
 
   // THEME
   useEffect(() => {
