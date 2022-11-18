@@ -23,8 +23,11 @@ import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import Segment from '../../lib/segment';
+import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
 import {CardScreens} from '../../navigation/card/CardStack';
+import {CardActivationScreens} from '../../navigation/card-activation/CardActivationStack';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
+import {WalletScreens} from '../../navigation/wallet/WalletStack';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
@@ -871,54 +874,130 @@ export const resetAllSettings = (): Effect => dispatch => {
   });
 };
 
+const runWhenAppInitComplete =
+  (cb: Function): Effect<void> =>
+  (_dispatch, getState) => {
+    const {APP} = getState();
+
+    if (APP.appWasInit) {
+      if (navigationRef.isReady()) {
+        cb();
+      } else {
+        setTimeout(() => cb(), 500);
+      }
+    } else {
+      const subscription = DeviceEventEmitter.addListener(
+        DeviceEmitterEvents.APP_INIT_COMPLETED,
+        () => {
+          subscription.remove();
+          cb();
+        },
+      );
+    }
+  };
+
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
-    let handled = false;
+    const pathSegments = url.replace(APP_DEEPLINK_PREFIX, '').split('/');
 
-    const parsed = url.replace(APP_DEEPLINK_PREFIX, '');
+    let handler: (() => void) | null = null;
 
-    if (parsed === 'card/offers') {
-      const {APP, CARD} = getState();
-      const cards = CARD.cards[APP.network];
-
-      if (cards.length) {
-        if (APP.appWasInit) {
-          setTimeout(() => {
-            handleDosh();
-          }, 500);
-        } else {
-          DeviceEventEmitter.addListener(
-            DeviceEmitterEvents.APP_INIT_COMPLETED,
-            () => {
-              handleDosh();
-            },
-          );
-        }
-
-        function handleDosh() {
-          navigationRef.navigate(RootStacks.TABS, {
-            screen: TabsScreens.CARD,
-            params: {
-              screen: CardScreens.SETTINGS,
-              params: {
-                id: cards[0].id,
-              },
-            },
-          });
-          dispatch(CardEffects.startOpenDosh());
-        }
-      } else {
-        navigationRef.navigate(RootStacks.TABS, {
-          screen: TabsScreens.CARD,
-          params: {
-            screen: CardScreens.HOME,
-          },
+    if (pathSegments[0] === 'buy-crypto') {
+      handler = () => {
+        navigationRef.navigate(RootStacks.BUY_CRYPTO, {
+          screen: BuyCryptoScreens.ROOT,
         });
+      };
+    } else if (pathSegments[0] === 'wallet') {
+      if (pathSegments[1] === 'create') {
+        handler = () => {
+          navigationRef.navigate(RootStacks.WALLET, {
+            screen: WalletScreens.CREATION_OPTIONS,
+          });
+        };
       }
+    } else if (pathSegments[0] === 'card') {
+      const cardPath = pathSegments[1];
 
-      handled = true;
+      if (cardPath === 'activate') {
+        handler = () => {
+          const {APP, CARD} = getState();
+          const cards = CARD.cards[APP.network];
+
+          if (cards.length) {
+            navigationRef.navigate(RootStacks.CARD_ACTIVATION, {
+              screen: CardActivationScreens.ACTIVATE,
+              params: {
+                card: cards[0],
+              },
+            });
+          } else {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.HOME,
+              },
+            });
+          }
+        };
+      } else if (cardPath === 'offers') {
+        handler = () => {
+          const {APP, CARD} = getState();
+          const cards = CARD.cards[APP.network];
+
+          if (cards.length) {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.SETTINGS,
+                params: {
+                  id: cards[0].id,
+                },
+              },
+            });
+
+            dispatch(CardEffects.startOpenDosh());
+          } else {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.HOME,
+              },
+            });
+          }
+        };
+      } else if (cardPath === 'referral') {
+        handler = () => {
+          const {APP, CARD} = getState();
+          const cards = CARD.cards[APP.network];
+
+          if (cards.length) {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.REFERRAL,
+                params: {
+                  card: cards[0],
+                },
+              },
+            });
+          } else {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.HOME,
+              },
+            });
+          }
+        };
+      }
     }
 
-    return handled;
+    if (handler) {
+      dispatch(runWhenAppInitComplete(handler));
+      return true;
+    }
+
+    return false;
   };

@@ -3,8 +3,9 @@ import {
   LinkingOptions,
   useNavigation,
 } from '@react-navigation/native';
-import {useEffect, useRef} from 'react';
+import {useRef} from 'react';
 import {Linking} from 'react-native';
+import AppsFlyer from 'react-native-appsflyer';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {
   APP_CRYPTO_PREFIX,
@@ -28,9 +29,10 @@ import {
   selectAvailableGiftCards,
   selectIntegrations,
 } from '../../store/shop/shop.selectors';
-import {LogActions} from '../../store/log';
 import {incomingLink} from '../../store/app/app.effects';
 import useAppDispatch from './useAppDispatch';
+import {useLogger} from './useLogger';
+import {useMount} from './useMount';
 
 const isUniversalLink = (url: string): boolean => {
   try {
@@ -56,11 +58,13 @@ const isCryptoLink = (url: string): boolean => {
 
 export const useUrlEventHandler = () => {
   const dispatch = useAppDispatch();
+  const logger = useLogger();
+
   const urlEventHandler = ({url}: {url: string | null}) => {
-    dispatch(LogActions.debug(`[deeplink] received: ${url}`));
+    logger.debug(`[deeplink] received: ${url}`);
 
     if (url && (isDeepLink(url) || isUniversalLink(url) || isCryptoLink(url))) {
-      dispatch(LogActions.info(`[deeplink] valid: ${url}`));
+      logger.info(`[deeplink] valid: ${url}`);
       dispatch(showBlur(false));
 
       let handled = false;
@@ -82,9 +86,7 @@ export const useUrlEventHandler = () => {
         });
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error('[deeplink] not available from IAB: ' + errStr),
-        );
+        logger.error('[deeplink] not available from IAB: ' + errStr);
       }
     }
   };
@@ -162,16 +164,40 @@ export const useShopDeepLinkHandler = () => {
 };
 
 export const useDeeplinks = () => {
-  const dispatch = useAppDispatch();
   const urlEventHandler = useUrlEventHandler();
+  const logger = useLogger();
 
-  useEffect(() => {
+  useMount(() => {
     const subscribeLinkingEvent = Linking.addEventListener(
       'url',
       urlEventHandler,
     );
+
+    AppsFlyer.onDeepLink(udlData => {
+      const {data, deepLinkStatus, status} = udlData;
+
+      if (status === 'failure' || deepLinkStatus === 'Error') {
+        logger.info('Failed to handle Universal Deep Link.');
+        return;
+      }
+
+      if (deepLinkStatus === 'NOT_FOUND') {
+        logger.info('Universal Deep Link not recognized.');
+        return;
+      }
+
+      if (deepLinkStatus === 'FOUND') {
+        const {deep_link_value} = data;
+
+        urlEventHandler({url: deep_link_value});
+        return;
+      }
+
+      logger.info(`Unrecognized deeplink status: ${deepLinkStatus}`);
+    });
+
     return () => subscribeLinkingEvent.remove();
-  }, [dispatch, urlEventHandler]);
+  });
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {
     prefixes: [APP_DEEPLINK_PREFIX],
