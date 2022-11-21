@@ -499,10 +499,24 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       const wallet = await _addWallet(_associatedWallet, walletName);
 
       if (!withinReceiveSettings) {
-        navigation.navigate('WalletDetails', {
-          walletId: wallet.id,
-          key,
-          skipInitializeHistory: false, // new wallet might have transactions
+        navigation.reset({
+          index: 1,
+          routes: [
+            {
+              name: 'KeyOverview',
+              params: {
+                id: key.id,
+              },
+            },
+            {
+              name: 'WalletDetails',
+              params: {
+                walletId: wallet.id,
+                key,
+                skipInitializeHistory: false, // new wallet might have transactions
+              },
+            },
+          ],
         });
       }
     } catch (err: any) {
