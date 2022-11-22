@@ -338,7 +338,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
 
                   <CheckboxLabel>
                     {t(
-                      'I agree to receive marketing communications from BitPay.',
+                      'Yes, I would like to receive promotional emails from BitPay.',
                     )}
                   </CheckboxLabel>
                 </CheckboxControl>
