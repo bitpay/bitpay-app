@@ -111,6 +111,7 @@ const RequestSpecificAmountQR = () => {
     currencyAbbreviation,
     network,
     chain,
+    tokenAddress,
   } = wallet;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -152,7 +153,7 @@ const RequestSpecificAmountQR = () => {
         address;
 
       const _formattedAmountObj = dispatch(
-        ParseAmount(requestAmount, currencyAbbreviation, chain),
+        ParseAmount(requestAmount, currencyAbbreviation, chain, tokenAddress),
       );
 
       if (IsUtxoCoin(currencyAbbreviation) || currencyAbbreviation === 'xrp') {

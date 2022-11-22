@@ -109,9 +109,11 @@ const CurrencyTokenSelectionScreen: React.VFC<
     if (params.key) {
       navigation.navigate('AddWallet', {
         key: params.key,
-        isCustomToken: true,
-        isToken: true,
-        chain: chain.chain,
+        currency: {
+          isCustomToken: true,
+          isToken: true,
+          chain: chain.chain,
+        },
       });
     }
   };

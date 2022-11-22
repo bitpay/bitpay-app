@@ -70,7 +70,6 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
-import Haptic from '../../../components/haptic-feedback/haptic';
 import Icons from '../components/WalletIcons';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -106,11 +105,14 @@ type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
 export type AddWalletParamList = {
   key: Key;
-  chain?: string;
-  currencyAbbreviation?: string;
-  currencyName?: string;
-  isToken?: boolean;
-  isCustomToken?: boolean;
+  currency?: {
+    chain?: string;
+    currencyAbbreviation?: string;
+    currencyName?: string;
+    isToken?: boolean;
+    isCustomToken?: boolean;
+    id?: string;
+  };
 };
 
 const CreateWalletContainer = styled.SafeAreaView`
@@ -200,14 +202,15 @@ const isWithinReceiveSettings = (parent: any): boolean => {
 const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const {key, currency} = route.params;
   const {
     currencyAbbreviation: _currencyAbbreviation,
     currencyName: _currencyName,
     chain: _chain,
-    key,
     isToken,
     isCustomToken,
-  } = route.params;
+    id,
+  } = currency || {};
   // temporary until advanced settings is finished
   const network = useAppSelector(({APP}) => APP.network);
   const [showOptions, setShowOptions] = useState(false);
@@ -411,6 +414,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               chain,
               currencyAbbreviation: _currencyAbbreviation,
               isToken: _associatedWallet ? isToken! : false,
+              tokenAddress: _associatedWallet ? currency?.id : undefined,
             },
             options: {
               password,
@@ -465,11 +469,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           const {tokens} = _associatedWallet;
 
           for (const token of tokens) {
-            if (
-              key?.wallets
-                .find(wallet => wallet.id === token)
-                ?.currencyAbbreviation.toLowerCase() === currency
-            ) {
+            const {token: _token} = key?.wallets.find(
+              wallet => wallet.id === token,
+            )?.credentials;
+            if (_token?.address === customTokenAddress) {
               dispatch(
                 showBottomNotificationModal({
                   type: 'warning',
@@ -718,7 +721,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           <WalletAdvancedOptionsContainer>
             <AdvancedOptionsButton
               onPress={() => {
-                Haptic('impactLight');
+                haptic('impactLight');
                 setShowOptions(!showOptions);
               }}>
               {showOptions ? (
@@ -823,7 +826,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
                       <VerticalPadding>
                         <TouchableOpacity
                           onPress={() => {
-                            Haptic('impactLight');
+                            haptic('impactLight');
                             dispatch(
                               openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
                             );

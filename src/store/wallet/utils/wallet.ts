@@ -20,6 +20,7 @@ import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
+  addTokenChainSuffix,
   convertToFiat,
   formatFiatAmount,
   getBadgeImg,
@@ -50,18 +51,19 @@ export const mapAbbreviationAndName =
   (
     coin: string,
     chain: string,
+    tokenAddress?: string,
   ): Effect<{currencyAbbreviation: string; currencyName: string}> =>
   dispatch => {
     switch (coin) {
       case 'pax':
         return {
           currencyAbbreviation: 'usdp',
-          currencyName: dispatch(GetName('usdp', chain)),
+          currencyName: dispatch(GetName('usdp', chain, tokenAddress)),
         };
       default:
         return {
           currencyAbbreviation: coin,
-          currencyName: dispatch(GetName(coin, chain)),
+          currencyName: dispatch(GetName(coin, chain, tokenAddress)),
         };
     }
   };
@@ -115,8 +117,12 @@ export const buildWalletObj = (
     img: any;
     pendingTxps: TransactionProposal[];
   },
-  tokenOpts?: {[key in string]: Token},
+  token?: Token,
+  tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
+  const tokenAddress = token
+    ? addTokenChainSuffix(token.address, chain)
+    : undefined;
   const _currencyAbbreviation = getCurrencyAbbreviation(
     currencyAbbreviation,
     chain,
@@ -131,10 +137,12 @@ export const buildWalletObj = (
     tokens,
     network,
     keyId: keyId ? keyId : 'readonly',
-    img: SUPPORTED_CURRENCIES.includes(_currencyAbbreviation)
+    img: SUPPORTED_CURRENCIES.includes(
+      token ? tokenAddress! : _currencyAbbreviation,
+    )
       ? CurrencyListIcons[_currencyAbbreviation]
-      : tokenOpts && tokenOpts[_currencyAbbreviation]?.logoURI
-      ? (tokenOpts[_currencyAbbreviation]?.logoURI as string)
+      : tokenOptsByAddress && tokenOptsByAddress[tokenAddress!]?.logoURI
+      ? (tokenOptsByAddress[tokenAddress!]?.logoURI as string)
       : img || '',
     badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
@@ -143,6 +151,7 @@ export const buildWalletObj = (
     hideWallet,
     hideBalance,
     pendingTxps,
+    tokenAddress,
   };
 };
 
@@ -152,7 +161,7 @@ export const buildKeyObj = ({
   wallets,
   totalBalance = 0,
   totalBalanceLastDay = 0,
-  backupComplete = false,
+  backupComplete = true, // TODO
   hideKeyBalance = false,
 }: {
   key: KeyMethods | undefined;
@@ -223,6 +232,7 @@ export const toFiat =
     totalAmount: number,
     fiatCode: string = 'USD',
     currencyAbbreviation: string,
+    tokenAddress: string | undefined,
     chain: string,
     rates: Rates = {},
     customRate?: number,
@@ -255,8 +265,9 @@ export const toFiat =
       );
       return 0;
     }
-
-    const precision = dispatch(GetPrecision(currencyAbbreviation, chain));
+    const precision = dispatch(
+      GetPrecision(currencyAbbreviation, chain, tokenAddress),
+    );
 
     if (!precision) {
       // precision not found return 0
@@ -494,6 +505,7 @@ export const BuildKeysAndWalletsList = ({
               chain,
               credentials: {walletName: fallbackName},
               walletName,
+              tokenAddress,
             } = walletObj;
             return merge(cloneDeep(walletObj), {
               cryptoBalance: balance.crypto,
@@ -504,6 +516,7 @@ export const BuildKeysAndWalletsList = ({
                       balance.sat,
                       defaultAltCurrencyIsoCode,
                       currencyAbbreviation,
+                      tokenAddress,
                       chain,
                       rates,
                     ),
@@ -521,6 +534,7 @@ export const BuildKeysAndWalletsList = ({
                       balance.satLocked,
                       defaultAltCurrencyIsoCode,
                       currencyAbbreviation,
+                      tokenAddress,
                       chain,
                       rates,
                     ),

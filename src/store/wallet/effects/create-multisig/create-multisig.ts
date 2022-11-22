@@ -59,6 +59,7 @@ export const startCreateKeyMultisig =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
+            _wallet.credentials.token?.address,
           ),
         );
 
@@ -130,6 +131,7 @@ export const addWalletMultisig =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
+            newWallet.credentials.token?.address,
           ),
         );
 

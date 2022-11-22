@@ -162,10 +162,10 @@ const Confirm = () => {
   const [destinationTag, setDestinationTag] = useState(
     recipient?.destinationTag || _destinationTag,
   );
-  const {currencyAbbreviation, chain} = wallet;
+  const {currencyAbbreviation, chain, tokenAddress} = wallet;
   const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
-    dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+    dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -326,7 +326,14 @@ const Confirm = () => {
         recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
         recipientAltAmountStr: formatFiatAmount(
           dispatch(
-            toFiat(amountSat, isoCode, currencyAbbreviation, chain, rates),
+            toFiat(
+              amountSat,
+              isoCode,
+              currencyAbbreviation,
+              tokenAddress,
+              chain,
+              rates,
+            ),
           ),
           isoCode,
         ),

@@ -51,6 +51,7 @@ import {
   getChangellyFixedCurrencyAbbreviation,
 } from '../utils/changelly-utils';
 import {
+  addTokenChainSuffix,
   getBadgeImg,
   getCurrencyAbbreviation,
   getCWCChain,
@@ -280,6 +281,7 @@ const ChangellyCheckout: React.FC = () => {
             GetPrecision(
               toWalletSelected.currencyAbbreviation,
               toWalletSelected.chain,
+              toWalletSelected.tokenAddress,
             ),
           );
           const newFiatAmountTo = dispatch(
@@ -287,6 +289,7 @@ const ChangellyCheckout: React.FC = () => {
               Number(amountTo) * presicion!.unitToSatoshi,
               alternativeIsoCode,
               toWalletSelected.currencyAbbreviation.toLowerCase(),
+              toWalletSelected.tokenAddress,
               toWalletSelected.chain,
               rates,
             ),
@@ -302,6 +305,7 @@ const ChangellyCheckout: React.FC = () => {
           GetPrecision(
             fromWalletSelected.currencyAbbreviation,
             fromWalletSelected.chain,
+            fromWalletSelected.tokenAddress,
           ),
         );
         // To Sat
@@ -328,7 +332,13 @@ const ChangellyCheckout: React.FC = () => {
             await sleep(400);
 
             if (useSendMax) {
-              showSendMaxWarning(ctxp.coin, ctxp.chain);
+              showSendMaxWarning(
+                ctxp.coin,
+                ctxp.chain,
+                ctxp.tokenAddress
+                  ? addTokenChainSuffix(ctxp.tokenAddress, ctxp.chain)
+                  : undefined,
+              );
             }
             return;
           })
@@ -589,15 +599,19 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showSendMaxWarning = async (coin: string, chain: string) => {
+  const showSendMaxWarning = async (
+    coin: string,
+    chain: string,
+    tokenAddress?: string,
+  ) => {
     if (!sendMaxInfo || !coin) {
       return;
     }
 
     const warningMsg = dispatch(
-      GetExcludedUtxosMessage(coin, chain, sendMaxInfo),
+      GetExcludedUtxosMessage(coin, chain, sendMaxInfo, tokenAddress),
     );
-    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain));
+    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
 
     const msg =
       `Because you are sending the maximum amount contained in this wallet, the ${chain} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +

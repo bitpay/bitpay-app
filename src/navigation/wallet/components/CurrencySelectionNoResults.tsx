@@ -44,7 +44,10 @@ const CurrencySelectionNoResults: React.VFC<
             haptic('soft');
             navigation.navigate('Wallet', {
               screen: 'AddWallet',
-              params: {key: walletKey, isCustomToken: true, isToken: true},
+              params: {
+                key: walletKey,
+                currency: {isCustomToken: true, isToken: true},
+              },
             });
           }}>
           {t('Add Custom Token')}

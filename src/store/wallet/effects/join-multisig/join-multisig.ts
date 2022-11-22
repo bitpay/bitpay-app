@@ -67,6 +67,7 @@ export const startJoinMultisig =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
+            _wallet.credentials.token?.address,
           ),
         );
 
@@ -143,6 +144,7 @@ export const addWalletJoinMultisig =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
+            newWallet.credentials.token?.address,
           ),
         );
 

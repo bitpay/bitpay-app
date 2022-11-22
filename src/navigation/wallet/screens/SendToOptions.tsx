@@ -297,6 +297,7 @@ const SendToOptions = () => {
         isVisible={recipientAmount.showModal}
         cryptoCurrencyAbbreviation={params.wallet.currencyAbbreviation.toUpperCase()}
         chain={params.wallet.chain}
+        tokenAddress={params.wallet.tokenAddress}
         onClose={() => {
           setRecipientAmount({showModal: false});
         }}

@@ -503,6 +503,9 @@ const BuyCryptoRoot: React.VFC<
               tokenData[symbol]?.name,
             chain,
             logoUri: getLogoUri(coin, chain),
+            tokenAddress:
+              BitpaySupportedCurrencies[symbol]?.tokenAddress ||
+              tokenData[symbol]?.tokenAddress,
           };
         })
         .filter(currency => !!currency.name);

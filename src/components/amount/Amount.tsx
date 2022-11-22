@@ -112,6 +112,7 @@ export interface AmountProps {
   context?: string;
   buttonState?: ButtonState;
   swapOpts?: SwapOpts;
+  tokenAddress?: string;
   onSendMaxPressed?: () => any;
 
   /**
@@ -127,6 +128,7 @@ const Amount: React.VFC<AmountProps> = ({
   context,
   buttonState,
   swapOpts,
+  tokenAddress,
   onSendMaxPressed,
   onSubmit,
 }) => {
@@ -207,6 +209,7 @@ const Amount: React.VFC<AmountProps> = ({
               primaryIsFiat ? val / rate : val,
               cryptoCurrencyAbbreviation.toLowerCase(),
               chain,
+              tokenAddress,
             ),
           ).amount;
 

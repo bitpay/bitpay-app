@@ -22,7 +22,10 @@ import {TransactionIcons} from '../../../../constants/TransactionIcons';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {
+  addTokenChainSuffix,
+  formatFiatAmount,
+} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
@@ -141,7 +144,16 @@ const ProcessTx =
         }
         tx.amount = tx.outputs.reduce((total: number, o: any) => {
           o.amountStr = dispatch(
-            FormatAmountStr(currencyAbbreviation, chain, o.amount),
+            FormatAmountStr(
+              currencyAbbreviation,
+              chain,
+              o.amount,
+              undefined,
+              addTokenChainSuffix(
+                tx.tokenAddress || currencyAbbreviation,
+                chain,
+              ),
+            ),
           );
           return total + o.amount;
         }, 0);
@@ -171,13 +183,35 @@ const ProcessTx =
     }
 
     tx.amountStr = dispatch(
-      FormatAmountStr(currencyAbbreviation, chain, tx.amount),
+      FormatAmountStr(
+        currencyAbbreviation,
+        chain,
+        tx.amount,
+        undefined,
+        addTokenChainSuffix(tx.tokenAddress || currencyAbbreviation, chain),
+      ),
     );
 
     tx.feeStr = tx.fee
-      ? dispatch(FormatAmountStr(chain, chain, tx.fee))
+      ? dispatch(
+          FormatAmountStr(
+            chain,
+            chain,
+            tx.fee,
+            undefined,
+            addTokenChainSuffix(tx.tokenAddress || currencyAbbreviation, chain),
+          ),
+        )
       : tx.fees
-      ? dispatch(FormatAmountStr(chain, chain, tx.fees))
+      ? dispatch(
+          FormatAmountStr(
+            chain,
+            chain,
+            tx.fees,
+            undefined,
+            addTokenChainSuffix(tx.tokenAddress || currencyAbbreviation, chain),
+          ),
+        )
       : 'N/A';
 
     if (tx.amountStr) {
@@ -894,7 +928,16 @@ export const buildTransactionDetails =
         const rates = await dispatch(startGetRates({}));
 
         _transaction.feeFiatStr = formatFiatAmount(
-          dispatch(toFiat(_fee, alternativeCurrency, chain, chain, rates)),
+          dispatch(
+            toFiat(
+              _fee,
+              alternativeCurrency,
+              chain,
+              wallet.tokenAddress,
+              chain,
+              rates,
+            ),
+          ),
           alternativeCurrency,
         );
 
@@ -903,7 +946,14 @@ export const buildTransactionDetails =
             _transaction.outputs = _transaction.outputs.map((o: any) => {
               o.alternativeAmountStr = formatFiatAmount(
                 dispatch(
-                  toFiat(o.amount, alternativeCurrency, coin, chain, rates),
+                  toFiat(
+                    o.amount,
+                    alternativeCurrency,
+                    coin,
+                    wallet.tokenAddress,
+                    chain,
+                    rates,
+                  ),
                 ),
                 alternativeCurrency,
               );
@@ -946,6 +996,7 @@ export const buildTransactionDetails =
             coin,
             alternativeCurrency,
             chain,
+            wallet.tokenAddress,
           ),
         );
 
@@ -964,6 +1015,7 @@ const UpdateFiatRate =
     currency: string,
     alternativeCurrency: string,
     chain: string,
+    tokenAddress?: string,
   ): Effect<string> =>
   dispatch => {
     const {amountValueStr, amount} = transaction;
@@ -981,7 +1033,14 @@ const UpdateFiatRate =
     } else {
       // Get current fiat value when historic rates are unavailable
       fiatRateStr = dispatch(
-        toFiat(amount, alternativeCurrency, currency, chain, rates),
+        toFiat(
+          amount,
+          alternativeCurrency,
+          currency,
+          tokenAddress,
+          chain,
+          rates,
+        ),
       );
       fiatRateStr = formatFiatAmount(fiatRateStr, alternativeCurrency);
     }

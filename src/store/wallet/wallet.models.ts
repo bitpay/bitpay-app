@@ -113,6 +113,7 @@ export interface WalletObj {
   hideWallet?: boolean;
   hideBalance?: boolean;
   network: Network;
+  tokenAddress?: string;
 }
 
 export interface KeyOptions {

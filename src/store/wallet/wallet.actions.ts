@@ -74,6 +74,7 @@ export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
 export const successGetTokenOptions = (payload: {
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
@@ -83,6 +84,7 @@ export const successGetTokenOptions = (payload: {
 export const successGetCustomTokenOptions = (payload: {
   customTokenOptions: {[key in string]: Token};
   customTokenData: {[key in string]: CurrencyOpts};
+  customTokenDataByAddress: {[key in string]: CurrencyOpts};
   customTokenOptionsByAddress: {[key in string]: Token};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS,

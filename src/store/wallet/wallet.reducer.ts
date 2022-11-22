@@ -6,6 +6,7 @@ import {CurrencyOpts} from '../../constants/currencies';
 type WalletReduxPersistBlackList = string[];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
   'tokenData',
+  'tokenDataByAddress',
   'tokenOptions',
   'tokenOptionsByAddress',
 ];
@@ -15,9 +16,11 @@ export interface WalletState {
   keys: {[key in string]: Key};
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
   customTokenOptions: {[key in string]: Token};
   customTokenData: {[key in string]: CurrencyOpts};
+  customTokenDataByAddress: {[key in string]: CurrencyOpts};
   customTokenOptionsByAddress: {[key in string]: Token};
   walletTermsAccepted: boolean;
   portfolioBalance: {
@@ -39,9 +42,11 @@ const initialState: WalletState = {
   keys: {},
   tokenOptions: {},
   tokenData: {},
+  tokenDataByAddress: {},
   tokenOptionsByAddress: {},
   customTokenOptions: {},
   customTokenData: {},
+  customTokenDataByAddress: {},
   customTokenOptionsByAddress: {},
   walletTermsAccepted: false,
   portfolioBalance: {
@@ -230,7 +235,12 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS: {
-      const {tokenOptions, tokenData, tokenOptionsByAddress} = action.payload;
+      const {
+        tokenOptions,
+        tokenData,
+        tokenOptionsByAddress,
+        tokenDataByAddress,
+      } = action.payload;
       return {
         ...state,
         tokenOptions: {
@@ -242,12 +252,19 @@ export const walletReducer = (
         tokenOptionsByAddress: {
           ...tokenOptionsByAddress,
         },
+        tokenDataByAddress: {
+          ...tokenDataByAddress,
+        },
       };
     }
 
     case WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS: {
-      const {customTokenOptions, customTokenData, customTokenOptionsByAddress} =
-        action.payload;
+      const {
+        customTokenOptions,
+        customTokenData,
+        customTokenOptionsByAddress,
+        customTokenDataByAddress,
+      } = action.payload;
       return {
         ...state,
         customTokenOptions: {
@@ -261,6 +278,10 @@ export const walletReducer = (
         customTokenOptionsByAddress: {
           ...state.customTokenOptionsByAddress,
           ...customTokenOptionsByAddress,
+        },
+        customTokenDataByAddress: {
+          ...state.customTokenDataByAddress,
+          ...customTokenDataByAddress,
         },
       };
     }

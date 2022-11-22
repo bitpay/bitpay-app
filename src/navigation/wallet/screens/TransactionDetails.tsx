@@ -216,6 +216,7 @@ const TransactionDetails = () => {
     network,
     chain,
     credentials: {walletId},
+    tokenAddress,
   } = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
   const isTestnet = network === 'testnet';
@@ -267,7 +268,13 @@ const TransactionDetails = () => {
             address: output.toAddress,
             amount: Number(
               dispatch(
-                FormatAmount(currencyAbbreviation, chain, output.amount),
+                FormatAmount(
+                  currencyAbbreviation,
+                  chain,
+                  output.amount,
+                  undefined,
+                  tokenAddress,
+                ),
               ),
             ),
           });
@@ -279,7 +286,13 @@ const TransactionDetails = () => {
         context: 'fromReplaceByFee' as TransactionOptionsContext,
         amount: Number(
           dispatch(
-            FormatAmount(currencyAbbreviation, chain, transaction.amount),
+            FormatAmount(
+              currencyAbbreviation,
+              chain,
+              transaction.amount,
+              undefined,
+              tokenAddress,
+            ),
           ),
         ),
         toAddress,

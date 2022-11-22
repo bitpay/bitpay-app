@@ -16,7 +16,11 @@ import {
   EVM_BLOCKCHAIN_EXPLORERS,
   EVM_BLOCKCHAIN_ID,
 } from '../../../../constants/config';
-import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {
+  addTokenChainSuffix,
+  getCurrencyAbbreviation,
+} from '../../../../utils/helper-methods';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
@@ -25,6 +29,7 @@ export const startGetTokenOptions =
       let tokenOptions: {[key in string]: Token} = {};
       let tokenOptionsByAddress: {[key in string]: Token} = {};
       let tokenData: {[key in string]: CurrencyOpts} = {};
+      let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
       for await (const chain of SUPPORTED_EVM_COINS) {
         let {
           data: {tokens},
@@ -33,9 +38,7 @@ export const startGetTokenOptions =
         }>(`https://api.1inch.io/v4.0/${EVM_BLOCKCHAIN_ID[chain]}/tokens`);
         Object.values(tokens).forEach(token => {
           if (
-            BitpaySupportedCurrencies[
-              getCurrencyAbbreviation(token.symbol, chain)
-            ]
+            BitpaySupportedCurrencies[addTokenChainSuffix(token.address, chain)]
           ) {
             return;
           } // remove bitpay supported tokens and currencies
@@ -44,6 +47,7 @@ export const startGetTokenOptions =
             token,
             tokenOptions,
             tokenData,
+            tokenDataByAddress,
             tokenOptionsByAddress,
           });
         });
@@ -52,6 +56,7 @@ export const startGetTokenOptions =
         successGetTokenOptions({
           tokenOptions,
           tokenData,
+          tokenDataByAddress,
           tokenOptionsByAddress,
         }),
       );
@@ -75,8 +80,11 @@ export const addCustomTokenOption =
       const customTokenOptions: {[key in string]: Token} = {};
       const customTokenOptionsByAddress: {[key in string]: Token} = {};
       const customTokenData: {[key in string]: CurrencyOpts} = {};
+      const customTokenDataByAddress: {[key in string]: CurrencyOpts} = {};
       if (
-        BitpaySupportedCurrencies[getCurrencyAbbreviation(token.symbol, chain)]
+        BitpaySupportedTokenOptsByAddress[
+          addTokenChainSuffix(token.address, chain)
+        ]
       ) {
         return;
       } // remove bitpay supported tokens and currencies
@@ -85,12 +93,14 @@ export const addCustomTokenOption =
         token,
         tokenOptions: customTokenOptions,
         tokenData: customTokenData,
+        tokenDataByAddress: customTokenDataByAddress,
         tokenOptionsByAddress: customTokenOptionsByAddress,
       });
       dispatch(
         successGetCustomTokenOptions({
           customTokenOptions,
           customTokenData,
+          customTokenDataByAddress,
           customTokenOptionsByAddress,
         }),
       );
@@ -106,17 +116,18 @@ const populateTokenInfo = ({
   token,
   tokenOptions,
   tokenData,
+  tokenDataByAddress,
   tokenOptionsByAddress,
 }: {
   chain: string;
   token: Token;
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
 }) => {
-  tokenOptions[getCurrencyAbbreviation(token.symbol, chain)] = token;
-  tokenOptionsByAddress[getCurrencyAbbreviation(token.address, chain)] = token;
-  tokenData[getCurrencyAbbreviation(token.symbol, chain)] = {
+  const tokenAddress = addTokenChainSuffix(token.address, chain);
+  const tokenOpts = {
     name: token.name.replace('(PoS)', '').trim(),
     chain,
     coin: token.symbol,
@@ -149,5 +160,10 @@ const populateTokenInfo = ({
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+    tokenAddress,
   };
+  tokenOptions[getCurrencyAbbreviation(token.symbol, chain)] = token;
+  tokenOptionsByAddress[tokenAddress] = token;
+  tokenData[getCurrencyAbbreviation(token.symbol, chain)] = tokenOpts;
+  tokenDataByAddress[tokenAddress] = tokenOpts;
 };

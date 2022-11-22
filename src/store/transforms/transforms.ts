@@ -50,10 +50,13 @@ export const bindWalletClient = createTransform(
         return merge(
           walletClient,
           wallet,
-          buildWalletObj({
-            ...walletClient.credentials,
-            ...wallet,
-          }),
+          buildWalletObj(
+            {
+              ...walletClient.credentials,
+              ...wallet,
+            },
+            wallet.credentials.token,
+          ),
         );
       });
 

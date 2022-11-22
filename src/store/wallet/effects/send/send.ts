@@ -100,10 +100,10 @@ export const createProposalAndBuildTxDetails =
           payProDetails,
         } = tx;
 
-        let {credentials, currencyAbbreviation, network} = wallet;
+        let {credentials, currencyAbbreviation, network, tokenAddress} = wallet;
         const {token, chain} = credentials;
         const formattedAmount = dispatch(
-          ParseAmount(amount, currencyAbbreviation, chain),
+          ParseAmount(amount, currencyAbbreviation, chain, tokenAddress),
         );
         const {
           WALLET: {
@@ -338,9 +338,14 @@ export const getNonce = (
 };
 
 export const getInvoiceEffectiveRate =
-  (invoice: Invoice, coin: string, chain: string): Effect<number | undefined> =>
+  (
+    invoice: Invoice,
+    coin: string,
+    chain: string,
+    tokenAddress?: string,
+  ): Effect<number | undefined> =>
   dispatch => {
-    const precision = dispatch(GetPrecision(coin, chain));
+    const precision = dispatch(GetPrecision(coin, chain, tokenAddress));
     return (
       precision &&
       invoice.price /
@@ -418,6 +423,7 @@ export const buildTxDetails =
     }
 
     const {type, name, address, email} = recipient || {};
+    const {img, tokenAddress, badgeImg, walletName} = wallet;
     return {
       context,
       currency: coin,
@@ -426,19 +432,22 @@ export const buildTxDetails =
         recipientName: name,
         recipientEmail: email,
         recipientAddress: address && formatCryptoAddress(address),
-        img: wallet.img,
+        img,
         recipientFullAddress: address,
         recipientChain: chain,
       },
       fee: {
         feeLevel,
-        cryptoAmount: dispatch(FormatAmountStr(chain, chain, fee)),
+        cryptoAmount: dispatch(
+          FormatAmountStr(chain, chain, fee, undefined, tokenAddress),
+        ),
         fiatAmount: formatFiatAmount(
           dispatch(
             toFiat(
               fee,
               defaultAltCurrencyIsoCode,
               chain,
+              tokenAddress,
               chain,
               rates,
               effectiveRateForFee,
@@ -451,13 +460,16 @@ export const buildTxDetails =
       },
       ...(networkCost && {
         networkCost: {
-          cryptoAmount: dispatch(FormatAmountStr(chain, chain, networkCost)),
+          cryptoAmount: dispatch(
+            FormatAmountStr(chain, chain, networkCost, undefined, tokenAddress),
+          ),
           fiatAmount: formatFiatAmount(
             dispatch(
               toFiat(
                 networkCost,
                 defaultAltCurrencyIsoCode,
                 chain,
+                tokenAddress,
                 chain,
                 rates,
                 effectiveRateForFee,
@@ -468,18 +480,21 @@ export const buildTxDetails =
         },
       }),
       sendingFrom: {
-        walletName: wallet.walletName || wallet.credentials.walletName,
-        img: wallet.img,
-        badgeImg: wallet.badgeImg,
+        walletName: walletName || wallet.credentials.walletName,
+        img,
+        badgeImg,
       },
       subTotal: {
-        cryptoAmount: dispatch(FormatAmountStr(coin, chain, amount)),
+        cryptoAmount: dispatch(
+          FormatAmountStr(coin, chain, amount, undefined, tokenAddress),
+        ),
         fiatAmount: formatFiatAmount(
           dispatch(
             toFiat(
               amount,
               defaultAltCurrencyIsoCode,
               coin,
+              tokenAddress,
               chain,
               rates,
               effectiveRate,
@@ -490,16 +505,27 @@ export const buildTxDetails =
       },
       total: {
         cryptoAmount: isERC20
-          ? `${dispatch(FormatAmountStr(coin, chain, amount))} + ${dispatch(
-              FormatAmountStr(chain, chain, fee),
+          ? `${dispatch(
+              FormatAmountStr(coin, chain, amount, undefined, tokenAddress),
+            )} + ${dispatch(
+              FormatAmountStr(chain, chain, fee, undefined, tokenAddress),
             )}`
-          : dispatch(FormatAmountStr(coin, chain, amount + fee)),
+          : dispatch(
+              FormatAmountStr(
+                coin,
+                chain,
+                amount + fee,
+                undefined,
+                tokenAddress,
+              ),
+            ),
         fiatAmount: formatFiatAmount(
           dispatch(
             toFiat(
               amount,
               defaultAltCurrencyIsoCode,
               coin,
+              tokenAddress,
               chain,
               rates,
               effectiveRate,
@@ -510,6 +536,7 @@ export const buildTxDetails =
                 fee,
                 defaultAltCurrencyIsoCode,
                 chain,
+                tokenAddress,
                 chain,
                 rates,
                 effectiveRateForFee,
@@ -565,6 +592,7 @@ const buildTransactionProposal =
           wallet,
           inputs,
           recipientList,
+          tokenAddress,
         } = tx;
         let {customData} = tx;
 
@@ -629,8 +657,9 @@ const buildTransactionProposal =
           if (sendMaxInfo.utxosBelowFee > 0) {
             const amountBelowFeeStr =
               sendMaxInfo.amountBelowFee /
-              dispatch(GetPrecision(currencyAbbreviation, chain!))!
-                .unitToSatoshi!;
+              dispatch(
+                GetPrecision(currencyAbbreviation, chain!, tokenAddress),
+              )!.unitToSatoshi!;
             const message = t(
               'A total of were excluded. These funds come from UTXOs smaller than the network fee provided',
               {
@@ -644,8 +673,9 @@ const buildTransactionProposal =
           if (sendMaxInfo.utxosAboveMaxSize > 0) {
             const amountAboveMaxSizeStr =
               sendMaxInfo.amountAboveMaxSize /
-              dispatch(GetPrecision(currencyAbbreviation, chain!))!
-                .unitToSatoshi;
+              dispatch(
+                GetPrecision(currencyAbbreviation, chain!, tokenAddress),
+              )!.unitToSatoshi;
             const message = t(
               'A total of were excluded. The maximum size allowed for a transaction was exceeded.',
               {
@@ -1204,7 +1234,12 @@ export const handleCreateTxProposalError =
             !getState().WALLET.useUnconfirmedFunds &&
             wallet.balance.sat >=
               dispatch(
-                ParseAmount(amount, wallet.currencyAbbreviation, wallet.chain),
+                ParseAmount(
+                  amount,
+                  wallet.currencyAbbreviation,
+                  wallet.chain,
+                  wallet.tokenAddress,
+                ),
               ).amountSat +
                 feeRatePerKb
           ) {
@@ -1272,7 +1307,11 @@ export const createPayProTxProposal =
       amount,
     } = confirmScreenParams!;
     const {unitToSatoshi} = dispatch(
-      GetPrecision(wallet.currencyAbbreviation, wallet.chain),
+      GetPrecision(
+        wallet.currencyAbbreviation,
+        wallet.chain,
+        wallet.tokenAddress,
+      ),
     ) || {
       unitToSatoshi: 100000000,
     };
@@ -1327,12 +1366,19 @@ export const buildEthERCTokenSpeedupTx =
           chain,
           credentials: {walletName, walletId},
           keyId,
+          tokenAddress,
         } = wallet;
 
         const {customData, addressTo, nonce, data, gasLimit} = transaction;
         const amount = Number(
           dispatch(
-            FormatAmount(currencyAbbreviation, chain, transaction.amount),
+            FormatAmount(
+              currencyAbbreviation,
+              chain,
+              transaction.amount,
+              undefined,
+              tokenAddress,
+            ),
           ),
         );
         const recipient = {

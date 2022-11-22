@@ -35,6 +35,7 @@ export const GetPrecision =
   (
     currencyAbbreviation: string,
     chain: string,
+    tokenAddress?: string,
   ): Effect<
     | {
         unitName: string;
@@ -46,11 +47,12 @@ export const GetPrecision =
   > =>
   (_dispatch, getState) => {
     const {
-      WALLET: {tokenData, customTokenData},
+      WALLET: {tokenDataByAddress, customTokenDataByAddress},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
-    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
-
+    const tokens = {...tokenDataByAddress, ...customTokenDataByAddress};
+    const currencyName = tokenAddress
+      ? tokenAddress
+      : getCurrencyAbbreviation(currencyAbbreviation, chain);
     return (
       BitpaySupportedCurrencies[currencyName]?.unitInfo ||
       tokens[currencyName]?.unitInfo
@@ -136,14 +138,19 @@ export const GetTheme = (
 };
 
 export const GetName =
-  (currencyAbbreviation: string, chain: string): Effect<string> =>
+  (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress?: string,
+  ): Effect<string> =>
   (_dispatch, getState) => {
     const {
-      WALLET: {tokenData, customTokenData},
+      WALLET: {tokenDataByAddress, customTokenDataByAddress},
     } = getState();
-    const tokens = {...tokenData, ...customTokenData};
-    const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
-
+    const tokens = {...tokenDataByAddress, ...customTokenDataByAddress};
+    const currencyName = tokenAddress
+      ? addTokenChainSuffix(tokenAddress, chain)
+      : getCurrencyAbbreviation(currencyAbbreviation, chain);
     return (
       BitpaySupportedCurrencies[currencyName]?.name ||
       tokens[currencyName]?.name

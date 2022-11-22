@@ -129,6 +129,7 @@ export default ({
               chain,
               credentials: {walletName: fallbackName},
               walletName,
+              tokenAddress,
             } = wallet;
             return merge(cloneDeep(wallet), {
               cryptoBalance: balance.crypto,
@@ -139,6 +140,7 @@ export default ({
                       balance.sat,
                       defaultAltCurrency.isoCode,
                       currencyAbbreviation,
+                      tokenAddress,
                       chain,
                       rates,
                     ),

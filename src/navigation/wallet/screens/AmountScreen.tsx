@@ -31,6 +31,7 @@ export interface AmountScreenParamList {
   fiatCurrencyAbbreviation?: string;
   chain?: string;
   context?: string;
+  tokenAddress?: string;
 }
 
 const AmountScreen: React.VFC<
@@ -46,6 +47,7 @@ const AmountScreen: React.VFC<
     fiatCurrencyAbbreviation,
     chain,
     context,
+    tokenAddress,
   } = route.params || {};
 
   const onSendMaxPressed = () => {
@@ -79,6 +81,7 @@ const AmountScreen: React.VFC<
         cryptoCurrencyAbbreviation={cryptoCurrencyAbbreviation}
         fiatCurrencyAbbreviation={fiatCurrencyAbbreviation}
         chain={chain}
+        tokenAddress={tokenAddress}
         onSubmit={amt => {
           onAmountSelected?.(amt.toString(), setButtonState);
         }}

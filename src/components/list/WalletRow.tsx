@@ -56,6 +56,7 @@ export interface WalletRowProps {
   pendingTxps: TransactionProposal[];
   coinbaseAccount?: CoinbaseAccountProps;
   multisig?: string;
+  tokenAddress?: string;
 }
 
 interface Props {

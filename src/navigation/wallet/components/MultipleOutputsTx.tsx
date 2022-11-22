@@ -29,7 +29,7 @@ import {
   getCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedEthereumTokenOptsByAddress} from '../../../constants/tokens';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
 import {
   DetailColumn,
@@ -71,13 +71,13 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   const {t} = useTranslation();
   let {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const {tokenOptions, customTokenOptions} = useAppSelector(
-    ({WALLET}) => WALLET.customTokenOptions,
+  const {tokenOptionsByAddress, customTokenOptionsByAddress} = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
   );
-  const tokenOpts = {
-    ...BitpaySupportedEthereumTokenOpts,
-    ...tokenOptions,
-    ...customTokenOptions,
+  const tokenOptsByAddress = {
+    ...BitpaySupportedEthereumTokenOptsByAddress,
+    ...tokenOptionsByAddress,
+    ...customTokenOptionsByAddress,
   };
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -139,11 +139,11 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
     const img = SUPPORTED_CURRENCIES.includes(coin)
       ? CurrencyListIcons[coin]
-      : tokenOpts &&
+      : tokenOptsByAddress &&
         // @ts-ignore
-        tokenOpts[coin]?.logoURI
+        tokenOptsByAddress[coin]?.logoURI
       ? // @ts-ignore
-        (tokenOpts[coin].logoURI as string)
+        (tokenOptsByAddress[coin].logoURI as string)
       : '';
     const badgeImg = getBadgeImg(coin, chain);
     const icon = tx.customData?.recipientEmail ? (

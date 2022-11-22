@@ -51,6 +51,7 @@ import {
 } from '../utils/changelly-utils';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
+  addTokenChainSuffix,
   getBadgeImg,
   getCurrencyAbbreviation,
   sleep,
@@ -115,7 +116,7 @@ export interface SwapCryptoCoin {
   name: string;
   protocol?: string;
   logoUri?: any;
-  contractAddress?: string;
+  tokenAddress?: string;
 }
 
 export const getChainFromChangellyProtocol = (
@@ -312,6 +313,7 @@ const SwapCryptoRoot: React.FC = () => {
           fromWalletSelected.balance.satSpendable,
           fromWalletSelected.currencyAbbreviation,
           fromWalletSelected.chain,
+          fromWalletSelected.tokenAddress,
         ),
       );
 
@@ -535,6 +537,7 @@ const SwapCryptoRoot: React.FC = () => {
                     fromWalletSelected.currencyAbbreviation,
                     fromWalletSelected.chain,
                     sendMaxInfo,
+                    fromWalletSelected.tokenAddress,
                   ),
                 );
                 msg = warningMsg;
@@ -545,6 +548,7 @@ const SwapCryptoRoot: React.FC = () => {
                   sendMaxInfo.fee,
                   fromWalletSelected.currencyAbbreviation,
                   fromWalletSelected.chain,
+                  fromWalletSelected.tokenAddress,
                 ),
               );
               const coin =
@@ -832,7 +836,9 @@ const SwapCryptoRoot: React.FC = () => {
                 chain,
                 protocol,
                 logoUri: getLogoUri(name, chain),
-                contractAddress,
+                tokenAddress: contractAddress
+                  ? addTokenChainSuffix(contractAddress, chain)
+                  : undefined,
               };
             },
           );
@@ -1295,6 +1301,7 @@ const SwapCryptoRoot: React.FC = () => {
         }}
         cryptoCurrencyAbbreviation={fromWalletSelected?.currencyAbbreviation.toUpperCase()}
         chain={fromWalletSelected?.chain}
+        tokenAddress={fromWalletSelected?.tokenAddress}
         onClose={() => hideModal('amount')}
         onSubmit={newAmount => {
           hideModal('amount');
@@ -1333,6 +1340,7 @@ const SwapCryptoRoot: React.FC = () => {
                   data.amount,
                   fromWalletSelected.currencyAbbreviation,
                   fromWalletSelected.chain,
+                  fromWalletSelected.tokenAddress,
                 ),
               );
             }

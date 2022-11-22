@@ -212,6 +212,7 @@ export const startUpdateWalletStatus =
                     sat,
                     defaultAltCurrency.isoCode,
                     wallets[index].currencyAbbreviation,
+                    wallets[index].tokenAddress,
                     wallets[index].chain,
                     rates,
                   ),
@@ -230,6 +231,7 @@ export const startUpdateWalletStatus =
                     sat,
                     defaultAltCurrency.isoCode,
                     wallets[index].currencyAbbreviation,
+                    wallets[index].tokenAddress,
                     wallets[index].chain,
                     lastDayRates,
                   ),
@@ -713,7 +715,7 @@ const updateWalletStatus =
 const buildBalance =
   ({wallet, status}: {wallet: Wallet; status: Status}): Effect<CryptoBalance> =>
   (dispatch, getState) => {
-    const {currencyAbbreviation, chain} = wallet;
+    const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     const {
       WALLET: {useUnconfirmedFunds},
@@ -755,23 +757,49 @@ const buildBalance =
       satSpendable: spendableAmount,
       satPending: pendingAmount,
       crypto: dispatch(
-        FormatAmount(currencyAbbreviation, chain, Number(satTotalAmount)),
+        FormatAmount(
+          currencyAbbreviation,
+          chain,
+          Number(satTotalAmount),
+          undefined,
+          tokenAddress,
+        ),
       ),
       cryptoLocked: dispatch(
-        FormatAmount(currencyAbbreviation, chain, Number(satLockedAmount)),
+        FormatAmount(
+          currencyAbbreviation,
+          chain,
+          Number(satLockedAmount),
+          undefined,
+          tokenAddress,
+        ),
       ),
       cryptoConfirmedLocked: dispatch(
         FormatAmount(
           currencyAbbreviation,
           chain,
           Number(lockedConfirmedAmount),
+          undefined,
+          tokenAddress,
         ),
       ),
       cryptoSpendable: dispatch(
-        FormatAmount(currencyAbbreviation, chain, Number(spendableAmount)),
+        FormatAmount(
+          currencyAbbreviation,
+          chain,
+          Number(spendableAmount),
+          undefined,
+          tokenAddress,
+        ),
       ),
       cryptoPending: dispatch(
-        FormatAmount(currencyAbbreviation, chain, Number(pendingAmount)),
+        FormatAmount(
+          currencyAbbreviation,
+          chain,
+          Number(pendingAmount),
+          undefined,
+          tokenAddress,
+        ),
       ),
     };
   };
@@ -791,7 +819,8 @@ const buildFiatBalance =
     cryptoBalance: CryptoBalance;
   }): Effect<FiatBalance> =>
   dispatch => {
-    const {currencyAbbreviation, network, chain, hideWallet} = wallet;
+    const {currencyAbbreviation, network, chain, hideWallet, tokenAddress} =
+      wallet;
 
     let {sat, satLocked, satConfirmedLocked, satSpendable, satPending} =
       cryptoBalance;
@@ -803,6 +832,7 @@ const buildFiatBalance =
             sat,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
+            tokenAddress,
             chain,
             rates,
           ),
@@ -816,6 +846,7 @@ const buildFiatBalance =
             satLocked,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
+            tokenAddress,
             chain,
             rates,
           ),
@@ -829,6 +860,7 @@ const buildFiatBalance =
             satConfirmedLocked,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
+            tokenAddress,
             chain,
             rates,
           ),
@@ -842,6 +874,7 @@ const buildFiatBalance =
             satSpendable,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
+            tokenAddress,
             chain,
             rates,
           ),
@@ -855,6 +888,7 @@ const buildFiatBalance =
             satPending,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
+            tokenAddress,
             chain,
             rates,
           ),
@@ -868,6 +902,7 @@ const buildFiatBalance =
             sat,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
+            tokenAddress,
             chain,
             lastDayRates,
           ),
@@ -966,14 +1001,29 @@ export const startFormatBalanceAllWalletsForKey =
             network,
             chain,
             hideWallet,
+            tokenAddress,
           } = wallet;
           try {
             const {sat, satLocked} = cachedBalance;
 
             const newBalance = {
-              crypto: dispatch(FormatAmount(currencyAbbreviation, chain, sat)),
+              crypto: dispatch(
+                FormatAmount(
+                  currencyAbbreviation,
+                  chain,
+                  sat,
+                  undefined,
+                  tokenAddress,
+                ),
+              ),
               cryptoLocked: dispatch(
-                FormatAmount(currencyAbbreviation, chain, satLocked),
+                FormatAmount(
+                  currencyAbbreviation,
+                  chain,
+                  satLocked,
+                  undefined,
+                  tokenAddress,
+                ),
               ),
               fiat: convertToFiat(
                 dispatch(
@@ -981,6 +1031,7 @@ export const startFormatBalanceAllWalletsForKey =
                     sat,
                     defaultAltCurrencyIsoCode,
                     currencyAbbreviation,
+                    tokenAddress,
                     chain,
                     rates,
                   ),
@@ -994,6 +1045,7 @@ export const startFormatBalanceAllWalletsForKey =
                     satLocked,
                     defaultAltCurrencyIsoCode,
                     currencyAbbreviation,
+                    tokenAddress,
                     chain,
                     rates,
                   ),
@@ -1007,6 +1059,7 @@ export const startFormatBalanceAllWalletsForKey =
                     sat,
                     defaultAltCurrencyIsoCode,
                     currencyAbbreviation,
+                    tokenAddress,
                     chain,
                     lastDayRates,
                   ),

@@ -170,6 +170,7 @@ export interface ToWalletSelectorCustomCurrency {
   chain: string;
   name: string;
   logoUri?: any;
+  tokenAddress?: string;
 }
 
 interface ToWalletSelectorCoinObj {
@@ -177,6 +178,7 @@ interface ToWalletSelectorCoinObj {
   chain: string;
   currencyAbbreviation: string;
   currencyName: string;
+  tokenAddress?: string;
   img?: string | ((props?: any) => ReactElement);
   total: number;
   availableWalletsByKey: {
@@ -201,8 +203,7 @@ const buildList = (
         getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
         coin.symbol,
     );
-
-    coins.push({
+    let _coin = {
       id: Math.random().toString(),
       currencyAbbreviation: coin.currencyAbbreviation,
       currencyName: availableWallets.length
@@ -215,7 +216,14 @@ const buildList = (
         availableWallets,
         wallet => wallet.keyId,
       ),
-    });
+    };
+    if (
+      coin.tokenAddress &&
+      !SUPPORTED_EVM_COINS.includes(coin.currencyAbbreviation)
+    ) {
+      _coin = {..._coin, ...{tokenAddress: coin.tokenAddress}};
+    }
+    coins.push(_coin);
   });
 
   chains =
@@ -330,6 +338,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
           selectedCurrency.currencyAbbreviation.toLowerCase() !==
           selectedCurrency.chain,
         chain: selectedCurrency.chain,
+        tokenAddress: selectedCurrency.tokenAddress,
       },
       options: {
         network: Network.mainnet,
@@ -386,6 +395,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                   network,
                   chain,
                   credentials: {walletName: fallbackName},
+                  tokenAddress,
                   walletName,
                 } = wallet;
                 return merge(cloneDeep(wallet), {
@@ -398,6 +408,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                           balance.sat,
                           defaultAltCurrency.isoCode,
                           currencyAbbreviation,
+                          tokenAddress,
                           chain,
                           rates,
                         ),
@@ -414,6 +425,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                           balance.satLocked,
                           defaultAltCurrency.isoCode,
                           currencyAbbreviation,
+                          tokenAddress,
                           chain,
                           rates,
                         ),
@@ -471,6 +483,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
         currencyAbbreviation: addTokenToLinkedWallet.currencyAbbreviation,
         isToken: true,
         chain: addTokenToLinkedWallet.chain,
+        tokenAddress: addTokenToLinkedWallet.tokenAddress,
       },
       options: {
         network: Network.mainnet,

@@ -164,8 +164,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
       hideArrow,
       badgeUri: _badgeUri,
     } = props;
-    const badgeUri =
-      _badgeUri || getBadgeImg(token.currencyAbbreviation, token.chain);
+    const badgeUri = _badgeUri || getBadgeImg(token.id, token.chain);
 
     return (
       <FlexRow

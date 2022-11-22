@@ -20,7 +20,7 @@ import {
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {
   subscribeEmailNotifications,
   subscribePushNotifications,
@@ -48,6 +48,7 @@ export interface AddWalletData {
     chain: string;
     currencyAbbreviation: string;
     isToken?: boolean;
+    tokenAddress?: string;
   };
   associatedWallet?: Wallet;
   options: CreateOptions;
@@ -61,6 +62,7 @@ export const startCreateKey =
       chain: string;
       currencyAbbreviation: string;
       isToken: boolean;
+      id?: string;
     }>,
   ): Effect<Promise<Key>> =>
   async (dispatch, getState) => {
@@ -122,14 +124,14 @@ export const addWallet =
           },
           WALLET,
         } = getState();
-        const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
-          ...WALLET.tokenOptions,
-          ...WALLET.customTokenOptions,
+        const tokenOptsByAddress = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...WALLET.tokenOptionsByAddress,
+          ...WALLET.customTokenOptionsByAddress,
         };
         const {walletName} = options;
 
-        if (currency.isToken) {
+        if (currency.isToken && currency.tokenAddress) {
           if (!associatedWallet) {
             associatedWallet = (await createWallet({
               key: key.methods!,
@@ -141,6 +143,7 @@ export const addWallet =
               mapAbbreviationAndName(
                 associatedWallet.credentials.coin,
                 associatedWallet.credentials.chain,
+                currency.tokenAddress,
               ),
             );
             key.wallets.push(
@@ -152,17 +155,18 @@ export const addWallet =
                     currencyAbbreviation,
                     currencyName,
                   },
-                  tokenOpts,
+                  tokenOptsByAddress[currency.tokenAddress],
+                  tokenOptsByAddress,
                 ),
               ),
             );
           }
-
           newWallet = (await dispatch(
             createTokenWallet(
               associatedWallet,
               currency.currencyAbbreviation.toLowerCase(),
-              tokenOpts,
+              tokenOptsByAddress,
+              currency.tokenAddress!,
             ),
           )) as Wallet;
         } else {
@@ -199,6 +203,7 @@ export const addWallet =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
+            newWallet.credentials.token?.address,
           ),
         );
 
@@ -212,7 +217,8 @@ export const addWallet =
                 currencyName,
                 walletName,
               },
-              tokenOpts,
+              newWallet.credentials.token,
+              tokenOptsByAddress,
             ),
           ),
         );
@@ -243,6 +249,7 @@ const createMultipleWallets =
       chain: string;
       currencyAbbreviation: string;
       isToken: boolean;
+      tokenAddress?: string;
     }>;
     options: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
@@ -256,10 +263,10 @@ const createMultipleWallets =
         defaultLanguage,
       },
     } = getState();
-    const tokenOpts = {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+    const tokenOptsByAddress = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
     const wallets: API[] = [];
     const tokens = currencies.filter(({isToken}) => isToken);
@@ -280,7 +287,8 @@ const createMultipleWallets =
             createTokenWallet(
               wallet,
               token.currencyAbbreviation.toLowerCase(),
-              tokenOpts,
+              tokenOptsByAddress,
+              token.tokenAddress!,
             ),
           );
           wallets.push(tokenWallet);
@@ -311,13 +319,15 @@ const createMultipleWallets =
         mapAbbreviationAndName(
           wallet.credentials.coin,
           wallet.credentials.chain,
+          wallet.credentials.token?.address,
         ),
       );
       return merge(
         wallet,
         buildWalletObj(
           {...wallet.credentials, currencyAbbreviation, currencyName},
-          tokenOpts,
+          wallet.credentials.token,
+          tokenOptsByAddress,
         ),
       );
     });
@@ -409,7 +419,8 @@ const createTokenWallet =
   (
     wallet: Wallet,
     tokenName: string,
-    tokenOpts: {[key in string]: Token},
+    tokenOptsByAddress: {[key in string]: Token},
+    tokenAddress: string,
   ): Effect<Promise<API>> =>
   async (dispatch): Promise<API> => {
     return new Promise((resolve, reject) => {
@@ -417,7 +428,7 @@ const createTokenWallet =
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
           wallet.credentials.getTokenCredentials(
-            tokenOpts[addTokenChainSuffix(tokenName, wallet.credentials.chain)],
+            tokenOptsByAddress[tokenAddress],
             wallet.credentials.chain,
           );
         bwcClient.fromObj(tokenCredentials);
@@ -497,6 +508,7 @@ export const startCreateKeyWithOpts =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
+            _wallet.credentials.token?.address,
           ),
         );
 

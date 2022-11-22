@@ -44,7 +44,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Effect, RootState} from '../../../store';
-import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {ButtonState} from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
@@ -159,19 +159,21 @@ export interface GlobalSelectObj {
   availableWalletsByKey: {
     [key in string]: Wallet[];
   };
+  tokenAddress?: string;
 }
 
 const buildList = (category: string[], wallets: Wallet[]) => {
   const coins: GlobalSelectObj[] = [];
-
   category.forEach(coin => {
-    const availableWallets = wallets.filter(
-      wallet =>
-        getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
-        coin,
-    );
+    const availableWallets = wallets.filter(wallet => {
+      const _currencyName = getCurrencyAbbreviation(
+        wallet.currencyAbbreviation,
+        wallet.chain,
+      );
+      return _currencyName === coin;
+    });
     if (availableWallets.length) {
-      const {currencyName, img, badgeImg} = availableWallets[0];
+      const {currencyName, img, badgeImg, tokenAddress} = availableWallets[0];
       coins.push({
         id: Math.random().toString(),
         currencyName,
@@ -182,6 +184,7 @@ const buildList = (category: string[], wallets: Wallet[]) => {
           availableWallets,
           wallet => wallet.keyId,
         ),
+        tokenAddress,
       });
     }
   });
@@ -225,9 +228,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const {rates} = useAppSelector(({RATE}) => RATE);
   const allTokens = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
   });
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -319,6 +322,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                   chain,
                   credentials: {walletName: fallbackName},
                   walletName,
+                  tokenAddress,
                 } = wallet;
                 return merge(cloneDeep(wallet), {
                   cryptoBalance: balance.crypto,
@@ -330,6 +334,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                           balance.sat,
                           defaultAltCurrency.isoCode,
                           currencyAbbreviation,
+                          tokenAddress,
                           chain,
                           rates,
                         ),
@@ -346,6 +351,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                           balance.satLocked,
                           defaultAltCurrency.isoCode,
                           currencyAbbreviation,
+                          tokenAddress,
                           chain,
                           rates,
                         ),

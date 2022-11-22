@@ -129,6 +129,7 @@ interface successGetTokenOptions {
   payload: {
     tokenOptions: {[key in string]: Token};
     tokenData: {[key in string]: CurrencyOpts};
+    tokenDataByAddress: {[key in string]: CurrencyOpts};
     tokenOptionsByAddress: {[key in string]: Token};
   };
 }
@@ -138,6 +139,7 @@ interface successGetCustomTokenOptions {
   payload: {
     customTokenOptions: {[key in string]: Token};
     customTokenData: {[key in string]: CurrencyOpts};
+    customTokenDataByAddress: {[key in string]: CurrencyOpts};
     customTokenOptionsByAddress: {[key in string]: Token};
   };
 }

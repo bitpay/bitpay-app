@@ -29,12 +29,13 @@ export const ParseAmount =
     amount: number,
     currencyAbbreviation: string,
     chain: string,
+    tokenAddress?: string,
     fullPrecision?: boolean,
   ): Effect<FormattedAmountObj> =>
   dispatch => {
     // @ts-ignore
     const {unitToSatoshi, unitDecimals} = dispatch(
-      GetPrecision(currencyAbbreviation, chain),
+      GetPrecision(currencyAbbreviation, chain, tokenAddress),
     );
     const satToUnit = 1 / unitToSatoshi;
     let amountUnitStr;
@@ -43,7 +44,13 @@ export const ParseAmount =
     amountSat = Number((amount * unitToSatoshi).toFixed(0));
     amountUnitStr =
       dispatch(
-        FormatAmountStr(currencyAbbreviation, chain, amountSat, fullPrecision),
+        FormatAmountStr(
+          currencyAbbreviation,
+          chain,
+          amountSat,
+          fullPrecision,
+          tokenAddress,
+        ),
       ) || '';
 
     // workaround to prevent miscalculations with decimal numbers that javascript can't handle with precision
@@ -86,6 +93,7 @@ export const FormatAmountStr =
     chain: string,
     satoshis: number,
     fullPrecision?: boolean,
+    tokenAddress?: string,
   ): Effect<string> =>
   dispatch => {
     if (isNaN(satoshis)) {
@@ -95,7 +103,13 @@ export const FormatAmountStr =
     try {
       return (
         dispatch(
-          FormatAmount(currencyAbbreviation, chain, satoshis, fullPrecision),
+          FormatAmount(
+            currencyAbbreviation,
+            chain,
+            satoshis,
+            fullPrecision,
+            tokenAddress,
+          ),
         ) +
         ' ' +
         currencyAbbreviation.toUpperCase()
@@ -111,6 +125,7 @@ export const FormatAmount =
     chain: string,
     satoshis: number,
     fullPrecision?: boolean,
+    tokenAddress?: string,
   ): Effect<string> =>
   dispatch => {
     // TODO : now only works for english, specify opts to change thousand separator and decimal separator
@@ -120,7 +135,7 @@ export const FormatAmount =
 
     if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation, chain)) {
       const {unitToSatoshi, unitDecimals} =
-        dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+        dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
       if (unitToSatoshi) {
         opts.toSatoshis = unitToSatoshi;
       }
@@ -146,10 +161,11 @@ export const SatToUnit =
     amount: number,
     currencyAbbreviation: string,
     chain: string,
+    tokenAddress?: string,
   ): Effect<number | undefined> =>
   dispatch => {
     const {unitToSatoshi, unitDecimals} =
-      dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+      dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
     let spendableAmount: number | undefined;
     if (unitToSatoshi && unitDecimals) {
       const satToUnit = 1 / unitToSatoshi;
@@ -160,12 +176,17 @@ export const SatToUnit =
   };
 
 export const GetExcludedUtxosMessage =
-  (coin: string, chain: string, sendMaxInfo: SendMaxInfo): Effect<string> =>
+  (
+    coin: string,
+    chain: string,
+    sendMaxInfo: SendMaxInfo,
+    tokenAddress?: string,
+  ): Effect<string> =>
   dispatch => {
     const warningMsg = [];
     if (sendMaxInfo.utxosBelowFee > 0) {
       const amountBelowFeeStr = dispatch(
-        SatToUnit(sendMaxInfo.amountBelowFee, coin, chain),
+        SatToUnit(sendMaxInfo.amountBelowFee, coin, chain, tokenAddress),
       );
       const message = `A total of ${amountBelowFeeStr} ${coin.toUpperCase()} were excluded. These funds come from UTXOs smaller than the network fee provided.`;
       warningMsg.push(message);
@@ -173,7 +194,7 @@ export const GetExcludedUtxosMessage =
 
     if (sendMaxInfo.utxosAboveMaxSize > 0) {
       const amountAboveMaxSizeStr = dispatch(
-        SatToUnit(sendMaxInfo.amountAboveMaxSize, coin, chain),
+        SatToUnit(sendMaxInfo.amountAboveMaxSize, coin, chain, tokenAddress),
       );
       const message = `A total of ${amountAboveMaxSizeStr} ${coin.toUpperCase()} were excluded. The maximum size allowed for a transaction was exceeded.`;
       warningMsg.push(message);
