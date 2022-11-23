@@ -3,10 +3,7 @@ import {
   BitpaySupportedCurrencies,
   BitpaySupportedUtxoCoins,
 } from '../../../constants/currencies';
-import {
-  addTokenChainSuffix,
-  getCurrencyAbbreviation,
-} from '../../../utils/helper-methods';
+import {getCurrencyAbbreviation} from '../../../utils/helper-methods';
 
 export const GetProtocolPrefix =
   (
@@ -149,7 +146,7 @@ export const GetName =
     } = getState();
     const tokens = {...tokenDataByAddress, ...customTokenDataByAddress};
     const currencyName = tokenAddress
-      ? addTokenChainSuffix(tokenAddress, chain)
+      ? tokenAddress
       : getCurrencyAbbreviation(currencyAbbreviation, chain);
     return (
       BitpaySupportedCurrencies[currencyName]?.name ||

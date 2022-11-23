@@ -1,5 +1,5 @@
 import {SUPPORTED_COINS} from '../constants/currencies';
-import {Key} from '../store/wallet/wallet.models';
+import {Key, Wallet} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
@@ -7,6 +7,7 @@ import {ReactElement} from 'react';
 import {IsERCToken} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
+import API from 'bitcore-wallet-client/ts_build';
 
 export const sleep = (duration: number) =>
   new Promise<void>(resolve => setTimeout(resolve, duration));
@@ -344,4 +345,13 @@ export const getCWCChain = (chain: string): string => {
     default:
       return 'ETHERC20';
   }
+};
+
+export const getTokenAddress = (wallet: Wallet | API): string | undefined => {
+  return wallet.credentials.token && wallet.credentials.token.address
+    ? addTokenChainSuffix(
+        wallet.credentials.token.address,
+        wallet.credentials.chain,
+      )
+    : undefined;
 };

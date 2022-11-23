@@ -120,9 +120,10 @@ export const buildWalletObj = (
   token?: Token,
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
-  const tokenAddress = token
-    ? addTokenChainSuffix(token.address, chain)
-    : undefined;
+  const tokenAddress =
+    token && token.address
+      ? addTokenChainSuffix(token.address, chain)
+      : undefined;
   const _currencyAbbreviation = getCurrencyAbbreviation(
     currencyAbbreviation,
     chain,

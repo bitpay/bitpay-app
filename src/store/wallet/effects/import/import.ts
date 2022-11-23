@@ -98,7 +98,7 @@ import {
   Analytics,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
-import {sleep} from '../../../../utils/helper-methods';
+import {getTokenAddress, sleep} from '../../../../utils/helper-methods';
 import {backupRedirect} from '../../../../navigation/wallet/screens/Backup';
 
 const BWC = BwcProvider.getInstance();
@@ -716,7 +716,7 @@ export const migrateKeyAndWallets =
             mapAbbreviationAndName(
               walletObj.credentials.coin,
               walletObj.credentials.chain,
-              walletObj.credentials.token?.address,
+              getTokenAddress(walletObj),
             ),
           );
 
@@ -915,7 +915,7 @@ const onSuccessServerAssistedImport =
             mapAbbreviationAndName(
               wallet.credentials.coin,
               wallet.credentials.chain,
-              wallet.credentials.token?.address,
+              getTokenAddress(wallet),
             ),
           );
           return merge(
@@ -1056,7 +1056,7 @@ export const startImportFile =
               mapAbbreviationAndName(
                 wallet.credentials.coin,
                 wallet.credentials.chain,
-                wallet.credentials.token?.address,
+                getTokenAddress(wallet),
               ),
             );
             return merge(
@@ -1154,7 +1154,7 @@ export const startImportWithDerivationPath =
             mapAbbreviationAndName(
               wallet.credentials.coin,
               wallet.credentials.chain,
-              wallet.credentials.token?.address,
+              getTokenAddress(wallet),
             ),
           );
 

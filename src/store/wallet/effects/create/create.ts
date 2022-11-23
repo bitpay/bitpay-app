@@ -29,7 +29,7 @@ import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
+import {getTokenAddress, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 
@@ -166,7 +166,7 @@ export const addWallet =
               associatedWallet,
               currency.currencyAbbreviation.toLowerCase(),
               tokenOptsByAddress,
-              currency.tokenAddress!,
+              currency.tokenAddress,
             ),
           )) as Wallet;
         } else {
@@ -203,7 +203,7 @@ export const addWallet =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
-            newWallet.credentials.token?.address,
+            getTokenAddress(newWallet),
           ),
         );
 
@@ -319,7 +319,7 @@ const createMultipleWallets =
         mapAbbreviationAndName(
           wallet.credentials.coin,
           wallet.credentials.chain,
-          wallet.credentials.token?.address,
+          getTokenAddress(wallet),
         ),
       );
       return merge(
@@ -508,7 +508,7 @@ export const startCreateKeyWithOpts =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
-            _wallet.credentials.token?.address,
+            getTokenAddress(_wallet),
           ),
         );
 

@@ -35,7 +35,7 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
-import {getMnemonic} from '../../../utils/helper-methods';
+import {getMnemonic, getTokenAddress} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
@@ -217,7 +217,7 @@ const KeySettings = () => {
               mapAbbreviationAndName(
                 syncWallet.credentials.coin,
                 syncWallet.credentials.chain,
-                syncWallet.credentials.token?.address,
+                getTokenAddress(syncWallet),
               ),
             );
             return merge(

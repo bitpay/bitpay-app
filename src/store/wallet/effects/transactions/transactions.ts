@@ -22,10 +22,7 @@ import {TransactionIcons} from '../../../../constants/TransactionIcons';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
-import {
-  addTokenChainSuffix,
-  formatFiatAmount,
-} from '../../../../utils/helper-methods';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
@@ -85,10 +82,10 @@ export const ProcessPendingTxps =
   (txps: TransactionProposal[], wallet: any): Effect<any> =>
   dispatch => {
     const now = Math.floor(Date.now() / 1000);
-    const {currencyAbbreviation, chain} = wallet;
+    const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
-      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx));
+      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx, tokenAddress));
 
       // no future transactions...
       if (tx.createdOn > now) {
@@ -126,6 +123,7 @@ const ProcessTx =
     currencyAbbreviation: string,
     chain: string,
     tx: TransactionProposal,
+    tokenAddress?: string,
   ): Effect<TransactionProposal> =>
   dispatch => {
     if (!tx || tx.action === 'invalid') {
@@ -149,10 +147,7 @@ const ProcessTx =
               chain,
               o.amount,
               undefined,
-              addTokenChainSuffix(
-                tx.tokenAddress || currencyAbbreviation,
-                chain,
-              ),
+              tokenAddress,
             ),
           );
           return total + o.amount;
@@ -188,29 +183,15 @@ const ProcessTx =
         chain,
         tx.amount,
         undefined,
-        addTokenChainSuffix(tx.tokenAddress || currencyAbbreviation, chain),
+        tokenAddress,
       ),
     );
 
     tx.feeStr = tx.fee
-      ? dispatch(
-          FormatAmountStr(
-            chain,
-            chain,
-            tx.fee,
-            undefined,
-            addTokenChainSuffix(tx.tokenAddress || currencyAbbreviation, chain),
-          ),
-        )
+      ? dispatch(FormatAmountStr(chain, chain, tx.fee, undefined, tokenAddress))
       : tx.fees
       ? dispatch(
-          FormatAmountStr(
-            chain,
-            chain,
-            tx.fees,
-            undefined,
-            addTokenChainSuffix(tx.tokenAddress || currencyAbbreviation, chain),
-          ),
+          FormatAmountStr(chain, chain, tx.fees, undefined, tokenAddress),
         )
       : 'N/A';
 
@@ -236,10 +217,10 @@ const ProcessNewTxs =
     const now = Math.floor(Date.now() / 1000);
     const txHistoryUnique: any = {};
     const ret = [];
-    const {currencyAbbreviation, chain} = wallet;
+    const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     for (let tx of txs) {
-      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx));
+      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx, tokenAddress));
 
       // no future transactions...
       if (tx.time > now) {

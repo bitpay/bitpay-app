@@ -14,6 +14,7 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
+import {getTokenAddress} from '../../../../utils/helper-methods';
 
 const BWC = BwcProvider.getInstance();
 
@@ -67,7 +68,7 @@ export const startJoinMultisig =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
-            _wallet.credentials.token?.address,
+            getTokenAddress(_wallet),
           ),
         );
 
@@ -144,7 +145,7 @@ export const addWalletJoinMultisig =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
-            newWallet.credentials.token?.address,
+            getTokenAddress(newWallet),
           ),
         );
 

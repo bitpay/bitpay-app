@@ -14,6 +14,7 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {LogActions} from '../../../log';
+import {getTokenAddress} from '../../../../utils/helper-methods';
 
 const BWC = BwcProvider.getInstance();
 
@@ -59,7 +60,7 @@ export const startCreateKeyMultisig =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
-            _wallet.credentials.token?.address,
+            getTokenAddress(_wallet),
           ),
         );
 
@@ -131,7 +132,7 @@ export const addWalletMultisig =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
-            newWallet.credentials.token?.address,
+            getTokenAddress(newWallet),
           ),
         );
 
