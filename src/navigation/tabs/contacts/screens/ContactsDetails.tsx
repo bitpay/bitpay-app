@@ -155,6 +155,7 @@ const ContactsDetails = ({
       wallet.network === 'livenet' &&
       wallet.isComplete() &&
       wallet.currencyAbbreviation === contact.coin &&
+      wallet.chain === contact.chain &&
       wallet.balance.sat > 0,
   );
 

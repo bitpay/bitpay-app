@@ -352,6 +352,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             cryptoCurrencyAbbreviation:
               fullWalletObj.currencyAbbreviation.toUpperCase(),
             chain: fullWalletObj.chain,
+            tokenAddress: fullWalletObj.tokenAddress,
             onAmountSelected: async (amount, setButtonState) => {
               setButtonState('success');
               await sleep(500);

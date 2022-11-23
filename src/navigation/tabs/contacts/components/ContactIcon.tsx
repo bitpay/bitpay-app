@@ -11,8 +11,8 @@ import {RootState} from '../../../../store';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {Token} from '../../../../store/wallet/wallet.models';
 import {
+  addTokenChainSuffix,
   getBadgeImg,
-  getCurrencyAbbreviation,
 } from '../../../../utils/helper-methods';
 
 interface ContactIconProps {
@@ -62,15 +62,19 @@ const ContactIcon: React.FC<ContactIconProps> = ({
     };
   }) as {[key in string]: Token};
 
+  const coinName =
+    coin && chain && tokenOptions[coin]
+      ? addTokenChainSuffix(tokenOptions[coin].address, chain)
+      : coin;
+
   const img =
     coin &&
     chain &&
-    (SUPPORTED_CURRENCIES.includes(coin)
+    coinName &&
+    (SUPPORTED_CURRENCIES.includes(coinName)
       ? CurrencyListIcons[coin]
-      : tokenOptions &&
-        tokenOptions[getCurrencyAbbreviation(coin, chain)] &&
-        tokenOptions[getCurrencyAbbreviation(coin, chain)]?.logoURI
-      ? (tokenOptions[getCurrencyAbbreviation(coin, chain)].logoURI as string)
+      : tokenOptions && tokenOptions[coin] && tokenOptions[coin]?.logoURI
+      ? (tokenOptions[coin].logoURI as string)
       : '');
 
   const coinBadge = img ? (

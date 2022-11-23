@@ -54,7 +54,7 @@ import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
 import {SUPPORTED_TOKENS} from '../../../../constants/currencies';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import debounce from 'lodash.debounce';
@@ -211,9 +211,9 @@ const ContactsAdd = ({
 
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
   });
 
@@ -254,7 +254,15 @@ const ContactsAdd = ({
 
   const [allTokenOptions, setAllTokenOptions] = useState(ALL_TOKENS);
 
-  const [selectedToken, setSelectedToken] = useState(ALL_TOKENS[0]);
+  const _selectedToken = ALL_TOKENS.find(
+    t =>
+      t.currencyAbbreviation.toLowerCase() === contact?.coin?.toLowerCase() &&
+      t.chain === contact.chain,
+  );
+
+  const [selectedToken, setSelectedToken] = useState(
+    _selectedToken || ALL_TOKENS[0],
+  );
   const [selectedCurrency, setSelectedCurrency] = useState(
     SupportedEvmCurrencyOptions[0],
   );

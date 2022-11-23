@@ -166,10 +166,9 @@ const buildList = (category: string[], wallets: Wallet[]) => {
   const coins: GlobalSelectObj[] = [];
   category.forEach(coin => {
     const availableWallets = wallets.filter(wallet => {
-      const _currencyName = getCurrencyAbbreviation(
-        wallet.currencyAbbreviation,
-        wallet.chain,
-      );
+      const _currencyName = wallet.tokenAddress
+        ? wallet.tokenAddress
+        : getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain);
       return _currencyName === coin;
     });
     if (availableWallets.length) {
@@ -404,6 +403,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                 cryptoCurrencyAbbreviation:
                   wallet.currencyAbbreviation.toUpperCase(),
                 chain: wallet.chain,
+                tokenAddress: wallet.tokenAddress,
                 onAmountSelected: async (amount, setButtonState, opts) => {
                   dispatch(
                     _createProposalAndBuildTxDetails({
