@@ -34,6 +34,10 @@ export const failedAppInit = (): AppActionType => ({
   payload: true,
 });
 
+export const appIsReadyForDeeplinking = (): AppActionType => ({
+  type: AppActionTypes.APP_READY_FOR_DEEPLINKING,
+});
+
 export const setAppFirstOpenEventComplete = (): AppActionType => ({
   type: AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE,
 });

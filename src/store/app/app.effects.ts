@@ -2,7 +2,12 @@ import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
 import {debounce} from 'lodash';
-import {DeviceEventEmitter, Linking, Platform} from 'react-native';
+import {
+  DeviceEventEmitter,
+  EmitterSubscription,
+  Linking,
+  Platform,
+} from 'react-native';
 import Braze from 'react-native-appboy-sdk';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
@@ -93,6 +98,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
+
+    dispatch(deferDeeplinksUntilAppIsReady());
 
     const {appFirstOpenData, onboardingCompleted, migrationComplete} =
       getState().APP;
@@ -189,7 +196,10 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     dispatch(showBlur(pinLockActive || biometricLockActive));
+
     dispatch(AppActions.successAppInit());
+    DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
+
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
@@ -226,6 +236,43 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     RNBootSplash.hide();
   }
 };
+
+const deferDeeplinksUntilAppIsReady =
+  (): Effect<void> => (_dispatch, getState) => {
+    const {APP} = getState();
+    let subscriptions: EmitterSubscription[] = [];
+
+    const emitIfReady = () => {
+      if (!subscriptions.length) {
+        DeviceEventEmitter.emit(DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS);
+      }
+    };
+
+    const waitForEvent = (e: DeviceEmitterEvents) => {
+      const sub = DeviceEventEmitter.addListener(e, () => {
+        sub.remove();
+        subscriptions = subscriptions.filter(s => s !== sub);
+
+        emitIfReady();
+      });
+
+      subscriptions.push(sub);
+    };
+
+    if (!navigationRef.isReady()) {
+      waitForEvent(DeviceEmitterEvents.APP_NAVIGATION_READY);
+    }
+
+    if (APP.appIsLoading) {
+      waitForEvent(DeviceEmitterEvents.APP_DATA_INITIALIZED);
+    }
+
+    if (!APP.onboardingCompleted) {
+      waitForEvent(DeviceEmitterEvents.APP_ONBOARDING_COMPLETED);
+    }
+
+    emitIfReady();
+  };
 
 /**
  * Checks to ensure that the App Identity is defined, else generates a new one.
@@ -874,28 +921,6 @@ export const resetAllSettings = (): Effect => dispatch => {
   });
 };
 
-const runWhenAppInitComplete =
-  (cb: Function): Effect<void> =>
-  (_dispatch, getState) => {
-    const {APP} = getState();
-
-    if (APP.appWasInit) {
-      if (navigationRef.isReady()) {
-        cb();
-      } else {
-        setTimeout(() => cb(), 500);
-      }
-    } else {
-      const subscription = DeviceEventEmitter.addListener(
-        DeviceEmitterEvents.APP_INIT_COMPLETED,
-        () => {
-          subscription.remove();
-          cb();
-        },
-      );
-    }
-  };
-
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
@@ -995,7 +1020,21 @@ export const incomingLink =
     }
 
     if (handler) {
-      dispatch(runWhenAppInitComplete(handler));
+      const {APP} = getState();
+      const {appIsReadyForDeeplinking} = APP;
+
+      if (appIsReadyForDeeplinking) {
+        handler();
+      } else {
+        const subscription = DeviceEventEmitter.addListener(
+          DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS,
+          () => {
+            subscription.remove();
+            handler?.();
+          },
+        );
+      }
+
       return true;
     }
 

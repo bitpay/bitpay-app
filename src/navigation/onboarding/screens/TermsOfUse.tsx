@@ -2,7 +2,7 @@ import {StackActions, useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Linking, ScrollView} from 'react-native';
+import {DeviceEventEmitter, Linking, ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -14,6 +14,7 @@ import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import TermsBox from '../components/TermsBox';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {
   useAppDispatch,
   useRequestTrackingPermissionHandler,
@@ -176,6 +177,9 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
                 navigation.navigate('Tabs', {screen: 'Home'});
               }
               dispatch(setOnboardingCompleted());
+              DeviceEventEmitter.emit(
+                DeviceEmitterEvents.APP_ONBOARDING_COMPLETED,
+              );
             });
           }}
           buttonStyle={'primary'}

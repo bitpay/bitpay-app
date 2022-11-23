@@ -21,6 +21,7 @@ export enum AppActionTypes {
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   APP_INIT_COMPLETE = 'APP/APP_INIT_COMPLETE',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
+  APP_READY_FOR_DEEPLINKING = 'APP/READY_FOR_DEEPLINKING',
   APP_OPENING_WAS_TRACKED = 'APP/OPENING_WAS_TRACKED',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
@@ -90,6 +91,10 @@ interface AppInitComplete {
 interface FailedAppInit {
   type: typeof AppActionTypes.FAILED_APP_INIT;
   payload: boolean;
+}
+
+interface AppIsReadyForDeeplinking {
+  type: typeof AppActionTypes.APP_READY_FOR_DEEPLINKING;
 }
 
 interface setAppFirstOpenEventComplete {
@@ -335,6 +340,7 @@ export type AppActionType =
   | SuccessAppInit
   | AppInitComplete
   | FailedAppInit
+  | AppIsReadyForDeeplinking
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
   | AppOpeningWasTracked
