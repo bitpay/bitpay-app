@@ -11,6 +11,7 @@ import {RefreshControl, SectionList, View} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {
+  addTokenChainSuffix,
   getCurrencyAbbreviation,
   getProtocolName,
   sleep,
@@ -82,6 +83,7 @@ import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {batch} from 'react-redux';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -229,6 +231,14 @@ const CoinbaseAccount = ({
   const [isLoading, setIsLoading] = useState<boolean>(txsLoading);
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [initialLoad, setInitialLoad] = useState<boolean>(true);
+  const tokens = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
+    };
+  });
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: account?.name,
@@ -366,7 +376,6 @@ const CoinbaseAccount = ({
         OtherBitpaySupportedCoins[_currencyAbbreviation.toLowerCase()]
           ? _currencyAbbreviation.toLowerCase()
           : 'eth';
-
       availableWallets = availableWallets.filter(
         wallet =>
           !wallet.hideWallet &&
@@ -375,7 +384,6 @@ const CoinbaseAccount = ({
           wallet.credentials.chain === _chain &&
           wallet.isComplete(),
       );
-
       if (availableWallets.length) {
         // Withdrawals to BitPay Wallet
         if (account.allow_withdrawals && Number(account.balance.amount) > 0) {
