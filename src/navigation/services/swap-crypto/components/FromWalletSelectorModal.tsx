@@ -60,7 +60,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
   const [swapCryptoHelpVisible, setSwapCryptoHelpVisible] = useState(false);
 
   const _customSupportedCurrencies = customSupportedCurrencies?.map(
-    ({symbol}) => symbol,
+    ({symbol, tokenAddress}) => tokenAddress ? tokenAddress : symbol,
   );
 
   const onHelpPress = () => {
