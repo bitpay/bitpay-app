@@ -39,7 +39,7 @@ import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
-import {ShopActions} from '../../../../../store/shop';
+import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';

@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 import styled from 'styled-components/native';
-import {Keyboard, ScrollView} from 'react-native';
+import {Keyboard, RefreshControl, ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getGiftCardConfigList,
@@ -38,6 +38,9 @@ import {
 } from '@react-navigation/native';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import {HeaderTitle} from '../../../components/styled/Text';
+import {useTheme} from 'styled-components';
+import {SlateDark, White} from '../../../styles/colors';
+import {sleep} from '../../../utils/helper-methods';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -105,8 +108,10 @@ const ShopHome: React.FC<
   StackScreenProps<ShopStackParamList, ShopScreens.HOME>
 > = ({route}) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const availableCardMap = useAppSelector(({SHOP}) => SHOP.availableCardMap);
   const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
   const giftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
@@ -180,6 +185,9 @@ const ShopHome: React.FC<
   );
 
   const [activeTab, setActiveTab] = useState(ShopTabs.GIFT_CARDS);
+  const [refreshing, setRefreshing] = useState(false);
+  const [initialGiftCardSyncComplete, setInitialGiftCardSyncComplete] =
+    useState(false);
 
   const memoizedGiftCardCatalog = useCallback(
     () => (
@@ -254,6 +262,10 @@ const ShopHome: React.FC<
 
   useFocusEffect(() => {
     dispatch(logSegmentEvent('track', 'Viewed Shop Tab', undefined));
+    if (!initialGiftCardSyncComplete) {
+      dispatch(ShopEffects.startSyncGiftCards());
+      setInitialGiftCardSyncComplete(true);
+    }
   });
 
   return (
@@ -262,7 +274,23 @@ const ShopHome: React.FC<
         ref={scrollViewRef}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
-        onScrollBeginDrag={Keyboard.dismiss}>
+        onScrollBeginDrag={Keyboard.dismiss}
+        refreshControl={
+          user ? (
+            <RefreshControl
+              tintColor={theme.dark ? White : SlateDark}
+              refreshing={refreshing}
+              onRefresh={async () => {
+                setRefreshing(true);
+                await Promise.all([
+                  dispatch(ShopEffects.startSyncGiftCards()),
+                  sleep(600),
+                ]);
+                setRefreshing(false);
+              }}
+            />
+          ) : undefined
+        }>
         <ShopInnerContainer>
           <Tab.Navigator
             style={{
