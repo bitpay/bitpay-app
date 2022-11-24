@@ -238,12 +238,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 };
 
 const deferDeeplinksUntilAppIsReady =
-  (): Effect<void> => (_dispatch, getState) => {
+  (): Effect<void> => (dispatch, getState) => {
     const {APP} = getState();
     let subscriptions: EmitterSubscription[] = [];
 
     const emitIfReady = () => {
       if (!subscriptions.length) {
+        dispatch(AppActions.appIsReadyForDeeplinking());
         DeviceEventEmitter.emit(DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS);
       }
     };
