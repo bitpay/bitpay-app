@@ -910,14 +910,7 @@ export const buildTransactionDetails =
 
         _transaction.feeFiatStr = formatFiatAmount(
           dispatch(
-            toFiat(
-              _fee,
-              alternativeCurrency,
-              chain,
-              wallet.tokenAddress,
-              chain,
-              rates,
-            ),
+            toFiat(_fee, alternativeCurrency, chain, undefined, chain, rates),
           ),
           alternativeCurrency,
         );

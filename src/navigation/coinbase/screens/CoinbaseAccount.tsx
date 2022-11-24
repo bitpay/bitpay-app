@@ -195,6 +195,7 @@ const CoinbaseAccount = ({
   const [customSupportedCurrencies, setCustomSupportedCurrencies] = useState(
     [] as ToWalletSelectorCustomCurrency[],
   );
+  const [tokenAddress, setTokenAddress] = useState<string | undefined>();
   const [walletModalVisible, setWalletModalVisible] = useState(false);
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fiatAmount, setFiatAmount] = useState(0);
@@ -725,6 +726,7 @@ const CoinbaseAccount = ({
         cryptoCurrencyAbbreviation={currencyAbbreviation}
         fiatCurrencyAbbreviation={defaultAltCurrency.isoCode}
         chain={chain}
+        tokenAddress={tokenAddress}
         onClose={() => setAmountModalVisible(false)}
         onSubmit={amt => onEnteredAmount(amt)}
       />

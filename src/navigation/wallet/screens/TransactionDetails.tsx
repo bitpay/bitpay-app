@@ -509,7 +509,9 @@ const TransactionDetails = () => {
             </>
           ) : null}
 
-          {IsSent(txs.action) ? <MultipleOutputsTx tx={txs} /> : null}
+          {IsSent(txs.action) ? (
+            <MultipleOutputsTx tx={txs} tokenAddress={tokenAddress} />
+          ) : null}
 
           {txs.creatorName && IsShared(wallet) ? (
             <>

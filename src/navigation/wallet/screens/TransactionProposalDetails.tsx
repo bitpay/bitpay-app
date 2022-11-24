@@ -424,7 +424,7 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          <MultipleOutputsTx tx={txs} />
+          <MultipleOutputsTx tx={txs} tokenAddress={wallet.tokenAddress} />
 
           <>
             <DetailContainer>

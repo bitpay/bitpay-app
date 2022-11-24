@@ -560,6 +560,7 @@ export const goToAmount =
         sendMaxEnabled: true,
         cryptoCurrencyAbbreviation: coin.toUpperCase(),
         chain,
+        tokenAddress: wallet.tokenAddress,
         onAmountSelected: async (amount, setButtonState, amountOpts) => {
           dispatch(
             goToConfirm({

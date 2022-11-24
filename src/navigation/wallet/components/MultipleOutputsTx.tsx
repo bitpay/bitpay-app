@@ -29,7 +29,7 @@ import {
   getCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {BitpaySupportedEthereumTokenOptsByAddress} from '../../../constants/tokens';
+import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
 import {
   DetailColumn,
@@ -67,17 +67,27 @@ const ContactsIconContainer = styled.TouchableOpacity`
   margin-left: 5px;
 `;
 
-const MultipleOutputsTx = ({tx}: {tx: any}) => {
+const SendToPillContainer = styled.View`
+  height: 37px;
+`;
+
+const MultipleOutputsTx = ({
+  tx,
+  tokenAddress,
+}: {
+  tx: any;
+  tokenAddress?: string;
+}) => {
   const {t} = useTranslation();
   let {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const {tokenOptionsByAddress, customTokenOptionsByAddress} = useAppSelector(
-    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  const {tokenOptions, customTokenOptions} = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptions,
   );
-  const tokenOptsByAddress = {
-    ...BitpaySupportedEthereumTokenOptsByAddress,
-    ...tokenOptionsByAddress,
-    ...customTokenOptionsByAddress,
+  const tokenOpts = {
+    ...BitpaySupportedEthereumTokenOpts,
+    ...tokenOptions,
+    ...customTokenOptions,
   };
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -137,13 +147,13 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
 
   const getIcon = () => {
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
-    const img = SUPPORTED_CURRENCIES.includes(coin)
+    const img = SUPPORTED_CURRENCIES.includes(tokenAddress || coin)
       ? CurrencyListIcons[coin]
-      : tokenOptsByAddress &&
+      : tokenOpts &&
         // @ts-ignore
-        tokenOptsByAddress[coin]?.logoURI
+        tokenOpts[coin]?.logoURI
       ? // @ts-ignore
-        (tokenOptsByAddress[coin].logoURI as string)
+        (tokenOpts[coin].logoURI as string)
       : '';
     const badgeImg = getBadgeImg(coin, chain);
     const icon = tx.customData?.recipientEmail ? (
