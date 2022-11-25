@@ -136,7 +136,7 @@ const KeySettings = () => {
   );
 
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const {keyName, hideKeyBalance} = _key || {};
+  const {keyName, hideKeyBalance, backupComplete} = _key || {};
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
@@ -374,7 +374,7 @@ const KeySettings = () => {
           ),
         )}
 
-        {_key && !_key.isReadOnly ? (
+        {_key && !_key.isReadOnly && backupComplete ? (
           <VerticalPadding style={{alignItems: 'center'}}>
             <AddWalletText
               onPress={() => {
@@ -430,45 +430,49 @@ const KeySettings = () => {
 
             <Hr />
 
-            <SettingView>
-              <WalletSettingsTitle>
-                {t('Request Encrypt Password')}
-              </WalletSettingsTitle>
+            {backupComplete ? (
+              <>
+                <SettingView>
+                  <WalletSettingsTitle>
+                    {t('Request Encrypt Password')}
+                  </WalletSettingsTitle>
 
-              <RequestEncryptPasswordToggle currentKey={key} />
-            </SettingView>
+                  <RequestEncryptPasswordToggle currentKey={key} />
+                </SettingView>
 
-            <Info>
-              <InfoTriangle />
+                <Info>
+                  <InfoTriangle />
 
-              <InfoHeader>
-                <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                  <InfoSvg />
-                </InfoImageContainer>
+                  <InfoHeader>
+                    <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                      <InfoSvg />
+                    </InfoImageContainer>
 
-                <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
-              </InfoHeader>
-              <InfoDescription>
-                {t(
-                  'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
-                )}
-              </InfoDescription>
+                    <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
+                  </InfoHeader>
+                  <InfoDescription>
+                    {t(
+                      'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
+                    )}
+                  </InfoDescription>
 
-              <VerticalPadding>
-                <TouchableOpacity
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD),
-                    );
-                  }}>
-                  <Link>{t('Learn More')}</Link>
-                </TouchableOpacity>
-              </VerticalPadding>
-            </Info>
+                  <VerticalPadding>
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
+                      onPress={() => {
+                        haptic('impactLight');
+                        dispatch(
+                          openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD),
+                        );
+                      }}>
+                      <Link>{t('Learn More')}</Link>
+                    </TouchableOpacity>
+                  </VerticalPadding>
+                </Info>
 
-            <Hr />
+                <Hr />
+              </>
+            ) : null}
 
             {_key?.methods?.isPrivKeyEncrypted() ? (
               <>
@@ -494,7 +498,7 @@ const KeySettings = () => {
 
         <VerticalPadding>
           <Title>{t('Advanced')}</Title>
-          {_key && !_key.isReadOnly ? (
+          {_key && !_key.isReadOnly && backupComplete ? (
             <>
               <Setting
                 activeOpacity={ActiveOpacity}
@@ -520,7 +524,7 @@ const KeySettings = () => {
             </>
           ) : null}
 
-          {_key && !_key.isReadOnly ? (
+          {_key && !_key.isReadOnly && backupComplete ? (
             <>
               <Setting
                 activeOpacity={ActiveOpacity}
@@ -558,7 +562,7 @@ const KeySettings = () => {
             </>
           ) : null}
 
-          {_key && !_key.isReadOnly ? (
+          {_key && !_key.isReadOnly && backupComplete ? (
             <>
               <Setting
                 activeOpacity={ActiveOpacity}

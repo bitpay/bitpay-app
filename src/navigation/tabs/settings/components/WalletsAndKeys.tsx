@@ -11,10 +11,8 @@ import {
   SettingTitle,
 } from '../../../../components/styled/Containers';
 import {Link} from '../../../../components/styled/Text';
-import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Key} from '../../../../store/wallet/wallet.models';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {keyBackupRequired} from '../../home/components/Crypto';
+import {useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
 import {DisabledOpacity} from '../../home/components/Styled';
 
@@ -25,22 +23,15 @@ const CreateOrImportLink = styled(Link)`
 const WalletsAndKeys = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const keyList = Object.values(keys);
   const deferredImport = useAppSelector(({WALLET}) => WALLET.deferredImport);
 
   const onPressKey = (key: Key) => {
-    key.backupComplete
-      ? navigation.navigate('Wallet', {
-          screen: 'KeySettings',
-          params: {key},
-        })
-      : dispatch(
-          showBottomNotificationModal(
-            keyBackupRequired(key, navigation, dispatch, 'settings'),
-          ),
-        );
+    navigation.navigate('Wallet', {
+      screen: 'KeySettings',
+      params: {key},
+    });
   };
 
   return (
