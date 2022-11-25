@@ -32,7 +32,7 @@ import {
 } from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {useNavigation} from '@react-navigation/native';
-import {HeaderTitle} from '../../../components/styled/Text';
+import {HeaderTitle, Link} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   SupportedCoinsOptions,
@@ -106,6 +106,11 @@ export const CurrencySelectionContainer = styled.View`
 
 const ListContainer = styled.View`
   flex-shrink: 1;
+`;
+
+const LinkContainer = styled.View`
+  align-items: center;
+  margin-top: 15px;
 `;
 
 export const SearchContainer = styled.View`
@@ -772,6 +777,22 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             data={filteredListItems}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
+            ListFooterComponent={() => {
+              return searchFilter && key ? (
+                <LinkContainer>
+                  <Link
+                    onPress={() => {
+                      haptic('soft');
+                      navigation.navigate('Wallet', {
+                        screen: 'AddWallet',
+                        params: {key, isCustomToken: true, isToken: true},
+                      });
+                    }}>
+                    {t('Add Custom Token')}
+                  </Link>
+                </LinkContainer>
+              ) : null;
+            }}
           />
         </ListContainer>
       ) : (
