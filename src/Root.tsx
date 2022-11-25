@@ -36,8 +36,8 @@ import {
   useAppSelector,
   useDeeplinks,
   useUrlEventHandler,
-  initAppFlyer,
 } from './utils/hooks';
+import {initAppsFlyer} from './utils/appsFlyer';
 import i18n from 'i18next';
 import appsFlyer from 'react-native-appsflyer';
 
@@ -392,20 +392,16 @@ export default () => {
 
     const onDeepLink = appsFlyer.onDeepLink(res => {
       if (res?.deepLinkStatus !== 'NOT_FOUND') {
-        const page = res?.data?.page; // TODO: configure standar name for view
-        const params = res?.data?.params;
         const deepLink = res?.data?.af_dp;
-        console.log('[appsFlyer] deeplink data', page, params, deepLink);
-        if (page && params) {
-          // TODO: redirect to view
-        } else if (deepLink) {
-          // TODO: handle deep link
+        console.log('[appsFlyer] deeplink data', deepLink);
+        if (deepLink) {
+          urlEventHandler({url: deepLink});
         } else {
-          // TODO: tbd
+          // TODO: not found deeplink
         }
       }
     });
-    initAppFlyer();
+    initAppsFlyer();
 
     return () => {
       onInstallConversion();
