@@ -37,6 +37,7 @@ import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
+import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
@@ -925,7 +926,15 @@ export const resetAllSettings = (): Effect => dispatch => {
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
-    const pathSegments = url.replace(APP_DEEPLINK_PREFIX, '').split('/');
+    const [fullPath, fullParams] = url
+      .replace(APP_DEEPLINK_PREFIX, '')
+      .split('?');
+    const pathSegments = (fullPath || '').split('/');
+    const params = (fullParams || '').split('&').reduce((paramMap, kvp) => {
+      const [k, v] = kvp.split('=');
+      paramMap[k] = v;
+      return paramMap;
+    }, {} as Record<string, string | undefined>) as any;
 
     let handler: (() => void) | null = null;
 
@@ -933,6 +942,7 @@ export const incomingLink =
       handler = () => {
         navigationRef.navigate(RootStacks.BUY_CRYPTO, {
           screen: BuyCryptoScreens.ROOT,
+          params,
         });
       };
     } else if (pathSegments[0] === 'wallet') {
@@ -940,83 +950,65 @@ export const incomingLink =
         handler = () => {
           navigationRef.navigate(RootStacks.WALLET, {
             screen: WalletScreens.CREATION_OPTIONS,
+            params,
           });
         };
       }
     } else if (pathSegments[0] === 'card') {
       const cardPath = pathSegments[1];
-
-      if (cardPath === 'activate') {
-        handler = () => {
+      const createCardHandler = (cb: (cards: Card[]) => void) => {
+        return () => {
           const {APP, CARD} = getState();
           const cards = CARD.cards[APP.network];
 
           if (cards.length) {
-            navigationRef.navigate(RootStacks.CARD_ACTIVATION, {
-              screen: CardActivationScreens.ACTIVATE,
+            cb(cards);
+          } else {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.HOME,
+              },
+            });
+          }
+        };
+      };
+
+      if (cardPath === 'activate') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(RootStacks.CARD_ACTIVATION, {
+            screen: CardActivationScreens.ACTIVATE,
+            params: {
+              card: cards[0],
+            },
+          });
+        });
+      } else if (cardPath === 'offers') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(RootStacks.TABS, {
+            screen: TabsScreens.CARD,
+            params: {
+              screen: CardScreens.SETTINGS,
+              params: {
+                id: cards[0].id,
+              },
+            },
+          });
+
+          dispatch(CardEffects.startOpenDosh());
+        });
+      } else if (cardPath === 'referral') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(RootStacks.TABS, {
+            screen: TabsScreens.CARD,
+            params: {
+              screen: CardScreens.REFERRAL,
               params: {
                 card: cards[0],
               },
-            });
-          } else {
-            navigationRef.navigate(RootStacks.TABS, {
-              screen: TabsScreens.CARD,
-              params: {
-                screen: CardScreens.HOME,
-              },
-            });
-          }
-        };
-      } else if (cardPath === 'offers') {
-        handler = () => {
-          const {APP, CARD} = getState();
-          const cards = CARD.cards[APP.network];
-
-          if (cards.length) {
-            navigationRef.navigate(RootStacks.TABS, {
-              screen: TabsScreens.CARD,
-              params: {
-                screen: CardScreens.SETTINGS,
-                params: {
-                  id: cards[0].id,
-                },
-              },
-            });
-
-            dispatch(CardEffects.startOpenDosh());
-          } else {
-            navigationRef.navigate(RootStacks.TABS, {
-              screen: TabsScreens.CARD,
-              params: {
-                screen: CardScreens.HOME,
-              },
-            });
-          }
-        };
-      } else if (cardPath === 'referral') {
-        handler = () => {
-          const {APP, CARD} = getState();
-          const cards = CARD.cards[APP.network];
-
-          if (cards.length) {
-            navigationRef.navigate(RootStacks.TABS, {
-              screen: TabsScreens.CARD,
-              params: {
-                screen: CardScreens.REFERRAL,
-                params: {
-                  card: cards[0],
-                },
-              },
-            });
-          } else {
-            navigationRef.navigate(RootStacks.TABS, {
-              screen: TabsScreens.CARD,
-              params: {
-                screen: CardScreens.HOME,
-              },
-            });
-          }
-        };
+            },
+          });
+        });
       }
     }
 
