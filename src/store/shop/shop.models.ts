@@ -75,7 +75,7 @@ export interface UnsoldGiftCard {
   accessKey: string;
   userEid?: string;
   totalDiscount?: number;
-  status: 'SUCCESS' | 'PENDING' | 'FAILURE' | 'UNREDEEMED';
+  status: 'SUCCESS' | 'PENDING' | 'FAILURE' | 'UNREDEEMED' | 'SYNCED';
 }
 
 export interface GiftCardBalanceEntry {

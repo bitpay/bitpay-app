@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.7.6",
+  "version": "14.7.7",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -83,7 +83,7 @@
     "react": "18.2.0",
     "react-hook-form": "7.19.5",
     "react-i18next": "11.15.2",
-    "react-native": "0.67.4",
+    "react-native": "0.67.5",
     "react-native-appboy-sdk": "1.38.1",
     "react-native-appsflyer": "6.5.20",
     "react-native-bootsplash": "3.2.6",

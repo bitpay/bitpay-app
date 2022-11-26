@@ -1145,7 +1145,7 @@
   "ViewAllArgTokens": "View all {{currency}} tokens",
   "MinimizeArgTokens": "Minimize {{currency}} tokens",
   "TokensOnEthereumNetworkDescription": "Tokens on the Ethereum network need an Ethereum wallet to pay for fees.",
-  "TokensOnPolygonNetworkDescription": "Tokens on the Polygon network need an Polygon wallet to pay for fees.",
+  "TokensOnPolygonNetworkDescription": "Tokens on the Polygon network need a Polygon wallet to pay for fees.",
   "To continue you will need to create a key and add a wallet.": "To continue you will need to create a key and add a wallet.",
   "Required": "Required",
   "CannotUseSameCodeTwice": "Cannot use the same code twice.",

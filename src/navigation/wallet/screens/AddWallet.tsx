@@ -65,6 +65,7 @@ import {
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {
   CurrencyListIcons,
+  SupportedCurrencyOptions,
   SupportedEvmCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
@@ -357,7 +358,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     setUIFormattedEvmWallets(_UIFormattedEvmWallets);
     setAssociatedWallet(_UIFormattedEvmWallets[0]);
 
-    if (!_evmWallets?.length) {
+    if (!_evmWallets?.length && isToken) {
       showMissingWalletMsg();
     }
     setShowAssociatedWalletSelectionDropdown(_evmWallets.length > 1 && isToken);
@@ -391,7 +392,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
             navigation.pop();
           }
         } else {
-          _currencyAbbreviation = SupportedEvmCurrencyOptions.find(
+          _currencyAbbreviation = SupportedCurrencyOptions.find(
             currencyOpts => currencyOpts.currencyAbbreviation === chain,
           )?.currencyAbbreviation!;
         }

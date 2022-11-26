@@ -182,7 +182,7 @@ export default ({
     () =>
       setPurchasedGiftCards(
         giftCards
-          .filter(c => c.status === 'SUCCESS')
+          .filter(c => ['PENDING', 'SUCCESS', 'SYNCED'].includes(c.status))
           .sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
           ),

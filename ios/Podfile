@@ -4,9 +4,6 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 platform :ios, '11.0'
 
 target 'BitPayApp' do
-  pod 'react-native-camera', path: '../node_modules/react-native-camera', subspecs: [
-    'BarcodeDetectorMLKit'
-  ]
   permissions_path = '../node_modules/react-native-permissions/ios'
   pod 'Permission-Notifications', :path => "#{permissions_path}/Notifications/Permission-Notifications.podspec"
   pod 'PoweredByDosh'

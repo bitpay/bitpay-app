@@ -25,6 +25,7 @@ import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
+import Braze from 'react-native-appboy-sdk';
 
 interface StartLoginParams {
   email: string;
@@ -88,6 +89,7 @@ interface CreateAccountParams {
   email: string;
   password: string;
   agreedToTOSandPP: boolean;
+  agreedToMarketingCommunications: boolean;
   gCaptchaResponse?: string;
 }
 
@@ -98,6 +100,12 @@ export const startCreateAccount =
       const {APP, BITPAY_ID} = getState();
       const salt = generateSalt();
       const hashedPassword = hashPassword(params.password);
+
+      if (params.agreedToMarketingCommunications) {
+        Braze.setEmailNotificationSubscriptionType(
+          Braze.NotificationSubscriptionTypes.OPTED_IN,
+        );
+      }
 
       await AuthApi.register(APP.network, BITPAY_ID.session.csrfToken, {
         givenName: params.givenName,
@@ -450,6 +458,7 @@ const startPairAndLoadUser =
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
+      dispatch(ShopEffects.startSyncGiftCards());
     } catch (err) {
       let errMsg;
 
