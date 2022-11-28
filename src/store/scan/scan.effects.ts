@@ -409,6 +409,7 @@ const goToConfirm =
       currency: string;
       chain: string;
       destinationTag?: number;
+      network?: Network;
     };
     amount: number;
     wallet?: Wallet;
@@ -619,11 +620,16 @@ const handleBitPayUri =
         feePerKb = Number(params.get('gasPrice'));
       }
       const chain = _chain || wallet!.chain;
+      const network = Object.keys(bitcoreLibs).includes(coin)
+        ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
+        : undefined;
+
       let recipient = {
         type: 'address',
         currency: coin,
         chain,
         address,
+        network,
       };
 
       if (!params.get('amount')) {
