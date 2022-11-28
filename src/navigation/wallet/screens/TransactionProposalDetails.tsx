@@ -5,6 +5,7 @@ import {
   HeaderTitle,
   H2,
   Link,
+  TextAlign,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -22,12 +23,7 @@ import {
   RejectTxProposal,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
-import {
-  Column,
-  Hr,
-  Row,
-  ScreenGutter,
-} from '../../../components/styled/Containers';
+import {Hr, ScreenGutter} from '../../../components/styled/Containers';
 import {IsCustomERCToken} from '../../../store/wallet/utils/currency';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
@@ -70,6 +66,12 @@ import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/stat
 import {useTranslation} from 'react-i18next';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {
+  DetailColumn,
+  DetailContainer,
+  DetailRow,
+  SendToPillContainer,
+} from './send/confirm/Shared';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -83,21 +85,6 @@ const ScrollView = styled(KeyboardAwareScrollView)`
 const SubTitle = styled(BaseText)`
   font-size: 14px;
   font-weight: 300;
-`;
-
-export const DetailContainer = styled.View`
-  min-height: 55px;
-  justify-content: center;
-  margin: 5px 0;
-`;
-
-export const DetailRow = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-`;
-
-export const DetailColumn = styled(Column)`
-  align-items: flex-end;
 `;
 
 const TimelineContainer = styled.View`
@@ -138,6 +125,10 @@ const NumberIcon = styled(IconBackground)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
+const MemoMsgContainer = styled.View`
+  justify-content: flex-end;
+  max-width: 80%;
+`;
 const TimelineList = ({actions}: {actions: TxActions[]}) => {
   return (
     <>
@@ -440,10 +431,12 @@ const TransactionProposalDetails = () => {
             <DetailContainer>
               <DetailRow>
                 <H7>{t('Sending from')}</H7>
-                <SendToPill
-                  icon={getIcon()}
-                  description={wallet.credentials.walletName}
-                />
+                <SendToPillContainer>
+                  <SendToPill
+                    icon={getIcon()}
+                    description={wallet.credentials.walletName}
+                  />
+                </SendToPillContainer>
               </DetailRow>
             </DetailContainer>
             <Hr />
@@ -478,7 +471,11 @@ const TransactionProposalDetails = () => {
               <DetailContainer>
                 <DetailRow>
                   <H7>{t('Memo')}</H7>
-                  <H7>{txs.message}</H7>
+                  <MemoMsgContainer>
+                    <TextAlign align={'right'}>
+                      <H7>{txs.message}</H7>
+                    </TextAlign>
+                  </MemoMsgContainer>
                 </DetailRow>
               </DetailContainer>
               <Hr />
