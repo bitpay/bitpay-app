@@ -40,6 +40,7 @@ interface CreateAccountFieldValues {
   email: string;
   password: string;
   agreedToTOSandPP: boolean;
+  agreedToMarketingCommunications: boolean;
 }
 
 const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
@@ -70,6 +71,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
     email: yup.string().email().required().trim(),
     password: yup.string().required(),
     agreedToTOSandPP: yup.boolean().oneOf([true], t('Required')),
+    agreedToMarketingCommunications: yup.boolean(),
   });
   const {
     control,
@@ -138,8 +140,14 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
     formData => {
       Keyboard.dismiss();
 
-      const {email, givenName, familyName, agreedToTOSandPP, password} =
-        formData;
+      const {
+        email,
+        givenName,
+        familyName,
+        agreedToTOSandPP,
+        password,
+        agreedToMarketingCommunications,
+      } = formData;
 
       if (!session.captchaDisabled) {
         setRecaptchaVisible(true);
@@ -153,6 +161,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
           email,
           password,
           agreedToTOSandPP,
+          agreedToMarketingCommunications,
         }),
       );
     },
@@ -164,8 +173,14 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
   const onCaptchaResponse = (gCaptchaResponse: string) => {
     setRecaptchaVisible(false);
 
-    const {givenName, familyName, email, password, agreedToTOSandPP} =
-      getValues();
+    const {
+      givenName,
+      familyName,
+      email,
+      password,
+      agreedToTOSandPP,
+      agreedToMarketingCommunications,
+    } = getValues();
 
     dispatch(
       BitPayIdEffects.startCreateAccount({
@@ -175,6 +190,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
         password,
         agreedToTOSandPP,
         gCaptchaResponse,
+        agreedToMarketingCommunications,
       }),
     );
   };
@@ -303,6 +319,32 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
               </>
             )}
             name="agreedToTOSandPP"
+            defaultValue={false}
+          />
+        </AuthRowContainer>
+
+        <AuthRowContainer>
+          <Controller
+            control={control}
+            render={({field}) => (
+              <>
+                <CheckboxControl>
+                  <Checkbox
+                    onPress={() =>
+                      setValue('agreedToMarketingCommunications', !field.value)
+                    }
+                    checked={field.value}
+                  />
+
+                  <CheckboxLabel>
+                    {t(
+                      'Yes, I would like to receive promotional emails from BitPay.',
+                    )}
+                  </CheckboxLabel>
+                </CheckboxControl>
+              </>
+            )}
+            name="agreedToMarketingCommunications"
             defaultValue={false}
           />
         </AuthRowContainer>

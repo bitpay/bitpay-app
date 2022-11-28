@@ -80,6 +80,14 @@ import {
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
 import {setContactMigrationComplete} from '../contact/contact.actions';
 import {startContactMigration} from '../contact/contact.effects';
+import {getStateFromPath} from '@react-navigation/native';
+import {
+  getAvailableGiftCards,
+  getCategoriesWithIntegrations,
+} from '../shop/shop.selectors';
+import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
+import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
+import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -923,6 +931,96 @@ export const resetAllSettings = (): Effect => dispatch => {
   });
 };
 
+export const getRouteParam = (url: string, param: string) => {
+  const path = url.replace(APP_DEEPLINK_PREFIX, '');
+  const state = getStateFromPath(path);
+  if (!state?.routes.length) {
+    return undefined;
+  }
+  const route = state.routes[0];
+  const routeParam = (((route.params as any) || {})[param] || '').toLowerCase();
+  return routeParam;
+};
+
+export const incomingShopLink =
+  (url: string): Effect<{merchantName: string} | undefined> =>
+  (_, getState) => {
+    const {SHOP} = getState();
+    const availableGiftCards = getAvailableGiftCards(SHOP.availableCardMap);
+    const integrations = Object.values(SHOP.integrations);
+    const categories = getCategoriesWithIntegrations(
+      Object.values(SHOP.categoriesAndCurations.categories),
+      integrations,
+    );
+
+    const path = url.replace(APP_DEEPLINK_PREFIX, '');
+    const state = getStateFromPath(path);
+    if (!state?.routes.length) {
+      return undefined;
+    }
+    const route = state.routes[0];
+    const merchantName = getRouteParam(url, 'merchant');
+    const categoryName = getRouteParam(url, 'category');
+
+    if (!['giftcard', 'shoponline'].includes(route.name)) {
+      return undefined;
+    }
+
+    if (route.name === 'giftcard') {
+      const cardConfig = availableGiftCards.find(
+        gc => gc.name.toLowerCase() === merchantName,
+      );
+
+      if (cardConfig) {
+        navigationRef.navigate('GiftCard', {
+          screen: 'BuyGiftCard',
+          params: {
+            cardConfig,
+          },
+        });
+      } else {
+        navigationRef.navigate('Shop', {
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.GIFT_CARDS,
+          },
+        });
+      }
+    } else if (route.name === 'shoponline') {
+      const directIntegration = integrations.find(
+        i => i.displayName.toLowerCase() === merchantName,
+      );
+      const category = categories.find(
+        c => c.displayName.toLowerCase() === categoryName,
+      );
+
+      if (category) {
+        navigationRef.navigate('Merchant', {
+          screen: MerchantScreens.MERCHANT_CATEGORY,
+          params: {
+            category,
+            integrations: category.integrations,
+          },
+        });
+      } else if (directIntegration) {
+        navigationRef.navigate('Merchant', {
+          screen: MerchantScreens.MERCHANT_DETAILS,
+          params: {
+            directIntegration,
+          },
+        });
+      } else {
+        navigationRef.navigate('Shop', {
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.SHOP_ONLINE,
+          },
+        });
+      }
+    }
+    return {merchantName};
+  };
+
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
@@ -935,6 +1033,12 @@ export const incomingLink =
       paramMap[k] = v;
       return paramMap;
     }, {} as Record<string, string | undefined>) as any;
+
+    const pathInfo = dispatch(incomingShopLink(url));
+
+    if (pathInfo) {
+      return true;
+    }
 
     let handler: (() => void) | null = null;
 

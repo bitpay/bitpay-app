@@ -927,3 +927,7 @@ export const SUPPORTED_TOKENS = [
 
 export const SUPPORTED_COINS = Object.keys(BitpaySupportedCoins);
 export const SUPPORTED_CURRENCIES = Object.keys(BitpaySupportedCurrencies);
+export const EVM_SUPPORTED_TOKENS_LENGTH = {
+  eth: SUPPORTED_ETHEREUM_TOKENS.length,
+  matic: SUPPORTED_MATIC_TOKENS.length,
+};

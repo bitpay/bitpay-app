@@ -113,7 +113,10 @@ export function sortByDisplayName(
   return aSortValue > bSortValue ? 1 : -1;
 }
 
-export function sortByDescendingDate(a: GiftCard, b: GiftCard) {
+export function sortByDescendingDate(
+  a: GiftCard | UnsoldGiftCard,
+  b: GiftCard | UnsoldGiftCard,
+) {
   return new Date(b.date).getTime() - new Date(a.date).getTime();
 }
 
