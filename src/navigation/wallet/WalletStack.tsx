@@ -222,7 +222,7 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            gestureEnabled: false,
+            ...TransitionPresets.ModalPresentationIOS,
           }}
           name={WalletScreens.ADD_WALLET}
           component={AddWallet}
