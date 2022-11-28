@@ -562,7 +562,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
       // TODO: show warning
       if (useAsModal) {
         closeModal();
-      } else {
+      } else if (navigation.canGoBack()) {
         navigation.goBack();
       }
     }
