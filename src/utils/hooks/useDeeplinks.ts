@@ -26,11 +26,13 @@ import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 import {
   selectAvailableGiftCards,
+  selectCategoriesWithIntegrations,
   selectIntegrations,
 } from '../../store/shop/shop.selectors';
 import {LogActions} from '../../store/log';
 import {incomingLink} from '../../store/app/app.effects';
 import useAppDispatch from './useAppDispatch';
+import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
 
 const isUniversalLink = (url: string): boolean => {
   try {
@@ -86,79 +88,13 @@ export const useUrlEventHandler = () => {
           LogActions.error('[deeplink] not available from IAB: ' + errStr),
         );
       }
+
+      return handled;
     }
   };
   const handlerRef = useRef(urlEventHandler);
 
   return handlerRef.current;
-};
-
-export const useShopDeepLinkHandler = () => {
-  const navigation = useNavigation();
-  const availableGiftCards = useAppSelector(selectAvailableGiftCards);
-  const integrations = useAppSelector(selectIntegrations);
-
-  const shopDeepLinkHandler = (
-    url: string,
-  ): {merchantName: string} | undefined => {
-    const path = url.replace(APP_DEEPLINK_PREFIX, '');
-    const state = getStateFromPath(path);
-    if (!state?.routes.length) {
-      return undefined;
-    }
-    const route = state.routes[0];
-    const merchantName = (
-      ((route.params as any) || {}).merchant || ''
-    ).toLowerCase();
-
-    if (!['giftcard', 'shoponline'].includes(route.name)) {
-      return undefined;
-    }
-
-    if (route.name === 'giftcard') {
-      const cardConfig = availableGiftCards.find(
-        gc => gc.name.toLowerCase() === merchantName,
-      );
-
-      if (cardConfig) {
-        navigation.navigate('GiftCard', {
-          screen: 'BuyGiftCard',
-          params: {
-            cardConfig,
-          },
-        });
-      } else {
-        navigation.navigate('Shop', {
-          screen: ShopScreens.HOME,
-          params: {
-            screen: ShopTabs.GIFT_CARDS,
-          },
-        });
-      }
-    } else if (route.name === 'shoponline') {
-      const directIntegration = integrations.find(
-        i => i.displayName.toLowerCase() === merchantName,
-      );
-
-      if (directIntegration) {
-        navigation.navigate('Merchant', {
-          screen: 'MerchantDetails',
-          params: {
-            directIntegration,
-          },
-        });
-      } else {
-        navigation.navigate('Shop', {
-          screen: ShopScreens.HOME,
-          params: {
-            screen: ShopTabs.SHOP_ONLINE,
-          },
-        });
-      }
-    }
-    return {merchantName};
-  };
-  return shopDeepLinkHandler;
 };
 
 export const useDeeplinks = () => {
