@@ -296,7 +296,7 @@ const ShopHome: React.FC<
             style={{
               height: scrollViewHeight,
             }}
-            screenOptions={ScreenOptions(112)}
+            screenOptions={ScreenOptions(120)}
             screenListeners={{
               tabPress: tab => {
                 if (tab.target) {
