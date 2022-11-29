@@ -21,7 +21,7 @@ const SwipeButtonBackground = styled.View`
 `;
 
 const SwipeButtonContainer = styled.View`
-  padding: 5px;
+  padding: 5px 10%;
 `;
 
 const SlideArrow = styled(SlideArrowSVG)`
@@ -50,7 +50,7 @@ const SwipeButton = ({
           height={buttonHeight}
           onSwipeStart={() => haptic('longPress')}
           onSwipeSuccess={onSwipeComplete}
-          swipeSuccessThreshold={90}
+          swipeSuccessThreshold={75}
           railBackgroundColor={'transparent'}
           railFillBorderColor={'#0E258D'}
           railStyles={{borderWidth: 2, borderRadius: 50}}
