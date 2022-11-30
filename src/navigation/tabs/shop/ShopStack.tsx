@@ -8,12 +8,15 @@ import ShopHome, {ShopHomeParamList} from './ShopHome';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {t} from 'i18next';
 import {NavigatorScreenParams} from '@react-navigation/native';
-import {CardConfig, GiftCard} from '../../../store/shop/shop.models';
+import {CardConfigMap, GiftCard} from '../../../store/shop/shop.models';
 import ArchivedGiftCards from './gift-card/screens/ArchivedGiftCards';
 
 export type ShopStackParamList = {
   Home: NavigatorScreenParams<ShopHomeParamList>;
-  ArchivedGiftCards: {giftCards: GiftCard[]; supportedGiftCards: CardConfig[]};
+  ArchivedGiftCards: {
+    giftCards: GiftCard[];
+    supportedGiftCardMap: CardConfigMap;
+  };
 };
 
 export enum ShopScreens {
