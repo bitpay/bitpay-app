@@ -3,7 +3,7 @@ import {ActivityIndicator} from 'react-native';
 import styled from 'styled-components/native';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
-import Blur from '../../blur/Blur';
+import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 
@@ -68,7 +68,6 @@ const Message = styled(BaseText)`
 const OnGoingProcessModal: React.FC = () => {
   const message = useAppSelector(({APP}) => APP.onGoingProcessModalMessage);
   const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
-  const showBlur = useAppSelector(({APP}) => APP.showBlur);
 
   return (
     <BaseModal
@@ -90,7 +89,7 @@ const OnGoingProcessModal: React.FC = () => {
             <ActivityIndicator color={SlateDark} />
           </ActivityIndicatorContainer>
           <Message>{message}</Message>
-          {showBlur && <Blur />}
+          <BlurContainer />
         </Row>
       </OnGoingProcessContainer>
     </BaseModal>

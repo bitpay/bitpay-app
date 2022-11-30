@@ -1,9 +1,11 @@
-import React from 'react';
 import {BlurView} from '@react-native-community/blur';
+import React from 'react';
 import {useTheme} from 'styled-components/native';
+import {useAppSelector} from '../../utils/hooks';
 
-const Blur = () => {
+export const Blur = () => {
   const theme = useTheme();
+
   return (
     <BlurView
       style={{
@@ -18,6 +20,12 @@ const Blur = () => {
       reducedTransparencyFallbackColor="white"
     />
   );
+};
+
+export const BlurContainer = () => {
+  const showBlur = useAppSelector(({APP}) => APP.showBlur);
+
+  return showBlur ? <Blur /> : null;
 };
 
 export default Blur;
