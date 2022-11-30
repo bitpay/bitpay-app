@@ -94,7 +94,7 @@ import CoinbaseStack, {
 } from './navigation/coinbase/CoinbaseStack';
 import BpDevtools from './components/bp-devtools/BpDevtools';
 import {APP_ANALYTICS_ENABLED, DEVTOOLS_ENABLED} from './constants/config';
-import Blur from './components/blur/Blur';
+import {BlurContainer} from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
   CardActivationStackParamList,
@@ -227,7 +227,6 @@ export default () => {
   const cachedRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
-  const showBlur = useAppSelector(({APP}) => APP.showBlur);
   const failedAppInit = useAppSelector(({APP}) => APP.failedAppInit);
   const biometricLockActive = useAppSelector(
     ({APP}) => APP.biometricLockActive,
@@ -535,7 +534,7 @@ export default () => {
           <OnGoingProcessModal />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
-          {showBlur && <Blur />}
+          <BlurContainer />
           <PinModal />
           <BiometricModal />
         </NavigationContainer>

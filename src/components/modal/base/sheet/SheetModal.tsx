@@ -1,6 +1,5 @@
 import React from 'react';
-import {useAppSelector} from '../../../../utils/hooks';
-import Blur from '../../../blur/Blur';
+import {BlurContainer} from '../../../blur/Blur';
 import {SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
 
@@ -15,8 +14,6 @@ const SheetModal: React.FC<Props> = ({
   onBackdropPress,
   placement,
 }) => {
-  const showBlur = useAppSelector(({APP}) => APP.showBlur);
-
   return (
     <BaseModal
       id={'sheetModal'}
@@ -39,7 +36,7 @@ const SheetModal: React.FC<Props> = ({
       }}>
       <>
         {children}
-        {showBlur && <Blur />}
+        <BlurContainer />
       </>
     </BaseModal>
   );
