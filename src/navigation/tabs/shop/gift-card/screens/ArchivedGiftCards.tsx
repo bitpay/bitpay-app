@@ -3,7 +3,7 @@ import {useNavigation, useScrollToTop} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {SectionContainer} from '../../components/styled/ShopTabComponents';
 import {GiftCardScreens} from '../GiftCardStack';
-import {CardConfig, GiftCard} from '../../../../../store/shop/shop.models';
+import {GiftCard} from '../../../../../store/shop/shop.models';
 import GiftCardCreditsItem from '../../components/GiftCardCreditsItem';
 import {FlatList, TouchableOpacity} from 'react-native';
 import {useAppSelector} from '../../../../../utils/hooks';
@@ -16,17 +16,15 @@ const ArchivedGiftCards = ({
   navigation,
 }: StackScreenProps<ShopStackParamList, 'ArchivedGiftCards'>) => {
   const navigator = useNavigation();
-  const {supportedGiftCards} = route.params;
+  const {supportedGiftCardMap} = route.params;
   const allGiftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
   const giftCards = allGiftCards
-    .filter(giftCard => giftCard.archived)
+    .filter(
+      giftCard => giftCard.archived && supportedGiftCardMap[giftCard.name],
+    )
     .sort(sortByDescendingDate);
-  const supportedGiftCardMap = supportedGiftCards.reduce(
-    (map, cardConfig) => ({...map, ...{[cardConfig.name]: cardConfig}}),
-    {} as {[name: string]: CardConfig},
-  );
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       if (!giftCards.length) {

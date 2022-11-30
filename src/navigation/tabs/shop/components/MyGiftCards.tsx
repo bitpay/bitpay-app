@@ -55,11 +55,16 @@ const MyGiftCards = ({
   const allGiftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
+  const supportedGiftCardMap = supportedGiftCards.reduce(
+    (map, cardConfig) => ({...map, ...{[cardConfig.name]: cardConfig}}),
+    {} as {[name: string]: CardConfig},
+  );
   const giftCards = allGiftCards
     .filter(
       giftCard =>
-        ['PENDING', 'SUCCESS', 'SYNCED'].includes(giftCard.status) ||
-        redemptionFailuresLessThanADayOld(giftCard),
+        (['PENDING', 'SUCCESS', 'SYNCED'].includes(giftCard.status) ||
+          redemptionFailuresLessThanADayOld(giftCard)) &&
+        supportedGiftCardMap[giftCard.name],
     )
     .sort(sortByDescendingDate);
   const activeGiftCards = giftCards.filter(giftCard => !giftCard.archived);
@@ -78,7 +83,7 @@ const MyGiftCards = ({
           screen: ShopScreens.ARCHIVED_GIFT_CARDS,
           params: {
             giftCards: archivedGiftCards,
-            supportedGiftCards,
+            supportedGiftCardMap,
           },
         });
   };
@@ -138,9 +143,7 @@ const MyGiftCards = ({
             {item.item.length ? (
               <>
                 {item.item.sort(sortByDescendingDate).map(giftCard => {
-                  const cardConfig = supportedGiftCards.find(
-                    config => config.name === giftCard.name,
-                  );
+                  const cardConfig = supportedGiftCardMap[giftCard.name];
                   return (
                     cardConfig && (
                       <TouchableWithoutFeedback
