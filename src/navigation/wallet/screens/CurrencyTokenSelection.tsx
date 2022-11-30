@@ -260,13 +260,13 @@ const CurrencyTokenSelectionScreen: React.VFC<
         <>
           {index === 0 && searchFilter?.length === 0 ? (
             <TokensHeading>
-              {t('PopularArgTokens', {currency: t(chain.currencyName)})} (#
+              {t('PopularArgTokens', {currency: t(chain.currencyName)})} (
               {tokenLength})
             </TokensHeading>
           ) : null}
           {index === tokenLength && searchFilter?.length === 0 ? (
             <TokensHeading>
-              {t('Other Tokens')} (#
+              {t('Other Tokens')} (
               {tokens.length - tokenLength})
             </TokensHeading>
           ) : null}
