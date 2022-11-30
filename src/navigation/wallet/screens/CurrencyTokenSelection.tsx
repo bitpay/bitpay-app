@@ -266,7 +266,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
           ) : null}
           {index === tokenLength && searchFilter?.length === 0 ? (
             <TokensHeading>
-              {t('Other Tokens')} (#
+              {t('Other Tokens')} (
               {tokens.length - tokenLength})
             </TokensHeading>
           ) : null}
