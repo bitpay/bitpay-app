@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {useTheme} from '@react-navigation/native';
+import {CommonActions, useTheme} from '@react-navigation/native';
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -66,6 +66,8 @@ import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import _ from 'lodash';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
+import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -121,19 +123,19 @@ const WalletListFooterText = styled(BaseText)`
   margin-left: 10px;
 `;
 
-const KeyToggle = styled(TouchableOpacity)`
+export const KeyToggle = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: column;
 `;
 
-const KeyDropdown = styled.SafeAreaView`
+export const KeyDropdown = styled.SafeAreaView`
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   max-height: 75%;
 `;
 
-const KeyDropdownOptionsContainer = styled.ScrollView`
+export const KeyDropdownOptionsContainer = styled.ScrollView`
   padding: 0 ${ScreenGutter};
 `;
 
@@ -351,6 +353,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const linkedCoinbase = useAppSelector(
+    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
+  );
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
   const hasMultipleKeys =
@@ -665,6 +670,30 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
                   hideKeyBalance={_key.hideKeyBalance}
                 />
               ))}
+            {linkedCoinbase ? (
+              <CoinbaseDropdownOption
+                onPress={() => {
+                  setShowKeyDropdown(false);
+                  navigation.dispatch(
+                    CommonActions.reset({
+                      index: 2,
+                      routes: [
+                        {
+                          name: 'Tabs',
+                          params: {screen: 'Home'},
+                        },
+                        {
+                          name: 'Coinbase',
+                          params: {
+                            screen: 'CoinbaseRoot',
+                          },
+                        },
+                      ],
+                    }),
+                  );
+                }}
+              />
+            ) : null}
           </KeyDropdownOptionsContainer>
         </KeyDropdown>
       </SheetModal>
