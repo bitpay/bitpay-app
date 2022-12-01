@@ -11,6 +11,7 @@ import {
 import {AppEffects} from '../../../../store/app';
 import {
   ActiveOpacity,
+  Hr,
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
@@ -132,6 +133,7 @@ const Notifications = () => {
         <SettingTitle>{t('Push Notifications')}</SettingTitle>
         <AngleRight />
       </Setting>
+      <Hr />
 
       {/*----------------------------------------------------------------------*/}
 

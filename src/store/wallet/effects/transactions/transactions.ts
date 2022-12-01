@@ -940,9 +940,7 @@ const UpdateFiatRate =
       fiatRateStr = dispatch(
         toFiat(amount, alternativeCurrency, currency, chain, rates),
       );
-      fiatRateStr =
-        formatFiatAmount(fiatRateStr, alternativeCurrency) +
-        alternativeCurrency;
+      fiatRateStr = formatFiatAmount(fiatRateStr, alternativeCurrency);
     }
     return fiatRateStr;
   };
