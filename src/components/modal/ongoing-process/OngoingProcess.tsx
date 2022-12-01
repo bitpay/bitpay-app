@@ -68,11 +68,12 @@ const Message = styled(BaseText)`
 const OnGoingProcessModal: React.FC = () => {
   const message = useAppSelector(({APP}) => APP.onGoingProcessModalMessage);
   const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
+  const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
 
   return (
     <BaseModal
       id={'ongoingProcess'}
-      isVisible={isVisible}
+      isVisible={appWasInit && isVisible}
       backdropOpacity={0.4}
       animationIn={'fadeInRight'}
       animationOut={'fadeOutLeft'}
