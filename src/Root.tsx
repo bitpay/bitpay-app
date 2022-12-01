@@ -22,6 +22,7 @@ import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
+import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -422,6 +423,8 @@ export default () => {
           theme={theme}
           linking={linking}
           onReady={async () => {
+            DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
+
             // routing to previous route if onboarding
             if (cachedRoute && !onboardingCompleted) {
               const [cachedStack, cachedParams] = cachedRoute;

@@ -2,7 +2,12 @@ import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
 import {debounce} from 'lodash';
-import {DeviceEventEmitter, Linking, Platform} from 'react-native';
+import {
+  DeviceEventEmitter,
+  EmitterSubscription,
+  Linking,
+  Platform,
+} from 'react-native';
 import Braze from 'react-native-appboy-sdk';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
@@ -23,12 +28,16 @@ import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import Segment from '../../lib/segment';
+import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
 import {CardScreens} from '../../navigation/card/CardStack';
+import {CardActivationScreens} from '../../navigation/card-activation/CardActivationStack';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
+import {WalletScreens} from '../../navigation/wallet/WalletStack';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
+import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
@@ -76,9 +85,9 @@ import {
   getAvailableGiftCards,
   getCategoriesWithIntegrations,
 } from '../shop/shop.selectors';
+import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
-import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -98,6 +107,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
+
+    dispatch(deferDeeplinksUntilAppIsReady());
 
     const {appFirstOpenData, onboardingCompleted, migrationComplete} =
       getState().APP;
@@ -194,7 +205,10 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     dispatch(showBlur(pinLockActive || biometricLockActive));
+
     dispatch(AppActions.successAppInit());
+    DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
+
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
@@ -231,6 +245,44 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     RNBootSplash.hide();
   }
 };
+
+const deferDeeplinksUntilAppIsReady =
+  (): Effect<void> => (dispatch, getState) => {
+    const {APP} = getState();
+    let subscriptions: EmitterSubscription[] = [];
+
+    const emitIfReady = () => {
+      if (!subscriptions.length) {
+        dispatch(AppActions.appIsReadyForDeeplinking());
+        DeviceEventEmitter.emit(DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS);
+      }
+    };
+
+    const waitForEvent = (e: DeviceEmitterEvents) => {
+      const sub = DeviceEventEmitter.addListener(e, () => {
+        sub.remove();
+        subscriptions = subscriptions.filter(s => s !== sub);
+
+        emitIfReady();
+      });
+
+      subscriptions.push(sub);
+    };
+
+    if (!navigationRef.isReady()) {
+      waitForEvent(DeviceEmitterEvents.APP_NAVIGATION_READY);
+    }
+
+    if (APP.appIsLoading) {
+      waitForEvent(DeviceEmitterEvents.APP_DATA_INITIALIZED);
+    }
+
+    if (!APP.onboardingCompleted) {
+      waitForEvent(DeviceEmitterEvents.APP_ONBOARDING_COMPLETED);
+    }
+
+    emitIfReady();
+  };
 
 /**
  * Checks to ensure that the App Identity is defined, else generates a new one.
@@ -972,29 +1024,71 @@ export const incomingShopLink =
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
-    let handled = false;
+    const [fullPath, fullParams] = url
+      .replace(APP_DEEPLINK_PREFIX, '')
+      .split('?');
+    const pathSegments = (fullPath || '').split('/');
+    const params = (fullParams || '').split('&').reduce((paramMap, kvp) => {
+      const [k, v] = kvp.split('=');
+      paramMap[k] = v;
+      return paramMap;
+    }, {} as Record<string, string | undefined>) as any;
 
-    const parsed = url.replace(APP_DEEPLINK_PREFIX, '');
+    const pathInfo = dispatch(incomingShopLink(url));
 
-    if (parsed === 'card/offers') {
-      const {APP, CARD} = getState();
-      const cards = CARD.cards[APP.network];
+    if (pathInfo) {
+      return true;
+    }
 
-      if (cards.length) {
-        if (APP.appWasInit) {
-          setTimeout(() => {
-            handleDosh();
-          }, 500);
-        } else {
-          DeviceEventEmitter.addListener(
-            DeviceEmitterEvents.APP_INIT_COMPLETED,
-            () => {
-              handleDosh();
+    let handler: (() => void) | null = null;
+
+    if (pathSegments[0] === 'buy-crypto') {
+      handler = () => {
+        navigationRef.navigate(RootStacks.BUY_CRYPTO, {
+          screen: BuyCryptoScreens.ROOT,
+          params,
+        });
+      };
+    } else if (pathSegments[0] === 'wallet') {
+      if (pathSegments[1] === 'create') {
+        handler = () => {
+          navigationRef.navigate(RootStacks.WALLET, {
+            screen: WalletScreens.CREATION_OPTIONS,
+            params,
+          });
+        };
+      }
+    } else if (pathSegments[0] === 'card') {
+      const cardPath = pathSegments[1];
+      const createCardHandler = (cb: (cards: Card[]) => void) => {
+        return () => {
+          const {APP, CARD} = getState();
+          const cards = CARD.cards[APP.network];
+
+          if (cards.length) {
+            cb(cards);
+          } else {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.HOME,
+              },
+            });
+          }
+        };
+      };
+
+      if (cardPath === 'activate') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(RootStacks.CARD_ACTIVATION, {
+            screen: CardActivationScreens.ACTIVATE,
+            params: {
+              card: cards[0],
             },
-          );
-        }
-
-        function handleDosh() {
+          });
+        });
+      } else if (cardPath === 'offers') {
+        handler = createCardHandler(cards => {
           navigationRef.navigate(RootStacks.TABS, {
             screen: TabsScreens.CARD,
             params: {
@@ -1004,24 +1098,42 @@ export const incomingLink =
               },
             },
           });
+
           dispatch(CardEffects.startOpenDosh());
-        }
-      } else {
-        navigationRef.navigate(RootStacks.TABS, {
-          screen: TabsScreens.CARD,
-          params: {
-            screen: CardScreens.HOME,
-          },
+        });
+      } else if (cardPath === 'referral') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(RootStacks.TABS, {
+            screen: TabsScreens.CARD,
+            params: {
+              screen: CardScreens.REFERRAL,
+              params: {
+                card: cards[0],
+              },
+            },
+          });
         });
       }
-
-      handled = true;
     }
 
-    const pathInfo = dispatch(incomingShopLink(url));
-    if (pathInfo) {
-      handled = true;
+    if (handler) {
+      const {APP} = getState();
+      const {appIsReadyForDeeplinking} = APP;
+
+      if (appIsReadyForDeeplinking) {
+        handler();
+      } else {
+        const subscription = DeviceEventEmitter.addListener(
+          DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS,
+          () => {
+            subscription.remove();
+            handler?.();
+          },
+        );
+      }
+
+      return true;
     }
 
-    return handled;
+    return false;
   };

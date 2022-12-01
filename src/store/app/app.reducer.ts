@@ -58,6 +58,10 @@ export interface AppState {
    * Whether the app is done initializing data and animations are complete.
    */
   appWasInit: boolean;
+  /**
+   * Whether app has completed a set of conditions before handling deeplinks/deferred deeplinks.
+   */
+  appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
   appOpeningWasTracked: boolean;
   introCompleted: boolean;
@@ -126,6 +130,7 @@ const initialState: AppState = {
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
   appWasInit: false,
+  appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   appOpeningWasTracked: false,
   introCompleted: false,
@@ -198,6 +203,12 @@ export const appReducer = (
       return {
         ...state,
         appWasInit: true,
+      };
+
+    case AppActionTypes.APP_READY_FOR_DEEPLINKING:
+      return {
+        ...state,
+        appIsReadyForDeeplinking: true,
       };
 
     case AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE:
