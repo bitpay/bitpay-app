@@ -110,6 +110,7 @@ static void InitializeFlipper(UIApplication *application) {
   openURL:(NSURL *)url
   options:(NSDictionary *)options
 {
+  [RCTLinkingManager application:application openURL:url options:options];
   [[AppsFlyerAttribution shared] handleOpenUrl:url options:options];
   return YES;
 }
@@ -119,6 +120,8 @@ static void InitializeFlipper(UIApplication *application) {
   openURL:(NSURL *)url
   sourceApplication:(NSString*)sourceApplication
   annotation:(id)annotation {
+  [RCTLinkingManager application:application openURL:url
+                        sourceApplication:sourceApplication annotation:annotation];
   [[AppsFlyerAttribution shared] handleOpenUrl:url sourceApplication:sourceApplication annotation:annotation];
   return YES;
 }
@@ -127,6 +130,9 @@ static void InitializeFlipper(UIApplication *application) {
 - (BOOL)application:(UIApplication *)application
   continueUserActivity:(NSUserActivity *)userActivity
   restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler {
+  [RCTLinkingManager application:application
+                     continueUserActivity:userActivity
+                       restorationHandler:restorationHandler];
   [[AppsFlyerAttribution shared] continueUserActivity:userActivity restorationHandler:restorationHandler];
   return YES;
 }
