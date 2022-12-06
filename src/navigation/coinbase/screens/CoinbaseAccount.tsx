@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
 import {find} from 'lodash';
@@ -31,8 +31,6 @@ import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import TransactionRow from '../../../components/list/TransactionRow';
-import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import GlobalSelect from '../../../navigation/wallet/screens/GlobalSelect';
 
 import {StackScreenProps} from '@react-navigation/stack';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
@@ -62,14 +60,28 @@ import {
 import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import Icons from '../../wallet/components/WalletIcons';
 import {
-  BitpaySupportedCoins,
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
 import {IsValidBitcoinCashAddress} from '../../../store/wallet/utils/validations';
+import ToWalletSelectorModal, {
+  ToWalletSelectorCustomCurrency,
+} from '../../services/components/ToWalletSelectorModal';
+import {
+  addWallet,
+  AddWalletData,
+  getDecryptPassword,
+} from '../../../store/wallet/effects';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {RootState} from '../../../store';
+import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
+import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -167,10 +179,13 @@ const CoinbaseAccount = ({
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {accountId, refresh} = route.params;
+  const logger = useLogger();
+  const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
+  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
 
   const [refreshing, setRefreshing] = useState(false);
   const [customSupportedCurrencies, setCustomSupportedCurrencies] = useState(
-    [] as string[],
+    [] as ToWalletSelectorCustomCurrency[],
   );
   const [walletModalVisible, setWalletModalVisible] = useState(false);
   const [amountModalVisible, setAmountModalVisible] = useState(false);
@@ -280,6 +295,26 @@ const CoinbaseAccount = ({
     );
   };
 
+  const getLogoUri = (coin: string, _chain: string) => {
+    if (
+      SupportedCurrencyOptions.find(
+        ({currencyAbbreviation, chain}) =>
+          currencyAbbreviation === coin.toLowerCase() &&
+          (!chain || chain === _chain),
+      )
+    ) {
+      return SupportedCurrencyOptions.find(
+        ({currencyAbbreviation, chain}) =>
+          currencyAbbreviation === coin.toLowerCase() &&
+          (!chain || chain === _chain),
+      )!.img;
+    } else if (tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI) {
+      return tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI;
+    } else {
+      return undefined;
+    }
+  };
+
   useEffect(() => {
     // all wallets
     let availableWallets = Object.values(keys)
@@ -298,10 +333,7 @@ const CoinbaseAccount = ({
         wallet =>
           !wallet.hideWallet &&
           wallet.network === 'livenet' &&
-          wallet.isComplete() &&
-          wallet.currencyAbbreviation.toLowerCase() ===
-            account.currency.code.toLocaleLowerCase() &&
-          wallet.chain === _chain,
+          wallet.isComplete(),
       );
 
       if (availableWallets.length) {
@@ -322,10 +354,13 @@ const CoinbaseAccount = ({
       setChain(_chain);
       setProtocolName(getProtocolName(_chain, 'livenet') || '');
 
-      const _currency = getCurrencyAbbreviation(
-        _currencyAbbreviation.toLowerCase(),
-        _chain,
-      );
+      const _currency: ToWalletSelectorCustomCurrency = {
+        currencyAbbreviation: _currencyAbbreviation,
+        symbol: getCurrencyAbbreviation(account.currency.code, chain),
+        chain: _chain,
+        name: account.currency.name,
+        logoUri: getLogoUri(account.currency.code, chain),
+      };
 
       setCustomSupportedCurrencies([_currency]);
 
@@ -430,9 +465,21 @@ const CoinbaseAccount = ({
       }),
     );
     if (newWallet) {
-      setSelectedWallet(newWallet);
-      await sleep(500);
-      setAmountModalVisible(true);
+      if (newWallet.credentials) {
+        if (newWallet.isComplete()) {
+          if (allKeys[newWallet.keyId].backupComplete) {
+            setSelectedWallet(newWallet);
+            await sleep(500);
+            setAmountModalVisible(true);
+          } else {
+            dispatch(showWalletError('needsBackup'));
+          }
+        } else {
+          dispatch(showWalletError('walletNotCompleted'));
+        }
+      } else {
+        dispatch(showWalletError('walletNotSupported'));
+      }
     }
   };
 
@@ -561,19 +608,67 @@ const CoinbaseAccount = ({
         ListEmptyComponent={listEmptyComponent}
       />
 
-      <SheetModal
+      <ToWalletSelectorModal
         isVisible={walletModalVisible}
-        onBackdropPress={() => setWalletModalVisible(false)}>
-        <GlobalSelectContainer>
-          <GlobalSelect
-            modalTitle={t('Select destination wallet')}
-            customSupportedCurrencies={customSupportedCurrencies}
-            useAsModal={true}
-            livenetOnly={true}
-            onDismiss={onSelectedWallet}
-          />
-        </GlobalSelectContainer>
-      </SheetModal>
+        modalContext={'coinbase'}
+        disabledChain={undefined}
+        customSupportedCurrencies={customSupportedCurrencies}
+        livenetOnly={true}
+        modalTitle={t('Select Destination')}
+        onDismiss={async (
+          newWallet?: Wallet,
+          createNewWalletData?: AddWalletData,
+        ) => {
+          setWalletModalVisible(false);
+          if (newWallet?.currencyAbbreviation) {
+            onSelectedWallet(newWallet);
+          } else if (createNewWalletData) {
+            try {
+              if (createNewWalletData.key.isPrivKeyEncrypted) {
+                logger.debug('Key is Encrypted. Trying to decrypt...');
+                await sleep(500);
+                const password = await dispatch(
+                  getDecryptPassword(createNewWalletData.key),
+                );
+                createNewWalletData.options.password = password;
+              }
+
+              await sleep(500);
+              await dispatch(
+                startOnGoingProcessModal(
+                  t(OnGoingProcessMessages.ADDING_WALLET),
+                ),
+              );
+              const createdToWallet = await dispatch(
+                addWallet(createNewWalletData),
+              );
+              logger.debug(
+                `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
+              );
+              dispatch(
+                logSegmentEvent('track', 'Created Basic Wallet', {
+                  coin: createNewWalletData.currency.currencyAbbreviation,
+                  chain: createNewWalletData.currency.chain,
+                  isErc20Token: createNewWalletData.currency.isToken,
+                  context: 'coinbase',
+                }),
+              );
+              onSelectedWallet(createdToWallet);
+              await sleep(300);
+              dispatch(dismissOnGoingProcessModal());
+              await sleep(500);
+            } catch (err: any) {
+              dispatch(dismissOnGoingProcessModal());
+              await sleep(500);
+              if (err.message === 'invalid password') {
+                dispatch(showBottomNotificationModal(WrongPasswordError()));
+              } else {
+                showError(err.message);
+              }
+            }
+          }
+        }}
+      />
 
       <AmountModal
         isVisible={amountModalVisible}
