@@ -100,8 +100,7 @@ const CoinbaseDashboard = () => {
     ({COINBASE}) => COINBASE.hideTotalBalance,
   );
   const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const hasMultipleKeys =
-    Object.values(keys).filter(k => k.backupComplete).length > 1;
+  const hasKeys = Object.values(keys).filter(k => k.backupComplete).length >= 1;
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
 
@@ -110,12 +109,12 @@ const CoinbaseDashboard = () => {
       headerTitle: () => (
         <KeyToggle
           activeOpacity={ActiveOpacity}
-          disabled={!hasMultipleKeys}
+          disabled={!hasKeys}
           onPress={() => setShowKeyDropdown(true)}>
           <HeaderTitleContainer>
             <CoinbaseSvg style={{marginRight: 8, marginTop: 2}} />
             <HeaderTitle style={{marginTop: 4}}>{'Coinbase'}</HeaderTitle>
-            {hasMultipleKeys && (
+            {hasKeys && (
               <ChevronDownSvg style={{marginLeft: 10, marginTop: 13}} />
             )}
           </HeaderTitleContainer>

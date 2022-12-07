@@ -376,7 +376,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         return (
           <KeyToggle
             activeOpacity={ActiveOpacity}
-            disabled={!hasMultipleKeys}
+            disabled={!hasMultipleKeys && !linkedCoinbase}
             onPress={() => setShowKeyDropdown(true)}>
             {key.methods?.isPrivKeyEncrypted() ? (
               theme.dark ? (
@@ -389,7 +389,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
               <HeaderTitle style={{textAlign: 'center'}}>
                 {key?.keyName}
               </HeaderTitle>
-              {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
+              {(hasMultipleKeys || linkedCoinbase) && (
+                <ChevronDownSvg style={{marginLeft: 10}} />
+              )}
             </HeaderTitleContainer>
           </KeyToggle>
         );
