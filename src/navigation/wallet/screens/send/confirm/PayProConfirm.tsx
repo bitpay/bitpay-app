@@ -155,7 +155,8 @@ const PayProConfirm = () => {
             title: t('Error'),
             errMsg:
               err.response?.data?.message || err.message || errorConfig.message,
-            action: () => (wallet ? null : reshowWalletSelector()),
+            action: () =>
+              wallet ? navigation.goBack() : reshowWalletSelector(),
           }),
         ),
       );
