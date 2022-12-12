@@ -349,7 +349,7 @@ const BuyCryptoOffers: React.FC = () => {
       currencyAbbreviation: coin.toLowerCase(),
       baseCurrencyAmount: offers.moonpay.fiatAmount,
       // extraFeePercentage: 0, // min: 0 max: 10. If not provided, will use the default value set to our account.
-      baseCurrencyCode: offers.simplex.fiatCurrency.toLowerCase(),
+      baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
       paymentMethod: _paymentMethod,
       areFeesIncluded: true,
       env: moonpayEnv,
@@ -825,7 +825,7 @@ const BuyCryptoOffers: React.FC = () => {
       externalTransactionId,
       redirectURL:
         APP_DEEPLINK_PREFIX + `moonpay?externalId=${externalTransactionId}`,
-      env: wyreEnv,
+      env: moonpayEnv,
       lockAmount: true,
       showWalletAddressForm: true,
     };
