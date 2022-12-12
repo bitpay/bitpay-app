@@ -3,7 +3,29 @@ export interface BuyCryptoLimits {
   max?: number;
 }
 
-export interface simplexPaymentData {
+export interface MoonpayPaymentData {
+  address: string;
+  chain: string;
+  created_on: number;
+  crypto_amount: number;
+  coin: string;
+  env: 'dev' | 'prod';
+  fiat_base_amount: number;
+  fiat_total_amount: number;
+  fiat_total_amount_currency: string;
+  external_id: string; // bitpay-app custom id
+  status: string;
+  user_id: string;
+  transaction_id?: string; // id form moonpay
+}
+
+export interface MoonpayIncomingData {
+  externalId: string;
+  transactionId?: string;
+  status?: string;
+}
+
+export interface SimplexPaymentData {
   address: string;
   chain: string;
   created_on: number;
@@ -19,14 +41,14 @@ export interface simplexPaymentData {
   user_id: string;
 }
 
-export interface simplexIncomingData {
+export interface SimplexIncomingData {
   paymentId?: string;
   success?: string;
   quoteId?: string;
   userId?: string;
 }
 
-export interface wyrePaymentData {
+export interface WyrePaymentData {
   orderId: string;
   env: 'dev' | 'prod';
   created_on: number;

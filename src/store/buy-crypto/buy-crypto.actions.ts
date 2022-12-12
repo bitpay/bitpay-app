@@ -1,19 +1,42 @@
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
 import {
-  simplexPaymentData,
-  simplexIncomingData,
-  wyrePaymentData,
+  MoonpayPaymentData,
+  MoonpayIncomingData,
+  SimplexPaymentData,
+  SimplexIncomingData,
+  WyrePaymentData,
 } from './buy-crypto.models';
 
+export const successPaymentRequestMoonpay = (payload: {
+  moonpayPaymentData: MoonpayPaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_MOONPAY,
+  payload,
+});
+
+export const updatePaymentRequestMoonpay = (payload: {
+  moonpayIncomingData: MoonpayIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_MOONPAY,
+  payload,
+});
+
+export const removePaymentRequestMoonpay = (payload: {
+  externalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_MOONPAY,
+  payload,
+});
+
 export const successPaymentRequestSimplex = (payload: {
-  simplexPaymentData: simplexPaymentData;
+  simplexPaymentData: SimplexPaymentData;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SIMPLEX,
   payload,
 });
 
 export const updatePaymentRequestSimplex = (payload: {
-  simplexIncomingData: simplexIncomingData;
+  simplexIncomingData: SimplexIncomingData;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SIMPLEX,
   payload,
@@ -27,7 +50,7 @@ export const removePaymentRequestSimplex = (payload: {
 });
 
 export const successPaymentRequestWyre = (payload: {
-  wyrePaymentData: wyrePaymentData;
+  wyrePaymentData: WyrePaymentData;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE,
   payload,

@@ -15,6 +15,7 @@ import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
+import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
@@ -37,7 +38,7 @@ const PaymentMethodCard = styled.TouchableOpacity`
   border-radius: 7px;
   margin-bottom: 20px;
   padding: 14px;
-  height: 105px;
+  min-height: 105px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#fbfbff')};
   display: flex;
   flex-direction: column;
@@ -107,7 +108,7 @@ const PaymentMethodsModal = ({
         type: 'info',
         title: t('Other Payment Methods'),
         message: t(
-          'By selecting "Other" as your payment method, you will have access to all payment methods enabled by Simplex based on your country of residence and your selected fiat currency.',
+          'By selecting "Other" as your payment method, you will have access to all payment methods enabled by the exchanges based on your country of residence and your selected fiat currency.',
         ),
         enableBackdropDismiss: true,
         actions: [
@@ -189,6 +190,20 @@ const PaymentMethodsModal = ({
                         <PaymentMethodProviderText>
                           {t('Provided by')}
                         </PaymentMethodProviderText>
+                      </PaymentMethodProvider>
+                      <PaymentMethodProvider style={{height: 30}}>
+                        {coin &&
+                        currency &&
+                        chain &&
+                        isPaymentMethodSupported(
+                          'moonpay',
+                          paymentMethod,
+                          coin,
+                          chain,
+                          currency,
+                        ) ? (
+                          <MoonpayLogo widthIcon={20} heightIcon={20} />
+                        ) : null}
                         {coin &&
                         currency &&
                         chain &&

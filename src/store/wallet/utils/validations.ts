@@ -37,6 +37,11 @@ export const isValidWalletConnectUri = (data: string): boolean => {
   return !!/(wallet\/wc|wc:)/g.exec(data);
 };
 
+export const isValidMoonpayUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!data?.includes('moonpay');
+};
+
 export const isValidSimplexUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!data?.includes('simplex');

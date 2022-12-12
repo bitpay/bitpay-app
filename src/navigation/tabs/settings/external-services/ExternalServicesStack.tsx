@@ -6,6 +6,8 @@ import {
   baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../../components/styled/Text';
+import MoonpaySettings from './screens/MoonpaySettings';
+import MoonpayDetails from './screens/MoonpayDetails';
 import SimplexSettings from './screens/SimplexSettings';
 import SimplexDetails from './screens/SimplexDetails';
 import WyreSettings from './screens/WyreSettings';
@@ -13,29 +15,39 @@ import WyreDetails from './screens/WyreDetails';
 import ChangellySettings from './screens/ChangellySettings';
 import ChangellyDetails from './screens/ChangellyDetails';
 import {
-  simplexIncomingData,
-  simplexPaymentData,
-  wyrePaymentData,
+  MoonpayIncomingData,
+  MoonpayPaymentData,
+  SimplexIncomingData,
+  SimplexPaymentData,
+  WyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 
 export type ExternalServicesSettingsStackParamList = {
+  MoonpaySettings:
+    | {
+        incomingPaymentRequest?: MoonpayIncomingData;
+      }
+    | undefined;
+  MoonpayDetails: {
+    paymentRequest: MoonpayPaymentData;
+  };
   SimplexSettings:
     | {
-        incomingPaymentRequest?: simplexIncomingData;
+        incomingPaymentRequest?: SimplexIncomingData;
       }
     | undefined;
   SimplexDetails: {
-    paymentRequest: simplexPaymentData;
+    paymentRequest: SimplexPaymentData;
   };
   WyreSettings:
     | {
-        incomingPaymentRequest?: wyrePaymentData;
+        incomingPaymentRequest?: WyrePaymentData;
         paymentRequestError?: boolean;
       }
     | undefined;
   WyreDetails: {
-    paymentRequest: wyrePaymentData;
+    paymentRequest: WyrePaymentData;
   };
   ChangellySettings: undefined;
   ChangellyDetails: {
@@ -44,6 +56,8 @@ export type ExternalServicesSettingsStackParamList = {
 };
 
 export enum ExternalServicesSettingsScreens {
+  MOONPAY_SETTINGS = 'MoonpaySettings',
+  MOONPAY_DETAILS = 'MoonpayDetails',
   SIMPLEX_SETTINGS = 'SimplexSettings',
   SIMPLEX_DETAILS = 'SimplexDetails',
   WYRE_SETTINGS = 'WyreSettings',
@@ -63,6 +77,20 @@ const ExternalServicesSettingsStack = () => {
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.MOONPAY_SETTINGS}
+        component={MoonpaySettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Moonpay Settings')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.MOONPAY_DETAILS}
+        component={MoonpayDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.SIMPLEX_SETTINGS}
         component={SimplexSettings}

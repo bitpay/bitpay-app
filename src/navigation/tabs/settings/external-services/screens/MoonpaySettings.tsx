@@ -9,12 +9,12 @@ import {
 import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
-import {RootState} from '../../../../../store';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
-import {WyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {MoonpayPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
   NoPrMsg,
   PrTitle,
@@ -28,79 +28,52 @@ import {
   FooterSupport,
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
-import {
-  dismissBottomNotificationModal,
-  showBottomNotificationModal,
-} from '../../../../../store/app/app.actions';
-import {sleep} from '../../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 
-export interface WyreSettingsProps {
-  incomingPaymentRequest?: WyrePaymentData;
-  paymentRequestError?: boolean;
+export interface MoonpaySettingsProps {
+  incomingPaymentRequest: {
+    externalId: string;
+    transactionId?: string;
+    status?: string;
+  };
 }
 
-const WyreSettings: React.FC = () => {
+const MoonpaySettings: React.FC = () => {
   const {t} = useTranslation();
-  const wyreHistory = useSelector(({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre);
+  const moonpayHistory = useSelector(
+    ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.moonpay,
+  );
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const logger = useLogger();
-  const [paymentRequests, setTransactions] = useState([] as WyrePaymentData[]);
+  const [paymentRequests, setTransactions] = useState(
+    [] as MoonpayPaymentData[],
+  );
 
-  const route = useRoute<RouteProp<{params: WyreSettingsProps}>>();
-  const {incomingPaymentRequest, paymentRequestError} = route.params || {};
+  const route = useRoute<RouteProp<{params: MoonpaySettingsProps}>>();
+  const {incomingPaymentRequest} = route.params || {};
 
   useEffect(() => {
-    const handlePaymentError = async () => {
-      await sleep(600);
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: t('Payment Error'),
-          message: t(
-            'There was an error with the payment process through Wyre.',
-          ),
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: t('Visit Help Center'),
-              action: async () => {
-                await sleep(600);
-                dispatch(
-                  openUrlWithInAppBrowser(
-                    'https://wyre-support.zendesk.com/hc/en-us/requests/new',
-                  ),
-                );
-              },
-              primary: true,
-            },
-            {
-              text: t('GOT IT'),
-              action: () => {
-                dispatch(dismissBottomNotificationModal());
-              },
-              primary: false,
-            },
-          ],
-        }),
-      );
-    };
     if (incomingPaymentRequest) {
-      logger.debug(`Coming from order: ${incomingPaymentRequest.orderId}`);
-    }
-    if (paymentRequestError) {
-      handlePaymentError();
+      logger.debug(
+        `Coming from payment request: ExternalID: ${
+          incomingPaymentRequest.externalId
+        }${
+          incomingPaymentRequest.transactionId
+            ? ` - TransactionID: ${incomingPaymentRequest.transactionId}`
+            : ''
+        }`,
+      );
     }
   }, []);
 
   useEffect(() => {
     if (isFocused) {
-      const wyrePaymentRequests = Object.values(wyreHistory).filter(
+      const moonpayPaymentRequests = Object.values(moonpayHistory).filter(
         pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
       );
-      setTransactions(wyrePaymentRequests);
+      setTransactions(moonpayPaymentRequests);
     }
   }, [isFocused]);
 
@@ -118,11 +91,11 @@ const WyreSettings: React.FC = () => {
               .map(pr => {
                 return (
                   <PrRow
-                    key={pr.orderId}
+                    key={pr.external_id}
                     onPress={() => {
                       haptic('impactLight');
                       navigation.navigate('ExternalServicesSettings', {
-                        screen: 'WyreDetails',
+                        screen: 'MoonpayDetails',
                         params: {
                           paymentRequest: pr,
                         },
@@ -130,56 +103,67 @@ const WyreSettings: React.FC = () => {
                     }}>
                     <PrRowLeft>
                       <PrTxtFiatAmount>
-                        {pr.sourceAmount} {pr.sourceCurrency}
+                        {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
                       </PrTxtFiatAmount>
                       {pr.status === 'failed' && (
                         <PrTxtStatus style={{color: '#df5264'}}>
-                          {t('Payment request rejected')}
+                          {t('Payment request failed')}
                         </PrTxtStatus>
                       )}
-                      {pr.status === 'success' && (
+                      {pr.status === 'completed' && (
                         <PrTxtStatus style={{color: '#01d1a2'}}>
-                          {t('Payment request approved')}
+                          {t('Payment request completed')}
                         </PrTxtStatus>
                       )}
-                      {pr.status === 'paymentRequestSent' && (
-                        <PrTxtStatus>
-                          {t('Processing payment request')}
-                        </PrTxtStatus>
-                      )}
+                      {!pr.status ||
+                        (pr.status === 'paymentRequestSent' && (
+                          <PrTxtStatus>
+                            {t('Attempted payment request')}
+                          </PrTxtStatus>
+                        ))}
+                      {pr.status &&
+                        [
+                          'waitingPayment',
+                          'pending',
+                          'waitingAuthorization',
+                        ].includes(pr.status) && (
+                          <PrTxtStatus>
+                            {t('Processing payment request')}
+                          </PrTxtStatus>
+                        )}
                     </PrRowLeft>
                     <PrRowRight>
                       <PrTxtCryptoAmount>
-                        {pr.destAmount} {pr.destCurrency}
+                        {pr.crypto_amount} {pr.coin}
                       </PrTxtCryptoAmount>
                       <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
                     </PrRowRight>
                   </PrRow>
                 );
               })}
-          {(!paymentRequests || paymentRequests.length == 0) && (
+          {(!paymentRequests || paymentRequests.length === 0) && (
             <NoPrMsg>
-              {t('There are currently no transactions with Wyre')}
+              {t('There are currently no transactions with Moonpay')}
             </NoPrMsg>
           )}
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>{t('Having problems with Wyre?')}</SupportTxt>
+        <SupportTxt>Having problems with Moonpay?</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
             dispatch(
               openUrlWithInAppBrowser(
-                'https://support.sendwyre.com/hc/en-us/requests/new',
+                'https://support.moonpay.com/hc/en-gb/requests/new',
               ),
             );
           }}>
-          <Link>{t('Contact the Wyre support team.')}</Link>
+          <Link>{t('Contact the Moonpay support team.')}</Link>
         </TouchableOpacity>
       </FooterSupport>
     </>
   );
 };
 
-export default WyreSettings;
+export default MoonpaySettings;

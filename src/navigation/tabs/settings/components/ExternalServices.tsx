@@ -10,6 +10,7 @@ import {
 } from '../../../../components/styled/Containers';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
+import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 
@@ -41,6 +42,22 @@ const ExternalServices = () => {
             <ChangellyLogo iconOnly={true} width={30} height={30} />
           </ExternalServicesIconContainer>
           <SettingTitle>Changelly</SettingTitle>
+        </ExternalServicesItemContainer>
+        <AngleRight />
+      </Setting>
+      <Hr />
+      <Setting
+        onPress={() => {
+          haptic('impactLight');
+          navigation.navigate('ExternalServicesSettings', {
+            screen: 'MoonpaySettings',
+          });
+        }}>
+        <ExternalServicesItemContainer>
+          <ExternalServicesIconContainer>
+            <MoonpayLogo iconOnly={true} widthIcon={30} heightIcon={25} />
+          </ExternalServicesIconContainer>
+          <SettingTitle>Moonpay</SettingTitle>
         </ExternalServicesItemContainer>
         <AngleRight />
       </Setting>

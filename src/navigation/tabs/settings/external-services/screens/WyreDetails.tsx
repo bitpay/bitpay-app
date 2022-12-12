@@ -6,7 +6,7 @@ import moment from 'moment';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import WyreLogo from '../../../../../components/icons/external-services/wyre/wyre-logo';
-import {wyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {WyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
@@ -42,7 +42,7 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 
 export interface WyreDetailsProps {
-  paymentRequest: wyrePaymentData;
+  paymentRequest: WyrePaymentData;
 }
 
 const copyText = (text: string) => {
@@ -59,7 +59,7 @@ const WyreDetails: React.FC = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const [paymentData, setPaymentData] =
-    useState<wyrePaymentData>(paymentRequest);
+    useState<WyrePaymentData>(paymentRequest);
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
   const [copiedTransferId, setCopiedTransferId] = useState(false);
   const [copiedOrderId, setCopiedOrderId] = useState(false);
