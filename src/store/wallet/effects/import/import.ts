@@ -930,6 +930,7 @@ const onSuccessServerAssistedImport =
 
       await dispatch(startGetRates({}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+      await sleep(1000);
       dispatch(updatePortfolioBalance());
       dispatch(clearDeferredImport());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));

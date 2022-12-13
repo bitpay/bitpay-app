@@ -159,9 +159,10 @@ const WalletSettings = () => {
           <WalletSettingsTitle>{t('Hide Wallet')}</WalletSettingsTitle>
 
           <ToggleSwitch
-            onChange={() => {
+            onChange={async () => {
               dispatch(toggleHideWallet({wallet}));
-              dispatch(startUpdateWalletStatus({key, wallet}));
+              dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+              await sleep(1000);
               dispatch(updatePortfolioBalance());
             }}
             isEnabled={!!hideWallet}
