@@ -8,6 +8,7 @@ import {useMemo, useRef} from 'react';
 import {Linking} from 'react-native';
 import AppsFlyer from 'react-native-appsflyer';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
+import {IS_IOS} from '../../constants';
 import {
   APP_CRYPTO_PREFIX,
   APP_DEEPLINK_PREFIX,
@@ -170,9 +171,20 @@ export const useDeeplinks = () => {
     LinkingOptions<RootStackParamList>['subscribe']
   >(
     () => listener => {
-      const subscription = Linking.addEventListener('url', ({url}) =>
-        listener(url),
-      );
+      const subscription = Linking.addEventListener('url', async ({url}) => {
+        // For raw deeplinks (eg. bitpay://home), url will be the deeplink URL
+        // For OneLink links (eg. https://onelink.me/path/123), url will be the deeplink URL (Android) or the OneLink url itself (iOS).
+        let handled = false;
+
+        // On iOS, raw deeplinks are not handled properly by the AppsFlyer SDK, so call the handler here.
+        if (IS_IOS && !handled) {
+          handled = !!(await urlEventHandler({url}));
+        }
+
+        if (!handled) {
+          listener(url);
+        }
+      });
 
       const appsFlyerUnsubscribe = AppsFlyer.onDeepLink(udlData => {
         const {data, deepLinkStatus, status} = udlData;
