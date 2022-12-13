@@ -80,12 +80,14 @@ export const incomingData =
       email?: string;
       destinationTag?: number;
     },
-  ): Effect<Promise<void>> =>
+  ): Effect<Promise<boolean>> =>
   async dispatch => {
     // wait to close blur
     await sleep(200);
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     const chain = opts?.wallet?.credentials?.chain.toLowerCase();
+    let handled = true;
+
     try {
       if (IsValidBitPayInvoice(data)) {
         dispatch(handleUnlock(data));
@@ -163,12 +165,16 @@ export const incomingData =
         // Join multisig wallet
       } else if (IsValidJoinCode(data)) {
         dispatch(goToJoinWallet(data));
+      } else {
+        handled = false;
       }
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(300);
       throw err;
     }
+
+    return handled;
   };
 
 const getParameterByName = (name: string, url: string): string | undefined => {

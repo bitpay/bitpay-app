@@ -100,7 +100,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     }
   }
 
-  const onPress = () => {
+  const onPress = async () => {
     haptic('impactLight');
 
     if (!contentCard.id.startsWith('dev_')) {
@@ -124,7 +124,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
 
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {
       try {
-        const handled = urlEventHandler({url});
+        const handled = await urlEventHandler({url});
         if (!handled) {
           const path = '/' + url.replace(APP_DEEPLINK_PREFIX, '');
           linkTo(path);
