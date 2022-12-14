@@ -89,6 +89,8 @@ import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
+import QuickActions from 'react-native-quick-actions';
+import {ShortcutList} from '../../constants/shortcuts';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -124,6 +126,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
       await dispatch(askForTrackingPermissionAndEnableSdks(true));
+      QuickActions.clearShortcutItems();
+      QuickActions.setShortcutItems(ShortcutList);
     }
 
     await dispatch(startWalletStoreInit());

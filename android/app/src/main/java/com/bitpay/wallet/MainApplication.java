@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
+import com.reactNativeQuickActions.AppShortcutsPackage;
 import com.mkuczera.RNReactNativeHapticFeedbackPackage;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;
@@ -40,6 +41,7 @@ public class MainApplication extends Application implements ReactApplication {
           packages.add(new DoshPackage());
           packages.add(new GooglePushProvisioningPackage());
           packages.add(new SilentPushPackage());
+          packages.add(new AppShortcutsPackage());
 
           return packages;
         }

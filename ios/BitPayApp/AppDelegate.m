@@ -14,7 +14,7 @@
 #import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
 #import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
 #import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
-#import "RNShortcuts.h"
+#import "RNQuickActionManager.h"
 
 #if RCT_DEV
 #import <React/RCTDevLoadingView.h>
@@ -95,8 +95,9 @@ static void InitializeFlipper(UIApplication *application) {
     completionHandler(UNNotificationPresentationOptionAlert);
   }
 }
-- (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler {
-    [RNShortcuts performActionForShortcutItem:shortcutItem completionHandler:completionHandler];
+
+- (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL succeeded)) completionHandler {
+  [RNQuickActionManager onQuickActionPress:shortcutItem completionHandler:completionHandler];
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge

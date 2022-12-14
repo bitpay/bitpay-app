@@ -5,13 +5,7 @@ import {
 } from '@react-navigation/native';
 import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {
-  NativeEventEmitter,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  Share,
-} from 'react-native';
+import {Platform, RefreshControl, ScrollView, Share} from 'react-native';
 import {
   APP_NAME,
   DOWNLOAD_BITPAY_URL,
@@ -72,8 +66,9 @@ import {useTranslation} from 'react-i18next';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
 import {WalletScreens} from '../../wallet/WalletStack';
-import {ShortcutList} from '../../../constants/shortcuts';
-import Shortcuts, {ShortcutItem} from 'react-native-actions-shortcuts';
+import {DeviceEventEmitter} from 'react-native';
+import {ShortcutItem} from 'react-native-quick-actions';
+import QuickActions from 'react-native-quick-actions';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -169,17 +164,6 @@ const HomeRoot = () => {
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
-
-  useEffect(() => {
-    const setInitialShortcuts = async () => {
-      const shortcuts = await Shortcuts.getShortcuts();
-      if (!shortcuts.length) {
-        Shortcuts.clearShortcuts();
-        await Shortcuts.setShortcuts(ShortcutList);
-      }
-    };
-    setInitialShortcuts();
-  }, []);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -366,35 +350,36 @@ const HomeRoot = () => {
     }
   };
 
-  // @ts-ignore
-  const ShortcutsEmitter = new NativeEventEmitter(Shortcuts);
+  const shortcutListener = (item: ShortcutItem) => {
+    const {type} = item || {};
+    switch (type) {
+      case 'buy':
+        goToBuyCrypto();
+        return;
+      case 'swap':
+        goToSwapCrypto();
+        return;
+      case 'send':
+        sendCrypto('Shortcut');
+        return;
+      case 'receive':
+        receiveCrypto('Shortcut');
+        return;
+      case 'share':
+        shareApp();
+        return;
+    }
+  };
+
   useEffect(() => {
-    const shortcutListener = (item: ShortcutItem) => {
-      const {type} = item;
-      switch (type) {
-        case 'buy':
-          goToBuyCrypto();
-          return;
-        case 'swap':
-          goToSwapCrypto();
-          return;
-        case 'send':
-          sendCrypto('Shortcut');
-          return;
-        case 'receive':
-          receiveCrypto('Shortcut');
-          return;
-        case 'share':
-          shareApp();
-          return;
-      }
-    };
-    const sub = ShortcutsEmitter.addListener(
-      'onShortcutItemPressed',
+    const subscription = DeviceEventEmitter.addListener(
+      'quickActionShortcut',
       shortcutListener,
     );
-    return () => sub.remove();
-  }, [ShortcutsEmitter]);
+    return () => subscription.remove();
+  }, []);
+
+  QuickActions.popInitialAction().then(shortcutListener).catch(console.error);
 
   return (
     <HomeContainer>
