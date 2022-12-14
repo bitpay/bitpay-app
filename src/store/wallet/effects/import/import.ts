@@ -780,32 +780,36 @@ export const migrateKeyAndWallets =
     });
   };
 
-export const deferredImportErrorNotification = (): Effect => async dispatch => {
-  dispatch(dismissOnGoingProcessModal());
-  await sleep(600);
-  dispatch(
-    showBottomNotificationModal({
-      type: 'error',
-      title: t('Problem importing key'),
-      message: t('There was an issue importing your key. Please try again.'),
-      enableBackdropDismiss: false,
-      actions: [
-        {
-          text: t('IMPORT KEY'),
-          action: () => {
-            navigationRef.navigate('Wallet', {screen: 'Import'});
+export const deferredImportErrorNotification =
+  (e: any): Effect =>
+  async dispatch => {
+    dispatch(dismissOnGoingProcessModal());
+    await sleep(600);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title: t('Problem importing key'),
+        message: `${t(
+          'There was an issue importing your key. Please try again.',
+        )}${e ? `\n\nError: ${e.message || e}` : ''}`,
+        enableBackdropDismiss: false,
+        actions: [
+          {
+            text: t('IMPORT KEY'),
+            action: () => {
+              navigationRef.navigate('Wallet', {screen: 'Import'});
+            },
+            primary: true,
           },
-          primary: true,
-        },
-        {
-          text: t('MAYBE LATER'),
-          action: () => {},
-          primary: false,
-        },
-      ],
-    }),
-  );
-};
+          {
+            text: t('MAYBE LATER'),
+            action: () => {},
+            primary: false,
+          },
+        ],
+      }),
+    );
+  };
 
 const onFailedDeferredImport =
   (e: any): Effect =>
@@ -823,7 +827,7 @@ const onFailedDeferredImport =
         APP: {onboardingCompleted},
       } = getState();
       if (onboardingCompleted) {
-        dispatch(deferredImportErrorNotification());
+        dispatch(deferredImportErrorNotification(e));
       } else {
         dispatch(updateOnCompleteOnboarding('deferredImportErrorNotification'));
       }
@@ -836,14 +840,13 @@ export const deferredImportMnemonic =
     opts: Partial<KeyOptions>,
     context?: string,
   ): Effect =>
-  dispatch => {
+  async dispatch => {
     try {
       dispatch(updateDeferredImport({importData, opts}));
-
       const {words, xPrivKey} = importData;
       opts.words = normalizeMnemonic(words);
       opts.xPrivKey = xPrivKey;
-      dispatch(serverAssistedImport(opts, context));
+      await dispatch(serverAssistedImport(opts, context));
     } catch (e: any) {
       dispatch(onFailedDeferredImport(e));
     }
