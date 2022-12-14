@@ -47,7 +47,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     }
   }
 
-  const _onPress = () => {
+  const _onPress = async () => {
     if (!contentCard.id.startsWith('dev_')) {
       Braze.logContentCardClicked(contentCard.id);
     }
@@ -59,7 +59,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     haptic('impactLight');
 
     try {
-      const handled = urlEventHandler({url});
+      const handled = await urlEventHandler({url});
       const merchantName = getRouteParam(url, 'merchant');
       if (handled && merchantName) {
         dispatch(

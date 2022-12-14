@@ -1,8 +1,14 @@
-import {LinkingOptions} from '@react-navigation/native';
-import {useRef} from 'react';
+import {
+  getActionFromState,
+  getStateFromPath,
+  LinkingOptions,
+  PathConfig,
+} from '@react-navigation/native';
+import {useMemo, useRef} from 'react';
 import {Linking} from 'react-native';
 import AppsFlyer from 'react-native-appsflyer';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
+import {IS_IOS} from '../../constants';
 import {
   APP_CRYPTO_PREFIX,
   APP_DEEPLINK_PREFIX,
@@ -13,15 +19,65 @@ import {CardScreens} from '../../navigation/card/CardStack';
 import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
 import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseStack';
-import {RootStackParamList, RootStacks} from '../../Root';
-import {TabsScreens} from '../../navigation/tabs/TabsStack';
+import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
+import {TabsScreens, TabsStackParamList} from '../../navigation/tabs/TabsStack';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {incomingData} from '../../store/scan/scan.effects';
 import {showBlur} from '../../store/app/app.actions';
 import {incomingLink} from '../../store/app/app.effects';
 import useAppDispatch from './useAppDispatch';
 import {useLogger} from './useLogger';
-import {useMount} from './useMount';
+
+const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
+  initialRouteName: RootStacks.TABS,
+  // configuration for associating screens with paths
+  screens: {
+    [RootStacks.DEBUG]: {
+      path: 'debug/:name',
+    },
+    [RootStacks.BITPAY_ID]: {
+      path: 'id',
+      screens: {
+        [BitpayIdScreens.PAIRING]: 'pair',
+        [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
+      },
+    },
+    [RootStacks.TABS]: {
+      screens: {
+        [TabsScreens.CARD]: {
+          path: 'wallet-card',
+          initialRouteName: CardScreens.HOME,
+          screens: {
+            [CardScreens.PAIRING]: 'pairing',
+          },
+        },
+        [TabsScreens.SETTINGS]: {
+          screens: {
+            [SettingsScreens.Root]: 'connections/:redirectTo',
+          },
+        },
+      },
+    } as PathConfig<TabsStackParamList>,
+    [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
+    [RootStacks.BUY_CRYPTO]: {
+      screens: {
+        [BuyCryptoScreens.ROOT]: {
+          path: 'buy/:amount?',
+        },
+      },
+    },
+    [RootStacks.SWAP_CRYPTO]: {
+      screens: {
+        [SwapCryptoScreens.ROOT]: 'swap',
+      },
+    },
+    [RootStacks.COINBASE]: {
+      screens: {
+        [CoinbaseScreens.ROOT]: 'coinbase',
+      },
+    },
+  },
+});
 
 const isUniversalLink = (url: string): boolean => {
   try {
@@ -49,7 +105,7 @@ export const useUrlEventHandler = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
 
-  const urlEventHandler = ({url}: {url: string | null}) => {
+  const urlEventHandler = async ({url}: {url: string | null}) => {
     logger.debug(`[deeplink] received: ${url}`);
 
     if (url && (isDeepLink(url) || isUniversalLink(url) || isCryptoLink(url))) {
@@ -58,12 +114,33 @@ export const useUrlEventHandler = () => {
 
       let handled = false;
 
+      // check if the url maps to a navigational link
       if (!handled) {
         handled = dispatch(incomingLink(url));
       }
 
+      // check if the url contains payment data
       if (!handled) {
-        dispatch(incomingData(url));
+        handled = await dispatch(incomingData(url));
+      }
+
+      // check if the url can be handled by the NavigationContainer based on the linking config
+      if (!handled) {
+        // try to translate the path to a navigation state according to our linking config
+        const path = url.replace(APP_DEEPLINK_PREFIX, '/');
+        const state = getStateFromPath(path, getLinkingConfig());
+
+        if (state) {
+          const action = getActionFromState(state);
+
+          if (action !== undefined) {
+            navigationRef.dispatch(action);
+          } else {
+            navigationRef.reset(state);
+          }
+
+          handled = true;
+        }
       }
 
       try {
@@ -90,90 +167,63 @@ export const useDeeplinks = () => {
   const urlEventHandler = useUrlEventHandler();
   const logger = useLogger();
 
-  useMount(() => {
-    const subscribeLinkingEvent = Linking.addEventListener(
-      'url',
-      urlEventHandler,
-    );
+  const memoizedSubscribe = useMemo<
+    LinkingOptions<RootStackParamList>['subscribe']
+  >(
+    () => listener => {
+      const subscription = Linking.addEventListener('url', async ({url}) => {
+        // For raw deeplinks (eg. bitpay://home), url will be the deeplink URL
+        // For OneLink links (eg. https://onelink.me/path/123), url will be the deeplink URL (Android) or the OneLink url itself (iOS).
+        let handled = false;
 
-    AppsFlyer.onDeepLink(udlData => {
-      const {data, deepLinkStatus, status} = udlData;
+        // On iOS, raw deeplinks are not handled properly by the AppsFlyer SDK, so call the handler here.
+        if (IS_IOS && !handled) {
+          handled = !!(await urlEventHandler({url}));
+        }
 
-      if (status === 'failure' || deepLinkStatus === 'Error') {
-        logger.info('Failed to handle Universal Deep Link.');
-        return;
-      }
+        if (!handled) {
+          listener(url);
+        }
+      });
 
-      if (deepLinkStatus === 'NOT_FOUND') {
-        logger.info('Universal Deep Link not recognized.');
-        return;
-      }
+      const appsFlyerUnsubscribe = AppsFlyer.onDeepLink(udlData => {
+        const {data, deepLinkStatus, status} = udlData;
 
-      if (deepLinkStatus === 'FOUND') {
-        const {deep_link_value} = data;
+        if (status === 'failure' || deepLinkStatus === 'Error') {
+          logger.info('Failed to handle Universal Deep Link.');
+          return;
+        }
 
-        urlEventHandler({url: deep_link_value});
-        return;
-      }
+        if (deepLinkStatus === 'NOT_FOUND') {
+          logger.info('Universal Deep Link not recognized.');
+          return;
+        }
 
-      logger.info(`Unrecognized deeplink status: ${deepLinkStatus}`);
-    });
+        if (deepLinkStatus === 'FOUND') {
+          const {deep_link_value} = data;
 
-    return () => subscribeLinkingEvent.remove();
-  });
+          if (deep_link_value) {
+            urlEventHandler({url: deep_link_value});
+          }
+
+          return;
+        }
+
+        logger.info(`Unrecognized deeplink status: ${deepLinkStatus}`);
+      });
+
+      return () => {
+        subscription.remove();
+        appsFlyerUnsubscribe();
+      };
+    },
+    [logger, urlEventHandler],
+  );
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {
     prefixes: [APP_DEEPLINK_PREFIX],
-    config: {
-      initialRouteName: 'Tabs',
-      // configuration for associating screens with paths
-      screens: {
-        [RootStacks.DEBUG]: {
-          path: 'debug/:name',
-        },
-        [RootStacks.BITPAY_ID]: {
-          path: 'id',
-          screens: {
-            [BitpayIdScreens.PAIRING]: 'pair',
-            [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
-          },
-        },
-        [RootStacks.TABS]: {
-          screens: {
-            [TabsScreens.CARD]: {
-              path: 'wallet-card',
-              initialRouteName: CardScreens.HOME,
-              screens: {
-                [CardScreens.PAIRING]: 'pairing',
-              },
-            },
-            [TabsScreens.SETTINGS]: {
-              screens: {
-                [SettingsScreens.Root]: 'connections/:redirectTo',
-              },
-            },
-          },
-        },
-        [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
-        [RootStacks.BUY_CRYPTO]: {
-          screens: {
-            [BuyCryptoScreens.ROOT]: {
-              path: 'buy/:amount?',
-            },
-          },
-        },
-        [RootStacks.SWAP_CRYPTO]: {
-          screens: {
-            [SwapCryptoScreens.ROOT]: 'swap',
-          },
-        },
-        [RootStacks.COINBASE]: {
-          screens: {
-            [CoinbaseScreens.ROOT]: 'coinbase',
-          },
-        },
-      },
-    },
+    subscribe: memoizedSubscribe,
+    config: getLinkingConfig(),
   };
 
   return linkingOptions;
