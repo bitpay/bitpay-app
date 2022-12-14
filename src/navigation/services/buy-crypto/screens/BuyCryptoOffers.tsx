@@ -468,8 +468,9 @@ const BuyCryptoOffers: React.FC = () => {
 
     offers.simplex.fiatAmount =
       offers.simplex.fiatCurrency === fiatCurrency
-        ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+        ? Number(amount)
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) ||
+          Number(amount);
 
     offers.simplex.amountLimits = dispatch(
       getBuyCryptoFiatLimits('simplex', offers.simplex.fiatCurrency),
