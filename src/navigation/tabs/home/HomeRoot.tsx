@@ -5,8 +5,18 @@ import {
 } from '@react-navigation/native';
 import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {RefreshControl, ScrollView} from 'react-native';
-import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
+import {
+  NativeEventEmitter,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  Share,
+} from 'react-native';
+import {
+  APP_NAME,
+  DOWNLOAD_BITPAY_URL,
+  STATIC_CONTENT_CARDS_ENABLED,
+} from '../../../constants/config';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   clearOnCompleteOnboardingList,
@@ -62,6 +72,8 @@ import {useTranslation} from 'react-i18next';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
 import {WalletScreens} from '../../wallet/WalletStack';
+import {ShortcutList} from '../../../constants/shortcuts';
+import Shortcuts, {ShortcutItem} from 'react-native-actions-shortcuts';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -159,6 +171,17 @@ const HomeRoot = () => {
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
 
   useEffect(() => {
+    const setInitialShortcuts = async () => {
+      const shortcuts = await Shortcuts.getShortcuts();
+      if (!shortcuts.length) {
+        Shortcuts.clearShortcuts();
+        await Shortcuts.setShortcuts(ShortcutList);
+      }
+    };
+    setInitialShortcuts();
+  }, []);
+
+  useEffect(() => {
     return navigation.addListener('focus', () => {
       if (!appIsLoading) {
         dispatch(updatePortfolioBalance());
@@ -215,6 +238,164 @@ const HomeRoot = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
 
+  const shareApp = async () => {
+    try {
+      let message = t(
+        'Spend and control your cryptocurrency by downloading the app.',
+        {APP_NAME},
+      );
+
+      if (Platform.OS !== 'ios') {
+        message = `${message} ${DOWNLOAD_BITPAY_URL}`;
+      }
+      await Share.share({message, url: DOWNLOAD_BITPAY_URL});
+    } catch (e) {}
+  };
+
+  const goToBuyCrypto = () => {
+    dispatch(
+      logSegmentEvent('track', 'Clicked Buy Crypto', {
+        context: 'Shortcuts',
+      }),
+    );
+    navigation.navigate('Wallet', {
+      screen: WalletScreens.AMOUNT,
+      params: {
+        onAmountSelected: async (amount: string, setButtonState: any) => {
+          navigation.navigate('BuyCrypto', {
+            screen: 'BuyCryptoRoot',
+            params: {
+              amount: Number(amount),
+            },
+          });
+        },
+        context: 'buyCrypto',
+      },
+    });
+  };
+
+  const goToSwapCrypto = () => {
+    dispatch(
+      logSegmentEvent('track', 'Clicked Swap Crypto', {
+        context: 'Shortcuts',
+      }),
+    );
+    navigation.navigate('SwapCrypto', {screen: 'Root'});
+  };
+
+  const sendCrypto = (loggerContext: string) => {
+    const walletsWithBalance = Object.values(keys)
+      .filter(key => key.backupComplete)
+      .flatMap(key => key.wallets)
+      .filter(wallet => !wallet.hideWallet && wallet.isComplete())
+      .filter(wallet => wallet.balance.sat > 0);
+
+    if (!walletsWithBalance.length) {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: t('No funds available'),
+          message: t('You do not have any funds to send.'),
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('Add funds'),
+              action: () => {
+                dispatch(
+                  logSegmentEvent('track', 'Clicked Buy Crypto', {
+                    context: 'HomeRoot',
+                  }),
+                );
+                navigation.navigate('Wallet', {
+                  screen: WalletScreens.AMOUNT,
+                  params: {
+                    onAmountSelected: (amount: string) => {
+                      navigation.navigate('BuyCrypto', {
+                        screen: 'BuyCryptoRoot',
+                        params: {
+                          amount: Number(amount),
+                        },
+                      });
+                    },
+                    context: 'buyCrypto',
+                  },
+                });
+              },
+              primary: true,
+            },
+            {
+              text: t('Got It'),
+              action: () => null,
+              primary: false,
+            },
+          ],
+        }),
+      );
+    } else {
+      dispatch(
+        logSegmentEvent('track', 'Clicked Send', {
+          context: loggerContext,
+        }),
+      );
+      navigation.navigate('Wallet', {
+        screen: 'GlobalSelect',
+        params: {context: 'send'},
+      });
+    }
+  };
+
+  const receiveCrypto = (loggerContext: string) => {
+    const needsBackup = !Object.values(keys).filter(key => key.backupComplete)
+      .length;
+    if (needsBackup) {
+      dispatch(
+        showBottomNotificationModal(
+          keyBackupRequired(Object.values(keys)[0], navigation, dispatch),
+        ),
+      );
+    } else {
+      dispatch(
+        logSegmentEvent('track', 'Clicked Receive', {
+          context: loggerContext,
+        }),
+      );
+      navigation.navigate('Wallet', {
+        screen: 'GlobalSelect',
+        params: {context: 'receive'},
+      });
+    }
+  };
+
+  // @ts-ignore
+  const ShortcutsEmitter = new NativeEventEmitter(Shortcuts);
+  useEffect(() => {
+    const shortcutListener = (item: ShortcutItem) => {
+      const {type} = item;
+      switch (type) {
+        case 'buy':
+          goToBuyCrypto();
+          return;
+        case 'swap':
+          goToSwapCrypto();
+          return;
+        case 'send':
+          sendCrypto('Shortcut');
+          return;
+        case 'receive':
+          receiveCrypto('Shortcut');
+          return;
+        case 'share':
+          shareApp();
+          return;
+      }
+    };
+    const sub = ShortcutsEmitter.addListener(
+      'onShortcutItemPressed',
+      shortcutListener,
+    );
+    return () => sub.remove();
+  }, [ShortcutsEmitter]);
+
   return (
     <HomeContainer>
       {appIsLoading ? null : (
@@ -249,100 +430,10 @@ const HomeRoot = () => {
             <HomeSection style={{marginBottom: 25}}>
               <LinkingButtons
                 receive={{
-                  cta: () => {
-                    const needsBackup = !Object.values(keys).filter(
-                      key => key.backupComplete,
-                    ).length;
-                    if (needsBackup) {
-                      dispatch(
-                        showBottomNotificationModal(
-                          keyBackupRequired(
-                            Object.values(keys)[0],
-                            navigation,
-                            dispatch,
-                          ),
-                        ),
-                      );
-                    } else {
-                      dispatch(
-                        logSegmentEvent('track', 'Clicked Receive', {
-                          context: 'HomeRoot',
-                        }),
-                      );
-                      navigation.navigate('Wallet', {
-                        screen: 'GlobalSelect',
-                        params: {context: 'receive'},
-                      });
-                    }
-                  },
+                  cta: () => receiveCrypto('HomeRoot'),
                 }}
                 send={{
-                  cta: () => {
-                    const walletsWithBalance = Object.values(keys)
-                      .filter(key => key.backupComplete)
-                      .flatMap(key => key.wallets)
-                      .filter(
-                        wallet => !wallet.hideWallet && wallet.isComplete(),
-                      )
-                      .filter(wallet => wallet.balance.sat > 0);
-
-                    if (!walletsWithBalance.length) {
-                      dispatch(
-                        showBottomNotificationModal({
-                          type: 'warning',
-                          title: t('No funds available'),
-                          message: t('You do not have any funds to send.'),
-                          enableBackdropDismiss: true,
-                          actions: [
-                            {
-                              text: t('Add funds'),
-                              action: () => {
-                                dispatch(
-                                  logSegmentEvent(
-                                    'track',
-                                    'Clicked Buy Crypto',
-                                    {
-                                      context: 'HomeRoot',
-                                    },
-                                  ),
-                                );
-                                navigation.navigate('Wallet', {
-                                  screen: WalletScreens.AMOUNT,
-                                  params: {
-                                    onAmountSelected: (amount: string) => {
-                                      navigation.navigate('BuyCrypto', {
-                                        screen: 'BuyCryptoRoot',
-                                        params: {
-                                          amount: Number(amount),
-                                        },
-                                      });
-                                    },
-                                    context: 'buyCrypto',
-                                  },
-                                });
-                              },
-                              primary: true,
-                            },
-                            {
-                              text: t('Got It'),
-                              action: () => null,
-                              primary: false,
-                            },
-                          ],
-                        }),
-                      );
-                    } else {
-                      dispatch(
-                        logSegmentEvent('track', 'Clicked Send', {
-                          context: 'HomeRoot',
-                        }),
-                      );
-                      navigation.navigate('Wallet', {
-                        screen: 'GlobalSelect',
-                        params: {context: 'send'},
-                      });
-                    }
-                  },
+                  cta: () => sendCrypto('HomeRoot'),
                 }}
               />
             </HomeSection>
