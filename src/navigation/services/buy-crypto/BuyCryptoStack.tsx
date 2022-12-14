@@ -6,20 +6,14 @@ import {
   baseScreenOptions,
 } from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
-import BuyCryptoRoot from './screens/BuyCryptoRoot';
+import BuyCryptoRoot, {
+  BuyCryptoRootScreenParams,
+} from './screens/BuyCryptoRoot';
 import BuyCryptoOffers from './screens/BuyCryptoOffers';
 import {useTranslation} from 'react-i18next';
 
 export type BuyCryptoStackParamList = {
-  BuyCryptoRoot:
-    | {
-        amount: number;
-        fromWallet?: any;
-        buyCryptoOpts?: any;
-        currencyAbbreviation?: string; // used from charts.
-        chain?: string; // used from charts.
-      }
-    | undefined;
+  BuyCryptoRoot: BuyCryptoRootScreenParams;
   BuyCryptoOffers: {
     amount: number;
     fiatCurrency: string;

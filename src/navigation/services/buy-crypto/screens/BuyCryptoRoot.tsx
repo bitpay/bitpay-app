@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Platform, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled, {useTheme} from 'styled-components/native';
@@ -6,8 +6,9 @@ import {
   useAppDispatch,
   useAppSelector,
   useLogger,
+  useMount,
 } from '../../../../utils/hooks';
-import {BuyCryptoStackParamList} from '../BuyCryptoStack';
+import {BuyCryptoScreens, BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
 import AmountModal from '../../../../components/amount/AmountModal';
@@ -29,6 +30,7 @@ import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
 } from '../../../../store/app/app.actions';
+import {getBuyCryptoFiatLimits} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
@@ -70,6 +72,16 @@ import {getCoinAndChainFromCurrencyCode} from '../../../bitpay-id/utils/bitpay-i
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {orderBy} from 'lodash';
 
+export type BuyCryptoRootScreenParams =
+  | {
+      amount: number;
+      fromWallet?: any;
+      buyCryptoOpts?: any;
+      currencyAbbreviation?: string; // used from charts.
+      chain?: string; // used from charts.
+    }
+  | undefined;
+
 const CtaContainer = styled.View`
   margin: 20px 15px;
 `;
@@ -78,8 +90,8 @@ const ArrowContainer = styled.View`
   margin-left: 10px;
 `;
 
-const BuyCryptoRoot: React.FC<
-  StackScreenProps<BuyCryptoStackParamList, 'BuyCryptoRoot'>
+const BuyCryptoRoot: React.VFC<
+  StackScreenProps<BuyCryptoStackParamList, BuyCryptoScreens.ROOT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -91,12 +103,12 @@ const BuyCryptoRoot: React.FC<
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const fromWallet = route.params?.fromWallet;
-  const fromAmount = route.params?.amount;
+  const fromAmount = Number(route.params?.amount || 0); // deeplink params are strings, ensure this is number so offers will work
   const fromCurrencyAbbreviation =
     route.params?.currencyAbbreviation?.toLowerCase();
   const fromChain = route.params?.chain?.toLowerCase();
 
-  const [amount, setAmount] = useState<number>(fromAmount ? fromAmount : 0);
+  const [amount, setAmount] = useState<number>(fromAmount);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
@@ -172,7 +184,7 @@ const BuyCryptoRoot: React.FC<
         allWallets = [...allWallets, ...key.wallets];
       });
 
-      fromWalletData = allWallets.find(wallet => wallet.id == fromWallet.id);
+      fromWalletData = allWallets.find(wallet => wallet.id === fromWallet.id);
       if (fromWalletData) {
         setWallet(fromWalletData);
       } else {
@@ -401,7 +413,7 @@ const BuyCryptoRoot: React.FC<
       return;
     }
     if (
-      selectedPaymentMethod.method == 'sepaBankTransfer' &&
+      selectedPaymentMethod.method === 'sepaBankTransfer' &&
       !countryData?.isEuCountry
     ) {
       setDefaultPaymentMethod();
@@ -441,6 +453,8 @@ const BuyCryptoRoot: React.FC<
       setDefaultPaymentMethod();
     }
   };
+  const checkPaymentMethodRef = useRef(checkPaymentMethod);
+  checkPaymentMethodRef.current = checkPaymentMethod;
 
   const showError = async (type?: string, coin?: string) => {
     let title, message: string;
@@ -530,7 +544,16 @@ const BuyCryptoRoot: React.FC<
     }
   };
 
-  useEffect(() => {
+  useMount(() => {
+    const limits = dispatch(getBuyCryptoFiatLimits(undefined, fiatCurrency));
+
+    if (limits.min !== undefined && amount < limits.min) {
+      setAmount(limits.min);
+    }
+    if (limits.max !== undefined && amount > limits.max) {
+      setAmount(limits.max);
+    }
+
     const coinsToRemove =
       !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
 
@@ -564,7 +587,7 @@ const BuyCryptoRoot: React.FC<
       ['asc', 'asc'],
     );
 
-    const buyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
+    const initialBuyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
       supportedCoins
         .map((symbol: string) => {
           const {coin, chain} = getCoinAndChainFromCurrencyCode(symbol);
@@ -580,13 +603,13 @@ const BuyCryptoRoot: React.FC<
         })
         .filter(currency => !!currency.name);
 
-    setBuyCryptoSupportedCoinsFullObj(buyCryptoSupportedCoinsFullObj);
+    setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
 
     selectFirstAvailableWallet();
-  }, []);
+  });
 
   useEffect(() => {
-    checkPaymentMethod();
+    checkPaymentMethodRef.current();
   }, [selectedWallet]);
 
   return (
