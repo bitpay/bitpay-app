@@ -1,36 +1,34 @@
-import {t} from 'i18next';
 import {ShortcutItem} from 'react-native-quick-actions';
 
 export const ShortcutList: Array<ShortcutItem> = [
-  // TODO icons
   {
     type: 'buy',
-    title: t('Buy Crypto'),
-    icon: 'ic_music',
+    title: 'Buy Crypto',
+    icon: 'BuyCrypto',
     userInfo: {url: ''},
   },
   {
     type: 'swap',
-    title: t('Exchange'),
-    icon: 'ic_music',
-    userInfo: {url: ''},
-  },
-  {
-    type: 'send',
-    title: t('Send'),
-    icon: 'ic_music',
+    title: 'Exchange',
+    icon: 'SwapCrypto',
     userInfo: {url: ''},
   },
   {
     type: 'receive',
-    title: t('Receive'),
-    icon: 'ic_music',
+    title: 'Receive',
+    icon: 'ReceiveCrypto',
+    userInfo: {url: ''},
+  },
+  {
+    type: 'send',
+    title: 'Send',
+    icon: 'SendCrypto',
     userInfo: {url: ''},
   },
   {
     type: 'share',
-    title: t('Share App'),
-    icon: 'ic_music',
+    title: 'Share App',
+    icon: 'Share',
     userInfo: {url: ''},
   },
 ];
