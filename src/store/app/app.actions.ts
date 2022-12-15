@@ -316,3 +316,7 @@ export const updateOnCompleteOnboarding = (payload: string): AppActionType => ({
 export const clearOnCompleteOnboardingList = (): AppActionType => ({
   type: AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST,
 });
+
+export const setHasViewedZenLedgerWarning = (): AppActionType => ({
+  type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
+});

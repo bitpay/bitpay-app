@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
@@ -9,12 +9,13 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {WalletConnectIconContainer} from '../../../wallet-connect/styled/WalletConnectContainers';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
+import ZenLedgerIcon from '../../../../../assets/img/zenledger/zenledger-icon.svg';
 import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
+import ZenLedgerModal from '../../../zenledger/components/ZLModal';
 
 interface ConnectionsProps {
   redirectTo?: string;
@@ -27,25 +28,17 @@ const ConnectionItemContainer = styled.View`
   flex: 1;
 `;
 
-const IconCoinbase = styled.View`
-  width: 25px;
-  height: 25px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
+const ConnectionIconContainer = styled.View`
+  margin-right: 5px;
 `;
-
-const CoinbaseIconContainer = (
-  <IconCoinbase>
-    <CoinbaseSvg width="25" height="25" />
-  </IconCoinbase>
-);
 
 const Connections: React.FC<ConnectionsProps> = props => {
   const {redirectTo} = props;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
+
+  const [showModal, setShowModal] = useState(false);
 
   const goToWalletConnect = useCallback(() => {
     dispatch(
@@ -84,37 +77,69 @@ const Connections: React.FC<ConnectionsProps> = props => {
       });
     }
   };
+
   useEffect(() => {
     if (redirectTo === 'walletconnect') {
       // reset params to prevent re-triggering
       navigation.setParams({redirectTo: undefined} as any);
       goToWalletConnect();
+    } else if (redirectTo === 'zenledger') {
+      navigation.setParams({redirectTo: undefined} as any);
+      setShowModal(true);
     }
-  }, [redirectTo, goToWalletConnect, navigation]);
+  }, [redirectTo, goToWalletConnect, setShowModal, navigation]);
 
   return (
     <SettingsComponent>
+      <Setting onPress={() => goToCoinbase()}>
+        <ConnectionItemContainer>
+          <ConnectionIconContainer>
+            <CoinbaseSvg width={30} height={25} />
+          </ConnectionIconContainer>
+          <SettingTitle>Coinbase</SettingTitle>
+        </ConnectionItemContainer>
+        <AngleRight />
+      </Setting>
+      <Hr />
       <Setting
         onPress={() => {
           haptic('impactLight');
           goToWalletConnect();
         }}>
         <ConnectionItemContainer>
-          <WalletConnectIconContainer>
-            <WalletConnectIcon />
-          </WalletConnectIconContainer>
+          <ConnectionIconContainer>
+            <WalletConnectIcon width={30} height={25} />
+          </ConnectionIconContainer>
           <SettingTitle>WalletConnect</SettingTitle>
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>
       <Hr />
-      <Setting onPress={() => goToCoinbase()}>
+      <Setting
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(
+            logSegmentEvent('track', 'Clicked ZenLedger', {
+              context: 'Settings Connections',
+            }),
+          );
+          setShowModal(true);
+        }}>
         <ConnectionItemContainer>
-          {CoinbaseIconContainer}
-          <SettingTitle>Coinbase</SettingTitle>
+          <ConnectionIconContainer>
+            <ZenLedgerIcon width={30} height={25} />
+          </ConnectionIconContainer>
+          <SettingTitle>ZenLedger Taxes</SettingTitle>
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>
+
+      <ZenLedgerModal
+        isVisible={showModal}
+        onDismiss={() => {
+          setShowModal(false);
+        }}
+      />
     </SettingsComponent>
   );
 };

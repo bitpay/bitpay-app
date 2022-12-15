@@ -111,6 +111,7 @@ export interface AppState {
   failedAppInit: boolean;
   checkingBiometricForSending: boolean;
   onCompleteOnboardingList: Array<string>;
+  hasViewedZenLedgerWarning: boolean;
 }
 
 const initialState: AppState = {
@@ -180,6 +181,7 @@ const initialState: AppState = {
   failedAppInit: false,
   checkingBiometricForSending: false,
   onCompleteOnboardingList: [],
+  hasViewedZenLedgerWarning: false,
 };
 
 export const appReducer = (
@@ -571,6 +573,11 @@ export const appReducer = (
       return {
         ...state,
         onCompleteOnboardingList: [],
+      };
+    case AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING:
+      return {
+        ...state,
+        hasViewedZenLedgerWarning: true,
       };
 
     default:
