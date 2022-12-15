@@ -103,6 +103,7 @@ const FileOrText = () => {
 
       await dispatch(startGetRates({}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+      await sleep(1000);
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 

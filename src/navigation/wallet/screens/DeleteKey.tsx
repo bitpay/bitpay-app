@@ -98,6 +98,7 @@ const DeleteKey = () => {
         homeCarouselConfig.filter(item => item.id !== keyId),
       ),
     );
+    await sleep(1000);
     dispatch(updatePortfolioBalance());
     dispatch(AppActions.dismissOnGoingProcessModal());
     navigation.navigate('Tabs', {screen: 'Home'});
