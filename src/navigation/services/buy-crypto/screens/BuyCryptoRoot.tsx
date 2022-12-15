@@ -71,6 +71,7 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {getCoinAndChainFromCurrencyCode} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {orderBy} from 'lodash';
+import {showWalletError} from '../../../../store/wallet/effects/errors/errors';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -171,7 +172,7 @@ const BuyCryptoRoot: React.VFC<
     const keysList = Object.values(allKeys).filter(key => key.backupComplete);
 
     if (!keysList[0]) {
-      showError('emptyKeyList');
+      dispatch(showWalletError('emptyKeyList'));
       return;
     }
 
@@ -188,7 +189,7 @@ const BuyCryptoRoot: React.VFC<
       if (fromWalletData) {
         setWallet(fromWalletData);
       } else {
-        showError('walletNotSupported');
+        dispatch(showWalletError('walletNotSupported'));
       }
     } else {
       const availableKeys = keysList.filter(key => {
@@ -219,9 +220,13 @@ const BuyCryptoRoot: React.VFC<
         }
         allowedWallets[0]
           ? setSelectedWallet(allowedWallets[0])
-          : showError('noWalletsAbleToBuy', fromCurrencyAbbreviation);
+          : dispatch(
+              showWalletError('noWalletsAbleToBuy', fromCurrencyAbbreviation),
+            );
       } else {
-        showError('keysNoSupportedWallet', fromCurrencyAbbreviation);
+        dispatch(
+          showWalletError('keysNoSupportedWallet', fromCurrencyAbbreviation),
+        );
       }
     }
   };
@@ -282,13 +287,13 @@ const BuyCryptoRoot: React.VFC<
         if (allKeys[wallet.keyId].backupComplete) {
           setSelectedWallet(wallet);
         } else {
-          showError('needsBackup');
+          dispatch(showWalletError('needsBackup'));
         }
       } else {
-        showError('walletNotCompleted');
+        dispatch(showWalletError('walletNotCompleted'));
       }
     } else {
-      showError('walletNotSupported');
+      dispatch(showWalletError('walletNotSupported'));
     }
   };
 
@@ -455,74 +460,6 @@ const BuyCryptoRoot: React.VFC<
   };
   const checkPaymentMethodRef = useRef(checkPaymentMethod);
   checkPaymentMethodRef.current = checkPaymentMethod;
-
-  const showError = async (type?: string, coin?: string) => {
-    let title, message: string;
-    switch (type) {
-      case 'walletNotSupported':
-        title = t('Wallet not supported');
-        message = t(
-          'The selected wallet is currently not supported for buying cryptocurrencies',
-        );
-        break;
-      case 'needsBackup':
-        title = t('Needs backup');
-        message = t(
-          'The key of the selected wallet needs backup before being able to receive funds',
-        );
-        break;
-      case 'walletNotCompleted':
-        title = t('Incomplete Wallet');
-        message = t(
-          'The selected wallet needs to be complete before being able to receive funds',
-        );
-        break;
-      case 'noWalletsAbleToBuy':
-        title = t('No wallets');
-        message = coin
-          ? t('No wallets available to receive funds.', {
-              coin: coin.toUpperCase(),
-            })
-          : t('No wallets available to receive funds.');
-        break;
-      case 'keysNoSupportedWallet':
-        title = t('Not supported wallets');
-        message = coin
-          ? t('Your keys do not have wallets able to buy crypto', {
-              coin: coin.toUpperCase(),
-            })
-          : t('Your keys do not have supported wallets able to buy crypto');
-        break;
-      case 'emptyKeyList':
-        title = t('No keys with supported wallets');
-        message = t(
-          'There are no keys with wallets able to receive funds. Remember to backup your keys before using this feature.',
-        );
-        break;
-      default:
-        title = t('Error');
-        message = t('Unknown Error');
-        break;
-    }
-    await sleep(1000);
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title,
-        message,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('OK'),
-            action: () => {
-              dispatch(dismissBottomNotificationModal());
-            },
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
 
   const getLogoUri = (coin: string, _chain: string) => {
     if (
@@ -834,7 +771,7 @@ const BuyCryptoRoot: React.VFC<
               if (err.message === 'invalid password') {
                 dispatch(showBottomNotificationModal(WrongPasswordError()));
               } else {
-                showError(err.message);
+                dispatch(showWalletError(err.message));
               }
             }
           }

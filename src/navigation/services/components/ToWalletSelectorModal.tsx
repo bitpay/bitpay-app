@@ -194,6 +194,7 @@ interface ToWalletSelectorChainObj extends ToWalletSelectorCoinObj {
 const buildList = (
   category: ToWalletSelectorCustomCurrency[],
   wallets: Wallet[],
+  context?: string,
 ) => {
   let coins: ToWalletSelectorCoinObj[] = [];
   let chains: ToWalletSelectorChainObj[] = [];
@@ -220,7 +221,10 @@ const buildList = (
     });
   });
 
-  chains = coins.filter(coin => coin.chain === coin.currencyAbbreviation);
+  chains =
+    context === 'coinbase'
+      ? coins
+      : coins.filter(coin => coin.chain === coin.currencyAbbreviation);
   chains.forEach(chain => {
     if (SUPPORTED_EVM_COINS.includes(chain.currencyAbbreviation)) {
       chain.tokens = coins.filter(
@@ -300,7 +304,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   }
 
   const supportedCoins = useMemo(
-    () => buildList(customSupportedCurrencies, wallets),
+    () => buildList(customSupportedCurrencies, wallets, context),
     [wallets, customSupportedCurrencies],
   );
 
@@ -318,9 +322,11 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
       key,
       associatedWallet: undefined,
       currency: {
-        currencyAbbreviation: selectedCurrency.currencyAbbreviation,
+        currencyAbbreviation:
+          selectedCurrency.currencyAbbreviation.toLowerCase(),
         isToken:
-          selectedCurrency.currencyAbbreviation !== selectedCurrency.chain,
+          selectedCurrency.currencyAbbreviation.toLowerCase() !==
+          selectedCurrency.chain,
         chain: selectedCurrency.chain,
       },
       options: {
@@ -529,7 +535,10 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
         const linkedChain = supportedCoins.filter(
           coin => coin.currencyAbbreviation === 'eth' && coin.chain === 'eth',
         );
-        if (Object.keys(linkedChain[0]?.availableWalletsByKey)[0]) {
+        if (
+          linkedChain[0] &&
+          Object.keys(linkedChain[0]?.availableWalletsByKey)[0]
+        ) {
           setAddTokenToLinkedWallet(currency);
           openKeyWalletSelector(linkedChain[0]);
         } else {
@@ -576,7 +585,6 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
         <RowContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
-            // setSelectedCurrency(item);
             handleCurrencyOnPress(item);
           }}>
           <CurrencyImageContainer>
@@ -765,12 +773,14 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
               <SubText>{t('swapToWalletsConditionMessage')}</SubText>
             </TextAlign>
           )}
-          <SearchContainer>
-            <CurrencySelectionSearchInput
-              onSearch={setSearchFilter}
-              debounceWait={300}
-            />
-          </SearchContainer>
+          {context !== 'coinbase' && (
+            <SearchContainer>
+              <CurrencySelectionSearchInput
+                onSearch={setSearchFilter}
+                debounceWait={300}
+              />
+            </SearchContainer>
+          )}
           <GlobalSelectContainer>
             {filteredListItems && [...filteredListItems].length > 0 && (
               <FlatList
@@ -832,7 +842,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                   </NoWalletsMsg>
                 </WalletSelectMenuHeaderContainer>
                 <WalletSelectMenuBodyContainer>
-                  {cardsList?.list.map(data => {
+                  {cardsList?.list.map((data: any) => {
                     return <View key={data.id}>{data.component}</View>;
                   })}
                 </WalletSelectMenuBodyContainer>
