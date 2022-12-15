@@ -427,6 +427,8 @@ const RecoveryPhrase = () => {
   ): Promise<void> => {
     try {
       if (!derivationPathEnabled) {
+        startDeferredImport(importData, opts);
+        await sleep(500);
         dispatch(
           showBottomNotificationModal({
             type: 'wait',
@@ -438,9 +440,7 @@ const RecoveryPhrase = () => {
             actions: [
               {
                 text: t('GOT IT'),
-                action: () => {
-                  startDeferredImport(importData, opts);
-                },
+                action: () => {},
                 primary: true,
               },
             ],
