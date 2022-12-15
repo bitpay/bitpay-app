@@ -909,7 +909,7 @@ const SwapCryptoRoot: React.FC = () => {
   const init = async () => {
     try {
       dispatch(
-        startOnGoingProcessModal(t(OnGoingProcessMessages.GENERAL_AWAITING)),
+        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
       );
       await Promise.all([getChangellyCurrencies(), sleep(400)]);
     } catch (err) {
@@ -1256,9 +1256,7 @@ const SwapCryptoRoot: React.FC = () => {
 
               await sleep(500);
               await dispatch(
-                startOnGoingProcessModal(
-                  t(OnGoingProcessMessages.ADDING_WALLET),
-                ),
+                startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
               );
 
               const createdToWallet = await dispatch(

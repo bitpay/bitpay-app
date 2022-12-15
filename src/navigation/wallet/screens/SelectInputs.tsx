@@ -28,9 +28,7 @@ import {FlatList} from 'react-native';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {
   createProposalAndBuildTxDetails,
@@ -39,6 +37,7 @@ import {
 import {sleep} from '../../../utils/helper-methods';
 import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
 import _ from 'lodash';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
@@ -181,7 +180,7 @@ const SelectInputs = () => {
   const goToConfirmView = async () => {
     try {
       haptic('impactLight');
-      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
+      dispatch(startOnGoingProcessModal('LOADING'));
       const selectedInputs = inputs.filter(input => input.checked);
       logger.debug(
         `Estimating fee for: ${selectedInputs.length} selected inputs`,

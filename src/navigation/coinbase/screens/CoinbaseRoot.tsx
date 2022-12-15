@@ -3,7 +3,6 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import CoinbaseDashboard from '../components/CoinbaseDashboard';
@@ -15,10 +14,10 @@ import {
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
 export type CoinbaseRootScreenParamList =
   | {
@@ -79,12 +78,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
 
       if (!token && code && state && tokenStatus !== 'failed') {
         await sleep(1000);
-        dispatch(
-          showOnGoingProcessModal(
-            // t('Connecting with Coinbase...')
-            t(OnGoingProcessMessages.CONNECTING_COINBASE),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('CONNECTING_COINBASE'));
         await dispatch(coinbaseLinkAccount(code, state));
         // reset params to prevent re-triggering flow based on cached params when disconnecting
         navigation.setParams({code: undefined, state: undefined});

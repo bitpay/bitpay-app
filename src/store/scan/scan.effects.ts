@@ -42,7 +42,6 @@ import {
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
 import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -198,12 +197,7 @@ const goToPayPro =
   async dispatch => {
     dispatch(dismissOnGoingProcessModal());
 
-    dispatch(
-      startOnGoingProcessModal(
-        //  t('Fetching payment options...')
-        t(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
 
     const payProUrl = GetPayProUrl(data);
 
@@ -457,12 +451,7 @@ const goToConfirm =
       if (setButtonState) {
         setButtonState('loading');
       } else {
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Creating Transaction')
-            t(OnGoingProcessMessages.CREATING_TXP),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('CREATING_TXP'));
       }
 
       const {txDetails, txp} = await dispatch(

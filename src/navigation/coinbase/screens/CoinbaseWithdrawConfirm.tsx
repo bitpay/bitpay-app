@@ -29,7 +29,6 @@ import {
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import prompt from 'react-native-prompt-android';
@@ -109,12 +108,7 @@ const CoinbaseWithdrawConfirm = () => {
         amount: amount,
         currency: currency,
       };
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Sending Payment')
-          t(OnGoingProcessMessages.SENDING_PAYMENT),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
       await sleep(400);
       dispatch(coinbaseSendTransaction(accountId, buildTx, code));
     },

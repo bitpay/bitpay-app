@@ -29,7 +29,6 @@ import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
@@ -58,7 +57,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import Haptic from '../../../components/haptic-feedback/haptic';
@@ -404,7 +402,7 @@ const RecoveryPhrase = () => {
     opts: Partial<KeyOptions>,
   ) => {
     await sleep(0);
-    dispatch(showOnGoingProcessModal(OnGoingProcessMessages.REDIRECTING));
+    dispatch(startOnGoingProcessModal('REDIRECTING'));
     await sleep(350);
 
     let _context = route.params?.context;
@@ -447,12 +445,7 @@ const RecoveryPhrase = () => {
           }),
         );
       } else {
-        await dispatch(
-          startOnGoingProcessModal(
-            // t('Importing')
-            t(OnGoingProcessMessages.IMPORTING),
-          ),
-        );
+        await dispatch(startOnGoingProcessModal('IMPORTING'));
         const key = (await dispatch<any>(
           startImportWithDerivationPath(importData, opts),
         )) as Key;
@@ -520,12 +513,7 @@ const RecoveryPhrase = () => {
         }
       }
 
-      await dispatch(
-        startOnGoingProcessModal(
-          // t('Creating Key')
-          t(OnGoingProcessMessages.CREATING_KEY),
-        ),
-      );
+      await dispatch(startOnGoingProcessModal('CREATING_KEY'));
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
       await dispatch(startGetRates({}));

@@ -25,7 +25,6 @@ import SwipeButton from '../../../../components/swipe-button/SwipeButton';
 import {H5, H7} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import Checkbox from '../../../../components/checkbox/Checkbox';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   Wallet,
   TransactionProposal,
@@ -521,9 +520,7 @@ const ChangellyCheckout: React.FC = () => {
 
   const makePayment = async () => {
     try {
-      dispatch(
-        startOnGoingProcessModal(t(OnGoingProcessMessages.SENDING_PAYMENT)),
-      );
+      dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
       await sleep(400);
 
       const broadcastedTx = (await dispatch<any>(
@@ -662,12 +659,7 @@ const ChangellyCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Getting data from the exchange...')
-        t(OnGoingProcessMessages.EXCHANGE_GETTING_DATA),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
     createFixTransaction(1);
   }, []);
 

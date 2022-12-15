@@ -3,7 +3,6 @@ import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
@@ -59,9 +58,7 @@ export const setOnboardingCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_ONBOARDING_COMPLETED,
 });
 
-export const showOnGoingProcessModal = (
-  message: OnGoingProcessMessages,
-): AppActionType => ({
+export const showOnGoingProcessModal = (message: string): AppActionType => ({
   type: AppActionTypes.SHOW_ONGOING_PROCESS_MODAL,
   payload: message,
 });

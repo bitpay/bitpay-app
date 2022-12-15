@@ -49,9 +49,7 @@ import {
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {
   ToCashAddress,
@@ -412,12 +410,7 @@ const CoinbaseAccount = ({
     if (!account) {
       return;
     }
-    dispatch(
-      showOnGoingProcessModal(
-        // t('Fetching data from Coinbase...')
-        t(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
     dispatch(
       logSegmentEvent('track', 'Clicked Receive', {
         context: 'CoinbaseAccount',

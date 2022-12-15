@@ -449,9 +449,41 @@ export const requestBrazeContentRefresh = (): Effect => async dispatch => {
 };
 
 export const startOnGoingProcessModal =
-  (message: OnGoingProcessMessages): Effect<Promise<void>> =>
+  (key: OnGoingProcessMessages): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
     const store: RootState = getState();
+
+    const _OnGoingProcessMessages = {
+      GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
+      CREATING_KEY: i18n.t('Creating Key'),
+      LOGGING_IN: i18n.t('Logging In'),
+      PAIRING: i18n.t('Pairing'),
+      CREATING_ACCOUNT: i18n.t('Creating Account'),
+      UPDATING_ACCOUNT: i18n.t('Updating Account'),
+      IMPORTING: i18n.t('Importing'),
+      DELETING_KEY: i18n.t('Deleting Key'),
+      ADDING_WALLET: i18n.t('Adding Wallet'),
+      LOADING: i18n.t('Loading'),
+      FETCHING_PAYMENT_OPTIONS: i18n.t('Fetching payment options...'),
+      FETCHING_PAYMENT_INFO: i18n.t('Fetching payment information...'),
+      JOIN_WALLET: i18n.t('Joining Wallet'),
+      SENDING_PAYMENT: i18n.t('Sending Payment'),
+      ACCEPTING_PAYMENT: i18n.t('Accepting Payment'),
+      GENERATING_ADDRESS: i18n.t('Generating Address'),
+      GENERATING_GIFT_CARD: i18n.t('Generating Gift Card'),
+      SYNCING_WALLETS: i18n.t('Syncing Wallets...'),
+      REJECTING_CALL_REQUEST: i18n.t('Rejecting Call Request'),
+      SAVING_LAYOUT: i18n.t('Saving Layout'),
+      SAVING_ADDRESSES: i18n.t('Saving Addresses'),
+      EXCHANGE_GETTING_DATA: i18n.t('Getting data from the exchange...'),
+      CALCULATING_FEE: i18n.t('Calculating Fee'),
+      CONNECTING_COINBASE: i18n.t('Connecting with Coinbase...'),
+      FETCHING_COINBASE_DATA: i18n.t('Fetching data from Coinbase...'),
+      UPDATING_TXP: i18n.t('Updating Transaction'),
+      CREATING_TXP: i18n.t('Creating Transaction'),
+      SENDING_EMAIL: i18n.t('Sending Email'),
+      REDIRECTING: i18n.t('Redirecting'),
+    };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next
     if (store.APP.showOnGoingProcessModal) {
@@ -459,7 +491,10 @@ export const startOnGoingProcessModal =
       await sleep(500);
     }
 
-    dispatch(AppActions.showOnGoingProcessModal(message));
+    // Translate message before show message
+    const _message = _OnGoingProcessMessages[key];
+
+    dispatch(AppActions.showOnGoingProcessModal(_message));
     return sleep(100);
   };
 

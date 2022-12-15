@@ -6,7 +6,6 @@ import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
 import CardApi from '../../api/card';
 import {InitialUserData} from '../../api/user/user.types';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../utils/helper-methods';
 import {AppActions} from '../app';
 import {Analytics} from '../app/app.effects';
@@ -131,12 +130,7 @@ export const startFetchOverview =
   ): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        AppActions.showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(AppActions.showOnGoingProcessModal('LOADING'));
       dispatch(CardActions.updateFetchOverviewStatus(id, 'loading'));
 
       const {APP, BITPAY_ID, CARD} = getState();
@@ -237,12 +231,7 @@ export const startFetchSettledTransactions =
   ): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        AppActions.showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(AppActions.showOnGoingProcessModal('LOADING'));
 
       const {APP, BITPAY_ID, CARD} = getState();
       const token = BITPAY_ID.apiToken[APP.network];
