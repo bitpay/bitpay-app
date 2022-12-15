@@ -611,12 +611,12 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
           <>
             {DESCRIPTIONS[currencyAbbreviation] ? (
               <DescriptionRow>
-                {t(DESCRIPTIONS[currencyAbbreviation])}
+                {DESCRIPTIONS[currencyAbbreviation]}
               </DescriptionRow>
             ) : null}
             {DESCRIPTIONS[currencyAbbreviation] ? (
               <TokensHeading>
-                {t('PopularArgTokens', {currency: t(currencyName)})}
+                {t('PopularArgTokens', {currency: currencyName})}
               </TokensHeading>
             ) : null}
           </>

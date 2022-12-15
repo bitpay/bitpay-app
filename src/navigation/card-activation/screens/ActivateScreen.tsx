@@ -149,7 +149,7 @@ const ActivateScreen: React.VFC<
       ? 'EnterArgToActivateYourCard'
       : 'EnterYourInformationToActivateYourCard';
   const descriptionArgs = fieldKeys.reduce((accum, key, idx) => {
-    accum[idx] = t(key);
+    accum[idx] = key;
 
     return accum;
   }, {} as Record<string, string>);
