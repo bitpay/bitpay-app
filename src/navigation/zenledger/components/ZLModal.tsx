@@ -16,6 +16,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
+  setHasViewedZenLedgerWarning,
   showBottomNotificationModal,
   showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
@@ -60,6 +61,9 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
   const {isVisible, onDismiss} = props;
   const dispatch = useAppDispatch();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const hasViewedZenLedgerWarning = useAppSelector(
+    ({APP}) => APP.hasViewedZenLedgerWarning,
+  );
 
   const allWallets = Object.values(keys)
     .filter((key: any) => key.backupComplete)
@@ -101,50 +105,43 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
         actions: [
           {
             text: t('GOT IT'),
-            action: async () => {
-              try {
-                haptic('impactLight');
-                dispatch(dismissBottomNotificationModal());
-                await sleep(500);
-                dispatch(
-                  showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)),
-                );
-                const {url} = (await dispatch<any>(
-                  getZenLedgerUrl(getRequestWallets()),
-                )) as any;
-                dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
-                onDismiss();
-                await sleep(500);
-                dispatch(openUrlWithInAppBrowser(url));
-              } catch (e) {
-                onDismiss();
-                await sleep(500);
-                dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
-                await showErrorMessage(
-                  CustomErrorMessage({
-                    errMsg: BWCErrorMessage(e),
-                    title: t('Uh oh, something went wrong'),
-                  }),
-                );
-              }
-            },
-            primary: true,
-          },
-          {
-            text: t('CANCEL'),
-            action: async () => {
+            action: () => {
               haptic('impactLight');
-              dispatch(dismissBottomNotificationModal());
-              await sleep(500);
-              onDismiss();
+              dispatch(setHasViewedZenLedgerWarning());
+              goToZenLedger();
             },
             primary: true,
           },
         ],
       }),
     );
+  };
+
+  const goToZenLedger = async () => {
+    try {
+      dispatch(dismissBottomNotificationModal());
+      await sleep(500);
+      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
+      const {url} = (await dispatch<any>(
+        getZenLedgerUrl(getRequestWallets()),
+      )) as any;
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      onDismiss();
+      await sleep(500);
+      dispatch(openUrlWithInAppBrowser(url));
+    } catch (e) {
+      onDismiss();
+      await sleep(500);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(e),
+          title: t('Uh oh, something went wrong'),
+        }),
+      );
+    }
   };
 
   return (
@@ -179,7 +176,12 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
         <ActionContainer>
           <Button
             onPress={() => {
-              showWarningMessage();
+              haptic('impactLight');
+              if (!hasViewedZenLedgerWarning) {
+                showWarningMessage();
+              } else {
+                goToZenLedger();
+              }
             }}>
             {t('Continue')}
           </Button>
