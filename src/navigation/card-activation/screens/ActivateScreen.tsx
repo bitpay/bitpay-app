@@ -153,7 +153,7 @@ const ActivateScreen: React.VFC<
 
     return accum;
   }, {} as Record<string, string>);
-  const description = t(descriptionKey, descriptionArgs);
+  const description = descriptionArgs[descriptionKey];
 
   const init = () => {
     if (!isActivationRequired(card)) {

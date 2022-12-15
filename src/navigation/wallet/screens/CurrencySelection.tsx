@@ -245,7 +245,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           },
           tokens: [],
           popularTokens: [],
-          description: DESCRIPTIONS[chain] ? t(DESCRIPTIONS[chain]) : '',
+          description: DESCRIPTIONS[chain] || '',
         };
 
         chainMap[chain] = item;

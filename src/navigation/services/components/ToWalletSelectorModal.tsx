@@ -667,8 +667,8 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                 onViewAllTokensPressed(item);
               }}>
               {viewAllChainSelected !== currencyAbbreviation
-                ? t('ViewAllArgTokens', {currency: t(currencyName)})
-                : t('MinimizeArgTokens', {currency: t(currencyName)})}
+                ? t('ViewAllArgTokens', {currency: currencyName})
+                : t('MinimizeArgTokens', {currency: currencyName})}
             </ViewAllLink>
           </TokensFooter>
         ) : null}

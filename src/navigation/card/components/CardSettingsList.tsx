@@ -338,7 +338,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             return (
               <React.Fragment key={link.labelKey}>
                 <Link onPress={() => openUrl(link.url, link.download)}>
-                  {t(link.labelKey)}
+                  {link.labelKey}
                 </Link>
 
                 {idx < links.length - 1 ? <Br /> : null}

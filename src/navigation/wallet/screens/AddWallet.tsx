@@ -299,7 +299,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       showBottomNotificationModal({
         type: 'info',
         title: t('Missing wallet'),
-        message: t(DESCRIPTIONS[chain]),
+        message: DESCRIPTIONS[chain],
         actions: [
           {
             primary: true,
