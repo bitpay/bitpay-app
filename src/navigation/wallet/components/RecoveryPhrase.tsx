@@ -652,6 +652,7 @@ const RecoveryPhrase = () => {
               value={value}
               autoCorrect={false}
               spellCheck={false}
+              textContentType={'password'}
             />
           )}
           name="text"
