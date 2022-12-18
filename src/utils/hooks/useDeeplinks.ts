@@ -176,10 +176,11 @@ export const useDeeplinks = () => {
         const urlParams = urlObj.searchParams;
 
         if (!handled) {
-          // true if should be handled by AppsFlyer SDK
           const isAppsFlyerDeeplink = urlParams.get('af_deeplink') === 'true';
+          const hasEmbeddedDeepLink = !!urlParams.get('deep_link_value');
 
-          handled = !!isAppsFlyerDeeplink;
+          // true if should be handled by AppsFlyer SDK
+          handled = !!(isAppsFlyerDeeplink && hasEmbeddedDeepLink);
         }
 
         if (!handled) {
