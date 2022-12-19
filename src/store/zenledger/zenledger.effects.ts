@@ -1,11 +1,11 @@
 import {Effect} from '..';
 import {LogActions} from '../log';
 import axios from 'axios';
-import {ZLRequestWalletsType} from './zenledger.models';
+import {ZenLedgerRequestWalletsType} from './zenledger.models';
 import {ZENLEDGER_CLIENT_ID} from '@env';
 
 export const getZenLedgerUrl =
-  (wallets: ZLRequestWalletsType[]): Effect<Promise<string>> =>
+  (wallets: ZenLedgerRequestWalletsType[]): Effect<Promise<string>> =>
   async dispatch => {
     try {
       dispatch(LogActions.info('starting [getZenLedgerUrl]'));

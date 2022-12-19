@@ -14,7 +14,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {Analytics} from '../../../../store/app/app.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import ZenLedgerModal from '../../../zenledger/components/ZLModal';
+import ZenLedgerModal from '../../../zenledger/components/ZenLedgerModal';
 import {SettingsComponent} from '../SettingsRoot';
 
 interface ConnectionsProps {

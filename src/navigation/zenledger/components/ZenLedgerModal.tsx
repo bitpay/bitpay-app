@@ -27,7 +27,7 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {ZLRequestWalletsType} from '../../../store/zenledger/zenledger.models';
+import {ZenLedgerRequestWalletsType} from '../../../store/zenledger/zenledger.models';
 import ZenLedgerLogo from './ZenLedgerLogo';
 
 const ZenLedgerModalContainer = styled.View`
@@ -56,7 +56,7 @@ interface ZenLedgerModalConfig {
   onDismiss: () => any;
 }
 
-const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
+const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
   const {t} = useTranslation();
   const {isVisible, onDismiss} = props;
   const dispatch = useAppDispatch();
@@ -71,7 +71,7 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
     .filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
   const getRequestWallets = () => {
-    let requestWallets: ZLRequestWalletsType[] = [];
+    let requestWallets: ZenLedgerRequestWalletsType[] = [];
     allWallets.forEach(wallet => {
       const {receiveAddress, walletName = '', chain} = wallet;
       if (receiveAddress) {
