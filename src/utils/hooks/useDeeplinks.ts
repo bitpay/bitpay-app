@@ -50,11 +50,6 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
             [CardScreens.PAIRING]: 'pairing',
           },
         },
-        [TabsScreens.SETTINGS]: {
-          screens: {
-            [SettingsScreens.Root]: 'connections/:redirectTo',
-          },
-        },
       },
     } as PathConfig<TabsStackParamList>,
     [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
