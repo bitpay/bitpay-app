@@ -99,7 +99,7 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
         type: 'warning',
         title: t('Connect to ZenLedger'),
         message: t(
-          'After you create a ZenLedger account or log in with your existing account, BitPay will automatically send your Wallet Addresses to Zenledger to be imported.',
+          'After you log in or create a ZenLedger account, BitPay will automatically send your Wallet Addresses to Zenledger to be imported.',
         ),
         enableBackdropDismiss: true,
         actions: [
@@ -167,9 +167,9 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
         </TextAlign>
         <View style={{marginBottom: 16}}>
           <ZenLedgerDescription>
-            {
-              'ZenLedger makes crypto taxes easy. Log In or Create your ZenLedger Account and BitPay will import your wallets for you.'
-            }
+            {t(
+              'ZenLedger makes crypto taxes easy. Log in or create a ZenLedger account and BitPay will import your wallets for you.',
+            )}
           </ZenLedgerDescription>
         </View>
 
