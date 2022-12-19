@@ -125,8 +125,35 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
-      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
       const requestWallets = getRequestWallets();
+      if (!requestWallets.length) {
+        const onDone = () => {
+          dispatch(dismissBottomNotificationModal());
+        };
+
+        dispatch(
+          showBottomNotificationModal({
+            title: t('No wallets available'),
+            type: 'info',
+            message: t('Create or import a wallet, then try again.'),
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {
+                  onDone();
+                },
+              },
+            ],
+            enableBackdropDismiss: true,
+            onBackdropDismiss: () => {
+              onDone();
+            },
+          }),
+        );
+        return;
+      }
+
+      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
       const {url} = await dispatch(getZenLedgerUrl(requestWallets));
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
@@ -150,6 +177,20 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
         }),
       );
     }
+  };
+
+  const onContinue = async () => {
+    haptic('impactLight');
+    dispatch(Analytics.track('Clicked ZenLedger Continue'));
+    onDismiss();
+    await sleep(500);
+
+    if (!hasViewedZenLedgerWarning) {
+      showWarningMessage();
+      return;
+    }
+
+    goToZenLedger();
   };
 
   return (
@@ -182,20 +223,7 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
         </View>
 
         <ActionContainer>
-          <Button
-            onPress={async () => {
-              haptic('impactLight');
-              dispatch(Analytics.track('Clicked ZenLedger Continue'));
-              onDismiss();
-              await sleep(500);
-              if (!hasViewedZenLedgerWarning) {
-                showWarningMessage();
-              } else {
-                goToZenLedger();
-              }
-            }}>
-            {t('Continue')}
-          </Button>
+          <Button onPress={onContinue}>{t('Continue')}</Button>
         </ActionContainer>
         <ActionContainer>
           <Button
