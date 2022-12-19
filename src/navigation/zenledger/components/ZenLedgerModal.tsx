@@ -23,7 +23,10 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {getZenLedgerUrl} from '../../../store/zenledger/zenledger.effects';
 import {sleep} from '../../../utils/helper-methods';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {
+  Analytics,
+  openUrlWithInAppBrowser,
+} from '../../../store/app/app.effects';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
@@ -121,20 +124,25 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
     try {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
+
       dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
-      const {url} = (await dispatch<any>(
-        getZenLedgerUrl(getRequestWallets()),
-      )) as any;
+      const requestWallets = getRequestWallets();
+      const {url} = await dispatch(getZenLedgerUrl(requestWallets));
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
+
       onDismiss();
       await sleep(500);
+
+      dispatch(Analytics.track('Opened ZenLedger'));
       dispatch(openUrlWithInAppBrowser(url));
     } catch (e) {
       onDismiss();
       await sleep(500);
+
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
+
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(e),
@@ -177,6 +185,7 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
           <Button
             onPress={async () => {
               haptic('impactLight');
+              dispatch(Analytics.track('Clicked ZenLedger Continue'));
               onDismiss();
               await sleep(500);
               if (!hasViewedZenLedgerWarning) {
@@ -190,7 +199,10 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
         </ActionContainer>
         <ActionContainer>
           <Button
-            onPress={onDismiss}
+            onPress={() => {
+              dispatch(Analytics.track('Clicked ZenLedger Cancel'));
+              onDismiss();
+            }}
             buttonStyle={'secondary'}
             buttonType={'link'}
             buttonOutline={true}>
