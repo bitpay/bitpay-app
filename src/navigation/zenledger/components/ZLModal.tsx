@@ -175,8 +175,10 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
 
         <ActionContainer>
           <Button
-            onPress={() => {
+            onPress={async () => {
               haptic('impactLight');
+              onDismiss();
+              await sleep(500);
               if (!hasViewedZenLedgerWarning) {
                 showWarningMessage();
               } else {
