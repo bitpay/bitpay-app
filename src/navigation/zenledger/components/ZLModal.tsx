@@ -10,7 +10,6 @@ import {LightBlack, White} from '../../../styles/colors';
 import Button from '../../../components/button/Button';
 import {H4, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import ZenLedgerLogo from '../../../../assets/img/zenledger/zenledger-logo.svg';
 import {View} from 'react-native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
@@ -29,6 +28,7 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {ZLRequestWalletsType} from '../../../store/zenledger/zenledger.models';
+import ZenLedgerLogo from './ZenLedgerLogo';
 
 const ZenLedgerModalContainer = styled.View`
   justify-content: center;
@@ -159,7 +159,7 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
       }}>
       <ZenLedgerModalContainer>
         <ZenLedgerLogoContainer>
-          <ZenLedgerLogo height={45} />
+          <ZenLedgerLogo />
         </ZenLedgerLogoContainer>
 
         <TextAlign align={'center'}>
@@ -175,8 +175,10 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
 
         <ActionContainer>
           <Button
-            onPress={() => {
+            onPress={async () => {
               haptic('impactLight');
+              onDismiss();
+              await sleep(500);
               if (!hasViewedZenLedgerWarning) {
                 showWarningMessage();
               } else {
