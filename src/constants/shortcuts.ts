@@ -4,7 +4,7 @@ import {ShortcutItem} from 'react-native-quick-actions';
 export const ShortcutList: Array<ShortcutItem> = [
   {
     type: 'buy',
-    title: 'Buy Cryptos',
+    title: 'Buy Crypto',
     icon: Platform.OS === 'ios' ? 'BuyCrypto' : 'ic_shortcut_buy_crypto',
     userInfo: {url: ''},
   },
