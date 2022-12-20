@@ -627,11 +627,7 @@ const CoinbaseAccount = ({
               }
 
               await sleep(500);
-              await dispatch(
-                startOnGoingProcessModal(
-                  t(OnGoingProcessMessages.ADDING_WALLET),
-                ),
-              );
+              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
               const createdToWallet = await dispatch(
                 addWallet(createNewWalletData),
               );

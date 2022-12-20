@@ -26,7 +26,6 @@ import {
   isInvalidTokenError,
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
@@ -217,9 +216,7 @@ const CoinbaseSettings = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
     await sleep(1000);
 
     try {
