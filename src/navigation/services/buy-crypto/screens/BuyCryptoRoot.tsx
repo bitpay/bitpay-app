@@ -27,7 +27,6 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {RootState} from '../../../../store';
 import {
   showBottomNotificationModal,
-  dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
 } from '../../../../store/app/app.actions';
 import {getBuyCryptoFiatLimits} from '../../../../store/buy-crypto/buy-crypto.effects';
@@ -72,6 +71,7 @@ import {getCoinAndChainFromCurrencyCode} from '../../../bitpay-id/utils/bitpay-i
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {orderBy} from 'lodash';
 import {showWalletError} from '../../../../store/wallet/effects/errors/errors';
+import {buildTestBadge} from '../../../../components/list/WalletRow';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -239,23 +239,32 @@ const BuyCryptoRoot: React.VFC<
   };
 
   const walletIsSupported = (wallet: Wallet): boolean => {
-    return (
-      wallet.credentials &&
-      ((wallet.network === 'livenet' &&
+    if (!__DEV__) {
+      return (
+        wallet.credentials &&
+        wallet.network === 'livenet' &&
         buyCryptoSupportedCoins.includes(
           getCurrencyAbbreviation(
             wallet.currencyAbbreviation.toLowerCase(),
             wallet.chain,
           ),
-        )) ||
-        (__DEV__ &&
-          wallet.network === 'testnet' &&
-          getWyreSupportedCurrencies().includes(
-            getCurrencyAbbreviation(
-              wallet.currencyAbbreviation.toLowerCase(),
-              wallet.chain,
-            ),
-          ))) &&
+        ) &&
+        wallet.isComplete() &&
+        !wallet.hideWallet &&
+        (!fromCurrencyAbbreviation ||
+          (wallet.currencyAbbreviation === fromCurrencyAbbreviation &&
+            (fromChain ? wallet.chain === fromChain : true)))
+      );
+    }
+    return (
+      wallet.credentials &&
+      wallet.network === 'testnet' &&
+      getWyreSupportedCurrencies().includes(
+        getCurrencyAbbreviation(
+          wallet.currencyAbbreviation.toLowerCase(),
+          wallet.chain,
+        ),
+      ) &&
       wallet.isComplete() &&
       !wallet.hideWallet &&
       (!fromCurrencyAbbreviation ||
@@ -620,6 +629,12 @@ const BuyCryptoRoot: React.VFC<
                   <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                     {selectedWallet.currencyAbbreviation.toUpperCase()}
                   </SelectedOptionText>
+                  {selectedWallet.network === 'testnet' &&
+                    buildTestBadge(
+                      selectedWallet.network,
+                      selectedWallet.chain,
+                      false,
+                    )}
                 </SelectedOptionCol>
                 <ArrowContainer>
                   <SelectorArrowDown
