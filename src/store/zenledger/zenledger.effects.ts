@@ -1,11 +1,11 @@
+import {ZENLEDGER_CLIENT_ID} from '@env';
+import axios from 'axios';
 import {Effect} from '..';
 import {LogActions} from '../log';
-import axios from 'axios';
-import {ZLRequestWalletsType} from './zenledger.models';
-import {ZENLEDGER_CLIENT_ID} from '@env';
+import {ZenLedgerRequestWalletsType} from './zenledger.models';
 
 export const getZenLedgerUrl =
-  (wallets: ZLRequestWalletsType[]): Effect<Promise<string>> =>
+  (wallets: ZenLedgerRequestWalletsType[]): Effect<Promise<{url: string}>> =>
   async dispatch => {
     try {
       dispatch(LogActions.info('starting [getZenLedgerUrl]'));
@@ -15,7 +15,7 @@ export const getZenLedgerUrl =
         },
       };
       const url = `https://stagingapi.zenledger.io/bitpay/wallets/${ZENLEDGER_CLIENT_ID}`;
-      const {data} = await axios.post(url, {wallets}, config);
+      const {data} = await axios.post<{url: string}>(url, {wallets}, config);
       dispatch(LogActions.info('successful [getZenLedgerUrl]'));
       return data;
     } catch (e) {

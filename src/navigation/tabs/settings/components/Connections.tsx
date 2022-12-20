@@ -1,21 +1,21 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
+import styled from 'styled-components/native';
+import AngleRight from '../../../../../assets/img/angle-right.svg';
+import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
+import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
+import ZenLedgerIcon from '../../../../../assets/img/zenledger/zenledger-icon.svg';
+import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {SettingsComponent} from '../SettingsRoot';
 import {
   Hr,
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
-import ZenLedgerIcon from '../../../../../assets/img/zenledger/zenledger-icon.svg';
-import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
-import AngleRight from '../../../../../assets/img/angle-right.svg';
-import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
-import ZenLedgerModal from '../../../zenledger/components/ZLModal';
+import {Analytics} from '../../../../store/app/app.effects';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import ZenLedgerModal from '../../../zenledger/components/ZenLedgerModal';
+import {SettingsComponent} from '../SettingsRoot';
 
 interface ConnectionsProps {
   redirectTo?: string;
@@ -32,17 +32,17 @@ const ConnectionIconContainer = styled.View`
   margin-right: 5px;
 `;
 
-const Connections: React.FC<ConnectionsProps> = props => {
+const Connections: React.VFC<ConnectionsProps> = props => {
   const {redirectTo} = props;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
 
-  const [showModal, setShowModal] = useState(false);
+  const [showZenLedgerModal, setShowZenLedgerModal] = useState(false);
 
   const goToWalletConnect = useCallback(() => {
     dispatch(
-      logSegmentEvent('track', 'Clicked WalletConnect', {
+      Analytics.track('Clicked WalletConnect', {
         context: 'Settings Connections',
       }),
     );
@@ -56,13 +56,13 @@ const Connections: React.FC<ConnectionsProps> = props => {
         params: {uri: undefined},
       });
     }
-  }, [connectors, navigation]);
+  }, [dispatch, connectors, navigation]);
 
   const token = useAppSelector(({COINBASE}) => COINBASE.token[COINBASE_ENV]);
   const goToCoinbase = () => {
     haptic('impactLight');
     dispatch(
-      logSegmentEvent('track', 'Clicked Connect Coinbase', {
+      Analytics.track('Clicked Connect Coinbase', {
         context: 'Settings Connections',
       }),
     );
@@ -85,9 +85,9 @@ const Connections: React.FC<ConnectionsProps> = props => {
       goToWalletConnect();
     } else if (redirectTo === 'zenledger') {
       navigation.setParams({redirectTo: undefined} as any);
-      setShowModal(true);
+      setShowZenLedgerModal(true);
     }
-  }, [redirectTo, goToWalletConnect, setShowModal, navigation]);
+  }, [redirectTo, goToWalletConnect, setShowZenLedgerModal, navigation]);
 
   return (
     <SettingsComponent>
@@ -119,11 +119,11 @@ const Connections: React.FC<ConnectionsProps> = props => {
         onPress={() => {
           haptic('impactLight');
           dispatch(
-            logSegmentEvent('track', 'Clicked ZenLedger', {
+            Analytics.track('Clicked ZenLedger', {
               context: 'Settings Connections',
             }),
           );
-          setShowModal(true);
+          setShowZenLedgerModal(true);
         }}>
         <ConnectionItemContainer>
           <ConnectionIconContainer>
@@ -135,9 +135,9 @@ const Connections: React.FC<ConnectionsProps> = props => {
       </Setting>
 
       <ZenLedgerModal
-        isVisible={showModal}
+        isVisible={showZenLedgerModal}
         onDismiss={() => {
-          setShowModal(false);
+          setShowZenLedgerModal(false);
         }}
       />
     </SettingsComponent>

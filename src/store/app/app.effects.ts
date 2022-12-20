@@ -85,9 +85,10 @@ import {
   getAvailableGiftCards,
   getCategoriesWithIntegrations,
 } from '../shop/shop.selectors';
+import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
-import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
+import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -1047,6 +1048,20 @@ export const incomingLink =
         navigationRef.navigate(RootStacks.BUY_CRYPTO, {
           screen: BuyCryptoScreens.ROOT,
           params,
+        });
+      };
+    } else if (pathSegments[0] === 'connections') {
+      const redirectTo = pathSegments[1];
+
+      handler = () => {
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.SETTINGS,
+          params: {
+            screen: SettingsScreens.Root,
+            params: {
+              redirectTo: redirectTo as any,
+            },
+          },
         });
       };
     } else if (pathSegments[0] === 'wallet') {

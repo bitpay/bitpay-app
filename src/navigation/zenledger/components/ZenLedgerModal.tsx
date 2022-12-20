@@ -23,12 +23,17 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {getZenLedgerUrl} from '../../../store/zenledger/zenledger.effects';
 import {sleep} from '../../../utils/helper-methods';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {
+  Analytics,
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {ZLRequestWalletsType} from '../../../store/zenledger/zenledger.models';
+import {ZenLedgerRequestWalletsType} from '../../../store/zenledger/zenledger.models';
 import ZenLedgerLogo from './ZenLedgerLogo';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 const ZenLedgerModalContainer = styled.View`
   justify-content: center;
@@ -56,7 +61,7 @@ interface ZenLedgerModalConfig {
   onDismiss: () => any;
 }
 
-const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
+const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
   const {t} = useTranslation();
   const {isVisible, onDismiss} = props;
   const dispatch = useAppDispatch();
@@ -70,18 +75,29 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
     .flatMap(key => key.wallets)
     .filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
-  const getRequestWallets = () => {
-    let requestWallets: ZLRequestWalletsType[] = [];
-    allWallets.forEach(wallet => {
-      const {receiveAddress, walletName = '', chain} = wallet;
-      if (receiveAddress) {
-        requestWallets.push({
-          address: receiveAddress,
-          blockchain: chain,
-          display_name: walletName,
-        });
-      }
-    });
+  const getRequestWallets = async () => {
+    let requestWallets: ZenLedgerRequestWalletsType[] = [];
+
+    await Promise.all(
+      allWallets.map(async wallet => {
+        let {receiveAddress, walletName = '', chain} = wallet;
+
+        if (!receiveAddress) {
+          receiveAddress = await dispatch(
+            createWalletAddress({wallet, newAddress: false}),
+          );
+        }
+
+        if (receiveAddress) {
+          requestWallets.push({
+            address: receiveAddress,
+            blockchain: chain,
+            display_name: walletName,
+          });
+        }
+      }),
+    );
+
     return requestWallets;
   };
 
@@ -99,7 +115,7 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
         type: 'warning',
         title: t('Connect to ZenLedger'),
         message: t(
-          'After you create a ZenLedger account or log in with your existing account, BitPay will automatically send your Wallet Addresses to Zenledger to be imported.',
+          'After you log in or create a ZenLedger account, BitPay will automatically send your Wallet Addresses to Zenledger to be imported.',
         ),
         enableBackdropDismiss: true,
         actions: [
@@ -121,20 +137,59 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
     try {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
-      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
-      const {url} = (await dispatch<any>(
-        getZenLedgerUrl(getRequestWallets()),
-      )) as any;
+
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+      );
+      await sleep(500);
+      const requestWallets = await getRequestWallets();
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
+
+      if (!requestWallets.length) {
+        const onDone = () => {
+          dispatch(dismissBottomNotificationModal());
+        };
+
+        dispatch(
+          showBottomNotificationModal({
+            title: t('No wallets available'),
+            type: 'info',
+            message: t('Create or import a wallet, then try again.'),
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {
+                  onDone();
+                },
+              },
+            ],
+            enableBackdropDismiss: true,
+            onBackdropDismiss: () => {
+              onDone();
+            },
+          }),
+        );
+        return;
+      }
+
+      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
+      const {url} = await dispatch(getZenLedgerUrl(requestWallets));
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+
       onDismiss();
       await sleep(500);
+
+      dispatch(Analytics.track('Opened ZenLedger'));
       dispatch(openUrlWithInAppBrowser(url));
     } catch (e) {
       onDismiss();
       await sleep(500);
+
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
+
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(e),
@@ -142,6 +197,20 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
         }),
       );
     }
+  };
+
+  const onContinue = async () => {
+    haptic('impactLight');
+    dispatch(Analytics.track('Clicked ZenLedger Continue'));
+    onDismiss();
+    await sleep(500);
+
+    if (!hasViewedZenLedgerWarning) {
+      showWarningMessage();
+      return;
+    }
+
+    goToZenLedger();
   };
 
   return (
@@ -167,30 +236,21 @@ const ZenLedgerModal = (props: ZenLedgerModalConfig) => {
         </TextAlign>
         <View style={{marginBottom: 16}}>
           <ZenLedgerDescription>
-            {
-              'ZenLedger makes crypto taxes easy. Log In or Create your ZenLedger Account and BitPay will import your wallets for you.'
-            }
+            {t(
+              'ZenLedger makes crypto taxes easy. Log in or create a ZenLedger account and BitPay will import your wallets for you.',
+            )}
           </ZenLedgerDescription>
         </View>
 
         <ActionContainer>
-          <Button
-            onPress={async () => {
-              haptic('impactLight');
-              onDismiss();
-              await sleep(500);
-              if (!hasViewedZenLedgerWarning) {
-                showWarningMessage();
-              } else {
-                goToZenLedger();
-              }
-            }}>
-            {t('Continue')}
-          </Button>
+          <Button onPress={onContinue}>{t('Continue')}</Button>
         </ActionContainer>
         <ActionContainer>
           <Button
-            onPress={onDismiss}
+            onPress={() => {
+              dispatch(Analytics.track('Clicked ZenLedger Cancel'));
+              onDismiss();
+            }}
             buttonStyle={'secondary'}
             buttonType={'link'}
             buttonOutline={true}>
