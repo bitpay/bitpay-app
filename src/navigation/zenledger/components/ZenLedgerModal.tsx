@@ -80,11 +80,13 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
 
     await Promise.all(
       allWallets.map(async wallet => {
-        if (!wallet.receiveAddress) {
-          await dispatch(createWalletAddress({wallet, newAddress: false}));
-        }
+        let {receiveAddress, walletName = '', chain} = wallet;
 
-        const {receiveAddress, walletName = '', chain} = wallet;
+        if (!receiveAddress) {
+          receiveAddress = await dispatch(
+            createWalletAddress({wallet, newAddress: false}),
+          );
+        }
 
         if (receiveAddress) {
           requestWallets.push({
