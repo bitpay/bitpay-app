@@ -26,12 +26,14 @@ import {sleep} from '../../../utils/helper-methods';
 import {
   Analytics,
   openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {ZenLedgerRequestWalletsType} from '../../../store/zenledger/zenledger.models';
 import ZenLedgerLogo from './ZenLedgerLogo';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 const ZenLedgerModalContainer = styled.View`
   justify-content: center;
@@ -73,18 +75,27 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
     .flatMap(key => key.wallets)
     .filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
-  const getRequestWallets = () => {
+  const getRequestWallets = async () => {
     let requestWallets: ZenLedgerRequestWalletsType[] = [];
-    allWallets.forEach(wallet => {
-      const {receiveAddress, walletName = '', chain} = wallet;
-      if (receiveAddress) {
-        requestWallets.push({
-          address: receiveAddress,
-          blockchain: chain,
-          display_name: walletName,
-        });
-      }
-    });
+
+    await Promise.all(
+      allWallets.map(async wallet => {
+        if (!wallet.receiveAddress) {
+          await dispatch(createWalletAddress({wallet, newAddress: false}));
+        }
+
+        const {receiveAddress, walletName = '', chain} = wallet;
+
+        if (receiveAddress) {
+          requestWallets.push({
+            address: receiveAddress,
+            blockchain: chain,
+            display_name: walletName,
+          });
+        }
+      }),
+    );
+
     return requestWallets;
   };
 
@@ -125,7 +136,14 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
-      const requestWallets = getRequestWallets();
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+      );
+      await sleep(500);
+      const requestWallets = await getRequestWallets();
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+
       if (!requestWallets.length) {
         const onDone = () => {
           dispatch(dismissBottomNotificationModal());
