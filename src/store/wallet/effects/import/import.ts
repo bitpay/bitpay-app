@@ -846,7 +846,7 @@ export const deferredImportMnemonic =
       const {words, xPrivKey} = importData;
       opts.words = normalizeMnemonic(words);
       opts.xPrivKey = xPrivKey;
-      await dispatch(serverAssistedImport(opts, context));
+      dispatch(serverAssistedImport(opts, context));
     } catch (e: any) {
       dispatch(onFailedDeferredImport(e));
     }
@@ -931,7 +931,7 @@ const onSuccessServerAssistedImport =
         }),
       );
 
-      await dispatch(startGetRates({}));
+      await dispatch(startGetRates({force: true})); // Force getRates function to get rates for new tokens if exists
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await sleep(1000);
       dispatch(updatePortfolioBalance());
