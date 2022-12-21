@@ -57,7 +57,6 @@ import {
   normalizeMnemonic,
   serverAssistedImport,
 } from '../../../store/wallet/effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import merge from 'lodash.merge';
 import {
   syncWallets,
@@ -193,12 +192,7 @@ const KeySettings = () => {
       // To close decrypt modal
       await sleep(500);
     }
-    await dispatch(
-      startOnGoingProcessModal(
-        // t('Syncing Wallets...')
-        t(OnGoingProcessMessages.SYNCING_WALLETS),
-      ),
-    );
+    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
     const opts = {
       words: normalizeMnemonic(mnemonic),
       mnemonic,

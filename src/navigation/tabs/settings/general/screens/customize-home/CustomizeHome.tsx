@@ -16,10 +16,8 @@ import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   setHomeCarouselLayoutType,
-  showOnGoingProcessModal,
 } from '../../../../../../store/app/app.actions';
 import {useNavigation} from '@react-navigation/native';
-import {OnGoingProcessMessages} from '../../../../../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../../../../../utils/helper-methods';
 import haptic from '../../../../../../components/haptic-feedback/haptic';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
@@ -41,7 +39,10 @@ import {
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../../../store/app/app.effects';
 
 enum LayoutTypes {
   CAROUSEL = 'Carousel',
@@ -118,12 +119,7 @@ const CustomizeHome = () => {
         <Button
           disabled={!dirty}
           onPress={async () => {
-            dispatch(
-              showOnGoingProcessModal(
-                // t('Saving Layout')
-                t(OnGoingProcessMessages.SAVING_LAYOUT),
-              ),
-            );
+            dispatch(startOnGoingProcessModal('SAVING_LAYOUT'));
             await sleep(1000);
             const list = [...visibleList, ...hiddenList].map(({key, show}) => ({
               id: key,
@@ -196,8 +192,7 @@ const CustomizeHome = () => {
             },
           }}>
           <Tab.Screen
-            /*  t('Carousel')*/
-            name={t(LayoutTypes.CAROUSEL)}
+            name={t('Carousel')}
             component={Noop}
             options={{
               tabBarIcon: ({focused}) => (
@@ -206,8 +201,7 @@ const CustomizeHome = () => {
             }}
           />
           <Tab.Screen
-            /*  t('List View')*/
-            name={t(LayoutTypes.LIST_VIEW)}
+            name={t('List View')}
             component={Noop}
             options={{
               tabBarIcon: ({focused}) => (

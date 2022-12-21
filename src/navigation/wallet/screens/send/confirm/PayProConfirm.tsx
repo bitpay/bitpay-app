@@ -25,7 +25,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
@@ -115,12 +114,7 @@ const PayProConfirm = () => {
   };
 
   const createTxp = async (selectedWallet: Wallet) => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Fetching payment information...')
-        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
     try {
       const fetchedInvoice = await fetchInvoice(payProOptions.payProUrl);
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
@@ -203,12 +197,7 @@ const PayProConfirm = () => {
   };
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Fetching payment information...')
-        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
     try {
       const fetchedInvoice = await fetchInvoice(payProOptions.payProUrl);
@@ -239,12 +228,7 @@ const PayProConfirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Sending Payment')
-        t(OnGoingProcessMessages.SENDING_PAYMENT),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
     txp && wallet && recipient
       ? await dispatch(startSendPayment({txp, key, wallet, recipient}))
       : await dispatch(

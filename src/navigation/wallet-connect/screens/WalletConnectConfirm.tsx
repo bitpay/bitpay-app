@@ -20,7 +20,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -122,12 +121,7 @@ const WalletConnectConfirm = () => {
 
   const approveCallRequest = async () => {
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Sending Payment')
-          t(OnGoingProcessMessages.SENDING_PAYMENT),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
       const broadcastedTx = (await dispatch<any>(
         startSendPayment({txp, key, wallet, recipient}),
       )) as any;
@@ -181,12 +175,7 @@ const WalletConnectConfirm = () => {
   const rejectCallRequest = useCallback(async () => {
     haptic('impactLight');
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Rejecting Call Request')
-          t(OnGoingProcessMessages.REJECTING_CALL_REQUEST),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('REJECTING_CALL_REQUEST'));
       const response = {
         id: request?.payload.id,
         error: {message: t('User rejected call request')},
@@ -232,12 +221,7 @@ const WalletConnectConfirm = () => {
 
   const updateTxProposal = async (newOpts: any) => {
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Updating Transaction')
-          t(OnGoingProcessMessages.UPDATING_TXP),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('UPDATING_TXP'));
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,

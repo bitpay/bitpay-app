@@ -39,7 +39,6 @@ import {SwapCryptoStackParamList} from '../SwapCryptoStack';
 import Button from '../../../../components/button/Button';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import FromWalletSelectorModal from '../components/FromWalletSelectorModal';
 import ToWalletSelectorModal from '../../components/ToWalletSelectorModal';
 import AmountModal from '../../../../components/amount/AmountModal';
@@ -908,9 +907,7 @@ const SwapCryptoRoot: React.FC = () => {
 
   const init = async () => {
     try {
-      dispatch(
-        startOnGoingProcessModal(t(OnGoingProcessMessages.GENERAL_AWAITING)),
-      );
+      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
       await Promise.all([getChangellyCurrencies(), sleep(400)]);
     } catch (err) {
       logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
@@ -1255,11 +1252,7 @@ const SwapCryptoRoot: React.FC = () => {
               }
 
               await sleep(500);
-              await dispatch(
-                startOnGoingProcessModal(
-                  t(OnGoingProcessMessages.ADDING_WALLET),
-                ),
-              );
+              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
 
               const createdToWallet = await dispatch(
                 addWallet(createToWalletData),

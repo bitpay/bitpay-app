@@ -39,7 +39,6 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {BchLegacyAddressInfo, Mismatch} from './ErrorMessages';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {Recipient} from '../../../store/wallet/wallet.models';
 import KeyWalletsRow, {
   KeyWallet,
@@ -217,12 +216,7 @@ const SendToAddress = () => {
       let address = receiveAddress;
 
       if (!address) {
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Generating Address')
-            t(OnGoingProcessMessages.GENERATING_ADDRESS),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
         address = (await dispatch<any>(
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         )) as string;

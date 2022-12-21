@@ -17,7 +17,6 @@ import {Controller, useForm} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {AppActions} from '../../../store/app';
@@ -160,9 +159,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
   };
 
   const toggleTwoFactor = async (twoFactorCode: string) => {
-    dispatch(
-      startOnGoingProcessModal(t(OnGoingProcessMessages.UPDATING_ACCOUNT)),
-    );
+    dispatch(startOnGoingProcessModal('UPDATING_ACCOUNT'));
     await requestTwoFactorChange(twoFactorCode);
     await dispatch(dismissOnGoingProcessModal());
     if (otpEnabled) {

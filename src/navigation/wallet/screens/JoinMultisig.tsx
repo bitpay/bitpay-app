@@ -28,7 +28,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {RouteProp} from '@react-navigation/core';
@@ -109,12 +108,7 @@ const JoinMultisig = () => {
           opts.password = await dispatch(getDecryptPassword(key));
         }
 
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Joining Wallet')
-            t(OnGoingProcessMessages.JOIN_WALLET),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('JOIN_WALLET'));
 
         const wallet = (await dispatch<any>(
           addWalletJoinMultisig({
@@ -201,12 +195,7 @@ const JoinMultisig = () => {
           },
         );
       } else {
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Joining Wallet')
-            t(OnGoingProcessMessages.JOIN_WALLET),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('JOIN_WALLET'));
 
         const multisigKey = (await dispatch<any>(
           startJoinMultisig(opts),

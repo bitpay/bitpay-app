@@ -3,12 +3,10 @@ import {IWalletConnectSession} from '@walletconnect/types';
 import React, {useCallback, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {walletConnectKillSession} from '../../../store/wallet-connect/wallet-connect.effects';
 import {sleep} from '../../../utils/helper-methods';
@@ -30,6 +28,7 @@ import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import ConnectionSkeletonRow from './ConnectionSkeletonRow';
 import {useTranslation} from 'react-i18next';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
 const NestedArrowContainer = styled.View`
   padding-right: 11px;
@@ -126,12 +125,7 @@ export default ({
                       try {
                         dispatch(dismissBottomNotificationModal());
                         await sleep(500);
-                        dispatch(
-                          showOnGoingProcessModal(
-                            //  t('Loading')
-                            t(OnGoingProcessMessages.LOADING),
-                          ),
-                        );
+                        dispatch(startOnGoingProcessModal('LOADING'));
                         dispatch(walletConnectKillSession(peerId));
                       } catch (e) {
                         await showErrorMessage(

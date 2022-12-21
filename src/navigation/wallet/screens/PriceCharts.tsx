@@ -32,9 +32,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -54,7 +52,10 @@ import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -258,24 +259,14 @@ const PriceCharts = () => {
 
   const redrawChart = async (dateRange: DateRanges) => {
     if (cachedRates[dateRange].domain) {
-      dispatch(
-        showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOADING'));
       await sleep(500);
       setDisplayData(cachedRates[dateRange]);
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
     } else {
       try {
-        dispatch(
-          showOnGoingProcessModal(
-            // t('Loading')
-            t(OnGoingProcessMessages.LOADING),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('LOADING'));
         await sleep(500);
         let {data, domain, percentChange}: ChartDataType =
           await getHistoricalFiatRates(dateRange);

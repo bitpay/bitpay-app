@@ -28,10 +28,9 @@ import {sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {useAppDispatch} from '../../../utils/hooks';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
 export type SendToOptionsParamList = {
   title: string;
@@ -204,7 +203,7 @@ const SendToOptions = () => {
 
   const goToConfirmView = async () => {
     try {
-      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
+      dispatch(startOnGoingProcessModal('LOADING'));
       const amount = _.sumBy(recipientList, 'amount');
       const tx = {
         wallet,

@@ -12,7 +12,6 @@ import {sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import Button from '../../../components/button/Button';
@@ -27,12 +26,14 @@ import {
   isInvalidTokenError,
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {toggleHideCoinbaseTotalBalance} from '../../../store/coinbase/coinbase.actions';
 
@@ -215,12 +216,7 @@ const CoinbaseSettings = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    dispatch(
-      showOnGoingProcessModal(
-        // t('Fetching data from Coinbase...')
-        t(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
     await sleep(1000);
 
     try {

@@ -59,7 +59,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
@@ -433,12 +432,7 @@ const SendTo = () => {
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
         const invoiceUrl = GetPayProUrl(text);
-        dispatch(
-          startOnGoingProcessModal(
-            //  t('Fetching payment options...')
-            t(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
 
         const payProOptions = await GetPayProOptions(invoiceUrl);
         dispatch(dismissOnGoingProcessModal());
@@ -505,12 +499,7 @@ const SendTo = () => {
       let address = receiveAddress;
 
       if (!address) {
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Generating Address')
-            t(OnGoingProcessMessages.GENERATING_ADDRESS),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
         address = await dispatch<Promise<string>>(
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         );

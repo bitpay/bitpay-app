@@ -56,7 +56,6 @@ import {
   getDecryptPassword,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import InfoSvg from '../../../../assets/img/info.svg';
 import PlusIcon from '../../../components/plus/Plus';
 import MinusIcon from '../../../components/minus/Minus';
@@ -254,12 +253,7 @@ const CreateMultisig = () => {
           opts.password = await dispatch(getDecryptPassword(key));
         }
 
-        await dispatch(
-          startOnGoingProcessModal(
-            // t('Adding Wallet')
-            t(OnGoingProcessMessages.ADDING_WALLET),
-          ),
-        );
+        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
         const wallet = (await dispatch<any>(
           addWalletMultisig({
             key,
@@ -322,12 +316,7 @@ const CreateMultisig = () => {
           },
         );
       } else {
-        await dispatch(
-          startOnGoingProcessModal(
-            // t('Creating Key')
-            t(OnGoingProcessMessages.CREATING_KEY),
-          ),
-        );
+        await dispatch(startOnGoingProcessModal('CREATING_KEY'));
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
         )) as Key;

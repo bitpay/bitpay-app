@@ -26,7 +26,6 @@ import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
@@ -45,13 +44,13 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {convertHexToNumber} from '@walletconnect/utils';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {useTranslation} from 'react-i18next';
 import {
   GetAmFormatDate,
   GetAmTimeAgo,
   WithinPastDay,
 } from '../../../store/wallet/utils/time';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -111,12 +110,7 @@ const WalletConnectHome = () => {
     try {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
-      dispatch(
-        showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOADING'));
 
       const {
         to: toAddress,
