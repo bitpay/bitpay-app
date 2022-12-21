@@ -73,9 +73,12 @@
                 <data android:scheme="litecoin"/>
             </intent-filter>
             <intent-filter android:autoVerify="true" android:label="BitPay">
-                <data android:scheme="https"
-                    android:host="bitpay.onelink.me"
-                    android:pathPrefix="/K4yy" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="bitpay.onelink.me" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true" android:label="BitPay">
                 <data android:host="link.bitpay.com" android:pathPattern="*" android:pathPrefix="/i/"
                     android:scheme="https"/>
                 <data android:host="link.bitpay.com" android:pathPattern="*" android:pathPrefix="/wallet/wc"
