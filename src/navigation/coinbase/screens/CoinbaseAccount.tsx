@@ -82,6 +82,7 @@ import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOpti
 import {RootState} from '../../../store';
 import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
 import {showWalletError} from '../../../store/wallet/effects/errors/errors';
+import {batch} from 'react-redux';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -217,6 +218,7 @@ const CoinbaseAccount = ({
 
   const txsLoading = useAppSelector(({COINBASE}) => COINBASE.isApiLoading);
 
+  const [nextStartingAfter, setNextStartingAfter] = useState('');
   const [isLoading, setIsLoading] = useState<boolean>(txsLoading);
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [initialLoad, setInitialLoad] = useState<boolean>(true);
@@ -315,6 +317,30 @@ const CoinbaseAccount = ({
     }
   };
 
+  const loadTransactions = async (refresh?: boolean) => {
+    if (!nextStartingAfter && !refresh) {
+      return;
+    }
+    try {
+      batch(() => {
+        setIsLoading(!refresh);
+        setErrorLoadingTxs(false);
+      });
+
+      await dispatch(
+        coinbaseGetTransactionsByAccount(accountId, refresh, nextStartingAfter),
+      );
+
+      batch(() => {
+        setIsLoading(false);
+      });
+    } catch (e) {
+      setNextStartingAfter('');
+      setIsLoading(false);
+      setErrorLoadingTxs(true);
+    }
+  };
+
   useEffect(() => {
     // all wallets
     let availableWallets = Object.values(keys)
@@ -379,8 +405,11 @@ const CoinbaseAccount = ({
     }
 
     if (transactions && transactions[accountId]) {
-      const tx = transactions[accountId].data;
-      setTxs(tx);
+      const _transactions = transactions[accountId].data;
+      const _nextStartingAfter =
+        transactions[accountId].pagination.next_starting_after;
+      setTxs(_transactions);
+      setNextStartingAfter(_nextStartingAfter);
     }
 
     if (txsLoading) {
@@ -521,7 +550,7 @@ const CoinbaseAccount = ({
 
     try {
       await dispatch(coinbaseGetAccountsAndBalance());
-      await dispatch(coinbaseGetTransactionsByAccount(accountId));
+      await dispatch(coinbaseGetTransactionsByAccount(accountId, true));
     } catch (err: CoinbaseErrorsProps | any) {
       setRefreshing(false);
       showError(err);
@@ -606,6 +635,7 @@ const CoinbaseAccount = ({
         ItemSeparatorComponent={() => <BorderBottom />}
         ListFooterComponent={listFooterComponent}
         ListEmptyComponent={listEmptyComponent}
+        onEndReached={() => loadTransactions()}
       />
 
       <ToWalletSelectorModal

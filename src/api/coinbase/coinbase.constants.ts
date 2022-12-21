@@ -47,6 +47,7 @@ export const CREDENTIALS: CredentialsProps = {
 };
 export const API_VERSION = '2017-10-31'; // TODO: there is a newest version: 2020-02-11
 export const PAGE_LIMIT: number = 100;
+export const TRANSACTIONS_LIMIT: number = 25;
 export const COINBASE_INVOICE_URL: string =
   'https://bitpay.com/oauth/coinbase/pay/';
 
