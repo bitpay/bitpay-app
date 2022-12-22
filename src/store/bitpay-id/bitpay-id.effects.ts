@@ -33,8 +33,8 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdStoreInit =
-  (initialData: InitialUserData): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  (initialData: InitialUserData): Effect<void> =>
+  (dispatch, getState) => {
     const {APP} = getState();
     const {basicInfo: user} = initialData;
 
