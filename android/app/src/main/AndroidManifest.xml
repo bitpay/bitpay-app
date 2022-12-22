@@ -83,8 +83,7 @@
                 <data android:scheme="litecoin" />
             </intent-filter>
             <intent-filter
-                android:autoVerify="true"
-                android:label="BitPay">
+                android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -95,8 +94,7 @@
                     android:host="bitpay.onelink.me" />
             </intent-filter>
             <intent-filter
-                android:autoVerify="true"
-                android:label="BitPay">
+                android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -108,8 +106,7 @@
                     android:pathPrefix="/uni/" />
             </intent-filter>
             <intent-filter
-                android:autoVerify="true"
-                android:label="BitPay">
+                android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -121,8 +118,7 @@
                     android:pathPrefix="/uni/" />
             </intent-filter>
             <intent-filter
-                android:autoVerify="true"
-                android:label="BitPay">
+                android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -134,8 +130,7 @@
                     android:pathPrefix="/f/uni/" />
             </intent-filter>
             <intent-filter
-                android:autoVerify="true"
-                android:label="BitPay">
+                android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -187,39 +182,6 @@
 
                 <data
                     android:scheme="https"
-                    android:host="link.bitpay.com"
-                    android:pathPattern="*" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="link.bitpay.com"
-                    android:pathPrefix="/i/" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="link.bitpay.com"
-                    android:pathPrefix="/wallet/wc" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
                     android:host="link.test.bitpay.com"
                     android:pathPattern="*" />
             </intent-filter>
@@ -243,72 +205,6 @@
                 <data
                     android:scheme="https"
                     android:host="link.test.bitpay.com"
-                    android:pathPrefix="/wallet/wc" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="link.test.bitpay.com"
-                    android:pathPattern="*" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="link.test.bitpay.com"
-                    android:pathPrefix="/i/" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="link.test.bitpay.com"
-                    android:pathPrefix="/wallet/wc" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="link.staging.bitpay.com"
-                    android:pathPattern="*" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="link.staging.bitpay.com"
-                    android:pathPrefix="/i/" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="link.staging.bitpay.com"
                     android:pathPrefix="/wallet/wc" />
             </intent-filter>
             <intent-filter>
