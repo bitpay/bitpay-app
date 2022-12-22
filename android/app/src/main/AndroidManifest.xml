@@ -82,6 +82,7 @@
                 <data android:scheme="dogecoin" />
                 <data android:scheme="litecoin" />
             </intent-filter>
+            <!-- Handle all BitPay OneLink URIs -->
             <intent-filter
                 android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -93,6 +94,7 @@
                     android:scheme="https"
                     android:host="bitpay.onelink.me" />
             </intent-filter>
+            <!-- Handle universal links wrapped by SendGrid -->
             <intent-filter
                 android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -105,6 +107,7 @@
                     android:host="clicks.bitpay.com"
                     android:pathPrefix="/uni/" />
             </intent-filter>
+            <!-- Handle universal links wrapped by SendGrid -->
             <intent-filter
                 android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -117,6 +120,7 @@
                     android:host="email.bitpay.com"
                     android:pathPrefix="/uni/" />
             </intent-filter>
+            <!-- Handle universal links wrapped by SparkPost (sent from Braze) -->
             <intent-filter
                 android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -127,18 +131,6 @@
                 <data
                     android:scheme="https"
                     android:host="clicks.bitpay.com"
-                    android:pathPrefix="/f/uni/" />
-            </intent-filter>
-            <intent-filter
-                android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="email.bitpay.com"
                     android:pathPrefix="/f/uni/" />
             </intent-filter>
             <intent-filter
