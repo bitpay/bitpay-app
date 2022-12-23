@@ -461,8 +461,20 @@ const Confirm = () => {
               onChange={message => setTxp({...txp, message})}
             />
           ) : null}
-          <Amount description={t('SubTotal')} amount={subTotal} height={83} />
-          <Amount description={t('Total')} amount={total} height={83} />
+          <Amount
+            description={t('SubTotal')}
+            amount={subTotal}
+            height={83}
+            chain={chain}
+            network={wallet.credentials.network}
+          />
+          <Amount
+            description={t('Total')}
+            amount={total}
+            height={83}
+            chain={chain}
+            network={wallet.credentials.network}
+          />
         </DetailsList>
 
         <PaymentSent
