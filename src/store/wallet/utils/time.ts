@@ -9,6 +9,18 @@ export const WithinSameMonth = (time1: number, time2: number): boolean => {
   return GetMonthYear(date1) === GetMonthYear(date2);
 };
 
+export const WithinSameMonthTimestamp = (
+  time1: string,
+  time2: string,
+): boolean => {
+  if (!time1 || !time2) {
+    return false;
+  }
+  const _date1 = Date.parse(time1);
+  const _date2 = Date.parse(time2);
+  return WithinSameMonth(_date1, _date2);
+};
+
 export const GetMonthYear = (date: Date): string => {
   return `${date.getMonth()}-${date.getFullYear()}`;
 };
