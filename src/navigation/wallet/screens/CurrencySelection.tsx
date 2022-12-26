@@ -30,7 +30,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle, Link} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -246,7 +245,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
           },
           tokens: [],
           popularTokens: [],
-          description: DESCRIPTIONS[chain] ? t(DESCRIPTIONS[chain]) : '',
+          description: DESCRIPTIONS[chain] || '',
         };
 
         chainMap[chain] = item;
@@ -390,11 +389,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               : t('Add Wallet'),
           onCtaPress: async () => {
             try {
-              await dispatch(
-                startOnGoingProcessModal(
-                  t(OnGoingProcessMessages.CREATING_KEY),
-                ),
-              );
+              await dispatch(startOnGoingProcessModal('CREATING_KEY'));
               const createdKey = await dispatch(
                 startCreateKey(selectedCurrencies),
               );

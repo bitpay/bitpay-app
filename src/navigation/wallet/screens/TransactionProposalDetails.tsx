@@ -52,7 +52,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {publishAndSign} from '../../../store/wallet/effects/send/send';
 import PaymentSent from '../components/PaymentSent';
@@ -506,9 +505,7 @@ const TransactionProposalDetails = () => {
             try {
               dispatch(
                 startOnGoingProcessModal(
-                  lastSigner
-                    ? t(OnGoingProcessMessages.SENDING_PAYMENT)
-                    : t(OnGoingProcessMessages.ACCEPTING_PAYMENT),
+                  lastSigner ? 'SENDING_PAYMENT' : 'ACCEPTING_PAYMENT',
                 ),
               );
               await sleep(400);

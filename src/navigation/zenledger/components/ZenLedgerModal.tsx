@@ -17,10 +17,8 @@ import {
   dismissOnGoingProcessModal,
   setHasViewedZenLedgerWarning,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {getZenLedgerUrl} from '../../../store/zenledger/zenledger.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {
@@ -138,9 +136,7 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
-      dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
-      );
+      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
       await sleep(500);
       const requestWallets = await getRequestWallets();
       dispatch(dismissOnGoingProcessModal());
@@ -173,7 +169,7 @@ const ZenLedgerModal: React.VFC<ZenLedgerModalConfig> = props => {
         return;
       }
 
-      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
+      dispatch(startOnGoingProcessModal('LOADING'));
       const {url} = await dispatch(getZenLedgerUrl(requestWallets));
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);

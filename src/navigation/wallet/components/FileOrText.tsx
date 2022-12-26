@@ -30,7 +30,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {sleep} from '../../../utils/helper-methods';
@@ -92,12 +91,7 @@ const FileOrText = () => {
     opts: Partial<KeyOptions>,
   ) => {
     try {
-      await dispatch(
-        startOnGoingProcessModal(
-          // t('Importing')
-          t(OnGoingProcessMessages.IMPORTING),
-        ),
-      );
+      await dispatch(startOnGoingProcessModal('IMPORTING'));
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
 

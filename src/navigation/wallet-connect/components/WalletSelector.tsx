@@ -12,11 +12,9 @@ import {
 } from '../../../utils/helper-methods';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {walletConnectOnSessionRequest} from '../../../store/wallet-connect/wallet-connect.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -40,7 +38,10 @@ import cloneDeep from 'lodash.clonedeep';
 import _ from 'lodash';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {Platform} from 'react-native';
 import {WalletConnectCtaContainer} from '../styled/WalletConnectContainers';
@@ -169,12 +170,7 @@ export default ({
   const goToStartView = useCallback(
     async (wallet: Wallet, wcUri: string) => {
       try {
-        dispatch(
-          showOnGoingProcessModal(
-            // t('Loading')
-            t(OnGoingProcessMessages.LOADING),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('LOADING'));
         const peer = (await dispatch<any>(
           walletConnectOnSessionRequest(wcUri),
         )) as any;

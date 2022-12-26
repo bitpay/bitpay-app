@@ -10,7 +10,6 @@ import Button from '../../../components/button/Button';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import {useDispatch} from 'react-redux';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
 import {
@@ -68,12 +67,7 @@ const DeleteKey = () => {
   const startDeleteKey = async () => {
     setIsVisible(false);
     await sleep(500);
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Deleting Key')
-        t(OnGoingProcessMessages.DELETING_KEY),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('DELETING_KEY'));
 
     // Unsubscribe wallets to push/email notifications if enabled
     const keyObj = await findKeyByKeyId(keyId, keys);

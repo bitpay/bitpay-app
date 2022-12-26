@@ -2,7 +2,6 @@ import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
@@ -121,7 +120,7 @@ interface SetOnboardingCompleted {
 
 interface ShowOnGoingProcessModal {
   type: typeof AppActionTypes.SHOW_ONGOING_PROCESS_MODAL;
-  payload: OnGoingProcessMessages;
+  payload: string;
 }
 
 interface DismissOnGoingProcessModal {

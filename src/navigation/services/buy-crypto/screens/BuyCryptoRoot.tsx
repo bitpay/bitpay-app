@@ -66,7 +66,6 @@ import {
   AddWalletData,
   getDecryptPassword,
 } from '../../../../store/wallet/effects/create/create';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {getCoinAndChainFromCurrencyCode} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
@@ -742,11 +741,7 @@ const BuyCryptoRoot: React.VFC<
               }
 
               await sleep(500);
-              await dispatch(
-                startOnGoingProcessModal(
-                  t(OnGoingProcessMessages.ADDING_WALLET),
-                ),
-              );
+              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
 
               const createdToWallet = await dispatch(
                 addWallet(createNewWalletData),

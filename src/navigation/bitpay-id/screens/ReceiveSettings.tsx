@@ -34,7 +34,6 @@ import {
 } from '../../wallet/screens/send/confirm/Shared';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -243,9 +242,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   };
 
   const generateAddress = async (wallet: Wallet) => {
-    dispatch(
-      startOnGoingProcessModal(t(OnGoingProcessMessages.GENERATING_ADDRESS)),
-    );
+    dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
     const address = await dispatch(
       createWalletAddress({wallet, newAddress: true}),
     );
@@ -278,9 +275,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   };
 
   const saveAddresses = async (twoFactorCode: string) => {
-    dispatch(
-      startOnGoingProcessModal(t(OnGoingProcessMessages.SAVING_ADDRESSES)),
-    );
+    dispatch(startOnGoingProcessModal('SAVING_ADDRESSES'));
     const newReceivingAddresses = Object.values(activeAddresses);
     await dispatch(
       BitPayIdEffects.startUpdateReceivingAddresses(

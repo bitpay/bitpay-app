@@ -6,10 +6,8 @@ import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
 import CardApi from '../../api/card';
 import {InitialUserData} from '../../api/user/user.types';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../utils/helper-methods';
-import {AppActions} from '../app';
-import {Analytics} from '../app/app.effects';
+import {Analytics, startOnGoingProcessModal} from '../app/app.effects';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ProviderConfig} from '../../constants/config.card';
@@ -25,6 +23,10 @@ import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/Apple
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
 import {getAppsFlyerId} from '../../utils/appsFlyer';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../app/app.actions';
 
 const DoshWhitelist: string[] = [];
 
@@ -131,12 +133,7 @@ export const startFetchOverview =
   ): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        AppActions.showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOADING'));
       dispatch(CardActions.updateFetchOverviewStatus(id, 'loading'));
 
       const {APP, BITPAY_ID, CARD} = getState();
@@ -189,7 +186,7 @@ export const startFetchOverview =
         dispatch(CardActions.failedFetchOverview(id));
       });
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -237,12 +234,7 @@ export const startFetchSettledTransactions =
   ): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        AppActions.showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOADING'));
 
       const {APP, BITPAY_ID, CARD} = getState();
       const token = BITPAY_ID.apiToken[APP.network];
@@ -289,7 +281,7 @@ export const startFetchSettledTransactions =
       dispatch(LogActions.error(errMsg || JSON.stringify(err)));
       dispatch(CardActions.failedFetchSettledTransactions(id));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -583,7 +575,7 @@ export const completeAddApplePaymentPass =
       dispatch(
         LogActions.error(`appleWallet - completeAddPaymentPassError - ${e}`),
       );
-      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+      dispatch(showBottomNotificationModal(GeneralError()));
     }
   };
 
@@ -606,7 +598,7 @@ export const startAddToGooglePay =
         await CardApi.startCreateGooglePayProvisioningRequest(token, id);
 
       if (provisioningData.errors) {
-        dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+        dispatch(showBottomNotificationModal(GeneralError()));
       } else {
         const {lastFourDigits, name} = data;
         const opc =
@@ -636,7 +628,7 @@ export const startAddToGooglePay =
         }
       }
 
-      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+      dispatch(showBottomNotificationModal(GeneralError()));
     }
   };
 

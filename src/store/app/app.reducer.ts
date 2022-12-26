@@ -3,7 +3,6 @@ import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
@@ -137,7 +136,7 @@ const initialState: AppState = {
   introCompleted: false,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
-  onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
+  onGoingProcessModalMessage: undefined,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
   currentRoute: undefined,

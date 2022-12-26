@@ -46,7 +46,6 @@ import {
 import {Effect, RootState} from '../../../store';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {ButtonState} from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
@@ -465,12 +464,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         if (setButtonState) {
           setButtonState('loading');
         } else {
-          dispatch(
-            startOnGoingProcessModal(
-              // t('Creating Transaction')
-              t(OnGoingProcessMessages.CREATING_TXP),
-            ),
-          );
+          dispatch(startOnGoingProcessModal('CREATING_TXP'));
         }
         const {txDetails, txp} = await dispatch(
           createProposalAndBuildTxDetails({

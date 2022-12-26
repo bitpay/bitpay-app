@@ -23,7 +23,6 @@ import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -250,12 +249,7 @@ const Confirm = () => {
 
   const updateTxProposal = async (newOpts: any) => {
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Updating Transaction')
-          t(OnGoingProcessMessages.UPDATING_TXP),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('UPDATING_TXP'));
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,
@@ -534,12 +528,7 @@ const Confirm = () => {
         forceReset={resetSwipeButton}
         onSwipeComplete={async () => {
           try {
-            dispatch(
-              startOnGoingProcessModal(
-                // t('Sending Payment')
-                t(OnGoingProcessMessages.SENDING_PAYMENT),
-              ),
-            );
+            dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
             await sleep(500);
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());

@@ -61,7 +61,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
@@ -579,11 +578,7 @@ const TransactionProposalNotifications = () => {
           forceReset={resetSwipeButton}
           onSwipeComplete={async () => {
             try {
-              dispatch(
-                startOnGoingProcessModal(
-                  t(OnGoingProcessMessages.SENDING_PAYMENT),
-                ),
-              );
+              dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
               await sleep(400);
               const wallet = findWalletById(
                 wallets,

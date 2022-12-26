@@ -34,7 +34,6 @@ import {
 import {sleep} from '../../../../../utils/helper-methods';
 import {useLogger} from '../../../../../utils/hooks/useLogger';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {wyreGetWalletOrderDetails} from '../../../../../store/buy-crypto/effects/wyre/wyre';
 import {handleWyreStatus} from '../../../../services/buy-crypto/utils/wyre-utils';
 import {useTranslation} from 'react-i18next';
@@ -68,12 +67,7 @@ const WyreDetails: React.FC = () => {
 
   useEffect(() => {
     const getWalletOrderDetails = async (orderId: string) => {
-      dispatch(
-        startOnGoingProcessModal(
-          // t("Just a second, we're setting a few things up")
-          t(OnGoingProcessMessages.GENERAL_AWAITING),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
       await sleep(400);
       const orderData = await wyreGetWalletOrderDetails(orderId);
       if (orderData.status) {
