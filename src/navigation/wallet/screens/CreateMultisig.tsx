@@ -147,7 +147,7 @@ const RemoveButton = styled.TouchableOpacity`
   border: 1px solid ${Slate};
 `;
 
-const AddButton = styled.TouchableOpacity`
+export const AddButton = styled.TouchableOpacity`
   display: flex;
   align-items: center;
   justify-content: center;

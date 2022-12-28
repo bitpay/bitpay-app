@@ -15,11 +15,12 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   contentCards,
 }) => {
   const navigation = useNavigation();
+  const {sessions} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
 
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     dev_walletConnect: () => {
-      if (Object.keys(connectors).length) {
+      if (Object.keys(sessions).length || Object.keys(connectors).length) {
         navigation.navigate('WalletConnect', {
           screen: 'WalletConnectConnections',
         });
