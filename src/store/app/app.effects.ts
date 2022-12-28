@@ -136,7 +136,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       QuickActions.setShortcutItems(ShortcutList);
     }
 
-    await dispatch(startWalletStoreInit());
+    dispatch(startWalletStoreInit());
 
     if (!contactMigrationComplete) {
       await dispatch(startContactMigration());
@@ -154,7 +154,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
 
-    await dispatch(initializeApi(network, identity));
+    dispatch(initializeApi(network, identity));
 
     dispatch(LocationEffects.getCountry());
 
@@ -181,7 +181,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             ),
           );
         }
-        await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
+        dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {
         if (isAxiosError(err)) {
@@ -203,8 +203,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    await dispatch(walletConnectInit());
-    await dispatch(initializeBrazeContent());
+    dispatch(walletConnectInit());
+    dispatch(initializeBrazeContent());
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
@@ -348,94 +348,93 @@ const initializeApi =
  * The subscription will fetch latest content when it receives an update event.
  * @returns void
  */
-export const initializeBrazeContent =
-  (): Effect => async (dispatch, getState) => {
-    try {
-      dispatch(LogActions.info('Initializing Braze content...'));
-      const {APP} = getState();
+export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
+  try {
+    dispatch(LogActions.info('Initializing Braze content...'));
+    const {APP} = getState();
 
-      let contentCardSubscription = APP.brazeContentCardSubscription;
+    let contentCardSubscription = APP.brazeContentCardSubscription;
 
-      if (contentCardSubscription) {
-        contentCardSubscription.subscriber?.removeAllSubscriptions();
-        contentCardSubscription = null;
-      }
-
-      // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
-      const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
-      const MAX_RETRIES = 3;
-      let currentRetry = 0;
-
-      contentCardSubscription = Braze.addListener(
-        Braze.Events.CONTENT_CARDS_UPDATED,
-        async () => {
-          const isInitializing = currentRetry < MAX_RETRIES;
-
-          dispatch(
-            isInitializing
-              ? LogActions.debug(
-                  'Braze content cards updated, fetching latest content cards...',
-                )
-              : LogActions.info(
-                  'Braze content cards updated, fetching latest content cards...',
-                ),
-          );
-
-          const contentCards = await Braze.getContentCards();
-
-          if (contentCards.length) {
-            currentRetry = MAX_RETRIES;
-          } else {
-            if (isInitializing) {
-              currentRetry++;
-              await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
-              dispatch(
-                LogActions.debug(
-                  `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
-                ),
-              );
-              Braze.requestContentCardsRefresh();
-              return;
-            }
-          }
-
-          dispatch(
-            LogActions.info(
-              `${contentCards.length} content ${
-                contentCards.length === 1 ? 'card' : 'cards'
-              } fetched from Braze.`,
-            ),
-          );
-          dispatch(AppActions.brazeContentCardsFetched(contentCards));
-        },
-      );
-
-      let eid = APP.brazeEid;
-
-      if (!eid) {
-        dispatch(LogActions.debug('Generating EID for anonymous user...'));
-        eid = uuid.v4().toString();
-        dispatch(setBrazeEid(eid));
-      }
-
-      // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
-      dispatch(Analytics.identify(eid));
-
-      dispatch(LogActions.info('Successfully initialized Braze.'));
-      dispatch(AppActions.brazeInitialized(contentCardSubscription));
-    } catch (err) {
-      const errMsg = 'Something went wrong while initializing Braze.';
-
-      dispatch(LogActions.error(errMsg));
-      dispatch(
-        LogActions.error(
-          err instanceof Error ? err.message : JSON.stringify(err),
-        ),
-      );
-    } finally {
-      dispatch(LogActions.info('Initializing Braze content complete.'));
+    if (contentCardSubscription) {
+      contentCardSubscription.subscriber?.removeAllSubscriptions();
+      contentCardSubscription = null;
     }
-  };
+
+    // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
+    const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
+    const MAX_RETRIES = 3;
+    let currentRetry = 0;
+
+    contentCardSubscription = Braze.addListener(
+      Braze.Events.CONTENT_CARDS_UPDATED,
+      async () => {
+        const isInitializing = currentRetry < MAX_RETRIES;
+
+        dispatch(
+          isInitializing
+            ? LogActions.debug(
+                'Braze content cards updated, fetching latest content cards...',
+              )
+            : LogActions.info(
+                'Braze content cards updated, fetching latest content cards...',
+              ),
+        );
+
+        const contentCards = await Braze.getContentCards();
+
+        if (contentCards.length) {
+          currentRetry = MAX_RETRIES;
+        } else {
+          if (isInitializing) {
+            currentRetry++;
+            await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
+            dispatch(
+              LogActions.debug(
+                `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
+              ),
+            );
+            Braze.requestContentCardsRefresh();
+            return;
+          }
+        }
+
+        dispatch(
+          LogActions.info(
+            `${contentCards.length} content ${
+              contentCards.length === 1 ? 'card' : 'cards'
+            } fetched from Braze.`,
+          ),
+        );
+        dispatch(AppActions.brazeContentCardsFetched(contentCards));
+      },
+    );
+
+    let eid = APP.brazeEid;
+
+    if (!eid) {
+      dispatch(LogActions.debug('Generating EID for anonymous user...'));
+      eid = uuid.v4().toString();
+      dispatch(setBrazeEid(eid));
+    }
+
+    // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
+    dispatch(Analytics.identify(eid));
+
+    dispatch(LogActions.info('Successfully initialized Braze.'));
+    dispatch(AppActions.brazeInitialized(contentCardSubscription));
+  } catch (err) {
+    const errMsg = 'Something went wrong while initializing Braze.';
+
+    dispatch(LogActions.error(errMsg));
+    dispatch(
+      LogActions.error(
+        err instanceof Error ? err.message : JSON.stringify(err),
+      ),
+    );
+  } finally {
+    dispatch(LogActions.info('Initializing Braze content complete.'));
+  }
+};
 
 /**
  * Requests a refresh for Braze content.
