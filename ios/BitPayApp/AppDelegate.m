@@ -7,6 +7,7 @@
 #import <React/RCTLinkingManager.h>
 #import <React/RCTRootView.h>
 #import "RNBootSplash.h"
+#import "RNQuickActionManager.h"
 #ifdef FB_SONARKIT_ENABLED
 #import <FlipperKit/FlipperClient.h>
 #import <FlipperKitLayoutPlugin/FlipperKitLayoutPlugin.h>
@@ -14,7 +15,6 @@
 #import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
 #import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
 #import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
-#import "RNQuickActionManager.h"
 
 #if RCT_DEV
 #import <React/RCTDevLoadingView.h>
