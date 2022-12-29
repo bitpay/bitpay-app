@@ -101,10 +101,15 @@ import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
-import {Analytics, handleBwsEvent} from './store/app/app.effects';
+import {
+  Analytics,
+  handleBwsEvent,
+  shortcutListener,
+} from './store/app/app.effects';
 import NotificationsSettingsStack, {
   NotificationsSettingsStackParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
+import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -441,6 +446,19 @@ export default () => {
               await sleep(10);
               urlEventHandler({url});
             }
+
+            LogActions.info('QuickActions Initialized');
+            QuickActions.popInitialAction()
+              .then(item =>
+                dispatch(shortcutListener(item, navigationRef as any)),
+              )
+              .catch(console.error);
+            DeviceEventEmitter.addListener(
+              'quickActionShortcut',
+              (item: ShortcutItem) => {
+                dispatch(shortcutListener(item, navigationRef as any));
+              },
+            );
           }}
           onStateChange={debouncedOnStateChange}>
           <Root.Navigator
