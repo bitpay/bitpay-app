@@ -41,7 +41,7 @@ import {
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
-import Crypto from './components/Crypto';
+import Crypto, {keyBackupRequired} from './components/Crypto';
 import ExchangeRatesList, {
   ExchangeRateItemProps,
 } from './components/exchange-rates/ExchangeRatesList';
@@ -61,10 +61,7 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
-import {
-  receiveCrypto,
-  sendCrypto,
-} from '../../../store/wallet/effects/send/send';
+import {WalletScreens} from '../../wallet/WalletStack';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -252,10 +249,100 @@ const HomeRoot = () => {
             <HomeSection style={{marginBottom: 25}}>
               <LinkingButtons
                 receive={{
-                  cta: () => dispatch(receiveCrypto(navigation, 'HomeRoot')),
+                  cta: () => {
+                    const needsBackup = !Object.values(keys).filter(
+                      key => key.backupComplete,
+                    ).length;
+                    if (needsBackup) {
+                      dispatch(
+                        showBottomNotificationModal(
+                          keyBackupRequired(
+                            Object.values(keys)[0],
+                            navigation,
+                            dispatch,
+                          ),
+                        ),
+                      );
+                    } else {
+                      dispatch(
+                        logSegmentEvent('track', 'Clicked Receive', {
+                          context: 'HomeRoot',
+                        }),
+                      );
+                      navigation.navigate('Wallet', {
+                        screen: 'GlobalSelect',
+                        params: {context: 'receive'},
+                      });
+                    }
+                  },
                 }}
                 send={{
-                  cta: () => dispatch(sendCrypto('HomeRoot')),
+                  cta: () => {
+                    const walletsWithBalance = Object.values(keys)
+                      .filter(key => key.backupComplete)
+                      .flatMap(key => key.wallets)
+                      .filter(
+                        wallet => !wallet.hideWallet && wallet.isComplete(),
+                      )
+                      .filter(wallet => wallet.balance.sat > 0);
+
+                    if (!walletsWithBalance.length) {
+                      dispatch(
+                        showBottomNotificationModal({
+                          type: 'warning',
+                          title: t('No funds available'),
+                          message: t('You do not have any funds to send.'),
+                          enableBackdropDismiss: true,
+                          actions: [
+                            {
+                              text: t('Add funds'),
+                              action: () => {
+                                dispatch(
+                                  logSegmentEvent(
+                                    'track',
+                                    'Clicked Buy Crypto',
+                                    {
+                                      context: 'HomeRoot',
+                                    },
+                                  ),
+                                );
+                                navigation.navigate('Wallet', {
+                                  screen: WalletScreens.AMOUNT,
+                                  params: {
+                                    onAmountSelected: (amount: string) => {
+                                      navigation.navigate('BuyCrypto', {
+                                        screen: 'BuyCryptoRoot',
+                                        params: {
+                                          amount: Number(amount),
+                                        },
+                                      });
+                                    },
+                                    context: 'buyCrypto',
+                                  },
+                                });
+                              },
+                              primary: true,
+                            },
+                            {
+                              text: t('Got It'),
+                              action: () => null,
+                              primary: false,
+                            },
+                          ],
+                        }),
+                      );
+                    } else {
+                      dispatch(
+                        logSegmentEvent('track', 'Clicked Send', {
+                          context: 'HomeRoot',
+                        }),
+                      );
+                      navigation.navigate('Wallet', {
+                        screen: 'GlobalSelect',
+                        params: {context: 'send'},
+                      });
+                    }
+                  },
                 }}
               />
             </HomeSection>
