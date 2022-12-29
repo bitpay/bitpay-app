@@ -460,6 +460,8 @@ PODS:
     - React
   - RNPermissions (3.2.0):
     - React-Core
+  - RNQuickAction (0.3.13):
+    - React
   - RNRate (1.2.9):
     - React-Core
   - RNReactNativeHapticFeedback (1.13.0):
@@ -606,6 +608,7 @@ DEPENDENCIES:
   - RNLocalize (from `../node_modules/react-native-localize`)
   - RNOS (from `../node_modules/react-native-os`)
   - RNPermissions (from `../node_modules/react-native-permissions`)
+  - RNQuickAction (from `../node_modules/react-native-quick-actions`)
   - RNRate (from `../node_modules/react-native-rate`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -763,6 +766,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-os"
   RNPermissions:
     :path: "../node_modules/react-native-permissions"
+  RNQuickAction:
+    :path: "../node_modules/react-native-quick-actions"
   RNRate:
     :path: "../node_modules/react-native-rate"
   RNReactNativeHapticFeedback:
@@ -865,6 +870,7 @@ SPEC CHECKSUMS:
   RNLocalize: f567ea0e35116a641cdffe6683b0d212d568f32a
   RNOS: 6f2f9a70895bbbfbdad7196abd952e7b01d45027
   RNPermissions: f7ebe52db07c00901127966ca080b4ec6a6ceb0a
+  RNQuickAction: 6d404a869dc872cde841ad3147416a670d13fa93
   RNRate: 94f57c773e155ca0d0aeeba9c10a32bce9030daf
   RNReactNativeHapticFeedback: b83bfb4b537bdd78eb4f6ffe63c6884f7b049ead
   RNReanimated: 190b6930d5d94832061278e1070bbe313e50c830
@@ -881,6 +887,6 @@ SPEC CHECKSUMS:
   Yoga: 099a946cbf84c9b32ffdc4278d72db26710ecf92
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 028e65bca16be9ebc8c327acc1641722908e9990
+PODFILE CHECKSUM: 8ff8af2c36d0b663d6de0357168bd24b2cb68370
 
 COCOAPODS: 1.11.3

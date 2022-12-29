@@ -4498,10 +4498,10 @@ bitcore-mnemonic@^8.25.40:
     bitcore-lib "^8.25.40"
     unorm "^1.4.1"
 
-bitcore-wallet-client@8.25.44:
-  version "8.25.44"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-8.25.44.tgz#37fc0e0b5e456f76712e80247e11110c62e9e713"
-  integrity sha512-NY60FyNyWl9d9XBOSV9gWS7vfUL39PqwVBHCznLyLo1GYcTjZ2a/X+aZ91DBtzrfX+IxEQN6j84aEe9EvQfALQ==
+bitcore-wallet-client@8.25.45:
+  version "8.25.45"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-8.25.45.tgz#766f9d3a3a1e57949ac7318a84f4b5d4e3764de0"
+  integrity sha512-NsWJ239YQaYJK8LqoWOuMagiFXF9JstuBQkCNkQWbjPM5hcTHBplpQBSFtqb+vmWVrMtiGbi3mVSUfB4IQjE3A==
   dependencies:
     ajv "^6.10.0"
     async "^0.9.0"
