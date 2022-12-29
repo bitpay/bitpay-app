@@ -12,6 +12,7 @@ import {
   buildKeyObj,
   buildMigrationKeyObj,
   buildWalletObj,
+  findKeyByKeyId,
   findMatchedKeyAndUpdate,
   getMatchedKey,
   getReadOnlyKey,
@@ -1149,19 +1150,41 @@ export const startImportWithDerivationPath =
               wallet.credentials.chain,
             ),
           );
-          const key = buildKeyObj({
-            key: _key,
-            wallets: [
+
+          let key;
+          const matchedKey = getMatchedKey(_key, Object.values(WALLET.keys));
+          if (matchedKey) {
+            // To avoid duplicate key creation when importing
+            wallet.credentials.keyId = wallet.keyId = matchedKey.id;
+            key = await findKeyByKeyId(matchedKey.id, WALLET.keys);
+            key.wallets.push(
               merge(
                 wallet,
                 buildWalletObj(
-                  {...wallet.credentials, currencyAbbreviation, currencyName},
+                  {
+                    ...wallet.credentials,
+                    currencyAbbreviation,
+                    currencyName,
+                  },
                   tokenOpts,
                 ),
               ),
-            ],
-            backupComplete: true,
-          });
+            );
+          } else {
+            key = buildKeyObj({
+              key: _key,
+              wallets: [
+                merge(
+                  wallet,
+                  buildWalletObj(
+                    {...wallet.credentials, currencyAbbreviation, currencyName},
+                    tokenOpts,
+                  ),
+                ),
+              ],
+              backupComplete: true,
+            });
+          }
           dispatch(
             successImport({
               key,
