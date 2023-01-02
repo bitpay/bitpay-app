@@ -47,11 +47,7 @@ import {
 } from '../../../store/app/app.actions';
 import {Key, Token} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
-import {
-  addTokenChainSuffix,
-  getCurrencyAbbreviation,
-  sleep,
-} from '../../../utils/helper-methods';
+import {addTokenChainSuffix, sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
@@ -130,11 +126,6 @@ const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
     return currency.hasMultisig;
   });
 
-export const DESCRIPTIONS: Record<string, string> = {
-  eth: 'TokensOnEthereumNetworkDescription',
-  matic: 'TokensOnPolygonNetworkDescription',
-};
-
 const POPULAR_TOKENS: Record<string, string[]> = {
   eth: ['usdc', 'busd', 'ape'],
   matic: ['usdc', 'busd', 'ape'],
@@ -159,7 +150,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   const appCustomTokenData = useAppSelector(
     ({WALLET}) => WALLET.customTokenData,
   );
-
+  const DESCRIPTIONS: Record<string, string> = {
+    eth: t('TokensOnEthereumNetworkDescription'),
+    matic: t('TokensOnPolygonNetworkDescription'),
+  };
   /**
    * Source of truth for which currencies are selected.
    */

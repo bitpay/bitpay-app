@@ -100,7 +100,6 @@ import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
-import {DESCRIPTIONS} from './CurrencySelection';
 import {CommonActions} from '@react-navigation/native';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
@@ -241,6 +240,11 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const [associatedWallet, setAssociatedWallet] = useState<
     WalletRowProps | undefined
   >();
+
+  const DESCRIPTIONS: Record<string, string> = {
+    eth: t('TokensOnEthereumNetworkDescription'),
+    matic: t('TokensOnPolygonNetworkDescription'),
+  };
 
   const [
     showAssociatedWalletSelectionDropdown,
