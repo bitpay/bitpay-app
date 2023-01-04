@@ -15,6 +15,8 @@ import {
   WithinSameMonth,
 } from '../../utils/time';
 import moment from 'moment';
+import 'moment/min/locales';
+import i18n from 'i18next';
 import {TransactionIcons} from '../../../../constants/TransactionIcons';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
@@ -392,9 +394,10 @@ export const GroupTransactionHistory = (history: any[]) => {
     }, [])
     .map((group: any[]) => {
       const time = group[0].time * 1000;
-      const title = IsDateInCurrentMonth(time)
-        ? t('Recent')
-        : moment(time).format('MMMM');
+      const month = moment(time)
+        .locale(i18n.language || 'en')
+        .format('MMMM');
+      const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
       return {title, data: group};
     });
   return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
