@@ -1,12 +1,13 @@
 import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
-import i18n from 'i18next';
+import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';
 import {
   DeviceEventEmitter,
   EmitterSubscription,
   Linking,
   Platform,
+  Share,
 } from 'react-native';
 import Braze from 'react-native-appboy-sdk';
 import RNBootSplash from 'react-native-bootsplash';
@@ -76,11 +77,13 @@ import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
   APP_ANALYTICS_ENABLED,
   APP_DEEPLINK_PREFIX,
+  APP_NAME,
+  DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
 import {setContactMigrationComplete} from '../contact/contact.actions';
 import {startContactMigration} from '../contact/contact.effects';
-import {getStateFromPath} from '@react-navigation/native';
+import {getStateFromPath, NavigationProp} from '@react-navigation/native';
 import {
   getAvailableGiftCards,
   getCategoriesWithIntegrations,
@@ -89,6 +92,11 @@ import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
+import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
+import {ShortcutList} from '../../constants/shortcuts';
+import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
+import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
+import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -124,6 +132,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
       await dispatch(askForTrackingPermissionAndEnableSdks(true));
+      QuickActions.clearShortcutItems();
+      QuickActions.setShortcutItems(ShortcutList);
     }
 
     dispatch(startWalletStoreInit());
@@ -1185,4 +1195,49 @@ export const incomingLink =
     }
 
     return false;
+  };
+
+export const shareApp = (): Effect<Promise<void>> => async dispatch => {
+  try {
+    let message = t(
+      'Spend and control your cryptocurrency by downloading the app.',
+      {APP_NAME},
+    );
+
+    if (Platform.OS !== 'ios') {
+      message = `${message} ${DOWNLOAD_BITPAY_URL}`;
+    }
+    await Share.share({message, url: DOWNLOAD_BITPAY_URL});
+  } catch (err) {
+    let errorStr;
+    if (err instanceof Error) {
+      errorStr = err.message;
+    } else {
+      errorStr = JSON.stringify(err);
+    }
+    dispatch(LogActions.error(`failed [shareApp]: ${errorStr}`));
+  }
+};
+
+export const shortcutListener =
+  (item: ShortcutItem, navigation: NavigationProp<any>): Effect<void> =>
+  dispatch => {
+    const {type} = item || {};
+    switch (type) {
+      case 'buy':
+        dispatch(goToBuyCrypto());
+        return;
+      case 'swap':
+        dispatch(goToSwapCrypto());
+        return;
+      case 'send':
+        dispatch(sendCrypto('Shortcut'));
+        return;
+      case 'receive':
+        dispatch(receiveCrypto(navigation, 'Shortcut'));
+        return;
+      case 'share':
+        dispatch(shareApp());
+        return;
+    }
   };
