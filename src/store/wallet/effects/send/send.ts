@@ -1585,23 +1585,43 @@ export const receiveCrypto =
   (navigation: NavigationProp<any>, loggerContext: string): Effect<void> =>
   (dispatch, getState) => {
     const keys = getState().WALLET.keys;
-    const needsBackup = !Object.values(keys).filter(key => key.backupComplete)
-      .length;
-    if (needsBackup) {
+    if (Object.keys(keys).length === 0) {
       dispatch(
-        showBottomNotificationModal(
-          keyBackupRequired(Object.values(keys)[0], navigation, dispatch),
-        ),
-      );
-    } else {
-      dispatch(
-        logSegmentEvent('track', 'Clicked Receive', {
-          context: loggerContext,
+        showBottomNotificationModal({
+          type: 'warning',
+          title: t("Let's create a key"),
+          message: t(
+            'To start using the app, you need to have a key. You can create or import a key.',
+          ),
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('Got It'),
+              action: () => null,
+              primary: false,
+            },
+          ],
         }),
       );
-      navigationRef.navigate('Wallet', {
-        screen: 'GlobalSelect',
-        params: {context: 'receive'},
-      });
+    } else {
+      const needsBackup = !Object.values(keys).filter(key => key.backupComplete)
+        .length;
+      if (needsBackup) {
+        dispatch(
+          showBottomNotificationModal(
+            keyBackupRequired(Object.values(keys)[0], navigation, dispatch),
+          ),
+        );
+      } else {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Receive', {
+            context: loggerContext,
+          }),
+        );
+        navigationRef.navigate('Wallet', {
+          screen: 'GlobalSelect',
+          params: {context: 'receive'},
+        });
+      }
     }
   };
