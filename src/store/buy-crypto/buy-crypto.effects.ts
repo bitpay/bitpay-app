@@ -1,6 +1,9 @@
 import {getMoonpayFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/moonpay-utils';
 import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/simplex-utils';
 import {getWyreFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/wyre-utils';
+import {WalletScreens} from '../../navigation/wallet/WalletStack';
+import {navigationRef} from '../../Root';
+import {logSegmentEvent} from '../app/app.effects';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {BuyCryptoLimits} from './buy-crypto.models';
@@ -128,3 +131,25 @@ export const getBuyCryptoFiatLimits =
       };
     }
   };
+
+export const goToBuyCrypto = (): Effect<void> => dispatch => {
+  dispatch(
+    logSegmentEvent('track', 'Clicked Buy Crypto', {
+      context: 'Shortcuts',
+    }),
+  );
+  navigationRef.navigate('Wallet', {
+    screen: WalletScreens.AMOUNT,
+    params: {
+      onAmountSelected: async (amount: string, setButtonState: any) => {
+        navigationRef.navigate('BuyCrypto', {
+          screen: 'BuyCryptoRoot',
+          params: {
+            amount: Number(amount),
+          },
+        });
+      },
+      context: 'buyCrypto',
+    },
+  });
+};
