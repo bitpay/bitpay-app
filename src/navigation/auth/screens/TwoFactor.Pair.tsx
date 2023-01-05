@@ -161,7 +161,7 @@ const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
               onChangeText={onChange}
               error={errors.code?.message}
               value={value}
-              keyboardType="numeric"
+              keyboardType={'numeric'}
               onSubmitEditing={onSubmit}
             />
           )}
