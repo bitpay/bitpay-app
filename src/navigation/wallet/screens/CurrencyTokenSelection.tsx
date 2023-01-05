@@ -10,6 +10,7 @@ import {useTranslation} from 'react-i18next';
 import {StyleSheet} from 'react-native';
 import {FlatList} from 'react-native-gesture-handler';
 import styled, {useTheme} from 'styled-components/native';
+import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ChainSelectionRow,
@@ -18,15 +19,20 @@ import {
   TokenSelectionRow,
   TokensHeading,
 } from '../../../components/list/CurrencySelectionRow';
-import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  CtaContainer,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import {HeaderTitle, Link} from '../../../components/styled/Text';
 import {IS_ANDROID} from '../../../constants';
+import {EVM_SUPPORTED_TOKENS_LENGTH} from '../../../constants/currencies';
 import {Key} from '../../../store/wallet/wallet.models';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {
+  ContextHandler,
   CurrencySelectionContainer,
   CurrencySelectionMode,
   SearchContainer,
@@ -40,6 +46,7 @@ export type CurrencyTokenSelectionScreenParamList = {
   hideCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
   onToggle: (id: string, chain?: string) => any;
+  contextHandler: () => ContextHandler;
 };
 
 const SearchContainerLinkRow = styled.View`
@@ -75,6 +82,8 @@ const CurrencyTokenSelectionScreen: React.VFC<
   const {t} = useTranslation();
   const theme = useTheme();
   const {params} = route;
+  const {onCtaPress, ctaTitle, selectedCurrencies} =
+    params.contextHandler() || {};
   const [chain, setChain] = useState(params.currency);
   const [tokens, setTokens] = useState(params.tokens);
   const [searchFilter, setSearchFilter] = useState('');
@@ -229,10 +238,6 @@ const CurrencyTokenSelectionScreen: React.VFC<
         {params.description ? (
           <DescriptionRow>{params.description}</DescriptionRow>
         ) : null}
-
-        <TokensHeading>
-          {t('AllArgTokens', {currency: t(chain.currencyName)})}
-        </TokensHeading>
       </>
     );
   }, [
@@ -245,15 +250,33 @@ const CurrencyTokenSelectionScreen: React.VFC<
   ]);
 
   const renderItem = useMemo(() => {
-    return ({item}: {item: CurrencySelectionItem}) => {
+    return ({item, index}: {item: CurrencySelectionItem; index: number}) => {
+      const _tokenLength =
+        // @ts-ignore
+        EVM_SUPPORTED_TOKENS_LENGTH[chain.currencyAbbreviation];
+      const tokenLength =
+        chain.currencyAbbreviation === 'eth' ? _tokenLength - 1 : _tokenLength;
       return (
-        <TokenSelectionRow
-          key={item.id}
-          token={item}
-          hideCheckbox={params.hideCheckbox}
-          selectionMode={params.selectionMode}
-          onToggle={memoizedOnTokenToggle}
-        />
+        <>
+          {index === 0 && searchFilter?.length === 0 ? (
+            <TokensHeading>
+              {t('PopularArgTokens', {currency: t(chain.currencyName)})} (
+              {tokenLength})
+            </TokensHeading>
+          ) : null}
+          {index === tokenLength && searchFilter?.length === 0 ? (
+            <TokensHeading>
+              {t('Other Tokens')} ({tokens.length - tokenLength})
+            </TokensHeading>
+          ) : null}
+          <TokenSelectionRow
+            key={item.id}
+            token={item}
+            hideCheckbox={params.hideCheckbox}
+            selectionMode={params.selectionMode}
+            onToggle={memoizedOnTokenToggle}
+          />
+        </>
       );
     };
   }, [
@@ -261,13 +284,14 @@ const CurrencyTokenSelectionScreen: React.VFC<
     params.hideCheckbox,
     params.selectionMode,
     chain.img,
+    searchFilter,
   ]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <HeaderTitle>
-          {t('SelectArgCurrencies', {
+          {t('SelectArgTokens', {
             chain: t(chain.currencyName),
           })}
         </HeaderTitle>
@@ -307,6 +331,22 @@ const CurrencyTokenSelectionScreen: React.VFC<
       ) : (
         <CurrencySelectionNoResults query={searchFilter} />
       )}
+
+      {onCtaPress && selectedCurrencies?.length > 0 ? (
+        <CtaContainer
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 4},
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 5,
+            marginTop: 16,
+          }}>
+          <Button onPress={onCtaPress} buttonStyle={'primary'}>
+            {ctaTitle || t('Continue')}
+          </Button>
+        </CtaContainer>
+      ) : null}
     </CurrencySelectionContainer>
   );
 };

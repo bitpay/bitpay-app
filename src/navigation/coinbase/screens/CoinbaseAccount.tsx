@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
 import {find} from 'lodash';
@@ -31,8 +31,6 @@ import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import TransactionRow from '../../../components/list/TransactionRow';
-import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import GlobalSelect from '../../../navigation/wallet/screens/GlobalSelect';
 
 import {StackScreenProps} from '@react-navigation/stack';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
@@ -51,9 +49,7 @@ import {
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {
   ToCashAddress,
@@ -62,14 +58,29 @@ import {
 import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import Icons from '../../wallet/components/WalletIcons';
 import {
-  BitpaySupportedCoins,
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
 import {IsValidBitcoinCashAddress} from '../../../store/wallet/utils/validations';
+import ToWalletSelectorModal, {
+  ToWalletSelectorCustomCurrency,
+} from '../../services/components/ToWalletSelectorModal';
+import {
+  addWallet,
+  AddWalletData,
+  getDecryptPassword,
+} from '../../../store/wallet/effects';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {RootState} from '../../../store';
+import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
+import {showWalletError} from '../../../store/wallet/effects/errors/errors';
+import {batch} from 'react-redux';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -167,10 +178,13 @@ const CoinbaseAccount = ({
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {accountId, refresh} = route.params;
+  const logger = useLogger();
+  const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
+  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
 
   const [refreshing, setRefreshing] = useState(false);
   const [customSupportedCurrencies, setCustomSupportedCurrencies] = useState(
-    [] as string[],
+    [] as ToWalletSelectorCustomCurrency[],
   );
   const [walletModalVisible, setWalletModalVisible] = useState(false);
   const [amountModalVisible, setAmountModalVisible] = useState(false);
@@ -202,6 +216,7 @@ const CoinbaseAccount = ({
 
   const txsLoading = useAppSelector(({COINBASE}) => COINBASE.isApiLoading);
 
+  const [nextStartingAfter, setNextStartingAfter] = useState('');
   const [isLoading, setIsLoading] = useState<boolean>(txsLoading);
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [initialLoad, setInitialLoad] = useState<boolean>(true);
@@ -280,6 +295,50 @@ const CoinbaseAccount = ({
     );
   };
 
+  const getLogoUri = (coin: string, _chain: string) => {
+    if (
+      SupportedCurrencyOptions.find(
+        ({currencyAbbreviation, chain}) =>
+          currencyAbbreviation === coin.toLowerCase() &&
+          (!chain || chain === _chain),
+      )
+    ) {
+      return SupportedCurrencyOptions.find(
+        ({currencyAbbreviation, chain}) =>
+          currencyAbbreviation === coin.toLowerCase() &&
+          (!chain || chain === _chain),
+      )!.img;
+    } else if (tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI) {
+      return tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI;
+    } else {
+      return undefined;
+    }
+  };
+
+  const loadTransactions = async (refresh?: boolean) => {
+    if (!nextStartingAfter && !refresh) {
+      return;
+    }
+    try {
+      batch(() => {
+        setIsLoading(!refresh);
+        setErrorLoadingTxs(false);
+      });
+
+      await dispatch(
+        coinbaseGetTransactionsByAccount(accountId, refresh, nextStartingAfter),
+      );
+
+      batch(() => {
+        setIsLoading(false);
+      });
+    } catch (e) {
+      setNextStartingAfter('');
+      setIsLoading(false);
+      setErrorLoadingTxs(true);
+    }
+  };
+
   useEffect(() => {
     // all wallets
     let availableWallets = Object.values(keys)
@@ -298,10 +357,9 @@ const CoinbaseAccount = ({
         wallet =>
           !wallet.hideWallet &&
           wallet.network === 'livenet' &&
-          wallet.isComplete() &&
-          wallet.currencyAbbreviation.toLowerCase() ===
-            account.currency.code.toLocaleLowerCase() &&
-          wallet.chain === _chain,
+          wallet.credentials.coin === _currencyAbbreviation.toLowerCase() &&
+          wallet.credentials.chain === _chain &&
+          wallet.isComplete(),
       );
 
       if (availableWallets.length) {
@@ -322,10 +380,13 @@ const CoinbaseAccount = ({
       setChain(_chain);
       setProtocolName(getProtocolName(_chain, 'livenet') || '');
 
-      const _currency = getCurrencyAbbreviation(
-        _currencyAbbreviation.toLowerCase(),
-        _chain,
-      );
+      const _currency: ToWalletSelectorCustomCurrency = {
+        currencyAbbreviation: _currencyAbbreviation,
+        symbol: getCurrencyAbbreviation(account.currency.code, chain),
+        chain: _chain,
+        name: account.currency.name,
+        logoUri: getLogoUri(account.currency.code, chain),
+      };
 
       setCustomSupportedCurrencies([_currency]);
 
@@ -344,8 +405,11 @@ const CoinbaseAccount = ({
     }
 
     if (transactions && transactions[accountId]) {
-      const tx = transactions[accountId].data;
-      setTxs(tx);
+      const _transactions = transactions[accountId].data;
+      const _nextStartingAfter =
+        transactions[accountId].pagination.next_starting_after;
+      setTxs(_transactions);
+      setNextStartingAfter(_nextStartingAfter);
     }
 
     if (txsLoading) {
@@ -377,12 +441,7 @@ const CoinbaseAccount = ({
     if (!account) {
       return;
     }
-    dispatch(
-      showOnGoingProcessModal(
-        // t('Fetching data from Coinbase...')
-        t(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
     dispatch(
       logSegmentEvent('track', 'Clicked Receive', {
         context: 'CoinbaseAccount',
@@ -430,9 +489,21 @@ const CoinbaseAccount = ({
       }),
     );
     if (newWallet) {
-      setSelectedWallet(newWallet);
-      await sleep(500);
-      setAmountModalVisible(true);
+      if (newWallet.credentials) {
+        if (newWallet.isComplete()) {
+          if (allKeys[newWallet.keyId].backupComplete) {
+            setSelectedWallet(newWallet);
+            await sleep(500);
+            setAmountModalVisible(true);
+          } else {
+            dispatch(showWalletError('needsBackup'));
+          }
+        } else {
+          dispatch(showWalletError('walletNotCompleted'));
+        }
+      } else {
+        dispatch(showWalletError('walletNotSupported'));
+      }
     }
   };
 
@@ -474,7 +545,7 @@ const CoinbaseAccount = ({
 
     try {
       await dispatch(coinbaseGetAccountsAndBalance());
-      await dispatch(coinbaseGetTransactionsByAccount(accountId));
+      await dispatch(coinbaseGetTransactionsByAccount(accountId, true));
     } catch (err: CoinbaseErrorsProps | any) {
       setRefreshing(false);
       showError(err);
@@ -559,21 +630,66 @@ const CoinbaseAccount = ({
         ItemSeparatorComponent={() => <BorderBottom />}
         ListFooterComponent={listFooterComponent}
         ListEmptyComponent={listEmptyComponent}
+        onEndReached={() => loadTransactions()}
       />
 
-      <SheetModal
+      <ToWalletSelectorModal
         isVisible={walletModalVisible}
-        onBackdropPress={() => setWalletModalVisible(false)}>
-        <GlobalSelectContainer>
-          <GlobalSelect
-            modalTitle={t('Select destination wallet')}
-            customSupportedCurrencies={customSupportedCurrencies}
-            useAsModal={true}
-            livenetOnly={true}
-            onDismiss={onSelectedWallet}
-          />
-        </GlobalSelectContainer>
-      </SheetModal>
+        modalContext={'coinbase'}
+        disabledChain={undefined}
+        customSupportedCurrencies={customSupportedCurrencies}
+        livenetOnly={true}
+        modalTitle={t('Select Destination')}
+        onDismiss={async (
+          newWallet?: Wallet,
+          createNewWalletData?: AddWalletData,
+        ) => {
+          setWalletModalVisible(false);
+          if (newWallet?.currencyAbbreviation) {
+            onSelectedWallet(newWallet);
+          } else if (createNewWalletData) {
+            try {
+              if (createNewWalletData.key.isPrivKeyEncrypted) {
+                logger.debug('Key is Encrypted. Trying to decrypt...');
+                await sleep(500);
+                const password = await dispatch(
+                  getDecryptPassword(createNewWalletData.key),
+                );
+                createNewWalletData.options.password = password;
+              }
+
+              await sleep(500);
+              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+              const createdToWallet = await dispatch(
+                addWallet(createNewWalletData),
+              );
+              logger.debug(
+                `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
+              );
+              dispatch(
+                logSegmentEvent('track', 'Created Basic Wallet', {
+                  coin: createNewWalletData.currency.currencyAbbreviation,
+                  chain: createNewWalletData.currency.chain,
+                  isErc20Token: createNewWalletData.currency.isToken,
+                  context: 'coinbase',
+                }),
+              );
+              onSelectedWallet(createdToWallet);
+              await sleep(300);
+              dispatch(dismissOnGoingProcessModal());
+              await sleep(500);
+            } catch (err: any) {
+              dispatch(dismissOnGoingProcessModal());
+              await sleep(500);
+              if (err.message === 'invalid password') {
+                dispatch(showBottomNotificationModal(WrongPasswordError()));
+              } else {
+                showError(err.message);
+              }
+            }
+          }
+        }}
+      />
 
       <AmountModal
         isVisible={amountModalVisible}

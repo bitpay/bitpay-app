@@ -29,7 +29,6 @@ import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
@@ -58,7 +57,6 @@ import {
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import Haptic from '../../../components/haptic-feedback/haptic';
@@ -404,7 +402,7 @@ const RecoveryPhrase = () => {
     opts: Partial<KeyOptions>,
   ) => {
     await sleep(0);
-    dispatch(showOnGoingProcessModal(OnGoingProcessMessages.REDIRECTING));
+    dispatch(startOnGoingProcessModal('REDIRECTING'));
     await sleep(350);
 
     let _context = route.params?.context;
@@ -427,6 +425,8 @@ const RecoveryPhrase = () => {
   ): Promise<void> => {
     try {
       if (!derivationPathEnabled) {
+        startDeferredImport(importData, opts);
+        await sleep(500);
         dispatch(
           showBottomNotificationModal({
             type: 'wait',
@@ -438,26 +438,20 @@ const RecoveryPhrase = () => {
             actions: [
               {
                 text: t('GOT IT'),
-                action: () => {
-                  startDeferredImport(importData, opts);
-                },
+                action: () => {},
                 primary: true,
               },
             ],
           }),
         );
       } else {
-        await dispatch(
-          startOnGoingProcessModal(
-            // t('Importing')
-            t(OnGoingProcessMessages.IMPORTING),
-          ),
-        );
+        await dispatch(startOnGoingProcessModal('IMPORTING'));
         const key = (await dispatch<any>(
           startImportWithDerivationPath(importData, opts),
         )) as Key;
         await dispatch(startGetRates({}));
         await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await sleep(1000);
         await dispatch(updatePortfolioBalance());
         dispatch(setHomeCarouselConfig({id: key.id, show: true}));
         backupRedirect({
@@ -519,16 +513,12 @@ const RecoveryPhrase = () => {
         }
       }
 
-      await dispatch(
-        startOnGoingProcessModal(
-          // t('Creating Key')
-          t(OnGoingProcessMessages.CREATING_KEY),
-        ),
-      );
+      await dispatch(startOnGoingProcessModal('CREATING_KEY'));
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
       await dispatch(startGetRates({}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+      await sleep(1000);
       await dispatch(updatePortfolioBalance());
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
@@ -650,6 +640,7 @@ const RecoveryPhrase = () => {
               value={value}
               autoCorrect={false}
               spellCheck={false}
+              textContentType={'password'}
             />
           )}
           name="text"

@@ -21,6 +21,7 @@ import {
   IsValidEthereumUri,
   IsValidMaticUri,
   IsValidMaticAddress,
+  isValidMoonpayUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
   IsValidLitecoinAddress,
@@ -35,12 +36,12 @@ import {
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
-  simplexIncomingData,
-  wyrePaymentData,
+  MoonpayIncomingData,
+  SimplexIncomingData,
+  WyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
 import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -78,12 +79,14 @@ export const incomingData =
       email?: string;
       destinationTag?: number;
     },
-  ): Effect<Promise<void>> =>
+  ): Effect<Promise<boolean>> =>
   async dispatch => {
     // wait to close blur
     await sleep(200);
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     const chain = opts?.wallet?.credentials?.chain.toLowerCase();
+    let handled = true;
+
     try {
       if (IsValidBitPayInvoice(data)) {
         dispatch(handleUnlock(data));
@@ -143,6 +146,9 @@ export const incomingData =
         // Wallet Connect URI
       } else if (isValidWalletConnectUri(data)) {
         handleWalletConnectUri(data);
+        // Moonpay
+      } else if (isValidMoonpayUri(data)) {
+        dispatch(handleMoonpayUri(data));
         // Simplex
       } else if (isValidSimplexUri(data)) {
         dispatch(handleSimplexUri(data));
@@ -158,12 +164,16 @@ export const incomingData =
         // Join multisig wallet
       } else if (IsValidJoinCode(data)) {
         dispatch(goToJoinWallet(data));
+      } else {
+        handled = false;
       }
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(300);
       throw err;
     }
+
+    return handled;
   };
 
 const getParameterByName = (name: string, url: string): string | undefined => {
@@ -187,12 +197,7 @@ const goToPayPro =
   async dispatch => {
     dispatch(dismissOnGoingProcessModal());
 
-    dispatch(
-      startOnGoingProcessModal(
-        //  t('Fetching payment options...')
-        t(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
 
     const payProUrl = GetPayProUrl(data);
 
@@ -409,6 +414,7 @@ const goToConfirm =
       currency: string;
       chain: string;
       destinationTag?: number;
+      network?: Network;
     };
     amount: number;
     wallet?: Wallet;
@@ -445,12 +451,7 @@ const goToConfirm =
       if (setButtonState) {
         setButtonState('loading');
       } else {
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Creating Transaction')
-            t(OnGoingProcessMessages.CREATING_TXP),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('CREATING_TXP'));
       }
 
       const {txDetails, txp} = await dispatch(
@@ -619,11 +620,16 @@ const handleBitPayUri =
         feePerKb = Number(params.get('gasPrice'));
       }
       const chain = _chain || wallet!.chain;
+      const network = Object.keys(bitcoreLibs).includes(coin)
+        ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
+        : undefined;
+
       let recipient = {
         type: 'address',
         currency: coin,
         chain,
         address,
+        network,
       };
 
       if (!params.get('amount')) {
@@ -929,6 +935,63 @@ const handleLitecoinUri =
     }
   };
 
+const handleMoonpayUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Moonpay URL: ' + data));
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const externalId = getParameterByName('externalId', res);
+    if (!externalId) {
+      dispatch(LogActions.warn('No externalId present. Do not redir'));
+      return;
+    }
+
+    const transactionId = getParameterByName('transactionId', res);
+    const status = getParameterByName('transactionStatus', res);
+
+    const stateParams: MoonpayIncomingData = {
+      externalId,
+      transactionId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestMoonpay({
+        moonpayIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.moonpay[externalId];
+
+    dispatch(
+      logSegmentEvent('track', 'Purchased Buy Crypto', {
+        exchange: 'moonpay',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin || '',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'MoonpaySettings',
+            params: {incomingPaymentRequest: stateParams},
+          },
+        },
+      ],
+    });
+  };
+
 const handleSimplexUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
@@ -945,7 +1008,7 @@ const handleSimplexUri =
     const quoteId = getParameterByName('quoteId', res);
     const userId = getParameterByName('userId', res);
 
-    const stateParams: simplexIncomingData = {
+    const stateParams: SimplexIncomingData = {
       success,
       paymentId,
       quoteId,
@@ -971,11 +1034,21 @@ const handleSimplexUri =
       }),
     );
 
-    navigationRef.navigate('ExternalServicesSettings', {
-      screen: 'SimplexSettings',
-      params: {
-        incomingPaymentRequest: stateParams,
-      },
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'SimplexSettings',
+            params: {incomingPaymentRequest: stateParams},
+          },
+        },
+      ],
     });
   };
 
@@ -1010,7 +1083,7 @@ const handleWyreUri =
     const sourceCurrency = getParameterByName('sourceCurrency', res);
     const sourceAmount = getParameterByName('sourceAmount', res);
 
-    const stateParams: wyrePaymentData = {
+    const stateParams: WyrePaymentData = {
       orderId,
       transferId: getParameterByName('transferId', res),
       owner: getParameterByName('owner', res),
@@ -1047,11 +1120,21 @@ const handleWyreUri =
       }),
     );
 
-    navigationRef.navigate('ExternalServicesSettings', {
-      screen: 'WyreSettings',
-      params: {
-        incomingPaymentRequest: stateParams,
-      },
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'WyreSettings',
+            params: {incomingPaymentRequest: stateParams},
+          },
+        },
+      ],
     });
   };
 

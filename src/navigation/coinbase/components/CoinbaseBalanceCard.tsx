@@ -12,19 +12,18 @@ import {useAppSelector} from '../../../utils/hooks';
 import {HomeCarouselLayoutType} from '../../../store/app/app.models';
 import {Balance, KeyName} from '../../wallet/components/KeyDropdownOption';
 import {BoxShadow} from '../../tabs/home/components/Styled';
-import {BaseText, H3} from '../../../components/styled/Text';
-import {
-  LightBlack,
-  White,
-  NeutralSlate,
-  SlateDark,
-} from '../../../styles/colors';
+import {H3} from '../../../components/styled/Text';
+import {LightBlack, White} from '../../../styles/colors';
 import {
   ActiveOpacity,
   Column,
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
+import {
+  BalanceCode,
+  BalanceCodeContainer,
+} from '../../tabs/home/components/Wallet';
 
 interface CoinbaseCardComponentProps {
   layout: HomeCarouselLayoutType;
@@ -53,16 +52,6 @@ const HeaderImgList = styled.View`
   height: 22px;
   align-items: center;
   justify-content: center;
-`;
-
-const BalanceCode = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
-  font-weight: 500;
-`;
-
-const BalanceCodeContainer = styled.View`
-  padding-left: 2px;
 `;
 
 const HeaderComponent = (

@@ -8,14 +8,14 @@ import {
   isCaptionedContentCard,
   isClassicContentCard,
 } from '../../../../../utils/braze';
-import {
-  useAppDispatch,
-  useShopDeepLinkHandler,
-} from '../../../../../utils/hooks';
+import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
 import {LogActions} from '../../../../../store/log';
 import LinkCard from '../cards/LinkCard';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
+import {
+  getRouteParam,
+  logSegmentEvent,
+} from '../../../../../store/app/app.effects';
 
 interface OfferCardProps {
   contentCard: ContentCard;
@@ -28,7 +28,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   const {contentCard} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
-  const shopDeepLinkHandler = useShopDeepLinkHandler();
+  const urlEventHandler = useUrlEventHandler();
   let description = '';
   let imageSource: Source | null = null;
 
@@ -47,7 +47,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     }
   }
 
-  const _onPress = () => {
+  const _onPress = async () => {
     if (!contentCard.id.startsWith('dev_')) {
       Braze.logContentCardClicked(contentCard.id);
     }
@@ -59,12 +59,13 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     haptic('impactLight');
 
     try {
-      const pathInfo = shopDeepLinkHandler(url);
-      if (pathInfo) {
+      const handled = await urlEventHandler({url});
+      const merchantName = getRouteParam(url, 'merchant');
+      if (handled && merchantName) {
         dispatch(
           logSegmentEvent('track', 'Clicked Shop with Crypto', {
             context: 'OfferCard',
-            merchantName: pathInfo.merchantName,
+            merchantName,
           }),
         );
       }

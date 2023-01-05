@@ -1,6 +1,5 @@
 import {t} from 'i18next';
 import React from 'react';
-import {View} from 'react-native';
 import styled from 'styled-components/native';
 import A from '../../../components/anchor/Anchor';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -94,14 +93,14 @@ const FEES = (): CardTableData[] => {
     {
       title: 'Card Load',
       description: (
-        <View>
-          <TextAlign align="right">{t('No conversion fee')}</TextAlign>
+        <>
+          <TextAlign align="right">{t('No conversion fee\n')}</TextAlign>
           <TextAlign align="right">
             <A href={URL.HELP_MINER_FEES}>
               {t('Network and miner fees may apply')}
             </A>
           </TextAlign>
-        </View>
+        </>
       ),
     },
     {

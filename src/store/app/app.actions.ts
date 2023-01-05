@@ -3,7 +3,6 @@ import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
@@ -34,6 +33,10 @@ export const failedAppInit = (): AppActionType => ({
   payload: true,
 });
 
+export const appIsReadyForDeeplinking = (): AppActionType => ({
+  type: AppActionTypes.APP_READY_FOR_DEEPLINKING,
+});
+
 export const setAppFirstOpenEventComplete = (): AppActionType => ({
   type: AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE,
 });
@@ -55,9 +58,7 @@ export const setOnboardingCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_ONBOARDING_COMPLETED,
 });
 
-export const showOnGoingProcessModal = (
-  message: OnGoingProcessMessages,
-): AppActionType => ({
+export const showOnGoingProcessModal = (message: string): AppActionType => ({
   type: AppActionTypes.SHOW_ONGOING_PROCESS_MODAL,
   payload: message,
 });
@@ -311,4 +312,8 @@ export const updateOnCompleteOnboarding = (payload: string): AppActionType => ({
 
 export const clearOnCompleteOnboardingList = (): AppActionType => ({
   type: AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST,
+});
+
+export const setHasViewedZenLedgerWarning = (): AppActionType => ({
+  type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
 });

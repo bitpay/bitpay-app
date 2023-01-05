@@ -2,7 +2,12 @@ import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
 import {debounce} from 'lodash';
-import {DeviceEventEmitter, Linking, Platform} from 'react-native';
+import {
+  DeviceEventEmitter,
+  EmitterSubscription,
+  Linking,
+  Platform,
+} from 'react-native';
 import Braze from 'react-native-appboy-sdk';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
@@ -23,12 +28,16 @@ import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import Segment from '../../lib/segment';
+import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
 import {CardScreens} from '../../navigation/card/CardStack';
+import {CardActivationScreens} from '../../navigation/card-activation/CardActivationStack';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
+import {WalletScreens} from '../../navigation/wallet/WalletStack';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
+import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
@@ -71,6 +80,15 @@ import {
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
 import {setContactMigrationComplete} from '../contact/contact.actions';
 import {startContactMigration} from '../contact/contact.effects';
+import {getStateFromPath} from '@react-navigation/native';
+import {
+  getAvailableGiftCards,
+  getCategoriesWithIntegrations,
+} from '../shop/shop.selectors';
+import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
+import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
+import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
+import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -91,6 +109,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
+    dispatch(deferDeeplinksUntilAppIsReady());
+
     const {appFirstOpenData, onboardingCompleted, migrationComplete} =
       getState().APP;
 
@@ -106,7 +126,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       await dispatch(askForTrackingPermissionAndEnableSdks(true));
     }
 
-    await dispatch(startWalletStoreInit());
+    dispatch(startWalletStoreInit());
 
     if (!contactMigrationComplete) {
       await dispatch(startContactMigration());
@@ -124,7 +144,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
 
-    await dispatch(initializeApi(network, identity));
+    dispatch(initializeApi(network, identity));
 
     dispatch(LocationEffects.getCountry());
 
@@ -151,7 +171,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             ),
           );
         }
-        await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
+        dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {
         if (isAxiosError(err)) {
@@ -173,8 +193,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    await dispatch(walletConnectInit());
-    await dispatch(initializeBrazeContent());
+    dispatch(walletConnectInit());
+    dispatch(initializeBrazeContent());
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
@@ -186,7 +206,10 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     dispatch(showBlur(pinLockActive || biometricLockActive));
+
     dispatch(AppActions.successAppInit());
+    DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
+
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
@@ -223,6 +246,44 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     RNBootSplash.hide();
   }
 };
+
+const deferDeeplinksUntilAppIsReady =
+  (): Effect<void> => (dispatch, getState) => {
+    const {APP} = getState();
+    let subscriptions: EmitterSubscription[] = [];
+
+    const emitIfReady = () => {
+      if (!subscriptions.length) {
+        dispatch(AppActions.appIsReadyForDeeplinking());
+        DeviceEventEmitter.emit(DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS);
+      }
+    };
+
+    const waitForEvent = (e: DeviceEmitterEvents) => {
+      const sub = DeviceEventEmitter.addListener(e, () => {
+        sub.remove();
+        subscriptions = subscriptions.filter(s => s !== sub);
+
+        emitIfReady();
+      });
+
+      subscriptions.push(sub);
+    };
+
+    if (!navigationRef.isReady()) {
+      waitForEvent(DeviceEmitterEvents.APP_NAVIGATION_READY);
+    }
+
+    if (APP.appIsLoading) {
+      waitForEvent(DeviceEmitterEvents.APP_DATA_INITIALIZED);
+    }
+
+    if (!APP.onboardingCompleted) {
+      waitForEvent(DeviceEmitterEvents.APP_ONBOARDING_COMPLETED);
+    }
+
+    emitIfReady();
+  };
 
 /**
  * Checks to ensure that the App Identity is defined, else generates a new one.
@@ -277,94 +338,93 @@ const initializeApi =
  * The subscription will fetch latest content when it receives an update event.
  * @returns void
  */
-export const initializeBrazeContent =
-  (): Effect => async (dispatch, getState) => {
-    try {
-      dispatch(LogActions.info('Initializing Braze content...'));
-      const {APP} = getState();
+export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
+  try {
+    dispatch(LogActions.info('Initializing Braze content...'));
+    const {APP} = getState();
 
-      let contentCardSubscription = APP.brazeContentCardSubscription;
+    let contentCardSubscription = APP.brazeContentCardSubscription;
 
-      if (contentCardSubscription) {
-        contentCardSubscription.subscriber?.removeAllSubscriptions();
-        contentCardSubscription = null;
-      }
-
-      // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
-      const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
-      const MAX_RETRIES = 3;
-      let currentRetry = 0;
-
-      contentCardSubscription = Braze.addListener(
-        Braze.Events.CONTENT_CARDS_UPDATED,
-        async () => {
-          const isInitializing = currentRetry < MAX_RETRIES;
-
-          dispatch(
-            isInitializing
-              ? LogActions.debug(
-                  'Braze content cards updated, fetching latest content cards...',
-                )
-              : LogActions.info(
-                  'Braze content cards updated, fetching latest content cards...',
-                ),
-          );
-
-          const contentCards = await Braze.getContentCards();
-
-          if (contentCards.length) {
-            currentRetry = MAX_RETRIES;
-          } else {
-            if (isInitializing) {
-              currentRetry++;
-              await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
-              dispatch(
-                LogActions.debug(
-                  `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
-                ),
-              );
-              Braze.requestContentCardsRefresh();
-              return;
-            }
-          }
-
-          dispatch(
-            LogActions.info(
-              `${contentCards.length} content ${
-                contentCards.length === 1 ? 'card' : 'cards'
-              } fetched from Braze.`,
-            ),
-          );
-          dispatch(AppActions.brazeContentCardsFetched(contentCards));
-        },
-      );
-
-      let eid = APP.brazeEid;
-
-      if (!eid) {
-        dispatch(LogActions.debug('Generating EID for anonymous user...'));
-        eid = uuid.v4().toString();
-        dispatch(setBrazeEid(eid));
-      }
-
-      // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
-      dispatch(Analytics.identify(eid));
-
-      dispatch(LogActions.info('Successfully initialized Braze.'));
-      dispatch(AppActions.brazeInitialized(contentCardSubscription));
-    } catch (err) {
-      const errMsg = 'Something went wrong while initializing Braze.';
-
-      dispatch(LogActions.error(errMsg));
-      dispatch(
-        LogActions.error(
-          err instanceof Error ? err.message : JSON.stringify(err),
-        ),
-      );
-    } finally {
-      dispatch(LogActions.info('Initializing Braze content complete.'));
+    if (contentCardSubscription) {
+      contentCardSubscription.subscriber?.removeAllSubscriptions();
+      contentCardSubscription = null;
     }
-  };
+
+    // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
+    const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
+    const MAX_RETRIES = 3;
+    let currentRetry = 0;
+
+    contentCardSubscription = Braze.addListener(
+      Braze.Events.CONTENT_CARDS_UPDATED,
+      async () => {
+        const isInitializing = currentRetry < MAX_RETRIES;
+
+        dispatch(
+          isInitializing
+            ? LogActions.debug(
+                'Braze content cards updated, fetching latest content cards...',
+              )
+            : LogActions.info(
+                'Braze content cards updated, fetching latest content cards...',
+              ),
+        );
+
+        const contentCards = await Braze.getContentCards();
+
+        if (contentCards.length) {
+          currentRetry = MAX_RETRIES;
+        } else {
+          if (isInitializing) {
+            currentRetry++;
+            await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
+            dispatch(
+              LogActions.debug(
+                `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
+              ),
+            );
+            Braze.requestContentCardsRefresh();
+            return;
+          }
+        }
+
+        dispatch(
+          LogActions.info(
+            `${contentCards.length} content ${
+              contentCards.length === 1 ? 'card' : 'cards'
+            } fetched from Braze.`,
+          ),
+        );
+        dispatch(AppActions.brazeContentCardsFetched(contentCards));
+      },
+    );
+
+    let eid = APP.brazeEid;
+
+    if (!eid) {
+      dispatch(LogActions.debug('Generating EID for anonymous user...'));
+      eid = uuid.v4().toString();
+      dispatch(setBrazeEid(eid));
+    }
+
+    // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
+    dispatch(Analytics.identify(eid));
+
+    dispatch(LogActions.info('Successfully initialized Braze.'));
+    dispatch(AppActions.brazeInitialized(contentCardSubscription));
+  } catch (err) {
+    const errMsg = 'Something went wrong while initializing Braze.';
+
+    dispatch(LogActions.error(errMsg));
+    dispatch(
+      LogActions.error(
+        err instanceof Error ? err.message : JSON.stringify(err),
+      ),
+    );
+  } finally {
+    dispatch(LogActions.info('Initializing Braze content complete.'));
+  }
+};
 
 /**
  * Requests a refresh for Braze content.
@@ -388,9 +448,41 @@ export const requestBrazeContentRefresh = (): Effect => async dispatch => {
 };
 
 export const startOnGoingProcessModal =
-  (message: OnGoingProcessMessages): Effect<Promise<void>> =>
+  (key: OnGoingProcessMessages): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
     const store: RootState = getState();
+
+    const _OnGoingProcessMessages = {
+      GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
+      CREATING_KEY: i18n.t('Creating Key'),
+      LOGGING_IN: i18n.t('Logging In'),
+      PAIRING: i18n.t('Pairing'),
+      CREATING_ACCOUNT: i18n.t('Creating Account'),
+      UPDATING_ACCOUNT: i18n.t('Updating Account'),
+      IMPORTING: i18n.t('Importing'),
+      DELETING_KEY: i18n.t('Deleting Key'),
+      ADDING_WALLET: i18n.t('Adding Wallet'),
+      LOADING: i18n.t('Loading'),
+      FETCHING_PAYMENT_OPTIONS: i18n.t('Fetching payment options...'),
+      FETCHING_PAYMENT_INFO: i18n.t('Fetching payment information...'),
+      JOIN_WALLET: i18n.t('Joining Wallet'),
+      SENDING_PAYMENT: i18n.t('Sending Payment'),
+      ACCEPTING_PAYMENT: i18n.t('Accepting Payment'),
+      GENERATING_ADDRESS: i18n.t('Generating Address'),
+      GENERATING_GIFT_CARD: i18n.t('Generating Gift Card'),
+      SYNCING_WALLETS: i18n.t('Syncing Wallets...'),
+      REJECTING_CALL_REQUEST: i18n.t('Rejecting Call Request'),
+      SAVING_LAYOUT: i18n.t('Saving Layout'),
+      SAVING_ADDRESSES: i18n.t('Saving Addresses'),
+      EXCHANGE_GETTING_DATA: i18n.t('Getting data from the exchange...'),
+      CALCULATING_FEE: i18n.t('Calculating Fee'),
+      CONNECTING_COINBASE: i18n.t('Connecting with Coinbase...'),
+      FETCHING_COINBASE_DATA: i18n.t('Fetching data from Coinbase...'),
+      UPDATING_TXP: i18n.t('Updating Transaction'),
+      CREATING_TXP: i18n.t('Creating Transaction'),
+      SENDING_EMAIL: i18n.t('Sending Email'),
+      REDIRECTING: i18n.t('Redirecting'),
+    };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next
     if (store.APP.showOnGoingProcessModal) {
@@ -398,7 +490,10 @@ export const startOnGoingProcessModal =
       await sleep(500);
     }
 
-    dispatch(AppActions.showOnGoingProcessModal(message));
+    // Translate message before show message
+    const _message = _OnGoingProcessMessages[key];
+
+    dispatch(AppActions.showOnGoingProcessModal(_message));
     return sleep(100);
   };
 
@@ -871,32 +966,178 @@ export const resetAllSettings = (): Effect => dispatch => {
   });
 };
 
+export const getRouteParam = (url: string, param: string) => {
+  const path = url.replace(APP_DEEPLINK_PREFIX, '');
+  const state = getStateFromPath(path);
+  if (!state?.routes.length) {
+    return undefined;
+  }
+  const route = state.routes[0];
+  const routeParam = (((route.params as any) || {})[param] || '').toLowerCase();
+  return routeParam;
+};
+
+export const incomingShopLink =
+  (url: string): Effect<{merchantName: string} | undefined> =>
+  (_, getState) => {
+    const {SHOP} = getState();
+    const availableGiftCards = getAvailableGiftCards(SHOP.availableCardMap);
+    const integrations = Object.values(SHOP.integrations);
+    const categories = getCategoriesWithIntegrations(
+      Object.values(SHOP.categoriesAndCurations.categories),
+      integrations,
+    );
+
+    const path = url.replace(APP_DEEPLINK_PREFIX, '');
+    const state = getStateFromPath(path);
+    if (!state?.routes.length) {
+      return undefined;
+    }
+    const route = state.routes[0];
+    const merchantName = getRouteParam(url, 'merchant');
+    const categoryName = getRouteParam(url, 'category');
+
+    if (!['giftcard', 'shoponline'].includes(route.name)) {
+      return undefined;
+    }
+
+    if (route.name === 'giftcard') {
+      const cardConfig = availableGiftCards.find(
+        gc => gc.name.toLowerCase() === merchantName,
+      );
+
+      if (cardConfig) {
+        navigationRef.navigate('GiftCard', {
+          screen: 'BuyGiftCard',
+          params: {
+            cardConfig,
+          },
+        });
+      } else {
+        navigationRef.navigate('Shop', {
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.GIFT_CARDS,
+          },
+        });
+      }
+    } else if (route.name === 'shoponline') {
+      const directIntegration = integrations.find(
+        i => i.displayName.toLowerCase() === merchantName,
+      );
+      const category = categories.find(
+        c => c.displayName.toLowerCase() === categoryName,
+      );
+
+      if (category) {
+        navigationRef.navigate('Merchant', {
+          screen: MerchantScreens.MERCHANT_CATEGORY,
+          params: {
+            category,
+            integrations: category.integrations,
+          },
+        });
+      } else if (directIntegration) {
+        navigationRef.navigate('Merchant', {
+          screen: MerchantScreens.MERCHANT_DETAILS,
+          params: {
+            directIntegration,
+          },
+        });
+      } else {
+        navigationRef.navigate('Shop', {
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.SHOP_ONLINE,
+          },
+        });
+      }
+    }
+    return {merchantName};
+  };
+
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
-    let handled = false;
+    const [fullPath, fullParams] = url
+      .replace(APP_DEEPLINK_PREFIX, '')
+      .split('?');
+    const pathSegments = (fullPath || '').split('/');
+    const params = (fullParams || '').split('&').reduce((paramMap, kvp) => {
+      const [k, v] = kvp.split('=');
+      paramMap[k] = v;
+      return paramMap;
+    }, {} as Record<string, string | undefined>) as any;
 
-    const parsed = url.replace(APP_DEEPLINK_PREFIX, '');
+    const pathInfo = dispatch(incomingShopLink(url));
 
-    if (parsed === 'card/offers') {
-      const {APP, CARD} = getState();
-      const cards = CARD.cards[APP.network];
+    if (pathInfo) {
+      return true;
+    }
 
-      if (cards.length) {
-        if (APP.appWasInit) {
-          setTimeout(() => {
-            handleDosh();
-          }, 500);
-        } else {
-          DeviceEventEmitter.addListener(
-            DeviceEmitterEvents.APP_INIT_COMPLETED,
-            () => {
-              handleDosh();
+    let handler: (() => void) | null = null;
+
+    if (pathSegments[0] === 'buy-crypto') {
+      handler = () => {
+        navigationRef.navigate(RootStacks.BUY_CRYPTO, {
+          screen: BuyCryptoScreens.ROOT,
+          params,
+        });
+      };
+    } else if (pathSegments[0] === 'connections') {
+      const redirectTo = pathSegments[1];
+
+      handler = () => {
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.SETTINGS,
+          params: {
+            screen: SettingsScreens.Root,
+            params: {
+              redirectTo: redirectTo as any,
             },
-          );
-        }
+          },
+        });
+      };
+    } else if (pathSegments[0] === 'wallet') {
+      if (pathSegments[1] === 'create') {
+        handler = () => {
+          navigationRef.navigate(RootStacks.WALLET, {
+            screen: WalletScreens.CREATION_OPTIONS,
+            params,
+          });
+        };
+      }
+    } else if (pathSegments[0] === 'card') {
+      const cardPath = pathSegments[1];
+      const createCardHandler = (cb: (cards: Card[]) => void) => {
+        return () => {
+          const {APP, CARD} = getState();
+          const cards = CARD.cards[APP.network];
 
-        function handleDosh() {
+          if (cards.length) {
+            cb(cards);
+          } else {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.HOME,
+              },
+            });
+          }
+        };
+      };
+
+      if (cardPath === 'activate') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(RootStacks.CARD_ACTIVATION, {
+            screen: CardActivationScreens.ACTIVATE,
+            params: {
+              card: cards[0],
+            },
+          });
+        });
+      } else if (cardPath === 'offers') {
+        handler = createCardHandler(cards => {
           navigationRef.navigate(RootStacks.TABS, {
             screen: TabsScreens.CARD,
             params: {
@@ -906,19 +1147,42 @@ export const incomingLink =
               },
             },
           });
+
           dispatch(CardEffects.startOpenDosh());
-        }
-      } else {
-        navigationRef.navigate(RootStacks.TABS, {
-          screen: TabsScreens.CARD,
-          params: {
-            screen: CardScreens.HOME,
-          },
+        });
+      } else if (cardPath === 'referral') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(RootStacks.TABS, {
+            screen: TabsScreens.CARD,
+            params: {
+              screen: CardScreens.REFERRAL,
+              params: {
+                card: cards[0],
+              },
+            },
+          });
         });
       }
-
-      handled = true;
     }
 
-    return handled;
+    if (handler) {
+      const {APP} = getState();
+      const {appIsReadyForDeeplinking} = APP;
+
+      if (appIsReadyForDeeplinking) {
+        handler();
+      } else {
+        const subscription = DeviceEventEmitter.addListener(
+          DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS,
+          () => {
+            subscription.remove();
+            handler?.();
+          },
+        );
+      }
+
+      return true;
+    }
+
+    return false;
   };

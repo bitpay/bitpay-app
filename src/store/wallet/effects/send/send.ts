@@ -55,7 +55,6 @@ import {createWalletAddress, ToCashAddress} from '../address/address';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
 import TouchID from 'react-native-touch-id-ng';
@@ -253,12 +252,7 @@ const setEthAddressNonce =
         let address = nonceWallet?.receiveAddress;
 
         if (!address) {
-          dispatch(
-            startOnGoingProcessModal(
-              // t('Generating Address')
-              t(OnGoingProcessMessages.GENERATING_ADDRESS),
-            ),
-          );
+          dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
           address = await dispatch<Promise<string>>(
             createWalletAddress({wallet: nonceWallet, newAddress: false}),
           );

@@ -29,7 +29,6 @@ export {
   payInvoicePending,
   payInvoiceSuccess,
   payInvoiceFailed,
-  selectHostNetwork,
 } from './coinbase.actions';
 export {
   isInvalidTokenError,

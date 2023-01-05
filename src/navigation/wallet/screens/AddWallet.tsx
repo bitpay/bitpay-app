@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
   BaseText,
   H4,
@@ -41,7 +35,6 @@ import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
@@ -108,6 +101,7 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {DESCRIPTIONS} from './CurrencySelection';
+import {CommonActions} from '@react-navigation/native';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -305,7 +299,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       showBottomNotificationModal({
         type: 'info',
         title: t('Missing wallet'),
-        message: t(DESCRIPTIONS[chain]),
+        message: DESCRIPTIONS[chain],
         actions: [
           {
             primary: true,
@@ -403,9 +397,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
             isErc20Token: !!isToken,
           }),
         );
-        dispatch(
-          startOnGoingProcessModal(t(OnGoingProcessMessages.ADDING_WALLET)),
-        );
+        dispatch(startOnGoingProcessModal('ADDING_WALLET'));
         // adds wallet and binds to key obj - creates eth wallet if needed
         const wallet = await dispatch(
           addWallet({
@@ -436,6 +428,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         // new wallet might have funds
         await dispatch(startGetRates({}));
         await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await sleep(1000);
         dispatch(updatePortfolioBalance());
 
         dispatch(dismissOnGoingProcessModal());
@@ -499,11 +492,27 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       const wallet = await _addWallet(_associatedWallet, walletName);
 
       if (!withinReceiveSettings) {
-        navigation.navigate('WalletDetails', {
-          walletId: wallet.id,
-          key,
-          skipInitializeHistory: false, // new wallet might have transactions
-        });
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [
+              {
+                name: 'KeyOverview',
+                params: {
+                  id: key.id,
+                },
+              },
+              {
+                name: 'WalletDetails',
+                params: {
+                  walletId: wallet.id,
+                  key,
+                  skipInitializeHistory: false, // new wallet might have transactions
+                },
+              },
+            ],
+          }),
+        );
       }
     } catch (err: any) {
       dispatch(LogActions.error(JSON.stringify(err)));

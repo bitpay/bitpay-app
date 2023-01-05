@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {Text, TouchableOpacity} from 'react-native';
+import {RefreshControl, Text, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-community/clipboard';
+import {useTheme} from '@react-navigation/native';
 import moment from 'moment';
 import {Br} from '../../../../../components/styled/Containers';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
@@ -40,6 +41,8 @@ import {
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
+import {sleep} from '../../../../../utils/helper-methods';
+import {SlateDark, White} from '../../../../../styles/colors';
 
 export interface ChangellyDetailsProps {
   swapTx: changellyTxData;
@@ -52,11 +55,13 @@ const ChangellyDetails: React.FC = () => {
   } = useRoute<RouteProp<{params: ChangellyDetailsProps}>>();
   const navigation = useNavigation();
   const logger = useLogger();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const [status, setStatus] = useState<Status>({
     statusTitle: undefined,
     statusDescription: undefined,
   });
+  const [refreshing, setRefreshing] = useState(false);
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
   const [copiedPayinAddress, setCopiedPayinAddress] = useState(false);
   const [copiedPayinExtraId, setCopiedPayinExtraId] = useState(false);
@@ -102,6 +107,12 @@ const ChangellyDetails: React.FC = () => {
       .catch(err => {
         logger.error('Changelly getStatus Error: ' + JSON.stringify(err));
       });
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([getStatus(true), sleep(1000)]);
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -160,7 +171,14 @@ const ChangellyDetails: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings>
+      <Settings
+        refreshControl={
+          <RefreshControl
+            tintColor={theme.dark ? White : SlateDark}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }>
         <RowDataContainer>
           <CryptoAmountContainer>
             <CryptoTitle>{t('Receiving amount')}</CryptoTitle>

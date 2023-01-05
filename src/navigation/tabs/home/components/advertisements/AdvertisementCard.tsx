@@ -22,10 +22,7 @@ import {
   isCaptionedContentCard,
   isClassicContentCard,
 } from '../../../../../utils/braze';
-import {
-  useAppDispatch,
-  useShopDeepLinkHandler,
-} from '../../../../../utils/hooks';
+import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
 
 interface AdvertisementCardProps {
@@ -78,7 +75,7 @@ const IconStyle: StyleProp<ImageStyle> = {
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const {contentCard, ctaOverride} = props;
   const {image, url, openURLInWebView} = contentCard;
-  const shopDeepLinkHandler = useShopDeepLinkHandler();
+  const urlEventHandler = useUrlEventHandler();
   const dispatch = useAppDispatch();
   const linkTo = useLinkTo();
   const theme = useTheme();
@@ -103,7 +100,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     }
   }
 
-  const onPress = () => {
+  const onPress = async () => {
     haptic('impactLight');
 
     if (!contentCard.id.startsWith('dev_')) {
@@ -127,8 +124,8 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
 
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {
       try {
-        const pathInfo = shopDeepLinkHandler(url);
-        if (!pathInfo) {
+        const handled = await urlEventHandler({url});
+        if (!handled) {
           const path = '/' + url.replace(APP_DEEPLINK_PREFIX, '');
           linkTo(path);
         }

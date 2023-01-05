@@ -3,7 +3,6 @@ import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
@@ -58,6 +57,10 @@ export interface AppState {
    * Whether the app is done initializing data and animations are complete.
    */
   appWasInit: boolean;
+  /**
+   * Whether app has completed a set of conditions before handling deeplinks/deferred deeplinks.
+   */
+  appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
   appOpeningWasTracked: boolean;
   introCompleted: boolean;
@@ -107,6 +110,7 @@ export interface AppState {
   failedAppInit: boolean;
   checkingBiometricForSending: boolean;
   onCompleteOnboardingList: Array<string>;
+  hasViewedZenLedgerWarning: boolean;
 }
 
 const initialState: AppState = {
@@ -126,12 +130,13 @@ const initialState: AppState = {
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
   appWasInit: false,
+  appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   appOpeningWasTracked: false,
   introCompleted: false,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
-  onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
+  onGoingProcessModalMessage: undefined,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
   currentRoute: undefined,
@@ -175,6 +180,7 @@ const initialState: AppState = {
   failedAppInit: false,
   checkingBiometricForSending: false,
   onCompleteOnboardingList: [],
+  hasViewedZenLedgerWarning: false,
 };
 
 export const appReducer = (
@@ -198,6 +204,12 @@ export const appReducer = (
       return {
         ...state,
         appWasInit: true,
+      };
+
+    case AppActionTypes.APP_READY_FOR_DEEPLINKING:
+      return {
+        ...state,
+        appIsReadyForDeeplinking: true,
       };
 
     case AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE:
@@ -560,6 +572,11 @@ export const appReducer = (
       return {
         ...state,
         onCompleteOnboardingList: [],
+      };
+    case AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING:
+      return {
+        ...state,
+        hasViewedZenLedgerWarning: true,
       };
 
     default:

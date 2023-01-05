@@ -14,7 +14,7 @@ import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
-import {wyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {WyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
   NoPrMsg,
   PrTitle,
@@ -36,7 +36,7 @@ import {sleep} from '../../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 
 export interface WyreSettingsProps {
-  incomingPaymentRequest?: wyrePaymentData;
+  incomingPaymentRequest?: WyrePaymentData;
   paymentRequestError?: boolean;
 }
 
@@ -47,7 +47,7 @@ const WyreSettings: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const logger = useLogger();
-  const [paymentRequests, setTransactions] = useState([] as wyrePaymentData[]);
+  const [paymentRequests, setTransactions] = useState([] as WyrePaymentData[]);
 
   const route = useRoute<RouteProp<{params: WyreSettingsProps}>>();
   const {incomingPaymentRequest, paymentRequestError} = route.params || {};
