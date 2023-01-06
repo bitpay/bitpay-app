@@ -29,7 +29,6 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       simplex: true,
-      wyre: true,
     },
     enabled: Platform.OS === 'ios',
   },
@@ -40,7 +39,6 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       simplex: true, // EU Only
-      wyre: false,
     },
     enabled: true,
   },
@@ -51,7 +49,6 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       simplex: true,
-      wyre: false,
     },
     enabled: true,
   },
@@ -62,7 +59,6 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       simplex: true,
-      wyre: true,
     },
     enabled: true,
   },
@@ -73,7 +69,6 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       simplex: true,
-      wyre: false,
     },
     enabled: true,
   },
