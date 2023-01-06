@@ -799,7 +799,7 @@
   "MAYBE LATER": "MAYBE LATER",
   "User rejected call request": "Solicitud rechazada por el usuario",
   "Reject": "Rechazar",
-  "WalletConnectBannerConfirm": "WalletConnectBannerConfirm",
+  "WalletConnectBannerConfirm": "Antes de proceder, verifica que la solicitud <0>{{peerName}}</0> aún este esperando confirmación.",
   "Gas price": "Precio de gas",
   "Edit gas price": "Editar precio de gas",
   "Gas limit": "Límite de gas",
