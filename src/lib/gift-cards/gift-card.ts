@@ -16,6 +16,7 @@ import {
   UnsoldGiftCard,
 } from '../../store/shop/shop.models';
 import {formatFiatAmount} from '../../utils/helper-methods';
+import {Grey, SlateDark} from '../../styles/colors';
 
 export function getGiftCardConfigList(
   cardConfigMap: CardConfigMap,
@@ -265,4 +266,45 @@ export function getGiftCardIcons(supportedCardMap: CardConfigMap) {
     }),
     {} as {[cardName: string]: string},
   );
+}
+
+export function generateGiftCardPrintHtml(
+  cardConfig: CardConfig,
+  giftCard: GiftCard,
+): string {
+  return `<div style="text-align: center; margin-top: 50px; font-family: Arial;">
+ <h1 style="font-size: 30px;">${formatFiatAmount(
+   giftCard.amount,
+   giftCard.currency,
+   {
+     currencyDisplay: 'symbol',
+   },
+ )}</h1>
+ <img src="${
+   cardConfig.cardImage
+ }" style="margin-top: 10px; height: 130px; border-radius: 10px;">
+ </br></br>
+ <h3 style="color: gray;">Claim Code</h3>
+ ${
+   giftCard.barcodeImage
+     ? `<img src="${giftCard.barcodeImage}" style="margin-top: 10px;">`
+     : ''
+ }
+ <h1 style="font-size: 22px;">${giftCard.claimCode}</h1>
+
+ ${
+   giftCard.pin
+     ? ` 
+     <div style="width: 400px; height: 1px; background-color: ${Grey}; display: inline-block; margin: 10px 0;"></div>
+     <h3 style="color: gray;">Pin</h3>
+     <h1 style="font-size: 22px;">${giftCard.pin}</h1>`
+     : ''
+ }
+ </br>
+ ${
+   cardConfig.terms
+     ? `<p style="font-size: 12px; color: ${SlateDark}; padding: 0 30px;">${cardConfig.terms}</p>`
+     : ''
+ }
+</div>`;
 }
