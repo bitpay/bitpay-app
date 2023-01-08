@@ -28,7 +28,7 @@ export const IsValidBitPayInvoice = (data: string): boolean => {
 
 export const IsValidPayPro = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!/^(bitcoin|bitcoincash|bchtest|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=[\w+]/.exec(
+  return !!/^(bitpay|bitcoin|bitcoincash|bchtest|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=[\w+]/.exec(
     data,
   );
 };
