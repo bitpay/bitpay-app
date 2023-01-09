@@ -89,13 +89,13 @@ import {initialShopState} from '../../../shop/shop.reducer';
 import {StackActions} from '@react-navigation/native';
 import {BuyCryptoActions} from '../../../buy-crypto';
 import {SwapCryptoActions} from '../../../swap-crypto';
+import {Analytics} from '../../../analytics/analytics.effects';
 import {
   checkNotificationsPermissions,
   setConfirmTxNotifications,
   setNotifications,
   subscribePushNotifications,
   subscribeEmailNotifications,
-  Analytics,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
 import {sleep} from '../../../../utils/helper-methods';

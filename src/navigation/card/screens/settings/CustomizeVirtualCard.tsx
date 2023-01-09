@@ -30,7 +30,7 @@ import CardFront from '../../components/CardFront';
 import CheckIcon from './CheckIcon';
 import * as Styled from './CustomizeVirtualCard.styled';
 import {CardBrand} from '../../../../constants/card';
-import {Analytics} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 export interface CustomizeVirtualCardParamList {
   card: Card;

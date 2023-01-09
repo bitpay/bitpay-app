@@ -12,7 +12,7 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {Analytics} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import ZenLedgerModal from '../../../zenledger/components/ZenLedgerModal';
 import {SettingsComponent} from '../SettingsRoot';

@@ -21,8 +21,8 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import {getZenLedgerUrl} from '../../../store/zenledger/zenledger.effects';
 import {sleep} from '../../../utils/helper-methods';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 import {
-  Analytics,
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';

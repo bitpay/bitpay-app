@@ -101,8 +101,8 @@ import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
+import {Analytics} from './store/analytics/analytics.effects';
 import {
-  Analytics,
   handleBwsEvent,
   shortcutListener,
 } from './store/app/app.effects';
