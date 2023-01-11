@@ -13,12 +13,13 @@ import Bug from '../../../../../../assets/img/settings/feedback/bug.svg';
 import Start from '../../../../../../assets/img/settings/feedback/star.svg';
 import Feature from '../../../../../../assets/img/settings/feedback/feature.svg';
 import ShareSvg from '../../../../../../assets/img/settings/feedback/share.svg';
-import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  shareApp,
+} from '../../../../../store/app/app.effects';
 import {URL} from '../../../../../constants';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../../../home/components/Styled';
-import {Platform, Share} from 'react-native';
-import {APP_NAME, DOWNLOAD_BITPAY_URL} from '../../../../../constants/config';
 import Rate, {AndroidMarket} from 'react-native-rate';
 import {useTranslation} from 'react-i18next';
 
@@ -46,19 +47,6 @@ const SendFeedback = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const share = async () => {
-    try {
-      let message = t(
-        'Spend and control your cryptocurrency by downloading the app.',
-        {APP_NAME},
-      );
-
-      if (Platform.OS !== 'ios') {
-        message = `${message} ${DOWNLOAD_BITPAY_URL}`;
-      }
-      await Share.share({message, url: DOWNLOAD_BITPAY_URL});
-    } catch (e) {}
-  };
   const feedbackList = [
     {
       key: 1,
@@ -87,7 +75,7 @@ const SendFeedback = () => {
     },
     {
       key: 2,
-      onPress: () => share(),
+      onPress: () => dispatch(shareApp()),
       description: t('Share with Friends'),
       leftIcon: <ShareSvg width={20} height={20} />,
       rightIcon: <AngleRight />,

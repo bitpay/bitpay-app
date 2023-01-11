@@ -49,12 +49,15 @@ import {
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 import {GetPrecision, IsERCToken} from '../../utils/currency';
-import {CommonActions} from '@react-navigation/native';
+import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
 import {createWalletAddress, ToCashAddress} from '../address/address';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
-import {startOnGoingProcessModal} from '../../../app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../app/app.effects';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
 import TouchID from 'react-native-touch-id-ng';
@@ -66,6 +69,9 @@ import {
 import {Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
 import {getCoinAndChainFromCurrencyCode} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
+import {navigationRef} from '../../../../Root';
+import {WalletScreens} from '../../../../navigation/wallet/WalletStack';
+import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1509,4 +1515,93 @@ export const checkBiometricForSending =
         }
         return Promise.reject('biometric check failed');
       });
+  };
+
+export const sendCrypto =
+  (loggerContext: string): Effect<void> =>
+  (dispatch, getState) => {
+    const keys = getState().WALLET.keys;
+    const walletsWithBalance = Object.values(keys)
+      .filter(key => key.backupComplete)
+      .flatMap(key => key.wallets)
+      .filter(wallet => !wallet.hideWallet && wallet.isComplete())
+      .filter(wallet => wallet.balance.sat > 0);
+
+    if (!walletsWithBalance.length) {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: t('No funds available'),
+          message: t('You do not have any funds to send.'),
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('Add funds'),
+              action: () => {
+                dispatch(
+                  logSegmentEvent('track', 'Clicked Buy Crypto', {
+                    context: 'HomeRoot',
+                  }),
+                );
+                navigationRef.navigate('Wallet', {
+                  screen: WalletScreens.AMOUNT,
+                  params: {
+                    onAmountSelected: (amount: string) => {
+                      navigationRef.navigate('BuyCrypto', {
+                        screen: 'BuyCryptoRoot',
+                        params: {
+                          amount: Number(amount),
+                        },
+                      });
+                    },
+                    context: 'buyCrypto',
+                  },
+                });
+              },
+              primary: true,
+            },
+            {
+              text: t('Got It'),
+              action: () => null,
+              primary: false,
+            },
+          ],
+        }),
+      );
+    } else {
+      dispatch(
+        logSegmentEvent('track', 'Clicked Send', {
+          context: loggerContext,
+        }),
+      );
+      navigationRef.navigate('Wallet', {
+        screen: 'GlobalSelect',
+        params: {context: 'send'},
+      });
+    }
+  };
+
+export const receiveCrypto =
+  (navigation: NavigationProp<any>, loggerContext: string): Effect<void> =>
+  (dispatch, getState) => {
+    const keys = getState().WALLET.keys;
+    const needsBackup = !Object.values(keys).filter(key => key.backupComplete)
+      .length;
+    if (needsBackup) {
+      dispatch(
+        showBottomNotificationModal(
+          keyBackupRequired(Object.values(keys)[0], navigation, dispatch),
+        ),
+      );
+    } else {
+      dispatch(
+        logSegmentEvent('track', 'Clicked Receive', {
+          context: loggerContext,
+        }),
+      );
+      navigationRef.navigate('Wallet', {
+        screen: 'GlobalSelect',
+        params: {context: 'receive'},
+      });
+    }
   };

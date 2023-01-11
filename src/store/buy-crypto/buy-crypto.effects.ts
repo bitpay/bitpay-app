@@ -121,3 +121,25 @@ export const getBuyCryptoFiatLimits =
       };
     }
   };
+
+export const goToBuyCrypto = (): Effect<void> => dispatch => {
+  dispatch(
+    logSegmentEvent('track', 'Clicked Buy Crypto', {
+      context: 'Shortcuts',
+    }),
+  );
+  navigationRef.navigate('Wallet', {
+    screen: WalletScreens.AMOUNT,
+    params: {
+      onAmountSelected: async (amount: string, setButtonState: any) => {
+        navigationRef.navigate('BuyCrypto', {
+          screen: 'BuyCryptoRoot',
+          params: {
+            amount: Number(amount),
+          },
+        });
+      },
+      context: 'buyCrypto',
+    },
+  });
+};

@@ -7,6 +7,7 @@
 #import <React/RCTLinkingManager.h>
 #import <React/RCTRootView.h>
 #import "RNBootSplash.h"
+#import "RNQuickActionManager.h"
 #ifdef FB_SONARKIT_ENABLED
 #import <FlipperKit/FlipperClient.h>
 #import <FlipperKitLayoutPlugin/FlipperKitLayoutPlugin.h>
@@ -93,6 +94,10 @@ static void InitializeFlipper(UIApplication *application) {
   } else {
     completionHandler(UNNotificationPresentationOptionAlert);
   }
+}
+
+- (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL succeeded)) completionHandler {
+  [RNQuickActionManager onQuickActionPress:shortcutItem completionHandler:completionHandler];
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
