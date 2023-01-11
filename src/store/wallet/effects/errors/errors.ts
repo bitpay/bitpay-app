@@ -32,7 +32,7 @@ export const showWalletError =
       case 'noWalletsAbleToBuy':
         title = t('No wallets');
         message = coin
-          ? t('No wallets available to receive funds.', {
+          ? t('No coin wallets available to receive funds.', {
               coin: coin.toUpperCase(),
             })
           : t('No wallets available to receive funds.');

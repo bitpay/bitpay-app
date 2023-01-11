@@ -71,6 +71,12 @@ import {getCoinAndChainFromCurrencyCode} from '../../../bitpay-id/utils/bitpay-i
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {orderBy} from 'lodash';
 import {showWalletError} from '../../../../store/wallet/effects/errors/errors';
+import {getExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
+import {
+  BuyCryptoConfig,
+  ExternalServicesConfig,
+} from '../../../../store/external-services/external-services.types';
+import {StackActions} from '@react-navigation/native';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -89,6 +95,8 @@ const CtaContainer = styled.View`
 const ArrowContainer = styled.View`
   margin-left: 10px;
 `;
+
+let buyCryptoConfig: BuyCryptoConfig | undefined;
 
 const BuyCryptoRoot: React.VFC<
   StackScreenProps<BuyCryptoStackParamList, BuyCryptoScreens.ROOT>
@@ -167,11 +175,20 @@ const BuyCryptoRoot: React.VFC<
     }
   };
 
-  const selectFirstAvailableWallet = () => {
+  const walletError = async (
+    type?: string,
+    fromCurrencyAbbreviation?: string,
+  ) => {
+    dispatch(dismissOnGoingProcessModal());
+    await sleep(400);
+    dispatch(showWalletError(type, fromCurrencyAbbreviation));
+  };
+
+  const selectFirstAvailableWallet = async () => {
     const keysList = Object.values(allKeys).filter(key => key.backupComplete);
 
     if (!keysList[0]) {
-      dispatch(showWalletError('emptyKeyList'));
+      walletError('emptyKeyList');
       return;
     }
 
@@ -187,8 +204,10 @@ const BuyCryptoRoot: React.VFC<
       fromWalletData = allWallets.find(wallet => wallet.id === fromWallet.id);
       if (fromWalletData) {
         setWallet(fromWalletData);
+        await sleep(500);
+        dispatch(dismissOnGoingProcessModal());
       } else {
-        dispatch(showWalletError('walletNotSupported'));
+        walletError('walletNotSupported');
       }
     } else {
       const availableKeys = keysList.filter(key => {
@@ -217,15 +236,15 @@ const BuyCryptoRoot: React.VFC<
               (fromChain ? wallet.chain === fromChain : true),
           );
         }
-        allowedWallets[0]
-          ? setSelectedWallet(allowedWallets[0])
-          : dispatch(
-              showWalletError('noWalletsAbleToBuy', fromCurrencyAbbreviation),
-            );
+        if (allowedWallets[0]) {
+          setSelectedWallet(allowedWallets[0]);
+          await sleep(500);
+          dispatch(dismissOnGoingProcessModal());
+        } else {
+          walletError('noWalletsAbleToBuy', fromCurrencyAbbreviation);
+        }
       } else {
-        dispatch(
-          showWalletError('keysNoSupportedWallet', fromCurrencyAbbreviation),
-        );
+        walletError('keysNoSupportedWallet', fromCurrencyAbbreviation);
       }
     }
   };
@@ -286,13 +305,13 @@ const BuyCryptoRoot: React.VFC<
         if (allKeys[wallet.keyId].backupComplete) {
           setSelectedWallet(wallet);
         } else {
-          dispatch(showWalletError('needsBackup'));
+          walletError('needsBackup');
         }
       } else {
-        dispatch(showWalletError('walletNotCompleted'));
+        walletError('walletNotCompleted');
       }
     } else {
-      dispatch(showWalletError('walletNotSupported'));
+      walletError('walletNotSupported');
     }
   };
 
@@ -377,6 +396,7 @@ const BuyCryptoRoot: React.VFC<
       country: countryData?.shortCode || 'US',
       selectedWallet,
       paymentMethod: selectedPaymentMethod,
+      buyCryptoConfig,
     });
   };
 
@@ -482,7 +502,47 @@ const BuyCryptoRoot: React.VFC<
     }
   };
 
-  useMount(() => {
+  const init = async () => {
+    try {
+      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+      const config: ExternalServicesConfig = await getExternalServicesConfig();
+      buyCryptoConfig = config?.buyCrypto;
+      logger.debug('buyCryptoConfig: ' + JSON.stringify(buyCryptoConfig));
+    } catch (err) {
+      logger.error('getBuyCryptoConfig Error: ' + JSON.stringify(err));
+    }
+
+    if (buyCryptoConfig?.disabled) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(600);
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          title: buyCryptoConfig?.disabledTitle
+            ? buyCryptoConfig.disabledTitle
+            : t('Out of service'),
+          message: buyCryptoConfig?.disabledMessage
+            ? buyCryptoConfig.disabledMessage
+            : t(
+                'This feature is temporarily out of service. Please try again later.',
+              ),
+          type: 'warning',
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {
+                navigation.dispatch(StackActions.popToTop());
+              },
+            },
+          ],
+          enableBackdropDismiss: true,
+          onBackdropDismiss: () => {
+            navigation.dispatch(StackActions.popToTop());
+          },
+        }),
+      );
+      return;
+    }
+
     const limits = dispatch(getBuyCryptoFiatLimits(undefined, fiatCurrency));
 
     if (limits.min !== undefined && amount < limits.min) {
@@ -544,6 +604,10 @@ const BuyCryptoRoot: React.VFC<
     setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
 
     selectFirstAvailableWallet();
+  };
+
+  useMount(() => {
+    init();
   });
 
   useEffect(() => {
@@ -768,7 +832,7 @@ const BuyCryptoRoot: React.VFC<
               if (err.message === 'invalid password') {
                 dispatch(showBottomNotificationModal(WrongPasswordError()));
               } else {
-                dispatch(showWalletError(err.message));
+                walletError(err.message);
               }
             }
           }

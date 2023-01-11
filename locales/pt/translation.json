@@ -374,7 +374,7 @@
   "Incomplete Wallet": "Carteira incompleta",
   "The selected wallet needs to be complete before being able to receive funds": "A carteira selecionada tem de estar completa antes de poder receber fundos",
   "No wallets": "Nenhuma carteira",
-  "No wallets available to receive funds.": "Não tem carteiras {{coin}} disponíveis para receber fundos.",
+  "No coin wallets available to receive funds.": "Não tem carteiras {{coin}} disponíveis para receber fundos.",
   "Not supported wallets": "Nenhuma carteira suportada",
   "Your keys do not have wallets able to buy crypto": "As suas chaves não têm carteiras {{coin}} compatíveis com a compra de criptomoedas",
   "Your keys do not have supported wallets able to buy crypto": "As suas chaves não têm carteiras compatíveis com a compra de criptomoedas",

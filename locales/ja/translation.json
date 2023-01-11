@@ -374,7 +374,7 @@
   "Incomplete Wallet": "未完成のウォレット",
   "The selected wallet needs to be complete before being able to receive funds": "選択されたウォレットは資産を受け取る前に完成させる必要があります",
   "No wallets": "ウォレットがありません",
-  "No wallets available to receive funds.": "資産の受け取りに利用可能な {{coin}} ウォレットがありません。",
+  "No coin wallets available to receive funds.": "資産の受け取りに利用可能な {{coin}} ウォレットがありません。",
   "Not supported wallets": "サポートされたウォレットがありません",
   "Your keys do not have wallets able to buy crypto": "お客様の鍵には暗号資産（仮想通貨）を購入できる {{coin}} ウォレットがありません",
   "Your keys do not have supported wallets able to buy crypto": "お客様の鍵には暗号資産（仮想通貨）の購入が可能なサポートされたウォレットがありません",
