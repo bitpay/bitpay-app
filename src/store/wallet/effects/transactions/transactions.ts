@@ -114,7 +114,7 @@ export const ProcessPendingTxps =
         tx.canBeRemoved = true;
       }
     });
-    return BuildUiFriendlyList(txps, currencyAbbreviation, [], {});
+    return BuildUiFriendlyList(txps, currencyAbbreviation, chain, [], {});
   };
 
 const ProcessTx =
