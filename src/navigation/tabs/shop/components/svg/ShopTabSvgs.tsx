@@ -29,6 +29,18 @@ export const InvoiceSvg = ({theme}: {theme: Theme}) => {
   );
 };
 
+export const PrintSvg = ({theme}: {theme: Theme}) => {
+  return (
+    <Svg width="16" height="17" viewBox="0 0 16 17" fill="none">
+      <Path d="M12 0.5H4V3.5H12V0.5Z" fill={getOptionIconFill(theme)} />
+      <Path
+        d="M12 5.5H4C1.8 5.5 0 7.3 0 9.5V12.5C0 13.1 0.4 13.5 1 13.5H3V15.5C3 16.1 3.4 16.5 4 16.5H12C12.6 16.5 13 16.1 13 15.5V13.5H15C15.6 13.5 16 13.1 16 12.5V9.5C16 7.3 14.2 5.5 12 5.5ZM11 14.5H5V10.5H11V14.5Z"
+        fill={getOptionIconFill(theme)}
+      />
+    </Svg>
+  );
+};
+
 export const ExternalLinkSvg = ({theme}: {theme: Theme}) => {
   const fill = getOptionIconFill(theme);
   return (

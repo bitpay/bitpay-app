@@ -142,7 +142,7 @@ const TwoFactorAuthentication: React.VFC<
               onChangeText={onChange}
               error={errors.code?.message}
               value={value}
-              keyboardType="numeric"
+              keyboardType={'numeric'}
               onSubmitEditing={onSubmit}
             />
           )}

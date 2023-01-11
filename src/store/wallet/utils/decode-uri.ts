@@ -12,7 +12,7 @@ export const GetPayProUrl = (data: string): string => {
     url = data.replace(/link./, '');
   } else {
     url = data.replace(
-      /(bitcoin|bitcoincash|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=/,
+      /(bitpay|bitcoin|bitcoincash|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=/,
       '',
     );
   }

@@ -1,5 +1,6 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
+import {t} from 'i18next';
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -34,32 +35,6 @@ const getDisplayFields = (card: Card) => {
   const {fields} = activation || {};
 
   return fields || {};
-};
-
-const getFieldKeys = (card: Card) => {
-  // the order should match the template
-  const fieldToI18nKey: Record<string, string> = {
-    cardNumber: 'your card number',
-    lastFourDigits: 'the last 4 digits of your card number',
-    expirationDate: 'the expiration date',
-    cvv: 'the cvv',
-  };
-
-  const fieldKeys = Object.keys(getDisplayFields(card));
-  const textKeys = Object.keys(fieldToI18nKey);
-  const orderOf = (k: string) => textKeys.indexOf(k);
-
-  fieldKeys.sort((a, b) => {
-    if (orderOf(a) > orderOf(b)) {
-      return 1;
-    }
-    if (orderOf(a) < orderOf(b)) {
-      return -1;
-    }
-    return 0;
-  });
-
-  return fieldKeys.map(k => fieldToI18nKey[k]);
 };
 
 const schemas = {
@@ -139,15 +114,41 @@ const ActivateScreen: React.VFC<
   const expDateRef = useRef<TextInput>(null);
   const cvvRef = useRef<TextInput>(null);
 
+  const getFieldKeys = (card: Card) => {
+    // the order should match the template
+    const fieldToI18nKey: Record<string, string> = {
+      cardNumber: t('your card number'),
+      lastFourDigits: t('the last 4 digits of your card number'),
+      expirationDate: t('the expiration date'),
+      cvv: t('the cvv'),
+    };
+
+    const fieldKeys = Object.keys(getDisplayFields(card));
+    const textKeys = Object.keys(fieldToI18nKey);
+    const orderOf = (k: string) => textKeys.indexOf(k);
+
+    fieldKeys.sort((a, b) => {
+      if (orderOf(a) > orderOf(b)) {
+        return 1;
+      }
+      if (orderOf(a) < orderOf(b)) {
+        return -1;
+      }
+      return 0;
+    });
+
+    return fieldKeys.map(k => fieldToI18nKey[k]);
+  };
+
   const fieldKeys = getFieldKeys(card);
   const descriptionKey =
     fieldKeys.length === 3
-      ? 'EnterArgArgArgToActivateYourCard'
+      ? t('EnterArgArgArgToActivateYourCard')
       : fieldKeys.length === 2
-      ? 'EnterArgArgToActivateYourCard'
+      ? t('EnterArgArgToActivateYourCard')
       : fieldKeys.length === 1
-      ? 'EnterArgToActivateYourCard'
-      : 'EnterYourInformationToActivateYourCard';
+      ? t('EnterArgToActivateYourCard')
+      : t('EnterYourInformationToActivateYourCard');
   const descriptionArgs = fieldKeys.reduce((accum, key, idx) => {
     accum[idx] = key;
 

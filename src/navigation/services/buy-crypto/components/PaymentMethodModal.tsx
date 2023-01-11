@@ -17,7 +17,6 @@ import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
-import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
@@ -215,18 +214,6 @@ const PaymentMethodsModal = ({
                           currency,
                         ) ? (
                           <SimplexLogo widthIcon={20} heightIcon={20} />
-                        ) : null}
-                        {coin &&
-                        currency &&
-                        chain &&
-                        isPaymentMethodSupported(
-                          'wyre',
-                          paymentMethod,
-                          coin,
-                          chain,
-                          currency,
-                        ) ? (
-                          <WyreLogo width={60} height={15} />
                         ) : null}
                       </PaymentMethodProvider>
                     </PaymentMethodCheckboxTexts>

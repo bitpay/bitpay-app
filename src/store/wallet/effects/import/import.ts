@@ -782,7 +782,7 @@ export const migrateKeyAndWallets =
   };
 
 export const deferredImportErrorNotification =
-  (e: any): Effect =>
+  (e?: any): Effect =>
   async dispatch => {
     dispatch(dismissOnGoingProcessModal());
     await sleep(600);

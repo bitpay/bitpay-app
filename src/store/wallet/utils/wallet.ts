@@ -236,7 +236,9 @@ export const toFiat =
 
     if (!ratesPerCurrency) {
       // Rate not found return 0
-      console.log(`Rate not found for currency: ${currencyAbbreviation}`);
+      console.log(
+        `[toFiat] Rate not found for currency: ${currencyAbbreviation}`,
+      );
       return 0;
     }
 
@@ -249,7 +251,7 @@ export const toFiat =
     if (!fiatRate) {
       // Rate not found for fiat/currency pair
       console.log(
-        `Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
+        `[toFiat] Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
       );
       return 0;
     }
@@ -258,7 +260,9 @@ export const toFiat =
 
     if (!precision) {
       // precision not found return 0
-      console.log(`precision not found for currency ${currencyAbbreviation}`);
+      console.log(
+        `[toFiat] precision not found for currency ${currencyAbbreviation}`,
+      );
       return 0;
     } else {
     }
