@@ -562,7 +562,9 @@ export const startUpdateAllKeyAndWalletStatus =
           !isCacheKeyStale(balanceCacheKey.all, BALANCE_CACHE_DURATION) &&
           !force
         ) {
-          console.log('All: skipping balance update');
+          console.log(
+            '[startUpdateAllKeyAndWalletStatus] All: skipping balance update',
+          );
           return resolve();
         }
 
@@ -681,7 +683,9 @@ const updateWalletStatus =
 
             const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
 
-            console.log('Status updated: ', newBalance, newPendingTxps);
+            console.log('[updateWalletStatus] wallet obj', wallet);
+            console.log('[updateWalletStatus] newBalance', newBalance);
+            console.log('[updateWalletStatus] newPendingTxps', newPendingTxps);
 
             resolve({balance: newBalance, pendingTxps: newPendingTxps});
           } catch (err2) {
