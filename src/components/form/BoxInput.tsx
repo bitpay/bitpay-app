@@ -167,6 +167,7 @@ const BoxInput = React.forwardRef<
       error,
       type,
       disabled,
+      keyboardType,
       ...props
     },
     ref,
@@ -175,10 +176,10 @@ const BoxInput = React.forwardRef<
     const isSearch = type === 'search';
     const [isFocused, setIsFocused] = useState(false);
     const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
-    const keyboardType: KeyboardTypeOptions | undefined =
+    const _keyboardType: KeyboardTypeOptions | undefined =
       isPassword && !isSecureTextEntry && IS_ANDROID
         ? 'visible-password'
-        : undefined;
+        : keyboardType || undefined;
 
     const _onFocus = () => {
       setIsFocused(true);
@@ -219,7 +220,7 @@ const BoxInput = React.forwardRef<
           {prefix ? <Prefix>{prefix()}</Prefix> : null}
 
           <Input
-            keyboardType={keyboardType}
+            keyboardType={_keyboardType}
             placeholderTextColor={Slate}
             {...props}
             editable={!disabled}
