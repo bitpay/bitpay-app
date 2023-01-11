@@ -146,7 +146,13 @@ export const waitForTargetAmountAndUpdateWallet =
         );
       }, 5000);
     } catch (err) {
-      console.error(err);
+      const errstring =
+        err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(
+        LogActions.error(
+          `Error WaitingForTargetAmountAndUpdateWallet: ${errstring}`,
+        ),
+      );
     }
   };
 

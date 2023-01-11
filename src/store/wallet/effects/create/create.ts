@@ -92,7 +92,9 @@ export const startCreateKey =
         );
         resolve(key);
       } catch (err) {
-        console.error(err);
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`Error creating key: ${errstring}`));
         reject();
       }
     });
@@ -393,7 +395,7 @@ const createWallet = (params: {
 
           reject(err);
         } else {
-          console.log('added coin', coin);
+          LogActions.info(`Added Coin ${coin}`);
           resolve(bwcClient);
         }
       },
@@ -522,7 +524,11 @@ export const startCreateKeyWithOpts =
 
         resolve(key);
       } catch (err) {
-        console.error(err);
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error(`Error creating key with opts: ${errstring}`),
+        );
         reject(err);
       }
     });
@@ -584,7 +590,7 @@ export const createWalletWithOpts = (params: {
 
             reject(err);
           } else {
-            console.log('added coin', opts.coin);
+            LogActions.info(`Added Coin ${opts.coin || 'btc'}`);
             resolve(bwcClient);
           }
         },

@@ -7,8 +7,8 @@ import {Network} from '../../constants';
 import {FeeLevels} from './effects/fee/fee';
 
 export interface KeyMethods {
-  _checkCoin: Function;
-  _checkNetwork: Function;
+  _checkCoin?: Function;
+  _checkNetwork?: Function;
   checkPassword: Function;
   compliantDerivation: boolean;
   createAccess: Function;
