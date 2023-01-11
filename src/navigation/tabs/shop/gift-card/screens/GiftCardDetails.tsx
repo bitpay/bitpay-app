@@ -7,6 +7,7 @@ import {
   Image,
   DeviceEventEmitter,
 } from 'react-native';
+import RNPrint from 'react-native-print';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled from 'styled-components/native';
@@ -42,6 +43,7 @@ import {
   ArchiveSvg,
   ExternalLinkSvg,
   InvoiceSvg,
+  PrintSvg,
 } from '../../components/svg/ShopTabSvgs';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
@@ -60,6 +62,7 @@ import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-event
 import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../../../store/app/app.effects';
+import {generateGiftCardPrintHtml} from '../../../../../lib/gift-cards/gift-card';
 
 const maxWidth = 320;
 
@@ -256,6 +259,20 @@ const GiftCardDetails = ({
         );
       },
     },
+    ...(cardConfig.defaultClaimCodeType !== 'link'
+      ? [
+          {
+            img: <PrintSvg theme={theme} />,
+            description: t('Print'),
+            onPress: async () => {
+              await sleep(600); // Wait for options sheet to close on iOS
+              await RNPrint.print({
+                html: generateGiftCardPrintHtml(cardConfig, giftCard),
+              });
+            },
+          },
+        ]
+      : []),
   ];
 
   const copyToClipboard = (value: string, customMessage?: string) => {
