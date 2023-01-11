@@ -475,6 +475,18 @@ const BuyCryptoOffers: React.FC = () => {
       setFinishedSimplex(!finishedSimplex);
       return;
     } else {
+      let paymentMethodArray: string[] = [];
+      switch (paymentMethod.method) {
+        case 'sepaBankTransfer':
+          paymentMethodArray.push('simplex_account');
+          break;
+        case 'applePay':
+        case 'debitCard':
+        case 'creditCard':
+          paymentMethodArray.push('credit_card');
+          break;
+      }
+
       const requestData: SimplexGetQuoteRequestData = {
         digital_currency: getSimplexCoinFormat(coin, selectedWallet.chain),
         fiat_currency: offers.simplex.fiatCurrency.toUpperCase(),
@@ -484,8 +496,8 @@ const BuyCryptoOffers: React.FC = () => {
         env: simplexEnv,
       };
 
-      if (paymentMethod.method === 'sepaBankTransfer') {
-        requestData.payment_methods = ['simplex_account'];
+      if (paymentMethodArray.length > 0) {
+        requestData.payment_methods = paymentMethodArray;
       }
 
       selectedWallet
