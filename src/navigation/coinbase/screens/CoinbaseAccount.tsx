@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {FlatList, RefreshControl} from 'react-native';
+import {RefreshControl, SectionList, View} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {
@@ -17,11 +17,10 @@ import {
 } from '../../../utils/helper-methods';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
-import {Hr, ScreenGutter} from '../../../components/styled/Containers';
+import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, Balance, H5} from '../../../components/styled/Text';
 import {
   Air,
-  Black,
   LightBlack,
   LuckySevens,
   SlateDark,
@@ -81,6 +80,8 @@ import {RootState} from '../../../store';
 import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
 import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {batch} from 'react-redux';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -144,9 +145,15 @@ const SkeletonContainer = styled.View`
   margin-bottom: 20px;
 `;
 
-const GlobalSelectContainer = styled.View`
-  flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+const TransactionSectionHeaderContainer = styled.View`
+  padding: ${ScreenGutter};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
+  height: 55px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const IconContainer = styled.View`
@@ -190,7 +197,9 @@ const CoinbaseAccount = ({
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fiatAmount, setFiatAmount] = useState(0);
   const [cryptoAmount, setCryptoAmount] = useState('0');
-  const [txs, setTxs] = useState([] as CoinbaseTransactionProps[]);
+  const [groupedTransactions, setGroupedTransactions] = useState<
+    {title: string; data: CoinbaseTransactionProps[]}[]
+  >([]);
 
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
@@ -269,7 +278,12 @@ const CoinbaseAccount = ({
   const listFooterComponent = () => {
     return (
       <>
-        {isLoading && initialLoad && !txs.length ? (
+        {!groupedTransactions?.length ? null : (
+          <View style={{marginBottom: 20}}>
+            <BorderBottom />
+          </View>
+        )}
+        {isLoading || initialLoad ? (
           <SkeletonContainer>
             <WalletTransactionSkeletonRow />
           </SkeletonContainer>
@@ -281,7 +295,7 @@ const CoinbaseAccount = ({
   const listEmptyComponent = () => {
     return (
       <>
-        {!initialLoad && !txs.length && (
+        {!initialLoad && !groupedTransactions.length && (
           <EmptyListContainer>
             <H5>
               {!errorLoadingTxs
@@ -408,7 +422,8 @@ const CoinbaseAccount = ({
       const _transactions = transactions[accountId].data;
       const _nextStartingAfter =
         transactions[accountId].pagination.next_starting_after;
-      setTxs(_transactions);
+      const _groupedTxs = GroupCoinbaseTransactions(_transactions);
+      setGroupedTransactions(_groupedTxs);
       setNextStartingAfter(_nextStartingAfter);
     }
 
@@ -560,9 +575,11 @@ const CoinbaseAccount = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const keyExtractor = useCallback(item => item.id, []);
+
   return (
     <AccountContainer>
-      <FlatList
+      <SectionList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -614,22 +631,26 @@ const CoinbaseAccount = ({
                   swap={{cta: () => null, hide: true}}
                 />
               </BalanceContainer>
-              <Hr />
-              {txs[0] ? (
-                <TransactionListHeader>
-                  <H5>{t('Transactions')}</H5>
-                </TransactionListHeader>
-              ) : (
-                <></>
-              )}
             </>
           );
         }}
-        data={txs}
+        sections={groupedTransactions}
+        stickyHeaderIndices={[groupedTransactions?.length]}
+        stickySectionHeadersEnabled={true}
+        keyExtractor={keyExtractor}
         renderItem={renderItem}
+        renderSectionHeader={({section: {title}}) => {
+          return (
+            <TouchableOpacity>
+              <TransactionSectionHeaderContainer>
+                <H5>{title}</H5>
+              </TransactionSectionHeaderContainer>
+            </TouchableOpacity>
+          );
+        }}
         ItemSeparatorComponent={() => <BorderBottom />}
-        ListFooterComponent={listFooterComponent}
         ListEmptyComponent={listEmptyComponent}
+        ListFooterComponent={listFooterComponent}
         onEndReached={() => loadTransactions()}
       />
 
