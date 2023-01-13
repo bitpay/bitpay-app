@@ -114,6 +114,7 @@ export const startCreateAccount =
         salt: salt,
         agreedToTOSandPP: params.agreedToTOSandPP,
         gCaptchaResponse: params.gCaptchaResponse,
+        attribute: 'App Signup',
       });
 
       // refresh session

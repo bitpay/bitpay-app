@@ -6,6 +6,7 @@ export interface RegisterParams {
   email: string;
   agreedToTOSandPP: boolean;
   gCaptchaResponse?: string;
+  attribute: 'App Signup';
 }
 
 export interface RegisterResponse {
