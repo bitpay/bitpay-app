@@ -17,6 +17,7 @@ import {
 import {AppActionType, AppActionTypes} from './app.types';
 import uniqBy from 'lodash.uniqby';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
+import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
@@ -35,6 +36,13 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
 ];
 
 export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
+
+export type FeedbackType = {
+  time: number;
+  version: string;
+  sent: boolean;
+  rate: FeedbackRateType;
+};
 
 export type AppFirstOpenData = {
   firstOpenEventComplete: boolean;
@@ -62,6 +70,7 @@ export interface AppState {
   appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
   introCompleted: boolean;
+  userFeedback: FeedbackType | undefined;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
@@ -131,6 +140,7 @@ const initialState: AppState = {
   appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   introCompleted: false,
+  userFeedback: undefined,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: undefined,
@@ -568,6 +578,12 @@ export const appReducer = (
       return {
         ...state,
         hasViewedZenLedgerWarning: true,
+      };
+
+    case AppActionTypes.USER_FEEDBACK:
+      return {
+        ...state,
+        userFeedback: action.payload,
       };
 
     default:

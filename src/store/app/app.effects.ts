@@ -58,6 +58,7 @@ import {
   setEmailNotificationsAccepted,
   setMigrationComplete,
   setNotificationsAccepted,
+  setUserFeedback,
   showBlur,
 } from './app.actions';
 import {AppIdentity} from './app.models';
@@ -76,6 +77,7 @@ import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME,
+  APP_VERSION,
   DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
@@ -95,6 +97,8 @@ import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
+import moment from 'moment';
+import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -164,6 +168,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const identity = dispatch(initializeAppIdentity());
 
     dispatch(initializeApi(network, identity));
+    dispatch(initUserFeedback());
 
     dispatch(LocationEffects.getCountry());
 
@@ -1143,6 +1148,90 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
       errorStr = JSON.stringify(err);
     }
     dispatch(LogActions.error(`failed [shareApp]: ${errorStr}`));
+  }
+};
+
+const isVersionUpdated = (
+  currentVersion: string,
+  savedVersion: string,
+): boolean => {
+  const verifyTagFormat = (tag: string) => {
+    const regex = /^v?\d+\.\d+\.\d+$/i;
+    return regex.exec(tag);
+  };
+
+  const formatTagNumber = (tag: string) => {
+    const formattedNumber = tag.replace(/^v/i, '').split('.');
+    return {
+      major: +formattedNumber[0],
+      minor: +formattedNumber[1],
+      patch: +formattedNumber[2],
+    };
+  };
+
+  if (!verifyTagFormat(currentVersion)) {
+    LogActions.error(
+      'Cannot verify the format of version tag: ' + currentVersion,
+    );
+  }
+  if (!verifyTagFormat(savedVersion)) {
+    LogActions.error(
+      'Cannot verify the format of the saved version tag: ' + savedVersion,
+    );
+  }
+
+  const current = formatTagNumber(currentVersion);
+  const saved = formatTagNumber(savedVersion);
+  if (saved.major == current.major && saved.minor == current.minor) {
+    return true;
+  }
+
+  return false;
+};
+
+const initFeedbackInfo = (): Effect => dispatch => {
+  dispatch(
+    setUserFeedback({
+      time: moment().unix(),
+      version: APP_VERSION,
+      sent: false,
+      rate: 'default',
+    }),
+  );
+};
+
+export const saveUserFeedback =
+  (rate: FeedbackRateType): Effect<any> =>
+  dispatch => {
+    dispatch(
+      setUserFeedback({
+        time: moment().unix(),
+        version: APP_VERSION,
+        sent: true,
+        rate,
+      }),
+    );
+  };
+
+export const initUserFeedback = (): Effect => (dispatch, getState) => {
+  const {APP} = getState();
+  const {userFeedback} = APP;
+
+  if (!userFeedback) {
+    dispatch(initFeedbackInfo());
+  } else {
+    // Check if current version is greater than saved version
+    const currentVersion = APP_VERSION;
+    const savedVersion = userFeedback.version;
+    if (isVersionUpdated(currentVersion, savedVersion)) {
+      const now = moment().unix();
+      const timeExceeded = now - userFeedback.time >= 24 * 7 * 60 * 60;
+      if (timeExceeded && !userFeedback.sent) {
+        dispatch(initFeedbackInfo());
+      }
+    } else {
+      dispatch(initFeedbackInfo());
+    }
   }
 };
 

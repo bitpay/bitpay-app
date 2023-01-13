@@ -17,6 +17,7 @@ import {
 import {
   logSegmentEvent,
   requestBrazeContentRefresh,
+  showUserFeedback,
 } from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
@@ -65,6 +66,7 @@ import {
   receiveCrypto,
   sendCrypto,
 } from '../../../store/wallet/effects/send/send';
+import FeedbackCard from './components/FeedbackCard';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -72,6 +74,7 @@ const HomeRoot = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const themeType = useThemeType();
+  const [showRateCard, setShowRateCard] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
   const brazeDoMore = useAppSelector(selectBrazeDoMore);
@@ -98,6 +101,7 @@ const HomeRoot = () => {
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
   const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
+  const userFeedback = useAppSelector(({APP}) => APP.userFeedback);
   useBrazeRefreshOnFocus();
 
   // Shop with Crypto
@@ -215,6 +219,14 @@ const HomeRoot = () => {
     }
   }, [dispatch, onCompleteOnboardingList]);
 
+  useEffect(() => {
+    if (!userFeedback?.sent) {
+      setShowRateCard(true);
+    } else {
+      setShowRateCard(false);
+    }
+  }, [userFeedback]);
+
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
 
@@ -258,6 +270,13 @@ const HomeRoot = () => {
                   cta: () => dispatch(sendCrypto('HomeRoot')),
                 }}
               />
+            </HomeSection>
+          ) : null}
+
+          {/* ////////////////////////////// FEEDBACK */}
+          {showRateCard ? (
+            <HomeSection slimContainer={true}>
+              <FeedbackCard />
             </HomeSection>
           ) : null}
 

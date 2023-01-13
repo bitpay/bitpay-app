@@ -12,7 +12,7 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
 } from './app.models';
-import {ModalId} from './app.reducer';
+import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
 
 export const networkChanged = (network: Network): AppActionType => ({
@@ -312,4 +312,9 @@ export const clearOnCompleteOnboardingList = (): AppActionType => ({
 
 export const setHasViewedZenLedgerWarning = (): AppActionType => ({
   type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
+});
+
+export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
+  type: AppActionTypes.USER_FEEDBACK,
+  payload: feedBack,
 });
