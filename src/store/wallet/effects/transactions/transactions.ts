@@ -400,9 +400,10 @@ export const GroupCoinbaseTransactions = (txs: any[]) => {
     }, [])
     .map((group: any[]) => {
       const time = Date.parse(group[0].created_at);
-      const title = IsDateInCurrentMonth(time)
-        ? t('Recent')
-        : moment(time).format('MMMM');
+      const month = moment(time)
+        .locale(i18n.language || 'en')
+        .format('MMMM');
+      const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
       return {title, data: group};
     });
   return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
