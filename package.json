@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.8.2",
+  "version": "14.9.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
