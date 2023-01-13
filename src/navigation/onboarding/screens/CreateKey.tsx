@@ -47,7 +47,7 @@ const CreateOrImportKey: React.VFC<
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const onSkipPressRef = useRef(() => {
     haptic('impactLight');

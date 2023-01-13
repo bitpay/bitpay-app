@@ -130,7 +130,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const onLoginPress = () => {
     haptic('impactLight');

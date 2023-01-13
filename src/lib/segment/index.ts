@@ -8,7 +8,6 @@ import {
 import {AppsflyerPlugin} from '@segment/analytics-react-native-plugin-appsflyer';
 import {IdfaPlugin} from '@segment/analytics-react-native-plugin-idfa';
 import {IS_ANDROID, IS_IOS} from '../../constants';
-import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import {BpBrazePlugin} from './plugins/braze';
 import {getBrazeIdForAnonymousUser} from './utils/getBrazeIdForAnonymousUser';
 
@@ -30,7 +29,6 @@ const getSegmentWriteKey = () => {
  */
 const lib = (() => {
   let _client: SegmentClient | null = null;
-  const _queue: Array<(client: SegmentClient) => Promise<any>> = [];
 
   /**
    * Guard wrapper that checks if analytics are enabled and client has been initialized before executing the provided callback.
@@ -40,13 +38,7 @@ const lib = (() => {
   const guard = <T>(
     cb: (client: SegmentClient) => Promise<T>,
   ): Promise<T | void> => {
-    if (!APP_ANALYTICS_ENABLED) {
-      return Promise.resolve();
-    }
-
     if (!_client) {
-      // Queue up any actions that happen before we get a chance to initialize.
-      _queue.push(cb);
       return Promise.resolve();
     }
 
@@ -66,10 +58,6 @@ const lib = (() => {
      * Creates and initializes the Segment SDK. Must be called first.
      */
     async init({eid}: {eid?: string} = {}) {
-      if (!APP_ANALYTICS_ENABLED) {
-        return;
-      }
-
       if (_client) {
         return;
       }
@@ -110,11 +98,6 @@ const lib = (() => {
 
       if (IS_IOS) {
         _client.add({plugin: new IdfaPlugin()});
-      }
-
-      // Clear the queue and run any deferred actions that were called before we got a chance to initialize
-      for (let fn = _queue.shift(); fn; fn = _queue.shift()) {
-        await fn(_client).catch(() => 0);
       }
     },
 

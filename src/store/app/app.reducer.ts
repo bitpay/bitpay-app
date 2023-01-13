@@ -21,7 +21,6 @@ import {BiometricModalConfig} from '../../components/modal/biometric/BiometricMo
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
   'appWasInit',
-  'appOpeningWasTracked',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
   'showDecryptPasswordModal',
@@ -62,7 +61,6 @@ export interface AppState {
    */
   appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
-  appOpeningWasTracked: boolean;
   introCompleted: boolean;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
@@ -132,7 +130,6 @@ const initialState: AppState = {
   appWasInit: false,
   appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
-  appOpeningWasTracked: false,
   introCompleted: false,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
@@ -228,12 +225,6 @@ export const appReducer = (
           ...state.appFirstOpenData,
           firstOpenDate: action.payload,
         },
-      };
-
-    case AppActionTypes.APP_OPENING_WAS_TRACKED:
-      return {
-        ...state,
-        appOpeningWasTracked: true,
       };
 
     case AppActionTypes.SET_ONBOARDING_COMPLETED:

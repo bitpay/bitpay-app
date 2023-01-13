@@ -4,7 +4,7 @@ import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 import {RootStackParamList} from '../../../Root';
-import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch} from '../../../utils/hooks';
 import IntroButton from '../components/intro-button/IntroButton';
@@ -41,7 +41,7 @@ const IntroShop: React.VFC<IntroShopScreenProps> = ({navigation}) => {
   const dispatch = useAppDispatch();
 
   const onFinish = async () => {
-    await dispatch(askForTrackingPermissionAndEnableSdks());
+    await dispatch(Analytics.initialize());
     await sleep(500);
 
     navigation.navigate('Tabs', {screen: 'Home'});

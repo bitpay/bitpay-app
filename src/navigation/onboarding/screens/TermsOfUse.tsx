@@ -74,7 +74,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   const {key, context} = route.params || {};
   const [agreed, setAgreed] = useState<number[]>([]);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const Terms: Array<TermsOfUseModel> = [
     {

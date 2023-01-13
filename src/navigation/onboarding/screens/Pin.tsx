@@ -62,7 +62,7 @@ const PinScreen: React.VFC<
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
