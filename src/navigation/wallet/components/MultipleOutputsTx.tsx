@@ -67,10 +67,6 @@ const ContactsIconContainer = styled.TouchableOpacity`
   margin-left: 5px;
 `;
 
-const SendToPillContainer = styled.View`
-  height: 37px;
-`;
-
 const MultipleOutputsTx = ({
   tx,
   tokenAddress,

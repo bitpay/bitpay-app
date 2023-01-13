@@ -1182,7 +1182,8 @@ export const startImportWithDerivationPath =
                   wallet,
                   buildWalletObj(
                     {...wallet.credentials, currencyAbbreviation, currencyName},
-                    tokenOpts,
+                    wallet.credentials.token,
+                    tokenOptsByAddress,
                   ),
                 ),
               ],
