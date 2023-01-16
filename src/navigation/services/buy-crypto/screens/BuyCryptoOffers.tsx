@@ -61,7 +61,7 @@ import SimplexTerms from '../components/terms/SimplexTerms';
 import WyreTerms from '../components/terms/WyreTerms';
 import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
-import { BitpaySupportedCoins } from '../../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -635,6 +635,15 @@ const BuyCryptoOffers: React.FC = () => {
 
   const getWyreQuote = async () => {
     logger.debug('Wyre getting quote');
+
+    if (buyCryptoConfig?.wyre?.disabled) {
+      let err = buyCryptoConfig?.wyre?.disabledMessage
+        ? buyCryptoConfig?.wyre?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'wyreGetQuote Error. Exchange disabled from config.';
+      showWyreError(err, reason);
+      return;
+    }
 
     offers.wyre.fiatAmount =
       offers.wyre.fiatCurrency === fiatCurrency
