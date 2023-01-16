@@ -23,6 +23,7 @@
 		5BEA4BF02838402700AB2121 /* RCTPaymentPass.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA4BEF2838402700AB2121 /* RCTPaymentPass.m */; };
 		5BEA4BF12838402700AB2121 /* RCTPaymentPass.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA4BEF2838402700AB2121 /* RCTPaymentPass.m */; };
 		66FFDC8F0B063607A7715F70 /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6D2B83099A369CC71732940 /* libPods-BitPayApp.a */; };
+		6D615C4929725FD70063DB8E /* RCTTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6D615C4729725FD70063DB8E /* RCTTimer.m */; };
 		71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */; };
 		D34892F44CAB44409EC335A9 /* Heebo-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4435EB64D2448EC885B3036 /* Heebo-Black.ttf */; };
 		D9739196BA804EA29143DA96 /* Heebo-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */; };
@@ -65,6 +66,8 @@
 		5BCF1C342740B8B2006D872E /* BootSplash.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = BitPayApp/BootSplash.storyboard; sourceTree = "<group>"; };
 		5BEA4BEE2838400700AB2121 /* RCTPaymentPass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTPaymentPass.h; sourceTree = "<group>"; };
 		5BEA4BEF2838402700AB2121 /* RCTPaymentPass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTPaymentPass.m; sourceTree = "<group>"; };
+		6D615C4729725FD70063DB8E /* RCTTimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTTimer.m; sourceTree = "<group>"; };
+		6D615C4829725FD70063DB8E /* RCTTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTTimer.h; sourceTree = "<group>"; };
 		6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Light.ttf"; path = "../assets/fonts/Heebo-Light.ttf"; sourceTree = "<group>"; };
 		6EEF4B2FDB87531BFD34B491 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Bold.ttf"; path = "../assets/fonts/Heebo-Bold.ttf"; sourceTree = "<group>"; };
@@ -129,6 +132,8 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				6D615C4829725FD70063DB8E /* RCTTimer.h */,
+				6D615C4729725FD70063DB8E /* RCTTimer.m */,
 				5B31AAFC2786381C002765E1 /* RCTDosh.h */,
 				5B31AAFD2786387B002765E1 /* RCTDosh.m */,
 				5B31AB5E2786515A002765E1 /* Dosh.swift */,
@@ -484,6 +489,7 @@
 				5B31AAFE2786387B002765E1 /* RCTDosh.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */,
 				5BEA4BF02838402700AB2121 /* RCTPaymentPass.m in Sources */,
+				6D615C4929725FD70063DB8E /* RCTTimer.m in Sources */,
 				ECCB92782860B25D00F9CF8B /* SilentPushEvent.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */,

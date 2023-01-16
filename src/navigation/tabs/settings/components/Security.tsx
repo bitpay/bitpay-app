@@ -6,7 +6,7 @@ import {
 } from '../../../../components/styled/Containers';
 import Button from '../../../../components/button/Button';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
-import {Platform} from 'react-native';
+import {Platform, NativeModules} from 'react-native';
 import React, {useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {useThemeType} from '../../../../utils/hooks/useThemeType';
@@ -117,9 +117,9 @@ const Security = () => {
           authOptionalConfigObject,
         );
       })
-      .then(() => {
-        const authorizedUntil =
-          Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+      .then(async () => {
+        const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+        const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.biometricLockActive(true));
       })
