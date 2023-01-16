@@ -77,7 +77,6 @@ import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME,
-  APP_VERSION,
   DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
@@ -168,7 +167,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const identity = dispatch(initializeAppIdentity());
 
     dispatch(initializeApi(network, identity));
-    dispatch(initUserFeedback());
 
     dispatch(LocationEffects.getCountry());
 
@@ -1151,7 +1149,7 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
   }
 };
 
-const isVersionUpdated = (
+export const isVersionUpdated = (
   currentVersion: string,
   savedVersion: string,
 ): boolean => {
@@ -1189,51 +1187,18 @@ const isVersionUpdated = (
   return false;
 };
 
-const initFeedbackInfo = (): Effect => dispatch => {
-  dispatch(
-    setUserFeedback({
-      time: moment().unix(),
-      version: APP_VERSION,
-      sent: false,
-      rate: 'default',
-    }),
-  );
-};
-
 export const saveUserFeedback =
-  (rate: FeedbackRateType): Effect<any> =>
+  (rate: FeedbackRateType, version: string): Effect<any> =>
   dispatch => {
     dispatch(
       setUserFeedback({
         time: moment().unix(),
-        version: APP_VERSION,
-        sent: true,
+        version,
+        sent: false,
         rate,
       }),
     );
   };
-
-export const initUserFeedback = (): Effect => (dispatch, getState) => {
-  const {APP} = getState();
-  const {userFeedback} = APP;
-
-  if (!userFeedback) {
-    dispatch(initFeedbackInfo());
-  } else {
-    // Check if current version is greater than saved version
-    const currentVersion = APP_VERSION;
-    const savedVersion = userFeedback.version;
-    if (isVersionUpdated(currentVersion, savedVersion)) {
-      const now = moment().unix();
-      const timeExceeded = now - userFeedback.time >= 24 * 7 * 60 * 60;
-      if (timeExceeded && !userFeedback.sent) {
-        dispatch(initFeedbackInfo());
-      }
-    } else {
-      dispatch(initFeedbackInfo());
-    }
-  }
-};
 
 export const shortcutListener =
   (item: ShortcutItem, navigation: NavigationProp<any>): Effect<void> =>

@@ -1,11 +1,10 @@
 import React, {useState} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import {useAppSelector, useAppDispatch} from '../../../../utils/hooks';
 import {FeedbackRateType} from '../../settings/about/screens/SendFeedback';
-import {ScreenGutter} from '../../../../components/styled/Containers';
 import {H4, Link, Paragraph} from '../../../../components/styled/Text';
-import {Feather, LightBlack, SlateDark, White} from '../../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../../styles/colors';
 
 import HearFace from ' ../../../../../assets/img/settings/feedback/heart-face.svg';
 import Smile from '../../../../../assets/img/settings/feedback/smile.svg';
@@ -14,10 +13,7 @@ import Question from '../../../../../assets/img/settings/feedback/question.svg';
 import Close from '../../../../../assets/img/settings/feedback/close.svg';
 import {useTranslation} from 'react-i18next';
 import {saveUserFeedback} from '../../../../store/app/app.effects';
-
-interface FeedbackCardProps {
-  rate: FeedbackRateType;
-}
+import {APP_VERSION} from '../../../../constants/config';
 
 const FeedbackContainer = styled.View`
   margin: 20px 16px 0 16px;
@@ -111,7 +107,7 @@ const FeedbackCard: React.FC = () => {
 
   const rateApp = (rate: FeedbackRateType) => {
     setPreRate(rate);
-    dispatch(saveUserFeedback(rate));
+    dispatch(saveUserFeedback(rate, APP_VERSION));
     if (rate !== 'default') {
       navigation.navigate('About', {screen: 'SendFeedback'});
     }

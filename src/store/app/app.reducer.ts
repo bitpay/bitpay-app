@@ -5,7 +5,11 @@ import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
+import {
+  APP_NETWORK,
+  APP_VERSION,
+  BASE_BITPAY_URLS,
+} from '../../constants/config';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
@@ -18,6 +22,7 @@ import {AppActionType, AppActionTypes} from './app.types';
 import uniqBy from 'lodash.uniqby';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
+import moment from 'moment';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
@@ -140,7 +145,12 @@ const initialState: AppState = {
   appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   introCompleted: false,
-  userFeedback: undefined,
+  userFeedback: {
+    time: moment().unix(),
+    version: APP_VERSION,
+    sent: false,
+    rate: 'default',
+  },
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: undefined,

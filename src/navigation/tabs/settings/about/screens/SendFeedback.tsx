@@ -26,6 +26,7 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {BoxShadow} from '../../../home/components/Styled';
 import Rate, {AndroidMarket} from 'react-native-rate';
 import {useTranslation} from 'react-i18next';
+import {APP_VERSION} from '../../../../../constants/config';
 
 const SendFeedbackContainer = styled.SafeAreaView`
   flex: 1;
@@ -181,7 +182,7 @@ const SendFeedback = () => {
   const chooseRateApp = (rate: FeedbackRateType) => {
     setShowEmojis(false);
     setRateApp(rate);
-    dispatch(saveUserFeedback(rate));
+    dispatch(saveUserFeedback(rate, APP_VERSION));
   };
 
   return (

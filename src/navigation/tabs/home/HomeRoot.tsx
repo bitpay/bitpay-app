@@ -6,7 +6,10 @@ import {
 import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
-import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
+import {
+  APP_VERSION,
+  STATIC_CONTENT_CARDS_ENABLED,
+} from '../../../constants/config';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   clearOnCompleteOnboardingList,
@@ -15,9 +18,10 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {
+  isVersionUpdated,
   logSegmentEvent,
   requestBrazeContentRefresh,
-  showUserFeedback,
+  saveUserFeedback,
 } from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
@@ -67,6 +71,7 @@ import {
   sendCrypto,
 } from '../../../store/wallet/effects/send/send';
 import FeedbackCard from './components/FeedbackCard';
+import moment from 'moment';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -220,10 +225,16 @@ const HomeRoot = () => {
   }, [dispatch, onCompleteOnboardingList]);
 
   useEffect(() => {
-    if (!userFeedback?.sent) {
-      setShowRateCard(true);
-    } else {
-      setShowRateCard(false);
+    if (userFeedback) {
+      const currentVersion = APP_VERSION;
+      const savedVersion = userFeedback.version;
+      if (isVersionUpdated(currentVersion, savedVersion)) {
+        const now = moment().unix();
+        const timeExceeded = now - userFeedback.time >= 24 * 7 * 60 * 60;
+        setShowRateCard(timeExceeded && !userFeedback.sent);
+      } else {
+        dispatch(saveUserFeedback('default', APP_VERSION));
+      }
     }
   }, [userFeedback]);
 
