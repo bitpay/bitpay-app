@@ -11,6 +11,10 @@ import {
   getSimplexSupportedCurrencies,
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
+import {
+  getWyreSupportedCurrencies,
+  wyreSupportedFiatCurrencies,
+} from './wyre-utils';
 import pickBy from 'lodash.pickby';
 import {CountryData} from '../../../../store/location/location.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
@@ -29,7 +33,8 @@ export const getEnabledPaymentMethods = (
     return (
       method.enabled &&
       (isPaymentMethodSupported('moonpay', method, coin, chain, currency) ||
-        isPaymentMethodSupported('simplex', method, coin, chain, currency))
+        isPaymentMethodSupported('simplex', method, coin, chain, currency) ||
+        isPaymentMethodSupported('wyre', method, coin, chain, currency))
     );
   });
 
@@ -42,9 +47,14 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
       return moonpaySupportedFiatCurrencies;
     case 'simplex':
       return simplexSupportedFiatCurrencies;
+    case 'wyre':
+      return wyreSupportedFiatCurrencies;
     default:
       const allSupportedFiatCurrencies = [
-        ...new Set([...simplexSupportedFiatCurrencies]),
+        ...new Set([
+          ...simplexSupportedFiatCurrencies,
+          ...wyreSupportedFiatCurrencies,
+        ]),
       ];
       return allSupportedFiatCurrencies;
   }
@@ -68,7 +78,8 @@ export const isPaymentMethodSupported = (
 export const isCoinSupportedToBuy = (coin: string, chain: string): boolean => {
   return (
     isCoinSupportedBy('moonpay', coin, chain) ||
-    isCoinSupportedBy('simplex', coin, chain)
+    isCoinSupportedBy('simplex', coin, chain) ||
+    isCoinSupportedBy('wyre', coin, chain)
   );
 };
 
@@ -86,6 +97,10 @@ const isCoinSupportedBy = (
       return getSimplexSupportedCurrencies().includes(
         getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
       );
+    case 'wyre':
+      return getWyreSupportedCurrencies().includes(
+        getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
+      );
     default:
       return false;
   }
@@ -100,6 +115,8 @@ const isFiatCurrencySupportedBy = (
       return moonpaySupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'simplex':
       return simplexSupportedFiatCurrencies.includes(currency.toUpperCase());
+    case 'wyre':
+      return wyreSupportedFiatCurrencies.includes(currency.toUpperCase());
     default:
       return false;
   }

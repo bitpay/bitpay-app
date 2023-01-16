@@ -34,7 +34,6 @@ import {
 } from '../../../../../store/app/app.actions';
 import {sleep} from '../../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
-import {AppActions} from '../../../../../store/app';
 
 export interface WyreSettingsProps {
   incomingPaymentRequest?: WyrePaymentData;
@@ -54,25 +53,6 @@ const WyreSettings: React.FC = () => {
   const {incomingPaymentRequest, paymentRequestError} = route.params || {};
 
   useEffect(() => {
-    const showWyreWarning = async () => {
-      await sleep(600);
-      dispatch(
-        AppActions.showBottomNotificationModal({
-          title: t('Warning'),
-          message: t('Please note that Wyre is out of service.'),
-          type: 'warning',
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
-          enableBackdropDismiss: true,
-          onBackdropDismiss: () => {},
-        }),
-      );
-    };
-
     const handlePaymentError = async () => {
       await sleep(600);
       dispatch(
@@ -112,8 +92,6 @@ const WyreSettings: React.FC = () => {
     }
     if (paymentRequestError) {
       handlePaymentError();
-    } else {
-      showWyreWarning();
     }
   }, []);
 
