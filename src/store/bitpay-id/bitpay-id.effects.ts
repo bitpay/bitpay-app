@@ -40,16 +40,20 @@ export const startBitPayIdStoreInit =
     const {basicInfo: user} = initialData;
 
     if (user) {
-      const {eid, email, name, referralCode} = user;
-      let {givenName, familyName} = user;
+      const {eid, name, referralCode} = user;
+      let {email, givenName, familyName} = user;
+
+      if (email) {
+        email = email.trim();
+      }
 
       if (!givenName && !familyName && name) {
         const [first, ...rest] = name.split(' ');
 
-        givenName = first;
+        givenName = first.trim();
 
         if (rest.length) {
-          familyName = rest[rest.length - 1];
+          familyName = rest[rest.length - 1].trim();
         }
       }
 
