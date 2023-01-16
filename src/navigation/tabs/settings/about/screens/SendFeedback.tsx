@@ -24,6 +24,7 @@ import {
 import {URL} from '../../../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {BoxShadow} from '../../../home/components/Styled';
+import Rate, {AndroidMarket} from 'react-native-rate';
 import {useTranslation} from 'react-i18next';
 
 const SendFeedbackContainer = styled.SafeAreaView`
@@ -116,12 +117,28 @@ const SendFeedback = () => {
     {
       key: 1,
       onPress: () => {
-        setShowEmojis(true);
+        const options = {
+          AppleAppID: '1149581638',
+          GooglePackageName: 'com.bitpay.wallet',
+          preferredAndroidMarket: AndroidMarket.Google,
+          preferInApp: false,
+          openAppStoreIfInAppFails: true,
+        };
+
+        Rate.rate(options, (success, errorMessage) => {
+          if (success) {
+            // this technically only tells us if the user successfully went to the Review Page. Whether they actually did anything, we do not know.
+          }
+          if (errorMessage) {
+            // errorMessage comes from the native code. Useful for debugging, but probably not for users to view
+            console.log(`Error Rating App: ${errorMessage}`);
+          }
+        });
       },
       description: t('Write a Review'),
       leftIcon: <Start width={20} height={20} />,
       rightIcon: <AngleRight />,
-      showOn: ['love', 'default'],
+      showOn: ['love'],
     },
     {
       key: 2,
@@ -133,7 +150,7 @@ const SendFeedback = () => {
     },
     {
       key: 3,
-      onPress: () => dispatch(shareApp()),
+      onPress: () => dispatch(openUrlWithInAppBrowser(URL.LEAVE_FEEDBACK)),
       description: t('Leave Feedback'),
       leftIcon: <Feature width={20} height={20} />,
       rightIcon: <AngleRight />,

@@ -110,7 +110,6 @@ const FeedbackCard: React.FC = () => {
   );
 
   const rateApp = (rate: FeedbackRateType) => {
-    console.log('### rate', rate);
     setPreRate(rate);
     dispatch(saveUserFeedback(rate));
     if (rate !== 'default') {
