@@ -37,6 +37,7 @@ import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {getMoonpaySupportedCurrencies} from '../utils/moonpay-utils';
 import {getSimplexSupportedCurrencies} from '../utils/simplex-utils';
+import {getWyreSupportedCurrencies} from '../utils/wyre-utils';
 import {
   getBadgeImg,
   getCurrencyAbbreviation,
@@ -123,6 +124,7 @@ const BuyCryptoRoot: React.VFC<
     ...new Set([
       ...getMoonpaySupportedCurrencies(),
       ...getSimplexSupportedCurrencies(),
+      ...getWyreSupportedCurrencies(),
     ]),
   ]);
   const [buyCryptoSupportedCoinsFullObj, setBuyCryptoSupportedCoinsFullObj] =
@@ -238,13 +240,21 @@ const BuyCryptoRoot: React.VFC<
   const walletIsSupported = (wallet: Wallet): boolean => {
     return (
       wallet.credentials &&
-      wallet.network === 'livenet' &&
-      buyCryptoSupportedCoins.includes(
-        getCurrencyAbbreviation(
-          wallet.currencyAbbreviation.toLowerCase(),
-          wallet.chain,
-        ),
-      ) &&
+      ((wallet.network === 'livenet' &&
+        buyCryptoSupportedCoins.includes(
+          getCurrencyAbbreviation(
+            wallet.currencyAbbreviation.toLowerCase(),
+            wallet.chain,
+          ),
+        )) ||
+        (__DEV__ &&
+          wallet.network === 'testnet' &&
+          getWyreSupportedCurrencies().includes(
+            getCurrencyAbbreviation(
+              wallet.currencyAbbreviation.toLowerCase(),
+              wallet.chain,
+            ),
+          ))) &&
       wallet.isComplete() &&
       !wallet.hideWallet &&
       (!fromCurrencyAbbreviation ||
@@ -256,13 +266,21 @@ const BuyCryptoRoot: React.VFC<
   const setWallet = (wallet: Wallet) => {
     if (
       wallet.credentials &&
-      wallet.network === 'livenet' &&
-      buyCryptoSupportedCoins.includes(
-        getCurrencyAbbreviation(
-          wallet.currencyAbbreviation.toLowerCase(),
-          wallet.chain,
-        ),
-      )
+      ((wallet.network === 'livenet' &&
+        buyCryptoSupportedCoins.includes(
+          getCurrencyAbbreviation(
+            wallet.currencyAbbreviation.toLowerCase(),
+            wallet.chain,
+          ),
+        )) ||
+        (__DEV__ &&
+          wallet.network === 'testnet' &&
+          getWyreSupportedCurrencies().includes(
+            getCurrencyAbbreviation(
+              wallet.currencyAbbreviation.toLowerCase(),
+              wallet.chain,
+            ),
+          )))
     ) {
       if (wallet.isComplete()) {
         if (allKeys[wallet.keyId].backupComplete) {
@@ -378,6 +396,13 @@ const BuyCryptoRoot: React.VFC<
             selectedWallet.currencyAbbreviation,
             selectedWallet.chain,
             fiatCurrency,
+          ) ||
+          isPaymentMethodSupported(
+            'wyre',
+            PaymentMethodsAvailable.applePay,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
           )
           ? PaymentMethodsAvailable.applePay
           : PaymentMethodsAvailable.debitCard,
@@ -408,6 +433,13 @@ const BuyCryptoRoot: React.VFC<
       ) ||
       isPaymentMethodSupported(
         'simplex',
+        selectedPaymentMethod,
+        selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
+        fiatCurrency,
+      ) ||
+      isPaymentMethodSupported(
+        'wyre',
         selectedPaymentMethod,
         selectedWallet.currencyAbbreviation,
         selectedWallet.chain,
