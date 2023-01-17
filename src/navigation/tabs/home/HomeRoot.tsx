@@ -225,16 +225,14 @@ const HomeRoot = () => {
   }, [dispatch, onCompleteOnboardingList]);
 
   useEffect(() => {
-    if (userFeedback) {
-      const currentVersion = APP_VERSION;
-      const savedVersion = userFeedback.version;
-      if (isVersionUpdated(currentVersion, savedVersion)) {
-        const now = moment().unix();
-        const timeExceeded = now - userFeedback.time >= 24 * 7 * 60 * 60;
-        setShowRateCard(timeExceeded && !userFeedback.sent);
-      } else {
-        dispatch(saveUserFeedback('default', APP_VERSION));
-      }
+    const currentVersion = APP_VERSION;
+    const savedVersion = userFeedback.version;
+    if (isVersionUpdated(currentVersion, savedVersion)) {
+      const now = moment().unix();
+      const timeExceeded = now - userFeedback.time >= 24 * 7 * 60 * 60;
+      setShowRateCard(timeExceeded && !userFeedback.sent);
+    } else {
+      dispatch(saveUserFeedback('default', APP_VERSION, false));
     }
   }, [userFeedback]);
 

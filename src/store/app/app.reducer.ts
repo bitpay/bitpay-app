@@ -75,7 +75,7 @@ export interface AppState {
   appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
   introCompleted: boolean;
-  userFeedback: FeedbackType | undefined;
+  userFeedback: FeedbackType;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;

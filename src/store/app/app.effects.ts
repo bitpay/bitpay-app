@@ -1188,13 +1188,13 @@ export const isVersionUpdated = (
 };
 
 export const saveUserFeedback =
-  (rate: FeedbackRateType, version: string): Effect<any> =>
+  (rate: FeedbackRateType, version: string, sent: boolean): Effect<any> =>
   dispatch => {
     dispatch(
       setUserFeedback({
         time: moment().unix(),
         version,
-        sent: false,
+        sent,
         rate,
       }),
     );

@@ -182,7 +182,7 @@ const SendFeedback = () => {
   const chooseRateApp = (rate: FeedbackRateType) => {
     setShowEmojis(false);
     setRateApp(rate);
-    dispatch(saveUserFeedback(rate, APP_VERSION));
+    dispatch(saveUserFeedback(rate, APP_VERSION, true));
   };
 
   return (

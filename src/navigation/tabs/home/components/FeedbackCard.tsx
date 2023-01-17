@@ -104,7 +104,7 @@ const FeedbackCard: React.FC = () => {
 
   const rateApp = (rate: FeedbackRateType) => {
     setPreRate(rate);
-    dispatch(saveUserFeedback(rate, APP_VERSION));
+    dispatch(saveUserFeedback(rate, APP_VERSION, true));
     if (rate !== 'default') {
       navigation.navigate('About', {screen: 'SendFeedback'});
     }
