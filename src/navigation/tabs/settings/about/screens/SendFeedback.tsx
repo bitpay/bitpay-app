@@ -109,37 +109,46 @@ const SendFeedback = () => {
   const userFeedback = useAppSelector(({APP}) => APP.userFeedback);
   const [showEmojis, setShowEmojis] = useState(false);
   const [preRate, setPreRate] = useState<FeedbackRateType>(
-    userFeedback?.rate || 'default',
+    userFeedback.rate || 'default',
   );
   const [rateApp, setRateApp] = useState<FeedbackRateType>(
-    userFeedback?.rate || 'default',
+    userFeedback.rate || 'default',
   );
+
+  const rateAppStore = () => {
+    const options = {
+      AppleAppID: '1149581638',
+      GooglePackageName: 'com.bitpay.wallet',
+      preferredAndroidMarket: AndroidMarket.Google,
+      preferInApp: false,
+      openAppStoreIfInAppFails: true,
+    };
+
+    Rate.rate(options, (success, errorMessage) => {
+      if (success) {
+        // this technically only tells us if the user successfully went to the Review Page. Whether they actually did anything, we do not know.
+      }
+      if (errorMessage) {
+        // errorMessage comes from the native code. Useful for debugging, but probably not for users to view
+        console.log(`Error Rating App: ${errorMessage}`);
+      }
+    });
+  };
+
   const feedbackList = [
     {
       key: 1,
       onPress: () => {
-        const options = {
-          AppleAppID: '1149581638',
-          GooglePackageName: 'com.bitpay.wallet',
-          preferredAndroidMarket: AndroidMarket.Google,
-          preferInApp: false,
-          openAppStoreIfInAppFails: true,
-        };
-
-        Rate.rate(options, (success, errorMessage) => {
-          if (success) {
-            // this technically only tells us if the user successfully went to the Review Page. Whether they actually did anything, we do not know.
-          }
-          if (errorMessage) {
-            // errorMessage comes from the native code. Useful for debugging, but probably not for users to view
-            console.log(`Error Rating App: ${errorMessage}`);
-          }
-        });
+        if (!userFeedback.sent) {
+          setShowEmojis(true);
+        } else {
+          rateAppStore();
+        }
       },
       description: t('Write a Review'),
       leftIcon: <Start width={20} height={20} />,
       rightIcon: <AngleRight />,
-      showOn: ['love'],
+      showOn: ['love', 'default'],
     },
     {
       key: 2,
