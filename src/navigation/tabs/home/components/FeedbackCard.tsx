@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
-import {useAppSelector, useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch} from '../../../../utils/hooks';
 import {FeedbackRateType} from '../../settings/about/screens/SendFeedback';
 import {H4, Link, Paragraph} from '../../../../components/styled/Text';
 import {LightBlack, SlateDark, White} from '../../../../styles/colors';
@@ -99,11 +99,8 @@ const FeedbackCard: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const userFeedback = useAppSelector(({APP}) => APP.userFeedback);
 
-  const [preRate, setPreRate] = useState<FeedbackRateType>(
-    userFeedback?.rate || 'default',
-  );
+  const [preRate, setPreRate] = useState<FeedbackRateType>('default');
 
   const rateApp = (rate: FeedbackRateType) => {
     setPreRate(rate);
