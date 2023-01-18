@@ -2,7 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Animated, TouchableOpacity, View} from 'react-native';
+import {Animated, TouchableOpacity, View, NativeModules} from 'react-native';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {useTheme} from 'styled-components/native';
@@ -13,7 +13,7 @@ import {BwcProvider} from '../../../lib/bwc';
 import {AppActions} from '../../../store/app';
 import {BitPay, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
 import {ActiveOpacity} from '../../styled/Containers';
@@ -69,6 +69,7 @@ export const hashPin = (pin: string[]) => {
 
 const Pin = gestureHandlerRootHOC(() => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const {type, context, onClose} =
     useAppSelector(({APP}) => APP.pinModalConfig) || {};
@@ -106,13 +107,13 @@ const Pin = gestureHandlerRootHOC(() => {
   }, [setMessage, setFirstPinEntered, setAttempts, setPin, t]);
 
   const checkPin = useCallback(
-    (pinToCheck: Array<string>) => {
+    async (pinToCheck: Array<string>) => {
       const pinHash = hashPin(pinToCheck);
 
       if (isEqual(currentPin, pinHash)) {
         dispatch(AppActions.showBlur(false));
-        const authorizedUntil =
-          Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+        const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+        const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
         onClose?.(true);
@@ -137,25 +138,28 @@ const Pin = gestureHandlerRootHOC(() => {
   gotoCreateKeyRef.current = gotoCreateKey;
 
   const setCurrentPin = useCallback(
-    (newPin: Array<string>) => {
-      if (isEqual(firstPinEntered, newPin)) {
-        dispatch(AppActions.pinLockActive(true));
-        const pinHash = hashPin(newPin);
-        dispatch(AppActions.currentPin(pinHash));
-        dispatch(AppActions.showBlur(false));
-
-        const authorizedUntil =
-          Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
-        dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-
-        if (context === 'onboarding') {
-          gotoCreateKeyRef.current();
+    async (newPin: Array<string>) => {
+      try {
+        if (isEqual(firstPinEntered, newPin)) {
+          dispatch(AppActions.pinLockActive(true));
+          const pinHash = hashPin(newPin);
+          dispatch(AppActions.currentPin(pinHash));
+          dispatch(AppActions.showBlur(false));
+          const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+          const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
+          dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
+  
+          if (context === 'onboarding') {
+            gotoCreateKeyRef.current();
+          } else {
+            dispatch(AppActions.dismissPinModal());
+          }
         } else {
-          dispatch(AppActions.dismissPinModal());
+          setShakeDots(true);
+          reset();
         }
-      } else {
-        setShakeDots(true);
-        reset();
+      } catch (err) {
+        logger.error(`setCurrentPin error: ${err}`)
       }
     },
     [dispatch, setShakeDots, reset, firstPinEntered, context],
@@ -234,14 +238,14 @@ const Pin = gestureHandlerRootHOC(() => {
     ],
   );
 
-  const setCountDown = useCallback(
-    (bannedUntil: number) => {
-      return setInterval(() => {
-        const now = Math.floor(Date.now() / 1000);
-        const totalSecs = bannedUntil - now;
+  const setCountDown = (bannedUntil: number, timeSinceBoot: number, count: number = 0) => {
+      const intervalId = setInterval(() => {
+        count = count + 1;
+        const totalSecs = bannedUntil - timeSinceBoot - count;
 
         if (totalSecs < 0) {
           dispatch(AppActions.pinBannedUntil(undefined));
+          clearInterval(intervalId)
           reset();
           return;
         }
@@ -254,33 +258,47 @@ const Pin = gestureHandlerRootHOC(() => {
           }),
         );
       }, 1000);
-    },
-    [dispatch, setMessage, reset, t],
-  );
+      return intervalId;
+  }
 
   useEffect(() => {
-    if (attempts === ATTEMPT_LIMIT) {
-      setAttempts(0);
-      const bannedUntil = Math.floor(Date.now() / 1000) + ATTEMPT_LOCK_OUT_TIME;
-      dispatch(AppActions.pinBannedUntil(bannedUntil));
-      const timer = setCountDown(bannedUntil);
-      return () => {
-        clearInterval(timer);
-      };
-    }
-  }, [dispatch, setCountDown, attempts]);
+    const checkAttempts = async () => {
+      try {
+        if (attempts === ATTEMPT_LIMIT) {
+          setAttempts(0);
+          const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+          const bannedUntil = Number(timeSinceBoot) + ATTEMPT_LOCK_OUT_TIME;
+          dispatch(AppActions.pinBannedUntil(bannedUntil));
+          const timer = setCountDown(bannedUntil, Number(timeSinceBoot));
+          return () => {
+            clearInterval(timer);
+          };
+        }
+      } catch (err) {
+        logger.error(`checkAttempts error: ${err}`)
+      }
+    };
+    checkAttempts();
+  }, [dispatch, attempts]);
 
   useEffect(() => {
-    const now = Math.floor(Date.now() / 1000);
-    if (pinBannedUntil && now < pinBannedUntil) {
-      const timer = setCountDown(pinBannedUntil);
-      return () => {
-        clearInterval(timer);
-      };
-    } else if (pinBannedUntil) {
-      dispatch(AppActions.pinBannedUntil(undefined));
-    }
-  }, [dispatch, setCountDown, pinBannedUntil]);
+    const checkIfBanned = async () => {
+      try {
+        const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+        if (pinBannedUntil && Number(timeSinceBoot) < pinBannedUntil) {
+          const timer = setCountDown(pinBannedUntil, Number(timeSinceBoot));
+          return () => {
+            clearInterval(timer);
+          };
+        } else if (pinBannedUntil) {
+          dispatch(AppActions.pinBannedUntil(undefined));
+        }
+      } catch (err) {
+        logger.error(`checkIfBanned error: ${err}`)
+      }
+    };
+   checkIfBanned();
+  }, [dispatch, pinBannedUntil]);
 
   return (
     <PinContainer>

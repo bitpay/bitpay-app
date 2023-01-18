@@ -309,7 +309,7 @@ export default () => {
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
-    function onAppStateChange(status: AppStateStatus) {
+    async function onAppStateChange(status: AppStateStatus) {
       // status === 'active' when the app goes from background to foreground,
 
       const showLockOption = () => {
@@ -330,14 +330,16 @@ export default () => {
           dispatch(AppActions.showBlur(false));
         } else if (status === 'active' && !appIsLoading) {
           if (lockAuthorizedUntil) {
-            const now = Math.floor(Date.now() / 1000);
-            const totalSecs = lockAuthorizedUntil - now;
+            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+            const totalSecs =
+              Number(lockAuthorizedUntil) - Number(timeSinceBoot);
             if (totalSecs < 0) {
               dispatch(AppActions.lockAuthorizedUntil(undefined));
               showLockOption();
             } else {
+              const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
               const authorizedUntil =
-                Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+                Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
               dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
               dispatch(AppActions.showBlur(false));
             }
