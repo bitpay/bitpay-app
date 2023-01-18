@@ -530,24 +530,33 @@ export const openUrlWithInAppBrowser =
       dispatch(LogActions.info(`Opening URL ${url} with ${handler}`));
 
       if (isIabAvailable) {
-        // successfully resolves after IAB is cancelled or dismissed
-        const result = await InAppBrowser.open(url, {
-          // iOS options
-          animated: true,
-          modalEnabled: true,
-          modalPresentationStyle: 'pageSheet',
+        try {
+          // successfully resolves after IAB is cancelled or dismissed
+          const result = await InAppBrowser.open(url, {
+            // iOS options
+            animated: true,
+            modalEnabled: true,
+            modalPresentationStyle: 'pageSheet',
 
-          // android options
-          forceCloseOnRedirection: false,
-          hasBackButton: true,
-          showInRecents: true,
+            // android options
+            forceCloseOnRedirection: false,
+            hasBackButton: true,
+            showInRecents: true,
 
-          ...options,
-        });
+            ...options,
+          });
 
-        dispatch(
-          LogActions.info(`InAppBrowser closed with type: ${result.type}`),
-        );
+          dispatch(
+            LogActions.info(`InAppBrowser closed with type: ${result.type}`),
+          );
+        } catch (err) {
+          const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${JSON.stringify(
+            err,
+          )}`;
+          dispatch(LogActions.error(logMsg));
+          // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
+          await Linking.openURL(url);
+        }
       } else {
         // successfully resolves if an installed app handles the URL,
         // or the user confirms any presented 'open' dialog
