@@ -9,7 +9,7 @@ import {
   SettingTitle,
 } from '../../../../../components/styled/Containers';
 import {AppActions} from '../../../../../store/app';
-import {Analytics} from '../../../../../store/app/app.effects';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';

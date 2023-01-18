@@ -1,4 +1,4 @@
-import {JsonMap, UserTraits} from '@segment/analytics-react-native';
+import {JsonMap} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';
@@ -19,7 +19,6 @@ import {
   requestNotifications,
   RESULTS,
 } from 'react-native-permissions';
-import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import uuid from 'react-native-uuid';
 import {batch} from 'react-redux';
 import {AppActions} from '.';
@@ -28,7 +27,6 @@ import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-import Segment from '../../lib/segment';
 import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
 import {CardScreens} from '../../navigation/card/CardStack';
 import {CardActivationScreens} from '../../navigation/card-activation/CardActivationStack';
@@ -36,6 +34,7 @@ import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../navigation/wallet/WalletStack';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
+import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
 import {Card} from '../card/card.models';
@@ -75,7 +74,6 @@ import {
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
-  APP_ANALYTICS_ENABLED,
   APP_DEEPLINK_PREFIX,
   APP_NAME,
   DOWNLOAD_BITPAY_URL,
@@ -109,34 +107,45 @@ const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
-    dispatch(LogActions.info(`Initializing app (${__DEV__ ? 'D' : 'P'})...`));
+    dispatch(
+      LogActions.info(
+        `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
+      ),
+    );
 
-    const {APP, BITPAY_ID, WALLET} = getState();
+    dispatch(deferDeeplinksUntilAppIsReady());
+
+    const {APP, BITPAY_ID, CONTACT, WALLET} = getState();
     const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
 
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    dispatch(deferDeeplinksUntilAppIsReady());
-
-    const {appFirstOpenData, onboardingCompleted, migrationComplete} =
-      getState().APP;
-
-    const {contactMigrationComplete} = getState().CONTACT;
-
-    if (!appFirstOpenData?.firstOpenDate) {
-      dispatch(setAppFirstOpenEventDate(Math.floor(Date.now() / 1000)));
-      dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
-    }
+    const {appFirstOpenData, onboardingCompleted, migrationComplete} = APP;
 
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
-      await dispatch(askForTrackingPermissionAndEnableSdks(true));
+      await dispatch(Analytics.initialize());
       QuickActions.clearShortcutItems();
       QuickActions.setShortcutItems(ShortcutList);
     }
 
+    if (!appFirstOpenData?.firstOpenDate) {
+      const firstOpen = Math.floor(Date.now() / 1000);
+
+      dispatch(setAppFirstOpenEventDate(firstOpen));
+      dispatch(trackFirstOpenEvent(firstOpen));
+    } else {
+      dispatch(Analytics.track('Last Opened App'));
+
+      if (!appFirstOpenData?.firstOpenEventComplete) {
+        dispatch(trackFirstOpenEvent(appFirstOpenData.firstOpenDate));
+      }
+    }
+
     dispatch(startWalletStoreInit());
+
+    const {contactMigrationComplete} = CONTACT;
 
     if (!contactMigrationComplete) {
       await dispatch(startContactMigration());
@@ -571,55 +580,13 @@ export const openUrlWithInAppBrowser =
     }
   };
 
-export const askForTrackingPermissionAndEnableSdks =
-  (appInit: boolean = false): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+const trackFirstOpenEvent =
+  (date: number): Effect =>
+  dispatch => {
     dispatch(
-      LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
-    );
-    const trackingStatus = await requestTrackingPermission();
-    const isAuthorizedByUser = ['authorized', 'unavailable'].includes(
-      trackingStatus,
-    );
-
-    if (APP_ANALYTICS_ENABLED && isAuthorizedByUser) {
-      dispatch(
-        LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
-      );
-
-      try {
-        const {appFirstOpenData, appOpeningWasTracked, brazeEid} =
-          getState().APP;
-
-        if (!Segment.getClient()) {
-          await Segment.init({eid: brazeEid});
-        }
-
-        if (appInit) {
-          if (!appOpeningWasTracked && appFirstOpenData) {
-            const {firstOpenDate, firstOpenEventComplete} = appFirstOpenData;
-
-            if (firstOpenDate && !firstOpenEventComplete) {
-              dispatch(setAppFirstOpenEventComplete());
-              dispatch(
-                Analytics.track('First Opened App', {
-                  date: firstOpenDate || '',
-                }),
-              );
-            } else {
-              dispatch(Analytics.track('Last Opened App', {}));
-            }
-
-            dispatch(AppActions.appOpeningWasTracked());
-          }
-        }
-      } catch (err) {
-        dispatch(LogActions.error('Segment setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-      }
-    }
-    dispatch(
-      LogActions.info('complete [askForTrackingPermissionAndEnableSdks]'),
+      Analytics.track('First Opened App', {date}, () => {
+        dispatch(setAppFirstOpenEventComplete());
+      }),
     );
   };
 
@@ -632,55 +599,6 @@ export const logSegmentEvent = (
   properties: JsonMap = {},
 ) => {
   return Analytics.track(event, properties);
-};
-
-export const Analytics = {
-  /**
-   * Makes a call to identify a user through the analytics SDK.
-   *
-   * @param user database ID (or email address) for this user.
-   * If you don't have a userId but want to record traits, you should pass nil.
-   * For more information on how we generate the UUID and Apple's policies on IDs, see https://segment.io/libraries/ios#ids
-   * @param traits A dictionary of traits you know about the user. Things like: email, name, plan, etc.
-   */
-  identify:
-    (
-      user: string | undefined,
-      traits?: UserTraits | undefined,
-    ): Effect<Promise<void>> =>
-    () => {
-      return Segment.identify(user, traits);
-    },
-
-  /**
-   * Makes a call to record a screen view through the analytics SDK.
-   *
-   * @param name The title of the screen being viewed.
-   * @param properties A dictionary of properties for the screen view event.
-   * If the event was 'Added to Shopping Cart', it might have properties like price, productType, etc.
-   */
-  screen:
-    (name: string, properties: JsonMap = {}): Effect<Promise<void>> =>
-    () => {
-      return Segment.screen(name, properties);
-    },
-
-  /**
-   * Record the actions your users perform through the analytics SDK.
-   *
-   * When a user performs an action in your app, you'll want to track that action for later analysis.
-   * Use the event name to say what the user did, and properties to specify any interesting details of the action.
-   *
-   * @param event The name of the event you're tracking.
-   * The SDK recommend using human-readable names like `Played a Song` or `Updated Status`.
-   * @param properties A dictionary of properties for the event.
-   * If the event was 'Added to Shopping Cart', it might have properties like price, productType, etc.
-   */
-  track:
-    (event: string, properties: JsonMap = {}): Effect<Promise<void>> =>
-    () => {
-      return Segment.track(`BitPay App - ${event}`, properties);
-    },
 };
 
 export const subscribePushNotifications =

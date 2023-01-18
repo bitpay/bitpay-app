@@ -9,7 +9,7 @@ import {
   CardContainer,
 } from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
-import {Analytics} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 import {CardEffects} from '../../../store/card';
 import {
   isCaptionedContentCard,

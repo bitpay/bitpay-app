@@ -8,7 +8,7 @@ import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {AppActions, AppEffects} from '../../../store/app';
-import {Analytics} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';

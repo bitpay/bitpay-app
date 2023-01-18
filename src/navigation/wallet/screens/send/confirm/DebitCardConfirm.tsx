@@ -24,10 +24,8 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {
-  Analytics,
-  startOnGoingProcessModal,
-} from '../../../../../store/app/app.effects';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {

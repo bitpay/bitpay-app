@@ -12,7 +12,8 @@ import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {Analytics, startOnGoingProcessModal} from '../app/app.effects';
+import {Analytics} from '../analytics/analytics.effects';
+import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -39,16 +40,20 @@ export const startBitPayIdStoreInit =
     const {basicInfo: user} = initialData;
 
     if (user) {
-      const {eid, email, name, referralCode} = user;
-      let {givenName, familyName} = user;
+      const {eid, name, referralCode} = user;
+      let {email, givenName, familyName} = user;
+
+      if (email) {
+        email = email.trim();
+      }
 
       if (!givenName && !familyName && name) {
         const [first, ...rest] = name.split(' ');
 
-        givenName = first;
+        givenName = first.trim();
 
         if (rest.length) {
-          familyName = rest[rest.length - 1];
+          familyName = rest[rest.length - 1].trim();
         }
       }
 

@@ -45,7 +45,7 @@ import ReferredUsersSkeleton from '../../components/ReferredUsersSkeleton';
 import ReferralCodeSkeleton from '../../components/ReferralCodeSkeleton';
 import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
-import {Analytics} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 export interface ReferralParamList {
   card: Card;

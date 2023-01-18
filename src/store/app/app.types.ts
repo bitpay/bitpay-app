@@ -106,10 +106,6 @@ interface setAppFirstOpenDate {
   payload: number;
 }
 
-interface AppOpeningWasTracked {
-  type: typeof AppActionTypes.APP_OPENING_WAS_TRACKED;
-}
-
 interface SetIntroCompleted {
   type: typeof AppActionTypes.SET_INTRO_COMPLETED;
 }
@@ -347,7 +343,6 @@ export type AppActionType =
   | AppIsReadyForDeeplinking
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
-  | AppOpeningWasTracked
   | SetIntroCompleted
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal
