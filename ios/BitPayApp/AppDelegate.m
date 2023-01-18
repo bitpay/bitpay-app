@@ -15,6 +15,7 @@
 #import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
 #import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
 #import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
+#import "AppboyReactUtils.h"
 
 #if RCT_DEV
 #import <React/RCTDevLoadingView.h>
@@ -63,6 +64,8 @@ static void InitializeFlipper(UIApplication *application) {
   [Appboy startWithApiKey:@"BRAZE_API_KEY_REPLACE_ME"
            inApplication:application
        withLaunchOptions:launchOptions];
+
+  [[AppboyReactUtils sharedInstance] populateInitialUrlFromLaunchOptions:launchOptions];
 
   return YES;
 }
