@@ -24,6 +24,7 @@ export const getEnabledPaymentMethods = (
   currency?: string,
   coin?: string,
   chain?: string,
+  country?: string,
 ): PaymentMethods => {
   if (!currency || !coin || !chain) {
     return {};
@@ -32,7 +33,14 @@ export const getEnabledPaymentMethods = (
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
     return (
       method.enabled &&
-      (isPaymentMethodSupported('moonpay', method, coin, chain, currency) ||
+      (isPaymentMethodSupported(
+        'moonpay',
+        method,
+        coin,
+        chain,
+        currency,
+        country,
+      ) ||
         isPaymentMethodSupported('simplex', method, coin, chain, currency) ||
         isPaymentMethodSupported('wyre', method, coin, chain, currency))
     );
@@ -66,18 +74,23 @@ export const isPaymentMethodSupported = (
   coin: string,
   chain: string,
   currency: string,
+  country?: string,
 ): boolean => {
   return (
     paymentMethod.supportedExchanges[exchange] &&
-    isCoinSupportedBy(exchange, coin, chain) &&
+    isCoinSupportedBy(exchange, coin, chain, country) &&
     (isFiatCurrencySupportedBy(exchange, currency) ||
       isFiatCurrencySupportedBy(exchange, 'USD'))
   );
 };
 
-export const isCoinSupportedToBuy = (coin: string, chain: string): boolean => {
+export const isCoinSupportedToBuy = (
+  coin: string,
+  chain: string,
+  country?: string,
+): boolean => {
   return (
-    isCoinSupportedBy('moonpay', coin, chain) ||
+    isCoinSupportedBy('moonpay', coin, chain, country) ||
     isCoinSupportedBy('simplex', coin, chain) ||
     isCoinSupportedBy('wyre', coin, chain)
   );
@@ -87,10 +100,11 @@ const isCoinSupportedBy = (
   exchange: string,
   coin: string,
   chain: string,
+  country?: string,
 ): boolean => {
   switch (exchange) {
     case 'moonpay':
-      return getMoonpaySupportedCurrencies().includes(
+      return getMoonpaySupportedCurrencies(country).includes(
         getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
       );
     case 'simplex':
