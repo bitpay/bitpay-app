@@ -92,12 +92,18 @@ export const bindWalletKeys = createTransform(
           // read only wallet
           outboundState[id] = key;
         } else {
-          outboundState[id] = merge(key, {
-            methods: BWCProvider.createKey({
-              seedType: 'object',
-              seedData: key.properties,
-            }),
-          });
+          try {
+            outboundState[id] = merge(key, {
+              methods: BWCProvider.createKey({
+                seedType: 'object',
+                seedData: key.properties,
+              }),
+            });
+          } catch (err: unknown) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            console.error(`Failed to bindWalletKeys - ${id} - ${errStr}`);
+          }
         }
         console.log(`bindKey - ${id}`);
       }
