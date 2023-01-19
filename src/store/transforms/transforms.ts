@@ -35,30 +35,43 @@ export const bindWalletClient = createTransform(
     for (const [id, key] of Object.entries(
       _outboundState as {[key in string]: Key},
     )) {
-      const wallets = key.wallets.map(wallet => {
-        // reset transaction history
-        wallet.transactionHistory = {
-          transactions: [],
-          loadMore: true,
-          hasConfirmingTxs: false,
-        };
-        const walletClient = BWCProvider.getClient(
-          JSON.stringify(wallet.credentials),
-        );
-        console.log(`bindWalletClient - ${wallet.id}`);
-        // build wallet obj with bwc client credentials
-        return merge(
-          walletClient,
-          wallet,
-          buildWalletObj({
-            ...walletClient.credentials,
-            ...wallet,
-          }),
-        );
-      });
+      const wallets = key.wallets
+        .map(wallet => {
+          // reset transaction history
+          wallet.transactionHistory = {
+            transactions: [],
+            loadMore: true,
+            hasConfirmingTxs: false,
+          };
+          let walletClient;
+          try {
+            walletClient = BWCProvider.getClient(
+              JSON.stringify(wallet.credentials),
+            );
+          } catch (err: unknown) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            console.error(
+              `Failed to bindWalletClient - ${wallet.id} - ${errStr}`,
+            );
+            return undefined;
+          }
+          console.log(`bindWalletClient - ${wallet.id}`);
+          // build wallet obj with bwc client credentials
+          return merge(
+            walletClient,
+            wallet,
+            buildWalletObj({
+              ...walletClient.credentials,
+              ...wallet,
+            }),
+          );
+        })
+        .filter(w => w !== undefined);
 
       outboundState[id] = {
         ...key,
+        // @ts-ignore
         wallets,
       };
     }
