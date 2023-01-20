@@ -32,6 +32,7 @@ export interface WalletState {
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
   deferredImport: null | DeferredImport;
+  initLogs: string[];
 }
 
 const initialState: WalletState = {
@@ -60,6 +61,7 @@ const initialState: WalletState = {
   queuedTransactions: false,
   enableReplaceByFee: false,
   deferredImport: null,
+  initLogs: [], // keep init logs at the end (order is important)
 };
 
 export const walletReducer = (
