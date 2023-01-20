@@ -847,7 +847,7 @@ export const deferredImportMnemonic =
       const {words, xPrivKey} = importData;
       opts.words = normalizeMnemonic(words);
       opts.xPrivKey = xPrivKey;
-      dispatch(serverAssistedImport(opts, context));
+      await dispatch(serverAssistedImport(opts, context));
     } catch (e: any) {
       dispatch(onFailedDeferredImport(e));
     }
