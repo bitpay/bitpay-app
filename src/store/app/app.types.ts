@@ -12,7 +12,7 @@ import {
 } from './app.models';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
-import {ModalId} from './app.reducer';
+import {FeedbackType, ModalId} from './app.reducer';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 
 export enum AppActionTypes {
@@ -73,6 +73,7 @@ export enum AppActionTypes {
   UPDATE_ON_COMPLETE_ONBOARDING_LIST = 'APP/UPDATE_ON_COMPLETE_ONBOARDING_LIST',
   CLEAR_ON_COMPLETE_ONBOARDING_LIST = 'APP/CLEAR_ON_COMPLETE_ONBOARDING_LIST',
   SET_HAS_VIEWED_ZENLEDGER_WARNING = 'APP/SET_HAS_VIEWED_ZENLEDGER_WARNING',
+  USER_FEEDBACK = 'APP/USER_FEEDBACK',
 }
 
 interface NetworkChanged {
@@ -335,6 +336,11 @@ interface SetHasViewedZenLedgerWarning {
   type: typeof AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING;
 }
 
+interface setUserFeedback {
+  type: typeof AppActionTypes.USER_FEEDBACK;
+  payload: FeedbackType;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -343,6 +349,7 @@ export type AppActionType =
   | AppIsReadyForDeeplinking
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
+  | setUserFeedback
   | SetIntroCompleted
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal

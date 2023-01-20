@@ -58,6 +58,7 @@ import {
   setEmailNotificationsAccepted,
   setMigrationComplete,
   setNotificationsAccepted,
+  setUserFeedback,
   showBlur,
 } from './app.actions';
 import {AppIdentity} from './app.models';
@@ -95,6 +96,8 @@ import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
+import moment from 'moment';
+import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -1147,6 +1150,57 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
     dispatch(LogActions.error(`failed [shareApp]: ${errorStr}`));
   }
 };
+
+export const isVersionUpdated = (
+  currentVersion: string,
+  savedVersion: string,
+): boolean => {
+  const verifyTagFormat = (tag: string) => {
+    const regex = /^v?\d+\.\d+\.\d+$/i;
+    return regex.exec(tag);
+  };
+
+  const formatTagNumber = (tag: string) => {
+    const formattedNumber = tag.replace(/^v/i, '').split('.');
+    return {
+      major: +formattedNumber[0],
+      minor: +formattedNumber[1],
+      patch: +formattedNumber[2],
+    };
+  };
+
+  if (!verifyTagFormat(currentVersion)) {
+    LogActions.error(
+      'Cannot verify the format of version tag: ' + currentVersion,
+    );
+  }
+  if (!verifyTagFormat(savedVersion)) {
+    LogActions.error(
+      'Cannot verify the format of the saved version tag: ' + savedVersion,
+    );
+  }
+
+  const current = formatTagNumber(currentVersion);
+  const saved = formatTagNumber(savedVersion);
+  if (saved.major == current.major && saved.minor == current.minor) {
+    return true;
+  }
+
+  return false;
+};
+
+export const saveUserFeedback =
+  (rate: FeedbackRateType, version: string, sent: boolean): Effect<any> =>
+  dispatch => {
+    dispatch(
+      setUserFeedback({
+        time: moment().unix(),
+        version,
+        sent,
+        rate,
+      }),
+    );
+  };
 
 export const shortcutListener =
   (item: ShortcutItem, navigation: NavigationProp<any>): Effect<void> =>

@@ -5,7 +5,11 @@ import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
+import {
+  APP_NETWORK,
+  APP_VERSION,
+  BASE_BITPAY_URLS,
+} from '../../constants/config';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
@@ -17,6 +21,8 @@ import {
 import {AppActionType, AppActionTypes} from './app.types';
 import uniqBy from 'lodash.uniqby';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
+import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
+import moment from 'moment';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
@@ -35,6 +41,13 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
 ];
 
 export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
+
+export type FeedbackType = {
+  time: number;
+  version: string;
+  sent: boolean;
+  rate: FeedbackRateType;
+};
 
 export type AppFirstOpenData = {
   firstOpenEventComplete: boolean;
@@ -62,6 +75,7 @@ export interface AppState {
   appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
   introCompleted: boolean;
+  userFeedback: FeedbackType;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
@@ -131,6 +145,12 @@ const initialState: AppState = {
   appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   introCompleted: false,
+  userFeedback: {
+    time: moment().unix(),
+    version: APP_VERSION,
+    sent: false,
+    rate: 'default',
+  },
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: undefined,
@@ -568,6 +588,12 @@ export const appReducer = (
       return {
         ...state,
         hasViewedZenLedgerWarning: true,
+      };
+
+    case AppActionTypes.USER_FEEDBACK:
+      return {
+        ...state,
+        userFeedback: action.payload,
       };
 
     default:

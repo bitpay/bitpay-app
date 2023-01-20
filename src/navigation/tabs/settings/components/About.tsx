@@ -16,6 +16,7 @@ import {useDispatch} from 'react-redux';
 import {
   logSegmentEvent,
   openUrlWithInAppBrowser,
+  shareApp,
 } from '../../../../store/app/app.effects';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {GIT_COMMIT_HASH} from '@env';
@@ -86,6 +87,12 @@ const About = () => {
         onPress={() => navigation.navigate('About', {screen: 'SendFeedback'})}>
         <SettingTitle>{t('Send Feedback')}</SettingTitle>
         <AngleRight />
+      </Setting>
+
+      <Hr />
+
+      <Setting onPress={() => dispatch(shareApp())}>
+        <SettingTitle>{t('Share with Friends')}</SettingTitle>
       </Setting>
 
       <Hr />

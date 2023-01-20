@@ -6,7 +6,10 @@ import {
 import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
-import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
+import {
+  APP_VERSION,
+  STATIC_CONTENT_CARDS_ENABLED,
+} from '../../../constants/config';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   clearOnCompleteOnboardingList,
@@ -15,8 +18,10 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {
+  isVersionUpdated,
   logSegmentEvent,
   requestBrazeContentRefresh,
+  saveUserFeedback,
 } from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
@@ -65,6 +70,8 @@ import {
   receiveCrypto,
   sendCrypto,
 } from '../../../store/wallet/effects/send/send';
+import FeedbackCard from './components/FeedbackCard';
+import moment from 'moment';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -72,6 +79,7 @@ const HomeRoot = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const themeType = useThemeType();
+  const [showRateCard, setShowRateCard] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
   const brazeDoMore = useAppSelector(selectBrazeDoMore);
@@ -98,6 +106,7 @@ const HomeRoot = () => {
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
   const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
+  const userFeedback = useAppSelector(({APP}) => APP.userFeedback);
   useBrazeRefreshOnFocus();
 
   // Shop with Crypto
@@ -215,6 +224,18 @@ const HomeRoot = () => {
     }
   }, [dispatch, onCompleteOnboardingList]);
 
+  useEffect(() => {
+    const currentVersion = APP_VERSION;
+    const savedVersion = userFeedback.version;
+    if (isVersionUpdated(currentVersion, savedVersion)) {
+      const now = moment().unix();
+      const timeExceeded = now - userFeedback.time >= 24 * 7 * 60 * 60;
+      setShowRateCard(timeExceeded && !userFeedback.sent);
+    } else {
+      dispatch(saveUserFeedback('default', APP_VERSION, false));
+    }
+  }, [userFeedback]);
+
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
 
@@ -258,6 +279,13 @@ const HomeRoot = () => {
                   cta: () => dispatch(sendCrypto('HomeRoot')),
                 }}
               />
+            </HomeSection>
+          ) : null}
+
+          {/* ////////////////////////////// FEEDBACK */}
+          {showRateCard ? (
+            <HomeSection slimContainer={true}>
+              <FeedbackCard />
             </HomeSection>
           ) : null}
 
