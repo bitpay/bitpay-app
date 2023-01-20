@@ -118,6 +118,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const {APP, BITPAY_ID, CONTACT, WALLET} = getState();
     const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
 
+    WALLET.initLogs.forEach((log: string) => dispatch(LogActions.info(log)));
+
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
