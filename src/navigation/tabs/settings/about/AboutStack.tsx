@@ -8,13 +8,16 @@ import {
 import SessionLogsScreen, {SessionLogsParamList} from './screens/SessionLog';
 import SendFeedback from './screens/SendFeedback';
 import {useTranslation} from 'react-i18next';
+import StorageUsage from './screens/StorageUsage';
 
 export type AboutStackParamList = {
+  StorageUsage: undefined;
   SessionLogs: SessionLogsParamList | undefined;
   SendFeedback: undefined;
 };
 
 export enum AboutScreens {
+  STORAGE_USAGE = 'StorageUsage',
   SESSION_LOGS = 'SessionLogs',
   SEND_FEEDBACK = 'SendFeedback',
 }
@@ -29,6 +32,13 @@ const AboutStack = () => {
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
+      <About.Screen
+        name={AboutScreens.STORAGE_USAGE}
+        component={StorageUsage}
+        options={{
+          headerTitle: t('Storage Usage'),
+        }}
+      />
       <About.Screen
         name={AboutScreens.SESSION_LOGS}
         component={SessionLogsScreen}
