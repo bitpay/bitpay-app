@@ -6,6 +6,7 @@ import {
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
+import Braze from 'react-native-appboy-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   Appearance,
@@ -444,9 +445,16 @@ export default () => {
                 ),
               );
             } else {
-              const url = await Linking.getInitialURL();
+              const getBrazeInitialUrl = async (): Promise<string> =>
+                new Promise(resolve =>
+                  Braze.getInitialURL(deepLink => resolve(deepLink)),
+                );
+              const [url, brazeUrl] = await Promise.all([
+                Linking.getInitialURL(),
+                getBrazeInitialUrl(),
+              ]);
               await sleep(10);
-              urlEventHandler({url});
+              urlEventHandler({url: url || brazeUrl});
             }
 
             LogActions.info('QuickActions Initialized');
