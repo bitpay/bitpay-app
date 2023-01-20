@@ -785,14 +785,22 @@ export const deferredImportErrorNotification =
   (e?: any): Effect =>
   async dispatch => {
     dispatch(dismissOnGoingProcessModal());
-    await sleep(600);
+    await sleep(1000);
+    let errorStr = '';
+    if (e?.message === 'WALLET_DOES_NOT_EXIST') {
+      errorStr = t(
+        'There are no records of your wallet on our servers. If you are importing a BIP44 compatible wallet from a 3rd party you can continue to recreate it. If you wallet is not BIP44 compatible, you will not be able to access its funds.',
+      );
+    } else if (e) {
+      errorStr = e instanceof Error ? e.message : JSON.stringify(e);
+    }
     dispatch(
       showBottomNotificationModal({
         type: 'error',
         title: t('Problem importing key'),
         message: `${t(
           'There was an issue importing your key. Please try again.',
-        )}${e ? `\n\nError: ${e.message || e}` : ''}`,
+        )}${'\n\n'}${errorStr}`,
         enableBackdropDismiss: false,
         actions: [
           {
