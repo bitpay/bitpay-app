@@ -351,6 +351,8 @@ PODS:
     - React-Core
   - react-native-pager-view (5.4.9):
     - React-Core
+  - react-native-print (0.10.0):
+    - React-Core
   - react-native-randombytes (3.6.1):
     - React-Core
   - react-native-restart (0.0.24):
@@ -460,6 +462,8 @@ PODS:
     - React
   - RNPermissions (3.2.0):
     - React-Core
+  - RNQuickAction (0.3.13):
+    - React
   - RNRate (1.2.9):
     - React-Core
   - RNReactNativeHapticFeedback (1.13.0):
@@ -574,6 +578,7 @@ DEPENDENCIES:
   - react-native-config (from `../node_modules/react-native-config`)
   - react-native-mail (from `../node_modules/react-native-mail`)
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
+  - react-native-print (from `../node_modules/react-native-print`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-restart (from `../node_modules/react-native-restart`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -606,6 +611,7 @@ DEPENDENCIES:
   - RNLocalize (from `../node_modules/react-native-localize`)
   - RNOS (from `../node_modules/react-native-os`)
   - RNPermissions (from `../node_modules/react-native-permissions`)
+  - RNQuickAction (from `../node_modules/react-native-quick-actions`)
   - RNRate (from `../node_modules/react-native-rate`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -699,6 +705,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-mail"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
+  react-native-print:
+    :path: "../node_modules/react-native-print"
   react-native-randombytes:
     :path: "../node_modules/react-native-randombytes"
   react-native-restart:
@@ -763,6 +771,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-os"
   RNPermissions:
     :path: "../node_modules/react-native-permissions"
+  RNQuickAction:
+    :path: "../node_modules/react-native-quick-actions"
   RNRate:
     :path: "../node_modules/react-native-rate"
   RNReactNativeHapticFeedback:
@@ -833,6 +843,7 @@ SPEC CHECKSUMS:
   react-native-config: 6502b1879f97ed5ac570a029961fc35ea606cd14
   react-native-mail: 8fdcd3aef007c33a6877a18eb4cf7447a1d4ce4a
   react-native-pager-view: 3ee7d4c7697fb3ef788346e834a60cca97ed8540
+  react-native-print: 1ae7a4ce4bf673b975f2ec9c4e00ad0c9b60e8aa
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-restart: 45c8dca02491980f2958595333cbccd6877cb57e
   react-native-safe-area-context: 584dc04881deb49474363f3be89e4ca0e854c057
@@ -865,6 +876,7 @@ SPEC CHECKSUMS:
   RNLocalize: f567ea0e35116a641cdffe6683b0d212d568f32a
   RNOS: 6f2f9a70895bbbfbdad7196abd952e7b01d45027
   RNPermissions: f7ebe52db07c00901127966ca080b4ec6a6ceb0a
+  RNQuickAction: 6d404a869dc872cde841ad3147416a670d13fa93
   RNRate: 94f57c773e155ca0d0aeeba9c10a32bce9030daf
   RNReactNativeHapticFeedback: b83bfb4b537bdd78eb4f6ffe63c6884f7b049ead
   RNReanimated: 190b6930d5d94832061278e1070bbe313e50c830
