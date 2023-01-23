@@ -37,7 +37,6 @@ const StorageUsage: React.VFC = () => {
   const [customTokenCount, setCustomTokenCount] = useState<number>(0);
 
   const [appSize, setAppSize] = useState<string>('');
-  const [dataSize, setDataSize] = useState<string>('');
   const [deviceFreeStorage, setDeviceFreeStorage] = useState<string>('');
   const [deviceTotalStorage, setDeviceTotalStorage] = useState<string>('');
   const [giftCardtStorage, setGiftCardStorage] = useState<string>('');
@@ -79,15 +78,11 @@ const StorageUsage: React.VFC = () => {
     try {
       // App Data Storage
       const resultStorage = await RNFS.readDir(storagePath);
-      let _dataSize: number = 0;
+      let _appSize: number = 0;
       forEach(resultStorage, data => {
-        if (data.name === 'BitPayApp') {
-          setAppSize(formatBytes(data.size));
-        } else {
-          _dataSize = _dataSize + data.size;
-        }
+        _appSize = _appSize + data.size;
       });
-      setDataSize(formatBytes(_dataSize));
+      setAppSize(formatBytes(_appSize));
 
       // Device Storage
       const resultDeviceStorage = await RNFS.getFSInfo();
@@ -145,16 +140,9 @@ const StorageUsage: React.VFC = () => {
       </HeaderTitle>
       <SettingsComponent>
         <Setting>
-          <SettingTitle>{t('BitPay')}</SettingTitle>
+          <SettingTitle>BitPay</SettingTitle>
 
           <Button buttonType="pill">{appSize}</Button>
-        </Setting>
-
-        <Hr />
-        <Setting>
-          <SettingTitle>{t('App Data')}</SettingTitle>
-
-          <Button buttonType="pill">{dataSize}</Button>
         </Setting>
 
         <Hr />
