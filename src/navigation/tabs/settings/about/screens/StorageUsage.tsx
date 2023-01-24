@@ -61,17 +61,15 @@ const StorageUsage: React.VFC = () => {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
   };
 
-  const getSize = (filePath: string, data: string): Promise<number> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        await RNFS.writeFile(filePath, data);
-        const file = await RNFS.stat(filePath);
-        await RNFS.unlink(filePath); // Delete
-        return resolve(file.size);
-      } catch (err) {
-        return reject(err);
-      }
-    });
+  const getSize = async (filePath: string, data: string): Promise<number> => {
+    try {
+      await RNFS.writeFile(filePath, data);
+      const file = await RNFS.stat(filePath);
+      await RNFS.unlink(filePath); // Delete
+      return Promise.resolve(file.size);
+    } catch (err) {
+      return Promise.reject(err);
+    }
   };
 
   useMemo(async () => {
@@ -103,30 +101,29 @@ const StorageUsage: React.VFC = () => {
       setCustomTokenCount(_customTokenCount);
 
       // Specific Data Storage
-      getSize(
+      const _walletStorageSize = await getSize(
         RNFS.TemporaryDirectoryPath + '/wallets.txt',
         JSON.stringify(wallets),
-      ).then(d => {
-        setWalletStorage(formatBytes(d));
-      });
-      getSize(
+      );
+      setWalletStorage(formatBytes(_walletStorageSize));
+
+      const _giftCardStorageSize = await getSize(
         RNFS.TemporaryDirectoryPath + '/gift-cards.txt',
         JSON.stringify(giftCards),
-      ).then(d => {
-        setGiftCardStorage(formatBytes(d));
-      });
-      getSize(
+      );
+      setGiftCardStorage(formatBytes(_giftCardStorageSize));
+
+      const _customTokenStorageSize = await getSize(
         RNFS.TemporaryDirectoryPath + '/custom-tokens.txt',
         JSON.stringify(customTokens),
-      ).then(d => {
-        setCustomTokenStorage(formatBytes(d));
-      });
-      getSize(
+      );
+      setCustomTokenStorage(formatBytes(_customTokenStorageSize));
+
+      const _contactStorageSize = await getSize(
         RNFS.TemporaryDirectoryPath + '/contacts.txt',
         JSON.stringify(contacts),
-      ).then(d => {
-        setContactStorage(formatBytes(d));
-      });
+      );
+      setContactStorage(formatBytes(_contactStorageSize));
     } catch (err) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
       LogActions.error('[StorageUsage] Error ', errStr);
