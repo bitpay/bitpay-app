@@ -401,7 +401,7 @@ const RecoveryPhrase = () => {
     importData: {words?: string | undefined; xPrivKey?: string | undefined},
     opts: Partial<KeyOptions>,
   ) => {
-    await sleep(0);
+    await sleep(50);
     dispatch(startOnGoingProcessModal('REDIRECTING'));
     await sleep(350);
 
@@ -425,7 +425,7 @@ const RecoveryPhrase = () => {
   ): Promise<void> => {
     try {
       if (!derivationPathEnabled) {
-        startDeferredImport(importData, opts);
+        await startDeferredImport(importData, opts);
         await sleep(500);
         dispatch(
           showBottomNotificationModal({
