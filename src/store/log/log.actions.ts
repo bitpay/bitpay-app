@@ -1,4 +1,4 @@
-import {LogActionType, LogActionTypes} from './log.types';
+import {AddLog, LogActionType, LogActionTypes} from './log.types';
 import {LogEntry, LogLevel} from './log.models';
 
 export const clear = (): LogActionType => {
@@ -7,26 +7,27 @@ export const clear = (): LogActionType => {
   };
 };
 
-export const debug = (
-  ...messages: (string | null | undefined)[]
-): LogActionType => _log(LogLevel.Debug, ...messages);
+export const debug = (...messages: (string | null | undefined)[]): AddLog =>
+  _log(LogLevel.Debug, ...messages);
 
-export const info = (
-  ...messages: (string | null | undefined)[]
-): LogActionType => _log(LogLevel.Info, ...messages);
+export const info = (...messages: (string | null | undefined)[]): AddLog =>
+  _log(LogLevel.Info, ...messages);
 
-export const warn = (
-  ...messages: (string | null | undefined)[]
-): LogActionType => _log(LogLevel.Warn, ...messages);
+export const warn = (...messages: (string | null | undefined)[]): AddLog =>
+  _log(LogLevel.Warn, ...messages);
 
-export const error = (
-  ...messages: (string | null | undefined)[]
-): LogActionType => _log(LogLevel.Error, ...messages);
+export const error = (...messages: (string | null | undefined)[]): AddLog =>
+  _log(LogLevel.Error, ...messages);
+
+export const persistLog = ({payload}: AddLog): AddLog => ({
+  type: LogActionTypes.ADD_PERSISTED_LOG,
+  payload,
+});
 
 function _log(
   level: LogLevel,
   ...messages: (string | null | undefined)[]
-): LogActionType {
+): AddLog {
   if (__DEV__ && !!messages) {
     switch (LogLevel[level]) {
       case 'Debug':

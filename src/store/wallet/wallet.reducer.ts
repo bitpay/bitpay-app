@@ -2,6 +2,7 @@ import {DeferredImport, Key, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
+import {AddLog} from '../log/log.types';
 
 type WalletReduxPersistBlackList = string[];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
@@ -32,7 +33,7 @@ export interface WalletState {
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
   deferredImport: null | DeferredImport;
-  initLogs: string[];
+  initLogs: AddLog[];
 }
 
 const initialState: WalletState = {

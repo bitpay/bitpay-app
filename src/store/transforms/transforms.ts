@@ -9,8 +9,10 @@ import {
 import Flatted from 'flatted';
 import {buildWalletObj} from '../wallet/utils/wallet';
 import {ContactRowProps} from '../../components/list/ContactRow';
+import {AddLog} from '../log/log.types';
+import {LogActions} from '../log';
 const BWCProvider = BwcProvider.getInstance();
-const initLogs: string[] = [];
+const initLogs: AddLog[] = [];
 
 export const bindWalletClient = createTransform(
   // transform state on its way to being serialized and persisted.
@@ -57,12 +59,12 @@ export const bindWalletClient = createTransform(
               const errStr =
                 err instanceof Error ? err.message : JSON.stringify(err);
               const errorLog = `Failed to bindWalletClient - ${wallet.id} - ${errStr}`;
-              initLogs.push(errorLog);
+              initLogs.push(LogActions.persistLog(LogActions.error(errorLog)));
               console.error(errorLog);
               return undefined;
             }
             const successLog = `bindWalletClient - ${wallet.id}`;
-            initLogs.push(successLog);
+            initLogs.push(LogActions.info(successLog));
             console.log(successLog);
             // build wallet obj with bwc client credentials
             return merge(
@@ -113,12 +115,12 @@ export const bindWalletKeys = createTransform(
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
             const errorLog = `Failed to bindWalletKeys - ${id} - ${errStr}`;
-            initLogs.push(errorLog);
+            initLogs.push(LogActions.persistLog(LogActions.error(errorLog)));
             console.error(errorLog);
           }
         }
         const successLog = `bindKey - ${id}`;
-        initLogs.push(successLog);
+        initLogs.push(LogActions.info(successLog));
         console.log(successLog);
       }
       return outboundState;
