@@ -3,7 +3,7 @@ import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {memo, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Alert, FlatList} from 'react-native';
+import {Alert, SectionList} from 'react-native';
 import Mailer from 'react-native-mail';
 import styled, {useTheme} from 'styled-components/native';
 import {
@@ -32,6 +32,7 @@ import Settings from '../../../../../components/settings/Settings';
 import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
 import SendIcon from '../../../../../../assets/img/send-icon.svg';
 import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
+import {ListHeader} from '../../general/screens/customize-home/Shared';
 
 export interface SessionLogsParamList {}
 
@@ -149,9 +150,16 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);
   const logs = useAppSelector(({LOG}) => LOG.logs);
+  const persistedLogs = useAppSelector(({LOG}) => LOG.persistedLogs);
   const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
+  const currentSessionStartTime = new Date(logs[0].timestamp);
+  const filteredPersistedLogs = persistedLogs.filter(
+    log =>
+      log.level <= filterLevel &&
+      new Date(log.timestamp) < currentSessionStartTime,
+  );
 
   const onFilterLevelChange = (level: LogLevel) => {
     if (level !== filterLevel) {
@@ -181,11 +189,20 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
     setShowOptions(false);
     let logStr =
       'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
-    logStr += filteredLogs.map(log => {
-      const formattedLevel = LogLevel[log.level].toLowerCase();
+    const printLogs = (logsToPrint: LogEntry[]) =>
+      logsToPrint
+        .map(log => {
+          const formattedLevel = LogLevel[log.level].toLowerCase();
 
-      return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
-    });
+          return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+        })
+        .join('');
+    const persistedLogString = filteredPersistedLogs.length
+      ? 'Previous Sessions\n\n' +
+        printLogs(filteredPersistedLogs) +
+        '\n\nCurrent Session\n\n'
+      : '';
+    logStr += persistedLogString + printLogs(filteredLogs);
 
     Alert.alert(
       t('Warning'),
@@ -206,14 +223,20 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
 
   return (
     <LogsContainer>
-      <FlatList
-        contentContainerStyle={{
-          paddingVertical: 15,
-          paddingHorizontal: 15,
-        }}
-        data={filteredLogs}
+      <SectionList
+        contentContainerStyle={{paddingBottom: 150, marginTop: 5}}
+        sections={[
+          {title: t('Previous Sessions'), data: filteredPersistedLogs},
+          {title: t('Current Session'), data: filteredLogs},
+        ]}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({section: {title}}) =>
+          filteredPersistedLogs.length > 0 ? (
+            <ListHeader>{title}</ListHeader>
+          ) : null
+        }
       />
 
       <FilterLabels onPress={onFilterLevelChange} />
