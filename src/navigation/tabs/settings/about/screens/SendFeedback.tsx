@@ -1,11 +1,11 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import {
   ScreenGutter,
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
-import {H4, Link, Paragraph} from '../../../../../components/styled/Text';
+import {H4, Paragraph} from '../../../../../components/styled/Text';
 import {LightBlack, SlateDark, White} from '../../../../../styles/colors';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import LinkSvg from '../../../../../../assets/img/link.svg';
@@ -22,11 +22,19 @@ import {
   shareApp,
 } from '../../../../../store/app/app.effects';
 import {URL} from '../../../../../constants';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../../../home/components/Styled';
 import Rate, {AndroidMarket} from 'react-native-rate';
 import {useTranslation} from 'react-i18next';
 import {APP_VERSION} from '../../../../../constants/config';
+import {StackScreenProps} from '@react-navigation/stack';
+import {AboutStackParamList} from '../AboutStack';
+
+export type FeedbackRateType = 'love' | 'ok' | 'disappointed' | 'default';
+
+export interface SendFeedbackParamList {
+  rate: FeedbackRateType;
+}
 
 const SendFeedbackContainer = styled.SafeAreaView`
   flex: 1;
@@ -63,7 +71,7 @@ const EmojisContainer = styled.View`
 
 const EmojiActionContainer = styled.View`
   width: 100%;
-  padding: 0 45px;
+  padding: 0 20px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -72,21 +80,6 @@ const EmojiActionContainer = styled.View`
 const EmojiAction = styled.TouchableOpacity`
   width: 44px;
   height: 44px;
-`;
-
-const ConfirmRate = styled.TouchableOpacity`
-  width: 100%;
-  display: flex;
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top-width: 1px;
-  border-top-color: ${({theme: {dark}}) => (dark ? White : '#EBEBEB')};
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-`;
-
-const ConfirmRateTitle = styled(Link)`
-  text-align: left;
-  font-size: 16px;
 `;
 
 const ListItem = styled(Setting)`
@@ -100,20 +93,15 @@ const LeftIconContainer = styled.View`
   margin-right: 10px;
 `;
 
-export type FeedbackRateType = 'love' | 'ok' | 'disappointed' | 'default';
-
-const SendFeedback = () => {
+const SendFeedback = ({
+  route,
+}: StackScreenProps<AboutStackParamList, 'SendFeedback'>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const userFeedback = useAppSelector(({APP}) => APP.userFeedback);
+  const {rate} = route.params || {};
   const [showEmojis, setShowEmojis] = useState(false);
-  const [preRate, setPreRate] = useState<FeedbackRateType>(
-    userFeedback.rate || 'default',
-  );
-  const [rateApp, setRateApp] = useState<FeedbackRateType>(
-    userFeedback.rate || 'default',
-  );
+  const [rateApp, setRateApp] = useState<FeedbackRateType>(rate || 'default');
 
   const rateAppStore = () => {
     const options = {
@@ -139,19 +127,25 @@ const SendFeedback = () => {
     {
       key: 1,
       onPress: () => {
-        if (!userFeedback.sent) {
-          setShowEmojis(true);
-        } else {
-          rateAppStore();
-        }
+        setShowEmojis(true);
       },
       description: t('Write a Review'),
       leftIcon: <Start width={20} height={20} />,
       rightIcon: <AngleRight />,
-      showOn: ['love', 'default'],
+      showOn: ['default'],
     },
     {
       key: 2,
+      onPress: () => {
+        rateAppStore();
+      },
+      description: t('Write a Review'),
+      leftIcon: <Start width={20} height={20} />,
+      rightIcon: <AngleRight />,
+      showOn: ['love'],
+    },
+    {
+      key: 3,
       onPress: () => dispatch(shareApp()),
       description: t('Share with Friends'),
       leftIcon: <ShareSvg width={20} height={20} />,
@@ -159,7 +153,7 @@ const SendFeedback = () => {
       showOn: ['love'],
     },
     {
-      key: 3,
+      key: 4,
       onPress: () => dispatch(openUrlWithInAppBrowser(URL.LEAVE_FEEDBACK)),
       description: t('Leave Feedback'),
       leftIcon: <Feature width={20} height={20} />,
@@ -167,7 +161,7 @@ const SendFeedback = () => {
       showOn: ['ok', 'disappointed', 'default'],
     },
     {
-      key: 4,
+      key: 5,
       onPress: () => {
         dispatch(openUrlWithInAppBrowser(URL.REQUEST_FEATURE));
       },
@@ -177,7 +171,7 @@ const SendFeedback = () => {
       showOn: ['ok', 'default'],
     },
     {
-      key: 5,
+      key: 6,
       onPress: () => {
         dispatch(openUrlWithInAppBrowser(URL.REPORT_ISSUE));
       },
@@ -261,45 +255,17 @@ const SendFeedback = () => {
       {showEmojis ? (
         <EmojisContainer>
           <EmojiActionContainer>
-            <EmojiAction onPress={() => setPreRate('love')}>
-              <HearFace
-                width={44}
-                height={44}
-                opacity={
-                  preRate === 'love' ? 1 : preRate === 'default' ? 1 : 0.4
-                }
-              />
+            <EmojiAction onPress={() => chooseRateApp('disappointed')}>
+              <Speechless width={44} height={44} />
             </EmojiAction>
-            <EmojiAction onPress={() => setPreRate('ok')}>
-              <Smile
-                width={44}
-                height={44}
-                opacity={preRate === 'ok' ? 1 : preRate === 'default' ? 1 : 0.4}
-              />
+            <EmojiAction onPress={() => chooseRateApp('ok')}>
+              <Smile width={44} height={44} />
             </EmojiAction>
-            <EmojiAction onPress={() => setPreRate('disappointed')}>
-              <Speechless
-                width={44}
-                height={44}
-                opacity={
-                  preRate === 'disappointed'
-                    ? 1
-                    : preRate === 'default'
-                    ? 1
-                    : 0.4
-                }
-              />
+
+            <EmojiAction onPress={() => chooseRateApp('love')}>
+              <HearFace width={44} height={44} />
             </EmojiAction>
           </EmojiActionContainer>
-          {preRate && preRate !== 'default' ? (
-            <ConfirmRate onPress={() => chooseRateApp(preRate)}>
-              <ConfirmRateTitle>
-                {preRate === 'love' ? t('I love it!') : null}
-                {preRate === 'ok' ? t("It's ok for now") : null}
-                {preRate === 'disappointed' ? t("I'm disappointed") : null}
-              </ConfirmRateTitle>
-            </ConfirmRate>
-          ) : null}
         </EmojisContainer>
       ) : null}
     </SendFeedbackContainer>

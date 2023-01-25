@@ -6,12 +6,12 @@ import {
 } from '../../../../constants/NavigationOptions';
 
 import SessionLogsScreen, {SessionLogsParamList} from './screens/SessionLog';
-import SendFeedback from './screens/SendFeedback';
+import SendFeedback, {SendFeedbackParamList} from './screens/SendFeedback';
 import {useTranslation} from 'react-i18next';
 
 export type AboutStackParamList = {
   SessionLogs: SessionLogsParamList | undefined;
-  SendFeedback: undefined;
+  SendFeedback: SendFeedbackParamList | undefined;
 };
 
 export enum AboutScreens {
