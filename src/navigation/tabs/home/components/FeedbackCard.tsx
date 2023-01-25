@@ -82,31 +82,15 @@ const EmojiAction = styled.TouchableOpacity`
   height: 44px;
 `;
 
-const ConfirmRate = styled.TouchableOpacity`
-  width: 100%;
-  display: flex;
-  padding-top: 16px;
-  border-top-width: 1px;
-  border-top-color: ${({theme: {dark}}) => (dark ? White : '#EBEBEB')};
-`;
-
-const ConfirmRateTitle = styled(Link)`
-  text-align: left;
-  font-size: 16px;
-`;
-
 const FeedbackCard: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
-  const [preRate, setPreRate] = useState<FeedbackRateType>('default');
-
   const rateApp = (rate: FeedbackRateType) => {
-    setPreRate(rate);
     dispatch(saveUserFeedback(rate, APP_VERSION, true));
     if (rate !== 'default') {
-      navigation.navigate('About', {screen: 'SendFeedback'});
+      navigation.navigate('About', {screen: 'SendFeedback', params: {rate}});
     }
   };
 
@@ -126,39 +110,16 @@ const FeedbackCard: React.FC = () => {
       </FeedbackParagraph>
       <EmojisContainer>
         <EmojiActionContainer>
-          <EmojiAction onPress={() => setPreRate('love')}>
-            <HearFace
-              width={44}
-              height={44}
-              opacity={preRate === 'love' ? 1 : preRate === 'default' ? 1 : 0.4}
-            />
+          <EmojiAction onPress={() => rateApp('disappointed')}>
+            <Speechless width={44} height={44} />
           </EmojiAction>
-          <EmojiAction onPress={() => setPreRate('ok')}>
-            <Smile
-              width={44}
-              height={44}
-              opacity={preRate === 'ok' ? 1 : preRate === 'default' ? 1 : 0.4}
-            />
+          <EmojiAction onPress={() => rateApp('ok')}>
+            <Smile width={44} height={44} />
           </EmojiAction>
-          <EmojiAction onPress={() => setPreRate('disappointed')}>
-            <Speechless
-              width={44}
-              height={44}
-              opacity={
-                preRate === 'disappointed' ? 1 : preRate === 'default' ? 1 : 0.4
-              }
-            />
+          <EmojiAction onPress={() => rateApp('love')}>
+            <HearFace width={44} height={44} />
           </EmojiAction>
         </EmojiActionContainer>
-        {preRate && preRate !== 'default' ? (
-          <ConfirmRate onPress={() => rateApp(preRate)}>
-            <ConfirmRateTitle>
-              {preRate === 'love' ? t('I love it!') : null}
-              {preRate === 'ok' ? t("It's ok for now") : null}
-              {preRate === 'disappointed' ? t("I'm disappointed") : null}
-            </ConfirmRateTitle>
-          </ConfirmRate>
-        ) : null}
       </EmojisContainer>
     </FeedbackContainer>
   );
