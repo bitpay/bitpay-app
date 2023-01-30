@@ -111,6 +111,7 @@ import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
 import ZenLedgerStack, {
   ZenLedgerStackParamsList,
 } from './navigation/zenledger/ZenLedgerStack';
+import {WalletBackupActions} from './store/wallet-backup';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -245,6 +246,11 @@ export default () => {
     ({APP}) => APP.lockAuthorizedUntil,
   );
 
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const [previousKeysLength, setPreviousKeysLength] = useState(
+    Object.keys(keys).length,
+  );
+
   const debouncedOnStateChange = useMemo(
     () =>
       debounce((state: NavigationState | undefined) => {
@@ -310,6 +316,26 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
+
+  useEffect(() => {
+    const numNewKeys = Object.keys(keys).length;
+    const keyLengthChange = previousKeysLength - numNewKeys;
+    if (keyLengthChange === 0) {
+      return;
+    }
+    setPreviousKeysLength(numNewKeys);
+    if (keyLengthChange > 1) {
+      dispatch(
+        LogActions.persistLog(
+          LogActions.warn(
+            'More than 1 key was just removed at once indicating potential corruption so not updating the backup key store',
+          ),
+        ),
+      );
+      return;
+    }
+    dispatch(WalletBackupActions.successBackupUpWalletKeys(keys));
+  }, [dispatch, keys, previousKeysLength]);
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {

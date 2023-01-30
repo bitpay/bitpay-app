@@ -11,9 +11,13 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
   'tokenOptionsByAddress',
 ];
 
+export type Keys = {
+  [key in string]: Key;
+};
+
 export interface WalletState {
   createdOn: number;
-  keys: {[key in string]: Key};
+  keys: Keys;
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
@@ -36,7 +40,7 @@ export interface WalletState {
   initLogs: AddLog[];
 }
 
-const initialState: WalletState = {
+export const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
   tokenOptions: {},
