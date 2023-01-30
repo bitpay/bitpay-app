@@ -93,6 +93,8 @@ import {
   RateState,
 } from './rate/rate.reducer';
 import {RateActionType} from './rate/rate.types';
+import {walletBackupReducer} from './wallet-backup/wallet-backup.reducer';
+import {WalletBackupActionType} from './wallet-backup/wallet-backup.types';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -178,6 +180,14 @@ const reducers = {
       blacklist: walletReduxPersistBlackList,
     },
     walletReducer,
+  ),
+  WALLET_BACKUP: persistReducer<WalletState, WalletBackupActionType>(
+    {
+      storage: AsyncStorage,
+      key: 'WALLET_BACKUP',
+      blacklist: walletReduxPersistBlackList,
+    },
+    walletBackupReducer,
   ),
   RATE: persistReducer<RateState, RateActionType>(
     {

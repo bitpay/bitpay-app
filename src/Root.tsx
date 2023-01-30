@@ -103,14 +103,13 @@ import CardActivationStack, {
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
-import {
-  handleBwsEvent,
-  shortcutListener,
-} from './store/app/app.effects';
+import {handleBwsEvent, shortcutListener} from './store/app/app.effects';
 import NotificationsSettingsStack, {
   NotificationsSettingsStackParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
+import {WalletBackupActions} from './store/wallet-backup';
+import {Keys} from './store/wallet/wallet.reducer';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -242,6 +241,11 @@ export default () => {
     ({APP}) => APP.lockAuthorizedUntil,
   );
 
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const [previousKeysLength, setPreviousKeysLength] = useState(
+    Object.keys(keys).length,
+  );
+
   const debouncedOnStateChange = useMemo(
     () =>
       debounce((state: NavigationState | undefined) => {
@@ -307,6 +311,26 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
+
+  useEffect(() => {
+    const numNewKeys = Object.keys(keys).length;
+    const keyLengthChange = previousKeysLength - numNewKeys;
+    if (keyLengthChange === 0) {
+      return;
+    }
+    setPreviousKeysLength(numNewKeys);
+    if (keyLengthChange > 1) {
+      dispatch(
+        LogActions.persistLog(
+          LogActions.warn(
+            'More than 1 key was just removed at once indicating potential corruption so not updating the backup key store',
+          ),
+        ),
+      );
+      return;
+    }
+    dispatch(WalletBackupActions.successBackupUpWalletKeys(keys));
+  }, [dispatch, keys, previousKeysLength]);
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
