@@ -22,7 +22,6 @@ import {
 } from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
 import {
-  clearDeferredImport,
   deleteKey,
   failedImport,
   setCustomizeNonce,
@@ -31,7 +30,6 @@ import {
   setWalletTermsAccepted,
   successImport,
   updateCacheFeeLevel,
-  updateDeferredImport,
   updatePortfolioBalance,
 } from '../../wallet.actions';
 import {
@@ -55,7 +53,6 @@ import {
   showBottomNotificationModal,
   showPortfolioValue,
   successGenerateAppIdentity,
-  updateOnCompleteOnboarding,
 } from '../../../app/app.actions';
 import {createContact} from '../../../contact/contact.actions';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
@@ -781,210 +778,95 @@ export const migrateKeyAndWallets =
     });
   };
 
-export const deferredImportErrorNotification =
-  (e?: any): Effect =>
-  async dispatch => {
-    dispatch(dismissOnGoingProcessModal());
-    await sleep(1000);
-    let errorStr = '';
-    if (e?.message === 'WALLET_DOES_NOT_EXIST') {
-      errorStr = t(
-        'There are no records of your wallet on our servers. If you are importing a BIP44 compatible wallet from a 3rd party you can continue to recreate it. If you wallet is not BIP44 compatible, you will not be able to access its funds.',
-      );
-    } else if (e) {
-      errorStr = e instanceof Error ? e.message : JSON.stringify(e);
-    }
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title: t('Problem importing key'),
-        message: `${t(
-          'There was an issue importing your key. Please try again.',
-        )}${'\n\n'}${errorStr}`,
-        enableBackdropDismiss: false,
-        actions: [
-          {
-            text: t('IMPORT KEY'),
-            action: () => {
-              navigationRef.navigate('Wallet', {screen: 'Import'});
-            },
-            primary: true,
-          },
-          {
-            text: t('MAYBE LATER'),
-            action: () => {},
-            primary: false,
-          },
-        ],
-      }),
-    );
-  };
-
-const onFailedDeferredImport =
-  (e: any): Effect =>
-  async (dispatch, getState) => {
-    try {
-      dispatch(clearDeferredImport());
-      let errorStr;
-      if (e instanceof Error) {
-        errorStr = e.message;
-      } else {
-        errorStr = JSON.stringify(e);
-      }
-      dispatch(LogActions.error('[Import Mnemonic]: ', errorStr));
-      const {
-        APP: {onboardingCompleted},
-      } = getState();
-      if (onboardingCompleted) {
-        dispatch(deferredImportErrorNotification(e));
-      } else {
-        dispatch(updateOnCompleteOnboarding('deferredImportErrorNotification'));
-      }
-    } catch (e) {}
-  };
-
-export const deferredImportMnemonic =
+export const startImportMnemonic =
   (
     importData: {words?: string; xPrivKey?: string},
     opts: Partial<KeyOptions>,
-    context?: string,
   ): Effect =>
-  async dispatch => {
-    try {
-      dispatch(updateDeferredImport({importData, opts}));
-      const {words, xPrivKey} = importData;
-      opts.words = normalizeMnemonic(words);
-      opts.xPrivKey = xPrivKey;
-      await dispatch(serverAssistedImport(opts, context));
-    } catch (e: any) {
-      dispatch(onFailedDeferredImport(e));
-    }
-  };
+  async (dispatch, getState): Promise<Key> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const {
+          WALLET,
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
+        } = getState();
+        const tokenOpts = {
+          ...BitpaySupportedTokenOpts,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
+        };
+        const {words, xPrivKey} = importData;
+        opts.words = normalizeMnemonic(words);
+        opts.xPrivKey = xPrivKey;
 
-const onSuccessServerAssistedImport =
-  (
-    data: {key: KeyMethods; wallets: Wallet[]},
-    opts: Partial<KeyOptions>,
-    context?: string,
-  ): Effect =>
-  async (dispatch, getState) => {
-    try {
-      const {
-        WALLET,
-        APP: {
-          notificationsAccepted,
-          emailNotifications,
-          brazeEid,
-          defaultLanguage,
-        },
-      } = getState();
-      const tokenOpts = {
-        ...BitpaySupportedTokenOpts,
-        ...WALLET.tokenOptions,
-        ...WALLET.customTokenOptions,
-      };
+        const data = await serverAssistedImport(opts);
 
-      // To Avoid Duplicate wallet import
-      const {key: _key, wallets} = findMatchedKeyAndUpdate(
-        data.wallets,
-        data.key,
-        Object.values(WALLET.keys),
-        opts,
-      );
+        // To Avoid Duplicate wallet import
+        const {key: _key, wallets} = findMatchedKeyAndUpdate(
+          data.wallets,
+          data.key,
+          Object.values(WALLET.keys),
+          opts,
+        );
 
-      // To clear encrypt password
-      if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
-        dispatch(deleteKey({keyId: opts.keyId}));
+        // To clear encrypt password
+        if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
+          dispatch(deleteKey({keyId: opts.keyId}));
+        }
+
+        const key = buildKeyObj({
+          key: _key,
+          wallets: wallets.map(wallet => {
+            // subscribe new wallet to push notifications
+            if (notificationsAccepted) {
+              dispatch(subscribePushNotifications(wallet, brazeEid!));
+            }
+            // subscribe new wallet to email notifications
+            if (
+              emailNotifications &&
+              emailNotifications.accepted &&
+              emailNotifications.email
+            ) {
+              const prefs = {
+                email: emailNotifications.email,
+                language: defaultLanguage,
+                unit: 'btc', // deprecated
+              };
+              dispatch(subscribeEmailNotifications(wallet, prefs));
+            }
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                wallet.credentials.coin,
+                wallet.credentials.chain,
+              ),
+            );
+            return merge(
+              wallet,
+              buildWalletObj(
+                {...wallet.credentials, currencyAbbreviation, currencyName},
+                tokenOpts,
+              ),
+            );
+          }),
+          backupComplete: true,
+        });
+
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        resolve(key);
+      } catch (e) {
+        dispatch(failedImport());
+        reject(e);
       }
-
-      const key = buildKeyObj({
-        key: _key,
-        wallets: wallets.map(wallet => {
-          // subscribe new wallet to push notifications
-          if (notificationsAccepted) {
-            dispatch(subscribePushNotifications(wallet, brazeEid!));
-          }
-          // subscribe new wallet to email notifications
-          if (
-            emailNotifications &&
-            emailNotifications.accepted &&
-            emailNotifications.email
-          ) {
-            const prefs = {
-              email: emailNotifications.email,
-              language: defaultLanguage,
-              unit: 'btc', // deprecated
-            };
-            dispatch(subscribeEmailNotifications(wallet, prefs));
-          }
-          const {currencyAbbreviation, currencyName} = dispatch(
-            mapAbbreviationAndName(
-              wallet.credentials.coin,
-              wallet.credentials.chain,
-            ),
-          );
-          return merge(
-            wallet,
-            buildWalletObj(
-              {...wallet.credentials, currencyAbbreviation, currencyName},
-              tokenOpts,
-            ),
-          );
-        }),
-        backupComplete: true,
-      });
-
-      dispatch(
-        successImport({
-          key,
-        }),
-      );
-
-      await dispatch(startGetRates({force: true})); // Force getRates function to get rates for new tokens if exists
-      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      await sleep(1000);
-      dispatch(updatePortfolioBalance());
-      dispatch(clearDeferredImport());
-      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
-
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(600);
-      dispatch(
-        Analytics.track('Imported Key', {
-          context: context || '',
-          source: 'RecoveryPhrase',
-        }),
-      );
-
-      dispatch(
-        showBottomNotificationModal({
-          type: 'success',
-          title: t('Key imported'),
-          message: 'Your key has successfully been imported.',
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('GOT IT'),
-              action: () => {
-                const {WALLET: _WALLET} = getState();
-
-                backupRedirect({
-                  context: _WALLET.walletTermsAccepted
-                    ? 'deferredImport'
-                    : context,
-                  navigation: navigationRef,
-                  walletTermsAccepted: _WALLET.walletTermsAccepted,
-                  key,
-                });
-              },
-              primary: true,
-            },
-          ],
-        }),
-      );
-    } catch (e) {
-      dispatch(onFailedDeferredImport(e));
-    }
+    });
   };
 
 export const startImportFile =
@@ -1362,49 +1244,39 @@ const createKeyAndCredentialsWithFile = async (
   return Promise.resolve({wallet: bwcClient, key});
 };
 
-export const serverAssistedImport =
-  (opts: Partial<KeyOptions>, context?: string): Effect =>
-  (dispatch): Promise<{key: KeyMethods; wallets: Wallet[]}> => {
-    return new Promise((resolve, reject) => {
-      try {
-        BwcProvider.API.serverAssistedImport(
-          opts,
-          {baseUrl: 'https://bws.bitpay.com/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
-          // @ts-ignore
-          async (err, key, wallets) => {
-            if (err) {
-              return reject(err);
+export const serverAssistedImport = async (
+  opts: Partial<KeyOptions>,
+): Promise<{key: KeyMethods; wallets: Wallet[]}> => {
+  return new Promise((resolve, reject) => {
+    try {
+      BwcProvider.API.serverAssistedImport(
+        opts,
+        {baseUrl: 'https://bws.bitpay.com/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
+        // @ts-ignore
+        async (err, key, wallets) => {
+          if (err) {
+            return reject(err);
+          }
+          if (wallets.length === 0) {
+            return reject(new Error('WALLET_DOES_NOT_EXIST'));
+          } else {
+            const tokens: Wallet[] = wallets.filter(
+              (wallet: Wallet) => !!wallet.credentials.token,
+            );
+
+            if (tokens && !!tokens.length) {
+              wallets = linkTokenToWallet(tokens, wallets);
             }
-            if (wallets.length === 0) {
-              return reject(new Error('WALLET_DOES_NOT_EXIST'));
-            } else {
-              // TODO CUSTOM TOKENS
-              const tokens: Wallet[] = wallets.filter(
-                (wallet: Wallet) => !!wallet.credentials.token,
-              );
 
-              if (tokens && !!tokens.length) {
-                wallets = linkTokenToWallet(tokens, wallets);
-              }
-
-              if (context) {
-                dispatch(
-                  onSuccessServerAssistedImport({key, wallets}, opts, context),
-                );
-              }
-              return resolve({key, wallets});
-            }
-          },
-        );
-      } catch (err) {
-        if (context) {
-          dispatch(onFailedDeferredImport(err));
-        }
-        return reject(err);
-      }
-    });
-  };
-
+            return resolve({key, wallets});
+          }
+        },
+      );
+    } catch (err) {
+      return reject(err);
+    }
+  });
+};
 const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
   tokens.forEach(token => {
     // find the associated wallet to add tokens too
