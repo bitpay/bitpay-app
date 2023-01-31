@@ -18,7 +18,10 @@ import {
 } from '../../../store/wallet/wallet.actions';
 import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
-import {setHomeCarouselConfig} from '../../../store/app/app.actions';
+import {
+  setExpectedKeyLengthChange,
+  setHomeCarouselConfig,
+} from '../../../store/app/app.actions';
 import {
   unSubscribeEmailNotifications,
   unSubscribePushNotifications,
@@ -86,7 +89,12 @@ const DeleteKey = () => {
       });
 
     await sleep(300);
+    const previousKeysLength = Object.keys(keys).length;
+    const numNewKeys = Object.keys(keys).length - 1;
+    const expectedLengthChange = previousKeysLength - numNewKeys;
     dispatch(deleteKey({keyId}));
+    dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+
     dispatch(
       setHomeCarouselConfig(
         homeCarouselConfig.filter(item => item.id !== keyId),

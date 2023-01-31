@@ -74,6 +74,7 @@ export enum AppActionTypes {
   CLEAR_ON_COMPLETE_ONBOARDING_LIST = 'APP/CLEAR_ON_COMPLETE_ONBOARDING_LIST',
   SET_HAS_VIEWED_ZENLEDGER_WARNING = 'APP/SET_HAS_VIEWED_ZENLEDGER_WARNING',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
+  EXPECTED_KEY_LENGTH_CHANGE = 'APP/EXPECTED_KEY_LENGTH_CHANGE',
 }
 
 interface NetworkChanged {
@@ -341,6 +342,11 @@ interface setUserFeedback {
   payload: FeedbackType;
 }
 
+interface setExpectedKeyLengthChange {
+  type: typeof AppActionTypes.EXPECTED_KEY_LENGTH_CHANGE;
+  payload: number;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -398,4 +404,5 @@ export type AppActionType =
   | checkingBiometricForSending
   | updateOnCompleteOnboarding
   | clearOnCompleteOnboardingList
-  | SetHasViewedZenLedgerWarning;
+  | SetHasViewedZenLedgerWarning
+  | setExpectedKeyLengthChange;

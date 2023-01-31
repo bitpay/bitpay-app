@@ -14,6 +14,7 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
+import {setExpectedKeyLengthChange} from '../../../app/app.actions';
 
 const BWC = BwcProvider.getInstance();
 
@@ -29,6 +30,7 @@ export const startJoinMultisig =
             brazeEid,
             defaultLanguage,
           },
+          WALLET: {keys},
         } = getState();
         const walletData = BWC.parseSecret(opts.invitationCode as string);
         opts.networkName = walletData.network;
@@ -81,12 +83,15 @@ export const startJoinMultisig =
         ) as Wallet;
 
         const key = buildKeyObj({key: _key, wallets: [wallet]});
-
+        const previousKeysLength = Object.keys(keys).length;
+        const numNewKeys = Object.keys(keys).length + 1;
+        const expectedLengthChange = previousKeysLength - numNewKeys;
         dispatch(
           successCreateKey({
             key,
           }),
         );
+        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
 
         resolve(key);
       } catch (err) {

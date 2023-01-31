@@ -112,6 +112,7 @@ import ZenLedgerStack, {
   ZenLedgerStackParamsList,
 } from './navigation/zenledger/ZenLedgerStack';
 import {WalletBackupActions} from './store/wallet-backup';
+import {successCreateKey} from './store/wallet/wallet.actions';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -247,6 +248,10 @@ export default () => {
   );
 
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const backupKeys = useAppSelector(({WALLET_BACKUP}) => WALLET_BACKUP.keys);
+  const expectedKeyLengthChange = useAppSelector(
+    ({APP}) => APP.expectedKeyLengthChange,
+  );
   const [previousKeysLength, setPreviousKeysLength] = useState(
     Object.keys(keys).length,
   );
@@ -317,14 +322,21 @@ export default () => {
     }
   }, [appLanguage]);
 
+  // this will not be useful for errors in the key or wallet transform process
   useEffect(() => {
     const numNewKeys = Object.keys(keys).length;
     const keyLengthChange = previousKeysLength - numNewKeys;
-    if (keyLengthChange === 0) {
+    setPreviousKeysLength(numNewKeys);
+    dispatch(AppActions.setExpectedKeyLengthChange(0));
+
+    // keys length changed as expected
+    if (expectedKeyLengthChange === keyLengthChange) {
+      const newKeyBackup = {...keys};
+      dispatch(WalletBackupActions.successBackupUpWalletKeys(newKeyBackup));
       return;
     }
-    setPreviousKeysLength(numNewKeys);
-    if (keyLengthChange > 1) {
+    // one or more keys were deleted unexpectedly
+    if (keyLengthChange >= 1) {
       dispatch(
         LogActions.persistLog(
           LogActions.warn(
@@ -332,10 +344,23 @@ export default () => {
           ),
         ),
       );
+
+      // find missing keys in the backup
+      const missingKeys: string[] = Object.keys(backupKeys).filter(
+        backupKeyId => !keys[backupKeyId],
+      );
+
+      // use backup keys to recover the missing keys
+      missingKeys.forEach((missingKey: string) => {
+        dispatch(
+          successCreateKey({
+            key: backupKeys[missingKey],
+          }),
+        );
+      });
       return;
     }
-    dispatch(WalletBackupActions.successBackupUpWalletKeys(keys));
-  }, [dispatch, keys, previousKeysLength]);
+  }, [dispatch, keys, previousKeysLength, expectedKeyLengthChange]);
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
