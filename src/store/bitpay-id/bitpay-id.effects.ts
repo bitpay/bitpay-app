@@ -118,8 +118,11 @@ export const startCreateAccount =
         hashedPassword: hashedPassword,
         salt: salt,
         agreedToTOSandPP: params.agreedToTOSandPP,
+        optInEmailMarketing: params.agreedToMarketingCommunications,
+        attribute: params.agreedToMarketingCommunications
+          ? 'App Signup'
+          : undefined,
         gCaptchaResponse: params.gCaptchaResponse,
-        attribute: 'App Signup',
       });
 
       // refresh session
