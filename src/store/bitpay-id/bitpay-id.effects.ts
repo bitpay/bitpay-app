@@ -57,7 +57,6 @@ export const startBitPayIdStoreInit =
         }
       }
 
-      dispatch(AppActions.setBrazeEid(eid));
       dispatch(
         Analytics.identify(eid, {
           email,

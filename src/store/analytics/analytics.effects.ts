@@ -1,12 +1,11 @@
 import {JsonMap, UserTraits} from '@segment/analytics-react-native';
-import Braze from 'react-native-appboy-sdk';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {Effect} from '..';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import Segment from '../../lib/segment';
 import {LogActions} from '../log';
 
-const getTrackingAuthorizedByUser = (): Promise<boolean> => {
+const getTrackingAuthorizedByUser = async (): Promise<boolean> => {
   return requestTrackingPermission().then(status => {
     return ['authorized', 'unavailable'].includes(status);
   });
@@ -98,13 +97,7 @@ export const Analytics = (() => {
       () => {
         guard(async () => {
           const isAuthorizedByUser = await getTrackingAuthorizedByUser();
-
-          if (!isAuthorizedByUser) {
-            if (user) {
-              // If not authorized, do not pass any user traits.
-              Braze.changeUser(user);
-            }
-          } else {
+          if (isAuthorizedByUser) {
             Segment.identify(user, traits);
             onComplete?.();
           }
