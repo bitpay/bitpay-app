@@ -7,12 +7,10 @@ import {
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import ZenLedgerImport from './screens/ZenLedgerImport';
-import ZenLedgerIntro, {
-  ZenLedgerIntroParamList,
-} from './screens/ZenLedgerIntro';
+import ZenLedgerIntro from './screens/ZenLedgerIntro';
 
 export type ZenLedgerStackParamsList = {
-  Root: ZenLedgerIntroParamList | undefined;
+  Root: undefined;
   ZenLedgerImport: undefined;
 };
 
@@ -35,9 +33,6 @@ const ZenLedgerStack = () => {
       <ZenLedger.Screen
         name={ZenLedgerScreens.Root}
         component={ZenLedgerIntro}
-        options={{
-          headerTitle: () => <HeaderTitle>{t('ZenLedger')}</HeaderTitle>,
-        }}
       />
       <ZenLedger.Screen
         name={ZenLedgerScreens.ZENLEDGER_IMPORT}
