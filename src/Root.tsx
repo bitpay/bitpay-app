@@ -103,14 +103,14 @@ import CardActivationStack, {
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
-import {
-  handleBwsEvent,
-  shortcutListener,
-} from './store/app/app.effects';
+import {handleBwsEvent, shortcutListener} from './store/app/app.effects';
 import NotificationsSettingsStack, {
   NotificationsSettingsStackParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
+import ZenLedgerStack, {
+  ZenLedgerStackParamsList,
+} from './navigation/zenledger/ZenLedgerStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -136,6 +136,7 @@ export type RootStackParamList = {
   WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
   Debug: DebugScreenParamList;
   NotificationsSettings: NavigatorScreenParams<NotificationsSettingsStackParamsList>;
+  ZenLedger: NavigatorScreenParams<ZenLedgerStackParamsList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -162,6 +163,7 @@ export enum RootStacks {
   WALLET_CONNECT = 'WalletConnect',
   DEBUG = 'Debug',
   NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
+  ZENLEDGER = 'ZenLedger',
 }
 
 // ROOT NAVIGATION CONFIG
@@ -182,7 +184,8 @@ export type NavScreenParams = NavigatorScreenParams<
     SwapCryptoStackParamList &
     ScanStackParamList &
     WalletConnectStackParamList &
-    NotificationsSettingsStackParamsList
+    NotificationsSettingsStackParamsList &
+    ZenLedgerStackParamsList
 >;
 
 declare global {
@@ -560,6 +563,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.WALLET_CONNECT}
               component={WalletConnectStack}
+            />
+            <Root.Screen
+              name={RootStacks.ZENLEDGER}
+              component={ZenLedgerStack}
             />
           </Root.Navigator>
           <OnGoingProcessModal />
