@@ -34,8 +34,9 @@ import {Network} from '../../../constants';
 import ZenLedgerWalletSelector from '../components/ZenLedgerWalletSelector';
 import {
   ZenLedgerRequestWalletsType,
-  ZenLedgerWallet,
+  ZenLedgerWalletObj,
 } from '../../../store/zenledger/zenledger.models';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 const ZenLedgerImportContainer = styled.View`
   flex: 1;
@@ -61,25 +62,11 @@ const ZenLedgerImport: React.FC = () => {
 
   const setFormattedKeys = () => {
     return _allKeys.map((key, index) => {
-      const formattedWallet = key.wallets
-        .filter(
-          ({balance, network}) => balance.sat && network === Network.mainnet,
-        )
+      const formattedWallet: ZenLedgerWalletObj[] = key.wallets
+        .filter(({network}) => network === Network.mainnet)
         .map(wallet => {
-          const {
-            currencyName,
-            currencyAbbreviation,
-            chain,
-            walletName,
-            img,
-            badgeImg,
-            hideBalance,
-            network,
-            balance,
-            hideWallet,
-            receiveAddress,
-            id,
-          } = wallet;
+          const {currencyAbbreviation, chain, network, balance, hideWallet} =
+            wallet;
 
           const fiatBalance = formatFiatAmount(
             convertToFiat(
@@ -98,17 +85,9 @@ const ZenLedgerImport: React.FC = () => {
             defaultAltCurrency.isoCode,
           );
           return {
-            id,
-            walletName,
-            currencyName,
-            receiveAddress,
-            hideWallet,
-            hideBalance,
-            fiatBalance,
-            img,
-            badgeImg,
+            wallet,
             checked: false,
-            chain,
+            fiatBalance,
           };
         });
 
@@ -123,20 +102,30 @@ const ZenLedgerImport: React.FC = () => {
   };
   const [allKeys, setAllkeys] = useState(setFormattedKeys());
 
-  const getRequestWallets = () => {
+  const getRequestWallets = async () => {
     let requestWallets: ZenLedgerRequestWalletsType[] = [];
-    allKeys.forEach(key => {
-      key.wallets.forEach(wallet => {
-        const {checked, receiveAddress, walletName = '', chain} = wallet;
-        if (checked && receiveAddress) {
-          requestWallets.push({
-            address: receiveAddress,
-            blockchain: chain,
-            display_name: walletName,
-          });
-        }
-      });
-    });
+    const selectedWallets = Object.values(allKeys)
+      .flatMap(key => key.wallets)
+      .filter(wallet => wallet.checked);
+
+    for await (const selectedWallet of selectedWallets) {
+      let {checked, wallet} = selectedWallet;
+      let {receiveAddress, walletName = '', chain} = wallet;
+
+      if (checked && !receiveAddress) {
+        receiveAddress = await dispatch(
+          createWalletAddress({wallet, newAddress: false}),
+        );
+      }
+
+      if (checked && receiveAddress) {
+        requestWallets.push({
+          address: receiveAddress,
+          blockchain: chain,
+          display_name: walletName,
+        });
+      }
+    }
     return requestWallets;
   };
 
@@ -160,15 +149,15 @@ const ZenLedgerImport: React.FC = () => {
       </View>
       <ZenLedgerWalletSelector
         keys={allKeys}
-        onPress={(keyId: string, wallet?: ZenLedgerWallet) => {
+        onPress={(keyId: string, walletObj?: ZenLedgerWalletObj) => {
           haptic('impactLight');
-          if (!wallet) {
+          if (!walletObj) {
             setAllkeys(prev => {
               prev &&
                 prev.forEach(k => {
                   if (k && k.keyId === keyId) {
                     k.checked = !k.checked;
-                    k.wallets?.forEach((w: ZenLedgerWallet) => {
+                    k.wallets?.forEach((w: ZenLedgerWalletObj) => {
                       w.checked = k.checked;
                       return w;
                     });
@@ -182,8 +171,8 @@ const ZenLedgerImport: React.FC = () => {
                 prev.forEach(k => {
                   if (k && k.keyId === keyId) {
                     const {wallets} = k;
-                    wallets.forEach((w: ZenLedgerWallet) => {
-                      if (w.id === wallet.id) {
+                    wallets.forEach((w: ZenLedgerWalletObj) => {
+                      if (w.wallet.id === walletObj.wallet.id) {
                         w.checked = !w.checked;
                       }
                       return w;
@@ -214,8 +203,9 @@ const ZenLedgerImport: React.FC = () => {
             try {
               haptic('impactLight');
               dispatch(startOnGoingProcessModal('LOADING'));
+              const requestWallets = await getRequestWallets();
               const {url} = (await dispatch<any>(
-                getZenLedgerUrl(getRequestWallets()),
+                getZenLedgerUrl(requestWallets),
               )) as any;
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);

@@ -16,7 +16,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {
   ZenLedgerKey,
-  ZenLedgerWallet,
+  ZenLedgerWalletObj,
 } from '../../../store/zenledger/zenledger.models';
 
 interface KeyWalletsRowContainerProps {
@@ -87,7 +87,7 @@ const KeyBox = ({keyId, onPress, checked}: Props) => {
 
 interface ZenLedgerKeyWalletProps {
   keys: ZenLedgerKey[];
-  onPress: (keyId: string, wallet?: ZenLedgerWallet) => void;
+  onPress: (keyId: string, wallet?: ZenLedgerWalletObj) => void;
   onDropdownPress: (keyId: string) => void;
 }
 
@@ -151,7 +151,7 @@ const ZenLedgerKeyWalletsRow = ({
                     item,
                     index,
                   }: {
-                    item: ZenLedgerWallet;
+                    item: ZenLedgerWalletObj;
                     index: number;
                   }) => {
                     const isLast = index === wallets.length - 1;

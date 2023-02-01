@@ -13,10 +13,10 @@ import {
 } from '../../../store/app/app.actions';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import ZenLedgerLogo from '../../../../assets/img/zenledger/zenledger-logo.svg';
 import LinkIcon from '../../../../assets/img/zenledger/link.svg';
 import LinearGradient from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
+import ZenLedgerLogo from '../components/ZenLedgerLogo';
 
 const ZenLedgerIntroContainer = styled.View`
   border-radius: 10px;

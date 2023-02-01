@@ -8,7 +8,7 @@ import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {
   ZenLedgerKey,
-  ZenLedgerWallet,
+  ZenLedgerWalletObj,
 } from '../../../store/zenledger/zenledger.models';
 
 export const ZenLedgerKeyRowContainer = styled.View`
@@ -21,7 +21,7 @@ export default ({
   onDropdownPress,
 }: {
   keys: ZenLedgerKey[];
-  onPress: (keyId: string, wallet?: ZenLedgerWallet) => void;
+  onPress: (keyId: string, wallet?: ZenLedgerWalletObj) => void;
   onDropdownPress: (keyId: string) => void;
 }) => {
   const {t} = useTranslation();

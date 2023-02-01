@@ -1,4 +1,4 @@
-import {ReactElement} from 'react';
+import {Wallet} from '../wallet/wallet.models';
 
 export type ZenLedgerRequestWalletsType = {
   address: string;
@@ -11,18 +11,11 @@ export type ZenLedgerKey = {
   keyId: string;
   checked: boolean;
   showWallets: boolean;
-  wallets: ZenLedgerWallet[];
+  wallets: ZenLedgerWalletObj[];
 };
 
-export type ZenLedgerWallet = {
-  id: string;
-  walletName: string | undefined;
-  currencyName: string;
-  receiveAddress: string | undefined;
-  hideWallet: boolean | undefined;
-  hideBalance: boolean | undefined;
+export type ZenLedgerWalletObj = {
+  wallet: Wallet;
   fiatBalance: string;
-  img: string | ((props?: any) => ReactElement);
-  badgeImg: string | ((props?: any) => ReactElement) | undefined;
   checked: boolean;
 };

@@ -9,7 +9,7 @@ import {
   RowContainer,
 } from '../../../components/styled/Containers';
 import {H5, ListItemSubText} from '../../../components/styled/Text';
-import {ZenLedgerWallet} from '../../../store/zenledger/zenledger.models';
+import {ZenLedgerWalletObj} from '../../../store/zenledger/zenledger.models';
 import {formatCryptoAddress} from '../../../utils/helper-methods';
 import {PillContainer, PillText} from '../../wallet/components/SendToPill';
 import {SendToPillContainer} from '../../wallet/screens/send/confirm/Shared';
@@ -28,8 +28,8 @@ const CheckBoxContainer = styled.View`
 `;
 
 interface WalletBoxProps {
-  onPress: (keyId: string, wallet: ZenLedgerWallet) => void;
-  wallet: ZenLedgerWallet;
+  onPress: (keyId: string, wallet: ZenLedgerWalletObj) => void;
+  wallet: ZenLedgerWalletObj;
   isSelected: boolean;
   keyId: string;
 }
@@ -48,28 +48,22 @@ const WalletBox = ({keyId, wallet, onPress}: WalletBoxProps) => {
 
 interface Props {
   keyId: string;
-  wallet: ZenLedgerWallet;
+  wallet: ZenLedgerWalletObj;
   isLast?: boolean;
-  onPress: (keyId: string, wallet: ZenLedgerWallet) => void;
+  onPress: (keyId: string, wallet: ZenLedgerWalletObj) => void;
   selectAll: boolean;
 }
 
 const ZenLedgerWalletRow = ({
   keyId,
-  wallet,
+  wallet: _wallet,
   onPress,
   isLast,
   selectAll,
 }: Props) => {
-  const {
-    img,
-    badgeImg,
-    walletName,
-    currencyName,
-    hideBalance,
-    fiatBalance,
-    receiveAddress,
-  } = wallet;
+  const {wallet, fiatBalance} = _wallet;
+  const {img, badgeImg, walletName, currencyName, hideBalance, receiveAddress} =
+    wallet;
   return (
     <RowContainer
       isLast={isLast}
@@ -80,7 +74,7 @@ const ZenLedgerWalletRow = ({
       }}>
       <WalletBox
         keyId={keyId}
-        wallet={wallet}
+        wallet={_wallet}
         onPress={onPress}
         isSelected={selectAll}
       />

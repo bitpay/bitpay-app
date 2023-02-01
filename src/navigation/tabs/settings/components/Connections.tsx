@@ -130,7 +130,6 @@ const Connections: React.VFC<ConnectionsProps> = props => {
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>
-
     </SettingsComponent>
   );
 };
