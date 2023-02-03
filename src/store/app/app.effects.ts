@@ -266,7 +266,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     // Reset Push Notifications
-    dispatch(resetPushNotifications());
+    dispatch(resetBrazeEid());
 
     dispatch(LogActions.error('Failed to initialize app: ' + errorStr));
     await sleep(500);
@@ -1229,16 +1229,8 @@ export const shortcutListener =
     }
   };
 
-export const resetPushNotifications =
-  (): Effect<void> => (dispatch, getState) => {
-    const {APP} = getState();
-    const brazeEid = uuid.v4().toString();
-    dispatch(setBrazeEid(brazeEid));
-    Braze.changeUser(brazeEid);
-    if (APP.notificationsAccepted) {
-      // Re-subscribe if Accepted
-      dispatch(setNotifications(true));
-      dispatch(setConfirmTxNotifications(true));
-      dispatch(setAnnouncementsNotifications(true));
-    }
-  };
+export const resetBrazeEid = (): Effect<void> => dispatch => {
+  const brazeEid = uuid.v4().toString();
+  dispatch(setBrazeEid(brazeEid));
+  Braze.changeUser(brazeEid);
+};

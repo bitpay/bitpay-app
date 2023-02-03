@@ -13,7 +13,6 @@ import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
-import Button from '../../../../../components/button/Button';
 
 const SettingRow = styled(View)`
   flex-grow: 1;
@@ -26,10 +25,6 @@ const SettingRowContainer = styled.TouchableOpacity`
   align-items: center;
   flex-direction: row;
   min-height: 58px;
-`;
-
-const VerticalSpace = styled.View`
-  margin: 25px 0;
 `;
 
 const PushNotifications = () => {
@@ -60,6 +55,9 @@ const PushNotifications = () => {
         DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
           accepted,
         });
+        if (!accepted) {
+          dispatch(AppEffects.resetBrazeEid());
+        }
       },
     },
     {
@@ -94,10 +92,6 @@ const PushNotifications = () => {
     },
   ];
 
-  const resetPushNotifications = () => {
-    dispatch(AppEffects.resetPushNotifications());
-  };
-
   return (
     <SettingsContainer>
       <Settings>
@@ -118,16 +112,6 @@ const PushNotifications = () => {
             <Hr />
           </View>
         ))}
-        {pushNotifications ? (
-          <VerticalSpace>
-            <Button
-              buttonType={'link'}
-              buttonStyle={'danger'}
-              onPress={resetPushNotifications}>
-              {t('Reset Push Notifications')}
-            </Button>
-          </VerticalSpace>
-        ) : null}
       </Settings>
     </SettingsContainer>
   );

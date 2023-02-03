@@ -103,10 +103,7 @@ import CardActivationStack, {
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
-import {
-  handleBwsEvent,
-  shortcutListener,
-} from './store/app/app.effects';
+import {handleBwsEvent, shortcutListener} from './store/app/app.effects';
 import NotificationsSettingsStack, {
   NotificationsSettingsStackParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
@@ -373,10 +370,6 @@ export default () => {
   // Silent Push Notifications
   useEffect(() => {
     function onMessageReceived(response: SilentPushEvent) {
-      console.log(
-        '##### Received Silent Push Notification',
-        JSON.stringify(response),
-      );
       dispatch(handleBwsEvent(response));
     }
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
