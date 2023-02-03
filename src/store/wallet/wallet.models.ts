@@ -100,6 +100,7 @@ export interface WalletObj {
   walletName?: string;
   preferences?: {
     tokenAddresses?: [];
+    maticTokenAddresses?: [];
   };
   img: string | ((props?: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
