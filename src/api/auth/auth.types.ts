@@ -6,7 +6,8 @@ export interface RegisterParams {
   email: string;
   agreedToTOSandPP: boolean;
   gCaptchaResponse?: string;
-  attribute: 'App Signup';
+  optInEmailMarketing?: boolean;
+  attribute: 'App Signup' | undefined;
 }
 
 export interface RegisterResponse {
