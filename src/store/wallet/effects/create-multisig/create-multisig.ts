@@ -15,6 +15,7 @@ import {
 } from '../../../app/app.effects';
 import {LogActions} from '../../../log';
 import {setExpectedKeyLengthChange} from '../../../app/app.actions';
+import {batch} from 'react-redux';
 
 const BWC = BwcProvider.getInstance();
 
@@ -78,13 +79,14 @@ export const startCreateKeyMultisig =
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
         const expectedLengthChange = previousKeysLength - numNewKeys;
-        dispatch(
-          successCreateKey({
-            key,
-          }),
-        );
-        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-
+        batch(() => {
+          dispatch(
+            successCreateKey({
+              key,
+            }),
+          );
+          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+        });
         resolve(key);
       } catch (err) {
         const errorStr =

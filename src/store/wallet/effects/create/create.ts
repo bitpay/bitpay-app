@@ -33,6 +33,7 @@ import {
 import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
+import {batch} from 'react-redux';
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -88,13 +89,14 @@ export const startCreateKey =
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
         const expectedLengthChange = previousKeysLength - numNewKeys;
-        dispatch(
-          successCreateKey({
-            key,
-          }),
-        );
-        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-
+        batch(() => {
+          dispatch(
+            successCreateKey({
+              key,
+            }),
+          );
+          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+        });
         resolve(key);
       } catch (err) {
         const errstring =
@@ -524,13 +526,14 @@ export const startCreateKeyWithOpts =
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
         const expectedLengthChange = previousKeysLength - numNewKeys;
-        dispatch(
-          successCreateKey({
-            key,
-          }),
-        );
-        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-
+        batch(() => {
+          dispatch(
+            successCreateKey({
+              key,
+            }),
+          );
+          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+        });
         resolve(key);
       } catch (err) {
         const errstring =
