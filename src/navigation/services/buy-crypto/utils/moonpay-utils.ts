@@ -48,23 +48,43 @@ export const moonpaySupportedFiatCurrencies = [
   'ZAR',
 ];
 
-export const moonpaySupportedCoins = ['bch', 'btc', 'eth', 'ltc', 'xrp'];
+export const moonpaySupportedCoins = [
+  'btc',
+  'bch',
+  'eth',
+  'ltc',
+  'doge',
+  'matic', // matic_polygon in Moonpay
+];
+
+export const nonUSMoonpaySupportedCoins = ['xrp'];
 
 export const moonpaySupportedErc20Tokens = [
   'bat',
-  'chz',
   'dai',
-  'mana',
+  'orn',
+  'shib',
   'tusd',
   'usdc',
   'usdt',
   'zrx',
 ];
 
+export const nonUSMoonpaySupportedErc20Tokens = [
+  'aave',
+  'ape',
+  'mana',
+  'matic',
+  'sand',
+  'uni',
+  'wbtc',
+  'weth',
+];
+
 export const moonpaySupportedMaticTokens = [];
 
-export const getMoonpaySupportedCurrencies = (): string[] => {
-  const moonpaySupportedCurrencies = moonpaySupportedCoins
+export const getMoonpaySupportedCurrencies = (country?: string): string[] => {
+  let moonpaySupportedCurrencies = moonpaySupportedCoins
     .concat(
       moonpaySupportedErc20Tokens.map(ethToken => {
         return getCurrencyAbbreviation(ethToken, 'eth');
@@ -75,7 +95,30 @@ export const getMoonpaySupportedCurrencies = (): string[] => {
         return getCurrencyAbbreviation(maticToken, 'matic');
       }),
     );
+
+  if (country !== 'US') {
+    moonpaySupportedCurrencies = moonpaySupportedCurrencies.concat(
+      nonUSMoonpaySupportedCoins,
+    );
+    moonpaySupportedCurrencies = moonpaySupportedCurrencies.concat(
+      nonUSMoonpaySupportedErc20Tokens.map(ethToken => {
+        return getCurrencyAbbreviation(ethToken, 'eth');
+      }),
+    );
+  }
+
   return moonpaySupportedCurrencies;
+};
+
+export const getMoonpayFixedCurrencyAbbreviation = (
+  currency: string,
+  chain: string,
+): string => {
+  if (currency === 'matic' && chain === 'matic') {
+    return 'matic_polygon';
+  } else {
+    return currency;
+  }
 };
 
 export const getMoonpayFiatAmountLimits = () => {

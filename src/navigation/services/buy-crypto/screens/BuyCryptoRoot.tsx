@@ -122,7 +122,7 @@ const BuyCryptoRoot: React.VFC<
   );
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
     ...new Set([
-      ...getMoonpaySupportedCurrencies(),
+      ...getMoonpaySupportedCurrencies(countryData?.shortCode || 'US'),
       ...getSimplexSupportedCurrencies(),
       ...getWyreSupportedCurrencies(),
     ]),
@@ -389,6 +389,7 @@ const BuyCryptoRoot: React.VFC<
           selectedWallet.currencyAbbreviation,
           selectedWallet.chain,
           fiatCurrency,
+          countryData?.shortCode || 'US',
         ) ||
           isPaymentMethodSupported(
             'simplex',
@@ -430,6 +431,7 @@ const BuyCryptoRoot: React.VFC<
         selectedWallet.currencyAbbreviation,
         selectedWallet.chain,
         fiatCurrency,
+        countryData?.shortCode || 'US',
       ) ||
       isPaymentMethodSupported(
         'simplex',
