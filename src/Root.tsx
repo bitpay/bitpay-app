@@ -335,13 +335,10 @@ export default () => {
       dispatch(WalletBackupActions.successBackupUpWalletKeys(newKeyBackup));
       return;
     }
-    // one or more keys were deleted unexpectedly
     if (keyLengthChange >= 1) {
       dispatch(
         LogActions.persistLog(
-          LogActions.warn(
-            'More than 1 key was just removed at once indicating potential corruption so not updating the backup key store',
-          ),
+          LogActions.warn('one or more keys were deleted unexpectedly'),
         ),
       );
 
