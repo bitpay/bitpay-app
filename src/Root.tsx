@@ -113,6 +113,7 @@ import ZenLedgerStack, {
 } from './navigation/zenledger/ZenLedgerStack';
 import {WalletBackupActions} from './store/wallet-backup';
 import {successCreateKey} from './store/wallet/wallet.actions';
+import {bootstrapKey, bootstrapWallets} from './store/transforms/transforms';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -253,7 +254,7 @@ export default () => {
     ({APP}) => APP.expectedKeyLengthChange,
   );
   const [previousKeysLength, setPreviousKeysLength] = useState(
-    Object.keys(keys).length,
+    Object.keys(backupKeys).length,
   );
 
   const debouncedOnStateChange = useMemo(
@@ -322,7 +323,6 @@ export default () => {
     }
   }, [appLanguage]);
 
-  // this will not be useful for errors in the key or wallet transform process
   useEffect(() => {
     const numNewKeys = Object.keys(keys).length;
     const keyLengthChange = previousKeysLength - numNewKeys;
@@ -349,11 +349,35 @@ export default () => {
 
       // use backup keys to recover the missing keys
       missingKeys.forEach((missingKey: string) => {
-        dispatch(
-          successCreateKey({
-            key: backupKeys[missingKey],
-          }),
-        );
+        try {
+          // @ts-ignore
+          backupKeys[missingKey] = bootstrapKey(
+            backupKeys[missingKey],
+            missingKey,
+            log => dispatch(log),
+          );
+          if (!backupKeys[missingKey]) {
+            throw new Error('bootstrapKey function failed');
+          }
+          // @ts-ignore
+          backupKeys[missingKey].wallets = bootstrapWallets(
+            backupKeys[missingKey].wallets,
+            log => dispatch(log),
+          );
+          dispatch(
+            successCreateKey({
+              key: backupKeys[missingKey],
+            }),
+          );
+        } catch (err) {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(
+            LogActions.persistLog(
+              LogActions.warn(`Something went wrong. Backup failed. ${errStr}`),
+            ),
+          );
+        }
       });
       return;
     }
