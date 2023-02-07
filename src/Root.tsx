@@ -7,7 +7,7 @@ import {
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import Braze from 'react-native-appboy-sdk';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   Appearance,
   AppState,
@@ -307,6 +307,19 @@ export default () => {
     });
   };
 
+  const debounceBoostrapAndSave = useMemo(
+    () =>
+      debounce((keys: Keys) => {
+        const newKeyBackup = {...keys};
+        const keyIds = Object.keys(newKeyBackup);
+        keyIds.forEach(keyId =>
+          bootstrapKeyAndWallets({keyId, keys: newKeyBackup}),
+        );
+        dispatch(WalletBackupActions.successBackupUpWalletKeys(newKeyBackup));
+      }, 1500),
+    [],
+  );
+
   const debouncedOnStateChange = useMemo(
     () =>
       debounce((state: NavigationState | undefined) => {
@@ -383,12 +396,7 @@ export default () => {
     // keys length changed as expected
     if (expectedKeyLengthChange === keyLengthChange) {
       try {
-        const newKeyBackup = {...keys};
-        const keyIds = Object.keys(newKeyBackup);
-        keyIds.forEach(keyId =>
-          bootstrapKeyAndWallets({keyId, keys: newKeyBackup}),
-        );
-        dispatch(WalletBackupActions.successBackupUpWalletKeys(newKeyBackup));
+        debounceBoostrapAndSave(keys);
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
