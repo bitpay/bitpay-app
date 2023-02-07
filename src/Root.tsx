@@ -276,6 +276,12 @@ export default () => {
   };
 
   const recoverKeys = ({backupKeys, keys}: {backupKeys: Keys; keys: Keys}) => {
+    if (Object.keys(backupKeys).length === 0) {
+      LogActions.persistLog(
+        LogActions.warn('No backup available for recovering keys.'),
+      );
+      return;
+    }
     // find missing keys in the backup
     const missingKeys: string[] = Object.keys(backupKeys).filter(
       backupKeyId => !keys[backupKeyId],
@@ -383,7 +389,6 @@ export default () => {
           bootstrapKeyAndWallets({keyId, keys: newKeyBackup}),
         );
         dispatch(WalletBackupActions.successBackupUpWalletKeys(newKeyBackup));
-        return;
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
