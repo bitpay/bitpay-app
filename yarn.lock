@@ -4498,10 +4498,10 @@ bitcore-mnemonic@^8.25.40:
     bitcore-lib "^8.25.40"
     unorm "^1.4.1"
 
-bitcore-wallet-client@8.25.44:
-  version "8.25.44"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-8.25.44.tgz#37fc0e0b5e456f76712e80247e11110c62e9e713"
-  integrity sha512-NY60FyNyWl9d9XBOSV9gWS7vfUL39PqwVBHCznLyLo1GYcTjZ2a/X+aZ91DBtzrfX+IxEQN6j84aEe9EvQfALQ==
+bitcore-wallet-client@8.25.45:
+  version "8.25.45"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-8.25.45.tgz#766f9d3a3a1e57949ac7318a84f4b5d4e3764de0"
+  integrity sha512-NsWJ239YQaYJK8LqoWOuMagiFXF9JstuBQkCNkQWbjPM5hcTHBplpQBSFtqb+vmWVrMtiGbi3mVSUfB4IQjE3A==
   dependencies:
     ajv "^6.10.0"
     async "^0.9.0"
@@ -11826,6 +11826,11 @@ react-native-haptic-feedback@1.13.0:
   resolved "https://registry.yarnpkg.com/react-native-haptic-feedback/-/react-native-haptic-feedback-1.13.0.tgz#e4974fc465a38548be262748e73098dc9dd3a0fb"
   integrity sha512-g8G5QURitDeC/zRlobDvUXLxKYfMlIM2HQNWJKbHPSu61qfs0djnK4s1NZuQzihkeAO0KJ4AS2XWvKBzUmlXtA==
 
+react-native-in-app-review@4.2.1:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/react-native-in-app-review/-/react-native-in-app-review-4.2.1.tgz#4bc763e0d33f8dae663c054e87832128cd4e6c63"
+  integrity sha512-Bny/ukRhkSSzlsbVpB3vsIuWYuOHBPlxguNwZ0TWK+7IQq8/vTRDf17y1P/4+jMIjBO0WNJCzBxHkXdnlhoTmQ==
+
 react-native-inappbrowser-reborn@3.7.0:
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/react-native-inappbrowser-reborn/-/react-native-inappbrowser-reborn-3.7.0.tgz#849a43c3c7da22b65147649fe596836bcb494083"
@@ -11917,6 +11922,11 @@ react-native-permissions@3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/react-native-permissions/-/react-native-permissions-3.2.0.tgz#2199a49e96bac633016955d36142032d747d0d3e"
   integrity sha512-UPXxf2twjYL9vPI4HP2kT15AOTY489MhsNuyAgp+wJM2IRkkSVW6rO3k4WuSRL9ZmPhwkWb9bYjf8EEwRzZcXg==
+
+react-native-print@0.10.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/react-native-print/-/react-native-print-0.10.0.tgz#803b28592c1605d2bdba80fc909fcdbced0d069f"
+  integrity sha512-jXFIeTLiQeC9rTduRjMGXWzGEaslx69U64tsw851+v2fbfNwn4SP53uEIhCCc0ly3VxGCFxseafrZjfuMyVXNg==
 
 react-native-progress@5.0.0:
   version "5.0.0"
