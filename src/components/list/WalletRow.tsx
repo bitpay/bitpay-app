@@ -17,7 +17,8 @@ import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {getProtocolName} from '../../utils/helper-methods';
 
 const BadgeContainer = styled.View`
-  margin-left: 5px;
+  margin-left: 3px;
+  margin-bottom: -2px;
 `;
 
 const BalanceColumn = styled(Column)`
@@ -123,10 +124,10 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
           <H5 ellipsizeMode="tail" numberOfLines={1}>
             {walletName || currencyName}
           </H5>
-          {buildTestBadge(network, chain, isToken)}
         </Row>
         <ListItemSubText>
           {currencyAbbreviation.toUpperCase()} {multisig ? multisig : null}
+          {buildTestBadge(network, chain, isToken)}
         </ListItemSubText>
       </CurrencyColumn>
       <BalanceColumn>
