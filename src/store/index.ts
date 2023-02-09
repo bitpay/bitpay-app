@@ -93,6 +93,7 @@ import {
   RateState,
 } from './rate/rate.reducer';
 import {RateActionType} from './rate/rate.types';
+import {LogActions} from './log';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -266,13 +267,15 @@ const getStore = () => {
   const rootPersistConfig = {
     ...basePersistConfig,
     key: 'root',
-    // override all stores as they will handle their own blacklisting of certain values
-    blacklist: Object.keys(reducers),
     transforms: [
       encryptTransform({
         secretKey: getUniqueId(),
-        onError: error => {
-          console.debug(error);
+        onError: err => {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          LogActions.persistLog(
+            LogActions.error(`Encrypt transform failed - ${errStr}`),
+          );
         },
       }),
     ],
