@@ -27,12 +27,13 @@ import {
 } from '../../../app/app.effects';
 import {
   dismissDecryptPasswordModal,
+  setExpectedKeyLengthChange,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
-
+import {batch} from 'react-redux';
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -68,6 +69,7 @@ export const startCreateKey =
       try {
         const state = getState();
         const network = state.APP.network;
+        const keys = state.WALLET.keys;
 
         const _key = BWC.createKey({
           seedType: 'new',
@@ -84,12 +86,17 @@ export const startCreateKey =
         );
 
         const key = buildKeyObj({key: _key, wallets});
-
-        dispatch(
-          successCreateKey({
-            key,
-          }),
-        );
+        const previousKeysLength = Object.keys(keys).length;
+        const numNewKeys = Object.keys(keys).length + 1;
+        const expectedLengthChange = previousKeysLength - numNewKeys;
+        batch(() => {
+          dispatch(
+            successCreateKey({
+              key,
+            }),
+          );
+          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+        });
         resolve(key);
       } catch (err) {
         const errstring =
@@ -464,6 +471,7 @@ export const startCreateKeyWithOpts =
             brazeEid,
             defaultLanguage,
           },
+          WALLET: {keys},
         } = getState();
         const _key = BWC.createKey({
           seedType: opts.seedType!,
@@ -515,13 +523,17 @@ export const startCreateKeyWithOpts =
           wallets: [wallet],
           backupComplete: true,
         });
-
-        dispatch(
-          successCreateKey({
-            key,
-          }),
-        );
-
+        const previousKeysLength = Object.keys(keys).length;
+        const numNewKeys = Object.keys(keys).length + 1;
+        const expectedLengthChange = previousKeysLength - numNewKeys;
+        batch(() => {
+          dispatch(
+            successCreateKey({
+              key,
+            }),
+          );
+          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+        });
         resolve(key);
       } catch (err) {
         const errstring =
