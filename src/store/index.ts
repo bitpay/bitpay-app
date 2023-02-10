@@ -111,6 +111,7 @@ const reducerPersistBlackLists = {
   LOG: logReduxPersistBlackList,
   SHOP: shopReduxPersistBlackList,
   SWAP_CRYPTO: swapCryptoReduxPersistBlackList,
+  WALLET_BACKUP: walletReduxPersistBlackList,
   WALLET: walletReduxPersistBlackList,
   RATE: rateReduxPersistBlackList,
   CONTACT: ContactReduxPersistBlackList,
@@ -193,7 +194,6 @@ const reducers = {
     {
       storage: AsyncStorage,
       key: 'WALLET_BACKUP',
-      blacklist: walletReduxPersistBlackList,
     },
     walletBackupReducer,
   ),
