@@ -53,7 +53,10 @@ import {
 } from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import {useTranslation} from 'react-i18next';
-import {moonpayEnv} from '../utils/moonpay-utils';
+import {
+  getMoonpayFixedCurrencyAbbreviation,
+  moonpayEnv,
+} from '../utils/moonpay-utils';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
 import WyreTerms from '../components/terms/WyreTerms';
@@ -310,6 +313,7 @@ const BuyCryptoOffers: React.FC = () => {
         coin,
         chain,
         offersDefault.simplex.fiatCurrency,
+        country,
       );
     }
   });
@@ -346,7 +350,10 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     const requestData = {
-      currencyAbbreviation: coin.toLowerCase(),
+      currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
+        coin.toLowerCase(),
+        selectedWallet.chain,
+      ),
       baseCurrencyAmount: offers.moonpay.fiatAmount,
       // extraFeePercentage: 0, // min: 0 max: 10. If not provided, will use the default value set to our account.
       baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
@@ -830,7 +837,10 @@ const BuyCryptoOffers: React.FC = () => {
     );
 
     const quoteData = {
-      currencyCode: coin.toLowerCase(),
+      currencyCode: getMoonpayFixedCurrencyAbbreviation(
+        coin.toLowerCase(),
+        destinationChain,
+      ),
       walletAddress: address,
       baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
       baseCurrencyAmount: offers.moonpay.fiatAmount,

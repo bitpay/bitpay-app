@@ -8,7 +8,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
-import {useDispatch} from 'react-redux';
+import {batch, useDispatch} from 'react-redux';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
@@ -18,7 +18,10 @@ import {
 } from '../../../store/wallet/wallet.actions';
 import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
-import {setHomeCarouselConfig} from '../../../store/app/app.actions';
+import {
+  setExpectedKeyLengthChange,
+  setHomeCarouselConfig,
+} from '../../../store/app/app.actions';
 import {
   unSubscribeEmailNotifications,
   unSubscribePushNotifications,
@@ -86,7 +89,14 @@ const DeleteKey = () => {
       });
 
     await sleep(300);
-    dispatch(deleteKey({keyId}));
+    const previousKeysLength = Object.keys(keys).length;
+    const numNewKeys = Object.keys(keys).length - 1;
+    const expectedLengthChange = previousKeysLength - numNewKeys;
+    batch(() => {
+      dispatch(deleteKey({keyId}));
+      dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+    });
+
     dispatch(
       setHomeCarouselConfig(
         homeCarouselConfig.filter(item => item.id !== keyId),

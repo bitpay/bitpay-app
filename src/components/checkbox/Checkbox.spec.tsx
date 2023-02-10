@@ -1,7 +1,7 @@
 import React from 'react';
 import Checkbox from './Checkbox';
-import {fireEvent, render} from '@test/render';
-import {SlateDark, Action} from '@/styles/colors';
+import {fireEvent, render} from '@testing-library/react-native';
+import {SlateDark, Action} from '../../styles/colors';
 
 it('renders correctly', async () => {
   const mockFn = jest.fn();

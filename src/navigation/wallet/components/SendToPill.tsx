@@ -17,7 +17,7 @@ interface StyleProps {
   accent?: 'action';
 }
 
-const PillContainer = styled.Pressable<StyleProps>`
+export const PillContainer = styled.Pressable<StyleProps>`
   background-color: ${({theme: {dark}, accent}) =>
     dark ? LightBlack : accent === 'action' ? '#ECEFFD' : NeutralSlate};
   flex-direction: row;
@@ -33,7 +33,7 @@ const IconContainer = styled.View`
   padding: 10px 0px;
 `;
 
-const PillText = styled(H7)<StyleProps>`
+export const PillText = styled(H7)<StyleProps>`
   ${({theme: {dark}, accent}) =>
     !dark && accent === 'action' ? `color: ${BitPay};` : ''};
   flex-direction: row;

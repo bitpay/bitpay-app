@@ -1,6 +1,6 @@
 import React from 'react';
 import Button from './Button';
-import {fireEvent, render} from '@test/render';
+import {fireEvent, render} from '@testing-library/react-native';
 
 jest.mock('react-native-haptic-feedback', () => {
   return {

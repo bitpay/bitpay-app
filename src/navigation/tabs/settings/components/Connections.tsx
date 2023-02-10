@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
@@ -14,7 +14,6 @@ import {
 } from '../../../../components/styled/Containers';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import ZenLedgerModal from '../../../zenledger/components/ZenLedgerModal';
 import {SettingsComponent} from '../SettingsRoot';
 
 interface ConnectionsProps {
@@ -37,8 +36,6 @@ const Connections: React.VFC<ConnectionsProps> = props => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
-
-  const [showZenLedgerModal, setShowZenLedgerModal] = useState(false);
 
   const goToWalletConnect = useCallback(() => {
     dispatch(
@@ -85,9 +82,9 @@ const Connections: React.VFC<ConnectionsProps> = props => {
       goToWalletConnect();
     } else if (redirectTo === 'zenledger') {
       navigation.setParams({redirectTo: undefined} as any);
-      setShowZenLedgerModal(true);
+      navigation.navigate('ZenLedger', {screen: 'Root'});
     }
-  }, [redirectTo, goToWalletConnect, setShowZenLedgerModal, navigation]);
+  }, [redirectTo, goToWalletConnect, navigation]);
 
   return (
     <SettingsComponent>
@@ -123,7 +120,7 @@ const Connections: React.VFC<ConnectionsProps> = props => {
               context: 'Settings Connections',
             }),
           );
-          setShowZenLedgerModal(true);
+          navigation.navigate('ZenLedger', {screen: 'Root'});
         }}>
         <ConnectionItemContainer>
           <ConnectionIconContainer>
@@ -133,13 +130,6 @@ const Connections: React.VFC<ConnectionsProps> = props => {
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>
-
-      <ZenLedgerModal
-        isVisible={showZenLedgerModal}
-        onDismiss={() => {
-          setShowZenLedgerModal(false);
-        }}
-      />
     </SettingsComponent>
   );
 };

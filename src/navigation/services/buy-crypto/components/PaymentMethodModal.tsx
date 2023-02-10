@@ -97,6 +97,7 @@ const PaymentMethodsModal = ({
     currency,
     coin,
     chain,
+    countryData?.shortCode || 'US',
   );
 
   const showOtherPaymentMethodsInfoSheet = (
@@ -201,6 +202,7 @@ const PaymentMethodsModal = ({
                           coin,
                           chain,
                           currency,
+                          countryData?.shortCode || 'US',
                         ) ? (
                           <MoonpayLogo widthIcon={20} heightIcon={20} />
                         ) : null}

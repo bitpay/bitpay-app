@@ -7,7 +7,7 @@ import {
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import Braze from 'react-native-appboy-sdk';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   Appearance,
   AppState,
@@ -108,6 +108,14 @@ import NotificationsSettingsStack, {
   NotificationsSettingsStackParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
+import ZenLedgerStack, {
+  ZenLedgerStackParamsList,
+} from './navigation/zenledger/ZenLedgerStack';
+import {WalletBackupActions} from './store/wallet-backup';
+import {successCreateKey} from './store/wallet/wallet.actions';
+import {bootstrapKey, bootstrapWallets} from './store/transforms/transforms';
+import {Key, Wallet} from './store/wallet/wallet.models';
+import {Keys} from './store/wallet/wallet.reducer';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -133,6 +141,7 @@ export type RootStackParamList = {
   WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
   Debug: DebugScreenParamList;
   NotificationsSettings: NavigatorScreenParams<NotificationsSettingsStackParamsList>;
+  ZenLedger: NavigatorScreenParams<ZenLedgerStackParamsList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -159,6 +168,7 @@ export enum RootStacks {
   WALLET_CONNECT = 'WalletConnect',
   DEBUG = 'Debug',
   NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
+  ZENLEDGER = 'ZenLedger',
 }
 
 // ROOT NAVIGATION CONFIG
@@ -179,7 +189,8 @@ export type NavScreenParams = NavigatorScreenParams<
     SwapCryptoStackParamList &
     ScanStackParamList &
     WalletConnectStackParamList &
-    NotificationsSettingsStackParamsList
+    NotificationsSettingsStackParamsList &
+    ZenLedgerStackParamsList
 >;
 
 declare global {
@@ -237,6 +248,76 @@ export default () => {
   );
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
+  );
+
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const backupKeys = useAppSelector(({WALLET_BACKUP}) => WALLET_BACKUP.keys);
+  const expectedKeyLengthChange = useAppSelector(
+    ({APP}) => APP.expectedKeyLengthChange,
+  );
+  const [previousKeysLength, setPreviousKeysLength] = useState(
+    Object.keys(backupKeys).length,
+  );
+
+  const bootstrapKeyAndWallets = ({
+    keyId,
+    keys,
+  }: {
+    keyId: string;
+    keys: Keys;
+  }) => {
+    keys[keyId] = bootstrapKey(keys[keyId], keyId, log => dispatch(log)) as Key;
+    if (!keys[keyId]) {
+      throw new Error('bootstrapKey function failed');
+    }
+    keys[keyId].wallets = bootstrapWallets(keys[keyId].wallets, log =>
+      dispatch(log),
+    ) as Wallet[];
+  };
+
+  const recoverKeys = ({backupKeys, keys}: {backupKeys: Keys; keys: Keys}) => {
+    if (Object.keys(backupKeys).length === 0) {
+      LogActions.persistLog(
+        LogActions.warn('No backup available for recovering keys.'),
+      );
+      return;
+    }
+    // find missing keys in the backup
+    const missingKeys: string[] = Object.keys(backupKeys).filter(
+      backupKeyId => !keys[backupKeyId],
+    );
+
+    // use backup keys to recover the missing keys
+    missingKeys.forEach((missingKey: string) => {
+      try {
+        bootstrapKeyAndWallets({keyId: missingKey, keys: backupKeys});
+        dispatch(
+          successCreateKey({
+            key: backupKeys[missingKey],
+          }),
+        );
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.persistLog(
+            LogActions.warn(`Something went wrong. Backup failed. ${errStr}`),
+          ),
+        );
+      }
+    });
+  };
+
+  const debounceBoostrapAndSave = useMemo(
+    () =>
+      debounce((keys: Keys) => {
+        const newKeyBackup = {...keys};
+        const keyIds = Object.keys(newKeyBackup);
+        keyIds.forEach(keyId =>
+          bootstrapKeyAndWallets({keyId, keys: newKeyBackup}),
+        );
+        dispatch(WalletBackupActions.successBackupUpWalletKeys(newKeyBackup));
+      }, 1500),
+    [],
   );
 
   const debouncedOnStateChange = useMemo(
@@ -304,6 +385,40 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
+
+  // BACKUP KEY LOGIC
+  useEffect(() => {
+    const numNewKeys = Object.keys(keys).length;
+    const keyLengthChange = previousKeysLength - numNewKeys;
+    setPreviousKeysLength(numNewKeys);
+    dispatch(AppActions.setExpectedKeyLengthChange(0));
+
+    // keys length changed as expected
+    if (expectedKeyLengthChange === keyLengthChange) {
+      try {
+        debounceBoostrapAndSave(keys);
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.persistLog(
+            LogActions.warn(
+              `Something went wrong backing up most recent version of keys. ${errStr}`,
+            ),
+          ),
+        );
+        recoverKeys({backupKeys, keys});
+      }
+    }
+    if (keyLengthChange >= 1) {
+      dispatch(
+        LogActions.persistLog(
+          LogActions.warn('one or more keys were deleted unexpectedly'),
+        ),
+      );
+
+      recoverKeys({backupKeys, keys});
+    }
+  }, [dispatch, keys, previousKeysLength, expectedKeyLengthChange]);
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
@@ -553,6 +668,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.WALLET_CONNECT}
               component={WalletConnectStack}
+            />
+            <Root.Screen
+              name={RootStacks.ZENLEDGER}
+              component={ZenLedgerStack}
             />
           </Root.Navigator>
           <OnGoingProcessModal />

@@ -15,9 +15,9 @@ module.exports = {
     },
   },
   transform: {
+    '^.+\\.tsx?$': 'ts-jest',
     '^.+\\.svg$': 'jest-transform-stub',
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
-    '^.+\\.tsx?$': 'ts-jest',
   },
   cacheDirectory: '.jest/cache',
   setupFilesAfterEnv: ['<rootDir>/test/afterEnv.ts'],

@@ -318,3 +318,10 @@ export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
   type: AppActionTypes.USER_FEEDBACK,
   payload: feedBack,
 });
+
+export const setExpectedKeyLengthChange = (
+  lengthChange: number,
+): AppActionType => ({
+  type: AppActionTypes.EXPECTED_KEY_LENGTH_CHANGE,
+  payload: lengthChange,
+});

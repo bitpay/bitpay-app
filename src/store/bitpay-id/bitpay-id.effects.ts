@@ -11,7 +11,7 @@ import {Network} from '../../constants';
 import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
-import {AppActions, AppEffects} from '../app/';
+import {AppEffects} from '../app/';
 import {Analytics} from '../analytics/analytics.effects';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
@@ -26,6 +26,7 @@ import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import Braze from 'react-native-appboy-sdk';
+import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
 
 interface StartLoginParams {
   email: string;
@@ -100,6 +101,7 @@ export const startCreateAccount =
   (params: CreateAccountParams): Effect =>
   async (dispatch, getState) => {
     try {
+      dispatch(startOnGoingProcessModal('CREATING_ACCOUNT'));
       const {APP, BITPAY_ID} = getState();
       const salt = generateSalt();
       const hashedPassword = hashPassword(params.password);
@@ -117,8 +119,11 @@ export const startCreateAccount =
         hashedPassword: hashedPassword,
         salt: salt,
         agreedToTOSandPP: params.agreedToTOSandPP,
+        optInEmailMarketing: params.agreedToMarketingCommunications,
+        attribute: params.agreedToMarketingCommunications
+          ? 'App Signup'
+          : undefined,
         gCaptchaResponse: params.gCaptchaResponse,
-        attribute: 'App Signup',
       });
 
       // refresh session
@@ -151,6 +156,8 @@ export const startCreateAccount =
       dispatch(BitPayIdActions.failedCreateAccount(upperFirst(errMsg)));
       dispatch(LogActions.error('Failed to create account.'));
       dispatch(LogActions.error(JSON.stringify(err)));
+    } finally {
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -243,7 +250,7 @@ export const startLogin =
         dispatch(BitPayIdActions.failedLogin(errMsg));
       });
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -293,7 +300,7 @@ export const startTwoFactorAuth =
         dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
       });
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -337,7 +344,7 @@ export const startTwoFactorPairing =
         );
       });
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -366,7 +373,7 @@ export const startEmailPairing =
         dispatch(BitPayIdActions.failedEmailPairing());
       });
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -395,7 +402,7 @@ export const startDeeplinkPairing =
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedPairingBitPayId(errMsg));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -684,6 +691,6 @@ export const startSubmitForgotPasswordEmail =
     } catch (e) {
       dispatch(BitPayIdActions.forgotPasswordEmailStatus('failed', errMsg));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
