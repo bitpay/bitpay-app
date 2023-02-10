@@ -3,7 +3,7 @@ import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
-import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
+import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
@@ -99,6 +99,22 @@ const basePersistConfig = {
   stateReconciler: autoMergeLevel2,
 };
 
+const reducerPersistBlackLists = {
+  APP: appReduxPersistBlackList,
+  BITPAY_ID: bitPayIdReduxPersistBlackList,
+  BUY_CRYPTO: buyCryptoReduxPersistBlackList,
+  CARD: cardReduxPersistBlacklist,
+  LOCATION: locationReduxPersistBlackList,
+  LOG: logReduxPersistBlackList,
+  SHOP: shopReduxPersistBlackList,
+  SWAP_CRYPTO: swapCryptoReduxPersistBlackList,
+  WALLET: walletReduxPersistBlackList,
+  RATE: rateReduxPersistBlackList,
+  CONTACT: ContactReduxPersistBlackList,
+  COINBASE: CoinbaseReduxPersistBlackList,
+  WALLET_CONNECT: walletConnectReduxPersistBlackList,
+};
+
 /*
  * Create a rootReducer using combineReducers
  * Set persist config for each and import blacklist to omit values
@@ -110,7 +126,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'APP',
-      blacklist: appReduxPersistBlackList,
     },
     appReducer,
   ),
@@ -118,7 +133,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'BITPAY_ID',
-      blacklist: bitPayIdReduxPersistBlackList,
     },
     bitPayIdReducer,
   ),
@@ -126,7 +140,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'BUY_CRYPTO',
-      blacklist: buyCryptoReduxPersistBlackList,
     },
     buyCryptoReducer,
   ),
@@ -134,7 +147,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'CARD',
-      blacklist: cardReduxPersistBlacklist,
     },
     cardReducer,
   ),
@@ -142,7 +154,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'LOCATION',
-      blacklist: locationReduxPersistBlackList,
     },
     locationReducer,
   ),
@@ -150,7 +161,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'LOG',
-      blacklist: logReduxPersistBlackList,
     },
     logReducer,
   ),
@@ -158,7 +168,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'SHOP',
-      blacklist: shopReduxPersistBlackList,
     },
     shopReducer,
   ),
@@ -166,7 +175,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'SWAP_CRYPTO',
-      blacklist: swapCryptoReduxPersistBlackList,
     },
     swapCryptoReducer,
   ),
@@ -175,7 +183,6 @@ const reducers = {
       storage: AsyncStorage,
       transforms: [bindWalletClient, bindWalletKeys],
       key: 'WALLET',
-      blacklist: walletReduxPersistBlackList,
     },
     walletReducer,
   ),
@@ -183,7 +190,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'RATE',
-      blacklist: rateReduxPersistBlackList,
     },
     rateReducer,
   ),
@@ -192,7 +198,6 @@ const reducers = {
       ...basePersistConfig,
       key: 'CONTACT',
       transforms: [transformContacts],
-      blacklist: ContactReduxPersistBlackList,
     },
     contactReducer,
   ),
@@ -200,7 +205,6 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'COINBASE',
-      blacklist: CoinbaseReduxPersistBlackList,
     },
     coinbaseReducer,
   ),
@@ -209,7 +213,6 @@ const reducers = {
       storage: AsyncStorage,
       key: 'WALLET_CONNECT',
       transforms: [transformCircular],
-      blacklist: walletConnectReduxPersistBlackList,
     },
     walletConnectReducer,
   ),
@@ -266,9 +269,21 @@ const getStore = () => {
   const rootPersistConfig = {
     ...basePersistConfig,
     key: 'root',
-    // override all stores as they will handle their own blacklisting of certain values
-    blacklist: Object.keys(reducers),
     transforms: [
+      createTransform(
+        (inboundState: any, key: keyof typeof reducerPersistBlackLists) => {
+          // Clear out nested blacklisted fields before encrypting and persisting
+          if (Object.keys(reducerPersistBlackLists).includes(key)) {
+            const reducerPersistBlackList = reducerPersistBlackLists[key];
+            const fieldOverrides = (reducerPersistBlackList as string[]).reduce(
+              (allFields, field) => ({...allFields, ...{[field]: undefined}}),
+              {},
+            );
+            return {...inboundState, ...fieldOverrides};
+          }
+          return inboundState;
+        },
+      ),
       encryptTransform({
         secretKey: getUniqueId(),
         onError: error => {
