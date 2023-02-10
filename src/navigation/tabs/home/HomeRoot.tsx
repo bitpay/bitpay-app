@@ -193,28 +193,6 @@ const HomeRoot = () => {
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
-  useEffect(() => {
-    if (
-      onCompleteOnboardingList?.length &&
-      onCompleteOnboardingList.includes('deferredImportErrorNotification')
-    ) {
-      dispatch(deferredImportErrorNotification());
-      dispatch(clearOnCompleteOnboardingList());
-    }
-  }, [dispatch, onCompleteOnboardingList]);
-
-  useEffect(() => {
-    const currentVersion = APP_VERSION;
-    const savedVersion = userFeedback.version;
-    if (isVersionUpdated(currentVersion, savedVersion)) {
-      const now = moment().unix();
-      const timeExceeded = now - userFeedback.time >= 24 * 7 * 60 * 60;
-      setShowRateCard(timeExceeded && !userFeedback.sent);
-    } else {
-      dispatch(saveUserFeedback('default', APP_VERSION, false));
-    }
-  }, [userFeedback]);
-
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
 
