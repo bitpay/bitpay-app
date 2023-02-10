@@ -1,6 +1,5 @@
-import React from 'react';
 import {createWalletAddress} from './address';
-import configureTestStore from '@test/store';
+import {configureTestStore} from '../../../../store';
 import {successGetReceiveAddress} from '../../wallet.actions';
 import {ValidateCoinAddress} from '../../utils/validations';
 
