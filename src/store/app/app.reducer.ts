@@ -38,6 +38,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
   'failedAppInit',
   'brazeContentCardSubscription',
+  'expectedKeyLengthChange',
 ];
 
 export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
@@ -123,6 +124,7 @@ export interface AppState {
   checkingBiometricForSending: boolean;
   onCompleteOnboardingList: Array<string>;
   hasViewedZenLedgerWarning: boolean;
+  expectedKeyLengthChange: number;
 }
 
 const initialState: AppState = {
@@ -198,6 +200,7 @@ const initialState: AppState = {
   checkingBiometricForSending: false,
   onCompleteOnboardingList: [],
   hasViewedZenLedgerWarning: false,
+  expectedKeyLengthChange: 0,
 };
 
 export const appReducer = (
@@ -594,6 +597,12 @@ export const appReducer = (
       return {
         ...state,
         userFeedback: action.payload,
+      };
+
+    case AppActionTypes.EXPECTED_KEY_LENGTH_CHANGE:
+      return {
+        ...state,
+        expectedKeyLengthChange: action.payload,
       };
 
     default:
