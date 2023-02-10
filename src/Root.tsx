@@ -397,6 +397,7 @@ export default () => {
     if (expectedKeyLengthChange === keyLengthChange) {
       try {
         debounceBoostrapAndSave(keys);
+        return;
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
@@ -407,6 +408,7 @@ export default () => {
           ),
         );
         recoverKeys({backupKeys, keys});
+        return;
       }
     }
     if (keyLengthChange >= 1) {
