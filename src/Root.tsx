@@ -116,6 +116,9 @@ import {successCreateKey} from './store/wallet/wallet.actions';
 import {bootstrapKey, bootstrapWallets} from './store/transforms/transforms';
 import {Key, Wallet} from './store/wallet/wallet.models';
 import {Keys} from './store/wallet/wallet.reducer';
+import NetworkFeePolicySettingsStack, {
+  NetworkFeePolicySettingsStackParamsList,
+} from './navigation/tabs/settings/NetworkFeePolicy/NetworkFeePolicyStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -142,6 +145,7 @@ export type RootStackParamList = {
   Debug: DebugScreenParamList;
   NotificationsSettings: NavigatorScreenParams<NotificationsSettingsStackParamsList>;
   ZenLedger: NavigatorScreenParams<ZenLedgerStackParamsList>;
+  NetworkFeePolicySettings: NavigatorScreenParams<NetworkFeePolicySettingsStackParamsList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -169,6 +173,7 @@ export enum RootStacks {
   DEBUG = 'Debug',
   NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
   ZENLEDGER = 'ZenLedger',
+  NETWORK_FEE_POLICY_SETTINGS = 'NetworkFeePolicySettings',
 }
 
 // ROOT NAVIGATION CONFIG
@@ -657,6 +662,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.NOTIFICATIONS_SETTINGS}
               component={NotificationsSettingsStack}
+            />
+            <Root.Screen
+              name={RootStacks.NETWORK_FEE_POLICY_SETTINGS}
+              component={NetworkFeePolicySettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
             <Root.Screen name={RootStacks.COINBASE} component={CoinbaseStack} />

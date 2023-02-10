@@ -1,15 +1,18 @@
-import {H4, Paragraph} from '../../../../components/styled/Text';
+import {H4, Paragraph} from '../../../../../components/styled/Text';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {ScreenGutter} from '../../../../components/styled/Containers';
-import {SlateDark, White} from '../../../../styles/colors';
+import {ScreenGutter} from '../../../../../components/styled/Containers';
+import {SlateDark, White} from '../../../../../styles/colors';
 import {
   Fee,
   getFeeLevelsUsingBwcClient,
   GetFeeOptions,
-} from '../../../../store/wallet/effects/fee/fee';
+} from '../../../../../store/wallet/effects/fee/fee';
 import * as _ from 'lodash';
-import {GetFeeUnits, GetTheme} from '../../../../store/wallet/utils/currency';
+import {
+  GetFeeUnits,
+  GetTheme,
+} from '../../../../../store/wallet/utils/currency';
 import {
   evmAvgTime,
   FeeLevelStep,
@@ -20,17 +23,17 @@ import {
   FeeLevelStepTopLabel,
   FeeLevelStepsHeader,
   FeeLevelStepsHeaderSubTitle,
-} from '../../../wallet/screens/send/TransactionLevel';
+} from '../../../../wallet/screens/send/TransactionLevel';
 import {View} from 'react-native';
-import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
-import {sleep} from '../../../../utils/helper-methods';
-import NetworkPolicyPlaceholder from '../components/NetworkPolicyPlaceholder';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {updateCacheFeeLevel} from '../../../../store/wallet/wallet.actions';
+import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
+import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
+import {sleep} from '../../../../../utils/helper-methods';
+import NetworkPolicyPlaceholder from '../../components/NetworkPolicyPlaceholder';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {updateCacheFeeLevel} from '../../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import i18next from 'i18next';
-import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {SUPPORTED_EVM_COINS} from '../../../../../constants/currencies';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
