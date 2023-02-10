@@ -93,6 +93,7 @@ import {
   RateState,
 } from './rate/rate.reducer';
 import {RateActionType} from './rate/rate.types';
+import {LogActions} from './log';
 import {walletBackupReducer} from './wallet-backup/wallet-backup.reducer';
 import {WalletBackupActionType} from './wallet-backup/wallet-backup.types';
 
@@ -296,8 +297,12 @@ const getStore = () => {
       ),
       encryptTransform({
         secretKey: getUniqueId(),
-        onError: error => {
-          console.debug(error);
+        onError: err => {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          LogActions.persistLog(
+            LogActions.error(`Encrypt transform failed - ${errStr}`),
+          );
         },
       }),
     ],
