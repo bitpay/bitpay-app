@@ -435,11 +435,23 @@ const createTokenWallet =
 
         wallet.preferences = wallet.preferences || {
           tokenAddresses: [],
+          maticTokenAddresses: [],
         };
-        wallet.preferences.tokenAddresses?.push(
-          // @ts-ignore
-          tokenCredentials.token.address,
-        );
+
+        switch (wallet.credentials.chain) {
+          case 'eth':
+            wallet.preferences.tokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token.address,
+            );
+            break;
+          case 'matic':
+            wallet.preferences.maticTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token.address,
+            );
+            break;
+        }
 
         wallet.savePreferences(wallet.preferences, (err: any) => {
           if (err) {

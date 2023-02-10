@@ -100,6 +100,7 @@ export interface WalletObj {
   walletName?: string;
   preferences?: {
     tokenAddresses?: [];
+    maticTokenAddresses?: [];
   };
   img: string | ((props?: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
@@ -140,6 +141,8 @@ export interface KeyOptions {
   invitationCode?: string;
   seedType?: string;
   password?: string;
+  includeTestnetWallets?: boolean;
+  includeLegacyWallets?: boolean;
 }
 
 export interface Token {
@@ -425,9 +428,4 @@ export interface Utxo {
   txid: string;
   vout: number;
   checked?: boolean;
-}
-
-export interface DeferredImport {
-  importData: {words?: string; xPrivKey?: string};
-  opts: Partial<KeyOptions>;
 }

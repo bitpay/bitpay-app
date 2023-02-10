@@ -148,7 +148,7 @@ const Pin = gestureHandlerRootHOC(() => {
           const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
           const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
           dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-  
+
           if (context === 'onboarding') {
             gotoCreateKeyRef.current();
           } else {
@@ -159,7 +159,7 @@ const Pin = gestureHandlerRootHOC(() => {
           reset();
         }
       } catch (err) {
-        logger.error(`setCurrentPin error: ${err}`)
+        logger.error(`setCurrentPin error: ${err}`);
       }
     },
     [dispatch, setShakeDots, reset, firstPinEntered, context],
@@ -238,28 +238,32 @@ const Pin = gestureHandlerRootHOC(() => {
     ],
   );
 
-  const setCountDown = (bannedUntil: number, timeSinceBoot: number, count: number = 0) => {
-      const intervalId = setInterval(() => {
-        count = count + 1;
-        const totalSecs = bannedUntil - timeSinceBoot - count;
+  const setCountDown = (
+    bannedUntil: number,
+    timeSinceBoot: number,
+    count: number = 0,
+  ) => {
+    const intervalId = setInterval(() => {
+      count = count + 1;
+      const totalSecs = bannedUntil - timeSinceBoot - count;
 
-        if (totalSecs < 0) {
-          dispatch(AppActions.pinBannedUntil(undefined));
-          clearInterval(intervalId)
-          reset();
-          return;
-        }
+      if (totalSecs < 0) {
+        dispatch(AppActions.pinBannedUntil(undefined));
+        clearInterval(intervalId);
+        reset();
+        return;
+      }
 
-        const m = Math.floor(totalSecs / 60);
-        const s = totalSecs % 60;
-        setMessage(
-          t('Try again in ', {
-            time: ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2),
-          }),
-        );
-      }, 1000);
-      return intervalId;
-  }
+      const m = Math.floor(totalSecs / 60);
+      const s = totalSecs % 60;
+      setMessage(
+        t('Try again in ', {
+          time: ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2),
+        }),
+      );
+    }, 1000);
+    return intervalId;
+  };
 
   useEffect(() => {
     const checkAttempts = async () => {
@@ -275,7 +279,7 @@ const Pin = gestureHandlerRootHOC(() => {
           };
         }
       } catch (err) {
-        logger.error(`checkAttempts error: ${err}`)
+        logger.error(`checkAttempts error: ${err}`);
       }
     };
     checkAttempts();
@@ -294,10 +298,10 @@ const Pin = gestureHandlerRootHOC(() => {
           dispatch(AppActions.pinBannedUntil(undefined));
         }
       } catch (err) {
-        logger.error(`checkIfBanned error: ${err}`)
+        logger.error(`checkIfBanned error: ${err}`);
       }
     };
-   checkIfBanned();
+    checkIfBanned();
   }, [dispatch, pinBannedUntil]);
 
   return (
