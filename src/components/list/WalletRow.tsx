@@ -15,9 +15,11 @@ import {TransactionProposal} from '../../store/wallet/wallet.models';
 import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {getProtocolName} from '../../utils/helper-methods';
+import {Platform} from 'react-native';
 
 const BadgeContainer = styled.View`
-  margin-left: 5px;
+  margin-left: 3px;
+  margin-bottom: -2px;
 `;
 
 const BalanceColumn = styled(Column)`
@@ -123,11 +125,17 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
           <H5 ellipsizeMode="tail" numberOfLines={1}>
             {walletName || currencyName}
           </H5>
+        </Row>
+        <Row style={{alignItems: 'center'}}>
+          <ListItemSubText
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            style={{marginTop: Platform.OS === 'ios' ? -2 : 0}}>
+            {currencyAbbreviation.toUpperCase()}{' '}
+            {multisig ? `${multisig} ` : null}
+          </ListItemSubText>
           {buildTestBadge(network, chain, isToken)}
         </Row>
-        <ListItemSubText>
-          {currencyAbbreviation.toUpperCase()} {multisig ? multisig : null}
-        </ListItemSubText>
       </CurrencyColumn>
       <BalanceColumn>
         {!hideBalance ? (
