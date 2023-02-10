@@ -301,15 +301,6 @@ export const checkingBiometricForSending = (
   payload,
 });
 
-export const updateOnCompleteOnboarding = (payload: string): AppActionType => ({
-  type: AppActionTypes.UPDATE_ON_COMPLETE_ONBOARDING_LIST,
-  payload,
-});
-
-export const clearOnCompleteOnboardingList = (): AppActionType => ({
-  type: AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST,
-});
-
 export const setHasViewedZenLedgerWarning = (): AppActionType => ({
   type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
 });
@@ -317,4 +308,11 @@ export const setHasViewedZenLedgerWarning = (): AppActionType => ({
 export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
   type: AppActionTypes.USER_FEEDBACK,
   payload: feedBack,
+});
+
+export const setExpectedKeyLengthChange = (
+  lengthChange: number,
+): AppActionType => ({
+  type: AppActionTypes.EXPECTED_KEY_LENGTH_CHANGE,
+  payload: lengthChange,
 });

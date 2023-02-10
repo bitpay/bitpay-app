@@ -48,9 +48,6 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
-import ListKeySkeleton from './cards/ListKeySkeleton';
-import CarouselKeySkeleton from './cards/CarouselKeySkeleton';
-import {clearDeferredImport} from '../../../../store/wallet/wallet.actions';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -150,7 +147,6 @@ export const createHomeCardList = ({
   linkedCoinbase,
   homeCarouselConfig,
   homeCarouselLayoutType,
-  deferredImport,
   context,
   onPress,
   currency,
@@ -161,7 +157,6 @@ export const createHomeCardList = ({
   linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
-  deferredImport?: boolean;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
   currency?: any;
@@ -249,52 +244,7 @@ export const createHomeCardList = ({
       homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
   );
 
-  const onDeferredImportPress = () => {
-    dispatch(
-      showBottomNotificationModal({
-        type: 'warning',
-        title: t('Cancel Import?'),
-        message: t('Would you like to cancel importing this key?'),
-        actions: [
-          {
-            text: t('Cancel Import'),
-            primary: true,
-            action: () => dispatch(clearDeferredImport()),
-          },
-        ],
-        enableBackdropDismiss: true,
-      }),
-    );
-  };
-
-  if (deferredImport) {
-    if (homeCarouselLayoutType === 'listView') {
-      list.push({
-        id: 'deferredImport',
-        component: (
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => onDeferredImportPress()}>
-            <ListKeySkeleton />
-          </TouchableOpacity>
-        ),
-      });
-    } else {
-      list.push({
-        id: 'deferredImport',
-        component: (
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => onDeferredImportPress()}>
-            <CarouselKeySkeleton />
-          </TouchableOpacity>
-        ),
-      });
-    }
-  }
-
   const order = homeCarouselConfig.map(item => item.id);
-  order.push('deferredImport'); // Display placeholder at the end of the list
 
   return {
     list: [..._.sortBy(list, item => _.indexOf(order, item.id))],
@@ -314,7 +264,6 @@ const Crypto = () => {
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
-  const deferredImport = useAppSelector(({WALLET}) => WALLET.deferredImport);
   const hasKeys = Object.values(keys).length;
   const [cardsList, setCardsList] = useState(
     createHomeCardList({
@@ -324,7 +273,6 @@ const Crypto = () => {
       linkedCoinbase: false,
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
-      deferredImport: !!deferredImport,
     }),
   );
 
@@ -337,7 +285,6 @@ const Crypto = () => {
         linkedCoinbase,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
-        deferredImport: !!deferredImport,
       }),
     );
   }, [
@@ -347,10 +294,9 @@ const Crypto = () => {
     linkedCoinbase,
     homeCarouselConfig,
     homeCarouselLayoutType,
-    deferredImport,
   ]);
 
-  if (!hasKeys && !linkedCoinbase && !deferredImport) {
+  if (!hasKeys && !linkedCoinbase) {
     return (
       <CryptoContainer>
         <SectionHeaderContainer style={{marginBottom: 0}}>

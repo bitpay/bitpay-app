@@ -45,11 +45,7 @@ import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {
-  deferredImportMnemonic,
-  startMigration,
-  startWalletStoreInit,
-} from '../wallet/effects';
+import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -223,12 +219,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
-
-    // Deferred Import
-    if (WALLET.deferredImport) {
-      const {importData, opts} = WALLET.deferredImport;
-      dispatch(deferredImportMnemonic(importData, opts, 'deferredImport'));
-    }
 
     dispatch(showBlur(pinLockActive || biometricLockActive));
 
@@ -506,7 +496,6 @@ export const startOnGoingProcessModal =
       UPDATING_TXP: i18n.t('Updating Transaction'),
       CREATING_TXP: i18n.t('Creating Transaction'),
       SENDING_EMAIL: i18n.t('Sending Email'),
-      REDIRECTING: i18n.t('Redirecting'),
     };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next

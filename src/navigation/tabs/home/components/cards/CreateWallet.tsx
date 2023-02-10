@@ -24,11 +24,9 @@ const CreateWallet = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const deferredImport = useAppSelector(({WALLET}) => WALLET.deferredImport);
 
   return (
     <LinkCard
-      disabled={!!deferredImport}
       image={image}
       description={t('Create, import or join a shared wallet')}
       onPress={() => {

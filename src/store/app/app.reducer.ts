@@ -38,6 +38,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
   'failedAppInit',
   'brazeContentCardSubscription',
+  'expectedKeyLengthChange',
 ];
 
 export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
@@ -121,8 +122,8 @@ export interface AppState {
   activeModalId: ModalId | null;
   failedAppInit: boolean;
   checkingBiometricForSending: boolean;
-  onCompleteOnboardingList: Array<string>;
   hasViewedZenLedgerWarning: boolean;
+  expectedKeyLengthChange: number;
 }
 
 const initialState: AppState = {
@@ -196,8 +197,8 @@ const initialState: AppState = {
   activeModalId: null,
   failedAppInit: false,
   checkingBiometricForSending: false,
-  onCompleteOnboardingList: [],
   hasViewedZenLedgerWarning: false,
+  expectedKeyLengthChange: 0,
 };
 
 export const appReducer = (
@@ -569,21 +570,6 @@ export const appReducer = (
         checkingBiometricForSending: action.payload,
       };
 
-    case AppActionTypes.UPDATE_ON_COMPLETE_ONBOARDING_LIST:
-      const _onCompleteOnboardingList = state.onCompleteOnboardingList;
-      if (!_onCompleteOnboardingList.includes(action.payload)) {
-        _onCompleteOnboardingList.push(action.payload);
-      }
-      return {
-        ...state,
-        onCompleteOnboardingList: _onCompleteOnboardingList,
-      };
-
-    case AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST:
-      return {
-        ...state,
-        onCompleteOnboardingList: [],
-      };
     case AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING:
       return {
         ...state,
@@ -594,6 +580,12 @@ export const appReducer = (
       return {
         ...state,
         userFeedback: action.payload,
+      };
+
+    case AppActionTypes.EXPECTED_KEY_LENGTH_CHANGE:
+      return {
+        ...state,
+        expectedKeyLengthChange: action.payload,
       };
 
     default:

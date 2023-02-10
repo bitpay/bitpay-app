@@ -1,4 +1,4 @@
-import {DeferredImport, Key, Token} from './wallet.models';
+import {Key, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
@@ -11,9 +11,13 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
   'tokenOptionsByAddress',
 ];
 
+export type Keys = {
+  [key in string]: Key;
+};
+
 export interface WalletState {
   createdOn: number;
-  keys: {[key in string]: Key};
+  keys: Keys;
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
@@ -32,11 +36,10 @@ export interface WalletState {
   customizeNonce: boolean;
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
-  deferredImport: null | DeferredImport;
   initLogs: AddLog[];
 }
 
-const initialState: WalletState = {
+export const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
   tokenOptions: {},
@@ -61,7 +64,6 @@ const initialState: WalletState = {
   customizeNonce: false,
   queuedTransactions: false,
   enableReplaceByFee: false,
-  deferredImport: null,
   initLogs: [], // keep init logs at the end (order is important)
 };
 
@@ -487,20 +489,6 @@ export const walletReducer = (
           ...state.feeLevel,
           [action.payload.currency]: action.payload.feeLevel,
         },
-      };
-    }
-
-    case WalletActionTypes.UPDATE_DEFERRED_IMPORT: {
-      return {
-        ...state,
-        deferredImport: action.payload,
-      };
-    }
-
-    case WalletActionTypes.CLEAR_DEFERRED_IMPORT: {
-      return {
-        ...state,
-        deferredImport: null,
       };
     }
 

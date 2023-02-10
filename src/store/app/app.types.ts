@@ -70,10 +70,9 @@ export enum AppActionTypes {
   SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN = 'APP/SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN',
   ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
   CHECKING_BIOMETRIC_FOR_SENDING = 'APP/CHECKING_BIOMETRIC_FOR_SENDING',
-  UPDATE_ON_COMPLETE_ONBOARDING_LIST = 'APP/UPDATE_ON_COMPLETE_ONBOARDING_LIST',
-  CLEAR_ON_COMPLETE_ONBOARDING_LIST = 'APP/CLEAR_ON_COMPLETE_ONBOARDING_LIST',
   SET_HAS_VIEWED_ZENLEDGER_WARNING = 'APP/SET_HAS_VIEWED_ZENLEDGER_WARNING',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
+  EXPECTED_KEY_LENGTH_CHANGE = 'APP/EXPECTED_KEY_LENGTH_CHANGE',
 }
 
 interface NetworkChanged {
@@ -323,15 +322,6 @@ interface checkingBiometricForSending {
   payload: boolean;
 }
 
-interface updateOnCompleteOnboarding {
-  type: typeof AppActionTypes.UPDATE_ON_COMPLETE_ONBOARDING_LIST;
-  payload: string;
-}
-
-interface clearOnCompleteOnboardingList {
-  type: typeof AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST;
-}
-
 interface SetHasViewedZenLedgerWarning {
   type: typeof AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING;
 }
@@ -339,6 +329,11 @@ interface SetHasViewedZenLedgerWarning {
 interface setUserFeedback {
   type: typeof AppActionTypes.USER_FEEDBACK;
   payload: FeedbackType;
+}
+
+interface setExpectedKeyLengthChange {
+  type: typeof AppActionTypes.EXPECTED_KEY_LENGTH_CHANGE;
+  payload: number;
 }
 
 export type AppActionType =
@@ -396,6 +391,6 @@ export type AppActionType =
   | SetDefaultAltCurrency
   | ActiveModalUpdated
   | checkingBiometricForSending
-  | updateOnCompleteOnboarding
-  | clearOnCompleteOnboardingList
+  | SetHasViewedZenLedgerWarning
+  | setExpectedKeyLengthChange
   | SetHasViewedZenLedgerWarning;

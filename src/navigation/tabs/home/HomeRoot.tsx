@@ -11,8 +11,6 @@ import {batch} from 'react-redux';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
-  clearOnCompleteOnboardingList,
-  setKeyMigrationFailureModalHasBeenShown,
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
@@ -23,11 +21,7 @@ import {
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
 import {selectCardGroups} from '../../../store/card/card.selectors';
-import {
-  deferredImportErrorNotification,
-  getPriceHistory,
-  startGetRates,
-} from '../../../store/wallet/effects';
+import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
@@ -87,9 +81,6 @@ const HomeRoot = () => {
   );
   const keyMigrationFailureModalHasBeenShown = useAppSelector(
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
-  );
-  const onCompleteOnboardingList = useAppSelector(
-    ({APP}) => APP.onCompleteOnboardingList,
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hasKeys = Object.values(keys).length;
@@ -198,7 +189,6 @@ const HomeRoot = () => {
     if (keyMigrationFailure && !keyMigrationFailureModalHasBeenShown) {
       batch(() => {
         dispatch(setShowKeyMigrationFailureModal(true));
-        dispatch(setKeyMigrationFailureModalHasBeenShown());
       });
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
@@ -212,6 +202,18 @@ const HomeRoot = () => {
       dispatch(clearOnCompleteOnboardingList());
     }
   }, [dispatch, onCompleteOnboardingList]);
+
+  useEffect(() => {
+    const currentVersion = APP_VERSION;
+    const savedVersion = userFeedback.version;
+    if (isVersionUpdated(currentVersion, savedVersion)) {
+      const now = moment().unix();
+      const timeExceeded = now - userFeedback.time >= 24 * 7 * 60 * 60;
+      setShowRateCard(timeExceeded && !userFeedback.sent);
+    } else {
+      dispatch(saveUserFeedback('default', APP_VERSION, false));
+    }
+  }, [userFeedback]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);

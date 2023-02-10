@@ -1,6 +1,5 @@
-import React from 'react';
 import {getDecryptPassword} from './create';
-import configureTestStore from '@test/store';
+import {configureTestStore} from '../../../store';
 import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,

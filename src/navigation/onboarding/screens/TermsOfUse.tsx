@@ -126,7 +126,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   const [termsList] = useState(() => {
     if (context === 'TOUOnly') {
       return Terms.filter(term => term.id === 3);
-    } else if (key || context === 'deferredImport') {
+    } else if (key) {
       return Terms.filter(term => term.id !== 3);
     }
 
