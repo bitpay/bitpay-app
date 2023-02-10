@@ -1020,7 +1020,15 @@ export const incomingLink =
 
     let handler: (() => void) | null = null;
 
-    if (pathSegments[0] === 'buy-crypto') {
+    if (pathSegments[0] === 'feedback') {
+      if (pathSegments[1] === 'rate') {
+        handler = () => {
+          setTimeout(() => {
+            dispatch(requestInAppReview());
+          }, 500);
+        };
+      }
+    } else if (pathSegments[0] === 'buy-crypto') {
       handler = () => {
         navigationRef.navigate(RootStacks.BUY_CRYPTO, {
           screen: BuyCryptoScreens.ROOT,
@@ -1226,6 +1234,13 @@ export const shortcutListener =
     }
   };
 
+/**
+ * Requests an in-app review UI from the device. Due to review quotas set by
+ * Apple/Google, request is not guaranteed to be granted and it is possible
+ * that nothing will be presented to the user.
+ *
+ * @returns
+ */
 export const requestInAppReview =
   (): Effect<Promise<void>> => async dispatch => {
     try {
