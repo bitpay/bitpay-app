@@ -15,7 +15,9 @@ import CurrencySelection, {
 import KeyOverview from './screens/KeyOverview';
 import KeyExplanation from './screens/KeyExplanation';
 import KeySettings from './screens/KeySettings';
-import WalletDetails from './screens/WalletDetails';
+import WalletDetails, {
+  WalletDetailsScreenParamList,
+} from './screens/WalletDetails';
 import WalletSettings from './screens/WalletSettings';
 import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
@@ -92,11 +94,7 @@ export type WalletStackParamList = {
     wallet?: {walletId: string; walletName: string | undefined};
     context: 'key' | 'wallet';
   };
-  WalletDetails: {
-    walletId: string;
-    key?: Key;
-    skipInitializeHistory?: boolean;
-  };
+  WalletDetails: WalletDetailsScreenParamList;
   WalletSettings: {walletId: string; key: Key};
   CreationOptions: undefined;
   Import: ImportParamList | undefined;

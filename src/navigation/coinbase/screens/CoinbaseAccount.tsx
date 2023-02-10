@@ -1,3 +1,5 @@
+import {useNavigation, useTheme} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {
   useEffect,
   useLayoutEffect,
@@ -5,7 +7,15 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {batch} from 'react-redux';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+  useMount,
+} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {RefreshControl, SectionList, View} from 'react-native';
 import {find} from 'lodash';
@@ -15,7 +25,6 @@ import {
   getProtocolName,
   sleep,
 } from '../../../utils/helper-methods';
-import {useNavigation, useTheme} from '@react-navigation/native';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, Balance, H5} from '../../../components/styled/Text';
@@ -31,7 +40,6 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import TransactionRow from '../../../components/list/TransactionRow';
 
-import {StackScreenProps} from '@react-navigation/stack';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import {
   CoinbaseErrorsProps,
@@ -56,11 +64,7 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {useTranslation} from 'react-i18next';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Icons from '../../wallet/components/WalletIcons';
 import {
   BitpaySupportedUtxoCoins,
@@ -79,9 +83,8 @@ import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOpti
 import {RootState} from '../../../store';
 import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
 import {showWalletError} from '../../../store/wallet/effects/errors/errors';
-import {batch} from 'react-redux';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -458,7 +461,7 @@ const CoinbaseAccount = ({
     }
     dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
     dispatch(
-      logSegmentEvent('track', 'Clicked Receive', {
+      Analytics.track('Clicked Receive', {
         context: 'CoinbaseAccount',
       }),
     );
@@ -499,7 +502,7 @@ const CoinbaseAccount = ({
   const onSelectedWallet = async (newWallet?: Wallet) => {
     setWalletModalVisible(false);
     dispatch(
-      logSegmentEvent('track', 'Clicked Send', {
+      Analytics.track('Clicked Send', {
         context: 'CoinbaseAccount',
       }),
     );
@@ -568,12 +571,11 @@ const CoinbaseAccount = ({
     setRefreshing(false);
   };
 
-  useEffect(() => {
+  useMount(() => {
     if (refresh) {
       onRefresh();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
 
   const keyExtractor = useCallback(item => item.id, []);
 
@@ -688,7 +690,7 @@ const CoinbaseAccount = ({
                 `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
               );
               dispatch(
-                logSegmentEvent('track', 'Created Basic Wallet', {
+                Analytics.track('Created Basic Wallet', {
                   coin: createNewWalletData.currency.currencyAbbreviation,
                   chain: createNewWalletData.currency.chain,
                   isErc20Token: createNewWalletData.currency.isToken,

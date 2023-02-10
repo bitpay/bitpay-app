@@ -99,6 +99,7 @@
     "react-native-fs": "2.20.0",
     "react-native-gesture-handler": "2.4.1",
     "react-native-haptic-feedback": "1.13.0",
+    "react-native-in-app-review": "4.2.1",
     "react-native-inappbrowser-reborn": "3.7.0",
     "react-native-keyboard-aware-scroll-view": "0.9.5",
     "react-native-level-fs": "3.0.1",

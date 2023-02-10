@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Braze from 'react-native-appboy-sdk';
 import RNBootSplash from 'react-native-bootsplash';
+import InAppReview from 'react-native-in-app-review';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
@@ -1008,7 +1009,15 @@ export const incomingLink =
 
     let handler: (() => void) | null = null;
 
-    if (pathSegments[0] === 'buy-crypto') {
+    if (pathSegments[0] === 'feedback') {
+      if (pathSegments[1] === 'rate') {
+        handler = () => {
+          setTimeout(() => {
+            dispatch(requestInAppReview());
+          }, 500);
+        };
+      }
+    } else if (pathSegments[0] === 'buy-crypto') {
       handler = () => {
         navigationRef.navigate(RootStacks.BUY_CRYPTO, {
           screen: BuyCryptoScreens.ROOT,
@@ -1171,7 +1180,7 @@ export const isVersionUpdated = (
 
   const current = formatTagNumber(currentVersion);
   const saved = formatTagNumber(savedVersion);
-  if (saved.major == current.major && saved.minor == current.minor) {
+  if (saved.major === current.major && saved.minor === current.minor) {
     return true;
   }
 
@@ -1211,5 +1220,44 @@ export const shortcutListener =
       case 'share':
         dispatch(shareApp());
         return;
+    }
+  };
+
+/**
+ * Requests an in-app review UI from the device. Due to review quotas set by
+ * Apple/Google, request is not guaranteed to be granted and it is possible
+ * that nothing will be presented to the user.
+ *
+ * @returns
+ */
+export const requestInAppReview =
+  (): Effect<Promise<void>> => async dispatch => {
+    try {
+      // Whether the device supports app ratings
+      const isAvailable = InAppReview.isAvailable();
+
+      if (!isAvailable) {
+        dispatch(LogActions.debug('In-app review not available.'));
+        return;
+      }
+
+      dispatch(LogActions.debug('Requesting in-app review...'));
+
+      // Android - true means the user finished or closed the review flow successfully, but does not indicate if the user left a review
+      // iOS - true means the rating flow was launched successfully, but does not indicate if the user left a review
+      const hasFlowFinishedSuccessfully =
+        await InAppReview.RequestInAppReview();
+
+      dispatch(
+        LogActions.debug(
+          `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
+        ),
+      );
+    } catch (e: any) {
+      dispatch(
+        LogActions.debug(
+          `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
+        ),
+      );
     }
   };
