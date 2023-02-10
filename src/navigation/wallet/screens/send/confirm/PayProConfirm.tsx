@@ -1,7 +1,8 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import axios from 'axios';
-import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp, StackActions} from '@react-navigation/core';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import axios from 'axios';
+import React, {useEffect, useMemo, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import SecureLockIcon from '../../../../../../assets/img/secure-lock.svg';
@@ -21,10 +22,7 @@ import {
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
@@ -42,6 +40,7 @@ import {
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import {WalletRowProps} from '../../../../../components/list/WalletRow';
@@ -52,7 +51,6 @@ import {
   CoinbaseErrorMessages,
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
-import {useTranslation} from 'react-i18next';
 import {Memo} from './Memo';
 
 export interface PayProConfirmParamList {
@@ -396,7 +394,10 @@ const PayProConfirm = () => {
             coinbaseAccount
               ? navigation.navigate('Coinbase', {
                   screen: 'CoinbaseAccount',
-                  params: {accountId: coinbaseAccount.id, refresh: true},
+                  params: {
+                    accountId: coinbaseAccount.id,
+                    refresh: true,
+                  },
                 })
               : navigation.navigate('Wallet', {
                   screen: 'WalletDetails',
@@ -420,7 +421,7 @@ const PayProConfirm = () => {
               try {
                 await sendPayment();
                 dispatch(
-                  logSegmentEvent('track', 'Sent Crypto', {
+                  Analytics.track('Sent Crypto', {
                     context: 'PayPro Confirm',
                     coin: wallet?.currencyAbbreviation || '',
                   }),
