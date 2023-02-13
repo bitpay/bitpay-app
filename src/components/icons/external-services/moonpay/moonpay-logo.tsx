@@ -9,7 +9,7 @@ const MoonpayIconSvg: React.FC<{
 }> = ({width, height}) => {
   return (
     <Svg
-      viewBox={'0 0 200 200'}
+      viewBox={'0 0 200 190'}
       height={height}
       width={width}
       id="moonpay-svg-icon">
@@ -31,11 +31,11 @@ const MoonpayLogoSvg: React.FC<{
 }> = ({isDark, width, height}) => {
   return (
     <Svg
-      viewBox={'0 0 500 200'}
+      viewBox={'10 0 450 190'}
       height={height}
       width={width}
       id="moonpay-svg-logo">
-      <G transform="translate(-70,50) scale(0.25)" stroke="none">
+      <G transform="translate(-80,50) scale(0.25)" stroke="none">
         <Path
           id="moonpay-path-logo"
           fill={isDark ? White : '#061027'}

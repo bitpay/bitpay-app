@@ -10,6 +10,7 @@ export type BuyCryptoConfig = {
   disabledTitle?: string;
   disabledMessage?: string;
   moonpay?: ExchangeConfig;
+  ramp?: ExchangeConfig;
   simplex?: ExchangeConfig;
   wyre?: ExchangeConfig;
 };

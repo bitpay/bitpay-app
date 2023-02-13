@@ -35,6 +35,7 @@ import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {getMoonpaySupportedCurrencies} from '../utils/moonpay-utils';
+import {getRampSupportedCurrencies} from '../utils/ramp-utils';
 import {getSimplexSupportedCurrencies} from '../utils/simplex-utils';
 import {getWyreSupportedCurrencies} from '../utils/wyre-utils';
 import {
@@ -129,6 +130,7 @@ const BuyCryptoRoot: React.VFC<
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
     ...new Set([
       ...getMoonpaySupportedCurrencies(locationData?.countryShortCode || 'US'),
+      ...getRampSupportedCurrencies(),
       ...getSimplexSupportedCurrencies(),
       ...getWyreSupportedCurrencies(),
     ]),
@@ -410,6 +412,13 @@ const BuyCryptoRoot: React.VFC<
           locationData?.countryShortCode || 'US',
         ) ||
           isPaymentMethodSupported(
+            'ramp',
+            PaymentMethodsAvailable.applePay,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+          ) ||
+          isPaymentMethodSupported(
             'simplex',
             PaymentMethodsAvailable.applePay,
             selectedWallet.currencyAbbreviation,
@@ -450,6 +459,13 @@ const BuyCryptoRoot: React.VFC<
         selectedWallet.chain,
         fiatCurrency,
         locationData?.countryShortCode || 'US',
+      ) ||
+      isPaymentMethodSupported(
+        'ramp',
+        selectedPaymentMethod,
+        selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
+        fiatCurrency,
       ) ||
       isPaymentMethodSupported(
         'simplex',

@@ -13,7 +13,9 @@ const SimplexIconSvg: React.FC<{
       height={height}
       width={width}
       id="simplex-svg-icon">
-      <G transform="matrix(1.3333333,0,0,-1.3333333,0,233.74667)" id="g10">
+      <G
+        transform="translate(10,0) matrix(1.3333333,0,0,-1.3333333,0,233.74667)"
+        id="g10">
         <G transform="scale(0.1)" id="g12">
           <Path
             id="simplex-path-icon"
@@ -37,7 +39,7 @@ const SimplexLogoSvg: React.FC<{
       height={height}
       width={width}
       id="simplex-svg-logo">
-      <G transform="translate(0,195) scale(0.2,-0.2)" stroke="none">
+      <G transform="translate(10,210) scale(0.2,-0.2)" stroke="none">
         <Path
           id="simplex-path-s"
           fill={isDark ? White : '#061027'}

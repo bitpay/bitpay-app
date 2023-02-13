@@ -1,4 +1,5 @@
 import {getMoonpayFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/moonpay-utils';
+import {getRampFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/ramp-utils';
 import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/simplex-utils';
 import {WalletScreens} from '../../navigation/wallet/WalletStack';
 import {navigationRef} from '../../Root';
@@ -93,6 +94,10 @@ export const getBuyCryptoFiatLimits =
         baseFiatArray = ['USD', 'EUR'];
         limits = getMoonpayFiatAmountLimits();
         break;
+      case 'ramp':
+        baseFiatArray = ['USD', 'EUR'];
+        limits = getRampFiatAmountLimits();
+        break;
       case 'simplex':
         baseFiatArray = ['USD'];
         limits = getSimplexFiatAmountLimits();
@@ -108,11 +113,13 @@ export const getBuyCryptoFiatLimits =
         limits = {
           min: Math.min(
             getMoonpayFiatAmountLimits().min,
+            getRampFiatAmountLimits().min,
             getSimplexFiatAmountLimits().min,
             getWyreFiatAmountLimits(locationData?.countryShortCode || 'US').min,
           ),
           max: Math.max(
             getMoonpayFiatAmountLimits().max,
+            getRampFiatAmountLimits().max,
             getSimplexFiatAmountLimits().max,
             getWyreFiatAmountLimits(locationData?.countryShortCode || 'US').max,
           ),

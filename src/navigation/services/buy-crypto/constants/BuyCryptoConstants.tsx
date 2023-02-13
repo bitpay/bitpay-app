@@ -28,6 +28,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <ApplePayIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      ramp: true,
       simplex: true,
       wyre: true,
     },
@@ -39,6 +40,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <BankIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      ramp: true,
       simplex: true, // EU Only
       wyre: false,
     },
@@ -50,6 +52,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <CreditCardIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      ramp: true,
       simplex: true,
       wyre: false,
     },
@@ -61,6 +64,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <DebitCardIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      ramp: true,
       simplex: true,
       wyre: true,
     },
@@ -72,6 +76,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <CreditCardIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      ramp: true,
       simplex: true,
       wyre: false,
     },

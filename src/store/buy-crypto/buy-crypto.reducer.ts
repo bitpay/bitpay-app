@@ -1,5 +1,6 @@
 import {
   MoonpayPaymentData,
+  RampPaymentData,
   SimplexPaymentData,
   WyrePaymentData,
 } from './buy-crypto.models';
@@ -12,12 +13,14 @@ export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
 
 export interface BuyCryptoState {
   moonpay: {[key in string]: MoonpayPaymentData};
+  ramp: {[key in string]: RampPaymentData};
   simplex: {[key in string]: SimplexPaymentData};
   wyre: {[key in string]: WyrePaymentData};
 }
 
 const initialState: BuyCryptoState = {
   moonpay: {},
+  ramp: {},
   simplex: {},
   wyre: {},
 };
@@ -72,6 +75,49 @@ export const buyCryptoReducer = (
       return {
         ...state,
         moonpay: {...moonpayPaymentRequestsList},
+      };
+
+    case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_RAMP:
+      const {rampPaymentData} = action.payload;
+      return {
+        ...state,
+        ramp: {
+          ...state.ramp,
+          [rampPaymentData.external_id]: rampPaymentData,
+        },
+      };
+
+    case BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_RAMP:
+      const {rampIncomingData} = action.payload;
+
+      if (
+        rampIncomingData.rampExternalId &&
+        state.ramp[rampIncomingData.rampExternalId]
+      ) {
+        if (rampIncomingData.status) {
+          state.ramp[rampIncomingData.rampExternalId].status =
+            rampIncomingData.status;
+        }
+        return {
+          ...state,
+          ramp: {
+            ...state.ramp,
+            [rampIncomingData.rampExternalId]:
+              state.ramp[rampIncomingData.rampExternalId],
+          },
+        };
+      } else {
+        return state;
+      }
+
+    case BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_RAMP:
+      const {rampExternalId} = action.payload;
+      const rampPaymentRequestsList = {...state.ramp};
+      delete rampPaymentRequestsList[rampExternalId];
+
+      return {
+        ...state,
+        ramp: {...rampPaymentRequestsList},
       };
 
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SIMPLEX:

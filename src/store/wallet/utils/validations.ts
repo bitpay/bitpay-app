@@ -48,6 +48,11 @@ export const isValidMoonpayUri = (data: string): boolean => {
   return !!data?.includes('moonpay');
 };
 
+export const isValidRampUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!data?.includes('ramp');
+};
+
 export const isValidSimplexUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!data?.includes('simplex');

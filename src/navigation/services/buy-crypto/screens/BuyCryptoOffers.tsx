@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, ScrollView} from 'react-native';
+import uuid from 'react-native-uuid';
 import styled from 'styled-components/native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
@@ -10,6 +11,7 @@ import {BaseText, H5, H7} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
+import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
@@ -28,6 +30,12 @@ import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {
   BuyCryptoLimits,
   MoonpayPaymentData,
+  RampGetAssetsData,
+  RampGetAssetsRequestData,
+  RampPaymentData,
+  RampPaymentUrlConfigParams,
+  RampQuoteRequestData,
+  RampQuoteResultForPaymentMethod,
   SimplexPaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {
@@ -36,7 +44,10 @@ import {
 } from '../../../../store/buy-crypto/buy-crypto.effects';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {APP_DEEPLINK_PREFIX} from '../../../../constants/config';
+import {
+  APP_DEEPLINK_PREFIX,
+  APP_NAME_UPPERCASE,
+} from '../../../../constants/config';
 import {
   getAvailableFiatCurrencies,
   isPaymentMethodSupported,
@@ -53,6 +64,11 @@ import {
   getMoonpayFixedCurrencyAbbreviation,
   moonpayEnv,
 } from '../utils/moonpay-utils';
+import {
+  getRampDefaultOfferData,
+  getRampCoinFormat,
+  rampEnv,
+} from '../utils/ramp-utils';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
 import WyreTerms from '../components/terms/WyreTerms';
@@ -60,6 +76,7 @@ import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -82,7 +99,7 @@ interface SimplexGetQuoteRequestData {
   payment_methods?: string[];
 }
 
-export type CryptoOfferKey = 'moonpay' | 'simplex' | 'wyre';
+export type CryptoOfferKey = 'moonpay' | 'ramp' | 'simplex' | 'wyre';
 
 export type CryptoOffer = {
   key: CryptoOfferKey;
@@ -96,9 +113,10 @@ export type CryptoOffer = {
   fee?: number;
   fiatMoney?: string; // Rate without fees
   amountReceiving?: string;
+  amountReceivingUnit?: string; // Ramp
   amountLimits?: BuyCryptoLimits;
   errorMsg?: string;
-  quoteData?: any; // Moonpay | Simplex
+  quoteData?: any; // Moonpay | Ramp | Simplex
   outOfLimitMsg?: string;
 };
 
@@ -232,6 +250,7 @@ const OfferDataRightContainer = styled.View`
 
 const offersDefault: {
   moonpay: CryptoOffer;
+  ramp: CryptoOffer;
   simplex: CryptoOffer;
   wyre: CryptoOffer;
 } = {
@@ -240,6 +259,18 @@ const offersDefault: {
     amountReceiving: '0',
     showOffer: true,
     logo: <MoonpayLogo widthIcon={25} heightIcon={25} />,
+    expanded: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  ramp: {
+    key: 'ramp',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <RampLogo width={70} height={20} />,
     expanded: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
@@ -300,7 +331,12 @@ const BuyCryptoOffers: React.FC = () => {
   const dispatch = useAppDispatch();
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
 
-  const exchangesArray: CryptoOfferKey[] = ['moonpay', 'simplex', 'wyre'];
+  const exchangesArray: CryptoOfferKey[] = [
+    'moonpay',
+    'ramp',
+    'simplex',
+    'wyre',
+  ];
   exchangesArray.forEach((exchange: CryptoOfferKey) => {
     if (offersDefault[exchange]) {
       offersDefault[exchange].fiatCurrency = getAvailableFiatCurrencies(
@@ -324,6 +360,7 @@ const BuyCryptoOffers: React.FC = () => {
 
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
   const [finishedMoonpay, setFinishedMoonpay] = useState(false);
+  const [finishedRamp, setFinishedRamp] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
@@ -480,6 +517,221 @@ const BuyCryptoOffers: React.FC = () => {
     offers.moonpay.errorMsg = msg;
     offers.moonpay.fiatMoney = undefined;
     offers.moonpay.expanded = false;
+    setUpdateView(!updateView);
+  };
+
+  const getRampQuote = async (): Promise<void> => {
+    logger.debug('Ramp getting quote');
+
+    offers.ramp.fiatAmount =
+      offers.ramp.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    const getAssetsRequestData: RampGetAssetsRequestData = {
+      env: rampEnv,
+      currencyCode: offers.ramp.fiatCurrency.toUpperCase(),
+      withDisabled: false,
+      withHidden: false,
+      useIp: true,
+    };
+
+    let assetsData: RampGetAssetsData | undefined;
+
+    try {
+      assetsData = await rampGetAssets(getAssetsRequestData);
+      if (assetsData && assetsData.assets?.length > 0) {
+        const selectedAssetData = assetsData.assets.filter(asset => {
+          return (
+            getRampCoinFormat(asset.symbol, asset.chain) ===
+            getRampCoinFormat(coin, chain)
+          );
+        });
+
+        if (selectedAssetData.length === 0) {
+          const err = t(
+            'The selected coin is not available in your region for purchases through Ramp at the moment.',
+          );
+          const reason =
+            "rampGetQuote Error. Coin not available in the user's region";
+          showRampError(err, reason);
+          return;
+        }
+      }
+    } catch (err) {
+      logger.warn(
+        'Ramp warning: Could not get assets data from Ramp. Continue anyways',
+      );
+    }
+
+    try {
+      const requestData = {
+        cryptoAssetSymbol: getRampCoinFormat(coin, chain),
+        fiatValue: offers.ramp.fiatAmount,
+        fiatCurrency: offers.ramp.fiatCurrency.toUpperCase(),
+        env: rampEnv,
+      };
+
+      const data: RampQuoteRequestData = await selectedWallet.rampGetQuote(
+        requestData,
+      );
+
+      let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
+      if (data?.asset) {
+        switch (paymentMethod.method) {
+          case 'sepaBankTransfer':
+            if (data.MANUAL_BANK_TRANSFER) {
+              paymentMethodData = data.MANUAL_BANK_TRANSFER;
+            }
+            break;
+          case 'applePay':
+            if (data.APPLE_PAY) {
+              paymentMethodData = data.APPLE_PAY;
+            }
+            break;
+          case 'debitCard':
+          case 'creditCard':
+            if (data.CARD_PAYMENT) {
+              paymentMethodData = data.CARD_PAYMENT;
+            }
+            break;
+          default:
+            paymentMethodData = getRampDefaultOfferData(data);
+        }
+
+        if (!paymentMethodData?.fiatValue) {
+          logger.error('rampGetQuote Error: No fiat value provided from Ramp');
+          const reason = 'rampGetQuote Error. No fiat value provided from Ramp';
+          showRampError(undefined, reason);
+          return;
+        }
+
+        offers.ramp.amountLimits = {
+          min:
+            data.asset.minPurchaseAmount < 0
+              ? dispatch(
+                  getBuyCryptoFiatLimits('ramp', offers.ramp.fiatCurrency),
+                ).min
+              : data.asset.minPurchaseAmount,
+          max:
+            data.asset.maxPurchaseAmount < 0
+              ? assetsData?.maxPurchaseAmount
+                ? assetsData.maxPurchaseAmount
+                : dispatch(
+                    getBuyCryptoFiatLimits('ramp', offers.ramp.fiatCurrency),
+                  ).max
+              : data.asset.maxPurchaseAmount,
+        };
+
+        if (
+          (offers.ramp.amountLimits.min &&
+            offers.ramp.fiatAmount < offers.ramp.amountLimits.min) ||
+          (offers.ramp.amountLimits.max &&
+            offers.ramp.fiatAmount > offers.ramp.amountLimits.max)
+        ) {
+          offers.ramp.outOfLimitMsg = t(
+            'There are no Ramp offers available, as the current purchase limits for this exchange must be between and',
+            {
+              min: offers.ramp.amountLimits.min,
+              max: offers.ramp.amountLimits.max,
+              fiatCurrency: offers.ramp.fiatCurrency,
+            },
+          );
+          setFinishedRamp(!finishedRamp);
+          return;
+        } else {
+          offers.ramp.outOfLimitMsg = undefined;
+          offers.ramp.errorMsg = undefined;
+          offers.ramp.quoteData = data;
+          offers.ramp.amountCost = paymentMethodData.fiatValue;
+          offers.ramp.buyAmount =
+            Number(paymentMethodData.fiatValue) -
+            Number(paymentMethodData.appliedFee);
+          offers.ramp.fee = Number(paymentMethodData.appliedFee);
+
+          const precision = dispatch(GetPrecision(coin, chain));
+          let decimals: number | undefined;
+
+          if (data.asset.decimals && data.asset.decimals > 0) {
+            decimals = data.asset.decimals;
+          } else if (precision?.unitDecimals) {
+            decimals = precision.unitDecimals;
+          } else {
+            logger.error(`Ramp error: Could not get precision for ${coin}`);
+
+            const reason = 'rampGetQuote Error. Could not get decimals';
+            showRampError(undefined, reason);
+            return;
+          }
+
+          offers.ramp.amountReceivingUnit = paymentMethodData.cryptoAmount;
+          const amountReceivingNum =
+            Number(paymentMethodData.cryptoAmount) / 10 ** decimals;
+          offers.ramp.amountReceiving = amountReceivingNum.toFixed(8);
+
+          if (
+            offers.ramp.buyAmount &&
+            Number(paymentMethodData.cryptoAmount) > 0 &&
+            coin &&
+            precision
+          ) {
+            offers.ramp.fiatMoney = Number(
+              offers.ramp.buyAmount / amountReceivingNum,
+            ).toFixed(precision.unitDecimals);
+          } else {
+            logger.error(`Ramp error: Could not get precision for ${coin}`);
+          }
+
+          logger.debug('Ramp getting quote: SUCCESS');
+          setFinishedRamp(!finishedRamp);
+        }
+      } else {
+        if (!data) {
+          logger.error('Ramp error: No data received');
+        }
+
+        let err = t("Can't get rates at this moment. Please try again later");
+        const reason = 'rampGetQuote Error. Necessary data not included.';
+        showRampError(err, reason);
+      }
+    } catch (err) {
+      const reason = 'rampGetQuote Error';
+      showRampError(err, reason);
+    }
+  };
+
+  const showRampError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Ramp error: ' + msg);
+
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'ramp',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.ramp.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.ramp.fiatCurrency || '',
+      }),
+    );
+
+    offers.ramp.errorMsg = msg;
+    offers.ramp.fiatMoney = undefined;
+    offers.ramp.expanded = false;
     setUpdateView(!updateView);
   };
 
@@ -803,6 +1055,10 @@ const BuyCryptoOffers: React.FC = () => {
         goToMoonpayBuyPage();
         break;
 
+      case 'ramp':
+        goToRampBuyPage();
+        break;
+
       case 'simplex':
         goToSimplexBuyPage();
         break;
@@ -887,8 +1143,109 @@ const BuyCryptoOffers: React.FC = () => {
     try {
       data = await selectedWallet.moonpayGetSignedPaymentUrl(quoteData);
     } catch (err) {
-      const reason = 'createWalletAddress Error';
+      const reason = 'moonpayGetSignedPaymentUrl Error';
       showMoonpayError(err, reason);
+      return;
+    }
+
+    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    await sleep(500);
+    navigation.goBack();
+  };
+
+  const goToRampBuyPage = () => {
+    if (offers.ramp.errorMsg || offers.ramp.outOfLimitMsg) {
+      return;
+    }
+    continueToRamp();
+  };
+
+  const continueToRamp = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showRampError(err, reason);
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const rampExternalId = uuid.v4().toString();
+
+    const newData: RampPaymentData = {
+      address,
+      chain: destinationChain,
+      created_on: Date.now(),
+      crypto_amount: Number(offers.ramp.amountReceiving),
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offers.ramp.buyAmount!,
+      fiat_total_amount: offers.ramp.amountCost!,
+      fiat_total_amount_currency: offers.ramp.fiatCurrency,
+      external_id: rampExternalId,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestRamp({
+        rampPaymentData: newData,
+      }),
+    );
+
+    dispatch(
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'ramp',
+        fiatAmount: offers.ramp.fiatAmount,
+        fiatCurrency: offers.ramp.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const redirectUrl =
+      APP_DEEPLINK_PREFIX +
+      'ramp?rampExternalId=' +
+      rampExternalId +
+      '&walletId=' +
+      selectedWallet.id +
+      '&status=pending';
+
+    const quoteData: RampPaymentUrlConfigParams = {
+      env: rampEnv,
+      hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
+      hostAppName: APP_NAME_UPPERCASE,
+      swapAsset: getRampCoinFormat(coin, chain),
+      swapAmount: offers.ramp.amountReceivingUnit!,
+      fiatCurrency: offers.ramp.fiatCurrency,
+      enabledFlows: 'ONRAMP',
+      defaultFlow: 'ONRAMP',
+      userAddress: address,
+      selectedCountryCode: country,
+      defaultAsset: getRampCoinFormat(coin, chain),
+      finalUrl: redirectUrl,
+    };
+
+    let data;
+    try {
+      data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
+    } catch (err) {
+      const reason = 'rampGetSignedPaymentUrl Error';
+      showRampError(err, reason);
+      return;
+    }
+
+    if (!data || !data.urlWithSignature) {
+      const err = t(
+        'It was not possible to generate the checkout URL correctly',
+      );
+      const reason =
+        'rampGetSignedPaymentUrl Error. Could not generate urlWithSignature';
+      showRampError(err, reason);
       return;
     }
 
@@ -1091,6 +1448,9 @@ const BuyCryptoOffers: React.FC = () => {
   useEffect(() => {
     if (offers.moonpay.showOffer) {
       getMoonpayQuote();
+    }
+    if (offers.ramp.showOffer) {
+      getRampQuote();
     }
     if (offers.simplex.showOffer) {
       getSimplexQuote();
