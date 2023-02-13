@@ -61,13 +61,13 @@ export const BitpaySupportedEthereumTokenOpts: TokenOptsType = {
     name: 'ApeCoin',
     symbol: 'APE',
     decimals: 18,
-    address: '0x4d224452801ACEd8B2F0aebE155379bb5D594381',
+    address: '0x4d224452801aced8b2f0aebe155379bb5d594381',
   },
   euroc_e: {
     name: 'Euro Coin',
     symbol: 'EUROC',
     decimals: 6,
-    address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
+    address: '0x1abaea1f7c830bd89acc67ec4af516284b1bc33c',
   },
   matic_e: {
     name: 'Matic Token',
@@ -164,17 +164,17 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
     decimals: 18,
     address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce',
   },
-  '0x4d224452801ACEd8B2F0aebE155379bb5D594381_e': {
+  '0x4d224452801aced8b2f0aebe155379bb5d594381_e': {
     name: 'ApeCoin',
     symbol: 'APE',
     decimals: 18,
-    address: '0x4d224452801ACEd8B2F0aebE155379bb5D594381',
+    address: '0x4d224452801aced8b2f0aebe155379bb5d594381',
   },
-  '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c_e': {
+  '0x1abaea1f7c830bd89acc67ec4af516284b1bc33c_e': {
     name: 'Euro Coin',
     symbol: 'EUROC',
     decimals: 6,
-    address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
+    address: '0x1abaea1f7c830bd89acc67ec4af516284b1bc33c',
   },
   '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0_e': {
     name: 'Matic Token',
