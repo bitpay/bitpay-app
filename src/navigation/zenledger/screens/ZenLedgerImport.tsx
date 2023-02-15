@@ -23,6 +23,7 @@ import {
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
 import {
+  dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
@@ -37,6 +38,7 @@ import {
   ZenLedgerWalletObj,
 } from '../../../store/zenledger/zenledger.models';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
+import {SUPPORTED_UTXO_COINS} from '../../../constants/currencies';
 
 const ZenLedgerImportContainer = styled.View`
   flex: 1;
@@ -140,6 +142,31 @@ const ZenLedgerImport: React.FC = () => {
     [dispatch],
   );
 
+  const goToZenLedger = async (
+    requestWallets: ZenLedgerRequestWalletsType[],
+  ) => {
+    try {
+      dispatch(startOnGoingProcessModal('REDIRECTING'));
+      const {url} = (await dispatch<any>(
+        getZenLedgerUrl(requestWallets),
+      )) as any;
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      dispatch(openUrlWithInAppBrowser(url));
+      await sleep(500);
+      navigation.goBack();
+    } catch (e) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(e),
+          title: t('Uh oh, something went wrong'),
+        }),
+      );
+    }
+  };
+
   return (
     <ZenLedgerImportContainer>
       <View style={{marginLeft: 20, marginTop: 32}}>
@@ -207,14 +234,44 @@ const ZenLedgerImport: React.FC = () => {
               haptic('impactLight');
               dispatch(startOnGoingProcessModal('LOADING'));
               const requestWallets = await getRequestWallets();
-              const {url} = (await dispatch<any>(
-                getZenLedgerUrl(requestWallets),
-              )) as any;
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);
-              dispatch(openUrlWithInAppBrowser(url));
-              await sleep(500);
-              navigation.goBack();
+              if (
+                requestWallets.some(wallet =>
+                  SUPPORTED_UTXO_COINS.includes(wallet.blockchain),
+                )
+              ) {
+                dispatch(
+                  showBottomNotificationModal({
+                    type: 'warning',
+                    title: t('Attention'),
+                    message: t(
+                      'For BTC, LTC, DOGE, BCH, ZenLedger import is limited and may require you to manually upload additional addresses in their dashboard.',
+                    ),
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: t('GOT IT'),
+                        action: async () => {
+                          dispatch(dismissBottomNotificationModal());
+                          await sleep(500);
+                          goToZenLedger(requestWallets);
+                        },
+                        primary: true,
+                      },
+                      {
+                        text: t('Cancel'),
+                        action: async () => {
+                          dispatch(dismissBottomNotificationModal());
+                          await sleep(500);
+                        },
+                      },
+                    ],
+                  }),
+                );
+              } else {
+                goToZenLedger(requestWallets);
+              }
             } catch (e) {
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);

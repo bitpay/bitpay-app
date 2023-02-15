@@ -496,6 +496,7 @@ export const startOnGoingProcessModal =
       UPDATING_TXP: i18n.t('Updating Transaction'),
       CREATING_TXP: i18n.t('Creating Transaction'),
       SENDING_EMAIL: i18n.t('Sending Email'),
+      REDIRECTING: i18n.t('Redirecting'),
     };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next
