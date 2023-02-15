@@ -130,6 +130,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'APP',
+      blacklist: appReduxPersistBlackList,
     },
     appReducer,
   ),
@@ -137,6 +138,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'BITPAY_ID',
+      blacklist: bitPayIdReduxPersistBlackList,
     },
     bitPayIdReducer,
   ),
@@ -144,6 +146,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'BUY_CRYPTO',
+      blacklist: buyCryptoReduxPersistBlackList,
     },
     buyCryptoReducer,
   ),
@@ -151,6 +154,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'CARD',
+      blacklist: cardReduxPersistBlacklist,
     },
     cardReducer,
   ),
@@ -158,6 +162,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'LOCATION',
+      blacklist: locationReduxPersistBlackList,
     },
     locationReducer,
   ),
@@ -165,6 +170,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'LOG',
+      blacklist: logReduxPersistBlackList,
     },
     logReducer,
   ),
@@ -172,6 +178,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'SHOP',
+      blacklist: shopReduxPersistBlackList,
     },
     shopReducer,
   ),
@@ -179,6 +186,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'SWAP_CRYPTO',
+      blacklist: swapCryptoReduxPersistBlackList,
     },
     swapCryptoReducer,
   ),
@@ -187,6 +195,7 @@ const reducers = {
       storage: AsyncStorage,
       transforms: [bindWalletClient, bindWalletKeys],
       key: 'WALLET',
+      blacklist: walletReduxPersistBlackList,
     },
     walletReducer,
   ),
@@ -194,6 +203,7 @@ const reducers = {
     {
       storage: AsyncStorage,
       key: 'WALLET_BACKUP',
+      blacklist: walletReduxPersistBlackList,
     },
     walletBackupReducer,
   ),
@@ -201,6 +211,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'RATE',
+      blacklist: rateReduxPersistBlackList,
     },
     rateReducer,
   ),
@@ -209,6 +220,7 @@ const reducers = {
       ...basePersistConfig,
       key: 'CONTACT',
       transforms: [transformContacts],
+      blacklist: ContactReduxPersistBlackList,
     },
     contactReducer,
   ),
@@ -216,6 +228,7 @@ const reducers = {
     {
       ...basePersistConfig,
       key: 'COINBASE',
+      blacklist: CoinbaseReduxPersistBlackList,
     },
     coinbaseReducer,
   ),
@@ -224,6 +237,7 @@ const reducers = {
       storage: AsyncStorage,
       key: 'WALLET_CONNECT',
       transforms: [transformCircular],
+      blacklist: walletConnectReduxPersistBlackList,
     },
     walletConnectReducer,
   ),
