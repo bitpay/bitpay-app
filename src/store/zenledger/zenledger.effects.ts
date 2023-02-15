@@ -14,7 +14,7 @@ export const getZenLedgerUrl =
           'content-type': 'application/json',
         },
       };
-      const url = `https://stagingapi.zenledger.io/bitpay/wallets/${ZENLEDGER_CLIENT_ID}`;
+      const url = `https://api.zenledger.io/bitpay/wallets/${ZENLEDGER_CLIENT_ID}`;
       const {data} = await axios.post<{url: string}>(url, {wallets}, config);
       dispatch(LogActions.info('successful [getZenLedgerUrl]'));
       return data;

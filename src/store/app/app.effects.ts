@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Braze from 'react-native-appboy-sdk';
 import RNBootSplash from 'react-native-bootsplash';
+import InAppReview from 'react-native-in-app-review';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
@@ -44,11 +45,7 @@ import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {
-  deferredImportMnemonic,
-  startMigration,
-  startWalletStoreInit,
-} from '../wallet/effects';
+import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -222,12 +219,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
-
-    // Deferred Import
-    if (WALLET.deferredImport) {
-      const {importData, opts} = WALLET.deferredImport;
-      dispatch(deferredImportMnemonic(importData, opts, 'deferredImport'));
-    }
 
     dispatch(showBlur(pinLockActive || biometricLockActive));
 
@@ -509,7 +500,6 @@ export const startOnGoingProcessModal =
       UPDATING_TXP: i18n.t('Updating Transaction'),
       CREATING_TXP: i18n.t('Creating Transaction'),
       SENDING_EMAIL: i18n.t('Sending Email'),
-      REDIRECTING: i18n.t('Redirecting'),
     };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next
@@ -1023,7 +1013,15 @@ export const incomingLink =
 
     let handler: (() => void) | null = null;
 
-    if (pathSegments[0] === 'buy-crypto') {
+    if (pathSegments[0] === 'feedback') {
+      if (pathSegments[1] === 'rate') {
+        handler = () => {
+          setTimeout(() => {
+            dispatch(requestInAppReview());
+          }, 500);
+        };
+      }
+    } else if (pathSegments[0] === 'buy-crypto') {
       handler = () => {
         navigationRef.navigate(RootStacks.BUY_CRYPTO, {
           screen: BuyCryptoScreens.ROOT,
@@ -1186,7 +1184,7 @@ export const isVersionUpdated = (
 
   const current = formatTagNumber(currentVersion);
   const saved = formatTagNumber(savedVersion);
-  if (saved.major == current.major && saved.minor == current.minor) {
+  if (saved.major === current.major && saved.minor === current.minor) {
     return true;
   }
 
@@ -1234,3 +1232,42 @@ export const resetBrazeEid = (): Effect<void> => dispatch => {
   dispatch(setBrazeEid(brazeEid));
   Braze.changeUser(brazeEid);
 };
+
+/**
+ * Requests an in-app review UI from the device. Due to review quotas set by
+ * Apple/Google, request is not guaranteed to be granted and it is possible
+ * that nothing will be presented to the user.
+ *
+ * @returns
+ */
+export const requestInAppReview =
+  (): Effect<Promise<void>> => async dispatch => {
+    try {
+      // Whether the device supports app ratings
+      const isAvailable = InAppReview.isAvailable();
+
+      if (!isAvailable) {
+        dispatch(LogActions.debug('In-app review not available.'));
+        return;
+      }
+
+      dispatch(LogActions.debug('Requesting in-app review...'));
+
+      // Android - true means the user finished or closed the review flow successfully, but does not indicate if the user left a review
+      // iOS - true means the rating flow was launched successfully, but does not indicate if the user left a review
+      const hasFlowFinishedSuccessfully =
+        await InAppReview.RequestInAppReview();
+
+      dispatch(
+        LogActions.debug(
+          `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
+        ),
+      );
+    } catch (e: any) {
+      dispatch(
+        LogActions.debug(
+          `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
+        ),
+      );
+    }
+  };

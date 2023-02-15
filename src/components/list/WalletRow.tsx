@@ -130,7 +130,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
           <ListItemSubText
             ellipsizeMode="tail"
             numberOfLines={1}
-            style={{marginTop: Platform.OS === 'ios' ? -2 : 0}}>
+            style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
             {currencyAbbreviation.toUpperCase()}{' '}
             {multisig ? `${multisig} ` : null}
           </ListItemSubText>

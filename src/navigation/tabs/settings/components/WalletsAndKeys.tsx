@@ -16,7 +16,6 @@ import {Key} from '../../../../store/wallet/wallet.models';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {keyBackupRequired} from '../../home/components/Crypto';
 import {SettingsComponent} from '../SettingsRoot';
-import {DisabledOpacity} from '../../home/components/Styled';
 
 const CreateOrImportLink = styled(Link)`
   font-weight: 500;
@@ -28,7 +27,6 @@ const WalletsAndKeys = () => {
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const keyList = Object.values(keys);
-  const deferredImport = useAppSelector(({WALLET}) => WALLET.deferredImport);
 
   const onPressKey = (key: Key) => {
     key.backupComplete
@@ -66,11 +64,7 @@ const WalletsAndKeys = () => {
           ))
         : null}
       <Setting
-        disabled={!!deferredImport}
-        style={[
-          {justifyContent: 'center'},
-          !!deferredImport && DisabledOpacity,
-        ]}
+        style={{justifyContent: 'center'}}
         onPress={() =>
           navigation.navigate('Wallet', {screen: 'CreationOptions'})
         }

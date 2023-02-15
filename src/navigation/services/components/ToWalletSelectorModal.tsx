@@ -496,7 +496,6 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
         linkedCoinbase: false,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType: 'listView',
-        deferredImport: false,
         context: 'keySelector',
         onPress: onKeySelected,
         currency: currency,

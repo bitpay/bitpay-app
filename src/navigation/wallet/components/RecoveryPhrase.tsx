@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Caution,
@@ -38,15 +38,16 @@ import {
   H4,
   ImportTitle,
   Paragraph,
+  Small,
   TextAlign,
 } from '../../../components/styled/Text';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
-  deferredImportMnemonic,
   startCreateKeyWithOpts,
   startGetRates,
+  startImportMnemonic,
   startImportWithDerivationPath,
 } from '../../../store/wallet/effects';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -106,6 +107,11 @@ const ErrorText = styled(BaseText)`
   font-size: 12px;
   font-weight: 500;
   padding: 5px 0 0 10px;
+`;
+
+const CuationText = styled(Small)`
+  padding: 5px 0 0 0px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const schema = yup.object().shape({
@@ -190,7 +196,8 @@ const RecoveryPhrase = () => {
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(CurrencyOptions[0]);
   const [recreateWallet, setRecreateWallet] = useState(false);
-
+  const [includeTestnetWallets, setIncludeTestnetWallets] = useState(false);
+  const [includeLegacyWallets, setIncludeLegacyWallets] = useState(false);
   const [advancedOptions, setAdvancedOptions] = useState({
     derivationPath: DefaultDerivationPath.defaultBTC as string,
     coin: CurrencyOptions[0].currencyAbbreviation,
@@ -375,6 +382,9 @@ const RecoveryPhrase = () => {
 
     let keyOpts: Partial<KeyOptions> = {};
 
+    keyOpts.includeTestnetWallets = includeTestnetWallets;
+    keyOpts.includeLegacyWallets = includeLegacyWallets;
+
     try {
       setKeyOptions(keyOpts, advancedOptions);
     } catch (e: any) {
@@ -397,77 +407,35 @@ const RecoveryPhrase = () => {
     }
   };
 
-  const startDeferredImport = async (
-    importData: {words?: string | undefined; xPrivKey?: string | undefined},
-    opts: Partial<KeyOptions>,
-  ) => {
-    await sleep(50);
-    dispatch(startOnGoingProcessModal('REDIRECTING'));
-    await sleep(350);
-
-    let _context = route.params?.context;
-    if (_context !== 'onboarding') {
-      _context = 'deferredImport';
-    }
-
-    dispatch(deferredImportMnemonic(importData, opts, _context));
-    dispatch(dismissOnGoingProcessModal());
-    backupRedirect({
-      context: _context,
-      navigation,
-      walletTermsAccepted,
-    });
-  };
-
   const importWallet = async (
     importData: {words?: string | undefined; xPrivKey?: string | undefined},
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      if (!derivationPathEnabled) {
-        await startDeferredImport(importData, opts);
-        await sleep(500);
-        dispatch(
-          showBottomNotificationModal({
-            type: 'wait',
-            title: t('Please wait'),
-            message: t(
-              'Your key is still being imported and will be available shortly. ',
-            ),
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: t('GOT IT'),
-                action: () => {},
-                primary: true,
-              },
-            ],
-          }),
-        );
-      } else {
-        await dispatch(startOnGoingProcessModal('IMPORTING'));
-        const key = (await dispatch<any>(
-          startImportWithDerivationPath(importData, opts),
-        )) as Key;
-        await dispatch(startGetRates({}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-        await sleep(1000);
-        await dispatch(updatePortfolioBalance());
-        dispatch(setHomeCarouselConfig({id: key.id, show: true}));
-        backupRedirect({
-          context: route.params?.context,
-          navigation,
-          walletTermsAccepted,
-          key,
-        });
-        dispatch(
-          logSegmentEvent('track', 'Imported Key', {
-            context: route.params?.context || '',
-            source: 'RecoveryPhrase',
-          }),
-        );
-        dispatch(dismissOnGoingProcessModal());
-      }
+      dispatch(startOnGoingProcessModal('IMPORTING'));
+      await sleep(1000);
+      const key = !derivationPathEnabled
+        ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
+        : ((await dispatch<any>(
+            startImportWithDerivationPath(importData, opts),
+          )) as Key);
+      await dispatch(startGetRates({}));
+      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+      await dispatch(updatePortfolioBalance());
+      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+      backupRedirect({
+        context: route.params?.context,
+        navigation,
+        walletTermsAccepted,
+        key,
+      });
+      dispatch(
+        logSegmentEvent('track', 'Imported Key', {
+          context: route.params?.context || '',
+          source: 'RecoveryPhrase',
+        }),
+      );
+      dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());
@@ -649,6 +617,9 @@ const RecoveryPhrase = () => {
 
         {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
 
+        <CuationText>
+          {t('This process may take a few minutes to complete.')}
+        </CuationText>
         <CtaContainer>
           <AdvancedOptionsContainer>
             <AdvancedOptionsButton
@@ -672,6 +643,50 @@ const RecoveryPhrase = () => {
                 </>
               )}
             </AdvancedOptionsButton>
+
+            {showAdvancedOptions && !derivationPathEnabled && (
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setIncludeTestnetWallets(!includeTestnetWallets);
+                  }}>
+                  <Column>
+                    <OptionTitle>{t('Include Testnet Wallets')}</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={includeTestnetWallets}
+                      onPress={() => {
+                        setIncludeTestnetWallets(!includeTestnetWallets);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
+            )}
+
+            {showAdvancedOptions && !derivationPathEnabled && (
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setIncludeLegacyWallets(!includeLegacyWallets);
+                  }}>
+                  <Column>
+                    <OptionTitle>{t('Include Legacy Wallets')}</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={includeLegacyWallets}
+                      onPress={() => {
+                        setIncludeLegacyWallets(!includeLegacyWallets);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
+            )}
 
             {showAdvancedOptions && (
               <AdvancedOptions>

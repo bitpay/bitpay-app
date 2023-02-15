@@ -1,5 +1,7 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
+import i18next from 'i18next';
+import _ from 'lodash';
 import React, {
   ReactElement,
   useCallback,
@@ -11,6 +13,8 @@ import React, {
 } from 'react';
 import {useTranslation} from 'react-i18next';
 import {
+  DeviceEventEmitter,
+  FlatList,
   Linking,
   RefreshControl,
   SectionList,
@@ -18,6 +22,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {batch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
@@ -31,7 +36,7 @@ import {
   ProposalBadge,
   Small,
 } from '../../../components/styled/Text';
-import {Network, URL} from '../../../constants';
+import {Network} from '../../../constants';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
@@ -98,11 +103,9 @@ import TransactionProposalRow from '../../../components/list/TransactionProposal
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
-import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
 import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
-import {FlatList} from 'react-native';
 import {
   buildBtcSpeedupTx,
   buildEthERCTokenSpeedupTx,
@@ -112,17 +115,20 @@ import {
 import KeySvg from '../../../../assets/img/key.svg';
 import TimerSvg from '../../../../assets/img/timer.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
 } from '../../../constants/currencies';
-import i18next from 'i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
-import _ from 'lodash';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
 import {TRANSACTION_ICON_SIZE} from '../../../constants/TransactionIcons';
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+
+export type WalletDetailsScreenParamList = {
+  walletId: string;
+  key?: Key;
+  skipInitializeHistory?: boolean;
+};
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -528,7 +534,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     dispatch(
-      logSegmentEvent('track', 'View Wallet', {
+      Analytics.track('View Wallet', {
         coin: fullWalletObj?.currencyAbbreviation,
       }),
     );
@@ -993,7 +999,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent('track', 'Clicked Buy Crypto', {
+                          Analytics.track('Clicked Buy Crypto', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
                           }),
@@ -1024,7 +1030,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent('track', 'Clicked Swap Crypto', {
+                          Analytics.track('Clicked Swap Crypto', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
                           }),
@@ -1040,7 +1046,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     receive={{
                       cta: () => {
                         dispatch(
-                          logSegmentEvent('track', 'Clicked Receive', {
+                          Analytics.track('Clicked Receive', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
                           }),
@@ -1052,7 +1058,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       hide: !fullWalletObj.balance.sat,
                       cta: () => {
                         dispatch(
-                          logSegmentEvent('track', 'Clicked Send', {
+                          Analytics.track('Clicked Send', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
                           }),

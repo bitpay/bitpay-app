@@ -43,6 +43,7 @@ import {
 import {
   FormatAmountStr,
   GetExcludedUtxosMessage,
+  parseAmountToStringIfBN,
   SatToUnit,
 } from '../../../../store/wallet/effects/amount/amount';
 import {
@@ -211,9 +212,19 @@ const ChangellyCheckout: React.FC = () => {
             'Changelly createFixTransaction Error: ' + data.error.message,
           );
 
-          if (
-            Math.abs(data.error.code) == 32602 ||
-            Math.abs(data.error.code) == 32603
+          if (data.error.message.includes("Can't exchange this currencies")) {
+            const msg = t(
+              "Can't exchange this currencies, please try again later.",
+            );
+            const reason = `Can't exchange this currencies error. Trying to exchange from ${fromWalletSelected.currencyAbbreviation.toLowerCase()}_${
+              fromWalletSelected.chain
+            } to ${toWalletSelected.currencyAbbreviation.toLowerCase()}_${
+              toWalletSelected.chain
+            }`;
+            showError(msg, reason);
+          } else if (
+            Math.abs(data.error.code) === 32602 ||
+            Math.abs(data.error.code) === 32603
           ) {
             logger.debug(
               'Changelly rateId was expired or already used. Generating a new one',
@@ -478,6 +489,9 @@ const ChangellyCheckout: React.FC = () => {
           txp.tokenAddress = token.address;
           if (txp.outputs) {
             for (const output of txp.outputs) {
+              if (output.amount) {
+                output.amount = parseAmountToStringIfBN(output.amount);
+              }
               if (!output.data) {
                 output.data = BWC.getCore()
                   .Transactions.get({chain: getCWCChain(wallet.chain)})

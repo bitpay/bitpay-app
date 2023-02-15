@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.9.1",
+  "version": "14.10.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -63,7 +63,7 @@
     "asyncstorage-down": "4.2.0",
     "axios": "0.21.1",
     "bitauth": "0.4.1",
-    "bitcore-wallet-client": "8.25.45",
+    "bitcore-wallet-client": "8.25.46",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",
     "eth-sig-util": "3.0.1",
@@ -99,6 +99,7 @@
     "react-native-fs": "2.20.0",
     "react-native-gesture-handler": "2.4.1",
     "react-native-haptic-feedback": "1.13.0",
+    "react-native-in-app-review": "4.2.1",
     "react-native-inappbrowser-reborn": "3.7.0",
     "react-native-keyboard-aware-scroll-view": "0.9.5",
     "react-native-level-fs": "3.0.1",
