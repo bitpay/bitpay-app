@@ -63,7 +63,10 @@ const ZenLedgerImport: React.FC = () => {
   const setFormattedKeys = () => {
     return _allKeys.map((key, index) => {
       const formattedWallet: ZenLedgerWalletObj[] = key.wallets
-        .filter(({network}) => network === Network.mainnet)
+        .filter(
+          ({network, credentials}) =>
+            network === Network.mainnet && credentials.isComplete(),
+        )
         .map(wallet => {
           const {currencyAbbreviation, chain, network, balance, hideWallet} =
             wallet;
