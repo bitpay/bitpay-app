@@ -35,7 +35,8 @@ export type OnGoingProcessMessages =
   | 'FETCHING_COINBASE_DATA'
   | 'UPDATING_TXP'
   | 'CREATING_TXP'
-  | 'SENDING_EMAIL';
+  | 'SENDING_EMAIL'
+  | 'REDIRECTING';
 
 const OnGoingProcessContainer = styled.View`
   max-width: 60%;
