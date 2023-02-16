@@ -32,6 +32,7 @@ import {
   isValidSimplexUri,
   isValidWalletConnectUri,
   isValidWyreUri,
+  IsBitPayInvoiceWebUrl,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -88,6 +89,11 @@ export const incomingData =
     let handled = true;
 
     try {
+      if (IsBitPayInvoiceWebUrl(data)) {
+        data = data
+          .replace('https://', 'https://link.')
+          .replace('/invoice?id=', '/i/');
+      }
       if (IsValidBitPayInvoice(data)) {
         dispatch(handleUnlock(data));
       }

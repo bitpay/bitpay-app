@@ -20,6 +20,12 @@ const SanitizeUri = (data: string): string => {
   return newUri;
 };
 
+export const IsBitPayInvoiceWebUrl = (data: string): boolean => {
+  return !!/^https:\/\/(www\.|link\.)?(test\.|staging\.)?bitpay\.com\/(invoice\?id=)\w+/.exec(
+    data,
+  );
+};
+
 export const IsValidBitPayInvoice = (data: string): boolean => {
   return !!/^https:\/\/(www\.|link\.)?(test\.|staging\.)?bitpay\.com\/i\/\w+/.exec(
     data,
