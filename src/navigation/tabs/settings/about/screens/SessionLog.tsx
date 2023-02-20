@@ -53,6 +53,14 @@ const Logs = styled(BaseText)<{color?: string | null}>`
     color ? color : dark ? White : SlateDark};
 `;
 
+const LogsTextContainer = styled.View`
+  flex-direction: row;
+`;
+
+const LogsTextColumn = styled.View`
+  align-items: flex-start;
+`;
+
 const LogsMessage = styled.Text`
   font-weight: 400;
 `;
@@ -136,9 +144,16 @@ const FilterLabels: React.VFC<{onPress?: (level: LogLevel) => any}> = memo(
 );
 
 const renderItem = ({item}: {item: LogEntry}) => (
-  <Logs color={LogColorMap[item.level]}>
-    [{LogLevel[item.level]}] <LogsMessage>{item.message}</LogsMessage>
-  </Logs>
+  <LogsTextContainer>
+    <LogsTextColumn style={{paddingRight: 5}}>
+      <Logs color={LogColorMap[item.level]}>[{LogLevel[item.level]}]</Logs>
+    </LogsTextColumn>
+    <LogsTextColumn>
+      <Logs color={LogColorMap[item.level]}>
+        <LogsMessage>{item.message}</LogsMessage>
+      </Logs>
+    </LogsTextColumn>
+  </LogsTextContainer>
 );
 
 const keyExtractor = (item: LogEntry, index: number) => item.message + index;
