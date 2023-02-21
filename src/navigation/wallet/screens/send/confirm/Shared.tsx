@@ -347,12 +347,14 @@ export const Amount = ({
               <H6>{description.toUpperCase()}</H6>
             )}
             <DetailColumn>
-              {fiatOnly && network && chain ? (
-                buildTestBadge(network, chain, false) || <H7>{fiatAmount}</H7>
+              {fiatOnly ? (
+                <H7>{fiatAmount}</H7>
               ) : (
                 <>
                   <H4>{cryptoAmount}</H4>
-                  {network && chain ? (
+                  {network &&
+                  !['livenet', 'mainnet'].includes(network) &&
+                  chain ? (
                     buildTestBadge(network, chain, false)
                   ) : (
                     <ConfirmSubText>{fiatAmount}</ConfirmSubText>
