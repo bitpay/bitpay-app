@@ -21,7 +21,7 @@ const SanitizeUri = (data: string): string => {
 };
 
 export const IsBitPayInvoiceWebUrl = (data: string): boolean => {
-  return !!/^https:\/\/(www\.|link\.)?(test\.|staging\.)?bitpay\.com\/(invoice\?id=)\w+/.exec(
+  return !!/^https:\/\/(www\.|link\.)?(test\.|staging\.)?bitpay\.com\/(invoice\?)\w+/.exec(
     data,
   );
 };
