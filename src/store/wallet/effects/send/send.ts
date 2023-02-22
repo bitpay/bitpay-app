@@ -378,7 +378,8 @@ export const buildTxDetails =
     const {gasPrice, gasLimit, nonce, destinationTag} = proposal || {};
     const invoiceCurrency =
       invoice?.buyerProvidedInfo!.selectedTransactionCurrency;
-    let {amount, coin, chain, fee} = proposal || {};
+    let {amount, coin, chain, fee = 0} = proposal || {}; // proposal fee is zero for coinbase
+
     if (invoiceCurrency) {
       amount = invoice.paymentTotals[invoiceCurrency] || 0;
       const coinAndChain = getCoinAndChainFromCurrencyCode(
@@ -386,7 +387,6 @@ export const buildTxDetails =
       );
       coin = coinAndChain.coin;
       chain = coinAndChain.chain;
-      fee = invoice.minerFees[invoiceCurrency].totalFee || 0;
     }
 
     if (!coin || !chain) {
@@ -430,25 +430,27 @@ export const buildTxDetails =
         recipientFullAddress: address,
         recipientChain: chain,
       },
-      fee: {
-        feeLevel,
-        cryptoAmount: dispatch(FormatAmountStr(chain, chain, fee)),
-        fiatAmount: formatFiatAmount(
-          dispatch(
-            toFiat(
-              fee,
-              defaultAltCurrencyIsoCode,
-              chain,
-              chain,
-              rates,
-              effectiveRateForFee,
+      ...(fee !== 0 && {
+        fee: {
+          feeLevel,
+          cryptoAmount: dispatch(FormatAmountStr(chain, chain, fee)),
+          fiatAmount: formatFiatAmount(
+            dispatch(
+              toFiat(
+                fee,
+                defaultAltCurrencyIsoCode,
+                chain,
+                chain,
+                rates,
+                effectiveRateForFee,
+              ),
             ),
+            defaultAltCurrencyIsoCode,
           ),
-          defaultAltCurrencyIsoCode,
-        ),
-        percentageOfTotalAmount:
-          ((fee / (amount + fee)) * 100).toFixed(2) + '%',
-      },
+          percentageOfTotalAmount:
+            ((fee / (amount + fee)) * 100).toFixed(2) + '%',
+        },
+      }),
       ...(networkCost && {
         networkCost: {
           cryptoAmount: dispatch(FormatAmountStr(chain, chain, networkCost)),
