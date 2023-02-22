@@ -15,8 +15,8 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
 import {useAppDispatch} from '../../../utils/hooks';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export interface Option {
   id: string;
@@ -48,7 +48,7 @@ const CreationOptions: React.FC = () => {
       ),
       cta: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Create New Key', {
+          Analytics.track('Clicked Create New Key', {
             context: 'CreationOptions',
           }),
         );
@@ -66,7 +66,7 @@ const CreationOptions: React.FC = () => {
       ),
       cta: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Import Key', {
+          Analytics.track('Clicked Import Key', {
             context: 'CreationOptions',
           }),
         );

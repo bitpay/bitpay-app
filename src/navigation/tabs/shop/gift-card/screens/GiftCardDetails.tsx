@@ -61,8 +61,8 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {generateGiftCardPrintHtml} from '../../../../../lib/gift-cards/gift-card';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const maxWidth = 320;
 
@@ -390,7 +390,7 @@ const GiftCardDetails = ({
                         }`,
                       );
                       dispatch(
-                        logSegmentEvent('track', 'Redeemed Gift Card', {
+                        Analytics.track('Redeemed Gift Card', {
                           giftCardAmount: giftCard.amount,
                           giftCardBrand: cardConfig.name,
                           giftCardCurrency: cardConfig.currency,

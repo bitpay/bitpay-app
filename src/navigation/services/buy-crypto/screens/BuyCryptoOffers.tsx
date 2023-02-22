@@ -23,10 +23,7 @@ import {
 import {getWyreCoinFormat, wyreEnv} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
-import {
-  logSegmentEvent,
-  openUrlWithInAppBrowser,
-} from '../../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {
   BuyCryptoLimits,
@@ -62,6 +59,7 @@ import WyreTerms from '../components/terms/WyreTerms';
 import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -467,7 +465,7 @@ const BuyCryptoOffers: React.FC = () => {
     logger.error('Moonpay error: ' + msg);
 
     dispatch(
-      logSegmentEvent('track', 'Failed Buy Crypto', {
+      Analytics.track('Failed Buy Crypto', {
         exchange: 'moonpay',
         context: 'BuyCryptoOffers',
         reason: reason || 'unknown',
@@ -615,7 +613,7 @@ const BuyCryptoOffers: React.FC = () => {
     logger.error('Simplex error: ' + msg);
 
     dispatch(
-      logSegmentEvent('track', 'Failed Buy Crypto', {
+      Analytics.track('Failed Buy Crypto', {
         exchange: 'simplex',
         context: 'BuyCryptoOffers',
         reason: reason || 'unknown',
@@ -769,7 +767,7 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     dispatch(
-      logSegmentEvent('track', 'Failed Buy Crypto', {
+      Analytics.track('Failed Buy Crypto', {
         exchange: 'wyre',
         context: 'BuyCryptoOffers',
         reason: reason || 'unknown',
@@ -859,7 +857,7 @@ const BuyCryptoOffers: React.FC = () => {
     );
 
     dispatch(
-      logSegmentEvent('track', 'Requested Crypto Purchase', {
+      Analytics.track('Requested Crypto Purchase', {
         exchange: 'moonpay',
         fiatAmount: offers.moonpay.fiatAmount,
         fiatCurrency: offers.moonpay.fiatCurrency,
@@ -968,7 +966,7 @@ const BuyCryptoOffers: React.FC = () => {
         );
 
         dispatch(
-          logSegmentEvent('track', 'Requested Crypto Purchase', {
+          Analytics.track('Requested Crypto Purchase', {
             exchange: 'simplex',
             fiatAmount: offers.simplex.fiatAmount,
             fiatCurrency: offers.simplex.fiatCurrency,
@@ -1065,7 +1063,7 @@ const BuyCryptoOffers: React.FC = () => {
   const continueToWyre = async (paymentUrl: string) => {
     const destinationChain = selectedWallet.chain;
     dispatch(
-      logSegmentEvent('track', 'Requested Crypto Purchase', {
+      Analytics.track('Requested Crypto Purchase', {
         exchange: 'wyre',
         fiatAmount: offers.wyre.fiatAmount,
         fiatCurrency: offers.wyre.fiatCurrency,

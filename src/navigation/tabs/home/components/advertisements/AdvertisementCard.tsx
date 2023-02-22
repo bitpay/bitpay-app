@@ -9,8 +9,8 @@ import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {AppEffects} from '../../../../../store/app';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {LogActions} from '../../../../../store/log';
 import {
   LightBlack,
@@ -117,7 +117,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     }
 
     dispatch(
-      logSegmentEvent('track', 'Clicked Advertisement', {
+      Analytics.track('Clicked Advertisement', {
         id: contentCard.id || '',
       }),
     );

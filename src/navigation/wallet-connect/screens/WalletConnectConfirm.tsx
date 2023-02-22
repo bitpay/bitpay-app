@@ -16,10 +16,7 @@ import {
   startSendPayment,
 } from '../../../store/wallet/effects/send/send';
 import {sleep} from '../../../utils/helper-methods';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -58,6 +55,7 @@ import {Platform} from 'react-native';
 import Banner from '../../../components/banner/Banner';
 import {BaseText} from '../../../components/styled/Text';
 import {Hr} from '../../../components/styled/Containers';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
@@ -133,7 +131,7 @@ const WalletConnectConfirm = () => {
       await dispatch(walletConnectApproveCallRequest(request.peerId, response));
       dispatch(dismissOnGoingProcessModal());
       dispatch(
-        logSegmentEvent('track', 'Sent Crypto', {
+        Analytics.track('Sent Crypto', {
           context: 'WalletConnect Confirm',
           coin: wallet?.currencyAbbreviation || '',
         }),

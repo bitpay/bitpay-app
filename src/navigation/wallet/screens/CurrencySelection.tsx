@@ -26,10 +26,7 @@ import {
   ImageSourcePropType,
   ListRenderItem,
 } from 'react-native';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle, Link} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -55,6 +52,7 @@ import {useTranslation} from 'react-i18next';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import {orderBy} from 'lodash';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -398,7 +396,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
                 },
               );
               dispatch(
-                logSegmentEvent('track', 'Created Key', {
+                Analytics.track('Created Key', {
                   context,
                   coins: selectedCurrencies,
                 }),

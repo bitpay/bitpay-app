@@ -47,8 +47,8 @@ import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
 import {SupportedCurrencyOptions} from '../../constants/SupportedCurrencyOptions';
 import {LogActions} from '../log';
 import {setHomeCarouselConfig} from '../app/app.actions';
-import {logSegmentEvent} from '../app/app.effects';
 import {getCurrencyCodeFromCoinAndChain} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
+import {Analytics} from '../analytics/analytics.effects';
 
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   return error?.errors?.some(err => err.id === 'revoked_token');
@@ -167,7 +167,7 @@ export const coinbaseLinkAccount =
       dispatch(setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}));
       dispatch(coinbaseGetAccountsAndBalance());
       dispatch(
-        logSegmentEvent('track', 'Connected Wallet', {
+        Analytics.track('Connected Wallet', {
           source: 'coinbase',
         }),
       );
@@ -524,7 +524,7 @@ export const coinbaseSendTransaction =
       );
       dispatch(sendTransactionSuccess());
       dispatch(
-        logSegmentEvent('track', 'Sent Crypto', {
+        Analytics.track('Sent Crypto', {
           context: 'Coinbase Withdraw Confirm',
           coin: tx?.currency || '',
         }),

@@ -54,10 +54,7 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {createWalletAddress, ToCashAddress} from '../address/address';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../app/app.effects';
+import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
 import TouchID from 'react-native-touch-id-ng';
@@ -72,6 +69,7 @@ import {getCoinAndChainFromCurrencyCode} from '../../../../navigation/bitpay-id/
 import {navigationRef} from '../../../../Root';
 import {WalletScreens} from '../../../../navigation/wallet/WalletStack';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
+import {Analytics} from '../../../analytics/analytics.effects';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1541,7 +1539,7 @@ export const sendCrypto =
               text: t('Add funds'),
               action: () => {
                 dispatch(
-                  logSegmentEvent('track', 'Clicked Buy Crypto', {
+                  Analytics.track('Clicked Buy Crypto', {
                     context: 'HomeRoot',
                   }),
                 );
@@ -1572,7 +1570,7 @@ export const sendCrypto =
       );
     } else {
       dispatch(
-        logSegmentEvent('track', 'Clicked Send', {
+        Analytics.track('Clicked Send', {
           context: loggerContext,
         }),
       );
@@ -1616,7 +1614,7 @@ export const receiveCrypto =
         );
       } else {
         dispatch(
-          logSegmentEvent('track', 'Clicked Receive', {
+          Analytics.track('Clicked Receive', {
             context: loggerContext,
           }),
         );

@@ -31,7 +31,6 @@ import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {
-  logSegmentEvent,
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
@@ -101,6 +100,7 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {CommonActions} from '@react-navigation/native';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -396,7 +396,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         }
 
         dispatch(
-          logSegmentEvent('track', 'Created Basic Wallet', {
+          Analytics.track('Created Basic Wallet', {
             coin: _currencyAbbreviation.toLowerCase(),
             isErc20Token: !!isToken,
           }),

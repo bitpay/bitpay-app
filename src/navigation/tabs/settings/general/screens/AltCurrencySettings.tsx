@@ -34,8 +34,8 @@ import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions
 import {getPriceHistory} from '../../../../../store/wallet/effects';
 import {batch} from 'react-redux';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {coinbaseInitialize} from '../../../../../store/coinbase';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
@@ -164,7 +164,7 @@ const AltCurrencySettings = () => {
               Keyboard.dismiss();
               navigation.goBack();
               dispatch(
-                logSegmentEvent('track', 'Saved Display Currency', {
+                Analytics.track('Saved Display Currency', {
                   currency: item.isoCode,
                 }),
               );

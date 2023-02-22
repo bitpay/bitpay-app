@@ -48,10 +48,7 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {publishAndSign} from '../../../store/wallet/effects/send/send';
 import PaymentSent from '../components/PaymentSent';
@@ -71,6 +68,7 @@ import {
   DetailRow,
   SendToPillContainer,
 } from './send/confirm/Shared';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -512,7 +510,7 @@ const TransactionProposalDetails = () => {
               await dispatch(publishAndSign({txp: txs, key, wallet}));
               dispatch(dismissOnGoingProcessModal());
               dispatch(
-                logSegmentEvent('track', 'Sent Crypto', {
+                Analytics.track('Sent Crypto', {
                   context: 'Transaction Proposal Details',
                   coin: currencyAbbreviation || '',
                 }),

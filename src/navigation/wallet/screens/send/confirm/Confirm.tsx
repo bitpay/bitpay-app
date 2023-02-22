@@ -19,7 +19,6 @@ import {
 import PaymentSent from '../../../components/PaymentSent';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {
-  logSegmentEvent,
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
@@ -70,6 +69,7 @@ import {Memo} from './Memo';
 import {toFiat} from '../../../../../store/wallet/utils/wallet';
 import {GetPrecision} from '../../../../../store/wallet/utils/currency';
 import prompt from 'react-native-prompt-android';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -545,7 +545,7 @@ const Confirm = () => {
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
             dispatch(
-              logSegmentEvent('track', 'Sent Crypto', {
+              Analytics.track('Sent Crypto', {
                 context: 'Confirm',
                 coin: currencyAbbreviation || '',
               }),

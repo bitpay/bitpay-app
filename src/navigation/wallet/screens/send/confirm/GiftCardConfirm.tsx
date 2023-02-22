@@ -19,10 +19,7 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
@@ -60,6 +57,7 @@ import {
   GiftCardStackParamList,
 } from '../../../../tabs/shop/gift-card/GiftCardStack';
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -309,7 +307,7 @@ const Confirm = () => {
         ? 'Failed Gift Card'
         : 'Purchased Gift Card';
     dispatch(
-      logSegmentEvent('track', purchaseEventName, {
+      Analytics.track(purchaseEventName, {
         giftCardAmount: amount,
         giftCardBrand: cardConfig.name,
         giftCardCurrency: cardConfig.currency,

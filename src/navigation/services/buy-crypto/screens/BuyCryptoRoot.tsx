@@ -50,10 +50,7 @@ import {
   isPaymentMethodSupported,
 } from '../utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   BitpaySupportedCoins,
   BitpaySupportedCurrencies,
@@ -77,6 +74,7 @@ import {
   ExternalServicesConfig,
 } from '../../../../store/external-services/external-services.types';
 import {StackActions} from '@react-navigation/native';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -379,7 +377,7 @@ const BuyCryptoRoot: React.VFC<
 
   const continueToViewOffers = () => {
     dispatch(
-      logSegmentEvent('track', 'Buy Crypto "View Offers"', {
+      Analytics.track('Buy Crypto "View Offers"', {
         fiatAmount: amount,
         fiatCurrency,
         paymentMethod: selectedPaymentMethod.method,
@@ -816,7 +814,7 @@ const BuyCryptoRoot: React.VFC<
                 `Added ${createdToWallet?.currencyAbbreviation} wallet from Buy Crypto`,
               );
               dispatch(
-                logSegmentEvent('track', 'Created Basic Wallet', {
+                Analytics.track('Created Basic Wallet', {
                   coin: createNewWalletData.currency.currencyAbbreviation,
                   chain: createNewWalletData.currency.chain,
                   isErc20Token: createNewWalletData.currency.isToken,

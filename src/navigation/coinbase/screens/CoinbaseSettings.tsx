@@ -30,12 +30,10 @@ import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import {useTranslation} from 'react-i18next';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {toggleHideCoinbaseTotalBalance} from '../../../store/coinbase/coinbase.actions';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -171,7 +169,7 @@ const CoinbaseSettings = () => {
 
   const deleteAccount = async () => {
     await dispatch(coinbaseDisconnectAccount());
-    dispatch(logSegmentEvent('track', 'Coinbase Disconnected', {}));
+    dispatch(Analytics.track('Coinbase Disconnected', {}));
     if (fromScreen === 'CoinbaseDashboard') {
       navigation.navigate('Tabs', {screen: 'Home'});
     } else {

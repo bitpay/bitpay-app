@@ -2,11 +2,11 @@ import {getMoonpayFiatAmountLimits} from '../../navigation/services/buy-crypto/u
 import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/simplex-utils';
 import {WalletScreens} from '../../navigation/wallet/WalletStack';
 import {navigationRef} from '../../Root';
-import {logSegmentEvent} from '../app/app.effects';
 import {getWyreFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/wyre-utils';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {BuyCryptoLimits} from './buy-crypto.models';
+import {Analytics} from '../analytics/analytics.effects';
 
 export const calculateAltFiatToUsd =
   (
@@ -134,7 +134,7 @@ export const getBuyCryptoFiatLimits =
 
 export const goToBuyCrypto = (): Effect<void> => dispatch => {
   dispatch(
-    logSegmentEvent('track', 'Clicked Buy Crypto', {
+    Analytics.track('Clicked Buy Crypto', {
       context: 'Shortcuts',
     }),
   );

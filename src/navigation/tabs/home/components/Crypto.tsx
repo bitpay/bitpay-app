@@ -47,7 +47,7 @@ import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -314,7 +314,7 @@ const Crypto = () => {
                 style={{marginBottom: 15}}
                 onPress={() => {
                   dispatch(
-                    logSegmentEvent('track', 'Clicked create, import or join', {
+                    Analytics.track('Clicked create, import or join', {
                       context: 'NoKeysCryptoContainer',
                     }),
                   );
@@ -326,7 +326,7 @@ const Crypto = () => {
                 buttonStyle={'secondary'}
                 onPress={() => {
                   dispatch(
-                    logSegmentEvent('track', 'Clicked Connect Coinbase', {
+                    Analytics.track('Clicked Connect Coinbase', {
                       context: 'NoKeysCryptoContainer',
                     }),
                   );

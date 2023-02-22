@@ -38,7 +38,7 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const Curations = ({
   curations,
@@ -155,9 +155,7 @@ export default ({
           giftCard.displayName.toLowerCase().includes(lowerCaseText),
         );
         setSearchResults(newSearchResults);
-        dispatch(
-          logSegmentEvent('track', 'Searched Gift Cards', {search: text}),
-        );
+        dispatch(Analytics.track('Searched Gift Cards', {search: text}));
       }, 300),
     [availableGiftCards, dispatch],
   );

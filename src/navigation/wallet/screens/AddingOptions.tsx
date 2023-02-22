@@ -19,8 +19,8 @@ import {WalletStackParamList} from '../WalletStack';
 import MultisigOptions from './MultisigOptions';
 import {Option} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
 import {useAppDispatch} from '../../../utils/hooks';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -50,7 +50,7 @@ const AddingOptions: React.FC = () => {
       ),
       cta: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Create Basic Wallet', {
+          Analytics.track('Clicked Create Basic Wallet', {
             context: 'AddingOptions',
           }),
         );

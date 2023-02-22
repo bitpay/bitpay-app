@@ -39,15 +39,8 @@ import {
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../../../../store/app/app.effects';
-
-enum LayoutTypes {
-  CAROUSEL = 'Carousel',
-  LIST_VIEW = 'List View',
-}
+import {startOnGoingProcessModal} from '../../../../../../store/app/app.effects';
+import {Analytics} from '../../../../../../store/analytics/analytics.effects';
 
 // Layout selector
 const Noop = () => null;
@@ -126,7 +119,7 @@ const CustomizeHome = () => {
               show: !!show,
             }));
             dispatch(
-              logSegmentEvent('track', 'Save Layout', {
+              Analytics.track('Save Layout', {
                 layoutType: layoutType,
               }),
             );

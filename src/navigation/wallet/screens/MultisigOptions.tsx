@@ -4,8 +4,8 @@ import {Key} from '../../../store/wallet/wallet.models';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
 import {useAppDispatch} from '../../../utils/hooks';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const MultisigSharedOptionImage = {
   light: require('../../../../assets/img/wallet/wallet-type/add-multisig.png'),
@@ -38,7 +38,7 @@ const MultisigOptions = ({
       description: t('Use more than one device to create a multisig wallet'),
       onPress: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Create Multisig Wallet', {
+          Analytics.track('Clicked Create Multisig Wallet', {
             context: walletKey ? 'AddingOptions' : 'CreationOptions',
           }),
         );
@@ -56,7 +56,7 @@ const MultisigOptions = ({
       ),
       onPress: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Join Multisig Wallet', {
+          Analytics.track('Clicked Join Multisig Wallet', {
             context: walletKey ? 'AddingOptions' : 'CreationOptions',
           }),
         );

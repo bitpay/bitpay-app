@@ -29,7 +29,7 @@ import {
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const SearchResults = styled.View`
   display: flex;
@@ -69,9 +69,7 @@ export const ShopOnline = ({
             .includes(text.toLocaleLowerCase()),
         );
         setSearchResults(newSearchResults);
-        dispatch(
-          logSegmentEvent('track', 'Searched Online Brands', {search: text}),
-        );
+        dispatch(Analytics.track('Searched Online Brands', {search: text}));
       }, 300),
     [dispatch, setSearchVal, integrations],
   );
