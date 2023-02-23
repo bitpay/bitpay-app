@@ -225,7 +225,7 @@ const WalletSettings = () => {
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
-                screen: 'TransactionHistory',
+                screen: 'ExportTransactionHistory',
                 params: {wallet},
               });
             }}>

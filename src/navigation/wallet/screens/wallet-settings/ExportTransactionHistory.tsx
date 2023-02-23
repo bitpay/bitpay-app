@@ -93,7 +93,7 @@ const ExportTransactionHistory = () => {
               '[isAndroidStoragePermissionGranted]: Storage permission denied',
             ),
           );
-          resolve(false);
+          throw new Error('Storage permission denied');
         }
       } catch (e) {
         reject(e);
@@ -181,7 +181,7 @@ const ExportTransactionHistory = () => {
             Destination: `${chain.toUpperCase()} Network Fees`,
             Description: _note,
             Amount: '-' + _fee,
-            Currency: currencyAbbreviation.toUpperCase(),
+            Currency: chain.toUpperCase(),
             Txid: '',
             Creator: '',
             Copayers: '',
@@ -231,7 +231,7 @@ const ExportTransactionHistory = () => {
       }
     } catch (err: any) {
       if (err && err.message === 'User did not share') {
-        dispatch(LogActions.warn(`[shareFile]: ${err.message}`));
+        dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
       } else {
         throw err;
       }
@@ -269,7 +269,7 @@ const ExportTransactionHistory = () => {
     <ExportTransactionHistoryContainer>
       <ScrollView>
         <ExportTransactionHistoryDescription>
-          {t('Export your transaction history as a CSV file')}
+          {t('Export your transaction history as a .csv file')}
         </ExportTransactionHistoryDescription>
 
         <ButtonContainer>
