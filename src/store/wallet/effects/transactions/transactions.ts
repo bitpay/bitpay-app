@@ -36,6 +36,7 @@ const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
 export const TX_HISTORY_LIMIT = 25;
+export const BWS_TX_HISTORY_LIMIT = 1001;
 
 const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
   const {currencyAbbreviation, network} = wallet;

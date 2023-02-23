@@ -77,6 +77,7 @@ import CurrencyTokenSelectionScreen, {
   CurrencyTokenSelectionScreenParamList,
 } from './screens/CurrencyTokenSelection';
 import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
+import ExportTransactionHistory from './screens/wallet-settings/ExportTransactionHistory';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -144,6 +145,7 @@ export type WalletStackParamList = {
   SendToOptions: SendToOptionsParamList;
   SelectInputs: SelectInputsParamList;
   EnterBuyerProvidedEmail: {data: string};
+  ExportTransactionHistory: {wallet: WalletModel};
 };
 
 export enum WalletScreens {
@@ -178,6 +180,7 @@ export enum WalletScreens {
   COPAYERS = 'Copayers',
   ADDING_OPTIONS = 'AddingOptions',
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
+  EXPORT_TRANSACTION_HISTORY = 'ExportTransactionHistory',
   TRANSACTION_DETAILS = 'TransactionDetails',
   TRANSACTION_PROPOSAL_DETAILS = 'TransactionProposalDetails',
   TRANSACTION_PROPOSAL_NOTIFICATIONS = 'TransactionProposalNotifications',
@@ -367,6 +370,15 @@ const WalletStack = () => {
           }}
           name={WalletScreens.TRANSACTION_DETAILS}
           component={TransactionDetails}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => (
+              <HeaderTitle>{t('Export Transaction History')}</HeaderTitle>
+            ),
+          }}
+          name={WalletScreens.EXPORT_TRANSACTION_HISTORY}
+          component={ExportTransactionHistory}
         />
         <Wallet.Screen
           options={{
