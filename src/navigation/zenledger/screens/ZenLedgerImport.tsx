@@ -39,6 +39,7 @@ import {
 } from '../../../store/zenledger/zenledger.models';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {SUPPORTED_UTXO_COINS} from '../../../constants/currencies';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const ZenLedgerImportContainer = styled.View`
   flex: 1;
@@ -253,6 +254,17 @@ const ZenLedgerImport: React.FC = () => {
                       {
                         text: t('GOT IT'),
                         action: async () => {
+                          const coins = requestWallets
+                            .map(item => {
+                              return item['blockchain'];
+                            })
+                            .toString();
+                          Analytics.track(
+                            'BitPay App - ZenLedger Imported Wallet Address',
+                            {
+                              cryptoType: coins,
+                            },
+                          );
                           dispatch(dismissBottomNotificationModal());
                           await sleep(500);
                           goToZenLedger(requestWallets);
