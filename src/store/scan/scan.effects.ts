@@ -90,9 +90,9 @@ export const incomingData =
 
     try {
       if (IsBitPayInvoiceWebUrl(data)) {
-        data = data
-          .replace('https://', 'https://link.')
-          .replace('/invoice?id=', '/i/');
+        const invoiceId = new URLSearchParams(data).get('id');
+        const origin = new URL(data).origin;
+        data = `${origin}/i/${invoiceId}`;
       }
       if (IsValidBitPayInvoice(data)) {
         dispatch(handleUnlock(data));
