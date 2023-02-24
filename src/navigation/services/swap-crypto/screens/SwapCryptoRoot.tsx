@@ -91,6 +91,12 @@ import SwapCryptoLoadingWalletSkeleton from './SwapCryptoLoadingWalletSkeleton';
 import SwapCryptoBalanceSkeleton from './SwapCryptoBalanceSkeleton';
 import BalanceDetailsModal from '../../../wallet/components/BalanceDetailsModal';
 import {buildUIFormattedWallet} from '../../../wallet/screens/KeyOverview';
+import {
+  ExternalServicesConfig,
+  SwapCryptoConfig,
+} from '../../../../store/external-services/external-services.types';
+import {getExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
+import {StackActions} from '@react-navigation/native';
 
 export interface RateData {
   fixedRateId: string;
@@ -131,6 +137,8 @@ export const getChainFromChangellyProtocol = (
       return currencyAbbreviation.toLowerCase();
   }
 };
+
+let swapCryptoConfig: SwapCryptoConfig | undefined;
 
 const SwapCryptoRoot: React.FC = () => {
   const {t} = useTranslation();
@@ -906,8 +914,48 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const init = async () => {
+    dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+
     try {
-      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+      const config: ExternalServicesConfig = await getExternalServicesConfig();
+      swapCryptoConfig = config?.swapCrypto;
+      logger.debug('swapCryptoConfig: ' + JSON.stringify(swapCryptoConfig));
+    } catch (err) {
+      logger.error('getSwapCryptoConfig Error: ' + JSON.stringify(err));
+    }
+
+    if (swapCryptoConfig?.disabled) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(600);
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          title: swapCryptoConfig?.disabledTitle
+            ? swapCryptoConfig.disabledTitle
+            : t('Out of service'),
+          message: swapCryptoConfig?.disabledMessage
+            ? swapCryptoConfig.disabledMessage
+            : t(
+                'This feature is temporarily out of service. Please try again later.',
+              ),
+          type: 'warning',
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {
+                navigation.dispatch(StackActions.popToTop());
+              },
+            },
+          ],
+          enableBackdropDismiss: true,
+          onBackdropDismiss: () => {
+            navigation.dispatch(StackActions.popToTop());
+          },
+        }),
+      );
+      return;
+    }
+
+    try {
       await Promise.all([getChangellyCurrencies(), sleep(400)]);
     } catch (err) {
       logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));

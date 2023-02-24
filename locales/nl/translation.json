@@ -374,7 +374,7 @@
   "Incomplete Wallet": "Onvoltooide wallet",
   "The selected wallet needs to be complete before being able to receive funds": "De geselecteerde wallet moet voltooid zijn om geld te kunnen ontvangen",
   "No wallets": "Geen wallets",
-  "No wallets available to receive funds.": "Geen {{coin}}-wallets beschikbaar om geld te ontvangen.",
+  "No coin wallets available to receive funds.": "Geen {{coin}}-wallets beschikbaar om geld te ontvangen.",
   "Not supported wallets": "Niet ondersteunde wallets",
   "Your keys do not have wallets able to buy crypto": "Uw keys hebben geen {{coin}}-wallets om crypto te kunnen kopen",
   "Your keys do not have supported wallets able to buy crypto": "Uw keys hebben geen ondersteunde wallets om crypto te kunnen kopen",

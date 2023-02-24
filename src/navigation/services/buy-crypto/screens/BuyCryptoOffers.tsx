@@ -9,7 +9,6 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText, H5, H7} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
@@ -61,6 +60,8 @@ import MoonpayTerms from '../components/terms/MoonpayTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
 import WyreTerms from '../components/terms/WyreTerms';
 import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
+import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -70,6 +71,7 @@ export interface BuyCryptoOffersProps {
   country: string;
   selectedWallet: Wallet;
   paymentMethod: PaymentMethod;
+  buyCryptoConfig: BuyCryptoConfig;
 }
 
 interface SimplexGetQuoteRequestData {
@@ -290,8 +292,10 @@ const BuyCryptoOffers: React.FC = () => {
       country,
       selectedWallet,
       paymentMethod,
+      buyCryptoConfig,
     },
-  } = useRoute<RouteProp<{params: BuyCryptoOffersProps}>>();
+  }: {params: BuyCryptoOffersProps} =
+    useRoute<RouteProp<{params: BuyCryptoOffersProps}>>();
   const {t} = useTranslation();
   const logger = useLogger();
   const navigation = useNavigation();
@@ -307,14 +311,16 @@ const BuyCryptoOffers: React.FC = () => {
         ? fiatCurrency
         : 'USD';
 
-      offersDefault[exchange].showOffer = isPaymentMethodSupported(
-        exchange,
-        paymentMethod,
-        coin,
-        chain,
-        offersDefault.simplex.fiatCurrency,
-        country,
-      );
+      offersDefault[exchange].showOffer =
+        isPaymentMethodSupported(
+          exchange,
+          paymentMethod,
+          coin,
+          chain,
+          offersDefault[exchange].fiatCurrency,
+          country,
+        ) &&
+        (!buyCryptoConfig?.[exchange] || !buyCryptoConfig?.[exchange]?.removed);
     }
   });
 
@@ -326,6 +332,15 @@ const BuyCryptoOffers: React.FC = () => {
 
   const getMoonpayQuote = (): void => {
     logger.debug('Moonpay getting quote');
+
+    if (buyCryptoConfig?.moonpay?.disabled) {
+      let err = buyCryptoConfig?.moonpay?.disabledMessage
+        ? buyCryptoConfig?.moonpay?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'moonpayGetQuote Error. Exchange disabled from config.';
+      showMoonpayError(err, reason);
+      return;
+    }
 
     offers.moonpay.fiatAmount =
       offers.moonpay.fiatCurrency === fiatCurrency
@@ -473,6 +488,15 @@ const BuyCryptoOffers: React.FC = () => {
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
 
+    if (buyCryptoConfig?.simplex?.disabled) {
+      let err = buyCryptoConfig?.simplex?.disabledMessage
+        ? buyCryptoConfig?.simplex?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'simplexGetQuote Error. Exchange disabled from config.';
+      showSimplexError(err, reason);
+      return;
+    }
+
     offers.simplex.fiatAmount =
       offers.simplex.fiatCurrency === fiatCurrency
         ? amount
@@ -611,6 +635,15 @@ const BuyCryptoOffers: React.FC = () => {
 
   const getWyreQuote = async () => {
     logger.debug('Wyre getting quote');
+
+    if (buyCryptoConfig?.wyre?.disabled) {
+      let err = buyCryptoConfig?.wyre?.disabledMessage
+        ? buyCryptoConfig?.wyre?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'wyreGetQuote Error. Exchange disabled from config.';
+      showWyreError(err, reason);
+      return;
+    }
 
     offers.wyre.fiatAmount =
       offers.wyre.fiatCurrency === fiatCurrency
