@@ -94,10 +94,7 @@ const CreateEncryptionPassword = () => {
         key.methods!.encrypt(password);
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));
         key.isPrivKeyEncrypted = key.methods!.isPrivKeyEncrypted();
-        navigation.navigate('Wallet', {
-          screen: 'KeySettings',
-          params: {key},
-        });
+        navigation.goBack();
         dispatch(
           showBottomNotificationModal({
             type: 'success',
