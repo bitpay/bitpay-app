@@ -45,7 +45,7 @@ const StorageUsage: React.VFC = () => {
   const [contactStorage, setContactStorage] = useState<string>('');
 
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
-  const wallets = useAppSelector(({WALLET}) => WALLET.keys);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const customTokens = useAppSelector(({WALLET}) => WALLET.customTokenData);
   const contacts = useAppSelector(({CONTACT}) => CONTACT.list);
 
@@ -92,10 +92,11 @@ const StorageUsage: React.VFC = () => {
       }
 
       // Data counter
-      const walletsCount = Object.values(wallets).map(k => {
+      const wallets = Object.values(keys).map(k => {
         const {wallets} = k;
         return wallets.length;
-      })[0];
+      });
+      const walletsCount = wallets.reduce((a, b) => a + b, 0);
       setWalletsCount(walletsCount);
       setGiftCount(giftCards.length);
       setContactCount(contacts.length);
@@ -105,7 +106,7 @@ const StorageUsage: React.VFC = () => {
       // Specific Data Storage
       const _walletStorageSize = await getSize(
         RNFS.TemporaryDirectoryPath + '/wallets.txt',
-        JSON.stringify(wallets),
+        JSON.stringify(keys),
       );
       setWalletStorage(formatBytes(_walletStorageSize));
 
