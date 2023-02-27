@@ -220,6 +220,21 @@ const WalletSettings = () => {
           </Setting>
           <Hr />
 
+          <Setting
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('Wallet', {
+                screen: 'ExportTransactionHistory',
+                params: {wallet},
+              });
+            }}>
+            <WalletSettingsTitle>
+              {t('Export Transaction History')}
+            </WalletSettingsTitle>
+          </Setting>
+          <Hr />
+
           {!key.isReadOnly ? (
             <Setting
               activeOpacity={ActiveOpacity}
