@@ -27,7 +27,6 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {RootState} from '../../../../store';
 import {
   showBottomNotificationModal,
-  dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
 } from '../../../../store/app/app.actions';
 import {getBuyCryptoFiatLimits} from '../../../../store/buy-crypto/buy-crypto.effects';

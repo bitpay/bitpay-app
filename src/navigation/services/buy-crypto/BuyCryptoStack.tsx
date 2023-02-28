@@ -11,6 +11,7 @@ import BuyCryptoRoot, {
 } from './screens/BuyCryptoRoot';
 import BuyCryptoOffers from './screens/BuyCryptoOffers';
 import {useTranslation} from 'react-i18next';
+import {BuyCryptoConfig} from '../../../store/external-services/external-services.types';
 
 export type BuyCryptoStackParamList = {
   BuyCryptoRoot: BuyCryptoRootScreenParams;
@@ -22,6 +23,7 @@ export type BuyCryptoStackParamList = {
     country: string;
     selectedWallet: any;
     paymentMethod: any;
+    buyCryptoConfig: BuyCryptoConfig | undefined;
   };
 };
 
