@@ -523,6 +523,15 @@ const BuyCryptoOffers: React.FC = () => {
   const getRampQuote = async (): Promise<void> => {
     logger.debug('Ramp getting quote');
 
+    if (buyCryptoConfig?.ramp?.disabled) {
+      let err = buyCryptoConfig?.ramp?.disabledMessage
+        ? buyCryptoConfig?.ramp?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'rampGetQuote Error. Exchange disabled from config.';
+      showRampError(err, reason);
+      return;
+    }
+
     offers.ramp.fiatAmount =
       offers.ramp.fiatCurrency === fiatCurrency
         ? amount

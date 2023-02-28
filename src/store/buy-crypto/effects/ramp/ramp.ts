@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BASE_BWS_URL } from '../../../../constants/config';
+import {BASE_BWS_URL} from '../../../../constants/config';
 import {RampGetAssetsRequestData} from '../../buy-crypto.models';
 
 const bwsUri = BASE_BWS_URL;
