@@ -167,7 +167,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(initializeApi(network, identity));
 
-    dispatch(LocationEffects.getCountry());
+    dispatch(LocationEffects.getLocationData());
 
     if (isPaired) {
       try {

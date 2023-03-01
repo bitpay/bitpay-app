@@ -1,9 +1,9 @@
-import {CountryData} from './location.models';
+import {LocationData} from './location.models';
 import {LocationActionType, LocationActionTypes} from './location.types';
 
-export const successGetCountry = (payload: {
-  countryData: CountryData;
+export const successGetLocation = (payload: {
+  locationData: LocationData;
 }): LocationActionType => ({
-  type: LocationActionTypes.SUCCESS_GET_COUNTRY,
+  type: LocationActionTypes.SUCCESS_GET_LOCATION,
   payload,
 });

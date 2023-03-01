@@ -285,7 +285,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {walletId, skipInitializeHistory} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 
@@ -995,7 +995,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       hide: !isCoinSupportedToBuy(
                         fullWalletObj.currencyAbbreviation,
                         fullWalletObj.chain,
-                        countryData?.shortCode || 'US',
+                        locationData?.countryShortCode || 'US',
                       ),
                       cta: () => {
                         dispatch(

@@ -16,11 +16,11 @@ import {
   wyreSupportedFiatCurrencies,
 } from './wyre-utils';
 import pickBy from 'lodash.pickby';
-import {CountryData} from '../../../../store/location/location.models';
+import {LocationData} from '../../../../store/location/location.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
 export const getEnabledPaymentMethods = (
-  countryData?: CountryData | null,
+  locationData?: LocationData | null,
   currency?: string,
   coin?: string,
   chain?: string,
@@ -29,7 +29,8 @@ export const getEnabledPaymentMethods = (
   if (!currency || !coin || !chain) {
     return {};
   }
-  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!countryData?.isEuCountry;
+  PaymentMethodsAvailable.sepaBankTransfer.enabled =
+    !!locationData?.isEuCountry;
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
     return (
       method.enabled &&

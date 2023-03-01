@@ -92,6 +92,7 @@ import BalanceDetailsModal from '../../../wallet/components/BalanceDetailsModal'
 import {buildUIFormattedWallet} from '../../../wallet/screens/KeyOverview';
 import {
   ExternalServicesConfig,
+  ExternalServicesConfigRequestParams,
   SwapCryptoConfig,
 } from '../../../../store/external-services/external-services.types';
 import {getExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
@@ -147,7 +148,7 @@ const SwapCryptoRoot: React.FC = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const tokenData = useAppSelector(({WALLET}) => WALLET.tokenData);
   const tokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -877,7 +878,7 @@ const SwapCryptoRoot: React.FC = () => {
       }
 
       const coinsToRemove =
-        !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
+        !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
       if (selectedWallet?.balance?.satSpendable === 0) {
         coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
       }
@@ -917,7 +918,13 @@ const SwapCryptoRoot: React.FC = () => {
     dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
 
     try {
-      const config: ExternalServicesConfig = await getExternalServicesConfig();
+      const requestData: ExternalServicesConfigRequestParams = {
+        currentLocationCountry: locationData?.countryShortCode,
+        currentLocationState: locationData?.stateShortCode,
+      };
+      const config: ExternalServicesConfig = await getExternalServicesConfig(
+        requestData,
+      );
       swapCryptoConfig = config?.swapCrypto;
       logger.debug('swapCryptoConfig: ' + JSON.stringify(swapCryptoConfig));
     } catch (err) {

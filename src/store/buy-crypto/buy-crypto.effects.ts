@@ -78,7 +78,7 @@ export const getBuyCryptoFiatLimits =
   (exchange?: string, fiatCurrency?: string): Effect<BuyCryptoLimits> =>
   (dispatch, getState) => {
     const state = getState();
-    const country = state.LOCATION.countryData;
+    const locationData = state.LOCATION.locationData;
     let limits: BuyCryptoLimits = {min: undefined, max: undefined};
     let baseFiatArray: string[];
 
@@ -99,7 +99,9 @@ export const getBuyCryptoFiatLimits =
         break;
       case 'wyre':
         baseFiatArray = ['USD', 'EUR'];
-        limits = getWyreFiatAmountLimits(country?.shortCode || 'US');
+        limits = getWyreFiatAmountLimits(
+          locationData?.countryShortCode || 'US',
+        );
         break;
       default:
         baseFiatArray = ['USD', 'EUR'];
@@ -107,12 +109,12 @@ export const getBuyCryptoFiatLimits =
           min: Math.min(
             getMoonpayFiatAmountLimits().min,
             getSimplexFiatAmountLimits().min,
-            getWyreFiatAmountLimits(country?.shortCode || 'US').min,
+            getWyreFiatAmountLimits(locationData?.countryShortCode || 'US').min,
           ),
           max: Math.max(
             getMoonpayFiatAmountLimits().max,
             getSimplexFiatAmountLimits().max,
-            getWyreFiatAmountLimits(country?.shortCode || 'US').max,
+            getWyreFiatAmountLimits(locationData?.countryShortCode || 'US').max,
           ),
         };
         break;

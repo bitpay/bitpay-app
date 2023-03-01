@@ -28,7 +28,7 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
     const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
     const user = BITPAY_ID.user[APP.network];
     const incentiveLevelId = user?.incentiveLevelId;
-    const country = LOCATION.countryData?.shortCode || 'US';
+    const country = LOCATION.locationData?.countryShortCode || 'US';
     const [catalogResponse, directoryResponse, integrationsResponse] =
       await Promise.all([
         axios.get(
