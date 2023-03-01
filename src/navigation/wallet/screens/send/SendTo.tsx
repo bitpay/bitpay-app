@@ -55,10 +55,7 @@ import {
   PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
@@ -93,6 +90,7 @@ import ContactRow from '../../../../components/list/ContactRow';
 import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -590,7 +588,7 @@ const SendTo = () => {
             onPress={() => {
               haptic('impactLight');
               dispatch(
-                logSegmentEvent('track', 'Open Scanner', {
+                Analytics.track('Open Scanner', {
                   context: 'SendTo',
                 }),
               );

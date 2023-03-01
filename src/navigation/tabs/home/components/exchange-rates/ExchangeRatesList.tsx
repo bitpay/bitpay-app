@@ -3,7 +3,7 @@ import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import ExchangeRateItem from './ExchangeRateItem';
 
@@ -40,7 +40,7 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
           onPress={() => {
             haptic('impactLight');
             dispatch(
-              logSegmentEvent('track', 'Clicked Exchange Rate', {
+              Analytics.track('Clicked Exchange Rate', {
                 coin: item.currencyAbbreviation || '',
               }),
             );

@@ -71,9 +71,9 @@ import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import _ from 'lodash';
-import {logSegmentEvent} from '../../../store/app/app.effects';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -464,7 +464,7 @@ const KeyOverview = () => {
   }, [navigation, key?.wallets, context]);
 
   useEffect(() => {
-    dispatch(logSegmentEvent('track', 'View Key'));
+    dispatch(Analytics.track('View Key'));
   }, []);
 
   const {wallets = [], totalBalance} =

@@ -10,8 +10,8 @@ import {
   NeutralSlate,
 } from '../../../../styles/colors';
 import {useTheme} from 'styled-components/native';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const ScanIcon = () => {
   const theme = useTheme();
@@ -113,7 +113,7 @@ const ScanButton: React.FC = () => {
       <TouchableOpacity
         onPress={() => {
           dispatch(
-            logSegmentEvent('track', 'Open Scanner', {
+            Analytics.track('Open Scanner', {
               context: 'HeaderScanButton',
             }),
           );

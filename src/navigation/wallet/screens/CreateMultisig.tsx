@@ -46,10 +46,7 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {BitpaySupportedCurrencies} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {WalletStackParamList} from '../WalletStack';
-import {
-  logSegmentEvent,
-  openUrlWithInAppBrowser,
-} from '../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
   addWalletMultisig,
@@ -65,6 +62,7 @@ import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export interface CreateMultisigProps {
   currency: string;
@@ -262,7 +260,7 @@ const CreateMultisig = () => {
         )) as Wallet;
 
         dispatch(
-          logSegmentEvent('track', 'Created Multisig Wallet', {
+          Analytics.track('Created Multisig Wallet', {
             coin: currency?.toLowerCase(),
             type: `${opts.m}-${opts.n}`,
             addedToExistingKey: true,
@@ -322,7 +320,7 @@ const CreateMultisig = () => {
         )) as Key;
 
         dispatch(
-          logSegmentEvent('track', 'Created Multisig Wallet', {
+          Analytics.track('Created Multisig Wallet', {
             coin: currency?.toLowerCase(),
             type: `${opts.m}-${opts.n}`,
             addedToExistingKey: false,
@@ -330,7 +328,7 @@ const CreateMultisig = () => {
         );
 
         dispatch(
-          logSegmentEvent('track', 'Created Key', {
+          Analytics.track('Created Key', {
             context: 'createMultisig',
             coins: [currency?.toLowerCase()],
           }),

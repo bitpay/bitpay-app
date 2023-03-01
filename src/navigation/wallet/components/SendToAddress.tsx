@@ -14,10 +14,7 @@ import {Caution, NeutralSlate} from '../../../styles/colors';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {Effect, RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
@@ -56,6 +53,7 @@ import {
   ExtractUriAmount,
 } from '../../../store/wallet/utils/decode-uri';
 import {sleep} from '../../../utils/helper-methods';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -273,7 +271,7 @@ const SendToAddress = () => {
             onPress={() => {
               haptic('impactLight');
               dispatch(
-                logSegmentEvent('track', 'Open Scanner', {
+                Analytics.track('Open Scanner', {
                   context: 'SendTo',
                 }),
               );

@@ -586,17 +586,6 @@ const trackFirstOpenEvent =
     );
   };
 
-/**
- * @deprecated Use `dispatch(Analytics.track(event, properties))` instead.
- */
-export const logSegmentEvent = (
-  _eventType: 'track',
-  event: string,
-  properties: JsonMap = {},
-) => {
-  return Analytics.track(event, properties);
-};
-
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
   dispatch => {

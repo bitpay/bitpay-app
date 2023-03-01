@@ -10,8 +10,8 @@ import {
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {AppEffects} from '../../../../../store/app';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {
   Action,
   LightBlack,
@@ -113,7 +113,7 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
     haptic('impactLight');
 
     dispatch(
-      logSegmentEvent('track', 'Clicked QuickLinks', {
+      Analytics.track('Clicked QuickLinks', {
         id: contentCard.id || '',
       }),
     );

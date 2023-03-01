@@ -16,7 +16,6 @@ import {
 } from '../../../../../components/styled/Containers';
 import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {LogActions} from '../../../../../store/log';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {HeaderTitle} from '../../../../../components/styled/Text';
@@ -29,6 +28,7 @@ import {
 } from '../../../../../store/app/app.actions';
 import {sleep} from '../../../../../utils/helper-methods';
 import RNRestart from 'react-native-restart';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const ThemeSettings: React.FC = () => {
   const {t} = useTranslation();
@@ -98,7 +98,7 @@ const ThemeSettings: React.FC = () => {
       LogActions.info('Theme updated to ' + (setScheme || 'system default')),
     );
     dispatch(
-      logSegmentEvent('track', 'Saved Theme', {
+      Analytics.track('Saved Theme', {
         theme: setScheme || 'system default',
       }),
     );

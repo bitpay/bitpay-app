@@ -1,7 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
 import {RootStackParamList} from '../../../../Root';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {selectAvailableGiftCards} from '../../../../store/shop/shop.selectors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 
@@ -29,7 +29,7 @@ const GiftCardDeeplinkScreen: React.FC<
 
   useEffect(() => {
     dispatch(
-      logSegmentEvent('track', 'Clicked Shop with Crypto', {
+      Analytics.track('Clicked Shop with Crypto', {
         context: 'GiftCardDeeplink',
       }),
     );

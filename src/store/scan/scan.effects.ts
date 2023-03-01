@@ -42,7 +42,7 @@ import {
   WyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
-import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
+import {startOnGoingProcessModal} from '../app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -69,6 +69,7 @@ import {t} from 'i18next';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
 import {BitpaySupportedEvmCoins} from '../../constants/currencies';
+import {Analytics} from '../analytics/analytics.effects';
 
 export const incomingData =
   (
@@ -972,7 +973,7 @@ const handleMoonpayUri =
     const order = BUY_CRYPTO.moonpay[externalId];
 
     dispatch(
-      logSegmentEvent('track', 'Purchased Buy Crypto', {
+      Analytics.track('Purchased Buy Crypto', {
         exchange: 'moonpay',
         fiatAmount: order?.fiat_total_amount || '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
@@ -1031,7 +1032,7 @@ const handleSimplexUri =
     const order = BUY_CRYPTO.simplex[paymentId];
 
     dispatch(
-      logSegmentEvent('track', 'Purchased Buy Crypto', {
+      Analytics.track('Purchased Buy Crypto', {
         exchange: 'simplex',
         fiatAmount: order?.fiat_total_amount || '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
@@ -1117,7 +1118,7 @@ const handleWyreUri =
     );
 
     dispatch(
-      logSegmentEvent('track', 'Purchased Buy Crypto', {
+      Analytics.track('Purchased Buy Crypto', {
         exchange: 'wyre',
         fiatAmount: sourceAmount || '',
         fiatCurrency: sourceCurrency || '',

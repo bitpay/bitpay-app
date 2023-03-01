@@ -37,7 +37,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type WalletConnectStartParamList = {
   keyId: string | undefined;
@@ -133,9 +133,7 @@ const WalletConnectStart = () => {
         ),
       );
       setButtonState('success');
-      dispatch(
-        logSegmentEvent('track', 'WalletConnect Session Request Approved', {}),
-      );
+      dispatch(Analytics.track('WalletConnect Session Request Approved', {}));
       dispatch(
         showBottomNotificationModal({
           type: 'success',

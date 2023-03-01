@@ -1,10 +1,10 @@
 import {Effect} from '..';
 import {navigationRef} from '../../Root';
-import {logSegmentEvent} from '../app/app.effects';
+import {Analytics} from '../analytics/analytics.effects';
 
 export const goToSwapCrypto = (): Effect<void> => dispatch => {
   dispatch(
-    logSegmentEvent('track', 'Clicked Swap Crypto', {
+    Analytics.track('Clicked Swap Crypto', {
       context: 'Shortcuts',
     }),
   );

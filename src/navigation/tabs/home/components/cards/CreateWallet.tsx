@@ -4,8 +4,8 @@ import LinkCard from './LinkCard';
 import {Path, Svg} from 'react-native-svg';
 import {White} from '../../../../../styles/colors';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const image = (theme: Theme) => {
   return (
@@ -31,7 +31,7 @@ const CreateWallet = () => {
       description={t('Create, import or join a shared wallet')}
       onPress={() => {
         dispatch(
-          logSegmentEvent('track', 'Clicked create, import or join', {
+          Analytics.track('Clicked create, import or join', {
             context: 'ExpandPortfolioCarousel',
           }),
         );

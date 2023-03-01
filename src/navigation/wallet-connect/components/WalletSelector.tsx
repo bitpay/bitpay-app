@@ -38,14 +38,12 @@ import cloneDeep from 'lodash.clonedeep';
 import _ from 'lodash';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {useTranslation} from 'react-i18next';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {Platform} from 'react-native';
 import {WalletConnectCtaContainer} from '../styled/WalletConnectContainers';
 import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -202,7 +200,7 @@ export default ({
   const goToScanView = useCallback(
     (wallet: Wallet) => {
       dispatch(
-        logSegmentEvent('track', 'Open Scanner', {
+        Analytics.track('Open Scanner', {
           context: 'WalletSelector',
         }),
       );

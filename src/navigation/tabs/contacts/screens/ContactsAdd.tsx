@@ -59,7 +59,6 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import debounce from 'lodash.debounce';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
 import {ContactsStackParamList} from '../ContactsStack';
 import {StackScreenProps} from '@react-navigation/stack';
 import {
@@ -69,6 +68,7 @@ import {
 } from '../../../../constants/SupportedCurrencyOptions';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -506,7 +506,7 @@ const ContactsAdd = ({
 
   const goToScan = () => {
     dispatch(
-      logSegmentEvent('track', 'Open Scanner', {
+      Analytics.track('Open Scanner', {
         context: 'contactsAdd',
       }),
     );

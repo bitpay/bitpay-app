@@ -42,8 +42,8 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
 import {GetAmFormatDate} from '../../../store/wallet/utils/time';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type WalletConnectRequestDetailsParamList = {
   peerId: string;
@@ -203,7 +203,7 @@ const WalletConnectRequestDetails = () => {
       };
       await dispatch(walletConnectRejectCallRequest(peerId, response));
       setRejectButtonState('success');
-      dispatch(logSegmentEvent('track', 'WalletConnect Request Rejected', {}));
+      dispatch(Analytics.track('WalletConnect Request Rejected', {}));
       goToWalletConnectHome();
     } catch (e) {
       setRejectButtonState('failed');
@@ -264,7 +264,7 @@ const WalletConnectRequestDetails = () => {
         }),
       );
       setApproveButtonState('success');
-      dispatch(logSegmentEvent('track', 'WalletConnect Request Approved', {}));
+      dispatch(Analytics.track('WalletConnect Request Approved', {}));
       goToWalletConnectHome();
     } catch (err) {
       setApproveButtonState('failed');

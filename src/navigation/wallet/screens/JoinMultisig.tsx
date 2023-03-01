@@ -24,10 +24,7 @@ import {
   addWalletJoinMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {RouteProp} from '@react-navigation/core';
@@ -41,6 +38,7 @@ import {
 } from '../components/ErrorMessages';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type JoinMultisigParamList = {
   key?: Key;
@@ -118,7 +116,7 @@ const JoinMultisig = () => {
         )) as Wallet;
 
         dispatch(
-          logSegmentEvent('track', 'Join Multisig Wallet success', {
+          Analytics.track('Join Multisig Wallet success', {
             addedToExistingKey: true,
           }),
         );
@@ -202,7 +200,7 @@ const JoinMultisig = () => {
         )) as Key;
 
         dispatch(
-          logSegmentEvent('track', 'Join Multisig Wallet success', {
+          Analytics.track('Join Multisig Wallet success', {
             addedToExistingKey: false,
           }),
         );
@@ -257,7 +255,7 @@ const JoinMultisig = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               dispatch(
-                logSegmentEvent('track', 'Open Scanner', {
+                Analytics.track('Open Scanner', {
                   context: 'JoinMultisig',
                 }),
               );

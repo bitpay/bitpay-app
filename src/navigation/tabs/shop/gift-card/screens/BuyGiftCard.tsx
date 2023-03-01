@@ -44,7 +44,7 @@ import {APP_NETWORK} from '../../../../../constants/config';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -144,7 +144,7 @@ const BuyGiftCard = ({
   });
   useEffect(() => {
     dispatch(
-      logSegmentEvent('track', 'Viewed Gift Card', {
+      Analytics.track('Viewed Gift Card', {
         giftCardBrand: cardConfig.name,
       }),
     );
@@ -296,7 +296,7 @@ const BuyGiftCard = ({
 
   const buyGiftCard = () => {
     dispatch(
-      logSegmentEvent('track', 'Started Gift Card Purchase', {
+      Analytics.track('Started Gift Card Purchase', {
         giftCardBrand: cardConfig.name,
       }),
     );

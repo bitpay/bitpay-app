@@ -76,10 +76,7 @@ import {
   ArrowContainer,
 } from '../styled/SwapCryptoCheckout.styled';
 import {startGetRates} from '../../../../store/wallet/effects';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -94,6 +91,7 @@ import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../../store';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -389,7 +387,7 @@ const ChangellyCheckout: React.FC = () => {
         clearInterval(countDown);
       }
       dispatch(
-        logSegmentEvent('track', 'Failed Crypto Swap', {
+        Analytics.track('Failed Crypto Swap', {
           exchange: 'changelly',
           context: 'ChangellyCheckout',
           reasonForFailure: 'Time to make the payment expired',
@@ -594,7 +592,7 @@ const ChangellyCheckout: React.FC = () => {
     logger.debug('Saved swap with: ' + JSON.stringify(newData));
 
     dispatch(
-      logSegmentEvent('track', 'Successful Crypto Swap', {
+      Analytics.track('Successful Crypto Swap', {
         fromCoin: fromWalletSelected.currencyAbbreviation,
         toCoin: toWalletSelected.currencyAbbreviation,
         amountFrom: amountFrom,
@@ -642,7 +640,7 @@ const ChangellyCheckout: React.FC = () => {
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
     dispatch(
-      logSegmentEvent('track', 'Failed Crypto Swap', {
+      Analytics.track('Failed Crypto Swap', {
         exchange: 'changelly',
         context: 'ChangellyCheckout',
         reasonForFailure: reason || 'unknown',

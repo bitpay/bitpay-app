@@ -36,11 +36,11 @@ import {
   useNavigation,
   useScrollToTop,
 } from '@react-navigation/native';
-import {logSegmentEvent} from '../../../store/app/app.effects';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useTheme} from 'styled-components';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -261,7 +261,7 @@ const ShopHome: React.FC<
   ]);
 
   useFocusEffect(() => {
-    dispatch(logSegmentEvent('track', 'Viewed Shop Tab', undefined));
+    dispatch(Analytics.track('Viewed Shop Tab', undefined));
     if (!initialGiftCardSyncComplete) {
       dispatch(ShopEffects.startSyncGiftCards());
       setInitialGiftCardSyncComplete(true);

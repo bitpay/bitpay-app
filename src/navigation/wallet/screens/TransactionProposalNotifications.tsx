@@ -57,14 +57,12 @@ import {
 } from '../components/ErrorMessages';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import PaymentSent from '../components/PaymentSent';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -607,7 +605,7 @@ const TransactionProposalNotifications = () => {
 
               if (count.success > 0) {
                 dispatch(
-                  logSegmentEvent('track', 'Sent Crypto', {
+                  Analytics.track('Sent Crypto', {
                     context: 'Transaction Proposal Notifications',
                     coin: wallet.currencyAbbreviation || '',
                   }),

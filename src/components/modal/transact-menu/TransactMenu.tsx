@@ -10,8 +10,8 @@ import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
-import {logSegmentEvent} from '../../../store/app/app.effects';
 import {WalletScreens} from '../../../navigation/wallet/WalletStack';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -94,7 +94,7 @@ const TransactModal = () => {
       description: t('Buy crypto with cash'),
       onPress: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Buy Crypto', {
+          Analytics.track('Clicked Buy Crypto', {
             context: 'TransactMenu',
           }),
         );
@@ -121,7 +121,7 @@ const TransactModal = () => {
       description: t('Swap crypto for another'),
       onPress: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Swap Crypto', {
+          Analytics.track('Clicked Swap Crypto', {
             context: 'TransactMenu',
           }),
         );
@@ -165,7 +165,7 @@ const TransactModal = () => {
           },
         });
         dispatch(
-          logSegmentEvent('track', 'Clicked Buy Gift Cards', {
+          Analytics.track('Clicked Buy Gift Cards', {
             context: 'TransactMenu',
           }),
         );
@@ -179,7 +179,7 @@ const TransactModal = () => {
     title: t('Scan'),
     onPress: () => {
       dispatch(
-        logSegmentEvent('track', 'Open Scanner', {
+        Analytics.track('Open Scanner', {
           context: 'TransactMenu',
         }),
       );

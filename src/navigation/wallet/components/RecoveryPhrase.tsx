@@ -54,10 +54,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import Haptic from '../../../components/haptic-feedback/haptic';
@@ -88,6 +85,7 @@ import {
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -430,7 +428,7 @@ const RecoveryPhrase = () => {
         key,
       });
       dispatch(
-        logSegmentEvent('track', 'Imported Key', {
+        Analytics.track('Imported Key', {
           context: route.params?.context || '',
           source: 'RecoveryPhrase',
         }),
@@ -579,7 +577,7 @@ const RecoveryPhrase = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               dispatch(
-                logSegmentEvent('track', 'Open Scanner', {
+                Analytics.track('Open Scanner', {
                   context: 'RecoveryPhrase',
                 }),
               );

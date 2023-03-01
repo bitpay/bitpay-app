@@ -63,7 +63,6 @@ import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/chan
 import {
   startOnGoingProcessModal,
   openUrlWithInAppBrowser,
-  logSegmentEvent,
 } from '../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
@@ -97,6 +96,7 @@ import {
 } from '../../../../store/external-services/external-services.types';
 import {getExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
 import {StackActions} from '@react-navigation/native';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 export interface RateData {
   fixedRateId: string;
@@ -731,7 +731,7 @@ const SwapCryptoRoot: React.FC = () => {
 
   const continueToCheckout = () => {
     dispatch(
-      logSegmentEvent('track', 'Requested Swap Crypto', {
+      Analytics.track('Requested Swap Crypto', {
         fromCoin: fromWalletSelected!.currencyAbbreviation,
         fromChain: fromWalletSelected!.chain,
         toCoin: toWalletSelected!.currencyAbbreviation,
@@ -1309,7 +1309,7 @@ const SwapCryptoRoot: React.FC = () => {
                 `Added ${createdToWallet?.currencyAbbreviation} wallet from Swap Crypto`,
               );
               dispatch(
-                logSegmentEvent('track', 'Created Basic Wallet', {
+                Analytics.track('Created Basic Wallet', {
                   coin: createToWalletData.currency.currencyAbbreviation,
                   chain: createToWalletData.currency.chain,
                   isErc20Token: createToWalletData.currency.isToken,

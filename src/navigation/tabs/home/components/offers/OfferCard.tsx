@@ -12,10 +12,8 @@ import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
 import {LogActions} from '../../../../../store/log';
 import LinkCard from '../cards/LinkCard';
-import {
-  getRouteParam,
-  logSegmentEvent,
-} from '../../../../../store/app/app.effects';
+import {getRouteParam} from '../../../../../store/app/app.effects';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 interface OfferCardProps {
   contentCard: ContentCard;
@@ -63,7 +61,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
       const merchantName = getRouteParam(url, 'merchant');
       if (handled && merchantName) {
         dispatch(
-          logSegmentEvent('track', 'Clicked Shop with Crypto', {
+          Analytics.track('Clicked Shop with Crypto', {
             context: 'OfferCard',
             merchantName,
           }),
