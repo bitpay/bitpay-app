@@ -15,7 +15,7 @@ import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import RNFS from 'react-native-fs';
 import {PermissionsAndroid, Platform} from 'react-native';
-import Share from 'react-native-share';
+import Share, {ShareOptions} from 'react-native-share';
 import Papa from 'papaparse';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {sleep} from '../../../../utils/helper-methods';
@@ -29,6 +29,7 @@ import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {LogActions} from '../../../../store/log';
 import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
+import Mailer from 'react-native-mail';
 
 const ExportTransactionHistoryContainer = styled.SafeAreaView`
   flex: 1;
@@ -197,6 +198,39 @@ const ExportTransactionHistory = () => {
     }
   };
 
+  const handleEmail = (subject: string, filePath: string) => {
+    Mailer.mail(
+      {
+        subject,
+        isHTML: false,
+        attachments: [
+          {
+            path: filePath,
+            type: 'csv',
+          },
+        ],
+      },
+      async (error, event) => {
+        if (error) {
+          dispatch(LogActions.error('Error sending email: ' + error));
+          const err = new Error(
+            `${APP_NAME_UPPERCASE} cannot open default Email App.`,
+          );
+          await sleep(500);
+          await showErrorMessage(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(err),
+              title: t('Uh oh, something went wrong'),
+            }),
+          );
+        }
+        if (event) {
+          dispatch(LogActions.debug('Email Logs: ' + event));
+        }
+      },
+    );
+  };
+
   const shareFile = async (csv: any, option: string) => {
     try {
       if (Platform.OS === 'android') {
@@ -212,7 +246,7 @@ const ExportTransactionHistory = () => {
       await RNFS.mkdir(filePath);
 
       filePath += '.csv';
-      const opts = {
+      const opts: ShareOptions = {
         title: csvFilename,
         url: `file://${filePath}`,
         subject: `${walletName} Transaction History`,
@@ -223,15 +257,12 @@ const ExportTransactionHistory = () => {
       if (option === 'download') {
         await Share.open(opts);
       } else {
-        await Share.shareSingle({
-          ...opts,
-          filename: csvFilename,
-          social: Share.Social.EMAIL,
-        });
+        handleEmail(opts.subject!, filePath);
       }
     } catch (err: any) {
+      dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
       if (err && err.message === 'User did not share') {
-        dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
+        return;
       } else {
         throw err;
       }
