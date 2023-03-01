@@ -1,6 +1,6 @@
 import React from 'react';
 import {Path, Svg, G, Polygon} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {White} from '../../../../styles/colors';
 
 const WyreLogoSvg: React.FC<{

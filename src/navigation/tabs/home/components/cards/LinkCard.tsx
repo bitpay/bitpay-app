@@ -1,5 +1,6 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {BaseText} from '../../../../../components/styled/Text';
 import {
   ActiveOpacity,
@@ -19,7 +20,7 @@ const LinkCardContainer = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   padding: 15px;
   max-width: 215px;

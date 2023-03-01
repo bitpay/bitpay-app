@@ -9,7 +9,7 @@ import {
   Midnight,
   NeutralSlate,
 } from '../../../../styles/colors';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
 

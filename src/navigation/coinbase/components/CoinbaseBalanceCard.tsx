@@ -6,7 +6,8 @@ import {
 } from '../../../utils/helper-methods';
 import {useNavigation} from '@react-navigation/native';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {useAppSelector} from '../../../utils/hooks';
 import {HomeCarouselLayoutType} from '../../../store/app/app.models';
@@ -30,7 +31,7 @@ interface CoinbaseCardComponentProps {
 }
 
 const ListCard = styled.TouchableOpacity`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   margin: 10px ${ScreenGutter};
   flex-direction: row;

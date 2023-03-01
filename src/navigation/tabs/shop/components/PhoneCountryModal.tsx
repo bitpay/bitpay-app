@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Modal, TouchableWithoutFeedback, FlatList} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {DarkTheme, DefaultTheme, useTheme} from '@react-navigation/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {PhoneCountryCode} from '../../../../lib/gift-cards/gift-card';
 import {
@@ -21,7 +22,8 @@ const ModalHeader = styled.View`
   align-items: center;
   padding-bottom: 0;
   padding-top: 10px;
-  background-color: ${({theme}) => theme.colors.background};
+  background-color: ${({theme: dark}) =>
+    dark ? DarkTheme.colors.background : DefaultTheme.colors.background};
 `;
 
 const ModalTitle = styled(BaseText)`
@@ -39,7 +41,7 @@ const CountryItem = styled.View`
   flex-direction: row;
   padding: 15px 5px;
   border-bottom-width: 1px;
-  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
+  border-bottom-color: ${({theme: dark}) => (dark ? LightBlack : Cloud)};
 `;
 
 const CountryName = styled(BaseText)`

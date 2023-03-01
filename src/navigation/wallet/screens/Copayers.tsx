@@ -2,9 +2,9 @@ import React, {useState, useLayoutEffect} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Clipboard from '@react-native-community/clipboard';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import {RouteProp, useRoute, useTheme} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {Image, ScrollView, RefreshControl, Share} from 'react-native';
 import {
   Paragraph,

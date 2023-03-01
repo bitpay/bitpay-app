@@ -14,7 +14,7 @@ import {useTranslation} from 'react-i18next';
 
 const ChangellyPoliciesContainer = styled.SafeAreaView`
   flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+  background-color: ${({theme: dark}) => (dark ? Black : White)};
 `;
 
 const ModalHeader = styled.View`

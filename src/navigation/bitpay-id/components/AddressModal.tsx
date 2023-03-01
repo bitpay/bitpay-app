@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Modal from 'react-native-modal';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
+import styled from 'styled-components/native';
 import Clipboard from '@react-native-community/clipboard';
 import {
   ActionContainer,
@@ -34,7 +35,7 @@ const ModalContainer = styled.View`
   justify-content: center;
   width: ${WIDTH - 30}px;
   max-width: 400px;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+  background-color: ${({theme: dark}) => (dark ? Black : White)};
   border-radius: 10px;
   padding: 22px 24px;
   overflow: hidden;
@@ -48,7 +49,7 @@ const HeaderContainer = styled.View`
 `;
 
 const AddressContainer = styled.TouchableOpacity`
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : '#eceffd')};
+  background-color: ${({theme: dark}) => (dark ? Midnight : '#eceffd')};
   border-radius: 8px;
   margin: 0;
   flex-direction: row;
@@ -59,7 +60,7 @@ const AddressContainer = styled.TouchableOpacity`
 const AddressTextContainer = styled.View`
   flex: 1 1 auto;
   border-right-width: 1px;
-  border-right-color: ${({theme: {dark}}) =>
+  border-right-color: ${({theme: dark}) =>
     dark ? 'rgba(73, 137, 255, 0.25)' : 'rgba(34, 64, 196, 0.25)'};
   padding-right: 12px;
   min-height: 20px;
@@ -82,7 +83,7 @@ const CopyContainer = styled.View`
 `;
 
 const Divider = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : Slate30)};
   height: 1px;
   margin: 24px -24px 19px;
 `;

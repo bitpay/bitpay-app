@@ -2,7 +2,8 @@ import React, {useState, useCallback, useEffect, useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {TouchableOpacity, FlatList, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {useForm, Controller} from 'react-hook-form';
@@ -112,7 +113,7 @@ const NoResultsHeader = styled(H4)`
 
 const Hr = styled.View`
   align-self: center;
-  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
+  border-bottom-color: ${({theme: dark}) => (dark ? LightBlack : Cloud)};
   border-bottom-width: 1px;
   margin: 0 ${horizontalPadding}px;
   width: ${WIDTH - horizontalPadding * 2}px;

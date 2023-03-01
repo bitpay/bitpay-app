@@ -42,7 +42,7 @@ const ModalHeaderRight = styled(BaseText)`
 `;
 
 const StyledAmountModalContainer = styled.SafeAreaView`
-  background-color: ${({theme}) => (theme.dark ? Black : White)};
+  background-color: ${({theme: dark}) => (dark ? Black : White)};
   flex: 1;
   padding-bottom: 45px;
 `;

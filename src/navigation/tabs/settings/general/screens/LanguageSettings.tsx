@@ -13,7 +13,7 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {SlateDark} from '../../../../../styles/colors';
 
 const LanguageSettingsScreen: React.VFC = () => {

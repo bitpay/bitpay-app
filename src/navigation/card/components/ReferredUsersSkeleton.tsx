@@ -1,4 +1,4 @@
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {LightBlack} from '../../../styles/colors';
 import React from 'react';

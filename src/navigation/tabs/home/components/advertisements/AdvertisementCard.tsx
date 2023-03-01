@@ -4,7 +4,8 @@ import {ImageStyle, Linking, StyleProp} from 'react-native';
 import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
@@ -35,7 +36,7 @@ const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
 };
 
 const AdvertisementCardContainer = styled.TouchableOpacity`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   flex-direction: column;
   justify-content: center;

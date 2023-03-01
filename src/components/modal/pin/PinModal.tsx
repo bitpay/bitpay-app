@@ -1,11 +1,11 @@
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Animated, TouchableOpacity, View, NativeModules} from 'react-native';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';

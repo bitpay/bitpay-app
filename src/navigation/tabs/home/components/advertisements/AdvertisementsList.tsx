@@ -1,6 +1,7 @@
 import React from 'react';
 import {ContentCard} from 'react-native-appboy-sdk';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';

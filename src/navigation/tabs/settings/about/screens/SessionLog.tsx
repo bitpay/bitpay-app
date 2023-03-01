@@ -5,7 +5,8 @@ import React, {memo, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Alert, SectionList} from 'react-native';
 import Mailer from 'react-native-mail';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {
   WIDTH,
   SheetContainer,

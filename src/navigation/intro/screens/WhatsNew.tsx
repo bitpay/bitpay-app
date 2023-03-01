@@ -2,7 +2,8 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {DarkTheme, DefaultTheme, useTheme} from '@react-navigation/native';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 import IntroButton from '../components/intro-button/IntroButton';
 import {
@@ -20,7 +21,8 @@ const darkImage = require('../../../../assets/img/intro/dark/whats-new.png');
 
 const IntroWhatsNewContainer = styled.View`
   flex: 1;
-  background: ${({theme}) => theme.colors.background};
+  background: ${({theme: dark}) =>
+    dark ? DarkTheme.colors.background : DefaultTheme.colors.background};
 `;
 
 type WhatsNewScreenProps = StackScreenProps<IntroStackParamList, 'WhatsNew'>;

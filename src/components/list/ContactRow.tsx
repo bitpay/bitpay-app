@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import styled from 'styled-components/native';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {Column} from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
 import AngleRight from '../../../assets/img/angle-right.svg';

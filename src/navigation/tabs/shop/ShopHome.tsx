@@ -38,7 +38,7 @@ import {
 } from '@react-navigation/native';
 import {logSegmentEvent} from '../../../store/app/app.effects';
 import {HeaderTitle} from '../../../components/styled/Text';
-import {useTheme} from 'styled-components';
+import {useTheme} from '@react-navigation/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 

@@ -3,7 +3,7 @@ import {RoundedCheckbox} from 'react-native-rounded-checkbox';
 import Check from '../../../assets/img/check.svg';
 import {Action, LightBlack, SlateDark, White} from '../../styles/colors';
 import styled from 'styled-components/native';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 
 interface Props {
   onPress: () => any;
@@ -20,12 +20,12 @@ interface BorderProps {
 
 const Border = styled.View<BorderProps>`
   border: 1px solid
-    ${({checked, disabled, theme}) => {
+    ${({checked, disabled, theme: dark}) => {
       if (disabled) {
         return 'transparent';
       }
 
-      return checked ? Action : theme?.dark ? '#E1E4E7' : SlateDark;
+      return checked ? Action : dark ? '#E1E4E7' : SlateDark;
     }};
   position: absolute;
   top: 0;

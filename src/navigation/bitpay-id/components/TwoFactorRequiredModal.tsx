@@ -1,6 +1,7 @@
 import React from 'react';
 import Modal from 'react-native-modal';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {WIDTH} from '../../../components/styled/Containers';
 import {
   Black,
@@ -17,7 +18,7 @@ const ModalContainer = styled.View`
   justify-content: center;
   width: ${WIDTH - 30}px;
   max-width: 400px;
-  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+  background-color: ${({theme: dark}) => (dark ? Black : White)};
   border-radius: 10px;
   padding: 22px 24px;
   overflow: hidden;

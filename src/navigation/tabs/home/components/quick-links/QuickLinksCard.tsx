@@ -3,7 +3,8 @@ import React from 'react';
 import {Linking} from 'react-native';
 import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
   ActiveOpacity,
@@ -41,7 +42,7 @@ const QuickLinkCardContainer = styled.TouchableOpacity`
   width: 202px;
   height: 91px;
   border-radius: 12px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : White)};
   left: ${ScreenGutter};
   position: relative;
 `;

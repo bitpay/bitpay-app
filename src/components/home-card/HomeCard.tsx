@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {Action, LightBlack, Slate, SlateDark, White} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {
@@ -92,7 +93,7 @@ const FooterArrow = styled.TouchableOpacity`
   height: 35px;
   align-self: flex-end;
   border-radius: 50px;
-  background-color: ${({theme}) => (theme.dark ? '#0C204E' : '#ECEFFD')};
+  background-color: ${({theme: dark}) => (dark ? '#0C204E' : '#ECEFFD')};
   align-items: center;
   justify-content: center;
 `;

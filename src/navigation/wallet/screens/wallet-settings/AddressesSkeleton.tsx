@@ -1,5 +1,5 @@
 import React from 'react';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {LightBlack} from '../../../../styles/colors';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {View} from 'react-native';

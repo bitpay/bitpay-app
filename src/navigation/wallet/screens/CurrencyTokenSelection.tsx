@@ -9,7 +9,8 @@ import React, {
 import {useTranslation} from 'react-i18next';
 import {StyleSheet} from 'react-native';
 import {FlatList} from 'react-native-gesture-handler';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {

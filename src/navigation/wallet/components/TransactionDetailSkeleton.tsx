@@ -1,6 +1,6 @@
 import React from 'react';
 import {Cloud, LightBlack} from '../../../styles/colors';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {View} from 'react-native';
 

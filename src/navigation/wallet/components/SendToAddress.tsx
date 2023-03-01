@@ -8,7 +8,8 @@ import {
   SearchInput,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {BaseText, H5, SubText} from '../../../components/styled/Text';
 import {Caution, NeutralSlate} from '../../../styles/colors';
 import {useNavigation, useRoute} from '@react-navigation/native';

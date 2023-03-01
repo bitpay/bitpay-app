@@ -8,7 +8,8 @@ import React, {
 import {FlatList, View} from 'react-native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {Controller, useForm} from 'react-hook-form';
 import Button from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';
@@ -86,7 +87,7 @@ const Container = styled.ScrollView`
 `;
 
 const AddressBadge = styled.View`
-  background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
+  background: ${({theme: dark}) => (dark ? '#000' : '#fff')};
   position: absolute;
   right: 5px;
   top: 50%;
@@ -120,10 +121,10 @@ const Label = styled(BaseText)`
 `;
 
 const CurrencyContainer = styled.TouchableOpacity`
-  background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
+  background: ${({theme: dark}) => (dark ? LightBlack : NeutralSlate)};
   padding: 0 20px 0 10px;
   height: 55px;
-  border: 0.75px solid ${({theme}) => (theme.dark ? LightBlack : Slate)};
+  border: 0.75px solid ${({theme: dark}) => (dark ? LightBlack : Slate)};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
 `;

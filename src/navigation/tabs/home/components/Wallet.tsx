@@ -1,5 +1,6 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText, H3} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
@@ -51,9 +52,9 @@ export const HeaderImg = styled.View`
 `;
 
 export const ListCard = styled.TouchableOpacity<{outlineStyle?: boolean}>`
-  border: ${({outlineStyle, theme}) =>
-    outlineStyle ? `1px solid ${theme.dark ? SlateDark : Slate30}` : 'none'};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  border: ${({outlineStyle, theme: dark}) =>
+    outlineStyle ? `1px solid ${dark ? SlateDark : Slate30}` : 'none'};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   margin: ${({outlineStyle}) =>
     outlineStyle ? `0px 0px ${ScreenGutter} 0px` : `10px ${ScreenGutter}`};

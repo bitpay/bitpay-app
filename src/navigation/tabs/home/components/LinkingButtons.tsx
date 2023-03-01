@@ -1,5 +1,6 @@
 import React, {ReactNode} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {Action, White} from '../../../../styles/colors';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
@@ -27,7 +28,7 @@ const ButtonContainer = styled.View`
 const ButtonText = styled(BaseText)`
   font-size: 12px;
   line-height: 18px;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  color: ${({theme: dark}) => (dark ? White : Action)};
   margin-top: 5px;
 `;
 
@@ -37,7 +38,7 @@ const LinkButton = styled.TouchableOpacity`
   border-radius: 11px;
   align-items: center;
   justify-content: center;
-  background: ${({theme: {dark}}) => (dark ? '#0C204E' : Action)};
+  background: ${({theme: dark}) => (dark ? '#0C204E' : Action)};
   margin: 11px 0 8px;
 `;
 

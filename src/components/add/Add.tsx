@@ -1,7 +1,8 @@
 import React from 'react';
 import {Platform} from 'react-native';
 import {Circle, Color, G, Svg, Rect} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {LightBlack, NeutralSlate, White} from '../../styles/colors';
 
 interface AddSvgProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 import {Path, Svg, G} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {Black} from '../../../../styles/colors';
 
 const ChangellyLogoSvg: React.FC<{

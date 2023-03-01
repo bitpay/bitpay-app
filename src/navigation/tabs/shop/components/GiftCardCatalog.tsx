@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import pickBy from 'lodash.pickby';
 import uniqBy from 'lodash.uniqby';
 import {Platform, View} from 'react-native';

@@ -1,4 +1,4 @@
-import {useTheme} from '@react-navigation/native';
+import {DarkTheme, DefaultTheme, useTheme} from '@react-navigation/native';
 import React, {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {TextInput, TouchableOpacity} from 'react-native';
@@ -125,16 +125,22 @@ const MemoInput = styled(ImportTextInput)<MemoInputContainerParams>`
 
 const MemoInputContainer = styled.View<MemoInputContainerParams>`
   flex-grow: 1;
-  border-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
-    getMemoBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
+  border-color: ${({hasFocus, isEditMode, isEmpty, theme: dark}) =>
+    getMemoBorderColor(
+      {hasFocus, isEditMode, isEmpty},
+      dark ? DarkTheme.dark : DefaultTheme.dark,
+    )};
   border-width: ${memoBorderWidth}px;
   border-top-left-radius: ${memoBorderRadius}px;
   border-top-right-radius: ${({isEditMode, isEmpty}) =>
     isEditMode || !isEmpty ? 0 : memoBorderRadius}px;
-  border-bottom-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
+  border-bottom-color: ${({hasFocus, isEditMode, isEmpty, theme: dark}) =>
     hasFocus
       ? Action
-      : getMemoBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
+      : getMemoBorderColor(
+          {hasFocus, isEditMode, isEmpty},
+          dark ? DarkTheme.dark : DefaultTheme.dark,
+        )};
   border-right-width: ${({isEmpty, isEditMode}) =>
     isEmpty && !isEditMode ? memoBorderWidth : 0}px;
   flex-direction: row;
@@ -142,12 +148,15 @@ const MemoInputContainer = styled.View<MemoInputContainerParams>`
 
 const memoOuterButtonHeight = memoInputHeight + memoBorderWidth * 2;
 const MemoOuterButtonContainer = styled.View<MemoInputContainerParams>`
-  background-color: ${({isEditMode, theme}) =>
-    isEditMode || theme.dark ? Action : White};
-  border-color: ${({isEditMode, hasFocus, isEmpty, theme}) =>
+  background-color: ${({isEditMode, theme: dark}) =>
+    isEditMode || dark ? Action : White};
+  border-color: ${({isEditMode, hasFocus, isEmpty, theme: dark}) =>
     isEditMode
       ? Action
-      : getMemoBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
+      : getMemoBorderColor(
+          {hasFocus, isEditMode, isEmpty},
+          dark ? DarkTheme.dark : DefaultTheme.dark,
+        )};
   border-width: ${memoBorderWidth}px;
   border-left-width: 0;
   border-top-right-radius: ${memoBorderRadius}px;
@@ -167,8 +176,11 @@ const MemoOuterButton = styled.TouchableOpacity`
 const MemoClearButtonContainer = styled.View<MemoInputContainerParams>`
   height: ${memoInputHeight}px;
   width: 33px;
-  background-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
-    getMemoInputColor({hasFocus, isEditMode, isEmpty}, theme.dark)}
+  background-color: ${({hasFocus, isEditMode, isEmpty, theme: dark}) =>
+    getMemoInputColor(
+      {hasFocus, isEditMode, isEmpty},
+      dark ? DarkTheme.dark : DefaultTheme.dark,
+    )}
   justify-content: center;
 `;
 

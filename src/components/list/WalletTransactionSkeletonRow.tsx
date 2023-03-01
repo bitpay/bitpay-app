@@ -2,7 +2,7 @@ import React from 'react';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {View} from 'react-native';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {LightBlack} from '../../styles/colors';
 
 const WalletTransactionSkeletonRow = () => {

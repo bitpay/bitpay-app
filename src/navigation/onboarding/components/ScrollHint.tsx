@@ -1,6 +1,7 @@
 import React from 'react';
+import {useTheme} from '@react-navigation/native';
 import Svg, {Defs, LinearGradient, Rect, Stop} from 'react-native-svg';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 
 interface ScrollHintProps {
   height: number;

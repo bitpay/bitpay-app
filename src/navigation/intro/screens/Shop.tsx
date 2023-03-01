@@ -1,7 +1,8 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 import {RootStackParamList} from '../../../Root';
 import {Analytics} from '../../../store/analytics/analytics.effects';

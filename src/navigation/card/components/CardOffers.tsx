@@ -3,7 +3,8 @@ import React from 'react';
 import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {
   ActiveOpacity,
   CardContainer,

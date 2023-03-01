@@ -1,4 +1,9 @@
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
 import React, {
   ComponentType,
   useCallback,
@@ -7,7 +12,7 @@ import React, {
   useState,
 } from 'react';
 import {Platform} from 'react-native';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainer, WIDTH} from '../../../components/styled/Containers';
 import {
@@ -189,7 +194,7 @@ const PriceCharts = () => {
   } = item;
 
   const {coinColor, gradientBackgroundColor} =
-    BitpaySupportedCoins[currencyAbbreviation.toLowerCase()].theme;
+    BitpaySupportedCoins[currencyAbbreviation.toLowerCase()].theme || {};
 
   const chartStyle = {
     data: {

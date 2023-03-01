@@ -1,5 +1,6 @@
-import React, {useMemo, useState} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import React, {useState} from 'react';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {
   ScreenGutter,
   Setting,
@@ -64,7 +65,7 @@ const EmojisContainer = styled.View`
   align-items: center;
   padding: 25px 16px 25px 16px;
   gap: 32px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  background: ${({theme: dark}) => (dark ? LightBlack : White)};
   box-shadow: 0px 1px 9px rgba(0, 0, 0, 0.05);
   border-radius: 12px;
 `;

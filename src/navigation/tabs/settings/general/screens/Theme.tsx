@@ -7,7 +7,7 @@ import {
   TextStyle,
   View,
 } from 'react-native';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
   Hr,

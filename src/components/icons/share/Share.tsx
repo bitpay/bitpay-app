@@ -24,7 +24,7 @@ const ShareContainer = styled.View`
   height: 40px;
   width: 40px;
   border-radius: 50px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  background: ${({theme: dark}) => (dark ? LightBlack : NeutralSlate)};
   align-items: center;
   justify-content: center;
 `;

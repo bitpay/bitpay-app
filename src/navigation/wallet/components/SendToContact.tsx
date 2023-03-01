@@ -6,7 +6,8 @@ import {
   SearchInput,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {H5, SubText} from '../../../components/styled/Text';
 import {NeutralSlate} from '../../../styles/colors';
 import {useRoute} from '@react-navigation/native';

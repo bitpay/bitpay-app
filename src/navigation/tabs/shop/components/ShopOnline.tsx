@@ -4,7 +4,8 @@ import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {View} from 'react-native';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {BaseText, Paragraph} from '../../../../components/styled/Text';
 import {

@@ -1,5 +1,6 @@
 import React, {memo, ReactElement} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {BaseText, H7} from '../styled/Text';
 import {StyleProp, TextStyle} from 'react-native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';

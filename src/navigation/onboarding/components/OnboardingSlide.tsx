@@ -1,5 +1,6 @@
 import React, {ReactElement} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {
   ImageContainer,
   SubTextContainer,

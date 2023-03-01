@@ -1,6 +1,7 @@
 import React, {useEffect, useLayoutEffect, useState, ReactElement} from 'react';
 import {useAppSelector} from '../../../../utils/hooks';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {useNavigation} from '@react-navigation/core';
 import {StackScreenProps} from '@react-navigation/stack';
 import Clipboard from '@react-native-community/clipboard';
@@ -90,7 +91,7 @@ const OptionContainer = styled.TouchableOpacity<{lastElement?: string}>`
   flex-direction: row;
   padding: 30px 25px;
   align-items: stretch;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
+  border-bottom-color: ${({theme: dark}) => (dark ? SlateDark : '#ebecee')};
   border-bottom-width: ${({lastElement}) => lastElement || '1px'};
 `;
 
@@ -113,7 +114,7 @@ const OptionTitleText = styled(BaseText)`
 `;
 
 const ModalContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  background: ${({theme: dark}) => (dark ? LightBlack : White)};
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   padding: 30px 0 0 0;

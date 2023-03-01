@@ -11,7 +11,7 @@ import RNPrint from 'react-native-print';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled from 'styled-components/native';
-import {useTheme} from 'styled-components';
+import {useTheme} from '@react-navigation/native';
 import Button from '../../../../../components/button/Button';
 import {
   CtaContainer,
@@ -73,9 +73,9 @@ const Amount = styled(BaseText)`
 `;
 
 const ClaimCodeBox = styled.View`
-  background-color: ${({theme}) => (theme.dark ? '#121212' : NeutralSlate)};
+  background-color: ${({theme: dark}) => (dark ? '#121212' : NeutralSlate)};
   border: 1px solid #e1e4e7;
-  ${({theme}) => (theme.dark ? 'border: none;' : '')}
+  ${({theme: dark}) => (dark ? 'border: none;' : '')}
   border-radius: 12px;
   margin-top: -80px;
   padding-top: 110px;
@@ -104,7 +104,7 @@ const ActionContainer = styled(CtaContainer)`
 `;
 
 const Divider = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Grey)};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : Grey)};
   height: 1px;
   width: 80%;
   margin-bottom: 20px;

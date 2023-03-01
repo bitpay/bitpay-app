@@ -1,6 +1,6 @@
 import {BlurView} from '@react-native-community/blur';
 import React from 'react';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {useAppSelector} from '../../utils/hooks';
 
 export const Blur = () => {

@@ -1,12 +1,13 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {LightBlack, Slate30, White} from '../../../../../styles/colors';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {BoxShadow} from '../Styled';
 
 const ListCard = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   margin: 10px ${ScreenGutter};
   flex-direction: row;

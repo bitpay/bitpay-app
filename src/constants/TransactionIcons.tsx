@@ -6,7 +6,7 @@ import OneInchSvg from '../../assets/img/wallet/transactions/1inch.svg';
 import MercadolivreSvg from '../../assets/img/wallet/transactions/mercadolivre.svg';
 import CoinbaseSvg from '../../assets/img/wallet/transactions/coinbase.svg';
 import BitPaySvg from '../../assets/img/wallet/transactions/bitpay.svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import {BitPayTheme} from '../themes/bitpay';
 import * as Svg from 'react-native-svg';
 import {Success25, Success50} from '../styles/colors';

@@ -1,7 +1,8 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Platform, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
+import styled from 'styled-components/native';
 import {
   useAppDispatch,
   useAppSelector,

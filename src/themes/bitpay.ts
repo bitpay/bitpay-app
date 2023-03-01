@@ -11,14 +11,17 @@ import {
 } from '../styles/colors';
 
 export type BitPayTheme = Theme & {
+  dark: boolean;
   colors: {
     // TODO: add additional color use cases
+    background: string;
     link: string;
     description: string;
   };
 };
 
 export const BitPayLightTheme: BitPayTheme = {
+  ...DefaultTheme,
   dark: false,
   colors: {
     ...DefaultTheme.colors,
@@ -35,6 +38,7 @@ export const BitPayLightTheme: BitPayTheme = {
 };
 
 export const BitPayDarkTheme: BitPayTheme = {
+  ...DarkTheme,
   dark: true,
   colors: {
     ...DarkTheme.colors,

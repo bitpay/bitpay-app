@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 
 const HeroImage = () => {
   const theme = useTheme();

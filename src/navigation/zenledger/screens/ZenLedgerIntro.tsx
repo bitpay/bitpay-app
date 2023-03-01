@@ -27,7 +27,7 @@ import {useNavigation} from '@react-navigation/native';
 import ZenLedgerLogo from '../components/ZenLedgerLogo';
 import Back from '../../../components/back/Back';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {useTheme} from 'styled-components';
+import {useTheme} from '@react-navigation/native';
 import LinkIcon from '../../../components/icons/link-icon/LinkIcon';
 
 const ZenLedgerIntroContainer = styled.View`
@@ -39,7 +39,7 @@ const ZenLedgerIntroContainer = styled.View`
 `;
 
 const ZenLedgerBottomContainer = styled.View`
-  background-color: ${({theme}) => (theme?.dark ? LightBlack : White)};
+  background-color: ${({theme: dark}) => (dark ? LightBlack : White)};
   bottom: 0px;
   height: 200px;
   width: 100%;

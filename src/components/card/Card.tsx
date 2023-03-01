@@ -1,5 +1,6 @@
 import {CardContainer, CardGutter} from '../styled/Containers';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import {BoxShadow} from '../../navigation/tabs/home/components/Styled';
