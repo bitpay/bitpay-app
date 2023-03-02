@@ -160,9 +160,6 @@ const TransactModal = () => {
       onPress: () => {
         navigation.navigate('Tabs', {
           screen: 'Shop',
-          params: {
-            screen: 'Home',
-          },
         });
         dispatch(
           Analytics.track('Clicked Buy Gift Cards', {
