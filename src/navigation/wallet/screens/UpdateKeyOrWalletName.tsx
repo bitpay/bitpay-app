@@ -37,7 +37,7 @@ const ButtonContainer = styled.View`
 `;
 
 const schema = yup.object().shape({
-  name: yup.string().max(15).trim(),
+  name: yup.string().max(15).trim().required(),
 });
 
 const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
@@ -61,7 +61,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
   const {
     control,
     handleSubmit,
-    formState: {errors},
+    formState: {errors, isValid},
   } = useForm<{name: string}>({resolver: yupResolver(schema)});
 
   const placeholder = context === 'key' ? key.keyName : walletName;
@@ -96,7 +96,10 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
         />
       </FormContainer>
       <ButtonContainer>
-        <Button onPress={handleSubmit(updateName)} buttonStyle={'primary'}>
+        <Button
+          onPress={handleSubmit(updateName)}
+          buttonStyle={'primary'}
+          disabled={!isValid}>
           {t('Update')}
         </Button>
       </ButtonContainer>
