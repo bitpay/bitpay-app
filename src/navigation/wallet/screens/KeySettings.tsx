@@ -144,7 +144,7 @@ const KeySettings = () => {
       });
       scrollViewRef?.current?.scrollToEnd({animated: false});
     }
-  }, [context]);
+  }, [context, key, navigation]);
 
   useLayoutEffect(() => {
     navigation.setOptions({

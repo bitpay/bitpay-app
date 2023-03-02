@@ -56,7 +56,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
         </HeaderTitle>
       ),
     });
-  }, [navigation, t]);
+  }, [navigation, t, context]);
 
   const {
     control,
