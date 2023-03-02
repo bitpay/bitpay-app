@@ -55,7 +55,6 @@ import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
-import {StackScreenProps} from '@react-navigation/stack';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {
   AppDispatch,

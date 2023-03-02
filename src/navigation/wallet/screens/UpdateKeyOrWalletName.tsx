@@ -37,7 +37,7 @@ const ButtonContainer = styled.View`
 `;
 
 const schema = yup.object().shape({
-  name: yup.string().max(15).trim(),
+  name: yup.string().max(15).trim().required(),
 });
 
 const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
@@ -56,7 +56,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
         </HeaderTitle>
       ),
     });
-  }, [navigation, t]);
+  }, [navigation, t, context]);
 
   const {
     control,
