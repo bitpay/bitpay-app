@@ -69,7 +69,7 @@ import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
-import _ from 'lodash';
+import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -364,7 +364,7 @@ const KeyOverview = () => {
   const hasMultipleKeys =
     Object.values(keys).filter(k => k.backupComplete).length > 1;
   let pendingTxps: any = [];
-  _.each(key?.wallets, x => {
+  each(key?.wallets, x => {
     if (x.pendingTxps) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
