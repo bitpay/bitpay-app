@@ -64,7 +64,7 @@
     "asyncstorage-down": "4.2.0",
     "axios": "0.21.1",
     "bitauth": "0.4.1",
-    "bitcore-wallet-client": "8.25.46",
+    "bitcore-wallet-client": "10.0.0",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",
     "eth-sig-util": "3.0.1",
