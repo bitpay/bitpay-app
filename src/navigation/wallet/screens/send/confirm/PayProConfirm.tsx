@@ -134,6 +134,11 @@ const PayProConfirm = () => {
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
         address: string;
       });
+      dispatch(
+        Analytics.track('BitPay App - Start Merchant Purchase', {
+          merchantBrand: fetchedInvoice.merchantName,
+        }),
+      );
     } catch (err: any) {
       await sleep(400);
       dispatch(dismissOnGoingProcessModal());
@@ -213,6 +218,11 @@ const PayProConfirm = () => {
       setInvoice(fetchedInvoice);
       setCoinbaseAccount(selectedCoinbaseAccount);
       dispatch(dismissOnGoingProcessModal());
+      dispatch(
+        Analytics.track('BitPay App - Start Merchant Purchase', {
+          merchantBrand: fetchedInvoice.merchantName,
+        }),
+      );
     } catch (err) {
       handleCreateGiftCardInvoiceOrTxpError(err);
     }
@@ -302,6 +312,14 @@ const PayProConfirm = () => {
     });
     await sleep(400);
     setResetSwipeButton(true);
+    dispatch(
+      Analytics.track('BitPay App - Failed Merchant Purchase', {
+        merchantBrand: invoice?.merchantName,
+        merchantAmount: invoice?.price,
+        merchantCurrency: invoice?.currency,
+        coin: wallet?.currencyAbbreviation || '',
+      }),
+    );
   };
 
   return (
@@ -423,6 +441,14 @@ const PayProConfirm = () => {
                 dispatch(
                   Analytics.track('Sent Crypto', {
                     context: 'PayPro Confirm',
+                    coin: wallet?.currencyAbbreviation || '',
+                  }),
+                );
+                dispatch(
+                  Analytics.track('BitPay App - Purchased Merchant', {
+                    merchantBrand: invoice?.merchantName,
+                    merchantAmount: invoice?.price,
+                    merchantCurrency: invoice?.currency,
                     coin: wallet?.currencyAbbreviation || '',
                   }),
                 );

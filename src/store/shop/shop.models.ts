@@ -170,6 +170,8 @@ export interface Invoice {
   transactionCurrency: string;
   status: 'new' | 'paid' | 'confirmed' | 'complete' | 'expired' | 'invalid';
   expirationTime: number;
+  merchantName: string;
+  currency: string;
 }
 
 export interface PhoneCountryInfo {

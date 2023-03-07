@@ -863,9 +863,16 @@ export const handleBwsEvent =
         case 'TxProposalRejectedBy':
         case 'TxProposalRemoved':
         case 'NewOutgoingTx':
-        case 'NewIncomingTx':
         case 'NewTxProposal':
         case 'TxConfirmation':
+          _startUpdateWalletStatus(dispatch, keyObj, wallet);
+          break;
+        case 'NewIncomingTx':
+          Analytics.track('BitPay App - Funded Wallet', {
+            walletType: wallet.credentials.addressType,
+            cryptoType: wallet.credentials.coin,
+            cryptoAmount: true,
+          });
           _startUpdateWalletStatus(dispatch, keyObj, wallet);
           break;
       }
