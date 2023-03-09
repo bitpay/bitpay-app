@@ -91,14 +91,17 @@ const lib = (() => {
       _client.add({
         plugin: new AppsflyerPlugin(),
       });
+
       // extend Braze features with BitPay specific logic, mainly passing braze_id for anonymous users to support cloud-mode events
       _client.add({
         plugin: new BpBrazePlugin({brazeId}),
       });
 
-      if (IS_IOS) {
-        _client.add({plugin: new IdfaPlugin()});
-      }
+      // iOS: prompts for app tracking, only sends IDFA if accepted
+      // android: no-op
+      _client.add({
+        plugin: new IdfaPlugin(),
+      });
     },
 
     /**
