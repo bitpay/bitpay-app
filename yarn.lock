@@ -12070,11 +12070,6 @@ react-native-touch-id-ng@5.0.1:
   resolved "https://registry.yarnpkg.com/react-native-touch-id-ng/-/react-native-touch-id-ng-5.0.1.tgz#acb229e3f3d70a7fee75153296e07778763b8032"
   integrity sha512-J8V10YnIfRvNNJ0hVUX889qqmu6lgs5O1baFars3q1qUgVqj0l4MAsrBF5tpyo5K89LFyLGWAt5XH7/0zNOPvA==
 
-react-native-tracking-transparency@0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/react-native-tracking-transparency/-/react-native-tracking-transparency-0.1.1.tgz#6426d4c826d0deaed7ed32f707cb2d15b09c3c3f"
-  integrity sha512-yGzpprmZ7dnlScegpoq1uQLuMLR2yDcFVHKF39FB0hxUBmck3G0bKSIbjj1ienM9IgjPvJQPgvG0dX9asyZ7NA==
-
 react-native-url-polyfill@1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/react-native-url-polyfill/-/react-native-url-polyfill-1.3.0.tgz#c1763de0f2a8c22cc3e959b654c8790622b6ef6a"
