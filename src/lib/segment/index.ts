@@ -97,11 +97,10 @@ const lib = (() => {
         plugin: new BpBrazePlugin({brazeId}),
       });
 
-      // iOS: prompts for app tracking, only sends IDFA if accepted
-      // android: no-op
-      _client.add({
-        plugin: new IdfaPlugin(),
-      });
+      // prompts for app tracking, only sends IDFA if accepted
+      if (IS_IOS) {
+        _client.add({plugin: new IdfaPlugin()});
+      }
     },
 
     /**
