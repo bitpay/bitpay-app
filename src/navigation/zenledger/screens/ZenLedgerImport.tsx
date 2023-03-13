@@ -256,7 +256,7 @@ const ZenLedgerImport: React.FC = () => {
                         action: async () => {
                           const coins = requestWallets
                             .map(item => {
-                              return item['blockchain'];
+                              return item.blockchain;
                             })
                             .toString();
                           Analytics.track(

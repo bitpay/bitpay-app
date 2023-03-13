@@ -386,7 +386,7 @@ const createWallet = (params: {
               if (context === 'WalletConnect') {
                 return reject(err);
               }
-              // eslint-disable-next-line no-shadow
+
               const account = options.account || 0;
               if (account >= 20) {
                 return reject(

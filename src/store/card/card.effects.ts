@@ -84,17 +84,16 @@ export const startCardStoreInit =
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
       try {
-        Dosh.initializeDosh(options).then(() => {
-          dispatch(LogActions.info('Successfully initialized Dosh.'));
-
-          const {doshToken} = initialData;
-          if (!doshToken) {
-            dispatch(LogActions.debug('No doshToken provided.'));
-            return;
-          }
-
-          return Dosh.setDoshToken(doshToken);
-        });
+        // TODO
+        // Dosh.initializeDosh(options).then(() => {
+        //   dispatch(LogActions.info('Successfully initialized Dosh.'));
+        //   const {doshToken} = initialData;
+        //   if (!doshToken) {
+        //     dispatch(LogActions.debug('No doshToken provided.'));
+        //     return;
+        //   }
+        //   return Dosh.setDoshToken(doshToken);
+        // });
       } catch (err: any) {
         dispatch(
           LogActions.error('An error occurred while initializing Dosh.'),
