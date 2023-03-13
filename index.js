@@ -1,3 +1,5 @@
+import '@walletconnect/react-native-compat';
+import '@ethersproject/shims';
 import './shim';
 import {AppRegistry} from 'react-native';
 import Root from './src/Root';

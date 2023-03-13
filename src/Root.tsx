@@ -169,7 +169,7 @@ export enum RootStacks {
   COINBASE = 'Coinbase',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
-  WALLET_CONNECT = 'WalletConnect',
+  WALLET_CONNECT_V2 = 'WalletConnect',
   DEBUG = 'Debug',
   NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
   ZENLEDGER = 'ZenLedger',
@@ -681,7 +681,7 @@ export default () => {
               }}
             />
             <Root.Screen
-              name={RootStacks.WALLET_CONNECT}
+              name={RootStacks.WALLET_CONNECT_V2}
               component={WalletConnectStack}
             />
             <Root.Screen

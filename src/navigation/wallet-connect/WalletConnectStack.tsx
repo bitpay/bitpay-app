@@ -31,7 +31,7 @@ const WalletConnectHeaderTitle = styled.View`
   flex-direction: row;
 `;
 
-const WalletConnectHeader = () => {
+export const WalletConnectHeader = () => {
   return (
     <WalletConnectHeaderTitle>
       <WalletConnectIconContainer>
@@ -96,9 +96,6 @@ const WalletConnectStack = () => {
       <WalletConnect.Screen
         name={WalletConnectScreens.WC_HOME}
         component={WalletConnectHome}
-        options={{
-          headerTitle: () => WalletConnectHeader(),
-        }}
       />
       <WalletConnect.Screen
         name={WalletConnectScreens.WC_REQUEST_DETAILS}

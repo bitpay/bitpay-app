@@ -15,4 +15,5 @@ declare module '@env' {
   export const SEGMENT_API_KEY_IOS: string;
   export const GIT_COMMIT_HASH: string;
   export const ZENLEDGER_CLIENT_ID: string;
+  export const WALLET_CONNECT_V2_PROJECT_ID: string;
 }

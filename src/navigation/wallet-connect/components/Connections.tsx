@@ -1,88 +1,95 @@
-import React from 'react';
-import EthIcon from '../../../../assets/img/currencies/eth.svg';
-import MaticIcon from '../../../../assets/img/currencies/matic.svg';
-import {titleCasing} from '../../../utils/helper-methods';
-import {Badge, H5} from '../../../components/styled/Text';
+import React, {memo} from 'react';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {EIP155_CHAINS} from '../../../constants/WalletConnectV2';
+import WCV2WalletRow from './WCV2WalletRow';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {useNavigation} from '@react-navigation/native';
+import {
+  WCV2SessionType,
+  WCV2Wallet,
+} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import styled from 'styled-components/native';
-import {IWCConnector} from '../../../store/wallet-connect/wallet-connect.models';
-import ConnectionItem from './ConnectionItem';
-import {Wallet} from '../../../store/wallet/wallet.models';
 
-const ConnectionsContainer = styled.View`
-  padding-bottom: 32px;
+const NoGutter = styled.View`
+  margin: 0 -10px;
 `;
 
-const ChainContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 16px;
-`;
-
-const ChainDetailsContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-`;
-
-const ChainIconContainer = styled.View`
-  border-radius: 100px;
-  height: auto;
-  width: auto;
-  overflow: hidden;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ChainTextContainer = styled.View`
-  margin-left: 8px;
-  align-items: flex-start;
-  flex-direction: row;
-`;
-
-export default ({
-  wallet,
-  connectors,
+const Connections = ({
+  account,
+  session,
+  keys,
+  wallet: _wallet,
+  peerId,
 }: {
-  wallet: Wallet;
-  connectors: IWCConnector[];
+  account?: string;
+  session?: WCV2SessionType;
+  keys?: {[key in string]: Key};
+  wallet?: Wallet;
+  peerId?: string;
 }) => {
-  const {walletName, network, chain} = wallet.credentials;
-  const networkName =
-    network === ('livenet' || 'mainnet')
-      ? 'mainnet'
-      : chain === 'eth'
-      ? 'kovan'
-      : 'mumbai';
+  const navigation = useNavigation();
+  let address, chain: string;
+  let wallet: Wallet | undefined;
 
-  return (
-    <ConnectionsContainer>
-      <ChainContainer>
-        <ChainDetailsContainer>
-          <ChainIconContainer>
-            {chain === 'eth' ? (
-              <EthIcon width={37} height={37} />
-            ) : (
-              <MaticIcon width={37} height={37} />
-            )}
-          </ChainIconContainer>
-          <ChainTextContainer>
-            <H5>{walletName}</H5>
-            {networkName ? (
-              <Badge style={{marginLeft: 5}}>{titleCasing(networkName)}</Badge>
-            ) : null}
-          </ChainTextContainer>
-        </ChainDetailsContainer>
-      </ChainContainer>
-      {Object.entries(connectors as any).map(([key, c]) => {
-        return (
-          <ConnectionItem
-            key={key}
-            session={(c as IWCConnector).connector.session}
-            wallet={wallet}
-          />
-        );
-      })}
-    </ConnectionsContainer>
-  );
+  const findWalletByAddress = (
+    address: string,
+    chain: string,
+    network: string,
+    keys: {[key in string]: Key},
+  ): Wallet | undefined => {
+    let wallet: Wallet | undefined;
+    for (let key of Object.values(keys)) {
+      wallet = key.wallets.find(
+        w =>
+          w.receiveAddress === address &&
+          w.chain === chain &&
+          w.network === network,
+      );
+      if (wallet) {
+        return wallet;
+      }
+    }
+  };
+
+  if (account && keys) {
+    // version 2
+    const index = account.indexOf(':', account.indexOf(':') + 1);
+    const protocolChainName = account.substring(0, index);
+    address = account.substring(index + 1);
+    chain = EIP155_CHAINS[protocolChainName]?.chainName;
+    const network = EIP155_CHAINS[protocolChainName]?.network;
+    wallet = findWalletByAddress(address, chain, network, keys);
+  } else if (_wallet) {
+    // version 1
+    address = _wallet.receiveAddress;
+    chain = _wallet.chain;
+    wallet = _wallet;
+  }
+
+  const {keyId} = wallet || {};
+
+  return wallet ? (
+    <NoGutter key={wallet.id}>
+      <WCV2WalletRow
+        walletObj={{wallet}}
+        topic={session?.topic}
+        keyId={keyId!}
+        isLast={false}
+        peerId={peerId}
+        onPress={(_keyId: string, walletObj: WCV2Wallet) => {
+          haptic('impactLight');
+          navigation.navigate('WalletConnect', {
+            screen: 'WalletConnectHome',
+            params: {
+              topic: session?.topic,
+              wallet: walletObj.wallet,
+              peerId,
+            },
+          });
+        }}
+        showCheckbox={false}
+      />
+    </NoGutter>
+  ) : null;
 };
+export default memo(Connections);

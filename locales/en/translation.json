@@ -1291,5 +1291,11 @@
   "To continue you will need to add a wallet to your key.": "To continue you will need to add a wallet to your key.",
   "Add wallet": "Add wallet",
   "Key and wallet required": "Key and wallet required",
-  "To continue you will need to create a key and add a wallet.": "To continue you will need to create a key and add a wallet."
+  "To continue you will need to create a key and add a wallet.": "To continue you will need to create a key and add a wallet.",
+  "WCNotSupportedChainMsg": "Sorry, {{peerName}} request to switch to a network that BitPay does not currently support.",
+  "WCSwitchEthereumChainMsg": "{{peerName}} requests to change network",
+  "WCSwitchNetworkTitle": "Switch network to {{chain}}",
+  "WCSwitchNetworkMsg": "This action will change the active network in BitPay to the {{chainName}} network",
+  "WCAddWalletMsg": "To make the switch you first need to have a {{chain}} wallet. Do you want to add this wallet to continue?",
+  "WCNoWalletMsg": "The {{chain}} wallet needed to continue was not found on this device."
 }

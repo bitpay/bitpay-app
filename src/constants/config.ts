@@ -71,7 +71,7 @@ export const PROTOCOL_NAME: {[key in string]: any} = {
     [Network.testnet]: 'Kovan',
   },
   matic: {
-    [Network.mainnet]: 'Polygon Network',
+    [Network.mainnet]: 'Polygon',
     [Network.testnet]: 'Mumbai',
   },
   default: {

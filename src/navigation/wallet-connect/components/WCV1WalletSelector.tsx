@@ -1,5 +1,5 @@
 import {StackActions, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -36,18 +36,12 @@ import KeyWalletsRow, {
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import _ from 'lodash';
-import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {Platform} from 'react-native';
 import {WalletConnectCtaContainer} from '../styled/WalletConnectContainers';
 import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
-import {Analytics} from '../../../store/analytics/analytics.effects';
-
-export type WalletConnectIntroParamList = {
-  uri?: string;
-};
 
 const DescriptionText = styled(BaseText)`
   font-style: normal;
@@ -69,7 +63,7 @@ export default ({
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const [uri, setUri] = useState(dappUri);
+
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -166,26 +160,25 @@ export default ({
   );
 
   const goToStartView = useCallback(
-    async (wallet: Wallet, wcUri: string) => {
+    async (wallet: Wallet) => {
       try {
         dispatch(startOnGoingProcessModal('LOADING'));
         const peer = (await dispatch<any>(
-          walletConnectOnSessionRequest(wcUri),
+          walletConnectOnSessionRequest(dappUri),
         )) as any;
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
         navigation.navigate('WalletConnect', {
           screen: 'WalletConnectStart',
           params: {
-            keyId: wallet.keyId,
-            walletId: wallet.id,
+            version: 1,
+            wallet,
             peer,
           },
         });
       } catch (e) {
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
-        setUri('');
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
@@ -197,32 +190,11 @@ export default ({
     [dispatch, navigation, showErrorMessage, t],
   );
 
-  const goToScanView = useCallback(
-    (wallet: Wallet) => {
-      dispatch(
-        Analytics.track('Open Scanner', {
-          context: 'WalletSelector',
-        }),
-      );
-      navigation.navigate('Scan', {
-        screen: 'Root',
-        params: {
-          onScanComplete: async data => {
-            if (isValidWalletConnectUri(data)) {
-              goToStartView(wallet, data);
-            }
-          },
-        },
-      });
-    },
-    [goToStartView, navigation],
-  );
-
   const onWalletSelect = async (wallet: Wallet) => {
     haptic('impactLight');
     onBackdropPress();
     await sleep(500);
-    uri ? goToStartView(wallet, uri) : goToScanView(wallet);
+    goToStartView(wallet);
   };
 
   return (

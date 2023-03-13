@@ -109,3 +109,11 @@ export const updateStore = (
   type: WalletConnectActionTypes.UPDATE_STORE,
   payload: {sessions, requests},
 });
+
+export const updateSession = (
+  connectors: IWCConnector[],
+  sessions: IWCSession[],
+): WalletConnectActionType => ({
+  type: WalletConnectActionTypes.UPDATE_SESSION,
+  payload: {connectors, sessions},
+});
