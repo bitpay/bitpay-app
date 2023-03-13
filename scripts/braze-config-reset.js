@@ -37,13 +37,6 @@ const dotenv = require('dotenv');
     );
   }
 
-  if (process.env.BRAZE_API_ENDPOINT) {
-    contentAndroid = contentAndroid.replace(
-      process.env.BRAZE_API_ENDPOINT,
-      'BRAZE_API_ENDPOINT_REPLACE_ME',
-    );
-  }
-
   if (process.env.BRAZE_SENDER_ID) {
     contentAndroid = contentAndroid.replace(
       process.env.BRAZE_SENDER_ID,
