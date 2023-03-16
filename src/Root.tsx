@@ -393,6 +393,32 @@ export default () => {
 
   // BACKUP KEY LOGIC
   useEffect(() => {
+    let checkObjDiff = (obj1: Keys, obj2: Keys) => {
+      if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+        return true;
+      }
+      const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
+      for (const key of keys) {
+        const mnemonicEncryptedChanged =
+          obj1[key]?.properties?.mnemonicEncrypted !==
+          obj2[key]?.properties?.mnemonicEncrypted;
+        const backupCompleteChanged =
+          obj1[key]?.backupComplete !== obj2[key]?.backupComplete;
+        const keyNameChanged = obj1[key]?.keyName !== obj2[key]?.keyName;
+        const walletLengthChanged =
+          obj1[key]?.wallets?.length !== obj2[key]?.wallets?.length;
+        if (
+          mnemonicEncryptedChanged ||
+          backupCompleteChanged ||
+          keyNameChanged ||
+          walletLengthChanged
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     const numNewKeys = Object.keys(keys).length;
     const keyLengthChange = previousKeysLength - numNewKeys;
     setPreviousKeysLength(numNewKeys);
@@ -401,7 +427,10 @@ export default () => {
     // keys length changed as expected
     if (expectedKeyLengthChange === keyLengthChange) {
       try {
-        debounceBoostrapAndSave(keys);
+        // check if any key was added or removed or if there is any diff worth to save
+        if (checkObjDiff(keys, backupKeys)) {
+          debounceBoostrapAndSave(keys);
+        }
         return;
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
