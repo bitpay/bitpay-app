@@ -1,11 +1,14 @@
 import WalletConnect from '@walletconnect/client';
-import {IWalletConnectSession} from '@walletconnect/types';
-import {IJsonRpcRequest} from '@walletconnect/types';
+import {
+  IWalletConnectSession,
+  IJsonRpcRequest,
+} from '@walletconnect/legacy-types';
 
 export interface IWCRequest {
   peerId: string;
   payload: IJsonRpcRequest;
   createdOn?: number;
+  chain?: string;
 }
 
 export interface IWCCustomData {

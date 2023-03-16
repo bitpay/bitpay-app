@@ -9,12 +9,13 @@
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* BitPayAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* BitPayAppTests.m */; };
 		03632D4B8959429DA3B141C2 /* Heebo-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EF767449FFE9477D8B33CD84 /* Heebo-Medium.ttf */; };
+		0EA3DCD80FBE9C8EBCAA20B7 /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC0B9B292F4583DE5FDD5331 /* libPods-BitPayApp.a */; };
 		0F819B33648D4741AAFCAD09 /* Heebo-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4BD0D9E39B2B473191E700CE /* Heebo-ExtraBold.ttf */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		4C96CFFE5B92D27B199CA36A /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC0B9B292F4583DE5FDD5331 /* libPods-BitPayApp.a */; };
-		4FD7BA8544E2A2E2F4B6D9DF /* libPods-BitPayApp-BitPayAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B94FBC38FF14F41D30974951 /* libPods-BitPayApp-BitPayAppTests.a */; };
+		36F28937290BF622EF701A95 /* libPods-BitPayApp-BitPayAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B94FBC38FF14F41D30974951 /* libPods-BitPayApp-BitPayAppTests.a */; };
+		4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.m */; };
 		5B31AAFE2786387B002765E1 /* RCTDosh.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.m */; };
 		5B31AAFF2786387B002765E1 /* RCTDosh.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.m */; };
 		5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AB5E2786515A002765E1 /* Dosh.swift */; };
@@ -52,12 +53,11 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = BitPayApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BitPayApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = BitPayApp/main.m; sourceTree = "<group>"; };
-		2AE1B4C889078E9E2447D827 /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp-BitPayAppTests.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp-BitPayAppTests/Pods-BitPayApp-BitPayAppTests.debug.xcconfig"; sourceTree = "<group>"; };
-		2D349DA13B64CDFC3C4F1AA1 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
-		30C3649089BBF946098BEF1E /* Pods-BitPayApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.debug.xcconfig"; sourceTree = "<group>"; };
-		4A3DF8BDA1701214D4ECFDFE /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp-BitPayAppTests.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp-BitPayAppTests/Pods-BitPayApp-BitPayAppTests.release.xcconfig"; sourceTree = "<group>"; };
+		4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AllowedUrlPrefixProtocol.m; sourceTree = "<group>"; };
+		4054F0E629AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AllowedUrlPrefixProtocol.h; sourceTree = "<group>"; };
 		4BD0D9E39B2B473191E700CE /* Heebo-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-ExtraBold.ttf"; path = "../assets/fonts/Heebo-ExtraBold.ttf"; sourceTree = "<group>"; };
 		4DCF32F2D2364E70AD2F1E68 /* Heebo-Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Thin.ttf"; path = "../assets/fonts/Heebo-Thin.ttf"; sourceTree = "<group>"; };
+		52C9C1EF81310A6432521118 /* Pods-BitPayApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.debug.xcconfig"; sourceTree = "<group>"; };
 		5B31AAFC2786381C002765E1 /* RCTDosh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTDosh.h; sourceTree = "<group>"; };
 		5B31AAFD2786387B002765E1 /* RCTDosh.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTDosh.m; sourceTree = "<group>"; };
 		5B31AB5E2786515A002765E1 /* Dosh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dosh.swift; sourceTree = "<group>"; };
@@ -72,8 +72,11 @@
 		6D615C4829725FD70063DB8E /* RCTTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTTimer.h; sourceTree = "<group>"; };
 		6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Light.ttf"; path = "../assets/fonts/Heebo-Light.ttf"; sourceTree = "<group>"; };
 		715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Bold.ttf"; path = "../assets/fonts/Heebo-Bold.ttf"; sourceTree = "<group>"; };
+		8A4282792C64982F7509BB95 /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp-BitPayAppTests.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp-BitPayAppTests/Pods-BitPayApp-BitPayAppTests.debug.xcconfig"; sourceTree = "<group>"; };
+		8FB612DEFF3091C53807723A /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp-BitPayAppTests.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp-BitPayAppTests/Pods-BitPayApp-BitPayAppTests.release.xcconfig"; sourceTree = "<group>"; };
 		B94FBC38FF14F41D30974951 /* libPods-BitPayApp-BitPayAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp-BitPayAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Regular.ttf"; path = "../assets/fonts/Heebo-Regular.ttf"; sourceTree = "<group>"; };
+		D065F59A146578B215CD6FE6 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		DC0B9B292F4583DE5FDD5331 /* libPods-BitPayApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ECCB92762860B25D00F9CF8B /* SilentPushEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SilentPushEvent.m; sourceTree = "<group>"; };
 		ECCB92772860B25D00F9CF8B /* SilentPushEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SilentPushEvent.h; sourceTree = "<group>"; };
@@ -87,7 +90,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4FD7BA8544E2A2E2F4B6D9DF /* libPods-BitPayApp-BitPayAppTests.a in Frameworks */,
+				36F28937290BF622EF701A95 /* libPods-BitPayApp-BitPayAppTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,7 +99,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5B5631782838854000C395A8 /* PassKit.framework in Frameworks */,
-				4C96CFFE5B92D27B199CA36A /* libPods-BitPayApp.a in Frameworks */,
+				0EA3DCD80FBE9C8EBCAA20B7 /* libPods-BitPayApp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,6 +140,8 @@
 				5B31AAFC2786381C002765E1 /* RCTDosh.h */,
 				5B31AAFD2786387B002765E1 /* RCTDosh.m */,
 				5B31AB5E2786515A002765E1 /* Dosh.swift */,
+				4054F0E629AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.h */,
+				4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.m */,
 				5BC1477B27B490E5004A8EEA /* BitPayApp-Bridging-Header.h */,
 				5BC1477C27B490FA004A8EEA /* BitPayAppTests-Bridging-Header.h */,
 				5BEA4BEE2838400700AB2121 /* RCTPaymentPass.h */,
@@ -173,10 +178,10 @@
 		7950FCCDC90E6306EDD77BCD /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				30C3649089BBF946098BEF1E /* Pods-BitPayApp.debug.xcconfig */,
-				2D349DA13B64CDFC3C4F1AA1 /* Pods-BitPayApp.release.xcconfig */,
-				2AE1B4C889078E9E2447D827 /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */,
-				4A3DF8BDA1701214D4ECFDFE /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */,
+				52C9C1EF81310A6432521118 /* Pods-BitPayApp.debug.xcconfig */,
+				D065F59A146578B215CD6FE6 /* Pods-BitPayApp.release.xcconfig */,
+				8A4282792C64982F7509BB95 /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */,
+				8FB612DEFF3091C53807723A /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -486,6 +491,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.m in Sources */,
 				5B31AAFE2786387B002765E1 /* RCTDosh.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */,
 				5BEA4BF02838402700AB2121 /* RCTPaymentPass.m in Sources */,
@@ -509,7 +515,7 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2AE1B4C889078E9E2447D827 /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */;
+			baseConfigurationReference = 8A4282792C64982F7509BB95 /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -541,7 +547,7 @@
 		};
 		00E356F71AD99517003FC87E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4A3DF8BDA1701214D4ECFDFE /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */;
+			baseConfigurationReference = 8FB612DEFF3091C53807723A /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -569,8 +575,9 @@
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 30C3649089BBF946098BEF1E /* Pods-BitPayApp.debug.xcconfig */;
+			baseConfigurationReference = 52C9C1EF81310A6432521118 /* Pods-BitPayApp.debug.xcconfig */;
 			buildSettings = {
+				ALLOWED_URL_PREFIXES = "ALLOWED-URL-PREFIXES-REPLACE-ME";
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
@@ -606,8 +613,9 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2D349DA13B64CDFC3C4F1AA1 /* Pods-BitPayApp.release.xcconfig */;
+			baseConfigurationReference = D065F59A146578B215CD6FE6 /* Pods-BitPayApp.release.xcconfig */;
 			buildSettings = {
+				ALLOWED_URL_PREFIXES = "ALLOWED-URL-PREFIXES-REPLACE-ME";
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;

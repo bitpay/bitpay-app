@@ -25,3 +25,11 @@ export type ExternalServicesConfig = {
   buyCrypto?: BuyCryptoConfig;
   swapCrypto?: SwapCryptoConfig;
 };
+
+export interface ExternalServicesConfigRequestParams {
+  currentAppVersion?: string;
+  currentLocationCountry?: string;
+  currentLocationState?: string;
+  bitpayIdLocationCountry?: string;
+  bitpayIdLocationState?: string;
+}

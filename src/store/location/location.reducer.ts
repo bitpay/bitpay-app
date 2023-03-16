@@ -1,15 +1,15 @@
-import {CountryData} from './location.models';
+import {LocationData} from './location.models';
 import {LocationActionType, LocationActionTypes} from './location.types';
 
 type LocationPersistBlackList = string[];
 export const locationReduxPersistBlackList: LocationPersistBlackList = [];
 
 export interface LocationState {
-  countryData: CountryData | null;
+  locationData: LocationData | null;
 }
 
 const initialState: LocationState = {
-  countryData: null,
+  locationData: null,
 };
 
 export const locationReducer = (
@@ -17,10 +17,10 @@ export const locationReducer = (
   action: LocationActionType,
 ): LocationState => {
   switch (action.type) {
-    case LocationActionTypes.SUCCESS_GET_COUNTRY:
-      const {countryData} = action.payload;
+    case LocationActionTypes.SUCCESS_GET_LOCATION:
+      const {locationData} = action.payload;
       return {
-        countryData: countryData,
+        locationData: locationData,
       };
 
     default:

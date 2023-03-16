@@ -61,7 +61,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
   const {
     control,
     handleSubmit,
-    formState: {errors, isValid},
+    formState: {errors},
   } = useForm<{name: string}>({resolver: yupResolver(schema)});
 
   const placeholder = context === 'key' ? key.keyName : walletName;
@@ -96,10 +96,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
         />
       </FormContainer>
       <ButtonContainer>
-        <Button
-          onPress={handleSubmit(updateName)}
-          buttonStyle={'primary'}
-          disabled={!isValid}>
+        <Button onPress={handleSubmit(updateName)} buttonStyle={'primary'}>
           {t('Update')}
         </Button>
       </ButtonContainer>

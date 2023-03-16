@@ -1,5 +1,8 @@
+import '@ethersproject/shims';
 import './shim';
+import '@walletconnect/react-native-compat';
 import {AppRegistry} from 'react-native';
+import 'react-native-get-random-values';
 import Root from './src/Root';
 import React from 'react';
 import './i18n';
