@@ -90,14 +90,14 @@ const PaymentMethodsModal = ({
 }: PaymentMethodsModalProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 
   const EnabledPaymentMethods = getEnabledPaymentMethods(
-    countryData,
+    locationData,
     currency,
     coin,
     chain,
-    countryData?.shortCode || 'US',
+    locationData?.countryShortCode || 'US',
   );
 
   const showOtherPaymentMethodsInfoSheet = (
@@ -202,7 +202,7 @@ const PaymentMethodsModal = ({
                           coin,
                           chain,
                           currency,
-                          countryData?.shortCode || 'US',
+                          locationData?.countryShortCode || 'US',
                         ) ? (
                           <MoonpayLogo widthIcon={20} heightIcon={20} />
                         ) : null}

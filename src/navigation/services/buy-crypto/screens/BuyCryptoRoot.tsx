@@ -71,6 +71,7 @@ import {getExternalServicesConfig} from '../../../../store/external-services/ext
 import {
   BuyCryptoConfig,
   ExternalServicesConfig,
+  ExternalServicesConfigRequestParams,
 } from '../../../../store/external-services/external-services.types';
 import {StackActions} from '@react-navigation/native';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
@@ -104,7 +105,7 @@ const BuyCryptoRoot: React.VFC<
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
-  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const fromWallet = route.params?.fromWallet;
@@ -127,7 +128,7 @@ const BuyCryptoRoot: React.VFC<
   );
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
     ...new Set([
-      ...getMoonpaySupportedCurrencies(countryData?.shortCode || 'US'),
+      ...getMoonpaySupportedCurrencies(locationData?.countryShortCode || 'US'),
       ...getSimplexSupportedCurrencies(),
       ...getWyreSupportedCurrencies(),
     ]),
@@ -390,7 +391,7 @@ const BuyCryptoRoot: React.VFC<
       fiatCurrency,
       coin: selectedWallet?.currencyAbbreviation || '',
       chain: selectedWallet?.chain || '',
-      country: countryData?.shortCode || 'US',
+      country: locationData?.countryShortCode || 'US',
       selectedWallet,
       paymentMethod: selectedPaymentMethod,
       buyCryptoConfig,
@@ -406,7 +407,7 @@ const BuyCryptoRoot: React.VFC<
           selectedWallet.currencyAbbreviation,
           selectedWallet.chain,
           fiatCurrency,
-          countryData?.shortCode || 'US',
+          locationData?.countryShortCode || 'US',
         ) ||
           isPaymentMethodSupported(
             'simplex',
@@ -436,7 +437,7 @@ const BuyCryptoRoot: React.VFC<
     }
     if (
       selectedPaymentMethod.method === 'sepaBankTransfer' &&
-      !countryData?.isEuCountry
+      !locationData?.isEuCountry
     ) {
       setDefaultPaymentMethod();
       return;
@@ -448,7 +449,7 @@ const BuyCryptoRoot: React.VFC<
         selectedWallet.currencyAbbreviation,
         selectedWallet.chain,
         fiatCurrency,
-        countryData?.shortCode || 'US',
+        locationData?.countryShortCode || 'US',
       ) ||
       isPaymentMethodSupported(
         'simplex',
@@ -502,7 +503,13 @@ const BuyCryptoRoot: React.VFC<
   const init = async () => {
     try {
       dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
-      const config: ExternalServicesConfig = await getExternalServicesConfig();
+      const requestData: ExternalServicesConfigRequestParams = {
+        currentLocationCountry: locationData?.countryShortCode,
+        currentLocationState: locationData?.stateShortCode,
+      };
+      const config: ExternalServicesConfig = await getExternalServicesConfig(
+        requestData,
+      );
       buyCryptoConfig = config?.buyCrypto;
       logger.debug('buyCryptoConfig: ' + JSON.stringify(buyCryptoConfig));
     } catch (err) {
@@ -550,7 +557,7 @@ const BuyCryptoRoot: React.VFC<
     }
 
     const coinsToRemove =
-      !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
+      !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
 
     if (coinsToRemove.length > 0) {
       coinsToRemove.forEach((coin: string) => {
