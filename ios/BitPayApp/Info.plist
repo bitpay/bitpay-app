@@ -47,7 +47,7 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
-	<true />
+	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSExceptionDomains</key>
@@ -55,7 +55,7 @@
 			<key>localhost</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true />
+				<true/>
 			</dict>
 		</dict>
 	</dict>
@@ -64,7 +64,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Enabling Face ID allows you quick and secure access to your account.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string />
+	<string/>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Tracking is used to identify source of traffic, optimize campaigns, and improve user experiences in the app.</string>
 	<key>UIAppFonts</key>
@@ -92,6 +92,8 @@
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false />
+	<false/>
+	<key>AllowedUrlPrefixes</key>
+	<string>$(ALLOWED_URL_PREFIXES)</string>
 </dict>
 </plist>

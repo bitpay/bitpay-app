@@ -1,9 +1,11 @@
 #import "AppDelegate.h"
+#import "../AllowedUrlPrefixProtocol.h"
 #import "../SilentPushEvent.h"
 #import "Appboy-iOS-SDK/AppboyKit.h"
 #import <RNAppsFlyer.h>
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
+#import <React/RCTHTTPRequestHandler.h>
 #import <React/RCTLinkingManager.h>
 #import <React/RCTRootView.h>
 #import "RNBootSplash.h"
@@ -66,6 +68,15 @@ static void InitializeFlipper(UIApplication *application) {
        withLaunchOptions:launchOptions];
 
   [[AppboyReactUtils sharedInstance] populateInitialUrlFromLaunchOptions:launchOptions];
+
+  RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSMutableArray *urlProtocolClasses = [NSMutableArray arrayWithArray:configuration.protocolClasses];
+    Class allowedUrlPrefixProtocol = AllowedUrlPrefixProtocol.class;
+    [urlProtocolClasses insertObject:allowedUrlPrefixProtocol atIndex:0];
+    configuration.protocolClasses = urlProtocolClasses;
+    return configuration;
+  });
 
   return YES;
 }
