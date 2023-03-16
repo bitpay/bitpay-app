@@ -24,13 +24,12 @@ export const EIP155_MAINNET_CHAINS: {[key in string]: any} = {
 };
 
 export const EIP155_TEST_CHAINS = {
-  // TODO: enable when goerli works
-  // 'eip155:5': {
-  //   chainId: 5,
-  //   name: 'Ethereum Goerli',
-  //   chainName: 'eth',
-  //   rpc: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'
-  // },
+  'eip155:5': {
+    chainId: 5,
+    name: 'Ethereum Goerli',
+    chainName: 'eth',
+    rpc: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+  },
   'eip155:80001': {
     chainId: 80001,
     name: 'Polygon Mumbai',
@@ -56,7 +55,7 @@ export const WALLET_CONNECT_SUPPORTED_CHAINS: {
 } = {
   'eip155:1': {chain: 'eth', network: Network.mainnet},
   'eip155:137': {chain: 'matic', network: Network.mainnet},
-  // 'eip155:5': {chain: 'eth', network: Network.testnet},
+  'eip155:5': {chain: 'eth', network: Network.testnet},
   'eip155:80001': {chain: 'matic', network: Network.testnet},
 };
 export type TEIP155Chain = keyof typeof EIP155_CHAINS;
