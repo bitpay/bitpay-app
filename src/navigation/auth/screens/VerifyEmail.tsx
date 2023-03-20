@@ -93,7 +93,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   };
 
   return (
-    <AuthFormContainer>
+    <AuthFormContainer accessibilityLabel="verify-email-view">
       {isTimedOut && (
         <VerifyEmailParagraph>
           {t("Didn't get an email? Try logging in again later.")}
@@ -111,7 +111,9 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
 
           <VerifyEmailParagraph>
             {t("Email didn't arrive?")}{' '}
-            <Link onPress={() => resendVerificationEmail()}>
+            <Link
+              accessibilityLabel="resend-link-button"
+              onPress={() => resendVerificationEmail()}>
               {t('Resend link')}
             </Link>
           </VerifyEmailParagraph>

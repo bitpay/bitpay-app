@@ -334,7 +334,7 @@ const Pin = gestureHandlerRootHOC(() => {
         pinLength={PIN_LENGTH}
         pin={pin}
       />
-      <VirtualKeyboardContainer>
+      <VirtualKeyboardContainer accessibilityLabel="virtual-key-container">
         <VirtualKeyboard
           showDot={false}
           onCellPress={onCellPress}
@@ -351,6 +351,7 @@ const PinModal: React.FC = () => {
 
   return (
     <BaseModal
+      accessibilityLabel="pin-view"
       id={'pin'}
       isVisible={isVisible}
       coverScreen={true}

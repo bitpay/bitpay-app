@@ -117,6 +117,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       headerRight: () => (
         <HeaderRightContainer>
           <Button
+            accessibilityLabel="cancel-button"
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');
@@ -259,7 +260,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   };
 
   return (
-    <VerifyPhraseContainer>
+    <VerifyPhraseContainer accessibilityLabel="verify-phrase-container">
       <ProgressBarContainer>
         <Progress.Bar
           progress={progress}
@@ -314,6 +315,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
           <WordSelectorContainer>
             {shuffledWords.current.map((value, index) => (
               <WordSelector
+                accessibilityLabel="word-selector"
                 key={index}
                 onPress={() => {
                   wordSelected(value);

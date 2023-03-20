@@ -62,7 +62,10 @@ const CreateOrImportKey: React.VFC<
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
+          <Button
+            accessibilityLabel="skip-button"
+            buttonType={'pill'}
+            onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -71,7 +74,7 @@ const CreateOrImportKey: React.VFC<
   }, [navigation, t]);
 
   return (
-    <CreateKeyContainer>
+    <CreateKeyContainer accessibilityLabel="create-key-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -91,9 +94,10 @@ const CreateOrImportKey: React.VFC<
             </Paragraph>
           </TextAlign>
         </TextContainer>
-        <CtaContainer>
+        <CtaContainer accessibilityLabel="cta-container">
           <ActionContainer>
             <Button
+              accessibilityLabel="create-a-key-button"
               buttonStyle={'primary'}
               onPress={() => {
                 askForTrackingThenNavigate(() =>
@@ -107,6 +111,7 @@ const CreateOrImportKey: React.VFC<
           </ActionContainer>
           <ActionContainer>
             <Button
+              accessibilityLabel="i-already-have-a-key-button"
               buttonStyle={'secondary'}
               onPress={() => {
                 askForTrackingThenNavigate(() =>

@@ -164,11 +164,17 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
       headerRight: () => (
         <HeaderRightContainer>
           {isPaired ? (
-            <Button buttonType="pill" onPress={onLogoutPressRef.current}>
+            <Button
+              accessibilityLabel="log-out-button"
+              buttonType="pill"
+              onPress={onLogoutPressRef.current}>
               {t('Log Out')}
             </Button>
           ) : (
-            <Button buttonType={'pill'} onPress={onLoginPressRef.current}>
+            <Button
+              accessibilityLabel="log-in-button"
+              buttonType={'pill'}
+              onPress={onLoginPressRef.current}>
               {t('Log In')}
             </Button>
           )}
@@ -216,7 +222,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
   ];
 
   return (
-    <OnboardingContainer>
+    <OnboardingContainer accessibilityLabel="onboarding-start-view">
       <ScrollView scrollEnabled={scrollEnabledForSmallScreens}>
         <Carousel
           vertical={false}
@@ -242,12 +248,14 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
       </ScrollHintContainer>
 
       <CtaContainerAbsolute
+        accessibilityLabel="cta-container"
         onLayout={e => {
           setScrollHintHeight(e.nativeEvent.layout.height + 20);
         }}>
         <Row>
           <Column>
             <Pagination
+              accessibilityLabel="pagination-button"
               dotsLength={onboardingSlides.length}
               activeDotIndex={activeSlideIndex}
               tappableDots={true}
@@ -269,6 +277,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
           <Column>
             {!isPaired ? (
               <Button
+                accessibilityLabel="get-started-button"
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
@@ -282,6 +291,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
               </Button>
             ) : (
               <Button
+                accessibilityLabel="continue-button"
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
@@ -300,6 +310,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
           <Row>
             <ActionContainer>
               <Button
+                accessibilityLabel="continue-without-an-account-button"
                 buttonType={'link'}
                 onPress={() => {
                   askForTrackingThenNavigate(() => {
