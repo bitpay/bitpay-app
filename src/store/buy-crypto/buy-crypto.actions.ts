@@ -2,6 +2,8 @@ import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
 import {
   MoonpayPaymentData,
   MoonpayIncomingData,
+  RampPaymentData,
+  RampIncomingData,
   SimplexPaymentData,
   SimplexIncomingData,
   WyrePaymentData,
@@ -25,6 +27,27 @@ export const removePaymentRequestMoonpay = (payload: {
   externalId: string;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_MOONPAY,
+  payload,
+});
+
+export const successPaymentRequestRamp = (payload: {
+  rampPaymentData: RampPaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_RAMP,
+  payload,
+});
+
+export const updatePaymentRequestRamp = (payload: {
+  rampIncomingData: RampIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_RAMP,
+  payload,
+});
+
+export const removePaymentRequestRamp = (payload: {
+  rampExternalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_RAMP,
   payload,
 });
 

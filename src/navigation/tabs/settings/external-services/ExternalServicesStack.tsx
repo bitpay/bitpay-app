@@ -8,6 +8,8 @@ import {
 import {HeaderTitle} from '../../../../components/styled/Text';
 import MoonpaySettings from './screens/MoonpaySettings';
 import MoonpayDetails from './screens/MoonpayDetails';
+import RampSettings from './screens/RampSettings';
+import RampDetails from './screens/RampDetails';
 import SimplexSettings from './screens/SimplexSettings';
 import SimplexDetails from './screens/SimplexDetails';
 import WyreSettings from './screens/WyreSettings';
@@ -17,6 +19,8 @@ import ChangellyDetails from './screens/ChangellyDetails';
 import {
   MoonpayIncomingData,
   MoonpayPaymentData,
+  RampIncomingData,
+  RampPaymentData,
   SimplexIncomingData,
   SimplexPaymentData,
   WyrePaymentData,
@@ -31,6 +35,14 @@ export type ExternalServicesSettingsStackParamList = {
     | undefined;
   MoonpayDetails: {
     paymentRequest: MoonpayPaymentData;
+  };
+  RampSettings:
+    | {
+        incomingPaymentRequest?: RampIncomingData;
+      }
+    | undefined;
+  RampDetails: {
+    paymentRequest: RampPaymentData;
   };
   SimplexSettings:
     | {
@@ -58,6 +70,8 @@ export type ExternalServicesSettingsStackParamList = {
 export enum ExternalServicesSettingsScreens {
   MOONPAY_SETTINGS = 'MoonpaySettings',
   MOONPAY_DETAILS = 'MoonpayDetails',
+  RAMP_SETTINGS = 'RampSettings',
+  RAMP_DETAILS = 'RampDetails',
   SIMPLEX_SETTINGS = 'SimplexSettings',
   SIMPLEX_DETAILS = 'SimplexDetails',
   WYRE_SETTINGS = 'WyreSettings',
@@ -87,6 +101,20 @@ const ExternalServicesSettingsStack = () => {
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.MOONPAY_DETAILS}
         component={MoonpayDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.RAMP_SETTINGS}
+        component={RampSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Ramp Settings')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.RAMP_DETAILS}
+        component={RampDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
         }}

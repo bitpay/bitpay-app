@@ -16,6 +16,7 @@ import Checkbox from '../../../../components/checkbox/Checkbox';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
+import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
@@ -205,6 +206,18 @@ const PaymentMethodsModal = ({
                           locationData?.countryShortCode || 'US',
                         ) ? (
                           <MoonpayLogo widthIcon={20} heightIcon={20} />
+                        ) : null}
+                        {coin &&
+                        currency &&
+                        chain &&
+                        isPaymentMethodSupported(
+                          'ramp',
+                          paymentMethod,
+                          coin,
+                          chain,
+                          currency,
+                        ) ? (
+                          <RampLogo width={65} height={15} />
                         ) : null}
                         {coin &&
                         currency &&

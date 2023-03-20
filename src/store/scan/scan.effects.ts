@@ -27,6 +27,7 @@ import {
   IsValidLitecoinAddress,
   IsValidLitecoinUri,
   IsValidPayPro,
+  isValidRampUri,
   IsValidRippleAddress,
   IsValidRippleUri,
   isValidSimplexUri,
@@ -38,6 +39,7 @@ import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
   MoonpayIncomingData,
+  RampIncomingData,
   SimplexIncomingData,
   WyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
@@ -161,6 +163,9 @@ export const incomingData =
         // Moonpay
       } else if (isValidMoonpayUri(data)) {
         dispatch(handleMoonpayUri(data));
+        // Simplex
+      } else if (isValidRampUri(data)) {
+        dispatch(handleRampUri(data));
         // Simplex
       } else if (isValidSimplexUri(data)) {
         dispatch(handleSimplexUri(data));
@@ -997,6 +1002,63 @@ const handleMoonpayUri =
           name: 'ExternalServicesSettings',
           params: {
             screen: 'MoonpaySettings',
+            params: {incomingPaymentRequest: stateParams},
+          },
+        },
+      ],
+    });
+  };
+
+const handleRampUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Ramp URL: ' + data));
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const rampExternalId = getParameterByName('rampExternalId', res);
+    if (!rampExternalId) {
+      dispatch(LogActions.warn('No rampExternalId present. Do not redir'));
+      return;
+    }
+
+    const walletId = getParameterByName('walletId', res);
+    const status = getParameterByName('status', res);
+
+    const stateParams: RampIncomingData = {
+      rampExternalId,
+      walletId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestRamp({
+        rampIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.ramp[rampExternalId];
+
+    dispatch(
+      Analytics.track('Purchased Buy Crypto', {
+        exchange: 'ramp',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin || '',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'RampSettings',
             params: {incomingPaymentRequest: stateParams},
           },
         },
