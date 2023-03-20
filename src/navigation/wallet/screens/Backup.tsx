@@ -128,6 +128,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
       headerRight: () => (
         <HeaderRightContainer>
           <Button
+            accessibilityLabel="skip-button"
             buttonType={'pill'}
             onPress={async () => {
               haptic('impactLight');
@@ -169,7 +170,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
   useAndroidBackHandler(() => true);
 
   return (
-    <BackupContainer>
+    <BackupContainer accessibilityLabel="backup-container">
       <ImageContainer>{BackupImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
@@ -186,7 +187,10 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button buttonStyle={'primary'} onPress={gotoBackup}>
+        <Button
+          accessibilityLabel="go-to-backup-button"
+          buttonStyle={'primary'}
+          onPress={gotoBackup}>
           {t('Backup your Recovery Phrase')}
         </Button>
       </CtaContainer>

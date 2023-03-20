@@ -99,6 +99,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
       headerRight: () => (
         <HeaderRightContainer>
           <Button
+            accessibilityLabel="cancel-button"
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');
@@ -164,7 +165,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   };
 
   return (
-    <RecoveryPhraseContainer>
+    <RecoveryPhraseContainer accessibilityLabel="recovery-phrase-view">
       <ProgressBarContainer>
         <Progress.Bar
           progress={0.3}
@@ -211,8 +212,9 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
             {activeSlideIndex + 1}/{words.length}
           </CountText>
         </CountTracker>
-        <CtaContainer>
+        <CtaContainer accessibilityLabel="cta-container">
           <Button
+            accessibilityLabel="next-button"
             buttonStyle={'primary'}
             debounceTime={Platform.OS === 'android' ? 200 : 0}
             onPress={next}>

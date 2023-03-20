@@ -159,13 +159,14 @@ const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <SafeAreaView>
-      <AuthFormContainer>
+    <SafeAreaView accessibilityLabel="login-view">
+      <AuthFormContainer accessibilityLabel="auth-form-container">
         <AuthRowContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="email-box-input"
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
                 onBlur={onBlur}
@@ -188,6 +189,7 @@ const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="password-box-input"
                 ref={passwordRef}
                 placeholder={'strongPassword123'}
                 label={t('PASSWORD')}
@@ -204,15 +206,18 @@ const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
           />
         </AuthRowContainer>
 
-        <AuthActionsContainer>
+        <AuthActionsContainer accessibilityLabel="auth-cta-container">
           <AuthActionRow>
-            <Button onPress={onSubmit}>{t('Log In')}</Button>
+            <Button accessibilityLabel="login-button" onPress={onSubmit}>
+              {t('Log In')}
+            </Button>
           </AuthActionRow>
 
           <AuthActionRow>
             <AuthActionText>
               {t("Don't have an account?")}{' '}
               <Link
+                accessibilityLabel="create-account-button"
                 onPress={() => {
                   navigation.navigate('CreateAccount');
                 }}>
@@ -223,7 +228,9 @@ const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
 
           <AuthActionRow>
             <AuthActionText>
-              <Link onPress={() => onTroubleLoggingIn()}>
+              <Link
+                accessibilityLabel="trouble-logging-in-button"
+                onPress={() => onTroubleLoggingIn()}>
                 {t('Trouble logging in?')}
               </Link>
             </AuthActionText>

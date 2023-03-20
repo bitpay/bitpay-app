@@ -196,13 +196,14 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
   };
 
   return (
-    <SafeAreaView>
-      <AuthFormContainer>
+    <SafeAreaView accessibilityLabel="create-account-view">
+      <AuthFormContainer accessibilityLabel="auth-form-container">
         <AuthRowContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="first-name-box-input"
                 placeholder={'Satoshi'}
                 label={t('FIRST NAME')}
                 onBlur={onBlur}
@@ -224,6 +225,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="last-name-box-input"
                 ref={familyNameRef}
                 placeholder={'Nakamoto'}
                 label={t('LAST NAME')}
@@ -246,6 +248,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="email-box-input"
                 ref={emailRef}
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
@@ -268,6 +271,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="password-box-input"
                 ref={passwordRef}
                 type="password"
                 placeholder={'strongPassword123'}
@@ -288,7 +292,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field}) => (
               <>
-                <CheckboxControl>
+                <CheckboxControl accessibilityLabel="agreed-terms-of-use-checkbox">
                   <Checkbox
                     onPress={() => setValue('agreedToTOSandPP', !field.value)}
                     checked={field.value}
@@ -328,7 +332,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field}) => (
               <>
-                <CheckboxControl>
+                <CheckboxControl accessibilityLabel="agreed-marketing-checkbox">
                   <Checkbox
                     onPress={() =>
                       setValue('agreedToMarketingCommunications', !field.value)
@@ -349,15 +353,20 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
           />
         </AuthRowContainer>
 
-        <AuthActionsContainer>
+        <AuthActionsContainer accessibilityLabel="auth-cta-container">
           <AuthActionRow>
-            <Button onPress={onSubmit}>{t('Create Account')}</Button>
+            <Button
+              accessibilityLabel="create-account-button"
+              onPress={onSubmit}>
+              {t('Create Account')}
+            </Button>
           </AuthActionRow>
 
           <AuthActionRow>
             <AuthActionText>
               {t('Already have an account?')}{' '}
               <Link
+                accessibilityLabel="login-button"
                 onPress={() => {
                   navigation.navigate('Login');
                 }}>

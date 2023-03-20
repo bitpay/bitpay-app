@@ -123,13 +123,14 @@ const ForgotPasswordScreen: React.VFC<
     setCaptchaModalVisible(false);
   };
   return (
-    <SafeAreaView>
+    <SafeAreaView accessibilityLabel="reset-password-container">
       <AuthFormContainer>
         <AuthRowContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="email-box-input"
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
                 onBlur={onBlur}
@@ -147,7 +148,11 @@ const ForgotPasswordScreen: React.VFC<
 
         <AuthActionsContainer>
           <AuthActionRow>
-            <Button onPress={onSubmit}>{t('Reset Password')}</Button>
+            <Button
+              accessibilityLabel="reset-password-button"
+              onPress={onSubmit}>
+              {t('Reset Password')}
+            </Button>
           </AuthActionRow>
         </AuthActionsContainer>
 

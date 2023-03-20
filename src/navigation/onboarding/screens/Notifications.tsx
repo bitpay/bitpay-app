@@ -71,7 +71,10 @@ const NotificationsScreen: React.VFC<
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
+          <Button
+            accessibilityLabel="skip-button"
+            buttonType={'pill'}
+            onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -114,7 +117,7 @@ const NotificationsScreen: React.VFC<
   };
 
   return (
-    <NotificationsContainer>
+    <NotificationsContainer accessibilityLabel="set-notifications-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -138,9 +141,10 @@ const NotificationsScreen: React.VFC<
           </TextAlign>
         </TextContainer>
 
-        <CtaContainer>
+        <CtaContainer accessibilityLabel="set-notifications-cta-container">
           <ActionContainer>
             <Button
+              accessibilityLabel="allow-button"
               buttonStyle={'primary'}
               onPress={() => onSetNotificationsPress(true)}>
               {t('Allow')}
@@ -148,6 +152,7 @@ const NotificationsScreen: React.VFC<
           </ActionContainer>
           <ActionContainer>
             <Button
+              accessibilityLabel="deny-button"
               buttonStyle={'secondary'}
               onPress={() => onSetNotificationsPress(false)}>
               {t('Deny')}

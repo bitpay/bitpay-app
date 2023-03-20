@@ -75,7 +75,10 @@ const PinScreen: React.VFC<
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
+          <Button
+            accessibilityLabel="skip-button"
+            buttonType={'pill'}
+            onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -114,7 +117,7 @@ const PinScreen: React.VFC<
   };
 
   return (
-    <PinContainer>
+    <PinContainer accessibilityLabel="security-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -134,14 +137,18 @@ const PinScreen: React.VFC<
             </Paragraph>
           </TextAlign>
         </TextContainer>
-        <CtaContainer>
+        <CtaContainer accessibilityLabel="cta-container">
           <ActionContainer>
-            <Button onPress={() => onSetPinPress()} buttonStyle={'primary'}>
+            <Button
+              accessibilityLabel="pin-button"
+              onPress={() => onSetPinPress()}
+              buttonStyle={'primary'}>
               {t('PIN')}
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button
+              accessibilityLabel="biometric-button"
               onPress={() => onSetBiometricPress()}
               buttonStyle={'secondary'}>
               {t('Biometric')}

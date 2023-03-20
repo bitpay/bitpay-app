@@ -546,6 +546,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         context === 'onboarding' && (
           <HeaderRightContainer>
             <Button
+              accessibilityLabel="skip-button"
               buttonType={'pill'}
               onPress={() => {
                 haptic('impactLight');
@@ -780,7 +781,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   );
 
   return (
-    <CurrencySelectionContainer>
+    <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
       <SearchContainer>
         <CurrencySelectionSearchInput
           onSearch={setSearchFilter}
@@ -798,6 +799,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               return searchFilter && key ? (
                 <LinkContainer>
                   <Link
+                    accessibilityLabel="add-custom-token-button"
                     onPress={() => {
                       haptic('soft');
                       navigation.navigate('Wallet', {
@@ -826,7 +828,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
             elevation: 5,
             marginTop: 16,
           }}>
-          <Button onPress={onCtaPress} buttonStyle={'primary'}>
+          <Button
+            accessibilityLabel="on-cta-press-button"
+            onPress={onCtaPress}
+            buttonStyle={'primary'}>
             {ctaTitle || t('Continue')}
           </Button>
         </CtaContainer>
