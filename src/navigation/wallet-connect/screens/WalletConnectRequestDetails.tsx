@@ -282,11 +282,6 @@ const WalletConnectRequestDetails = () => {
               )) as any;
               break;
             case 'wallet_switchEthereumChain':
-              // disabled until Ethereum Goerli works
-              if (wallet.network === 'testnet') {
-                throw methodNotSupportedMsg;
-              }
-
               const allowSwitchNetwork = await showSwitchNetworkWarningMsg();
               await sleep(500);
               if (allowSwitchNetwork) {
