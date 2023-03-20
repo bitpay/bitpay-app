@@ -835,7 +835,7 @@ const SwapCryptoRoot: React.FC = () => {
             }) => {
               const chain = getChainFromChangellyProtocol(name, protocol);
               return {
-                currencyAbbreviation: name,
+                currencyAbbreviation: name.toLowerCase(),
                 symbol: getCurrencyAbbreviation(name, chain),
                 name: fullName,
                 chain,
