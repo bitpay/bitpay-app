@@ -93,16 +93,38 @@ const CurrencyTokenSelectionScreen: React.VFC<
       return tokens;
     }
 
-    return tokens.reduce<CurrencySelectionItem[]>((accum, item) => {
-      if (
-        item.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
-        item.currencyName.toLowerCase().includes(searchFilter)
-      ) {
-        accum.push(item);
-      }
+    const filteredList = tokens.reduce<CurrencySelectionItem[]>(
+      (accum, item) => {
+        if (
+          item.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
+          item.currencyName.toLowerCase().includes(searchFilter)
+        ) {
+          accum.push(item);
+        }
 
-      return accum;
-    }, []);
+        return accum;
+      },
+      [],
+    );
+
+    return filteredList.sort((a, b) => {
+      const aStarts = a.currencyAbbreviation
+        .toLowerCase()
+        .startsWith(searchFilter);
+      const bStarts = b.currencyAbbreviation
+        .toLowerCase()
+        .startsWith(searchFilter);
+      if (aStarts && bStarts) {
+        return a.currencyAbbreviation.localeCompare(b.currencyAbbreviation);
+      }
+      if (aStarts && !bStarts) {
+        return -1;
+      }
+      if (!aStarts && bStarts) {
+        return 1;
+      }
+      return a.currencyAbbreviation.localeCompare(b.currencyAbbreviation);
+    });
   }, [searchFilter, tokens]);
 
   const onAddCustomTokenPress = () => {
