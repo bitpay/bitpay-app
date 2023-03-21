@@ -376,7 +376,7 @@ export const buildTxDetails =
     const {gasPrice, gasLimit, nonce, destinationTag} = proposal || {};
     const invoiceCurrency =
       invoice?.buyerProvidedInfo!.selectedTransactionCurrency;
-    let {amount, coin, chain, fee = 0} = proposal || {}; // proposal fee is zero for coinbase
+    let {amount, coin, chain, fee: _fee = 0} = proposal || {}; // proposal fee is zero for coinbase
 
     if (invoiceCurrency) {
       amount = invoice.paymentTotals[invoiceCurrency] || 0;
@@ -392,10 +392,19 @@ export const buildTxDetails =
     }
 
     amount = Number(amount); // Support BN (use number instead string only for view)
+
+    const {exchangeRates, currency, minerFees} = invoice || {};
+
+    const fee = minerFees ? minerFees[chain.toUpperCase()].totalFee : _fee;
+
     const effectiveRate =
-      (invoiceCurrency &&
-        dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain))) ||
-      undefined;
+      exchangeRates && currency
+        ? exchangeRates[chain.toUpperCase()][currency]
+        : (invoiceCurrency &&
+            dispatch(
+              getInvoiceEffectiveRate(invoice, invoiceCurrency, chain),
+            )) ||
+          undefined;
     const opts = {
       effectiveRate,
       defaultAltCurrencyIsoCode,
