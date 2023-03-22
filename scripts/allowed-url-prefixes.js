@@ -51,20 +51,22 @@ const allowedUrlPrefixes = [
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');
 
-let replaceArgs = ['ALLOWED-URL-PREFIXES-REPLACE-ME', allowedUrlPrefixString];
+let replaceIosArgs = [/ALLOWED_URL_PREFIXES\s*=\s*("(ALLOWED-URL-PREFIXES-REPLACE-ME|https:\/\/.*?)")/g, `ALLOWED_URL_PREFIXES = "${allowedUrlPrefixString}"`];
+let replaceAndroidArgs = [/android:value="(ALLOWED-URL-PREFIXES-REPLACE-ME|https:\/\/.*?)"/g, `android:value="${allowedUrlPrefixString}"`];
 
 if (isReset) {
-  replaceArgs = [replaceArgs[1], replaceArgs[0]];
+  replaceIosArgs = [replaceIosArgs[1], replaceIosArgs[0]];
+  replaceAndroidArgs = [replaceAndroidArgs[1], replaceAndroidArgs[0]];
 }
 
 fs.writeFileSync(
   xcodeProjectPath,
-  xcodeProjectContent.replaceAll(...replaceArgs),
+  xcodeProjectContent.replaceAll(...replaceIosArgs),
 );
 
 fs.writeFileSync(
   androidManifestPath,
-  androidManifestContent.replaceAll(...replaceArgs),
+  androidManifestContent.replaceAll(...replaceAndroidArgs),
 );
 
 console.log(

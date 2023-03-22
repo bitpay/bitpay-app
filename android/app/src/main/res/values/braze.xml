@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- no-commit -->
 <resources>
   <string name="com_braze_api_key">BRAZE_API_KEY_REPLACE_ME</string>
   <string translatable="false" name="com_braze_custom_endpoint">sdk.iad-05.braze.com</string>

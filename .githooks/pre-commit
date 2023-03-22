@@ -1,0 +1,19 @@
+#!/bin/bash
+# Check if it's a rebase or cherry-pick operation
+BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ -z "$BRANCH_NAME" ]; then
+  echo "Skipping pre-commit hook during rebase or cherry-pick"
+  exit 0
+fi
+#
+# This hook will look for code comments marked 'no-commit'
+#    - case-insensitive
+noCommitCount=$(git diff --no-ext-diff --cached | egrep -i --count "no-commit")
+if [ "$noCommitCount" -ne "0" ]; then
+   echo "WARNING: You are attempting to commit changes which include a 'no-commit'. Make sure you are not including sensitive information."
+   echo "Please check the following files:"
+   git diff --no-ext-diff --cached --name-only -i -G"no-commit" | sed 's/^/   - /'
+   echo
+   echo "You can ignore this warning by running the commit command with '--no-verify'"
+   exit 1
+fi
