@@ -416,6 +416,13 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       },
     );
 
+    Braze.subscribeToInAppMessage(true, event => {
+      const inAppMessage = new Braze.BrazeInAppMessage(event.inAppMessage);
+      dispatch(
+        LogActions.info('[InAppMessage]', inAppMessage.inAppMessageJsonString),
+      );
+    });
+
     let eid = APP.brazeEid;
 
     if (!eid) {
