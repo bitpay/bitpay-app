@@ -12,7 +12,6 @@ export const changellySupportedCoins = [
 ];
 
 export const changellySupportedEthErc20Tokens = [
-  'busd',
   'usdp',
   'usdc',
   'gusd',

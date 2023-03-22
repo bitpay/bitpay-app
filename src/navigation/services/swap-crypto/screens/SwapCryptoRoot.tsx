@@ -879,6 +879,7 @@ const SwapCryptoRoot: React.FC = () => {
 
       const coinsToRemove =
         !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
+      coinsToRemove.push('busd');
       if (selectedWallet?.balance?.satSpendable === 0) {
         coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
       }
