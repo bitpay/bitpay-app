@@ -2,9 +2,10 @@ package com.bitpay.wallet;
 
 import android.app.Application;
 import android.content.Context;
+
+import com.braze.ui.inappmessage.BrazeInAppMessageManager;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
-import com.mkuczera.RNReactNativeHapticFeedbackPackage;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
@@ -12,6 +13,7 @@ import com.facebook.soloader.SoLoader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+
 import com.facebook.react.bridge.JSIModulePackage;
 import com.swmansion.reanimated.ReanimatedJSIModulePackage;
 
@@ -72,6 +74,7 @@ public class MainApplication extends Application implements ReactApplication {
 
     // Braze
     registerActivityLifecycleCallbacks(new BrazeActivityLifecycleCallbackListener());
+    BrazeInAppMessageManager.getInstance().setCustomInAppMessageManagerListener(new CustomInAppMessageManagerListener());
   }
 
   /**

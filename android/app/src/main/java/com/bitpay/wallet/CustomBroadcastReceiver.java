@@ -26,6 +26,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
         switch (action) {
             case Constants.BRAZE_PUSH_INTENT_NOTIFICATION_RECEIVED:
                 Bundle extras = intent.getBundleExtra(Constants.BRAZE_PUSH_EXTRAS_KEY);
+                Log.d(TAG, String.format("Extra params: %s", extras));
                 if (extras != null) {
                     WritableMap extraParams = Arguments.createMap();
                     for (String key : extras.keySet()) {

@@ -1,17 +1,27 @@
 package com.bitpay.wallet;
 
+import com.braze.models.inappmessage.IInAppMessage;
 import com.braze.ui.inappmessage.BrazeInAppMessageManager;
 import com.facebook.react.ReactActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Build;
 import android.app.Activity;
+import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.graphics.Color;
 import android.view.Window;
 import android.view.WindowManager;
+
+import com.facebook.react.ReactInstanceManager;
+import com.facebook.react.bridge.ReactContext;
 import com.zoontek.rnbootsplash.RNBootSplash;
+
+import java.util.Stack;
+
 public class MainActivity extends ReactActivity {
+  private static final String TAG = "MainActivity";
 
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule
@@ -44,6 +54,18 @@ public class MainActivity extends ReactActivity {
         win.setStatusBarColor(Color.TRANSPARENT);
       }
       BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(MainActivity.this);
+
+    // Wait for the React Native app to finish loading
+    ReactInstanceManager reactInstanceManager = getReactNativeHost().getReactInstanceManager();
+    reactInstanceManager.addReactInstanceEventListener(new ReactInstanceManager.ReactInstanceEventListener() {
+      @Override
+      public void onReactContextInitialized(ReactContext context) {
+        // The React Native app has finished loading
+        // Show the in-app message
+        showInAppMessage();
+      }
+    });
+
   }
 
     public static void setWindowFlag(Activity activity, final int bits, boolean on) {
@@ -64,23 +86,33 @@ public class MainActivity extends ReactActivity {
   }
 
   @Override
-  public void onResume() {
-    super.onResume();
-    // Registers the BrazeInAppMessageManager for the current Activity. This Activity will now listen for
-    // in-app messages from Braze.
-    BrazeInAppMessageManager.getInstance().registerInAppMessageManager(MainActivity.this);
-  }
-
-  @Override
-  public void onPause() {
-    super.onPause();
-    // Unregisters the BrazeInAppMessageManager for the current Activity.
-    BrazeInAppMessageManager.getInstance().unregisterInAppMessageManager(MainActivity.this);
-  }
-
-  @Override
   protected void onDestroy() {
     super.onDestroy();
     ((MainApplication) getApplication()).removeActivityFromStack(this.getClass());
+  }
+
+  private void showInAppMessage() {
+    Log.d(TAG, "Enter showInAppMessage function");
+
+    // Get the in-app message stack from the BrazeInAppMessageManager
+    Stack<IInAppMessage> inAppMessageStack = BrazeInAppMessageManager.getInstance().getInAppMessageStack();
+
+    // Check if the stack is empty
+    if (!inAppMessageStack.empty()) {
+      Log.d(TAG, "You have new message in the stack");
+      // Get the most recently received in-app message
+      IInAppMessage inAppMessage = inAppMessageStack.peek();
+      delayedExecution(20, inAppMessage);
+    }
+  }
+
+  public void delayedExecution(int seconds, IInAppMessage inAppMessage) {
+    new Handler().postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        Log.d(TAG, "Send message to the APP");
+        BrazeInAppMessageManager.getInstance().addInAppMessage(inAppMessage);
+      }
+    }, seconds * 1000);
   }
 }
