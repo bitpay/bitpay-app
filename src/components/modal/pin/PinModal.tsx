@@ -290,6 +290,13 @@ const Pin = gestureHandlerRootHOC(() => {
       try {
         const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
         if (pinBannedUntil && Number(timeSinceBoot) < pinBannedUntil) {
+          const totalSecsToRelease = pinBannedUntil - Number(timeSinceBoot);
+          // workaround for inconsistencies between the stored timeSinceBoot with the timeSinceBoot that results after the system been hibernated or suspended
+          if (totalSecsToRelease > ATTEMPT_LOCK_OUT_TIME) {
+            const bannedUntil = Number(timeSinceBoot) + ATTEMPT_LOCK_OUT_TIME;
+            dispatch(AppActions.pinBannedUntil(bannedUntil));
+            return;
+          }
           const timer = setCountDown(pinBannedUntil, Number(timeSinceBoot));
           return () => {
             clearInterval(timer);
