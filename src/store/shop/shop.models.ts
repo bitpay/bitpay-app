@@ -158,7 +158,11 @@ export interface Invoice {
   buyerProvidedInfo?: {
     selectedTransactionCurrency?: string;
   };
-  exchangeRates: any;
+  exchangeRates: {
+    [currency: string]: {
+      [currency: string]: number;
+    };
+  };
   minerFees: {[currency: string]: InvoiceMinerFee};
   paymentSubtotals: {[currency: string]: number};
   paymentTotals: {[currency: string]: number};

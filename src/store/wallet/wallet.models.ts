@@ -376,7 +376,7 @@ export interface TxDetailsSendingFrom {
 export interface TxDetails {
   currency: string;
   sendingTo: TxDetailsSendingTo;
-  fee: TxDetailsFee;
+  fee?: TxDetailsFee;
   networkCost?: TxDetailsAmount;
   context?: TransactionOptionsContext;
   // eth
