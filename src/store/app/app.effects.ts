@@ -1,4 +1,3 @@
-import {JsonMap} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';

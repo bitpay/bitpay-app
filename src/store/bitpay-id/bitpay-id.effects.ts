@@ -26,7 +26,7 @@ import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import Braze from 'react-native-appboy-sdk';
-import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
+import {dismissOnGoingProcessModal} from '../app/app.actions';
 
 interface StartLoginParams {
   email: string;
