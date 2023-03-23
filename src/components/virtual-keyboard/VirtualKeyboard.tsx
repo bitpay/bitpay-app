@@ -80,7 +80,6 @@ const Cell: React.FC<CellProps> = ({
   darkModeOnly,
 }) => {
   const accessibilityLabel = `${value}-button`;
-  console.log(accessibilityLabel);
   return (
     <CellContainer accessibilityLabel={accessibilityLabel}>
       <VirtualKeyboardButtonAnimation
