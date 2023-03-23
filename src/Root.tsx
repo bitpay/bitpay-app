@@ -244,7 +244,6 @@ export default () => {
     ({APP}) => APP.checkingBiometricForSending,
   );
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
-  const cachedRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const failedAppInit = useAppSelector(({APP}) => APP.failedAppInit);
@@ -336,15 +335,6 @@ export default () => {
             const childRoute =
               parentRoute.state.routes[parentRoute.state.index || 0];
 
-            dispatch(
-              AppActions.setCurrentRoute([
-                parentRoute.name,
-                {
-                  screen: childRoute.name,
-                  params: childRoute.params,
-                },
-              ]),
-            );
             dispatch(
               LogActions.info(`Navigation event... ${parentRoute.name}`),
             );
@@ -581,18 +571,7 @@ export default () => {
           onReady={async () => {
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
 
-            // routing to previous route if onboarding
-            if (cachedRoute && !onboardingCompleted) {
-              const [cachedStack, cachedParams] = cachedRoute;
-              navigationRef.navigate(cachedStack, cachedParams);
-              dispatch(
-                LogActions.info(
-                  `Navigating to cached route... ${cachedStack} ${JSON.stringify(
-                    cachedParams,
-                  )}`,
-                ),
-              );
-            } else {
+            if (onboardingCompleted) {
               const getBrazeInitialUrl = async (): Promise<string> =>
                 new Promise(resolve =>
                   Braze.getInitialURL(deepLink => resolve(deepLink)),

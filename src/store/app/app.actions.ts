@@ -83,11 +83,6 @@ export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
   payload: scheme,
 });
 
-export const setCurrentRoute = (route: any): AppActionType => ({
-  type: AppActionTypes.SET_CURRENT_ROUTE,
-  payload: route,
-});
-
 export const successGenerateAppIdentity = (
   network: Network,
   identity: AppIdentity,
