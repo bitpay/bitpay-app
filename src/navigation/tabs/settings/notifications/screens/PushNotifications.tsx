@@ -55,6 +55,9 @@ const PushNotifications = () => {
         DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
           accepted,
         });
+        if (!accepted) {
+          dispatch(AppEffects.resetBrazeEid());
+        }
       },
     },
     {

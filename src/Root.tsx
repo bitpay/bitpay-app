@@ -521,10 +521,6 @@ export default () => {
   // Silent Push Notifications
   useEffect(() => {
     function onMessageReceived(response: SilentPushEvent) {
-      console.log(
-        '##### Received Silent Push Notification',
-        JSON.stringify(response),
-      );
       dispatch(handleBwsEvent(response));
     }
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);

@@ -257,6 +257,10 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       // Avoid lock the app in Debug view
       dispatch(AppActions.failedAppInit());
     }
+
+    // Reset Push Notifications
+    dispatch(resetBrazeEid());
+
     dispatch(LogActions.error('Failed to initialize app: ' + errorStr));
     await sleep(500);
     dispatch(showBlur(false));
@@ -416,16 +420,16 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       },
     );
 
-    let eid = APP.brazeEid;
-
-    if (!eid) {
-      dispatch(LogActions.debug('Generating EID for anonymous user...'));
-      eid = uuid.v4().toString();
-      dispatch(setBrazeEid(eid));
+    // Push Notifications
+    let brazeEid = APP.brazeEid;
+    if (!brazeEid) {
+      dispatch(
+        LogActions.debug('Generating New BrazeEID for Push Notifications...'),
+      );
+      brazeEid = uuid.v4().toString();
+      dispatch(setBrazeEid(brazeEid));
     }
-
-    // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
-    dispatch(Analytics.identify(eid));
+    Braze.changeUser(brazeEid);
 
     dispatch(LogActions.info('Successfully initialized Braze.'));
     dispatch(AppActions.brazeInitialized(contentCardSubscription));
@@ -1260,3 +1264,9 @@ export const requestInAppReview =
       );
     }
   };
+
+export const resetBrazeEid = (): Effect<void> => dispatch => {
+  const brazeEid = uuid.v4().toString();
+  dispatch(setBrazeEid(brazeEid));
+  Braze.changeUser(brazeEid);
+};
