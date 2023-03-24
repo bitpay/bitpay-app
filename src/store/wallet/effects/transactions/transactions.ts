@@ -921,7 +921,11 @@ export const buildTransactionDetails =
             const minFee = GetMinFee(wallet);
             _transaction.lowAmount = amount < minFee;
           } catch (minFeeErr) {
-            console.log(minFeeErr);
+            const e =
+              minFeeErr instanceof Error
+                ? minFeeErr.message
+                : JSON.stringify(minFeeErr);
+            dispatch(LogActions.error('[GeMinFee] ', e));
           }
         }
 

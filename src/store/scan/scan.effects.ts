@@ -27,6 +27,7 @@ import {
   IsValidLitecoinAddress,
   IsValidLitecoinUri,
   IsValidPayPro,
+  isValidRampUri,
   IsValidRippleAddress,
   IsValidRippleUri,
   isValidSimplexUri,
@@ -38,11 +39,15 @@ import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
   MoonpayIncomingData,
+  RampIncomingData,
   SimplexIncomingData,
   WyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -62,7 +67,7 @@ import {
   bitcoreLibs,
   GetAddressNetwork,
 } from '../wallet/effects/address/address';
-import {Network} from '../../constants';
+import {Network, URL as _URL} from '../../constants';
 import BitPayIdApi from '../../api/bitpay';
 import axios from 'axios';
 import {t} from 'i18next';
@@ -70,6 +75,8 @@ import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
 import {BitpaySupportedEvmCoins} from '../../constants/currencies';
 import {Analytics} from '../analytics/analytics.effects';
+import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
+import {parseUri} from '@walletconnect/utils';
 
 export const incomingData =
   (
@@ -152,10 +159,13 @@ export const incomingData =
         dispatch(handleLitecoinUri(data, opts?.wallet));
         // Wallet Connect URI
       } else if (isValidWalletConnectUri(data)) {
-        handleWalletConnectUri(data);
+        dispatch(handleWalletConnectUri(data));
         // Moonpay
       } else if (isValidMoonpayUri(data)) {
         dispatch(handleMoonpayUri(data));
+        // Simplex
+      } else if (isValidRampUri(data)) {
+        dispatch(handleRampUri(data));
         // Simplex
       } else if (isValidSimplexUri(data)) {
         dispatch(handleSimplexUri(data));
@@ -999,6 +1009,63 @@ const handleMoonpayUri =
     });
   };
 
+const handleRampUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Ramp URL: ' + data));
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const rampExternalId = getParameterByName('rampExternalId', res);
+    if (!rampExternalId) {
+      dispatch(LogActions.warn('No rampExternalId present. Do not redir'));
+      return;
+    }
+
+    const walletId = getParameterByName('walletId', res);
+    const status = getParameterByName('status', res);
+
+    const stateParams: RampIncomingData = {
+      rampExternalId,
+      walletId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestRamp({
+        rampIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.ramp[rampExternalId];
+
+    dispatch(
+      Analytics.track('Purchased Buy Crypto', {
+        exchange: 'ramp',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin || '',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'RampSettings',
+            params: {incomingPaymentRequest: stateParams},
+          },
+        },
+      ],
+    });
+  };
+
 const handleSimplexUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
@@ -1145,14 +1212,41 @@ const handleWyreUri =
     });
   };
 
-const handleWalletConnectUri = (data: string) => {
-  navigationRef.navigate('WalletConnect', {
-    screen: 'Root',
-    params: {
-      uri: data,
-    },
-  });
-};
+const handleWalletConnectUri =
+  (data: string): Effect<void> =>
+  async dispatch => {
+    try {
+      if (isValidWalletConnectUri(data)) {
+        const {version} = parseUri(data);
+        if (version === 1) {
+          navigationRef.navigate('WalletConnect', {
+            screen: 'Root',
+            params: {
+              uri: data,
+            },
+          });
+        } else {
+          dispatch(startOnGoingProcessModal('LOADING'));
+          const proposal = (await dispatch<any>(
+            walletConnectV2OnSessionProposal(data),
+          )) as any;
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          navigationRef.navigate('WalletConnect', {
+            screen: 'Root',
+            params: {
+              proposal,
+            },
+          });
+        }
+      }
+    } catch (e: any) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+
+      dispatch(showBottomNotificationModal(GeneralError()));
+    }
+  };
 
 const handlePlainAddress =
   (
@@ -1171,7 +1265,7 @@ const handlePlainAddress =
     dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
-      : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
+      : undefined; // There is no way to tell if an eth address is goerli or livenet so let's skip the network filter
     const recipient = {
       type: opts?.context || 'address',
       name: opts?.name,

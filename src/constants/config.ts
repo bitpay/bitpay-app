@@ -57,7 +57,7 @@ export const EVM_BLOCKCHAIN_ID: {[key in string]: number} = {
 export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'etherscan.io/',
-    [Network.testnet]: 'kovan.etherscan.io/',
+    [Network.testnet]: 'goerli.etherscan.io/',
   },
   matic: {
     [Network.mainnet]: 'polygonscan.com/',
@@ -68,10 +68,10 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
 export const PROTOCOL_NAME: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'Ethereum Mainnet',
-    [Network.testnet]: 'Kovan',
+    [Network.testnet]: 'Goerli',
   },
   matic: {
-    [Network.mainnet]: 'Polygon Network',
+    [Network.mainnet]: 'Polygon',
     [Network.testnet]: 'Mumbai',
   },
   default: {

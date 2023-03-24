@@ -36,6 +36,7 @@ export const ItemTitleTouchableContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
+  max-width: 50%;
 `;
 
 export const ItemNoteContainer = styled.View`
@@ -71,4 +72,9 @@ export const WalletConnectCtaContainer = styled.View`
     css`
       margin-bottom: 10px;
     `}
+`;
+
+export const NoGutter = styled.View`
+  margin: 0 -10px;
+  padding-right: 5px;
 `;

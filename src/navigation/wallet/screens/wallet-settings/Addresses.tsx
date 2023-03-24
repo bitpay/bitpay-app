@@ -40,6 +40,7 @@ import AddressesSkeleton from './AddressesSkeleton';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
+import {LogActions} from '../../../../store/log';
 
 const ADDRESS_LIMIT = 5;
 
@@ -218,8 +219,9 @@ const Addresses = () => {
           );
           setMinFeePer(per.toFixed(2) + '%');
         }
-      } catch (e) {
-        console.log(e);
+      } catch (err) {
+        const e = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[Addresses] ', e));
       }
       setLoading(false);
     } catch (e) {

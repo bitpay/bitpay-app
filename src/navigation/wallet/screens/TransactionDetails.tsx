@@ -26,9 +26,7 @@ import {
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
-  Column,
   Hr,
-  Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {
@@ -72,6 +70,7 @@ import {useTranslation} from 'react-i18next';
 import {Memo} from './send/confirm/Memo';
 import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
+import {LogActions} from '../../../store/log';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -240,10 +239,11 @@ const TransactionDetails = () => {
       setMemo(_transaction.detailsMemo);
       await sleep(500);
       setIsLoading(false);
-    } catch (e) {
+    } catch (err) {
       await sleep(500);
       setIsLoading(false);
-      console.log(e);
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[TransactionDetails] ', e));
     }
   };
 
@@ -375,8 +375,9 @@ const TransactionDetails = () => {
       transaction.uiDescription = newMemo;
       setMemo(newMemo);
       onMemoChange();
-    } catch (e) {
-      console.log('Edit note err: ', e);
+    } catch (err) {
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[EditTxNote] ', e));
     }
   };
 

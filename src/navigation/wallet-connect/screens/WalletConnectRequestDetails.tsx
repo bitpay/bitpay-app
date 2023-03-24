@@ -23,18 +23,10 @@ import {
 } from '../styled/WalletConnectContainers';
 import {HeaderTitle} from '../styled/WalletConnectText';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {
-  walletConnectApproveCallRequest,
-  walletConnectPersonalSign,
-  walletConnectRejectCallRequest,
-  walletConnectSignTypedData,
-  walletConnectSignTypedDataLegacy,
-} from '../../../store/wallet-connect/wallet-connect.effects';
+import {useAppDispatch} from '../../../utils/hooks';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
-import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {sleep} from '../../../utils/helper-methods';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
@@ -44,12 +36,27 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
 import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {
+  walletConnectV2ApproveCallRequest,
+  walletConnectV2RejectCallRequest,
+} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
+import {
+  walletConnectApproveCallRequest,
+  walletConnectPersonalSign,
+  walletConnectRejectCallRequest,
+  walletConnectSignTypedData,
+  walletConnectSignTypedDataLegacy,
+  walletConnectUpdateSession,
+} from '../../../store/wallet-connect/wallet-connect.effects';
+import {EVM_BLOCKCHAIN_ID, PROTOCOL_NAME} from '../../../constants/config';
 
 export type WalletConnectRequestDetailsParamList = {
-  peerId: string;
-  requestId: number;
+  request: any;
   wallet: Wallet;
   peerName?: string;
+  version: number;
+  peerId?: string;
+  topic?: string;
 };
 
 const RequestDetailsContainer = styled.View`
@@ -104,7 +111,7 @@ const InfoSubTitle = styled(InfoTitle)`
 const WalletConnectRequestDetails = () => {
   const {t} = useTranslation();
   const {
-    params: {peerId, requestId, wallet, peerName},
+    params: {request: _request, wallet, peerName, version, peerId, topic},
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
   const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');
@@ -115,29 +122,39 @@ const WalletConnectRequestDetails = () => {
   const [rejectButtonState, setRejectButtonState] = useState<ButtonState>();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
-  const request: IWCRequest | undefined = useAppSelector(({WALLET_CONNECT}) => {
-    return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
-  });
+  const request = version === 1 ? _request : _request.params.request;
 
   useEffect(() => {
     if (!request) {
       return;
     }
 
-    switch (request.payload.method) {
+    switch (request.method) {
       case 'eth_signTypedData':
       case 'eth_signTypedData_v1':
       case 'eth_signTypedData_v3':
       case 'eth_signTypedData_v4':
       case 'eth_sign':
-        setAddress(request.payload.params[0]);
-        setMessage(request.payload.params[1]);
+        setAddress(request.params[0]);
+        setMessage(request.params[1]);
         setIsMethodSupported(true);
         break;
       case 'personal_sign':
-        setAddress(request.payload.params[1]);
-        setMessage(request.payload.params[0]);
+        setAddress(request.params[1]);
+        setMessage(request.params[0]);
         setIsMethodSupported(true);
+        break;
+      case 'wallet_switchEthereumChain':
+        const _chainId = parseInt(request.params[0].chainId, 16);
+        const chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
+          key => EVM_BLOCKCHAIN_ID[key] === _chainId,
+        );
+        setIsMethodSupported(!!chain);
+        if (!chain) {
+          const msg = t('WCNotSupportedChainMsg', {peerName});
+          setMethodNotSupportedMsg(msg);
+        }
+        setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
         break;
       case 'wallet_switchEthereumChain':
         setIsMethodSupported(false);
@@ -189,19 +206,30 @@ const WalletConnectRequestDetails = () => {
     return () => clearTimeout(timer);
   }, [clipboardObj]);
 
-  const goToWalletConnectHome = async () => {
+  const goToWalletConnectHome = async (newLinkedWallet?: Wallet) => {
     await sleep(500);
-    navigation.goBack();
+    navigation.navigate('WalletConnect', {
+      screen: 'WalletConnectHome',
+      params: {
+        peerId,
+        topic,
+        wallet: newLinkedWallet || wallet,
+      },
+    });
   };
 
   const rejectRequest = async () => {
     try {
       setRejectButtonState('loading');
-      const response = {
-        id: request?.payload.id,
-        error: {message: t('User rejected call request')},
-      };
-      await dispatch(walletConnectRejectCallRequest(peerId, response));
+      if (version === 1) {
+        const response = {
+          id: request.id,
+          error: {message: t('User rejected call request')},
+        };
+        await dispatch(walletConnectRejectCallRequest(peerId!, response));
+      } else {
+        await dispatch(walletConnectV2RejectCallRequest(_request));
+      }
       setRejectButtonState('success');
       dispatch(Analytics.track('WalletConnect Request Rejected', {}));
       goToWalletConnectHome();
@@ -222,56 +250,91 @@ const WalletConnectRequestDetails = () => {
   const approveRequest = async () => {
     try {
       haptic('impactLight');
-      setApproveButtonState('loading');
       if (!request) {
         return;
       }
+      let newLinkedWallet;
+      setApproveButtonState('loading');
+      if (version === 1) {
+        let result: any;
+        if (
+          (wallet.receiveAddress &&
+            wallet.receiveAddress.toLowerCase() === address.toLowerCase()) ||
+          request.method === 'wallet_switchEthereumChain'
+        ) {
+          switch (request.method) {
+            case 'eth_signTypedData':
+            case 'eth_signTypedData_v3':
+            case 'eth_signTypedData_v4':
+              result = (await dispatch<any>(
+                walletConnectSignTypedData(JSON.parse(message), wallet),
+              )) as any;
+              break;
+            case 'eth_signTypedData_v1':
+              result = (await dispatch<any>(
+                walletConnectSignTypedDataLegacy(message, wallet),
+              )) as any;
+              break;
+            case 'personal_sign':
+            case 'eth_sign':
+              result = (await dispatch<any>(
+                walletConnectPersonalSign(message, wallet),
+              )) as any;
+              break;
+            case 'wallet_switchEthereumChain':
+              const allowSwitchNetwork = await showSwitchNetworkWarningMsg();
+              await sleep(500);
+              if (allowSwitchNetwork) {
+                newLinkedWallet = (await dispatch<any>(
+                  walletConnectUpdateSession(
+                    wallet,
+                    request.params[0].chainId,
+                    peerId!,
+                  ),
+                )) as any;
 
-      let result: any;
-      if (
-        wallet.receiveAddress &&
-        wallet.receiveAddress.toLowerCase() === address.toLowerCase()
-      ) {
-        switch (request.payload.method) {
-          case 'eth_signTypedData':
-          case 'eth_signTypedData_v3':
-          case 'eth_signTypedData_v4':
-            result = (await dispatch<any>(
-              walletConnectSignTypedData(JSON.parse(message), wallet),
-            )) as any;
-            break;
-          case 'eth_signTypedData_v1':
-            result = (await dispatch<any>(
-              walletConnectSignTypedDataLegacy(message, wallet),
-            )) as any;
-            break;
-          case 'personal_sign':
-          case 'eth_sign':
-            result = (await dispatch<any>(
-              walletConnectPersonalSign(message, wallet),
-            )) as any;
-            break;
-          default:
-            throw methodNotSupportedMsg;
+                if (newLinkedWallet) {
+                  result = (await dispatch<any>(
+                    walletConnectPersonalSign(
+                      request.params[0].chainId,
+                      wallet,
+                    ),
+                  )) as any;
+                } else {
+                  setApproveButtonState(undefined);
+                  return;
+                }
+              } else {
+                throw 'user rejection';
+              }
+              break;
+            default:
+              throw methodNotSupportedMsg;
+          }
+        } else {
+          throw t('Address requested does not match active account');
         }
+        await dispatch(
+          walletConnectApproveCallRequest(peerId!, {
+            id: request.id,
+            result,
+          }),
+        );
       } else {
-        throw t('Address requested does not match active account');
+        await dispatch(walletConnectV2ApproveCallRequest(_request, wallet));
       }
-      await dispatch(
-        walletConnectApproveCallRequest(peerId, {
-          id: request.payload.id,
-          result,
-        }),
-      );
       setApproveButtonState('success');
       dispatch(Analytics.track('WalletConnect Request Approved', {}));
-      goToWalletConnectHome();
+      goToWalletConnectHome(newLinkedWallet);
     } catch (err) {
-      setApproveButtonState('failed');
       switch (err) {
+        case 'user rejection':
+          setApproveButtonState(undefined);
+          break;
         case 'invalid password':
         case 'password canceled':
         case 'biometric check failed':
+          setApproveButtonState('failed');
           await sleep(800);
           setApproveButtonState('loading');
           await sleep(200);
@@ -299,6 +362,32 @@ const WalletConnectRequestDetails = () => {
     [dispatch],
   );
 
+  const showSwitchNetworkWarningMsg = useCallback((): Promise<boolean> => {
+    return new Promise(async resolve => {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'question',
+          title: t('Allow site to switch network?'),
+          message: t('WCSwitchNetworkMsg', {
+            chainName: PROTOCOL_NAME[wallet.chain][wallet.network],
+          }),
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('Switch Network'),
+              action: () => resolve(true),
+              primary: true,
+            },
+            {
+              text: t('Cancel'),
+              action: () => resolve(false),
+            },
+          ],
+        }),
+      );
+    });
+  }, [dispatch]);
+
   return (
     <WalletConnectContainer>
       <ScrollView>
@@ -307,26 +396,31 @@ const WalletConnectRequestDetails = () => {
             <>
               <HeaderTitle>{t('Summary')}</HeaderTitle>
               <Hr />
-              <ItemContainer>
-                <ItemTitleContainer>
-                  <H7>{t('Address')}</H7>
-                </ItemTitleContainer>
-                <AddressContainer>
-                  {clipboardObj.copied && clipboardObj.type === 'address' ? (
-                    <CopiedSvg width={17} />
-                  ) : null}
-                  <AddressTextContainer
-                    disabled={clipboardObj.copied}
-                    onPress={() => {
-                      copyToClipboard(address, 'address');
-                    }}>
-                    <H7 numberOfLines={1} ellipsizeMode={'middle'}>
-                      {address}
-                    </H7>
-                  </AddressTextContainer>
-                </AddressContainer>
-              </ItemContainer>
-              <Hr />
+              {address ? (
+                <>
+                  <ItemContainer>
+                    <ItemTitleContainer>
+                      <H7>{t('Address')}</H7>
+                    </ItemTitleContainer>
+                    <AddressContainer>
+                      {clipboardObj.copied &&
+                      clipboardObj.type === 'address' ? (
+                        <CopiedSvg width={17} />
+                      ) : null}
+                      <AddressTextContainer
+                        disabled={clipboardObj.copied}
+                        onPress={() => {
+                          copyToClipboard(address, 'address');
+                        }}>
+                        <H7 numberOfLines={1} ellipsizeMode={'middle'}>
+                          {address}
+                        </H7>
+                      </AddressTextContainer>
+                    </AddressContainer>
+                  </ItemContainer>
+                  <Hr />
+                </>
+              ) : null}
               <MessageTitleContainer>
                 <ItemTitleContainer>
                   <H7>{t('Message')}</H7>
@@ -340,7 +434,10 @@ const WalletConnectRequestDetails = () => {
                     onPress={() => {
                       copyToClipboard(message, 'message');
                     }}>
-                    <H7 numberOfLines={3} ellipsizeMode={'tail'}>
+                    <H7
+                      numberOfLines={3}
+                      ellipsizeMode={'tail'}
+                      style={{textAlign: 'right'}}>
                       {message}
                     </H7>
                   </MessageTextContainer>
@@ -350,7 +447,7 @@ const WalletConnectRequestDetails = () => {
           ) : (
             <Info>
               <InfoHeader>
-                <InfoSubTitle>{request?.payload.method}</InfoSubTitle>
+                <InfoSubTitle>{request.method}</InfoSubTitle>
               </InfoHeader>
               <InfoDescription>{methodNotSupportedMsg}</InfoDescription>
             </Info>

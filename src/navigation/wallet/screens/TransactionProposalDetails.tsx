@@ -69,6 +69,7 @@ import {
   SendToPillContainer,
 } from './send/confirm/Shared';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {LogActions} from '../../../store/log';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -226,10 +227,11 @@ const TransactionProposalDetails = () => {
       );
       await sleep(500);
       setIsLoading(false);
-    } catch (e) {
+    } catch (err) {
       await sleep(500);
       setIsLoading(false);
-      console.log(e);
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[TransactionProposalDetails] ', e));
     }
   };
 
@@ -271,8 +273,9 @@ const TransactionProposalDetails = () => {
           ],
         }),
       );
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[removePaymentProposal] ', e));
     }
   };
 
@@ -302,8 +305,9 @@ const TransactionProposalDetails = () => {
           ],
         }),
       );
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[rejectPaymentProposal] ', e));
     }
   };
 

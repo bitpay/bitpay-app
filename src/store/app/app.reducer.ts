@@ -82,7 +82,6 @@ export interface AppState {
   onGoingProcessModalMessage: string | undefined;
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
-  currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
   confirmedTxAccepted: boolean;
   announcementsAccepted: boolean;
@@ -157,7 +156,6 @@ const initialState: AppState = {
   onGoingProcessModalMessage: undefined,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
-  currentRoute: undefined,
   notificationsAccepted: false,
   confirmedTxAccepted: false,
   announcementsAccepted: false,
@@ -296,12 +294,6 @@ export const appReducer = (
       return {
         ...state,
         colorScheme: action.payload,
-      };
-
-    case AppActionTypes.SET_CURRENT_ROUTE:
-      return {
-        ...state,
-        currentRoute: action.payload,
       };
 
     case AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY:

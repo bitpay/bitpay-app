@@ -117,7 +117,9 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
     } = currency;
 
     return (
-      <FlexRow onPress={() => onToggle?.(currencyAbbreviation)}>
+      <FlexRow
+        accessibilityLabel="chain-selection-row"
+        onPress={() => onToggle?.(currencyAbbreviation)}>
         <CurrencyColumn>
           <CurrencyImage img={img} imgSrc={imgSrc} />
         </CurrencyColumn>
@@ -131,7 +133,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         </CurrencyTitleColumn>
 
         {!hideCheckbox && (
-          <CurrencyColumn>
+          <CurrencyColumn accessibilityLabel="chain-selection-row-checkbox">
             <Checkbox
               checked={!!selected}
               radio={selectionMode === 'single'}
@@ -169,6 +171,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
 
     return (
       <FlexRow
+        accessibilityLabel="token-selection-row"
         style={{marginBottom: 24}}
         onPress={() => onToggle?.(token.currencyAbbreviation, token.chain)}>
         {!hideArrow ? (
@@ -194,7 +197,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
         </CurrencyTitleColumn>
 
         {!hideCheckbox ? (
-          <CurrencyColumn>
+          <CurrencyColumn accessibilityLabel="token-selection-row-checkbox">
             <Checkbox
               checked={!!token.selected}
               radio={selectionMode === 'single'}
@@ -238,7 +241,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   );
 
   return (
-    <CurrencySelectionRowContainer>
+    <CurrencySelectionRowContainer accessibilityLabel="currency-selection-container">
       <ChainSelectionRow
         currency={currency}
         onToggle={() => onPress(currency.currencyAbbreviation, currency.chain)}
@@ -268,6 +271,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
 
           <TokensFooter>
             <ViewAllLink
+              accessibilityLabel="view-all-tokens-button"
               onPress={() => {
                 onViewAllTokensPressed?.(currency, tokens);
               }}>

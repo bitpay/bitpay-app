@@ -50,6 +50,7 @@ interface ButtonProps extends BaseButtonProps {
   state?: ButtonState;
   style?: StyleProp<ViewStyle>;
   action?: boolean;
+  accessibilityLabel?: string;
 }
 
 interface ButtonOptionProps {
@@ -239,6 +240,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     state,
     style,
     action,
+    accessibilityLabel,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -303,6 +305,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
 
   return (
     <ButtonContainer
+      accessibilityLabel={accessibilityLabel}
       style={style}
       buttonType={buttonType}
       onPress={debouncedOnPress}

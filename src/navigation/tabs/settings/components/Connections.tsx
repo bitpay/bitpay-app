@@ -36,6 +36,7 @@ const Connections: React.VFC<ConnectionsProps> = props => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
+  const {sessions} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
 
   const goToWalletConnect = useCallback(() => {
     dispatch(
@@ -43,7 +44,7 @@ const Connections: React.VFC<ConnectionsProps> = props => {
         context: 'Settings Connections',
       }),
     );
-    if (Object.keys(connectors).length) {
+    if (Object.keys(sessions).length || Object.keys(connectors).length) {
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConnections',
       });
@@ -53,7 +54,7 @@ const Connections: React.VFC<ConnectionsProps> = props => {
         params: {uri: undefined},
       });
     }
-  }, [dispatch, connectors, navigation]);
+  }, [dispatch, sessions, navigation]);
 
   const token = useAppSelector(({COINBASE}) => COINBASE.token[COINBASE_ENV]);
   const goToCoinbase = () => {

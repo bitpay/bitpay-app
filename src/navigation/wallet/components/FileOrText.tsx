@@ -159,6 +159,7 @@ const FileOrText = () => {
 
   return (
     <ScrollViewContainer
+      accessibilityLabel="file-or-text-view"
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView keyboardShouldPersistTaps={'handled'}>
@@ -170,6 +171,7 @@ const FileOrText = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <ImportTextInput
+                accessibilityLabel="import-text-input"
                 multiline
                 numberOfLines={5}
                 onChangeText={onChange}
@@ -189,6 +191,7 @@ const FileOrText = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="password-box-input"
                 label={t('PASSWORD')}
                 placeholder={'strongPassword123'}
                 type={'password'}
@@ -203,7 +206,10 @@ const FileOrText = () => {
           />
         </FormRow>
 
-        <Button buttonStyle={'primary'} onPress={onSubmit}>
+        <Button
+          accessibilityLabel="import-wallet-button"
+          buttonStyle={'primary'}
+          onPress={onSubmit}>
           {t('Import Wallet')}
         </Button>
       </ContentView>

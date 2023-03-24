@@ -770,7 +770,9 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
             )}
           </ModalHeader>
           {context === 'swapCrypto' && (
-            <TextAlign style={{marginTop: 15}} align={'center'}>
+            <TextAlign
+              style={{marginTop: 15, marginLeft: 5, marginRight: 5}}
+              align={'center'}>
               <SubText>{t('swapToWalletsConditionMessage')}</SubText>
             </TextAlign>
           )}

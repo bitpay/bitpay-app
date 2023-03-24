@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {t} from 'i18next';
 import {generateMessageId} from '../../../../navigation/services/swap-crypto/utils/changelly-utils';
 
 const uri = 'https://bws.bitpay.com/bws/api';
@@ -8,6 +9,7 @@ export const changellyGetCurrencies = async (full?: boolean) => {
     const body = {
       id: generateMessageId(),
       full,
+      useV2: true,
     };
 
     const config = {
@@ -24,6 +26,9 @@ export const changellyGetCurrencies = async (full?: boolean) => {
 
     if (data?.id !== body.id) {
       console.log('The response does not match the origin of the request');
+      return Promise.reject(
+        t('The response does not match the origin of the request'),
+      );
     }
 
     return Promise.resolve(data);
@@ -41,6 +46,7 @@ export const changellyGetStatus = async (
     const body = {
       id: generateMessageId(),
       exchangeTxId,
+      useV2: true,
     };
 
     const config = {
@@ -61,6 +67,9 @@ export const changellyGetStatus = async (
 
     if (data.id && data.id !== body.id) {
       console.log('The response does not match the origin of the request');
+      return Promise.reject(
+        t('The response does not match the origin of the request'),
+      );
     }
 
     data.exchangeTxId = exchangeTxId;

@@ -77,4 +77,10 @@ export const URL = {
    * */
   HELP_DESTINATION_TAG:
     'https://support.bitpay.com/hc/en-us/articles/360039839312-What-are-XRP-Destination-Tags-',
+
+  /**
+   * WalletConnect v1
+   * */
+  WALLET_CONNECT_V1_SUNSET_NOTICE:
+    'https://medium.com/walletconnect/walletconnect-v1-0-sunset-notice-and-migration-schedule-8af9d3720d2e',
 };

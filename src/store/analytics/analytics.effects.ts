@@ -1,16 +1,8 @@
 import {JsonMap, UserTraits} from '@segment/analytics-react-native';
-import Braze from 'react-native-appboy-sdk';
-import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {Effect} from '..';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import Segment from '../../lib/segment';
 import {LogActions} from '../log';
-
-const getTrackingAuthorizedByUser = (): Promise<boolean> => {
-  return requestTrackingPermission().then(status => {
-    return ['authorized', 'unavailable'].includes(status);
-  });
-};
 
 export const Analytics = (() => {
   let _preInitQueue: Array<() => void> = [];
@@ -36,24 +28,7 @@ export const Analytics = (() => {
         return;
       }
 
-      const isAuthorizedByUser = await getTrackingAuthorizedByUser().catch(
-        e => {
-          dispatch(
-            LogActions.error(
-              'An error occurred while requesting tracking permission.',
-            ),
-          );
-          dispatch(
-            LogActions.error(
-              e instanceof Error ? e.message : JSON.stringify(e),
-            ),
-          );
-
-          return false;
-        },
-      );
-
-      if (!APP_ANALYTICS_ENABLED || !isAuthorizedByUser) {
+      if (!APP_ANALYTICS_ENABLED) {
         _isInitialized = true;
         return;
       }
@@ -97,17 +72,8 @@ export const Analytics = (() => {
       ): Effect<void> =>
       () => {
         guard(async () => {
-          const isAuthorizedByUser = await getTrackingAuthorizedByUser();
-
-          if (!isAuthorizedByUser) {
-            if (user) {
-              // If not authorized, do not pass any user traits.
-              Braze.changeUser(user);
-            }
-          } else {
-            Segment.identify(user, traits);
-            onComplete?.();
-          }
+          Segment.identify(user, traits);
+          onComplete?.();
         });
       },
 
@@ -127,12 +93,6 @@ export const Analytics = (() => {
       ): Effect<any> =>
       () => {
         guard(async () => {
-          const isAuthorizedByUser = await getTrackingAuthorizedByUser();
-
-          if (!isAuthorizedByUser) {
-            return;
-          }
-
           Segment.screen(name, properties);
           onComplete?.();
         });
@@ -158,12 +118,6 @@ export const Analytics = (() => {
       ): Effect<void> =>
       () => {
         guard(async () => {
-          const isAuthorizedByUser = await getTrackingAuthorizedByUser();
-
-          if (!isAuthorizedByUser) {
-            return;
-          }
-
           Segment.track(`BitPay App - ${event}`, properties);
           onComplete?.();
         });

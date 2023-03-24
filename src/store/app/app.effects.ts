@@ -44,7 +44,6 @@ import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
-import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
@@ -95,6 +94,8 @@ import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
+import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
+import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -167,7 +168,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(initializeApi(network, identity));
 
-    dispatch(LocationEffects.getCountry());
+    dispatch(LocationEffects.getLocationData());
 
     if (isPaired) {
       try {
@@ -215,6 +216,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     dispatch(walletConnectInit());
+    dispatch(walletConnectV2Init());
     dispatch(initializeBrazeContent());
 
     // Update Coinbase

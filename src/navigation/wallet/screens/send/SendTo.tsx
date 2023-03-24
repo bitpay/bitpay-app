@@ -91,6 +91,7 @@ import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {LogActions} from '../../../../store/log';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -601,7 +602,11 @@ const SendTo = () => {
                         validateAndNavigateToConfirm(data);
                       }
                     } catch (err) {
-                      console.log(err);
+                      const e =
+                        err instanceof Error
+                          ? err.message
+                          : JSON.stringify(err);
+                      dispatch(LogActions.error('[OpenScanner SendTo] ', e));
                     }
                   },
                 },

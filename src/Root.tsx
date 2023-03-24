@@ -169,7 +169,7 @@ export enum RootStacks {
   COINBASE = 'Coinbase',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
-  WALLET_CONNECT = 'WalletConnect',
+  WALLET_CONNECT_V2 = 'WalletConnect',
   DEBUG = 'Debug',
   NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
   ZENLEDGER = 'ZenLedger',
@@ -244,7 +244,6 @@ export default () => {
     ({APP}) => APP.checkingBiometricForSending,
   );
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
-  const cachedRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const failedAppInit = useAppSelector(({APP}) => APP.failedAppInit);
@@ -337,15 +336,6 @@ export default () => {
               parentRoute.state.routes[parentRoute.state.index || 0];
 
             dispatch(
-              AppActions.setCurrentRoute([
-                parentRoute.name,
-                {
-                  screen: childRoute.name,
-                  params: childRoute.params,
-                },
-              ]),
-            );
-            dispatch(
               LogActions.info(`Navigation event... ${parentRoute.name}`),
             );
 
@@ -393,6 +383,32 @@ export default () => {
 
   // BACKUP KEY LOGIC
   useEffect(() => {
+    let checkObjDiff = (obj1: Keys, obj2: Keys) => {
+      if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+        return true;
+      }
+      const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
+      for (const key of keys) {
+        const mnemonicEncryptedChanged =
+          obj1[key]?.properties?.mnemonicEncrypted !==
+          obj2[key]?.properties?.mnemonicEncrypted;
+        const backupCompleteChanged =
+          obj1[key]?.backupComplete !== obj2[key]?.backupComplete;
+        const keyNameChanged = obj1[key]?.keyName !== obj2[key]?.keyName;
+        const walletLengthChanged =
+          obj1[key]?.wallets?.length !== obj2[key]?.wallets?.length;
+        if (
+          mnemonicEncryptedChanged ||
+          backupCompleteChanged ||
+          keyNameChanged ||
+          walletLengthChanged
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     const numNewKeys = Object.keys(keys).length;
     const keyLengthChange = previousKeysLength - numNewKeys;
     setPreviousKeysLength(numNewKeys);
@@ -401,7 +417,10 @@ export default () => {
     // keys length changed as expected
     if (expectedKeyLengthChange === keyLengthChange) {
       try {
-        debounceBoostrapAndSave(keys);
+        // check if any key was added or removed or if there is any diff worth to save
+        if (checkObjDiff(keys, backupKeys)) {
+          debounceBoostrapAndSave(keys);
+        }
         return;
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
@@ -552,18 +571,7 @@ export default () => {
           onReady={async () => {
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
 
-            // routing to previous route if onboarding
-            if (cachedRoute && !onboardingCompleted) {
-              const [cachedStack, cachedParams] = cachedRoute;
-              navigationRef.navigate(cachedStack, cachedParams);
-              dispatch(
-                LogActions.info(
-                  `Navigating to cached route... ${cachedStack} ${JSON.stringify(
-                    cachedParams,
-                  )}`,
-                ),
-              );
-            } else {
+            if (onboardingCompleted) {
               const getBrazeInitialUrl = async (): Promise<string> =>
                 new Promise(resolve =>
                   Braze.getInitialURL(deepLink => resolve(deepLink)),
@@ -681,7 +689,7 @@ export default () => {
               }}
             />
             <Root.Screen
-              name={RootStacks.WALLET_CONNECT}
+              name={RootStacks.WALLET_CONNECT_V2}
               component={WalletConnectStack}
             />
             <Root.Screen

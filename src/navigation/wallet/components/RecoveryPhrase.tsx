@@ -561,6 +561,7 @@ const RecoveryPhrase = () => {
 
   return (
     <ScrollViewContainer
+      accessibilityLabel="recovery-phrase-view"
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView keyboardShouldPersistTaps={'handled'}>
@@ -574,6 +575,7 @@ const RecoveryPhrase = () => {
           <ImportTitle>{t('Recovery phrase')}</ImportTitle>
 
           <ScanContainer
+            accessibilityLabel="scan-button"
             activeOpacity={ActiveOpacity}
             onPress={() => {
               dispatch(
@@ -598,6 +600,7 @@ const RecoveryPhrase = () => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <ImportTextInput
+              accessibilityLabel="import-text-input"
               multiline
               autoCapitalize={'none'}
               numberOfLines={3}
@@ -606,7 +609,9 @@ const RecoveryPhrase = () => {
               value={value}
               autoCorrect={false}
               spellCheck={false}
-              textContentType={'password'}
+              autoComplete="off"
+              textContentType="password" // ios
+              keyboardType="visible-password" // android
             />
           )}
           name="text"
@@ -619,8 +624,9 @@ const RecoveryPhrase = () => {
           {t('This process may take a few minutes to complete.')}
         </CuationText>
         <CtaContainer>
-          <AdvancedOptionsContainer>
+          <AdvancedOptionsContainer accessibilityLabel="advanced-options-container">
             <AdvancedOptionsButton
+              accessibilityLabel="show-advanced-options"
               onPress={() => {
                 Haptic('impactLight');
                 setShowAdvancedOptions(!showAdvancedOptions);
@@ -652,7 +658,7 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Include Testnet Wallets')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer>
+                  <CheckBoxContainer accessibilityLabel="include-testnet-wallet-checkbox">
                     <Checkbox
                       checked={includeTestnetWallets}
                       onPress={() => {
@@ -674,7 +680,7 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Include Legacy Wallets')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer>
+                  <CheckBoxContainer accessibilityLabel="include-legacy-wallet-checkbox">
                     <Checkbox
                       checked={includeLegacyWallets}
                       onPress={() => {
@@ -696,7 +702,7 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Specify Derivation Path')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer>
+                  <CheckBoxContainer accessibilityLabel="specify-derivation-path-checkbox">
                     <Checkbox
                       checked={derivationPathEnabled}
                       onPress={() => {
@@ -713,6 +719,7 @@ const RecoveryPhrase = () => {
                 <CurrencySelectorContainer>
                   <Label>{t('CURRENCY')}</Label>
                   <CurrencyContainer
+                    accessibilityLabel="currency-container"
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
                       setCurrencyModalVisible(true);
@@ -755,6 +762,7 @@ const RecoveryPhrase = () => {
               <AdvancedOptions>
                 <InputContainer>
                   <BoxInput
+                    accessibilityLabel="derivation-path-box-input"
                     label={'DERIVATION PATH'}
                     onChangeText={(text: string) =>
                       setAdvancedOptions({
@@ -784,7 +792,7 @@ const RecoveryPhrase = () => {
                     <Column>
                       <OptionTitle>{t('Shared Wallet')}</OptionTitle>
                     </Column>
-                    <CheckBoxContainer>
+                    <CheckBoxContainer accessibilityLabel="shared-wallet-checkbox">
                       <Checkbox
                         checked={advancedOptions.isMultisig}
                         onPress={() => {
@@ -803,6 +811,7 @@ const RecoveryPhrase = () => {
               <AdvancedOptions>
                 <InputContainer>
                   <BoxInput
+                    accessibilityLabel="password-input-box"
                     placeholder={'strongPassword123'}
                     type={'password'}
                     onChangeText={(text: string) =>
@@ -821,7 +830,10 @@ const RecoveryPhrase = () => {
           </AdvancedOptionsContainer>
         </CtaContainer>
 
-        <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+        <Button
+          accessibilityLabel="import-wallet-button"
+          buttonStyle={'primary'}
+          onPress={handleSubmit(onSubmit)}>
           {t('Import Wallet')}
         </Button>
       </ContentView>

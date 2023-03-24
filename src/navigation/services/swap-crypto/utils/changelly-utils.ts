@@ -12,7 +12,6 @@ export const changellySupportedCoins = [
 ];
 
 export const changellySupportedEthErc20Tokens = [
-  'busd',
   'usdp',
   'usdc',
   'gusd',
@@ -231,6 +230,7 @@ export const changellyGetFixRateForAmount = async (
   try {
     const messageData = {
       id: generateMessageId(wallet.id),
+      useV2: true,
       coinFrom: data.coinFrom,
       coinTo: data.coinTo,
       amountFrom: data.amountFrom,
@@ -256,6 +256,7 @@ export const changellyGetPairsParams = async (
   try {
     const messageData = {
       id: generateMessageId(wallet.id),
+      useV2: true,
       coinFrom: data.coinFrom,
       coinTo: data.coinTo,
     };
@@ -280,6 +281,7 @@ export const changellyCreateFixTransaction = async (
   try {
     const messageData = {
       id: generateMessageId(wallet.id),
+      useV2: true,
       coinFrom: data.coinFrom,
       coinTo: data.coinTo,
       addressTo: data.addressTo,
