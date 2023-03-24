@@ -609,7 +609,9 @@ const RecoveryPhrase = () => {
               value={value}
               autoCorrect={false}
               spellCheck={false}
-              textContentType={'password'}
+              autoComplete="off"
+              textContentType="password" // ios
+              keyboardType="visible-password" // android
             />
           )}
           name="text"
