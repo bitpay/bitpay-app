@@ -141,11 +141,6 @@ interface SetColorScheme {
   payload: ColorSchemeName;
 }
 
-interface SetCurrentRoute {
-  type: typeof AppActionTypes.SET_CURRENT_ROUTE;
-  payload: [keyof RootStackParamList, NavScreenParams];
-}
-
 interface SuccessGenerateAppIdentity {
   type: typeof AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY;
   payload: {network: Network; identity: AppIdentity};
@@ -353,7 +348,6 @@ export type AppActionType =
   | DismissBottomNotificationModal
   | ResetBottomNotificationModalConfig
   | SetColorScheme
-  | SetCurrentRoute
   | SuccessGenerateAppIdentity
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
