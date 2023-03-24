@@ -18,7 +18,7 @@ import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../../components/form/BoxInput';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {yupResolver} from '@hookform/resolvers/yup';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';
@@ -30,6 +30,7 @@ import Clipboard from '@react-native-community/clipboard';
 import {sleep} from '../../../../utils/helper-methods';
 import {Linking} from 'react-native';
 import {useTranslation} from 'react-i18next';
+import {LogActions} from '../../../../store/log';
 
 const BWC = BwcProvider.getInstance();
 
@@ -93,6 +94,7 @@ const ExportWallet = () => {
 
   const {network} = wallet;
 
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);
   const [dontIncludePrivateKey, setDontIncludePrivateKey] = useState(false);
@@ -199,8 +201,9 @@ const ExportWallet = () => {
       setSendButtonState('success');
       await sleep(200);
       setSendButtonState(undefined);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[onSendByEmail] ', e));
       setSendButtonState('failed');
       await sleep(500);
       setSendButtonState(undefined);
