@@ -410,11 +410,11 @@ const SwapCryptoRoot: React.FC = () => {
 
     const data = {
       coinFrom: getChangellyFixedCurrencyAbbreviation(
-        fromWalletSelected.currencyAbbreviation,
+        fromWalletSelected.currencyAbbreviation.toLowerCase(),
         fromWalletSelected.chain,
       ),
       coinTo: getChangellyFixedCurrencyAbbreviation(
-        toWalletSelected.currencyAbbreviation,
+        toWalletSelected.currencyAbbreviation.toLowerCase(),
         toWalletSelected.chain,
       ),
     };
@@ -463,7 +463,8 @@ const SwapCryptoRoot: React.FC = () => {
         if (
           data.result &&
           data.result[0] &&
-          Number(data.result[0].maxAmountFixed) <= 0
+          (!data.result[0].maxAmountFixed ||
+            Number(data.result[0].maxAmountFixed) <= 0)
         ) {
           const title = t('Changelly Error');
           const actions = [
@@ -488,8 +489,10 @@ const SwapCryptoRoot: React.FC = () => {
           const msg = t(
             'Changelly has temporarily disabled - pair. If you have further questions please reach out to them.',
             {
-              fromWalletSelected: fromWalletSelected.currencyAbbreviation,
-              toWalletSelected: toWalletSelected.currencyAbbreviation,
+              fromWalletSelected:
+                fromWalletSelected.currencyAbbreviation.toUpperCase(),
+              toWalletSelected:
+                toWalletSelected.currencyAbbreviation.toUpperCase(),
             },
           );
           showError(msg, title, actions);
