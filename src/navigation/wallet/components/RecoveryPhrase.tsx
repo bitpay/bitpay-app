@@ -86,6 +86,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {IS_ANDROID, IS_IOS} from '../../../constants';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -610,8 +611,8 @@ const RecoveryPhrase = () => {
               autoCorrect={false}
               spellCheck={false}
               autoComplete="off"
-              textContentType="password" // ios
-              keyboardType="visible-password" // android
+              textContentType={IS_IOS ? 'password' : undefined}
+              keyboardType={IS_ANDROID ? 'visible-password' : undefined}
             />
           )}
           name="text"
