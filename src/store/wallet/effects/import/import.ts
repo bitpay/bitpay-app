@@ -46,6 +46,7 @@ import {
   setAnnouncementsAccepted,
   setColorScheme,
   setDefaultAltCurrency,
+  setExpectedKeyLengthChange,
   setHomeCarouselConfig,
   setIntroCompleted,
   setKeyMigrationFailure,
@@ -97,6 +98,7 @@ import {
 import {t} from 'i18next';
 import {sleep} from '../../../../utils/helper-methods';
 import {backupRedirect} from '../../../../navigation/wallet/screens/Backup';
+import {batch} from 'react-redux';
 
 const BWC = BwcProvider.getInstance();
 
@@ -816,7 +818,13 @@ export const startImportMnemonic =
 
         // To clear encrypt password
         if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
-          dispatch(deleteKey({keyId: opts.keyId}));
+          const previousKeysLength = Object.keys(WALLET.keys).length;
+          const numNewKeys = Object.keys(WALLET.keys).length - 1;
+          const expectedLengthChange = previousKeysLength - numNewKeys;
+          batch(() => {
+            dispatch(deleteKey({keyId: opts.keyId}));
+            dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+          });
         }
 
         const key = buildKeyObj({
@@ -915,7 +923,13 @@ export const startImportFile =
           );
           filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
           wallets = wallets.concat(filteredKeys);
-          dispatch(deleteKey({keyId: opts.keyId}));
+          const previousKeysLength = Object.keys(WALLET.keys).length;
+          const numNewKeys = Object.keys(WALLET.keys).length - 1;
+          const expectedLengthChange = previousKeysLength - numNewKeys;
+          batch(() => {
+            dispatch(deleteKey({keyId: opts.keyId}));
+            dispatch(setExpectedKeyLengthChange(expectedLengthChange));
+          });
         }
 
         const key = buildKeyObj({
