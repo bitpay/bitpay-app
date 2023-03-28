@@ -32,6 +32,7 @@ const allowedUrlPrefixes = [
   'https://staging.bitpay.com',
   'https://bws.bitpay.com',
   'https://www.coinbase.com',
+  'https://api.coinbase.com',
   'https://api.1inch.io/v4.0/',
   'https://api.coingecko.com/api/v3/simple/token_price/',
   'https://checkout.simplexcc.com',
