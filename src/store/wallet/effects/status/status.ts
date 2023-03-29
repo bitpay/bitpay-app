@@ -345,7 +345,7 @@ export const startUpdateAllWalletStatusForKeys =
                 },
                 (err: Error, bulkStatus: BulkStatus[]) => {
                   const balances = key.wallets.map(wallet => {
-                    const {balance: cachedBalance} = wallet;
+                    const {balance: cachedBalance, pendingTxps} = wallet;
 
                     if (err || !bulkStatus) {
                       if (err) {
@@ -395,8 +395,9 @@ export const startUpdateAllWalletStatusForKeys =
                       success &&
                       (status.balance.availableAmount !==
                         cachedBalance?.satAvailable ||
-                        status.pendingTxps?.length > 0)
-                    ) {
+                        status.pendingTxps?.length > 0 ||
+                        pendingTxps?.length > 0)
+                    ) { 
                       const cryptoBalance = dispatch(
                         buildBalance({
                           wallet,
