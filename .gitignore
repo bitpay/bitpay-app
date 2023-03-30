@@ -74,3 +74,6 @@ coverage/
 
 # Crowdin
 crowdin-credentials.yml
+
+# Ruby
+vendor/
