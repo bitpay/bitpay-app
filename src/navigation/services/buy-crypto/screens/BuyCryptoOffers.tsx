@@ -70,6 +70,7 @@ import {
   rampEnv,
 } from '../utils/ramp-utils';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
+import RampTerms from '../components/terms/RampTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
 import WyreTerms from '../components/terms/WyreTerms';
 import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
@@ -1643,6 +1644,12 @@ const BuyCryptoOffers: React.FC = () => {
                   </OfferExpandibleItem>
                   {offer.key == 'moonpay' ? (
                     <MoonpayTerms
+                      paymentMethod={paymentMethod}
+                      country={country}
+                    />
+                  ) : null}
+                  {offer.key == 'ramp' ? (
+                    <RampTerms
                       paymentMethod={paymentMethod}
                       country={country}
                     />
