@@ -7,7 +7,8 @@ export const TRANSACTION_PROPOSAL_ROW_HEIGHT = 75;
 
 const TransactionContainer = styled.TouchableOpacity`
   flex-direction: row;
-  padding: ${ScreenGutter};
+  padding-left: ${ScreenGutter};
+  padding-right: ${ScreenGutter};
   justify-content: center;
   align-items: center;
   height: ${TRANSACTION_PROPOSAL_ROW_HEIGHT}px;
@@ -45,6 +46,7 @@ interface Props {
   creator?: string;
   value?: string;
   time?: string;
+  message?: string;
   onPressTransaction?: () => void;
   hideIcon?: boolean;
 }
@@ -54,6 +56,7 @@ const TransactionProposalRow = ({
   creator,
   value,
   time,
+  message,
   onPressTransaction,
   hideIcon,
 }: Props) => {
@@ -63,8 +66,8 @@ const TransactionProposalRow = ({
       {icon && !hideIcon && <IconContainer>{icon}</IconContainer>}
 
       <HeadContainer>
-        <Description numberOfLines={1} ellipsizeMode={'tail'}>
-          {t('Sending')}
+        <Description numberOfLines={message ? 2 : 1} ellipsizeMode={'tail'}>
+          {message ? message : t('Sending')}
         </Description>
         {creator && <Creator>{t('Created by ', {creator})}</Creator>}
       </HeadContainer>

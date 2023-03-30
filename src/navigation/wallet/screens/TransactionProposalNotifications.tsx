@@ -425,6 +425,7 @@ const TransactionProposalNotifications = () => {
                       creator={txp.uiCreator}
                       time={txp.uiTime}
                       value={txp.uiValue}
+                      message={txp.message}
                       onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
                       hideIcon={true}
                     />
