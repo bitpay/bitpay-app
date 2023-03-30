@@ -63,6 +63,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {TransactionIcons} from '../../../constants/TransactionIcons';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -421,7 +422,7 @@ const TransactionProposalNotifications = () => {
                 <ProposalsContainer key={txp.id}>
                   <ProposalsInfoContainer>
                     <TransactionProposalRow
-                      icon={txp.uiIcon}
+                      icon={TransactionIcons[txp.uiIcon]}
                       creator={txp.uiCreator}
                       time={txp.uiTime}
                       value={txp.uiValue}

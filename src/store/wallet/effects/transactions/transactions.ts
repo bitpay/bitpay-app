@@ -26,7 +26,6 @@ import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {partition} from 'lodash';
@@ -116,7 +115,7 @@ export const ProcessPendingTxps =
         tx.canBeRemoved = true;
       }
     });
-    return BuildUiFriendlyList(txps, currencyAbbreviation, chain, [], {});
+    return BuildUiFriendlyList(txps, currencyAbbreviation, chain, []);
   };
 
 const ProcessTx =
@@ -496,13 +495,11 @@ export const GetTransactionHistory =
         );
 
         // To get transaction list details: icon, description, amount and date
-        const {SHOP} = getState();
         transactions = BuildUiFriendlyList(
           transactions,
           wallet.currencyAbbreviation,
           wallet.chain,
           contactList,
-          getGiftCardIcons(SHOP.supportedCardMap),
         );
 
         const array = transactions
@@ -653,7 +650,6 @@ export const BuildUiFriendlyList = (
   currencyAbbreviation: string,
   chain: string,
   contactList: any[] = [],
-  giftCardIcons: {[cardName: string]: string},
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -696,7 +692,7 @@ export const BuildUiFriendlyList = (
     const isInvalid = IsInvalid(action);
 
     if (!confirmations || confirmations <= 0) {
-      transaction.uiIcon = TransactionIcons.confirming;
+      transaction.uiIcon = 'confirming';
 
       if (notZeroAmountEVM) {
         if (contactName || transaction.customData?.recipientEmail) {
@@ -727,11 +723,10 @@ export const BuildUiFriendlyList = (
             IsCustomERCToken(currencyAbbreviation, chain)) &&
           error
         ) {
-          transaction.uiIcon = TransactionIcons.error;
+          transaction.uiIcon = 'error';
         } else {
-          transaction.uiIcon =
-            TransactionIcons[customDataService] || TransactionIcons.sent;
-          transaction.uiIconURI = giftCardIcons[giftCardName];
+          transaction.uiIcon = customDataService || 'sent';
+          transaction.uiIconURI = giftCardName;
         }
         if (notZeroAmountEVM) {
           if (noteBody) {
@@ -753,7 +748,7 @@ export const BuildUiFriendlyList = (
       }
 
       if (isReceived) {
-        transaction.uiIcon = TransactionIcons.received;
+        transaction.uiIcon = 'received';
 
         if (noteBody) {
           transaction.uiDescription = noteBody;
@@ -765,7 +760,7 @@ export const BuildUiFriendlyList = (
       }
 
       if (isMoved) {
-        transaction.uiIcon = TransactionIcons.moved;
+        transaction.uiIcon = 'moved';
 
         if (noteBody) {
           transaction.uiDescription = noteBody;
@@ -778,7 +773,7 @@ export const BuildUiFriendlyList = (
       }
 
       if (isInvalid) {
-        transaction.uiIcon = TransactionIcons.error;
+        transaction.uiIcon = 'error';
 
         transaction.uiDescription = t('Invalid');
       }
@@ -786,7 +781,7 @@ export const BuildUiFriendlyList = (
 
     if (!notZeroAmountEVM) {
       const {uiDescription} = transaction;
-      transaction.uiIcon = TransactionIcons.contractInteraction;
+      transaction.uiIcon = 'contractInteraction';
 
       transaction.uiDescription = uiDescription
         ? t('Interaction with contract') + ` ${uiDescription}`
