@@ -86,7 +86,7 @@ export const ProcessPendingTxps =
     const {currencyAbbreviation, chain} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
-      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx));
+      tx = dispatch(ProcessTx(tx));
 
       // no future transactions...
       if (tx.createdOn > now) {
@@ -120,15 +120,12 @@ export const ProcessPendingTxps =
   };
 
 const ProcessTx =
-  (
-    currencyAbbreviation: string,
-    chain: string,
-    tx: TransactionProposal,
-  ): Effect<TransactionProposal> =>
+  (tx: TransactionProposal): Effect<TransactionProposal> =>
   dispatch => {
     if (!tx || tx.action === 'invalid') {
       return tx;
     }
+    const {chain, coin} = tx;
 
     // New transaction output format. Fill tx.amount and tx.toAmount for
     // backward compatibility.
@@ -142,22 +139,22 @@ const ProcessTx =
         }
         tx.amount = tx.outputs.reduce((total: number, o: any) => {
           o.amountStr = dispatch(
-            FormatAmountStr(currencyAbbreviation, chain, o.amount),
+            FormatAmountStr(coin, chain, Number(o.amount)),
           );
-          return total + o.amount;
+          return total + Number(o.amount);
         }, 0);
       }
       tx.toAddress = tx.outputs[0].toAddress!;
 
       // translate legacy addresses
-      if (tx.addressTo && currencyAbbreviation === 'ltc') {
+      if (tx.addressTo && coin === 'ltc') {
         for (let o of tx.outputs) {
           o.address = o.addressToShow = ToLtcAddress(tx.addressTo);
         }
       }
 
       if (tx.toAddress) {
-        tx.toAddress = ToAddress(tx.toAddress, currencyAbbreviation);
+        tx.toAddress = ToAddress(tx.toAddress, coin);
       }
     }
 
@@ -171,9 +168,7 @@ const ProcessTx =
       ];
     }
 
-    tx.amountStr = dispatch(
-      FormatAmountStr(currencyAbbreviation, chain, tx.amount),
-    );
+    tx.amountStr = dispatch(FormatAmountStr(coin, chain, tx.amount));
 
     tx.feeStr = tx.fee
       ? dispatch(FormatAmountStr(chain, chain, tx.fee))
@@ -191,7 +186,7 @@ const ProcessTx =
     }
 
     if (tx.addressTo) {
-      tx.addressTo = ToAddress(tx.addressTo, currencyAbbreviation);
+      tx.addressTo = ToAddress(tx.addressTo, coin);
     }
 
     return tx;
@@ -203,10 +198,14 @@ const ProcessNewTxs =
     const now = Math.floor(Date.now() / 1000);
     const txHistoryUnique: any = {};
     const ret = [];
-    const {currencyAbbreviation, chain} = wallet;
+    const {currencyAbbreviation} = wallet;
 
     for (let tx of txs) {
-      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx));
+      // workaround for BWS bug / coin is missing and chain is in uppercase
+      tx.coin = wallet.currencyAbbreviation;
+      tx.chain = wallet.chain;
+
+      tx = dispatch(ProcessTx(tx));
 
       // no future transactions...
       if (tx.time > now) {
@@ -877,8 +876,7 @@ export const buildTransactionDetails =
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
-        const {coin, chain} = wallet.credentials;
-        const _transaction = {...transaction, coin, chain};
+        const _transaction = {...transaction};
         const {
           fees,
           fee,
@@ -888,6 +886,8 @@ export const buildTransactionDetails =
           action,
           time,
           hasMultiplesOutputs,
+          coin,
+          chain,
         } = transaction;
         const _fee = fees || fee;
 
