@@ -361,7 +361,9 @@ export const getBlockByDate =
       throw e;
     }
   };
+
 // ------- TOKEN API ------- //
+
 export const getERC20TokenPrice =
   ({address, chain}: {address: string; chain: string}): Effect<Promise<any>> =>
   async dispatch => {
@@ -493,6 +495,68 @@ export const getERC20TokenMetadataBySymbol =
       dispatch(
         LogActions.error(
           `[moralis/getERC20TokenMetadataBySymbol]: an error occurred while getting ERC20 token metadata: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
+// ------- RESOLVE API ------- //
+
+export const getAddressByENSDomain =
+  ({domain}: {domain: string}): Effect<Promise<any>> =>
+  async dispatch => {
+    try {
+      const response = await Moralis.EvmApi.resolve.resolveDomain({
+        domain,
+      });
+
+      dispatch(
+        LogActions.info(
+          '[moralis/getAddressByENSDomain]: get address by ENS domain successfully',
+        ),
+      );
+      return response?.toJSON();
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getAddressByENSDomain]: an error occurred while getting address by ENS domain: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
+export const getENSDomainByAddress =
+  ({address}: {address: string}): Effect<Promise<any>> =>
+  async dispatch => {
+    try {
+      const response = await Moralis.EvmApi.resolve.resolveAddress({
+        address,
+      });
+
+      dispatch(
+        LogActions.info(
+          '[moralis/getENSDomainByAddress]: get ENS domain by address successfully',
+        ),
+      );
+      return response?.toJSON();
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getENSDomainByAddress]: an error occurred while getting ENS domain by address: ${errorStr}`,
         ),
       );
       throw e;
