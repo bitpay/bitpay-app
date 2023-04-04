@@ -107,6 +107,8 @@ const BuyCryptoRoot: React.VFC<
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const network = useAppSelector(({APP}) => APP.network);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const fromWallet = route.params?.fromWallet;
@@ -522,6 +524,8 @@ const BuyCryptoRoot: React.VFC<
       const requestData: ExternalServicesConfigRequestParams = {
         currentLocationCountry: locationData?.countryShortCode,
         currentLocationState: locationData?.stateShortCode,
+        bitpayIdLocationCountry: user?.country,
+        bitpayIdLocationState: user?.state,
       };
       const config: ExternalServicesConfig = await getExternalServicesConfig(
         requestData,

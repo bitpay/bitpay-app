@@ -44,6 +44,7 @@ export interface SecuritySettings {
 export interface User {
   email: string;
   eid: string;
+  country?: string;
   familyName?: string;
   givenName?: string;
   incentiveLevel?: string;
@@ -54,5 +55,6 @@ export interface User {
     optInEmailMarketing?: boolean;
   };
   referralCode?: string;
+  state?: string;
   name?: string;
 }
