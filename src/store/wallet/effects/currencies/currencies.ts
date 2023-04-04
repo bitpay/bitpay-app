@@ -20,13 +20,14 @@ import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {isEmpty} from 'lodash';
 
 export const startGetTokenOptions =
-  (): Effect<Promise<void>> => async (dispatch, getState) => {
+  (force?: boolean): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
     try {
       dispatch(LogActions.info('starting [startGetTokenOptions]'));
       const {
         WALLET: {tokenOptions, tokenOptionsByAddress, tokenData},
       } = getState();
-      if (!isEmpty(tokenData)) {
+      if (!force && !isEmpty(tokenData)) {
         dispatch(LogActions.info('skipping [startGetTokenOptions]'));
         return;
       }
