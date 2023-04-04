@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
 import {forEach} from 'lodash';
-import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
+import {SettingsComponent} from '../../SettingsRoot';
 import {
   Hr,
   ScreenGutter,
@@ -25,6 +25,10 @@ const HeaderTitle = styled(Setting)`
   border-bottom-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
+const StorageContainer = styled.ScrollView`
+  flex: 1;
+`;
+
 const storagePath =
   Platform.OS === 'ios' ? RNFS.MainBundlePath : RNFS.DocumentDirectoryPath;
 
@@ -44,10 +48,38 @@ const StorageUsage: React.VFC = () => {
   const [customTokenStorage, setCustomTokenStorage] = useState<string>('');
   const [contactStorage, setContactStorage] = useState<string>('');
 
+  const [tokenCacheSize, setTokenCacheSize] = useState<string>('');
+  const [customTokenCacheSize, setCustomTokenCacheSize] = useState<string>('');
+  const [ratesCacheSize, setRatesCacheSize] = useState<string>('');
+
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const customTokens = useAppSelector(({WALLET}) => WALLET.customTokenData);
   const contacts = useAppSelector(({CONTACT}) => CONTACT.list);
+
+  const tokenCache = useAppSelector(({WALLET}) => {
+    return {
+      ...WALLET.tokenData,
+      ...WALLET.tokenOptions,
+      ...WALLET.tokenOptionsByAddress,
+    };
+  });
+
+  const customTokenCache = useAppSelector(({WALLET}) => {
+    return {
+      ...WALLET.customTokenData,
+      ...WALLET.customTokenOptions,
+      ...WALLET.customTokenOptionsByAddress,
+    };
+  });
+
+  const ratesCache = useAppSelector(({RATE}) => {
+    return {
+      ...RATE.rates,
+      ...RATE.priceHistory,
+      ...RATE.ratesByDateRange,
+    };
+  });
 
   const formatBytes = (bytes: number, decimals = 2): string => {
     if (!+bytes) {
@@ -127,6 +159,23 @@ const StorageUsage: React.VFC = () => {
         JSON.stringify(contacts),
       );
       setContactStorage(formatBytes(_contactStorageSize));
+
+      // Cache
+      const _tokenSize = await getSize(
+        RNFS.TemporaryDirectoryPath + '/tokens.txt',
+        JSON.stringify(tokenCache),
+      );
+      setTokenCacheSize(formatBytes(_tokenSize));
+      const _customTokenSize = await getSize(
+        RNFS.TemporaryDirectoryPath + '/custom-tokens.txt',
+        JSON.stringify(customTokenCache),
+      );
+      setCustomTokenCacheSize(formatBytes(_customTokenSize));
+      const _ratesSize = await getSize(
+        RNFS.TemporaryDirectoryPath + '/rates.txt',
+        JSON.stringify(ratesCache),
+      );
+      setRatesCacheSize(formatBytes(_ratesSize));
     } catch (err) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
       LogActions.error('[StorageUsage] Error ', errStr);
@@ -134,7 +183,7 @@ const StorageUsage: React.VFC = () => {
   }, []);
 
   return (
-    <SettingsContainer>
+    <StorageContainer>
       <HeaderTitle>
         <SettingTitle>{t('Total Size')}</SettingTitle>
       </HeaderTitle>
@@ -161,9 +210,9 @@ const StorageUsage: React.VFC = () => {
         </Setting>
       </SettingsComponent>
       <HeaderTitle>
-        <SettingTitle>{t('Details')}</SettingTitle>
+        <SettingTitle>{t('Data')}</SettingTitle>
       </HeaderTitle>
-      <SettingsComponent style={{marginBottom: 10}}>
+      <SettingsComponent>
         <Setting>
           <SettingTitle>
             {t('Wallets')} ({walletsCount || '0'})
@@ -199,7 +248,32 @@ const StorageUsage: React.VFC = () => {
           <Button buttonType="pill">{contactStorage}</Button>
         </Setting>
       </SettingsComponent>
-    </SettingsContainer>
+      <HeaderTitle>
+        <SettingTitle>{t('Cached')}</SettingTitle>
+      </HeaderTitle>
+      <SettingsComponent>
+        <Setting>
+          <SettingTitle>Rates</SettingTitle>
+
+          <Button buttonType="pill">{ratesCacheSize}</Button>
+        </Setting>
+
+        <Hr />
+
+        <Setting>
+          <SettingTitle>{t('Tokens')}</SettingTitle>
+
+          <Button buttonType="pill">{tokenCacheSize}</Button>
+        </Setting>
+
+        <Hr />
+        <Setting>
+          <SettingTitle>{t('Custom Tokens')}</SettingTitle>
+
+          <Button buttonType="pill">{customTokenCacheSize}</Button>
+        </Setting>
+      </SettingsComponent>
+    </StorageContainer>
   );
 };
 
