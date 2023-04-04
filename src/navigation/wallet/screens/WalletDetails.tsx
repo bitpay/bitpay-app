@@ -877,6 +877,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         creator={item.uiCreator}
         time={item.uiTime}
         value={item.uiValue}
+        message={item.message}
         onPressTransaction={() => onPressTxp(item)}
       />
     );
