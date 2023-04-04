@@ -5,11 +5,7 @@ import {CurrencyOpts} from '../../constants/currencies';
 import {AddLog} from '../log/log.types';
 
 type WalletReduxPersistBlackList = string[];
-export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
-  'tokenData',
-  'tokenOptions',
-  'tokenOptionsByAddress',
-];
+export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
 export type Keys = {
   [key in string]: Key;
