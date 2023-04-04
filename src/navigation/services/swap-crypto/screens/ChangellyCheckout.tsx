@@ -253,10 +253,10 @@ const ChangellyCheckout: React.FC = () => {
             Number(data.result.changellyFee) -
             Number(data.result.apiExtraFee);
           let exchangeFee =
-            (Number(data.result.changellyFee) * data.result.amountTo) /
+            (Number(data.result.changellyFee) * data.result.amountExpectedTo) /
             receivingPercentage;
           let bitpayFee =
-            (Number(data.result.apiExtraFee) * data.result.amountTo) /
+            (Number(data.result.apiExtraFee) * data.result.amountExpectedTo) /
             receivingPercentage;
           setTotalExchangeFee(exchangeFee + bitpayFee);
           logger.debug(
@@ -279,8 +279,8 @@ const ChangellyCheckout: React.FC = () => {
           ? data.result.payinExtraId
           : undefined; // (destinationTag) Used for coins like: XRP, XLM, EOS, IGNIS, BNB, XMR, ARDOR, DCT, XEM
         setExchangeTxId(data.result.id);
-        setAmountExpectedFrom(data.result.amountExpectedFrom);
-        setAmountTo(Number(data.result.amountTo));
+        setAmountExpectedFrom(Number(data.result.amountExpectedFrom));
+        setAmountTo(Number(data.result.amountExpectedTo));
         status = data.result.status;
 
         try {
@@ -293,7 +293,7 @@ const ChangellyCheckout: React.FC = () => {
           );
           const newFiatAmountTo = dispatch(
             toFiat(
-              Number(amountTo) * presicion!.unitToSatoshi,
+              Number(data.result.amountExpectedTo) * presicion!.unitToSatoshi,
               alternativeIsoCode,
               toWalletSelected.currencyAbbreviation.toLowerCase(),
               toWalletSelected.chain,
@@ -776,17 +776,18 @@ const ChangellyCheckout: React.FC = () => {
               )}
             </RowDataContainer>
             <ItemDivisor />
-            <RowDataContainer>
-              <RowLabel>{t('Exchange Fee')}</RowLabel>
-              {!!totalExchangeFee && (
-                <RowData>
-                  {' '}
-                  {Number(totalExchangeFee).toFixed(6)}{' '}
-                  {toWalletSelected.currencyAbbreviation.toUpperCase()}
-                </RowData>
-              )}
-            </RowDataContainer>
-            <ItemDivisor />
+            {totalExchangeFee ? (
+              <>
+                <RowDataContainer>
+                  <RowLabel>{t('Exchange Fee')}</RowLabel>
+                  <RowData>
+                    {Number(totalExchangeFee).toFixed(6)}{' '}
+                    {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                  </RowData>
+                </RowDataContainer>
+                <ItemDivisor />
+              </>
+            ) : null}
             <RowDataContainer>
               <RowLabel>{t('Expires')}</RowLabel>
               {!!remainingTimeStr && (
