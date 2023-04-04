@@ -58,6 +58,7 @@ import {
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
+import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
 
 export interface DebitCardConfirmParamList {
   amount: number;
@@ -205,7 +206,10 @@ const Confirm = () => {
     try {
       const {invoiceId, invoice: newInvoice} = await createTopUpInvoice({
         walletId: selectedWallet.id,
-        transactionCurrency: selectedWallet.currencyAbbreviation.toUpperCase(),
+        transactionCurrency: getCurrencyCodeFromCoinAndChain(
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.chain,
+        ),
       });
       const baseUrl = BASE_BITPAY_URLS[network];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
