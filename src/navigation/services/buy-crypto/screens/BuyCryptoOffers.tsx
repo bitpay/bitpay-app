@@ -786,7 +786,7 @@ const BuyCryptoOffers: React.FC = () => {
       let paymentMethodArray: string[] = [];
       switch (paymentMethod.method) {
         case 'sepaBankTransfer':
-          paymentMethodArray.push('simplex_account');
+          paymentMethodArray.push('sepa_open_banking');
           break;
         case 'applePay':
         case 'debitCard':
