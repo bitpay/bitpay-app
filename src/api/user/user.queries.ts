@@ -9,6 +9,8 @@ export const basicInfoFields = `
   incentiveLevel
   incentiveLevelId
   name
+  country
+  state
   userSettings {
     agreedCardholderAgreement
     acknowledgePrivacyNotice

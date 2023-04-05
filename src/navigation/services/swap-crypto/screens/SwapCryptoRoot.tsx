@@ -149,6 +149,8 @@ const SwapCryptoRoot: React.FC = () => {
   const logger = useLogger();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const network = useAppSelector(({APP}) => APP.network);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const tokenData = useAppSelector(({WALLET}) => WALLET.tokenData);
   const tokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -925,6 +927,8 @@ const SwapCryptoRoot: React.FC = () => {
       const requestData: ExternalServicesConfigRequestParams = {
         currentLocationCountry: locationData?.countryShortCode,
         currentLocationState: locationData?.stateShortCode,
+        bitpayIdLocationCountry: user?.country,
+        bitpayIdLocationState: user?.state,
       };
       const config: ExternalServicesConfig = await getExternalServicesConfig(
         requestData,
