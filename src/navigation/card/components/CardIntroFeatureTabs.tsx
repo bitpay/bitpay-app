@@ -108,7 +108,7 @@ const FEES = (): CardTableData[] => {
       description: t('3%'),
     },
     {
-      title: t('Inactivity Fee'),
+      title: t('Dormancy Fee'),
       description: t('$5 per month after 90 days with no transactions'),
     },
   ];
