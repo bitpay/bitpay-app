@@ -378,11 +378,6 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     }
 
-    offers.moonpay.fiatAmount =
-      offers.moonpay.fiatCurrency === fiatCurrency
-        ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
-
     let _paymentMethod: string | undefined;
     switch (paymentMethod.method) {
       case 'debitCard':
@@ -391,6 +386,8 @@ const BuyCryptoOffers: React.FC = () => {
         break;
       case 'sepaBankTransfer':
         _paymentMethod = 'sepa_bank_transfer';
+        // Moonpay only accepts EUR as a base currency for SEPA payments
+        offers.moonpay.fiatCurrency = 'EUR';
         break;
       case 'applePay':
         _paymentMethod = 'mobile_wallet';
@@ -399,6 +396,11 @@ const BuyCryptoOffers: React.FC = () => {
         _paymentMethod = undefined;
         break;
     }
+
+    offers.moonpay.fiatAmount =
+      offers.moonpay.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
 
     const requestData = {
       currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
