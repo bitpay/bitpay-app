@@ -92,6 +92,7 @@ import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.s
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../../store';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {changellyGetTransactions} from '../../../../store/swap-crypto/effects/changelly/changelly';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -243,21 +244,39 @@ const ChangellyCheckout: React.FC = () => {
           return;
         }
 
-        if (
-          Number(data.result.changellyFee) > 0 ||
-          Number(data.result.apiExtraFee > 0)
-        ) {
+        let changellyFee = 0;
+        let apiExtraFee = 0;
+
+        if (data.result.changellyFee && data.result.apiExtraFee) {
+          changellyFee = Number(data.result.changellyFee);
+          apiExtraFee = Number(data.result.apiExtraFee);
+        } else {
+          try {
+            const transactionData = await changellyGetTransactions(
+              data.result.id,
+            );
+            if (transactionData.result[0]) {
+              if (Number(transactionData.result[0].changellyFee) > 0) {
+                changellyFee = Number(transactionData.result[0].changellyFee);
+              }
+              if (Number(transactionData.result[0].apiExtraFee) > 0) {
+                apiExtraFee = Number(transactionData.result[0].apiExtraFee);
+              }
+            }
+          } catch (e) {
+            logger.warn(
+              `Error getting transactionData with id: ${data.result.id}`,
+            );
+          }
+        }
+
+        if (changellyFee >= 0 && apiExtraFee >= 0) {
           // changellyFee and apiExtraFee (Bitpay fee) are in percents
-          const receivingPercentage =
-            100 -
-            Number(data.result.changellyFee) -
-            Number(data.result.apiExtraFee);
+          const receivingPercentage = 100 - changellyFee - apiExtraFee;
           let exchangeFee =
-            (Number(data.result.changellyFee) * data.result.amountExpectedTo) /
-            receivingPercentage;
+            (changellyFee * data.result.amountExpectedTo) / receivingPercentage;
           let bitpayFee =
-            (Number(data.result.apiExtraFee) * data.result.amountExpectedTo) /
-            receivingPercentage;
+            (apiExtraFee * data.result.amountExpectedTo) / receivingPercentage;
           setTotalExchangeFee(exchangeFee + bitpayFee);
           logger.debug(
             `Changelly fee: ${exchangeFee} - BitPay fee: ${bitpayFee} - Total fee: ${
@@ -266,7 +285,6 @@ const ChangellyCheckout: React.FC = () => {
           );
         }
 
-        // TODO: handle payin address for BCH
         if (fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch') {
           payinAddress = BWC.getBitcoreCash()
             .Address(data.result.payinAddress)
@@ -817,7 +835,7 @@ const ChangellyCheckout: React.FC = () => {
               <>
                 <FiatAmountContainer>
                   <FiatAmount>
-                    ~{fiatAmountTo} {alternativeIsoCode}
+                    ~{fiatAmountTo.toFixed(2)} {alternativeIsoCode}
                   </FiatAmount>
                 </FiatAmountContainer>
               </>

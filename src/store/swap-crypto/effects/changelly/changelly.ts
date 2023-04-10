@@ -38,6 +38,38 @@ export const changellyGetCurrencies = async (full?: boolean) => {
   }
 };
 
+export const changellyGetTransactions = async (exchangeTxId: string) => {
+  try {
+    const body = {
+      id: generateMessageId(),
+      exchangeTxId,
+      useV2: true,
+    };
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const {data} = await axios.post(
+      uri + '/v1/service/changelly/getTransactions',
+      body,
+      config,
+    );
+
+    if (data.id && data.id !== body.id) {
+      return Promise.reject(
+        t('The response does not match the origin of the request'),
+      );
+    }
+
+    return Promise.resolve(data);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
+
 export const changellyGetStatus = async (
   exchangeTxId: string,
   oldStatus: string,
