@@ -307,7 +307,7 @@ export const TxWalletConnectIcon = ({
   );
 };
 
-export const TransactionIcons: {[key in string]: ReactElement} = {
+export const TransactionIcons: {[index in string]: ReactElement} = {
   amazon: (
     <AmazonSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
   ),

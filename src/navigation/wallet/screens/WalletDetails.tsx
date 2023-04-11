@@ -120,9 +120,13 @@ import {
   SUPPORTED_EVM_COINS,
 } from '../../../constants/currencies';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
-import {TRANSACTION_ICON_SIZE} from '../../../constants/TransactionIcons';
+import {
+  TransactionIcons,
+  TRANSACTION_ICON_SIZE,
+} from '../../../constants/TransactionIcons';
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -285,6 +289,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {walletId, skipInitializeHistory} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
+  const {supportedCardMap} = useAppSelector(({SHOP}) => SHOP);
+
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
@@ -454,7 +460,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       currencyAbbreviation,
       chain,
       [],
-      {},
     );
     formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
@@ -858,10 +863,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               badge={<SentBadgeSvg />}
             />
           ) : (
-            item.uiIcon
+            TransactionIcons[item.uiIcon]
           )
         }
-        iconURI={item.uiIconURI}
+        iconURI={getGiftCardIcons(supportedCardMap)[item.uiIconURI]}
         description={item.uiDescription}
         time={item.uiTime}
         value={item.uiValue}
@@ -873,7 +878,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const renderTxp = useCallback(({item}) => {
     return (
       <TransactionProposalRow
-        icon={item.uiIcon}
+        icon={TransactionIcons[item.uiIcon]}
         creator={item.uiCreator}
         time={item.uiTime}
         value={item.uiValue}
