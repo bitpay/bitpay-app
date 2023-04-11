@@ -7,7 +7,7 @@ import {
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import Braze from 'react-native-appboy-sdk';
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   Appearance,
   AppState,
@@ -511,8 +511,8 @@ export default () => {
   // Silent Push Notifications
   useEffect(() => {
     function onMessageReceived(response: SilentPushEvent) {
-      console.log(
-        '##### Received Silent Push Notification',
+      LogActions.debug(
+        '[Root] Silent Push Notification',
         JSON.stringify(response),
       );
       dispatch(handleBwsEvent(response));

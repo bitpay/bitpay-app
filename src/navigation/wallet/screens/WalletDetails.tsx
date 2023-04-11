@@ -339,9 +339,26 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         createWalletAddress({wallet: fullWalletObj, newAddress: false}),
       )) as string;
 
-      await Share.share({
-        message: address,
-      });
+      Share.share(
+        {
+          message: address,
+          title: t('Share Address'),
+        },
+        {
+          dialogTitle: t('Share Address'),
+          subject: t('Share Address'),
+          excludedActivityTypes: [
+            'print',
+            'addToReadingList',
+            'markupAsPDF',
+            'openInIbooks',
+            'postToFacebook',
+            'postToTwitter',
+            'saveToCameraRoll',
+            'sharePlay',
+          ],
+        },
+      );
     } catch (e) {}
   };
 
