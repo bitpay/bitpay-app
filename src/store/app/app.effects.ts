@@ -96,6 +96,7 @@ import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
+import {moralisInit} from '../moralis/moralis.effects';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -218,6 +219,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(walletConnectInit());
     dispatch(walletConnectV2Init());
     dispatch(initializeBrazeContent());
+    dispatch(moralisInit());
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
