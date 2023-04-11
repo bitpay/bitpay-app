@@ -84,6 +84,7 @@ const BiometricModal: React.FC = () => {
   const inputRange = [0, 1];
   const outputRange = [1, 1.2];
   const scale = animation.interpolate({inputRange, outputRange});
+  const [isActive, setIsActive] = useState(false);
 
   const pulse = () => {
     Animated.sequence([
@@ -115,6 +116,7 @@ const BiometricModal: React.FC = () => {
   };
 
   const authenticate = () => {
+    setIsActive(true);
     TouchID.authenticate('Authentication Required', authOptionalConfigObject)
       .then(async () => {
         const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
@@ -132,11 +134,14 @@ const BiometricModal: React.FC = () => {
           );
         }
         pulse();
+      })
+      .finally(() => {
+        setIsActive(false);
       });
   };
 
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && !isActive) {
       authenticate();
     }
   }, [isVisible]);
