@@ -3,7 +3,6 @@ import axios from 'axios';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
 import FastImage from 'react-native-fast-image';
-import {batch} from 'react-redux';
 import CardApi from '../../api/card';
 import {InitialUserData} from '../../api/user/user.types';
 import {sleep} from '../../utils/helper-methods';
@@ -180,11 +179,9 @@ export const startFetchOverview =
       );
     } catch (err) {
       console.log(`Failed to fetch overview for card ${id}`);
-      batch(() => {
-        dispatch(LogActions.error(`Failed to fetch overview for card ${id}`));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(CardActions.failedFetchOverview(id));
-      });
+      dispatch(LogActions.error(`Failed to fetch overview for card ${id}`));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(CardActions.failedFetchOverview(id));
     } finally {
       dispatch(dismissOnGoingProcessModal());
     }
@@ -309,15 +306,13 @@ export const startFetchVirtualCardImageUrls =
         dispatch(LogActions.error(JSON.stringify(err)));
       }
     } catch (err) {
-      batch(() => {
-        dispatch(
-          LogActions.error(
-            `Failed to fetch virtual card image URLs for ${ids.join(', ')}`,
-          ),
-        );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(CardActions.failedFetchVirtualImageUrls());
-      });
+      dispatch(
+        LogActions.error(
+          `Failed to fetch virtual card image URLs for ${ids.join(', ')}`,
+        ),
+      );
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(CardActions.failedFetchVirtualImageUrls());
     }
   };
 
@@ -334,13 +329,9 @@ export const START_UPDATE_CARD_LOCK =
 
       dispatch(CardActions.successUpdateCardLock(network, id, isLocked));
     } catch (err) {
-      batch(() => {
-        dispatch(
-          LogActions.error(`Failed to update card lock status for ${id}`),
-        );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(CardActions.failedUpdateCardLock(id));
-      });
+      dispatch(LogActions.error(`Failed to update card lock status for ${id}`));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(CardActions.failedUpdateCardLock(id));
     }
   };
 
@@ -396,11 +387,9 @@ export const START_UPDATE_CARD_NAME =
 
       dispatch(CardActions.successUpdateCardName(network, id, nickname));
     } catch (err) {
-      batch(() => {
-        dispatch(LogActions.error(`Failed to update card name for ${id}`));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(CardActions.failedUpdateCardName(id));
-      });
+      dispatch(LogActions.error(`Failed to update card name for ${id}`));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(CardActions.failedUpdateCardName(id));
     }
   };
 

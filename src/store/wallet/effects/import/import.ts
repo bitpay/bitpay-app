@@ -87,7 +87,6 @@ import {initialShopState} from '../../../shop/shop.reducer';
 import {StackActions} from '@react-navigation/native';
 import {BuyCryptoActions} from '../../../buy-crypto';
 import {SwapCryptoActions} from '../../../swap-crypto';
-import {Analytics} from '../../../analytics/analytics.effects';
 import {
   checkNotificationsPermissions,
   setConfirmTxNotifications,
@@ -96,9 +95,6 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
-import {sleep} from '../../../../utils/helper-methods';
-import {backupRedirect} from '../../../../navigation/wallet/screens/Backup';
-import {batch} from 'react-redux';
 
 const BWC = BwcProvider.getInstance();
 
@@ -821,10 +817,8 @@ export const startImportMnemonic =
           const previousKeysLength = Object.keys(WALLET.keys).length;
           const numNewKeys = Object.keys(WALLET.keys).length - 1;
           const expectedLengthChange = previousKeysLength - numNewKeys;
-          batch(() => {
-            dispatch(deleteKey({keyId: opts.keyId}));
-            dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-          });
+          dispatch(deleteKey({keyId: opts.keyId}));
+          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
         }
 
         const key = buildKeyObj({
@@ -926,10 +920,8 @@ export const startImportFile =
           const previousKeysLength = Object.keys(WALLET.keys).length;
           const numNewKeys = Object.keys(WALLET.keys).length - 1;
           const expectedLengthChange = previousKeysLength - numNewKeys;
-          batch(() => {
-            dispatch(deleteKey({keyId: opts.keyId}));
-            dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-          });
+          dispatch(deleteKey({keyId: opts.keyId}));
+          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
         }
 
         const key = buildKeyObj({

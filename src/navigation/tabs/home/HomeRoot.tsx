@@ -7,7 +7,6 @@ import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, ScrollView} from 'react-native';
-import {batch} from 'react-redux';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
@@ -187,9 +186,7 @@ const HomeRoot = () => {
 
   useEffect(() => {
     if (keyMigrationFailure && !keyMigrationFailureModalHasBeenShown) {
-      batch(() => {
-        dispatch(setShowKeyMigrationFailureModal(true));
-      });
+      dispatch(setShowKeyMigrationFailureModal(true));
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 

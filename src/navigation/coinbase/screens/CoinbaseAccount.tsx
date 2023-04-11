@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import {batch} from 'react-redux';
 import {
   useAppDispatch,
   useAppSelector,
@@ -337,18 +336,14 @@ const CoinbaseAccount = ({
       return;
     }
     try {
-      batch(() => {
-        setIsLoading(!refresh);
-        setErrorLoadingTxs(false);
-      });
+      setIsLoading(!refresh);
+      setErrorLoadingTxs(false);
 
       await dispatch(
         coinbaseGetTransactionsByAccount(accountId, refresh, nextStartingAfter),
       );
 
-      batch(() => {
-        setIsLoading(false);
-      });
+      setIsLoading(false);
     } catch (e) {
       setNextStartingAfter('');
       setIsLoading(false);

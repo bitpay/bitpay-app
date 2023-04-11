@@ -21,7 +21,6 @@ import {
   RESULTS,
 } from 'react-native-permissions';
 import uuid from 'react-native-uuid';
-import {batch} from 'react-redux';
 import {AppActions} from '.';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
@@ -885,19 +884,17 @@ export const handleBwsEvent =
   };
 
 export const resetAllSettings = (): Effect => dispatch => {
-  batch(() => {
-    dispatch(AppActions.setColorScheme(null));
-    dispatch(AppActions.showPortfolioValue(true));
-    dispatch(
-      AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
-    );
-    dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
-    dispatch(WalletActions.setUseUnconfirmedFunds(false));
-    dispatch(WalletActions.setCustomizeNonce(false));
-    dispatch(WalletActions.setQueuedTransactions(false));
-    dispatch(WalletActions.setEnableReplaceByFee(false));
-    dispatch(LogActions.info('Reset all settings'));
-  });
+  dispatch(AppActions.setColorScheme(null));
+  dispatch(AppActions.showPortfolioValue(true));
+  dispatch(
+    AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
+  );
+  dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
+  dispatch(WalletActions.setUseUnconfirmedFunds(false));
+  dispatch(WalletActions.setCustomizeNonce(false));
+  dispatch(WalletActions.setQueuedTransactions(false));
+  dispatch(WalletActions.setEnableReplaceByFee(false));
+  dispatch(LogActions.info('Reset all settings'));
 };
 
 export const getRouteParam = (url: string, param: string) => {

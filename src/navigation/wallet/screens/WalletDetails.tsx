@@ -23,7 +23,6 @@ import {
   View,
 } from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import {batch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -507,10 +506,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       return;
     }
     try {
-      batch(() => {
-        setIsLoading(!refresh);
-        setErrorLoadingTxs(false);
-      });
+      setIsLoading(!refresh);
+      setErrorLoadingTxs(false);
 
       const [transactionHistory] = await Promise.all([
         dispatch(
@@ -524,22 +521,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         ),
       ]);
 
-      batch(() => {
-        if (transactionHistory) {
-          let {transactions: _history, loadMore: _loadMore} =
-            transactionHistory;
+      if (transactionHistory) {
+        let {transactions: _history, loadMore: _loadMore} = transactionHistory;
 
-          if (_history?.length) {
-            setHistory(_history);
-            const grouped = GroupTransactionHistory(_history);
-            setGroupedHistory(grouped);
-          }
-
-          setLoadMore(_loadMore);
+        if (_history?.length) {
+          setHistory(_history);
+          const grouped = GroupTransactionHistory(_history);
+          setGroupedHistory(grouped);
         }
 
-        setIsLoading(false);
-      });
+        setLoadMore(_loadMore);
+      }
+
+      setIsLoading(false);
     } catch (e) {
       setLoadMore(false);
       setIsLoading(false);

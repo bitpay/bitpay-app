@@ -15,7 +15,6 @@ import {
 } from '../../../app/app.effects';
 import {t} from 'i18next';
 import {setExpectedKeyLengthChange} from '../../../app/app.actions';
-import {batch} from 'react-redux';
 
 const BWC = BwcProvider.getInstance();
 
@@ -87,14 +86,12 @@ export const startJoinMultisig =
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
         const expectedLengthChange = previousKeysLength - numNewKeys;
-        batch(() => {
-          dispatch(
-            successCreateKey({
-              key,
-            }),
-          );
-          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-        });
+        dispatch(
+          successCreateKey({
+            key,
+          }),
+        );
+        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
         resolve(key);
       } catch (err) {
         reject(err);
