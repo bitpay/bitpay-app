@@ -10,10 +10,7 @@ import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useTranslation} from 'react-i18next';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {
@@ -24,7 +21,6 @@ import {sleep} from '../../../utils/helper-methods';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
-import {walletConnectV2OnSessionProposal} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {parseUri} from '@walletconnect/utils';
 import WCV1WalletSelector from '../components/WCV1WalletSelector';
 import WCV2WalletSelector from '../components/WCV2WalletSelector';
@@ -110,17 +106,15 @@ const WalletConnectIntro = () => {
                     if (isValidWalletConnectUri(data)) {
                       const {version} = parseUri(data);
                       if (version === 1) {
+                        await sleep(500);
                         setDappUri(data);
                         showWalletSelector();
                       } else {
-                        dispatch(startOnGoingProcessModal('LOADING'));
-                        const _proposal = (await dispatch<any>(
-                          walletConnectV2OnSessionProposal(data),
-                        )) as any;
-                        setDappProposal(_proposal);
-                        dispatch(dismissOnGoingProcessModal());
-                        await sleep(500);
-                        showWalletSelectorV2();
+                        // temporarily disabled
+                        const errMsg = t(
+                          'Connection cannot be established. WalletConnect version 2 is still under development.',
+                        );
+                        throw new Error(errMsg);
                       }
                     }
                   } catch (e: any) {
