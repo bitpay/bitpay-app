@@ -53,6 +53,7 @@ import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchI
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import {orderBy} from 'lodash';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {startGetTokenOptions} from '../../../store/wallet/effects/currencies/currencies';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -779,6 +780,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     },
     [memoizedOnToggle, memoizedOnViewAllPressed, selectionMode],
   );
+
+  useEffect(() => {
+    dispatch(startGetTokenOptions(true));
+  }, [dispatch]);
 
   return (
     <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
