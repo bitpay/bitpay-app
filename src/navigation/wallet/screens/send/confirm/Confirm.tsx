@@ -67,9 +67,13 @@ import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
 import {toFiat} from '../../../../../store/wallet/utils/wallet';
-import {GetPrecision} from '../../../../../store/wallet/utils/currency';
+import {
+  GetPrecision,
+  IsERCToken,
+} from '../../../../../store/wallet/utils/currency';
 import prompt from 'react-native-prompt-android';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -139,6 +143,7 @@ const Confirm = () => {
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
   const [enableRBF, setEnableRBF] = useState(false);
+  const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
 
   const {
     fee: _fee,
@@ -535,6 +540,15 @@ const Confirm = () => {
           />
         ) : null}
       </ConfirmScrollView>
+      {wallet && IsERCToken(wallet.currencyAbbreviation, wallet.chain) ? (
+        <SendingToERC20Warning
+          isVisible={showSendingERC20Modal}
+          closeModal={() => {
+            setShowSendingERC20Modal(false);
+          }}
+          wallet={wallet}
+        />
+      ) : null}
       <SwipeButton
         title={speedup ? t('Speed Up') : t('Slide to send')}
         forceReset={resetSwipeButton}
