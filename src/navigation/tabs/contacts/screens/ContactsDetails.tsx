@@ -323,6 +323,15 @@ const ContactsDetails = ({
               </AddressContainer>
             </DetailInfo>
           </Detail>
+          {contact.domain ? (
+            <>
+              <Hr />
+              <Detail>
+                <Title>{t('Domain')}</Title>
+                <DetailInfo align="right">{contact.domain}</DetailInfo>
+              </Detail>
+            </>
+          ) : null}
           {contact.network !== 'livenet' ? (
             <>
               <Hr />

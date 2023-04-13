@@ -39,6 +39,7 @@ export interface ContactRowProps {
   tag?: number; // backward compatibility
   destinationTag?: number;
   email?: string;
+  domain?: string;
 }
 
 interface Props {
@@ -49,7 +50,7 @@ interface Props {
 const ContactRow = ({contact, onPress}: Props) => {
   const theme = useTheme();
   const underlayColor = theme.dark ? '#121212' : '#fbfbff';
-  const {coin: _coin, name, email, address, chain} = contact;
+  const {coin: _coin, name, email, address, chain, domain} = contact;
   const coin = getCurrencyAbbreviation(_coin, chain);
   return (
     <ContactContainer underlayColor={underlayColor} onPress={onPress}>
@@ -60,7 +61,7 @@ const ContactRow = ({contact, onPress}: Props) => {
         <ContactColumn>
           <H5>{name}</H5>
           <ListItemSubText numberOfLines={1} ellipsizeMode={'tail'}>
-            {email ? email : address}
+            {domain ? domain : email ? email : address}
           </ListItemSubText>
         </ContactColumn>
         <AngleRight />

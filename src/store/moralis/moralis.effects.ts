@@ -507,7 +507,7 @@ export const getAddressByENSDomain =
   ({domain}: {domain: string}): Effect<Promise<any>> =>
   async dispatch => {
     try {
-      const response = await Moralis.EvmApi.resolve.resolveDomain({
+      const response = await Moralis.EvmApi.resolve.resolveENSDomain({
         domain,
       });
 
@@ -516,7 +516,7 @@ export const getAddressByENSDomain =
           '[moralis/getAddressByENSDomain]: get address by ENS domain successfully',
         ),
       );
-      return response?.toJSON();
+      return response?.raw.address;
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {
@@ -527,6 +527,36 @@ export const getAddressByENSDomain =
       dispatch(
         LogActions.error(
           `[moralis/getAddressByENSDomain]: an error occurred while getting address by ENS domain: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
+export const getAddressByUnstoppableDomain =
+  ({domain}: {domain: string}): Effect<Promise<any>> =>
+  async dispatch => {
+    try {
+      const response = await Moralis.EvmApi.resolve.resolveDomain({
+        domain,
+      });
+
+      dispatch(
+        LogActions.info(
+          '[moralis/getAddressByUnstoppableDomain]: get address by Unstoppable domain successfully',
+        ),
+      );
+      return response?.raw.address;
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getAddressByUnstoppableDomain]: an error occurred while getting address by Unstoppable domain: ${errorStr}`,
         ),
       );
       throw e;
@@ -546,7 +576,8 @@ export const getENSDomainByAddress =
           '[moralis/getENSDomainByAddress]: get ENS domain by address successfully',
         ),
       );
-      return response?.toJSON();
+
+      return response?.raw.name;
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {

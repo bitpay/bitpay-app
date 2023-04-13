@@ -24,6 +24,7 @@ interface DeleteContact {
   coin: string;
   network: string;
   chain?: string;
+  domain?: string;
 }
 
 interface MigrateContacts {

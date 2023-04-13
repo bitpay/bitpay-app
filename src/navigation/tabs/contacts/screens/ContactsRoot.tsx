@@ -158,8 +158,10 @@ const ContactsRoot: React.FC = () => {
 
   const updateSearchResults = debounce((text: string) => {
     setSearchVal(text);
-    const results = contactList.filter(contact =>
-      contact.name.toLowerCase().includes(text.toLocaleLowerCase()),
+    const results = contactList.filter(
+      contact =>
+        contact.name.toLowerCase().includes(text.toLocaleLowerCase()) ||
+        contact.domain?.toLowerCase().includes(text.toLowerCase()),
     );
     setSearchResults(results);
   }, 300);

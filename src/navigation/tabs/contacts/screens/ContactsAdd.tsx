@@ -69,6 +69,11 @@ import {
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {
+  getAddressByENSDomain,
+  getAddressByUnstoppableDomain,
+  getENSDomainByAddress,
+} from '../../../../store/moralis/moralis.effects';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -150,6 +155,7 @@ const schema = yup.object().shape({
   email: yup.string().email().trim(),
   destinationTag: yup.number(),
   address: yup.string().required(),
+  domain: yup.string(),
 });
 
 const SearchImageContainer = styled.View`
@@ -194,6 +200,7 @@ const ContactsAdd = ({
   const dispatch = useAppDispatch();
 
   const [validAddress, setValidAddress] = useState(false);
+  const [validDomain, setValidDomain] = useState(false);
   const [xrpValidAddress, setXrpValidAddress] = useState(false);
   const [evmValidAddress, setEvmValidAddress] = useState(false);
   const [searchInput, setSearchInput] = useState('');
@@ -202,6 +209,7 @@ const ContactsAdd = ({
   const [coinValue, setCoinValue] = useState('');
   const [networkValue, setNetworkValue] = useState('');
   const [chainValue, setChainValue] = useState('');
+  const [domainValue, setDomainValue] = useState('');
 
   const [tokenModalVisible, setTokenModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
@@ -299,12 +307,15 @@ const ContactsAdd = ({
     coin: string,
     network: string,
     chain: string,
+    domain: string,
   ) => {
     setValidAddress(true);
     setAddressValue(address);
     setCoinValue(coin);
     setNetworkValue(network);
     setChainValue(chain);
+    setValidDomain(true);
+    setDomainValue(domain);
 
     _setSelectedCurrency(coin);
 
@@ -320,13 +331,19 @@ const ContactsAdd = ({
         return;
     }
   };
-
-  const processAddress = (
-    address?: string,
-    coin?: string,
-    network?: string,
-    chain?: string,
-  ) => {
+  const processAddressOrDomain = ({
+    address,
+    coin,
+    network,
+    chain,
+    domain,
+  }: {
+    address?: string;
+    coin?: string;
+    network?: string;
+    chain?: string;
+    domain?: string;
+  }) => {
     if (address) {
       const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
       if (coinAndNetwork) {
@@ -341,6 +358,7 @@ const ContactsAdd = ({
             coin || coinAndNetwork.coin,
             network || coinAndNetwork.network,
             chain || coinAndNetwork.coin,
+            domain || '',
           );
         } else {
           // try testnet
@@ -355,27 +373,77 @@ const ContactsAdd = ({
               coin || coinAndNetwork.coin,
               network || 'testnet',
               chain || coinAndNetwork.coin,
+              domain || '',
             );
           }
         }
       } else {
-        setCoinValue('');
-        setNetworkValue('');
-        setAddressValue('');
-        setValidAddress(false);
-        setEvmValidAddress(false);
-        setXrpValidAddress(false);
+        processDomain({domain: address});
       }
+    } else {
+      resetValues();
     }
+  };
+
+  const processDomain = useMemo(
+    () =>
+      debounce(async ({domain}: {domain: string}) => {
+        try {
+          if (!domain) {
+            return;
+          }
+
+          const addressByENS = await dispatch(getAddressByENSDomain({domain}));
+          const addressByUnstoppableDomain = await dispatch(
+            getAddressByUnstoppableDomain({domain}),
+          );
+
+          if (addressByENS || addressByUnstoppableDomain) {
+            setValidDomain(true);
+            processAddressOrDomain({
+              address: addressByENS || addressByUnstoppableDomain,
+              domain,
+            });
+          } else {
+            resetValues();
+          }
+        } catch (e) {
+          resetValues();
+        }
+      }, 300),
+    [],
+  );
+
+  const resetValues = () => {
+    setCoinValue('');
+    setNetworkValue('');
+    setAddressValue('');
+    setValidAddress(false);
+    setEvmValidAddress(false);
+    setXrpValidAddress(false);
+    setValidDomain(false);
   };
 
   const onSubmit = handleSubmit((contact: ContactRowProps) => {
     if (!validAddress) {
       setError('address', {
         type: 'manual',
-        message: t('Invalid address'),
+        message: t('Invalid address or domain'),
       });
       return;
+    }
+    
+    if (!validDomain && domainValue) {
+      setError('domain', {
+        type: 'manual',
+        message: t('Invalid domain'),
+      });
+      return;
+    }
+
+    if (addressValue && domainValue) {
+      contact.address = addressValue;
+      contact.domain = domainValue;
     }
 
     if (coinValue && chainValue && networkValue) {
@@ -516,27 +584,47 @@ const ContactsAdd = ({
       params: {
         onScanComplete: address => {
           setValue('address', address, {shouldDirty: true});
-          processAddress(address);
+          processAddressOrDomain({address});
         },
       },
     });
   };
 
+  const fetchENSDomainByAddress = async () => {
+    try {
+      const domain = await dispatch(
+        getENSDomainByAddress({address: addressValue}),
+      );
+      if (domain) {
+        setValue('domain', domain);
+        setDomainValue(domain);
+        setValidDomain(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     if (contact) {
-      processAddress(
-        contact.address,
-        contact.coin,
-        contact.network,
-        contact.chain,
-      );
+      processAddressOrDomain({
+        address: contact.address,
+        coin: contact.coin,
+        network: contact.network,
+        chain: contact.chain,
+        domain: contact.domain,
+      });
       setValue('address', contact.address!, {shouldDirty: true});
       setValue('name', contact.name || '');
       setValue('email', contact.email);
       setValue('chain', contact.chain!);
       setValue('destinationTag', contact.tag || contact.destinationTag);
+      setValue('domain', contact.domain);
+      if (context === 'edit' && evmValidAddress && !domainValue) {
+        fetchENSDomainByAddress();
+      }
     }
-  }, [contact]);
+  }, [contact, evmValidAddress]);
 
   return (
     <Container keyboardShouldPersistTaps="handled">
@@ -581,12 +669,12 @@ const ContactsAdd = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                placeholder={'Crypto address'}
-                label={t('ADDRESS')}
+                placeholder={'Crypto address or domain'}
+                label={t('ADDRESS OR DOMAIN')}
                 onBlur={onBlur}
                 onChangeText={(newValue: string) => {
                   onChange(newValue);
-                  processAddress(newValue);
+                  processAddressOrDomain({address: newValue});
                 }}
                 error={errors.address?.message}
                 value={value}
@@ -606,16 +694,30 @@ const ContactsAdd = ({
           )}
         </InputContainer>
       ) : (
-        <InputContainer>
-          <Controller
-            control={control}
-            render={({field: {value}}) => (
-              <BoxInput disabled={true} label={t('ADDRESS')} value={value} />
-            )}
-            name="address"
-            defaultValue=""
-          />
-        </InputContainer>
+        <>
+          <InputContainer>
+            <Controller
+              control={control}
+              render={({field: {value}}) => (
+                <BoxInput disabled={true} label={t('ADDRESS')} value={value} />
+              )}
+              name="address"
+              defaultValue=""
+            />
+          </InputContainer>
+          {evmValidAddress && domainValue ? (
+            <InputContainer>
+              <Controller
+                control={control}
+                render={({field: {value}}) => (
+                  <BoxInput disabled={true} label={t('DOMAIN')} value={value} />
+                )}
+                name="domain"
+                defaultValue=""
+              />
+            </InputContainer>
+          ) : null}
+        </>
       )}
 
       {!contact && evmValidAddress ? (
