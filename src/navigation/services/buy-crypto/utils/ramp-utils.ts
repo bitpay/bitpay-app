@@ -64,7 +64,7 @@ export const getRampSupportedCurrencies = (): string[] => {
 };
 
 export const getRampCoinFormat = (coin: string, chain: string): string => {
-  let formattedCoin: string = `${coin.toUpperCase()}_${chain.toUpperCase()}`;
+  let formattedCoin: string = `${chain.toUpperCase()}_${coin.toUpperCase()}`;
   return formattedCoin;
 };
 
