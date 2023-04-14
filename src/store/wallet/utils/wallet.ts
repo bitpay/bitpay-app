@@ -45,6 +45,7 @@ import {
 import {AppDispatch} from '../../../utils/hooks';
 import {find, isEqual} from 'lodash';
 import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
+import {Invoice} from '../../../store/shop/shop.models';
 
 export const mapAbbreviationAndName =
   (
@@ -387,6 +388,7 @@ export const BuildCoinbaseWalletsList = ({
   defaultAltCurrencyIsoCode = 'USD',
   network,
   payProOptions,
+  invoice,
 }: {
   coinbaseAccounts: CoinbaseAccountProps[] | null;
   coinbaseExchangeRates: CoinbaseExchangeRatesProps | null;
@@ -394,8 +396,13 @@ export const BuildCoinbaseWalletsList = ({
   defaultAltCurrencyIsoCode?: string;
   network?: Network;
   payProOptions?: PayProOptions;
+  invoice?: Invoice;
 }) => {
+  const price = invoice?.price || 0;
+  const threshold = invoice?.oauth?.coinbase?.threshold || 0;
+  const enabled = invoice?.oauth?.coinbase?.enabled || false;
   if (
+    !enabled ||
     !coinbaseAccounts ||
     !coinbaseUser ||
     !coinbaseExchangeRates ||
@@ -410,7 +417,10 @@ export const BuildCoinbaseWalletsList = ({
     ? selectedPaymentOptions
     : payProOptions?.paymentOptions;
   const wallets = coinbaseAccounts
-    .filter(account => account.balance.amount > 0)
+    .filter(
+      account =>
+        account.balance.amount > 0 && threshold > 0 && threshold >= price,
+    )
     .filter(
       account =>
         !paymentOptions?.length ||
@@ -550,20 +560,19 @@ export const BuildPayProWalletSelectorList =
     network,
     payProOptions,
     defaultAltCurrencyIsoCode = 'USD',
+    invoice,
   }: {
     keys: {[key in string]: Key};
     network?: Network;
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
+    invoice?: Invoice;
   }): Effect<WalletsAndAccounts> =>
   (dispatch, getState) => {
     const {COINBASE} = getState();
     const {
       RATE: {rates},
     } = getState();
-    const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
-    const coinbaseUser = COINBASE.user[COINBASE_ENV];
-    const coinbaseExchangeRates = COINBASE.exchangeRates;
     const keyWallets = BuildKeysAndWalletsList({
       keys,
       network,
@@ -575,6 +584,10 @@ export const BuildPayProWalletSelectorList =
       key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
       return key;
     });
+    // Coinbase
+    const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
+    const coinbaseUser = COINBASE.user[COINBASE_ENV];
+    const coinbaseExchangeRates = COINBASE.exchangeRates;
     const coinbaseWallets = BuildCoinbaseWalletsList({
       coinbaseAccounts,
       coinbaseUser,
@@ -582,6 +595,7 @@ export const BuildPayProWalletSelectorList =
       network,
       payProOptions,
       defaultAltCurrencyIsoCode,
+      invoice,
     });
     return {keyWallets, coinbaseWallets};
   };

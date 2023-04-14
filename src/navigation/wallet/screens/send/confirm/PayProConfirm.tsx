@@ -59,6 +59,7 @@ export interface PayProConfirmParamList {
   txp?: TransactionProposal;
   txDetails?: TxDetails;
   payProOptions: PayProOptions;
+  invoice: Invoice;
 }
 
 const PayProConfirm = () => {
@@ -72,6 +73,7 @@ const PayProConfirm = () => {
     recipient: _recipient,
     txDetails: _txDetails,
     txp: _txp,
+    invoice: _invoice,
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -81,7 +83,7 @@ const PayProConfirm = () => {
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [coinbaseAccount, setCoinbaseAccount] =
     useState<CoinbaseAccountProps>();
-  const [invoice, setInvoice] = useState<Invoice>();
+  const [invoice, setInvoice] = useState<Invoice>(_invoice);
   const [wallet, setWallet] = useState(_wallet);
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
@@ -101,9 +103,10 @@ const PayProConfirm = () => {
           keys,
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
           payProOptions,
+          invoice,
         }),
       ),
-    [defaultAltCurrency.isoCode, dispatch, keys, payProOptions],
+    [defaultAltCurrency.isoCode, dispatch, keys, payProOptions, invoice],
   );
 
   const reshowWalletSelector = async () => {
@@ -303,7 +306,6 @@ const PayProConfirm = () => {
     updateTxDetails(undefined);
     updateTxp(undefined);
     setWallet(undefined);
-    setInvoice(undefined);
     setCoinbaseAccount(undefined);
     showError({
       error,

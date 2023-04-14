@@ -44,10 +44,7 @@ import {
   WyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../app/app.effects';
+import {startOnGoingProcessModal} from '../app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -67,7 +64,7 @@ import {
   bitcoreLibs,
   GetAddressNetwork,
 } from '../wallet/effects/address/address';
-import {Network, URL as _URL} from '../../constants';
+import {Network} from '../../constants';
 import BitPayIdApi from '../../api/bitpay';
 import axios from 'axios';
 import {t} from 'i18next';
@@ -77,6 +74,7 @@ import {BitpaySupportedEvmCoins} from '../../constants/currencies';
 import {Analytics} from '../analytics/analytics.effects';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {parseUri} from '@walletconnect/utils';
+import {Invoice} from '../shop/shop.models';
 
 export const incomingData =
   (
@@ -210,16 +208,23 @@ const getParameterByName = (name: string, url: string): string | undefined => {
 };
 
 const goToPayPro =
-  (data: string, replaceNavigationRoute?: boolean): Effect =>
+  (data: string, replaceNavigationRoute?: boolean, invoice?: Invoice): Effect =>
   async dispatch => {
     dispatch(dismissOnGoingProcessModal());
-
-    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
-
+    const invoiceId = data.split('/i/')[1].split('?')[0];
     const payProUrl = GetPayProUrl(data);
+    const {host} = new URL(payProUrl);
 
     try {
+      await dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
       const payProOptions = await GetPayProOptions(payProUrl);
+      const getInvoiceResponse = await axios.get(
+        `https://${host}/invoices/${invoiceId}`,
+      );
+      const {
+        data: {data: fetchedInvoice},
+      } = getInvoiceResponse as {data: {data: Invoice}};
+      const _invoice: Invoice = invoice || fetchedInvoice;
       dispatch(dismissOnGoingProcessModal());
 
       if (replaceNavigationRoute) {
@@ -228,17 +233,18 @@ const goToPayPro =
             screen: WalletScreens.PAY_PRO_CONFIRM,
             params: {
               payProOptions,
+              invoice: _invoice,
             },
           }),
         );
         return;
       }
-
       InteractionManager.runAfterInteractions(() => {
         navigationRef.navigate('Wallet', {
           screen: WalletScreens.PAY_PRO_CONFIRM,
           params: {
             payProOptions,
+            invoice: _invoice,
           },
         });
       });
@@ -281,7 +287,7 @@ const handleUnlock =
     const {host} = new URL(GetPayProUrl(data));
 
     try {
-      const invoice = await axios.get(
+      const {data: invoice} = await axios.get(
         `https://${host}/invoiceData/${invoiceId}`,
       );
       if (invoice) {
@@ -305,7 +311,7 @@ const handleUnlock =
             });
           }
         } else {
-          dispatch(goToPayPro(data));
+          dispatch(goToPayPro(data, undefined, invoice));
         }
         return;
       }
