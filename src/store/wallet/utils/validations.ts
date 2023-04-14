@@ -1,4 +1,5 @@
 import {BwcProvider} from '../../../lib/bwc';
+import {ENSDomains, UnstoppableDomains} from '../../moralis/moralis.constants';
 import {ExtractBitPayUriAddress} from './decode-uri';
 
 const BWC = BwcProvider.getInstance();
@@ -204,6 +205,14 @@ export const CheckIfLegacyBCH = (address: string): boolean => {
   );
 };
 
+export const IsValidUnstoppableDomain = (domain: string): boolean => {
+  return UnstoppableDomains.some(item => domain.endsWith(item));
+};
+
+export const IsValidENSDomain = (domain: string): boolean => {
+  return ENSDomains.some(item => domain.endsWith(item));
+};
+
 export const ValidateURI = (data: string): any => {
   if (!data) {
     return;
@@ -350,6 +359,22 @@ export const ValidateURI = (data: string): any => {
       data,
       type: 'BitPayUri',
       title: 'BitPay URI',
+    };
+  }
+
+  if (IsValidUnstoppableDomain(data)) {
+    return {
+      data,
+      type: 'UnstoppableDomain',
+      title: 'Unstoppable Domain',
+    };
+  }
+
+  if (IsValidENSDomain(data)) {
+    return {
+      data,
+      type: 'ENSDomain',
+      title: 'ENS Domain',
     };
   }
 

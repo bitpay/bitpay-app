@@ -26,7 +26,10 @@ import {
   SearchInput,
   Column,
 } from '../../../../components/styled/Containers';
-import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
+import {
+  ValidateCoinAddress,
+  ValidateURI,
+} from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {
   ContactRowProps,
@@ -397,7 +400,8 @@ const ContactsAdd = ({
           }
         }
       } else {
-        processDomain({domain: address});
+        const data = ValidateURI(address);
+        processDomain({data});
       }
     } else {
       resetValues();
@@ -406,30 +410,35 @@ const ContactsAdd = ({
 
   const processDomain = useMemo(
     () =>
-      debounce(async ({domain}: {domain: string}) => {
+      debounce(async ({data}: {data: any}) => {
         try {
-          if (!domain) {
+          if (!data.data) {
             return;
           }
-          const addressByENS = await dispatch(getAddressByENSDomain({domain}));
-          const addressByUnstoppableDomain = await dispatch(
-            getAddressByUnstoppableDomain({domain}),
-          );
-
-          if (addressByENS) {
-            setValidDomain(true);
-            processAddressOrDomain({
-              address: addressByENS,
-              domain,
-              domainType: 'ens',
-            });
-          } else if (addressByUnstoppableDomain) {
-            setValidDomain(true);
-            processAddressOrDomain({
-              address: addressByUnstoppableDomain,
-              domain,
-              domainType: 'unstoppable',
-            });
+          if (data.type === 'UnstoppableDomain') {
+            const addressByUnstoppableDomain = await dispatch(
+              getAddressByUnstoppableDomain({domain: data.data}),
+            );
+            if (addressByUnstoppableDomain) {
+              setValidDomain(true);
+              processAddressOrDomain({
+                address: addressByUnstoppableDomain,
+                domain: data.data,
+                domainType: data.type,
+              });
+            }
+          } else if (data.type === 'ENSDomain') {
+            const addressByENS = await dispatch(
+              getAddressByENSDomain({domain: data.data}),
+            );
+            if (addressByENS) {
+              setValidDomain(true);
+              processAddressOrDomain({
+                address: addressByENS,
+                domain: data.data,
+                domainType: data.type,
+              });
+            }
           } else {
             resetValues();
           }

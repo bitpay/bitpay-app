@@ -53,7 +53,7 @@ const CoinBadge: React.FC<BadgeProps> = ({
   return (
     <CoinBadgeContainer>
       {domainType ? (
-        domainType === 'ens' ? (
+        domainType === 'ENSDomain' ? (
           <ENSDomainIcon size={size} />
         ) : (
           <UnstoppableDomainIcon size={size} />

@@ -30,7 +30,7 @@ const RowContainer = styled.View`
   align-items: center;
 `;
 
-export type DomainType = 'ens' | 'unstoppable';
+export type DomainType = 'ENSDomain' | 'UnstoppableDomain';
 
 export interface ContactRowProps {
   address: string;
