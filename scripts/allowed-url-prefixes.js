@@ -45,6 +45,7 @@ const allowedUrlPrefixes = [
   'https://cloudflare-eth.com/',
   'https://polygon-rpc.com/',
   'https://matic-mumbai.chainstacklabs.com',
+  'https://deep-index.moralis.io/api/v2/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');
