@@ -1,7 +1,7 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import i18next from 'i18next';
-import _ from 'lodash';
+import _, {debounce} from 'lodash';
 import React, {
   ReactElement,
   useCallback,
@@ -49,9 +49,11 @@ import {
   Wallet,
 } from '../../../store/wallet/wallet.models';
 import {
+  Action,
   Air,
   Black,
   LightBlack,
+  LinkBlue,
   LuckySevens,
   SlateDark,
   White,
@@ -127,6 +129,15 @@ import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 import {BillPayAccount} from '../../../store/shop/shop.models';
+import DomainPill from '../components/DomainPill';
+import ShareIcon from '../../../components/icons/share/Share';
+import {getENSDomainByAddress} from '../../../store/moralis/moralis.effects';
+import ShareAddressModal from '../components/ShareAddressModal';
+import CopyToClipboardIcon from '../../../components/icons/copy-to-clipboard/CopyToClipboardIcon';
+import haptic from '../../../components/haptic-feedback/haptic';
+import Clipboard from '@react-native-community/clipboard';
+import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import {DomainType} from '../../../components/list/ContactRow';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -145,7 +156,7 @@ const WalletDetailsContainer = styled.View`
 `;
 
 const HeaderContainer = styled.View`
-  margin: 32px 0 24px;
+  margin: 10px 0 24px;
 `;
 
 const Row = styled.View`
@@ -162,7 +173,7 @@ const TouchableRow = styled.TouchableOpacity`
 `;
 
 const BalanceContainer = styled.View`
-  padding: 0 15px 40px;
+  padding: 0 15px 29px;
   flex-direction: column;
 `;
 
@@ -254,6 +265,12 @@ const TypeText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
 `;
 
+const DomainPillContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  justify-content: center;
+  margin-top: 12px;
+`;
+
 const getWalletType = (
   key: Key,
   wallet: Wallet,
@@ -298,6 +315,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
+
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
@@ -472,6 +490,61 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [onEndReachedCalledDuringLoading, setOnEndReachedCalledDuringLoading] =
     useState<boolean>(true);
+
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const [domain, setDomain] = useState<string>();
+  const [domainType, setDomainType] = useState<DomainType>();
+  const [showShareAddressModal, setShowShareAddressModal] = useState(false);
+  const [showShareAddressIcon, setShowShareAddressIcon] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const fetchENSDomainByAddress = useMemo(
+    () =>
+      debounce(async ({address}: {address: string}) => {
+        try {
+          if (!address) {
+            return;
+          }
+          const _domain = await dispatch(getENSDomainByAddress({address}));
+          if (_domain) {
+            setDomain(_domain);
+            setDomainType('ens');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }, 300),
+    [],
+  );
+
+  if (
+    fullWalletObj.receiveAddress &&
+    SUPPORTED_EVM_COINS.includes(currencyAbbreviation.toLocaleLowerCase())
+  ) {
+    fetchENSDomainByAddress({address: fullWalletObj.receiveAddress});
+  }
+
+  const copyToClipboard = (text: string) => {
+    haptic('impactLight');
+    Clipboard.setString(text);
+    setCopied(true);
+  };
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  useEffect(() => {
+    const _arr = _.compact([fullWalletObj.receiveAddress, domain, user?.email]);
+    setShowShareAddressIcon(_arr.length > 1 ? true : false);
+  }, [fullWalletObj.receiveAddress, domain]);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
     const txpsPending: TransactionProposal[] = [];
@@ -952,6 +1025,45 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           return (
             <>
               <HeaderContainer>
+                <Row>
+                  {walletType && (
+                    <TypeContainer>
+                      {walletType.icon ? (
+                        <IconContainer>{walletType.icon}</IconContainer>
+                      ) : null}
+                      <TypeText>{walletType.title}</TypeText>
+                    </TypeContainer>
+                  )}
+                  {protocolName ? (
+                    <TypeContainer>
+                      <IconContainer>
+                        <Icons.Network />
+                      </IconContainer>
+                      <TypeText>{protocolName}</TypeText>
+                    </TypeContainer>
+                  ) : null}
+                  {IsShared(fullWalletObj) ? (
+                    <TypeContainer>
+                      <TypeText>
+                        Multisig {fullWalletObj.credentials.m}/
+                        {fullWalletObj.credentials.n}
+                      </TypeText>
+                    </TypeContainer>
+                  ) : null}
+                  {['xrp'].includes(fullWalletObj?.currencyAbbreviation) ? (
+                    <TouchableOpacity
+                      onPress={() => setShowBalanceDetailsModal(true)}>
+                      <InfoSvg />
+                    </TouchableOpacity>
+                  ) : null}
+                  {['xrp'].includes(fullWalletObj?.currencyAbbreviation) &&
+                  Number(fullWalletObj?.balance?.cryptoConfirmedLocked) >=
+                    10 ? (
+                    <TypeContainer>
+                      <TypeText>{t('Activated')}</TypeText>
+                    </TypeContainer>
+                  ) : null}
+                </Row>
                 <BalanceContainer>
                   <TouchableOpacity
                     onLongPress={() => {
@@ -990,45 +1102,35 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       </Small>
                     </TouchableRow>
                   )}
-                  <Row>
-                    {walletType && (
-                      <TypeContainer>
-                        {walletType.icon ? (
-                          <IconContainer>{walletType.icon}</IconContainer>
-                        ) : null}
-                        <TypeText>{walletType.title}</TypeText>
-                      </TypeContainer>
-                    )}
-                    {protocolName ? (
-                      <TypeContainer>
-                        <IconContainer>
-                          <Icons.Network />
-                        </IconContainer>
-                        <TypeText>{protocolName}</TypeText>
-                      </TypeContainer>
-                    ) : null}
-                    {IsShared(fullWalletObj) ? (
-                      <TypeContainer>
-                        <TypeText>
-                          Multisig {fullWalletObj.credentials.m}/
-                          {fullWalletObj.credentials.n}
-                        </TypeText>
-                      </TypeContainer>
-                    ) : null}
-                    {['xrp'].includes(fullWalletObj?.currencyAbbreviation) ? (
-                      <TouchableOpacity
-                        onPress={() => setShowBalanceDetailsModal(true)}>
-                        <InfoSvg />
-                      </TouchableOpacity>
-                    ) : null}
-                    {['xrp'].includes(fullWalletObj?.currencyAbbreviation) &&
-                    Number(fullWalletObj?.balance?.cryptoConfirmedLocked) >=
-                      10 ? (
-                      <TypeContainer>
-                        <TypeText>{t('Activated')}</TypeText>
-                      </TypeContainer>
-                    ) : null}
-                  </Row>
+                  {fullWalletObj.receiveAddress ? (
+                    <DomainPillContainer>
+                      <DomainPill
+                        icon={
+                          showShareAddressIcon ? (
+                            <ShareIcon
+                              width={10}
+                              height={12}
+                              showBackground={false}
+                              fillColor={theme.dark ? LinkBlue : Action}
+                            />
+                          ) : !copied ? (
+                            <CopyToClipboardIcon
+                              size={12}
+                              color={theme.dark ? LinkBlue : Action}
+                            />
+                          ) : (
+                            <CopiedSvg width={12} />
+                          )
+                        }
+                        onPress={() => {
+                          showShareAddressIcon
+                            ? setShowShareAddressModal(true)
+                            : copyToClipboard(fullWalletObj.receiveAddress!);
+                        }}
+                        description={fullWalletObj.receiveAddress}
+                      />
+                    </DomainPillContainer>
+                  ) : null}
                 </BalanceContainer>
 
                 {fullWalletObj ? (
@@ -1229,6 +1331,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           isVisible={showReceiveAddressBottomModal}
           closeModal={() => setShowReceiveAddressBottomModal(false)}
           wallet={fullWalletObj}
+        />
+      ) : null}
+
+      {fullWalletObj ? (
+        <ShareAddressModal
+          isVisible={showShareAddressModal}
+          closeModal={() => setShowShareAddressModal(false)}
+          wallet={fullWalletObj}
+          domain={domain}
+          domainType={domainType}
+          email={user?.email}
         />
       ) : null}
     </WalletDetailsContainer>

@@ -348,7 +348,8 @@ const SendTo = () => {
         contact.chain === chain.toLowerCase() &&
         contact.network === network &&
         (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-          contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
+          contact.email?.toLowerCase().includes(searchInput.toLowerCase()) ||
+          contact.domain?.toLowerCase().includes(searchInput.toLowerCase())),
     );
   }, [allContacts, currencyAbbreviation, network, searchInput]);
 

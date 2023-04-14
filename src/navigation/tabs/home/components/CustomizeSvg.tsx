@@ -1,7 +1,7 @@
 import React from 'react';
 import {Circle, Path, Svg} from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
-import {Action, LinkBlue} from '../../../../styles/colors';
+import {Action, LinkBlue, Midnight} from '../../../../styles/colors';
 
 const CustomizeSvg: React.FC<{
   width: number;
@@ -14,7 +14,7 @@ const CustomizeSvg: React.FC<{
         cx="17.5"
         cy="17.5"
         r="17.5"
-        fill={theme.dark ? '#0C204E' : '#ECEFFD'}
+        fill={theme.dark ? Midnight : '#ECEFFD'}
       />
       <Path
         d="M15 15V11C15 10.4 14.6 10 14 10C13.4 10 13 10.4 13 11V15C13 15.6 13.4 16 14 16C14.6 16 15 15.6 15 15Z"

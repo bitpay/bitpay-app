@@ -30,6 +30,8 @@ const RowContainer = styled.View`
   align-items: center;
 `;
 
+export type DomainType = 'ens' | 'unstoppable';
+
 export interface ContactRowProps {
   address: string;
   coin: string;
@@ -40,6 +42,7 @@ export interface ContactRowProps {
   destinationTag?: number;
   email?: string;
   domain?: string;
+  domainType?: DomainType;
 }
 
 interface Props {
@@ -50,13 +53,27 @@ interface Props {
 const ContactRow = ({contact, onPress}: Props) => {
   const theme = useTheme();
   const underlayColor = theme.dark ? '#121212' : '#fbfbff';
-  const {coin: _coin, name, email, address, chain, domain} = contact;
+  const {
+    coin: _coin,
+    name,
+    email,
+    address,
+    chain,
+    domain,
+    domainType,
+  } = contact;
   const coin = getCurrencyAbbreviation(_coin, chain);
   return (
     <ContactContainer underlayColor={underlayColor} onPress={onPress}>
       <RowContainer>
         <ContactImageContainer>
-          <ContactIcon name={name} coin={coin} size={45} chain={chain} />
+          <ContactIcon
+            name={name}
+            coin={coin}
+            size={45}
+            chain={chain}
+            domainType={domainType}
+          />
         </ContactImageContainer>
         <ContactColumn>
           <H5>{name}</H5>

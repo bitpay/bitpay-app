@@ -293,6 +293,7 @@ const ContactsDetails = ({
             size={100}
             name={contact.name}
             chain={contact.chain}
+            domainType={contact.domainType}
           />
         </ContactImageHeader>
         <Details>

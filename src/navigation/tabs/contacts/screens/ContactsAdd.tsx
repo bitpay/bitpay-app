@@ -28,7 +28,10 @@ import {
 } from '../../../../components/styled/Containers';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
-import {ContactRowProps} from '../../../../components/list/ContactRow';
+import {
+  ContactRowProps,
+  DomainType,
+} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
 import {RootState} from '../../../../store';
 import {
@@ -74,6 +77,8 @@ import {
   getAddressByUnstoppableDomain,
   getENSDomainByAddress,
 } from '../../../../store/moralis/moralis.effects';
+import ENSDomainIcon from '../../../../components/avatar/ENSDomainIcon';
+import UnstoppableDomainIcon from '../../../../components/avatar/UnstoppableDomainIcon';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -95,6 +100,13 @@ const AddressBadge = styled.View`
   position: absolute;
   right: 13px;
   top: 50%;
+`;
+
+const DomainBadge = styled.View`
+  position: absolute;
+  left: 5px;
+  top: 52%;
+  z-index: 1;
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
@@ -210,6 +222,7 @@ const ContactsAdd = ({
   const [networkValue, setNetworkValue] = useState('');
   const [chainValue, setChainValue] = useState('');
   const [domainValue, setDomainValue] = useState('');
+  const [domainTypeValue, setDomainTypeValue] = useState<DomainType>();
 
   const [tokenModalVisible, setTokenModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
@@ -308,6 +321,7 @@ const ContactsAdd = ({
     network: string,
     chain: string,
     domain: string,
+    domainType?: DomainType,
   ) => {
     setValidAddress(true);
     setAddressValue(address);
@@ -316,6 +330,7 @@ const ContactsAdd = ({
     setChainValue(chain);
     setValidDomain(true);
     setDomainValue(domain);
+    setDomainTypeValue(domainType);
 
     _setSelectedCurrency(coin);
 
@@ -337,12 +352,14 @@ const ContactsAdd = ({
     network,
     chain,
     domain,
+    domainType,
   }: {
     address?: string;
     coin?: string;
     network?: string;
     chain?: string;
     domain?: string;
+    domainType?: DomainType;
   }) => {
     if (address) {
       const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
@@ -359,6 +376,7 @@ const ContactsAdd = ({
             network || coinAndNetwork.network,
             chain || coinAndNetwork.coin,
             domain || '',
+            domainType,
           );
         } else {
           // try testnet
@@ -374,6 +392,7 @@ const ContactsAdd = ({
               network || 'testnet',
               chain || coinAndNetwork.coin,
               domain || '',
+              domainType,
             );
           }
         }
@@ -392,17 +411,24 @@ const ContactsAdd = ({
           if (!domain) {
             return;
           }
-
           const addressByENS = await dispatch(getAddressByENSDomain({domain}));
           const addressByUnstoppableDomain = await dispatch(
             getAddressByUnstoppableDomain({domain}),
           );
 
-          if (addressByENS || addressByUnstoppableDomain) {
+          if (addressByENS) {
             setValidDomain(true);
             processAddressOrDomain({
-              address: addressByENS || addressByUnstoppableDomain,
+              address: addressByENS,
               domain,
+              domainType: 'ens',
+            });
+          } else if (addressByUnstoppableDomain) {
+            setValidDomain(true);
+            processAddressOrDomain({
+              address: addressByUnstoppableDomain,
+              domain,
+              domainType: 'unstoppable',
             });
           } else {
             resetValues();
@@ -422,6 +448,7 @@ const ContactsAdd = ({
     setEvmValidAddress(false);
     setXrpValidAddress(false);
     setValidDomain(false);
+    setDomainTypeValue(undefined);
   };
 
   const onSubmit = handleSubmit((contact: ContactRowProps) => {
@@ -432,7 +459,7 @@ const ContactsAdd = ({
       });
       return;
     }
-    
+
     if (!validDomain && domainValue) {
       setError('domain', {
         type: 'manual',
@@ -441,9 +468,10 @@ const ContactsAdd = ({
       return;
     }
 
-    if (addressValue && domainValue) {
+    if (addressValue && domainValue && domainTypeValue) {
       contact.address = addressValue;
       contact.domain = domainValue;
+      contact.domainType = domainTypeValue;
     }
 
     if (coinValue && chainValue && networkValue) {
@@ -598,6 +626,7 @@ const ContactsAdd = ({
       if (domain) {
         setValue('domain', domain);
         setDomainValue(domain);
+        setDomainTypeValue('ens');
         setValidDomain(true);
       }
     } catch (err) {
@@ -613,6 +642,7 @@ const ContactsAdd = ({
         network: contact.network,
         chain: contact.chain,
         domain: contact.domain,
+        domainType: contact.domainType,
       });
       setValue('address', contact.address!, {shouldDirty: true});
       setValue('name', contact.name || '');
@@ -665,20 +695,36 @@ const ContactsAdd = ({
       </InputContainer>
       {!contact ? (
         <InputContainer>
+          {validDomain && domainTypeValue ? (
+            domainTypeValue === 'ens' ? (
+              <DomainBadge>
+                <ENSDomainIcon />
+              </DomainBadge>
+            ) : (
+              <DomainBadge>
+                <UnstoppableDomainIcon />
+              </DomainBadge>
+            )
+          ) : null}
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
-              <BoxInput
-                placeholder={'Crypto address or domain'}
-                label={t('ADDRESS OR DOMAIN')}
-                onBlur={onBlur}
-                onChangeText={(newValue: string) => {
-                  onChange(newValue);
-                  processAddressOrDomain({address: newValue});
-                }}
-                error={errors.address?.message}
-                value={value}
-              />
+              <>
+                <BoxInput
+                  style={{
+                    paddingLeft: validDomain && domainValue ? 30 : 12,
+                  }}
+                  placeholder={'Crypto address or domain'}
+                  label={t('ADDRESS OR DOMAIN')}
+                  onBlur={onBlur}
+                  onChangeText={(newValue: string) => {
+                    onChange(newValue);
+                    processAddressOrDomain({address: newValue});
+                  }}
+                  error={errors.address?.message}
+                  value={value}
+                />
+              </>
             )}
             name="address"
             defaultValue=""
@@ -707,10 +753,28 @@ const ContactsAdd = ({
           </InputContainer>
           {evmValidAddress && domainValue ? (
             <InputContainer>
+              {validDomain && domainTypeValue ? (
+                domainTypeValue === 'ens' ? (
+                  <DomainBadge>
+                    <ENSDomainIcon />
+                  </DomainBadge>
+                ) : (
+                  <DomainBadge>
+                    <UnstoppableDomainIcon />
+                  </DomainBadge>
+                )
+              ) : null}
               <Controller
                 control={control}
                 render={({field: {value}}) => (
-                  <BoxInput disabled={true} label={t('DOMAIN')} value={value} />
+                  <BoxInput
+                    disabled={true}
+                    label={t('DOMAIN')}
+                    value={value}
+                    style={{
+                      paddingLeft: 30,
+                    }}
+                  />
                 )}
                 name="domain"
                 defaultValue=""

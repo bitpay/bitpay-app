@@ -14,6 +14,9 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
 } from '../../../../utils/helper-methods';
+import ENSDomainIcon from '../../../../components/avatar/ENSDomainIcon';
+import UnstoppableDomainIcon from '../../../../components/avatar/UnstoppableDomainIcon';
+import {DomainType} from '../../../../components/list/ContactRow';
 
 interface ContactIconProps {
   size?: number;
@@ -21,12 +24,14 @@ interface ContactIconProps {
   coin?: string;
   chain?: string;
   badge?: JSX.Element;
+  domainType?: DomainType;
 }
 
 interface BadgeProps {
   img: string | ((props?: any) => ReactElement);
   badgeImg: string | ((props?: any) => ReactElement);
   size?: number;
+  domainType?: DomainType;
 }
 
 const ContactIconContainer = styled.View`
@@ -39,10 +44,23 @@ const CoinBadgeContainer = styled.View`
   bottom: -1px;
 `;
 
-const CoinBadge: React.FC<BadgeProps> = ({size = 20, img, badgeImg}) => {
+const CoinBadge: React.FC<BadgeProps> = ({
+  size = 20,
+  img,
+  badgeImg,
+  domainType,
+}) => {
   return (
     <CoinBadgeContainer>
-      <CurrencyImage img={img} badgeUri={badgeImg} size={size} />
+      {domainType ? (
+        domainType === 'ens' ? (
+          <ENSDomainIcon size={size} />
+        ) : (
+          <UnstoppableDomainIcon size={size} />
+        )
+      ) : (
+        <CurrencyImage img={img} badgeUri={badgeImg} size={size} />
+      )}
     </CoinBadgeContainer>
   );
 };
@@ -53,6 +71,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   size = 50,
   name,
   badge,
+  domainType,
 }) => {
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {
     return {
@@ -72,12 +91,12 @@ const ContactIcon: React.FC<ContactIconProps> = ({
         tokenOptions[getCurrencyAbbreviation(coin, chain)]?.logoURI
       ? (tokenOptions[getCurrencyAbbreviation(coin, chain)].logoURI as string)
       : '');
-
   const coinBadge = img ? (
     <CoinBadge
       size={size / 2.5}
       img={img}
       badgeImg={getBadgeImg(coin, chain)}
+      domainType={domainType}
     />
   ) : null;
 
