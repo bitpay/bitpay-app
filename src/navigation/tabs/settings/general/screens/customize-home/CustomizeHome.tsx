@@ -72,15 +72,17 @@ const CustomizeHome = () => {
 
   const toggle = useCallback(
     (item: CustomizeItem) => {
-      const {show, key} = item;
-      item.show = !show;
+      const newItem = {...item};
+      const {show, key} = newItem;
+
+      newItem.show = !show;
       setDirty(true);
       if (show) {
         setVisibleList(visibleList.filter(vi => vi.key !== key));
-        setHiddenList(hiddenList.concat(item));
+        setHiddenList(hiddenList.concat(newItem));
       } else {
         setHiddenList(hiddenList.filter(hi => hi.key !== key));
-        setVisibleList(visibleList.concat(item));
+        setVisibleList(visibleList.concat(newItem));
       }
     },
     [hiddenList, visibleList],
@@ -209,7 +211,7 @@ const CustomizeHome = () => {
         ListHeaderComponent={() =>
           visibleList.length ? <ListHeader>{t('Favorites')}</ListHeader> : null
         }
-        ListFooterComponent={memoizedFooterList}
+        ListFooterComponent={() => memoizedFooterList}
         contentContainerStyle={{paddingTop: 20, paddingBottom: 250}}
         onDragEnd={({data}) => {
           if (!dirty && visibleList[0]?.key !== data[0]?.key) {
