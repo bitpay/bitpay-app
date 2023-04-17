@@ -44,7 +44,7 @@ public class MainActivity extends ReactActivity {
 
   protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(null);
-      // ((MainApplication) getApplication()).addActivityToStack(this.getClass()); TODO FIX IAB
+      ((MainApplication) getApplication()).addActivityToStack(this.getClass());
       RNBootSplash.init(R.drawable.bootsplash, MainActivity.this);
       Window win = getWindow();
       win.setFlags(
@@ -101,10 +101,9 @@ public class MainActivity extends ReactActivity {
     BrazeInAppMessageManager.getInstance().unregisterInAppMessageManager(MainActivity.this);
   }
 
-  // FIX IAB TODO
-  //  @Override
-  // protected void onDestroy() {
-  //   super.onDestroy();
-  //   ((MainApplication) getApplication()).removeActivityFromStack(this.getClass());
-  // }
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    ((MainApplication) getApplication()).removeActivityFromStack(this.getClass());
+  }
 }

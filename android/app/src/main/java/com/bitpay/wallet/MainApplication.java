@@ -10,6 +10,7 @@ import com.facebook.react.ReactPackage;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactNativeHost;
 import com.facebook.soloader.SoLoader;
+import java.util.ArrayList;
 import java.util.List;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.facebook.react.modules.network.NetworkingModule;
@@ -22,6 +23,7 @@ import com.facebook.react.views.text.ReactFontManager;
 import com.braze.BrazeActivityLifecycleCallbackListener;
 
 public class MainApplication extends Application implements ReactApplication {
+  private ArrayList<Class> runningActivities = new ArrayList<>();
 
   private final ReactNativeHost mReactNativeHost =
       new DefaultReactNativeHost(this) {
@@ -94,17 +96,16 @@ public class MainApplication extends Application implements ReactApplication {
   /*
     Fix for IAB TODO
   */
-  // private ArrayList<Class> runningActivities = new ArrayList<>();
 
-  // public void addActivityToStack (Class cls) {
-  //     if (!runningActivities.contains(cls)) runningActivities.add(cls);
-  // }
+  public void addActivityToStack (Class cls) {
+      if (!runningActivities.contains(cls)) runningActivities.add(cls);
+  }
 
-  // public void removeActivityFromStack (Class cls) {
-  //     if (runningActivities.contains(cls)) runningActivities.remove(cls);
-  // }
+  public void removeActivityFromStack (Class cls) {
+      if (runningActivities.contains(cls)) runningActivities.remove(cls);
+  }
 
-  // public boolean isActivityInBackStack (Class cls) {
-  //     return runningActivities.contains(cls);
-  // }
+  public boolean isActivityInBackStack (Class cls) {
+      return runningActivities.contains(cls);
+  }
 }
