@@ -362,30 +362,34 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const ShareAddress = async () => {
     try {
       await sleep(1000);
-      const address = (await dispatch<any>(
-        createWalletAddress({wallet: fullWalletObj, newAddress: false}),
-      )) as string;
+      if (showShareAddressIcon) {
+        setShowShareAddressModal(true);
+      } else {
+        const address = (await dispatch<any>(
+          createWalletAddress({wallet: fullWalletObj, newAddress: false}),
+        )) as string;
 
-      Share.share(
-        {
-          message: address,
-          title: t('Share Address'),
-        },
-        {
-          dialogTitle: t('Share Address'),
-          subject: t('Share Address'),
-          excludedActivityTypes: [
-            'print',
-            'addToReadingList',
-            'markupAsPDF',
-            'openInIbooks',
-            'postToFacebook',
-            'postToTwitter',
-            'saveToCameraRoll',
-            'sharePlay',
-          ],
-        },
-      );
+        Share.share(
+          {
+            message: address,
+            title: t('Share Address'),
+          },
+          {
+            dialogTitle: t('Share Address'),
+            subject: t('Share Address'),
+            excludedActivityTypes: [
+              'print',
+              'addToReadingList',
+              'markupAsPDF',
+              'openInIbooks',
+              'postToFacebook',
+              'postToTwitter',
+              'saveToCameraRoll',
+              'sharePlay',
+            ],
+          },
+        );
+      }
     } catch (e) {}
   };
 
@@ -508,9 +512,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           if (domainName) {
             setDomain({domainName, domainType: 'ENSDomain'});
           }
-        } catch (err) {
-          console.error(err);
-        }
+        } catch (e) {}
       }, 300),
     [],
   );

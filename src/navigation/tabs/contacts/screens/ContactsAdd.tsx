@@ -641,9 +641,7 @@ const ContactsAdd = ({
         setDomainValue(_domain);
         setValidDomain(true);
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (e) {}
   };
 
   useEffect(() => {
