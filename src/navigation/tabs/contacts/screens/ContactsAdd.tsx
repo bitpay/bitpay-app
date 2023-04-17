@@ -82,6 +82,7 @@ import {
 } from '../../../../store/moralis/moralis.effects';
 import ENSDomainIcon from '../../../../components/avatar/ENSDomainIcon';
 import UnstoppableDomainIcon from '../../../../components/avatar/UnstoppableDomainIcon';
+import _ from 'lodash';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -170,7 +171,10 @@ const schema = yup.object().shape({
   email: yup.string().email().trim(),
   destinationTag: yup.number(),
   address: yup.string().required(),
-  domain: yup.string(),
+  domain: yup.object().shape({
+    domainName: yup.string(),
+    domainType: yup.string(),
+  }),
 });
 
 const SearchImageContainer = styled.View`
@@ -329,8 +333,10 @@ const ContactsAdd = ({
     setCoinValue(coin);
     setNetworkValue(network);
     setChainValue(chain);
-    setValidDomain(true);
-    setDomainValue(domain);
+    if (!_.values(domain).every(_.isEmpty)) {
+      setValidDomain(true);
+      setDomainValue(domain);
+    }
 
     _setSelectedCurrency(coin);
 
@@ -466,7 +472,7 @@ const ContactsAdd = ({
       return;
     }
 
-    if (!validDomain && domainValue) {
+    if (!validDomain && !_.values(domainValue).every(_.isEmpty)) {
       setError('domain', {
         type: 'manual',
         message: t('Invalid domain'),
@@ -623,17 +629,16 @@ const ContactsAdd = ({
     });
   };
 
-  const fetchENSDomainByAddress = async () => {
+  const fetchENSDomainByAddress = async (address: string) => {
     try {
-      const domainName = await dispatch(
-        getENSDomainByAddress({address: addressValue}),
-      );
+      const domainName = await dispatch(getENSDomainByAddress({address}));
       if (domainName) {
-        setValue('domain', domainName);
-        setDomainValue({
+        const _domain: DomainProps = {
           domainName,
           domainType: 'ENSDomain',
-        });
+        };
+        setValue('domain', _domain);
+        setDomainValue(_domain);
         setValidDomain(true);
       }
     } catch (err) {
@@ -656,8 +661,8 @@ const ContactsAdd = ({
       setValue('chain', contact.chain!);
       setValue('destinationTag', contact.tag || contact.destinationTag);
       setValue('domain', contact.domain);
-      if (context === 'edit' && !domainValue) {
-        fetchENSDomainByAddress();
+      if (context === 'edit' && _.values(contact.domain).every(_.isEmpty)) {
+        fetchENSDomainByAddress(contact.address!);
       }
     }
   }, [contact]);

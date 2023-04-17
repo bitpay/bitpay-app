@@ -324,12 +324,14 @@ const ContactsDetails = ({
               </AddressContainer>
             </DetailInfo>
           </Detail>
-          {contact.domain ? (
+          {contact.domain?.domainName ? (
             <>
               <Hr />
               <Detail>
                 <Title>{t('Domain')}</Title>
-                <DetailInfo align="right">{contact.domain}</DetailInfo>
+                <DetailInfo align="right">
+                  {contact.domain.domainName}
+                </DetailInfo>
               </Detail>
             </>
           ) : null}
