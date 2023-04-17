@@ -10,7 +10,7 @@ import ENSDomainIcon from '../../../components/avatar/ENSDomainIcon';
 import CopyToClipboardIcon from '../../../components/icons/copy-to-clipboard/CopyToClipboardIcon';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {DomainType} from '../../../components/list/ContactRow';
+import {DomainProps} from '../../../components/list/ContactRow';
 import UnstoppableDomainIcon from '../../../components/avatar/UnstoppableDomainIcon';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -70,8 +70,7 @@ interface Props {
   isVisible: boolean;
   closeModal: () => void;
   wallet: Wallet;
-  domain?: string;
-  domainType?: DomainType;
+  domain?: DomainProps;
   email?: string;
 }
 
@@ -80,7 +79,6 @@ const ShareAddressModal = ({
   closeModal,
   wallet,
   domain,
-  domainType,
   email,
 }: Props) => {
   const {t} = useTranslation();
@@ -155,11 +153,11 @@ const ShareAddressModal = ({
               </LabelTip>
             ) : null}
 
-            {domain && domainType ? (
+            {domain ? (
               <LabelTip>
-                <Row onPress={() => shareAddress(domain)}>
+                <Row onPress={() => shareAddress(domain.domainName)}>
                   <RowLabelContainer>
-                    {domainType === 'ens' ? (
+                    {domain.domainType === 'ENSDomain' ? (
                       <ENSDomainIcon />
                     ) : (
                       <UnstoppableDomainIcon />
@@ -170,7 +168,7 @@ const ShareAddressModal = ({
                   </RowLabelContainer>
                   <CopyToClipboardContainer
                     onPress={() => {
-                      copyToClipboard(domain);
+                      copyToClipboard(domain.domainName);
                       setCopiedDomain(true);
                     }}>
                     {!copiedDomain ? (

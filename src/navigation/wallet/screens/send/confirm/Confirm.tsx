@@ -367,13 +367,16 @@ const Confirm = () => {
         recipientType: r.type,
         recipientCoin: currencyAbbreviation,
         recipientChain: r.chain,
+        recipientDomain: r.domain,
       };
     });
   }
 
   if (
     recipient.type &&
-    (recipient.type === 'coinbase' || recipient.type === 'contact')
+    (recipient.type === 'coinbase' ||
+      recipient.type === 'contact' ||
+      recipient.type === 'domain')
   ) {
     recipientData = {
       recipientName: recipient.name,
@@ -381,6 +384,7 @@ const Confirm = () => {
       img: recipient.type,
       recipientChain: recipient.chain,
       recipientType: recipient.type,
+      recipientDomain: recipient.domain,
     };
   } else {
     recipientData = sendingTo;

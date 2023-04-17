@@ -86,13 +86,17 @@ import {toFiat} from '../../../../store/wallet/utils/wallet';
 import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
-import ContactRow from '../../../../components/list/ContactRow';
+import ContactRow, {DomainProps} from '../../../../components/list/ContactRow';
 import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
 import CopySvg from '../../../../../assets/img/copy.svg';
+import {
+  getAddressByENSDomain,
+  getAddressByUnstoppableDomain,
+} from '../../../../store/moralis/moralis.effects';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -110,6 +114,8 @@ const ValidDataTypes: string[] = [
   'DogecoinUri',
   'LitecoinUri',
   'BitPayUri',
+  'UnstoppableDomain',
+  'ENSDomain',
 ];
 
 const SafeAreaView = styled.SafeAreaView`
@@ -273,6 +279,7 @@ const SendTo = () => {
   const [emailAddressSearchPromise, setEmailAddressSearchPromise] = useState<
     Promise<ReceivingAddress[]>
   >(Promise.resolve([]));
+  const [domain, setDomain] = useState<DomainProps>();
 
   const {wallet} = route.params;
   const {currencyAbbreviation, id, chain, network} = wallet;
@@ -349,7 +356,9 @@ const SendTo = () => {
         contact.network === network &&
         (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
           contact.email?.toLowerCase().includes(searchInput.toLowerCase()) ||
-          contact.domain?.toLowerCase().includes(searchInput.toLowerCase())),
+          contact.domain?.domainName
+            ?.toLowerCase()
+            .includes(searchInput.toLowerCase())),
     );
   }, [allContacts, currencyAbbreviation, network, searchInput]);
 
@@ -478,15 +487,64 @@ const SendTo = () => {
         );
       }
     } else if (ValidDataTypes.includes(data?.type)) {
-      if (dispatch(checkCoinAndNetwork(text))) {
+      if (data.type === 'UnstoppableDomain' || data.type === 'ENSDomain') {
+        processDomain({data});
+      } else if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
         dispatch(
-          incomingData(text, {wallet, context, name, email, destinationTag}),
+          incomingData(text, {
+            wallet,
+            context,
+            name,
+            email,
+            destinationTag,
+            domain,
+          }),
         );
       }
     }
   };
+
+  const processDomain = useMemo(
+    () =>
+      debounce(async ({data}: {data: any}) => {
+        try {
+          if (data.type === 'UnstoppableDomain') {
+            const addressByUnstoppableDomain = await dispatch(
+              getAddressByUnstoppableDomain({domain: data.data}),
+            );
+            setDomain(
+              addressByUnstoppableDomain
+                ? {
+                    domainName: data.data,
+                    domainType: 'UnstoppableDomain',
+                    domainAddress: addressByUnstoppableDomain,
+                  }
+                : undefined,
+            );
+          } else if (data.type === 'ENSDomain') {
+            const addressByENS = await dispatch(
+              getAddressByENSDomain({domain: data.data}),
+            );
+            setDomain(
+              addressByENS
+                ? {
+                    domainName: data.data,
+                    domainType: 'ENSDomain',
+                    domainAddress: addressByENS,
+                  }
+                : undefined,
+            );
+          } else {
+            setDomain(undefined);
+          }
+        } catch (e) {
+          setDomain(undefined);
+        }
+      }, 300),
+    [],
+  );
 
   const onSearchInputChange = debounce((text: string) => {
     validateAndNavigateToConfirm(text);
@@ -584,7 +642,7 @@ const SendTo = () => {
       <ScrollView keyboardShouldPersistTaps={'handled'}>
         <SearchContainer>
           <SearchInput
-            placeholder={t('Search contact or enter address')}
+            placeholder={t('Contact, address or domain')}
             placeholderTextColor={placeHolderTextColor}
             value={searchInput}
             onChangeText={(text: string) => {
@@ -721,6 +779,33 @@ const SendTo = () => {
               );
             })}
           </>
+        ) : null}
+
+        {domain && domain.domainAddress ? (
+          <View style={{marginTop: 30}}>
+            <ContactTitleContainer>
+              {ContactsSvg({})}
+              <ContactTitle>{t('Domain')}</ContactTitle>
+            </ContactTitleContainer>
+            <ContactRow
+              contact={{
+                coin: currencyAbbreviation,
+                chain,
+                network,
+                name: domain.domainName,
+                address: domain.domainAddress,
+                domain,
+              }}
+              onPress={() => {
+                if (domain.domainAddress) {
+                  validateAndNavigateToConfirm(domain.domainAddress, {
+                    context: 'domain',
+                    name: domain.domainName,
+                  });
+                }
+              }}
+            />
+          </View>
         ) : null}
 
         <OptionsSheet

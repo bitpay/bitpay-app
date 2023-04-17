@@ -5,6 +5,7 @@ import {RootState} from '../index';
 import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
 import {FeeLevels} from './effects/fee/fee';
+import {DomainProps} from '../../components/list/ContactRow';
 
 export interface KeyMethods {
   _checkCoin?: Function;
@@ -191,6 +192,7 @@ export interface Recipient {
   amount?: number;
   destinationTag?: number;
   chain?: string;
+  domain?: DomainProps;
 }
 
 export interface CustomTransactionData {
@@ -370,6 +372,7 @@ export interface TxDetailsSendingTo {
   recipientAltAmountStr?: string;
   recipientCoin?: string;
   recipientChain?: string;
+  recipientDomain?: DomainProps;
 }
 
 export interface TxDetailsSendingFrom {

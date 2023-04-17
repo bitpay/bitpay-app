@@ -33,7 +33,7 @@ import {
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {
   ContactRowProps,
-  DomainType,
+  DomainProps,
 } from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
 import {RootState} from '../../../../store';
@@ -224,8 +224,7 @@ const ContactsAdd = ({
   const [coinValue, setCoinValue] = useState('');
   const [networkValue, setNetworkValue] = useState('');
   const [chainValue, setChainValue] = useState('');
-  const [domainValue, setDomainValue] = useState('');
-  const [domainTypeValue, setDomainTypeValue] = useState<DomainType>();
+  const [domainValue, setDomainValue] = useState<DomainProps>();
 
   const [tokenModalVisible, setTokenModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
@@ -323,8 +322,7 @@ const ContactsAdd = ({
     coin: string,
     network: string,
     chain: string,
-    domain: string,
-    domainType?: DomainType,
+    domain?: DomainProps,
   ) => {
     setValidAddress(true);
     setAddressValue(address);
@@ -333,7 +331,6 @@ const ContactsAdd = ({
     setChainValue(chain);
     setValidDomain(true);
     setDomainValue(domain);
-    setDomainTypeValue(domainType);
 
     _setSelectedCurrency(coin);
 
@@ -355,14 +352,12 @@ const ContactsAdd = ({
     network,
     chain,
     domain,
-    domainType,
   }: {
     address?: string;
     coin?: string;
     network?: string;
     chain?: string;
-    domain?: string;
-    domainType?: DomainType;
+    domain?: DomainProps;
   }) => {
     if (address) {
       const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
@@ -378,8 +373,7 @@ const ContactsAdd = ({
             coin || coinAndNetwork.coin,
             network || coinAndNetwork.network,
             chain || coinAndNetwork.coin,
-            domain || '',
-            domainType,
+            domain,
           );
         } else {
           // try testnet
@@ -394,8 +388,7 @@ const ContactsAdd = ({
               coin || coinAndNetwork.coin,
               network || 'testnet',
               chain || coinAndNetwork.coin,
-              domain || '',
-              domainType,
+              domain,
             );
           }
         }
@@ -423,8 +416,10 @@ const ContactsAdd = ({
               setValidDomain(true);
               processAddressOrDomain({
                 address: addressByUnstoppableDomain,
-                domain: data.data,
-                domainType: data.type,
+                domain: {
+                  domainName: data.data,
+                  domainType: data.type,
+                },
               });
             }
           } else if (data.type === 'ENSDomain') {
@@ -435,8 +430,10 @@ const ContactsAdd = ({
               setValidDomain(true);
               processAddressOrDomain({
                 address: addressByENS,
-                domain: data.data,
-                domainType: data.type,
+                domain: {
+                  domainName: data.data,
+                  domainType: data.type,
+                },
               });
             }
           } else {
@@ -457,7 +454,7 @@ const ContactsAdd = ({
     setEvmValidAddress(false);
     setXrpValidAddress(false);
     setValidDomain(false);
-    setDomainTypeValue(undefined);
+    setDomainValue(undefined);
   };
 
   const onSubmit = handleSubmit((contact: ContactRowProps) => {
@@ -477,10 +474,9 @@ const ContactsAdd = ({
       return;
     }
 
-    if (addressValue && domainValue && domainTypeValue) {
+    if (addressValue && domainValue) {
       contact.address = addressValue;
       contact.domain = domainValue;
-      contact.domainType = domainTypeValue;
     }
 
     if (coinValue && chainValue && networkValue) {
@@ -629,13 +625,15 @@ const ContactsAdd = ({
 
   const fetchENSDomainByAddress = async () => {
     try {
-      const domain = await dispatch(
+      const domainName = await dispatch(
         getENSDomainByAddress({address: addressValue}),
       );
-      if (domain) {
-        setValue('domain', domain);
-        setDomainValue(domain);
-        setDomainTypeValue('ens');
+      if (domainName) {
+        setValue('domain', domainName);
+        setDomainValue({
+          domainName,
+          domainType: 'ENSDomain',
+        });
         setValidDomain(true);
       }
     } catch (err) {
@@ -651,7 +649,6 @@ const ContactsAdd = ({
         network: contact.network,
         chain: contact.chain,
         domain: contact.domain,
-        domainType: contact.domainType,
       });
       setValue('address', contact.address!, {shouldDirty: true});
       setValue('name', contact.name || '');
@@ -659,11 +656,11 @@ const ContactsAdd = ({
       setValue('chain', contact.chain!);
       setValue('destinationTag', contact.tag || contact.destinationTag);
       setValue('domain', contact.domain);
-      if (context === 'edit' && evmValidAddress && !domainValue) {
+      if (context === 'edit' && !domainValue) {
         fetchENSDomainByAddress();
       }
     }
-  }, [contact, evmValidAddress]);
+  }, [contact]);
 
   return (
     <Container keyboardShouldPersistTaps="handled">
@@ -704,8 +701,8 @@ const ContactsAdd = ({
       </InputContainer>
       {!contact ? (
         <InputContainer>
-          {validDomain && domainTypeValue ? (
-            domainTypeValue === 'ens' ? (
+          {validDomain && domainValue ? (
+            domainValue.domainType === 'ENSDomain' ? (
               <DomainBadge>
                 <ENSDomainIcon />
               </DomainBadge>
@@ -760,10 +757,10 @@ const ContactsAdd = ({
               defaultValue=""
             />
           </InputContainer>
-          {evmValidAddress && domainValue ? (
+          {domainValue ? (
             <InputContainer>
-              {validDomain && domainTypeValue ? (
-                domainTypeValue === 'ens' ? (
+              {validDomain && domainValue ? (
+                domainValue.domainType === 'ENSDomain' ? (
                   <DomainBadge>
                     <ENSDomainIcon />
                   </DomainBadge>
@@ -779,14 +776,14 @@ const ContactsAdd = ({
                   <BoxInput
                     disabled={true}
                     label={t('DOMAIN')}
-                    value={value}
+                    value={value?.domainName}
                     style={{
                       paddingLeft: 30,
                     }}
                   />
                 )}
                 name="domain"
-                defaultValue=""
+                defaultValue={undefined}
               />
             </InputContainer>
           ) : null}

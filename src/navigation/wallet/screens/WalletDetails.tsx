@@ -137,7 +137,7 @@ import CopyToClipboardIcon from '../../../components/icons/copy-to-clipboard/Cop
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
-import {DomainType} from '../../../components/list/ContactRow';
+import {DomainProps} from '../../../components/list/ContactRow';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -492,8 +492,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     useState<boolean>(true);
 
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-  const [domain, setDomain] = useState<string>();
-  const [domainType, setDomainType] = useState<DomainType>();
+  const [domain, setDomain] = useState<DomainProps>();
   const [showShareAddressModal, setShowShareAddressModal] = useState(false);
   const [showShareAddressIcon, setShowShareAddressIcon] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -505,10 +504,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           if (!address) {
             return;
           }
-          const _domain = await dispatch(getENSDomainByAddress({address}));
-          if (_domain) {
-            setDomain(_domain);
-            setDomainType('ens');
+          const domainName = await dispatch(getENSDomainByAddress({address}));
+          if (domainName) {
+            setDomain({domainName, domainType: 'ENSDomain'});
           }
         } catch (err) {
           console.error(err);
@@ -517,10 +515,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  if (
-    fullWalletObj.receiveAddress &&
-    SUPPORTED_EVM_COINS.includes(currencyAbbreviation.toLocaleLowerCase())
-  ) {
+  if (fullWalletObj.receiveAddress) {
     fetchENSDomainByAddress({address: fullWalletObj.receiveAddress});
   }
 
@@ -1340,7 +1335,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           closeModal={() => setShowShareAddressModal(false)}
           wallet={fullWalletObj}
           domain={domain}
-          domainType={domainType}
           email={user?.email}
         />
       ) : null}
