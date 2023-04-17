@@ -158,12 +158,12 @@ const ShareAddressModal = ({
                 <Row onPress={() => shareAddress(domain.domainName)}>
                   <RowLabelContainer>
                     {domain.domainType === 'ENSDomain' ? (
-                      <ENSDomainIcon />
+                      <ENSDomainIcon showBackground={false} />
                     ) : (
-                      <UnstoppableDomainIcon />
+                      <UnstoppableDomainIcon showBackground={false} />
                     )}
                     <RowLabel numberOfLines={1} ellipsizeMode={'middle'}>
-                      {domain}
+                      {domain.domainName}
                     </RowLabel>
                   </RowLabelContainer>
                   <CopyToClipboardContainer

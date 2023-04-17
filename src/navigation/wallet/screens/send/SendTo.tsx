@@ -605,7 +605,10 @@ const SendTo = () => {
 
   useEffect(() => {
     return navigation.addListener('blur', () =>
-      setTimeout(() => setSearchInput(''), 300),
+      setTimeout(() => {
+        setSearchInput('');
+        setDomain(undefined);
+      }, 300),
     );
   }, [navigation]);
 
