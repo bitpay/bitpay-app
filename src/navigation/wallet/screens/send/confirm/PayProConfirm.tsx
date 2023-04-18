@@ -115,16 +115,15 @@ const PayProConfirm = () => {
   };
 
   const createTxp = async (selectedWallet: Wallet) => {
-    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+    dispatch(startOnGoingProcessModal('CREATING_TXP'));
     try {
-      const fetchedInvoice = await fetchInvoice(payProOptions.payProUrl);
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
         await createPayProTxProposal({
           wallet: selectedWallet,
           paymentUrl: payProOptions.payProUrl,
           payProOptions,
           invoiceID: payProOptions.paymentId,
-          invoice: fetchedInvoice,
+          invoice,
         }),
       );
       setWallet(selectedWallet);
@@ -133,13 +132,12 @@ const PayProConfirm = () => {
       dispatch(dismissOnGoingProcessModal());
       updateTxDetails(newTxDetails);
       updateTxp(newTxp);
-      setInvoice(fetchedInvoice);
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
         address: string;
       });
       dispatch(
         Analytics.track('BitPay App - Start Merchant Purchase', {
-          merchantBrand: fetchedInvoice.merchantName,
+          merchantBrand: invoice.merchantName,
         }),
       );
     } catch (err: any) {
@@ -191,26 +189,14 @@ const PayProConfirm = () => {
     );
   };
 
-  const fetchInvoice = async (payProUrl: string) => {
-    const invoiceId = payProUrl.split('/').slice(-1)[0];
-    const getInvoiceResponse = await axios.get(
-      `https://${payProHost}/invoices/${invoiceId}`,
-    );
-    const {
-      data: {data: fetchedInvoice},
-    } = getInvoiceResponse as {data: {data: Invoice}};
-    return fetchedInvoice;
-  };
-
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
-    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+    dispatch(startOnGoingProcessModal('CREATING_TXP'));
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
     try {
-      const fetchedInvoice = await fetchInvoice(payProOptions.payProUrl);
       const rates = await dispatch(startGetRates({}));
       const newTxDetails = dispatch(
         buildTxDetails({
-          invoice: fetchedInvoice,
+          invoice,
           wallet: walletRowProps,
           rates,
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
@@ -218,12 +204,11 @@ const PayProConfirm = () => {
       );
       updateTxDetails(newTxDetails);
       updateTxp(undefined);
-      setInvoice(fetchedInvoice);
       setCoinbaseAccount(selectedCoinbaseAccount);
       dispatch(dismissOnGoingProcessModal());
       dispatch(
         Analytics.track('BitPay App - Start Merchant Purchase', {
-          merchantBrand: fetchedInvoice.merchantName,
+          merchantBrand: invoice.merchantName,
         }),
       );
     } catch (err) {

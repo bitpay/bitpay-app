@@ -447,16 +447,21 @@ const SendTo = () => {
         if (selected) {
           const isValid = dispatch(checkCoinAndNetwork(selected, true));
           if (isValid) {
-            navigation.navigate('Wallet', {
-              screen: WalletScreens.PAY_PRO_CONFIRM,
-              params: {
-                payProOptions,
+            await sleep(0);
+            dispatch(
+              incomingData(text, {
                 wallet,
-              },
-            });
+                context,
+                name,
+                email,
+                destinationTag,
+              }),
+            );
           }
         } else {
-          // TODO: handle me
+          dispatch(
+            showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
+          );
         }
       } catch (err) {
         const formattedErrMsg = BWCErrorMessage(err);
