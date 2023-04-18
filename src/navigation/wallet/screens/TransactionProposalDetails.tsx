@@ -6,12 +6,13 @@ import {
   H2,
   Link,
   TextAlign,
+  H5,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useLogger, useAppSelector} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
   getDetailsTitle,
@@ -22,6 +23,7 @@ import {
   RemoveTxProposal,
   RejectTxProposal,
 } from '../../../store/wallet/effects/transactions/transactions';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import styled from 'styled-components/native';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
 import {IsCustomERCToken} from '../../../store/wallet/utils/currency';
@@ -50,7 +52,10 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
-import {publishAndSign} from '../../../store/wallet/effects/send/send';
+import {
+  broadcastTx,
+  publishAndSign,
+} from '../../../store/wallet/effects/send/send';
 import PaymentSent from '../components/PaymentSent';
 import {
   CustomErrorMessage,
@@ -61,7 +66,11 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
-import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {
+  Key,
+  TransactionProposal,
+  Wallet,
+} from '../../../store/wallet/wallet.models';
 import {
   DetailColumn,
   DetailContainer,
@@ -70,8 +79,10 @@ import {
 } from './send/confirm/Shared';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../store/log';
+import {TransactionSectionHeaderContainer} from './TransactionProposalNotifications';
+import {GetPayProDetails} from '../../../store/wallet/effects/paypro/paypro';
 
-const TxsDetailsContainer = styled.SafeAreaView`
+const TxpDetailsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -123,9 +134,9 @@ const NumberIcon = styled(IconBackground)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
-const MemoMsgContainer = styled.View`
+const MemoMsgContainer = styled.View<{maxWidth?: string}>`
   justify-content: flex-end;
-  max-width: 80%;
+  max-width: ${({maxWidth}) => maxWidth ?? '80%'};
 `;
 const TimelineList = ({actions}: {actions: TxActions[]}) => {
   return (
@@ -181,6 +192,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 const TransactionProposalDetails = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const navigation = useNavigation();
   const {
     params: {transactionId, walletId, keyId},
@@ -189,7 +201,10 @@ const TransactionProposalDetails = () => {
   const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]) as Key;
   const wallet = findWalletById(key.wallets, walletId) as Wallet;
   const transaction = wallet.pendingTxps.find(txp => txp.id === transactionId);
-  const [txs, setTxs] = useState<any>();
+  const [txp, setTxp] = useState<any>();
+  const [payProDetails, setPayProDetails] = useState<any>();
+  const [paymentExpired, setPaymentExpired] = useState<boolean>(false);
+  const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
@@ -220,7 +235,8 @@ const TransactionProposalDetails = () => {
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
         }),
       );
-      setTxs(_transaction);
+      console.log('========= _transaction: ', _transaction);
+      setTxp(_transaction);
       setLastSigner(
         _transaction.actions.filter((a: any) => a?.type === 'accept').length ===
           _transaction.requiredSignatures - 1,
@@ -235,9 +251,66 @@ const TransactionProposalDetails = () => {
     }
   };
 
-  useEffect(() => {
-    init();
-  }, [transaction, wallet]);
+  const checkPayPro = async () => {
+    try {
+      const address = (await dispatch<Promise<string>>(
+        createWalletAddress({wallet: wallet, newAddress: false}),
+      )) as string;
+      const payload = {
+        address,
+      };
+      const _payProDetails = await GetPayProDetails({
+        paymentUrl: txp.payProUrl,
+        coin: txp.coin,
+        chain: txp.chain,
+        payload,
+      });
+      paymentTimeControl(_payProDetails.expires);
+      setPayProDetails(_payProDetails);
+    } catch (err) {
+      logger.warn('Error fetching this invoice: ' + BWCErrorMessage(err));
+      await sleep(500);
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(err),
+            title: t('Error fetching this invoice'),
+          }),
+        ),
+      );
+    }
+  };
+
+  const paymentTimeControl = (expires: number): void => {
+    const expirationTime = Math.floor(new Date(expires).getTime() / 1000);
+    setPaymentExpired(false);
+    setExpirationTime(expirationTime);
+
+    const countDown = setInterval(() => {
+      setExpirationTime(expirationTime, countDown);
+    }, 1000);
+  };
+
+  const setExpirationTime = (
+    expirationTime: number,
+    countDown?: NodeJS.Timeout,
+  ): void => {
+    const now = Math.floor(Date.now() / 1000);
+
+    if (now > expirationTime) {
+      setPaymentExpired(true);
+      setRemainingTimeStr(t('Expired'));
+      if (countDown) {
+        /* later */
+        clearInterval(countDown);
+      }
+      return;
+    }
+    const totalSecs = expirationTime - now;
+    const m = Math.floor(totalSecs / 60);
+    const s = totalSecs % 60;
+    setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
+  };
 
   const getIcon = () => {
     return SUPPORTED_CURRENCIES.includes(wallet.currencyAbbreviation) ? (
@@ -245,6 +318,21 @@ const TransactionProposalDetails = () => {
     ) : (
       <DefaultSvg width={18} height={18} />
     );
+  };
+
+  const broadcastTxp = async (txp: TransactionProposal) => {
+    dispatch(startOnGoingProcessModal('BROADCASTING_TXP'));
+
+    try {
+      logger.debug('Trying to re-broadcast Txp');
+      const broadcastedTx = await broadcastTx(wallet, txp);
+      await sleep(1000);
+      dispatch(dismissOnGoingProcessModal());
+    } catch (err) {
+      logger.error('Could not re-broadcast Txp');
+      await sleep(1000);
+      dispatch(dismissOnGoingProcessModal());
+    }
   };
 
   const removePaymentProposal = async () => {
@@ -259,7 +347,7 @@ const TransactionProposalDetails = () => {
             {
               text: t('YES'),
               action: async () => {
-                await RemoveTxProposal(wallet, txs);
+                await RemoveTxProposal(wallet, txp);
                 dispatch(startUpdateWalletStatus({key, wallet, force: true}));
                 navigation.goBack();
               },
@@ -291,7 +379,7 @@ const TransactionProposalDetails = () => {
             {
               text: t('YES'),
               action: async () => {
-                await RejectTxProposal(wallet, txs);
+                await RejectTxProposal(wallet, txp);
                 dispatch(startUpdateWalletStatus({key, wallet, force: true}));
                 navigation.goBack();
               },
@@ -310,6 +398,16 @@ const TransactionProposalDetails = () => {
       dispatch(LogActions.error('[rejectPaymentProposal] ', e));
     }
   };
+
+  useEffect(() => {
+    init();
+  }, [transaction, wallet]);
+
+  useEffect(() => {
+    if (txp?.payProUrl) {
+      checkPayPro();
+    }
+  }, [txp]);
 
   useEffect(() => {
     if (!resetSwipeButton) {
@@ -331,35 +429,59 @@ const TransactionProposalDetails = () => {
   );
 
   return (
-    <TxsDetailsContainer>
+    <TxpDetailsContainer>
       {isLoading ? (
         <TransactionDetailSkeleton />
-      ) : txs ? (
+      ) : txp ? (
         <ScrollView>
           <>
-            {NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
-              <H2 medium={true}>{txs.amountStr}</H2>
+            {NotZeroAmountEVM(txp.amount, currencyAbbreviation) ? (
+              <H2 medium={true}>{txp.amountStr}</H2>
             ) : null}
 
             {!IsCustomERCToken(currencyAbbreviation, chain) ? (
               <SubTitle>
-                {!txs.fiatRateStr
+                {!txp.fiatRateStr
                   ? '...'
                   : isTestnet
                   ? t('Test Only - No Value')
-                  : txs.fiatRateStr}
+                  : txp.fiatRateStr}
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
+            {!NotZeroAmountEVM(txp.amount, currencyAbbreviation) ? (
               <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>
 
-          {(txs && !txs.removed && txs.canBeRemoved) ||
-          (txs && txs.status == 'accepted' && !txs.broadcastedOn) ? (
+          {txp.removed ? (
+            <Banner
+              type={'info'}
+              height={60}
+              description={t('The payment was removed by creator')}
+            />
+          ) : null}
+
+          {txp.status === 'broadcasted' ? (
+            <Banner
+              type={'success'}
+              height={60}
+              description={t('Payment was successfully sent')}
+            />
+          ) : null}
+
+          {txp.status === 'rejected' ? (
+            <Banner
+              type={'success'}
+              height={60}
+              description={t('Payment Rejected')}
+            />
+          ) : null}
+
+          {(!txp.removed && txp.canBeRemoved) ||
+          (txp.status === 'accepted' && !txp.broadcastedOn) ? (
             <>
-              {!txs.payProUrl ? (
+              {!txp.payProUrl ? (
                 <Banner
                   height={110}
                   type={'info'}
@@ -382,12 +504,26 @@ const TransactionProposalDetails = () => {
                 <Link>{t('Delete payment proposal')}</Link>
               </Button>
             </>
+          ) : txp.status === 'accepted' ? (
+            <>
+              <Banner
+                type={'info'}
+                height={60}
+                description={t('Payment accepted, but not yet broadcasted')}
+              />
+              <Button
+                onPress={() => {
+                  broadcastTxp(txp);
+                }}
+                buttonType={'link'}>
+                <Link>{t('Broadcast Payment')}</Link>
+              </Button>
+            </>
           ) : null}
 
-          {txs &&
-          !txs.removed &&
-          txs.pendingForUs &&
-          !txs.multisigContractAddress &&
+          {!txp.removed &&
+          txp.pendingForUs &&
+          !txp.multisigContractAddress &&
           wallet.credentials.n > 1 ? (
             <Button
               onPress={rejectPaymentProposal}
@@ -402,18 +538,18 @@ const TransactionProposalDetails = () => {
           </DetailContainer>
           <Hr />
 
-          {txs.feeStr && !IsReceived(txs.action) ? (
+          {txp.feeStr && !IsReceived(txp.action) ? (
             <>
               <DetailContainer>
                 <DetailRow>
                   <H7>{t('Miner fee')}</H7>
                   <DetailColumn>
-                    <H6>{txs.feeStr}</H6>
+                    <H6>{txp.feeStr}</H6>
                     {!isTestnet ? (
                       <H7>
-                        {txs.feeFiatStr}{' '}
-                        {txs.feeRateStr
-                          ? '(' + txs.feeRateStr + t(' of total amount') + ')'
+                        {txp.feeFiatStr}{' '}
+                        {txp.feeRateStr
+                          ? '(' + txp.feeRateStr + t(' of total amount') + ')'
                           : null}
                       </H7>
                     ) : (
@@ -426,7 +562,7 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          <MultipleOutputsTx tx={txs} />
+          <MultipleOutputsTx tx={txp} />
 
           <>
             <DetailContainer>
@@ -443,13 +579,13 @@ const TransactionProposalDetails = () => {
             <Hr />
           </>
 
-          {txs.creatorName ? (
+          {txp.creatorName ? (
             <>
               <DetailContainer>
                 <DetailRow>
                   <H7>{t('Created by')}</H7>
 
-                  <H7>{txs.creatorName}</H7>
+                  <H7>{txp.creatorName}</H7>
                 </DetailRow>
               </DetailContainer>
               <Hr />
@@ -460,21 +596,21 @@ const TransactionProposalDetails = () => {
             <DetailRow>
               <H7>{t('Date')}</H7>
               <H7>
-                {GetAmFormatDate((txs.ts || txs.createdOn || txs.time) * 1000)}
+                {GetAmFormatDate((txp.ts || txp.createdOn || txp.time) * 1000)}
               </H7>
             </DetailRow>
           </DetailContainer>
 
           <Hr />
 
-          {txs.message ? (
+          {txp.message ? (
             <>
               <DetailContainer>
                 <DetailRow>
                   <H7>{t('Memo')}</H7>
                   <MemoMsgContainer>
                     <TextAlign align={'right'}>
-                      <H7>{txs.message}</H7>
+                      <H7>{txp.message}</H7>
                     </TextAlign>
                   </MemoMsgContainer>
                 </DetailRow>
@@ -485,12 +621,51 @@ const TransactionProposalDetails = () => {
 
           {/*  TODO: Add Notify unconfirmed transaction  row */}
 
-          {!IsMultisigEthInfo(wallet) && txs.actionsList?.length ? (
+          {payProDetails ? (
+            <>
+              <TransactionSectionHeaderContainer>
+                <H5>{t('Payment request')}</H5>
+              </TransactionSectionHeaderContainer>
+              {paymentExpired ? (
+                <DetailContainer>
+                  <DetailRow>
+                    <H7>{t('Expired')}</H7>
+                    <H7>{GetAmTimeAgo(payProDetails.expires * 1000)}</H7>
+                  </DetailRow>
+                </DetailContainer>
+              ) : (
+                <DetailContainer>
+                  <DetailRow>
+                    <H7>{t('Expires')}</H7>
+                    <H7>{remainingTimeStr}</H7>
+                  </DetailRow>
+                </DetailContainer>
+              )}
+
+              {payProDetails.memo ? (
+                <>
+                  <Hr />
+                  <DetailContainer>
+                    <DetailRow>
+                      <H7 style={{maxWidth: '25%'}}>{t('Merchant Message')}</H7>
+                      <MemoMsgContainer maxWidth={'70%'}>
+                        <TextAlign align={'right'}>
+                          <H7>{payProDetails.memo}</H7>
+                        </TextAlign>
+                      </MemoMsgContainer>
+                    </DetailRow>
+                  </DetailContainer>
+                </>
+              ) : null}
+            </>
+          ) : null}
+
+          {!IsMultisigEthInfo(wallet) && txp.actionsList?.length ? (
             <>
               <TimelineContainer>
                 <H7>{t('Timeline')}</H7>
 
-                <TimelineList actions={txs.actionsList} />
+                <TimelineList actions={txp.actionsList} />
               </TimelineContainer>
 
               <Hr />
@@ -499,7 +674,11 @@ const TransactionProposalDetails = () => {
         </ScrollView>
       ) : null}
 
-      {txs && !txs.removed && txs.pendingForUs && !key.isReadOnly ? (
+      {txp &&
+      !txp.removed &&
+      txp.pendingForUs &&
+      !key.isReadOnly &&
+      !paymentExpired ? (
         <SwipeButton
           title={lastSigner ? t('Slide to send') : t('Slide to accept')}
           forceReset={resetSwipeButton}
@@ -511,7 +690,7 @@ const TransactionProposalDetails = () => {
                 ),
               );
               await sleep(400);
-              await dispatch(publishAndSign({txp: txs, key, wallet}));
+              await dispatch(publishAndSign({txp, key, wallet}));
               dispatch(dismissOnGoingProcessModal());
               dispatch(
                 Analytics.track('Sent Crypto', {
@@ -556,7 +735,7 @@ const TransactionProposalDetails = () => {
           navigation.goBack();
         }}
       />
-    </TxsDetailsContainer>
+    </TxpDetailsContainer>
   );
 };
 

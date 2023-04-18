@@ -8,6 +8,7 @@ import {
   Warning,
   LightBlack,
   NeutralSlate,
+  Success,
 } from '../../styles/colors';
 import {H7, Link} from '../styled/Text';
 import {ActionContainer, ActiveOpacity, Row} from '../styled/Containers';
@@ -51,6 +52,8 @@ const getBgColor = (type: string) => {
       return Warning;
     case 'error':
       return Caution;
+    case 'success':
+      return Success;
     default:
       return Slate;
   }

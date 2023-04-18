@@ -74,7 +74,7 @@ const ListHeaderPadding = styled.View`
   margin-top: 10px;
 `;
 
-const TransactionSectionHeaderContainer = styled.View`
+export const TransactionSectionHeaderContainer = styled.View`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
   height: 55px;
