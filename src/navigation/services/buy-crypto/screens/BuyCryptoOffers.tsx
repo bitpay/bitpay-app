@@ -207,10 +207,6 @@ const OfferDataCryptoAmount = styled(H5)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
 
-const OfferDataRate = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
 const OfferDataInfoContainer = styled.View`
   display: flex;
   flex-direction: row;
@@ -1583,17 +1579,6 @@ const BuyCryptoOffers: React.FC = () => {
                       <OfferDataCryptoAmount>
                         {offer.amountReceiving} {coin.toUpperCase()}
                       </OfferDataCryptoAmount>
-                      <OfferDataRate>
-                        1 {coin.toUpperCase()} ={' '}
-                        {formatFiatAmount(
-                          Number(offer.fiatMoney),
-                          offer.fiatCurrency,
-                          {
-                            customPrecision: undefined,
-                            currencyAbbreviation: coin,
-                          },
-                        )}
-                      </OfferDataRate>
                       {offer.fiatCurrency !== fiatCurrency ? (
                         <OfferDataWarningContainer>
                           <OfferDataWarningMsg>
