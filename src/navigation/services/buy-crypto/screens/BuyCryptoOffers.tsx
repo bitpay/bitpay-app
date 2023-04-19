@@ -7,7 +7,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {BaseText, H5, H7} from '../../../../components/styled/Text';
+import {BaseText, H5, H7, Small} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
@@ -189,6 +189,20 @@ const OfferDataContainer = styled.View`
   flex-direction: column;
 `;
 
+const BestOfferTagContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 5px;
+`;
+const BestOfferTag = styled.View`
+  background-color: #cbf3e8;
+  border-radius: 50px;
+  height: 25px;
+  padding: 5px 10px;
+`;
+
 const OfferDataCryptoAmount = styled(H5)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
@@ -201,7 +215,7 @@ const OfferDataInfoContainer = styled.View`
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 10px;
 `;
 
 const OfferDataInfoLabel = styled(H7)`
@@ -1529,7 +1543,7 @@ const BuyCryptoOffers: React.FC = () => {
             parseFloat(b.amountReceiving || '0') -
             parseFloat(a.amountReceiving || '0'),
         )
-        .map(offer => {
+        .map((offer: CryptoOffer, index: number) => {
           return offer.showOffer ? (
             <BuyCryptoExpandibleCard
               key={offer.key}
@@ -1559,6 +1573,13 @@ const BuyCryptoOffers: React.FC = () => {
                   !offer.errorMsg &&
                   !offer.outOfLimitMsg ? (
                     <>
+                      {index === 0 ? (
+                        <BestOfferTagContainer>
+                          <BestOfferTag>
+                            <Small>{t('Best Offer')}</Small>
+                          </BestOfferTag>
+                        </BestOfferTagContainer>
+                      ) : null}
                       <OfferDataCryptoAmount>
                         {offer.amountReceiving} {coin.toUpperCase()}
                       </OfferDataCryptoAmount>
