@@ -197,10 +197,14 @@ const BestOfferTagContainer = styled.View`
   margin-bottom: 5px;
 `;
 const BestOfferTag = styled.View`
-  background-color: #cbf3e8;
+  background-color: ${({theme: {dark}}) => (dark ? '#2FCFA4' : '#cbf3e8')};
   border-radius: 50px;
   height: 25px;
   padding: 5px 10px;
+`;
+
+const BestOfferTagText = styled(Small)`
+  color: ${Black};
 `;
 
 const OfferDataCryptoAmount = styled(H5)`
@@ -1572,7 +1576,9 @@ const BuyCryptoOffers: React.FC = () => {
                       {index === 0 ? (
                         <BestOfferTagContainer>
                           <BestOfferTag>
-                            <Small>{t('Best Offer')}</Small>
+                            <BestOfferTagText>
+                              {t('Best Offer')}
+                            </BestOfferTagText>
                           </BestOfferTag>
                         </BestOfferTagContainer>
                       ) : null}
