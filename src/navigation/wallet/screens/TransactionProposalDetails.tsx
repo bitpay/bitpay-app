@@ -63,7 +63,10 @@ import {
 } from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
+import {
+  startUpdateWalletStatus,
+  waitForTargetAmountAndUpdateWallet,
+} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {
@@ -235,7 +238,6 @@ const TransactionProposalDetails = () => {
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
         }),
       );
-      console.log('========= _transaction: ', _transaction);
       setTxp(_transaction);
       setLastSigner(
         _transaction.actions.filter((a: any) => a?.type === 'accept').length ===
@@ -324,14 +326,45 @@ const TransactionProposalDetails = () => {
     dispatch(startOnGoingProcessModal('BROADCASTING_TXP'));
 
     try {
-      logger.debug('Trying to re-broadcast Txp');
+      logger.debug('Trying to broadcast Txp');
       const broadcastedTx = await broadcastTx(wallet, txp);
+      logger.debug(`Transaction broadcasted: ${broadcastedTx.txid}`);
+      const {fee, amount} = broadcastedTx as {
+        fee: number;
+        amount: number;
+      };
+      const targetAmount = wallet.balance.sat - (fee + amount);
+
+      dispatch(
+        waitForTargetAmountAndUpdateWallet({
+          key,
+          wallet,
+          targetAmount,
+        }),
+      );
       await sleep(1000);
       dispatch(dismissOnGoingProcessModal());
-    } catch (err) {
-      logger.error('Could not re-broadcast Txp');
+      await sleep(600);
+      setShowPaymentSentModal(true);
+    } catch (err: any) {
+      logger.error(
+        `Could not broadcast Txp. Coin: ${txp.coin} - Chain: ${txp.chain} - Network: ${wallet.network} - Raw: ${txp.raw}`,
+      );
+      let msg: string = t('Could not broadcast payment');
+      if (typeof err?.message === 'string') {
+        msg = msg + `: ${err.message}`;
+      }
       await sleep(1000);
       dispatch(dismissOnGoingProcessModal());
+      await sleep(600);
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: msg,
+            title: t('Error'),
+          }),
+        ),
+      );
     }
   };
 
@@ -341,11 +374,11 @@ const TransactionProposalDetails = () => {
         showBottomNotificationModal({
           type: 'warning',
           title: t('Warning!'),
-          message: t('Are you sure you want to remove this transaction?'),
+          message: t('Are you sure you want to delete this transaction?'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: t('YES'),
+              text: t('DELETE'),
               action: async () => {
                 await RemoveTxProposal(wallet, txp);
                 dispatch(startUpdateWalletStatus({key, wallet, force: true}));
@@ -356,7 +389,6 @@ const TransactionProposalDetails = () => {
             {
               text: t('CANCEL'),
               action: () => {},
-              primary: true,
             },
           ],
         }),
@@ -377,7 +409,7 @@ const TransactionProposalDetails = () => {
           enableBackdropDismiss: true,
           actions: [
             {
-              text: t('YES'),
+              text: t('REJECT'),
               action: async () => {
                 await RejectTxProposal(wallet, txp);
                 dispatch(startUpdateWalletStatus({key, wallet, force: true}));
@@ -388,7 +420,6 @@ const TransactionProposalDetails = () => {
             {
               text: t('CANCEL'),
               action: () => {},
-              primary: true,
             },
           ],
         }),
@@ -458,7 +489,7 @@ const TransactionProposalDetails = () => {
             <Banner
               type={'info'}
               height={60}
-              description={t('The payment was removed by creator')}
+              description={t('The payment was removed by creator.')}
             />
           ) : null}
 
@@ -466,7 +497,7 @@ const TransactionProposalDetails = () => {
             <Banner
               type={'success'}
               height={60}
-              description={t('Payment was successfully sent')}
+              description={t('Payment was successfully sent.')}
             />
           ) : null}
 
@@ -474,8 +505,25 @@ const TransactionProposalDetails = () => {
             <Banner
               type={'success'}
               height={60}
-              description={t('Payment Rejected')}
+              description={t('Payment Rejected.')}
             />
+          ) : null}
+
+          {txp.status === 'accepted' ? (
+            <>
+              <Banner
+                type={'info'}
+                height={60}
+                description={t('Payment accepted, but not yet broadcasted.')}
+              />
+              <Button
+                onPress={() => {
+                  broadcastTxp(txp);
+                }}
+                buttonType={'link'}>
+                {t('Broadcast Payment')}
+              </Button>
+            </>
           ) : null}
 
           {(!txp.removed && txp.canBeRemoved) ||
@@ -501,35 +549,21 @@ const TransactionProposalDetails = () => {
                 onPress={removePaymentProposal}
                 buttonType={'link'}
                 buttonStyle={'danger'}>
-                <Link>{t('Delete payment proposal')}</Link>
-              </Button>
-            </>
-          ) : txp.status === 'accepted' ? (
-            <>
-              <Banner
-                type={'info'}
-                height={60}
-                description={t('Payment accepted, but not yet broadcasted')}
-              />
-              <Button
-                onPress={() => {
-                  broadcastTxp(txp);
-                }}
-                buttonType={'link'}>
-                <Link>{t('Broadcast Payment')}</Link>
+                {t('Delete payment proposal')}
               </Button>
             </>
           ) : null}
 
           {!txp.removed &&
           txp.pendingForUs &&
+          !paymentExpired &&
           !txp.multisigContractAddress &&
           wallet.credentials.n > 1 ? (
             <Button
               onPress={rejectPaymentProposal}
               buttonType={'link'}
               buttonStyle={'danger'}>
-              <Link>{t('Reject Payment Proposal')}</Link>
+              {t('Reject Payment Proposal')}
             </Button>
           ) : null}
 
