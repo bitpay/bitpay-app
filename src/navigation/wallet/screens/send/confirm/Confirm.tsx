@@ -142,7 +142,7 @@ const Confirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
-  const [enableRBF, setEnableRBF] = useState(false);
+  const [enableRBF, setEnableRBF] = useState(enableReplaceByFee);
   const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
 
   const {
@@ -382,7 +382,7 @@ const Confirm = () => {
           />
           {enableReplaceByFee &&
           !selectInputs &&
-          currencyAbbreviation === 'btc' ? (
+          currencyAbbreviation.toLowerCase() === 'btc' ? (
             <>
               <Setting activeOpacity={1}>
                 <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>

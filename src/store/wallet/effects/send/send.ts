@@ -108,6 +108,7 @@ export const createProposalAndBuildTxDetails =
             feeLevel: cachedFeeLevel,
             useUnconfirmedFunds,
             queuedTransactions,
+            enableReplaceByFee,
           },
         } = getState();
         const {
@@ -149,6 +150,13 @@ export const createProposalAndBuildTxDetails =
               ),
             });
           }
+        }
+
+        if (
+          currencyAbbreviation === 'btc' &&
+          !(context && ['paypro', 'selectInputs'].includes(context))
+        ) {
+          tx.enableRBF = tx.enableRBF || enableReplaceByFee;
         }
 
         const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
