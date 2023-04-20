@@ -6,11 +6,7 @@ import {
   buildWalletObj,
   mapAbbreviationAndName,
 } from '../../utils/wallet';
-import {
-  successCreateKey,
-  setExpectedKeyLengthChange,
-  successAddWallet,
-} from '../../wallet.actions';
+import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
 import {
@@ -88,13 +84,13 @@ export const startJoinMultisig =
         const key = buildKeyObj({key: _key, wallets: [wallet]});
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
-        const expectedLengthChange = previousKeysLength - numNewKeys;
+        const lengthChange = previousKeysLength - numNewKeys;
         dispatch(
           successCreateKey({
             key,
+            lengthChange,
           }),
         );
-        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
         resolve(key);
       } catch (err) {
         reject(err);

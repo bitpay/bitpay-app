@@ -30,8 +30,6 @@ import {
   setWalletTermsAccepted,
   successImport,
   updateCacheFeeLevel,
-  updatePortfolioBalance,
-  setExpectedKeyLengthChange,
 } from '../../wallet.actions';
 import {
   BitpaySupportedEthereumTokenOpts,
@@ -816,9 +814,8 @@ export const startImportMnemonic =
         if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
           const previousKeysLength = Object.keys(WALLET.keys).length;
           const numNewKeys = Object.keys(WALLET.keys).length - 1;
-          const expectedLengthChange = previousKeysLength - numNewKeys;
-          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-          dispatch(deleteKey({keyId: opts.keyId}));
+          const lengthChange = previousKeysLength - numNewKeys;
+          dispatch(deleteKey({keyId: opts.keyId, lengthChange}));
         }
 
         const key = buildKeyObj({
@@ -919,9 +916,8 @@ export const startImportFile =
           wallets = wallets.concat(filteredKeys);
           const previousKeysLength = Object.keys(WALLET.keys).length;
           const numNewKeys = Object.keys(WALLET.keys).length - 1;
-          const expectedLengthChange = previousKeysLength - numNewKeys;
-          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-          dispatch(deleteKey({keyId: opts.keyId}));
+          const lengthChange = previousKeysLength - numNewKeys;
+          dispatch(deleteKey({keyId: opts.keyId, lengthChange}));
         }
 
         const key = buildKeyObj({

@@ -65,6 +65,7 @@ interface successCreateKey {
   type: typeof WalletActionTypes.SUCCESS_CREATE_KEY;
   payload: {
     key: Key;
+    lengthChange: number;
   };
 }
 
@@ -121,6 +122,7 @@ interface deleteKey {
   type: typeof WalletActionTypes.DELETE_KEY;
   payload: {
     keyId: string;
+    lengthChange: number;
   };
 }
 

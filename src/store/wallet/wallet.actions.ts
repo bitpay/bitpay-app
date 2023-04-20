@@ -17,7 +17,10 @@ export const failedWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_WALLET_STORE_INIT,
 });
 
-export const successCreateKey = (payload: {key: Key}): WalletActionType => ({
+export const successCreateKey = (payload: {
+  key: Key;
+  lengthChange: number;
+}): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_CREATE_KEY,
   payload,
 });
@@ -65,7 +68,10 @@ export const successEncryptOrDecryptPassword = (payload: {
   payload,
 });
 
-export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
+export const deleteKey = (payload: {
+  keyId: string;
+  lengthChange: number;
+}): WalletActionType => ({
   type: WalletActionTypes.DELETE_KEY,
   payload,
 });

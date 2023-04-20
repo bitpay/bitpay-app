@@ -6,11 +6,7 @@ import {
   buildWalletObj,
   mapAbbreviationAndName,
 } from '../../utils/wallet';
-import {
-  successCreateKey,
-  setExpectedKeyLengthChange,
-  successAddWallet,
-} from '../../wallet.actions';
+import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import {Key, KeyOptions, Wallet} from '../../wallet.models';
 import {createWalletWithOpts} from '../create/create';
 import {
@@ -80,13 +76,13 @@ export const startCreateKeyMultisig =
         const key = buildKeyObj({key: _key, wallets: [wallet]});
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
-        const expectedLengthChange = previousKeysLength - numNewKeys;
+        const lengthChange = previousKeysLength - numNewKeys;
         dispatch(
           successCreateKey({
             key,
+            lengthChange,
           }),
         );
-        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
         resolve(key);
       } catch (err) {
         const errorStr =

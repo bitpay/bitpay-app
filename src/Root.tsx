@@ -296,6 +296,7 @@ export default () => {
         dispatch(
           successCreateKey({
             key: backupKeys[missingKey],
+            lengthChange: 0,
           }),
         );
       } catch (err) {

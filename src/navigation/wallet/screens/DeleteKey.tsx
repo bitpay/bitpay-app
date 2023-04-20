@@ -8,13 +8,11 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
-import {useDispatch} from 'react-redux';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
 import {
   deleteKey,
-  setExpectedKeyLengthChange,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
 import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
@@ -90,9 +88,9 @@ const DeleteKey = () => {
     await sleep(300);
     const previousKeysLength = Object.keys(keys).length;
     const numNewKeys = Object.keys(keys).length - 1;
-    const expectedLengthChange = previousKeysLength - numNewKeys;
-    dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-    dispatch(deleteKey({keyId}));
+    const lengthChange = previousKeysLength - numNewKeys;
+    dispatch(deleteKey({keyId, lengthChange}));
+
     dispatch(
       setHomeCarouselConfig(
         homeCarouselConfig.filter(item => item.id !== keyId),

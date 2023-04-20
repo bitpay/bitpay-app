@@ -16,7 +16,6 @@ import {
   failedAddWallet,
   successAddWallet,
   successCreateKey,
-  setExpectedKeyLengthChange,
 } from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
@@ -88,13 +87,13 @@ export const startCreateKey =
         const key = buildKeyObj({key: _key, wallets});
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
-        const expectedLengthChange = previousKeysLength - numNewKeys;
+        const lengthChange = previousKeysLength - numNewKeys;
         dispatch(
           successCreateKey({
             key,
+            lengthChange,
           }),
         );
-        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
         resolve(key);
       } catch (err) {
         const errstring =
@@ -541,13 +540,13 @@ export const startCreateKeyWithOpts =
         });
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
-        const expectedLengthChange = previousKeysLength - numNewKeys;
+        const lengthChange = previousKeysLength - numNewKeys;
         dispatch(
           successCreateKey({
             key,
+            lengthChange,
           }),
         );
-        dispatch(setExpectedKeyLengthChange(expectedLengthChange));
         resolve(key);
       } catch (err) {
         const errstring =
