@@ -119,6 +119,7 @@ import {Keys} from './store/wallet/wallet.reducer';
 import NetworkFeePolicySettingsStack, {
   NetworkFeePolicySettingsStackParamsList,
 } from './navigation/tabs/settings/NetworkFeePolicy/NetworkFeePolicyStack';
+import {WalletActions} from './store/wallet';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -254,11 +255,8 @@ export default () => {
     ({APP}) => APP.lockAuthorizedUntil,
   );
 
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const {keys, expectedKeyLengthChange} = useAppSelector(({WALLET}) => WALLET);
   const backupKeys = useAppSelector(({WALLET_BACKUP}) => WALLET_BACKUP.keys);
-  const expectedKeyLengthChange = useAppSelector(
-    ({APP}) => APP.expectedKeyLengthChange,
-  );
   const [previousKeysLength, setPreviousKeysLength] = useState(
     Object.keys(backupKeys).length,
   );
@@ -412,7 +410,7 @@ export default () => {
     const numNewKeys = Object.keys(keys).length;
     const keyLengthChange = previousKeysLength - numNewKeys;
     setPreviousKeysLength(numNewKeys);
-    dispatch(AppActions.setExpectedKeyLengthChange(0));
+    dispatch(WalletActions.setExpectedKeyLengthChange(0));
 
     // keys length changed as expected
     if (expectedKeyLengthChange === keyLengthChange) {

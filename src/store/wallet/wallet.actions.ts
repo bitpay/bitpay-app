@@ -246,3 +246,10 @@ export const updateCacheFeeLevel = (
   type: WalletActionTypes.UPDATE_CACHE_FEE_LEVEL,
   payload,
 });
+
+export const setExpectedKeyLengthChange = (
+  lengthChange: number,
+): WalletActionType => ({
+  type: WalletActionTypes.EXPECTED_KEY_LENGTH_CHANGE,
+  payload: lengthChange,
+});

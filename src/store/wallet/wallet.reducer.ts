@@ -9,6 +9,7 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
   'tokenData',
   'tokenOptions',
   'tokenOptionsByAddress',
+  'expectedKeyLengthChange'
 ];
 
 export type Keys = {
@@ -37,6 +38,7 @@ export interface WalletState {
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
   initLogs: AddLog[];
+  expectedKeyLengthChange: number;
 }
 
 export const initialState: WalletState = {
@@ -65,6 +67,7 @@ export const initialState: WalletState = {
   queuedTransactions: false,
   enableReplaceByFee: false,
   initLogs: [], // keep init logs at the end (order is important)
+  expectedKeyLengthChange: 0,
 };
 
 export const walletReducer = (
@@ -530,6 +533,12 @@ export const walletReducer = (
         },
       };
     }
+
+    case WalletActionTypes.EXPECTED_KEY_LENGTH_CHANGE:
+      return {
+        ...state,
+        expectedKeyLengthChange: action.payload,
+      };
 
     default:
       return state;

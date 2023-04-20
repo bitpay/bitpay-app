@@ -16,6 +16,7 @@ import {
   failedAddWallet,
   successAddWallet,
   successCreateKey,
+  setExpectedKeyLengthChange,
 } from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
@@ -27,7 +28,6 @@ import {
 } from '../../../app/app.effects';
 import {
   dismissDecryptPasswordModal,
-  setExpectedKeyLengthChange,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';

@@ -6,7 +6,11 @@ import {
   buildWalletObj,
   mapAbbreviationAndName,
 } from '../../utils/wallet';
-import {successCreateKey, successAddWallet} from '../../wallet.actions';
+import {
+  successCreateKey,
+  setExpectedKeyLengthChange,
+  successAddWallet,
+} from '../../wallet.actions';
 import {Key, KeyOptions, Wallet} from '../../wallet.models';
 import {createWalletWithOpts} from '../create/create';
 import {
@@ -14,7 +18,6 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {LogActions} from '../../../log';
-import {setExpectedKeyLengthChange} from '../../../app/app.actions';
 
 const BWC = BwcProvider.getInstance();
 

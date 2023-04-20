@@ -6,7 +6,11 @@ import {
   buildWalletObj,
   mapAbbreviationAndName,
 } from '../../utils/wallet';
-import {successCreateKey, successAddWallet} from '../../wallet.actions';
+import {
+  successCreateKey,
+  setExpectedKeyLengthChange,
+  successAddWallet,
+} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
 import {
@@ -14,7 +18,6 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
-import {setExpectedKeyLengthChange} from '../../../app/app.actions';
 
 const BWC = BwcProvider.getInstance();
 
