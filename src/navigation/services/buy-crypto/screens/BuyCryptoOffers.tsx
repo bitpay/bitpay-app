@@ -7,7 +7,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {BaseText, H5, H7} from '../../../../components/styled/Text';
+import {BaseText, H5, H7, Small} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
@@ -189,19 +189,33 @@ const OfferDataContainer = styled.View`
   flex-direction: column;
 `;
 
-const OfferDataCryptoAmount = styled(H5)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
+const BestOfferTagContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 5px;
+`;
+const BestOfferTag = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? '#2FCFA4' : '#cbf3e8')};
+  border-radius: 50px;
+  height: 25px;
+  padding: 5px 10px;
 `;
 
-const OfferDataRate = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+const BestOfferTagText = styled(Small)`
+  color: ${Black};
+`;
+
+const OfferDataCryptoAmount = styled(H5)`
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
 
 const OfferDataInfoContainer = styled.View`
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 10px;
 `;
 
 const OfferDataInfoLabel = styled(H7)`
@@ -1529,7 +1543,7 @@ const BuyCryptoOffers: React.FC = () => {
             parseFloat(b.amountReceiving || '0') -
             parseFloat(a.amountReceiving || '0'),
         )
-        .map(offer => {
+        .map((offer: CryptoOffer, index: number) => {
           return offer.showOffer ? (
             <BuyCryptoExpandibleCard
               key={offer.key}
@@ -1559,20 +1573,18 @@ const BuyCryptoOffers: React.FC = () => {
                   !offer.errorMsg &&
                   !offer.outOfLimitMsg ? (
                     <>
+                      {index === 0 ? (
+                        <BestOfferTagContainer>
+                          <BestOfferTag>
+                            <BestOfferTagText>
+                              {t('Best Offer')}
+                            </BestOfferTagText>
+                          </BestOfferTag>
+                        </BestOfferTagContainer>
+                      ) : null}
                       <OfferDataCryptoAmount>
                         {offer.amountReceiving} {coin.toUpperCase()}
                       </OfferDataCryptoAmount>
-                      <OfferDataRate>
-                        1 {coin.toUpperCase()} ={' '}
-                        {formatFiatAmount(
-                          Number(offer.fiatMoney),
-                          offer.fiatCurrency,
-                          {
-                            customPrecision: undefined,
-                            currencyAbbreviation: coin,
-                          },
-                        )}
-                      </OfferDataRate>
                       {offer.fiatCurrency !== fiatCurrency ? (
                         <OfferDataWarningContainer>
                           <OfferDataWarningMsg>
