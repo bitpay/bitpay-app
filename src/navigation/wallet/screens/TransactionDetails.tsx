@@ -52,7 +52,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Banner from '../../../components/banner/Banner';
 import Info from '../../../components/icons/info/Info';
 import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
-import {sleep} from '../../../utils/helper-methods';
+import {getContactObj, sleep} from '../../../utils/helper-methods';
 import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 import {
   createProposalAndBuildTxDetails,
@@ -71,6 +71,7 @@ import {Memo} from './send/confirm/Memo';
 import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
 import {LogActions} from '../../../store/log';
+import {RootState} from '../../../store';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -203,6 +204,7 @@ const TransactionDetails = () => {
     params: {transaction, wallet, onMemoChange},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -255,9 +257,20 @@ const TransactionDetails = () => {
     try {
       const txp = await getTx(wallet, transaction.proposalId); // only way to get actual inputs and ouputs
       const toAddress = transaction.outputs[0].address;
-      const recipient = {
-        address: toAddress,
-      };
+
+      const contact = getContactObj(
+        contacts,
+        toAddress,
+        currencyAbbreviation,
+        network,
+        chain,
+      );
+
+      const recipient = contact
+        ? {...contact, ...{type: 'contact'}}
+        : {
+            address: toAddress,
+          };
 
       let recipientList: Recipient[] | undefined;
       if (transaction.hasMultiplesOutputs) {

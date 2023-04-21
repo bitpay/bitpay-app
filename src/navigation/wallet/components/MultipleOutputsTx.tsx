@@ -24,6 +24,7 @@ import {useTranslation} from 'react-i18next';
 import AddContactIcon from '../../../components/icons/add-contacts/AddContacts';
 import {useNavigation} from '@react-navigation/native';
 import {
+  findContact,
   formatCryptoAddress,
   getBadgeImg,
   getCurrencyAbbreviation,
@@ -136,6 +137,14 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   const [showMultiOptions, setShowMultiOptions] = useState(false);
 
   const getIcon = () => {
+    const existsContact = findContact(
+      contactList,
+      tx.outputs[0].address,
+      tx.coin,
+      network,
+      tx.chain,
+    );
+
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
     const img = SUPPORTED_CURRENCIES.includes(coin)
       ? CurrencyListIcons[coin]
@@ -148,6 +157,8 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     const badgeImg = getBadgeImg(coin, chain);
     const icon = tx.customData?.recipientEmail ? (
       <ContactIcon name={tx.customData?.recipientEmail} size={18} />
+    ) : existsContact ? (
+      <ContactIcon name={getDesc()} size={18} />
     ) : (
       <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
     );

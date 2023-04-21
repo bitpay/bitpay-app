@@ -185,7 +185,7 @@ const Confirm = () => {
     const includedCurrencies = ['btc', 'eth', 'matic'];
     // TODO: exclude paypro, coinbase, usingMerchantFee txs,
     // const {payProUrl} = txDetails;
-    return includedCurrencies.includes(currencyAbbreviation);
+    return includedCurrencies.includes(currencyAbbreviation.toLowerCase());
   };
 
   const onCloseTxLevelModal = async (
