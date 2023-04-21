@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -10,6 +10,7 @@ import {
 import Button from '../../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
 import {
+  ActiveOpacity,
   CtaContainer,
   HeaderRightContainer,
   WIDTH,
@@ -17,9 +18,8 @@ import {
 import * as Progress from 'react-native-progress';
 import {Air, BitPay, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
-import {sleep} from '../../../utils/helper-methods';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {Platform} from 'react-native';
+import {Platform, TouchableOpacity} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -29,6 +29,7 @@ import {backupRedirect} from './Backup';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import Back from '../../../components/back/Back';
 
 type RecoveryPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -91,11 +92,28 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   );
   const {words, context, key} = params;
 
+  useAndroidBackHandler(() => true);
+  const ref = useRef<Carousel<string>>(null);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{t('Recovery Phrase')}</HeaderTitle>,
-      headerLeft: () => null,
+      headerLeft: () => (
+        <TouchableOpacity
+          style={{marginLeft: Platform.OS === 'android' ? 10 : 0}}
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            if (ref.current?.currentIndex === 0) {
+              navigation.goBack();
+            } else {
+              ref.current?.snapToPrev();
+            }
+          }}>
+          <Back opacity={1} />
+        </TouchableOpacity>
+      ),
       headerRight: () => (
         <HeaderRightContainer>
           <Button
@@ -140,18 +158,6 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
     });
   });
 
-  useAndroidBackHandler(() => true);
-  const ref = useRef<Carousel<string>>(null);
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-
-  useEffect(() => {
-    return navigation.addListener('blur', async () => {
-      await sleep(400);
-      setActiveSlideIndex(0);
-      ref.current?.snapToItem(0);
-    });
-  }, [navigation]);
-
   const next = () => {
     if (activeSlideIndex === words.length - 1) {
       navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
@@ -159,8 +165,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
         params: {...params, walletTermsAccepted},
       });
     } else {
-      // @ts-ignore
-      ref.current.snapToNext();
+      ref.current?.snapToNext();
     }
   };
 
