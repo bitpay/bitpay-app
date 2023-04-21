@@ -78,6 +78,7 @@ import CurrencyTokenSelectionScreen, {
 } from './screens/CurrencyTokenSelection';
 import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
 import ExportTransactionHistory from './screens/wallet-settings/ExportTransactionHistory';
+import ClearTransactionHistoryCache from './screens/wallet-settings/ClearTransactionHistoryCache';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -146,6 +147,7 @@ export type WalletStackParamList = {
   SelectInputs: SelectInputsParamList;
   EnterBuyerProvidedEmail: {data: string};
   ExportTransactionHistory: {wallet: WalletModel};
+  ClearTransactionHistoryCache: {wallet: WalletModel; key: Key};
 };
 
 export enum WalletScreens {
@@ -195,6 +197,7 @@ export enum WalletScreens {
   SEND_TO_OPTIONS = 'SendToOptions',
   SELECT_INPUTS = 'SelectInputs',
   ENTER_BUYER_PROVIDED_EMAIL = 'EnterBuyerProvidedEmail',
+  CLEAR_TRANSACTION_HISTORY_CACHE = 'ClearTransactionHistoryCache',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -456,6 +459,15 @@ const WalletStack = () => {
           }}
           name={WalletScreens.ENTER_BUYER_PROVIDED_EMAIL}
           component={EnterBuyerProvidedEmail}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => (
+              <HeaderTitle>{t('Clear Transaction History Cache')}</HeaderTitle>
+            ),
+          }}
+          name={WalletScreens.CLEAR_TRANSACTION_HISTORY_CACHE}
+          component={ClearTransactionHistoryCache}
         />
       </Wallet.Navigator>
     </>
