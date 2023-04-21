@@ -237,18 +237,10 @@ const WalletStack = () => {
           component={Backup}
         />
         <Wallet.Screen
-          options={{
-            gestureEnabled: false,
-            headerLeft: () => null,
-          }}
           name={WalletScreens.RECOVERY_PHRASE}
           component={RecoveryPhrase}
         />
         <Wallet.Screen
-          options={{
-            gestureEnabled: false,
-            headerLeft: () => null,
-          }}
           name={WalletScreens.VERIFY_PHRASE}
           component={VerifyPhrase}
         />
