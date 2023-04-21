@@ -218,6 +218,24 @@ export const findContact = (
   return !!foundContacts.length;
 };
 
+export const getContactObj = (
+  contactList: ContactRowProps[],
+  address: string,
+  coin: string,
+  network: string,
+  chain: string,
+) => {
+  const contactObj = contactList.find((contact: ContactRowProps) => {
+    return (
+      contact.address === address &&
+      contact.coin === coin &&
+      contact.network === network &&
+      contact.chain === chain
+    );
+  });
+  return contactObj;
+};
+
 export const getMnemonic = (key: Key) =>
   key.properties!.mnemonic.trim().split(' ');
 
