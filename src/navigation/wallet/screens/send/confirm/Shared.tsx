@@ -13,7 +13,13 @@ import {
   Row,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import React, {ReactChild, useCallback, useEffect, useState} from 'react';
+import React, {
+  ReactChild,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import styled from 'styled-components/native';
 import {Pressable, ScrollView, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
@@ -484,6 +490,7 @@ export const WalletSelector = ({
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [selectorVisible, setSelectorVisible] = useState(false);
+  const [showNoWallets, setShowNoWallets] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
       ? true
@@ -540,11 +547,32 @@ export const WalletSelector = ({
     ],
   );
 
+  useMemo(() => {
+    let hasWallets: boolean = false;
+    let hasCoinbase: boolean = false;
+    for (const keyWallet of walletsAndAccounts.keyWallets) {
+      if (keyWallet.wallets.length > 0) {
+        hasWallets = true;
+      }
+    }
+    for (const coinbaseWallet of walletsAndAccounts.coinbaseWallets) {
+      if (coinbaseWallet.wallets.length > 0) {
+        hasCoinbase = true;
+      }
+    }
+
+    if (!hasWallets && !hasCoinbase) {
+      setShowNoWallets(true);
+    }
+  }, [dispatch, navigation, walletsAndAccounts]);
+
   useEffect(() => {
-    isVisible
+    isVisible && !showNoWallets
       ? showSelector(autoSelectSingleWallet)
+      : showNoWallets
+      ? dispatch(showNoWalletsModal({navigation}))
       : setSelectorVisible(false);
-  }, [autoSelectSingleWallet, isVisible, showSelector]);
+  }, [isVisible, showNoWallets]);
 
   return (
     <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>
