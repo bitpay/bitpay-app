@@ -640,7 +640,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           createWalletAddress({wallet: fullWalletObj, newAddress: false}),
         );
 
-        tx = await buildBtcSpeedupTx(fullWalletObj, transaction, address);
+        tx = await dispatch(
+          buildBtcSpeedupTx(fullWalletObj, transaction, address),
+        );
 
         dispatch(
           showBottomNotificationModal({

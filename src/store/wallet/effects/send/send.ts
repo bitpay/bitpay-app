@@ -419,10 +419,7 @@ export const buildTxDetails =
 
     if (invoiceCurrency && context === 'paypro') {
       amount = invoice.paymentTotals[invoiceCurrency];
-    } else if (context === 'speedupBtcReceive') {
-      amount = amount - fee;
     }
-
     const {type, name, address, email} = recipient || {};
     return {
       context,
