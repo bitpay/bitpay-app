@@ -17,20 +17,14 @@ import {
   EVM_BLOCKCHAIN_ID,
 } from '../../../../constants/config';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
-import {isEmpty} from 'lodash';
 
 export const startGetTokenOptions =
-  (force?: boolean): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  (): Effect<Promise<void>> => async dispatch => {
     try {
       dispatch(LogActions.info('starting [startGetTokenOptions]'));
-      const {
-        WALLET: {tokenOptions, tokenOptionsByAddress, tokenData},
-      } = getState();
-      if (!force && !isEmpty(tokenData)) {
-        dispatch(LogActions.info('skipping [startGetTokenOptions]'));
-        return;
-      }
+      let tokenOptions: {[key in string]: Token} = {};
+      let tokenOptionsByAddress: {[key in string]: Token} = {};
+      let tokenData: {[key in string]: CurrencyOpts} = {};
       for await (const chain of SUPPORTED_EVM_COINS) {
         let {
           data: {tokens},
