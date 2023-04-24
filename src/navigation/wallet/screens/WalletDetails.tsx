@@ -889,6 +889,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         description={item.uiDescription}
         time={item.uiTime}
         value={item.uiValue}
+        RBFInfo={{isRBF: item.isRBF, isReceived: IsReceived(item.action)}}
         onPressTransaction={() => onPressTransaction(item)}
       />
     );
