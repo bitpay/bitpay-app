@@ -4,9 +4,6 @@ import {
   H6,
   HeaderTitle,
   H2,
-  Link,
-  TextAlign,
-  H5,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -82,7 +79,6 @@ import {
 } from './send/confirm/Shared';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../store/log';
-import {TransactionSectionHeaderContainer} from './TransactionProposalNotifications';
 import {GetPayProDetails} from '../../../store/wallet/effects/paypro/paypro';
 
 const TxpDetailsContainer = styled.SafeAreaView`
@@ -137,10 +133,18 @@ const NumberIcon = styled(IconBackground)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
-const MemoMsgContainer = styled.View<{maxWidth?: string}>`
-  justify-content: flex-end;
-  max-width: ${({maxWidth}) => maxWidth ?? '80%'};
+const MemoMsgContainer = styled.View`
+  margin: 20px 0;
+  justify-content: flex-start;
 `;
+
+const MemoMsgText = styled(BaseText)`
+  font-size: 16px;
+  color: #9b9bab;
+  margin-top: 10px;
+  justify-content: flex-start;
+`;
+
 const TimelineList = ({actions}: {actions: TxActions[]}) => {
   return (
     <>
@@ -192,6 +196,8 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
   );
 };
 
+let countDown: NodeJS.Timer | undefined;
+
 const TransactionProposalDetails = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -209,6 +215,7 @@ const TransactionProposalDetails = () => {
   const [paymentExpired, setPaymentExpired] = useState<boolean>(false);
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [payproIsLoading, setPayproIsLoading] = useState(true);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [lastSigner, setLastSigner] = useState(false);
@@ -255,6 +262,9 @@ const TransactionProposalDetails = () => {
 
   const checkPayPro = async () => {
     try {
+      setPayproIsLoading(true);
+      await sleep(400);
+      dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
       const address = (await dispatch<Promise<string>>(
         createWalletAddress({wallet: wallet, newAddress: false}),
       )) as string;
@@ -269,9 +279,15 @@ const TransactionProposalDetails = () => {
       });
       paymentTimeControl(_payProDetails.expires);
       setPayProDetails(_payProDetails);
-    } catch (err) {
-      logger.warn('Error fetching this invoice: ' + BWCErrorMessage(err));
       await sleep(500);
+      setPayproIsLoading(false);
+      dispatch(dismissOnGoingProcessModal());
+    } catch (err) {
+      setPayproIsLoading(false);
+      await sleep(1000);
+      dispatch(dismissOnGoingProcessModal());
+      logger.warn('Error fetching this invoice: ' + BWCErrorMessage(err));
+      await sleep(600);
       await dispatch(
         showBottomNotificationModal(
           CustomErrorMessage({
@@ -283,19 +299,19 @@ const TransactionProposalDetails = () => {
     }
   };
 
-  const paymentTimeControl = (expires: number): void => {
+  const paymentTimeControl = (expires: string): void => {
     const expirationTime = Math.floor(new Date(expires).getTime() / 1000);
     setPaymentExpired(false);
     setExpirationTime(expirationTime);
 
-    const countDown = setInterval(() => {
+    countDown = setInterval(() => {
       setExpirationTime(expirationTime, countDown);
     }, 1000);
   };
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timeout,
+    countDown?: NodeJS.Timer,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
@@ -451,6 +467,14 @@ const TransactionProposalDetails = () => {
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
 
+  useEffect(() => {
+    return () => {
+      if (countDown) {
+        clearInterval(countDown);
+      }
+    };
+  }, []);
+
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
       await sleep(500);
@@ -509,7 +533,9 @@ const TransactionProposalDetails = () => {
             />
           ) : null}
 
-          {txp.status === 'accepted' ? (
+          {txp.status === 'accepted' &&
+          (!txp.payProUrl ||
+            (payProDetails && !payproIsLoading && !paymentExpired)) ? (
             <>
               <Banner
                 type={'info'}
@@ -529,7 +555,7 @@ const TransactionProposalDetails = () => {
           {(!txp.removed && txp.canBeRemoved) ||
           (txp.status === 'accepted' && !txp.broadcastedOn) ? (
             <>
-              {!txp.payProUrl ? (
+              {!txp.payProUrl && wallet.credentials.n > 1 ? (
                 <Banner
                   height={110}
                   type={'info'}
@@ -537,15 +563,19 @@ const TransactionProposalDetails = () => {
                     '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
                   )}
                 />
-              ) : (
+              ) : null}
+              {txp.payProUrl &&
+              !payproIsLoading &&
+              (!payProDetails || paymentExpired) ? (
                 <Banner
                   type={'warning'}
                   description={t(
-                    'Your payment proposal was rejected by the receiver. Please, delete it and try again.',
+                    'Your payment proposal expired or was rejected by the receiver. Please, delete it and try again.',
                   )}
                 />
-              )}
+              ) : null}
               <Button
+                style={{marginTop: 10}}
                 onPress={removePaymentProposal}
                 buttonType={'link'}
                 buttonStyle={'danger'}>
@@ -637,18 +667,13 @@ const TransactionProposalDetails = () => {
 
           <Hr />
 
-          {txp.message ? (
+          {txp.message &&
+          (!payProDetails || payProDetails.memo !== txp.message) ? (
             <>
-              <DetailContainer>
-                <DetailRow>
-                  <H7>{t('Memo')}</H7>
-                  <MemoMsgContainer>
-                    <TextAlign align={'right'}>
-                      <H7>{txp.message}</H7>
-                    </TextAlign>
-                  </MemoMsgContainer>
-                </DetailRow>
-              </DetailContainer>
+              <MemoMsgContainer>
+                <H7>{t('Memo')}</H7>
+                <MemoMsgText>{txp.message}</MemoMsgText>
+              </MemoMsgContainer>
               <Hr />
             </>
           ) : null}
@@ -657,14 +682,17 @@ const TransactionProposalDetails = () => {
 
           {payProDetails ? (
             <>
-              <TransactionSectionHeaderContainer>
-                <H5>{t('Payment request')}</H5>
-              </TransactionSectionHeaderContainer>
+              <DetailContainer>
+                <H6>{t('Payment request')}</H6>
+              </DetailContainer>
+              <Hr />
               {paymentExpired ? (
                 <DetailContainer>
                   <DetailRow>
                     <H7>{t('Expired')}</H7>
-                    <H7>{GetAmTimeAgo(payProDetails.expires * 1000)}</H7>
+                    <H7>
+                      {GetAmTimeAgo(new Date(payProDetails.expires).getTime())}
+                    </H7>
                   </DetailRow>
                 </DetailContainer>
               ) : (
@@ -679,25 +707,22 @@ const TransactionProposalDetails = () => {
               {payProDetails.memo ? (
                 <>
                   <Hr />
-                  <DetailContainer>
-                    <DetailRow>
-                      <H7 style={{maxWidth: '25%'}}>{t('Merchant Message')}</H7>
-                      <MemoMsgContainer maxWidth={'70%'}>
-                        <TextAlign align={'right'}>
-                          <H7>{payProDetails.memo}</H7>
-                        </TextAlign>
-                      </MemoMsgContainer>
-                    </DetailRow>
-                  </DetailContainer>
+                  <MemoMsgContainer>
+                    <H7>{t('Merchant Message')}</H7>
+                    <MemoMsgText>{payProDetails.memo}</MemoMsgText>
+                  </MemoMsgContainer>
                 </>
               ) : null}
+              <Hr />
             </>
           ) : null}
 
           {!IsMultisigEthInfo(wallet) && txp.actionsList?.length ? (
             <>
               <TimelineContainer>
-                <H7>{t('Timeline')}</H7>
+                <DetailContainer>
+                  <H6>{t('Timeline')}</H6>
+                </DetailContainer>
 
                 <TimelineList actions={txp.actionsList} />
               </TimelineContainer>
@@ -712,7 +737,8 @@ const TransactionProposalDetails = () => {
       !txp.removed &&
       txp.pendingForUs &&
       !key.isReadOnly &&
-      !paymentExpired ? (
+      (!txp.payProUrl ||
+        (payProDetails && !payproIsLoading && !paymentExpired)) ? (
         <SwipeButton
           title={lastSigner ? t('Slide to send') : t('Slide to accept')}
           forceReset={resetSwipeButton}
@@ -735,6 +761,7 @@ const TransactionProposalDetails = () => {
               await sleep(400);
               setShowPaymentSentModal(true);
             } catch (err) {
+              await sleep(500);
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);
               setResetSwipeButton(true);

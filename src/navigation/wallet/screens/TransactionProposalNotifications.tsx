@@ -74,7 +74,7 @@ const ListHeaderPadding = styled.View`
   margin-top: 10px;
 `;
 
-export const TransactionSectionHeaderContainer = styled.View`
+const TransactionSectionHeaderContainer = styled.View`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
   height: 55px;
@@ -102,7 +102,7 @@ const ProposalsInfoContainer = styled.View`
 const CheckBoxContainer = styled.View`
   flex-direction: column;
   justify-content: center;
-  margin-left: 15px;
+  margin-left: 5px;
   margin-right: 15px;
 `;
 
