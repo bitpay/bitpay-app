@@ -109,6 +109,8 @@ export interface ChangellyCheckoutProps {
   sendMaxInfo?: SendMaxInfo;
 }
 
+let countDown: NodeJS.Timer | undefined;
+
 const ChangellyCheckout: React.FC = () => {
   let {
     params: {
@@ -386,14 +388,14 @@ const ChangellyCheckout: React.FC = () => {
     setPaymentExpired(false);
     setExpirationTime(expirationTime);
 
-    const countDown = setInterval(() => {
+    countDown = setInterval(() => {
       setExpirationTime(expirationTime, countDown);
     }, 1000);
   };
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timeout,
+    countDown?: NodeJS.Timer,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
@@ -691,6 +693,12 @@ const ChangellyCheckout: React.FC = () => {
   useEffect(() => {
     dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
     createFixTransaction(1);
+
+    return () => {
+      if (countDown) {
+        clearInterval(countDown);
+      }
+    };
   }, []);
 
   useEffect(() => {
