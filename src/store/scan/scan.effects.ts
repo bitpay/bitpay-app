@@ -21,6 +21,7 @@ import {
   IsValidEthereumUri,
   IsValidMaticUri,
   IsValidMaticAddress,
+  isValidBuyCryptoUri,
   isValidMoonpayUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
@@ -75,6 +76,8 @@ import {Analytics} from '../analytics/analytics.effects';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
+import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
+import {IsUtxoCoin} from '../wallet/utils/currency';
 
 export const incomingData =
   (
@@ -158,6 +161,9 @@ export const incomingData =
         // Wallet Connect URI
       } else if (isValidWalletConnectUri(data)) {
         dispatch(handleWalletConnectUri(data));
+        // Buy Crypto
+      } else if (isValidBuyCryptoUri(data)) {
+        dispatch(handleBuyCryptoUri(data));
         // Moonpay
       } else if (isValidMoonpayUri(data)) {
         dispatch(handleMoonpayUri(data));
@@ -964,6 +970,62 @@ const handleLitecoinUri =
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
+  };
+
+const handleBuyCryptoUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(
+      LogActions.info('Incoming-data (redirect): Buy crypto pre-set: ' + data),
+    );
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const partner = getParameterByName('partner', res)?.toLowerCase();
+    const amount = getParameterByName('amount', res);
+    let coin = getParameterByName('coin', res)?.toLowerCase();
+    let chain = getParameterByName('chain', res)?.toLowerCase();
+
+    let _amount: number | undefined;
+    if (amount) {
+      const {APP} = getState();
+      const altCurrency = APP.defaultAltCurrency?.isoCode;
+      _amount =
+        altCurrency === 'USD'
+          ? Number(amount)
+          : dispatch(
+              calculateUsdToAltFiat(Number(amount), altCurrency || 'USD'),
+            );
+    }
+
+    if (coin && !chain) {
+      if (IsUtxoCoin(coin)) {
+        chain = coin;
+      } else {
+        coin = undefined;
+      }
+    }
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'BuyCrypto',
+          params: {
+            screen: 'BuyCryptoRoot',
+            params: {
+              partner,
+              amount: _amount,
+              currencyAbbreviation: coin,
+              chain,
+            },
+          },
+        },
+      ],
+    });
   };
 
 const handleMoonpayUri =

@@ -8,6 +8,7 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {BuyCryptoLimits} from './buy-crypto.models';
 import {Analytics} from '../analytics/analytics.effects';
+import {BuyCryptoExchangeKey} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 
 export const calculateAltFiatToUsd =
   (
@@ -76,7 +77,10 @@ export const calculateUsdToAltFiat =
   };
 
 export const getBuyCryptoFiatLimits =
-  (exchange?: string, fiatCurrency?: string): Effect<BuyCryptoLimits> =>
+  (
+    exchange?: BuyCryptoExchangeKey,
+    fiatCurrency?: string,
+  ): Effect<BuyCryptoLimits> =>
   (dispatch, getState) => {
     const state = getState();
     const locationData = state.LOCATION.locationData;

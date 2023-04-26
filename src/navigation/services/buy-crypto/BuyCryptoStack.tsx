@@ -9,22 +9,14 @@ import {HeaderTitle} from '../../../components/styled/Text';
 import BuyCryptoRoot, {
   BuyCryptoRootScreenParams,
 } from './screens/BuyCryptoRoot';
-import BuyCryptoOffers from './screens/BuyCryptoOffers';
+import BuyCryptoOffers, {
+  BuyCryptoOffersScreenParams,
+} from './screens/BuyCryptoOffers';
 import {useTranslation} from 'react-i18next';
-import {BuyCryptoConfig} from '../../../store/external-services/external-services.types';
 
 export type BuyCryptoStackParamList = {
   BuyCryptoRoot: BuyCryptoRootScreenParams;
-  BuyCryptoOffers: {
-    amount: number;
-    fiatCurrency: string;
-    coin: string;
-    chain: string;
-    country: string;
-    selectedWallet: any;
-    paymentMethod: any;
-    buyCryptoConfig: BuyCryptoConfig | undefined;
-  };
+  BuyCryptoOffers: BuyCryptoOffersScreenParams;
 };
 
 export enum BuyCryptoScreens {

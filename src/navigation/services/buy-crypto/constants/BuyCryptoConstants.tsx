@@ -6,9 +6,17 @@ import ApplePayIcon from '../../../../../assets/img/services/payment-methods/app
 import BankIcon from '../../../../../assets/img/services/payment-methods/icon-bank.svg';
 import CreditCardIcon from '../../../../../assets/img/services/payment-methods/icon-creditcard.svg';
 import DebitCardIcon from '../../../../../assets/img/services/payment-methods/icon-debitcard.svg';
+import {BuyCryptoExchangeKey} from '../utils/buy-crypto-utils';
+
+export type PaymentMethodKey =
+  | 'applePay'
+  | 'creditCard'
+  | 'debitCard'
+  | 'sepaBankTransfer'
+  | 'other';
 
 export type PaymentMethods = {
-  [key in string]: PaymentMethod;
+  [key in PaymentMethodKey]: PaymentMethod;
 };
 
 export interface PaymentMethod {
@@ -16,7 +24,7 @@ export interface PaymentMethod {
   method: string;
   imgSrc: JSX.Element;
   supportedExchanges: {
-    [key in string]: boolean;
+    [key in BuyCryptoExchangeKey]: boolean;
   };
   enabled: boolean;
 }

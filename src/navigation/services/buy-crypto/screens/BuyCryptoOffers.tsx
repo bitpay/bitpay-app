@@ -2,7 +2,12 @@ import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, ScrollView} from 'react-native';
 import uuid from 'react-native-uuid';
 import styled from 'styled-components/native';
-import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
+import {
+  RouteProp,
+  useRoute,
+  useNavigation,
+  StackActions,
+} from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
@@ -49,6 +54,8 @@ import {
   APP_NAME_UPPERCASE,
 } from '../../../../constants/config';
 import {
+  BuyCryptoExchangeKey,
+  BuyCryptoSupportedExchanges,
   getAvailableFiatCurrencies,
   isPaymentMethodSupported,
 } from '../utils/buy-crypto-utils';
@@ -78,8 +85,9 @@ import {BuyCryptoConfig} from '../../../../store/external-services/external-serv
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
+import {AppActions} from '../../../../store/app';
 
-export interface BuyCryptoOffersProps {
+export type BuyCryptoOffersScreenParams = {
   amount: number;
   fiatCurrency: string;
   coin: string;
@@ -87,8 +95,9 @@ export interface BuyCryptoOffersProps {
   country: string;
   selectedWallet: Wallet;
   paymentMethod: PaymentMethod;
-  buyCryptoConfig: BuyCryptoConfig;
-}
+  buyCryptoConfig: BuyCryptoConfig | undefined;
+  preSetPartner?: BuyCryptoExchangeKey | undefined;
+};
 
 interface SimplexGetQuoteRequestData {
   digital_currency: string;
@@ -100,10 +109,8 @@ interface SimplexGetQuoteRequestData {
   payment_methods?: string[];
 }
 
-export type CryptoOfferKey = 'moonpay' | 'ramp' | 'simplex' | 'wyre';
-
 export type CryptoOffer = {
-  key: CryptoOfferKey;
+  key: BuyCryptoExchangeKey;
   showOffer: boolean;
   logo: JSX.Element;
   expanded: boolean;
@@ -337,22 +344,17 @@ const BuyCryptoOffers: React.FC = () => {
       selectedWallet,
       paymentMethod,
       buyCryptoConfig,
+      preSetPartner,
     },
-  }: {params: BuyCryptoOffersProps} =
-    useRoute<RouteProp<{params: BuyCryptoOffersProps}>>();
+  }: {params: BuyCryptoOffersScreenParams} =
+    useRoute<RouteProp<{params: BuyCryptoOffersScreenParams}>>();
   const {t} = useTranslation();
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
 
-  const exchangesArray: CryptoOfferKey[] = [
-    'moonpay',
-    'ramp',
-    'simplex',
-    'wyre',
-  ];
-  exchangesArray.forEach((exchange: CryptoOfferKey) => {
+  BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
     if (offersDefault[exchange]) {
       offersDefault[exchange].fiatCurrency = getAvailableFiatCurrencies(
         exchange,
@@ -360,16 +362,36 @@ const BuyCryptoOffers: React.FC = () => {
         ? fiatCurrency
         : 'USD';
 
-      offersDefault[exchange].showOffer =
-        isPaymentMethodSupported(
-          exchange,
-          paymentMethod,
-          coin,
-          chain,
-          offersDefault[exchange].fiatCurrency,
-          country,
-        ) &&
-        (!buyCryptoConfig?.[exchange] || !buyCryptoConfig?.[exchange]?.removed);
+      if (
+        preSetPartner &&
+        BuyCryptoSupportedExchanges.includes(preSetPartner)
+      ) {
+        offersDefault[exchange].showOffer =
+          preSetPartner === exchange
+            ? isPaymentMethodSupported(
+                preSetPartner,
+                paymentMethod,
+                coin,
+                chain,
+                offersDefault[preSetPartner].fiatCurrency,
+                country,
+              ) &&
+              (!buyCryptoConfig?.[preSetPartner] ||
+                !buyCryptoConfig?.[preSetPartner]?.removed)
+            : false;
+      } else {
+        offersDefault[exchange].showOffer =
+          isPaymentMethodSupported(
+            exchange,
+            paymentMethod,
+            coin,
+            chain,
+            offersDefault[exchange].fiatCurrency,
+            country,
+          ) &&
+          (!buyCryptoConfig?.[exchange] ||
+            !buyCryptoConfig?.[exchange]?.removed);
+      }
     }
   });
 
@@ -1471,18 +1493,52 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
+  const showError = (title: string, msg: string) => {
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        title: title ?? t('Error'),
+        message: msg,
+        type: 'error',
+        actions: [
+          {
+            text: t('OK'),
+            action: () => {
+              navigation.dispatch(StackActions.popToTop());
+            },
+          },
+        ],
+        enableBackdropDismiss: true,
+        onBackdropDismiss: () => {
+          navigation.dispatch(StackActions.popToTop());
+        },
+      }),
+    );
+  };
+
   useEffect(() => {
-    if (offers.moonpay.showOffer) {
-      getMoonpayQuote();
-    }
-    if (offers.ramp.showOffer) {
-      getRampQuote();
-    }
-    if (offers.simplex.showOffer) {
-      getSimplexQuote();
-    }
-    if (offers.wyre.showOffer) {
-      getWyreQuote();
+    const showedOffersCount = Object.values(cloneDeep(offers)).filter(
+      offer => offer.showOffer,
+    ).length;
+    if (showedOffersCount === 0) {
+      const title = t('No offers');
+      const msg = t(
+        'There are currently no offers that satisfy your request. Please try again later.',
+      );
+      logger.error(msg);
+      showError(title, msg);
+    } else {
+      if (offers.moonpay.showOffer) {
+        getMoonpayQuote();
+      }
+      if (offers.ramp.showOffer) {
+        getRampQuote();
+      }
+      if (offers.simplex.showOffer) {
+        getSimplexQuote();
+      }
+      if (offers.wyre.showOffer) {
+        getWyreQuote();
+      }
     }
   }, []);
 
