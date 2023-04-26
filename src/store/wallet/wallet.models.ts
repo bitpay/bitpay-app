@@ -322,6 +322,8 @@ export interface TransactionProposal {
   hasMultiplesOutputs: boolean;
   requiredSignatures: number;
   requiredRejections: number;
+  raw?: string;
+  txid?: string;
 }
 
 export interface ProposalErrorHandlerProps {

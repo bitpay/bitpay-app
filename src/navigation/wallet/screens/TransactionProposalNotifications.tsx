@@ -102,7 +102,7 @@ const ProposalsInfoContainer = styled.View`
 const CheckBoxContainer = styled.View`
   flex-direction: column;
   justify-content: center;
-  margin-left: 15px;
+  margin-left: 5px;
   margin-right: 15px;
 `;
 
