@@ -23,36 +23,90 @@ import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
+export type BuyCryptoExchangeKey = 'moonpay' | 'ramp' | 'simplex' | 'wyre';
+
+export const BuyCryptoSupportedExchanges: BuyCryptoExchangeKey[] = [
+  'moonpay',
+  'ramp',
+  'simplex',
+  'wyre',
+];
+
 export const getEnabledPaymentMethods = (
   locationData?: LocationData | null,
   currency?: string,
   coin?: string,
   chain?: string,
   country?: string,
-): PaymentMethods => {
+  exchange?: BuyCryptoExchangeKey | undefined,
+): Partial<PaymentMethods> => {
   if (!currency || !coin || !chain) {
     return {};
   }
   PaymentMethodsAvailable.sepaBankTransfer.enabled =
     !!locationData?.isEuCountry;
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
-    return (
-      method.enabled &&
-      (isPaymentMethodSupported(
-        'moonpay',
-        method,
-        coin,
-        chain,
-        currency,
-        country,
-      ) ||
-        isPaymentMethodSupported('ramp', method, coin, chain, currency) ||
-        isPaymentMethodSupported('simplex', method, coin, chain, currency) ||
-        isPaymentMethodSupported('wyre', method, coin, chain, currency))
-    );
+    return exchange && BuyCryptoSupportedExchanges.includes(exchange)
+      ? method.enabled &&
+          isPaymentMethodSupported(
+            exchange,
+            method,
+            coin,
+            chain,
+            currency,
+            country,
+          )
+      : method.enabled &&
+          (isPaymentMethodSupported(
+            'moonpay',
+            method,
+            coin,
+            chain,
+            currency,
+            country,
+          ) ||
+            isPaymentMethodSupported('ramp', method, coin, chain, currency) ||
+            isPaymentMethodSupported(
+              'simplex',
+              method,
+              coin,
+              chain,
+              currency,
+            ) ||
+            isPaymentMethodSupported('wyre', method, coin, chain, currency));
   });
 
   return EnabledPaymentMethods;
+};
+
+export const getBuyCryptoSupportedCoins = (
+  locationData?: LocationData | null,
+  exchange?: string,
+): string[] => {
+  switch (exchange) {
+    case 'moonpay':
+      return getMoonpaySupportedCurrencies(
+        locationData?.countryShortCode || 'US',
+      );
+    case 'ramp':
+      return getRampSupportedCurrencies();
+    case 'simplex':
+      return getSimplexSupportedCurrencies();
+    case 'wyre':
+      return getWyreSupportedCurrencies();
+    default:
+      const allSupportedCurrencies = [
+        ...new Set([
+          ...getMoonpaySupportedCurrencies(
+            locationData?.countryShortCode || 'US',
+          ),
+          ...getRampSupportedCurrencies(),
+          ...getSimplexSupportedCurrencies(),
+          ...getWyreSupportedCurrencies(),
+        ]),
+      ];
+      return allSupportedCurrencies;
+  }
 };
 
 export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
@@ -79,7 +133,7 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
 };
 
 export const isPaymentMethodSupported = (
-  exchange: string,
+  exchange: BuyCryptoExchangeKey,
   paymentMethod: PaymentMethod,
   coin: string,
   chain: string,

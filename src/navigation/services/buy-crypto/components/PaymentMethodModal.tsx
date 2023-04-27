@@ -8,6 +8,8 @@ import {
   ModalHeaderRight,
 } from '../styled/BuyCryptoModals';
 import {
+  BuyCryptoExchangeKey,
+  BuyCryptoSupportedExchanges,
   getEnabledPaymentMethods,
   isPaymentMethodSupported,
 } from '../utils/buy-crypto-utils';
@@ -33,6 +35,7 @@ interface PaymentMethodsModalProps {
   coin?: string;
   chain?: string;
   currency?: string;
+  preSetPartner?: BuyCryptoExchangeKey | undefined;
 }
 
 const PaymentMethodCard = styled.TouchableOpacity`
@@ -88,6 +91,7 @@ const PaymentMethodsModal = ({
   coin,
   currency,
   chain,
+  preSetPartner,
 }: PaymentMethodsModalProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -99,6 +103,7 @@ const PaymentMethodsModal = ({
     coin,
     chain,
     locationData?.countryShortCode || 'US',
+    preSetPartner,
   );
 
   const showOtherPaymentMethodsInfoSheet = (
@@ -127,6 +132,23 @@ const PaymentMethodsModal = ({
         ],
       }),
     );
+  };
+
+  const getPartnerLogo = (
+    exchange: BuyCryptoExchangeKey,
+  ): JSX.Element | null => {
+    switch (exchange) {
+      case 'moonpay':
+        return <MoonpayLogo key={exchange} widthIcon={20} heightIcon={20} />;
+      case 'ramp':
+        return <RampLogo key={exchange} width={65} height={15} />;
+      case 'simplex':
+        return <SimplexLogo key={exchange} widthIcon={20} heightIcon={20} />;
+      case 'wyre':
+        return <WyreLogo key={exchange} width={60} height={15} />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -194,55 +216,24 @@ const PaymentMethodsModal = ({
                         </PaymentMethodProviderText>
                       </PaymentMethodProvider>
                       <PaymentMethodProvider style={{height: 30}}>
-                        {coin &&
-                        currency &&
-                        chain &&
-                        isPaymentMethodSupported(
-                          'moonpay',
-                          paymentMethod,
-                          coin,
-                          chain,
-                          currency,
-                          locationData?.countryShortCode || 'US',
-                        ) ? (
-                          <MoonpayLogo widthIcon={20} heightIcon={20} />
-                        ) : null}
-                        {coin &&
-                        currency &&
-                        chain &&
-                        isPaymentMethodSupported(
-                          'ramp',
-                          paymentMethod,
-                          coin,
-                          chain,
-                          currency,
-                        ) ? (
-                          <RampLogo width={65} height={15} />
-                        ) : null}
-                        {coin &&
-                        currency &&
-                        chain &&
-                        isPaymentMethodSupported(
-                          'simplex',
-                          paymentMethod,
-                          coin,
-                          chain,
-                          currency,
-                        ) ? (
-                          <SimplexLogo widthIcon={20} heightIcon={20} />
-                        ) : null}
-                        {coin &&
-                        currency &&
-                        chain &&
-                        isPaymentMethodSupported(
-                          'wyre',
-                          paymentMethod,
-                          coin,
-                          chain,
-                          currency,
-                        ) ? (
-                          <WyreLogo width={60} height={15} />
-                        ) : null}
+                        {preSetPartner &&
+                        BuyCryptoSupportedExchanges.includes(preSetPartner)
+                          ? getPartnerLogo(preSetPartner)
+                          : BuyCryptoSupportedExchanges.map(exchange => {
+                              return coin &&
+                                currency &&
+                                chain &&
+                                isPaymentMethodSupported(
+                                  exchange,
+                                  paymentMethod,
+                                  coin,
+                                  chain,
+                                  currency,
+                                  locationData?.countryShortCode || 'US',
+                                )
+                                ? getPartnerLogo(exchange)
+                                : null;
+                            })}
                       </PaymentMethodProvider>
                     </PaymentMethodCheckboxTexts>
                   </PaymentMethodCardContainer>
