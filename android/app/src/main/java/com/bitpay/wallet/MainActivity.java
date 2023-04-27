@@ -61,6 +61,10 @@ public class MainActivity extends ReactActivity {
   public void onNewIntent(Intent intent) {
     super.onNewIntent(intent);
     setIntent(intent);
+    // Clear the intent data so that the next time the Activity is opened,
+    // it will not be opened with old deeplink
+    Intent clonedIntent = getIntent();
+    clonedIntent.setData(null);
   }
 
   @Override
