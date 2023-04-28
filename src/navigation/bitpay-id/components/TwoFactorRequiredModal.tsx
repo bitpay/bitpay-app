@@ -77,7 +77,7 @@ const TwoFactorRequiredModal = ({
         <SecondaryAction
           buttonType={'link'}
           onPress={() => onClose()}
-          height={38}>
+          height={40}>
           {t('Do this later')}
         </SecondaryAction>
       </ModalContainer>
