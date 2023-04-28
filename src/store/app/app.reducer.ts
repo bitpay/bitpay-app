@@ -100,6 +100,7 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   defaultLanguage: string;
   showPortfolioValue: boolean;
+  hideAllBalances: boolean;
   brazeContentCardSubscription: EventSubscription | null;
   brazeContentCards: ContentCard[];
   brazeEid: string | undefined;
@@ -173,6 +174,7 @@ const initialState: AppState = {
   colorScheme: null,
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
+  hideAllBalances: false,
   brazeContentCardSubscription: null,
   brazeContentCards: [],
   brazeEid: undefined,
@@ -410,6 +412,12 @@ export const appReducer = (
       return {
         ...state,
         showPortfolioValue: action.payload,
+      };
+
+    case AppActionTypes.TOGGLE_HIDE_ALL_BALANCES:
+      return {
+        ...state,
+        hideAllBalances: action.payload ?? !state.hideAllBalances,
       };
 
     case AppActionTypes.BRAZE_INITIALIZED:

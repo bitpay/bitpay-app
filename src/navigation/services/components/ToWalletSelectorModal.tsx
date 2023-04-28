@@ -51,8 +51,6 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {RootState} from '../../../store';
-import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import {findWalletById, toFiat} from '../../../store/wallet/utils/wallet';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
@@ -264,14 +262,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const tokens = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
-    };
-  });
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const [keySelectorModalVisible, setKeySelectorModalVisible] =
     useState<boolean>(false);
   const [viewAllChainSelected, setViewAllChainSelected] = useState<string>();
@@ -496,6 +487,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
         linkedCoinbase: false,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType: 'listView',
+        hideKeyBalance: hideAllBalances,
         context: 'keySelector',
         onPress: onKeySelected,
         currency: currency,
@@ -814,6 +806,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                 <WalletSelectMenuBodyContainer>
                   <KeyWalletsRow
                     keyWallets={keyWallets!}
+                    hideBalance={hideAllBalances}
                     onPress={
                       addTokenToLinkedWallet?.currencyAbbreviation
                         ? onLinkedWalletSelect

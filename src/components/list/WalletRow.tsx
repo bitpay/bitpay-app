@@ -66,6 +66,7 @@ interface Props {
   hideIcon?: boolean;
   isLast?: boolean;
   onPress: () => void;
+  hideBalance: boolean;
 }
 
 export const buildTestBadge = (
@@ -86,7 +87,7 @@ export const buildTestBadge = (
   );
 };
 
-const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
+const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,
@@ -98,7 +99,6 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
     fiatBalance,
     isToken,
     network,
-    hideBalance,
     multisig,
   } = wallet;
 

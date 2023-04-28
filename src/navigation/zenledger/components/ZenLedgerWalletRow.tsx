@@ -52,6 +52,7 @@ interface Props {
   isLast?: boolean;
   onPress: (keyId: string, wallet: ZenLedgerWalletObj) => void;
   selectAll: boolean;
+  hideBalance: boolean;
 }
 
 const ZenLedgerWalletRow = ({
@@ -60,10 +61,10 @@ const ZenLedgerWalletRow = ({
   onPress,
   isLast,
   selectAll,
+  hideBalance,
 }: Props) => {
   const {wallet, fiatBalance} = _wallet;
-  const {img, badgeImg, walletName, currencyName, hideBalance, receiveAddress} =
-    wallet;
+  const {img, badgeImg, walletName, currencyName, receiveAddress} = wallet;
   return (
     <RowContainer
       isLast={isLast}

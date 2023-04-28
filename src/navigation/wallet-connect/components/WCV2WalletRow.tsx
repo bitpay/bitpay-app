@@ -95,16 +95,16 @@ const WCV2WalletRow = ({
           wallet.chain,
     ),
   );
-
   const requestsV1 = useAppSelector(({WALLET_CONNECT}) => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
+
   let {
     img,
     badgeImg,
     walletName,
     currencyName,
-    hideBalance,
     balance,
     receiveAddress,
     network,
@@ -149,7 +149,7 @@ const WCV2WalletRow = ({
           </TestBadgeContainer>
         </Row>
         <ListItemSubText style={{marginTop: -4}}>
-          {!hideBalance ? balance?.crypto : '****'}
+          {!hideAllBalances ? balance?.crypto : '****'}
         </ListItemSubText>
       </CurrencyColumn>
       {receiveAddress ? (

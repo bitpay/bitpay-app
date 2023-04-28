@@ -100,6 +100,7 @@ const CoinbaseDashboard = () => {
     ({COINBASE}) => COINBASE.hideTotalBalance,
   );
   const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
   const hasKeys = Object.values(keys).filter(k => k.backupComplete).length >= 1;
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
@@ -163,6 +164,7 @@ const CoinbaseDashboard = () => {
         <WalletRow
           id={walletItem.id}
           wallet={walletItem}
+          hideBalance={hideAllBalances}
           onPress={() => {
             haptic('impactLight');
             navigation.navigate('Coinbase', {
@@ -325,7 +327,7 @@ const CoinbaseDashboard = () => {
                     );
                   }}
                   defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
-                  hideKeyBalance={_key.hideKeyBalance}
+                  hideKeyBalance={hideAllBalances}
                 />
               ))}
           </KeyDropdownOptionsContainer>

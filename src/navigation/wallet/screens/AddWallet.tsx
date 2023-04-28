@@ -209,11 +209,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     isCustomToken,
   } = route.params;
   // temporary until advanced settings is finished
-  const network = useAppSelector(({APP}) => APP.network);
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances, network} = useAppSelector(
+    ({APP}) => APP,
+  );
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const [customTokenAddress, setCustomTokenAddress] = useState<
     string | undefined
@@ -545,6 +546,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     ({item}) => (
       <WalletRow
         id={item.id}
+        hideBalance={hideAllBalances}
         onPress={() => {
           haptic('soft');
           setAssociatedWallet(item);

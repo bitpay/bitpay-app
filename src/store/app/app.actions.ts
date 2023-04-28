@@ -188,6 +188,11 @@ export const showPortfolioValue = (value: boolean): AppActionType => ({
   payload: value,
 });
 
+export const toggleHideAllBalances = (value?: boolean): AppActionType => ({
+  type: AppActionTypes.TOGGLE_HIDE_ALL_BALANCES,
+  payload: value,
+});
+
 export const brazeInitialized = (
   contentCardSubscription: EventSubscription | null,
 ): AppActionType => ({

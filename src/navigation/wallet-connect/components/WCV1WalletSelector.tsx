@@ -66,7 +66,7 @@ export default ({
 
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
 
   let allWallets = Object.values(keys)
     .filter(key => key.backupComplete)
@@ -214,6 +214,7 @@ export default ({
             <WalletSelectMenuBodyContainer>
               <KeyWalletsRow
                 keyWallets={keyWallets!}
+                hideBalance={hideAllBalances}
                 onPress={onWalletSelect}
               />
             </WalletSelectMenuBodyContainer>

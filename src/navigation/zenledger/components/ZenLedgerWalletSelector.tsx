@@ -10,6 +10,7 @@ import {
   ZenLedgerKey,
   ZenLedgerWalletObj,
 } from '../../../store/zenledger/zenledger.models';
+import {useAppSelector} from '../../../utils/hooks';
 
 export const ZenLedgerKeyRowContainer = styled.View`
   padding: 0 ${ScreenGutter} 2px;
@@ -25,6 +26,7 @@ export default ({
   onDropdownPress: (keyId: string) => void;
 }) => {
   const {t} = useTranslation();
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
   return (
     <View style={{marginTop: 12, marginBottom: 100}}>
       {keys && keys.length ? (
@@ -33,6 +35,7 @@ export default ({
             keys={keys}
             onPress={onPress}
             onDropdownPress={onDropdownPress}
+            hideBalance={hideAllBalances}
           />
         </ZenLedgerKeyRowContainer>
       ) : (
