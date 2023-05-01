@@ -586,7 +586,7 @@ export const WalletSelector = ({
               />
             </WalletSelectMenuHeaderIconContainer>
           ) : null}
-          <H4>{t('Select a Walletx')}</H4>
+          <H4>{t('Select a Wallet')}</H4>
         </WalletSelectMenuHeaderContainer>
         <WalletSelectMenuBodyContainer>
           <KeyWalletsRow<KeyWallet>

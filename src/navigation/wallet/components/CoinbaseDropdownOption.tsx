@@ -18,11 +18,7 @@ interface Props {
 const CoinbaseDropdownOption = ({onPress}: Props) => {
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const hideTotalBalance = useAppSelector(
-    ({COINBASE}) => COINBASE.hideTotalBalance,
-  );
-
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const {amount, code} = formatFiatAmountObj(
     balance,
     defaultAltCurrency.isoCode,
@@ -35,7 +31,7 @@ const CoinbaseDropdownOption = ({onPress}: Props) => {
           <CoinbaseSvg style={{marginRight: 4}} width="25" />
           <KeyName>Coinbase</KeyName>
         </Row>
-        {!hideTotalBalance ? (
+        {!hideAllBalances ? (
           <>
             <Row style={{alignItems: 'center', justifyContent: 'flex-end'}}>
               <Balance>

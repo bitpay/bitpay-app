@@ -32,8 +32,8 @@ import {CoinbaseStackParamList} from '../CoinbaseStack';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {toggleHideCoinbaseTotalBalance} from '../../../store/coinbase/coinbase.actions';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {AppActions} from '../../../store/app';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -115,10 +115,7 @@ const CoinbaseSettings = () => {
     ({COINBASE}) => COINBASE.isApiLoading,
   );
   const userError = useAppSelector(({COINBASE}) => COINBASE.getUserError);
-
-  const hideTotalBalance = useAppSelector(
-    ({COINBASE}) => COINBASE.hideTotalBalance,
-  );
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
@@ -277,13 +274,13 @@ const CoinbaseSettings = () => {
           </Detail>
           <Hr />
           <Detail>
-            <Item>{t('Hide Balance')}</Item>
+            <Item>{t('Hide All Balances')}</Item>
 
             <ToggleSwitch
-              onChange={() => {
-                dispatch(toggleHideCoinbaseTotalBalance(!hideTotalBalance));
-              }}
-              isEnabled={!!hideTotalBalance}
+              onChange={value =>
+                dispatch(AppActions.toggleHideAllBalances(value))
+              }
+              isEnabled={!!hideAllBalances}
             />
           </Detail>
           <Hr />

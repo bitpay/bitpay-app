@@ -94,13 +94,9 @@ const CoinbaseDashboard = () => {
   );
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
 
-  const hideTotalBalance = useAppSelector(
-    ({COINBASE}) => COINBASE.hideTotalBalance,
-  );
   const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const {hideAllBalances} = useAppSelector(({APP}) => APP);
   const hasKeys = Object.values(keys).filter(k => k.backupComplete).length >= 1;
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
@@ -176,7 +172,13 @@ const CoinbaseDashboard = () => {
         />
       );
     },
-    [dispatch, navigation, exchangeRates, defaultAltCurrency.isoCode],
+    [
+      dispatch,
+      navigation,
+      exchangeRates,
+      defaultAltCurrency.isoCode,
+      hideAllBalances,
+    ],
   );
 
   const showError = useCallback(
@@ -243,7 +245,7 @@ const CoinbaseDashboard = () => {
       <BalanceContainer>
         {balance !== null ? (
           <>
-            {!hideTotalBalance ? (
+            {!hideAllBalances ? (
               <Balance scale={shouldScale(balance)}>
                 {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
               </Balance>

@@ -183,9 +183,7 @@ const WalletSettings = () => {
           <WalletSettingsTitle>{t('Hide All Balances')}</WalletSettingsTitle>
 
           <ToggleSwitch
-            onChange={() => {
-              dispatch(toggleHideAllBalances());
-            }}
+            onChange={value => dispatch(toggleHideAllBalances(value))}
             isEnabled={!!hideAllBalances}
           />
         </SettingView>
