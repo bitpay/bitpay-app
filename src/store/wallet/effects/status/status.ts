@@ -299,33 +299,33 @@ export const startUpdateAllWalletStatusForKeys =
             string,
             {
               tokenAddresses: string[] | undefined;
-              multisigContractAddress: string | null;
             }
           >;
 
           key.wallets
             .filter(wallet => {
               return (
-                !wallet.credentials.token && wallet.credentials.isComplete()
+                !wallet.credentials.token &&
+                !wallet.credentials.multisigEthInfo &&
+                wallet.credentials.isComplete()
               );
             })
-            .forEach(({credentials: {copayerId, multisigEthInfo}, tokens}) => {
+            .forEach(({credentials: {copayerId}, tokens}) => {
               const tokenAddresses = tokens?.map(
                 address => '0x' + address.split('0x')[1],
               );
-              const multisigContractAddress =
-                multisigEthInfo?.multisigContractAddress || null;
 
               walletOptions[copayerId] = {
                 tokenAddresses,
-                multisigContractAddress,
               };
             });
 
           const credentials = key.wallets
             .filter(
               wallet =>
-                !wallet.credentials.token && wallet.credentials.isComplete(),
+                !wallet.credentials.token &&
+                !wallet.credentials.multisigEthInfo &&
+                wallet.credentials.isComplete(),
             )
             .map(wallet => wallet.credentials);
 
