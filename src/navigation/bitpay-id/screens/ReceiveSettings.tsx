@@ -454,50 +454,46 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
             </>
           ) : null}
         </ViewBody>
-        <WalletSelector
-          isVisible={walletSelectorVisible}
-          setWalletSelectorVisible={setWalletSelectorVisible}
-          autoSelectIfOnlyOneWallet={false}
-          currency={walletSelectorCurrency}
-          chain={walletSelectorChain}
-          walletsAndAccounts={{
-            keyWallets:
-              keyWalletsByCurrency[
-                getReceivingAddressKey(
-                  walletSelectorCurrency,
-                  walletSelectorChain,
-                )
-              ],
-            coinbaseWallets: [],
-          }}
-          onWalletSelect={async wallet => {
-            const key = keys[wallet.keyId];
-            if (!key.backupComplete) {
-              dispatch(
-                showBottomNotificationModal(
-                  keyBackupRequired(
-                    Object.values(keys)[0],
-                    navigator,
-                    dispatch,
+        {keyWallets.length > 0 ? (
+          <WalletSelector
+            isVisible={walletSelectorVisible}
+            setWalletSelectorVisible={setWalletSelectorVisible}
+            autoSelectIfOnlyOneWallet={false}
+            currency={walletSelectorCurrency}
+            chain={walletSelectorChain}
+            walletsAndAccounts={{
+              keyWallets: keyWallets,
+              coinbaseWallets: [],
+            }}
+            onWalletSelect={async wallet => {
+              const key = keys[wallet.keyId];
+              if (!key.backupComplete) {
+                dispatch(
+                  showBottomNotificationModal(
+                    keyBackupRequired(
+                      Object.values(keys)[0],
+                      navigator,
+                      dispatch,
+                    ),
                   ),
-                ),
-              );
-              return;
-            }
-            await generateAddress(wallet).catch(async error => {
-              await dispatch(dismissOnGoingProcessModal());
-              await sleep(400);
-              showError({
-                error,
-                defaultErrorMessage: t('Could not generate address'),
+                );
+                return;
+              }
+              await generateAddress(wallet).catch(async error => {
+                await dispatch(dismissOnGoingProcessModal());
+                await sleep(400);
+                showError({
+                  error,
+                  defaultErrorMessage: t('Could not generate address'),
+                });
               });
-            });
-          }}
-          onCoinbaseAccountSelect={() => {}}
-          onBackdropPress={async () => {
-            setWalletSelectorVisible(false);
-          }}
-        />
+            }}
+            onCoinbaseAccountSelect={() => {}}
+            onBackdropPress={async () => {
+              setWalletSelectorVisible(false);
+            }}
+          />
+        ) : null}
       </ViewContainer>
       <FooterButton
         background={true}
