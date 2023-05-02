@@ -40,7 +40,6 @@ import RNFS from 'react-native-fs';
 import {
   biometricLockActive,
   currentPin,
-  dismissOnGoingProcessModal,
   pinLockActive,
   setAnnouncementsAccepted,
   setColorScheme,
@@ -49,7 +48,6 @@ import {
   setIntroCompleted,
   setKeyMigrationFailure,
   setOnboardingCompleted,
-  showBottomNotificationModal,
   showPortfolioValue,
   successGenerateAppIdentity,
 } from '../../../app/app.actions';
@@ -58,10 +56,7 @@ import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
-import {
-  startUpdateAllKeyAndWalletStatus,
-  startUpdateAllWalletStatusForKey,
-} from '../status/status';
+import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {startGetRates} from '../rates/rates';
 import {
   accessTokenSuccess,

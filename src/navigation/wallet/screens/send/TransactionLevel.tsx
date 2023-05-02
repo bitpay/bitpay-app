@@ -19,11 +19,7 @@ import {
   MinFeeWarning,
 } from '../../components/ErrorMessages';
 import {useAppDispatch} from '../../../../utils/hooks';
-import {
-  GetFeeUnits,
-  GetTheme,
-  IsERCToken,
-} from '../../../../store/wallet/utils/currency';
+import {GetFeeUnits, GetTheme} from '../../../../store/wallet/utils/currency';
 import styled, {useTheme} from 'styled-components/native';
 import {
   ActionContainer,

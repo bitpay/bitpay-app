@@ -1,9 +1,9 @@
-import React, {useState} from 'react';
+import React from 'react';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {FeedbackRateType} from '../../settings/about/screens/SendFeedback';
-import {H4, Link, Paragraph} from '../../../../components/styled/Text';
+import {H4, Paragraph} from '../../../../components/styled/Text';
 import {LightBlack, SlateDark, White} from '../../../../styles/colors';
 
 import HearFace from ' ../../../../../assets/img/settings/feedback/heart-face.svg';

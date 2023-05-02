@@ -12,7 +12,6 @@ import {
 } from '../../constants/config';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
-import {NavScreenParams, RootStackParamList} from '../../Root';
 import {
   AppIdentity,
   HomeCarouselConfig,

@@ -3,10 +3,7 @@ import {
   BitpaySupportedCurrencies,
   BitpaySupportedUtxoCoins,
 } from '../../../constants/currencies';
-import {
-  addTokenChainSuffix,
-  getCurrencyAbbreviation,
-} from '../../../utils/helper-methods';
+import {getCurrencyAbbreviation} from '../../../utils/helper-methods';
 
 export const GetProtocolPrefix =
   (

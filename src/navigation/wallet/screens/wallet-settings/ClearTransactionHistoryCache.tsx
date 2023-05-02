@@ -6,7 +6,6 @@ import Button, {ButtonState} from '../../../../components/button/Button';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {WalletStackParamList} from '../../WalletStack';
-import _ from 'lodash';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {sleep} from '../../../../utils/helper-methods';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';

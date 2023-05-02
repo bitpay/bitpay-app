@@ -3,7 +3,6 @@ import {
   RampQuoteRequestData,
   RampQuoteResultForPaymentMethod,
 } from '../../../../store/buy-crypto/buy-crypto.models';
-import {Wallet} from '../../../../store/wallet/wallet.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
 export const rampEnv = __DEV__ ? 'sandbox' : 'production';

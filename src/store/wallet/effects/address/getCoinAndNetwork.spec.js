@@ -1,5 +1,5 @@
 import React from 'react';
-import {GetCoinAndNetwork, GetAddressNetwork} from './address';
+import {GetCoinAndNetwork} from './address';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
 
 /**
