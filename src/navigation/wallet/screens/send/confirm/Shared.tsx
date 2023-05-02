@@ -490,7 +490,7 @@ export const WalletSelector = ({
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [selectorVisible, setSelectorVisible] = useState(false);
-  const [showNoWallets, setShowNoWallets] = useState(false);
+  const [showNoWalletsMessage, setShowNoWalletsMessage] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
       ? true
@@ -562,17 +562,17 @@ export const WalletSelector = ({
     }
 
     if (!hasWallets && !hasCoinbase) {
-      setShowNoWallets(true);
+      setShowNoWalletsMessage(true);
     }
   }, [dispatch, navigation, walletsAndAccounts]);
 
   useEffect(() => {
-    isVisible && !showNoWallets
-      ? showSelector(autoSelectSingleWallet)
-      : showNoWallets
-      ? dispatch(showNoWalletsModal({navigation}))
+    isVisible
+      ? showNoWalletsMessage
+        ? dispatch(showNoWalletsModal({navigation}))
+        : showSelector(autoSelectSingleWallet)
       : setSelectorVisible(false);
-  }, [isVisible, showNoWallets]);
+  }, [isVisible]);
 
   return (
     <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>
