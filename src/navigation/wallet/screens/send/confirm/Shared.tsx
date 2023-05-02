@@ -490,7 +490,7 @@ export const WalletSelector = ({
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [selectorVisible, setSelectorVisible] = useState(false);
-  const [showNoWallets, setShowNoWallets] = useState(false);
+  const [showNoWalletsMessage, setShowNoWalletsMessage] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
       ? true
@@ -550,29 +550,27 @@ export const WalletSelector = ({
   useMemo(() => {
     let hasWallets: boolean = false;
     let hasCoinbase: boolean = false;
-    for (const keyWallet of walletsAndAccounts.keyWallets) {
-      if (keyWallet.wallets.length > 0) {
-        hasWallets = true;
-      }
+
+    const {keyWallets, coinbaseWallets} = walletsAndAccounts;
+    if (keyWallets.length > 0 && keyWallets[0].wallets.length > 0) {
+      hasWallets = true;
     }
-    for (const coinbaseWallet of walletsAndAccounts.coinbaseWallets) {
-      if (coinbaseWallet.wallets.length > 0) {
-        hasCoinbase = true;
-      }
+    if (coinbaseWallets.length > 0 && coinbaseWallets[0].wallets.length > 0) {
+      hasCoinbase = true;
     }
 
     if (!hasWallets && !hasCoinbase) {
-      setShowNoWallets(true);
+      setShowNoWalletsMessage(true);
     }
-  }, [dispatch, navigation, walletsAndAccounts]);
+  }, [walletsAndAccounts]);
 
   useEffect(() => {
-    isVisible && !showNoWallets
-      ? showSelector(autoSelectSingleWallet)
-      : showNoWallets
-      ? dispatch(showNoWalletsModal({navigation}))
+    isVisible
+      ? showNoWalletsMessage
+        ? dispatch(showNoWalletsModal({navigation}))
+        : showSelector(autoSelectSingleWallet)
       : setSelectorVisible(false);
-  }, [isVisible, showNoWallets]);
+  }, [isVisible]);
 
   return (
     <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>
