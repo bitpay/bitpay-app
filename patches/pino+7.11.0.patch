@@ -1,0 +1,13 @@
+diff --git a/node_modules/pino/browser.js b/node_modules/pino/browser.js
+index 51989ba..089c935 100644
+--- a/node_modules/pino/browser.js
++++ b/node_modules/pino/browser.js
+@@ -55,7 +55,7 @@ function pino (opts) {
+   }
+   if (opts.enabled === false) opts.level = 'silent'
+   const level = opts.level || 'info'
+-  const logger = Object.create(proto)
++  const logger = {...proto}
+   if (!logger.log) logger.log = noop
+ 
+   Object.defineProperty(logger, 'levelVal', {
