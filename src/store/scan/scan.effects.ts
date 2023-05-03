@@ -1008,6 +1008,14 @@ const handleBuyCryptoUri =
       }
     }
 
+    dispatch(
+      Analytics.track('Clicked Buy Crypto', {
+        context: 'DeepLink',
+        coin: coin || '',
+        chain: chain || '',
+      }),
+    );
+
     navigationRef.reset({
       index: 2,
       routes: [

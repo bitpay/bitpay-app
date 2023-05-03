@@ -1024,6 +1024,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           Analytics.track('Clicked Buy Crypto', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
                           }),
                         );
                         navigation.navigate('Wallet', {
@@ -1055,6 +1056,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           Analytics.track('Clicked Swap Crypto', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
                           }),
                         );
                         navigation.navigate('SwapCrypto', {
