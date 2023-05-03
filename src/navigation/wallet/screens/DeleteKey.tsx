@@ -8,7 +8,6 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
-import {batch, useDispatch} from 'react-redux';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
@@ -18,15 +17,13 @@ import {
 } from '../../../store/wallet/wallet.actions';
 import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
-import {
-  setExpectedKeyLengthChange,
-  setHomeCarouselConfig,
-} from '../../../store/app/app.actions';
+import {setHomeCarouselConfig} from '../../../store/app/app.actions';
 import {
   unSubscribeEmailNotifications,
   unSubscribePushNotifications,
 } from '../../../store/app/app.effects';
 import {useTranslation} from 'react-i18next';
+import {useAppDispatch} from '../../../utils/hooks';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -48,7 +45,7 @@ const DeleteKeyParagraph = styled(Paragraph)`
 const DeleteKey = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
   const {notificationsAccepted, emailNotifications, brazeEid} = useAppSelector(
@@ -91,11 +88,8 @@ const DeleteKey = () => {
     await sleep(300);
     const previousKeysLength = Object.keys(keys).length;
     const numNewKeys = Object.keys(keys).length - 1;
-    const expectedLengthChange = previousKeysLength - numNewKeys;
-    batch(() => {
-      dispatch(deleteKey({keyId}));
-      dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-    });
+    const lengthChange = previousKeysLength - numNewKeys;
+    dispatch(deleteKey({keyId, lengthChange}));
 
     dispatch(
       setHomeCarouselConfig(

@@ -30,7 +30,6 @@ import {
   setWalletTermsAccepted,
   successImport,
   updateCacheFeeLevel,
-  updatePortfolioBalance,
 } from '../../wallet.actions';
 import {
   BitpaySupportedEthereumTokenOpts,
@@ -46,7 +45,6 @@ import {
   setAnnouncementsAccepted,
   setColorScheme,
   setDefaultAltCurrency,
-  setExpectedKeyLengthChange,
   setHomeCarouselConfig,
   setIntroCompleted,
   setKeyMigrationFailure,
@@ -87,7 +85,6 @@ import {initialShopState} from '../../../shop/shop.reducer';
 import {StackActions} from '@react-navigation/native';
 import {BuyCryptoActions} from '../../../buy-crypto';
 import {SwapCryptoActions} from '../../../swap-crypto';
-import {Analytics} from '../../../analytics/analytics.effects';
 import {
   checkNotificationsPermissions,
   setConfirmTxNotifications,
@@ -96,9 +93,6 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
-import {sleep} from '../../../../utils/helper-methods';
-import {backupRedirect} from '../../../../navigation/wallet/screens/Backup';
-import {batch} from 'react-redux';
 
 const BWC = BwcProvider.getInstance();
 
@@ -820,11 +814,8 @@ export const startImportMnemonic =
         if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
           const previousKeysLength = Object.keys(WALLET.keys).length;
           const numNewKeys = Object.keys(WALLET.keys).length - 1;
-          const expectedLengthChange = previousKeysLength - numNewKeys;
-          batch(() => {
-            dispatch(deleteKey({keyId: opts.keyId}));
-            dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-          });
+          const lengthChange = previousKeysLength - numNewKeys;
+          dispatch(deleteKey({keyId: opts.keyId, lengthChange}));
         }
 
         const key = buildKeyObj({
@@ -925,11 +916,8 @@ export const startImportFile =
           wallets = wallets.concat(filteredKeys);
           const previousKeysLength = Object.keys(WALLET.keys).length;
           const numNewKeys = Object.keys(WALLET.keys).length - 1;
-          const expectedLengthChange = previousKeysLength - numNewKeys;
-          batch(() => {
-            dispatch(deleteKey({keyId: opts.keyId}));
-            dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-          });
+          const lengthChange = previousKeysLength - numNewKeys;
+          dispatch(deleteKey({keyId: opts.keyId, lengthChange}));
         }
 
         const key = buildKeyObj({

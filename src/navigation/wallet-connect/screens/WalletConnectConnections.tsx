@@ -203,19 +203,15 @@ const WalletConnectConnections = () => {
                       if (isValidWalletConnectUri(data)) {
                         const {version} = parseUri(data);
                         if (version === 1) {
+                          await sleep(500);
                           setDappUri(data);
                           showWalletSelector();
                         } else {
-                          dispatch(startOnGoingProcessModal('LOADING'));
-                          const _proposal = (await dispatch<any>(
-                            walletConnectV2OnSessionProposal(data),
-                          )) as any;
-                          await sleep(500);
-                          setSessionToUpdate(undefined);
-                          setDappProposal(_proposal);
-                          dispatch(dismissOnGoingProcessModal());
-                          await sleep(500);
-                          showWalletSelectorV2();
+                          // temporarily disabled
+                          const errMsg = t(
+                            'Connection cannot be established. WalletConnect version 2 is still under development.',
+                          );
+                          throw new Error(errMsg);
                         }
                       }
                     } catch (e: any) {

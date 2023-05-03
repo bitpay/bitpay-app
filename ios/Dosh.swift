@@ -10,7 +10,7 @@ import PoweredByDosh
 import UIKit
 
 struct CustomTheme: PoweredByDoshTheme {
-  
+  var showPoweredByDoshMessage: Bool
   // colors
   var headerColor: UIColor = UIColor.init(red: 0x00/255, green: 0x00/255, blue: 0x00/255, alpha: 0xff/255);
   var primaryColor: UIColor = UIColor.init(red: 0x00/255, green: 0x00/255, blue: 0x00/255, alpha: 0xff/255);
@@ -44,7 +44,7 @@ public class DoshAdapter: NSObject {
       : DoshBrandDetailsHeaderStyle.rectangular;
     
     var theme: CustomTheme = CustomTheme(
-      navigationBarStyle: DoshNavigationBarStyle(
+      showPoweredByDoshMessage: false, navigationBarStyle: DoshNavigationBarStyle(
         backgroundColor: .white,
         separatorColor: .white,
         backButtonImage: UIImage.init(named: "BackArrow")!,

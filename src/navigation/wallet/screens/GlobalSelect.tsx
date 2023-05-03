@@ -221,15 +221,15 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   }
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {keys, tokenOptions, customTokenOptions} = useAppSelector(
+    ({WALLET}) => WALLET,
+  );
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const allTokens = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
-    };
-  });
+  const allTokens = {
+    ...BitpaySupportedTokenOpts,
+    ...tokenOptions,
+    ...customTokenOptions,
+  };
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);

@@ -320,7 +320,6 @@ const Confirm = () => {
     setResetSwipeButton(true);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => openKeyWalletSelector(), []);
 
   return (

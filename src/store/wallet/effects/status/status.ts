@@ -397,7 +397,7 @@ export const startUpdateAllWalletStatusForKeys =
                         cachedBalance?.satAvailable ||
                         status.pendingTxps?.length > 0 ||
                         pendingTxps?.length > 0)
-                    ) { 
+                    ) {
                       const cryptoBalance = dispatch(
                         buildBalance({
                           wallet,

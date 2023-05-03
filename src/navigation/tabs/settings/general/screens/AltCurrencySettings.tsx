@@ -35,7 +35,6 @@ import SearchSvg from '../../../../../../assets/img/search.svg';
 import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
 import {getPriceHistory} from '../../../../../store/wallet/effects';
-import {batch} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import {coinbaseInitialize} from '../../../../../store/coinbase';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
@@ -175,13 +174,11 @@ const AltCurrencySettings = () => {
                 }),
               );
               InteractionManager.runAfterInteractions(() => {
-                batch(() => {
-                  dispatch(setDefaultAltCurrency(item));
-                  dispatch(FormatKeyBalances());
-                  dispatch(updatePortfolioBalance());
-                  dispatch(coinbaseInitialize());
-                  dispatch(getPriceHistory(item.isoCode));
-                });
+                dispatch(setDefaultAltCurrency(item));
+                dispatch(FormatKeyBalances());
+                dispatch(updatePortfolioBalance());
+                dispatch(coinbaseInitialize());
+                dispatch(getPriceHistory(item.isoCode));
               });
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);

@@ -27,13 +27,11 @@ import {
 } from '../../../app/app.effects';
 import {
   dismissDecryptPasswordModal,
-  setExpectedKeyLengthChange,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
-import {batch} from 'react-redux';
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -89,15 +87,13 @@ export const startCreateKey =
         const key = buildKeyObj({key: _key, wallets});
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
-        const expectedLengthChange = previousKeysLength - numNewKeys;
-        batch(() => {
-          dispatch(
-            successCreateKey({
-              key,
-            }),
-          );
-          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-        });
+        const lengthChange = previousKeysLength - numNewKeys;
+        dispatch(
+          successCreateKey({
+            key,
+            lengthChange,
+          }),
+        );
         resolve(key);
       } catch (err) {
         const errstring =
@@ -386,7 +382,7 @@ const createWallet = (params: {
               if (context === 'WalletConnect') {
                 return reject(err);
               }
-              // eslint-disable-next-line no-shadow
+
               const account = options.account || 0;
               if (account >= 20) {
                 return reject(
@@ -544,15 +540,13 @@ export const startCreateKeyWithOpts =
         });
         const previousKeysLength = Object.keys(keys).length;
         const numNewKeys = Object.keys(keys).length + 1;
-        const expectedLengthChange = previousKeysLength - numNewKeys;
-        batch(() => {
-          dispatch(
-            successCreateKey({
-              key,
-            }),
-          );
-          dispatch(setExpectedKeyLengthChange(expectedLengthChange));
-        });
+        const lengthChange = previousKeysLength - numNewKeys;
+        dispatch(
+          successCreateKey({
+            key,
+            lengthChange,
+          }),
+        );
         resolve(key);
       } catch (err) {
         const errstring =

@@ -69,15 +69,18 @@ import {Network} from '../../constants';
 import BitPayIdApi from '../../api/bitpay';
 import axios from 'axios';
 import {t} from 'i18next';
-import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  GeneralError,
+} from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
 import {BitpaySupportedEvmCoins} from '../../constants/currencies';
 import {Analytics} from '../analytics/analytics.effects';
-import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
 import {IsUtxoCoin} from '../wallet/utils/currency';
+import {BWCErrorMessage} from '../../constants/BWCError';
 
 export const incomingData =
   (
@@ -1302,25 +1305,24 @@ const handleWalletConnectUri =
             },
           });
         } else {
-          dispatch(startOnGoingProcessModal('LOADING'));
-          const proposal = (await dispatch<any>(
-            walletConnectV2OnSessionProposal(data),
-          )) as any;
-          dispatch(dismissOnGoingProcessModal());
-          await sleep(500);
-          navigationRef.navigate('WalletConnect', {
-            screen: 'Root',
-            params: {
-              proposal,
-            },
-          });
+          // temporarily disabled
+          const errMsg = t(
+            'Connection cannot be established. WalletConnect version 2 is still under development.',
+          );
+          throw new Error(errMsg);
         }
       }
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
-
-      dispatch(showBottomNotificationModal(GeneralError()));
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: t('Uh oh, something went wrong'),
+          }),
+        ),
+      );
     }
   };
 

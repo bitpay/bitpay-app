@@ -1,5 +1,4 @@
 import {upperFirst} from 'lodash';
-import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
 import {
   LoginErrorResponse,
@@ -232,24 +231,22 @@ export const startLogin =
       );
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
-      batch(() => {
-        let errMsg;
+      let errMsg;
 
-        if (isAxiosError<LoginErrorResponse>(err)) {
-          errMsg = upperFirst(
-            err.response?.data.message ||
-              err.message ||
-              t('An unexpected error occurred.'),
-          );
-          console.error(errMsg);
-        } else {
-          console.error(err);
-        }
+      if (isAxiosError<LoginErrorResponse>(err)) {
+        errMsg = upperFirst(
+          err.response?.data.message ||
+            err.message ||
+            t('An unexpected error occurred.'),
+        );
+        console.error(errMsg);
+      } else {
+        console.error(err);
+      }
 
-        dispatch(LogActions.error('Login failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedLogin(errMsg));
-      });
+      dispatch(LogActions.error('Login failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedLogin(errMsg));
     } finally {
       dispatch(dismissOnGoingProcessModal());
     }
@@ -282,24 +279,22 @@ export const startTwoFactorAuth =
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
       );
     } catch (err) {
-      batch(() => {
-        let errMsg;
+      let errMsg;
 
-        if (isAxiosError<string>(err)) {
-          errMsg = upperFirst(
-            err.response?.data ||
-              err.message ||
-              t('An unexpected error occurred.'),
-          );
-          console.error(errMsg);
-        } else {
-          console.error(err);
-        }
+      if (isAxiosError<string>(err)) {
+        errMsg = upperFirst(
+          err.response?.data ||
+            err.message ||
+            t('An unexpected error occurred.'),
+        );
+        console.error(errMsg);
+      } else {
+        console.error(err);
+      }
 
-        dispatch(LogActions.error('Two factor authentication failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
-      });
+      dispatch(LogActions.error('Two factor authentication failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
     } finally {
       dispatch(dismissOnGoingProcessModal());
     }
@@ -321,29 +316,27 @@ export const startTwoFactorPairing =
 
       dispatch(BitPayIdActions.successSubmitTwoFactorPairing());
     } catch (err) {
-      batch(() => {
-        let errMsg;
+      let errMsg;
 
-        if (isAxiosError<any>(err)) {
-          errMsg = upperFirst(
-            err.response?.data ||
-              err.message ||
-              t('An unexpected error occurred.'),
-          );
-          console.error(errMsg);
-        } else if (err instanceof Error) {
-          errMsg = upperFirst(err.message);
-          console.error(errMsg);
-        } else {
-          console.error(err);
-        }
-
-        dispatch(LogActions.error('Pairing with two factor failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(
-          BitPayIdActions.failedSubmitTwoFactorPairing(JSON.stringify(errMsg)),
+      if (isAxiosError<any>(err)) {
+        errMsg = upperFirst(
+          err.response?.data ||
+            err.message ||
+            t('An unexpected error occurred.'),
         );
-      });
+        console.error(errMsg);
+      } else if (err instanceof Error) {
+        errMsg = upperFirst(err.message);
+        console.error(errMsg);
+      } else {
+        console.error(err);
+      }
+
+      dispatch(LogActions.error('Pairing with two factor failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(
+        BitPayIdActions.failedSubmitTwoFactorPairing(JSON.stringify(errMsg)),
+      );
     } finally {
       dispatch(dismissOnGoingProcessModal());
     }
@@ -367,12 +360,10 @@ export const startEmailPairing =
       );
       dispatch(BitPayIdActions.successEmailPairing());
     } catch (err) {
-      batch(() => {
-        console.error(err);
-        dispatch(LogActions.error('Pairing from email authentication failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedEmailPairing());
-      });
+      console.error(err);
+      dispatch(LogActions.error('Pairing from email authentication failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedEmailPairing());
     } finally {
       dispatch(dismissOnGoingProcessModal());
     }
@@ -512,11 +503,9 @@ export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
 
     dispatch(BitPayIdActions.successFetchDoshToken(APP.network, doshToken));
   } catch (err) {
-    batch(() => {
-      dispatch(LogActions.error('Failed to fetch dosh token.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
-      dispatch(BitPayIdActions.failedFetchDoshToken());
-    });
+    dispatch(LogActions.error('Failed to fetch dosh token.'));
+    dispatch(LogActions.error(JSON.stringify(err)));
+    dispatch(BitPayIdActions.failedFetchDoshToken());
   }
 };
 
@@ -537,10 +526,8 @@ export const startFetchSecuritySettings =
         );
         return securitySettings;
       } catch (err) {
-        batch(() => {
-          dispatch(LogActions.error('Failed to fetch security settings.'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        });
+        dispatch(LogActions.error('Failed to fetch security settings.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
         throw err;
       }
     })();
@@ -563,10 +550,8 @@ export const startToggleTwoFactorAuthEnabled =
           ),
         );
       } catch (err) {
-        batch(() => {
-          dispatch(LogActions.error('Failed to toggle two-factor settings.'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        });
+        dispatch(LogActions.error('Failed to toggle two-factor settings.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
         throw err;
       }
     })();
@@ -612,10 +597,8 @@ export const startFetchReceivingAddresses =
         );
         return receivingAddresses;
       } catch (err) {
-        batch(() => {
-          dispatch(LogActions.error('Failed to fetch receiving addresses.'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        });
+        dispatch(LogActions.error('Failed to fetch receiving addresses.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
         throw err;
       }
     })();
@@ -643,10 +626,8 @@ export const startUpdateReceivingAddresses =
         );
         await dispatch(startFetchReceivingAddresses());
       } catch (err) {
-        batch(() => {
-          dispatch(LogActions.error('Failed to update receiving addresses.'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        });
+        dispatch(LogActions.error('Failed to update receiving addresses.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
         throw err;
       }
     })();

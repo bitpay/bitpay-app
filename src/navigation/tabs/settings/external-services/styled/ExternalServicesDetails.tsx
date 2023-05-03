@@ -65,7 +65,7 @@ export const LabelTip = styled.View<{type?: string}>`
 
 export const LabelTipText = styled(BaseText)`
   color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255, 255, 255, 0.6)' : '#4a4a4a'}; ;
+    dark ? 'rgba(255, 255, 255, 0.6)' : '#4a4a4a'};
 `;
 
 export const ColumnDataContainer = styled.View`

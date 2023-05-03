@@ -1,4 +1,3 @@
-import {JsonMap} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';
@@ -21,7 +20,6 @@ import {
   RESULTS,
 } from 'react-native-permissions';
 import uuid from 'react-native-uuid';
-import {batch} from 'react-redux';
 import {AppActions} from '.';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
@@ -94,7 +92,6 @@ import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
-import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {moralisInit} from '../moralis/moralis.effects';
 
@@ -217,9 +214,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     dispatch(walletConnectInit());
-    dispatch(walletConnectV2Init());
     dispatch(initializeBrazeContent());
     dispatch(moralisInit());
+
+    // temporarily disabled
+    // dispatch(walletConnectV2Init());
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
@@ -885,19 +884,17 @@ export const handleBwsEvent =
   };
 
 export const resetAllSettings = (): Effect => dispatch => {
-  batch(() => {
-    dispatch(AppActions.setColorScheme(null));
-    dispatch(AppActions.showPortfolioValue(true));
-    dispatch(
-      AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
-    );
-    dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
-    dispatch(WalletActions.setUseUnconfirmedFunds(false));
-    dispatch(WalletActions.setCustomizeNonce(false));
-    dispatch(WalletActions.setQueuedTransactions(false));
-    dispatch(WalletActions.setEnableReplaceByFee(false));
-    dispatch(LogActions.info('Reset all settings'));
-  });
+  dispatch(AppActions.setColorScheme(null));
+  dispatch(AppActions.showPortfolioValue(true));
+  dispatch(
+    AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
+  );
+  dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
+  dispatch(WalletActions.setUseUnconfirmedFunds(false));
+  dispatch(WalletActions.setCustomizeNonce(false));
+  dispatch(WalletActions.setQueuedTransactions(false));
+  dispatch(WalletActions.setEnableReplaceByFee(false));
+  dispatch(LogActions.info('Reset all settings'));
 };
 
 export const getRouteParam = (url: string, param: string) => {
