@@ -12,6 +12,8 @@
   "ViewAllArgTokens": "View all {{currency}} tokens",
   "Wallets": "Wallets",
   "Sending": "Sending",
+  "Sending to multiple recipients (recipientCount)": "Sending to multiple recipients ({{recipientCount}})",
+  "Sending to contactName": "Sending to {{contactName}}",
   "Created by ": "Created by {{creator}}",
   "Hidden": "Hidden",
   "Unlock App": "Unlock App",
