@@ -5,7 +5,6 @@ import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
-import {IS_ANDROID} from '../../constants';
 import {
   Caution,
   LightBlack,
@@ -177,9 +176,7 @@ const BoxInput = React.forwardRef<
     const [isFocused, setIsFocused] = useState(false);
     const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
     const _keyboardType: KeyboardTypeOptions | undefined =
-      isPassword && !isSecureTextEntry && IS_ANDROID
-        ? 'visible-password'
-        : keyboardType || undefined;
+      keyboardType || undefined;
 
     const _onFocus = () => {
       setIsFocused(true);
