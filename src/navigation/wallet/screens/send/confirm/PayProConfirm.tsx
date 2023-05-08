@@ -1,6 +1,5 @@
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import axios from 'axios';
 import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {WalletScreens, WalletStackParamList} from '../../../WalletStack';

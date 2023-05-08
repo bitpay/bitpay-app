@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   ImportTextInput,
-  CtaContainer as _CtaContainer,
   HeaderContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';

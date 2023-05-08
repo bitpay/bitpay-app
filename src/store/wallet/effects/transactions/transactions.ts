@@ -18,7 +18,6 @@ import {
 import moment from 'moment';
 import 'moment/min/locales';
 import i18n from 'i18next';
-import {TransactionIcons} from '../../../../constants/TransactionIcons';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';

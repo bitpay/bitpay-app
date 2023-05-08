@@ -25,7 +25,7 @@ import {
   White,
 } from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
-import {WalletScreens, WalletStackParamList} from '../../WalletStack';
+import {WalletStackParamList} from '../../WalletStack';
 import {Effect, RootState} from '../../../../store';
 import {
   convertToFiat,

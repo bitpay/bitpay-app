@@ -4,7 +4,6 @@ import {BottomNotificationConfig} from '../../components/modal/bottom-notificati
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
-import {NavScreenParams, RootStackParamList} from '../../Root';
 import {
   AppIdentity,
   HomeCarouselConfig,

@@ -1,7 +1,7 @@
 import React from 'react';
 import {useTheme} from 'styled-components/native';
 import {Path, Svg, G, Defs, ClipPath, Rect} from 'react-native-svg';
-import {Black, White} from '../../../styles/colors';
+import {White} from '../../../styles/colors';
 
 interface ZenLedgerProps {
   isDark: boolean;

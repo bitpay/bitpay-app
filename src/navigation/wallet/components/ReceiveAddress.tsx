@@ -2,10 +2,8 @@ import React, {useEffect, useState} from 'react';
 import Clipboard from '@react-native-community/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
-
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
@@ -14,16 +12,13 @@ import {
   ActiveOpacity,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
-
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from './ErrorMessages';
-
 import {
   Action,
   Black,
   LightBlack,
   NeutralSlate,
-  SlateDark,
   White,
 } from '../../../styles/colors';
 import CopySvg from '../../../../assets/img/copy.svg';

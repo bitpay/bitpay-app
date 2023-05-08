@@ -4,7 +4,6 @@ import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import {FlatList} from 'react-native';
 import {t} from 'i18next';
-import haptic from '../../../components/haptic-feedback/haptic';
 
 interface BottomNotificationListType {
   key: number;

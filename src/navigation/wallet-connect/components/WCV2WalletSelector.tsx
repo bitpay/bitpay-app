@@ -14,7 +14,6 @@ import {
   WalletSelectMenuContainer,
   WalletSelectMenuHeaderContainer,
 } from '../../wallet/screens/GlobalSelect';
-import _ from 'lodash';
 import {useTranslation} from 'react-i18next';
 import {Platform, View} from 'react-native';
 import {WalletConnectCtaContainer} from '../styled/WalletConnectContainers';
