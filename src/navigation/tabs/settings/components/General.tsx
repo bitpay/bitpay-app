@@ -22,8 +22,8 @@ import {
 const General = () => {
   const navigation = useNavigation();
   const colorScheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
-  const showPortfolioValue = useAppSelector(
-    ({APP}: RootState) => APP.showPortfolioValue,
+  const {showPortfolioValue, hideAllBalances} = useAppSelector(
+    ({APP}: RootState) => APP,
   );
   const selectedAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
@@ -79,6 +79,15 @@ const General = () => {
         <ToggleSwitch
           onChange={value => dispatch(AppActions.showPortfolioValue(value))}
           isEnabled={showPortfolioValue}
+        />
+      </Setting>
+      <Hr />
+      {/*----------------------------------------------------------------------*/}
+      <Setting activeOpacity={1}>
+        <SettingTitle>{t('Hide All Balances')}</SettingTitle>
+        <ToggleSwitch
+          onChange={value => dispatch(AppActions.toggleHideAllBalances(value))}
+          isEnabled={hideAllBalances}
         />
       </Setting>
       <Hr />

@@ -147,6 +147,7 @@ export const createHomeCardList = ({
   linkedCoinbase,
   homeCarouselConfig,
   homeCarouselLayoutType,
+  hideKeyBalance,
   context,
   onPress,
   currency,
@@ -157,6 +158,7 @@ export const createHomeCardList = ({
   linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
+  hideKeyBalance: boolean;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
   currency?: any;
@@ -188,7 +190,7 @@ export const createHomeCardList = ({
           <WalletCardComponent
             layout={homeCarouselLayoutType}
             keyName={key.keyName}
-            hideKeyBalance={key.hideKeyBalance}
+            hideKeyBalance={hideKeyBalance}
             wallets={wallets}
             totalBalance={totalBalance}
             percentageDifference={percentageDifference}
@@ -261,8 +263,8 @@ const Crypto = () => {
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
-  const homeCarouselLayoutType = useAppSelector(
-    ({APP}) => APP.homeCarouselLayoutType,
+  const {homeCarouselLayoutType, hideAllBalances} = useAppSelector(
+    ({APP}) => APP,
   );
   const hasKeys = Object.values(keys).length;
   const [cardsList, setCardsList] = useState(
@@ -273,6 +275,7 @@ const Crypto = () => {
       linkedCoinbase: false,
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
+      hideKeyBalance: hideAllBalances,
     }),
   );
 
@@ -285,6 +288,7 @@ const Crypto = () => {
         linkedCoinbase,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
+        hideKeyBalance: hideAllBalances,
       }),
     );
   }, [
@@ -294,6 +298,7 @@ const Crypto = () => {
     linkedCoinbase,
     homeCarouselConfig,
     homeCarouselLayoutType,
+    hideAllBalances,
   ]);
 
   if (!hasKeys && !linkedCoinbase) {

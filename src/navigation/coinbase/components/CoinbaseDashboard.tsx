@@ -94,11 +94,8 @@ const CoinbaseDashboard = () => {
   );
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
 
-  const hideTotalBalance = useAppSelector(
-    ({COINBASE}) => COINBASE.hideTotalBalance,
-  );
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const hasKeys = Object.values(keys).filter(k => k.backupComplete).length >= 1;
 
@@ -163,6 +160,7 @@ const CoinbaseDashboard = () => {
         <WalletRow
           id={walletItem.id}
           wallet={walletItem}
+          hideBalance={hideAllBalances}
           onPress={() => {
             haptic('impactLight');
             navigation.navigate('Coinbase', {
@@ -174,7 +172,13 @@ const CoinbaseDashboard = () => {
         />
       );
     },
-    [dispatch, navigation, exchangeRates, defaultAltCurrency.isoCode],
+    [
+      dispatch,
+      navigation,
+      exchangeRates,
+      defaultAltCurrency.isoCode,
+      hideAllBalances,
+    ],
   );
 
   const showError = useCallback(
@@ -241,7 +245,7 @@ const CoinbaseDashboard = () => {
       <BalanceContainer>
         {balance !== null ? (
           <>
-            {!hideTotalBalance ? (
+            {!hideAllBalances ? (
               <Balance scale={shouldScale(balance)}>
                 {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
               </Balance>
@@ -325,7 +329,7 @@ const CoinbaseDashboard = () => {
                     );
                   }}
                   defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
-                  hideKeyBalance={_key.hideKeyBalance}
+                  hideKeyBalance={hideAllBalances}
                 />
               ))}
           </KeyDropdownOptionsContainer>

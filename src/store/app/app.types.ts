@@ -51,6 +51,7 @@ export enum AppActionTypes {
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
+  TOGGLE_HIDE_ALL_BALANCES = 'APP/TOGGLE_HIDE_ALL_BALANCES',
   BRAZE_INITIALIZED = 'APP/BRAZE_INITIALIZED',
   BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
   SET_BRAZE_EID = 'APP/SET_BRAZE_EID',
@@ -248,6 +249,11 @@ interface ShowPortfolioValue {
   payload: boolean;
 }
 
+interface ToggleHideAllBalances {
+  type: typeof AppActionTypes.TOGGLE_HIDE_ALL_BALANCES;
+  payload?: boolean;
+}
+
 interface BrazeInitialized {
   type: typeof AppActionTypes.BRAZE_INITIALIZED;
   payload: {contentCardSubscription: EventSubscription | null};
@@ -360,6 +366,7 @@ export type AppActionType =
   | PinBannedUntil
   | ShowBlur
   | ShowPortfolioValue
+  | ToggleHideAllBalances
   | BrazeInitialized
   | BrazeContentCardsFetched
   | SetBrazeEid

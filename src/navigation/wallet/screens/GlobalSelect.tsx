@@ -230,7 +230,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     ...tokenOptions,
     ...customTokenOptions,
   };
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [receiveWallet, setReceiveWallet] = useState<Wallet>();
@@ -627,6 +627,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             <WalletSelectMenuBodyContainer>
               <KeyWalletsRow
                 keyWallets={keyWallets!}
+                hideBalance={hideAllBalances}
                 onPress={onWalletSelect}
               />
             </WalletSelectMenuBodyContainer>

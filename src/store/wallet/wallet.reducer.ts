@@ -489,50 +489,6 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.TOGGLE_HIDE_BALANCE: {
-      const {
-        wallet: {keyId, id},
-      } = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      if (!keyToUpdate) {
-        return state;
-      }
-      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-        if (wallet.id === id) {
-          wallet.hideBalance = !wallet.hideBalance;
-        }
-        return wallet;
-      });
-
-      return {
-        ...state,
-        keys: {
-          ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
-        },
-      };
-    }
-
-    case WalletActionTypes.TOGGLE_HIDE_KEY_BALANCE: {
-      const {keyId} = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      if (!keyToUpdate) {
-        return state;
-      }
-      keyToUpdate.hideKeyBalance = !keyToUpdate.hideKeyBalance;
-      return {
-        ...state,
-        keys: {
-          ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
-        },
-      };
-    }
-
     case WalletActionTypes.UPDATE_CACHE_FEE_LEVEL: {
       return {
         ...state,

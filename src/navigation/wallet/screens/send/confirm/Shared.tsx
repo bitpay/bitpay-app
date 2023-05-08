@@ -46,7 +46,7 @@ import {
 } from '../../GlobalSelect';
 import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
 import {useNavigation} from '@react-navigation/native';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
@@ -489,6 +489,7 @@ export const WalletSelector = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [showNoWalletsMessage, setShowNoWalletsMessage] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
@@ -591,11 +592,13 @@ export const WalletSelector = ({
           <KeyWalletsRow<KeyWallet>
             currency={currency}
             keyWallets={walletsAndAccounts.keyWallets}
+            hideBalance={hideAllBalances}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
           />
           <KeyWalletsRow<WalletRowProps>
             keyWallets={walletsAndAccounts.coinbaseWallets}
             keySvg={CoinbaseSmall}
+            hideBalance={hideAllBalances}
             onPress={account =>
               selectOption(() => onCoinbaseAccountSelect(account), true)
             }

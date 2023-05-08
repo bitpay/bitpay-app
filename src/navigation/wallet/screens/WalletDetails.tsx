@@ -36,13 +36,13 @@ import {
   Small,
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {
+  showBottomNotificationModal,
+  toggleHideAllBalances,
+} from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
-import {
-  toggleHideBalance,
-  updatePortfolioBalance,
-} from '../../../store/wallet/wallet.actions';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
   Key,
   TransactionProposal,
@@ -295,7 +295,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
@@ -449,7 +449,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     currencyAbbreviation,
     chain,
     network,
-    hideBalance,
     pendingTxps,
   } = uiFormattedWallet;
 
@@ -935,10 +934,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 <BalanceContainer>
                   <TouchableOpacity
                     onLongPress={() => {
-                      dispatch(toggleHideBalance({wallet: fullWalletObj}));
+                      dispatch(toggleHideAllBalances());
                     }}>
                     <Row>
-                      {!hideBalance ? (
+                      {!hideAllBalances ? (
                         <Balance scale={shouldScale(cryptoBalance)}>
                           {cryptoBalance} {currencyAbbreviation}
                         </Balance>
@@ -947,12 +946,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       )}
                     </Row>
                     <Row>
-                      {showFiatBalance && !hideBalance && (
+                      {showFiatBalance && !hideAllBalances && (
                         <Paragraph>{fiatBalance}</Paragraph>
                       )}
                     </Row>
                   </TouchableOpacity>
-                  {!hideBalance && showBalanceDetailsButton() && (
+                  {!hideAllBalances && showBalanceDetailsButton() && (
                     <TouchableRow
                       onPress={() => setShowBalanceDetailsModal(true)}>
                       <TimerSvg

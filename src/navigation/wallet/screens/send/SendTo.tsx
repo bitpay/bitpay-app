@@ -261,7 +261,7 @@ const SendTo = () => {
   const {rates} = useAppSelector(({RATE}) => RATE);
 
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
@@ -728,6 +728,7 @@ const SendTo = () => {
         <View style={{marginTop: 10}}>
           <KeyWalletsRow
             keyWallets={keyWallets}
+            hideBalance={hideAllBalances}
             onPress={(selectedWallet: KeyWallet) => {
               onSendToWallet(selectedWallet);
             }}

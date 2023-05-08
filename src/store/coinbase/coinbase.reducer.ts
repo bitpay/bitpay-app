@@ -417,11 +417,6 @@ export const coinbaseReducer = (
       };
 
     // ------- Settings -------- //
-    case CoinbaseActionTypes.TOGGLE_HIDE_TOTAL_BALANCE:
-      return {
-        ...state,
-        hideTotalBalance: action.payload,
-      };
 
     case CoinbaseActionTypes.BLOCKCHAIN_NETWORK:
       return {

@@ -42,6 +42,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
+  toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {
   CustomErrorMessage,
@@ -58,10 +59,7 @@ import {
   serverAssistedImport,
 } from '../../../store/wallet/effects';
 import merge from 'lodash.merge';
-import {
-  syncWallets,
-  toggleHideKeyBalance,
-} from '../../../store/wallet/wallet.actions';
+import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
@@ -119,7 +117,7 @@ const KeySettings = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
 
   const _wallets = key.wallets;
@@ -134,7 +132,7 @@ const KeySettings = () => {
   );
 
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const {keyName, hideKeyBalance} = _key || {};
+  const {keyName} = _key || {};
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
@@ -304,13 +302,11 @@ const KeySettings = () => {
         <Hr />
 
         <SettingView>
-          <WalletSettingsTitle>{t('Hide Balance')}</WalletSettingsTitle>
+          <WalletSettingsTitle>{t('Hide All Balances')}</WalletSettingsTitle>
 
           <ToggleSwitch
-            onChange={() => {
-              dispatch(toggleHideKeyBalance({keyId: key.id}));
-            }}
-            isEnabled={!!hideKeyBalance}
+            onChange={value => dispatch(toggleHideAllBalances(value))}
+            isEnabled={!!hideAllBalances}
           />
         </SettingView>
 

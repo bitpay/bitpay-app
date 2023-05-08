@@ -89,12 +89,14 @@ interface ZenLedgerKeyWalletProps {
   keys: ZenLedgerKey[];
   onPress: (keyId: string, wallet?: ZenLedgerWalletObj) => void;
   onDropdownPress: (keyId: string) => void;
+  hideBalance: boolean;
 }
 
 const ZenLedgerKeyWalletsRow = ({
   keys,
   onPress,
   onDropdownPress,
+  hideBalance,
 }: ZenLedgerKeyWalletProps) => {
   const renderItem = useCallback(
     ({item, keyId, isLast}) => {
@@ -106,6 +108,7 @@ const ZenLedgerKeyWalletsRow = ({
             isLast={isLast}
             onPress={onPress}
             selectAll={false}
+            hideBalance={hideBalance}
           />
         </NoGutter>
       ) : null;

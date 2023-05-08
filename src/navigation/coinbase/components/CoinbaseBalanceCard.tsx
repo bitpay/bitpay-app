@@ -76,10 +76,7 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   };
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const hideTotalBalance = useAppSelector(
-    ({COINBASE}) => COINBASE.hideTotalBalance,
-  );
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
 
   const {amount, code} = formatFiatAmountObj(
     balance,
@@ -104,7 +101,7 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
             <KeyName>Coinbase</KeyName>
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            {!hideTotalBalance ? (
+            {!hideAllBalances ? (
               <Balance>
                 {amount}
                 {code ? (

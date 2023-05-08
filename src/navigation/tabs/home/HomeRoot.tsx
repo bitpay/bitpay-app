@@ -75,17 +75,17 @@ const HomeRoot = () => {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
-  const keyMigrationFailure = useAppSelector(
-    ({APP}) => APP.keyMigrationFailure,
-  );
-  const keyMigrationFailureModalHasBeenShown = useAppSelector(
-    ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
-  );
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {
+    appIsLoading,
+    defaultAltCurrency,
+    defaultLanguage,
+    keyMigrationFailure,
+    keyMigrationFailureModalHasBeenShown,
+    showPortfolioValue,
+  } = useAppSelector(({APP}) => APP);
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
-  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   useBrazeRefreshOnFocus();
 
   // Shop with Crypto
@@ -145,9 +145,6 @@ const HomeRoot = () => {
 
     return brazeQuickLinks;
   }, [brazeQuickLinks, defaultLanguage]);
-
-  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
-  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {

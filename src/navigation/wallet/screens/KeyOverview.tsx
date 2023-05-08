@@ -31,12 +31,12 @@ import {
   HeaderRightContainer as _HeaderRightContainer,
   ProposalBadgeContainer,
 } from '../../../components/styled/Containers';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {
-  toggleHideKeyBalance,
-  updatePortfolioBalance,
-} from '../../../store/wallet/wallet.actions';
+  showBottomNotificationModal,
+  toggleHideAllBalances,
+} from '../../../store/app/app.actions';
+import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Wallet, Status} from '../../../store/wallet/wallet.models';
 import {Rates} from '../../../store/rate/rate.models';
 import {
@@ -355,7 +355,7 @@ const KeyOverview = () => {
   const [refreshing, setRefreshing] = useState(false);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
@@ -557,6 +557,7 @@ const KeyOverview = () => {
         <WalletRow
           id={item.id}
           wallet={item}
+          hideBalance={hideAllBalances}
           onPress={() => {
             haptic('impactLight');
             const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
@@ -604,7 +605,7 @@ const KeyOverview = () => {
         />
       );
     },
-    [key, navigation],
+    [key, navigation, hideAllBalances],
   );
 
   return (
@@ -612,10 +613,10 @@ const KeyOverview = () => {
       <BalanceContainer>
         <TouchableOpacity
           onLongPress={() => {
-            dispatch(toggleHideKeyBalance({keyId: key.id}));
+            dispatch(toggleHideAllBalances());
           }}>
           <Row>
-            {!key?.hideKeyBalance ? (
+            {!hideAllBalances ? (
               <Balance scale={shouldScale(totalBalance)}>
                 {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
                   currencyDisplay: 'symbol',
@@ -699,7 +700,7 @@ const KeyOverview = () => {
                     } as any);
                   }}
                   defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
-                  hideKeyBalance={_key.hideKeyBalance}
+                  hideKeyBalance={hideAllBalances}
                 />
               ))}
             {linkedCoinbase ? (
