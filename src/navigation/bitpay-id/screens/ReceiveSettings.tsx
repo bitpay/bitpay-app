@@ -467,7 +467,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
                   walletSelectorCurrency,
                   walletSelectorChain,
                 )
-              ],
+              ] || [],
             coinbaseWallets: [],
           }}
           onWalletSelect={async wallet => {
