@@ -2,7 +2,6 @@ import React, {
   useState,
   useMemo,
   useCallback,
-  useLayoutEffect,
   useEffect,
 } from 'react';
 import {FlatList, View} from 'react-native';
@@ -265,7 +264,7 @@ const ContactsAdd = ({
     {id: 'testnet', name: 'Testnet'},
   ];
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <HeaderTitle>

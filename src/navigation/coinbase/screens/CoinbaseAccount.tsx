@@ -2,7 +2,6 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {
   useEffect,
-  useLayoutEffect,
   useState,
   useCallback,
   useMemo,
@@ -231,7 +230,7 @@ const CoinbaseAccount = ({
   const [isLoading, setIsLoading] = useState<boolean>(txsLoading);
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [initialLoad, setInitialLoad] = useState<boolean>(true);
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: account?.name,
     });

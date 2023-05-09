@@ -1,7 +1,7 @@
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {memo, useLayoutEffect, useState} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Alert, SectionList} from 'react-native';
 import Mailer from 'react-native-mail';
@@ -215,7 +215,7 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
     );
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerRight: () => <Settings onPress={() => setShowOptions(true)} />,
     });

@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import RecoveryPhrase from '../components/RecoveryPhrase';
@@ -28,7 +28,7 @@ const Import: React.FC<ImportScreenProps> = ({route}) => {
   const Tab = createMaterialTopTabNavigator();
   const navigation = useNavigation();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Import')}</HeaderTitle>,
       headerTitleAlign: 'center',

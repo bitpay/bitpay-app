@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import {Paragraph, HeaderTitle, H6} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -49,7 +49,7 @@ const ExportKey = () => {
 
   const navigation = useNavigation();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Export Key')}</HeaderTitle>,
     });

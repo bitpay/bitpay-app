@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {HeaderTitle, Paragraph} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -104,7 +104,7 @@ const ExportWallet = () => {
   const [copyButtonState, setCopyButtonState] = useState<ButtonState>();
   const [sendButtonState, setSendButtonState] = useState<ButtonState>();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Export Wallet')}</HeaderTitle>,
     });

@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
@@ -121,7 +121,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
     });
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerLeft: () => null,

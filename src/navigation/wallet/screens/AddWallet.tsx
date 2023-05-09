@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   BaseText,
   H4,
@@ -261,7 +261,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
   const withinReceiveSettings = isWithinReceiveSettings(navigation.getParent());
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
         return (

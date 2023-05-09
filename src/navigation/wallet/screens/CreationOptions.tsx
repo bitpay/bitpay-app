@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActiveOpacity,
   OptionContainer,
@@ -31,7 +31,7 @@ const CreationOptions: React.FC = () => {
   const dispatch = useAppDispatch();
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{t('Select an option')}</HeaderTitle>,

@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Amount from '../../../components/amount/Amount';
@@ -63,7 +63,7 @@ const AmountScreen: React.VFC<
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
   onSendMaxPressedRef.current = onSendMaxPressed;
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       ...(headerTitle && {headerTitle}),
       headerRight: sendMaxEnabled

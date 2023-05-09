@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -59,7 +59,7 @@ const DeleteKey = () => {
     params: {keyId},
   } = useRoute<RouteProp<WalletStackParamList, 'DeleteKey'>>();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Delete Key')}</HeaderTitle>,
     });

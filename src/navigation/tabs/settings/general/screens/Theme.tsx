@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
   ColorSchemeName,
@@ -79,7 +79,7 @@ const ThemeSettings: React.FC = () => {
   const onPressTitleRef = useRef(onPressTitle);
   onPressTitleRef.current = onPressTitle;
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
         return (

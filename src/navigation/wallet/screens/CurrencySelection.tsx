@@ -1,7 +1,6 @@
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -536,7 +535,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     contextHandler() || {};
 
   // Configuring Header
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <HeaderTitle>{headerTitle || t('Select Currencies')}</HeaderTitle>

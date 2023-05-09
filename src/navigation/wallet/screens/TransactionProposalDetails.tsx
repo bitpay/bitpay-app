@@ -5,7 +5,7 @@ import {
   HeaderTitle,
   H2,
 } from '../../../components/styled/Text';
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
@@ -227,7 +227,7 @@ const TransactionProposalDetails = () => {
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
   const isTestnet = network === 'testnet';
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{title}</HeaderTitle>,

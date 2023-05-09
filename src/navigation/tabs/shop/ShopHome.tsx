@@ -2,7 +2,6 @@ import debounce from 'lodash.debounce';
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -170,7 +169,7 @@ const ShopHome: React.FC<
     [availableGiftCards, categoriesAndCurations, purchasedGiftCards],
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
       headerTitle: () => <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>,

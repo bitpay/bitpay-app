@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   BaseText,
   H7,
@@ -122,7 +122,7 @@ const Addresses = () => {
     return () => clearTimeout(timer);
   }, [copiedUnusedAddress]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Addresses')}</HeaderTitle>,
     });

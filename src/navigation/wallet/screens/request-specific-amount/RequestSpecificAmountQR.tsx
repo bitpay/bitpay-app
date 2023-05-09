@@ -5,7 +5,7 @@ import {
   HeaderTitle,
   Paragraph,
 } from '../../../../components/styled/Text';
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
@@ -120,7 +120,7 @@ const RequestSpecificAmountQR = () => {
 
   const [qrValue, setQrValue] = useState<string>();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const onPressShare = async () => {
       if (qrValue) {
         await Share.share({

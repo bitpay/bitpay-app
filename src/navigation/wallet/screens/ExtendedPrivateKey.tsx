@@ -1,5 +1,5 @@
 import {useNavigation, useRoute} from '@react-navigation/native';
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {HeaderTitle, Paragraph, H5} from '../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -36,7 +36,7 @@ const ExtendedPrivateKey = () => {
 
   const [copied, setCopied] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Extended Private Key')}</HeaderTitle>,
     });

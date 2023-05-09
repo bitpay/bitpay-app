@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {H5, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -116,7 +116,7 @@ const WalletInformation = () => {
   const [copiedXPubKey, setCopiedXPubKey] = useState('');
   const [copiedAddress, setCopiedAddress] = useState('');
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Wallet Information')}</HeaderTitle>,
     });

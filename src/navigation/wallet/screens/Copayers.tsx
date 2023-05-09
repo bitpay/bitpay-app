@@ -1,4 +1,4 @@
-import React, {useState, useLayoutEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Clipboard from '@react-native-community/clipboard';
@@ -75,7 +75,7 @@ const Copayers: React.FC<CopayersProps> = props => {
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const walletName =
       wallet?.walletName ||
       wallet?.credentials?.walletName ||

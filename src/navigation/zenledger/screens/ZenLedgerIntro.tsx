@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -111,7 +111,7 @@ const ZenLedgerIntro: React.VFC = () => {
     );
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerStyle: {
         backgroundColor: theme.dark ? Black : 'rgba(0, 133, 102, 0.05)',

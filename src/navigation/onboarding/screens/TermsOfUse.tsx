@@ -1,6 +1,6 @@
 import {StackActions, useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {ReactElement, useLayoutEffect, useState} from 'react';
+import React, {ReactElement, useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Linking, ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -137,7 +137,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
     return Terms;
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{t('Important')}</HeaderTitle>,

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {FlatList, RefreshControl, View} from 'react-native';
 import styled from 'styled-components/native';
@@ -101,7 +101,7 @@ const CoinbaseDashboard = () => {
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <KeyToggle

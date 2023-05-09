@@ -1,4 +1,4 @@
-import React, {useCallback, useLayoutEffect, useState, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {RouteProp} from '@react-navigation/core';
@@ -161,7 +161,7 @@ const WalletConnectConfirm = () => {
     }
   }, [dispatch, navigation, request, showErrorMessage, t]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <HeaderRightContainer>

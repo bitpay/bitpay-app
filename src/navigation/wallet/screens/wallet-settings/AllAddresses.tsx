@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {BaseText, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -98,7 +98,7 @@ const AllAddresses = () => {
     return () => clearTimeout(timer);
   }, [copiedUnusedAddress]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('All Addresses')}</HeaderTitle>,
     });

@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import TouchID from 'react-native-touch-id-ng';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -69,7 +69,7 @@ const PinScreen: React.VFC<
     askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerLeft: () => null,

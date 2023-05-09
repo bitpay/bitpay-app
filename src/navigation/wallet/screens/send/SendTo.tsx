@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   BaseText,
   HeaderTitle,
@@ -313,7 +313,7 @@ const SendTo = () => {
     ? [multisendOption, selectInputOption]
     : [];
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
       headerRight: () =>

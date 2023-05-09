@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -96,7 +96,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const ref = useRef<Carousel<string>>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{t('Recovery Phrase')}</HeaderTitle>,

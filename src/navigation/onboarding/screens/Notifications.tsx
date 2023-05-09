@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {Platform, ScrollView} from 'react-native';
 import {requestNotifications, RESULTS} from 'react-native-permissions';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -65,7 +65,7 @@ const NotificationsScreen: React.VFC<
     await askForTrackingThenNavigate(() => navigation.navigate('Pin'));
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerLeft: () => null,

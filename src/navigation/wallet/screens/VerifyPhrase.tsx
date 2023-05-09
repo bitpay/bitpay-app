@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -109,7 +109,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     return {word: w, isActive: true};
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{t('Verify your Phrase')}</HeaderTitle>,

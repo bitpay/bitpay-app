@@ -1,7 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {
   useCallback,
-  useLayoutEffect,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -309,7 +309,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
     searchFilter,
   ]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <HeaderTitle>

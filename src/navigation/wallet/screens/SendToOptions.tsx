@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
@@ -252,7 +252,7 @@ const SendToOptions = () => {
     }
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{params.title}</HeaderTitle>,
       headerTitleAlign: 'center',

@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {
   BaseText,
   HeaderTitle,
@@ -144,7 +144,7 @@ const KeySettings = () => {
     }
   }, [context, key, navigation]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Key Settings')}</HeaderTitle>,
     });

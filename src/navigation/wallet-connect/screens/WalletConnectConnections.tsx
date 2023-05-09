@@ -165,7 +165,7 @@ const WalletConnectConnections = () => {
       </ItemContainer>
     );
   };
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerRight: () => {
         return (

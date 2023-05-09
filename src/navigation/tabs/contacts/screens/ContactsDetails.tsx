@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState, ReactElement} from 'react';
+import React, {useEffect, useState, ReactElement} from 'react';
 import {useAppSelector} from '../../../../utils/hooks';
 import styled, {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/core';
@@ -215,7 +215,7 @@ const ContactsDetails = ({
     },
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <Settings

@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Platform, ScrollView, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {LinearGradient} from 'rnx-gradient/src';
@@ -131,7 +131,7 @@ const BuyGiftCard = ({
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
   );
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
         return (

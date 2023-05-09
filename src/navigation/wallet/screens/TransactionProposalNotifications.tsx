@@ -23,7 +23,6 @@ import {WalletStackParamList} from '../WalletStack';
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useState,
 } from 'react';
@@ -156,7 +155,7 @@ const TransactionProposalNotifications = () => {
     });
   }
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Notifications')}</HeaderTitle>,
     });

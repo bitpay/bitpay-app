@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';

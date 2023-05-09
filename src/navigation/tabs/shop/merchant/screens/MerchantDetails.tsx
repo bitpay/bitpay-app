@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import {Linking, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {LinearGradient} from 'rnx-gradient/src';
@@ -58,7 +58,7 @@ const MerchantDetails = ({
   const theme = useTheme();
   const {directIntegration} = route.params;
   const iconHeight = 70;
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <HeaderTitle>{directIntegration.displayName}</HeaderTitle>

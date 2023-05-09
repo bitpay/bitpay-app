@@ -1,5 +1,5 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {H7, Smallest} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
@@ -180,7 +180,7 @@ const WalletConnectHome = () => {
     );
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => WalletConnectHeader(),
       headerRight: () => {

@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActiveOpacity,
   OptionContainer,
@@ -34,7 +34,7 @@ const AddingOptions: React.FC = () => {
   const {key} = route.params;
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Select Wallet Type')}</HeaderTitle>,
       headerTitleAlign: 'center',

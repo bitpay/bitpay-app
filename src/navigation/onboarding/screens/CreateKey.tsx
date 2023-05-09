@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
@@ -56,7 +56,7 @@ const CreateOrImportKey: React.VFC<
     });
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerLeft: () => null,

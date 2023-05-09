@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import {ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
@@ -24,7 +24,7 @@ const MerchantCategory = ({
 }: StackScreenProps<MerchantStackParamList, 'MerchantCategory'>) => {
   const navigator = useNavigation();
   const {integrations, category} = route.params;
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: category.displayName,
     });

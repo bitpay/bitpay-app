@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ScrollView,
   Linking,
@@ -194,7 +194,7 @@ const GiftCardDetails = ({
     });
   }, [cardConfig, giftCard.barcodeImage, giftCard.claimLink]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{cardConfig.displayName}</HeaderTitle>,
       headerRight: () => (

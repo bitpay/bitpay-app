@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
@@ -91,7 +91,7 @@ const WalletConnectStart = () => {
   const peerName = metadata?.name;
   const peerUrl = metadata?.url;
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <HeaderRightContainer>

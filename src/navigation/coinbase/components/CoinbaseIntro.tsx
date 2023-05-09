@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
@@ -72,7 +72,7 @@ const CoinbaseIntro = () => {
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: '',
     });

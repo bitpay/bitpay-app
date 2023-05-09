@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useEffect, useLayoutEffect} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -136,7 +136,7 @@ const ContactsRoot: React.FC = () => {
   const [searchResults, setSearchResults] = useState([] as ContactRowProps[]);
   const [searchVal, setSearchVal] = useState('');
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
         return contacts.length ? (

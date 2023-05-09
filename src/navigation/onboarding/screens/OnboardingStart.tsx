@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
@@ -158,7 +158,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
   const onLogoutPressRef = useRef(onLogoutPress);
   onLogoutPressRef.current = onLogoutPress;
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
       headerRight: () => (

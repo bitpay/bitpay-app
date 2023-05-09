@@ -1,7 +1,6 @@
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useState,
 } from 'react';
@@ -369,7 +368,7 @@ const KeyOverview = () => {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!key) {
       return;
     }

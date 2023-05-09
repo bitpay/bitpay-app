@@ -3,7 +3,6 @@ import React, {
   ComponentType,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useState,
 } from 'react';
 import {Platform} from 'react-native';
@@ -222,7 +221,7 @@ const PriceCharts = () => {
     );
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <PriceChartHeader />,

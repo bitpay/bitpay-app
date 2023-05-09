@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
@@ -183,7 +183,7 @@ const Confirm = () => {
   const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
     dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <HeaderTitle>
