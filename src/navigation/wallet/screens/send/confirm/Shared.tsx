@@ -21,9 +21,10 @@ import React, {
   useState,
 } from 'react';
 import styled from 'styled-components/native';
-import {Pressable, ScrollView, View} from 'react-native';
+import {Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
+import InfoSvg from '../../../../../../assets/img/info.svg';
 import {
   getBadgeImg,
   getCurrencyAbbreviation,
@@ -332,6 +333,8 @@ export const Amount = ({
   hr,
   chain,
   network,
+  showInfoIcon,
+  infoIconOnPress,
 }: {
   description: string | undefined;
   amount: TxDetailsAmount | undefined;
@@ -340,6 +343,8 @@ export const Amount = ({
   hr?: boolean;
   chain?: string | undefined;
   network?: string | undefined;
+  showInfoIcon?: boolean;
+  infoIconOnPress?: () => void;
 }): JSX.Element | null => {
   if (amount && description) {
     const {cryptoAmount, fiatAmount} = amount;
@@ -348,9 +353,27 @@ export const Amount = ({
         <DetailContainer height={height}>
           <DetailRow>
             {fiatOnly ? (
-              <H7>{description}</H7>
+              <>
+                <H7>{description}</H7>
+                {showInfoIcon ? (
+                  <TouchableOpacity
+                    onPress={infoIconOnPress}
+                    style={{marginLeft: 6}}>
+                    <InfoSvg width={22} height={22} />
+                  </TouchableOpacity>
+                ) : null}
+              </>
             ) : (
-              <H6>{description.toUpperCase()}</H6>
+              <>
+                <H6>{description.toUpperCase()}</H6>
+                {showInfoIcon ? (
+                  <TouchableOpacity
+                    onPress={infoIconOnPress}
+                    style={{marginLeft: 8}}>
+                    <InfoSvg width={25} height={25} />
+                  </TouchableOpacity>
+                ) : null}
+              </>
             )}
             <DetailColumn>
               {fiatOnly ? (

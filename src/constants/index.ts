@@ -48,6 +48,8 @@ export const URL = {
     'https://support.bitpay.com/hc/en-us/articles/115003004403-I-forgot-my-wallet-s-encrypted-password-What-can-I-do-',
   HELP_SINGLE_ADDRESS:
     'https://support.bitpay.com/hc/en-us/articles/360015920572-Setting-up-the-Single-Address-Feature-for-your-BitPay-Wallet',
+  HELP_PAYPRO_NETWORK_COST:
+    'https://support.bitpay.com/hc/en-us/articles/115002990803-What-is-the-Network-Cost-fee-on-BitPay-invoices-and-why-is-BitPay-charging-it',
 
   /**
    * Quick Links

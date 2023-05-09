@@ -74,6 +74,7 @@ import {
 import prompt from 'react-native-prompt-android';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
+import {AppActions} from '../../../../../store/app';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -250,6 +251,33 @@ const Confirm = () => {
     updateTxProposal({
       enableRBF,
     });
+  };
+
+  const showTotalInfoSheet = () => {
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title: t('Total'),
+        message: t(
+          'The total amount is the subtotal amount plus transaction fees.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Read more'),
+            action: async () => {
+              await sleep(1000);
+              dispatch(openUrlWithInAppBrowser(URL.HELP_MINER_FEES));
+            },
+            primary: true,
+          },
+          {
+            text: t('GOT IT'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
   };
 
   const updateTxProposal = async (newOpts: any) => {
@@ -479,6 +507,10 @@ const Confirm = () => {
             height={83}
             chain={chain}
             network={wallet.credentials.network}
+            showInfoIcon={!!subTotal}
+            infoIconOnPress={() => {
+              showTotalInfoSheet();
+            }}
           />
         </DetailsList>
 

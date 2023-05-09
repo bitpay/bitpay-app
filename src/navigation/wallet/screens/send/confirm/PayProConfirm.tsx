@@ -21,7 +21,10 @@ import {
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
@@ -51,6 +54,7 @@ import {
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {Memo} from './Memo';
+import {URL} from '../../../../../constants';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
@@ -258,6 +262,60 @@ const PayProConfirm = () => {
     );
   };
 
+  const showSubTotalInfoSheet = () => {
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title: t('Subtotal'),
+        message: t(
+          'For BitPay invoices the subtotal amount is the product or service amount plus network costs.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Read more'),
+            action: async () => {
+              await sleep(1000);
+              dispatch(openUrlWithInAppBrowser(URL.HELP_PAYPRO_NETWORK_COST));
+            },
+            primary: true,
+          },
+          {
+            text: t('GOT IT'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  };
+
+  const showTotalInfoSheet = () => {
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title: t('Total'),
+        message: t(
+          'The total amount is the subtotal amount plus transaction fees.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Read more'),
+            action: async () => {
+              await sleep(1000);
+              dispatch(openUrlWithInAppBrowser(URL.HELP_MINER_FEES));
+            },
+            primary: true,
+          },
+          {
+            text: t('GOT IT'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  };
+
   const request2FA = async () => {
     navigation.navigate('Wallet', {
       screen: WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR,
@@ -359,6 +417,10 @@ const PayProConfirm = () => {
                 amount={subTotal}
                 height={83}
                 hr
+                showInfoIcon={!!txp?.payProUrl}
+                infoIconOnPress={() => {
+                  showSubTotalInfoSheet();
+                }}
               />
               {wallet && fee ? (
                 <Fee
@@ -368,7 +430,15 @@ const PayProConfirm = () => {
                   hr
                 />
               ) : null}
-              <Amount description={'Total'} amount={total} height={83} />
+              <Amount
+                description={'Total'}
+                amount={total}
+                height={83}
+                showInfoIcon={true}
+                infoIconOnPress={() => {
+                  showTotalInfoSheet();
+                }}
+              />
             </>
           ) : null}
         </DetailsList>
