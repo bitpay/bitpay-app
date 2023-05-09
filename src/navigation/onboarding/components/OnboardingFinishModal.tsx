@@ -14,7 +14,7 @@ import {RootState} from '../../../store';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {White} from '../../../styles/colors';
-import LinearGradient from 'react-native-linear-gradient';
+import {LinearGradient} from 'rnx-gradient/src';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
 

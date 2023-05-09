@@ -1,7 +1,7 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {Platform, ScrollView, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
-import LinearGradient from 'react-native-linear-gradient';
+import {LinearGradient} from 'rnx-gradient/src';
 import Markdown from 'react-native-markdown-display';
 import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
 import RemoteImage from '../../components/RemoteImage';

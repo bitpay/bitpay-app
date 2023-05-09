@@ -1,6 +1,6 @@
 import React from 'react';
 import {Image, ImageSourcePropType} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import {LinearGradient} from 'rnx-gradient/src';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import Button from '../button/Button';

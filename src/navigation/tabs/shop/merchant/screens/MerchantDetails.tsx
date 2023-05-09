@@ -1,7 +1,7 @@
 import React, {useLayoutEffect} from 'react';
 import {Linking, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
-import LinearGradient from 'react-native-linear-gradient';
+import {LinearGradient} from 'rnx-gradient/src';
 import {MerchantStackParamList} from '../MerchantStack';
 import RemoteImage from '../../components/RemoteImage';
 import styled from 'styled-components/native';

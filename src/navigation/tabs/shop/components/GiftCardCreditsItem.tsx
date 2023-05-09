@@ -6,7 +6,7 @@ import {CardConfig} from '../../../../store/shop/shop.models';
 import {BaseText, H4} from '../../../../components/styled/Text';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {LightBlack} from '../../../../styles/colors';
-import LinearGradient from 'react-native-linear-gradient';
+import {LinearGradient} from 'rnx-gradient/src';
 
 interface GiftCardCreditsItemProps {
   logoBackgroundColor: string;

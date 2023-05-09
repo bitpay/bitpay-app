@@ -314,28 +314,28 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => (
-        <>
-          <HeaderSubTitleContainer>
-            <KeySvg width={10} height={10} />
-            <HeaderKeyName>{key.keyName}</HeaderKeyName>
-          </HeaderSubTitleContainer>
-          <HeaderTitle style={{textAlign: 'center'}}>
-            {uiFormattedWallet.walletName}
-          </HeaderTitle>
-        </>
-      ),
-      headerRight: () => (
-        <Settings
-          onPress={() => {
-            setShowWalletOptions(true);
-          }}
-        />
-      ),
-    });
-  }, [navigation, uiFormattedWallet.walletName, key.keyName]);
+  // useLayoutEffect(() => {
+  //   navigation.setOptions({
+  //     headerTitle: () => (
+  //       <>
+  //         <HeaderSubTitleContainer>
+  //           <KeySvg width={10} height={10} />
+  //           <HeaderKeyName>{key.keyName}</HeaderKeyName>
+  //         </HeaderSubTitleContainer>
+  //         <HeaderTitle style={{textAlign: 'center'}}>
+  //           {uiFormattedWallet.walletName}
+  //         </HeaderTitle>
+  //       </>
+  //     ),
+  //     headerRight: () => (
+  //       <Settings
+  //         onPress={() => {
+  //           setShowWalletOptions(true);
+  //         }}
+  //       />
+  //     ),
+  //   });
+  // }, [navigation, uiFormattedWallet.walletName, key.keyName]);
 
   useEffect(() => {
     setRefreshing(!!fullWalletObj.isRefreshing);

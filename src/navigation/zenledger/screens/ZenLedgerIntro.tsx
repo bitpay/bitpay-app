@@ -22,7 +22,7 @@ import {
 } from '../../../store/app/app.actions';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import LinearGradient from 'react-native-linear-gradient';
+import {LinearGradient} from 'rnx-gradient/src';
 import {useNavigation} from '@react-navigation/native';
 import ZenLedgerLogo from '../components/ZenLedgerLogo';
 import Back from '../../../components/back/Back';

@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-skeleton-placeholder/lib/skeleton-placeholder.js b/node_modules/react-native-skeleton-placeholder/lib/skeleton-placeholder.js
+index 353abb6..cf73342 100644
+--- a/node_modules/react-native-skeleton-placeholder/lib/skeleton-placeholder.js
++++ b/node_modules/react-native-skeleton-placeholder/lib/skeleton-placeholder.js
+@@ -36,7 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ const masked_view_1 = __importDefault(require("@react-native-masked-view/masked-view"));
+ const React = __importStar(require("react"));
+ const react_native_1 = require("react-native");
+-const react_native_linear_gradient_1 = __importDefault(require("react-native-linear-gradient"));
++const react_native_linear_gradient_1 = __importDefault(require("rnx-gradient/src/LinearGradientViewNativeComponent"));
+ const WINDOW_WIDTH = react_native_1.Dimensions.get('window').width;
+ const logEnabled = false;
+ const SkeletonPlaceholder = ({ children, enabled = true, backgroundColor = '#E1E9EE', highlightColor = '#F2F8FC', speed = 800, direction = 'right', borderRadius, shimmerWidth, }) => {
