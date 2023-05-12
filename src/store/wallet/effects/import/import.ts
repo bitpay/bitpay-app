@@ -801,7 +801,7 @@ export const startImportMnemonic =
         const {key: _key, wallets} = findMatchedKeyAndUpdate(
           data.wallets,
           data.key,
-          Object.values(WALLET.keys),
+          Object.values(WALLET.keys).filter(k => k.id !== 'readonly'), // Avoid checking readonly keys
           opts,
         );
 
