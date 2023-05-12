@@ -50,6 +50,8 @@ import {
   BaseText,
   HeaderTitle,
   InfoDescription,
+  InfoHeader,
+  InfoTitle,
   Link,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -59,6 +61,7 @@ import {
   ActiveOpacity,
   Hr,
   Info,
+  InfoImageContainer,
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
@@ -74,6 +77,8 @@ import {
 import prompt from 'react-native-prompt-android';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
+import {FEE_TOO_HIGH_LIMIT_PER} from '../../../../../constants/wallet';
+import WarningSvg from '../../../../../../assets/img/warning.svg';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -378,8 +383,31 @@ const Confirm = () => {
             }
             fee={fee}
             feeOptions={feeOptions}
-            hr
+            hr={fee.percentageOfTotalAmount <= FEE_TOO_HIGH_LIMIT_PER}
           />
+          {fee.percentageOfTotalAmount > FEE_TOO_HIGH_LIMIT_PER &&
+          txp.amount !== 0 ? (
+            <>
+              <Info>
+                <InfoTriangle />
+                <InfoHeader>
+                  <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                    <WarningSvg />
+                  </InfoImageContainer>
+
+                  <InfoTitle>
+                    {t('Transaction fees are currently high')}
+                  </InfoTitle>
+                </InfoHeader>
+                <InfoDescription>
+                  {t(
+                    'Due to high demand, miner fees are high. Fees are paid to miners who process transactions and are not paid to BitPay.',
+                  )}
+                </InfoDescription>
+              </Info>
+              <Hr />
+            </>
+          ) : null}
           {enableReplaceByFee &&
           !selectInputs &&
           currencyAbbreviation.toLowerCase() === 'btc' ? (

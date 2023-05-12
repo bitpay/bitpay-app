@@ -421,6 +421,7 @@ export const buildTxDetails =
       amount = invoice.paymentTotals[invoiceCurrency];
     }
     const {type, name, address, email} = recipient || {};
+    const percentageOfTotalAmount = (fee / (amount + fee)) * 100;
     return {
       context,
       currency: coin,
@@ -450,8 +451,8 @@ export const buildTxDetails =
             ),
             defaultAltCurrencyIsoCode,
           ),
-          percentageOfTotalAmount:
-            ((fee / (amount + fee)) * 100).toFixed(2) + '%',
+          percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(2)} %`,
+          percentageOfTotalAmount,
         },
       }),
       ...(networkCost && {

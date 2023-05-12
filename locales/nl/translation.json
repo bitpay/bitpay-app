@@ -958,7 +958,7 @@
   "Please enter your two-step verification code.": "Voer uw tweeledige verificatiecode in.",
   "TWO-STEP VERIFICATION CODE": "TWEELEDIGE VERIFICATIECODE",
   "Please enter a valid verification code.": "Voer een geldige verificatiecode in.",
-  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmount}} van totaalbedrag)",
+  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmountStr}} van totaalbedrag)",
   "Sending from": "Versturen van",
   "Select Inputs for this Transaction": "Selecteer invoeren voor deze transactie",
   "Choose which inputs you'd like to use to send crypto.": "Kies welke invoeren u wilt gebruiken om crypto te versturen.",

@@ -343,7 +343,8 @@ export interface TxDetailsFee {
   feeLevel: string;
   cryptoAmount: string;
   fiatAmount: string;
-  percentageOfTotalAmount: string;
+  percentageOfTotalAmountStr: string;
+  percentageOfTotalAmount: number;
 }
 
 export interface FeeOptions {

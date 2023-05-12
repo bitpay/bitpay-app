@@ -4,3 +4,4 @@ export const SOFT_CONFIRMATION_LIMIT: number = 12;
 export const DEFAULT_RBF_SEQ_NUMBER = 0xffffffff;
 export const SAFE_CONFIRMATIONS: number = 6;
 export const HISTORIC_RATES_CACHE_DURATION = 5 * 60; // 5min
+export const FEE_TOO_HIGH_LIMIT_PER = 15;

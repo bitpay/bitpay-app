@@ -958,7 +958,7 @@
   "Please enter your two-step verification code.": "Bitte geben Sie Ihren zweistufigen Verifizierungscode ein.",
   "TWO-STEP VERIFICATION CODE": "CODE FÜR DIE ZWEISTUFIGE VERIFIZIERUNG",
   "Please enter a valid verification code.": "Bitte geben Sie einen gültigen Verifizierungscode ein.",
-  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmount}} des Gesamtbetrags)",
+  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmountStr}} des Gesamtbetrags)",
   "Sending from": "Senden von",
   "Select Inputs for this Transaction": "Eingaben für diese Transaktion auswählen",
   "Choose which inputs you'd like to use to send crypto.": "Wählen Sie, welche Eingaben Sie zum Senden von Kryptowährungen verwenden möchten.",

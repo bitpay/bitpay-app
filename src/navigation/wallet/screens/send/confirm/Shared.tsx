@@ -256,7 +256,8 @@ export const Fee = ({
 }): JSX.Element | null => {
   const {t} = useTranslation();
   if (fee) {
-    const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmount} = fee;
+    const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmountStr} =
+      fee;
     // @ts-ignore
     const viewFee = feeOptions[feeLevel].toUpperCase();
     return (
@@ -271,7 +272,7 @@ export const Fee = ({
                 <ConfirmSubText>
                   {t(' ( of total amount)', {
                     fiatAmount,
-                    percentageOfTotalAmount,
+                    percentageOfTotalAmountStr,
                   })}
                 </ConfirmSubText>
               </DetailColumn>

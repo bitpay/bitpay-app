@@ -958,7 +958,7 @@
   "Please enter your two-step verification code.": "Введите проверочный код двухфакторной аутентификации.",
   "TWO-STEP VERIFICATION CODE": "ПРОВЕРОЧНЫЙ КОД ДВУХФАКТОРНОЙ АУТЕНТИФИКАЦИИ",
   "Please enter a valid verification code.": "Введите действительный проверочный код.",
-  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmount}} от общей суммы)",
+  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmountStr}} от общей суммы)",
   "Sending from": "Отправка из",
   "Select Inputs for this Transaction": "Выберите входы для данной транзакции",
   "Choose which inputs you'd like to use to send crypto.": "Выберите входы, которые будут использоваться для отправки криптовалюты.",
