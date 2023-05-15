@@ -88,11 +88,12 @@ const Container = styled.ScrollView`
 const AddressBadge = styled.View`
   background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
   position: absolute;
-  right: 5px;
+  right: 13px;
   top: 50%;
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
+  background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
   position: absolute;
   right: 5px;
   top: 32px;
