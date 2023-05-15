@@ -66,18 +66,22 @@ import {
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import {Platform, TouchableOpacity} from 'react-native';
-import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
+import {
+  GetFeeOptions,
+  getFeeRatePerKb,
+} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
 import {toFiat} from '../../../../../store/wallet/utils/wallet';
 import {
+  GetFeeUnits,
   GetPrecision,
   IsERCToken,
 } from '../../../../../store/wallet/utils/currency';
 import prompt from 'react-native-prompt-android';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
-import {FEE_TOO_HIGH_LIMIT_PER} from '../../../../../constants/wallet';
+import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
 
 const VerticalPadding = styled.View`
@@ -149,6 +153,8 @@ const Confirm = () => {
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
   const [enableRBF, setEnableRBF] = useState(enableReplaceByFee);
   const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
+  const [showHighFeeWarningMessage, setShowHighFeeWarningMessage] =
+    useState(false);
 
   const {
     fee: _fee,
@@ -324,6 +330,23 @@ const Confirm = () => {
     [dispatch],
   );
 
+  const checkHighFees = async () => {
+    const {feeUnitAmount} = dispatch(GetFeeUnits(currencyAbbreviation, chain));
+    let feePerKb: number;
+    if (txp.feePerKb) {
+      feePerKb = txp.feePerKb;
+    } else {
+      feePerKb = await getFeeRatePerKb({wallet, feeLevel: fee.feeLevel});
+    }
+    setShowHighFeeWarningMessage(
+      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[chain] && txp.amount !== 0,
+    );
+  };
+
+  useEffect(() => {
+    checkHighFees();
+  }, [fee]);
+
   let recipientData, recipientListData;
 
   if (recipientList) {
@@ -383,10 +406,9 @@ const Confirm = () => {
             }
             fee={fee}
             feeOptions={feeOptions}
-            hr={fee.percentageOfTotalAmount <= FEE_TOO_HIGH_LIMIT_PER}
+            hr={!showHighFeeWarningMessage}
           />
-          {fee.percentageOfTotalAmount > FEE_TOO_HIGH_LIMIT_PER &&
-          txp.amount !== 0 ? (
+          {showHighFeeWarningMessage ? (
             <>
               <Info>
                 <InfoTriangle />
