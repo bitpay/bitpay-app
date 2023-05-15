@@ -41,7 +41,7 @@ public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
   @Override
   public void initialize() {
     super.initialize();
-    tapAndPayClient = TapAndPay.getClient(this.getCurrentActivity());
+    // tapAndPayClient = TapAndPay.getClient(getCurrentActivity());
   }
 
   @ReactMethod
@@ -75,6 +75,10 @@ public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
             .setLastDigits(lastFourDigits)
             .setUserAddress(userAddress)
             .build();
+
+        if (tapAndPayClient == null) {
+          return;
+        }
 
         tapAndPayClient.pushTokenize(activity, pushTokenizeRequest, REQUEST_CODE_PUSH_TOKENIZE);
         self.requestPaymentPromise = promise;
