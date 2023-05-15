@@ -30,10 +30,10 @@ build/
 local.properties
 *.iml
 *.hprof
-android/app/src/main/res/raw/*
 .cxx/
 *.keystore
 !debug.keystore
+android/app/src/main/res/raw/*
 
 # Emacs
 .log/
