@@ -1,6 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
-apply plugin: 'com.google.gms.google-services'
+apply plugin: "com.google.gms.google-services"
+
 import com.android.build.OutputFile
 
 /**
@@ -159,12 +160,8 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    implementation platform('com.google.firebase:firebase-bom:29.1.0')
-    implementation "com.google.firebase:firebase-core"
-    implementation "com.google.firebase:firebase-messaging"
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
-    implementation("androidx.core:core-splashscreen:1.0.0")
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
     debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {
@@ -178,6 +175,12 @@ dependencies {
         implementation jscFlavor
     }
 
+    implementation platform('com.google.firebase:firebase-bom:29.1.0')
+    implementation "com.google.firebase:firebase-core"
+    implementation "com.google.firebase:firebase-messaging"
+
+    implementation("androidx.core:core-splashscreen:1.0.0")
+
     // Dosh
     implementation('com.dosh:poweredby:2.8.0') {
       exclude group:'com.squareup.okhttp3', module:'okhttp'
@@ -185,6 +188,7 @@ dependencies {
 
     // AppsFlyer
     implementation project(':react-native-appsflyer')
+
     // Dosh SDK requires updated okhttp version
     // If React Native updates their version, this can be removed
     implementation "com.squareup.okhttp3:okhttp:4.8.0"

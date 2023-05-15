@@ -1,19 +1,22 @@
 package com.bitpay.wallet;
 
-import com.braze.ui.inappmessage.BrazeInAppMessageManager;
 import com.facebook.react.ReactActivity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.os.Build;
-import android.app.Activity;
-import android.view.View;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
+
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import com.braze.ui.inappmessage.BrazeInAppMessageManager;
 import com.zoontek.rnbootsplash.RNBootSplash;
+
+
 public class MainActivity extends ReactActivity {
 
   /**
@@ -36,7 +39,9 @@ public class MainActivity extends ReactActivity {
         this,
         getMainComponentName(),
         // If you opted-in for the New Architecture, we enable the Fabric Renderer.
-        DefaultNewArchitectureEntryPoint.getFabricEnabled()
+        DefaultNewArchitectureEntryPoint.getFabricEnabled(), // fabricEnabled
+        // If you opted-in for the New Architecture, we enable Concurrent React (i.e. React 18).
+        DefaultNewArchitectureEntryPoint.getConcurrentReactEnabled() // concurrentRootEnabled
         );
   }
 

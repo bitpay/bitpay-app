@@ -1,19 +1,22 @@
 package com.bitpay.wallet;
 
 import android.app.Application;
-import android.content.Context;
+
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
-import com.mkuczera.RNReactNativeHapticFeedbackPackage;
+
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactNativeHost;
 import com.facebook.soloader.SoLoader;
-import java.util.ArrayList;
-import java.util.List;
+
+import android.content.Context;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.facebook.react.modules.network.NetworkingModule;
+import com.mkuczera.RNReactNativeHapticFeedbackPackage;
+import java.util.ArrayList;
+import java.util.List;
 import okhttp3.OkHttpClient;
 
 // Register custom font
@@ -71,7 +74,6 @@ public class MainApplication extends Application implements ReactApplication {
   @Override
   public void onCreate() {
     super.onCreate();
-    Context context = this;
     SoLoader.init(this, /* native exopackage */ false);
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
@@ -79,7 +81,9 @@ public class MainApplication extends Application implements ReactApplication {
     }
     ReactNativeFlipper.initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
 
-     NetworkingModule.setCustomClientBuilder(
+    Context context = this;
+
+    NetworkingModule.setCustomClientBuilder(
       new NetworkingModule.CustomClientBuilder() {
         @Override
         public void apply(OkHttpClient.Builder builder) {
@@ -93,9 +97,6 @@ public class MainApplication extends Application implements ReactApplication {
     // Braze
     registerActivityLifecycleCallbacks(new BrazeActivityLifecycleCallbackListener());
   }
-  /*
-    Fix for IAB TODO
-  */
 
   public void addActivityToStack (Class cls) {
       if (!runningActivities.contains(cls)) runningActivities.add(cls);
