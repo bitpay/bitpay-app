@@ -23,7 +23,6 @@ import DownloadHistoryIcon from '../assets/settings/icon-history.svg';
 import ResetPinIcon from '../assets/settings/icon-info.svg';
 import LockIcon from '../assets/settings/icon-lock.svg';
 import OffersIcon from '../assets/settings/icon-offers.svg';
-import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
 import {CardScreens, CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
@@ -183,14 +182,6 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Styled.CategoryRow>
             <Styled.CategoryHeading>{t('Account')}</Styled.CategoryHeading>
           </Styled.CategoryRow>
-
-          <Hr />
-
-          <Styled.SettingsLink
-            Icon={ReferEarnIcon}
-            onPress={() => navigation.navigate('Referral', {card})}>
-            {t('Refer & Earn')}
-          </Styled.SettingsLink>
 
           <Hr />
 
