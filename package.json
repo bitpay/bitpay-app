@@ -241,6 +241,7 @@
     "crypto": "react-native-crypto",
     "http": "@tradle/react-native-http",
     "https": "https-browserify",
+    "os": "react-native-os",
     "path": "path-browserify",
     "fs": "react-native-level-fs",
     "_stream_transform": "readable-stream/transform",
@@ -249,13 +250,13 @@
     "_stream_duplex": "readable-stream/duplex",
     "_stream_passthrough": "readable-stream/passthrough",
     "stream": "stream-browserify",
-    "vm": "vm-browserify",
-    "os": "react-native-os"
+    "vm": "vm-browserify"
   },
   "browser": {
     "crypto": "react-native-crypto",
     "http": "@tradle/react-native-http",
     "https": "https-browserify",
+    "os": "react-native-os",
     "path": "path-browserify",
     "fs": "react-native-level-fs",
     "_stream_transform": "readable-stream/transform",
@@ -264,10 +265,6 @@
     "_stream_duplex": "readable-stream/duplex",
     "_stream_passthrough": "readable-stream/passthrough",
     "stream": "stream-browserify",
-    "vm": "vm-browserify",
-    "os": "react-native-os"
-  },
-  "engines": {
-    "node": ">=16"
+    "vm": "vm-browserify"
   }
 }
