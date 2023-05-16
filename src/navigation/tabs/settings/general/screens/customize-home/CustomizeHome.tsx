@@ -36,7 +36,6 @@ import {
   ListHeader,
   ListViewSvg,
 } from './Shared';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../../../../store/app/app.effects';
@@ -47,7 +46,6 @@ const Noop = () => null;
 
 const CustomizeHome = () => {
   const {t} = useTranslation();
-  useAndroidBackHandler(() => true);
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig)!;

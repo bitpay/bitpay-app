@@ -71,7 +71,6 @@ import {
   GetPrecision,
   IsERCToken,
 } from '../../../../../store/wallet/utils/currency';
-import prompt from 'react-native-prompt-android';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 

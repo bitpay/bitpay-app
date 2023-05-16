@@ -1,8 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
-import TouchID from 'react-native-touch-id-ng';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -59,8 +57,6 @@ const PinScreen: React.VFC<
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const themeType = useThemeType();
-
-  useAndroidBackHandler(() => true);
 
   const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 

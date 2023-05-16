@@ -96,18 +96,16 @@ import CoinbaseStack, {
 } from './navigation/coinbase/CoinbaseStack';
 import BpDevtools from './components/bp-devtools/BpDevtools';
 import {APP_ANALYTICS_ENABLED, DEVTOOLS_ENABLED} from './constants/config';
-import {BlurContainer} from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
-import {handleBwsEvent, shortcutListener} from './store/app/app.effects';
+import {handleBwsEvent} from './store/app/app.effects';
 import NotificationsSettingsStack, {
   NotificationsSettingsStackParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
-import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
 import ZenLedgerStack, {
   ZenLedgerStackParamsList,
 } from './navigation/zenledger/ZenLedgerStack';
@@ -507,19 +505,7 @@ export default () => {
     failedAppInit,
   ]);
 
-  // Silent Push Notifications
-  useEffect(() => {
-    function onMessageReceived(response: SilentPushEvent) {
-      LogActions.debug(
-        '[Root] Silent Push Notification',
-        JSON.stringify(response),
-      );
-      dispatch(handleBwsEvent(response));
-    }
-    const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
-    eventEmitter.addListener('SilentPushNotification', onMessageReceived);
-    return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
-  }, [dispatch]);
+
 
   // THEME
   useEffect(() => {
@@ -549,8 +535,6 @@ export default () => {
     ? RootStacks.ONBOARDING
     : RootStacks.INTRO;
 
-  const showDevtools = __DEV__ && DEVTOOLS_ENABLED;
-
   return (
     <SafeAreaProvider>
       <StatusBar
@@ -561,7 +545,7 @@ export default () => {
       />
 
       <ThemeProvider theme={theme}>
-        {showDevtools ? <BpDevtools /> : null}
+
 
         <NavigationContainer
           ref={navigationRef}
@@ -582,19 +566,6 @@ export default () => {
               await sleep(10);
               urlEventHandler({url: url || brazeUrl});
             }
-
-            LogActions.info('QuickActions Initialized');
-            QuickActions.popInitialAction()
-              .then(item =>
-                dispatch(shortcutListener(item, navigationRef as any)),
-              )
-              .catch(console.error);
-            DeviceEventEmitter.addListener(
-              'quickActionShortcut',
-              (item: ShortcutItem) => {
-                dispatch(shortcutListener(item, navigationRef as any));
-              },
-            );
           }}
           onStateChange={debouncedOnStateChange}>
           <Root.Navigator
@@ -699,7 +670,6 @@ export default () => {
           <OnGoingProcessModal />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
-          <BlurContainer />
           <PinModal />
           <BiometricModal />
         </NavigationContainer>

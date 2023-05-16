@@ -20,7 +20,6 @@ import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
@@ -57,7 +56,6 @@ const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
   const theme = useTheme();
-  useAndroidBackHandler(() => true);
   const TransactionButton = () => null;
   return (
     <Tab.Navigator

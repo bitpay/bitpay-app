@@ -18,7 +18,6 @@ import {
 import * as Progress from 'react-native-progress';
 import {Air, BitPay, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {Platform, TouchableOpacity} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
@@ -92,7 +91,6 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   );
   const {words, context, key} = params;
 
-  useAndroidBackHandler(() => true);
   const ref = useRef<Carousel<string>>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 

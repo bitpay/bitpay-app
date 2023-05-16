@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {KeyboardTypeOptions, TextInput, TextInputProps} from 'react-native';
-import TextInputMask, {TextInputMaskProps} from 'react-native-text-input-mask';
 import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
@@ -76,7 +75,7 @@ const Separator = styled.View`
   height: ${SEPARATOR_HEIGHT}px;
 `;
 
-const Input = styled(TextInputMask)<InputProps>`
+const Input = styled(TextInput)<InputProps>`
   background-color: transparent;
   color: ${({theme}) => theme.colors.text};
   height: ${INPUT_HEIGHT}px;
@@ -153,7 +152,7 @@ interface BoxInputProps extends TextInputProps {
 
 const BoxInput = React.forwardRef<
   TextInput,
-  BoxInputProps & TextInputMaskProps
+  BoxInputProps
 >(
   (
     {

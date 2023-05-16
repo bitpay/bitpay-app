@@ -3,7 +3,6 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Linking, ScrollView} from 'react-native';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';
@@ -145,8 +144,6 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
       headerRight: () => null,
     });
   }, [navigation, t]);
-
-  useAndroidBackHandler(() => true);
 
   const setChecked = (id: number) => {
     setAgreed([...agreed, id]);

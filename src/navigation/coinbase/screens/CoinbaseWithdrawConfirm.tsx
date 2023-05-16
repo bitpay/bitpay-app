@@ -31,7 +31,7 @@ import {createWalletAddress} from '../../../store/wallet/effects/address/address
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
-import prompt from 'react-native-prompt-android';
+
 
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;

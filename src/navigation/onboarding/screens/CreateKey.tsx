@@ -1,7 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import {OnboardingImage} from '../components/Containers';
 import Button from '../../../components/button/Button';
@@ -44,8 +43,6 @@ const CreateOrImportKey: React.VFC<
 > = ({navigation}) => {
   const {t} = useTranslation();
   const themeType = useThemeType();
-
-  useAndroidBackHandler(() => true);
 
   const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 

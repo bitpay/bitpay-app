@@ -4,7 +4,6 @@ import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -127,8 +126,6 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
   const isPaired = useAppSelector(
     ({APP, BITPAY_ID}) => !!BITPAY_ID.apiToken[APP.network],
   );
-
-  useAndroidBackHandler(() => true);
 
   const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 

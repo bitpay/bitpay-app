@@ -9,7 +9,6 @@ import {
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useDispatch, useSelector} from 'react-redux';
 import {OnboardingImage} from '../../onboarding/components/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -166,8 +165,6 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
       ),
     });
   }, [navigation, t]);
-
-  useAndroidBackHandler(() => true);
 
   return (
     <BackupContainer accessibilityLabel="backup-container">
