@@ -1,7 +1,6 @@
 import React from 'react';
 import {SvgProps} from 'react-native-svg';
 import styled from 'styled-components/native';
-import EarnCashIcon from '../../../../assets/img/card/icons/intro-earn-cash.svg';
 import EnhancedSecurityIcon from '../../../../assets/img/card/icons/intro-enhanced-security.svg';
 import FlexibilityIcon from '../../../../assets/img/card/icons/intro-flexibility.svg';
 import InstantReloadsIcon from '../../../../assets/img/card/icons/intro-instant-reloads.svg';
@@ -91,17 +90,6 @@ const CARD_HIGHLIGHTS = (): CardHighlight[] => {
             'Ready to use in millions of locations around the world with contactless payment, PIN, Google Pay, Apple Pay, or by simply withdrawing cash from any compatible ATM',
           )}
           <Exp i={2} />.
-        </SubText>
-      ),
-    },
-    {
-      icon: EarnCashIcon,
-      title: <HighlightTitle>{t('Earn cash')}</HighlightTitle>,
-      description: (
-        <SubText>
-          {t(
-            "Refer friends and you'll each receive $10 when they load their first $100.",
-          )}
         </SubText>
       ),
     },
