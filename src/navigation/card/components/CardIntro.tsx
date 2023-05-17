@@ -1,31 +1,37 @@
+import {yupResolver} from '@hookform/resolvers/yup';
 import {useScrollToTop} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useRef} from 'react';
+import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {ScrollView, View} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useDispatch, useSelector} from 'react-redux';
+import {Keyboard, ScrollView, View} from 'react-native';
+import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
+import BoxInput from '../../../components/form/BoxInput';
 import {
   ActionContainer,
   Br,
   CtaContainerAbsolute,
   ScreenGutter,
+  WIDTH,
 } from '../../../components/styled/Containers';
 import {
   Exp,
-  H3,
   Paragraph,
   Smallest,
   TextAlign,
 } from '../../../components/styled/Text';
 import {Network, URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
+import yup from '../../../lib/yup';
 import {RootState} from '../../../store';
-import {AppEffects} from '../../../store/app';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {getAppsFlyerId} from '../../../utils/appsFlyer';
+import {useAppDispatch} from '../../../utils/hooks';
+import {BaseText} from '../../wallet/components/KeyDropdownOption';
 import {CardStackParamList} from '../CardStack';
 import CardFeatureTabs from './CardIntroFeatureTabs';
 import CardIntroHeroImg from './CardIntroHeroImage';
@@ -43,40 +49,67 @@ const ContentContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
+const IntroTitleContainer = styled.View`
+  align-items: center;
+  justify-content: center;
+`;
+
+const CardIntroImgContainer = styled.View`
+  margin-top: -30px;
+`;
+
+const TitleText = styled(BaseText)`
+  width: ${WIDTH * 1.2};
+  text-align: center;
+  font-size: 38.4px;
+`;
+
 const IntroHero = () => {
   const {t} = useTranslation();
   return (
-    <View style={{flexDirection: 'row'}}>
-      <View
-        style={{
-          flexBasis: '40%',
-          marginTop: 40,
-          alignItems: 'flex-end',
-          paddingRight: 40,
-        }}>
-        <View>
-          <H3>{t('Fund it.')}</H3>
+    <IntroTitleContainer>
+      <TitleText numberOfLines={1} ellipsizeMode={'clip'}>
+        {t('Spend crypto like cash.')}
+      </TitleText>
+      <TitleText numberOfLines={1} ellipsizeMode={'clip'}>
+        {t('Better than ever.')}
+      </TitleText>
 
-          <H3>{t('Spend it.')}</H3>
-
-          <H3>{t('Live on crypto.')}</H3>
-        </View>
-      </View>
-      <View>
-        <View style={{alignItems: 'flex-start'}}>
-          <CardIntroHeroImg />
-        </View>
-      </View>
-    </View>
+      <CardIntroImgContainer>
+        <CardIntroHeroImg />
+      </CardIntroImgContainer>
+    </IntroTitleContainer>
   );
 };
 
+const schema = yup.object().shape({
+  email: yup.string().email().required().trim(),
+});
+
+interface EmailFormFieldValues {
+  email: string;
+}
+
 const CardIntro: React.FC<CardIntroProps> = props => {
-  const {navigation} = props;
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
-  const insets = useSafeAreaInsets();
+  const user = useSelector<RootState, User | null>(
+    ({BITPAY_ID}) => BITPAY_ID.user[network],
+  );
+
+  const {
+    control,
+    handleSubmit,
+    formState: {errors},
+  } = useForm<EmailFormFieldValues>({
+    resolver: yupResolver(schema),
+  });
+
+  const onFormSubmit = handleSubmit(({email}) => {
+    Keyboard.dismiss();
+    // onSubmit(email);
+  });
 
   const onGetCardPress = async (context: 'login' | 'createAccount') => {
     const baseUrl = BASE_BITPAY_URLS[network];
@@ -89,37 +122,59 @@ const CardIntro: React.FC<CardIntroProps> = props => {
       url += `&afid=${afid}`;
     }
 
-    dispatch(AppEffects.openUrlWithInAppBrowser(url));
+    dispatch(openUrlWithInAppBrowser(url));
   };
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
 
   return (
     <>
-      <ScrollView
-        ref={scrollViewRef}
-        style={{
-          marginTop: insets.top,
-        }}>
+      <ScrollView ref={scrollViewRef}>
         <ContentContainer>
           <IntroHero />
 
           <Spacer height={32} />
 
-          <Paragraph>
+          <Paragraph style={{textAlign: 'center'}}>
             {t(
-              'The fastest, easiest way to turn your crypto into dollars for shopping. Load funds in the BitPay App and spend in minutes.',
+              "We've temporarily paused new BitPay Card applications while we improve the crypto debit card program. Join our waitlist to get updates.",
+            )}
+          </Paragraph>
+          <Spacer height={56} />
+
+          {!user ? (
+            <View style={{marginBottom: 16}}>
+              <Controller
+                control={control}
+                render={({field: {onChange, onBlur, value}}) => (
+                  <BoxInput
+                    placeholder={'Enter Email'}
+                    onBlur={onBlur}
+                    onChangeText={(text: string) => onChange(text)}
+                    error={errors.email?.message}
+                    keyboardType={'email-address'}
+                    value={value}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                  />
+                )}
+                name="email"
+              />
+            </View>
+          ) : null}
+
+          <View style={{marginBottom: 16}}>
+            <Button onPress={onFormSubmit}>{t('Join Waitlist')}</Button>
+          </View>
+
+          <Paragraph style={{textAlign: 'center', fontSize: 14}}>
+            {t(
+              'By submitting this form, you agree to receive marketing and other communications from BitPay. BitPay Card available to U.S. residents only.',
             )}
           </Paragraph>
 
-          <Spacer height={24} />
+          <Spacer height={42} />
 
           {CardHighlights()}
 
@@ -169,29 +224,31 @@ const CardIntro: React.FC<CardIntroProps> = props => {
         </ContentContainer>
       </ScrollView>
 
-      <CtaContainerAbsolute
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
-        <ActionContainer>
-          <Button onPress={() => onGetCardPress('createAccount')}>
-            {t('Sign Up')}
-          </Button>
-        </ActionContainer>
+      {!user ? (
+        <CtaContainerAbsolute
+          background={true}
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 4},
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 5,
+          }}>
+          <ActionContainer>
+            <Button onPress={() => onGetCardPress('createAccount')}>
+              {t('Sign Up')}
+            </Button>
+          </ActionContainer>
 
-        <ActionContainer>
-          <Button
-            buttonStyle="secondary"
-            onPress={() => onGetCardPress('login')}>
-            {t('I already have an account')}
-          </Button>
-        </ActionContainer>
-      </CtaContainerAbsolute>
+          <ActionContainer>
+            <Button
+              buttonStyle="secondary"
+              onPress={() => onGetCardPress('login')}>
+              {t('I already have an account')}
+            </Button>
+          </ActionContainer>
+        </CtaContainerAbsolute>
+      ) : null}
     </>
   );
 };
