@@ -63,6 +63,7 @@ import CardOffers from './CardOffers';
 import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
+import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
 interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
@@ -97,6 +98,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const coinbaseAccounts = useAppSelector(
+    ({COINBASE}) => COINBASE.accounts[COINBASE_ENV],
+  );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
@@ -110,6 +114,15 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         .filter(wallet => wallet.balance.sat > 0 && wallet.network === network)
         .length > 0,
     [keys, network],
+  );
+
+  const hasCoinbaseAccountsWithBalance = useMemo(
+    () =>
+      coinbaseAccounts && coinbaseAccounts.length > 0
+        ? coinbaseAccounts.filter(account => account.balance.amount > 0)
+            .length > 0
+        : false,
+    [coinbaseAccounts],
   );
 
   const currentGroupIdx = Math.max(
@@ -156,7 +169,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   const goToAmountScreen = () => {
     dispatch(Analytics.track('Clicked Add Funds', {context: 'CardDashboard'}));
-    if (hasWalletsWithBalance) {
+    if (hasWalletsWithBalance || hasCoinbaseAccountsWithBalance) {
       navigator.navigate('Wallet', {
         screen: WalletScreens.AMOUNT,
         params: {
