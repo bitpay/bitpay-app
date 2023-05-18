@@ -280,3 +280,7 @@ export const confirmPinChangeStatusUpdated = (
   type: CardActionTypes.CONFIRM_PIN_CHANGE_STATUS_UPDATED,
   payload: {id, status},
 });
+
+export const joinWaitlist = (): CardActionType => ({
+  type: CardActionTypes.JOIN_WAITLIST,
+});

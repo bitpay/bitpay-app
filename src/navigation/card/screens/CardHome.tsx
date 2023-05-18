@@ -31,7 +31,7 @@ const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
     );
   }
 
-  return <CardIntro navigation={navigation} />;
+  return <CardIntro />;
 };
 
 export default CardHome;

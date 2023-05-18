@@ -1,14 +1,13 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {useScrollToTop} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useRef} from 'react';
+import React, {useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {Keyboard, ScrollView, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import A from '../../../components/anchor/Anchor';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {
   ActionContainer,
@@ -29,17 +28,14 @@ import yup from '../../../lib/yup';
 import {RootState} from '../../../store';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
+import {joinWaitlist} from '../../../store/card/card.actions';
 import {getAppsFlyerId} from '../../../utils/appsFlyer';
+import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch} from '../../../utils/hooks';
 import {BaseText} from '../../wallet/components/KeyDropdownOption';
-import {CardStackParamList} from '../CardStack';
 import CardFeatureTabs from './CardIntroFeatureTabs';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
-
-interface CardIntroProps {
-  navigation: StackNavigationProp<CardStackParamList, 'CardHome'>;
-}
 
 const Spacer = styled.View<{height: number}>`
   height: ${({height}) => height}px;
@@ -59,7 +55,7 @@ const CardIntroImgContainer = styled.View`
 `;
 
 const TitleText = styled(BaseText)`
-  width: ${WIDTH * 1.2};
+  width: ${WIDTH * 1.2}px;
   text-align: center;
   font-size: 38.4px;
 `;
@@ -90,10 +86,17 @@ interface EmailFormFieldValues {
   email: string;
 }
 
-const CardIntro: React.FC<CardIntroProps> = props => {
+const CardIntro: React.FC = () => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+  const [buttonState, setButtonState] = useState<ButtonState>();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
+  const isJoinedWaitlist = useSelector<RootState, boolean>(
+    ({CARD}) => CARD.isJoinedWaitlist,
+  );
+  const [showEmailForm, setShowEmailForm] = useState<boolean>(
+    !isJoinedWaitlist,
+  );
   const user = useSelector<RootState, User | null>(
     ({BITPAY_ID}) => BITPAY_ID.user[network],
   );
@@ -106,9 +109,15 @@ const CardIntro: React.FC<CardIntroProps> = props => {
     resolver: yupResolver(schema),
   });
 
-  const onFormSubmit = handleSubmit(({email}) => {
+  const onFormSubmit = handleSubmit(async ({email}) => {
+    setButtonState('loading');
     Keyboard.dismiss();
-    // onSubmit(email);
+    // TODO onSubmit(email);
+    dispatch(joinWaitlist());
+    await sleep(500);
+    setButtonState('success');
+    await sleep(1000);
+    setShowEmailForm(false);
   });
 
   const onGetCardPress = async (context: 'login' | 'createAccount') => {
@@ -143,36 +152,51 @@ const CardIntro: React.FC<CardIntroProps> = props => {
           </Paragraph>
           <Spacer height={56} />
 
-          {!user ? (
-            <View style={{marginBottom: 16}}>
-              <Controller
-                control={control}
-                render={({field: {onChange, onBlur, value}}) => (
-                  <BoxInput
-                    placeholder={'Enter Email'}
-                    onBlur={onBlur}
-                    onChangeText={(text: string) => onChange(text)}
-                    error={errors.email?.message}
-                    keyboardType={'email-address'}
-                    value={value}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
+          {showEmailForm ? (
+            <>
+              {!user ? (
+                <View style={{marginBottom: 16}}>
+                  <Controller
+                    control={control}
+                    render={({field: {onChange, onBlur, value}}) => (
+                      <BoxInput
+                        placeholder={'Enter Email'}
+                        onBlur={onBlur}
+                        onChangeText={(text: string) => onChange(text)}
+                        error={errors.email?.message}
+                        keyboardType={'email-address'}
+                        value={value}
+                        returnKeyType="next"
+                        blurOnSubmit={false}
+                      />
+                    )}
+                    name="email"
                   />
+                </View>
+              ) : null}
+
+              <View style={{marginBottom: 16}}>
+                <Button state={buttonState} onPress={onFormSubmit}>
+                  {t('Join Waitlist')}
+                </Button>
+              </View>
+
+              <Paragraph style={{textAlign: 'center', fontSize: 14}}>
+                {t(
+                  'By submitting this form, you agree to receive marketing and other communications from BitPay. BitPay Card available to U.S. residents only.',
                 )}
-                name="email"
-              />
-            </View>
-          ) : null}
+              </Paragraph>
+            </>
+          ) : (
+            <>
+              <Spacer height={24} />
 
-          <View style={{marginBottom: 16}}>
-            <Button onPress={onFormSubmit}>{t('Join Waitlist')}</Button>
-          </View>
-
-          <Paragraph style={{textAlign: 'center', fontSize: 14}}>
-            {t(
-              'By submitting this form, you agree to receive marketing and other communications from BitPay. BitPay Card available to U.S. residents only.',
-            )}
-          </Paragraph>
+              <Paragraph style={{textAlign: 'center', fontSize: 14}}>
+                {t('You have joined the waitlist.')}
+              </Paragraph>
+              <Spacer height={24} />
+            </>
+          )}
 
           <Spacer height={42} />
 

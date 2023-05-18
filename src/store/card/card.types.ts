@@ -75,6 +75,7 @@ export enum CardActionTypes {
   CONFIRM_PIN_CHANGE_SUCCESS = 'CARD/CONFIRM_PIN_CHANGE_SUCCESS',
   CONFIRM_PIN_CHANGE_FAILED = 'CARD/CONFIRM_PIN_CHANGE_FAILED',
   CONFIRM_PIN_CHANGE_STATUS_UPDATED = 'CARD/CONFIRM_PIN_CHANGE_STATUS_UPDATED',
+  JOIN_WAITLIST = 'CARD/JOIN_WAITLIST',
 }
 
 interface SuccessInitializeStore {
@@ -260,6 +261,10 @@ interface ConfirmPinChangeStatusUpdated {
   payload: {id: string; status: ConfirmPinChangeStatus};
 }
 
+interface JoinWaitlist {
+  type: CardActionTypes.JOIN_WAITLIST;
+}
+
 export type CardActionType =
   | SuccessInitializeStore
   | SuccessFetchCards
@@ -295,4 +300,5 @@ export type CardActionType =
   | ResetPinChangeRequestInfo
   | ConfirmPinChangeSuccess
   | ConfirmPinChangeFailed
-  | ConfirmPinChangeStatusUpdated;
+  | ConfirmPinChangeStatusUpdated
+  | JoinWaitlist;

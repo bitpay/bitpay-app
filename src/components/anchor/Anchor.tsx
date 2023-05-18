@@ -1,7 +1,7 @@
 import React from 'react';
 import {Linking} from 'react-native';
-import {useDispatch} from 'react-redux';
-import {AppEffects} from '../../store/app';
+import {openUrlWithInAppBrowser} from '../../store/app/app.effects';
+import {useAppDispatch} from '../../utils/hooks';
 import {Link} from '../styled/Text';
 
 interface AnchorProps {
@@ -9,9 +9,9 @@ interface AnchorProps {
   download?: boolean;
 }
 
-const A: React.FC<AnchorProps> = props => {
+const A: React.FC<React.PropsWithChildren<AnchorProps>> = props => {
   const {href, download, children} = props;
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const onPress = async () => {
     if (href) {
@@ -24,7 +24,7 @@ const A: React.FC<AnchorProps> = props => {
         return;
       }
 
-      dispatch(AppEffects.openUrlWithInAppBrowser(href));
+      dispatch(openUrlWithInAppBrowser(href));
     }
   };
 

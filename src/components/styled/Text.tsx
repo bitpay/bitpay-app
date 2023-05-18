@@ -174,6 +174,13 @@ export const Link = styled(BaseText)`
   color: ${({theme}) => theme.colors.link};
 `;
 
+export const UnderlineLink = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
+  text-decoration: underline;
+  text-decoration-color: ${({theme}) => theme.colors.text};
+  font-weight: bold;
+`;
+
 // WALLET
 export const Balance = styled(BaseText)<{scale: boolean}>`
   font-size: ${({scale}) => (scale ? 26 : 36)}px;
