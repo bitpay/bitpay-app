@@ -389,6 +389,7 @@ export const BuildCoinbaseWalletsList = ({
   network,
   payProOptions,
   invoice,
+  skipThreshold = false,
 }: {
   coinbaseAccounts: CoinbaseAccountProps[] | null;
   coinbaseExchangeRates: CoinbaseExchangeRatesProps | null;
@@ -397,10 +398,11 @@ export const BuildCoinbaseWalletsList = ({
   network?: Network;
   payProOptions?: PayProOptions;
   invoice?: Invoice;
+  skipThreshold?: boolean;
 }) => {
   const price = invoice?.price || 0;
   const threshold = invoice?.oauth?.coinbase?.threshold || 0;
-  const enabled = invoice?.oauth?.coinbase?.enabled || false;
+  const enabled = invoice?.oauth?.coinbase?.enabled || !!skipThreshold;
   if (
     !enabled ||
     !coinbaseAccounts ||
@@ -419,7 +421,8 @@ export const BuildCoinbaseWalletsList = ({
   const wallets = coinbaseAccounts
     .filter(
       account =>
-        account.balance.amount > 0 && threshold > 0 && threshold >= price,
+        account.balance.amount > 0 &&
+        (skipThreshold || (threshold > 0 && threshold >= price)),
     )
     .filter(
       account =>
@@ -561,12 +564,14 @@ export const BuildPayProWalletSelectorList =
     payProOptions,
     defaultAltCurrencyIsoCode = 'USD',
     invoice,
+    skipThreshold = false,
   }: {
     keys: {[key in string]: Key};
     network?: Network;
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
     invoice?: Invoice;
+    skipThreshold?: boolean;
   }): Effect<WalletsAndAccounts> =>
   (dispatch, getState) => {
     const {COINBASE} = getState();
@@ -596,6 +601,7 @@ export const BuildPayProWalletSelectorList =
       payProOptions,
       defaultAltCurrencyIsoCode,
       invoice,
+      skipThreshold,
     });
     return {keyWallets, coinbaseWallets};
   };
