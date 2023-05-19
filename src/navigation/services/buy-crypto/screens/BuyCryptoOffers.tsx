@@ -34,6 +34,7 @@ import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {
   BuyCryptoLimits,
+  MoonpayGetCurrencyLimitsRequestData,
   MoonpayPaymentData,
   RampGetAssetsData,
   RampGetAssetsRequestData,
@@ -86,6 +87,7 @@ import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {AppActions} from '../../../../store/app';
+import {moonpayGetCurrencyLimits} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
 
 export type BuyCryptoOffersScreenParams = {
   amount: number;
@@ -402,7 +404,7 @@ const BuyCryptoOffers: React.FC = () => {
   const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
 
-  const getMoonpayQuote = (): void => {
+  const getMoonpayQuote = async (): Promise<void> => {
     logger.debug('Moonpay getting quote');
 
     if (buyCryptoConfig?.moonpay?.disabled) {
@@ -437,6 +439,51 @@ const BuyCryptoOffers: React.FC = () => {
       offers.moonpay.fiatCurrency === fiatCurrency
         ? amount
         : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    const currencyLimitsrequestData: MoonpayGetCurrencyLimitsRequestData = {
+      currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
+        coin.toLowerCase(),
+        selectedWallet.chain,
+      ),
+      baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
+      paymentMethod: _paymentMethod,
+      areFeesIncluded: true,
+      env: moonpayEnv,
+    };
+
+    try {
+      const moonpayCurrencyLimitsData = await moonpayGetCurrencyLimits(
+        currencyLimitsrequestData,
+      );
+      offers.moonpay.amountLimits = {
+        min: moonpayCurrencyLimitsData.baseCurrency.minBuyAmount,
+        max: moonpayCurrencyLimitsData.baseCurrency.maxBuyAmount,
+      };
+
+      if (
+        (offers.moonpay.amountLimits.min &&
+          offers.moonpay.fiatAmount < offers.moonpay.amountLimits.min) ||
+        (offers.moonpay.amountLimits.max &&
+          offers.moonpay.fiatAmount > offers.moonpay.amountLimits.max)
+      ) {
+        offers.moonpay.outOfLimitMsg = t(
+          'There are no Moonpay offers available, as the current purchase limits for this exchange must be between and',
+          {
+            min: offers.moonpay.amountLimits.min,
+            max: offers.moonpay.amountLimits.max,
+            fiatCurrency: offers.moonpay.fiatCurrency,
+          },
+        );
+        setFinishedMoonpay(!finishedMoonpay);
+        return;
+      }
+    } catch (err) {
+      logger.warn(
+        `It was not possible to get currency limits for Moonpay with the following values: ${JSON.stringify(
+          currencyLimitsrequestData,
+        )}`,
+      );
+    }
 
     const requestData = {
       currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
