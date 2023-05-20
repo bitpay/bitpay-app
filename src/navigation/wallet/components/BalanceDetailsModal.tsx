@@ -107,6 +107,7 @@ interface Props {
 
 const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
   const {t} = useTranslation();
+  const isTestnet = wallet.network === 'testnet';
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <BalanceDetailsContainer>
@@ -144,7 +145,9 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                       {wallet.cryptoConfirmedLockedBalance} XRP
                     </CryptoBalance>
                     <FiatBalance>
-                      {wallet.fiatConfirmedLockedBalance}
+                      {isTestnet
+                        ? t('Test Only - No Value')
+                        : wallet.fiatConfirmedLockedBalance}
                     </FiatBalance>
                   </BalanceContainer>
                 </Row>
@@ -167,7 +170,9 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <CryptoBalance>
                   {wallet.cryptoBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
-                <FiatBalance>{wallet.fiatBalance}</FiatBalance>
+                <FiatBalance>
+                  {isTestnet ? t('Test Only - No Value') : wallet.fiatBalance}
+                </FiatBalance>
               </BalanceContainer>
             </Row>
             <LabelTip type="info">
@@ -195,7 +200,11 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <CryptoBalance type="success">
                   {wallet.cryptoSpendableBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
-                <FiatBalance>{wallet.fiatSpendableBalance}</FiatBalance>
+                <FiatBalance>
+                  {isTestnet
+                    ? t('Test Only - No Value')
+                    : wallet.fiatSpendableBalance}
+                </FiatBalance>
               </BalanceContainer>
             </Row>
             <LabelTip type="info">
@@ -215,7 +224,11 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <CryptoBalance type="warn">
                   {wallet.cryptoPendingBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
-                <FiatBalance>{wallet.fiatPendingBalance}</FiatBalance>
+                <FiatBalance>
+                  {isTestnet
+                    ? t('Test Only - No Value')
+                    : wallet.fiatPendingBalance}
+                </FiatBalance>
               </BalanceContainer>
             </Row>
             <LabelTip type="info">
@@ -236,7 +249,11 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <CryptoBalance type="caution">
                   {wallet.cryptoLockedBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
-                <FiatBalance>{wallet.fiatLockedBalance}</FiatBalance>
+                <FiatBalance>
+                  {isTestnet
+                    ? t('Test Only - No Value')
+                    : wallet.fiatLockedBalance}
+                </FiatBalance>
               </BalanceContainer>
             </Row>
             <LabelTip type="info">

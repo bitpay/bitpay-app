@@ -45,6 +45,7 @@ import SendToPill from '../components/SendToPill';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
+import SecureLockIcon from '../../../../assets/img/secure-lock.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
@@ -75,6 +76,7 @@ import {
   DetailColumn,
   DetailContainer,
   DetailRow,
+  SendingTo,
   SendToPillContainer,
 } from './send/confirm/Shared';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -626,7 +628,25 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          <MultipleOutputsTx tx={txp} />
+          {txp.payProUrl ? (
+            <SendingTo
+              recipient={{
+                recipientName: txp.payProUrl
+                  .replace('https://', '')
+                  .split('/')[0],
+                img: () => (
+                  <SecureLockIcon
+                    height={18}
+                    width={18}
+                    style={{marginTop: -2}}
+                  />
+                ),
+              }}
+              hr
+            />
+          ) : (
+            <MultipleOutputsTx tx={txp} />
+          )}
 
           <>
             <DetailContainer>

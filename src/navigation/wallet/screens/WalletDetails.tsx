@@ -899,6 +899,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         value={item.uiValue}
         message={item.message}
         onPressTransaction={() => onPressTxp(item)}
+        recipientCount={item.recipientCount}
+        toAddress={item.toAddress}
+        chain={item.chain}
+        contactList={contactList}
       />
     );
   }, []);

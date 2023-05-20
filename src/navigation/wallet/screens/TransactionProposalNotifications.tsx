@@ -118,6 +118,7 @@ const TransactionProposalNotifications = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const wallets = keyId
     ? keys[keyId].wallets
     : Object.values(keys).flatMap(k => k.wallets);
@@ -429,6 +430,10 @@ const TransactionProposalNotifications = () => {
                       message={txp.message}
                       onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
                       hideIcon={true}
+                      recipientCount={txp.recipientCount}
+                      toAddress={txp.toAddress}
+                      chain={txp.chain}
+                      contactList={contactList}
                     />
                   </ProposalsInfoContainer>
                   {item.needSign ? (
