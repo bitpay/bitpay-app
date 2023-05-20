@@ -21,6 +21,7 @@ import {
   createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
+  showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
@@ -388,11 +389,26 @@ const Confirm = () => {
               fiatOnly
               hr
             />
-            <Amount description={t('SubTotal')} amount={subTotal} hr />
+            <Amount
+              description={t('SubTotal')}
+              amount={subTotal}
+              hr
+              showInfoIcon={!!networkCost}
+              infoIconOnPress={() => {
+                dispatch(showConfirmAmountInfoSheet('subtotal'));
+              }}
+            />
 
             <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
 
-            <Amount description={t('Total')} amount={total} />
+            <Amount
+              description={t('Total')}
+              amount={total}
+              showInfoIcon={!!subTotal}
+              infoIconOnPress={() => {
+                dispatch(showConfirmAmountInfoSheet('total'));
+              }}
+            />
 
             <CardTermsContainer>
               <Smallest>

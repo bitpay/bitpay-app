@@ -54,7 +54,10 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {createWalletAddress, ToCashAddress} from '../address/address';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
-import {startOnGoingProcessModal} from '../../../app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../app/app.effects';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
 import TouchID from 'react-native-touch-id-ng';
@@ -70,6 +73,8 @@ import {navigationRef} from '../../../../Root';
 import {WalletScreens} from '../../../../navigation/wallet/WalletStack';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 import {Analytics} from '../../../analytics/analytics.effects';
+import {AppActions} from '../../../app';
+import {URL} from '../../../../constants';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1629,4 +1634,52 @@ export const receiveCrypto =
         });
       }
     }
+  };
+
+export const showConfirmAmountInfoSheet =
+  (type: 'total' | 'subtotal'): Effect<void> =>
+  dispatch => {
+    let title: string, message: string, readMoreUrl: string;
+
+    switch (type) {
+      case 'total':
+        title = t('Total');
+        message = t(
+          'The total amount is the subtotal amount plus transaction fees.',
+        );
+        readMoreUrl = URL.HELP_MINER_FEES;
+        break;
+      case 'subtotal':
+        title = t('Subtotal');
+        message = t(
+          'For BitPay invoices the subtotal amount is the product or service amount plus network costs.',
+        );
+        readMoreUrl = URL.HELP_PAYPRO_NETWORK_COST;
+        break;
+      default:
+        return;
+    }
+
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title,
+        message,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Read more'),
+            action: async () => {
+              await sleep(1000);
+              dispatch(openUrlWithInAppBrowser(readMoreUrl));
+            },
+            primary: true,
+          },
+          {
+            text: t('GOT IT'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
   };

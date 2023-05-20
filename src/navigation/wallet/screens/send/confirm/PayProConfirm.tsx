@@ -17,6 +17,7 @@ import {
   createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
+  showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
@@ -359,6 +360,10 @@ const PayProConfirm = () => {
                 amount={subTotal}
                 height={83}
                 hr
+                showInfoIcon={!!txp?.payProUrl}
+                infoIconOnPress={() => {
+                  dispatch(showConfirmAmountInfoSheet('subtotal'));
+                }}
               />
               {wallet && fee ? (
                 <Fee
@@ -368,7 +373,15 @@ const PayProConfirm = () => {
                   hr
                 />
               ) : null}
-              <Amount description={'Total'} amount={total} height={83} />
+              <Amount
+                description={'Total'}
+                amount={total}
+                height={83}
+                showInfoIcon={true}
+                infoIconOnPress={() => {
+                  dispatch(showConfirmAmountInfoSheet('total'));
+                }}
+              />
             </>
           ) : null}
         </DetailsList>

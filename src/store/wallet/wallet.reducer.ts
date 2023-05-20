@@ -9,7 +9,7 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
   'tokenData',
   'tokenOptions',
   'tokenOptionsByAddress',
-  'expectedKeyLengthChange'
+  'expectedKeyLengthChange',
 ];
 
 export type Keys = {

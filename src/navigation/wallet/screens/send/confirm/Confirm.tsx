@@ -14,6 +14,7 @@ import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
+  showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
@@ -479,6 +480,10 @@ const Confirm = () => {
             height={83}
             chain={chain}
             network={wallet.credentials.network}
+            showInfoIcon={!!subTotal}
+            infoIconOnPress={() => {
+              dispatch(showConfirmAmountInfoSheet('total'));
+            }}
           />
         </DetailsList>
 

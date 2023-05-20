@@ -19,7 +19,10 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
@@ -38,6 +41,7 @@ import {
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
+import {URL} from '../../../../../constants';
 import {Terms} from '../../../../tabs/shop/components/styled/ShopTabComponents';
 import {
   CardConfig,
@@ -420,8 +424,23 @@ const Confirm = () => {
               amount={networkCost}
               fiatOnly
               hr
+              showInfoIcon={true}
+              infoIconOnPress={async () => {
+                await sleep(400);
+                dispatch(openUrlWithInAppBrowser(URL.HELP_PAYPRO_NETWORK_COST));
+              }}
             />
-            <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
+            <Amount
+              description={t('Miner fee')}
+              amount={fee}
+              fiatOnly
+              hr
+              showInfoIcon={true}
+              infoIconOnPress={async () => {
+                await sleep(400);
+                dispatch(openUrlWithInAppBrowser(URL.HELP_MINER_FEES));
+              }}
+            />
             <Amount description={t('Total')} amount={total} />
             <Terms>{cardConfig.terms}</Terms>
           </>
