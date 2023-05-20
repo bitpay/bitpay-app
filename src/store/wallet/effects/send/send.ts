@@ -908,7 +908,9 @@ export const publishAndSign =
       }
       if (key.isPrivKeyEncrypted && !signingMultipleProposals) {
         try {
-          password = await new Promise<string>((_resolve, _reject) => {
+          password = await new Promise<string>(async (_resolve, _reject) => {
+            dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
+            await sleep(500);
             dispatch(
               showDecryptPasswordModal({
                 onSubmitHandler: async (_password: string) => {
@@ -1047,7 +1049,9 @@ export const publishAndSignMultipleProposals =
         }
         if (key.isPrivKeyEncrypted) {
           try {
-            password = await new Promise<string>((_resolve, _reject) => {
+            password = await new Promise<string>(async (_resolve, _reject) => {
+              dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
+              await sleep(500);
               dispatch(
                 showDecryptPasswordModal({
                   onSubmitHandler: async (_password: string) => {
