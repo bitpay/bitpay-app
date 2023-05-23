@@ -1,39 +1,22 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {useScrollToTop} from '@react-navigation/native';
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {Keyboard, ScrollView, View} from 'react-native';
-import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import A from '../../../components/anchor/Anchor';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
-import {
-  ActionContainer,
-  Br,
-  CtaContainerAbsolute,
-  ScreenGutter,
-  WIDTH,
-} from '../../../components/styled/Containers';
-import {
-  Exp,
-  Paragraph,
-  Smallest,
-  TextAlign,
-} from '../../../components/styled/Text';
-import {Network, URL} from '../../../constants';
-import {BASE_BITPAY_URLS} from '../../../constants/config';
+import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
+import {Paragraph} from '../../../components/styled/Text';
+import {BWCErrorMessage} from '../../../constants/BWCError';
 import yup from '../../../lib/yup';
-import {RootState} from '../../../store';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {joinWaitlist} from '../../../store/card/card.actions';
-import {getAppsFlyerId} from '../../../utils/appsFlyer';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {joinWaitlist} from '../../../store/card/card.effects';
 import {sleep} from '../../../utils/helper-methods';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BaseText} from '../../wallet/components/KeyDropdownOption';
-import CardFeatureTabs from './CardIntroFeatureTabs';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
 
@@ -51,7 +34,7 @@ const IntroTitleContainer = styled.View`
 `;
 
 const CardIntroImgContainer = styled.View`
-  margin-top: -30px;
+  margin-top: -20px;
 `;
 
 const TitleText = styled(BaseText)`
@@ -89,53 +72,59 @@ interface EmailFormFieldValues {
 const CardIntro: React.FC = () => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+  const logger = useLogger();
   const [buttonState, setButtonState] = useState<ButtonState>();
-  const network = useSelector<RootState, Network>(({APP}) => APP.network);
-  const isJoinedWaitlist = useSelector<RootState, boolean>(
-    ({CARD}) => CARD.isJoinedWaitlist,
-  );
-  const [showEmailForm, setShowEmailForm] = useState<boolean>(
-    !isJoinedWaitlist,
-  );
-  const user = useSelector<RootState, User | null>(
-    ({BITPAY_ID}) => BITPAY_ID.user[network],
-  );
+  const network = useAppSelector(({APP}) => APP.network);
+  const {isJoinedWaitlist} = useAppSelector(({CARD}) => CARD);
+  const [showEmailForm, setShowEmailForm] = useState<boolean>();
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const {email: userEmail} = user || {};
 
   const {
     control,
     handleSubmit,
     formState: {errors},
   } = useForm<EmailFormFieldValues>({
-    resolver: yupResolver(schema),
+    resolver: !userEmail ? yupResolver(schema) : undefined,
   });
 
   const onFormSubmit = handleSubmit(async ({email}) => {
-    setButtonState('loading');
-    Keyboard.dismiss();
-    // TODO onSubmit(email);
-    dispatch(joinWaitlist());
-    await sleep(500);
-    setButtonState('success');
-    await sleep(1000);
-    setShowEmailForm(false);
-  });
+    try {
+      setButtonState('loading');
+      Keyboard.dismiss();
+      await dispatch(joinWaitlist(userEmail || email));
+      await sleep(500);
+      setButtonState('success');
+    } catch (err) {
+      setButtonState('failed');
 
-  const onGetCardPress = async (context: 'login' | 'createAccount') => {
-    const baseUrl = BASE_BITPAY_URLS[network];
-    const path = 'wallet-card';
-    const afid = await getAppsFlyerId();
-
-    let url = `${baseUrl}/${path}?context=${context}`;
-
-    if (afid) {
-      url += `&afid=${afid}`;
+      logger.warn('Error joining waitlist: ' + BWCErrorMessage(err));
+      await sleep(500);
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(err),
+            title: t('Error joining waitlist'),
+          }),
+        ),
+      );
+      await sleep(500);
+      setShowEmailForm(true);
+      setButtonState(undefined);
     }
-
-    dispatch(openUrlWithInAppBrowser(url));
-  };
+  });
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
+
+  const updateEmailForm = async () => {
+    await sleep(1000);
+    setShowEmailForm(!isJoinedWaitlist);
+  };
+
+  useEffect(() => {
+    updateEmailForm();
+  }, [isJoinedWaitlist]);
 
   return (
     <>
@@ -154,7 +143,7 @@ const CardIntro: React.FC = () => {
 
           {showEmailForm ? (
             <>
-              {!user ? (
+              {!userEmail ? (
                 <View style={{marginBottom: 16}}>
                   <Controller
                     control={control}
@@ -189,90 +178,22 @@ const CardIntro: React.FC = () => {
             </>
           ) : (
             <>
-              <Spacer height={24} />
+              <Spacer height={42} />
 
               <Paragraph style={{textAlign: 'center', fontSize: 14}}>
                 {t('You have joined the waitlist.')}
               </Paragraph>
-              <Spacer height={24} />
+              <Spacer height={56} />
             </>
           )}
 
-          <Spacer height={42} />
+          <Spacer height={56} />
 
           {CardHighlights()}
-
-          <Spacer height={24} />
-
-          <Paragraph>
-            {t(
-              'Shop online or in stores instantly with the virtual BitPay Prepaid Mastercard©, or order your physical card for free today.',
-            )}
-          </Paragraph>
         </ContentContainer>
 
         <Spacer height={56} />
-
-        {CardFeatureTabs}
-
-        <ContentContainer>
-          <Paragraph>
-            <A href={URL.PRIVACY_POLICY}>{t('Privacy Policy')}</A>
-          </Paragraph>
-        </ContentContainer>
-
-        <ContentContainer>
-          <Smallest>
-            <Exp i={1} /> {t('Network fees and miner fees may apply.')}
-          </Smallest>
-
-          <Smallest>
-            <Exp i={2} /> {t('Third party fees may apply.')}
-          </Smallest>
-
-          <Br />
-
-          <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
-
-          <Br />
-
-          <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
-        </ContentContainer>
-
-        <ContentContainer style={{marginBottom: 200}}>
-          <TextAlign align="center">
-            <A href={URL.MASTERCARD_CARDHOLDER_AGREEMENT} download>
-              {t('Cardholder Agreement')}
-            </A>
-          </TextAlign>
-        </ContentContainer>
       </ScrollView>
-
-      {!user ? (
-        <CtaContainerAbsolute
-          background={true}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 4},
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 5,
-          }}>
-          <ActionContainer>
-            <Button onPress={() => onGetCardPress('createAccount')}>
-              {t('Sign Up')}
-            </Button>
-          </ActionContainer>
-
-          <ActionContainer>
-            <Button
-              buttonStyle="secondary"
-              onPress={() => onGetCardPress('login')}>
-              {t('I already have an account')}
-            </Button>
-          </ActionContainer>
-        </CtaContainerAbsolute>
-      ) : null}
     </>
   );
 };

@@ -281,6 +281,9 @@ export const confirmPinChangeStatusUpdated = (
   payload: {id, status},
 });
 
-export const joinWaitlist = (): CardActionType => ({
-  type: CardActionTypes.JOIN_WAITLIST,
+export const isJoinedWaitlist = (
+  isJoinedWaitlist: boolean,
+): CardActionType => ({
+  type: CardActionTypes.IS_JOINED_WAITLIST,
+  payload: {isJoinedWaitlist},
 });

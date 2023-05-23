@@ -548,10 +548,10 @@ export const cardReducer = (
           [action.payload.id]: action.payload.status,
         },
       };
-    case CardActionTypes.JOIN_WAITLIST:
+    case CardActionTypes.IS_JOINED_WAITLIST:
       return {
         ...state,
-        isJoinedWaitlist: true,
+        isJoinedWaitlist: action.payload.isJoinedWaitlist,
       };
 
     default:
