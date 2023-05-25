@@ -14,7 +14,10 @@ const WyreLogoSvg: React.FC<{
       width={width}
       height={height}
       viewBox={iconOnly ? '0 0 33 32' : '0 0 96 32'}>
-      <G transform="translate(-3,0)" fill="none" fill-rule="evenodd">
+      <G
+        transform={iconOnly ? 'translate(3,0)' : 'translate(-3,0)'}
+        fill="none"
+        fill-rule="evenodd">
         <Path
           id="wyre-path-icon1"
           fill="#94C5FF"
