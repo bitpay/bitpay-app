@@ -173,11 +173,10 @@ export const formatFiatAmount = (
   opts: {
     customPrecision?: 'minimal';
     currencyAbbreviation?: string;
-    currencyDisplay?: 'symbol';
+    currencyDisplay?: 'symbol' | 'code';
   } = {},
 ) => {
-  const currencyDisplay =
-    currency === 'USD' ? 'symbol' : opts.currencyDisplay || 'code';
+  const currencyDisplay = opts.currencyDisplay || 'symbol';
   const formatter = getFormatter(amount, currency, {...opts, currencyDisplay});
 
   if (currencyDisplay === 'symbol') {
@@ -274,11 +273,10 @@ export const formatFiatAmountObj = (
   opts: {
     customPrecision?: 'minimal';
     currencyAbbreviation?: string;
-    currencyDisplay?: 'symbol';
+    currencyDisplay?: 'symbol' | 'code';
   } = {},
 ): {amount: string; code?: string} => {
-  const currencyDisplay =
-    currency === 'USD' ? 'symbol' : opts.currencyDisplay || 'code';
+  const currencyDisplay = opts.currencyDisplay || 'symbol';
   const formatter = getFormatter(amount, currency, {...opts, currencyDisplay});
 
   if (currencyDisplay === 'symbol') {

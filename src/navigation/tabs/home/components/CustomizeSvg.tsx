@@ -3,10 +3,13 @@ import {Circle, Path, Svg} from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
 import {Action, LinkBlue} from '../../../../styles/colors';
 
-const CustomizeSvg = () => {
+const CustomizeSvg: React.FC<{
+  width: number;
+  height: number;
+}> = ({width = 35, height = 35}) => {
   const theme = useTheme();
   return (
-    <Svg width="35" height="35" viewBox="0 0 35 35" fill="none">
+    <Svg width={width} height={height} viewBox="0 0 35 35" fill="none">
       <Circle
         cx="17.5"
         cy="17.5"
