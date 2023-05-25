@@ -958,7 +958,7 @@
   "Please enter your two-step verification code.": "2段階認証コードを入力してください。",
   "TWO-STEP VERIFICATION CODE": "2段階認証コード",
   "Please enter a valid verification code.": "有効な認証コードを入力してください。",
-  " ( of total amount)": "{{fiatAmount}}（総額の{{percentageOfTotalAmount}}）",
+  " ( of total amount)": "{{fiatAmount}}（総額の{{percentageOfTotalAmountStr}}）",
   "Sending from": "送付元",
   "Select Inputs for this Transaction": "この取引に使う預け入れを選択する",
   "Choose which inputs you'd like to use to send crypto.": "暗号資産（仮想通貨）を送付するために、どの預け入れを使うか選択する。",

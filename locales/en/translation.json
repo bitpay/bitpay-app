@@ -1081,7 +1081,7 @@
   "Please enter your two-step verification code.": "Please enter your two-step verification code.",
   "TWO-STEP VERIFICATION CODE": "TWO-STEP VERIFICATION CODE",
   "Sending to": "Sending to",
-  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmount}} of total amount)",
+  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmountStr}} of total amount)",
   "Sending from": "Sending from",
   "Please try again.": "Please try again.",
   "By giving my email address, I give explicit consent to BitPay to use it to contact me about payment issues.": "By giving my email address, I give explicit consent to BitPay to use it to contact me about payment issues.",

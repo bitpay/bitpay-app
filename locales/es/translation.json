@@ -1066,7 +1066,7 @@
   "Please enter your two-step verification code.": "Por favor, introduzca su código de verificación de dos pasos.",
   "TWO-STEP VERIFICATION CODE": "CÓDIGO DE VERIFICACIÓN DE DOS PASOS",
   "Sending to": "Enviando a",
-  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmount}} del monto total)",
+  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmountStr}} del monto total)",
   "Sending from": "Enviando desde",
   "Please try again.": "Por favor intente nuevamente.",
   "By giving my email address, I give explicit consent to BitPay to use it to contact me about payment issues.": "Al proporcionar mi dirección de correo electrónico, doy mi consentimiento explícito a BitPay para que la use para contactarme sobre problemas de pago.",

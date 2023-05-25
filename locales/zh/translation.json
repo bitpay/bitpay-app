@@ -958,7 +958,7 @@
   "Please enter your two-step verification code.": "请输入两步验证码。",
   "TWO-STEP VERIFICATION CODE": "两步验证码",
   "Please enter a valid verification code.": "请输入有效的验证码。",
-  " ( of total amount)": "{{fiatAmount}}（总额的 {{percentageOfTotalAmount}}）",
+  " ( of total amount)": "{{fiatAmount}}（总额的 {{percentageOfTotalAmountStr}}）",
   "Sending from": "发送自",
   "Select Inputs for this Transaction": "选择此交易的输入",
   "Choose which inputs you'd like to use to send crypto.": "选择您希望用于发送加密货币的输入。",
