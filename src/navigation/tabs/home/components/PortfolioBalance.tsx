@@ -50,6 +50,7 @@ const PercentageText = styled(BaseText)`
 
 const PercentageContainer = styled.View`
   flex-direction: row;
+  justify-content: center;
 `;
 
 const PortfolioBalance = () => {
