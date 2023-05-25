@@ -20,6 +20,7 @@ interface CardHighlight {
 
 const HighlightContainer = styled.View`
   border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
+  border-bottom-width: 0px;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   margin-top: 16px;

@@ -687,7 +687,7 @@ export const joinWaitlist =
       const {network} = APP;
       const session = await AuthApi.fetchSession(network);
       const baseUrl = BASE_BITPAY_URLS[network];
-      
+
       const config = {
         headers: {
           'x-csrf-token': session.csrfToken,
