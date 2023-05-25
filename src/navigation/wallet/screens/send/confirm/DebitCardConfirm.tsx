@@ -108,6 +108,7 @@ const Confirm = () => {
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [wallet, setWallet] = useState(_wallet);
   const [coinbaseAccount, setCoinbaseAccount] =
     useState<CoinbaseAccountProps>();
@@ -121,8 +122,17 @@ const Confirm = () => {
 
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const memoizedKeysAndWalletsList = useMemo(
-    () => dispatch(BuildPayProWalletSelectorList({keys, network})),
-    [dispatch, keys, network],
+    () =>
+      dispatch(
+        BuildPayProWalletSelectorList({
+          keys,
+          network,
+          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+          invoice,
+          skipThreshold: true,
+        }),
+      ),
+    [defaultAltCurrency.isoCode, dispatch, keys, network, invoice],
   );
 
   const reshowWalletSelector = async () => {
