@@ -1,6 +1,5 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {useDispatch} from 'react-redux';
 import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import {
@@ -25,7 +24,7 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import _ from 'lodash';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -257,7 +256,7 @@ export const createHomeCardList = ({
 const Crypto = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const linkedCoinbase = useAppSelector(
