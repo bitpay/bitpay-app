@@ -16,7 +16,6 @@ import CustomizeVirtualCard, {
 import UpdateCardNameScreen, {
   UpdateCardNameScreenParamList,
 } from './screens/settings/UpdateCardName';
-import Referral, {ReferralParamList} from './screens/settings/Referral';
 import {HeaderTitle} from '../../components/styled/Text';
 import ResetPinScreen, {
   ResetPinScreenParamList,
@@ -28,7 +27,6 @@ export type CardStackParamList = {
   Settings: CardSettingsParamList;
   CustomizeVirtualCard: CustomizeVirtualCardParamList;
   UpdateCardName: UpdateCardNameScreenParamList;
-  Referral: ReferralParamList;
   CardResetPin: ResetPinScreenParamList;
 };
 
@@ -38,7 +36,6 @@ export enum CardScreens {
   SETTINGS = 'Settings',
   CUSTOMIZE_VIRTUAL_CARD = 'CustomizeVirtualCard',
   UPDATE_CARD_NAME = 'UpdateCardName',
-  REFERRAL = 'Referral',
   RESET_PIN = 'CardResetPin',
 }
 
@@ -109,7 +106,6 @@ const CardStack = () => {
           headerTitle: () => <HeaderTitle>{t('Reset PIN')}</HeaderTitle>,
         }}
       />
-      <Card.Screen name={CardScreens.REFERRAL} component={Referral} />
     </Card.Navigator>
   );
 };

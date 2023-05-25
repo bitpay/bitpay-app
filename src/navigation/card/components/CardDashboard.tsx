@@ -3,7 +3,7 @@ import {
   useNavigation,
   useScrollToTop,
 } from '@react-navigation/native';
-import React, {useCallback, useLayoutEffect, useMemo} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList} from 'react-native';
@@ -13,13 +13,11 @@ import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
 import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
-import Button from '../../../components/button/Button';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {
   ActiveOpacity,
   Br,
-  HeaderRightContainer,
   ScreenGutter,
   WIDTH,
 } from '../../../components/styled/Containers';
@@ -136,14 +134,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const goToCardSettingsRef = useRef(goToCardSettings);
   goToCardSettingsRef.current = goToCardSettings;
 
-  const goToReferAndEarn = () => {
-    dispatch(Analytics.track('Clicked Refer and Earn', {}));
-
-    navigation.navigate('Referral', {card: activeCard});
-  };
-  const goToReferAndEarnRef = useRef(goToReferAndEarn);
-  goToReferAndEarnRef.current = goToReferAndEarn;
-
   const goToConfirmScreen = (amount: number) => {
     navigator.navigate('Wallet', {
       screen: WalletScreens.DEBIT_CARD_CONFIRM,
@@ -208,20 +198,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       );
     }
   };
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <HeaderRightContainer>
-          <Button
-            onPress={() => goToReferAndEarnRef.current()}
-            buttonType="pill">
-            {t('Earn $10')}
-          </Button>
-        </HeaderRightContainer>
-      ),
-    });
-  }, [navigation, t]);
 
   // if id does not exist as a key, tx for this card has not been initialized
   const pageData = useAppSelector(
