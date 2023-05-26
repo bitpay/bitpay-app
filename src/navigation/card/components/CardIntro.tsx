@@ -75,7 +75,7 @@ const CardIntro: React.FC = () => {
   const logger = useLogger();
   const [buttonState, setButtonState] = useState<ButtonState>();
   const network = useAppSelector(({APP}) => APP.network);
-  const {isJoinedWaitlist} = useAppSelector(({CARD}) => CARD);
+  const isJoinedWaitlist = useAppSelector(({CARD}) => CARD.isJoinedWaitlist);
   const [showEmailForm, setShowEmailForm] = useState<boolean>();
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const {email: userEmail} = user || {};
