@@ -288,7 +288,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {walletId, skipInitializeHistory} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const {supportedCardMap} = useAppSelector(({SHOP}) => SHOP);
+  const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
 
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 

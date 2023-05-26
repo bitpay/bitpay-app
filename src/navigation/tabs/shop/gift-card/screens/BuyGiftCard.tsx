@@ -122,11 +122,11 @@ const BuyGiftCard = ({
   const syncGiftCardPurchasesWithBitPayId = useAppSelector(
     ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
   );
-  const {
-    email: savedEmail,
-    phone: savedPhone,
-    phoneCountryInfo: savedPhoneCountryInfo,
-  } = useAppSelector(({SHOP}) => SHOP);
+  const savedEmail = useAppSelector(({SHOP}) => SHOP.email);
+  const savedPhone = useAppSelector(({SHOP}) => SHOP.phone);
+  const savedPhoneCountryInfo = useAppSelector(
+    ({SHOP}) => SHOP.phoneCountryInfo,
+  );
   const shouldSync = user && syncGiftCardPurchasesWithBitPayId;
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),

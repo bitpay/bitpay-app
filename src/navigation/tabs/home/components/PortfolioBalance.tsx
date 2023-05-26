@@ -61,7 +61,8 @@ const PortfolioBalance = () => {
     ({WALLET}: RootState) => WALLET.portfolioBalance,
   );
 
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
 
   const totalBalance: number = portfolioBalance.current + coinbaseBalance;
 

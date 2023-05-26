@@ -35,8 +35,12 @@ const Connections: React.VFC<ConnectionsProps> = props => {
   const {redirectTo} = props;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
-  const {sessions} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
+  const connectors = useAppSelector(
+    ({WALLET_CONNECT}) => WALLET_CONNECT.connectors,
+  );
+  const sessions = useAppSelector(
+    ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
+  );
 
   const goToWalletConnect = useCallback(() => {
     dispatch(

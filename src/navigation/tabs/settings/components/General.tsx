@@ -22,8 +22,11 @@ import {
 const General = () => {
   const navigation = useNavigation();
   const colorScheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
-  const {showPortfolioValue, hideAllBalances} = useAppSelector(
-    ({APP}: RootState) => APP,
+  const showPortfolioValue = useAppSelector(
+    ({APP}: RootState) => APP.showPortfolioValue,
+  );
+  const hideAllBalances = useAppSelector(
+    ({APP}: RootState) => APP.hideAllBalances,
   );
   const selectedAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
