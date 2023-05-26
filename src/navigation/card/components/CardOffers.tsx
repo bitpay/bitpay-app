@@ -1,6 +1,6 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
-import { Linking } from 'react-native';
+import {Linking} from 'react-native';
 import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {TouchableOpacity} from 'react-native-gesture-handler';
@@ -10,9 +10,9 @@ import {
   CardContainer,
 } from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
-import { APP_DEEPLINK_PREFIX } from '../../../constants/config';
+import {APP_DEEPLINK_PREFIX} from '../../../constants/config';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import { AppEffects } from '../../../store/app';
+import {AppEffects} from '../../../store/app';
 import {CardEffects} from '../../../store/card';
 import {
   isCaptionedContentCard,
@@ -107,18 +107,15 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
 
       if (url.trim().startsWith(APP_DEEPLINK_PREFIX)) {
         dispatch(AppEffects.incomingLink(url));
-
       } else if (contentCard.openURLInWebView) {
         dispatch(AppEffects.openUrlWithInAppBrowser(url));
-
       } else {
-        Linking.canOpenURL(url).then((canOpenUrl) => {
+        Linking.canOpenURL(url).then(canOpenUrl => {
           if (canOpenUrl) {
             Linking.openURL(url);
           }
         });
-      } 
-
+      }
     } else {
       dispatch(CardEffects.startOpenDosh());
     }
