@@ -13,7 +13,7 @@ import {generateSalt, hashPassword} from '../../utils/password';
 import {AppEffects} from '../app/';
 import {Analytics} from '../analytics/analytics.effects';
 import {startOnGoingProcessModal} from '../app/app.effects';
-import {CardEffects} from '../card';
+import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
@@ -229,6 +229,8 @@ export const startLogin =
           type: 'basicAuth',
         }),
       );
+
+      dispatch(CardActions.isJoinedWaitlist(false));
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       let errMsg;
@@ -460,9 +462,9 @@ export const startDisconnectBitPayId =
       if (isAuthenticated && csrfToken) {
         await AuthApi.logout(APP.network, csrfToken);
       }
-
       dispatch(Analytics.track('Log Out User success', {}));
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+      dispatch(CardActions.isJoinedWaitlist(false));
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.error('An error occurred while logging out.'));

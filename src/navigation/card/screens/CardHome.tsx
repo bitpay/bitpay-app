@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect} from 'react';
+import React from 'react';
 import {SafeAreaView} from 'react-native';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppSelector} from '../../../utils/hooks';
@@ -21,12 +21,6 @@ const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: hasCards,
-    });
-  }, [hasCards, navigation]);
-
   if (hasCards) {
     const id = route.params?.id || cardGroups[0][0].id;
 
@@ -37,7 +31,7 @@ const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
     );
   }
 
-  return <CardIntro navigation={navigation} />;
+  return <CardIntro />;
 };
 
 export default CardHome;

@@ -27,6 +27,8 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../app/app.actions';
+import AuthApi from '../../api/auth';
+import {isJoinedWaitlist} from './card.actions';
 
 const DoshWhitelist: string[] = [];
 
@@ -674,5 +676,32 @@ export const startConfirmPinChange =
       dispatch(CardActions.confirmPinChangeError(id, errMsg));
     } else {
       dispatch(CardActions.confirmPinChangeSuccess(id));
+    }
+  };
+
+export const joinWaitlist =
+  (email: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      const {network} = APP;
+      const session = await AuthApi.fetchSession(network);
+      const baseUrl = BASE_BITPAY_URLS[network];
+
+      const config = {
+        headers: {
+          'x-csrf-token': session.csrfToken,
+        },
+      };
+      const data = {
+        email,
+        attribute: 'CFSB Card Waitlist',
+      };
+
+      await axios.post(`${baseUrl}/marketing/marketingOptIn`, data, config);
+      dispatch(isJoinedWaitlist(true));
+    } catch (err) {
+      dispatch(LogActions.error(`Error joining waitlist: ${err}`));
+      throw err;
     }
   };
