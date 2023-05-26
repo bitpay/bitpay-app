@@ -48,9 +48,11 @@ const DeleteKey = () => {
   const dispatch = useAppDispatch();
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
-  const {notificationsAccepted, emailNotifications, brazeEid} = useAppSelector(
-    ({APP}) => APP,
+  const notificationsAccepted = useAppSelector(
+    ({APP}) => APP.notificationsAccepted,
   );
+  const emailNotifications = useAppSelector(({APP}) => APP.emailNotifications);
+  const brazeEid = useAppSelector(({APP}) => APP.brazeEid);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
 
   const {

@@ -75,14 +75,16 @@ const HomeRoot = () => {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
-  const {
-    appIsLoading,
-    defaultAltCurrency,
-    defaultLanguage,
-    keyMigrationFailure,
-    keyMigrationFailureModalHasBeenShown,
-    showPortfolioValue,
-  } = useAppSelector(({APP}) => APP);
+  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
+  const keyMigrationFailure = useAppSelector(
+    ({APP}) => APP.keyMigrationFailure,
+  );
+  const keyMigrationFailureModalHasBeenShown = useAppSelector(
+    ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
+  );
+  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;

@@ -262,9 +262,10 @@ const Crypto = () => {
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
-  const {homeCarouselLayoutType, hideAllBalances} = useAppSelector(
-    ({APP}) => APP,
+  const homeCarouselLayoutType = useAppSelector(
+    ({APP}) => APP.homeCarouselLayoutType,
   );
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const hasKeys = Object.values(keys).length;
   const [cardsList, setCardsList] = useState(
     createHomeCardList({
