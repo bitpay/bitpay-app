@@ -29,6 +29,7 @@ import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {partition} from 'lodash';
 import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -119,11 +120,30 @@ export const ProcessPendingTxps =
 
 const ProcessTx =
   (tx: TransactionProposal): Effect<TransactionProposal> =>
-  dispatch => {
+  (dispatch, getState) => {
     if (!tx || tx.action === 'invalid') {
       return tx;
     }
-    const {chain, coin} = tx;
+
+    const {tokenOptionsByAddress, customTokenOptionsByAddress} =
+      getState().WALLET;
+    const tokensOptsByAddress = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...tokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
+    };
+
+    const {chain, coin, tokenAddress} = tx;
+
+    // Only for payouts. For this case chain and coin have the same value.
+    // Therefore, to identify an ERC20 token payout it is necessary to check if exist the tokenAddress field
+    let tokenSymbol: string | undefined;
+
+    if (coin === chain && tokenAddress) {
+      tokenSymbol = Object.values(tokensOptsByAddress)
+        .find(({address}) => tokenAddress.toLowerCase() === address)
+        ?.symbol.toLowerCase();
+    }
 
     // New transaction output format. Fill tx.amount and tx.toAmount for
     // backward compatibility.
@@ -137,7 +157,7 @@ const ProcessTx =
         }
         tx.amount = tx.outputs.reduce((total: number, o: any) => {
           o.amountStr = dispatch(
-            FormatAmountStr(coin, chain, Number(o.amount)),
+            FormatAmountStr(tokenSymbol || coin, chain, Number(o.amount)),
           );
           return total + Number(o.amount);
         }, 0);
@@ -166,7 +186,9 @@ const ProcessTx =
       ];
     }
 
-    tx.amountStr = dispatch(FormatAmountStr(coin, chain, tx.amount));
+    tx.amountStr = dispatch(
+      FormatAmountStr(tokenSymbol || coin, chain, tx.amount),
+    );
 
     tx.feeStr = tx.fee
       ? dispatch(FormatAmountStr(chain, chain, tx.fee))
