@@ -76,7 +76,9 @@ const CardIntro: React.FC = () => {
   const [buttonState, setButtonState] = useState<ButtonState>();
   const network = useAppSelector(({APP}) => APP.network);
   const isJoinedWaitlist = useAppSelector(({CARD}) => CARD.isJoinedWaitlist);
-  const [showEmailForm, setShowEmailForm] = useState<boolean>();
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const isUSResident = !locationData || locationData.countryShortCode === 'US';
+  const [showEmailForm, setShowEmailForm] = useState<boolean>(isUSResident);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const {email: userEmail} = user || {};
 
@@ -123,8 +125,10 @@ const CardIntro: React.FC = () => {
   };
 
   useEffect(() => {
-    updateEmailForm();
-  }, [isJoinedWaitlist]);
+    if (isUSResident) {
+      updateEmailForm();
+    }
+  }, [isJoinedWaitlist, isUSResident]);
 
   return (
     <>
@@ -180,9 +184,18 @@ const CardIntro: React.FC = () => {
             <>
               <Spacer height={42} />
 
-              <Paragraph style={{textAlign: 'center', fontSize: 14}}>
-                {t('You have joined the waitlist.')}
-              </Paragraph>
+              {isUSResident ? (
+                <Paragraph style={{textAlign: 'center', fontSize: 14}}>
+                  {t('You have joined the waitlist.')}
+                </Paragraph>
+              ) : (
+                <Paragraph style={{textAlign: 'center', fontSize: 14}}>
+                  {t(
+                    'Waitlist unavailable. BitPay Card available to U.S. residents only.',
+                  )}
+                </Paragraph>
+              )}
+
               <Spacer height={56} />
             </>
           )}
