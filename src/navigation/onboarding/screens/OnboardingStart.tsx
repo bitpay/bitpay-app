@@ -36,20 +36,20 @@ type OnboardingStartScreenProps = StackScreenProps<
 
 // IMAGES
 const OnboardingImages = {
-  card: {
-    light: (
-      <OnboardingImage
-        style={{height: 247, width: 215}}
-        source={require('../../../../assets/img/onboarding/light/card.png')}
-      />
-    ),
-    dark: (
-      <OnboardingImage
-        style={{height: 247, width: 192}}
-        source={require('../../../../assets/img/onboarding/dark/card.png')}
-      />
-    ),
-  },
+  // card: {
+  //   light: (
+  //     <OnboardingImage
+  //       style={{height: 247, width: 215}}
+  //       source={require('../../../../assets/img/onboarding/light/card.png')}
+  //     />
+  //   ),
+  //   dark: (
+  //     <OnboardingImage
+  //       style={{height: 247, width: 192}}
+  //       source={require('../../../../assets/img/onboarding/dark/card.png')}
+  //     />
+  //   ),
+  // },
   spend: {
     light: (
       <OnboardingImage
@@ -188,15 +188,22 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
   const [scrollHintHeight, setScrollHintHeight] = useState(0);
 
   const onboardingSlides = [
+    // {
+    //   title: t('Turn crypto into dollars with our BitPay Card'),
+    //   text: t(
+    //     'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+    //   ),
+    //   subText: t(
+    //     '*Currently available in the USA. More countries coming soon.',
+    //   ),
+    //   img: () => OnboardingImages.card[themeType],
+    // },
     {
-      title: t('Turn crypto into dollars with our BitPay Card'),
+      title: t('Seamlessly buy & swap'),
       text: t(
-        'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+        'BitPay partners with multiple crypto marketplaces to ensure you get the best possible rates. Buy and swap 60+ top cryptocurrencies without leaving the app.',
       ),
-      subText: t(
-        '*Currently available in the USA. More countries coming soon.',
-      ),
-      img: () => OnboardingImages.card[themeType],
+      img: () => OnboardingImages.swap[themeType],
     },
     {
       title: t('Spend crypto at your favorite places'),
@@ -211,13 +218,6 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
         "Websites and exchanges get hacked. BitPay's self - custody wallet allows you to privately store, manage and use your crypto funds without a centralized bank or exchange.",
       ),
       img: () => OnboardingImages.wallet[themeType],
-    },
-    {
-      title: t('Seamlessly buy & swap'),
-      text: t(
-        'BitPay partners with multiple crypto marketplaces to ensure you get the best possible rates. Buy and swap 60+ top cryptocurrencies without leaving the app.',
-      ),
-      img: () => OnboardingImages.swap[themeType],
     },
   ];
 
