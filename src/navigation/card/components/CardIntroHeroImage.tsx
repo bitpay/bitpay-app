@@ -5,8 +5,8 @@ const HeroImage = () => {
   return (
     <FastImage
       style={{
-        width: 226,
-        height: 455,
+        width: 204,
+        height: 310,
       }}
       source={require('../../../../assets/img/card/bitpay-card-phone.png')}
     />
