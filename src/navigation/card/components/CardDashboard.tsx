@@ -15,12 +15,7 @@ import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {
-  ActiveOpacity,
-  Br,
-  ScreenGutter,
-  WIDTH,
-} from '../../../components/styled/Containers';
+import {Br, ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
@@ -48,10 +43,6 @@ import {
   EmptyGhostContainer,
   EmptyListContainer,
   EmptyListDescription,
-  FloatingActionButton,
-  FloatingActionButtonContainer,
-  FloatingActionButtonIconContainer,
-  FloatingActionButtonText,
   TransactionListFooter,
   TransactionListHeader,
   TransactionListHeaderIcon,
@@ -62,6 +53,10 @@ import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
+import FloatingActionButton, {
+  FloatingActionButtonProps,
+} from '../../../components/floating-action-button/FloatingActionButton';
+import {AddFundsButton} from './AddFundsButton';
 
 interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
@@ -420,16 +415,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         ListEmptyComponent={listEmptyComponent}
         ref={flatListRef}
       />
-      <FloatingActionButtonContainer>
-        <FloatingActionButton
-          onPress={() => goToAmountScreen()}
-          activeOpacity={ActiveOpacity}>
-          <FloatingActionButtonIconContainer>
-            <PlusSvg />
-          </FloatingActionButtonIconContainer>
-          <FloatingActionButtonText>{t('Add Funds')}</FloatingActionButtonText>
-        </FloatingActionButton>
-      </FloatingActionButtonContainer>
+      <AddFundsButton onPress={goToAmountScreen} />
     </>
   );
 };
