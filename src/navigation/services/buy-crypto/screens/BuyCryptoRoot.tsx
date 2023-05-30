@@ -76,7 +76,6 @@ import {
 } from '../../../../store/external-services/external-services.types';
 import {StackActions} from '@react-navigation/native';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {DefaultTheme} from 'styled-components';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -104,7 +103,7 @@ const BuyCryptoRoot: React.VFC<
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const theme = useTheme() as DefaultTheme;
+  const theme = useTheme();
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);

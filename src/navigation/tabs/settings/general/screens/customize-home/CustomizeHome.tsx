@@ -22,7 +22,7 @@ import {sleep} from '../../../../../../utils/helper-methods';
 import haptic from '../../../../../../components/haptic-feedback/haptic';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../../../../styles/tabNavigator';
-import {useTheme} from 'styled-components';
+import {useTheme} from 'styled-components/native';
 import {
   CarouselSvg,
   createCustomizeCardList,
