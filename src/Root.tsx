@@ -253,11 +253,13 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
-
-  const {keys, expectedKeyLengthChange} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const expectedKeyLengthChange = useAppSelector(
+    ({WALLET}) => WALLET.expectedKeyLengthChange,
+  );
   const backupKeys = useAppSelector(({WALLET_BACKUP}) => WALLET_BACKUP.keys);
   const [previousKeysLength, setPreviousKeysLength] = useState(
-    Object.keys(backupKeys).length,
+    () => Object.keys(backupKeys).length,
   );
 
   const bootstrapKeyAndWallets = ({
