@@ -14,6 +14,7 @@ export type FloatingActionButtonProps = PropsWithChildren &
     onPress?: (e: any) => void;
     hAlign?: hAlign;
     vAlign?: vAlign;
+    allowDisabledPress?: boolean;
   };
 
 const FloatingActionButtonContainer = styled.View<{
@@ -59,9 +60,12 @@ const FloatingActionButtonContainer = styled.View<{
   }}
 `;
 
-const FloatingActionButtonTouchable = styled.TouchableOpacity`
+const FloatingActionButtonTouchable = styled.TouchableOpacity<{
+  showAsDisabled?: boolean;
+}>`
   align-items: center;
-  background-color: ${props => (props.disabled ? Disabled : Action)};
+  background-color: ${props =>
+    props.disabled || props.showAsDisabled ? Disabled : Action};
   border-radius: 50px;
   flex-direction: row;
   justify-content: center;
@@ -73,8 +77,11 @@ const FloatingActionButtonIconContainer = styled.View`
   margin-right: 10px;
 `;
 
-const FloatingActionButtonText = styled(H5)`
-  color: ${props => (props.disabled ? DisabledDark : White)};
+const FloatingActionButtonText = styled(H5)<{
+  showAsDisabled?: boolean;
+}>`
+  color: ${props =>
+    props.disabled || props.showAsDisabled ? DisabledDark : White};
 `;
 
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = props => {
@@ -82,7 +89,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = props => {
     <FloatingActionButtonContainer hAlign={props.hAlign} vAlign={props.vAlign}>
       <FloatingActionButtonTouchable
         onPress={e => props.onPress?.(e)}
-        disabled={props.disabled}
+        disabled={props.disabled && !props.allowDisabledPress}
+        showAsDisabled={props.disabled && props.allowDisabledPress}
         activeOpacity={ActiveOpacity}>
         {props.icon ? (
           <FloatingActionButtonIconContainer>

@@ -31,7 +31,8 @@ export const AddFundsButton: React.FC<
       icon={<PlusIcon disabled={props.disabled} />}
       hAlign={'center'}
       vAlign={'bottom'}
-      disabled={props.disabled}>
+      disabled={props.disabled}
+      allowDisabledPress={true}>
       {t('Add Funds')}
     </FloatingActionButton>
   );

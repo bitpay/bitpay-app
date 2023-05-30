@@ -1317,5 +1317,7 @@
   "WCSwitchNetworkTitle": "Switch network to {{chain}}",
   "WCSwitchNetworkMsg": "This action will change the active network in BitPay to the {{chainName}} network",
   "WCAddWalletMsg": "To make the switch you first need to have a {{chain}} wallet. Do you want to add this wallet to continue?",
-  "WCNoWalletMsg": "The {{chain}} wallet needed to continue was not found on this device."
+  "WCNoWalletMsg": "The {{chain}} wallet needed to continue was not found on this device.",
+  "UnableToAddFunds": "Unable to add funds",
+  "CardBalanceReturnWarningJune2023": "Funds are unable to be added to your card. On June 30th, 2023, any remaining balances on your card will be sent via check to the current physical address associated with your BitPay Card within 30 days. To update/verify this address, log into your account at BitPay.com and review the information under the Card Settings section."
 }
