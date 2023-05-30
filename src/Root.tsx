@@ -94,8 +94,7 @@ import PinModal from './components/modal/pin/PinModal';
 import CoinbaseStack, {
   CoinbaseStackParamList,
 } from './navigation/coinbase/CoinbaseStack';
-import BpDevtools from './components/bp-devtools/BpDevtools';
-import {APP_ANALYTICS_ENABLED, DEVTOOLS_ENABLED} from './constants/config';
+import {APP_ANALYTICS_ENABLED} from './constants/config';
 import {BlurContainer} from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
@@ -549,8 +548,6 @@ export default () => {
     ? RootStacks.ONBOARDING
     : RootStacks.INTRO;
 
-  const showDevtools = __DEV__ && DEVTOOLS_ENABLED;
-
   return (
     <SafeAreaProvider>
       <StatusBar
@@ -561,8 +558,6 @@ export default () => {
       />
 
       <ThemeProvider theme={theme}>
-        {showDevtools ? <BpDevtools /> : null}
-
         <NavigationContainer
           ref={navigationRef}
           theme={theme}
