@@ -11,7 +11,7 @@ import RNPrint from 'react-native-print';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled from 'styled-components/native';
-import {useTheme} from 'styled-components';
+import {useTheme} from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import {
   CtaContainer,

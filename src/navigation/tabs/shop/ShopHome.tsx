@@ -14,7 +14,6 @@ import {
   getGiftCardConfigList,
   getGiftCardCurations,
 } from '../../../lib/gift-cards/gift-card';
-import {useDispatch} from 'react-redux';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
 import {ShopOnline} from './components/ShopOnline';
@@ -27,7 +26,7 @@ import {
   selectIntegrations,
 } from '../../../store/shop/shop.selectors';
 import {APP_NETWORK} from '../../../constants/config';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
@@ -37,7 +36,7 @@ import {
   useScrollToTop,
 } from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
-import {useTheme} from 'styled-components';
+import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -218,7 +217,7 @@ const ShopHome: React.FC<
     [integrations].map(obj => JSON.stringify(obj)),
   );
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(ShopEffects.startFetchCatalog());

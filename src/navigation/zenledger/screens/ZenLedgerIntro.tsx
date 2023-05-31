@@ -27,7 +27,7 @@ import {useNavigation} from '@react-navigation/native';
 import ZenLedgerLogo from '../components/ZenLedgerLogo';
 import Back from '../../../components/back/Back';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {useTheme} from 'styled-components';
+import {useTheme} from 'styled-components/native';
 import LinkIcon from '../../../components/icons/link-icon/LinkIcon';
 
 const ZenLedgerIntroContainer = styled.View`

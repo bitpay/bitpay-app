@@ -94,8 +94,7 @@ import PinModal from './components/modal/pin/PinModal';
 import CoinbaseStack, {
   CoinbaseStackParamList,
 } from './navigation/coinbase/CoinbaseStack';
-import BpDevtools from './components/bp-devtools/BpDevtools';
-import {APP_ANALYTICS_ENABLED, DEVTOOLS_ENABLED} from './constants/config';
+import {APP_ANALYTICS_ENABLED} from './constants/config';
 import {BlurContainer} from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
@@ -254,11 +253,13 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
-
-  const {keys, expectedKeyLengthChange} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const expectedKeyLengthChange = useAppSelector(
+    ({WALLET}) => WALLET.expectedKeyLengthChange,
+  );
   const backupKeys = useAppSelector(({WALLET_BACKUP}) => WALLET_BACKUP.keys);
   const [previousKeysLength, setPreviousKeysLength] = useState(
-    Object.keys(backupKeys).length,
+    () => Object.keys(backupKeys).length,
   );
 
   const bootstrapKeyAndWallets = ({
@@ -549,8 +550,6 @@ export default () => {
     ? RootStacks.ONBOARDING
     : RootStacks.INTRO;
 
-  const showDevtools = __DEV__ && DEVTOOLS_ENABLED;
-
   return (
     <SafeAreaProvider>
       <StatusBar
@@ -561,8 +560,6 @@ export default () => {
       />
 
       <ThemeProvider theme={theme}>
-        {showDevtools ? <BpDevtools /> : null}
-
         <NavigationContainer
           ref={navigationRef}
           theme={theme}
