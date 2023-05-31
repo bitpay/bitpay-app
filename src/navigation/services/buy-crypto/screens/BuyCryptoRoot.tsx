@@ -437,6 +437,14 @@ const BuyCryptoRoot: React.VFC<
               fiatCurrency,
             ) ||
             isPaymentMethodSupported(
+              'sardine',
+              PaymentMethodsAvailable.applePay,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              fiatCurrency,
+              locationData?.countryShortCode || 'US',
+            ) ||
+            isPaymentMethodSupported(
               'simplex',
               PaymentMethodsAvailable.applePay,
               selectedWallet.currencyAbbreviation,
@@ -496,6 +504,14 @@ const BuyCryptoRoot: React.VFC<
             selectedWallet.currencyAbbreviation,
             selectedWallet.chain,
             fiatCurrency,
+          ) ||
+          isPaymentMethodSupported(
+            'sardine',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
           ) ||
           isPaymentMethodSupported(
             'simplex',

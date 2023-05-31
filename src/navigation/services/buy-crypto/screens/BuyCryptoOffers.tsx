@@ -17,6 +17,7 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
+import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
@@ -42,6 +43,11 @@ import {
   RampPaymentUrlConfigParams,
   RampQuoteRequestData,
   RampQuoteResultForPaymentMethod,
+  SardineGetAuthTokenRequestData,
+  SardineGetQuoteRequestData,
+  SardinePaymentData,
+  SardinePaymentUrlConfigParams,
+  SimplexGetQuoteRequestData,
   SimplexPaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {
@@ -79,6 +85,7 @@ import {
 } from '../utils/ramp-utils';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
 import RampTerms from '../components/terms/RampTerms';
+import SardineTerms from '../components/terms/SardineTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
 import WyreTerms from '../components/terms/WyreTerms';
 import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
@@ -88,6 +95,16 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {AppActions} from '../../../../store/app';
 import {moonpayGetCurrencyLimits} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
+import {
+  getSardineChainFormat,
+  getSardineCoinFormat,
+  getSardinePaymentMethodFormat,
+  sardineEnv,
+} from '../utils/sardine-utils';
+import {
+  sardineGetCurrencyLimits,
+  sardineGetSignedPaymentUrl,
+} from '../../../../store/buy-crypto/effects/sardine/sardine';
 
 export type BuyCryptoOffersScreenParams = {
   amount: number;
@@ -100,16 +117,6 @@ export type BuyCryptoOffersScreenParams = {
   buyCryptoConfig: BuyCryptoConfig | undefined;
   preSetPartner?: BuyCryptoExchangeKey | undefined;
 };
-
-interface SimplexGetQuoteRequestData {
-  digital_currency: string;
-  fiat_currency: string;
-  requested_currency: string;
-  requested_amount: number;
-  end_user_id: string;
-  env: 'sandbox' | 'production';
-  payment_methods?: string[];
-}
 
 export type CryptoOffer = {
   key: BuyCryptoExchangeKey;
@@ -126,7 +133,7 @@ export type CryptoOffer = {
   amountReceivingUnit?: string; // Ramp
   amountLimits?: BuyCryptoLimits;
   errorMsg?: string;
-  quoteData?: any; // Moonpay | Ramp | Simplex
+  quoteData?: any; // Moonpay | Ramp | Sardine | Simplex
   outOfLimitMsg?: string;
 };
 
@@ -275,6 +282,7 @@ const OfferDataRightContainer = styled.View`
 const offersDefault: {
   moonpay: CryptoOffer;
   ramp: CryptoOffer;
+  sardine: CryptoOffer;
   simplex: CryptoOffer;
   wyre: CryptoOffer;
 } = {
@@ -295,6 +303,18 @@ const offersDefault: {
     amountReceiving: '0',
     showOffer: true,
     logo: <RampLogo width={70} height={20} />,
+    expanded: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  sardine: {
+    key: 'sardine',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <SardineLogo width={70} height={20} />,
     expanded: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
@@ -400,9 +420,21 @@ const BuyCryptoOffers: React.FC = () => {
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
   const [finishedMoonpay, setFinishedMoonpay] = useState(false);
   const [finishedRamp, setFinishedRamp] = useState(false);
+  const [finishedSardine, setFinishedSardine] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
+
+  const setPrefix = (
+    address: string,
+    chain: string,
+    network: 'livenet' | 'testnet',
+  ): string => {
+    const prefix =
+      BitpaySupportedCoins[chain].paymentInfo.protocolPrefix[network];
+    const addr = `${prefix}:${address}`;
+    return addr;
+  };
 
   const getMoonpayQuote = async (): Promise<void> => {
     logger.debug('Moonpay getting quote');
@@ -830,6 +862,151 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
+  const getSardineQuote = async (): Promise<void> => {
+    logger.debug('Sardine getting quote');
+
+    if (buyCryptoConfig?.sardine?.disabled) {
+      let err = buyCryptoConfig?.sardine?.disabledMessage
+        ? buyCryptoConfig?.sardine?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'sardineGetQuote Error. Exchange disabled from config.';
+      showSardineError(err, reason);
+      return;
+    }
+
+    offers.sardine.fiatAmount =
+      offers.sardine.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    try {
+      const sardineCurrencyLimitsData = await sardineGetCurrencyLimits(
+        offers.sardine.fiatCurrency,
+        getSardinePaymentMethodFormat(paymentMethod.method, country),
+      );
+
+      offers.sardine.amountLimits = {
+        min: sardineCurrencyLimitsData.minAmount,
+        max: sardineCurrencyLimitsData.maxAmount,
+      };
+    } catch (err) {
+      offers.sardine.amountLimits = dispatch(
+        getBuyCryptoFiatLimits('sardine', offers.sardine.fiatCurrency),
+      );
+    }
+
+    if (
+      (offers.sardine.amountLimits.min &&
+        offers.sardine.fiatAmount < offers.sardine.amountLimits.min) ||
+      (offers.sardine.amountLimits.max &&
+        offers.sardine.fiatAmount > offers.sardine.amountLimits.max)
+    ) {
+      offers.sardine.outOfLimitMsg = t(
+        'There are no Sardine offers available, as the current purchase limits for this exchange must be between and',
+        {
+          min: offers.sardine.amountLimits.min,
+          max: offers.sardine.amountLimits.max,
+          fiatCurrency: offers.sardine.fiatCurrency,
+        },
+      );
+      setFinishedSardine(!finishedSardine);
+      return;
+    } else {
+      const requestData: SardineGetQuoteRequestData = {
+        env: sardineEnv,
+        asset_type: getSardineCoinFormat(coin),
+        network: getSardineChainFormat(selectedWallet.chain) ?? '',
+        total: offers.sardine.fiatAmount.toString(),
+        currency: offers.sardine.fiatCurrency.toUpperCase(),
+        paymentType:
+          getSardinePaymentMethodFormat(paymentMethod.method, country) ??
+          'debit',
+        quote_type: 'buy',
+      };
+
+      selectedWallet
+        .sardineGetQuote(requestData)
+        .then((data: any) => {
+          if (data && data.quantity) {
+            offers.sardine.outOfLimitMsg = undefined;
+            offers.sardine.errorMsg = undefined;
+            offers.sardine.quoteData = data;
+            offers.sardine.amountCost = data.total;
+            offers.sardine.buyAmount = data.subtotal;
+            offers.sardine.fee = data.total - data.subtotal;
+
+            const precision = dispatch(GetPrecision(coin, chain));
+            if (offers.sardine.buyAmount && coin && precision) {
+              offers.sardine.fiatMoney = Number(
+                offers.sardine.buyAmount / data.quantity,
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(
+                `Sardine error: Could not get precision for ${coin}`,
+              );
+            }
+            offers.sardine.amountReceiving = data.quantity.toString();
+            logger.debug('Sardine getting quote: SUCCESS');
+            setFinishedSardine(!finishedSardine);
+          } else {
+            if (data.message && typeof data.message === 'string') {
+              logger.error('Sardine error: ' + data.message);
+            }
+            if (data.error && typeof data.error === 'string') {
+              logger.error('Sardine error: ' + data.error);
+            }
+            if (data.errors) {
+              logger.error(data.errors);
+            }
+            let err = t(
+              "Can't get rates at this moment. Please try again later",
+            );
+            const reason = 'sardineGetQuote Error. "quantity" not included.';
+            showSardineError(err, reason);
+          }
+        })
+        .catch((err: any) => {
+          const reason = 'sardineGetQuote Error';
+          showSardineError(err, reason);
+        });
+    }
+  };
+
+  const showSardineError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Sardine error: ' + msg);
+
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'sardine',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.sardine.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.sardine.fiatCurrency || '',
+      }),
+    );
+
+    offers.sardine.errorMsg = msg;
+    offers.sardine.fiatMoney = undefined;
+    offers.sardine.expanded = false;
+    setUpdateView(!updateView);
+  };
+
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
 
@@ -892,7 +1069,6 @@ const BuyCryptoOffers: React.FC = () => {
       if (paymentMethodArray.length > 0) {
         requestData.payment_methods = paymentMethodArray;
       }
-
       selectedWallet
         .simplexGetQuote(requestData)
         .then(data => {
@@ -1133,17 +1309,6 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
-  const setPrefix = (
-    address: string,
-    chain: string,
-    network: 'livenet' | 'testnet',
-  ): string => {
-    const prefix =
-      BitpaySupportedCoins[chain].paymentInfo.protocolPrefix[network];
-    const addr = `${prefix}:${address}`;
-    return addr;
-  };
-
   const goTo = (key: string): void => {
     switch (key) {
       case 'moonpay':
@@ -1152,6 +1317,10 @@ const BuyCryptoOffers: React.FC = () => {
 
       case 'ramp':
         goToRampBuyPage();
+        break;
+
+      case 'sardine':
+        goToSardineBuyPage();
         break;
 
       case 'simplex':
@@ -1345,6 +1514,123 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    await sleep(500);
+    navigation.goBack();
+  };
+
+  const goToSardineBuyPage = () => {
+    if (offers.sardine.errorMsg || offers.sardine.outOfLimitMsg) {
+      return;
+    }
+    continueToSardine();
+  };
+
+  const continueToSardine = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showSardineError(err, reason);
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const sardineExternalId = uuid.v4().toString();
+
+    let authTokenData;
+    try {
+      const quoteData: SardineGetAuthTokenRequestData = {
+        env: sardineEnv,
+        referenceId: sardineExternalId,
+        externalUserId: selectedWallet.id,
+      };
+      authTokenData = await selectedWallet.sardineGetToken(quoteData);
+    } catch (err) {
+      const reason = 'sardineGetAuthToken Error';
+      showSardineError(err, reason);
+      return;
+    }
+
+    const newData: SardinePaymentData = {
+      address,
+      chain: destinationChain,
+      created_on: Date.now(),
+      crypto_amount: Number(offers.sardine.amountReceiving),
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offers.sardine.buyAmount!,
+      fiat_total_amount: offers.sardine.amountCost!,
+      fiat_total_amount_currency: offers.sardine.fiatCurrency,
+      external_id: sardineExternalId,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestSardine({
+        sardinePaymentData: newData,
+      }),
+    );
+
+    dispatch(
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'sardine',
+        fiatAmount: offers.sardine.fiatAmount,
+        fiatCurrency: offers.sardine.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const redirectUrl =
+      APP_DEEPLINK_PREFIX +
+      'sardine?sardineExternalId=' +
+      sardineExternalId +
+      '&walletId=' +
+      selectedWallet.id +
+      '&status=pending';
+
+    const quoteData: SardinePaymentUrlConfigParams = {
+      env: sardineEnv,
+      client_token: authTokenData.clientToken,
+      address,
+      redirect_url: redirectUrl,
+      fixed_fiat_amount: offers.sardine.fiatAmount,
+      fixed_fiat_currency: offers.sardine.fiatCurrency,
+      fixed_asset_type: getSardineCoinFormat(coin),
+      fixed_network: getSardineChainFormat(chain),
+      supported_tokens: [
+        {
+          token: getSardineCoinFormat(coin),
+          network: getSardineChainFormat(chain) || '',
+        },
+      ],
+    };
+
+    let checkoutUrl: string;
+    try {
+      checkoutUrl = await sardineGetSignedPaymentUrl(quoteData);
+    } catch (err) {
+      const reason = 'sardineGetSignedPaymentUrl Error';
+      showSardineError(err, reason);
+      return;
+    }
+
+    if (!checkoutUrl) {
+      const err = t(
+        'It was not possible to generate the checkout URL correctly',
+      );
+      const reason =
+        'sardineGetSignedPaymentUrl Error. Could not generate urlWithSignature';
+      showSardineError(err, reason);
+      return;
+    }
+
+    dispatch(openUrlWithInAppBrowser(checkoutUrl));
     await sleep(500);
     navigation.goBack();
   };
@@ -1580,6 +1866,9 @@ const BuyCryptoOffers: React.FC = () => {
       if (offers.ramp.showOffer) {
         getRampQuote();
       }
+      if (offers.sardine.showOffer) {
+        getSardineQuote();
+      }
       if (offers.simplex.showOffer) {
         getSimplexQuote();
       }
@@ -1591,7 +1880,14 @@ const BuyCryptoOffers: React.FC = () => {
 
   useEffect(() => {
     setOffers(offers);
-  }, [finishedMoonpay, finishedSimplex, finishedWyre, updateView]);
+  }, [
+    finishedMoonpay,
+    finishedRamp,
+    finishedSardine,
+    finishedSimplex,
+    finishedWyre,
+    updateView,
+  ]);
 
   return (
     <ScrollView>
@@ -1770,6 +2066,9 @@ const BuyCryptoOffers: React.FC = () => {
                       paymentMethod={paymentMethod}
                       country={country}
                     />
+                  ) : null}
+                  {offer.key == 'sardine' ? (
+                    <SardineTerms quoteData={offer.quoteData} />
                   ) : null}
                   {offer.key == 'simplex' ? (
                     <SimplexTerms paymentMethod={paymentMethod} />
