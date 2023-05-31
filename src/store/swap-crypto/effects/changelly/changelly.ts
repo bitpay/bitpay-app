@@ -1,8 +1,9 @@
 import axios from 'axios';
 import {t} from 'i18next';
+import {BASE_BWS_URL} from '../../../../constants/config';
 import {generateMessageId} from '../../../../navigation/services/swap-crypto/utils/changelly-utils';
 
-const uri = 'https://bws.bitpay.com/bws/api';
+const bwsUri = BASE_BWS_URL;
 
 export const changellyGetCurrencies = async (full?: boolean) => {
   try {
@@ -19,7 +20,7 @@ export const changellyGetCurrencies = async (full?: boolean) => {
     };
 
     const {data} = await axios.post(
-      uri + '/v1/service/changelly/getCurrencies',
+      bwsUri + '/v1/service/changelly/getCurrencies',
       body,
       config,
     );
@@ -53,7 +54,7 @@ export const changellyGetTransactions = async (exchangeTxId: string) => {
     };
 
     const {data} = await axios.post(
-      uri + '/v1/service/changelly/getTransactions',
+      bwsUri + '/v1/service/changelly/getTransactions',
       body,
       config,
     );
@@ -92,7 +93,7 @@ export const changellyGetStatus = async (
     );
 
     const {data} = await axios.post(
-      uri + '/v1/service/changelly/getStatus',
+      bwsUri + '/v1/service/changelly/getStatus',
       body,
       config,
     );

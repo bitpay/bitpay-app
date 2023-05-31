@@ -10,6 +10,8 @@ import MoonpaySettings from './screens/MoonpaySettings';
 import MoonpayDetails from './screens/MoonpayDetails';
 import RampSettings from './screens/RampSettings';
 import RampDetails from './screens/RampDetails';
+import SardineSettings from './screens/SardineSettings';
+import SardineDetails from './screens/SardineDetails';
 import SimplexSettings from './screens/SimplexSettings';
 import SimplexDetails from './screens/SimplexDetails';
 import WyreSettings from './screens/WyreSettings';
@@ -21,6 +23,8 @@ import {
   MoonpayPaymentData,
   RampIncomingData,
   RampPaymentData,
+  SardineIncomingData,
+  SardinePaymentData,
   SimplexIncomingData,
   SimplexPaymentData,
   WyrePaymentData,
@@ -43,6 +47,14 @@ export type ExternalServicesSettingsStackParamList = {
     | undefined;
   RampDetails: {
     paymentRequest: RampPaymentData;
+  };
+  SardineSettings:
+    | {
+        incomingPaymentRequest?: SardineIncomingData;
+      }
+    | undefined;
+  SardineDetails: {
+    paymentRequest: SardinePaymentData;
   };
   SimplexSettings:
     | {
@@ -72,6 +84,8 @@ export enum ExternalServicesSettingsScreens {
   MOONPAY_DETAILS = 'MoonpayDetails',
   RAMP_SETTINGS = 'RampSettings',
   RAMP_DETAILS = 'RampDetails',
+  SARDINE_SETTINGS = 'SardineSettings',
+  SARDINE_DETAILS = 'SardineDetails',
   SIMPLEX_SETTINGS = 'SimplexSettings',
   SIMPLEX_DETAILS = 'SimplexDetails',
   WYRE_SETTINGS = 'WyreSettings',
@@ -115,6 +129,20 @@ const ExternalServicesSettingsStack = () => {
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.RAMP_DETAILS}
         component={RampDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.SARDINE_SETTINGS}
+        component={SardineSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Sardine Settings')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.SARDINE_DETAILS}
+        component={SardineDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
         }}

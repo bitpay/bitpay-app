@@ -12,6 +12,7 @@ import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
+import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 
@@ -75,6 +76,22 @@ const ExternalServices = () => {
             <RampLogo iconOnly={true} width={30} height={30} />
           </ExternalServicesIconContainer>
           <SettingTitle>Ramp</SettingTitle>
+        </ExternalServicesItemContainer>
+        <AngleRight />
+      </Setting>
+      <Hr />
+      <Setting
+        onPress={() => {
+          haptic('impactLight');
+          navigation.navigate('ExternalServicesSettings', {
+            screen: 'SardineSettings',
+          });
+        }}>
+        <ExternalServicesItemContainer>
+          <ExternalServicesIconContainer>
+            <SardineLogo iconOnly={true} width={30} height={25} />
+          </ExternalServicesIconContainer>
+          <SettingTitle>Sardine</SettingTitle>
         </ExternalServicesItemContainer>
         <AngleRight />
       </Setting>

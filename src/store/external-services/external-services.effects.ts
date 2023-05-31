@@ -1,11 +1,11 @@
 import axios from 'axios';
 import {Platform} from 'react-native';
 import {Effect} from '..';
-import {APP_VERSION} from '../../constants/config';
 import {LogActions} from '../log';
+import {APP_VERSION, BASE_BWS_URL} from '../../constants/config';
 import {ExternalServicesConfigRequestParams} from './external-services.types';
 
-const uri = 'https://bws.bitpay.com/bws/api';
+const bwsUri = BASE_BWS_URL;
 
 export const getExternalServicesConfig =
   (params: ExternalServicesConfigRequestParams): Effect<Promise<any>> =>
@@ -35,8 +35,7 @@ export const getExternalServicesConfig =
           )}`,
         ),
       );
-
-      const {data} = await axios.get(uri + '/v1/services', config);
+      const {data} = await axios.get(bwsUri + '/v1/services', config);
 
       return Promise.resolve(data);
     } catch (err) {
