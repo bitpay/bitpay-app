@@ -31,6 +31,7 @@ import {
   isValidRampUri,
   IsValidRippleAddress,
   IsValidRippleUri,
+  isValidSardineUri,
   isValidSimplexUri,
   isValidWalletConnectUri,
   isValidWyreUri,
@@ -41,6 +42,7 @@ import {BuyCryptoActions} from '../buy-crypto';
 import {
   MoonpayIncomingData,
   RampIncomingData,
+  SardineIncomingData,
   SimplexIncomingData,
   WyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
@@ -170,9 +172,12 @@ export const incomingData =
         // Moonpay
       } else if (isValidMoonpayUri(data)) {
         dispatch(handleMoonpayUri(data));
-        // Simplex
+        // Ramp
       } else if (isValidRampUri(data)) {
         dispatch(handleRampUri(data));
+        // Sardine
+      } else if (isValidSardineUri(data)) {
+        dispatch(handleSardineUri(data));
         // Simplex
       } else if (isValidSimplexUri(data)) {
         dispatch(handleSimplexUri(data));
@@ -1146,6 +1151,69 @@ const handleRampUri =
           name: 'ExternalServicesSettings',
           params: {
             screen: 'RampSettings',
+            params: {incomingPaymentRequest: stateParams},
+          },
+        },
+      ],
+    });
+  };
+
+const handleSardineUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Sardine URL: ' + data));
+
+    data = data.replace('?order_id', 'order_id');
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const sardineExternalId = getParameterByName('sardineExternalId', res);
+    if (!sardineExternalId) {
+      dispatch(LogActions.warn('No sardineExternalId present. Do not redir'));
+      return;
+    }
+
+    const walletId = getParameterByName('walletId', res);
+    const status = getParameterByName('status', res);
+    const order_id = getParameterByName('order_id', res);
+
+    const stateParams: SardineIncomingData = {
+      sardineExternalId,
+      walletId,
+      status,
+      order_id,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestSardine({
+        sardineIncomingData: stateParams,
+      }),
+    );
+
+    if (order_id) {
+      const {BUY_CRYPTO} = getState();
+      const order = BUY_CRYPTO.sardine[sardineExternalId];
+
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'sardine',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin?.toLowerCase() || '',
+          chain: order?.chain?.toLowerCase() || '',
+        }),
+      );
+    }
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'SardineSettings',
             params: {incomingPaymentRequest: stateParams},
           },
         },
