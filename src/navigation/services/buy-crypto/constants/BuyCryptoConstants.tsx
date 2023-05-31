@@ -9,6 +9,7 @@ import DebitCardIcon from '../../../../../assets/img/services/payment-methods/ic
 import {BuyCryptoExchangeKey} from '../utils/buy-crypto-utils';
 
 export type PaymentMethodKey =
+  | 'ach'
   | 'applePay'
   | 'creditCard'
   | 'debitCard'
@@ -21,7 +22,7 @@ export type PaymentMethods = {
 
 export interface PaymentMethod {
   label: string;
-  method: string;
+  method: PaymentMethodKey;
   imgSrc: JSX.Element;
   supportedExchanges: {
     [key in BuyCryptoExchangeKey]: boolean;
@@ -30,6 +31,19 @@ export interface PaymentMethod {
 }
 
 export const PaymentMethodsAvailable: PaymentMethods = {
+  ach: {
+    label: 'ACH',
+    method: 'ach',
+    imgSrc: <BankIcon width={40} height={40} />,
+    supportedExchanges: {
+      moonpay: false,
+      ramp: false,
+      sardine: true,
+      simplex: false,
+      wyre: false,
+    },
+    enabled: true,
+  },
   applePay: {
     label: 'Apple Pay',
     method: 'applePay',
@@ -37,22 +51,11 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       ramp: true,
+      sardine: false,
       simplex: true,
       wyre: true,
     },
     enabled: Platform.OS === 'ios',
-  },
-  sepaBankTransfer: {
-    label: 'SEPA Bank Transfer',
-    method: 'sepaBankTransfer',
-    imgSrc: <BankIcon width={40} height={40} />,
-    supportedExchanges: {
-      moonpay: true,
-      ramp: true,
-      simplex: true, // EU Only
-      wyre: false,
-    },
-    enabled: true,
   },
   creditCard: {
     label: 'Credit Card',
@@ -61,6 +64,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       ramp: true,
+      sardine: true,
       simplex: true,
       wyre: false,
     },
@@ -73,8 +77,22 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       ramp: true,
+      sardine: true,
       simplex: true,
       wyre: true,
+    },
+    enabled: true,
+  },
+  sepaBankTransfer: {
+    label: 'SEPA Bank Transfer',
+    method: 'sepaBankTransfer',
+    imgSrc: <BankIcon width={40} height={40} />,
+    supportedExchanges: {
+      moonpay: true,
+      ramp: true,
+      sardine: false,
+      simplex: true, // EU Only
+      wyre: false,
     },
     enabled: true,
   },
@@ -85,6 +103,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
       ramp: true,
+      sardine: true,
       simplex: true,
       wyre: false,
     },

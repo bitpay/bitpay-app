@@ -3,6 +3,8 @@ import {
   MoonpayIncomingData,
   RampPaymentData,
   RampIncomingData,
+  SardinePaymentData,
+  SardineIncomingData,
   SimplexPaymentData,
   SimplexIncomingData,
   WyrePaymentData,
@@ -15,6 +17,9 @@ export enum BuyCryptoActionTypes {
   SUCCESS_PAYMENT_REQUEST_RAMP = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_RAMP',
   UPDATE_PAYMENT_REQUEST_RAMP = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_RAMP',
   REMOVE_PAYMENT_REQUEST_RAMP = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_RAMP',
+  SUCCESS_PAYMENT_REQUEST_SARDINE = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_SARDINE',
+  UPDATE_PAYMENT_REQUEST_SARDINE = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_SARDINE',
+  REMOVE_PAYMENT_REQUEST_SARDINE = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_SARDINE',
   SUCCESS_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_SIMPLEX',
   UPDATE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_SIMPLEX',
   REMOVE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_SIMPLEX',
@@ -64,6 +69,27 @@ interface removePaymentRequestRamp {
   };
 }
 
+interface successPaymentRequestSardine {
+  type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SARDINE;
+  payload: {
+    sardinePaymentData: SardinePaymentData;
+  };
+}
+
+interface updatePaymentRequestSardine {
+  type: typeof BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SARDINE;
+  payload: {
+    sardineIncomingData: SardineIncomingData;
+  };
+}
+
+interface removePaymentRequestSardine {
+  type: typeof BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_SARDINE;
+  payload: {
+    sardineExternalId: string;
+  };
+}
+
 interface successPaymentRequestSimplex {
   type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SIMPLEX;
   payload: {
@@ -106,6 +132,9 @@ export type BuyCryptoActionType =
   | successPaymentRequestRamp
   | updatePaymentRequestRamp
   | removePaymentRequestRamp
+  | successPaymentRequestSardine
+  | updatePaymentRequestSardine
+  | removePaymentRequestSardine
   | successPaymentRequestSimplex
   | updatePaymentRequestSimplex
   | removePaymentRequestSimplex

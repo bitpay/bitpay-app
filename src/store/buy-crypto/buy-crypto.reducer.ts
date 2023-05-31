@@ -1,6 +1,7 @@
 import {
   MoonpayPaymentData,
   RampPaymentData,
+  SardinePaymentData,
   SimplexPaymentData,
   WyrePaymentData,
 } from './buy-crypto.models';
@@ -14,6 +15,7 @@ export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
 export interface BuyCryptoState {
   moonpay: {[key in string]: MoonpayPaymentData};
   ramp: {[key in string]: RampPaymentData};
+  sardine: {[key in string]: SardinePaymentData};
   simplex: {[key in string]: SimplexPaymentData};
   wyre: {[key in string]: WyrePaymentData};
 }
@@ -21,6 +23,7 @@ export interface BuyCryptoState {
 const initialState: BuyCryptoState = {
   moonpay: {},
   ramp: {},
+  sardine: {},
   simplex: {},
   wyre: {},
 };
@@ -118,6 +121,61 @@ export const buyCryptoReducer = (
       return {
         ...state,
         ramp: {...rampPaymentRequestsList},
+      };
+
+    case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SARDINE:
+      const {sardinePaymentData} = action.payload;
+      return {
+        ...state,
+        sardine: {
+          ...state.sardine,
+          [sardinePaymentData.external_id]: sardinePaymentData,
+        },
+      };
+
+    case BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SARDINE:
+      const {sardineIncomingData} = action.payload;
+
+      if (
+        sardineIncomingData.sardineExternalId &&
+        state.sardine[sardineIncomingData.sardineExternalId]
+      ) {
+        if (sardineIncomingData.status) {
+          state.sardine[sardineIncomingData.sardineExternalId].status =
+            sardineIncomingData.status;
+        }
+        if (sardineIncomingData.order_id) {
+          state.sardine[sardineIncomingData.sardineExternalId].order_id =
+            sardineIncomingData.order_id;
+        }
+        if (sardineIncomingData.cryptoAmount) {
+          state.sardine[sardineIncomingData.sardineExternalId].crypto_amount =
+            sardineIncomingData.cryptoAmount;
+        }
+        if (sardineIncomingData.transactionId) {
+          state.sardine[sardineIncomingData.sardineExternalId].transaction_id =
+            sardineIncomingData.transactionId;
+        }
+        return {
+          ...state,
+          sardine: {
+            ...state.sardine,
+            [sardineIncomingData.sardineExternalId]:
+              state.sardine[sardineIncomingData.sardineExternalId],
+          },
+        };
+      } else {
+        return state;
+      }
+
+    case BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_SARDINE:
+      const {sardineExternalId} = action.payload;
+      const sardinePaymentRequestsList = {...state.sardine};
+      delete sardinePaymentRequestsList[sardineExternalId];
+
+      return {
+        ...state,
+        sardine: {...sardinePaymentRequestsList},
       };
 
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SIMPLEX:
