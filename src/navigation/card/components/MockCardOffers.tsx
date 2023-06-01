@@ -1,7 +1,7 @@
-import {ClassicContentCard} from 'react-native-appboy-sdk';
+// import {ClassicContentCard} from 'react-native-appboy-sdk';
 import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../utils/braze';
 
-const MockCardOffers: ClassicContentCard[] = [
+const MockCardOffers: any[] = [
   {
     ...DEFAULT_CLASSIC_CONTENT_CARD,
     id: 'dev_1',

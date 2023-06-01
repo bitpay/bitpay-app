@@ -1,12 +1,12 @@
 import React, {memo} from 'react';
 import {StyleSheet} from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+// import Animated, {
+//   Easing,
+//   useAnimatedStyle,
+//   useSharedValue,
+//   withRepeat,
+//   withTiming,
+// } from 'react-native-reanimated';
 import {NotificationPrimary, White} from '../../styles/colors';
 
 const styles = StyleSheet.create({
@@ -30,25 +30,25 @@ const styles = StyleSheet.create({
 });
 
 const Spinner = ({buttonStyle}: {buttonStyle?: string}) => {
-  const angle = useSharedValue(0);
-  angle.value = withRepeat(
-    withTiming(180, {duration: 250, easing: Easing.linear}),
-    -1,
-    false,
-  );
+  // const angle = useSharedValue(0);
+  // angle.value = withRepeat(
+  //   withTiming(180, {duration: 250, easing: Easing.linear}),
+  //   -1,
+  //   false,
+  // );
 
-  const spin = useAnimatedStyle(() => ({
-    transform: [{rotate: `${angle.value}deg`}],
-  }));
+  // const spin = useAnimatedStyle(() => ({
+  //   transform: [{rotate: `${angle.value}deg`}],
+  // }));
 
-  return (
-    <Animated.View
-      style={[
-        styles.spinner,
-        spin,
-        buttonStyle === 'secondary' ? styles.secondary : styles.default,
-      ]}
-    />
+  return (<></>
+    // <Animated.View
+    //   style={[
+    //     styles.spinner,
+    //     spin,
+    //     buttonStyle === 'secondary' ? styles.secondary : styles.default,
+    //   ]}
+    // />
   );
 };
 

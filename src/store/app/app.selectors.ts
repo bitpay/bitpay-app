@@ -1,4 +1,4 @@
-import {ContentCard} from 'react-native-appboy-sdk';
+// import {ContentCard} from 'react-native-appboy-sdk';
 import {createSelector} from 'reselect';
 import {AppSelector} from '..';
 import {
@@ -8,7 +8,7 @@ import {
   isShopWithCrypto,
 } from '../../utils/braze';
 
-export const selectBrazeContentCards: AppSelector<ContentCard[]> = ({APP}) =>
+export const selectBrazeContentCards: AppSelector<any[]> = ({APP}) =>
   APP.brazeContentCards;
 
 export const selectBrazeShopWithCrypto = createSelector(

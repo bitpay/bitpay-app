@@ -13463,10 +13463,10 @@ react-native-localize@2.2.4:
   resolved "https://registry.yarnpkg.com/react-native-localize/-/react-native-localize-2.2.4.tgz#3bc46ade48499ab9df61bf17a9b66633a5ba9bb9"
   integrity sha512-gVmbyAEQQnBQ8vKlAQchFfIISeId3qT6Lc7LHmKF39nsYWX9KN4PHuG6Hk+7gduMI6IHKeZGKcLsOdh6wvN6cg==
 
-react-native-macos@latest:
-  version "0.71.6"
-  resolved "https://registry.yarnpkg.com/react-native-macos/-/react-native-macos-0.71.6.tgz#4143aecdedce1c515f861af829ae1d2df922035f"
-  integrity sha512-u8dg68MtuVAkNCH9WPKIqgoJDsT6+PR4eQGtTg6/c61vRw7Bh4YzuLwPY1tw7XyZ6cv587ZkrsTLALoDkMAlww==
+react-native-macos@^0.71.0-0:
+  version "0.71.8"
+  resolved "https://registry.yarnpkg.com/react-native-macos/-/react-native-macos-0.71.8.tgz#d605c5bcfa7831ca553ced0f5afb5cb00ddc75ae"
+  integrity sha512-34/e9GqI6xPcY1Ih6hCRAI7SAtDFSgE58XF8WGXpOEALs2BaEzyRrtKnvUh1UwrKfjrr8/f8PQzLkDispQ22NQ==
   dependencies:
     "@jest/create-cache-key-function" "^29.2.1"
     "@react-native-community/cli" "10.2.2"

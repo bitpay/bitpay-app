@@ -197,7 +197,7 @@ const Referral = ({}) => {
   return (
     <ReferralContainer>
       <ScrollView>
-        <ReferralHeroContainer>
+     <ReferralHeroContainer>
           <ReferralHeroBackgroundColor />
           <LargePresentSvg height={275} width={275} />
         </ReferralHeroContainer>
@@ -241,7 +241,7 @@ const Referral = ({}) => {
             <ReferralCodeSkeleton />
           </CodeContainer>
         )}
-
+ 
         <ReferredUsersContainer>
           <CategoryRow>
             <CategoryHeading>{t('My Referrals')}</CategoryHeading>
@@ -252,7 +252,7 @@ const Referral = ({}) => {
           </CategoryRow>
 
           <Hr />
-
+  
           {typeof referredUsers === 'string' ? (
             <>
               {referredUsers === 'failed' ? (
@@ -314,7 +314,6 @@ const Referral = ({}) => {
             </>
           )}
         </ReferredUsersContainer>
-
         <PromotionTermsContainer>
           <Smallest>
             {t(

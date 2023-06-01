@@ -1,5 +1,5 @@
 import axios from 'axios';
-import BitAuth from 'bitauth';
+// import BitAuth from 'bitauth';
 import {Network} from '../../constants';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import {AppIdentity} from '../../store/app/app.models';

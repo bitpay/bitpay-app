@@ -1,5 +1,5 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+// import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
@@ -261,7 +261,7 @@ interface BrazeInitialized {
 
 interface BrazeContentCardsFetched {
   type: typeof AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED;
-  payload: {contentCards: ContentCard[]};
+  payload: {contentCards: any[]};
 }
 
 interface SetBrazeEid {

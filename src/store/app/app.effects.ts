@@ -1,4 +1,4 @@
-import BitAuth from 'bitauth';
+// import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';
 import {
@@ -8,90 +8,90 @@ import {
   Platform,
   Share,
 } from 'react-native';
-import Braze from 'react-native-appboy-sdk';
+// import Braze from 'react-native-appboy-sdk';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppReview from 'react-native-in-app-review';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
-import {
-  checkNotifications,
-  requestNotifications,
-  RESULTS,
-} from 'react-native-permissions';
+// import {
+//   checkNotifications,
+//   requestNotifications,
+//   RESULTS,
+// } from 'react-native-permissions';
 import uuid from 'react-native-uuid';
 import {AppActions} from '.';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {Network} from '../../constants';
-import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
-import {CardScreens} from '../../navigation/card/CardStack';
-import {CardActivationScreens} from '../../navigation/card-activation/CardActivationStack';
-import {TabsScreens} from '../../navigation/tabs/TabsStack';
-import {WalletScreens} from '../../navigation/wallet/WalletStack';
-import {isAxiosError} from '../../utils/axios';
-import {sleep} from '../../utils/helper-methods';
-import {Analytics} from '../analytics/analytics.effects';
-import {BitPayIdEffects} from '../bitpay-id';
-import {CardEffects} from '../card';
-import {Card} from '../card/card.models';
-import {coinbaseInitialize} from '../coinbase';
-import {Effect, RootState} from '../index';
-import {LocationEffects} from '../location';
-import {LogActions} from '../log';
-import {WalletActions} from '../wallet';
-import {startMigration, startWalletStoreInit} from '../wallet/effects';
-import {
-  setAnnouncementsAccepted,
-  setAppFirstOpenEventComplete,
-  setAppFirstOpenEventDate,
-  setBrazeEid,
-  setConfirmedTxAccepted,
-  setEmailNotificationsAccepted,
-  setMigrationComplete,
-  setNotificationsAccepted,
-  setUserFeedback,
-  showBlur,
-} from './app.actions';
-import {AppIdentity} from './app.models';
-import {
-  findKeyByKeyId,
-  findWalletByIdHashed,
-  getAllWalletClients,
-} from '../wallet/utils/wallet';
-import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
-import {
-  startUpdateAllKeyAndWalletStatus,
-  startUpdateWalletStatus,
-} from '../wallet/effects/status/status';
-import {createWalletAddress} from '../wallet/effects/address/address';
-import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
-import {
-  APP_DEEPLINK_PREFIX,
-  APP_NAME,
-  DOWNLOAD_BITPAY_URL,
-} from '../../constants/config';
-import {updatePortfolioBalance} from '../wallet/wallet.actions';
-import {setContactMigrationComplete} from '../contact/contact.actions';
-import {startContactMigration} from '../contact/contact.effects';
-import {getStateFromPath, NavigationProp} from '@react-navigation/native';
-import {
-  getAvailableGiftCards,
-  getCategoriesWithIntegrations,
-} from '../shop/shop.selectors';
-import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
-import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
-import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
-import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
-import {ShortcutList} from '../../constants/shortcuts';
-import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
-import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
-import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
-import moment from 'moment';
-import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
-import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
+// import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+// import {Network} from '../../constants';
+// import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
+// import {CardScreens} from '../../navigation/card/CardStack';
+// import {CardActivationScreens} from '../../navigation/card-activation/CardActivationStack';
+// import {TabsScreens} from '../../navigation/tabs/TabsStack';
+// import {WalletScreens} from '../../navigation/wallet/WalletStack';
+// import {isAxiosError} from '../../utils/axios';
+// import {sleep} from '../../utils/helper-methods';
+// import {Analytics} from '../analytics/analytics.effects';
+// import {BitPayIdEffects} from '../bitpay-id';
+// import {CardEffects} from '../card';
+// import {Card} from '../card/card.models';
+// import {coinbaseInitialize} from '../coinbase';
+// import {Effect, RootState} from '../index';
+// import {LocationEffects} from '../location';
+// import {LogActions} from '../log';
+// import {WalletActions} from '../wallet';
+// import {startMigration, startWalletStoreInit} from '../wallet/effects';
+// import {
+//   setAnnouncementsAccepted,
+//   setAppFirstOpenEventComplete,
+//   setAppFirstOpenEventDate,
+//   setBrazeEid,
+//   setConfirmedTxAccepted,
+//   setEmailNotificationsAccepted,
+//   setMigrationComplete,
+//   setNotificationsAccepted,
+//   setUserFeedback,
+//   showBlur,
+// } from './app.actions';
+// import {AppIdentity} from './app.models';
+// import {
+//   findKeyByKeyId,
+//   findWalletByIdHashed,
+//   getAllWalletClients,
+// } from '../wallet/utils/wallet';
+// import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
+// import {
+//   startUpdateAllKeyAndWalletStatus,
+//   startUpdateWalletStatus,
+// } from '../wallet/effects/status/status';
+// import {createWalletAddress} from '../wallet/effects/address/address';
+// import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
+// import {
+//   APP_DEEPLINK_PREFIX,
+//   APP_NAME,
+//   DOWNLOAD_BITPAY_URL,
+// } from '../../constants/config';
+// import {updatePortfolioBalance} from '../wallet/wallet.actions';
+// import {setContactMigrationComplete} from '../contact/contact.actions';
+// import {startContactMigration} from '../contact/contact.effects';
+// import {getStateFromPath, NavigationProp} from '@react-navigation/native';
+// import {
+//   getAvailableGiftCards,
+//   getCategoriesWithIntegrations,
+// } from '../shop/shop.selectors';
+// import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
+// import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
+// import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
+// import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
+// import {ShortcutList} from '../../constants/shortcuts';
+// import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
+// import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
+// import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
+// import moment from 'moment';
+// import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
+// import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {moralisInit} from '../moralis/moralis.effects';
 
 // Subscription groups (Braze)
@@ -262,76 +262,76 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
   }
 };
 
-const deferDeeplinksUntilAppIsReady =
-  (): Effect<void> => (dispatch, getState) => {
-    const {APP} = getState();
-    let subscriptions: EmitterSubscription[] = [];
+// const deferDeeplinksUntilAppIsReady =
+//   (): Effect<void> => (dispatch, getState) => {
+//     const {APP} = getState();
+//     let subscriptions: EmitterSubscription[] = [];
 
-    const emitIfReady = () => {
-      if (!subscriptions.length) {
-        dispatch(AppActions.appIsReadyForDeeplinking());
-        DeviceEventEmitter.emit(DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS);
-      }
-    };
+//     const emitIfReady = () => {
+//       if (!subscriptions.length) {
+//         dispatch(AppActions.appIsReadyForDeeplinking());
+//         DeviceEventEmitter.emit(DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS);
+//       }
+//     };
 
-    const waitForEvent = (e: DeviceEmitterEvents) => {
-      const sub = DeviceEventEmitter.addListener(e, () => {
-        sub.remove();
-        subscriptions = subscriptions.filter(s => s !== sub);
+//     const waitForEvent = (e: DeviceEmitterEvents) => {
+//       const sub = DeviceEventEmitter.addListener(e, () => {
+//         sub.remove();
+//         subscriptions = subscriptions.filter(s => s !== sub);
 
-        emitIfReady();
-      });
+//         emitIfReady();
+//       });
 
-      subscriptions.push(sub);
-    };
+//       subscriptions.push(sub);
+//     };
 
-    if (!navigationRef.isReady()) {
-      waitForEvent(DeviceEmitterEvents.APP_NAVIGATION_READY);
-    }
+//     if (!navigationRef.isReady()) {
+//       waitForEvent(DeviceEmitterEvents.APP_NAVIGATION_READY);
+//     }
 
-    if (APP.appIsLoading) {
-      waitForEvent(DeviceEmitterEvents.APP_DATA_INITIALIZED);
-    }
+//     if (APP.appIsLoading) {
+//       waitForEvent(DeviceEmitterEvents.APP_DATA_INITIALIZED);
+//     }
 
-    if (!APP.onboardingCompleted) {
-      waitForEvent(DeviceEmitterEvents.APP_ONBOARDING_COMPLETED);
-    }
+//     if (!APP.onboardingCompleted) {
+//       waitForEvent(DeviceEmitterEvents.APP_ONBOARDING_COMPLETED);
+//     }
 
-    emitIfReady();
-  };
+//     emitIfReady();
+//   };
 
-/**
- * Checks to ensure that the App Identity is defined, else generates a new one.
- * @returns The App Identity.
- */
-const initializeAppIdentity =
-  (): Effect<AppIdentity> => (dispatch, getState) => {
-    const {APP} = getState();
-    let identity = APP.identity[APP.network];
+// /**
+//  * Checks to ensure that the App Identity is defined, else generates a new one.
+//  * @returns The App Identity.
+//  */
+// const initializeAppIdentity =
+//   (): Effect<AppIdentity> => (dispatch, getState) => {
+//     const {APP} = getState();
+//     let identity = APP.identity[APP.network];
 
-    dispatch(LogActions.info('Initializing App Identity...'));
+//     dispatch(LogActions.info('Initializing App Identity...'));
 
-    if (!identity || !Object.keys(identity).length || !identity.priv) {
-      try {
-        dispatch(LogActions.info('Generating new App Identity...'));
+//     if (!identity || !Object.keys(identity).length || !identity.priv) {
+//       try {
+//         dispatch(LogActions.info('Generating new App Identity...'));
 
-        identity = BitAuth.generateSin();
+//         identity = BitAuth.generateSin();
 
-        dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
-      } catch (error) {
-        dispatch(
-          LogActions.error(
-            'Error generating App Identity: ' + JSON.stringify(error),
-          ),
-        );
-        dispatch(AppActions.failedGenerateAppIdentity());
-      }
-    }
+//         dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
+//       } catch (error) {
+//         dispatch(
+//           LogActions.error(
+//             'Error generating App Identity: ' + JSON.stringify(error),
+//           ),
+//         );
+//         dispatch(AppActions.failedGenerateAppIdentity());
+//       }
+//     }
 
-    dispatch(LogActions.info('Initialized App Identity successfully.'));
+//     dispatch(LogActions.info('Initialized App Identity successfully.'));
 
-    return identity;
-  };
+//     return identity;
+//   };
 
 /**
  * Initializes APIs for the given network and identity.
@@ -1219,13 +1219,13 @@ export const shortcutListener =
     }
   };
 
-/**
- * Requests an in-app review UI from the device. Due to review quotas set by
- * Apple/Google, request is not guaranteed to be granted and it is possible
- * that nothing will be presented to the user.
- *
- * @returns
- */
+// /**
+//  * Requests an in-app review UI from the device. Due to review quotas set by
+//  * Apple/Google, request is not guaranteed to be granted and it is possible
+//  * that nothing will be presented to the user.
+//  *
+//  * @returns
+//  */
 export const requestInAppReview =
   (): Effect<Promise<void>> => async dispatch => {
     try {

@@ -14,7 +14,7 @@ import {RootState} from '../../store';
 import {BitPayIdEffects} from '../../store/bitpay-id';
 import {User} from '../../store/bitpay-id/bitpay-id.models';
 import {ShopEffects} from '../../store/shop';
-import PairingScreen, {
+import BitPayIdPairingScreen, {
   BitPayIdPairingScreenParamList,
 } from './screens/BitPayIdPairingScreen';
 import Profile from './screens/ProfileSettings';
@@ -63,17 +63,16 @@ const BitpayIdStack = () => {
 
   return (
     <BitpayId.Navigator
-      screenOptions={{...baseNavigatorOptions}}
+      screenOptions={{}}
       initialRouteName={BitpayIdScreens.PROFILE}>
       <BitpayId.Screen
         name={BitpayIdScreens.PAIRING}
-        component={PairingScreen}
+        component={BitPayIdPairingScreen}
         options={{
-          ...baseScreenOptions,
           headerTitle: () => <HeaderTitle>{t('Pairing...')}</HeaderTitle>,
         }}
       />
-      <BitpayId.Screen
+      {/* <BitpayId.Screen
         name={BitpayIdScreens.PROFILE}
         component={Profile}
         options={{
@@ -140,7 +139,7 @@ const BitpayIdStack = () => {
           ...baseScreenOptions,
           headerLeft: () => null,
         }}
-      />
+      /> */}
     </BitpayId.Navigator>
   );
 };

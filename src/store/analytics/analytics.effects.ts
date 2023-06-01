@@ -1,7 +1,7 @@
 import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import {Effect} from '..';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
-import Segment from '../../lib/segment';
+// import Segment from '../../lib/segment';
 import {LogActions} from '../log';
 
 export const Analytics = (() => {

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import DeviceInfo from 'react-native-device-info';
+// import DeviceInfo from 'react-native-device-info';
 import {Network} from '../../constants';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import {Session} from '../../store/bitpay-id/bitpay-id.models';

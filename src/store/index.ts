@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
-import {getUniqueId} from 'react-native-device-info';
+//import {getUniqueId} from 'react-native-device-info';
 import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
@@ -327,16 +327,16 @@ const getStore = () => {
           return inboundState;
         },
       ),
-      encryptTransform({
-        secretKey: getUniqueId(),
-        onError: err => {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          LogActions.persistLog(
-            LogActions.error(`Encrypt transform failed - ${errStr}`),
-          );
-        },
-      }),
+      // encryptTransform({
+      //   secretKey: getUniqueId(),
+      //   onError: err => {
+      //     const errStr =
+      //       err instanceof Error ? err.message : JSON.stringify(err);
+      //     LogActions.persistLog(
+      //       LogActions.error(`Encrypt transform failed - ${errStr}`),
+      //     );
+      //   },
+      // }),
     ],
   };
 

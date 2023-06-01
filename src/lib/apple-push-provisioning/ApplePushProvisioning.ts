@@ -1,5 +1,5 @@
 import ReactNative from 'react-native';
-import {NativeEventEmitter} from 'react-native';
+// import {NativeEventEmitter} from 'react-native';
 
 interface AppleWalletModule {
   canAddPaymentPass: () => Promise<boolean>;
@@ -14,8 +14,8 @@ interface AppleWalletModule {
 
 const module = ReactNative.NativeModules?.PaymentPass || {};
 const AppleWalletModule = module as AppleWalletModule;
-const eventEmitter = new NativeEventEmitter(module);
-
+// const eventEmitter = new NativeEventEmitter(module);
+const eventEmitter = null;
 const canAddPaymentPass = (): Promise<boolean> => {
   return AppleWalletModule.canAddPaymentPass();
 };

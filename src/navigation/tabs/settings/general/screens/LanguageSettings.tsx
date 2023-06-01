@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import React, {useEffect, useState} from 'react';
 import {View, ActivityIndicator} from 'react-native';
-import Braze from 'react-native-appboy-sdk';
+// import Braze from 'react-native-appboy-sdk';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
   Hr,

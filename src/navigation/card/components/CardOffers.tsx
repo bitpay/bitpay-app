@@ -1,6 +1,6 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
-import Braze, {ContentCard} from 'react-native-appboy-sdk';
+// import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled, {useTheme} from 'styled-components/native';
@@ -89,7 +89,7 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
 
   const onPress = () => {
     if (!contentCard.id.startsWith('dev_')) {
-      Braze.logContentCardClicked(contentCard.id);
+      // Braze.logContentCardClicked(contentCard.id);
 
       dispatch(
         Analytics.track('Clicked Card Offer', {
@@ -104,29 +104,29 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
 
   useFocusEffect(() => {
     if (!contentCard.id.startsWith('dev_')) {
-      Braze.logContentCardImpression(contentCard.id);
+      // Braze.logContentCardImpression(contentCard.id);
     }
   });
 
-  return (
-    <CardOffersOuterContainer
-      style={{
-        ...(theme.dark ? {} : BoxShadow),
-      }}>
-      <CardOffersInnerContainer onPress={onPress} activeOpacity={ActiveOpacity}>
-        <MainColumn>
-          <TitleRow>{title}</TitleRow>
+  return ( <></>
+    // <CardOffersOuterContainer
+    //   style={{
+    //     ...(theme.dark ? {} : BoxShadow),
+    //   }}>
+    //   <CardOffersInnerContainer onPress={onPress} activeOpacity={ActiveOpacity}>
+    //     <MainColumn>
+    //       <TitleRow>{title}</TitleRow>
 
-          <DescriptionRow>{description}</DescriptionRow>
-        </MainColumn>
+    //       <DescriptionRow>{description}</DescriptionRow>
+    //     </MainColumn>
 
-        {iconSource ? (
-          <IconColumn>
-            <IconImage source={iconSource} />
-          </IconColumn>
-        ) : null}
-      </CardOffersInnerContainer>
-    </CardOffersOuterContainer>
+    //     {iconSource ? (
+    //       <IconColumn>
+    //         <IconImage source={iconSource} />
+    //       </IconColumn>
+    //     ) : null}
+    //   </CardOffersInnerContainer>
+    // </CardOffersOuterContainer>
   );
 };
 

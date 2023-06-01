@@ -14,7 +14,7 @@ import {
   HEIGHT,
   WIDTH,
 } from '../../../components/styled/Containers';
-import {Link} from '../../../components/styled/Text';
+import {BaseText, Link} from '../../../components/styled/Text';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {Action, LuckySevens} from '../../../styles/colors';
 import {
@@ -220,8 +220,9 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
 
   return (
     <OnboardingContainer accessibilityLabel="onboarding-start-view">
+      <BaseText>Hola</BaseText>
       <ScrollView scrollEnabled={scrollEnabledForSmallScreens}>
-        <Carousel
+        {/* <Carousel
           vertical={false}
           layout={'default'}
           useExperimentalSnap={true}
@@ -236,13 +237,13 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
           }}
           // @ts-ignore
           disableIntervalMomentum={true}
-        />
+        /> */}
         <View style={{height: scrollHintHeight}} />
       </ScrollView>
 
-      <ScrollHintContainer>
+      {/* <ScrollHintContainer>
         <ScrollHint height={scrollHintHeight} />
-      </ScrollHintContainer>
+      </ScrollHintContainer> */}
 
       <CtaContainerAbsolute
         accessibilityLabel="cta-container"

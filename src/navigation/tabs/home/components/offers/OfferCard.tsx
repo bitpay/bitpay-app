@@ -1,7 +1,7 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
-import Braze, {ContentCard} from 'react-native-appboy-sdk';
+// import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
@@ -16,7 +16,7 @@ import {getRouteParam} from '../../../../../store/app/app.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 interface OfferCardProps {
-  contentCard: ContentCard;
+  contentCard: any;
 }
 
 const OFFER_HEIGHT = 30;
@@ -47,7 +47,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
 
   const _onPress = async () => {
     if (!contentCard.id.startsWith('dev_')) {
-      Braze.logContentCardClicked(contentCard.id);
+      // Braze.logContentCardClicked(contentCard.id);
     }
 
     if (!url) {
@@ -84,7 +84,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
 
   useFocusEffect(() => {
     if (!contentCard.id.startsWith('dev_')) {
-      Braze.logContentCardImpression(contentCard.id);
+      // Braze.logContentCardImpression(contentCard.id);
     }
   });
 

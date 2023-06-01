@@ -54,23 +54,23 @@ const CardStack = () => {
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
-      <Card.Screen
+    <Card.Screen
         name={CardScreens.HOME}
         component={CardHome}
-        options={{
-          title: 'Card',
-          headerLeft: () => null,
-          headerTitle: () => <HeaderTitle>{t('Card')}</HeaderTitle>,
-        }}
-        sharedElements={route => {
-          return [
-            {
-              id: 'card.dashboard.active-card.' + route.params.id,
-              animation: 'fade',
-            },
-          ];
-        }}
-      />
+        // options={{
+        //   title: 'Card',
+        //   headerLeft: () => null,
+        //   headerTitle: () => <HeaderTitle>{t('Card')}</HeaderTitle>,
+        // }}
+        // sharedElements={route => {
+        //   return [
+        //     {
+        //       id: 'card.dashboard.active-card.' + route.params.id,
+        //       animation: 'fade',
+        //     },
+        //   ];
+        // }}
+      /> 
       <Card.Screen
         name={CardScreens.PAIRING}
         component={CardPairingScreen}
@@ -85,7 +85,7 @@ const CardStack = () => {
           headerTitle: () => <HeaderTitle>{t('Card Details')}</HeaderTitle>,
           title: 'Settings',
         }}
-      />
+      /> 
       <Card.Screen
         name={CardScreens.CUSTOMIZE_VIRTUAL_CARD}
         component={CustomizeVirtualCard}
@@ -100,7 +100,7 @@ const CardStack = () => {
         component={UpdateCardNameScreen}
         options={{
           headerTitle: () => <HeaderTitle>{t('Update Card Name')}</HeaderTitle>,
-        }}
+        }} 
       />
       <Card.Screen
         name={CardScreens.RESET_PIN}

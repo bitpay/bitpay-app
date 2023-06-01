@@ -6,13 +6,13 @@ import {
   TapGestureHandlerGestureEvent,
   State,
 } from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedGestureHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+// import Animated, {
+//   runOnJS,
+//   useAnimatedGestureHandler,
+//   useAnimatedStyle,
+//   useSharedValue,
+//   withTiming,
+// } from 'react-native-reanimated';
 import {VIRTUAL_KEYBOARD_BUTTON_SIZE} from './VirtualKeyboard';
 
 interface RippleProps {
@@ -28,56 +28,56 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
   children,
 }) => {
   onLongPress = onLongPress || onPress;
-  const centerX = useSharedValue(0);
-  const centerY = useSharedValue(0);
-  const scale = useSharedValue(0);
+  // const centerX = useSharedValue(0);
+  // const centerY = useSharedValue(0);
+  // const scale = useSharedValue(0);
 
-  const rippleOpacity = useSharedValue(1);
+  // const rippleOpacity = useSharedValue(1);
 
-  const tapGestureEvent =
-    useAnimatedGestureHandler<TapGestureHandlerGestureEvent>({
-      onStart: tapEvent => {
-        centerX.value = VIRTUAL_KEYBOARD_BUTTON_SIZE / 2;
-        centerY.value = VIRTUAL_KEYBOARD_BUTTON_SIZE / 2;
+  // const tapGestureEvent =
+  //   useAnimatedGestureHandler<TapGestureHandlerGestureEvent>({
+  //     onStart: tapEvent => {
+  //       centerX.value = VIRTUAL_KEYBOARD_BUTTON_SIZE / 2;
+  //       centerY.value = VIRTUAL_KEYBOARD_BUTTON_SIZE / 2;
 
-        rippleOpacity.value = 1;
-        scale.value = 0;
-        scale.value = withTiming(1, {duration: 550});
-      },
-      onActive: () => {
-        if (onPress) {
-          runOnJS(onPress)();
-        }
-      },
-      onFinish: () => {
-        rippleOpacity.value = withTiming(0);
-      },
-    });
+  //       rippleOpacity.value = 1;
+  //       scale.value = 0;
+  //       scale.value = withTiming(1, {duration: 550});
+  //     },
+  //     onActive: () => {
+  //       if (onPress) {
+  //         runOnJS(onPress)();
+  //       }
+  //     },
+  //     onFinish: () => {
+  //       rippleOpacity.value = withTiming(0);
+  //     },
+  //   });
 
-  const rStyle = useAnimatedStyle(() => {
-    const circleRadius = Math.sqrt(VIRTUAL_KEYBOARD_BUTTON_SIZE ** 3.2 * 2);
+  // const rStyle = useAnimatedStyle(() => {
+  //   const circleRadius = Math.sqrt(VIRTUAL_KEYBOARD_BUTTON_SIZE ** 3.2 * 2);
 
-    const translateX = centerX.value - circleRadius;
-    const translateY = centerY.value - circleRadius;
+  //   const translateX = centerX.value - circleRadius;
+  //   const translateY = centerY.value - circleRadius;
 
-    return {
-      width: circleRadius * 2,
-      height: circleRadius * 2,
-      borderRadius: circleRadius,
-      opacity: rippleOpacity.value,
-      backgroundColor,
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      transform: [
-        {translateX},
-        {translateY},
-        {
-          scale: scale.value,
-        },
-      ],
-    };
-  });
+  //   return {
+  //     width: circleRadius * 2,
+  //     height: circleRadius * 2,
+  //     borderRadius: circleRadius,
+  //     opacity: rippleOpacity.value,
+  //     backgroundColor,
+  //     position: 'absolute',
+  //     top: 0,
+  //     left: 0,
+  //     transform: [
+  //       {translateX},
+  //       {translateY},
+  //       {
+  //         scale: scale.value,
+  //       },
+  //     ],
+  //   };
+  // });
 
   return (
     <LongPressGestureHandler
@@ -87,7 +87,7 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
           onLongPress ? onLongPress() : onPress();
         }
       }}>
-      <Animated.View>
+      {/* <Animated.View>
         <TapGestureHandler onGestureEvent={tapGestureEvent}>
           <Animated.View
             style={[
@@ -104,7 +104,7 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
             <Animated.View style={rStyle} />
           </Animated.View>
         </TapGestureHandler>
-      </Animated.View>
+      </Animated.View> */}
     </LongPressGestureHandler>
   );
 };

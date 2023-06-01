@@ -1,7 +1,7 @@
 import {useFocusEffect, useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
-import Braze, {ContentCard} from 'react-native-appboy-sdk';
+// import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
@@ -26,7 +26,7 @@ import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
 
 interface AdvertisementCardProps {
-  contentCard: ContentCard;
+  contentCard: any;
   ctaOverride?: () => void;
 }
 
@@ -162,7 +162,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
 
   useFocusEffect(() => {
     if (!contentCard.id.startsWith('dev_')) {
-      Braze.logContentCardImpression(contentCard.id);
+      // Braze.logContentCardImpression(contentCard.id);
     }
   });
 

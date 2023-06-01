@@ -1,11 +1,11 @@
 import React, {memo} from 'react';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+// import Animated, {
+//   Easing,
+//   useAnimatedStyle,
+//   useSharedValue,
+//   withRepeat,
+//   withTiming,
+// } from 'react-native-reanimated';
 import styled from 'styled-components/native';
 import {Action, LightBlack} from '../../styles/colors';
 import {BitPayB} from './Spinner.Icons';
@@ -23,13 +23,13 @@ const SpinnerContainer = styled.View<{size: number}>`
   width: ${({size}) => size}px;
 `;
 
-const SpinnerRing = styled(Animated.View)<{size: number}>`
-  border: 3px solid ${({theme}) => (theme.dark ? LightBlack : '#f6f7f8')};
-  border-top-color: ${Action};
-  border-radius: ${({size}) => size}px;
-  height: 100%;
-  width: 100%;
-`;
+// const SpinnerRing = styled(Animated.View)<{size: number}>`
+//   border: 3px solid ${({theme}) => (theme.dark ? LightBlack : '#f6f7f8')};
+//   border-top-color: ${Action};
+//   border-radius: ${({size}) => size}px;
+//   height: 100%;
+//   width: 100%;
+// `;
 
 const SpinnerIconContainer = styled.View`
   align-self: center;
@@ -41,25 +41,26 @@ const Spinner = (props: SpinnerProps) => {
   const scale = 0.5;
   const iconSize = scale * size;
 
-  const angle = useSharedValue(-45);
-  angle.value = withRepeat(
-    withTiming(675, {duration: 1500, easing: Easing.bezier(0.5, 0, 0.25, 1.2)}),
-    -1,
-    false,
-  );
+  // const angle = useSharedValue(-45);
+  // angle.value = withRepeat(
+  //   withTiming(675, {duration: 1500, easing: Easing.bezier(0.5, 0, 0.25, 1.2)}),
+  //   -1,
+  //   false,
+  // );
 
-  const spin = useAnimatedStyle(() => ({
-    transform: [{rotate: `${angle.value}deg`}],
-  }));
+  // const spin = useAnimatedStyle(() => ({
+  //   transform: [{rotate: `${angle.value}deg`}],
+  // }));
 
   return (
-    <SpinnerContainer size={size}>
-      <SpinnerRing size={size} style={spin} />
+    <></>
+    // <SpinnerContainer size={size}>
+    //   <SpinnerRing size={size} style={spin} />
 
-      <SpinnerIconContainer>
-        <BitPayB size={iconSize} />
-      </SpinnerIconContainer>
-    </SpinnerContainer>
+    //   <SpinnerIconContainer>
+    //     <BitPayB size={iconSize} />
+    //   </SpinnerIconContainer>
+    // </SpinnerContainer>
   );
 };
 

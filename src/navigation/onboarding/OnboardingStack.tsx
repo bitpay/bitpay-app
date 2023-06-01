@@ -62,6 +62,7 @@ const OnboardingStack = () => {
         name={OnboardingScreens.ONBOARDING_START}
         component={OnboardingStartScreen}
       />
+      {/* 
       <Onboarding.Screen
         name={OnboardingScreens.NOTIFICATIONS}
         component={NotificationsScreen}
@@ -94,7 +95,7 @@ const OnboardingStack = () => {
       <Onboarding.Screen
         name={OnboardingScreens.IMPORT}
         component={ImportScreen}
-      />
+      /> */}
     </Onboarding.Navigator>
   );
 };

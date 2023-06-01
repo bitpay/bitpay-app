@@ -1,6 +1,6 @@
 import React from 'react';
-import {Image, ImageSourcePropType} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import {Image, ImageSourcePropType, View} from 'react-native';
+// import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import Button from '../button/Button';
@@ -53,8 +53,8 @@ interface Props {
   cta: () => void;
 }
 
-const FeatureCardContainer = styled(LinearGradient).attrs(({theme}) => ({
-  colors: theme.dark ? ['#606060', '#26272A'] : ['#FFFFFF', '#EBEDF8'],
+const FeatureCardContainer = styled(View).attrs(({theme}) => ({
+  // colors: theme.dark ? ['#606060', '#26272A'] : ['#FFFFFF', '#EBEDF8'],
   start: {x: 0, y: 0},
   end: {x: 0, y: 0},
   useAngle: true,

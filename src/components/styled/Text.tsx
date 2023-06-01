@@ -14,8 +14,8 @@ import {
 export const fontFamily = 'Heebo';
 
 export const BaseText = styled.Text`
-  color: ${({theme}) => theme.colors.text};
-  font-family: '${fontFamily}';
+  color: ${({theme}) => theme?.colors?.text};
+  /* font-family: '${fontFamily}'; */
 `;
 
 interface HeadingProps {

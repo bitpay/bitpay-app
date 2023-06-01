@@ -1,10 +1,10 @@
-import {ClassicContentCard} from 'react-native-appboy-sdk';
+// import {ClassicContentCard} from 'react-native-appboy-sdk';
 import {URL} from '../../../../../constants';
 import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {t} from 'i18next';
 
-const DefaultQuickLinks = (): ClassicContentCard[] => {
+const DefaultQuickLinks = (): any[] => {
   return [
     {
       ...DEFAULT_CLASSIC_CONTENT_CARD,

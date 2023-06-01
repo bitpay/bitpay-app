@@ -1,5 +1,5 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+// import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -201,7 +201,7 @@ export const brazeInitialized = (
 });
 
 export const brazeContentCardsFetched = (
-  contentCards: ContentCard[],
+  contentCards: any[],
 ): AppActionType => ({
   type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
   payload: {contentCards},

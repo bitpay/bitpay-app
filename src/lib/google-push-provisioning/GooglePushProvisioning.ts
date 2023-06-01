@@ -1,5 +1,5 @@
 import ReactNative from 'react-native';
-import {NativeEventEmitter} from 'react-native';
+// import {NativeEventEmitter} from 'react-native';
 
 interface GooglePushProvisioningModule {
   startPushProvision: any;
@@ -7,8 +7,8 @@ interface GooglePushProvisioningModule {
 
 const module = ReactNative.NativeModules?.GooglePushProvisioning || {};
 const GooglePushProvisioning = module as GooglePushProvisioningModule;
-const eventEmitter = new NativeEventEmitter(module);
-
+// const eventEmitter = new NativeEventEmitter(module);
+const eventEmitter = null;
 const startPushProvision = (
   opc: string,
   name: string,

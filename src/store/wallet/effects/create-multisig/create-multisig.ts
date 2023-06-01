@@ -1,14 +1,14 @@
 import {Effect} from '../../../index';
 import {BwcProvider} from '../../../../lib/bwc';
-import merge from 'lodash.merge';
-import {
-  buildKeyObj,
-  buildWalletObj,
-  mapAbbreviationAndName,
-} from '../../utils/wallet';
-import {successCreateKey, successAddWallet} from '../../wallet.actions';
-import {Key, KeyOptions, Wallet} from '../../wallet.models';
-import {createWalletWithOpts} from '../create/create';
+// import merge from 'lodash.merge';
+// import {
+//   buildKeyObj,
+//   buildWalletObj,
+//   mapAbbreviationAndName,
+// } from '../../utils/wallet';
+// import {successCreateKey, successAddWallet} from '../../wallet.actions';
+// import {Key, KeyOptions, Wallet} from '../../wallet.models';
+// import {createWalletWithOpts} from '../create/create';
 import {
   subscribePushNotifications,
   subscribeEmailNotifications,

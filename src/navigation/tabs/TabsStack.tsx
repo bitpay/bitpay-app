@@ -82,9 +82,9 @@ const TabsStack = () => {
           return <Icon />;
         },
       })}>
-      <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />
+      {/* <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />*/}
       <Tab.Screen name={TabsScreens.SHOP} component={ShopRoot} />
-      <Tab.Screen
+     <Tab.Screen
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
         options={{

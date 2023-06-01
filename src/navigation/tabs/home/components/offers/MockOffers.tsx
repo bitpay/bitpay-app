@@ -1,9 +1,9 @@
-import {ClassicContentCard} from 'react-native-appboy-sdk';
+// import {ClassicContentCard} from 'react-native-appboy-sdk';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';
 import {t} from 'i18next';
 
-const MockOffers = (): ClassicContentCard[] => {
+const MockOffers = (): any[] => {
   return [
     {
       ...DEFAULT_CLASSIC_CONTENT_CARD,

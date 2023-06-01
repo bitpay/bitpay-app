@@ -1,7 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {Platform, ScrollView} from 'react-native';
-import {requestNotifications, RESULTS} from 'react-native-permissions';
+// import {requestNotifications, RESULTS} from 'react-native-permissions';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';

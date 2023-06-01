@@ -40,14 +40,14 @@ const GeneralSettingsStack = () => {
         name={GeneralSettingsScreens.THEME}
         component={Theme}
       />
-      <GeneralSettings.Screen
+      {/*<GeneralSettings.Screen
         name={GeneralSettingsScreens.CUSTOMIZE_HOME}
         component={CustomizeHome}
         options={{
           headerTitle: () => <HeaderTitle>{t('Customize Home')}</HeaderTitle>,
         }}
-      />
-      <GeneralSettings.Screen
+      />*/}
+     <GeneralSettings.Screen
         name={GeneralSettingsScreens.ALT_CURRENCY_SETTTINGS}
         component={AltCurrencySettings}
         options={{

@@ -1,12 +1,12 @@
-import {
-  BannerContentCard,
-  CaptionedContentCard,
-  ClassicContentCard,
-  ContentCard,
-  ContentCardBase,
-} from 'react-native-appboy-sdk';
+// import {
+//   BannerContentCard,
+//   CaptionedContentCard,
+//   ClassicContentCard,
+//   ContentCard,
+//   ContentCardBase,
+// } from 'react-native-appboy-sdk';
 
-export const DEFAULT_CONTENT_CARD_BASE: ContentCardBase = {
+export const DEFAULT_CONTENT_CARD_BASE: any = {
   id: '',
   created: 0,
   expiresAt: 0,
@@ -19,7 +19,7 @@ export const DEFAULT_CONTENT_CARD_BASE: ContentCardBase = {
   extras: {},
 };
 
-export const DEFAULT_CLASSIC_CONTENT_CARD: ClassicContentCard = {
+export const DEFAULT_CLASSIC_CONTENT_CARD: any = {
   ...DEFAULT_CONTENT_CARD_BASE,
   type: 'Classic',
   title: 'Lorem Ipsum',
@@ -27,35 +27,35 @@ export const DEFAULT_CLASSIC_CONTENT_CARD: ClassicContentCard = {
 };
 
 export const isBannerContentCard = (
-  contentCard: ContentCard,
-): contentCard is BannerContentCard => {
+  contentCard: any,
+): contentCard is any => {
   return contentCard.type === 'Banner';
 };
 
 export const isCaptionedContentCard = (
-  contentCard: ContentCard,
-): contentCard is CaptionedContentCard => {
+  contentCard: any,
+): contentCard is any => {
   return contentCard.type === 'Captioned';
 };
 
 export const isClassicContentCard = (
-  contentCard: ContentCard,
-): contentCard is ClassicContentCard => {
+  contentCard: any,
+): contentCard is any => {
   return contentCard.type === 'Classic';
 };
 
-export const isShopWithCrypto = (contentCard: ContentCard) => {
+export const isShopWithCrypto = (contentCard: any) => {
   return contentCard.extras.feed_type === 'shop_with_crypto';
 };
 
-export const isQuickLink = (contentCard: ContentCard) => {
+export const isQuickLink = (contentCard: any) => {
   return contentCard.extras.feed_type === 'quick_links';
 };
 
-export const isDoMore = (contentCard: ContentCard) => {
+export const isDoMore = (contentCard: any) => {
   return contentCard.extras.feed_type === 'do_more';
 };
 
-export const isCardOffer = (contentCard: ContentCard) => {
+export const isCardOffer = (contentCard: any) => {
   return contentCard.extras.feed_type === 'card_promotion';
 };

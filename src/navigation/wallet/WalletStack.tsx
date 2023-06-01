@@ -209,18 +209,11 @@ const WalletStack = () => {
       <Wallet.Navigator
         screenOptions={{...baseNavigatorOptions, ...baseScreenOptions}}
         initialRouteName={WalletScreens.BACKUP_KEY}>
-        <Wallet.Screen
-          options={{
-            headerTitle: () => (
-              <HeaderTitle>{t('Select Currencies')}</HeaderTitle>
-            ),
-            headerTitleAlign: 'center',
-            gestureEnabled: false,
-          }}
+       <Wallet.Screen
           name={WalletScreens.CURRENCY_SELECTION}
           component={CurrencySelection}
         />
-        <Wallet.Screen
+        {/*  <Wallet.Screen
           name={WalletScreens.CURRENCY_TOKEN_SELECTION}
           component={CurrencyTokenSelectionScreen}
         />
@@ -460,7 +453,7 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CLEAR_TRANSACTION_HISTORY_CACHE}
           component={ClearTransactionHistoryCache}
-        />
+        /> */}
       </Wallet.Navigator>
     </>
   );

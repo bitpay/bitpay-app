@@ -24,7 +24,7 @@ import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
-import Braze from 'react-native-appboy-sdk';
+// import Braze from 'react-native-appboy-sdk';
 import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
 
 interface StartLoginParams {
@@ -107,9 +107,9 @@ export const startCreateAccount =
       const hashedPassword = hashPassword(params.password);
 
       if (params.agreedToMarketingCommunications) {
-        Braze.setEmailNotificationSubscriptionType(
-          Braze.NotificationSubscriptionTypes.OPTED_IN,
-        );
+        // Braze.setEmailNotificationSubscriptionType(
+        //   Braze.NotificationSubscriptionTypes.OPTED_IN,
+        // );
       }
 
       await AuthApi.register(APP.network, BITPAY_ID.session.csrfToken, {

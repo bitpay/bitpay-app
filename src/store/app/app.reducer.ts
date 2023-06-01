@@ -1,6 +1,6 @@
 import i18n from 'i18next';
 import {ColorSchemeName, EventSubscription} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+// import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
@@ -101,7 +101,7 @@ export interface AppState {
   showPortfolioValue: boolean;
   hideAllBalances: boolean;
   brazeContentCardSubscription: EventSubscription | null;
-  brazeContentCards: ContentCard[];
+  brazeContentCards: any[];
   brazeEid: string | undefined;
   showBiometricModal: boolean;
   biometricModalConfig: BiometricModalConfig | undefined;

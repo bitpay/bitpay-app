@@ -1,5 +1,5 @@
 import axios from 'axios';
-import BitAuth from 'bitauth';
+// import BitAuth from 'bitauth';
 import {Network} from '../../constants';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import {AppIdentity} from '../../store/app/app.models';
@@ -70,7 +70,7 @@ class GraphQlApi {
 
   private sign(params: GqlQueryParams) {
     const unsignedData = `${this.apiHost}/${JSON.stringify(params)}`;
-    const signature: any = BitAuth.sign(unsignedData, this.identity.priv);
+    // const signature: any = BitAuth.sign(unsignedData, this.identity.priv);
 
     return signature.toString('hex');
   }

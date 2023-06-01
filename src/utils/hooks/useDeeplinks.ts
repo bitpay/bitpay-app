@@ -6,7 +6,7 @@ import {
 } from '@react-navigation/native';
 import {useMemo, useRef} from 'react';
 import {Linking} from 'react-native';
-import AppsFlyer from 'react-native-appsflyer';
+// import AppsFlyer from 'react-native-appsflyer';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {
   APP_CRYPTO_PREFIX,
@@ -41,15 +41,15 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
       },
     },
     [RootStacks.TABS]: {
-      screens: {
-        [TabsScreens.CARD]: {
-          path: 'wallet-card',
-          initialRouteName: CardScreens.HOME,
-          screens: {
-            [CardScreens.PAIRING]: 'pairing',
-          },
-        },
-      },
+    //   screens: {
+    //     [TabsScreens.CARD]: {
+    //       path: 'wallet-card',
+    //       initialRouteName: CardScreens.HOME,
+    //       screens: {
+    //         [CardScreens.PAIRING]: 'pairing',
+    //       },
+    //     },
+    //   },
     } as PathConfig<TabsStackParamList>,
     [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
     [RootStacks.BUY_CRYPTO]: {
@@ -102,6 +102,7 @@ export const useUrlEventHandler = () => {
     logger.debug(`[deeplink] received: ${url}`);
 
     if (url && (isDeepLink(url) || isUniversalLink(url) || isCryptoLink(url))) {
+
       logger.info(`[deeplink] valid: ${url}`);
       dispatch(showBlur(false));
 
@@ -148,7 +149,7 @@ export const useUrlEventHandler = () => {
         logger.error('[deeplink] not available from IAB: ' + errStr);
       }
 
-      return handled;
+      // return handled;
     }
   };
   const handlerRef = useRef(urlEventHandler);
@@ -160,90 +161,91 @@ export const useDeeplinks = () => {
   const urlEventHandler = useUrlEventHandler();
   const logger = useLogger();
 
-  const memoizedSubscribe = useMemo<
-    LinkingOptions<RootStackParamList>['subscribe']
-  >(
-    () => listener => {
-      const subscription = Linking.addEventListener('url', async ({url}) => {
-        let handled = false;
-        const urlObj = new URL(url);
-        const urlParams = urlObj.searchParams;
+  // const memoizedSubscribe = useMemo<
+  //   LinkingOptions<RootStackParamList>['subscribe']
+  // >(
+  //   () => listener => {
+  //     const subscription = Linking.addEventListener('url', async ({url}) => {
+  //       let handled = false;
+  //       const urlObj = new URL(url);
+  //       const urlParams = urlObj.searchParams;
 
-        if (!handled) {
-          const isAppsFlyerDeeplink = urlParams.get('af_deeplink') === 'true';
-          const hasEmbeddedDeepLink = !!urlParams.get('deep_link_value');
+  //       if (!handled) {
+  //         const isAppsFlyerDeeplink = urlParams.get('af_deeplink') === 'true';
+  //         const hasEmbeddedDeepLink = !!urlParams.get('deep_link_value');
 
-          // true if should be handled by AppsFlyer SDK
-          handled = !!(isAppsFlyerDeeplink && hasEmbeddedDeepLink);
-        }
+  //         // true if should be handled by AppsFlyer SDK
+  //         handled = !!(isAppsFlyerDeeplink && hasEmbeddedDeepLink);
+  //       }
 
-        if (!handled) {
-          handled = !!(await urlEventHandler({url}));
-        }
+  //       if (!handled) {
+  //         handled = !!(await urlEventHandler({url}));
+  //       }
 
-        if (!handled) {
-          listener(url);
-        }
-      });
+  //       if (!handled) {
+  //         listener(url);
+  //       }
+  //     });
 
       // Configure AppsFlyer to handle wrapped deeplinks.
       // ie. resolve deeplinks with these hostnames to get the real deeplink
-      AppsFlyer.setResolveDeepLinkURLs(
-        ['clicks.bitpay.com', 'email.bitpay.com'],
-        () => {
-          logger.debug(
-            'Successfully configured AppsFlyer deeplink resolution.',
-          );
-        },
-        e => {
-          const errString = e instanceof Error ? e.message : JSON.stringify(e);
-          logger.debug(
-            `An error occurred trying to configure AppsFlyer deeplink resolution: ${errString}`,
-          );
-        },
-      );
+      // AppsFlyer.setResolveDeepLinkURLs(
+      //   ['clicks.bitpay.com', 'email.bitpay.com'],
+      //   () => {
+      //     logger.debug(
+      //       'Successfully configured AppsFlyer deeplink resolution.',
+      //     );
+      //   },
+      //   e => {
+      //     const errString = e instanceof Error ? e.message : JSON.stringify(e);
+      //     logger.debug(
+      //       `An error occurred trying to configure AppsFlyer deeplink resolution: ${errString}`,
+      //     );
+      //   },
+      // );
 
-      const appsFlyerUnsubscribe = AppsFlyer.onDeepLink(udlData => {
-        const {data, deepLinkStatus, status} = udlData;
+      // const appsFlyerUnsubscribe = AppsFlyer.onDeepLink(udlData => {
+      //   const {data, deepLinkStatus, status} = udlData;
 
-        if (status === 'failure' || deepLinkStatus === 'Error') {
-          logger.info('Failed to handle Universal Deep Link.');
-          return;
-        }
+      //   if (status === 'failure' || deepLinkStatus === 'Error') {
+      //     logger.info('Failed to handle Universal Deep Link.');
+      //     return;
+      //   }
 
-        if (deepLinkStatus === 'NOT_FOUND') {
-          logger.info('Universal Deep Link not recognized.');
-          return;
-        }
+      //   if (deepLinkStatus === 'NOT_FOUND') {
+      //     logger.info('Universal Deep Link not recognized.');
+      //     return;
+      //   }
 
-        if (deepLinkStatus === 'FOUND') {
-          const {deep_link_value} = data;
+      //   if (deepLinkStatus === 'FOUND') {
+      //     const {deep_link_value} = data;
 
-          if (deep_link_value) {
-            urlEventHandler({url: deep_link_value});
-          }
+      //     if (deep_link_value) {
+      //       urlEventHandler({url: deep_link_value});
+      //     }
 
-          return;
-        }
+      //     return;
+      //   }
 
-        logger.info(`Unrecognized deeplink status: ${deepLinkStatus}`);
-      });
+      //   logger.info(`Unrecognized deeplink status: ${deepLinkStatus}`);
+      // });
 
-      return () => {
-        subscription.remove();
-        appsFlyerUnsubscribe();
-      };
-    },
-    [logger, urlEventHandler],
-  );
+  //     return () => {
+  //       subscription.remove();
+  //       // appsFlyerUnsubscribe();
+  //     };
+  //   },
+  //   [logger, urlEventHandler],
+  // );
 
-  const linkingOptions: LinkingOptions<RootStackParamList> = {
-    prefixes: [APP_DEEPLINK_PREFIX],
-    subscribe: memoizedSubscribe,
-    config: getLinkingConfig(),
-  };
+  // const linkingOptions: LinkingOptions<RootStackParamList> = {
+  //   prefixes: [APP_DEEPLINK_PREFIX],
+  //   subscribe: memoizedSubscribe,
+  //   config: getLinkingConfig(),
+  // };
 
-  return linkingOptions;
+  // return linkingOptions;
+  return {};
 };
 
 export default useDeeplinks;

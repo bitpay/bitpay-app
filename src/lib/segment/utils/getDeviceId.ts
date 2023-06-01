@@ -1,4 +1,4 @@
-import Braze from 'react-native-appboy-sdk';
+// import Braze from 'react-native-appboy-sdk';
 
 /**
  * Wraps Braze's getInstallTrackingId in a promise to get the device ID. This is regenerated each time the app is installed, but persists after that.

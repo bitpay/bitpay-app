@@ -14,7 +14,7 @@ import {RootState} from '../../../store';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {White} from '../../../styles/colors';
-import LinearGradient from 'react-native-linear-gradient';
+// import LinearGradient from 'react-native-linear-gradient';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
 
@@ -31,8 +31,8 @@ interface ButtonProps {
   accessibilityLabel?: string;
 }
 
-const BackgroundGradient = styled(LinearGradient).attrs({
-  colors: ['#AD4FF7', '#1A3B8B'],
+const BackgroundGradient = styled(View).attrs({
+  // colors: ['#AD4FF7', '#1A3B8B'],
   start: {x: 0, y: 0},
   end: {x: 0, y: 0},
   useAngle: true,

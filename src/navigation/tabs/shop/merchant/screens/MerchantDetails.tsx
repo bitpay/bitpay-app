@@ -1,7 +1,7 @@
 import React, {useLayoutEffect} from 'react';
-import {Linking, ScrollView} from 'react-native';
+import {Linking, ScrollView, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
-import LinearGradient from 'react-native-linear-gradient';
+// import LinearGradient from 'react-native-linear-gradient';
 import {MerchantStackParamList} from '../MerchantStack';
 import RemoteImage from '../../components/RemoteImage';
 import styled from 'styled-components/native';
@@ -25,7 +25,7 @@ import {
 import {useTheme} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
-const GradientBox = styled(LinearGradient)`
+const GradientBox = styled(View)`
   width: ${WIDTH}px;
   height: 80px;
 `;

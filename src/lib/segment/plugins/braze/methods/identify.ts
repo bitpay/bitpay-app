@@ -1,5 +1,5 @@
 import {IdentifyEventType} from '@segment/analytics-react-native';
-import Braze from 'react-native-appboy-sdk';
+// import Braze from 'react-native-appboy-sdk';
 
 /**
  * Modified version of the Segment's official Braze plugin identify method.

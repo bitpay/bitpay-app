@@ -1,5 +1,5 @@
 import React from 'react';
-import {ContentCard} from 'react-native-appboy-sdk';
+// import {ContentCard} from 'react-native-appboy-sdk';
 import {Carousel} from 'react-native-snap-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
@@ -8,7 +8,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useAppSelector} from '../../../../../utils/hooks';
 
 interface QuickLinksCarouselProps {
-  contentCards: ContentCard[];
+  contentCards: any[];
 }
 
 const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
@@ -34,12 +34,12 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   };
 
   return (
-    <Carousel<ContentCard>
+    <Carousel<any>
       vertical={false}
       layout={'default'}
       useExperimentalSnap={true}
       data={contentCards}
-      renderItem={({item}: {item: ContentCard}) => (
+      renderItem={({item}: {item: any}) => (
         <CarouselItemContainer>
           <QuickLinksCard
             contentCard={item}

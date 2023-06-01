@@ -1,5 +1,5 @@
 import React from 'react';
-import {ContentCard} from 'react-native-appboy-sdk';
+// import {ContentCard} from 'react-native-appboy-sdk';
 import styled, {useTheme} from 'styled-components/native';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import AdvertisementCard from './AdvertisementCard';
@@ -9,7 +9,7 @@ import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequ
 import {WalletScreens} from '../../../../wallet/WalletStack';
 
 interface AdvertisementListProps {
-  contentCards: ContentCard[];
+  contentCards: any[];
 }
 
 const AdvertisementListContainer = styled.View`

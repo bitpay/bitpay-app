@@ -6,7 +6,8 @@ import {CardConfig} from '../../../../store/shop/shop.models';
 import {BaseText, H4} from '../../../../components/styled/Text';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {LightBlack} from '../../../../styles/colors';
-import LinearGradient from 'react-native-linear-gradient';
+import { View } from 'react-native';
+// import LinearGradient from 'react-native-linear-gradient';
 
 interface GiftCardCreditsItemProps {
   logoBackgroundColor: string;
@@ -28,7 +29,7 @@ const getBorderColor = (logoBackgroundColor: string, theme: DefaultTheme) => {
   return 'transparent';
 };
 
-const GiftCardItem = styled(LinearGradient)<GiftCardCreditsItemProps>`
+const GiftCardItem = styled(View)<GiftCardCreditsItemProps>`
   ${({logoBackgroundColor, theme}) =>
     css`
       overflow: hidden;

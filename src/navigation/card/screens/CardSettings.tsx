@@ -3,13 +3,13 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import Animated, {
-  Easing,
-  FadeOutLeft,
-  FadeOutRight,
-  SlideInLeft,
-  SlideInRight,
-} from 'react-native-reanimated';
+// import Animated, {
+//   Easing,
+//   FadeOutLeft,
+//   FadeOutRight,
+//   SlideInLeft,
+//   SlideInRight,
+// } from 'react-native-reanimated';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
@@ -176,38 +176,27 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           const isVirtual = c.cardType === 'virtual';
           const delay = 0;
           const duration = 250;
-          const easing = Easing.linear;
+          // const easing = Easing.linear;
 
           const useTransition = cardsToShow.length > 1;
-          const transitionEnter =
-            useTransition && animationsEnabled
-              ? isVirtual
-                ? SlideInLeft.duration(duration).delay(delay).easing(easing)
-                : SlideInRight.duration(duration).delay(delay).easing(easing)
-              : undefined;
+          // const transitionEnter =
+          //   useTransition && animationsEnabled
+          //     ? isVirtual
+          //       ? SlideInLeft.duration(duration).delay(delay).easing(easing)
+          //       : SlideInRight.duration(duration).delay(delay).easing(easing)
+          //     : undefined;
 
-          const transitionLeave = useTransition
-            ? isVirtual
-              ? FadeOutLeft.duration(duration / 2)
-                  .delay(0)
-                  .easing(easing)
-              : FadeOutRight.duration(duration / 2)
-                  .delay(0)
-                  .easing(easing)
-            : undefined;
+          // const transitionLeave = useTransition
+          //   ? isVirtual
+          //     ? FadeOutLeft.duration(duration / 2)
+          //         .delay(0)
+          //         .easing(easing)
+          //     : FadeOutRight.duration(duration / 2)
+          //         .delay(0)
+          //         .easing(easing)
+          //   : undefined;
 
-          return isActive ? (
-            <Animated.View
-              key={c.id}
-              entering={transitionEnter}
-              exiting={transitionLeave}>
-              <SettingsList
-                card={c}
-                orderPhysical={isVirtual && !physicalCard}
-                navigation={navigation}
-              />
-            </Animated.View>
-          ) : null;
+          return  null;
         })}
       </CardSettingsContainer>
     </ScrollView>

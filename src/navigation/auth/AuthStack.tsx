@@ -52,19 +52,19 @@ export type AuthStackParamList = {
 
 const Auth = createStackNavigator<AuthStackParamList>();
 const AuthStack: React.FC = () => {
-  const {t} = useTranslation();
-  const dispatch = useDispatch();
-  const loginStatus = useSelector<RootState, LoginStatus>(
-    ({BITPAY_ID}) => BITPAY_ID.loginStatus,
-  );
-  const isTwoFactorPending = loginStatus === 'twoFactorPending';
-  const isEmailAuthPending = loginStatus === 'emailAuthenticationPending';
+  // const {t} = useTranslation();
+  // const dispatch = useDispatch();
+  // const loginStatus = useSelector<RootState, LoginStatus>(
+  //   ({BITPAY_ID}) => BITPAY_ID.loginStatus,
+  // );
+  // const isTwoFactorPending = loginStatus === 'twoFactorPending';
+  // const isEmailAuthPending = loginStatus === 'emailAuthenticationPending';
 
-  useEffect(() => {
-    return () => {
-      dispatch(BitPayIdActions.resetAuthStack());
-    };
-  }, [dispatch]);
+  // useEffect(() => {
+  //   return () => {
+  //     dispatch(BitPayIdActions.resetAuthStack());
+  //   };
+  // }, [dispatch]);
 
   return (
     <Auth.Navigator
@@ -73,7 +73,7 @@ const AuthStack: React.FC = () => {
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
-      <Auth.Screen
+      {/* <Auth.Screen
         name={AuthScreens.LOGIN}
         component={LoginScreen}
         options={{
@@ -133,7 +133,7 @@ const AuthStack: React.FC = () => {
         options={{
           headerTitle: () => <HeaderTitle>{t('Reset Password')}</HeaderTitle>,
         }}
-      />
+      /> */}
     </Auth.Navigator>
   );
 };

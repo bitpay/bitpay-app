@@ -6,9 +6,9 @@ import AppsFlyer from 'react-native-appsflyer';
  * @returns AppsFlyer ID
  */
 export const getAppsFlyerId = () => {
-  return new Promise<string | undefined>(resolve =>
-    AppsFlyer.getAppsFlyerUID((err, id) => {
-      resolve(err ? undefined : id);
-    }),
+  return new Promise<string | undefined>(resolve => {}
+    // AppsFlyer.getAppsFlyerUID((err, id) => {
+    //   resolve(err ? undefined : id);
+    // }),
   );
 };

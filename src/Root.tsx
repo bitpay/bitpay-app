@@ -6,7 +6,7 @@ import {
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
-import Braze from 'react-native-appboy-sdk';
+// import Braze from 'react-native-appboy-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   Appearance,
@@ -118,6 +118,7 @@ import NetworkFeePolicySettingsStack, {
   NetworkFeePolicySettingsStackParamsList,
 } from './navigation/tabs/settings/NetworkFeePolicy/NetworkFeePolicyStack';
 import {WalletActions} from './store/wallet';
+import { BaseText } from './components/styled/Text';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -370,7 +371,7 @@ export default () => {
       navigationRef.navigate(RootStacks.DEBUG, {name: 'Failed app init'});
     }
   }, [dispatch, failedAppInit]);
-
+  
   // LANGUAGE
   useEffect(() => {
     if (appLanguage && appLanguage !== i18n.language) {
@@ -529,12 +530,14 @@ export default () => {
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
   // ROOT STACKS AND GLOBAL COMPONENTS
-  const initialRoute = onboardingCompleted
-    ? RootStacks.TABS
-    : introCompleted
-    ? RootStacks.ONBOARDING
-    : RootStacks.INTRO;
-
+  const initialRoute = RootStacks.ONBOARDING
+  //  onboardingCompleted
+  // ? RootStacks.TABS
+  // : introCompleted
+  // ? RootStacks.ONBOARDING
+  // : RootStacks.INTRO;
+  
+  console.log('#########################initialRoute', initialRoute)
   return (
     <SafeAreaProvider>
       <StatusBar
@@ -556,8 +559,8 @@ export default () => {
 
             if (onboardingCompleted) {
               const getBrazeInitialUrl = async (): Promise<string> =>
-                new Promise(resolve =>
-                  Braze.getInitialURL(deepLink => resolve(deepLink)),
+                new Promise(resolve => {}
+                  // Braze.getInitialURL(deepLink => resolve(deepLink)),
                 );
               const [url, brazeUrl] = await Promise.all([
                 Linking.getInitialURL(),
@@ -574,7 +577,7 @@ export default () => {
               headerShown: false,
             }}
             initialRouteName={initialRoute}>
-            <Root.Screen
+         <Root.Screen
               name={RootStacks.DEBUG}
               component={DebugScreen}
               options={{
@@ -583,7 +586,7 @@ export default () => {
                 animationEnabled: false,
               }}
             />
-            <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
+            {/* <Root.Screen name={RootStacks.AUTH} component={AuthStack} /> */}
             <Root.Screen name={RootStacks.INTRO} component={IntroStack} />
             <Root.Screen
               name={RootStacks.ONBOARDING}
@@ -600,6 +603,7 @@ export default () => {
               name={RootStacks.BITPAY_ID}
               component={BitpayIdStack}
             />
+
             <Root.Screen
               options={{
                 gestureEnabled: false,
@@ -607,6 +611,7 @@ export default () => {
               name={RootStacks.WALLET}
               component={WalletStack}
             />
+
             <Root.Screen
               name={RootStacks.CARD_ACTIVATION}
               component={CardActivationStack}
@@ -627,7 +632,6 @@ export default () => {
               component={GiftCardDeeplinkScreen}
             />
             <Root.Screen name={RootStacks.MERCHANT} component={MerchantStack} />
-            {/* SETTINGS */}
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}
               component={GeneralSettingsStack}

@@ -24,18 +24,18 @@ const BitPayIdPairingScreen: React.FC<
   }, [navigation]);
 
   const onFailure = () => {
-    navigation.dispatch(
-      CommonActions.reset({
-        routes: [
-          {
-            name: RootStacks.TABS,
-            params: {
-              screen: TabsScreens.SETTINGS,
-            },
-          },
-        ],
-      }),
-    );
+    // navigation.dispatch(
+    //   CommonActions.reset({
+    //     routes: [
+    //       {
+    //         name: RootStacks.TABS,
+    //         params: {
+    //           screen: TabsScreens.SETTINGS,
+    //         },
+    //       },
+    //     ],
+    //   }),
+    // );
   };
 
   return (

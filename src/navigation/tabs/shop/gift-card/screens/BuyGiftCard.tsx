@@ -1,7 +1,7 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {Platform, ScrollView, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
-import LinearGradient from 'react-native-linear-gradient';
+// import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
 import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
 import RemoteImage from '../../components/RemoteImage';
@@ -46,7 +46,7 @@ import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
-const GradientBox = styled(LinearGradient)`
+const GradientBox = styled(View)`
   width: ${WIDTH}px;
   align-items: center;
   padding-top: 40px;

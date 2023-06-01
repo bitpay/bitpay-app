@@ -6,11 +6,11 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+// import Animated, {
+//   useAnimatedStyle,
+//   useSharedValue,
+//   withTiming,
+// } from 'react-native-reanimated';
 import styled from 'styled-components/native';
 import {Action, Grey} from '../../styles/colors';
 
@@ -38,19 +38,19 @@ const ProgressTrack = styled.View`
   width: 100%;
 `;
 
-const Progress = styled(Animated.View)`
-  background-color: ${Action};
-  height: 100%;
-  left: -100%;
-  position: relative;
-`;
+// const Progress = styled(Animated.View)`
+//   background-color: ${Action};
+//   height: 100%;
+//   left: -100%;
+//   position: relative;
+// `;
 
-const IconContainer = styled(Animated.View)`
-  align-items: flex-end;
-  left: -100%;
-  position: relative;
-  width: 100%;
-`;
+// const IconContainer = styled(Animated.View)`
+//   align-items: flex-end;
+//   left: -100%;
+//   position: relative;
+//   width: 100%;
+// `;
 
 const clamp = (value: number, min: number, max: number) => {
   return Math.min(max, Math.max(min, value));
@@ -72,20 +72,20 @@ const ProgressBar: React.FC<PropsWithChildren<ProgressBarProps>> = props => {
   const {color = Action, backgroundColor = Grey} = props;
   const offset = barWidth ? calculateOffset(props.progress, barWidth) : 0;
 
-  const animatedWidth = useSharedValue(0);
-  animatedWidth.value = withTiming(offset, {
-    duration: 200,
-  });
+  // const animatedWidth = useSharedValue(0);
+  // animatedWidth.value = withTiming(offset, {
+  //   duration: 200,
+  // });
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateX: animatedWidth.value,
-        },
-      ],
-    };
-  });
+  // const animatedStyle = useAnimatedStyle(() => {
+  //   return {
+  //     transform: [
+  //       {
+  //         translateX: animatedWidth.value,
+  //       },
+  //     ],
+  //   };
+  // });
 
   const onBarLayout = useCallback((e: LayoutChangeEvent) => {
     setBarWidth(Math.round(e.nativeEvent.layout.width));
@@ -105,7 +105,7 @@ const ProgressBar: React.FC<PropsWithChildren<ProgressBarProps>> = props => {
 
   return (
     <ProgressContainer onLayout={onBarLayout}>
-      <ProgressTrack style={backgroundColor ? {backgroundColor} : null}>
+      {/* <ProgressTrack style={backgroundColor ? {backgroundColor} : null}>
         <Progress
           style={[animatedStyle, color ? {backgroundColor: color} : null]}
         />
@@ -117,7 +117,7 @@ const ProgressBar: React.FC<PropsWithChildren<ProgressBarProps>> = props => {
             <ProgressIcon />
           </View>
         </IconContainer>
-      ) : null}
+      ) : null} */}
     </ProgressContainer>
   );
 };

@@ -367,81 +367,81 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     });
   }
 
-  const flatListRef = useRef<FlatList>(null);
-  useScrollToTop(flatListRef);
+  // const flatListRef = useRef<FlatList>(null);
+  // useScrollToTop(flatListRef);
 
-  return (
-    <>
-      <FlatList
-        contentContainerStyle={{minHeight: '100%'}}
-        data={dashboardTransactions}
-        renderItem={renderTransaction}
-        initialNumToRender={30}
-        onEndReachedThreshold={0.1}
-        onEndReached={() => fetchNextPage()}
-        ListHeaderComponent={
-          <>
-            <Carousel<Card[]>
-              ref={carouselRef}
-              vertical={false}
-              layout="default"
-              activeSlideAlignment="center"
-              firstItem={currentGroupIdx}
-              data={cardGroups}
-              renderItem={renderSlide}
-              onSnapToItem={idx => {
-                navigation.setParams({
-                  id: cardGroups[idx][0].id,
-                });
-              }}
-              itemWidth={CARD_WIDTH + 20}
-              sliderWidth={WIDTH}
-              inactiveSlideScale={1}
-              inactiveSlideOpacity={1}
-              containerCustomStyle={{
-                flexGrow: 0,
-                marginTop: 32,
-              }}
-            />
+  return ( <></>
+    // <>
+    //   <FlatList
+    //     contentContainerStyle={{minHeight: '100%'}}
+    //     data={dashboardTransactions}
+    //     renderItem={renderTransaction}
+    //     initialNumToRender={30}
+    //     onEndReachedThreshold={0.1}
+    //     onEndReached={() => fetchNextPage()}
+    //     ListHeaderComponent={
+    //       <>
+    //         <Carousel<Card[]>
+    //           ref={carouselRef}
+    //           vertical={false}
+    //           layout="default"
+    //           activeSlideAlignment="center"
+    //           firstItem={currentGroupIdx}
+    //           data={cardGroups}
+    //           renderItem={renderSlide}
+    //           onSnapToItem={idx => {
+    //             navigation.setParams({
+    //               id: cardGroups[idx][0].id,
+    //             });
+    //           }}
+    //           itemWidth={CARD_WIDTH + 20}
+    //           sliderWidth={WIDTH}
+    //           inactiveSlideScale={1}
+    //           inactiveSlideOpacity={1}
+    //           containerCustomStyle={{
+    //             flexGrow: 0,
+    //             marginTop: 32,
+    //           }}
+    //         />
 
-            {additionalContent.length ? (
-              additionalContent.map(({key, content}) => (
-                <CardsRowContainer key={key}>{content}</CardsRowContainer>
-              ))
-            ) : (
-              <BelowCarouselSpacer />
-            )}
+    //         {additionalContent.length ? (
+    //           additionalContent.map(({key, content}) => (
+    //             <CardsRowContainer key={key}>{content}</CardsRowContainer>
+    //           ))
+    //         ) : (
+    //           <BelowCarouselSpacer />
+    //         )}
 
-            {!isLoadingInitial ? (
-              <TransactionListHeader>
-                <TransactionListHeaderTitle>
-                  {dashboardTransactions.length <= 0
-                    ? null
-                    : t('Recent Activity')}
-                </TransactionListHeaderTitle>
+    //         {!isLoadingInitial ? (
+    //           <TransactionListHeader>
+    //             <TransactionListHeaderTitle>
+    //               {dashboardTransactions.length <= 0
+    //                 ? null
+    //                 : t('Recent Activity')}
+    //             </TransactionListHeaderTitle>
 
-                <TransactionListHeaderIcon onPress={() => onRefresh()}>
-                  <RefreshIcon />
-                </TransactionListHeaderIcon>
-              </TransactionListHeader>
-            ) : null}
-          </>
-        }
-        ListFooterComponent={listFooterComponent}
-        ListEmptyComponent={listEmptyComponent}
-        ref={flatListRef}
-      />
-      <FloatingActionButtonContainer>
-        <FloatingActionButton
-          onPress={() => goToAmountScreen()}
-          activeOpacity={ActiveOpacity}>
-          <FloatingActionButtonIconContainer>
-            <PlusSvg />
-          </FloatingActionButtonIconContainer>
-          <FloatingActionButtonText>{t('Add Funds')}</FloatingActionButtonText>
-        </FloatingActionButton>
-      </FloatingActionButtonContainer>
-    </>
+    //             <TransactionListHeaderIcon onPress={() => onRefresh()}>
+    //               <RefreshIcon />
+    //             </TransactionListHeaderIcon>
+    //           </TransactionListHeader>
+    //         ) : null}
+    //       </>
+    //     }
+    //     ListFooterComponent={listFooterComponent}
+    //     ListEmptyComponent={listEmptyComponent}
+    //     ref={flatListRef}
+    //   />
+    //   <FloatingActionButtonContainer>
+    //     <FloatingActionButton
+    //       onPress={() => goToAmountScreen()}
+    //       activeOpacity={ActiveOpacity}>
+    //       <FloatingActionButtonIconContainer>
+    //         <PlusSvg />
+    //       </FloatingActionButtonIconContainer>
+    //       <FloatingActionButtonText>{t('Add Funds')}</FloatingActionButtonText>
+    //     </FloatingActionButton>
+    //   </FloatingActionButtonContainer>
+    // </>
   );
 };
 

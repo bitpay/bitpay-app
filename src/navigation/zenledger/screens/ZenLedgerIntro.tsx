@@ -22,7 +22,7 @@ import {
 } from '../../../store/app/app.actions';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import LinearGradient from 'react-native-linear-gradient';
+// import LinearGradient from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
 import ZenLedgerLogo from '../components/ZenLedgerLogo';
 import Back from '../../../components/back/Back';
@@ -62,8 +62,8 @@ const ZenLedgerLogoContainer = styled.View`
   margin: 16px 0;
 `;
 
-const ZenLedgerBackground = styled(LinearGradient).attrs(({theme}) => ({
-  colors: theme.dark ? [Black, Black] : ['#FFFFFF', 'rgba(0, 133, 102, 0.05)'],
+const ZenLedgerBackground = styled(View).attrs(({theme}) => ({
+  // colors: theme.dark ? [Black, Black] : ['#FFFFFF', 'rgba(0, 133, 102, 0.05)'],
   start: {x: 0, y: 0},
   end: {x: 0, y: 0},
 }))`
