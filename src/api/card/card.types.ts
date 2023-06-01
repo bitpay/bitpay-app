@@ -3,7 +3,6 @@ import {
   PagedTransactionData,
   TopUp,
   Transaction,
-  ReferredUsersType,
 } from '../../store/card/card.models';
 
 export interface FetchAllCardsResponse {
@@ -69,34 +68,6 @@ export interface ActivateCardResponse {
        * Activation date in ms, as a string.
        */
       activationDate: string;
-    };
-  };
-}
-
-export interface UpdateCardNameResponse {
-  user: {
-    card: {
-      nickname: string;
-    };
-  };
-}
-
-export interface FetchReferralCodeResponse {
-  user: {
-    referralCode: string;
-  };
-}
-
-export interface FetchReferredUsers {
-  user: {
-    referredUsers: ReferredUsersType[];
-  };
-}
-
-export interface FetchPinChangeRequestInfoResponse {
-  user: {
-    card: {
-      pinChangeRequestInfo: string;
     };
   };
 }

@@ -10,8 +10,7 @@ import styled from 'styled-components/native';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {Br, ScreenGutter, WIDTH} from '../../../components/styled/Containers';
-import {Smallest} from '../../../components/styled/Text';
+import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
@@ -46,6 +45,7 @@ import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
 import {AddFundsButton} from './AddFundsButton';
+import {TermsAndConditionsMastercard} from './CardSettingsList.styled';
 
 interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
@@ -150,13 +150,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     () => (
       <TransactionListFooter>
         {activeCard.provider === CardProvider.galileo ? (
-          <>
-            <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
-
-            <Br />
-
-            <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
-          </>
+          <TermsAndConditionsMastercard />
         ) : null}
       </TransactionListFooter>
     ),

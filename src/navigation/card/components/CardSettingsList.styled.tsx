@@ -1,16 +1,19 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import {SvgProps} from 'react-native-svg';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {
   ActiveOpacity,
+  Br,
   Setting,
   SettingIcon,
   SettingTitle,
 } from '../../../components/styled/Containers';
-import {H4} from '../../../components/styled/Text';
+import {BaseText, H4, Smallest} from '../../../components/styled/Text';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
+import {Black, Slate30} from '../../../styles/colors';
 import Spinner, {ToggleSpinnerState} from './ToggleSpinner';
 
 export const CategoryRow = styled.View`
@@ -29,18 +32,25 @@ export const CategoryHeading = styled(H4)`
   min-height: 58px;
 `;
 
+const CardTermsText = styled(Smallest)`
+  color: ${({theme: {dark}}) => (dark ? Slate30 : Black)};
+  text-align: justify;
+`;
+
 interface SettingsRowBaseProps {
   Icon: React.FC<SvgProps>;
 }
 
 interface SettingsLinkProps extends SettingsRowBaseProps {
   onPress?: () => any;
+  children?: any;
 }
 
 interface SettingsToggleProps extends SettingsRowBaseProps {
   value: boolean;
   onChange?: (value: boolean) => any;
   state?: ToggleSpinnerState;
+  children?: any;
 }
 
 const ICON_SIZE = 20;
@@ -88,5 +98,18 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = props => {
         <ToggleSwitch isEnabled={value} onChange={onChange} />
       </SettingIcon>
     </Setting>
+  );
+};
+
+export const TermsAndConditionsMastercard = () => {
+  const {t} = useTranslation();
+  return (
+    <>
+      <CardTermsText>{t('TermsAndConditionsMastercard')}</CardTermsText>
+
+      <Br />
+
+      <CardTermsText>{t('TermsAndConditionsMastercard2')}</CardTermsText>
+    </>
   );
 };

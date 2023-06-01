@@ -274,68 +274,10 @@ const FETCH_VIRTUAL_CARD_IMAGE_URLS = (
   };
 };
 
-const FETCH_REFERRAL_CODE = (token: string): GqlQueryParams => {
-  return {
-    query: `
-      query FETCH_REFERRAL_CODE($token:String!, $csrf:String) {
-        user:bitpayUser(token:$token, csrf:$csrf) {
-          referralCode: getOrGenerateReferralCode
-        }
-      }`,
-    variables: {
-      token,
-    },
-  };
-};
-
-const FETCH_REFERRED_USERS = (token: string): GqlQueryParams => {
-  return {
-    query: `
-      query FETCH_REFERRED_USERS($token:String!, $csrf:String) {
-        user:bitpayUser(token:$token, csrf:$csrf) {
-          referredUsers: getReferredUsers{
-            givenName
-            familyName
-            status
-            expiration
-          }
-        }
-      }
-    `,
-    variables: {
-      token,
-    },
-  };
-};
-
-const FETCH_PIN_CHANGE_REQUEST_INFO = (
-  token: string,
-  id: string,
-): GqlQueryParams => {
-  return {
-    query: `
-      query FETCH_PIN_CHANGE_REQUEST_INFO($token:String!, $csrf:String, $cardId:String!) {
-        user:bitpayUser(token:$token, csrf:$csrf) {
-          card:debitCard(cardId:$cardId) {
-            pinChangeRequestInfo
-          }
-        }
-      }
-    `,
-    variables: {
-      token,
-      cardId: id,
-    },
-  };
-};
-
 const CardQueries = {
   FETCH_CARDS,
   FETCH_CARD,
   FETCH_OVERVIEW,
-  FETCH_PIN_CHANGE_REQUEST_INFO,
-  FETCH_REFERRAL_CODE,
-  FETCH_REFERRED_USERS,
   FETCH_SETTLED_TRANSACTIONS,
   FETCH_VIRTUAL_CARD_IMAGE_URLS,
 };
