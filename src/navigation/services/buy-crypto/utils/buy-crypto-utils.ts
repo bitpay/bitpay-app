@@ -55,6 +55,7 @@ export const getEnabledPaymentMethods = (
   }
   PaymentMethodsAvailable.sepaBankTransfer.enabled =
     !!locationData?.isEuCountry;
+  PaymentMethodsAvailable.ach.enabled = country === 'US';
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
     return exchange && BuyCryptoSupportedExchanges.includes(exchange)
       ? method.enabled &&
