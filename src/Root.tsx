@@ -79,7 +79,7 @@ import IntroStack, {IntroStackParamList} from './navigation/intro/IntroStack';
 import WalletConnectStack, {
   WalletConnectStackParamList,
 } from './navigation/wallet-connect/WalletConnectStack';
-import {ShopStackParamList} from './navigation/tabs/shop/ShopStack';
+import ShopStack, {ShopStackParamList} from './navigation/shop/ShopStack';
 import GiftCardStack, {
   GiftCardStackParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardStack';
@@ -159,6 +159,7 @@ export enum RootStacks {
   INTRO = 'Intro',
   ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
+  SHOP = 'Shop',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
   CARD_ACTIVATION = 'CardActivation',
@@ -200,6 +201,7 @@ export type NavScreenParams = NavigatorScreenParams<
     BuyCryptoStackParamList &
     SwapCryptoStackParamList &
     ScanStackParamList &
+    ShopStackParamList &
     WalletConnectStackParamList &
     NotificationsSettingsStackParamsList &
     ZenLedgerStackParamsList
@@ -628,6 +630,10 @@ export default () => {
               options={{
                 gestureEnabled: false,
               }}
+            />
+            <Root.Screen
+              name={RootStacks.SHOP}
+              component={ShopStack}
             />
             <Root.Screen
               name={RootStacks.BITPAY_ID}

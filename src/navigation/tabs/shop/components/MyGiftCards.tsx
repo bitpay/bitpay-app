@@ -22,7 +22,7 @@ import {
   redemptionFailuresLessThanADayOld,
   sortByDescendingDate,
 } from '../../../../lib/gift-cards/gift-card';
-import {ShopScreens} from '../ShopStack';
+import {ShopScreens} from '../../../../navigation/shop/ShopStack';
 import {useTranslation} from 'react-i18next';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`

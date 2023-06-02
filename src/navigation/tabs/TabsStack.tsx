@@ -1,15 +1,17 @@
-import React from 'react';
-import {View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
+import React from 'react';
+import {useTranslation} from 'react-i18next';
+import {View} from 'react-native';
+import {SvgProps} from 'react-native-svg';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 import HomeRoot from './home/HomeRoot';
-import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
+import ShopHome, {ShopHomeParamList} from './shop/ShopHome';
 import SettingsRoot from './settings/SettingsStack';
 import {SettingsStackParamList} from './settings/SettingsStack';
 import CardStack, {CardStackParamList} from '../card/CardStack';
 
-import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
 import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
 import ShopIcon from '../../../assets/img/tab-icons/shop.svg';
@@ -19,9 +21,9 @@ import CardFocusedIcon from '../../../assets/img/tab-icons/card-focused.svg';
 import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
-
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
+import {WIDTH} from '../../components/styled/Containers';
+import {HeaderTitle} from '../../components/styled/Text';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
@@ -46,7 +48,7 @@ export enum TabsScreens {
 
 export type TabsStackParamList = {
   Home: undefined;
-  Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
+  Shop: NavigatorScreenParams<ShopHomeParamList> | undefined;
   TransactButton: undefined;
   Card: NavigatorScreenParams<CardStackParamList> | undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
@@ -57,8 +59,12 @@ const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
   const theme = useTheme();
+  const {t} = useTranslation();
+
   useAndroidBackHandler(() => true);
+
   const TransactionButton = () => null;
+
   return (
     <Tab.Navigator
       initialRouteName={TabsScreens.HOME}
@@ -85,7 +91,17 @@ const TabsStack = () => {
         },
       })}>
       <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />
-      <Tab.Screen name={TabsScreens.SHOP} component={ShopRoot} />
+      <Tab.Screen name={TabsScreens.SHOP} component={ShopHome} options={{
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: 'transparent',
+        },
+        headerShadowVisible: false,
+        headerTitleStyle: {maxWidth: WIDTH - 150},
+        headerShown: true,
+        headerLeft: () => null,
+        headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
+      }} />
       <Tab.Screen
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
