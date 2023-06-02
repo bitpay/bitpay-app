@@ -3,6 +3,7 @@ import {
   useScrollToTop,
   useTheme,
 } from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -24,6 +25,7 @@ import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
+import {TabsScreens, TabsStackParamList} from '../TabsStack';
 import {sleep} from '../../../utils/helper-methods';
 import {
   useAppDispatch,
@@ -57,7 +59,9 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
-const HomeRoot = () => {
+export type HomeRootScreenProps = StackScreenProps<TabsStackParamList, TabsScreens.HOME>;
+
+const HomeRootScreen: React.FC<HomeRootScreenProps> = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -287,4 +291,4 @@ const HomeRoot = () => {
   );
 };
 
-export default HomeRoot;
+export default HomeRootScreen;

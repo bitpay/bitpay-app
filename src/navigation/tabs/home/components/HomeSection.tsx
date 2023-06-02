@@ -14,7 +14,7 @@ import {BaseText, Link} from '../../../../components/styled/Text';
 import {HomeSectionTitle} from './Styled';
 import {LightBlack, LuckySevens, SlateDark} from '../../../../styles/colors';
 
-interface HomeRowProps {
+type HomeRowProps = React.PropsWithChildren<{
   title?: string | undefined;
   action?: string | undefined;
   onActionPress?: TouchableWithoutFeedbackProps['onPress'];
@@ -22,7 +22,7 @@ interface HomeRowProps {
   style?: StyleProp<ViewStyle>;
   slimContainer?: boolean;
   label?: string;
-}
+}>;
 
 const HomeRowContainer = styled.View<{slim?: boolean}>`
   margin-bottom: ${({slim}) => (slim ? 32 : 28)}px;
