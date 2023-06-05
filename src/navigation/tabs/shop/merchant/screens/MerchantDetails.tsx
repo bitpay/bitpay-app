@@ -64,7 +64,7 @@ const MerchantDetails = ({
         <HeaderTitle>{directIntegration.displayName}</HeaderTitle>
       ),
     });
-  });
+  }, [directIntegration.displayName]);
   return (
     <>
       <ScrollView>

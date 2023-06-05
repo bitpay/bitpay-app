@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {PropsWithChildren, useEffect, useState} from 'react';
 import {Platform, ScrollView, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {LinearGradient} from 'rnx-gradient/src';
@@ -46,13 +46,29 @@ import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
-const GradientBox = styled(LinearGradient)`
-  width: ${WIDTH}px;
-  align-items: center;
-  padding-top: 40px;
-  flex-grow: 1;
-  justify-content: center;
-`;
+const GradientBox: React.FC<PropsWithChildren & {[k:string]: any}> = (props) => {
+  const {children, ...rest} = props;
+  return (
+    <View style={{
+      width: WIDTH,
+      alignItems: 'center',
+      paddingTop: 40,
+      flexGrow: 1,
+      flexDirection: 'column',
+      justifyContent: 'center',
+      position: 'relative'
+    }}>
+      <LinearGradient {...rest} style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0
+      }} />
+      {children}
+    </View>
+  );
+};
 
 const AmountContainer = styled.View`
   flex-grow: 1;
@@ -141,7 +157,8 @@ const BuyGiftCard = ({
         );
       },
     });
-  });
+  }, [cardConfig.displayName]);
+
   useEffect(() => {
     dispatch(
       Analytics.track('Viewed Gift Card', {
