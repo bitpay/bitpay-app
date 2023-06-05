@@ -23,7 +23,7 @@ import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 import {WIDTH} from '../../components/styled/Containers';
-import {HeaderTitle} from '../../components/styled/Text';
+import {HeaderTitle, ZeroHeightHeader} from '../../components/styled/Text';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
@@ -90,7 +90,10 @@ const TabsStack = () => {
           return <Icon />;
         },
       })}>
-      <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />
+      <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} options={{
+        headerShown: true,
+        header: () => <ZeroHeightHeader />,
+      }} />
       <Tab.Screen name={TabsScreens.SHOP} component={ShopHome} options={{
         headerTitleAlign: 'center',
         headerStyle: {
