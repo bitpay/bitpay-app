@@ -56,20 +56,14 @@ export const sardineGetSignedPaymentUrl = (
   paymentUrlConfigParams: SardinePaymentUrlConfigParams,
 ): string => {
   const dataSrc: any = {
-    // partner: paymentUrlConfigParams.app_provider_id,
     env: paymentUrlConfigParams.env,
     client_token: paymentUrlConfigParams.client_token,
     address: paymentUrlConfigParams.address,
     redirect_url: paymentUrlConfigParams.redirect_url,
-    // fiat_amount: ,
     fixed_fiat_amount: paymentUrlConfigParams.fixed_fiat_amount,
-    // fiat_currency: offers.sardine.fiatCurrency,
     fixed_fiat_currency: paymentUrlConfigParams.fixed_fiat_currency,
-    // asset_type: ,
     fixed_asset_type: paymentUrlConfigParams.fixed_asset_type,
-    // network: ,
     fixed_network: paymentUrlConfigParams.fixed_network,
-    // parent_session_key: , ??
     supported_tokens: paymentUrlConfigParams.supported_tokens,
   };
 

@@ -94,8 +94,7 @@ const SardineDetails: React.FC = () => {
 
     const requestData: SardineGetOrderDetailsRequestData = {
       env: sardineEnv,
-      // orderId: paymentRequest.order_id!
-      referenceId: paymentRequest.external_id!,
+      orderId: paymentRequest.order_id,
     };
 
     sardineGetOrderDetails(requestData)
