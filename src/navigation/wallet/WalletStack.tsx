@@ -51,9 +51,6 @@ import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 import KeyGlobalSelect, {
   KeyGlobalSelectParamList,
 } from './screens/KeyGlobalSelect';
-import DebitCardConfirm, {
-  DebitCardConfirmParamList,
-} from './screens/send/confirm/DebitCardConfirm';
 import WalletInformation from './screens/wallet-settings/WalletInformation';
 import ExportWallet from './screens/wallet-settings/ExportWallet';
 import Addresses from './screens/wallet-settings/Addresses';
@@ -76,7 +73,6 @@ import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
 import CurrencyTokenSelectionScreen, {
   CurrencyTokenSelectionScreenParamList,
 } from './screens/CurrencyTokenSelection';
-import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
 import ExportTransactionHistory from './screens/wallet-settings/ExportTransactionHistory';
 import ClearTransactionHistoryCache from './screens/wallet-settings/ClearTransactionHistoryCache';
 
@@ -109,7 +105,6 @@ export type WalletStackParamList = {
     wallet: WalletModel;
   };
   Confirm: ConfirmParamList;
-  DebitCardConfirm: DebitCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
   PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   CreateMultisig: CreateMultisigProps;
@@ -173,8 +168,6 @@ export enum WalletScreens {
   AMOUNT = 'WalletAmountScreen',
   SEND_TO = 'SendTo',
   CONFIRM = 'Confirm',
-  DEBIT_CARD_CONFIRM = 'DebitCardConfirm',
-  GIFT_CARD_CONFIRM = 'GiftCardConfirm',
   PAY_PRO_CONFIRM = 'PayProConfirm',
   PAY_PRO_CONFIRM_TWO_FACTOR = 'PayProConfirmTwoFactor',
   CREATE_MULTISIG = 'CreateMultisig',
@@ -196,7 +189,6 @@ export enum WalletScreens {
   CLEAR_ENCRYPT_PASSWORD = 'ClearEncryptPassword',
   SEND_TO_OPTIONS = 'SendToOptions',
   SELECT_INPUTS = 'SelectInputs',
-  ENTER_BUYER_PROVIDED_EMAIL = 'EnterBuyerProvidedEmail',
   CLEAR_TRANSACTION_HISTORY_CACHE = 'ClearTransactionHistoryCache',
 }
 
@@ -208,18 +200,18 @@ const WalletStack = () => {
     <>
       <Wallet.Navigator
         screenOptions={{...baseNavigatorOptions, ...baseScreenOptions}}
-        initialRouteName={WalletScreens.BACKUP_KEY}>
-       <Wallet.Screen
+        initialRouteName={WalletScreens.CREATION_OPTIONS}>
+        {/*<Wallet.Screen
           name={WalletScreens.CURRENCY_SELECTION}
           component={CurrencySelection}
         />
-        {/*  <Wallet.Screen
+        <Wallet.Screen
           name={WalletScreens.CURRENCY_TOKEN_SELECTION}
           component={CurrencyTokenSelectionScreen}
         />
         <Wallet.Screen
           options={{
-            ...TransitionPresets.ModalPresentationIOS,
+            ...TransitionPresets.DefaultTransition,
           }}
           name={WalletScreens.ADD_WALLET}
           component={AddWallet}
@@ -292,14 +284,6 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>{t('Add Funds')}</HeaderTitle>,
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
-          name={WalletScreens.DEBIT_CARD_CONFIRM}
-          component={DebitCardConfirm}
-        />
-        <Wallet.Screen
-          options={{
             headerTitle: () => (
               <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>
             ),
@@ -340,21 +324,37 @@ const WalletStack = () => {
           }}
           name={WalletScreens.COPAYERS}
           component={Copayers}
+        />*/}
+        <Wallet.Screen
+          name={WalletScreens.CREATION_OPTIONS}
+          component={CreationOptions}
         />
         <Wallet.Screen
-          name={WalletScreens.ADDING_OPTIONS}
-          component={AddingOptions}
+          name={WalletScreens.CURRENCY_SELECTION}
+          component={CurrencySelection}
         />
         <Wallet.Screen
           options={{
-            ...TransitionPresets.ModalPresentationIOS,
+            gestureEnabled: false,
+            headerLeft: () => null,
+          }}
+          name={WalletScreens.BACKUP_KEY}
+          component={Backup}
+        />
+        <Wallet.Screen
+          name={WalletScreens.RECOVERY_PHRASE}
+          component={RecoveryPhrase}
+        />
+        {/*<Wallet.Screen
+          options={{
+            ...TransitionPresets.DefaultTransition,
           }}
           name={WalletScreens.REQUEST_SPECIFIC_AMOUNT_QR}
           component={RequestSpecificAmountQR}
         />
         <Wallet.Screen
           options={{
-            ...TransitionPresets.ModalPresentationIOS,
+            ...TransitionPresets.DefaultTransition,
           }}
           name={WalletScreens.TRANSACTION_DETAILS}
           component={TransactionDetails}
@@ -370,14 +370,14 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            ...TransitionPresets.ModalPresentationIOS,
+            ...TransitionPresets.DefaultTransition,
           }}
           name={WalletScreens.TRANSACTION_PROPOSAL_DETAILS}
           component={TransactionProposalDetails}
         />
         <Wallet.Screen
           options={{
-            ...TransitionPresets.ModalPresentationIOS,
+            ...TransitionPresets.DefaultTransition,
           }}
           name={WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS}
           component={TransactionProposalNotifications}
@@ -409,14 +409,14 @@ const WalletStack = () => {
         <Wallet.Screen name={WalletScreens.ADDRESSES} component={Addresses} />
         <Wallet.Screen
           options={{
-            ...TransitionPresets.ModalPresentationIOS,
+            ...TransitionPresets.DefaultTransition,
           }}
           name={WalletScreens.ALL_ADDRESSES}
           component={AllAddresses}
         />
         <Wallet.Screen
           options={{
-            ...TransitionPresets.ModalPresentationIOS,
+            ...TransitionPresets.DefaultTransition,
           }}
           name={WalletScreens.PRICE_CHARTS}
           component={PriceCharts}
@@ -440,20 +440,13 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>{t('Enter Email')}</HeaderTitle>,
-          }}
-          name={WalletScreens.ENTER_BUYER_PROVIDED_EMAIL}
-          component={EnterBuyerProvidedEmail}
-        />
-        <Wallet.Screen
-          options={{
             headerTitle: () => (
               <HeaderTitle>{t('Clear Transaction History Cache')}</HeaderTitle>
             ),
           }}
           name={WalletScreens.CLEAR_TRANSACTION_HISTORY_CACHE}
           component={ClearTransactionHistoryCache}
-        /> */}
+        />*/}
       </Wallet.Navigator>
     </>
   );

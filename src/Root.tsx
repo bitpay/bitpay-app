@@ -1,43 +1,27 @@
 import {
   createNavigationContainerRef,
   NavigationContainer,
-  NavigationState,
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import React, {useEffect, useMemo, useState} from 'react';
-import {
-  Appearance,
-  AppState,
-  AppStateStatus,
-  DeviceEventEmitter,
-  NativeModules,
-  StatusBar,
-} from 'react-native';
+import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
+import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
-import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from './constants/NavigationOptions';
-import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
-import BiometricModal from './components/modal/biometric/BiometricModal';
-import {AppEffects, AppActions} from './store/app';
+import {AppEffects} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
-import {
-  useAppDispatch,
-  useAppSelector,
-} from './utils/hooks';
+import {useAppDispatch, useAppSelector} from './utils/hooks';
 import i18n from 'i18next';
 
-import TabsStack, {
-  TabsStackParamList,
-} from './navigation/tabs/TabsStack';
 import WalletStack, {
   WalletStackParamList,
 } from './navigation/wallet/WalletStack';
@@ -47,14 +31,33 @@ import GeneralSettingsStack, {
 import ContactsStack, {
   ContactsStackParamList,
 } from './navigation/tabs/contacts/ContactsStack';
+import ExternalServicesSettingsStack, {
+  ExternalServicesSettingsStackParamList,
+} from './navigation/tabs/settings/external-services/ExternalServicesStack';
 import AboutStack, {
   AboutStackParamList,
 } from './navigation/tabs/settings/about/AboutStack';
 
-import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
-import PinModal from './components/modal/pin/PinModal';
-import {APP_ANALYTICS_ENABLED} from './constants/config';
+import BuyCryptoStack, {
+  BuyCryptoStackParamList,
+} from './navigation/services/buy-crypto/BuyCryptoStack';
+import SwapCryptoStack, {
+  SwapCryptoStackParamList,
+} from './navigation/services/swap-crypto/SwapCryptoStack';
+import WalletConnectStack, {
+  WalletConnectStackParamList,
+} from './navigation/wallet-connect/WalletConnectStack';
+//import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
+import CoinbaseStack, {
+  CoinbaseStackParamList,
+} from './navigation/coinbase/CoinbaseStack';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
+import NotificationsSettingsStack, {
+  NotificationsSettingsStackParamsList,
+} from './navigation/tabs/settings/notifications/NotificationsStack';
+import ZenLedgerStack, {
+  ZenLedgerStackParamsList,
+} from './navigation/zenledger/ZenLedgerStack';
 import {WalletBackupActions} from './store/wallet-backup';
 import {successCreateKey} from './store/wallet/wallet.actions';
 import {bootstrapKey, bootstrapWallets} from './store/transforms/transforms';
@@ -64,6 +67,7 @@ import NetworkFeePolicySettingsStack, {
   NetworkFeePolicySettingsStackParamsList,
 } from './navigation/tabs/settings/NetworkFeePolicy/NetworkFeePolicyStack';
 import {WalletActions} from './store/wallet';
+import TabsStack, {TabsStackParamList} from './navigation/tabs/TabsStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -71,42 +75,50 @@ export type RootStackParamList = {
   Wallet: NavigatorScreenParams<WalletStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
+  ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
+  Coinbase: NavigatorScreenParams<CoinbaseStackParamList>;
+  BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
+  SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
+  WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
   Debug: DebugScreenParamList;
+  NotificationsSettings: NavigatorScreenParams<NotificationsSettingsStackParamsList>;
+  ZenLedger: NavigatorScreenParams<ZenLedgerStackParamsList>;
   NetworkFeePolicySettings: NavigatorScreenParams<NetworkFeePolicySettingsStackParamsList>;
 };
+
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
-  HOME = 'Home',
-  AUTH = 'Auth',
-  INTRO = 'Intro',
-  ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
-  BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
-  CARD_ACTIVATION = 'CardActivation',
-  SCAN = 'Scan',
   CONTACTS = 'Contacts',
-  GIFT_CARD = 'GiftCard',
-  GIFT_CARD_DEEPLINK = 'GiftCardDeeplink',
-  MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
+  EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
   ABOUT = 'About',
+  COINBASE = 'Coinbase',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT_V2 = 'WalletConnect',
   DEBUG = 'Debug',
   NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
+  ZENLEDGER = 'ZenLedger',
   NETWORK_FEE_POLICY_SETTINGS = 'NetworkFeePolicySettings',
 }
 
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
-    WalletStackParamList &
+  WalletStackParamList &
     GeneralSettingsStackParamList &
     ContactsStackParamList &
-    AboutStackParamList
+    ExternalServicesSettingsStackParamList &
+    AboutStackParamList &
+    CoinbaseStackParamList &
+    BuyCryptoStackParamList &
+    SwapCryptoStackParamList &
+    WalletConnectStackParamList &
+    NotificationsSettingsStackParamsList &
+    ZenLedgerStackParamsList
 >;
 
 declare global {
@@ -144,24 +156,9 @@ const Root = createStackNavigator<RootStackParamList>();
 export default () => {
   const dispatch = useAppDispatch();
   const [, rerender] = useState({});
-  const onboardingCompleted = useAppSelector(
-    ({APP}) => APP.onboardingCompleted,
-  );
-  const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
-  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
-  const checkingBiometricForSending = useAppSelector(
-    ({APP}) => APP.checkingBiometricForSending,
-  );
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
-  const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const failedAppInit = useAppSelector(({APP}) => APP.failedAppInit);
-  const biometricLockActive = useAppSelector(
-    ({APP}) => APP.biometricLockActive,
-  );
-  const lockAuthorizedUntil = useAppSelector(
-    ({APP}) => APP.lockAuthorizedUntil,
-  );
 
   const {keys, expectedKeyLengthChange} = useAppSelector(({WALLET}) => WALLET);
   const backupKeys = useAppSelector(({WALLET_BACKUP}) => WALLET_BACKUP.keys);
@@ -231,41 +228,6 @@ export default () => {
     [],
   );
 
-  const debouncedOnStateChange = useMemo(
-    () =>
-      debounce((state: NavigationState | undefined) => {
-        // storing current route
-        if (state) {
-          const parentRoute = state.routes[state.index];
-
-          if (parentRoute.state) {
-            const childRoute =
-              parentRoute.state.routes[parentRoute.state.index || 0];
-
-            dispatch(
-              LogActions.info(`Navigation event... ${parentRoute.name}`),
-            );
-
-            if (APP_ANALYTICS_ENABLED) {
-              let stackName;
-              let screenName;
-
-              if (parentRoute.name === RootStacks.TABS) {
-                const tabStack =
-                  parentRoute.state.routes[parentRoute.state.index || 0];
-
-                stackName = tabStack.name + ' Tab';
-              } else {
-                stackName = parentRoute.name;
-                screenName = childRoute.name;
-              }
-            }
-          }
-        }
-      }, 300),
-    [dispatch],
-  );
-
   // MAIN APP INIT
   useEffect(() => {
     if (!failedAppInit) {
@@ -274,7 +236,7 @@ export default () => {
       navigationRef.navigate(RootStacks.DEBUG, {name: 'Failed app init'});
     }
   }, [dispatch, failedAppInit]);
-  
+
   // LANGUAGE
   useEffect(() => {
     if (appLanguage && appLanguage !== i18n.language) {
@@ -347,70 +309,6 @@ export default () => {
     }
   }, [dispatch, keys, previousKeysLength, expectedKeyLengthChange]);
 
-  // CHECK PIN || BIOMETRIC
-  useEffect(() => {
-    async function onAppStateChange(status: AppStateStatus) {
-      // status === 'active' when the app goes from background to foreground,
-
-      const showLockOption = () => {
-        if (biometricLockActive) {
-          dispatch(AppActions.showBiometricModal({}));
-        } else if (pinLockActive) {
-          dispatch(AppActions.showPinModal({type: 'check'}));
-        } else {
-          dispatch(AppActions.showBlur(false));
-        }
-      };
-
-      if (onboardingCompleted) {
-        if (status === 'active' && checkingBiometricForSending) {
-          dispatch(AppActions.checkingBiometricForSending(false));
-          dispatch(AppActions.showBlur(false));
-        } else if (status === 'inactive' && checkingBiometricForSending) {
-          dispatch(AppActions.showBlur(false));
-        } else if (status === 'active' && !appIsLoading) {
-          if (lockAuthorizedUntil) {
-            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
-            const totalSecs =
-              Number(lockAuthorizedUntil) - Number(timeSinceBoot);
-            if (totalSecs < 0) {
-              dispatch(AppActions.lockAuthorizedUntil(undefined));
-              showLockOption();
-            } else {
-              const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
-              const authorizedUntil =
-                Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
-              dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-              dispatch(AppActions.showBlur(false));
-            }
-          } else {
-            showLockOption();
-          }
-        } else if (failedAppInit) {
-          dispatch(AppActions.showBlur(false));
-        } else {
-          dispatch(AppActions.showBlur(true));
-        }
-      }
-    }
-    const subscriptionAppStateChange = AppState.addEventListener(
-      'change',
-      onAppStateChange,
-    );
-    return () => subscriptionAppStateChange.remove();
-  }, [
-    dispatch,
-    onboardingCompleted,
-    pinLockActive,
-    lockAuthorizedUntil,
-    biometricLockActive,
-    checkingBiometricForSending,
-    appIsLoading,
-    failedAppInit,
-  ]);
-
-
-
   // THEME
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
@@ -433,7 +331,7 @@ export default () => {
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
   // ROOT STACKS AND GLOBAL COMPONENTS
-  const initialRoute = RootStacks.TABS
+  const initialRoute = RootStacks.TABS;
 
   return (
     <SafeAreaProvider>
@@ -445,22 +343,14 @@ export default () => {
       />
 
       <ThemeProvider theme={theme}>
-
-
-        <NavigationContainer
-          ref={navigationRef}
-          theme={theme}
-          onReady={async () => {
-            DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
-          }}
-          onStateChange={debouncedOnStateChange}>
+        <NavigationContainer ref={navigationRef} theme={theme}>
           <Root.Navigator
             screenOptions={{
               ...baseScreenOptions,
               headerShown: false,
             }}
             initialRouteName={initialRoute}>
-         <Root.Screen
+            <Root.Screen
               name={RootStacks.DEBUG}
               component={DebugScreen}
               options={{
@@ -487,17 +377,46 @@ export default () => {
               name={RootStacks.GENERAL_SETTINGS}
               component={GeneralSettingsStack}
             />
-             <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
+            <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
+            <Root.Screen
+              name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
+              component={ExternalServicesSettingsStack}
+            />
+            <Root.Screen
+              name={RootStacks.NOTIFICATIONS_SETTINGS}
+              component={NotificationsSettingsStack}
+            />
             <Root.Screen
               name={RootStacks.NETWORK_FEE_POLICY_SETTINGS}
               component={NetworkFeePolicySettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
+            <Root.Screen name={RootStacks.COINBASE} component={CoinbaseStack} />
+            <Root.Screen
+              name={RootStacks.BUY_CRYPTO}
+              component={BuyCryptoStack}
+            />
+            <Root.Screen
+              name={RootStacks.SWAP_CRYPTO}
+              component={SwapCryptoStack}
+              options={{
+                gestureEnabled: false,
+              }}
+            />
+            <Root.Screen
+              name={RootStacks.WALLET_CONNECT_V2}
+              component={WalletConnectStack}
+            />
+            <Root.Screen
+              name={RootStacks.ZENLEDGER}
+              component={ZenLedgerStack}
+            />
           </Root.Navigator>
-          {/* <OnGoingProcessModal /> */}
-          {/* <BottomNotificationModal /> */}
-          {/* <DecryptEnterPasswordModal /> */}
-          {/* <PinModal /> */}
+          <OnGoingProcessModal />
+          <BottomNotificationModal />
+          {/*
+          <DecryptEnterPasswordModal />
+          */}
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

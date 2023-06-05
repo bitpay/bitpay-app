@@ -1,11 +1,11 @@
 import React from 'react';
-import {BlurContainer} from '../../../blur/Blur';
 import {SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
 
 interface Props extends SheetParams {
   isVisible: boolean;
   onBackdropPress: (props?: any) => void;
+  children: any;
 }
 
 const SheetModal: React.FC<Props> = ({
@@ -34,10 +34,7 @@ const SheetModal: React.FC<Props> = ({
         justifyContent: placement === 'top' ? 'flex-start' : 'flex-end',
         margin: 0,
       }}>
-      <>
-        {children}
-        <BlurContainer />
-      </>
+      <>{children}</>
     </BaseModal>
   );
 };

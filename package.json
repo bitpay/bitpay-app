@@ -10,7 +10,7 @@
     "desktop": "react-native run-macos",
     "ios:device": "export NODE_OPTIONS=--openssl-legacy-provider && react-native run-ios --device",
     "ios:device:release": "export NODE_OPTIONS=--openssl-legacy-provider && react-native run-ios --configuration Release --device",
-    "start": "export NODE_OPTIONS=--openssl-legacy-provider && react-native start",
+    "start": "export NODE_OPTIONS='--openssl-legacy-provider --max-old-space-size=8192' && react-native start",
     "test:coverage": "jest --coverage --testMatch='**/*.spec.{js,tsx}' --config='jest.config.js'",
     "test:unit": "jest --watch --testMatch='**/*.spec.{js,tsx}' --config='jest.config.js'",
     "prebuild:android:debug": "yarn set:dev",

@@ -12,10 +12,8 @@ import {
   OptionDescription,
   OptionTitle,
 } from '../../../components/styled/Text';
-import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch} from '../../../utils/hooks';
 
 export interface Option {
   id: string;
@@ -27,7 +25,6 @@ export interface Option {
 const CreationOptions: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useAppDispatch();
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
@@ -81,7 +78,6 @@ const CreationOptions: React.FC = () => {
             <OptionList
               activeOpacity={ActiveOpacity}
               onPress={() => {
-                haptic('impactLight');
                 cta();
               }}
               key={id}>

@@ -15,12 +15,6 @@ jest.mock('react-native/Libraries/Utilities/Platform', () => ({
   select: () => null,
 }));
 
-jest.mock('react-native-reanimated', () =>
-  require('react-native-reanimated/mock'),
-);
-global.__reanimatedWorkletInit = jest.fn();
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
-
 jest.mock('@segment/analytics-react-native', () => ({
   setup: () => null,
   identify: () => null,

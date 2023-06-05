@@ -4,14 +4,11 @@ import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
   HeaderRightContainer,
-  ImageContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
-import {OnboardingImage} from '../../onboarding/components/Containers';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletStackParamList} from '../WalletStack';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -21,20 +18,6 @@ import {RootState} from '../../../store';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
-const BackupImage = {
-  light: (
-    <OnboardingImage
-      style={{width: 217, height: 195}}
-      source={require('../../../../assets/img/onboarding/light/backup.png')}
-    />
-  ),
-  dark: (
-    <OnboardingImage
-      style={{width: 217, height: 165}}
-      source={require('../../../../assets/img/onboarding/dark/backup.png')}
-    />
-  ),
-};
 
 type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
 
@@ -109,7 +92,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
 
   const gotoBackup = () => {
     const {id, mnemonic} = key.properties!;
-    navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
+    navigation.navigate('Wallet', {
       screen: 'RecoveryPhrase',
       params: {
         keyId: id,
@@ -130,7 +113,6 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
             accessibilityLabel="skip-button"
             buttonType={'pill'}
             onPress={async () => {
-              haptic('impactLight');
               dispatch(
                 showBottomNotificationModal({
                   type: 'warning',
@@ -168,7 +150,6 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
 
   return (
     <BackupContainer accessibilityLabel="backup-container">
-      <ImageContainer>{BackupImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>{t('Would you like to backup your key?')}</H3>

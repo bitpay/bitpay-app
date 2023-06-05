@@ -9,7 +9,6 @@ import React, {
 import styled from 'styled-components/native';
 import {
   CtaContainer,
-  HeaderRightContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import CurrencySelectionRow, {
@@ -29,7 +28,6 @@ import {
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle, Link} from '../../../components/styled/Text';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {
   SupportedCoinsOptions,
   SupportedCurrencyOption,
@@ -128,11 +126,11 @@ const POPULAR_TOKENS: Record<string, string[]> = {
   matic: ['usdc', 'busd', 'ape'],
 };
 
-// const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
+const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
 
 const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
-   route,
- }) => {
+  route,
+}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const {context, key} = route.params;
@@ -159,40 +157,39 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
   );
   const allListItemsRef = useRef(allListItems);
   allListItemsRef.current = allListItems;
-    /**
-     * Derived from allListItems, but with search filter applied.
-     */
-    const filteredListItems = useMemo(() => {
-      // If no filter, return reference to allListItems.
-      if (!searchFilter) {
-        return allListItems;
-      }
-  
-      // Else return a new array to trigger a rerender.
-      return allListItems.reduce<CurrencySelectionListItem[]>((accum, item) => {
-        const isCurrencyMatch =
-          item.currency.currencyAbbreviation
-            .toLowerCase()
-            .includes(searchFilter) ||
-          item.currency.currencyName.toLowerCase().includes(searchFilter);
-        const matchingTokens = item.popularTokens.filter(
-          token =>
-            token.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
-            token.currencyName.toLowerCase().includes(searchFilter),
-        );
-  
-        // Display the item if the currency itself matches the filter or one of its tokens matches
-        if (isCurrencyMatch || matchingTokens.length) {
-          accum.push({
-            ...item,
-            popularTokens: matchingTokens,
-          });
-        }
-  
-        return accum;
-      }, []);
-    }, [searchFilter, allListItems]);
+  /**
+   * Derived from allListItems, but with search filter applied.
+   */
+  const filteredListItems = useMemo(() => {
+    // If no filter, return reference to allListItems.
+    if (!searchFilter) {
+      return allListItems;
+    }
 
+    // Else return a new array to trigger a rerender.
+    return allListItems.reduce<CurrencySelectionListItem[]>((accum, item) => {
+      const isCurrencyMatch =
+        item.currency.currencyAbbreviation
+          .toLowerCase()
+          .includes(searchFilter) ||
+        item.currency.currencyName.toLowerCase().includes(searchFilter);
+      const matchingTokens = item.popularTokens.filter(
+        token =>
+          token.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
+          token.currencyName.toLowerCase().includes(searchFilter),
+      );
+
+      // Display the item if the currency itself matches the filter or one of its tokens matches
+      if (isCurrencyMatch || matchingTokens.length) {
+        accum.push({
+          ...item,
+          popularTokens: matchingTokens,
+        });
+      }
+
+      return accum;
+    }, []);
+  }, [searchFilter, allListItems]);
 
   // Initialize supported currencies and tokens into row item format.
   // Resets if tokenOptions or tokenData updates.
@@ -387,13 +384,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
               dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
 
-              navigation.navigate(
-                context === 'onboarding' ? 'Onboarding' : 'Wallet',
-                {
-                  screen: 'BackupKey',
-                  params: {context, key: createdKey},
-                },
-              );
+              navigation.navigate('Wallet', {
+                screen: 'BackupKey',
+                params: {context, key: createdKey},
+              });
               dispatch(dismissOnGoingProcessModal());
             } catch (e: any) {
               logger.error(e.message);
@@ -517,7 +511,6 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
     }
   };
 
-
   const contextHandlerRef = useRef(contextHandler);
   contextHandlerRef.current = contextHandler;
 
@@ -536,304 +529,282 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         <HeaderTitle>{headerTitle || t('Select Currencies')}</HeaderTitle>
       ),
       headerTitleAlign: 'center',
-      headerRight: () =>
-        context === 'onboarding' && (
-          <HeaderRightContainer>
-            <Button
-              accessibilityLabel="skip-button"
-              buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('Onboarding', {
-                  screen: 'TermsOfUse',
-                  params: {
-                    context: 'TOUOnly',
-                  },
-                });
-              }}>
-              {t('Skip')}
-            </Button>
-          </HeaderRightContainer>
-        ),
     });
   }, [navigation, t, context, headerTitle]);
 
-  return <></>
+  const onToggle = (currencyAbbreviation: string, chain?: string) => {
+    setAllListItems(previous =>
+      previous.map(item => {
+        const isCurrencyMatch =
+          item.currency.currencyAbbreviation === currencyAbbreviation &&
+          item.currency.chain === chain;
+        const tokenMatch = item.tokens.find(
+          token =>
+            token.currencyAbbreviation === currencyAbbreviation &&
+            item.currency.chain === chain,
+        );
 
-//   const onToggle = (currencyAbbreviation: string, chain?: string) => {
-//     setAllListItems(previous =>
-//       previous.map(item => {
-//         const isCurrencyMatch =
-//           item.currency.currencyAbbreviation === currencyAbbreviation &&
-//           item.currency.chain === chain;
-//         const tokenMatch = item.tokens.find(
-//           token =>
-//             token.currencyAbbreviation === currencyAbbreviation &&
-//             item.currency.chain === chain,
-//         );
+        // if multi, just toggle the selected item and rerender
+        if (selectionMode === 'multi') {
+          if (isCurrencyMatch) {
+            const hasSelectedTokens = item.tokens.some(token => token.selected);
 
-//         // if multi, just toggle the selected item and rerender
-//         if (selectionMode === 'multi') {
-//           if (isCurrencyMatch) {
-//             const hasSelectedTokens = item.tokens.some(token => token.selected);
+            if (item.currency.selected && hasSelectedTokens) {
+              // do nothing
+            } else {
+              item.currency = {
+                ...item.currency,
+                selected: !item.currency.selected,
+              };
+            }
+          }
 
-//             if (item.currency.selected && hasSelectedTokens) {
-//               // do nothing
-//             } else {
-//               item.currency = {
-//                 ...item.currency,
-//                 selected: !item.currency.selected,
-//               };
-//             }
-//           }
+          if (tokenMatch) {
+            // if selecting a token, make sure its chain is also selected
+            if (!item.currency.selected) {
+              item.currency = {
+                ...item.currency,
+                selected: true,
+              };
+            }
 
-//           if (tokenMatch) {
-//             // if selecting a token, make sure its chain is also selected
-//             if (!item.currency.selected) {
-//               item.currency = {
-//                 ...item.currency,
-//                 selected: true,
-//               };
-//             }
+            const updatedToken = {
+              ...tokenMatch,
+              selected: !tokenMatch.selected,
+            };
 
-//             const updatedToken = {
-//               ...tokenMatch,
-//               selected: !tokenMatch.selected,
-//             };
+            // update token state
+            item.tokens = item.tokens.map(token => {
+              return token.currencyAbbreviation === currencyAbbreviation
+                ? updatedToken
+                : token;
+            });
 
-//             // update token state
-//             item.tokens = item.tokens.map(token => {
-//               return token.currencyAbbreviation === currencyAbbreviation
-//                 ? updatedToken
-//                 : token;
-//             });
+            // update popular token state
+            // append tokens once selected so user can see their entire selection
+            let appendToPopular = true;
+            item.popularTokens = item.popularTokens.map(token => {
+              if (token.currencyAbbreviation === currencyAbbreviation) {
+                appendToPopular = false;
+              }
 
-//             // update popular token state
-//             // append tokens once selected so user can see their entire selection
-//             let appendToPopular = true;
-//             item.popularTokens = item.popularTokens.map(token => {
-//               if (token.currencyAbbreviation === currencyAbbreviation) {
-//                 appendToPopular = false;
-//               }
+              return token.currencyAbbreviation === currencyAbbreviation
+                ? updatedToken
+                : token;
+            });
 
-//               return token.currencyAbbreviation === currencyAbbreviation
-//                 ? updatedToken
-//                 : token;
-//             });
+            if (appendToPopular) {
+              item.popularTokens.push(updatedToken);
+            }
+          }
+        }
 
-//             if (appendToPopular) {
-//               item.popularTokens.push(updatedToken);
-//             }
-//           }
-//         }
+        // if single, toggle the selected item, deselect any selected items, and rerender
+        if (selectionMode === 'single') {
+          if (isCurrencyMatch) {
+            item.currency = {
+              ...item.currency,
+              selected: !item.currency.selected,
+            };
 
-//         // if single, toggle the selected item, deselect any selected items, and rerender
-//         if (selectionMode === 'single') {
-//           if (isCurrencyMatch) {
-//             item.currency = {
-//               ...item.currency,
-//               selected: !item.currency.selected,
-//             };
+            // deselect any selected tokens
+            if (item.tokens.some(token => token.selected)) {
+              item.tokens = item.tokens.map(token => {
+                return token.selected ? {...token, selected: false} : token;
+              });
+            }
 
-//             // deselect any selected tokens
-//             if (item.tokens.some(token => token.selected)) {
-//               item.tokens = item.tokens.map(token => {
-//                 return token.selected ? {...token, selected: false} : token;
-//               });
-//             }
+            // deselect any selected popular tokens
+            if (item.popularTokens.some(token => token.selected)) {
+              item.popularTokens = item.popularTokens.map(token => {
+                return token.selected ? {...token, selected: false} : token;
+              });
+            }
+          } else {
+            // deselect this item's currency
+            if (item.currency.selected) {
+              item.currency = {
+                ...item.currency,
+                selected: false,
+              };
+            }
+          }
 
-//             // deselect any selected popular tokens
-//             if (item.popularTokens.some(token => token.selected)) {
-//               item.popularTokens = item.popularTokens.map(token => {
-//                 return token.selected ? {...token, selected: false} : token;
-//               });
-//             }
-//           } else {
-//             // deselect this item's currency
-//             if (item.currency.selected) {
-//               item.currency = {
-//                 ...item.currency,
-//                 selected: false,
-//               };
-//             }
-//           }
+          if (tokenMatch) {
+            const updatedToken = {
+              ...tokenMatch,
+              selected: !tokenMatch.selected,
+            };
 
-//           if (tokenMatch) {
-//             const updatedToken = {
-//               ...tokenMatch,
-//               selected: !tokenMatch.selected,
-//             };
+            // update token state
+            item.tokens = item.tokens.map(token => {
+              if (token.currencyAbbreviation === currencyAbbreviation) {
+                return updatedToken;
+              }
 
-//             // update token state
-//             item.tokens = item.tokens.map(token => {
-//               if (token.currencyAbbreviation === currencyAbbreviation) {
-//                 return updatedToken;
-//               }
+              return token.selected ? {...token, selected: false} : token;
+            });
 
-//               return token.selected ? {...token, selected: false} : token;
-//             });
+            // update popular token state
+            // append tokens once selected so user can see their entire selection
+            let appendToPopular = true;
+            item.popularTokens = item.popularTokens.map(token => {
+              if (token.currencyAbbreviation === currencyAbbreviation) {
+                appendToPopular = false;
+                return updatedToken;
+              }
 
-//             // update popular token state
-//             // append tokens once selected so user can see their entire selection
-//             let appendToPopular = true;
-//             item.popularTokens = item.popularTokens.map(token => {
-//               if (token.currencyAbbreviation === currencyAbbreviation) {
-//                 appendToPopular = false;
-//                 return updatedToken;
-//               }
+              return token.selected ? {...token, selected: false} : token;
+            });
 
-//               return token.selected ? {...token, selected: false} : token;
-//             });
+            if (appendToPopular) {
+              item.popularTokens.push(updatedToken);
+            }
+          }
 
-//             if (appendToPopular) {
-//               item.popularTokens.push(updatedToken);
-//             }
-//           }
+          // if selecting a token, make sure deselect any other token selected
+          if (
+            !tokenMatch &&
+            !isCurrencyMatch &&
+            item.currency.chain !== chain &&
+            item.tokens.length > 0
+          ) {
+            item.popularTokens = item.popularTokens.map(token => {
+              return token.selected ? {...token, selected: false} : token;
+            });
+            item.tokens = item.tokens.map(token => {
+              return token.selected ? {...token, selected: false} : token;
+            });
+          }
+        }
 
-//           // if selecting a token, make sure deselect any other token selected
-//           if (
-//             !tokenMatch &&
-//             !isCurrencyMatch &&
-//             item.currency.chain !== chain &&
-//             item.tokens.length > 0
-//           ) {
-//             item.popularTokens = item.popularTokens.map(token => {
-//               return token.selected ? {...token, selected: false} : token;
-//             });
-//             item.tokens = item.tokens.map(token => {
-//               return token.selected ? {...token, selected: false} : token;
-//             });
-//           }
-//         }
+        return item;
+      }),
+    );
+  };
 
-//         return item;
-//       }),
-//     );
-//   };
+  const onToggleRef = useRef(onToggle);
+  onToggleRef.current = onToggle;
 
-//   const onToggleRef = useRef(onToggle);
-//   onToggleRef.current = onToggle;
+  const memoizedOnToggle = useCallback(
+    (currencyAbbreviation: string, chain?: string) => {
+      onToggleRef.current(currencyAbbreviation, chain);
+    },
+    [],
+  );
 
-//   const memoizedOnToggle = useCallback(
-//     (currencyAbbreviation: string, chain?: string) => {
-//       onToggleRef.current(currencyAbbreviation, chain);
-//     },
-//     [],
-//   );
+  const memoizedOnViewAllPressed = useMemo(() => {
+    return (currency: CurrencySelectionItem) => {
+      const item = allListItemsRef.current.find(
+        i => i.currency.currencyAbbreviation === currency.currencyAbbreviation,
+      );
 
-//   const memoizedOnViewAllPressed = useMemo(() => {
-//     return (currency: CurrencySelectionItem) => {
-//       const item = allListItemsRef.current.find(
-//         i => i.currency.currencyAbbreviation === currency.currencyAbbreviation,
-//       );
+      if (!item) {
+        return;
+      }
 
-//       if (!item) {
-//         return;
-//       }
+      // sorted selected tokens to the top for ease of use
+      const sortedTokens = orderBy(
+        item.tokens.map(token => ({...token})),
+        'selected',
+        'desc',
+      );
 
-//       // sorted selected tokens to the top for ease of use
-//       const sortedTokens = orderBy(
-//         item.tokens.map(token => ({...token})),
-//         'selected',
-//         'desc',
-//       );
+      navigation.navigate('Wallet', {
+        screen: WalletScreens.CURRENCY_TOKEN_SELECTION,
+        params: {
+          key,
+          currency: {...currency},
+          tokens: sortedTokens,
+          description: item.description,
+          selectionMode,
+          onToggle: memoizedOnToggle,
+          contextHandler: memoizedContextHandler,
+        },
+      });
+    };
+  }, [
+    memoizedOnToggle,
+    memoizedContextHandler,
+    navigation,
+    key,
+    selectionMode,
+  ]);
 
-//       navigation.navigate('Wallet', {
-//         screen: WalletScreens.CURRENCY_TOKEN_SELECTION,
-//         params: {
-//           key,
-//           currency: {...currency},
-//           tokens: sortedTokens,
-//           description: item.description,
-//           selectionMode,
-//           onToggle: memoizedOnToggle,
-//           contextHandler: memoizedContextHandler,
-//         },
-//       });
-//     };
-//   }, [
-//     memoizedOnToggle,
-//     memoizedContextHandler,
-//     navigation,
-//     key,
-//     selectionMode,
-//   ]);
+  const renderItem: ListRenderItem<CurrencySelectionListItem> = useCallback(
+    ({item}) => {
+      return (
+        <CurrencySelectionRow
+          key={item.currency.id}
+          currency={item.currency}
+          tokens={item.popularTokens}
+          description={item.description}
+          selectionMode={selectionMode}
+          onToggle={memoizedOnToggle}
+          onViewAllTokensPressed={memoizedOnViewAllPressed}
+        />
+      );
+    },
+    [memoizedOnToggle, memoizedOnViewAllPressed, selectionMode],
+  );
 
-//   const renderItem: ListRenderItem<CurrencySelectionListItem> = useCallback(
-//     ({item}) => {
-//       return (
-//         <CurrencySelectionRow
-//           key={item.currency.id}
-//           currency={item.currency}
-//           tokens={item.popularTokens}
-//           description={item.description}
-//           selectionMode={selectionMode}
-//           onToggle={memoizedOnToggle}
-//           onViewAllTokensPressed={memoizedOnViewAllPressed}
-//         />
-//       );
-//     },
-//     [memoizedOnToggle, memoizedOnViewAllPressed, selectionMode],
-//   );
+  return (
+    <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
+      <SearchContainer>
+        <CurrencySelectionSearchInput
+          onSearch={setSearchFilter}
+          debounceWait={300}
+        />
+      </SearchContainer>
 
-//   return (
-//     <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
-//       <SearchContainer>
-//         <CurrencySelectionSearchInput
-//           onSearch={setSearchFilter}
-//           debounceWait={300}
-//         />
-//       </SearchContainer>
+      {filteredListItems.length ? (
+        <ListContainer>
+          <FlatList<CurrencySelectionListItem>
+            data={filteredListItems}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            ListFooterComponent={() => {
+              return searchFilter && key ? (
+                <LinkContainer>
+                  <Link
+                    accessibilityLabel="add-custom-token-button"
+                    onPress={() => {
+                      navigation.navigate('Wallet', {
+                        screen: 'AddWallet',
+                        params: {key, isCustomToken: true, isToken: true},
+                      });
+                    }}>
+                    {t('Add Custom Token')}
+                  </Link>
+                </LinkContainer>
+              ) : null;
+            }}
+          />
+        </ListContainer>
+      ) : (
+        <CurrencySelectionNoResults query={searchFilter} walletKey={key} />
+      )}
 
-//       {filteredListItems.length ? (
-//         <ListContainer>
-//           <FlatList<CurrencySelectionListItem>
-//             data={filteredListItems}
-//             keyExtractor={keyExtractor}
-//             renderItem={renderItem}
-//             ListFooterComponent={() => {
-//               return searchFilter && key ? (
-//                 <LinkContainer>
-//                   <Link
-//                     accessibilityLabel="add-custom-token-button"
-//                     onPress={() => {
-//                       haptic('soft');
-//                       navigation.navigate('Wallet', {
-//                         screen: 'AddWallet',
-//                         params: {key, isCustomToken: true, isToken: true},
-//                       });
-//                     }}>
-//                     {t('Add Custom Token')}
-//                   </Link>
-//                 </LinkContainer>
-//               ) : null;
-//             }}
-//           />
-//         </ListContainer>
-//       ) : (
-//         <CurrencySelectionNoResults query={searchFilter} walletKey={key} />
-//       )}
-
-//       {onCtaPress && selectedCurrencies.length > 0 ? (
-//         <CtaContainer
-//           style={{
-//             shadowColor: '#000',
-//             shadowOffset: {width: 0, height: 4},
-//             shadowOpacity: 0.1,
-//             shadowRadius: 12,
-//             elevation: 5,
-//             marginTop: 16,
-//           }}>
-//           <Button
-//             accessibilityLabel="on-cta-press-button"
-//             onPress={onCtaPress}
-//             buttonStyle={'primary'}>
-//             {ctaTitle || t('Continue')}
-//           </Button>
-//         </CtaContainer>
-//       ) : null}
-//     </CurrencySelectionContainer>
-//   );
+      {onCtaPress && selectedCurrencies.length > 0 ? (
+        <CtaContainer
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 4},
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 5,
+            marginTop: 16,
+          }}>
+          <Button
+            accessibilityLabel="on-cta-press-button"
+            onPress={onCtaPress}
+            buttonStyle={'primary'}>
+            {ctaTitle || t('Continue')}
+          </Button>
+        </CtaContainer>
+      ) : null}
+    </CurrencySelectionContainer>
+  );
 };
 
 export default CurrencySelection;

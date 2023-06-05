@@ -1,16 +1,10 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
-import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
-import {
-  AppIdentity,
-  HomeCarouselConfig,
-  HomeCarouselLayoutType,
-} from './app.models';
+import {HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
 
@@ -30,19 +24,6 @@ export const appInitCompleted = (): AppActionType => ({
 export const failedAppInit = (): AppActionType => ({
   type: AppActionTypes.FAILED_APP_INIT,
   payload: true,
-});
-
-export const appIsReadyForDeeplinking = (): AppActionType => ({
-  type: AppActionTypes.APP_READY_FOR_DEEPLINKING,
-});
-
-export const setAppFirstOpenEventComplete = (): AppActionType => ({
-  type: AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE,
-});
-
-export const setAppFirstOpenEventDate = (date: number): AppActionType => ({
-  type: AppActionTypes.SET_APP_FIRST_OPEN_DATE,
-  payload: date,
 });
 
 export const setIntroCompleted = (): AppActionType => ({
@@ -80,18 +61,6 @@ export const resetBottomNotificationModalConfig = (): AppActionType => ({
 export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
   type: AppActionTypes.SET_COLOR_SCHEME,
   payload: scheme,
-});
-
-export const successGenerateAppIdentity = (
-  network: Network,
-  identity: AppIdentity,
-): AppActionType => ({
-  type: AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY,
-  payload: {network, identity},
-});
-
-export const failedGenerateAppIdentity = (): AppActionType => ({
-  type: AppActionTypes.FAILED_GENERATE_APP_IDENTITY,
 });
 
 export const setNotificationsAccepted = (
@@ -151,32 +120,6 @@ export const resetDecryptPasswordConfig = (): AppActionType => ({
   type: AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG,
 });
 
-export const showPinModal = (config: PinModalConfig): AppActionType => ({
-  type: AppActionTypes.SHOW_PIN_MODAL,
-  payload: config,
-});
-
-export const dismissPinModal = (): AppActionType => ({
-  type: AppActionTypes.DISMISS_PIN_MODAL,
-});
-
-export const pinLockActive = (active: boolean): AppActionType => ({
-  type: AppActionTypes.PIN_LOCK_ACTIVE,
-  payload: active,
-});
-
-export const pinBannedUntil = (
-  bannedUntil: number | undefined,
-): AppActionType => ({
-  type: AppActionTypes.PIN_BANNED_UNTIL,
-  payload: bannedUntil,
-});
-
-export const currentPin = (pin: string | undefined): AppActionType => ({
-  type: AppActionTypes.CURRENT_PIN,
-  payload: pin,
-});
-
 export const showBlur = (value: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_BLUR,
   payload: value,
@@ -192,27 +135,18 @@ export const toggleHideAllBalances = (value?: boolean): AppActionType => ({
   payload: value,
 });
 
-export const showBiometricModal = (
-  config: BiometricModalConfig,
+export const brazeInitialized = (
+  contentCardSubscription: EventSubscription | null,
 ): AppActionType => ({
-  type: AppActionTypes.SHOW_BIOMETRIC_MODAL,
-  payload: config,
+  type: AppActionTypes.BRAZE_INITIALIZED,
+  payload: {contentCardSubscription},
 });
 
-export const dismissBiometricModal = (): AppActionType => ({
-  type: AppActionTypes.DISMISS_BIOMETRIC_MODAL,
-});
-
-export const biometricLockActive = (active: boolean): AppActionType => ({
-  type: AppActionTypes.BIOMETRIC_LOCK_ACTIVE,
-  payload: active,
-});
-
-export const lockAuthorizedUntil = (
-  authorizedUntil: number | undefined,
+export const brazeContentCardsFetched = (
+  contentCards: any[],
 ): AppActionType => ({
-  type: AppActionTypes.LOCK_AUTHORIZED_UNTIL,
-  payload: authorizedUntil,
+  type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
+  payload: {contentCards},
 });
 
 export const setHomeCarouselConfig = (
@@ -250,35 +184,13 @@ export const setDefaultAltCurrency = (
   defaultAltCurrency,
 });
 
-export const setMigrationComplete = (): AppActionType => ({
-  type: AppActionTypes.SET_MIGRATION_COMPLETE,
-});
-
-export const setKeyMigrationFailure = (): AppActionType => ({
-  type: AppActionTypes.SET_KEY_MIGRATION_FAILURE,
-});
-
-export const setShowKeyMigrationFailureModal = (
-  payload: boolean,
-): AppActionType => ({
-  type: AppActionTypes.SET_SHOW_KEY_MIGRATION_FAILURE_MODAL,
-  payload,
-});
-
-export const setKeyMigrationFailureModalHasBeenShown = (): AppActionType => ({
-  type: AppActionTypes.SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN,
-});
-
 export const activeModalUpdated = (id: ModalId | null): AppActionType => ({
   type: AppActionTypes.ACTIVE_MODAL_UPDATED,
   payload: id,
 });
 
-export const checkingBiometricForSending = (
-  payload: boolean,
-): AppActionType => ({
-  type: AppActionTypes.CHECKING_BIOMETRIC_FOR_SENDING,
-  payload,
+export const setHasViewedZenLedgerWarning = (): AppActionType => ({
+  type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
 });
 
 export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({

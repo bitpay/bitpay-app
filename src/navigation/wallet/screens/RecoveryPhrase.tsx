@@ -19,7 +19,6 @@ import * as Progress from 'react-native-progress';
 import {Air, BitPay, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
 import {Platform, TouchableOpacity} from 'react-native';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -118,8 +117,6 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
             accessibilityLabel="cancel-button"
             buttonType={'pill'}
             onPress={() => {
-              haptic('impactLight');
-
               if (context === 'settings') {
                 navigation.goBack();
                 return;

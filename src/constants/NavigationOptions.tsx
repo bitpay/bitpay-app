@@ -19,5 +19,5 @@ export const baseNavigatorOptions: StackNavigationOptions = {
 };
 
 export const baseScreenOptions: StackNavigationOptions = {
-  ...TransitionPresets.SlideFromRightIOS,
+  ...TransitionPresets.DefaultTransition,
 };

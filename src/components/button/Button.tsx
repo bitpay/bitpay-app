@@ -1,6 +1,6 @@
 import debounce from 'lodash.debounce';
 import React, {memo, useMemo, useRef} from 'react';
-// import {BaseButtonProps} from 'react-native-gesture-handler';
+import {BaseButtonProps} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {
   Action,
@@ -243,115 +243,100 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   const isLoading = state === 'loading';
   const isSuccess = state === 'success';
   const isFailure = state === 'failed';
-  const hideContent = !!state;
 
-  
-  // const childOpacity = useSharedValue(1);
-  return <></>
-  // childOpacity.value = withDelay(
-  //   hideContent ? 0 : DURATION,
-  //   withTiming(hideContent ? 0 : 1, {duration: 0, easing: Easing.linear}),
-  // );
+  let ButtonTypeContainer: React.FC<ButtonOptionProps>;
+  let ButtonTypeText: React.FC<ButtonOptionProps>;
 
-  // const childrenStyle = useAnimatedStyle(() => ({
-  //   opacity: childOpacity.value,
-  // }));
+  if (buttonType === 'pill') {
+    ButtonTypeContainer = PillContent;
+    ButtonTypeText = PillText;
+  } else if (buttonType === 'link') {
+    ButtonTypeContainer = LinkContent;
+    ButtonTypeText = LinkText;
+  } else {
+    ButtonTypeContainer = ButtonContent;
+    ButtonTypeText = ButtonText;
+  }
 
-  // let ButtonTypeContainer: React.FC<ButtonOptionProps>;
-  // let ButtonTypeText: React.FC<ButtonOptionProps>;
+  // useRef to preserve memoized debounce
+  const _onPress = () => {
+    if (!onPress || disabled || !!state) {
+      return;
+    }
 
-  // if (buttonType === 'pill') {
-  //   ButtonTypeContainer = PillContent;
-  //   ButtonTypeText = PillText;
-  // } else if (buttonType === 'link') {
-  //   ButtonTypeContainer = LinkContent;
-  //   ButtonTypeText = LinkText;
-  // } else {
-  //   ButtonTypeContainer = ButtonContent;
-  //   ButtonTypeText = ButtonText;
-  // }
+    Haptic('impactLight');
+    onPress();
+  };
+  const onPressRef = useRef(_onPress);
+  onPressRef.current = _onPress;
 
-  // // useRef to preserve memoized debounce
-  // const _onPress = () => {
-  //   if (!onPress || disabled || !!state) {
-  //     return;
-  //   }
+  const debouncedOnPress = useMemo(
+    () =>
+      debounce(
+        () => {
+          onPressRef.current();
+        },
+        debounceTime || 0,
+        {
+          leading: true,
+          trailing: false,
+        },
+      ),
+    [debounceTime],
+  );
 
-  //   Haptic('impactLight');
-  //   onPress();
-  // };
-  // const onPressRef = useRef(_onPress);
-  // onPressRef.current = _onPress;
+  return (
+    <ButtonContainer
+      accessibilityLabel={accessibilityLabel}
+      style={style}
+      buttonType={buttonType}
+      onPress={debouncedOnPress}
+      activeOpacity={disabled ? 1 : ActiveOpacity}
+      testID={'button'}>
+      <ButtonTypeContainer
+        height={height}
+        danger={danger}
+        secondary={secondary}
+        outline={outline}
+        cancel={cancel}
+        disabled={disabled}
+        action={action}>
+        <ButtonTypeText
+          secondary={secondary}
+          cancel={cancel}
+          danger={danger}
+          disabled={disabled}
+          action={action}>
+          {children}
+        </ButtonTypeText>
+      </ButtonTypeContainer>
 
-  // const debouncedOnPress = useMemo(
-  //   () =>
-  //     debounce(
-  //       () => {
-  //         onPressRef.current();
-  //       },
-  //       debounceTime || 0,
-  //       {
-  //         leading: true,
-  //         trailing: false,
-  //       },
-  //     ),
-  //   [debounceTime],
-  // );
+      <ButtonOverlay
+        isVisible={isLoading}
+        buttonStyle={buttonStyle}
+        buttonType={buttonType}>
+        <ButtonSpinner buttonStyle={buttonStyle} />
+      </ButtonOverlay>
 
-  // return (
-  //   <ButtonContainer
-  //     accessibilityLabel={accessibilityLabel}
-  //     style={style}
-  //     buttonType={buttonType}
-  //     onPress={debouncedOnPress}
-  //     activeOpacity={disabled ? 1 : ActiveOpacity}
-  //     testID={'button'}>
-  //     <ButtonTypeContainer
-  //       height={height}
-  //       danger={danger}
-  //       secondary={secondary}
-  //       outline={outline}
-  //       cancel={cancel}
-  //       disabled={disabled}
-  //       action={action}>
-  //       <Animated.View style={childrenStyle}>
-  //         <ButtonTypeText
-  //           secondary={secondary}
-  //           cancel={cancel}
-  //           danger={danger}
-  //           disabled={disabled}
-  //           action={action}>
-  //           {children}
-  //         </ButtonTypeText>
-  //       </Animated.View>
-  //     </ButtonTypeContainer>
+      <ButtonOverlay
+        isVisible={isSuccess}
+        buttonStyle={buttonStyle}
+        buttonType={buttonType}
+        backgroundColor={Success}
+        animate>
+        <Icons.Check buttonStyle={buttonStyle} />
+      </ButtonOverlay>
 
-  //     <ButtonOverlay
-  //       isVisible={isLoading}
-  //       buttonStyle={buttonStyle}
-  //       buttonType={buttonType}>
-  //       <ButtonSpinner buttonStyle={buttonStyle} />
-  //     </ButtonOverlay>
-
-  //     <ButtonOverlay
-  //       isVisible={isSuccess}
-  //       buttonStyle={buttonStyle}
-  //       buttonType={buttonType}
-  //       backgroundColor={Success}
-  //       animate>
-  //       <Icons.Check buttonStyle={buttonStyle} />
-  //     </ButtonOverlay>
-
-  //     <ButtonOverlay
-  //       isVisible={isFailure}
-  //       buttonStyle={buttonStyle}
-  //       buttonType={buttonType}
-  //       backgroundColor={Caution}
-  //       animate>
-  //       <Icons.Close buttonStyle={buttonStyle} />
-  //     </ButtonOverlay>
-  //   </ButtonContainer>
-  // );
+      <ButtonOverlay
+        isVisible={isFailure}
+        buttonStyle={buttonStyle}
+        buttonType={buttonType}
+        backgroundColor={Caution}
+        animate>
+        <Icons.Close buttonStyle={buttonStyle} />
+      </ButtonOverlay>
+    </ButtonContainer>
+  );
 };
 
 export default memo(Button);

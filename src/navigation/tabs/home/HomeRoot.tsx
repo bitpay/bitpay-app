@@ -12,6 +12,7 @@ import {
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
+import {requestBrazeContentRefresh} from '../../../store/app/app.effects';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
@@ -22,16 +23,23 @@ import {
   useAppSelector,
 } from '../../../utils/hooks';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
+import Crypto from './components/Crypto';
 import ExchangeRatesList, {
   ExchangeRateItemProps,
 } from './components/exchange-rates/ExchangeRatesList';
+import ProfileButton from './components/HeaderProfileButton';
+import ScanButton from './components/HeaderScanButton';
 import HomeSection from './components/HomeSection';
+import LinkingButtons from './components/LinkingButtons';
 import PortfolioBalance from './components/PortfolioBalance';
 import {HeaderContainer, HomeContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
+import {
+  receiveCrypto,
+  sendCrypto,
+} from '../../../store/wallet/effects/send/send';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -54,6 +62,7 @@ const HomeRoot = () => {
     keyMigrationFailureModalHasBeenShown,
     showPortfolioValue,
   } = useAppSelector(({APP}) => APP);
+  const hasKeys = Object.values(keys).length;
 
   // Exchange Rates
   const priceHistory = useAppSelector(({RATE}) => RATE.priceHistory);
@@ -84,14 +93,6 @@ const HomeRoot = () => {
     [priceHistory],
   );
 
-  useEffect(() => {
-    return navigation.addListener('focus', () => {
-      if (!appIsLoading) {
-        dispatch(updatePortfolioBalance());
-      } // portfolio balance is updated in app init
-    });
-  }, [dispatch, navigation]);
-
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -99,6 +100,7 @@ const HomeRoot = () => {
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus({force: true})),
+        dispatch(requestBrazeContentRefresh()),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -153,6 +155,25 @@ const HomeRoot = () => {
               <PortfolioBalance />
             </HomeSection>
           ) : null}
+
+          {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
+          {hasKeys ? (
+            <HomeSection style={{marginBottom: 25}}>
+              <LinkingButtons
+                receive={{
+                  cta: () => dispatch(receiveCrypto(navigation, 'HomeRoot')),
+                }}
+                send={{
+                  cta: () => dispatch(sendCrypto('HomeRoot')),
+                }}
+              />
+            </HomeSection>
+          ) : null}
+
+          {/* ////////////////////////////// CRYPTO */}
+          <HomeSection slimContainer={true}>
+            <Crypto />
+          </HomeSection>
 
           {/* ////////////////////////////// EXCHANGE RATES */}
           {memoizedExchangeRates.length ? (

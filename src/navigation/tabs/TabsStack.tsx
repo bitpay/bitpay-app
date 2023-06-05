@@ -1,5 +1,4 @@
 import React from 'react';
-import {View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
@@ -10,49 +9,30 @@ import {SettingsStackParamList} from './settings/SettingsStack';
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
 import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
-import ShopIcon from '../../../assets/img/tab-icons/shop.svg';
-import ShopFocusedIcon from '../../../assets/img/tab-icons/shop-focused.svg';
-import CardIcon from '../../../assets/img/tab-icons/card.svg';
-import CardFocusedIcon from '../../../assets/img/tab-icons/card-focused.svg';
 import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
-import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
-
-import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
   HomeFocused: HomeFocusedIcon,
-  Shop: ShopIcon,
-  ShopFocused: ShopFocusedIcon,
-  Card: CardIcon,
-  CardFocused: CardFocusedIcon,
   Settings: SettingsIcon,
   SettingsFocused: SettingsFocusedIcon,
-  TransactButton: TransactButtonIcon,
 };
 
 export enum TabsScreens {
   HOME = 'Home',
-  SHOP = 'Shop',
-  TRANSACT_BUTTON = 'TransactButton',
-  CARD = 'Card',
   SETTINGS = 'Settings',
-  CAMERA = 'Camera',
 }
 
 export type TabsStackParamList = {
   Home: undefined;
-  TransactButton: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
-  Camera: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
   const theme = useTheme();
-  const TransactionButton = () => null;
   return (
     <Tab.Navigator
       initialRouteName={TabsScreens.HOME}

@@ -1,8 +1,7 @@
 // renders svg if supported currency or cached png if custom token
 import React, {ReactElement, useMemo} from 'react';
 import {StyleSheet} from 'react-native';
-import {ImageRequireSource} from 'react-native';
-import FastImage from 'react-native-fast-image';
+import {ImageRequireSource, Image} from 'react-native';
 import styled from 'styled-components/native';
 import DefaultImage from '../../../assets/img/currencies/default.svg';
 import CoinbaseSvg from '../../../assets/img/logos/coinbase.svg';
@@ -49,20 +48,14 @@ export const CurrencyImage: React.VFC<CurrencyImageProps> = ({
       badgeSrc || badgeUri ? (
         <BadgeContainer>
           {badgeSrc ? (
-            <FastImage
-              style={styles.badge}
-              source={badgeSrc}
-              resizeMode={FastImage.resizeMode.contain}
-            />
+            <Image style={styles.badge} source={badgeSrc} />
           ) : badgeUri ? (
             typeof badgeUri === 'string' ? (
-              <FastImage
+              <Image
                 style={styles.badge}
                 source={{
                   uri: badgeUri,
-                  priority: FastImage.priority.normal,
                 }}
-                resizeMode={FastImage.resizeMode.contain}
               />
             ) : (
               badgeUri(styles.badge)
@@ -78,24 +71,18 @@ export const CurrencyImage: React.VFC<CurrencyImageProps> = ({
       {!img && !imgSrc ? (
         <DefaultImage {...style} />
       ) : imgSrc ? (
-        <FastImage
-          style={style}
-          source={imgSrc}
-          resizeMode={FastImage.resizeMode.cover}
-        />
+        <Image style={style} source={imgSrc} />
       ) : typeof img === 'string' ? (
         img === 'coinbase' ? (
           <CoinbaseSvg width="20" height="20" />
         ) : img === 'contact' ? (
           <ProfileIcon size={20} />
         ) : (
-          <FastImage
+          <Image
             style={style}
             source={{
               uri: img,
-              priority: FastImage.priority.normal,
             }}
-            resizeMode={FastImage.resizeMode.contain}
           />
         )
       ) : (

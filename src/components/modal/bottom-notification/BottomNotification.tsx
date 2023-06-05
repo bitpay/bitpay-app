@@ -14,7 +14,6 @@ import {
   SlateDark,
   White,
 } from '../../../styles/colors';
-import haptic from '../../haptic-feedback/haptic';
 import {Platform} from 'react-native';
 import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
@@ -145,7 +144,6 @@ const BottomNotification = () => {
       onBackdropPress={() => {
         if (enableBackdropDismiss) {
           dispatch(AppActions.dismissBottomNotificationModal());
-          haptic('impactLight');
           if (onBackdropDismiss) {
             onBackdropDismiss();
           }
@@ -181,7 +179,6 @@ const BottomNotification = () => {
                 suppressHighlighting={true}
                 primary={primary}
                 onPress={async () => {
-                  haptic('impactLight');
                   dispatch(AppActions.dismissBottomNotificationModal());
                   await sleep(0);
                   action(rootState);

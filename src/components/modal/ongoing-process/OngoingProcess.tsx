@@ -3,7 +3,6 @@ import {ActivityIndicator} from 'react-native';
 import styled from 'styled-components/native';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
-import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 
@@ -90,7 +89,6 @@ const OnGoingProcessModal: React.FC = () => {
             <ActivityIndicator color={SlateDark} />
           </ActivityIndicatorContainer>
           <Message>{message}</Message>
-          <BlurContainer />
         </Row>
       </OnGoingProcessContainer>
     </BaseModal>
