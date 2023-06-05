@@ -38,7 +38,6 @@ import {
 } from '../components/ErrorMessages';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type JoinMultisigParamList = {
   key?: Key;
@@ -114,12 +113,6 @@ const JoinMultisig = () => {
             opts,
           }),
         )) as Wallet;
-
-        dispatch(
-          Analytics.track('Join Multisig Wallet success', {
-            addedToExistingKey: true,
-          }),
-        );
 
         wallet.getStatus(
           {network: wallet.network},
@@ -199,12 +192,6 @@ const JoinMultisig = () => {
           startJoinMultisig(opts),
         )) as Key;
 
-        dispatch(
-          Analytics.track('Join Multisig Wallet success', {
-            addedToExistingKey: false,
-          }),
-        );
-
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
         navigation.navigate('Wallet', {
@@ -254,11 +241,6 @@ const JoinMultisig = () => {
           <ScanContainer
             activeOpacity={ActiveOpacity}
             onPress={() => {
-              dispatch(
-                Analytics.track('Open Scanner', {
-                  context: 'JoinMultisig',
-                }),
-              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {

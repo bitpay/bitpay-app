@@ -34,7 +34,6 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScrollView} from 'react-native';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -104,12 +103,6 @@ const FileOrText = () => {
         walletTermsAccepted,
         key,
       });
-      dispatch(
-        Analytics.track('Imported Key', {
-          context: route.params?.context || '',
-          source: 'FileOrText',
-        }),
-      );
       dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);

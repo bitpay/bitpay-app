@@ -24,9 +24,7 @@ export const startCreateKeyMultisig =
       try {
         const {
           APP: {
-            notificationsAccepted,
             emailNotifications,
-            brazeEid,
             defaultLanguage,
           },
           WALLET: {keys},
@@ -37,11 +35,6 @@ export const startCreateKeyMultisig =
         });
 
         const _wallet = await createWalletWithOpts({key: _key, opts});
-
-        // subscribe new wallet to push notifications
-        if (notificationsAccepted) {
-          dispatch(subscribePushNotifications(_wallet, brazeEid!));
-        }
         // subscribe new wallet to email notifications
         if (
           emailNotifications &&
@@ -100,9 +93,7 @@ export const addWalletMultisig =
       try {
         const {
           APP: {
-            notificationsAccepted,
             emailNotifications,
-            brazeEid,
             defaultLanguage,
           },
         } = getState();
@@ -112,9 +103,6 @@ export const addWalletMultisig =
         })) as Wallet;
 
         // subscribe new wallet to push notifications
-        if (notificationsAccepted) {
-          dispatch(subscribePushNotifications(newWallet, brazeEid!));
-        }
         // subscribe new wallet to email notifications
         if (
           emailNotifications &&

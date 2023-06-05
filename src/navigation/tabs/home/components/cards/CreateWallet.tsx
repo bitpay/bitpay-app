@@ -5,7 +5,6 @@ import {Path, Svg} from 'react-native-svg';
 import {White} from '../../../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../../../utils/hooks';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const image = (theme: Theme) => {
   return (
@@ -30,11 +29,6 @@ const CreateWallet = () => {
       image={image}
       description={t('Create, import or join a shared wallet')}
       onPress={() => {
-        dispatch(
-          Analytics.track('Clicked create, import or join', {
-            context: 'ExpandPortfolioCarousel',
-          }),
-        );
         navigation.navigate('Wallet', {screen: 'CreationOptions'});
       }}
     />

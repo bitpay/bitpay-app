@@ -72,7 +72,6 @@ import {toFiat} from '../../../store/wallet/utils/wallet';
 import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -463,7 +462,6 @@ const KeyOverview = () => {
   }, [navigation, key?.wallets, context]);
 
   useEffect(() => {
-    dispatch(Analytics.track('View Key'));
   }, []);
 
   const {wallets = [], totalBalance} =

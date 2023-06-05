@@ -38,7 +38,6 @@ import {
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Banner from '../../../components/banner/Banner';
 import Info from '../../../components/icons/info/Info';
-import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
 import {sleep} from '../../../utils/helper-methods';
 import {GetAmFormatDate, GetAmTimeAgo} from '../../../store/wallet/utils/time';
 import SendToPill from '../components/SendToPill';
@@ -77,7 +76,6 @@ import {
   DetailRow,
   SendToPillContainer,
 } from './send/confirm/Shared';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../store/log';
 import {GetPayProDetails} from '../../../store/wallet/effects/paypro/paypro';
 
@@ -485,9 +483,7 @@ const TransactionProposalDetails = () => {
 
   return (
     <TxpDetailsContainer>
-      {isLoading ? (
-        <TransactionDetailSkeleton />
-      ) : txp ? (
+      {!isLoading && txp ? (
         <ScrollView>
           <>
             {NotZeroAmountEVM(txp.amount, currencyAbbreviation) ? (
@@ -752,12 +748,6 @@ const TransactionProposalDetails = () => {
               await sleep(400);
               await dispatch(publishAndSign({txp, key, wallet}));
               dispatch(dismissOnGoingProcessModal());
-              dispatch(
-                Analytics.track('Sent Crypto', {
-                  context: 'Transaction Proposal Details',
-                  coin: currencyAbbreviation || '',
-                }),
-              );
               await sleep(400);
               setShowPaymentSentModal(true);
             } catch (err) {

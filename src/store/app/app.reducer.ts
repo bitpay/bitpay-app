@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import {ColorSchemeName, EventSubscription} from 'react-native';
-// import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
@@ -36,7 +35,6 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'biometricModalConfig',
   'activeModalId',
   'failedAppInit',
-  'brazeContentCardSubscription',
 ];
 
 export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
@@ -100,9 +98,6 @@ export interface AppState {
   defaultLanguage: string;
   showPortfolioValue: boolean;
   hideAllBalances: boolean;
-  brazeContentCardSubscription: EventSubscription | null;
-  brazeContentCards: any[];
-  brazeEid: string | undefined;
   showBiometricModal: boolean;
   biometricModalConfig: BiometricModalConfig | undefined;
   biometricLockActive: boolean;
@@ -120,7 +115,6 @@ export interface AppState {
   activeModalId: ModalId | null;
   failedAppInit: boolean;
   checkingBiometricForSending: boolean;
-  hasViewedZenLedgerWarning: boolean;
 }
 
 const initialState: AppState = {
@@ -174,9 +168,6 @@ const initialState: AppState = {
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
   hideAllBalances: false,
-  brazeContentCardSubscription: null,
-  brazeContentCards: [],
-  brazeEid: undefined,
   showBiometricModal: false,
   biometricModalConfig: undefined,
   biometricLockActive: false,
@@ -194,7 +185,6 @@ const initialState: AppState = {
   activeModalId: null,
   failedAppInit: false,
   checkingBiometricForSending: false,
-  hasViewedZenLedgerWarning: false,
 };
 
 export const appReducer = (
@@ -419,31 +409,6 @@ export const appReducer = (
         hideAllBalances: action.payload ?? !state.hideAllBalances,
       };
 
-    case AppActionTypes.BRAZE_INITIALIZED:
-      return {
-        ...state,
-        brazeContentCardSubscription: action.payload.contentCardSubscription,
-      };
-
-    case AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED:
-      if (
-        state.brazeContentCards.length === 0 &&
-        action.payload.contentCards.length === 0
-      ) {
-        return state;
-      }
-
-      return {
-        ...state,
-        brazeContentCards: action.payload.contentCards,
-      };
-
-    case AppActionTypes.SET_BRAZE_EID:
-      return {
-        ...state,
-        brazeEid: action.payload,
-      };
-
     case AppActionTypes.SHOW_BIOMETRIC_MODAL:
       return {
         ...state,
@@ -564,12 +529,6 @@ export const appReducer = (
       return {
         ...state,
         checkingBiometricForSending: action.payload,
-      };
-
-    case AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING:
-      return {
-        ...state,
-        hasViewedZenLedgerWarning: true,
       };
 
     case AppActionTypes.USER_FEEDBACK:

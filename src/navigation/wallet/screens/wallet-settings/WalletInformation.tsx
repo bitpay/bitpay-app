@@ -18,7 +18,6 @@ import {
   IsUtxoCoin,
 } from '../../../../store/wallet/utils/currency';
 import {View} from 'react-native';
-import WalletInformationSkeleton from './WalletInformationSkeleton';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
@@ -192,9 +191,7 @@ const WalletInformation = () => {
   return (
     <InfoContainer>
       <ScrollView>
-        {isLoading ? (
-          <WalletInformationSkeleton />
-        ) : (
+        {!isLoading && (
           <>
             <InfoSettingsRow>
               <SettingTitle>{t('Name (at creation)')}</SettingTitle>

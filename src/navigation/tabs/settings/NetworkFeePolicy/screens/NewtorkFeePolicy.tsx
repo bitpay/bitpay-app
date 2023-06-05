@@ -28,7 +28,6 @@ import {View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import {sleep} from '../../../../../utils/helper-methods';
-import NetworkPolicyPlaceholder from '../../components/NetworkPolicyPlaceholder';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {updateCacheFeeLevel} from '../../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
@@ -288,9 +287,7 @@ const NetworkFeePolicy = () => {
           )}
         </NetworkFeePolicyParagraph>
 
-        {isLoading ? (
-          <NetworkPolicyPlaceholder />
-        ) : (
+        {!isLoading && (
           <>
             <View>
               {btcFeeOptions && btcFeeOptions.length > 0 ? (

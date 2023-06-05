@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {BaseText, H2} from '../../../../components/styled/Text';
 import {Black, LuckySevens, SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
@@ -16,9 +17,7 @@ import {
   toggleHideAllBalances,
 } from '../../../../store/app/app.actions';
 import Percentage from '../../../../components/percentage/Percentage';
-import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -54,15 +53,13 @@ const PercentageContainer = styled.View`
 
 const PortfolioBalance = () => {
   const {t} = useTranslation();
-  const coinbaseBalance =
-    useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
   const portfolioBalance = useSelector(
     ({WALLET}: RootState) => WALLET.portfolioBalance,
   );
 
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
 
-  const totalBalance: number = portfolioBalance.current + coinbaseBalance;
+  const totalBalance: number = portfolioBalance.current;
 
   const dispatch = useAppDispatch();
   const percentageDifference = calculatePercentageDifference(

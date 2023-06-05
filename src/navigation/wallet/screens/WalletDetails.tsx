@@ -1,5 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import i18next from 'i18next';
 import _ from 'lodash';
 import React, {
@@ -22,7 +23,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -61,7 +61,6 @@ import {
   shouldScale,
   sleep,
 } from '../../../utils/helper-methods';
-import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {
   BalanceUpdateError,
   CustomErrorMessage,
@@ -100,11 +99,8 @@ import TransactionRow, {
 } from '../../../components/list/TransactionRow';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
-import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
-import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
-import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
 import {
   buildBtcSpeedupTx,
   buildEthERCTokenSpeedupTx,
@@ -124,7 +120,6 @@ import {
   TRANSACTION_ICON_SIZE,
 } from '../../../constants/TransactionIcons';
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 
 export type WalletDetailsScreenParamList = {
@@ -179,10 +174,6 @@ const TransactionSectionHeaderContainer = styled.View`
 const BorderBottom = styled.View`
   border-bottom-width: 1px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
-`;
-
-const SkeletonContainer = styled.View`
-  margin-bottom: 20px;
 `;
 
 const EmptyListContainer = styled.View`
@@ -288,7 +279,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {walletId, skipInitializeHistory} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const {supportedCardMap} = useAppSelector(({SHOP}) => SHOP);
 
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 
@@ -550,11 +540,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   useEffect(() => {
-    dispatch(
-      Analytics.track('View Wallet', {
-        coin: fullWalletObj?.currencyAbbreviation,
-      }),
-    );
     updateWalletStatusAndProfileBalance();
     setNeedActionTxps(fullWalletObj.pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
@@ -581,11 +566,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             <BorderBottom />
           </View>
         )}
-        {isLoading ? (
-          <SkeletonContainer>
-            <WalletTransactionSkeletonRow />
-          </SkeletonContainer>
-        ) : null}
       </>
     );
   };
@@ -1009,91 +989,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     ) : null}
                   </Row>
                 </BalanceContainer>
-
-                {fullWalletObj ? (
-                  <LinkingButtons
-                    buy={{
-                      hide: !isCoinSupportedToBuy(
-                        fullWalletObj.currencyAbbreviation,
-                        fullWalletObj.chain,
-                        locationData?.countryShortCode || 'US',
-                      ),
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Buy Crypto', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                            chain: fullWalletObj.chain || '',
-                          }),
-                        );
-                        navigation.navigate('Wallet', {
-                          screen: WalletScreens.AMOUNT,
-                          params: {
-                            onAmountSelected: async (amount: string) => {
-                              navigation.navigate('BuyCrypto', {
-                                screen: 'BuyCryptoRoot',
-                                params: {
-                                  amount: Number(amount),
-                                  fromWallet: fullWalletObj,
-                                },
-                              });
-                            },
-                            context: 'buyCrypto',
-                          },
-                        });
-                      },
-                    }}
-                    swap={{
-                      hide:
-                        fullWalletObj.network === 'testnet' ||
-                        !isCoinSupportedToSwap(
-                          fullWalletObj.currencyAbbreviation,
-                          fullWalletObj.chain,
-                        ),
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Swap Crypto', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                            chain: fullWalletObj.chain || '',
-                          }),
-                        );
-                        navigation.navigate('SwapCrypto', {
-                          screen: 'Root',
-                          params: {
-                            selectedWallet: fullWalletObj,
-                          },
-                        });
-                      },
-                    }}
-                    receive={{
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Receive', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                          }),
-                        );
-                        setShowReceiveAddressBottomModal(true);
-                      },
-                    }}
-                    send={{
-                      hide: !fullWalletObj.balance.sat,
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Send', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                          }),
-                        );
-                        navigation.navigate('Wallet', {
-                          screen: 'SendTo',
-                          params: {wallet: fullWalletObj},
-                        });
-                      },
-                    }}
-                  />
-                ) : null}
               </HeaderContainer>
               {pendingTxps && pendingTxps[0] ? (
                 <>

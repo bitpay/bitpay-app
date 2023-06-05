@@ -1,5 +1,4 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
-// import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -193,25 +192,6 @@ export const toggleHideAllBalances = (value?: boolean): AppActionType => ({
   payload: value,
 });
 
-export const brazeInitialized = (
-  contentCardSubscription: EventSubscription | null,
-): AppActionType => ({
-  type: AppActionTypes.BRAZE_INITIALIZED,
-  payload: {contentCardSubscription},
-});
-
-export const brazeContentCardsFetched = (
-  contentCards: any[],
-): AppActionType => ({
-  type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
-  payload: {contentCards},
-});
-
-export const setBrazeEid = (eid: string): AppActionType => ({
-  type: AppActionTypes.SET_BRAZE_EID,
-  payload: eid,
-});
-
 export const showBiometricModal = (
   config: BiometricModalConfig,
 ): AppActionType => ({
@@ -299,10 +279,6 @@ export const checkingBiometricForSending = (
 ): AppActionType => ({
   type: AppActionTypes.CHECKING_BIOMETRIC_FOR_SENDING,
   payload,
-});
-
-export const setHasViewedZenLedgerWarning = (): AppActionType => ({
-  type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
 });
 
 export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({

@@ -11,7 +11,6 @@ import Icons from './TransactMenuIcons';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
 import {WalletScreens} from '../../../navigation/wallet/WalletStack';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -93,11 +92,6 @@ const TransactModal = () => {
       title: t('Buy Crypto'),
       description: t('Buy crypto with cash'),
       onPress: () => {
-        dispatch(
-          Analytics.track('Clicked Buy Crypto', {
-            context: 'TransactMenu',
-          }),
-        );
         navigation.navigate('Wallet', {
           screen: WalletScreens.AMOUNT,
           params: {
@@ -120,11 +114,6 @@ const TransactModal = () => {
       title: t('Exchange'),
       description: t('Swap crypto for another'),
       onPress: () => {
-        dispatch(
-          Analytics.track('Clicked Swap Crypto', {
-            context: 'TransactMenu',
-          }),
-        );
         navigation.navigate('SwapCrypto', {screen: 'Root'});
       },
     },
@@ -161,11 +150,6 @@ const TransactModal = () => {
         navigation.navigate('Tabs', {
           screen: 'Shop',
         });
-        dispatch(
-          Analytics.track('Clicked Buy Gift Cards', {
-            context: 'TransactMenu',
-          }),
-        );
       },
     },
   ];
@@ -175,11 +159,6 @@ const TransactModal = () => {
     img: () => <Icons.Scan />,
     title: t('Scan'),
     onPress: () => {
-      dispatch(
-        Analytics.track('Open Scanner', {
-          context: 'TransactMenu',
-        }),
-      );
       navigation.navigate('Scan', {screen: 'Root'});
     },
   };

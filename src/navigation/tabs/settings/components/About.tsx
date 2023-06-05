@@ -19,7 +19,6 @@ import {
 } from '../../../../store/app/app.effects';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {GIT_COMMIT_HASH} from '@env';
-import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 interface LinkSetting {
   key: string;
@@ -114,11 +113,6 @@ const About = () => {
                   key === 'HelpAndSupport'
                     ? 'Clicked Support'
                     : 'Clicked About BitPay Link';
-                dispatch(
-                  Analytics.track(segmentEvent, {
-                    key,
-                  }),
-                );
                 dispatch(openUrlWithInAppBrowser(link));
               }}>
               <SettingTitle>{title}</SettingTitle>

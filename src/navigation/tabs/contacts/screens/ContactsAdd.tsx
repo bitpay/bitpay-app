@@ -5,7 +5,7 @@ import React, {
   useLayoutEffect,
   useEffect,
 } from 'react';
-import {FlatList, View} from 'react-native';
+import {FlatList, View, TouchableOpacity} from 'react-native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
 import styled, {useTheme} from 'styled-components/native';
@@ -56,7 +56,6 @@ import WalletIcons from '../../../wallet/components/WalletIcons';
 import {SUPPORTED_TOKENS} from '../../../../constants/currencies';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import debounce from 'lodash.debounce';
 import {useTranslation} from 'react-i18next';
 import {ContactsStackParamList} from '../ContactsStack';
@@ -68,7 +67,6 @@ import {
 } from '../../../../constants/SupportedCurrencyOptions';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
-import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -505,11 +503,6 @@ const ContactsAdd = ({
   );
 
   const goToScan = () => {
-    dispatch(
-      Analytics.track('Open Scanner', {
-        context: 'contactsAdd',
-      }),
-    );
     navigation.navigate('Scan', {
       screen: 'Root',
       params: {

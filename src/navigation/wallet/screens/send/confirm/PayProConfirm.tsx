@@ -39,7 +39,6 @@ import {
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import {WalletRowProps} from '../../../../../components/list/WalletRow';
@@ -134,11 +133,6 @@ const PayProConfirm = () => {
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
         address: string;
       });
-      dispatch(
-        Analytics.track('BitPay App - Start Merchant Purchase', {
-          merchantBrand: invoice.merchantName,
-        }),
-      );
     } catch (err: any) {
       await sleep(400);
       dispatch(dismissOnGoingProcessModal());
@@ -205,11 +199,6 @@ const PayProConfirm = () => {
       updateTxp(undefined);
       setCoinbaseAccount(selectedCoinbaseAccount);
       dispatch(dismissOnGoingProcessModal());
-      dispatch(
-        Analytics.track('BitPay App - Start Merchant Purchase', {
-          merchantBrand: invoice.merchantName,
-        }),
-      );
     } catch (err) {
       handleCreateGiftCardInvoiceOrTxpError(err);
     }
@@ -298,14 +287,6 @@ const PayProConfirm = () => {
     });
     await sleep(400);
     setResetSwipeButton(true);
-    dispatch(
-      Analytics.track('BitPay App - Failed Merchant Purchase', {
-        merchantBrand: invoice?.merchantName,
-        merchantAmount: invoice?.price,
-        merchantCurrency: invoice?.currency,
-        coin: wallet?.currencyAbbreviation || '',
-      }),
-    );
   };
 
   return (
@@ -424,20 +405,6 @@ const PayProConfirm = () => {
             onSwipeComplete={async () => {
               try {
                 await sendPayment();
-                dispatch(
-                  Analytics.track('Sent Crypto', {
-                    context: 'PayPro Confirm',
-                    coin: wallet?.currencyAbbreviation || '',
-                  }),
-                );
-                dispatch(
-                  Analytics.track('BitPay App - Purchased Merchant', {
-                    merchantBrand: invoice?.merchantName,
-                    merchantAmount: invoice?.price,
-                    merchantCurrency: invoice?.currency,
-                    coin: wallet?.currencyAbbreviation || '',
-                  }),
-                );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());
                 await sleep(400);

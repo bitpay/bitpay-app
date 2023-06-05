@@ -10,6 +10,7 @@ import {
   TextAlign,
 } from '../../../components/styled/Text';
 import styled from 'styled-components/native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActiveOpacity,
@@ -90,17 +91,14 @@ import {
   BitpaySupportedCurrencies,
   SUPPORTED_EVM_COINS,
 } from '../../../constants/currencies';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
-import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {CommonActions} from '@react-navigation/native';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -396,12 +394,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           )?.currencyAbbreviation!;
         }
 
-        dispatch(
-          Analytics.track('Created Basic Wallet', {
-            coin: _currencyAbbreviation.toLowerCase(),
-            isErc20Token: !!isToken,
-          }),
-        );
         dispatch(startOnGoingProcessModal('ADDING_WALLET'));
         // adds wallet and binds to key obj - creates eth wallet if needed
         const wallet = await dispatch(

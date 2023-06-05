@@ -24,7 +24,6 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
@@ -419,12 +418,6 @@ const Confirm = () => {
             onSwipeComplete={async () => {
               try {
                 await sendPayment();
-                dispatch(
-                  Analytics.track('Adding funds to Debit Card', {
-                    amount: amount,
-                    brand: brand || '',
-                  }),
-                );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());
                 await sleep(400);

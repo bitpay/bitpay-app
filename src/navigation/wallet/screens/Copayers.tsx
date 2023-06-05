@@ -1,6 +1,6 @@
 import React, {useState, useLayoutEffect} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Clipboard from '@react-native-community/clipboard';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';

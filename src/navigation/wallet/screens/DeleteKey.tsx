@@ -48,7 +48,7 @@ const DeleteKey = () => {
   const dispatch = useAppDispatch();
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
-  const {notificationsAccepted, emailNotifications, brazeEid} = useAppSelector(
+  const {emailNotifications} = useAppSelector(
     ({APP}) => APP,
   );
   const {keys} = useAppSelector(({WALLET}) => WALLET);
@@ -77,9 +77,6 @@ const DeleteKey = () => {
           !wallet.credentials.token && wallet.credentials.isComplete(),
       )
       .forEach(walletClient => {
-        if (notificationsAccepted && brazeEid) {
-          dispatch(unSubscribePushNotifications(walletClient, brazeEid));
-        }
         if (emailNotifications.accepted && emailNotifications.email) {
           dispatch(unSubscribeEmailNotifications(walletClient));
         }

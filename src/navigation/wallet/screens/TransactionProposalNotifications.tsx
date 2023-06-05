@@ -62,7 +62,6 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 
 const NotificationsContainer = styled.SafeAreaView`
@@ -606,12 +605,6 @@ const TransactionProposalNotifications = () => {
               }
 
               if (count.success > 0) {
-                dispatch(
-                  Analytics.track('Sent Crypto', {
-                    context: 'Transaction Proposal Notifications',
-                    coin: wallet.currencyAbbreviation || '',
-                  }),
-                );
                 const title =
                   count.success > 1
                     ? t('proposals signed', {sucess: count.success})

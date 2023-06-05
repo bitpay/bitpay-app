@@ -1,13 +1,6 @@
 import debounce from 'lodash.debounce';
 import React, {memo, useMemo, useRef} from 'react';
-import {BaseButtonProps} from 'react-native-gesture-handler';
-// import Animated, {
-//   Easing,
-//   useAnimatedStyle,
-//   useSharedValue,
-//   withTiming,
-//   withDelay,
-// } from 'react-native-reanimated';
+// import {BaseButtonProps} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {
   Action,

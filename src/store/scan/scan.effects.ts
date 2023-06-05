@@ -13,7 +13,6 @@ import {
   IsValidBitcoinCashUri,
   IsValidBitcoinCashUriWithLegacyAddress,
   IsValidBitcoinUri,
-  IsValidBitPayInvoice,
   IsValidBitPayUri,
   IsValidDogecoinAddress,
   IsValidDogecoinUri,
@@ -21,29 +20,16 @@ import {
   IsValidEthereumUri,
   IsValidMaticUri,
   IsValidMaticAddress,
-  isValidBuyCryptoUri,
-  isValidMoonpayUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
   IsValidLitecoinAddress,
   IsValidLitecoinUri,
   IsValidPayPro,
-  isValidRampUri,
   IsValidRippleAddress,
   IsValidRippleUri,
-  isValidSimplexUri,
-  isValidWalletConnectUri,
-  isValidWyreUri,
   IsBitPayInvoiceWebUrl,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
-import {BuyCryptoActions} from '../buy-crypto';
-import {
-  MoonpayIncomingData,
-  RampIncomingData,
-  SimplexIncomingData,
-  WyrePaymentData,
-} from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {
@@ -59,28 +45,18 @@ import {
 import {Key, Wallet} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
-import {InteractionManager, Linking} from 'react-native';
+import {InteractionManager} from 'react-native';
 import {
   BitcoreLibs,
   bitcoreLibs,
   GetAddressNetwork,
 } from '../wallet/effects/address/address';
 import {Network} from '../../constants';
-import BitPayIdApi from '../../api/bitpay';
 import axios from 'axios';
 import {t} from 'i18next';
-import {
-  CustomErrorMessage,
-  GeneralError,
-} from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
 import {BitpaySupportedEvmCoins} from '../../constants/currencies';
-import {Analytics} from '../analytics/analytics.effects';
-import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
-import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
-import {IsUtxoCoin} from '../wallet/utils/currency';
-import {BWCErrorMessage} from '../../constants/BWCError';
 
 export const incomingData =
   (
@@ -105,9 +81,6 @@ export const incomingData =
         const invoiceId = new URLSearchParams(data).get('id');
         const origin = new URL(data).origin;
         data = `${origin}/i/${invoiceId}`;
-      }
-      if (IsValidBitPayInvoice(data)) {
-        dispatch(handleUnlock(data));
       }
       // Paypro
       else if (IsValidPayPro(data)) {
@@ -161,24 +134,6 @@ export const incomingData =
         // Litecoin URI
       } else if (IsValidLitecoinUri(data)) {
         dispatch(handleLitecoinUri(data, opts?.wallet));
-        // Wallet Connect URI
-      } else if (isValidWalletConnectUri(data)) {
-        dispatch(handleWalletConnectUri(data));
-        // Buy Crypto
-      } else if (isValidBuyCryptoUri(data)) {
-        dispatch(handleBuyCryptoUri(data));
-        // Moonpay
-      } else if (isValidMoonpayUri(data)) {
-        dispatch(handleMoonpayUri(data));
-        // Simplex
-      } else if (isValidRampUri(data)) {
-        dispatch(handleRampUri(data));
-        // Simplex
-      } else if (isValidSimplexUri(data)) {
-        dispatch(handleSimplexUri(data));
-        // Wyre
-      } else if (isValidWyreUri(data)) {
-        dispatch(handleWyreUri(data));
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
         dispatch(handleBitPayUri(data, opts?.wallet));
@@ -284,158 +239,6 @@ const goToPayPro =
           ],
         }),
       );
-    }
-  };
-
-const handleUnlock =
-  (data: string, wallet?: Wallet): Effect =>
-  async dispatch => {
-    const invoiceId = data.split('/i/')[1].split('?')[0];
-    const network = data.includes('test.bitpay.com')
-      ? Network.testnet
-      : Network.mainnet;
-    const result = await dispatch(unlockInvoice(invoiceId, network));
-
-    if (result === 'unlockSuccess') {
-      dispatch(goToPayPro(data, undefined, undefined, wallet));
-      return;
-    }
-
-    const {host} = new URL(GetPayProUrl(data));
-
-    try {
-      const {data: invoice} = await axios.get(
-        `https://${host}/invoiceData/${invoiceId}`,
-      );
-      if (invoice) {
-        const context = getParameterByName('c', data);
-        if (context === 'u') {
-          const {
-            data: {
-              invoice: {
-                buyerProvidedInfo: {emailAddress},
-                buyerProvidedEmail,
-                status,
-              },
-            },
-          } = invoice;
-          if (emailAddress || buyerProvidedEmail || status !== 'new') {
-            dispatch(goToPayPro(data, undefined, undefined, wallet));
-          } else {
-            navigationRef.navigate('Wallet', {
-              screen: 'EnterBuyerProvidedEmail',
-              params: {data},
-            });
-          }
-        } else {
-          dispatch(goToPayPro(data, undefined, invoice, wallet));
-        }
-        return;
-      }
-    } catch {}
-    switch (result) {
-      case 'pairingRequired':
-        navigationRef.navigate('Auth', {
-          screen: 'Login',
-          params: {
-            onLoginSuccess: () => {
-              navigationRef.navigate('Tabs', {screen: 'Home'});
-              dispatch(incomingData(data));
-            },
-          },
-        });
-        break;
-
-      // needs verification - send to bitpay id verify
-      case 'userShopperNotFound':
-      case 'tierNotMet':
-        dispatch(
-          showBottomNotificationModal({
-            type: 'warning',
-            title: t('Verification Required'),
-            enableBackdropDismiss: false,
-            message: t('To complete this payment please verify your account.'),
-            actions: [
-              {
-                text: t('Verify'),
-                action: () => {
-                  Linking.openURL(
-                    `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
-                  );
-                },
-              },
-              {
-                text: t('Cancel'),
-                action: () => {},
-              },
-            ],
-          }),
-        );
-        break;
-      default:
-        dispatch(showBottomNotificationModal(GeneralError()));
-        break;
-    }
-  };
-
-const unlockInvoice =
-  (invoiceId: string, network: Network): Effect<Promise<string>> =>
-  async (dispatch, getState) => {
-    const {BITPAY_ID, APP} = getState();
-
-    if (APP.network !== network) {
-      return 'networkMismatch';
-    }
-
-    const token = BITPAY_ID.apiToken[APP.network];
-
-    const isPaired = !!token;
-    if (!isPaired) {
-      return 'pairingRequired';
-    }
-
-    try {
-      const tokens = (await BitPayIdApi.getInstance()
-        .request('getProductTokens', token)
-        .then(res => {
-          if (res.data.error) {
-            throw new Error(res.data.error);
-          }
-          return res.data;
-        })) as [{facade: string; token: string; name: string}];
-
-      const {token: userShopperToken} =
-        tokens.find(({facade}: {facade: string}) => facade === 'userShopper') ||
-        {};
-
-      if (!userShopperToken) {
-        return 'userShopperNotFound';
-      }
-
-      try {
-        const unlockInvoiceResponse = await BitPayIdApi.getInstance()
-          .request('unlockInvoice', userShopperToken, {invoiceId})
-          .then(res => {
-            if (res.data.error) {
-              throw new Error(res.data.error);
-            }
-
-            return res.data;
-          });
-
-        const {data} = unlockInvoiceResponse as {data: any};
-        const {meetsRequiredTier} = data;
-
-        if (!meetsRequiredTier) {
-          return 'tierNotMet';
-        }
-
-        return 'unlockSuccess';
-      } catch (e) {
-        return 'invalidInvoice';
-      }
-    } catch (e) {
-      return 'somethingWentWrong';
     }
   };
 
@@ -620,7 +423,6 @@ const handleBitPayUri =
   (dispatch, getState) => {
     dispatch(LogActions.info('[scan] Incoming-data: BitPay URI', data));
 
-    // From Braze (push notifications)
     if (data.includes('wallet?')) {
       const params: URLSearchParams = new URLSearchParams(
         data.replace(APP_DEEPLINK_PREFIX + 'wallet?', ''),
@@ -972,365 +774,6 @@ const handleLitecoinUri =
         dispatch(FormatAmount(coin, chain, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
-    }
-  };
-
-const handleBuyCryptoUri =
-  (data: string): Effect<void> =>
-  (dispatch, getState) => {
-    dispatch(
-      LogActions.info('Incoming-data (redirect): Buy crypto pre-set: ' + data),
-    );
-
-    const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const partner = getParameterByName('partner', res)?.toLowerCase();
-    const amount = getParameterByName('amount', res);
-    let coin = getParameterByName('coin', res)?.toLowerCase();
-    let chain = getParameterByName('chain', res)?.toLowerCase();
-
-    let _amount: number | undefined;
-    if (amount) {
-      const {APP} = getState();
-      const altCurrency = APP.defaultAltCurrency?.isoCode;
-      _amount =
-        altCurrency === 'USD'
-          ? Number(amount)
-          : dispatch(
-              calculateUsdToAltFiat(Number(amount), altCurrency || 'USD'),
-            );
-    }
-
-    if (coin && !chain) {
-      if (IsUtxoCoin(coin)) {
-        chain = coin;
-      } else {
-        coin = undefined;
-      }
-    }
-
-    dispatch(
-      Analytics.track('Clicked Buy Crypto', {
-        context: 'DeepLink',
-        coin: coin || '',
-        chain: chain || '',
-      }),
-    );
-
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'BuyCrypto',
-          params: {
-            screen: 'BuyCryptoRoot',
-            params: {
-              partner,
-              amount: _amount,
-              currencyAbbreviation: coin,
-              chain,
-            },
-          },
-        },
-      ],
-    });
-  };
-
-const handleMoonpayUri =
-  (data: string): Effect<void> =>
-  (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Moonpay URL: ' + data));
-
-    const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const externalId = getParameterByName('externalId', res);
-    if (!externalId) {
-      dispatch(LogActions.warn('No externalId present. Do not redir'));
-      return;
-    }
-
-    const transactionId = getParameterByName('transactionId', res);
-    const status = getParameterByName('transactionStatus', res);
-
-    const stateParams: MoonpayIncomingData = {
-      externalId,
-      transactionId,
-      status,
-    };
-
-    dispatch(
-      BuyCryptoActions.updatePaymentRequestMoonpay({
-        moonpayIncomingData: stateParams,
-      }),
-    );
-
-    const {BUY_CRYPTO} = getState();
-    const order = BUY_CRYPTO.moonpay[externalId];
-
-    dispatch(
-      Analytics.track('Purchased Buy Crypto', {
-        exchange: 'moonpay',
-        fiatAmount: order?.fiat_total_amount || '',
-        fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin || '',
-      }),
-    );
-
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'MoonpaySettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
-        },
-      ],
-    });
-  };
-
-const handleRampUri =
-  (data: string): Effect<void> =>
-  (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Ramp URL: ' + data));
-
-    const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const rampExternalId = getParameterByName('rampExternalId', res);
-    if (!rampExternalId) {
-      dispatch(LogActions.warn('No rampExternalId present. Do not redir'));
-      return;
-    }
-
-    const walletId = getParameterByName('walletId', res);
-    const status = getParameterByName('status', res);
-
-    const stateParams: RampIncomingData = {
-      rampExternalId,
-      walletId,
-      status,
-    };
-
-    dispatch(
-      BuyCryptoActions.updatePaymentRequestRamp({
-        rampIncomingData: stateParams,
-      }),
-    );
-
-    const {BUY_CRYPTO} = getState();
-    const order = BUY_CRYPTO.ramp[rampExternalId];
-
-    dispatch(
-      Analytics.track('Purchased Buy Crypto', {
-        exchange: 'ramp',
-        fiatAmount: order?.fiat_total_amount || '',
-        fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin || '',
-      }),
-    );
-
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'RampSettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
-        },
-      ],
-    });
-  };
-
-const handleSimplexUri =
-  (data: string): Effect<void> =>
-  (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Simplex URL: ' + data));
-
-    const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const paymentId = getParameterByName('paymentId', res);
-    if (!paymentId) {
-      dispatch(LogActions.warn('No paymentId present. Do not redir'));
-      return;
-    }
-
-    const success = getParameterByName('success', res);
-    const quoteId = getParameterByName('quoteId', res);
-    const userId = getParameterByName('userId', res);
-
-    const stateParams: SimplexIncomingData = {
-      success,
-      paymentId,
-      quoteId,
-      userId,
-    };
-
-    dispatch(
-      BuyCryptoActions.updatePaymentRequestSimplex({
-        simplexIncomingData: stateParams,
-      }),
-    );
-
-    const {BUY_CRYPTO} = getState();
-    const order = BUY_CRYPTO.simplex[paymentId];
-
-    dispatch(
-      Analytics.track('Purchased Buy Crypto', {
-        exchange: 'simplex',
-        fiatAmount: order?.fiat_total_amount || '',
-        fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin?.toLowerCase() || '',
-        chain: order?.chain?.toLowerCase() || '',
-      }),
-    );
-
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'SimplexSettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
-        },
-      ],
-    });
-  };
-
-const handleWyreUri =
-  (data: string): Effect<void> =>
-  dispatch => {
-    dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
-
-    if (data.indexOf('wyreError') >= 0) {
-      navigationRef.navigate('ExternalServicesSettings', {
-        screen: 'WyreSettings',
-        params: {
-          paymentRequestError: true,
-        },
-      });
-      return;
-    }
-
-    if (data === 'wyre') {
-      return;
-    }
-    const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const orderId = getParameterByName('id', res);
-    if (!orderId) {
-      dispatch(LogActions.warn('No orderId present. Do not redir'));
-      return;
-    }
-
-    const walletId = getParameterByName('walletId', res);
-    const destCurrency = getParameterByName('destCurrency', res);
-    const destChain = getParameterByName('destChain', res);
-    const sourceCurrency = getParameterByName('sourceCurrency', res);
-    const sourceAmount = getParameterByName('sourceAmount', res);
-
-    const stateParams: WyrePaymentData = {
-      orderId,
-      transferId: getParameterByName('transferId', res),
-      owner: getParameterByName('owner', res),
-      accountId: getParameterByName('accountId', res),
-      walletId,
-      dest: getParameterByName('dest', res),
-      destAmount: getParameterByName('destAmount', res),
-      destChain,
-      destCurrency,
-      purchaseAmount: getParameterByName('purchaseAmount', res),
-      sourceAmount,
-      sourceCurrency,
-      status: getParameterByName('status', res),
-      createdAt: getParameterByName('createdAt', res),
-      paymentMethodName: getParameterByName('paymentMethodName', res),
-      blockchainNetworkTx: getParameterByName('blockchainNetworkTx', res),
-      env: __DEV__ ? 'dev' : 'prod',
-      created_on: Date.now(),
-    };
-
-    dispatch(
-      BuyCryptoActions.successPaymentRequestWyre({
-        wyrePaymentData: stateParams,
-      }),
-    );
-
-    dispatch(
-      Analytics.track('Purchased Buy Crypto', {
-        exchange: 'wyre',
-        fiatAmount: sourceAmount || '',
-        fiatCurrency: sourceCurrency || '',
-        coin: destCurrency?.toLowerCase() || '',
-        chain: destChain?.toLowerCase() || '',
-      }),
-    );
-
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'WyreSettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
-        },
-      ],
-    });
-  };
-
-const handleWalletConnectUri =
-  (data: string): Effect<void> =>
-  async dispatch => {
-    try {
-      if (isValidWalletConnectUri(data)) {
-        const {version} = parseUri(data);
-        if (version === 1) {
-          navigationRef.navigate('WalletConnect', {
-            screen: 'Root',
-            params: {
-              uri: data,
-            },
-          });
-        } else {
-          // temporarily disabled
-          const errMsg = t(
-            'Connection cannot be established. WalletConnect version 2 is still under development.',
-          );
-          throw new Error(errMsg);
-        }
-      }
-    } catch (e: any) {
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      dispatch(
-        showBottomNotificationModal(
-          CustomErrorMessage({
-            errMsg: BWCErrorMessage(e),
-            title: t('Uh oh, something went wrong'),
-          }),
-        ),
-      );
     }
   };
 

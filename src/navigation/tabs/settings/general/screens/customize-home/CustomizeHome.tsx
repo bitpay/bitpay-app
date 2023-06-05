@@ -39,7 +39,6 @@ import {
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../../../../store/app/app.effects';
-import {Analytics} from '../../../../../../store/analytics/analytics.effects';
 
 // Layout selector
 const Noop = () => null;
@@ -118,11 +117,6 @@ const CustomizeHome = () => {
               id: key,
               show: !!show,
             }));
-            dispatch(
-              Analytics.track('Save Layout', {
-                layoutType: layoutType,
-              }),
-            );
             dispatch(setHomeCarouselConfig(list));
             dispatch(setHomeCarouselLayoutType(layoutType));
             navigation.goBack();

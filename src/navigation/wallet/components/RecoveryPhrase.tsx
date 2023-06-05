@@ -85,7 +85,6 @@ import {
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 import {IS_ANDROID, IS_IOS} from '../../../constants';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
@@ -428,12 +427,6 @@ const RecoveryPhrase = () => {
         walletTermsAccepted,
         key,
       });
-      dispatch(
-        Analytics.track('Imported Key', {
-          context: route.params?.context || '',
-          source: 'RecoveryPhrase',
-        }),
-      );
       dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
@@ -579,11 +572,6 @@ const RecoveryPhrase = () => {
             accessibilityLabel="scan-button"
             activeOpacity={ActiveOpacity}
             onPress={() => {
-              dispatch(
-                Analytics.track('Open Scanner', {
-                  context: 'RecoveryPhrase',
-                }),
-              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {

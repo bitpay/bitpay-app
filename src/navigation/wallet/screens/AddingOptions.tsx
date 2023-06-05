@@ -20,7 +20,6 @@ import MultisigOptions from './MultisigOptions';
 import {Option} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -49,11 +48,6 @@ const AddingOptions: React.FC = () => {
         'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and APE',
       ),
       cta: () => {
-        dispatch(
-          Analytics.track('Clicked Create Basic Wallet', {
-            context: 'AddingOptions',
-          }),
-        );
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
           params: {context: 'addWallet', key},

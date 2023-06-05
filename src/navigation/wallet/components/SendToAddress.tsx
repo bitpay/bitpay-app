@@ -53,7 +53,6 @@ import {
   ExtractUriAmount,
 } from '../../../store/wallet/utils/decode-uri';
 import {sleep} from '../../../utils/helper-methods';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../store/log';
 
 const ValidDataTypes: string[] = [
@@ -272,11 +271,6 @@ const SendToAddress = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              dispatch(
-                Analytics.track('Open Scanner', {
-                  context: 'SendTo',
-                }),
-              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {

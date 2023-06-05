@@ -62,7 +62,6 @@ import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export interface CreateMultisigProps {
   currency: string;
@@ -259,14 +258,6 @@ const CreateMultisig = () => {
           }),
         )) as Wallet;
 
-        dispatch(
-          Analytics.track('Created Multisig Wallet', {
-            coin: currency?.toLowerCase(),
-            type: `${opts.m}-${opts.n}`,
-            addedToExistingKey: true,
-          }),
-        );
-
         wallet.getStatus(
           {network: wallet.network},
           (err: any, status: Status) => {
@@ -318,21 +309,6 @@ const CreateMultisig = () => {
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
         )) as Key;
-
-        dispatch(
-          Analytics.track('Created Multisig Wallet', {
-            coin: currency?.toLowerCase(),
-            type: `${opts.m}-${opts.n}`,
-            addedToExistingKey: false,
-          }),
-        );
-
-        dispatch(
-          Analytics.track('Created Key', {
-            context: 'createMultisig',
-            coins: [currency?.toLowerCase()],
-          }),
-        );
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 

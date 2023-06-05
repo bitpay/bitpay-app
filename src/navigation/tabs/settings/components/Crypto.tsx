@@ -15,7 +15,6 @@ import {useTranslation} from 'react-i18next';
 import {WalletActions} from '../../../../store/wallet';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {useNavigation} from '@react-navigation/native';
-import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const Crypto = () => {
   const dispatch = useAppDispatch();
@@ -56,11 +55,6 @@ const Crypto = () => {
         <ToggleSwitch
           onChange={value => {
             dispatch(WalletActions.setUseUnconfirmedFunds(value));
-            dispatch(
-              Analytics.track('Set Use Unconfirmed Funds', {
-                value,
-              }),
-            );
           }}
           isEnabled={useUnconfirmedFunds}
         />
@@ -83,11 +77,6 @@ const Crypto = () => {
         <ToggleSwitch
           onChange={value => {
             dispatch(WalletActions.setCustomizeNonce(value));
-            dispatch(
-              Analytics.track('Set Customize EVM Nonce', {
-                value,
-              }),
-            );
           }}
           isEnabled={customizeNonce}
         />
@@ -132,11 +121,6 @@ const Crypto = () => {
         <ToggleSwitch
           onChange={value => {
             dispatch(WalletActions.setEnableReplaceByFee(value));
-            dispatch(
-              Analytics.track('Set Enable BTC Replace-By-Fee', {
-                value,
-              }),
-            );
           }}
           isEnabled={enableReplaceByFee}
         />

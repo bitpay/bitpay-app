@@ -4,7 +4,6 @@ import styled from 'styled-components/native';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
-import ZenLedgerIcon from '../../../../../assets/img/zenledger/zenledger-icon.svg';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {
@@ -12,7 +11,6 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
 
@@ -39,11 +37,6 @@ const Connections: React.VFC<ConnectionsProps> = props => {
   const {sessions} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
 
   const goToWalletConnect = useCallback(() => {
-    dispatch(
-      Analytics.track('Clicked WalletConnect', {
-        context: 'Settings Connections',
-      }),
-    );
     if (Object.keys(sessions).length || Object.keys(connectors).length) {
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConnections',
@@ -59,11 +52,6 @@ const Connections: React.VFC<ConnectionsProps> = props => {
   const token = useAppSelector(({COINBASE}) => COINBASE.token[COINBASE_ENV]);
   const goToCoinbase = () => {
     haptic('impactLight');
-    dispatch(
-      Analytics.track('Clicked Connect Coinbase', {
-        context: 'Settings Connections',
-      }),
-    );
     if (token && token.access_token) {
       navigation.navigate('Coinbase', {
         screen: 'CoinbaseSettings',
@@ -81,9 +69,6 @@ const Connections: React.VFC<ConnectionsProps> = props => {
       // reset params to prevent re-triggering
       navigation.setParams({redirectTo: undefined} as any);
       goToWalletConnect();
-    } else if (redirectTo === 'zenledger') {
-      navigation.setParams({redirectTo: undefined} as any);
-      navigation.navigate('ZenLedger', {screen: 'Root'});
     }
   }, [redirectTo, goToWalletConnect, navigation]);
 
@@ -109,25 +94,6 @@ const Connections: React.VFC<ConnectionsProps> = props => {
             <WalletConnectIcon width={30} height={25} />
           </ConnectionIconContainer>
           <SettingTitle>WalletConnect</SettingTitle>
-        </ConnectionItemContainer>
-        <AngleRight />
-      </Setting>
-      <Hr />
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          dispatch(
-            Analytics.track('Clicked ZenLedger', {
-              context: 'Settings Connections',
-            }),
-          );
-          navigation.navigate('ZenLedger', {screen: 'Root'});
-        }}>
-        <ConnectionItemContainer>
-          <ConnectionIconContainer>
-            <ZenLedgerIcon width={30} height={25} />
-          </ConnectionIconContainer>
-          <SettingTitle>ZenLedger Taxes</SettingTitle>
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>

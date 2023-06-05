@@ -16,7 +16,6 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export interface Option {
   id: string;
@@ -47,11 +46,6 @@ const CreationOptions: React.FC = () => {
         'Add coins like Bitcoin and Dogecoin and also tokens like USDC and APE',
       ),
       cta: () => {
-        dispatch(
-          Analytics.track('Clicked Create New Key', {
-            context: 'CreationOptions',
-          }),
-        );
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
           params: {context: 'createNewKey'},
@@ -65,11 +59,6 @@ const CreationOptions: React.FC = () => {
         'Use an existing recovery phrase to import an existing wallet',
       ),
       cta: () => {
-        dispatch(
-          Analytics.track('Clicked Import Key', {
-            context: 'CreationOptions',
-          }),
-        );
         navigation.navigate('Wallet', {
           screen: 'Import',
         });

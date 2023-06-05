@@ -1,11 +1,5 @@
 import React from 'react';
 import {View} from 'react-native';
-import {
-  LongPressGestureHandler,
-  TapGestureHandler,
-  TapGestureHandlerGestureEvent,
-  State,
-} from 'react-native-gesture-handler';
 // import Animated, {
 //   runOnJS,
 //   useAnimatedGestureHandler,
@@ -80,32 +74,33 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
   // });
 
   return (
-    <LongPressGestureHandler
-      minDurationMs={1000}
-      onHandlerStateChange={({nativeEvent}) => {
-        if (nativeEvent.state === State.ACTIVE) {
-          onLongPress ? onLongPress() : onPress();
-        }
-      }}>
-      {/* <Animated.View>
-        <TapGestureHandler onGestureEvent={tapGestureEvent}>
-          <Animated.View
-            style={[
-              {
-                overflow: 'hidden',
-                height: VIRTUAL_KEYBOARD_BUTTON_SIZE,
-                width: VIRTUAL_KEYBOARD_BUTTON_SIZE,
-                borderRadius: 50,
-                alignItems: 'center',
-                justifyContent: 'center',
-              },
-            ]}>
-            <View>{children}</View>
-            <Animated.View style={rStyle} />
-          </Animated.View>
-        </TapGestureHandler>
-      </Animated.View> */}
-    </LongPressGestureHandler>
+    <></>
+    // <LongPressGestureHandler
+    //   minDurationMs={1000}
+    //   onHandlerStateChange={({nativeEvent}) => {
+    //     if (nativeEvent.state === State.ACTIVE) {
+    //       onLongPress ? onLongPress() : onPress();
+    //     }
+    //   }}>
+      // {/* <Animated.View>
+      //   <TapGestureHandler onGestureEvent={tapGestureEvent}>
+      //     <Animated.View
+      //       style={[
+      //         {
+      //           overflow: 'hidden',
+      //           height: VIRTUAL_KEYBOARD_BUTTON_SIZE,
+      //           width: VIRTUAL_KEYBOARD_BUTTON_SIZE,
+      //           borderRadius: 50,
+      //           alignItems: 'center',
+      //           justifyContent: 'center',
+      //         },
+      //       ]}>
+      //       <View>{children}</View>
+      //       <Animated.View style={rStyle} />
+      //     </Animated.View>
+      //   </TapGestureHandler>
+      // </Animated.View> */}
+    // </LongPressGestureHandler>
   );
 };
 

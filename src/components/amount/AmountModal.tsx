@@ -1,6 +1,5 @@
 import {useTheme} from '@react-navigation/native';
 import React from 'react';
-import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import CloseModal from '../../../assets/img/close-modal-icon.svg';
 import Button from '../../components/button/Button';
@@ -8,7 +7,6 @@ import {BaseText} from '../../components/styled/Text';
 import {Black, White} from '../../styles/colors';
 import SheetModal from '../modal/base/sheet/SheetModal';
 import Amount, {AmountProps} from './Amount';
-import {SwapOpts} from '../../navigation/services/swap-crypto/screens/SwapCryptoRoot';
 
 const ModalHeaderText = styled(BaseText)`
   font-size: 18px;
@@ -55,11 +53,7 @@ type AmountModalProps = AmountProps & {
   onSendMaxPressed?: () => any;
 };
 
-const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
-  return (
-    <StyledAmountModalContainer>{props.children}</StyledAmountModalContainer>
-  );
-});
+<StyledAmountModalContainer>{props.children}</StyledAmountModalContainer>
 
 const AmountModal: React.VFC<AmountModalProps> = props => {
   const {
@@ -74,7 +68,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
-      <AmountModalContainerHOC>
+      <StyledAmountModalContainer>
         <ModalHeader>
           <CloseModalButton
             onPress={() => {
@@ -106,7 +100,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
           swapOpts={swapOpts}
           onSendMaxPressed={onSendMaxPressed}
         />
-      </AmountModalContainerHOC>
+      </StyledAmountModalContainer>
     </SheetModal>
   );
 };

@@ -52,7 +52,6 @@ import {useTranslation} from 'react-i18next';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import {orderBy} from 'lodash';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -394,12 +393,6 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
                   screen: 'BackupKey',
                   params: {context, key: createdKey},
                 },
-              );
-              dispatch(
-                Analytics.track('Created Key', {
-                  context,
-                  coins: selectedCurrencies,
-                }),
               );
               dispatch(dismissOnGoingProcessModal());
             } catch (e: any) {

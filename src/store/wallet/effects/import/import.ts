@@ -41,7 +41,6 @@ import {
   biometricLockActive,
   currentPin,
   pinLockActive,
-  setAnnouncementsAccepted,
   setColorScheme,
   setDefaultAltCurrency,
   setHomeCarouselConfig,
@@ -54,37 +53,13 @@ import {
 import {createContact} from '../../../contact/contact.actions';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
-import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {startGetRates} from '../rates/rates';
-import {
-  accessTokenSuccess,
-  coinbaseGetAccountsAndBalance,
-  coinbaseGetUser,
-} from '../../../coinbase';
-import {
-  CoinbaseEnvironment,
-  CoinbaseTokenProps,
-} from '../../../../api/coinbase/coinbase.types';
-import {coinbaseUpdateExchangeRate} from '../../../coinbase/coinbase.effects';
 import {hashPin} from '../../../../components/modal/pin/PinModal';
 import {navigationRef} from '../../../../Root';
-import {
-  CardConfigMap,
-  GiftCard,
-  LegacyGiftCard,
-} from '../../../shop/shop.models';
-import {ShopActions} from '../../../shop';
-import {initialShopState} from '../../../shop/shop.reducer';
 import {StackActions} from '@react-navigation/native';
-import {BuyCryptoActions} from '../../../buy-crypto';
-import {SwapCryptoActions} from '../../../swap-crypto';
 import {
-  checkNotificationsPermissions,
-  setConfirmTxNotifications,
-  setNotifications,
-  subscribePushNotifications,
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
@@ -255,11 +230,7 @@ export const startMigration =
         );
 
         const {
-          confirmedTxsNotifications,
           emailNotifications,
-          pushNotifications,
-          offersAndPromotions,
-          productsUpdates,
           totalBalance,
           feeLevels,
           theme,
@@ -268,20 +239,6 @@ export const startMigration =
         } = config || {};
 
         emailNotificationsConfig = emailNotifications;
-
-        // push notifications
-        const systemEnabled = await checkNotificationsPermissions();
-        if (systemEnabled) {
-          if (pushNotifications?.enabled) {
-            dispatch(setNotifications(true));
-            if (confirmedTxsNotifications?.enabled) {
-              dispatch(setConfirmTxNotifications(true));
-            }
-            if (offersAndPromotions?.enabled || productsUpdates?.enabled) {
-              dispatch(setAnnouncementsAccepted(true));
-            }
-          }
-        }
 
         // lock
         if (lock) {
@@ -346,203 +303,6 @@ export const startMigration =
         );
       }
 
-      // buy crypto
-      // simplex
-      try {
-        dispatch(LogActions.info('[startMigration] - Migrating simplex'));
-        const buyCryptoSimplexData = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'simplex-production',
-            'utf8',
-          ).catch(_ => '{}'),
-        ) as any;
-        Object.values(buyCryptoSimplexData).forEach(
-          (simplexPaymentData: any) => {
-            simplexPaymentData.env = 'prod';
-            delete simplexPaymentData.error;
-            dispatch(
-              BuyCryptoActions.successPaymentRequestSimplex({
-                simplexPaymentData,
-              }),
-            );
-          },
-        );
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate simplex: ' + errorStr));
-      }
-
-      // wyre
-      try {
-        dispatch(LogActions.info('[startMigration] - Migrating wyre'));
-        const buyCryptoWyreData = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'wyre-production',
-            'utf8',
-          ).catch(_ => '{}'),
-        ) as any;
-        Object.values(buyCryptoWyreData).forEach((wyrePaymentData: any) => {
-          wyrePaymentData.env = 'prod';
-          delete wyrePaymentData.error;
-          dispatch(
-            BuyCryptoActions.successPaymentRequestWyre({
-              wyrePaymentData,
-            }),
-          );
-        });
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate wyre: ' + errorStr));
-      }
-
-      // swap crypto
-      // changelly
-      try {
-        dispatch(LogActions.info('[startMigration] - Migrating changelly'));
-        const swapCryptoChangellyData = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'changelly-production',
-            'utf8',
-          ).catch(_ => '{}'),
-        ) as any;
-        Object.values(swapCryptoChangellyData).forEach(
-          (changellyTxData: any) => {
-            changellyTxData.env = 'prod';
-            delete changellyTxData.error;
-            dispatch(
-              SwapCryptoActions.successTxChangelly({
-                changellyTxData,
-              }),
-            );
-          },
-        );
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate changelly: ' + errorStr));
-      }
-
-      // gift cards
-      try {
-        dispatch(LogActions.info('[startMigration] - Migrating gift cards'));
-        const supportedCardMap = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'giftCardConfigCache',
-            'utf8',
-          ).catch(_ => '{}'),
-        ) as CardConfigMap;
-        dispatch(
-          ShopActions.successFetchCatalog({
-            availableCardMap: supportedCardMap || {},
-            categoriesAndCurations: initialShopState.categoriesAndCurations,
-            integrations: initialShopState.integrations,
-          }),
-        );
-        const supportedCardNames = Object.keys(supportedCardMap);
-        const getStorageKey = (cardName: string) => {
-          switch (cardName) {
-            case 'Amazon.com':
-              return 'amazonGiftCards-livenet';
-            case 'Amazon.co.jp':
-              return 'amazonGiftCards-livenet-japan';
-            case 'Mercado Livre':
-              return 'MercadoLibreGiftCards-livenet';
-            default:
-              return `giftCards-${cardName}-livenet`;
-          }
-        };
-        const purchasedCardPromises = supportedCardNames.map(cardName =>
-          RNFS.readFile(
-            cordovaStoragePath + getStorageKey(cardName),
-            'utf8',
-          ).catch(_ => '{}'),
-        );
-        const purchasedCardResponses = await Promise.all(purchasedCardPromises);
-        const purchasedCards = purchasedCardResponses
-          .map(res => {
-            try {
-              return JSON.parse(res);
-            } catch (err) {}
-            return {};
-          })
-          .map((giftCardMap: {[invoiceId: string]: LegacyGiftCard}) => {
-            const legacyGiftCards = Object.values(giftCardMap);
-            const migratedGiftCards = legacyGiftCards.map(legacyGiftCard => ({
-              ...legacyGiftCard,
-              clientId: legacyGiftCard.uuid,
-            }));
-            return migratedGiftCards as GiftCard[];
-          })
-          .filter(brand => brand.length);
-        const allGiftCards = purchasedCards
-          .flat()
-          .filter(
-            giftCard =>
-              supportedCardNames.includes(giftCard.name) &&
-              giftCard.status !== 'UNREDEEMED',
-          );
-        const numActiveGiftCards = allGiftCards.filter(
-          giftCard => !giftCard.archived,
-        ).length;
-        const giftCards = allGiftCards.map(giftCard => ({
-          ...giftCard,
-          archived: numActiveGiftCards > 3 ? true : giftCard.archived,
-        }));
-        dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
-
-        const giftCardEmail = await RNFS.readFile(
-          cordovaStoragePath + 'amazonUserInfo',
-          'utf8',
-        )
-          .then(
-            (emailObjectString: string) => JSON.parse(emailObjectString).email,
-          )
-          .catch(_ => '');
-        const email = giftCardEmail || emailNotificationsConfig?.email;
-        dispatch(ShopActions.updatedEmailAddress({email}));
-
-        const phoneCountryInfoPromise = async () => {
-          try {
-            return JSON.parse(
-              await RNFS.readFile(
-                cordovaStoragePath + 'phoneCountryInfo',
-                'utf8',
-              ),
-            );
-          } catch (e) {}
-        };
-
-        const [phone, phoneCountryInfo] = await Promise.all([
-          RNFS.readFile(cordovaStoragePath + 'phone', 'utf8'),
-          phoneCountryInfoPromise(),
-        ]);
-        if (phone && phoneCountryInfo) {
-          dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
-        }
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate gift cards: ' + errorStr));
-      }
-
       // address book
       try {
         dispatch(LogActions.info('[startMigration] - Migrating address book'));
@@ -588,58 +348,6 @@ export const startMigration =
         }
         dispatch(
           LogActions.info('Failed to migrate app identity: ' + errorStr),
-        );
-      }
-
-      // bitpay id
-      try {
-        dispatch(LogActions.info('[startMigration] - Migrating bitpay id'));
-        const token = await RNFS.readFile(
-          cordovaStoragePath + 'bitpayIdToken-livenet',
-          'utf8',
-        );
-        dispatch(LogActions.info('Successfully migrated bitpay id'));
-        await dispatch(successPairingBitPayId(Network.mainnet, token));
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(LogActions.info('Failed to migrate bitpay id: ' + errorStr));
-      }
-
-      // coinbase
-      try {
-        dispatch(
-          LogActions.info('[startMigration] - Migrating Coinbase tokens'),
-        );
-        const account = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'coinbase-production',
-            'utf8',
-          ),
-        ) as {token: CoinbaseTokenProps};
-        dispatch(
-          accessTokenSuccess(CoinbaseEnvironment.production, account.token),
-        );
-        await dispatch(coinbaseGetUser());
-        await dispatch(coinbaseUpdateExchangeRate());
-        await dispatch(coinbaseGetAccountsAndBalance());
-        dispatch(
-          setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
-        );
-        dispatch(LogActions.info('Successfully migrated Coinbase account'));
-      } catch (err: unknown) {
-        let errorStr;
-        if (err instanceof Error) {
-          errorStr = err.message;
-        } else {
-          errorStr = JSON.stringify(err);
-        }
-        dispatch(
-          LogActions.info('Failed to migrate Coinbase account: ' + errorStr),
         );
       }
 
@@ -780,9 +488,7 @@ export const startImportMnemonic =
         const {
           WALLET,
           APP: {
-            notificationsAccepted,
             emailNotifications,
-            brazeEid,
             defaultLanguage,
           },
         } = getState();
@@ -816,10 +522,6 @@ export const startImportMnemonic =
         const key = buildKeyObj({
           key: _key,
           wallets: wallets.map(wallet => {
-            // subscribe new wallet to push notifications
-            if (notificationsAccepted) {
-              dispatch(subscribePushNotifications(wallet, brazeEid!));
-            }
             // subscribe new wallet to email notifications
             if (
               emailNotifications &&
@@ -873,7 +575,6 @@ export const startImportFile =
           APP: {
             notificationsAccepted,
             emailNotifications,
-            brazeEid,
             defaultLanguage,
           },
         } = getState();
@@ -918,10 +619,6 @@ export const startImportFile =
         const key = buildKeyObj({
           key: _key,
           wallets: wallets.map(wallet => {
-            // subscribe new wallet to push notifications
-            if (notificationsAccepted) {
-              dispatch(subscribePushNotifications(wallet, brazeEid!));
-            }
             // subscribe new wallet to email notifications
             if (
               emailNotifications &&
@@ -979,7 +676,6 @@ export const startImportWithDerivationPath =
           APP: {
             notificationsAccepted,
             emailNotifications,
-            brazeEid,
             defaultLanguage,
           },
         } = getState();
@@ -1013,10 +709,6 @@ export const startImportWithDerivationPath =
               err = new Error('WALLET_DOES_NOT_EXIST');
             }
             return reject(err);
-          }
-          // subscribe new wallet to push notifications
-          if (notificationsAccepted) {
-            dispatch(subscribePushNotifications(wallet, brazeEid!));
           }
           // subscribe new wallet to email notifications
           if (

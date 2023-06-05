@@ -28,7 +28,6 @@ import {
 } from '../../../../../store/app/app.actions';
 import {sleep} from '../../../../../utils/helper-methods';
 import RNRestart from 'react-native-restart';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const ThemeSettings: React.FC = () => {
   const {t} = useTranslation();
@@ -96,11 +95,6 @@ const ThemeSettings: React.FC = () => {
     dispatch(AppActions.setColorScheme(setScheme));
     dispatch(
       LogActions.info('Theme updated to ' + (setScheme || 'system default')),
-    );
-    dispatch(
-      Analytics.track('Saved Theme', {
-        theme: setScheme || 'system default',
-      }),
     );
   };
   const [selected, setSelected] = useState(currentTheme);

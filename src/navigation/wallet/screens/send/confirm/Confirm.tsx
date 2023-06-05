@@ -71,7 +71,6 @@ import {
   GetPrecision,
   IsERCToken,
 } from '../../../../../store/wallet/utils/currency';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 
 const VerticalPadding = styled.View`
@@ -557,12 +556,6 @@ const Confirm = () => {
             await sleep(500);
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
-            dispatch(
-              Analytics.track('Sent Crypto', {
-                context: 'Confirm',
-                coin: currencyAbbreviation || '',
-              }),
-            );
             await sleep(500);
             setShowPaymentSentModal(true);
           } catch (err) {

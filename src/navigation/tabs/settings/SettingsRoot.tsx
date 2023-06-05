@@ -3,8 +3,6 @@ import React, {ReactElement, useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View, LayoutAnimation, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
-import AngleRight from '../../../../assets/img/angle-right.svg';
-import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -12,23 +10,16 @@ import {
   SettingIcon,
   SettingTitle,
 } from '../../../components/styled/Containers';
-import {RootState} from '../../../store';
-import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {Black, Feather, LightBlack, White} from '../../../styles/colors';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
-import {navigationRef} from '../../../Root';
 import {updateSettingsListConfig} from '../../../store/app/app.actions';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 
 import General from './components/General';
 import Security from './components/Security';
-import Notifications from './components/Notifications';
-import Connections from './components/Connections';
-import ExternalServices from './components/ExternalServices';
 import About from './components/About';
 import Contacts from './components/Contacts';
-import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
 import {SettingsStackParamList} from './SettingsStack';
@@ -107,7 +98,6 @@ export type SettingsListType =
   | 'Wallets & Keys'
   | 'Security'
   | 'External Services'
-  | 'Notifications'
   | 'Connections'
   | 'About BitPay';
 
@@ -115,9 +105,6 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
   const {redirectTo} = route.params || {};
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const user = useSelector<RootState, User | null>(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const hideList = useAppSelector(({APP}) => APP.settingsListConfig);
   const memoizedSettingsConfigs: HomeSetting[] = useMemo(
     () => [
@@ -150,24 +137,6 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
         title: t('Security'),
         onPress: () => {},
         subListComponent: <Security />,
-      },
-      {
-        id: 'Notifications',
-        title: t('Notifications'),
-        onPress: () => {},
-        subListComponent: <Notifications />,
-      },
-      {
-        id: 'Connections',
-        title: t('Connections'),
-        onPress: () => {},
-        subListComponent: <Connections redirectTo={redirectTo} />,
-      },
-      {
-        id: 'External Services',
-        title: t('External Services'),
-        onPress: () => {},
-        subListComponent: <ExternalServices />,
       },
       {
         id: 'About BitPay',
@@ -213,37 +182,6 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
   return (
     <SettingsContainer>
       <SettingsHome ref={scrollViewRef}>
-        <BitPayIdSettingsLink
-          style={{paddingHorizontal: 15}}
-          onPress={() => {
-            if (user) {
-              navigationRef.navigate('BitpayId', {screen: 'Profile'});
-            } else {
-              navigationRef.navigate('Auth', {screen: 'Login'});
-            }
-          }}>
-          <BitPayIdAvatarContainer>
-            <Avatar size={50} />
-          </BitPayIdAvatarContainer>
-          {user ? (
-            <BitPayIdUserContainer>
-              {user.givenName || user.familyName ? (
-                <BitPayIdUserText bold>
-                  {user.givenName} {user.familyName}
-                </BitPayIdUserText>
-              ) : null}
-              <BitPayIdUserText>{user.email}</BitPayIdUserText>
-            </BitPayIdUserContainer>
-          ) : (
-            <BitPayIdSettingTitle>
-              {t('Log In or Sign Up')}
-            </BitPayIdSettingTitle>
-          )}
-          <SettingIcon suffix>
-            <AngleRight />
-          </SettingIcon>
-        </BitPayIdSettingsLink>
-
         {memoizedSettingsList}
       </SettingsHome>
     </SettingsContainer>

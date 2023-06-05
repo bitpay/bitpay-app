@@ -36,8 +36,6 @@ import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/stat
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
 import {getPriceHistory} from '../../../../../store/wallet/effects';
 import {useTranslation} from 'react-i18next';
-import {coinbaseInitialize} from '../../../../../store/coinbase';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {sleep} from '../../../../../utils/helper-methods';
 
@@ -168,16 +166,10 @@ const AltCurrencySettings = () => {
               Keyboard.dismiss();
               dispatch(startOnGoingProcessModal('LOADING'));
               await sleep(500);
-              dispatch(
-                Analytics.track('Saved Display Currency', {
-                  currency: item.isoCode,
-                }),
-              );
               InteractionManager.runAfterInteractions(() => {
                 dispatch(setDefaultAltCurrency(item));
                 dispatch(FormatKeyBalances());
                 dispatch(updatePortfolioBalance());
-                dispatch(coinbaseInitialize());
                 dispatch(getPriceHistory(item.isoCode));
               });
               dispatch(dismissOnGoingProcessModal());

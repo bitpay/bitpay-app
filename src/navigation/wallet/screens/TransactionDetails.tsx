@@ -51,7 +51,6 @@ import {
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Banner from '../../../components/banner/Banner';
 import Info from '../../../components/icons/info/Info';
-import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
 import {getContactObj, sleep} from '../../../utils/helper-methods';
 import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 import {
@@ -396,9 +395,7 @@ const TransactionDetails = () => {
 
   return (
     <TxsDetailsContainer>
-      {isLoading ? (
-        <TransactionDetailSkeleton />
-      ) : txs ? (
+      {isLoading &&  (
         <ScrollView
           keyboardShouldPersistTaps={'handled'}
           extraScrollHeight={80}>

@@ -53,7 +53,6 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -290,13 +289,6 @@ const PriceCharts = () => {
   };
 
   const goToBuyCrypto = useRequireKeyAndWalletRedirect(() => {
-    dispatch(
-      Analytics.track('Clicked Buy Crypto', {
-        context: 'PriceChart',
-        coin: currencyAbbreviation || '',
-        chain: chain || '',
-      }),
-    );
     navigation.navigate('Wallet', {
       screen: WalletScreens.AMOUNT,
       params: {

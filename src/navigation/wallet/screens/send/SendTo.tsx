@@ -9,13 +9,10 @@ import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import Clipboard from '@react-native-community/clipboard';
 import {
-  ActiveOpacity,
   ScreenGutter,
   SearchContainer,
   SearchInput,
 } from '../../../../components/styled/Containers';
-import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
-import SendLightSvg from '../../../../../assets/img/send-icon-light.svg';
 import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
 import {
   LightBlack,
@@ -40,7 +37,7 @@ import {
   CheckIfLegacyBCH,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {TouchableOpacity, View} from 'react-native';
+import {View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
@@ -57,7 +54,6 @@ import {
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
-  dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
@@ -87,11 +83,7 @@ import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
 import ContactRow from '../../../../components/list/ContactRow';
-import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
-import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
-import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {LogActions} from '../../../../store/log';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -267,10 +259,6 @@ const SendTo = () => {
   const [searchInput, setSearchInput] = useState('');
   const [clipboardData, setClipboardData] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
-  const [searchIsEmailAddress, setSearchIsEmailAddress] = useState(false);
-  const [emailAddressSearchPromise, setEmailAddressSearchPromise] = useState<
-    Promise<ReceivingAddress[]>
-  >(Promise.resolve([]));
 
   const {wallet} = route.params;
   const {currencyAbbreviation, id, chain, network} = wallet;
@@ -422,11 +410,6 @@ const SendTo = () => {
     } = {},
   ) => {
     const {context, name, email, destinationTag} = opts;
-    if (isEmailAddress(text.trim())) {
-      setSearchIsEmailAddress(true);
-      return;
-    }
-    setSearchIsEmailAddress(false);
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
@@ -548,33 +531,6 @@ const SendTo = () => {
     );
   }, [navigation]);
 
-  useEffect(() => {
-    const getReceivingAddresses = async () => {
-      const email = searchInput.trim().toLowerCase();
-      const searchPromise = dispatch(
-        BitPayIdEffects.startFetchReceivingAddresses({
-          email,
-          currency: getCurrencyCodeFromCoinAndChain(
-            currencyAbbreviation,
-            wallet.chain,
-          ),
-        }),
-      ).catch(_ => Promise.resolve([]));
-      setEmailAddressSearchPromise(searchPromise);
-      await searchPromise;
-    };
-    if (searchIsEmailAddress) {
-      getReceivingAddresses();
-    } else {
-      setEmailAddressSearchPromise(Promise.resolve([]));
-    }
-  }, [
-    searchIsEmailAddress,
-    searchInput,
-    dispatch,
-    currencyAbbreviation,
-    wallet.chain,
-  ]);
 
   return (
     <SafeAreaView>
@@ -589,90 +545,8 @@ const SendTo = () => {
               onSearchInputChange(text);
             }}
           />
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={() => {
-              haptic('impactLight');
-              dispatch(
-                Analytics.track('Open Scanner', {
-                  context: 'SendTo',
-                }),
-              );
-              navigation.navigate('Scan', {
-                screen: 'Root',
-                params: {
-                  onScanComplete: data => {
-                    try {
-                      if (data) {
-                        validateAndNavigateToConfirm(data);
-                      }
-                    } catch (err) {
-                      const e =
-                        err instanceof Error
-                          ? err.message
-                          : JSON.stringify(err);
-                      dispatch(LogActions.error('[OpenScanner SendTo] ', e));
-                    }
-                  },
-                },
-              });
-            }}>
-            <ScanSvg />
-          </TouchableOpacity>
         </SearchContainer>
 
-        {searchIsEmailAddress ? (
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={async () => {
-              const email = searchInput.toLowerCase();
-              const emailReceivingAddresses = await emailAddressSearchPromise;
-              const addressMatchingCurrency = emailReceivingAddresses.find(
-                ({coin, chain: addressChain}) =>
-                  currencyAbbreviation.toLowerCase() === coin.toLowerCase() &&
-                  chain.toLowerCase() === addressChain.toLowerCase(),
-              );
-              addressMatchingCurrency
-                ? validateAndNavigateToConfirm(
-                    addressMatchingCurrency.address,
-                    {email},
-                  )
-                : dispatch(
-                    showBottomNotificationModal({
-                      type: 'warning',
-                      title: 'Unable to Send to Contact',
-                      message: '',
-                      message2: (
-                        <InfoSheetMessage>
-                          <Paragraph>
-                            <EmailText>{email}</EmailText> is not yet able to
-                            receive crypto to their email.
-                          </Paragraph>
-                        </InfoSheetMessage>
-                      ),
-                      enableBackdropDismiss: true,
-                      actions: [
-                        {
-                          text: 'OK',
-                          action: async () => {
-                            dispatch(dismissBottomNotificationModal());
-                          },
-                          primary: true,
-                        },
-                      ],
-                    }),
-                  );
-            }}>
-            <EmailContainer>
-              <EmailIconContainer>
-                <SendLightSvg />
-              </EmailIconContainer>
-              <Paragraph>
-                Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
-              </Paragraph>
-            </EmailContainer>
-          </TouchableOpacity>
-        ) : null}
 
         {clipboardData ? (
           <PasteClipboardContainer

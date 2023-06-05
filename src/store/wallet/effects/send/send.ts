@@ -68,7 +68,6 @@ import {getCoinAndChainFromCurrencyCode} from '../../../../navigation/bitpay-id/
 import {navigationRef} from '../../../../Root';
 import {WalletScreens} from '../../../../navigation/wallet/WalletStack';
 // import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
-// import {Analytics} from '../../../analytics/analytics.effects';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1542,11 +1541,6 @@ export const sendCrypto =
             {
               text: t('Add funds'),
               action: () => {
-                dispatch(
-                  Analytics.track('Clicked Buy Crypto', {
-                    context: 'HomeRoot',
-                  }),
-                );
                 navigationRef.navigate('Wallet', {
                   screen: WalletScreens.AMOUNT,
                   params: {
@@ -1573,11 +1567,6 @@ export const sendCrypto =
         }),
       );
     } else {
-      dispatch(
-        Analytics.track('Clicked Send', {
-          context: loggerContext,
-        }),
-      );
       navigationRef.navigate('Wallet', {
         screen: 'GlobalSelect',
         params: {context: 'send'},
@@ -1617,11 +1606,6 @@ export const receiveCrypto =
           ),
         );
       } else {
-        dispatch(
-          Analytics.track('Clicked Receive', {
-            context: loggerContext,
-          }),
-        );
         navigationRef.navigate('Wallet', {
           screen: 'GlobalSelect',
           params: {context: 'receive'},

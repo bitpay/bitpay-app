@@ -6,19 +6,15 @@ import {
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
-// import Braze from 'react-native-appboy-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   Appearance,
   AppState,
   AppStateStatus,
   DeviceEventEmitter,
-  Linking,
-  NativeEventEmitter,
   NativeModules,
   StatusBar,
 } from 'react-native';
-import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
@@ -36,79 +32,29 @@ import {LogActions} from './store/log';
 import {
   useAppDispatch,
   useAppSelector,
-  useDeeplinks,
-  useUrlEventHandler,
 } from './utils/hooks';
 import i18n from 'i18next';
 
-import BitpayIdStack, {
-  BitpayIdStackParamList,
-} from './navigation/bitpay-id/BitpayIdStack';
-import OnboardingStack, {
-  OnboardingStackParamList,
-} from './navigation/onboarding/OnboardingStack';
 import TabsStack, {
-  TabsScreens,
   TabsStackParamList,
 } from './navigation/tabs/TabsStack';
 import WalletStack, {
   WalletStackParamList,
 } from './navigation/wallet/WalletStack';
-import ScanStack, {ScanStackParamList} from './navigation/scan/ScanStack';
 import GeneralSettingsStack, {
   GeneralSettingsStackParamList,
 } from './navigation/tabs/settings/general/GeneralStack';
 import ContactsStack, {
   ContactsStackParamList,
 } from './navigation/tabs/contacts/ContactsStack';
-import ExternalServicesSettingsStack, {
-  ExternalServicesSettingsStackParamList,
-} from './navigation/tabs/settings/external-services/ExternalServicesStack';
 import AboutStack, {
   AboutStackParamList,
 } from './navigation/tabs/settings/about/AboutStack';
-import AuthStack, {AuthStackParamList} from './navigation/auth/AuthStack';
 
-import BuyCryptoStack, {
-  BuyCryptoStackParamList,
-} from './navigation/services/buy-crypto/BuyCryptoStack';
-import SwapCryptoStack, {
-  SwapCryptoStackParamList,
-} from './navigation/services/swap-crypto/SwapCryptoStack';
-import IntroStack, {IntroStackParamList} from './navigation/intro/IntroStack';
-import WalletConnectStack, {
-  WalletConnectStackParamList,
-} from './navigation/wallet-connect/WalletConnectStack';
-import {ShopStackParamList} from './navigation/tabs/shop/ShopStack';
-import GiftCardStack, {
-  GiftCardStackParamList,
-} from './navigation/tabs/shop/gift-card/GiftCardStack';
-import GiftCardDeeplinkScreen, {
-  GiftCardDeeplinkScreenParamList,
-} from './navigation/tabs/shop/gift-card/GiftCardDeeplink';
 import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
-import MerchantStack, {
-  MerchantStackParamList,
-} from './navigation/tabs/shop/merchant/MerchantStack';
 import PinModal from './components/modal/pin/PinModal';
-import CoinbaseStack, {
-  CoinbaseStackParamList,
-} from './navigation/coinbase/CoinbaseStack';
-import BpDevtools from './components/bp-devtools/BpDevtools';
-import {APP_ANALYTICS_ENABLED, DEVTOOLS_ENABLED} from './constants/config';
+import {APP_ANALYTICS_ENABLED} from './constants/config';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
-import CardActivationStack, {
-  CardActivationStackParamList,
-} from './navigation/card-activation/CardActivationStack';
-import {sleep} from './utils/helper-methods';
-import {Analytics} from './store/analytics/analytics.effects';
-import {handleBwsEvent} from './store/app/app.effects';
-import NotificationsSettingsStack, {
-  NotificationsSettingsStackParamsList,
-} from './navigation/tabs/settings/notifications/NotificationsStack';
-import ZenLedgerStack, {
-  ZenLedgerStackParamsList,
-} from './navigation/zenledger/ZenLedgerStack';
 import {WalletBackupActions} from './store/wallet-backup';
 import {successCreateKey} from './store/wallet/wallet.actions';
 import {bootstrapKey, bootstrapWallets} from './store/transforms/transforms';
@@ -118,33 +64,15 @@ import NetworkFeePolicySettingsStack, {
   NetworkFeePolicySettingsStackParamsList,
 } from './navigation/tabs/settings/NetworkFeePolicy/NetworkFeePolicyStack';
 import {WalletActions} from './store/wallet';
-import { BaseText } from './components/styled/Text';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
-  Auth: NavigatorScreenParams<AuthStackParamList>;
-  Intro: NavigatorScreenParams<IntroStackParamList>;
-  Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Tabs: NavigatorScreenParams<TabsStackParamList>;
-  BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
-  CardActivation: NavigatorScreenParams<CardActivationStackParamList>;
-  Scan: NavigatorScreenParams<ScanStackParamList>;
-  Shop: NavigatorScreenParams<ShopStackParamList>;
-  GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
-  GiftCardDeeplink: GiftCardDeeplinkScreenParamList;
-  Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
-  ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
-  Coinbase: NavigatorScreenParams<CoinbaseStackParamList>;
-  BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
-  SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
-  WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
   Debug: DebugScreenParamList;
-  NotificationsSettings: NavigatorScreenParams<NotificationsSettingsStackParamsList>;
-  ZenLedger: NavigatorScreenParams<ZenLedgerStackParamsList>;
   NetworkFeePolicySettings: NavigatorScreenParams<NetworkFeePolicySettingsStackParamsList>;
 };
 // ROOT NAVIGATION CONFIG
@@ -164,38 +92,21 @@ export enum RootStacks {
   MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
-  EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
   ABOUT = 'About',
-  COINBASE = 'Coinbase',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT_V2 = 'WalletConnect',
   DEBUG = 'Debug',
   NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
-  ZENLEDGER = 'ZenLedger',
   NETWORK_FEE_POLICY_SETTINGS = 'NetworkFeePolicySettings',
 }
 
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
-  AuthStackParamList &
-    OnboardingStackParamList &
-    BitpayIdStackParamList &
     WalletStackParamList &
-    CardActivationStackParamList &
-    GiftCardStackParamList &
-    MerchantStackParamList &
     GeneralSettingsStackParamList &
     ContactsStackParamList &
-    ExternalServicesSettingsStackParamList &
-    AboutStackParamList &
-    CoinbaseStackParamList &
-    BuyCryptoStackParamList &
-    SwapCryptoStackParamList &
-    ScanStackParamList &
-    WalletConnectStackParamList &
-    NotificationsSettingsStackParamsList &
-    ZenLedgerStackParamsList
+    AboutStackParamList
 >;
 
 declare global {
@@ -233,8 +144,6 @@ const Root = createStackNavigator<RootStackParamList>();
 export default () => {
   const dispatch = useAppDispatch();
   const [, rerender] = useState({});
-  const linking = useDeeplinks();
-  const urlEventHandler = useUrlEventHandler();
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
@@ -346,16 +255,10 @@ export default () => {
                   parentRoute.state.routes[parentRoute.state.index || 0];
 
                 stackName = tabStack.name + ' Tab';
-
-                if (tabStack.name === TabsScreens.SHOP) {
-                  dispatch(Analytics.track('Clicked Shop tab', {}));
-                }
               } else {
                 stackName = parentRoute.name;
                 screenName = childRoute.name;
               }
-
-              dispatch(Analytics.screen(stackName, {screen: screenName || ''}));
             }
           }
         }
@@ -530,14 +433,8 @@ export default () => {
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
   // ROOT STACKS AND GLOBAL COMPONENTS
-  const initialRoute = RootStacks.ONBOARDING
-  //  onboardingCompleted
-  // ? RootStacks.TABS
-  // : introCompleted
-  // ? RootStacks.ONBOARDING
-  // : RootStacks.INTRO;
-  
-  console.log('#########################initialRoute', initialRoute)
+  const initialRoute = RootStacks.TABS
+
   return (
     <SafeAreaProvider>
       <StatusBar
@@ -553,22 +450,8 @@ export default () => {
         <NavigationContainer
           ref={navigationRef}
           theme={theme}
-          linking={linking}
           onReady={async () => {
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
-
-            if (onboardingCompleted) {
-              const getBrazeInitialUrl = async (): Promise<string> =>
-                new Promise(resolve => {}
-                  // Braze.getInitialURL(deepLink => resolve(deepLink)),
-                );
-              const [url, brazeUrl] = await Promise.all([
-                Linking.getInitialURL(),
-                getBrazeInitialUrl(),
-              ]);
-              await sleep(10);
-              urlEventHandler({url: url || brazeUrl});
-            }
           }}
           onStateChange={debouncedOnStateChange}>
           <Root.Navigator
@@ -586,12 +469,6 @@ export default () => {
                 animationEnabled: false,
               }}
             />
-            {/* <Root.Screen name={RootStacks.AUTH} component={AuthStack} /> */}
-            <Root.Screen name={RootStacks.INTRO} component={IntroStack} />
-            <Root.Screen
-              name={RootStacks.ONBOARDING}
-              component={OnboardingStack}
-            />
             <Root.Screen
               name={RootStacks.TABS}
               component={TabsStack}
@@ -600,82 +477,27 @@ export default () => {
               }}
             />
             <Root.Screen
-              name={RootStacks.BITPAY_ID}
-              component={BitpayIdStack}
-            />
-
-            <Root.Screen
               options={{
                 gestureEnabled: false,
               }}
               name={RootStacks.WALLET}
               component={WalletStack}
             />
-
-            <Root.Screen
-              name={RootStacks.CARD_ACTIVATION}
-              component={CardActivationStack}
-              options={{
-                gestureEnabled: false,
-              }}
-            />
-            <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
-            <Root.Screen
-              name={RootStacks.GIFT_CARD}
-              component={GiftCardStack}
-              options={{
-                gestureEnabled: false,
-              }}
-            />
-            <Root.Screen
-              name={RootStacks.GIFT_CARD_DEEPLINK}
-              component={GiftCardDeeplinkScreen}
-            />
-            <Root.Screen name={RootStacks.MERCHANT} component={MerchantStack} />
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}
               component={GeneralSettingsStack}
             />
-            <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
-            <Root.Screen
-              name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
-              component={ExternalServicesSettingsStack}
-            />
-            <Root.Screen
-              name={RootStacks.NOTIFICATIONS_SETTINGS}
-              component={NotificationsSettingsStack}
-            />
+             <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
             <Root.Screen
               name={RootStacks.NETWORK_FEE_POLICY_SETTINGS}
               component={NetworkFeePolicySettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
-            <Root.Screen name={RootStacks.COINBASE} component={CoinbaseStack} />
-            <Root.Screen
-              name={RootStacks.BUY_CRYPTO}
-              component={BuyCryptoStack}
-            />
-            <Root.Screen
-              name={RootStacks.SWAP_CRYPTO}
-              component={SwapCryptoStack}
-              options={{
-                gestureEnabled: false,
-              }}
-            />
-            <Root.Screen
-              name={RootStacks.WALLET_CONNECT_V2}
-              component={WalletConnectStack}
-            />
-            <Root.Screen
-              name={RootStacks.ZENLEDGER}
-              component={ZenLedgerStack}
-            />
           </Root.Navigator>
-          <OnGoingProcessModal />
-          <BottomNotificationModal />
-          <DecryptEnterPasswordModal />
-          <PinModal />
-          <BiometricModal />
+          {/* <OnGoingProcessModal /> */}
+          {/* <BottomNotificationModal /> */}
+          {/* <DecryptEnterPasswordModal /> */}
+          {/* <PinModal /> */}
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -30,14 +30,7 @@ import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wal
 import {Network} from '../../../constants';
 import {GetInvoiceCurrency, PayProOptions} from '../effects/paypro/paypro';
 import {Effect} from '../..';
-import {
-  CoinbaseAccountProps,
-  CoinbaseExchangeRatesProps,
-  CoinbaseUserProps,
-} from '../../../api/coinbase/coinbase.types';
-import {coinbaseGetFiatAmount} from '../../coinbase';
 import {WalletRowProps} from '../../../components/list/WalletRow';
-import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {
   KeyWallet,
   KeyWalletsRowProps,
@@ -335,117 +328,6 @@ export const getRemainingWalletCount = (
   return wallets.length - WALLET_DISPLAY_LIMIT;
 };
 
-export const coinbaseAccountToWalletRow = (
-  account: CoinbaseAccountProps,
-  exchangeRates: CoinbaseExchangeRatesProps | null,
-  defaultAltCurrencyIsoCode = 'USD',
-) => {
-  const fiatAmount = coinbaseGetFiatAmount(
-    account.balance.amount,
-    account.balance.currency,
-    exchangeRates,
-  );
-  const cryptoAmount = Number(account.balance.amount)
-    ? account.balance.amount
-    : '0';
-
-  const _chain =
-    BitpaySupportedUtxoCoins[account.currency.code.toLowerCase()] ||
-    OtherBitpaySupportedCoins[account.currency.code.toLowerCase()]
-      ? account.currency.code.toLowerCase()
-      : 'eth';
-  const _currencyAbbreviation = getCurrencyAbbreviation(
-    account.currency.code.toLowerCase(),
-    _chain,
-  );
-  const badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), _chain);
-  const currencyImg = CurrencyListIcons[_currencyAbbreviation.toLowerCase()];
-
-  const walletItem = {
-    id: account.id,
-    currencyName: account.currency.name,
-    currencyAbbreviation: account.currency.code,
-    coinbaseAccount: account,
-    walletName: account.currency.name,
-    img: currencyImg,
-    cryptoBalance: cryptoAmount,
-    cryptoLockedBalance: '',
-    fiatBalance: formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode),
-    fiatLockedBalance: '',
-    isToken: false,
-    network: Network.mainnet,
-    pendingTxps: [],
-    chain: _chain,
-    badgeImg,
-  };
-  return walletItem as WalletRowProps;
-};
-
-export const BuildCoinbaseWalletsList = ({
-  coinbaseAccounts,
-  coinbaseExchangeRates,
-  coinbaseUser,
-  defaultAltCurrencyIsoCode = 'USD',
-  network,
-  payProOptions,
-  invoice,
-}: {
-  coinbaseAccounts: CoinbaseAccountProps[] | null;
-  coinbaseExchangeRates: CoinbaseExchangeRatesProps | null;
-  coinbaseUser: CoinbaseUserProps | null;
-  defaultAltCurrencyIsoCode?: string;
-  network?: Network;
-  payProOptions?: PayProOptions;
-  invoice?: Invoice;
-}) => {
-  const price = invoice?.price || 0;
-  const threshold = invoice?.oauth?.coinbase?.threshold || 0;
-  const enabled = invoice?.oauth?.coinbase?.enabled || false;
-  if (
-    !enabled ||
-    !coinbaseAccounts ||
-    !coinbaseUser ||
-    !coinbaseExchangeRates ||
-    network === Network.testnet
-  ) {
-    return [];
-  }
-  const selectedPaymentOptions = payProOptions?.paymentOptions?.filter(
-    option => option.selected,
-  );
-  const paymentOptions = selectedPaymentOptions?.length
-    ? selectedPaymentOptions
-    : payProOptions?.paymentOptions;
-  const wallets = coinbaseAccounts
-    .filter(
-      account =>
-        account.balance.amount > 0 && threshold > 0 && threshold >= price,
-    )
-    .filter(
-      account =>
-        !paymentOptions?.length ||
-        paymentOptions.some(
-          ({currency, network}) =>
-            account.currency.code.toLowerCase() === currency.toLowerCase() &&
-            network === Network.mainnet,
-        ),
-    )
-    .map(account =>
-      coinbaseAccountToWalletRow(
-        account,
-        coinbaseExchangeRates,
-        defaultAltCurrencyIsoCode,
-      ),
-    );
-  return [
-    {
-      key: coinbaseUser.data.id,
-      keyName: `${coinbaseUser.data.name}'s Coinbase Account`,
-      wallets,
-    },
-  ].filter(key => key.wallets.length);
-};
-
 export const BuildKeysAndWalletsList = ({
   keys,
   network,
@@ -551,7 +433,6 @@ export const BuildKeysAndWalletsList = ({
 
 export interface WalletsAndAccounts {
   keyWallets: KeyWalletsRowProps<KeyWallet>[];
-  coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
 }
 
 export const BuildPayProWalletSelectorList =
@@ -569,7 +450,6 @@ export const BuildPayProWalletSelectorList =
     invoice?: Invoice;
   }): Effect<WalletsAndAccounts> =>
   (dispatch, getState) => {
-    const {COINBASE} = getState();
     const {
       RATE: {rates},
     } = getState();
@@ -584,20 +464,7 @@ export const BuildPayProWalletSelectorList =
       key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
       return key;
     });
-    // Coinbase
-    const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
-    const coinbaseUser = COINBASE.user[COINBASE_ENV];
-    const coinbaseExchangeRates = COINBASE.exchangeRates;
-    const coinbaseWallets = BuildCoinbaseWalletsList({
-      coinbaseAccounts,
-      coinbaseUser,
-      coinbaseExchangeRates,
-      network,
-      payProOptions,
-      defaultAltCurrencyIsoCode,
-      invoice,
-    });
-    return {keyWallets, coinbaseWallets};
+    return {keyWallets};
   };
 
 // These 2 functions were taken from

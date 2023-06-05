@@ -3,7 +3,6 @@ import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import ExchangeRateItem from './ExchangeRateItem';
 
@@ -39,11 +38,6 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
           key={item.id}
           onPress={() => {
             haptic('impactLight');
-            dispatch(
-              Analytics.track('Clicked Exchange Rate', {
-                coin: item.currencyAbbreviation || '',
-              }),
-            );
             navigation.navigate('Wallet', {
               screen: 'PriceCharts',
               params: {item},

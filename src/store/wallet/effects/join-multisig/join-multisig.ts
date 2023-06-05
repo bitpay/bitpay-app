@@ -24,9 +24,7 @@ export const startJoinMultisig =
       try {
         const {
           APP: {
-            notificationsAccepted,
             emailNotifications,
-            brazeEid,
             defaultLanguage,
           },
           WALLET: {keys},
@@ -47,10 +45,6 @@ export const startJoinMultisig =
 
         const _wallet = await joinMultisigWallet({key: _key, opts});
 
-        // subscribe new wallet to push notifications
-        if (notificationsAccepted) {
-          dispatch(subscribePushNotifications(_wallet, brazeEid!));
-        }
         // subscribe new wallet to email notifications
         if (
           emailNotifications &&
@@ -107,7 +101,6 @@ export const addWalletJoinMultisig =
           APP: {
             notificationsAccepted,
             emailNotifications,
-            brazeEid,
             defaultLanguage,
           },
         } = getState();
@@ -124,10 +117,6 @@ export const addWalletJoinMultisig =
           opts,
         })) as Wallet;
 
-        // subscribe new wallet to push notifications
-        if (notificationsAccepted) {
-          dispatch(subscribePushNotifications(newWallet, brazeEid!));
-        }
         // subscribe new wallet to email notifications
         if (
           emailNotifications &&

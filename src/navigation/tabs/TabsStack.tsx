@@ -4,10 +4,8 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
-import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
 import SettingsRoot from './settings/SettingsStack';
 import {SettingsStackParamList} from './settings/SettingsStack';
-import CardStack, {CardStackParamList} from '../card/CardStack';
 
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
@@ -45,9 +43,7 @@ export enum TabsScreens {
 
 export type TabsStackParamList = {
   Home: undefined;
-  Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
   TransactButton: undefined;
-  Card: NavigatorScreenParams<CardStackParamList> | undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
   Camera: undefined;
 };
@@ -82,17 +78,7 @@ const TabsStack = () => {
           return <Icon />;
         },
       })}>
-      {/* <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />*/}
-      <Tab.Screen name={TabsScreens.SHOP} component={ShopRoot} />
-     <Tab.Screen
-        name={TabsScreens.TRANSACT_BUTTON}
-        component={TransactionButton}
-        options={{
-          tabBarIcon: () => <TransactModal />,
-          tabBarButton: props => <View {...props} />,
-        }}
-      />
-      <Tab.Screen name={TabsScreens.CARD} component={CardStack} />
+      <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />
       <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
     </Tab.Navigator>
   );

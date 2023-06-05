@@ -1,5 +1,4 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
-// import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
@@ -52,9 +51,6 @@ export enum AppActionTypes {
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
   TOGGLE_HIDE_ALL_BALANCES = 'APP/TOGGLE_HIDE_ALL_BALANCES',
-  BRAZE_INITIALIZED = 'APP/BRAZE_INITIALIZED',
-  BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
-  SET_BRAZE_EID = 'APP/SET_BRAZE_EID',
   SHOW_BIOMETRIC_MODAL = 'APP/SHOW_BIOMETRIC_MODAL',
   DISMISS_BIOMETRIC_MODAL = 'APP/DISMISS_BIOMETRIC_MODAL',
   BIOMETRIC_LOCK_ACTIVE = 'APP/BIOMETRIC_LOCK_ACTIVE',
@@ -70,7 +66,6 @@ export enum AppActionTypes {
   SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN = 'APP/SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN',
   ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
   CHECKING_BIOMETRIC_FOR_SENDING = 'APP/CHECKING_BIOMETRIC_FOR_SENDING',
-  SET_HAS_VIEWED_ZENLEDGER_WARNING = 'APP/SET_HAS_VIEWED_ZENLEDGER_WARNING',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
 }
 
@@ -254,21 +249,6 @@ interface ToggleHideAllBalances {
   payload?: boolean;
 }
 
-interface BrazeInitialized {
-  type: typeof AppActionTypes.BRAZE_INITIALIZED;
-  payload: {contentCardSubscription: EventSubscription | null};
-}
-
-interface BrazeContentCardsFetched {
-  type: typeof AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED;
-  payload: {contentCards: any[]};
-}
-
-interface SetBrazeEid {
-  type: typeof AppActionTypes.SET_BRAZE_EID;
-  payload: string;
-}
-
 interface SetHomeCarouselConfig {
   type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
   payload: HomeCarouselConfig[] | HomeCarouselConfig;
@@ -321,10 +301,6 @@ interface checkingBiometricForSending {
   payload: boolean;
 }
 
-interface SetHasViewedZenLedgerWarning {
-  type: typeof AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING;
-}
-
 interface setUserFeedback {
   type: typeof AppActionTypes.USER_FEEDBACK;
   payload: FeedbackType;
@@ -367,9 +343,6 @@ export type AppActionType =
   | ShowBlur
   | ShowPortfolioValue
   | ToggleHideAllBalances
-  | BrazeInitialized
-  | BrazeContentCardsFetched
-  | SetBrazeEid
   | ShowBiometricModal
   | DismissBiometricModal
   | BiometricLockActive
@@ -384,6 +357,4 @@ export type AppActionType =
   | SetKeyMigrationFailureModalHasBeenShown
   | SetDefaultAltCurrency
   | ActiveModalUpdated
-  | checkingBiometricForSending
-  | SetHasViewedZenLedgerWarning
-  | SetHasViewedZenLedgerWarning;
+  | checkingBiometricForSending;

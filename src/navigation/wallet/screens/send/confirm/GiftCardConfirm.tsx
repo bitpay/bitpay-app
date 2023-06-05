@@ -57,7 +57,6 @@ import {
   GiftCardStackParamList,
 } from '../../../../tabs/shop/gift-card/GiftCardStack';
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -306,14 +305,6 @@ const Confirm = () => {
       giftCard.status === 'FAILURE'
         ? 'Failed Gift Card'
         : 'Purchased Gift Card';
-    dispatch(
-      Analytics.track(purchaseEventName, {
-        giftCardAmount: amount,
-        giftCardBrand: cardConfig.name,
-        giftCardCurrency: cardConfig.currency,
-        coin: getTransactionCurrency(),
-      }),
-    );
   };
 
   const showError = ({

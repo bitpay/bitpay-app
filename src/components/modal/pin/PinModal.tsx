@@ -3,7 +3,6 @@ import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Animated, TouchableOpacity, View, NativeModules} from 'react-native';
-import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {useTheme} from 'styled-components/native';
 import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
@@ -67,7 +66,7 @@ export const hashPin = (pin: string[]) => {
   return sjcl.codec.hex.fromBits(bits);
 };
 
-const Pin = gestureHandlerRootHOC(() => {
+const Pin = () => {
   const {t} = useTranslation();
   const logger = useLogger();
   const dispatch = useAppDispatch();
@@ -350,7 +349,7 @@ const Pin = gestureHandlerRootHOC(() => {
       </VirtualKeyboardContainer>
     </PinContainer>
   );
-});
+};
 
 const PinModal: React.FC = () => {
   const isVisible = useAppSelector(({APP}) => APP.showPinModal);
