@@ -9,7 +9,6 @@ import {
   WIDTH,
 } from '../../../../components/styled/Containers';
 import {Key} from '../../../../store/wallet/wallet.models';
-import ConnectCoinbase from './cards/ConnectCoinbase';
 import CreateWallet from './cards/CreateWallet';
 import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
@@ -42,8 +41,6 @@ import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {Feather} from '../../../../styles/colors';
 import Button from '../../../../components/button/Button';
-import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCard';
-import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
@@ -143,7 +140,6 @@ export const createHomeCardList = ({
   navigation,
   keys,
   dispatch,
-  linkedCoinbase,
   homeCarouselConfig,
   homeCarouselLayoutType,
   hideKeyBalance,
@@ -154,7 +150,6 @@ export const createHomeCardList = ({
   navigation: NavigationProp<any>;
   keys: Key[];
   dispatch: Dispatch;
-  linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
@@ -165,8 +160,6 @@ export const createHomeCardList = ({
   let list: {id: string; component: JSX.Element}[] = [];
   const defaults: {id: string; component: JSX.Element}[] = [];
   const hasKeys = keys.length;
-  const hasGiftCards = false;
-  const hasCoinbase = linkedCoinbase;
   if (hasKeys) {
     const walletCards = keys.map(key => {
       let {
@@ -227,19 +220,6 @@ export const createHomeCardList = ({
 
   defaults.push({id: 'createWallet', component: <CreateWallet />});
 
-  if (hasCoinbase) {
-    list.push({
-      id: 'coinbaseBalanceCard',
-      component: <CoinbaseBalanceCard layout={homeCarouselLayoutType} />,
-    });
-  } else {
-    defaults.push({id: 'connectToCoinbase', component: <ConnectCoinbase />});
-  }
-
-  if (hasGiftCards) {
-    // TODO
-  }
-
   list = list.filter(
     item =>
       homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
@@ -259,9 +239,6 @@ const Crypto = () => {
   const dispatch = useDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const linkedCoinbase = useAppSelector(
-    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
-  );
   const {homeCarouselLayoutType, hideAllBalances} = useAppSelector(
     ({APP}) => APP,
   );
@@ -271,7 +248,6 @@ const Crypto = () => {
       navigation,
       keys: Object.values(keys),
       dispatch,
-      linkedCoinbase: false,
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
       hideKeyBalance: hideAllBalances,
@@ -284,7 +260,6 @@ const Crypto = () => {
         navigation,
         keys: Object.values(keys),
         dispatch,
-        linkedCoinbase,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
         hideKeyBalance: hideAllBalances,
@@ -294,13 +269,12 @@ const Crypto = () => {
     navigation,
     keys,
     dispatch,
-    linkedCoinbase,
     homeCarouselConfig,
     homeCarouselLayoutType,
     hideAllBalances,
   ]);
 
-  if (!hasKeys && !linkedCoinbase) {
+  if (!hasKeys) {
     return (
       <CryptoContainer>
         <SectionHeaderContainer style={{marginBottom: 0}}>
@@ -308,9 +282,7 @@ const Crypto = () => {
             <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
             <Row style={{justifyContent: 'space-between'}}>
               <HomeSectionSubtext style={{width: '90%'}}>
-                {t(
-                  'You don’t have any crypto. Create a wallet, import a wallet or connect your Coinbase account.',
-                )}
+                {t('You don’t have any crypto. Create or import a wallet.')}
               </HomeSectionSubtext>
             </Row>
             <ButtonContainer>
@@ -320,15 +292,6 @@ const Crypto = () => {
                   navigation.navigate('Wallet', {screen: 'CreationOptions'});
                 }}>
                 {t('Create, import or join a shared wallet')}
-              </Button>
-              <Button
-                buttonStyle={'secondary'}
-                onPress={() => {
-                  navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
-                }}>
-                {linkedCoinbase
-                  ? 'Coinbase'
-                  : t('Connect your Coinbase account')}
               </Button>
             </ButtonContainer>
           </Column>
@@ -344,9 +307,7 @@ const Crypto = () => {
           <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
           <Row style={{justifyContent: 'space-between'}}>
             <HomeSectionSubtext style={{width: '75%'}}>
-              {t(
-                'View your wallets, card balance, connect to Coinbase and more.',
-              )}
+              {t('View your wallets, card balance and more.')}
             </HomeSectionSubtext>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}

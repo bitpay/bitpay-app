@@ -48,34 +48,6 @@ export const SettingsHome = styled.ScrollView`
   padding: 10px 0;
 `;
 
-const BitPayIdSettingsLink = styled(Setting)`
-  height: auto;
-  margin-bottom: 32px;
-`;
-
-const BitPayIdAvatarContainer = styled.View`
-  margin-right: ${ScreenGutter};
-`;
-
-const BitPayIdUserContainer = styled.View`
-  display: flex;
-  flex-grow: 1;
-  flex-direction: column;
-`;
-
-const BitPayIdSettingTitle = styled(SettingTitle)`
-  color: ${({theme}) => theme.colors.text};
-  flex-grow: 1;
-`;
-
-const BitPayIdUserText = styled.Text<{bold?: boolean}>`
-  display: flex;
-  font-size: 14px;
-  line-height: 19px;
-  font-weight: ${({bold}) => (bold ? 700 : 400)};
-  color: ${({theme}) => theme.colors.text};
-`;
-
 const DropdownSetting = styled(Setting)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
   padding: 0 ${ScreenGutter};
@@ -181,9 +153,7 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
 
   return (
     <SettingsContainer>
-      <SettingsHome ref={scrollViewRef}>
-        {memoizedSettingsList}
-      </SettingsHome>
+      <SettingsHome ref={scrollViewRef}>{memoizedSettingsList}</SettingsHome>
     </SettingsContainer>
   );
 };

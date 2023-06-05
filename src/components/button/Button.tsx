@@ -1,6 +1,5 @@
 import debounce from 'lodash.debounce';
 import React, {memo, useMemo, useRef} from 'react';
-import {BaseButtonProps} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {
   Action,
@@ -15,7 +14,6 @@ import {
   Success,
   White,
 } from '../../styles/colors';
-import Haptic from '../haptic-feedback/haptic';
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
 import * as Icons from './ButtonIcons';
@@ -32,7 +30,7 @@ export type ButtonStyle =
   | undefined;
 export type ButtonType = 'button' | 'link' | 'pill' | undefined;
 
-interface ButtonProps extends BaseButtonProps {
+interface ButtonProps {
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
   buttonOutline?: boolean;
@@ -226,7 +224,6 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     buttonStyle = 'primary',
     buttonType = 'button',
     buttonOutline,
-    children,
     disabled,
     debounceTime,
     height,
@@ -264,7 +261,6 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
       return;
     }
 
-    Haptic('impactLight');
     onPress();
   };
   const onPressRef = useRef(_onPress);
@@ -306,35 +302,8 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
           cancel={cancel}
           danger={danger}
           disabled={disabled}
-          action={action}>
-          {children}
-        </ButtonTypeText>
+          action={action}></ButtonTypeText>
       </ButtonTypeContainer>
-
-      <ButtonOverlay
-        isVisible={isLoading}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}>
-        <ButtonSpinner buttonStyle={buttonStyle} />
-      </ButtonOverlay>
-
-      <ButtonOverlay
-        isVisible={isSuccess}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}
-        backgroundColor={Success}
-        animate>
-        <Icons.Check buttonStyle={buttonStyle} />
-      </ButtonOverlay>
-
-      <ButtonOverlay
-        isVisible={isFailure}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}
-        backgroundColor={Caution}
-        animate>
-        <Icons.Close buttonStyle={buttonStyle} />
-      </ButtonOverlay>
     </ButtonContainer>
   );
 };

@@ -79,7 +79,8 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
   //   })),
   // ];
 
-  return (<></>
+  return (
+    <></>
     // <Animated.View style={overlayStyle}>
     //   <Animated.View style={iconStyle}>{children}</Animated.View>
     // </Animated.View>

@@ -4,42 +4,28 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {each} from 'lodash';
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, ScrollView} from 'react-native';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
-import {
-  setShowKeyMigrationFailureModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
-import {requestBrazeContentRefresh} from '../../../store/app/app.effects';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
-import {
-  useAppDispatch,
-  useAppSelector,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import Crypto from './components/Crypto';
 import ExchangeRatesList, {
   ExchangeRateItemProps,
 } from './components/exchange-rates/ExchangeRatesList';
-import ProfileButton from './components/HeaderProfileButton';
-import ScanButton from './components/HeaderScanButton';
 import HomeSection from './components/HomeSection';
-import LinkingButtons from './components/LinkingButtons';
 import PortfolioBalance from './components/PortfolioBalance';
 import {HeaderContainer, HomeContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
-import {
-  receiveCrypto,
-  sendCrypto,
-} from '../../../store/wallet/effects/send/send';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -55,14 +41,9 @@ const HomeRoot = () => {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
-  const {
-    appIsLoading,
-    defaultAltCurrency,
-    keyMigrationFailure,
-    keyMigrationFailureModalHasBeenShown,
-    showPortfolioValue,
-  } = useAppSelector(({APP}) => APP);
-  const hasKeys = Object.values(keys).length;
+  const {appIsLoading, defaultAltCurrency, showPortfolioValue} = useAppSelector(
+    ({APP}) => APP,
+  );
 
   // Exchange Rates
   const priceHistory = useAppSelector(({RATE}) => RATE.priceHistory);
@@ -100,7 +81,6 @@ const HomeRoot = () => {
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus({force: true})),
-        dispatch(requestBrazeContentRefresh()),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -119,12 +99,6 @@ const HomeRoot = () => {
     },
     [],
   );
-
-  useEffect(() => {
-    if (keyMigrationFailure && !keyMigrationFailureModalHasBeenShown) {
-      dispatch(setShowKeyMigrationFailureModal(true));
-    }
-  }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
@@ -156,20 +130,6 @@ const HomeRoot = () => {
             </HomeSection>
           ) : null}
 
-          {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-          {hasKeys ? (
-            <HomeSection style={{marginBottom: 25}}>
-              <LinkingButtons
-                receive={{
-                  cta: () => dispatch(receiveCrypto(navigation, 'HomeRoot')),
-                }}
-                send={{
-                  cta: () => dispatch(sendCrypto('HomeRoot')),
-                }}
-              />
-            </HomeSection>
-          ) : null}
-
           {/* ////////////////////////////// CRYPTO */}
           <HomeSection slimContainer={true}>
             <Crypto />
@@ -184,7 +144,6 @@ const HomeRoot = () => {
               />
             </HomeSection>
           ) : null}
-
         </ScrollView>
       )}
       <KeyMigrationFailureModal />

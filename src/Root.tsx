@@ -7,7 +7,6 @@ import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import React, {useEffect, useMemo, useState} from 'react';
 import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
-import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
@@ -31,33 +30,11 @@ import GeneralSettingsStack, {
 import ContactsStack, {
   ContactsStackParamList,
 } from './navigation/tabs/contacts/ContactsStack';
-import ExternalServicesSettingsStack, {
-  ExternalServicesSettingsStackParamList,
-} from './navigation/tabs/settings/external-services/ExternalServicesStack';
 import AboutStack, {
   AboutStackParamList,
 } from './navigation/tabs/settings/about/AboutStack';
 
-import BuyCryptoStack, {
-  BuyCryptoStackParamList,
-} from './navigation/services/buy-crypto/BuyCryptoStack';
-import SwapCryptoStack, {
-  SwapCryptoStackParamList,
-} from './navigation/services/swap-crypto/SwapCryptoStack';
-import WalletConnectStack, {
-  WalletConnectStackParamList,
-} from './navigation/wallet-connect/WalletConnectStack';
-//import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
-import CoinbaseStack, {
-  CoinbaseStackParamList,
-} from './navigation/coinbase/CoinbaseStack';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
-import NotificationsSettingsStack, {
-  NotificationsSettingsStackParamsList,
-} from './navigation/tabs/settings/notifications/NotificationsStack';
-import ZenLedgerStack, {
-  ZenLedgerStackParamsList,
-} from './navigation/zenledger/ZenLedgerStack';
 import {WalletBackupActions} from './store/wallet-backup';
 import {successCreateKey} from './store/wallet/wallet.actions';
 import {bootstrapKey, bootstrapWallets} from './store/transforms/transforms';
@@ -75,15 +52,8 @@ export type RootStackParamList = {
   Wallet: NavigatorScreenParams<WalletStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
-  ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
-  Coinbase: NavigatorScreenParams<CoinbaseStackParamList>;
-  BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
-  SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
-  WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
   Debug: DebugScreenParamList;
-  NotificationsSettings: NavigatorScreenParams<NotificationsSettingsStackParamsList>;
-  ZenLedger: NavigatorScreenParams<ZenLedgerStackParamsList>;
   NetworkFeePolicySettings: NavigatorScreenParams<NetworkFeePolicySettingsStackParamsList>;
 };
 
@@ -94,15 +64,9 @@ export enum RootStacks {
   CONTACTS = 'Contacts',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
-  EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
   ABOUT = 'About',
-  COINBASE = 'Coinbase',
-  BUY_CRYPTO = 'BuyCrypto',
-  SWAP_CRYPTO = 'SwapCrypto',
-  WALLET_CONNECT_V2 = 'WalletConnect',
   DEBUG = 'Debug',
   NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
-  ZENLEDGER = 'ZenLedger',
   NETWORK_FEE_POLICY_SETTINGS = 'NetworkFeePolicySettings',
 }
 
@@ -111,14 +75,7 @@ export type NavScreenParams = NavigatorScreenParams<
   WalletStackParamList &
     GeneralSettingsStackParamList &
     ContactsStackParamList &
-    ExternalServicesSettingsStackParamList &
-    AboutStackParamList &
-    CoinbaseStackParamList &
-    BuyCryptoStackParamList &
-    SwapCryptoStackParamList &
-    WalletConnectStackParamList &
-    NotificationsSettingsStackParamsList &
-    ZenLedgerStackParamsList
+    AboutStackParamList
 >;
 
 declare global {
@@ -379,38 +336,10 @@ export default () => {
             />
             <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
             <Root.Screen
-              name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
-              component={ExternalServicesSettingsStack}
-            />
-            <Root.Screen
-              name={RootStacks.NOTIFICATIONS_SETTINGS}
-              component={NotificationsSettingsStack}
-            />
-            <Root.Screen
               name={RootStacks.NETWORK_FEE_POLICY_SETTINGS}
               component={NetworkFeePolicySettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
-            <Root.Screen name={RootStacks.COINBASE} component={CoinbaseStack} />
-            <Root.Screen
-              name={RootStacks.BUY_CRYPTO}
-              component={BuyCryptoStack}
-            />
-            <Root.Screen
-              name={RootStacks.SWAP_CRYPTO}
-              component={SwapCryptoStack}
-              options={{
-                gestureEnabled: false,
-              }}
-            />
-            <Root.Screen
-              name={RootStacks.WALLET_CONNECT_V2}
-              component={WalletConnectStack}
-            />
-            <Root.Screen
-              name={RootStacks.ZENLEDGER}
-              component={ZenLedgerStack}
-            />
           </Root.Navigator>
           <OnGoingProcessModal />
           <BottomNotificationModal />
