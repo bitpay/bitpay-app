@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -13,12 +13,10 @@ import {
   ActiveOpacity,
   CtaContainer,
   HeaderRightContainer,
-  WIDTH,
 } from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
 import {Air, BitPay, ProgressBlue} from '../../../styles/colors';
-import Carousel from 'react-native-snap-carousel';
-import {Platform, TouchableOpacity} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -90,7 +88,6 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   );
   const {words, context, key} = params;
 
-  const ref = useRef<Carousel<string>>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   useLayoutEffect(() => {
@@ -99,13 +96,13 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
       headerTitle: () => <HeaderTitle>{t('Recovery Phrase')}</HeaderTitle>,
       headerLeft: () => (
         <TouchableOpacity
-          style={{marginLeft: Platform.OS === 'android' ? 10 : 0}}
+          style={{marginLeft: 10}}
           activeOpacity={ActiveOpacity}
           onPress={() => {
-            if (ref.current?.currentIndex === 0) {
+            if (activeSlideIndex === 0) {
               navigation.goBack();
             } else {
-              ref.current?.snapToPrev();
+              setActiveSlideIndex(activeSlideIndex - 1);
             }
           }}>
           <Back opacity={1} />
@@ -155,12 +152,12 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
 
   const next = () => {
     if (activeSlideIndex === words.length - 1) {
-      navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
+      navigation.navigate('Wallet', {
         screen: 'VerifyPhrase',
         params: {...params, walletTermsAccepted},
       });
     } else {
-      ref.current?.snapToNext();
+      setActiveSlideIndex(activeSlideIndex + 1);
     }
   };
 
@@ -168,7 +165,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
     <RecoveryPhraseContainer accessibilityLabel="recovery-phrase-view">
       <ProgressBarContainer>
         <Progress.Bar
-          progress={0.3}
+          progress={(activeSlideIndex + 1) / 12}
           width={null}
           color={ProgressBlue}
           unfilledColor={Air}
@@ -184,29 +181,11 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
             <Paragraph>{t('Write down each word.')}</Paragraph>
           </TextAlign>
         </DirectionsContainer>
-        <Carousel
-          vertical={false}
-          layout={'stack'}
-          layoutCardOffset={words.length}
-          useExperimentalSnap={true}
-          data={words}
-          renderItem={({item: word}: {item: string}) => {
-            return (
-              <WordContainer>
-                <H2>{word}</H2>
-              </WordContainer>
-            );
-          }}
-          ref={ref}
-          sliderWidth={WIDTH}
-          itemWidth={Math.round(WIDTH)}
-          onScrollIndexChanged={(index: number) => {
-            setActiveSlideIndex(index);
-          }}
-          scrollEnabled={false}
-          // @ts-ignore
-          disableIntervalMomentum={true}
-        />
+        <View>
+          <WordContainer>
+            <H2>{words[activeSlideIndex]}</H2>
+          </WordContainer>
+        </View>
         <CountTracker>
           <CountText>
             {activeSlideIndex + 1}/{words.length}
@@ -216,7 +195,6 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
           <Button
             accessibilityLabel="next-button"
             buttonStyle={'primary'}
-            debounceTime={Platform.OS === 'android' ? 200 : 0}
             onPress={next}>
             {t('Next')}
           </Button>

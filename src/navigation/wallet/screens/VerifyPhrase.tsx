@@ -8,10 +8,7 @@ import {
   TextAlign,
 } from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
-import {
-  HeaderRightContainer,
-  WIDTH,
-} from '../../../components/styled/Containers';
+import {HeaderRightContainer} from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
 import {
   Action,
@@ -20,8 +17,6 @@ import {
   NeutralSlate,
   ProgressBlue,
 } from '../../../styles/colors';
-import Carousel from 'react-native-snap-carousel';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {
   BodyContainer,
   CountText,
@@ -30,7 +25,6 @@ import {
   ProgressBarContainer,
   WordContainer,
 } from './RecoveryPhrase';
-import {sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {useDispatch} from 'react-redux';
 import {WalletActions} from '../../../store/wallet';
@@ -119,8 +113,6 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             accessibilityLabel="cancel-button"
             buttonType={'pill'}
             onPress={() => {
-              haptic('impactLight');
-
               if (context === 'settings') {
                 backupRedirect({
                   context,
@@ -162,42 +154,26 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     });
   }, [navigation, t]);
 
-  const ref = useRef(null);
   const shuffledWords = useRef<Array<{word: string; isActive: boolean}>>(
     [...words].sort(() => Math.random() - 0.5),
   );
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [attemptWords, setAttemptWords] = useState(['']);
-  const [progress, setProgress] = useState(0.5);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    return navigation.addListener('blur', async () => {
-      await sleep(400);
-      setActiveSlideIndex(0);
-      setAttemptWords(['undefined']);
-      setIsAnimating(false);
-    });
-  }, [navigation]);
+  const [selectedWord, setSelectedWord] = useState('');
 
   const wordSelected = async (value: {word: string; isActive: boolean}) => {
-    if (isAnimating) {
-      return;
-    }
     value.isActive = false;
-    haptic('impactLight');
-    // lock UI - (unlocks from onSnap event in carousel props in jsx)
-    setIsAnimating(true);
     // update words and append empty string for next entry
     const update = [...attemptWords.filter(w => w), value.word, ''];
-    // store words and update index
-    setAttemptWords(update);
-    setActiveSlideIndex(activeSlideIndex + 1);
-    // sleep for animation time
-    await sleep(0);
+    console.log('#### selected', activeSlideIndex, words.length);
     if (activeSlideIndex !== words.length - 1) {
-      // @ts-ignore
-      ref.current.snapToNext();
+      setActiveSlideIndex(activeSlideIndex + 1);
+      setSelectedWord(value.word);
+      setTimeout(() => {
+        setSelectedWord('');
+      }, 800);
+      // store words and update index
+      setAttemptWords(update);
     } else {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
@@ -206,7 +182,6 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         if (context !== 'keySettings') {
           dispatch(WalletActions.setBackupComplete(keyId));
         }
-        setProgress(1);
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'success',
@@ -241,13 +216,10 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               {
                 text: t('TRY AGAIN'),
                 action: async () => {
-                  navigation.navigate(
-                    context === 'onboarding' ? 'Onboarding' : 'Wallet',
-                    {
-                      screen: 'RecoveryPhrase',
-                      params,
-                    },
-                  );
+                  navigation.navigate('Wallet', {
+                    screen: 'RecoveryPhrase',
+                    params,
+                  });
                 },
                 primary: true,
               },
@@ -262,7 +234,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     <VerifyPhraseContainer accessibilityLabel="verify-phrase-container">
       <ProgressBarContainer>
         <Progress.Bar
-          progress={progress}
+          progress={(activeSlideIndex + 1) / 12}
           width={null}
           color={ProgressBlue}
           unfilledColor={Air}
@@ -273,33 +245,10 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       </ProgressBarContainer>
 
       <BodyContainer>
-        <Carousel
-          vertical={false}
-          layout={'default'}
-          useExperimentalSnap={true}
-          data={attemptWords}
-          renderItem={({item: word, index}: {item: string; index: number}) => {
-            return (
-              <WordContainer key={index}>
-                <H2>{word}</H2>
-                <DottedBorder />
-              </WordContainer>
-            );
-          }}
-          ref={ref}
-          sliderWidth={WIDTH}
-          itemWidth={Math.round(WIDTH)}
-          onSnapToItem={() => setIsAnimating(false)}
-          scrollEnabled={false}
-          // @ts-ignore
-          disableIntervalMomentum={true}
-          animationOptions={{
-            friction: 4,
-            tension: 40,
-            isInteraction: false,
-            useNativeDriver: true,
-          }}
-        />
+        <WordContainer>
+          <H2>{selectedWord}</H2>
+          <DottedBorder />
+        </WordContainer>
         <CountTracker>
           <CountText>
             {activeSlideIndex}/{words.length}
@@ -308,7 +257,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         <BottomContainer>
           <DirectionsContainer>
             <TextAlign align={'center'}>
-              <Paragraph>{t('Tap each word in the correct order.')}</Paragraph>
+              <Paragraph>
+                {t('Click each word in the correct order.')}
+              </Paragraph>
             </TextAlign>
           </DirectionsContainer>
           <WordSelectorContainer>

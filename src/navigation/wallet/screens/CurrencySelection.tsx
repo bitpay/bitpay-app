@@ -37,7 +37,6 @@ import {
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {
   dismissOnGoingProcessModal,
-  setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Key, Token} from '../../../store/wallet/wallet.models';
@@ -381,8 +380,6 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               const createdKey = await dispatch(
                 startCreateKey(selectedCurrencies),
               );
-
-              dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
 
               navigation.navigate('Wallet', {
                 screen: 'BackupKey',

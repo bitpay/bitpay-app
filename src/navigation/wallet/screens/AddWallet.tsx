@@ -2,7 +2,6 @@ import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
   BaseText,
   H4,
-  HeaderTitle,
   InfoDescription,
   InfoHeader,
   InfoTitle,
@@ -10,7 +9,7 @@ import {
   TextAlign,
 } from '../../../components/styled/Text';
 import styled from 'styled-components/native';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {FlatList, Keyboard, View, TouchableOpacity} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActiveOpacity,
@@ -31,10 +30,7 @@ import {WalletStackParamList} from '../WalletStack';
 import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
@@ -63,14 +59,11 @@ import {
 } from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
-import {FlatList, Keyboard, View} from 'react-native';
 import {
   getProtocolName,
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import haptic from '../../../components/haptic-feedback/haptic';
-import Haptic from '../../../components/haptic-feedback/haptic';
 import Icons from '../components/WalletIcons';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -92,7 +85,6 @@ import {
   SUPPORTED_EVM_COINS,
 } from '../../../constants/currencies';
 import InfoSvg from '../../../../assets/img/info.svg';
-import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
@@ -187,14 +179,6 @@ const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
 `;
 
-const isWithinReceiveSettings = (parent: any): boolean => {
-  return parent
-    ?.getState()
-    .routes.some(
-      (r: any) => r.params?.screen === BitpayIdScreens.RECEIVE_SETTINGS,
-    );
-};
-
 const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -257,8 +241,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
   const [chainModalVisible, setChainModalVisible] = useState(false);
 
-  const withinReceiveSettings = isWithinReceiveSettings(navigation.getParent());
-
+  /*
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
@@ -278,6 +261,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       },
     });
   }, [navigation, t]);
+   */
 
   const addAssociatedWallet = async () => {
     try {
@@ -385,9 +369,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         if (_associatedWallet) {
           _currencyAbbreviation = currencyAbbreviation!;
           navigation.popToTop();
-          if (withinReceiveSettings) {
-            navigation.pop();
-          }
         } else {
           _currencyAbbreviation = SupportedCurrencyOptions.find(
             currencyOpts => currencyOpts.currencyAbbreviation === chain,
@@ -488,29 +469,27 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
       const wallet = await _addWallet(_associatedWallet, walletName);
 
-      if (!withinReceiveSettings) {
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 1,
-            routes: [
-              {
-                name: 'KeyOverview',
-                params: {
-                  id: key.id,
-                },
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: 'KeyOverview',
+              params: {
+                id: key.id,
               },
-              {
-                name: 'WalletDetails',
-                params: {
-                  walletId: wallet.id,
-                  key,
-                  skipInitializeHistory: false, // new wallet might have transactions
-                },
+            },
+            {
+              name: 'WalletDetails',
+              params: {
+                walletId: wallet.id,
+                key,
+                skipInitializeHistory: false, // new wallet might have transactions
               },
-            ],
-          }),
-        );
-      }
+            },
+          ],
+        }),
+      );
     } catch (err: any) {
       dispatch(LogActions.error(JSON.stringify(err)));
     }
@@ -540,7 +519,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         id={item.id}
         hideBalance={hideAllBalances}
         onPress={() => {
-          haptic('soft');
           setAssociatedWallet(item);
           if (isCustomToken && !!customTokenAddress) {
             setCustomTokenAddress(undefined);
@@ -558,7 +536,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       <CurrencySelectionRow
         currency={item}
         onToggle={chain => {
-          haptic('soft');
           setChain(
             SupportedEvmCurrencyOptions.find(
               evmOpts => evmOpts.currencyAbbreviation === chain,
@@ -712,7 +689,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           <WalletAdvancedOptionsContainer>
             <AdvancedOptionsButton
               onPress={() => {
-                Haptic('impactLight');
                 setShowOptions(!showOptions);
               }}>
               {showOptions ? (
@@ -817,10 +793,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
                       <VerticalPadding>
                         <TouchableOpacity
                           onPress={() => {
-                            Haptic('impactLight');
-                            dispatch(
-                              openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
-                            );
+                            // TODO: open external url
                           }}>
                           <Link>Learn More</Link>
                         </TouchableOpacity>

@@ -345,6 +345,17 @@ const WalletStack = () => {
           name={WalletScreens.RECOVERY_PHRASE}
           component={RecoveryPhrase}
         />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.DefaultTransition,
+          }}
+          name={WalletScreens.ADD_WALLET}
+          component={AddWallet}
+        />
+        <Wallet.Screen
+          name={WalletScreens.VERIFY_PHRASE}
+          component={VerifyPhrase}
+        />
         {/*<Wallet.Screen
           options={{
             ...TransitionPresets.DefaultTransition,

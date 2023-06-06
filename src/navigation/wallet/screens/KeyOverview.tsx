@@ -6,7 +6,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  CommonActions,
   RouteProp,
   useNavigation,
   useRoute,
@@ -14,7 +13,6 @@ import {
 } from '@react-navigation/native';
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
-import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {
   BaseText,
@@ -70,8 +68,6 @@ import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {each} from 'lodash';
-import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
-import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -355,9 +351,6 @@ const KeyOverview = () => {
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
-  const linkedCoinbase = useAppSelector(
-    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
-  );
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
   const hasMultipleKeys =
@@ -378,7 +371,7 @@ const KeyOverview = () => {
         return (
           <KeyToggle
             activeOpacity={ActiveOpacity}
-            disabled={!hasMultipleKeys && !linkedCoinbase}
+            disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
             {key.methods?.isPrivKeyEncrypted() ? (
               theme.dark ? (
@@ -391,9 +384,7 @@ const KeyOverview = () => {
               <HeaderTitle style={{textAlign: 'center'}}>
                 {key?.keyName}
               </HeaderTitle>
-              {(hasMultipleKeys || linkedCoinbase) && (
-                <ChevronDownSvg style={{marginLeft: 10}} />
-              )}
+              {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
             </HeaderTitleContainer>
           </KeyToggle>
         );
@@ -494,8 +485,6 @@ const KeyOverview = () => {
           'Prevent an unauthorized user from sending funds out of your wallet.',
         ),
         onPress: () => {
-          haptic('impactLight');
-
           navigation.navigate('Wallet', {
             screen: 'CreateEncryptPassword',
             params: {
@@ -511,7 +500,6 @@ const KeyOverview = () => {
       title: t('Key Settings'),
       description: t('View all the ways to manage and configure your key.'),
       onPress: () => {
-        haptic('impactLight');
         navigation.navigate('Wallet', {
           screen: 'KeySettings',
           params: {
@@ -556,7 +544,6 @@ const KeyOverview = () => {
           wallet={item}
           hideBalance={hideAllBalances}
           onPress={() => {
-            haptic('impactLight');
             const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
             if (!fullWalletObj.isComplete()) {
               fullWalletObj.getStatus(
@@ -648,7 +635,6 @@ const KeyOverview = () => {
             <WalletListFooter
               activeOpacity={ActiveOpacity}
               onPress={() => {
-                haptic('impactLight');
                 navigation.navigate('Wallet', {
                   screen: 'AddingOptions',
                   params: {
@@ -700,30 +686,6 @@ const KeyOverview = () => {
                   hideKeyBalance={hideAllBalances}
                 />
               ))}
-            {linkedCoinbase ? (
-              <CoinbaseDropdownOption
-                onPress={() => {
-                  setShowKeyDropdown(false);
-                  navigation.dispatch(
-                    CommonActions.reset({
-                      index: 2,
-                      routes: [
-                        {
-                          name: 'Tabs',
-                          params: {screen: 'Home'},
-                        },
-                        {
-                          name: 'Coinbase',
-                          params: {
-                            screen: 'CoinbaseRoot',
-                          },
-                        },
-                      ],
-                    }),
-                  );
-                }}
-              />
-            ) : null}
           </KeyDropdownOptionsContainer>
         </KeyDropdown>
       </SheetModal>

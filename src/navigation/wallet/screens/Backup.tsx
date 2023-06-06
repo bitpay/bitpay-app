@@ -82,7 +82,6 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const themeType = useThemeType();
 
   const walletTermsAccepted = useSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,

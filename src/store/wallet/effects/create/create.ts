@@ -22,10 +22,6 @@ import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {
-  subscribeEmailNotifications,
-  subscribePushNotifications,
-} from '../../../app/app.effects';
-import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
@@ -118,13 +114,7 @@ export const addWallet =
     return new Promise(async (resolve, reject) => {
       try {
         let newWallet;
-        const {
-          APP: {
-            emailNotifications,
-            defaultLanguage,
-          },
-          WALLET,
-        } = getState();
+        const {WALLET} = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
           ...WALLET.tokenOptions,
@@ -181,20 +171,6 @@ export const addWallet =
           return reject();
         }
 
-        // subscribe new wallet to email notifications
-        if (
-          emailNotifications &&
-          emailNotifications.accepted &&
-          emailNotifications.email
-        ) {
-          const prefs = {
-            email: emailNotifications.email,
-            language: defaultLanguage,
-            unit: 'btc', // deprecated
-          };
-          dispatch(subscribeEmailNotifications(newWallet, prefs));
-        }
-
         const {currencyAbbreviation, currencyName} = dispatch(
           mapAbbreviationAndName(
             newWallet.credentials.coin,
@@ -247,13 +223,7 @@ const createMultipleWallets =
     options: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
-    const {
-      WALLET,
-      APP: {
-        emailNotifications,
-        defaultLanguage,
-      },
-    } = getState();
+    const {WALLET} = getState();
     const tokenOpts = {
       ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
@@ -288,19 +258,6 @@ const createMultipleWallets =
 
     // build out app specific props
     return wallets.map(wallet => {
-      // subscribe new wallet to email notifications
-      if (
-        emailNotifications &&
-        emailNotifications.accepted &&
-        emailNotifications.email
-      ) {
-        const prefs = {
-          email: emailNotifications.email,
-          language: defaultLanguage,
-          unit: 'btc', // deprecated
-        };
-        dispatch(subscribeEmailNotifications(wallet, prefs));
-      }
       const {currencyAbbreviation, currencyName} = dispatch(
         mapAbbreviationAndName(
           wallet.credentials.coin,
@@ -468,10 +425,6 @@ export const startCreateKeyWithOpts =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {
-            emailNotifications,
-            defaultLanguage,
-          },
           WALLET: {keys},
         } = getState();
         const _key = BWC.createKey({
@@ -483,20 +436,6 @@ export const startCreateKeyWithOpts =
         });
 
         const _wallet = await createWalletWithOpts({key: _key, opts});
-
-        // subscribe new wallet to email notifications
-        if (
-          emailNotifications &&
-          emailNotifications.accepted &&
-          emailNotifications.email
-        ) {
-          const prefs = {
-            email: emailNotifications.email,
-            language: defaultLanguage,
-            unit: 'btc', // deprecated
-          };
-          dispatch(subscribeEmailNotifications(_wallet, prefs));
-        }
 
         const {currencyAbbreviation, currencyName} = dispatch(
           mapAbbreviationAndName(
