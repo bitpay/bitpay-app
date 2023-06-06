@@ -23,7 +23,6 @@ import ExchangeRatesList, {
 import HomeSection from './components/HomeSection';
 import PortfolioBalance from './components/PortfolioBalance';
 import {HeaderContainer, HomeContainer} from './components/Styled';
-import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
 
@@ -146,7 +145,6 @@ const HomeRoot = () => {
           ) : null}
         </ScrollView>
       )}
-      <KeyMigrationFailureModal />
     </HomeContainer>
   );
 };

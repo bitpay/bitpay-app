@@ -1,13 +1,8 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {useDispatch} from 'react-redux';
-import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
-import {
-  ActiveOpacity,
-  Column,
-  WIDTH,
-} from '../../../../components/styled/Containers';
+import {Column} from '../../../../components/styled/Containers';
 import {Key} from '../../../../store/wallet/wallet.models';
 import CreateWallet from './cards/CreateWallet';
 import WalletCardComponent from './Wallet';
@@ -23,22 +18,19 @@ import {
   getMnemonic,
   sleep,
 } from '../../../../utils/helper-methods';
-import _ from 'lodash';
+import {sortBy, indexOf} from 'lodash';
 import {useAppSelector} from '../../../../utils/hooks';
 import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
 } from '../../../../store/app/app.models';
 import {
-  CarouselItemContainer,
   HomeSectionSubtext,
   HomeSectionSubTitle,
   HomeSectionTitle,
   SectionHeaderContainer,
 } from './Styled';
-import {TouchableOpacity, View} from 'react-native';
-import CustomizeSvg from './CustomizeSvg';
-import haptic from '../../../../components/haptic-feedback/haptic';
+import {View} from 'react-native';
 import {Feather} from '../../../../styles/colors';
 import Button from '../../../../components/button/Button';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
@@ -48,10 +40,6 @@ import {t} from 'i18next';
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
   padding: 10px 0 12px;
-`;
-
-const CarouselContainer = styled.View`
-  margin-top: 10px;
 `;
 
 const Row = styled.View`
@@ -66,10 +54,6 @@ const ButtonContainer = styled.View`
   padding: 20px 0;
   margin-top: 15px;
 `;
-
-const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
-  return <CarouselItemContainer>{item.component}</CarouselItemContainer>;
-};
 
 export const keyBackupRequired = (
   key: Key,
@@ -191,11 +175,9 @@ export const createHomeCardList = ({
             onPress={
               onPress
                 ? () => {
-                    haptic('soft');
                     onPress(currency, key);
                   }
                 : () => {
-                    haptic('soft');
                     if (backupComplete) {
                       navigation.navigate('Wallet', {
                         screen: 'KeyOverview',
@@ -228,7 +210,7 @@ export const createHomeCardList = ({
   const order = homeCarouselConfig.map(item => item.id);
 
   return {
-    list: [..._.sortBy(list, item => _.indexOf(order, item.id))],
+    list: [...sortBy(list, item => indexOf(order, item.id))],
     defaults,
   };
 };
@@ -306,66 +288,27 @@ const Crypto = () => {
         <Column>
           <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
           <Row style={{justifyContent: 'space-between'}}>
-            <HomeSectionSubtext style={{width: '75%'}}>
+            <HomeSectionSubtext style={{width: '75%', marginTop: 10}}>
               {t('View your wallets, card balance and more.')}
             </HomeSectionSubtext>
-            <TouchableOpacity
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                haptic('soft');
-                navigation.navigate('GeneralSettings', {
-                  screen: 'CustomizeHome',
-                });
-              }}>
-              <CustomizeSvg width={54} height={54} />
-            </TouchableOpacity>
           </Row>
         </Column>
       </SectionHeaderContainer>
-      {/* ////////////////////////////// CAROUSEL/LISTVIEW */}
-      {homeCarouselLayoutType === 'carousel' ? (
-        <CarouselContainer style={{marginBottom: 22}}>
-          <Carousel
-            vertical={false}
-            layout={'default'}
-            useExperimentalSnap={true}
-            data={cardsList.list}
-            renderItem={_renderItem}
-            sliderWidth={WIDTH}
-            itemWidth={190}
-            inactiveSlideScale={1}
-            inactiveSlideOpacity={1}
-          />
-        </CarouselContainer>
-      ) : (
-        <ListViewContainer>
-          {cardsList.list.map(data => {
-            return <View key={data.id}>{data.component}</View>;
-          })}
-        </ListViewContainer>
-      )}
+      {/* ////////////////////////////// LISTVIEW */}
+      <ListViewContainer>
+        {cardsList.list.map(data => {
+          return <View key={data.id}>{data.component}</View>;
+        })}
+      </ListViewContainer>
       {/* ////////////////////////////// CREATE DEFAULTS */}
-      <CarouselContainer>
-        <SectionHeaderContainer style={{marginTop: 0, position: 'absolute'}}>
-          <HomeSectionSubTitle>
-            {t('Expand your Portfolio')}
-          </HomeSectionSubTitle>
-        </SectionHeaderContainer>
-        <Carousel
-          vertical={false}
-          layout={'default'}
-          containerCustomStyle={{
-            marginTop: 20,
-          }}
-          useExperimentalSnap={true}
-          data={cardsList.defaults}
-          renderItem={_renderItem}
-          sliderWidth={WIDTH}
-          itemWidth={200}
-          inactiveSlideScale={1}
-          inactiveSlideOpacity={1}
-        />
-      </CarouselContainer>
+      <HomeSectionSubTitle style={{paddingLeft: 15}}>
+        {t('Expand your Portfolio')}
+      </HomeSectionSubTitle>
+      <ListViewContainer>
+        {cardsList.defaults.map(data => {
+          return <View key={data.id}>{data.component}</View>;
+        })}
+      </ListViewContainer>
     </CryptoContainer>
   );
 };

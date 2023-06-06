@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {BaseText, H2} from '../../../../components/styled/Text';
 import {Black, LuckySevens, SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';

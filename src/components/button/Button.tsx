@@ -52,6 +52,7 @@ interface ButtonOptionProps {
   disabled?: boolean;
   action?: boolean;
   height?: number;
+  children?: any;
 }
 
 export const DURATION = 100;
@@ -304,6 +305,29 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
           disabled={disabled}
           action={action}></ButtonTypeText>
       </ButtonTypeContainer>
+
+      <ButtonOverlay
+        isVisible={isLoading}
+        buttonStyle={buttonStyle}
+        buttonType={buttonType}>
+        <ButtonSpinner buttonStyle={buttonStyle} />
+      </ButtonOverlay>
+
+      <ButtonOverlay
+        isVisible={isSuccess}
+        buttonStyle={buttonStyle}
+        buttonType={buttonType}
+        backgroundColor={Success}>
+        <Icons.Check buttonStyle={buttonStyle} />
+      </ButtonOverlay>
+
+      <ButtonOverlay
+        isVisible={isFailure}
+        buttonStyle={buttonStyle}
+        buttonType={buttonType}
+        backgroundColor={Caution}>
+        <Icons.Close buttonStyle={buttonStyle} />
+      </ButtonOverlay>
     </ButtonContainer>
   );
 };
