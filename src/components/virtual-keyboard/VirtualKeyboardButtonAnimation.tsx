@@ -82,24 +82,24 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
     //       onLongPress ? onLongPress() : onPress();
     //     }
     //   }}>
-      // {/* <Animated.View>
-      //   <TapGestureHandler onGestureEvent={tapGestureEvent}>
-      //     <Animated.View
-      //       style={[
-      //         {
-      //           overflow: 'hidden',
-      //           height: VIRTUAL_KEYBOARD_BUTTON_SIZE,
-      //           width: VIRTUAL_KEYBOARD_BUTTON_SIZE,
-      //           borderRadius: 50,
-      //           alignItems: 'center',
-      //           justifyContent: 'center',
-      //         },
-      //       ]}>
-      //       <View>{children}</View>
-      //       <Animated.View style={rStyle} />
-      //     </Animated.View>
-      //   </TapGestureHandler>
-      // </Animated.View> */}
+    // {/* <Animated.View>
+    //   <TapGestureHandler onGestureEvent={tapGestureEvent}>
+    //     <Animated.View
+    //       style={[
+    //         {
+    //           overflow: 'hidden',
+    //           height: VIRTUAL_KEYBOARD_BUTTON_SIZE,
+    //           width: VIRTUAL_KEYBOARD_BUTTON_SIZE,
+    //           borderRadius: 50,
+    //           alignItems: 'center',
+    //           justifyContent: 'center',
+    //         },
+    //       ]}>
+    //       <View>{children}</View>
+    //       <Animated.View style={rStyle} />
+    //     </Animated.View>
+    //   </TapGestureHandler>
+    // </Animated.View> */}
     // </LongPressGestureHandler>
   );
 };

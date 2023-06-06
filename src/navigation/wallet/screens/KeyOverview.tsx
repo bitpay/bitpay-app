@@ -461,8 +461,7 @@ const KeyOverview = () => {
     }
   }, [navigation, key?.wallets, context]);
 
-  useEffect(() => {
-  }, []);
+  useEffect(() => {}, []);
 
   const {wallets = [], totalBalance} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};

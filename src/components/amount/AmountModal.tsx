@@ -49,21 +49,14 @@ type AmountModalProps = AmountProps & {
   isVisible: boolean;
   onClose: () => void;
   modalTitle?: string;
-  swapOpts?: SwapOpts;
   onSendMaxPressed?: () => any;
 };
 
-<StyledAmountModalContainer>{props.children}</StyledAmountModalContainer>
+<StyledAmountModalContainer>{props.children}</StyledAmountModalContainer>;
 
 const AmountModal: React.VFC<AmountModalProps> = props => {
-  const {
-    onClose,
-    onSendMaxPressed,
-    isVisible,
-    modalTitle,
-    swapOpts,
-    ...amountProps
-  } = props;
+  const {onClose, onSendMaxPressed, isVisible, modalTitle, ...amountProps} =
+    props;
   const theme = useTheme();
 
   return (
@@ -83,7 +76,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
             />
           </CloseModalButton>
           {modalTitle ? <ModalHeaderText>{modalTitle}</ModalHeaderText> : null}
-          {onSendMaxPressed && !swapOpts?.swapLimits.maxAmount ? (
+          {onSendMaxPressed ? (
             <ModalHeaderRight>
               <Button
                 buttonType="pill"
@@ -95,11 +88,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
           ) : null}
         </ModalHeader>
 
-        <Amount
-          {...amountProps}
-          swapOpts={swapOpts}
-          onSendMaxPressed={onSendMaxPressed}
-        />
+        <Amount {...amountProps} onSendMaxPressed={onSendMaxPressed} />
       </StyledAmountModalContainer>
     </SheetModal>
   );

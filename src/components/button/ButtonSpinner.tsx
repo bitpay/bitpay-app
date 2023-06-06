@@ -41,7 +41,8 @@ const Spinner = ({buttonStyle}: {buttonStyle?: string}) => {
   //   transform: [{rotate: `${angle.value}deg`}],
   // }));
 
-  return (<></>
+  return (
+    <></>
     // <Animated.View
     //   style={[
     //     styles.spinner,

@@ -531,7 +531,6 @@ const SendTo = () => {
     );
   }, [navigation]);
 
-
   return (
     <SafeAreaView>
       <ScrollView keyboardShouldPersistTaps={'handled'}>
@@ -546,7 +545,6 @@ const SendTo = () => {
             }}
           />
         </SearchContainer>
-
 
         {clipboardData ? (
           <PasteClipboardContainer

@@ -47,7 +47,7 @@ const GeneralSettingsStack = () => {
           headerTitle: () => <HeaderTitle>{t('Customize Home')}</HeaderTitle>,
         }}
       />*/}
-     <GeneralSettings.Screen
+      <GeneralSettings.Screen
         name={GeneralSettingsScreens.ALT_CURRENCY_SETTTINGS}
         component={AltCurrencySettings}
         options={{

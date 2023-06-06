@@ -11,11 +11,11 @@ import {
   Slate30,
 } from '../../styles/colors';
 
-export const fontFamily = 'Heebo';
+export const fontFamily = 'Arial';
 
 export const BaseText = styled.Text`
   color: ${({theme}) => theme?.colors?.text};
-  /* font-family: '${fontFamily}'; */
+  font-family: '${fontFamily}';
 `;
 
 interface HeadingProps {

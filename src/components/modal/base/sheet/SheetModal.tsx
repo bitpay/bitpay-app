@@ -18,17 +18,7 @@ const SheetModal: React.FC<Props> = ({
     <BaseModal
       id={'sheetModal'}
       isVisible={isVisible}
-      backdropOpacity={0.4}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating={true}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
-      testID="modalBackdrop"
       onBackdropPress={onBackdropPress}
-      animationIn={placement === 'top' ? 'slideInDown' : 'slideInUp'}
-      animationOut={placement === 'top' ? 'slideOutUp' : 'slideOutDown'}
-      // swipeDirection={'down'}
-      // onSwipeComplete={hideModal}
       style={{
         position: 'relative',
         justifyContent: placement === 'top' ? 'flex-start' : 'flex-end',

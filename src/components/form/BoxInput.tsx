@@ -150,10 +150,7 @@ interface BoxInputProps extends TextInputProps {
   disabled?: boolean;
 }
 
-const BoxInput = React.forwardRef<
-  TextInput,
-  BoxInputProps
->(
+const BoxInput = React.forwardRef<TextInput, BoxInputProps>(
   (
     {
       label,

@@ -48,9 +48,7 @@ const DeleteKey = () => {
   const dispatch = useAppDispatch();
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
-  const {emailNotifications} = useAppSelector(
-    ({APP}) => APP,
-  );
+  const {emailNotifications} = useAppSelector(({APP}) => APP);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
 
   const {

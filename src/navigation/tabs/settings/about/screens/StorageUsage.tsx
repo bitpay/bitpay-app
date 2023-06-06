@@ -39,12 +39,10 @@ const StorageUsage: React.VFC = () => {
   const [appSize, setAppSize] = useState<string>('');
   const [deviceFreeStorage, setDeviceFreeStorage] = useState<string>('');
   const [deviceTotalStorage, setDeviceTotalStorage] = useState<string>('');
-  const [giftCardtStorage, setGiftCardStorage] = useState<string>('');
   const [walletStorage, setWalletStorage] = useState<string>('');
   const [customTokenStorage, setCustomTokenStorage] = useState<string>('');
   const [contactStorage, setContactStorage] = useState<string>('');
 
-  const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const customTokens = useAppSelector(({WALLET}) => WALLET.customTokenData);
   const contacts = useAppSelector(({CONTACT}) => CONTACT.list);
@@ -68,7 +66,7 @@ const StorageUsage: React.VFC = () => {
       await RNFS.writeFile(filePath, data);
       const file = await RNFS.stat(filePath);
       await RNFS.unlink(filePath); // Delete
-      return Promise.resolve(file.size);
+      return Promise.resolve(Number(file.size));
     } catch (err) {
       return Promise.reject(err);
     }
@@ -80,7 +78,7 @@ const StorageUsage: React.VFC = () => {
       const resultStorage = await RNFS.readDir(storagePath);
       let _appSize: number = 0;
       forEach(resultStorage, data => {
-        _appSize = _appSize + data.size;
+        _appSize = _appSize + Number(data.size);
       });
       setAppSize(formatBytes(_appSize));
 
@@ -98,7 +96,6 @@ const StorageUsage: React.VFC = () => {
       });
       const walletsCount = wallets.reduce((a, b) => a + b, 0);
       setWalletsCount(walletsCount);
-      setGiftCount(giftCards.length);
       setContactCount(contacts.length);
       const _customTokenCount = Object.values(customTokens).length;
       setCustomTokenCount(_customTokenCount);
@@ -109,12 +106,6 @@ const StorageUsage: React.VFC = () => {
         JSON.stringify(keys),
       );
       setWalletStorage(formatBytes(_walletStorageSize));
-
-      const _giftCardStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/gift-cards.txt',
-        JSON.stringify(giftCards),
-      );
-      setGiftCardStorage(formatBytes(_giftCardStorageSize));
 
       const _customTokenStorageSize = await getSize(
         RNFS.TemporaryDirectoryPath + '/custom-tokens.txt',
@@ -170,15 +161,6 @@ const StorageUsage: React.VFC = () => {
           </SettingTitle>
 
           <Button buttonType="pill">{walletStorage}</Button>
-        </Setting>
-
-        <Hr />
-        <Setting>
-          <SettingTitle>
-            {t('Gift Cards')} ({giftCount || '0'})
-          </SettingTitle>
-
-          <Button buttonType="pill">{giftCardtStorage}</Button>
         </Setting>
 
         <Hr />

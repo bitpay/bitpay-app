@@ -159,7 +159,6 @@ export const createHomeCardList = ({
       );
 
       wallets = wallets.filter(wallet => !wallet.hideWallet);
-
       return {
         id: key.id,
         component: (

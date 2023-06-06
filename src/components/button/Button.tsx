@@ -303,7 +303,8 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
           cancel={cancel}
           danger={danger}
           disabled={disabled}
-          action={action}></ButtonTypeText>
+          action={action}
+        />
       </ButtonTypeContainer>
 
       <ButtonOverlay

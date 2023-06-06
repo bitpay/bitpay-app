@@ -105,7 +105,7 @@
     "react-native-keyboard-aware-scroll-view": "0.9.5",
     "react-native-level-fs": "3.0.1",
     "react-native-localize": "2.2.4",
-    "react-native-macos": "^0.71.0-0",
+    "react-native-macos": "0.71.10",
     "react-native-mail": "6.1.1",
     "react-native-markdown-display": "7.0.0-alpha.2",
     "react-native-modal": "13.0.1",
