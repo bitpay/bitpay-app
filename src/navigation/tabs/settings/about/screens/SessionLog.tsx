@@ -1,4 +1,3 @@
-import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {memo, useLayoutEffect, useState} from 'react';
@@ -61,9 +60,15 @@ const FilterLabelsContainer = styled.View`
   margin-top: 16px;
 `;
 
-const FilterLabel = styled(BaseText)`
+const FilterLabel = styled(BaseText)<{
+  color?: string | null;
+  isSelected: boolean;
+}>`
   flex: 1 1 100%;
+  padding: 20px 0px;
   text-align: center;
+  color: ${({theme: {dark}, color, isSelected}) =>
+    color && isSelected ? color : dark ? White : SlateDark};
 `;
 
 const OptionContainer = styled.TouchableOpacity<SheetParams>`
@@ -114,25 +119,37 @@ const LogColorMap: Partial<{[key in LogLevel]: string | null}> = {
   [LogLevel.Debug]: LinkBlue,
 };
 
-const FilterLabels: React.VFC<{onPress?: (level: LogLevel) => any}> = memo(
-  props => {
-    const levels = [];
+const LogLabelColorMap: Partial<{[key in LogLevel]: string | null}> = {
+  [LogLevel.Error]: Caution,
+  [LogLevel.Warn]: Warning,
+  [LogLevel.Debug]: LinkBlue,
+  [LogLevel.Info]: LinkBlue,
+};
 
-    for (let i = MIN_LOG_LEVEL; i <= MAX_LOG_LEVEL; ++i) {
-      levels.push(i);
-    }
+const FilterLabels: React.VFC<{
+  onPress?: (level: LogLevel) => any;
+  selectedLabel: LogLevel;
+}> = memo(props => {
+  const levels = [];
 
-    return (
-      <FilterLabelsContainer>
-        {levels.map(level => (
-          <FilterLabel onPress={() => props.onPress?.(level)} key={level}>
-            {LogLevel[level]}
-          </FilterLabel>
-        ))}
-      </FilterLabelsContainer>
-    );
-  },
-);
+  for (let i = MIN_LOG_LEVEL; i <= MAX_LOG_LEVEL; ++i) {
+    levels.push(i);
+  }
+
+  return (
+    <FilterLabelsContainer>
+      {levels.map(level => (
+        <FilterLabel
+          isSelected={props.selectedLabel === level}
+          color={LogLabelColorMap[level]}
+          onPress={() => props.onPress?.(level)}
+          key={level}>
+          {LogLevel[level]}
+        </FilterLabel>
+      ))}
+    </FilterLabelsContainer>
+  );
+});
 
 const renderItem = ({item}: {item: LogEntry}) => (
   <Logs color={LogColorMap[item.level]}>
@@ -236,19 +253,7 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
         }
       />
 
-      <FilterLabels onPress={onFilterLevelChange} />
-
-      <Slider
-        step={1}
-        value={filterLevel}
-        minimumValue={MIN_LOG_LEVEL}
-        maximumValue={MAX_LOG_LEVEL}
-        onValueChange={onFilterLevelChange}
-        style={{
-          alignSelf: 'center',
-          width: SLIDER_WIDTH,
-        }}
-      />
+      <FilterLabels onPress={onFilterLevelChange} selectedLabel={filterLevel} />
 
       <SheetModal
         placement={'top'}
