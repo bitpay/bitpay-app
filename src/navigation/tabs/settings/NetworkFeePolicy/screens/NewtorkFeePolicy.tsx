@@ -40,7 +40,7 @@ const NetworkFeePolicyContainer = styled.SafeAreaView`
 
 const ScrollView = styled.ScrollView`
   margin-top: 20px;
-  padding: 0 ${ScreenGutter};
+  margin: 0 ${ScreenGutter};
 `;
 
 const NetworkFeePolicyParagraph = styled(Paragraph)`

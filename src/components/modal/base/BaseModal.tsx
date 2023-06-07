@@ -40,26 +40,27 @@ const BaseModal: React.FC<ModalProps> = props => {
   return (
     <>
       {isVisibleSafe ? (
-        <TouchableOpacity activeOpacity={1} style={{
-          position: 'absolute',
-          height: '100%',
-          width: '100%',
-          top: 0,
-          left: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-        }}
-        onPress={props.onBackdropPress}>
-          <TouchableOpacity
+        <TouchableOpacity
           activeOpacity={1}
+          style={{
+            position: 'absolute',
+            height: '100%',
+            width: '100%',
+            top: 0,
+            left: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+          }}
+          onPress={props.onBackdropPress}>
+          <TouchableOpacity
+            activeOpacity={1}
             style={{
               position: 'absolute',
               bottom: 0,
               left: 0,
               width: '100%',
               zIndex: isVisibleSafe ? 1000000 : undefined,
-            }}
-            >
-              {props.children}
+            }}>
+            {props.children}
           </TouchableOpacity>
         </TouchableOpacity>
       ) : null}

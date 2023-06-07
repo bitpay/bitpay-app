@@ -1,7 +1,7 @@
 // import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';
-import {Platform, Share} from 'react-native';
+import {Platform, Linking, Share} from 'react-native';
 import {AppActions} from '.';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 // import {Network} from '../../constants';
@@ -356,3 +356,28 @@ export const isVersionUpdated = (
 
   return false;
 };
+
+/**
+ * Open a URL with the InAppBrowser if available, else lets the device handle the URL.
+ * @param url
+ * @param options
+ * @returns
+ */
+export const openUrlWithInAppBrowser =
+  (url: string): Effect =>
+  async dispatch => {
+    const handler = 'external app'; //in app browser not available
+    try {
+      dispatch(LogActions.info(`Opening URL ${url} with ${handler}`));
+
+      // successfully resolves if an installed app handles the URL,
+      // or the user confirms any presented 'open' dialog
+      await Linking.openURL(url);
+    } catch (err) {
+      const logMsg = `Error opening URL ${url} with ${handler}.\n${JSON.stringify(
+        err,
+      )}`;
+
+      dispatch(LogActions.error(logMsg));
+    }
+  };

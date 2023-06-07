@@ -23,10 +23,7 @@ export const startJoinMultisig =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {
-            emailNotifications,
-            defaultLanguage,
-          },
+          APP: {emailNotifications, defaultLanguage},
           WALLET: {keys},
         } = getState();
         const walletData = BWC.parseSecret(opts.invitationCode as string);
@@ -98,11 +95,7 @@ export const addWalletJoinMultisig =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {
-            notificationsAccepted,
-            emailNotifications,
-            defaultLanguage,
-          },
+          APP: {notificationsAccepted, emailNotifications, defaultLanguage},
         } = getState();
 
         const walletData = BWC.parseSecret(opts.invitationCode as string);

@@ -37,7 +37,7 @@ export const SettingsContainer = styled.SafeAreaView`
 `;
 
 export const Settings = styled.ScrollView`
-  padding: 10px ${ScreenGutter};
+  margin: 10px ${ScreenGutter};
 `;
 
 export const SettingsComponent = styled.View`
@@ -103,12 +103,6 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
         title: t('Wallets & Keys'),
         onPress: () => {},
         subListComponent: <WalletsAndKeys />,
-      },
-      {
-        id: 'Security',
-        title: t('Security'),
-        onPress: () => {},
-        subListComponent: <Security />,
       },
       {
         id: 'About BitPay',

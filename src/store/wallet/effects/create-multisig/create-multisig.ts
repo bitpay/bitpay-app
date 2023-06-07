@@ -23,10 +23,7 @@ export const startCreateKeyMultisig =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {
-            emailNotifications,
-            defaultLanguage,
-          },
+          APP: {emailNotifications, defaultLanguage},
           WALLET: {keys},
         } = getState();
 
@@ -92,10 +89,7 @@ export const addWalletMultisig =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          APP: {
-            emailNotifications,
-            defaultLanguage,
-          },
+          APP: {emailNotifications, defaultLanguage},
         } = getState();
         const newWallet = (await createWalletWithOpts({
           key: key.methods!,
