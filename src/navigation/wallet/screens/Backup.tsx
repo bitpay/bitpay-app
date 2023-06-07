@@ -16,7 +16,6 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {StackScreenProps} from '@react-navigation/stack';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
 
 type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
@@ -42,11 +41,7 @@ export const backupRedirect = ({
   walletTermsAccepted: boolean;
   key?: Key;
 }) => {
-  if (context === 'onboarding') {
-    navigation.navigate('Onboarding', {
-      screen: 'TermsOfUse',
-    });
-  } else if (context === 'keySettings') {
+  if (context === 'keySettings') {
     navigation.navigate('Wallet', {screen: 'KeySettings', params: {key}});
   } else if (context === 'settings') {
     navigation.navigate('Tabs', {screen: 'Settings', params: {key}});
@@ -64,10 +59,6 @@ export const backupRedirect = ({
         params: {id: key.id, context},
       }),
     );
-  } else if (context === 'swapCrypto') {
-    navigation.navigate('SwapCrypto', {screen: 'Root'});
-  } else if (context === 'buyCrypto') {
-    navigation.navigate('BuyCrypto', {screen: 'Root'});
   } else {
     navigation.dispatch(
       StackActions.replace('Wallet', {

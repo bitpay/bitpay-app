@@ -127,9 +127,7 @@ const POPULAR_TOKENS: Record<string, string[]> = {
 
 const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
 
-const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
-  route,
-}) => {
+const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const {context, key} = route.params;

@@ -31,9 +31,7 @@ import {
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
 import ExportKey from './screens/ExportKey';
-import TermsOfUse, {
-  TermsOfUseParamList,
-} from '../onboarding/screens/TermsOfUse';
+import TermsOfUse, {TermsOfUseParamList} from './screens/TermsOfUse';
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 import AmountScreen, {AmountScreenParamList} from './screens/AmountScreen';
 import SendTo from './screens/send/SendTo';
@@ -355,6 +353,14 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.VERIFY_PHRASE}
           component={VerifyPhrase}
+        />
+        <Wallet.Screen
+          name={WalletScreens.KEY_OVERVIEW}
+          component={KeyOverview}
+        />
+        <Wallet.Screen
+          name={WalletScreens.TERMS_OF_USE}
+          component={TermsOfUse}
         />
         {/*<Wallet.Screen
           options={{

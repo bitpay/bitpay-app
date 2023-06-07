@@ -14,6 +14,8 @@ import {
 } from '../../../components/styled/Text';
 import MultisigOptions from './MultisigOptions';
 import {useTranslation} from 'react-i18next';
+import {StackScreenProps} from '@react-navigation/stack';
+import {WalletScreens, WalletStackParamList} from '../WalletStack';
 
 export interface Option {
   id: string;
@@ -22,7 +24,12 @@ export interface Option {
   cta: () => void;
 }
 
-const CreationOptions: React.FC = () => {
+type CreationOptionsScreenProps = StackScreenProps<
+  WalletStackParamList,
+  WalletScreens.CREATION_OPTIONS
+>;
+
+const CreationOptions: React.FC<CreationOptionsScreenProps> = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);

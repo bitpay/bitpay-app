@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -165,16 +165,15 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     value.isActive = false;
     // update words and append empty string for next entry
     const update = [...attemptWords.filter(w => w), value.word, ''];
-    console.log('#### selected', activeSlideIndex, words.length);
-    if (activeSlideIndex !== words.length - 1) {
-      setActiveSlideIndex(activeSlideIndex + 1);
-      setSelectedWord(value.word);
-      setTimeout(() => {
-        setSelectedWord('');
-      }, 800);
-      // store words and update index
-      setAttemptWords(update);
-    } else {
+    // store words and update index
+    setAttemptWords(update);
+    setActiveSlideIndex(activeSlideIndex + 1);
+    setSelectedWord(value.word);
+    // Clear selected word
+    setTimeout(() => {
+      setSelectedWord('');
+    }, 500);
+    if (activeSlideIndex === words.length - 1) {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
       if (words.every((w, index) => w.word === compareWords[index])) {
