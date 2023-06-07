@@ -10,7 +10,6 @@ import {
 } from '../../../styles/colors';
 import {ActiveOpacity} from '../../../components/styled/Containers';
 import {titleCasing} from '../../../utils/helper-methods';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {DateRanges} from '../../../store/rate/rate.models';
 
 interface Props {
@@ -74,7 +73,6 @@ const RangeDateSelector = ({onPress}: Props) => {
             isActive={isActive.label}
             label={label}
             onPress={() => {
-              haptic('impactLight');
               if (isActive.label !== label) {
                 setActiveOption(dateRange);
                 onPress(dateRange);

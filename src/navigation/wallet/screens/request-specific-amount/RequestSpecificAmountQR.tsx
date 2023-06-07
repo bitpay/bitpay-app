@@ -13,7 +13,6 @@ import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import CopySvg from '../../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import haptic from '../../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import {LightBlack, White} from '../../../../styles/colors';
@@ -176,7 +175,6 @@ const RequestSpecificAmountQR = () => {
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = () => {
-    haptic('impactLight');
     if (!copied && qrValue) {
       Clipboard.setString(qrValue);
       setCopied(true);

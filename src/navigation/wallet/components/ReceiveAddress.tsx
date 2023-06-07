@@ -11,7 +11,6 @@ import {
   SheetContainer,
   ActiveOpacity,
 } from '../../../components/styled/Containers';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from './ErrorMessages';
 import {
@@ -166,7 +165,6 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   const [singleAddress, setSingleAddress] = useState(false);
 
   const copyToClipboard = () => {
-    haptic('impactLight');
     if (!copied) {
       Clipboard.setString(address);
       setCopied(true);
@@ -200,7 +198,6 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   }, [copied]);
 
   const onBchAddressTypeChange = (type: string) => {
-    haptic('impactLight');
     setBchAddressType(type);
     if (type === 'Legacy') {
       setAddress(GetLegacyBchAddressFormat(address));

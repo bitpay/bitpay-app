@@ -19,7 +19,6 @@ import {
   ActiveOpacity,
   ActionContainer,
 } from '../../../components/styled/Containers';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {WalletStackParamList} from '../WalletStack';
 import {White, SlateDark} from '../../../styles/colors';
 import {useNavigation} from '@react-navigation/native';
@@ -114,7 +113,6 @@ const Copayers: React.FC<CopayersProps> = props => {
   };
 
   const copyToClipboard = () => {
-    haptic('impactLight');
     if (!copied) {
       Clipboard.setString(walletStatus.secret);
       setCopied(true);

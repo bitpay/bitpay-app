@@ -3,7 +3,6 @@ import RNSwipeButton from 'rn-swipe-button';
 import {NotificationPrimary, White} from '../../styles/colors';
 import BitpayBSvg from '../../../assets/img/logos/bitpay-b.svg';
 import SlideArrowSVG from '../../../assets/img/slide-arrow.svg';
-import haptic from '../haptic-feedback/haptic';
 import styled from 'styled-components/native';
 
 export interface SwipeButtonConfig {
@@ -48,7 +47,6 @@ const SwipeButton = ({
             height: buttonHeight,
           }}
           height={buttonHeight}
-          onSwipeStart={() => haptic('longPress')}
           onSwipeSuccess={onSwipeComplete}
           swipeSuccessThreshold={75}
           railBackgroundColor={'transparent'}

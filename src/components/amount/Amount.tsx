@@ -2,7 +2,6 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../components/button/Button';
-import haptic from '../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../components/styled/Containers';
 import {BaseText} from '../../components/styled/Text';
 import VirtualKeyboard from '../../components/virtual-keyboard/VirtualKeyboard';
@@ -198,7 +197,6 @@ const Amount: React.VFC<AmountProps> = ({
   updateAmountRef.current = updateAmount;
 
   const onCellPress = useCallback((val: string) => {
-    haptic('soft');
     setUseSendMax(false);
 
     let newValue;

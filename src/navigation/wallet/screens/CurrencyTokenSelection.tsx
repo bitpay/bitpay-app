@@ -10,7 +10,6 @@ import {useTranslation} from 'react-i18next';
 import {StyleSheet, Text, FlatList, View} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import Button from '../../../components/button/Button';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ChainSelectionRow,
   CurrencySelectionItem,
@@ -138,8 +137,6 @@ const CurrencyTokenSelectionScreen: React.VFC<
   };
 
   const onChainToggle = (id: string) => {
-    haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
-
     if (params.selectionMode === 'multi') {
       if (!tokens.some(token => token.selected)) {
         setChain({
@@ -186,8 +183,6 @@ const CurrencyTokenSelectionScreen: React.VFC<
     currencyAbbreviation: string,
     currencyChain?: string,
   ) => {
-    haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
-
     if (params.selectionMode === 'multi') {
       if (!chain.selected) {
         setChain(prev => ({

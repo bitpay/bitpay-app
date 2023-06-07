@@ -2,7 +2,6 @@ import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {Trans, useTranslation} from 'react-i18next';
 import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {
   NoResultsContainer,
   NoResultsDescription,
@@ -41,7 +40,6 @@ const CurrencySelectionNoResults: React.VFC<
         <Link
           style={{marginTop: 10, height: 50}}
           onPress={() => {
-            haptic('soft');
             navigation.navigate('Wallet', {
               screen: 'AddWallet',
               params: {key: walletKey, isCustomToken: true, isToken: true},

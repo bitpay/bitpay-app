@@ -38,7 +38,6 @@ import {
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
 import {View} from 'react-native';
-import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
@@ -550,7 +549,6 @@ const SendTo = () => {
           <PasteClipboardContainer
             activeOpacity={0.75}
             onPress={() => {
-              haptic('impactLight');
               setSearchInput(clipboardData);
               validateAndNavigateToConfirm(clipboardData);
             }}>

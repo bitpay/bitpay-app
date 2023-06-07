@@ -14,7 +14,6 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {ContactTitle, ContactTitleContainer} from '../screens/send/SendTo';
 import ContactsSvg from '../../../../assets/img/tab-icons/contacts.svg';
 import {useAppSelector} from '../../../utils/hooks';
@@ -136,7 +135,6 @@ const SendToContact = () => {
                   <ContactRow
                     contact={item}
                     onPress={() => {
-                      haptic('impactLight');
                       context === 'selectInputs'
                         ? goToSelectInputsView({...item, type: 'contact'})
                         : setRecipientAmountContext({
@@ -156,7 +154,6 @@ const SendToContact = () => {
           <Button
             buttonStyle={'primary'}
             onPress={() => {
-              haptic('impactLight');
               goToConfirmView();
             }}
             disabled={!recipientList[0]}>

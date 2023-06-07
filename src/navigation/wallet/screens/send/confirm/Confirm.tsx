@@ -64,7 +64,6 @@ import {
 } from '../../../../../components/styled/Containers';
 import {Platform, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
-import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
 import {toFiat} from '../../../../../store/wallet/utils/wallet';
 import {
@@ -447,7 +446,6 @@ const Confirm = () => {
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
-                      haptic('impactLight');
                       dispatch(
                         openUrlWithInAppBrowser(URL.HELP_DESTINATION_TAG),
                       );

@@ -3,7 +3,6 @@ import styled from 'styled-components/native';
 import {ActiveOpacity, Column} from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
-import haptic from '../haptic-feedback/haptic';
 import Checkbox from '../checkbox/Checkbox';
 import {Utxo} from '../../store/wallet/wallet.models';
 
@@ -29,7 +28,6 @@ const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
   const [checked, setChecked] = useState(!!initialCheckValue);
   const toggle = (): void => {
     setChecked(!checked);
-    haptic('impactLight');
     emit({...item, ...{checked: !checked}}, index);
   };
 

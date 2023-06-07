@@ -19,7 +19,6 @@ import {
 } from '../../../components/styled/Containers';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {GetUtxos} from '../../../store/wallet/effects/transactions/transactions';
-import haptic from '../../../components/haptic-feedback/haptic';
 import InputSelectionRow from '../../../components/list/InputsRow';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
@@ -179,7 +178,6 @@ const SelectInputs = () => {
 
   const goToConfirmView = async () => {
     try {
-      haptic('impactLight');
       dispatch(startOnGoingProcessModal('LOADING'));
       const selectedInputs = inputs.filter(input => input.checked);
       logger.debug(

@@ -21,7 +21,6 @@ import {View} from 'react-native';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
-import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 
 const InfoContainer = styled.SafeAreaView`
@@ -122,7 +121,6 @@ const WalletInformation = () => {
   }, [navigation, t]);
 
   const copyToClipboard = (text: string) => {
-    haptic('impactLight');
     Clipboard.setString(text);
   };
 

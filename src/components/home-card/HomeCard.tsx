@@ -2,7 +2,6 @@ import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import {Action, LightBlack, Slate, SlateDark, White} from '../../styles/colors';
-import Haptic from '../haptic-feedback/haptic';
 import {
   ActiveOpacity,
   CardGutter,
@@ -157,7 +156,6 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
 
   const _onPress = () => {
     if (onCTAPress) {
-      Haptic('impactLight');
       onCTAPress();
     }
   };

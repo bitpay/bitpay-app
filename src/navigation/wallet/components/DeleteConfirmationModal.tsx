@@ -5,7 +5,6 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import CautionSvg from '../../../../assets/img/error.svg';
 import {H4, Link, Paragraph} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {TouchableOpacity} from 'react-native';
 import {useTranslation} from 'react-i18next';
 
@@ -62,14 +61,12 @@ const DeleteConfirmationModal = ({
         <ActionsContainer>
           <TouchableOpacity
             onPress={() => {
-              haptic('impactLight');
               onPressOk();
             }}>
             <Link>{t('DELETE')}</Link>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
-              haptic('impactLight');
               onPressCancel();
             }}>
             <SecondaryActionText>{t('NEVERMIND')}</SecondaryActionText>

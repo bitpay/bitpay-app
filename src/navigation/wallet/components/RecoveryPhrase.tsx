@@ -56,7 +56,6 @@ import {WalletStackParamList} from '../WalletStack';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
-import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
@@ -613,7 +612,6 @@ const RecoveryPhrase = () => {
             <AdvancedOptionsButton
               accessibilityLabel="show-advanced-options"
               onPress={() => {
-                Haptic('impactLight');
                 setShowAdvancedOptions(!showAdvancedOptions);
               }}>
               {showAdvancedOptions ? (

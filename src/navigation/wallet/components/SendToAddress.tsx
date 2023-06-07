@@ -23,7 +23,6 @@ import {
   ValidateURI,
 } from '../../../store/wallet/utils/validations';
 import {FlatList, TouchableOpacity, View} from 'react-native';
-import haptic from '../../../components/haptic-feedback/haptic';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {
   createWalletAddress,
@@ -270,7 +269,6 @@ const SendToAddress = () => {
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
             onPress={() => {
-              haptic('impactLight');
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
@@ -345,7 +343,6 @@ const SendToAddress = () => {
           <Button
             buttonStyle={'primary'}
             onPress={() => {
-              haptic('impactLight');
               goToConfirmView();
             }}
             disabled={!recipientList[0]}>

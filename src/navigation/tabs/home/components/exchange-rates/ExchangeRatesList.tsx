@@ -1,7 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
-import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import ExchangeRateItem from './ExchangeRateItem';
@@ -37,7 +36,6 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
           item={item}
           key={item.id}
           onPress={() => {
-            haptic('impactLight');
             navigation.navigate('Wallet', {
               screen: 'PriceCharts',
               params: {item},

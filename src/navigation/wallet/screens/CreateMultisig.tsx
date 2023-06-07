@@ -39,7 +39,6 @@ import {
   CtaContainer as _CtaContainer,
   InfoImageContainer,
 } from '../../../components/styled/Containers';
-import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {BitpaySupportedCurrencies} from '../../../constants/currencies';
@@ -472,7 +471,6 @@ const CreateMultisig = () => {
           <AdvancedOptionsContainer>
             <AdvancedOptionsButton
               onPress={() => {
-                Haptic('impactLight');
                 setShowOptions(!showOptions);
               }}>
               {showOptions ? (
@@ -581,7 +579,6 @@ const CreateMultisig = () => {
                       <VerticalPadding>
                         <TouchableOpacity
                           onPress={() => {
-                            Haptic('impactLight');
                             dispatch(
                               openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
                             );

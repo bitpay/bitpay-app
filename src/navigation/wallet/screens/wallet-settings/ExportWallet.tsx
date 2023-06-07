@@ -19,7 +19,6 @@ import BoxInput from '../../../../components/form/BoxInput';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import Haptic from '../../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';
 import Checkbox from '../../../../components/checkbox/Checkbox';
@@ -261,7 +260,6 @@ const ExportWallet = () => {
               <AdvancedOptionsButton
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  Haptic('impactLight');
                   setShowOptions(!showOptions);
                 }}>
                 {showOptions ? (

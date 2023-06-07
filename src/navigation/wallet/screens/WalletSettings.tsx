@@ -16,7 +16,6 @@ import {
   SettingView,
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
-import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
@@ -130,7 +129,6 @@ const WalletSettings = () => {
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
-            haptic('impactLight');
             navigation.navigate('Wallet', {
               screen: 'UpdateKeyOrWalletName',
               params: {
@@ -195,7 +193,6 @@ const WalletSettings = () => {
           <Setting
             activeOpacity={ActiveOpacity}
             onPress={() => {
-              haptic('impactLight');
               navigation.navigate('Wallet', {
                 screen: 'WalletInformation',
                 params: {wallet},
@@ -208,7 +205,6 @@ const WalletSettings = () => {
           <Setting
             activeOpacity={ActiveOpacity}
             onPress={() => {
-              haptic('impactLight');
               navigation.navigate('Wallet', {
                 screen: 'Addresses',
                 params: {wallet},
@@ -221,7 +217,6 @@ const WalletSettings = () => {
           <Setting
             activeOpacity={ActiveOpacity}
             onPress={() => {
-              haptic('impactLight');
               navigation.navigate('Wallet', {
                 screen: 'ExportTransactionHistory',
                 params: {wallet},
@@ -238,7 +233,6 @@ const WalletSettings = () => {
               <Setting
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  haptic('impactLight');
                   const {
                     compliantDerivation,
                     fingerPrint,
@@ -286,7 +280,6 @@ const WalletSettings = () => {
           <Setting
             activeOpacity={ActiveOpacity}
             onPress={() => {
-              haptic('impactLight');
               navigation.navigate('Wallet', {
                 screen: 'ClearTransactionHistoryCache',
                 params: {wallet, key},

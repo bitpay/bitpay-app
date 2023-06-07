@@ -16,7 +16,6 @@ import {navigationRef} from '../../Root';
 import {RootState} from '../../store';
 import {AppActions} from '../../store/app';
 import {Action, NeutralSlate, SlateDark, White} from '../../styles/colors';
-import haptic from '../haptic-feedback/haptic';
 
 const Container = styled.View`
   align-items: center;
@@ -44,7 +43,6 @@ const NetworkToggle = () => {
   });
 
   const toggleNetwork = () => {
-    haptic('impactLight');
     dispatch(
       AppActions.networkChanged(isTestnet ? Network.mainnet : Network.testnet),
     );
@@ -66,7 +64,6 @@ const ThemeToggle = () => {
     Appearance.getColorScheme();
 
   const toggleTheme = () => {
-    haptic('impactLight');
     dispatch(AppActions.setColorScheme(scheme === 'dark' ? 'light' : 'dark'));
   };
 
@@ -86,7 +83,6 @@ const LanguageToggle = () => {
   );
 
   const toggleLanguage = () => {
-    haptic('impactLight');
     dispatch(AppActions.setDefaultLanguage(language === 'es' ? 'en' : 'es'));
   };
 

@@ -37,7 +37,6 @@ import {View} from 'react-native';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
 import Clipboard from '@react-native-community/clipboard';
 import {useTranslation} from 'react-i18next';
-import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {LogActions} from '../../../../store/log';
 
@@ -301,7 +300,6 @@ const Addresses = () => {
   };
 
   const copyText = (text: string) => {
-    haptic('impactLight');
     Clipboard.setString(text);
   };
 

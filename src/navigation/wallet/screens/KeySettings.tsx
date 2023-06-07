@@ -24,7 +24,6 @@ import {
   InfoImageContainer,
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
-import haptic from '../../../components/haptic-feedback/haptic';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
 import {SlateDark, White} from '../../../styles/colors';
 import {
@@ -286,7 +285,6 @@ const KeySettings = () => {
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
-            haptic('impactLight');
             navigation.navigate('Wallet', {
               screen: 'UpdateKeyOrWalletName',
               params: {key, context: 'key'},
@@ -317,7 +315,6 @@ const KeySettings = () => {
           <InfoImageContainer infoMargin={'0 0 0 8px'}>
             <TouchableOpacity
               onPress={() => {
-                haptic('impactLight');
                 navigation.navigate('Wallet', {screen: 'KeyExplanation'});
               }}>
               <InfoSvg />
@@ -339,7 +336,6 @@ const KeySettings = () => {
           }) => (
             <TouchableOpacity
               onPress={() => {
-                haptic('impactLight');
                 navigation.navigate('Wallet', {
                   screen: 'WalletSettings',
                   params: {walletId: id, key},
@@ -367,7 +363,6 @@ const KeySettings = () => {
           <VerticalPadding style={{alignItems: 'center'}}>
             <AddWalletText
               onPress={() => {
-                haptic('impactLight');
                 navigation.navigate('Wallet', {
                   screen: 'AddingOptions',
                   params: {key},
@@ -383,7 +378,6 @@ const KeySettings = () => {
             <Title>{t('Security')}</Title>
             <Setting
               onPress={() => {
-                haptic('impactLight');
                 if (!_key.isPrivKeyEncrypted) {
                   navigation.navigate('Wallet', {
                     screen: 'RecoveryPhrase',
@@ -447,7 +441,6 @@ const KeySettings = () => {
                 <TouchableOpacity
                   activeOpacity={ActiveOpacity}
                   onPress={() => {
-                    haptic('impactLight');
                     dispatch(
                       openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD),
                     );
@@ -488,7 +481,6 @@ const KeySettings = () => {
               <Setting
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  haptic('impactLight');
                   if (!_key.isPrivKeyEncrypted) {
                     startSyncWallets(_key.properties!.mnemonic);
                   } else {
@@ -514,7 +506,6 @@ const KeySettings = () => {
               <Setting
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  haptic('impactLight');
                   if (!_key.isPrivKeyEncrypted) {
                     navigation.navigate('Wallet', {
                       screen: 'ExportKey',
@@ -552,7 +543,6 @@ const KeySettings = () => {
               <Setting
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  haptic('impactLight');
                   if (!_key.isPrivKeyEncrypted) {
                     navigation.navigate('Wallet', {
                       screen: 'ExtendedPrivateKey',
@@ -586,7 +576,6 @@ const KeySettings = () => {
             activeOpacity={ActiveOpacity}
             style={{marginBottom: 50}}
             onPress={() => {
-              haptic('impactLight');
               navigation.navigate('Wallet', {
                 screen: 'DeleteKey',
                 params: {keyId: key.id},

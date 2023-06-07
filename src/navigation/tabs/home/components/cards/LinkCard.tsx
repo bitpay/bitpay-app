@@ -7,7 +7,6 @@ import {
 } from '../../../../../components/styled/Containers';
 import {LightBlack, White} from '../../../../../styles/colors';
 import {BoxShadow} from '../Styled';
-import haptic from '../../../../../components/haptic-feedback/haptic';
 interface LinkCardProps {
   image?: any;
   description: string;
@@ -46,7 +45,6 @@ const LinkCard: React.FC<LinkCardProps> = ({image, description, onPress}) => {
     <LinkCardContainer
       activeOpacity={ActiveOpacity}
       onPress={() => {
-        haptic('soft');
         onPress();
       }}
       style={[!theme.dark && BoxShadow]}>

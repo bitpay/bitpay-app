@@ -5,7 +5,6 @@ import {Success, White} from '../../../styles/colors';
 import {WIDTH} from '../../../components/styled/Containers';
 import PaymentCompleteSvg from '../../../../assets/img/wallet/payment-complete.svg';
 import {BaseText} from '../../../components/styled/Text';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
 
 const PaymentSentContainer = styled.View`
@@ -74,7 +73,6 @@ const PaymentSent = ({isVisible, onCloseModal, title}: PaymentSentModal) => {
         <PaymentSentFooter>
           <CloseButton
             onPress={() => {
-              haptic('impactLight');
               onCloseModal();
             }}>
             <CloseText>{t('CLOSE')}</CloseText>

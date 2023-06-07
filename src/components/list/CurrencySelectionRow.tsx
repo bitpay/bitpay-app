@@ -15,7 +15,6 @@ import {
 import {getBadgeImg} from '../../utils/helper-methods';
 import Checkbox from '../checkbox/Checkbox';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import haptic from '../haptic-feedback/haptic';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {ScreenGutter} from '../styled/Containers';
 import {BaseText, H6, H7} from '../styled/Text';
@@ -234,7 +233,6 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   const {currencyName} = currency;
   const onPress = useCallback(
     (currencyAbbreviation: string, chain: string): void => {
-      haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
       onToggle?.(currencyAbbreviation, chain);
     },
     [onToggle],

@@ -9,7 +9,6 @@ import {ContactsStackParamList} from '../ContactsStack';
 import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import {BaseText, TextAlign} from '../../../../components/styled/Text';
 import {Hr} from '../../../../components/styled/Containers';
-import haptic from '../../../../components/haptic-feedback/haptic';
 import {
   NeutralSlate,
   SlateDark,
@@ -239,7 +238,6 @@ const ContactsDetails = ({
   }, [copied]);
 
   const copyToClipboard = () => {
-    haptic('impactLight');
     Clipboard.setString(contact.address);
     setCopied(true);
   };

@@ -4,7 +4,6 @@ import React, {useRef, useState} from 'react';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ActionContainer,
   CtaContainerAbsolute,
@@ -125,7 +124,6 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
           sliderWidth={WIDTH}
           itemWidth={Math.round(WIDTH)}
           onScrollIndexChanged={(index: number) => {
-            haptic('impactLight');
             setActiveSlideIndex(index);
           }}
           // @ts-ignore
