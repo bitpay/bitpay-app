@@ -1,5 +1,6 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
+import {TransitionPresets} from '@react-navigation/stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
@@ -10,7 +11,7 @@ import HomeRoot from './home/HomeRoot';
 import ShopHome, {ShopHomeParamList} from './shop/ShopHome';
 import SettingsRoot from './settings/SettingsStack';
 import {SettingsStackParamList} from './settings/SettingsStack';
-import CardStack, {CardStackParamList} from '../card/CardStack';
+import CardHome, {CardHomeScreenParamList} from '../../navigation/card/screens/CardHome';
 
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
 import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
@@ -30,8 +31,8 @@ const Icons: Record<string, React.FC<SvgProps>> = {
   HomeFocused: HomeFocusedIcon,
   Shop: ShopIcon,
   ShopFocused: ShopFocusedIcon,
-  Card: CardIcon,
-  CardFocused: CardFocusedIcon,
+  CardTab: CardIcon,
+  CardTabFocused: CardFocusedIcon,
   Settings: SettingsIcon,
   SettingsFocused: SettingsFocusedIcon,
   TransactButton: TransactButtonIcon,
@@ -41,7 +42,7 @@ export enum TabsScreens {
   HOME = 'Home',
   SHOP = 'Shop',
   TRANSACT_BUTTON = 'TransactButton',
-  CARD = 'Card',
+  CARD = 'CardTab',
   SETTINGS = 'Settings',
   CAMERA = 'Camera',
 }
@@ -50,7 +51,7 @@ export type TabsStackParamList = {
   Home: undefined;
   Shop: NavigatorScreenParams<ShopHomeParamList> | undefined;
   TransactButton: undefined;
-  Card: NavigatorScreenParams<CardStackParamList> | undefined;
+  CardTab: CardHomeScreenParamList | undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
   Camera: undefined;
 };
@@ -101,6 +102,7 @@ const TabsStack = () => {
         },
         headerShadowVisible: false,
         headerTitleStyle: {maxWidth: WIDTH - 150},
+        ...TransitionPresets.SlideFromRightIOS,
         headerShown: true,
         headerLeft: () => null,
         headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
@@ -113,7 +115,16 @@ const TabsStack = () => {
           tabBarButton: props => <View {...props} />,
         }}
       />
-      <Tab.Screen name={TabsScreens.CARD} component={CardStack} />
+      <Tab.Screen name={TabsScreens.CARD} component={CardHome} options={{
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: 'transparent'
+        },
+        headerShadowVisible: false,
+        headerTitleStyle: {maxWidth: WIDTH - 150},
+        ...TransitionPresets.SlideFromRightIOS,
+        headerLeft: () => null,
+      }} />
       <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
     </Tab.Navigator>
   );

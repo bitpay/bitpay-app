@@ -97,6 +97,7 @@ import CoinbaseStack, {
 import {APP_ANALYTICS_ENABLED} from './constants/config';
 import {BlurContainer} from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
+import CardStack, {CardStackParamList} from './navigation/card/CardStack';
 import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
@@ -132,6 +133,7 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
+  Card: NavigatorScreenParams<CardStackParamList>;
   CardActivation: NavigatorScreenParams<CardActivationStackParamList>;
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Shop: NavigatorScreenParams<ShopStackParamList>;
@@ -162,6 +164,7 @@ export enum RootStacks {
   SHOP = 'Shop',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
+  CARD = 'Card',
   CARD_ACTIVATION = 'CardActivation',
   SCAN = 'Scan',
   CONTACTS = 'Contacts',
@@ -189,6 +192,7 @@ export type NavScreenParams = NavigatorScreenParams<
     OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
+    CardStackParamList &
     CardActivationStackParamList &
     GiftCardStackParamList &
     MerchantStackParamList &
@@ -645,6 +649,13 @@ export default () => {
               }}
               name={RootStacks.WALLET}
               component={WalletStack}
+            />
+            <Root.Screen
+              name={RootStacks.CARD}
+              component={CardStack}
+              options={{
+                gestureEnabled: false,
+              }}
             />
             <Root.Screen
               name={RootStacks.CARD_ACTIVATION}

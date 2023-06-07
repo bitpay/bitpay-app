@@ -5,7 +5,6 @@ import {useTranslation} from 'react-i18next';
 import {FlatList} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Carousel from 'react-native-snap-carousel';
-import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
@@ -14,7 +13,7 @@ import {Br, ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
-import {navigationRef} from '../../../Root';
+import {RootStacks, navigationRef} from '../../../Root';
 import {AppEffects} from '../../../store/app';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -31,6 +30,7 @@ import {
   useAppSelector,
   useBrazeRefreshOnFocus,
 } from '../../../utils/hooks';
+import {CardScreens} from '../CardStack';
 import {CardHomeScreenProps} from '../screens/CardHome';
 import {
   EmptyGhostContainer,
@@ -100,8 +100,11 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const goToCardSettings = () => {
     dispatch(Analytics.track('Clicked Card Settings', {}));
 
-    navigation.navigate('Settings', {
-      id: activeCard.id,
+    navigationRef.navigate(RootStacks.CARD, {
+      screen: CardScreens.SETTINGS,
+      params: {
+        id: activeCard.id,
+      },
     });
   };
   const goToCardSettingsRef = useRef(goToCardSettings);
@@ -185,18 +188,14 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const renderSlide = useCallback(
     ({item}: {item: Card[]}) =>
       activeCard.id === item[0].id ? (
-        <SharedElement
-          id={'card.dashboard.active-card.' + item[0].id}
-          style={{paddingHorizontal: 10}}>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => goToCardSettingsRef.current()}>
-            <CardOverviewSlide
-              card={item[0]}
-              designCurrency={virtualDesignCurrency}
-            />
-          </TouchableOpacity>
-        </SharedElement>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => goToCardSettingsRef.current()}>
+          <CardOverviewSlide
+            card={item[0]}
+            designCurrency={virtualDesignCurrency}
+          />
+        </TouchableOpacity>
       ) : (
         <CardOverviewSlide
           card={item[0]}
@@ -297,7 +296,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
                   id: cardGroups[idx][0].id,
                 });
               }}
-              itemWidth={CARD_WIDTH + 20}
+              itemWidth={CARD_WIDTH}
               sliderWidth={WIDTH}
               inactiveSlideScale={1}
               inactiveSlideOpacity={1}

@@ -16,9 +16,11 @@ import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {CARD_WIDTH} from '../../../constants/config.card';
+import {RootStacks, navigationRef} from '../../../Root';
 import {Card} from '../../../store/card/card.models';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppSelector} from '../../../utils/hooks';
+import {TabsScreens} from '../../tabs/TabsStack';
 import {CardStackParamList} from '../CardStack';
 import SettingsList from '../components/CardSettingsList';
 import SettingsSlide from '../components/CardSettingsSlide';
@@ -109,8 +111,11 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   }, [physicalCard]);
 
   const goToCardHome = () => {
-    navigation.navigate('CardHome', {
-      id: id,
+    navigationRef.navigate(RootStacks.TABS, {
+      screen: TabsScreens.CARD,
+      params: {
+        id,
+      },
     });
   };
   const goToCardHomeRef = useRef(goToCardHome);
