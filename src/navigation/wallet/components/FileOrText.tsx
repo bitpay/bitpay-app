@@ -20,7 +20,6 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {startGetRates, startImportFile} from '../../../store/wallet/effects';
 import {
   dismissOnGoingProcessModal,
-  setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
@@ -95,7 +94,6 @@ const FileOrText = () => {
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await sleep(1000);
       await dispatch(updatePortfolioBalance());
-      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
       backupRedirect({
         context: route.params?.context,

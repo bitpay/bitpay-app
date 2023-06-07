@@ -1,10 +1,9 @@
-import {ColorSchemeName, EventSubscription} from 'react-native';
+import {ColorSchemeName} from 'react-native';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {Network} from '../../constants';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
-import {HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
 
@@ -133,34 +132,6 @@ export const showPortfolioValue = (value: boolean): AppActionType => ({
 export const toggleHideAllBalances = (value?: boolean): AppActionType => ({
   type: AppActionTypes.TOGGLE_HIDE_ALL_BALANCES,
   payload: value,
-});
-
-export const brazeInitialized = (
-  contentCardSubscription: EventSubscription | null,
-): AppActionType => ({
-  type: AppActionTypes.BRAZE_INITIALIZED,
-  payload: {contentCardSubscription},
-});
-
-export const brazeContentCardsFetched = (
-  contentCards: any[],
-): AppActionType => ({
-  type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
-  payload: {contentCards},
-});
-
-export const setHomeCarouselConfig = (
-  update: HomeCarouselConfig[] | HomeCarouselConfig,
-): AppActionType => ({
-  type: AppActionTypes.SET_HOME_CAROUSEL_CONFIG,
-  payload: update,
-});
-
-export const setHomeCarouselLayoutType = (
-  update: HomeCarouselLayoutType,
-): AppActionType => ({
-  type: AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE,
-  payload: update,
 });
 
 export const updateSettingsListConfig = (

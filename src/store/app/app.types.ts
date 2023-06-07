@@ -249,16 +249,6 @@ interface ToggleHideAllBalances {
   payload?: boolean;
 }
 
-interface SetHomeCarouselConfig {
-  type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
-  payload: HomeCarouselConfig[] | HomeCarouselConfig;
-}
-
-interface SetHomeCarouselLayoutType {
-  type: typeof AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE;
-  payload: HomeCarouselLayoutType;
-}
-
 interface updateSettingsListConfigType {
   type: typeof AppActionTypes.UPDATE_SETTINGS_LIST_CONFIG;
   payload: SettingsListType;
@@ -347,8 +337,6 @@ export type AppActionType =
   | DismissBiometricModal
   | BiometricLockActive
   | LockAuthorizedUntil
-  | SetHomeCarouselConfig
-  | SetHomeCarouselLayoutType
   | updateSettingsListConfigType
   | AddAltCurrencyList
   | SetMigrationComplete

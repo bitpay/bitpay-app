@@ -27,7 +27,6 @@ import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
 import {
   dismissOnGoingProcessModal,
-  setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -420,7 +419,6 @@ const RecoveryPhrase = () => {
       await dispatch(startGetRates({}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
-      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       backupRedirect({
         context: route.params?.context,
         navigation,
@@ -480,8 +478,6 @@ const RecoveryPhrase = () => {
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await sleep(1000);
       await dispatch(updatePortfolioBalance());
-
-      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
       backupRedirect({
         context: route.params?.context,

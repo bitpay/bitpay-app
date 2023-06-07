@@ -14,7 +14,6 @@ import Button from '../../../components/button/Button';
 import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
-  setHomeCarouselConfig,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
@@ -309,8 +308,6 @@ const CreateMultisig = () => {
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
         )) as Key;
-
-        dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
         navigation.navigate('Wallet', {
           screen: 'BackupKey',

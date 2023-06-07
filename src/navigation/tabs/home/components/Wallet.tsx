@@ -1,6 +1,5 @@
 import React from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText, H3} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
@@ -12,10 +11,7 @@ import {
   White,
 } from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import {
-  formatFiatAmount,
-  formatFiatAmountObj,
-} from '../../../../utils/helper-methods';
+import {formatFiatAmountObj} from '../../../../utils/helper-methods';
 import {getRemainingWalletCount} from '../../../../store/wallet/utils/wallet';
 import {
   ActiveOpacity,
@@ -24,7 +20,6 @@ import {
   ScreenGutter,
 } from '../../../../components/styled/Containers';
 import {Balance, KeyName} from '../../../wallet/components/KeyDropdownOption';
-import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
 import {BoxShadow} from './Styled';
 import {View} from 'react-native';
 import Percentage from '../../../../components/percentage/Percentage';
@@ -39,7 +34,6 @@ interface WalletCardComponentProps {
   onPress: () => void;
   needsBackup: boolean;
   keyName: string | undefined;
-  layout: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
   context?: 'keySelector';
 }
@@ -109,7 +103,6 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   needsBackup,
   keyName = 'My Key',
   hideKeyBalance,
-  layout,
   context,
 }) => {
   const {t} = useTranslation();
@@ -117,7 +110,6 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
-  const isListView = layout === 'listView';
   const HeaderComponent = (
     <HeaderImg>
       {walletInfo.map((wallet, index) => {
@@ -125,13 +117,13 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         return (
           wallet && (
             <Img key={id} isFirst={index === 0}>
-              <CurrencyImage img={img} size={isListView ? 15 : ICON_SIZE} />
+              <CurrencyImage img={img} size={15} />
             </Img>
           )
         );
       })}
       {remainingWalletCount ? (
-        <View style={isListView ? {paddingBottom: 5} : null}>
+        <View style={{paddingBottom: 5}}>
           <RemainingAssetsLabel>
             + {remainingWalletCount} {t('more')}{' '}
           </RemainingAssetsLabel>
@@ -141,73 +133,54 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   );
 
   /* ////////////////////////////// LISTVIEW */
-  if (layout === 'listView') {
-    const {amount, code} = formatFiatAmountObj(
-      totalBalance,
-      defaultAltCurrency.isoCode,
-    );
-    return (
-      <ListCard
-        activeOpacity={ActiveOpacity}
-        onPress={onPress}
-        style={!theme.dark && context !== 'keySelector' ? BoxShadow : null}
-        outlineStyle={context === 'keySelector'}>
-        <Row style={{alignItems: 'center', justifyContent: 'center'}}>
-          <Column>
-            {HeaderComponent}
-            <KeyName>{keyName}</KeyName>
-          </Column>
-          <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            {needsBackup ? (
-              <Row style={{alignItems: 'center'}}>
-                <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-                {context === 'keySelector' ? (
-                  <AngleRightSvg style={{marginLeft: 10}} />
-                ) : null}
-              </Row>
-            ) : context === 'keySelector' ? (
-              <AngleRightSvg />
-            ) : !hideKeyBalance ? (
-              <>
-                <Balance>
-                  {amount}
-                  {code ? (
-                    <BalanceCodeContainer>
-                      <BalanceCode>{code}</BalanceCode>
-                    </BalanceCodeContainer>
-                  ) : null}
-                </Balance>
-                {percentageDifference ? (
-                  <Percentage
-                    percentageDifference={percentageDifference}
-                    darkModeColor={Slate}
-                  />
-                ) : null}
-              </>
-            ) : (
-              <H3>****</H3>
-            )}
-          </Column>
-        </Row>
-      </ListCard>
-    );
-  }
-
-  // todo refactor to not use multiple layers for home card as it will no longer be used for anything other then keys
-
-  /* ////////////////////////////// CAROUSEL */
+  const {amount, code} = formatFiatAmountObj(
+    totalBalance,
+    defaultAltCurrency.isoCode,
+  );
   return (
-    <HomeCard
-      header={HeaderComponent}
-      body={{
-        title: keyName,
-        value: formatFiatAmount(totalBalance, defaultAltCurrency.isoCode),
-        percentageDifference,
-        needsBackup,
-        hideKeyBalance,
-      }}
-      onCTAPress={onPress}
-    />
+    <ListCard
+      activeOpacity={ActiveOpacity}
+      onPress={onPress}
+      style={!theme.dark && context !== 'keySelector' ? BoxShadow : null}
+      outlineStyle={context === 'keySelector'}>
+      <Row style={{alignItems: 'center', justifyContent: 'center'}}>
+        <Column>
+          {HeaderComponent}
+          <KeyName>{keyName}</KeyName>
+        </Column>
+        <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
+          {needsBackup ? (
+            <Row style={{alignItems: 'center'}}>
+              <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+              {context === 'keySelector' ? (
+                <AngleRightSvg style={{marginLeft: 10}} />
+              ) : null}
+            </Row>
+          ) : context === 'keySelector' ? (
+            <AngleRightSvg />
+          ) : !hideKeyBalance ? (
+            <>
+              <Balance>
+                {amount}
+                {code ? (
+                  <BalanceCodeContainer>
+                    <BalanceCode>{code}</BalanceCode>
+                  </BalanceCodeContainer>
+                ) : null}
+              </Balance>
+              {percentageDifference ? (
+                <Percentage
+                  percentageDifference={percentageDifference}
+                  darkModeColor={Slate}
+                />
+              ) : null}
+            </>
+          ) : (
+            <H3>****</H3>
+          )}
+        </Column>
+      </Row>
+    </ListCard>
   );
 };
 

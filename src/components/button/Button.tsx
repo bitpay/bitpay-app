@@ -11,14 +11,14 @@ import {
   Midnight,
   NeutralSlate,
   SlateDark,
-  Success,
+  //  Success,
   White,
 } from '../../styles/colors';
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
-import * as Icons from './ButtonIcons';
-import ButtonOverlay from './ButtonOverlay';
-import ButtonSpinner from './ButtonSpinner';
+//import * as Icons from './ButtonIcons';
+//import ButtonOverlay from './ButtonOverlay';
+//import ButtonSpinner from './ButtonSpinner';
 import {StyleProp, ViewStyle} from 'react-native';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
@@ -232,6 +232,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     style,
     action,
     accessibilityLabel,
+    children,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -239,8 +240,8 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   const danger = buttonStyle === 'danger';
 
   const isLoading = state === 'loading';
-  const isSuccess = state === 'success';
-  const isFailure = state === 'failed';
+  //  const isSuccess = state === 'success';
+  //  const isFailure = state === 'failed';
 
   let ButtonTypeContainer: React.FC<ButtonOptionProps>;
   let ButtonTypeText: React.FC<ButtonOptionProps>;
@@ -296,39 +297,17 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         secondary={secondary}
         outline={outline}
         cancel={cancel}
-        disabled={disabled}
+        disabled={isLoading ? true : disabled}
         action={action}>
         <ButtonTypeText
           secondary={secondary}
           cancel={cancel}
           danger={danger}
-          disabled={disabled}
+          disabled={isLoading ? true : disabled}
           action={action}
+          children={children}
         />
       </ButtonTypeContainer>
-
-      <ButtonOverlay
-        isVisible={isLoading}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}>
-        <ButtonSpinner buttonStyle={buttonStyle} />
-      </ButtonOverlay>
-
-      <ButtonOverlay
-        isVisible={isSuccess}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}
-        backgroundColor={Success}>
-        <Icons.Check buttonStyle={buttonStyle} />
-      </ButtonOverlay>
-
-      <ButtonOverlay
-        isVisible={isFailure}
-        buttonStyle={buttonStyle}
-        buttonType={buttonType}
-        backgroundColor={Caution}>
-        <Icons.Close buttonStyle={buttonStyle} />
-      </ButtonOverlay>
     </ButtonContainer>
   );
 };

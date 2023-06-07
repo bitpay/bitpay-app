@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import Button from '../../../../components/button/Button';
-import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
 import {AppActions} from '../../../../store/app';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
@@ -61,16 +60,6 @@ const General = () => {
             ? t('Dark Mode')
             : t('System Default')}
         </Button>
-      </Setting>
-      <Hr />
-      {/*----------------------------------------------------------------------*/}
-      <Setting
-        activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
-        }>
-        <SettingTitle>{t('Customize Home')}</SettingTitle>
-        <AngleRight />
       </Setting>
       <Hr />
       {/*----------------------------------------------------------------------*/}

@@ -32,7 +32,6 @@ import Settings from '../../../../../components/settings/Settings';
 import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
 import SendIcon from '../../../../../../assets/img/send-icon.svg';
 import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
-import {ListHeader} from '../../general/screens/customize-home/Shared';
 
 export interface SessionLogsParamList {}
 
@@ -233,9 +232,7 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
         keyExtractor={keyExtractor}
         stickySectionHeadersEnabled={false}
         renderSectionHeader={({section: {title}}) =>
-          filteredPersistedLogs.length > 0 ? (
-            <ListHeader>{title}</ListHeader>
-          ) : null
+          filteredPersistedLogs.length > 0 ? title : null
         }
       />
 
@@ -251,8 +248,6 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
           alignSelf: 'center',
           width: SLIDER_WIDTH,
         }}
-        // iOS
-        tapToSeek={true}
       />
 
       <SheetModal

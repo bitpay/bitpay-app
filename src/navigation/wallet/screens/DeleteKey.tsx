@@ -15,13 +15,7 @@ import {
   deleteKey,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
-import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
-import {setHomeCarouselConfig} from '../../../store/app/app.actions';
-import {
-  unSubscribeEmailNotifications,
-  unSubscribePushNotifications,
-} from '../../../store/app/app.effects';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
 
@@ -67,30 +61,12 @@ const DeleteKey = () => {
     await sleep(500);
     dispatch(startOnGoingProcessModal('DELETING_KEY'));
 
-    // Unsubscribe wallets to push/email notifications if enabled
-    const keyObj = await findKeyByKeyId(keyId, keys);
-    keyObj.wallets
-      .filter(
-        (wallet: any) =>
-          !wallet.credentials.token && wallet.credentials.isComplete(),
-      )
-      .forEach(walletClient => {
-        if (emailNotifications.accepted && emailNotifications.email) {
-          dispatch(unSubscribeEmailNotifications(walletClient));
-        }
-      });
-
     await sleep(300);
     const previousKeysLength = Object.keys(keys).length;
     const numNewKeys = Object.keys(keys).length - 1;
     const lengthChange = previousKeysLength - numNewKeys;
     dispatch(deleteKey({keyId, lengthChange}));
 
-    dispatch(
-      setHomeCarouselConfig(
-        homeCarouselConfig.filter(item => item.id !== keyId),
-      ),
-    );
     await sleep(1000);
     dispatch(updatePortfolioBalance());
     dispatch(AppActions.dismissOnGoingProcessModal());

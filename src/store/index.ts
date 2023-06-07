@@ -162,7 +162,7 @@ const getStore = () => {
   const middlewares = [thunkMiddleware];
   if (__DEV__) {
     // @ts-ignore
-    middlewares.push(logger); //TODO: uncomment to see LOGs
+    //middlewares.push(logger); //TODO: uncomment to see LOGs
   }
 
   let middlewareEnhancers = applyMiddleware(...middlewares);

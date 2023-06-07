@@ -18,12 +18,8 @@ import {
   getMnemonic,
   sleep,
 } from '../../../../utils/helper-methods';
-import {sortBy, indexOf} from 'lodash';
+import {sortBy} from 'lodash';
 import {useAppSelector} from '../../../../utils/hooks';
-import {
-  HomeCarouselConfig,
-  HomeCarouselLayoutType,
-} from '../../../../store/app/app.models';
 import {
   HomeSectionSubtext,
   HomeSectionSubTitle,
@@ -124,8 +120,6 @@ export const createHomeCardList = ({
   navigation,
   keys,
   dispatch,
-  homeCarouselConfig,
-  homeCarouselLayoutType,
   hideKeyBalance,
   context,
   onPress,
@@ -134,8 +128,6 @@ export const createHomeCardList = ({
   navigation: NavigationProp<any>;
   keys: Key[];
   dispatch: Dispatch;
-  homeCarouselConfig: HomeCarouselConfig[];
-  homeCarouselLayoutType: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
@@ -163,7 +155,6 @@ export const createHomeCardList = ({
         id: key.id,
         component: (
           <WalletCardComponent
-            layout={homeCarouselLayoutType}
             keyName={key.keyName}
             hideKeyBalance={hideKeyBalance}
             wallets={wallets}
@@ -201,15 +192,8 @@ export const createHomeCardList = ({
 
   defaults.push({id: 'createWallet', component: <CreateWallet />});
 
-  list = list.filter(
-    item =>
-      homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
-  );
-
-  const order = homeCarouselConfig.map(item => item.id);
-
   return {
-    list: [...sortBy(list, item => indexOf(order, item.id))],
+    list: [...sortBy(list)],
     defaults,
   };
 };
@@ -219,18 +203,13 @@ const Crypto = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const {homeCarouselLayoutType, hideAllBalances} = useAppSelector(
-    ({APP}) => APP,
-  );
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
   const hasKeys = Object.values(keys).length;
   const [cardsList, setCardsList] = useState(
     createHomeCardList({
       navigation,
       keys: Object.values(keys),
       dispatch,
-      homeCarouselConfig: homeCarouselConfig || [],
-      homeCarouselLayoutType,
       hideKeyBalance: hideAllBalances,
     }),
   );
@@ -241,19 +220,10 @@ const Crypto = () => {
         navigation,
         keys: Object.values(keys),
         dispatch,
-        homeCarouselConfig: homeCarouselConfig || [],
-        homeCarouselLayoutType,
         hideKeyBalance: hideAllBalances,
       }),
     );
-  }, [
-    navigation,
-    keys,
-    dispatch,
-    homeCarouselConfig,
-    homeCarouselLayoutType,
-    hideAllBalances,
-  ]);
+  }, [navigation, keys, dispatch, hideAllBalances]);
 
   if (!hasKeys) {
     return (
@@ -262,7 +232,7 @@ const Crypto = () => {
           <Column>
             <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
             <Row style={{justifyContent: 'space-between'}}>
-              <HomeSectionSubtext style={{width: '90%'}}>
+              <HomeSectionSubtext style={{width: '90%', marginTop: 10}}>
                 {t('You don’t have any crypto. Create or import a wallet.')}
               </HomeSectionSubtext>
             </Row>

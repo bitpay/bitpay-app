@@ -40,7 +40,6 @@ import RNFS from 'react-native-fs';
 import {
   setColorScheme,
   setDefaultAltCurrency,
-  setHomeCarouselConfig,
   setIntroCompleted,
   setOnboardingCompleted,
   showPortfolioValue,
@@ -207,7 +206,6 @@ export const startMigration =
             keyName,
           };
           await dispatch(migrateKeyAndWallets({key, wallets, keyConfig}));
-          dispatch(setHomeCarouselConfig({id: key.id, show: true}));
           dispatch(LogActions.info('[startMigration] - success key migration'));
         }
 
@@ -535,9 +533,6 @@ export const startMigration =
         await dispatch(coinbaseGetUser());
         await dispatch(coinbaseUpdateExchangeRate());
         await dispatch(coinbaseGetAccountsAndBalance());
-        dispatch(
-          setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
-        );
         dispatch(LogActions.info('Successfully migrated Coinbase account'));
       } catch (err: unknown) {
         let errorStr;
