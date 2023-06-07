@@ -1,12 +1,87 @@
 import React from 'react';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {View} from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import styled, {useTheme} from 'styled-components/native';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
-import {useTheme} from 'styled-components/native';
 import {LightBlack} from '../../styles/colors';
+
+const USE_NEW_ARCH_WORKAROUND = true;
+
+const WorkaroundSkeletonItem = styled.View`
+  background: ${({theme}) => theme.dark ? LightBlack : '#E1E9EE'};
+`;
+
+const WorkaroundHeader = styled(WorkaroundSkeletonItem)`
+  border-radius: 0;
+  height: 55px;
+  width: 100%;
+`;
+
+const WorkaroundRow = styled.View`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 15px;
+`;
+
+const WorkaroundIcon = styled(WorkaroundSkeletonItem)`
+  border-radius: 50px;
+  height: ${TRANSACTION_ICON_SIZE}px;
+  margin-right: 8px;
+  width: ${TRANSACTION_ICON_SIZE}px;
+`;
+
+const WorkaroundHeading = styled(WorkaroundSkeletonItem)`
+  height: 18px;
+  width: 150px;
+`;
+
+const WorkaroundDetails = styled.View`
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin-left: auto;
+`;
+
+const WorkaroundDetailsTop = styled(WorkaroundSkeletonItem)`
+  height: 14px;
+  margin-bottom: 5px;
+  width: 80px;
+`;
+
+const WorkaroundDetailsBottom = styled(WorkaroundSkeletonItem)`
+  height: 12px;
+  width: 70px;
+`;
+
+const NonAnimatedNewArchWorkaround = () => {
+  return (
+    <>
+      <WorkaroundHeader />
+
+      <WorkaroundRow>
+        <WorkaroundIcon />
+
+        <WorkaroundHeading />
+
+        <WorkaroundDetails>
+          <WorkaroundDetailsTop />
+
+          <WorkaroundDetailsBottom />
+        </WorkaroundDetails>
+      </WorkaroundRow>
+    </>
+  );
+};
 
 const WalletTransactionSkeletonRow = () => {
   const theme = useTheme();
+
+  if (USE_NEW_ARCH_WORKAROUND) {
+    return <NonAnimatedNewArchWorkaround />
+  }
 
   return (
     <SkeletonPlaceholder
