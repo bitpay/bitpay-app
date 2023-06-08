@@ -15,7 +15,6 @@ import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import {Caution} from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {startGetRates, startImportFile} from '../../../store/wallet/effects';
 import {
@@ -24,24 +23,20 @@ import {
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {sleep} from '../../../utils/helper-methods';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScrollView} from 'react-native';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 
 const BWCProvider = BwcProvider.getInstance();
 
-const ScrollViewContainer = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-`;
-
 const ContentView = styled(ScrollView)`
-  padding: 0 ${ScreenGutter};
+  margin: 0 ${ScreenGutter};
 `;
 
 const ErrorText = styled(BaseText)`
@@ -68,10 +63,10 @@ const schema = yup.object().shape({
 const FileOrText = () => {
   const {t} = useTranslation();
   const logger = useLogger();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
-  const walletTermsAccepted = useSelector(
+  const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
 
@@ -148,62 +143,57 @@ const FileOrText = () => {
   });
 
   return (
-    <ScrollViewContainer
-      accessibilityLabel="file-or-text-view"
-      extraScrollHeight={90}
-      keyboardShouldPersistTaps={'handled'}>
-      <ContentView keyboardShouldPersistTaps={'handled'}>
-        <FormRow>
-          <HeaderContainer>
-            <ImportTitle>{t('Backup plain text code')}</ImportTitle>
-          </HeaderContainer>
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur, value}}) => (
-              <ImportTextInput
-                accessibilityLabel="import-text-input"
-                multiline
-                numberOfLines={5}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                value={value}
-              />
-            )}
-            name="text"
-            defaultValue=""
-          />
+    <ContentView keyboardShouldPersistTaps={'handled'}>
+      <FormRow>
+        <HeaderContainer>
+          <ImportTitle>{t('Backup plain text code')}</ImportTitle>
+        </HeaderContainer>
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <ImportTextInput
+              accessibilityLabel="import-text-input"
+              multiline
+              numberOfLines={5}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              value={value}
+            />
+          )}
+          name="text"
+          defaultValue=""
+        />
 
-          {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
-        </FormRow>
+        {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
+      </FormRow>
 
-        <FormRow>
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur, value}}) => (
-              <BoxInput
-                accessibilityLabel="password-box-input"
-                label={t('PASSWORD')}
-                placeholder={'strongPassword123'}
-                type={'password'}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                value={value}
-                error={errors.password?.message}
-              />
-            )}
-            name="password"
-            defaultValue=""
-          />
-        </FormRow>
+      <FormRow>
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <BoxInput
+              accessibilityLabel="password-box-input"
+              label={t('PASSWORD')}
+              placeholder={'strongPassword123'}
+              type={'password'}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              value={value}
+              error={errors.password?.message}
+            />
+          )}
+          name="password"
+          defaultValue=""
+        />
+      </FormRow>
 
-        <Button
-          accessibilityLabel="import-wallet-button"
-          buttonStyle={'primary'}
-          onPress={onSubmit}>
-          {t('Import Wallet')}
-        </Button>
-      </ContentView>
-    </ScrollViewContainer>
+      <Button
+        accessibilityLabel="import-wallet-button"
+        buttonStyle={'primary'}
+        onPress={onSubmit}>
+        {t('Import Wallet')}
+      </Button>
+    </ContentView>
   );
 };
 

@@ -229,20 +229,16 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.VERIFY_PHRASE}
           component={VerifyPhrase}
-        />
-        <Wallet.Screen
-          name={WalletScreens.KEY_OVERVIEW}
-          component={KeyOverview}
-        />
-        <Wallet.Screen
+        />*/}
+        {/*<Wallet.Screen
           name={WalletScreens.KEY_EXPLANATION}
           component={KeyExplanation}
-        />
+      />*/}
         <Wallet.Screen
           name={WalletScreens.KEY_SETTINGS}
           component={KeySettings}
         />
-        <Wallet.Screen
+        {/*<Wallet.Screen
           name={WalletScreens.UPDATE_KEY_OR_WALLET_NAME}
           component={UpdateKeyOrWalletName}
         />
@@ -253,9 +249,9 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.WALLET_SETTINGS}
           component={WalletSettings}
-        />
+        />*/}
         <Wallet.Screen name={WalletScreens.IMPORT} component={Import} />
-        <Wallet.Screen
+        {/*<Wallet.Screen
           name={WalletScreens.CREATION_OPTIONS}
           component={CreationOptions}
         />
@@ -266,9 +262,9 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.EXTENDED_PRIVATE_KEY}
           component={ExtendedPrivateKey}
-        />
+      />*/}
         <Wallet.Screen name={WalletScreens.DELETE_KEY} component={DeleteKey} />
-        <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
+        {/*<Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
         <Wallet.Screen
           name={WalletScreens.TERMS_OF_USE}
           component={TermsOfUse}

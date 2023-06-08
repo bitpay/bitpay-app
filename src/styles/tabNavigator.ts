@@ -34,6 +34,7 @@ export const ScreenOptions = (
       textTransform: 'none',
       fontWeight: '500',
       paddingVertical: Platform.select({
+        macos: 4,
         ios: 4,
         android: 2,
       }),
