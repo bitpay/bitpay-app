@@ -11,7 +11,6 @@ import Animated, {
   SlideInRight,
 } from 'react-native-reanimated';
 import Carousel from 'react-native-snap-carousel';
-import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
@@ -95,6 +94,8 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
       setActiveCard(nextCard);
     }
   };
+  const onCardChangeRef = useRef(onCardChange);
+  onCardChangeRef.current = onCardChange;
 
   const onVirtualPress = useCallback(() => {
     if (virtualCard) {
@@ -123,15 +124,12 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
 
   const renderSettingsSlide = useCallback(
     ({item}: {item: Card}) => (
-      <SharedElement id={'card.dashboard.active-card.' + item.id}>
-        <View>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => goToCardHomeRef.current()}>
-            <SettingsSlide card={item} />
-          </TouchableOpacity>
-        </View>
-      </SharedElement>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => goToCardHomeRef.current()}
+        style={{alignItems: 'center'}}>
+        <SettingsSlide card={item} />
+      </TouchableOpacity>
     ),
     [],
   );
@@ -171,8 +169,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
         itemWidth={CARD_WIDTH}
         sliderWidth={WIDTH}
         renderItem={renderSettingsSlide}
-        onScrollIndexChanged={onCardChange}
-        layout="default"
+        onScrollIndexChanged={onCardChangeRef.current}
       />
 
       <CardSettingsContainer>
@@ -202,16 +199,18 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
             : undefined;
 
           return isActive ? (
-            <Animated.View
+            <View key={c.id}>
+            {/* <Animated.View
               key={c.id}
               entering={transitionEnter}
-              exiting={transitionLeave}>
+              exiting={transitionLeave}> */}
               <SettingsList
                 card={c}
                 orderPhysical={isVirtual && !physicalCard}
                 navigation={navigation}
               />
-            </Animated.View>
+            {/* </Animated.View> */}
+            </View>
           ) : null;
         })}
       </CardSettingsContainer>
