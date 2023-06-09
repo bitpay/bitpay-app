@@ -30,6 +30,8 @@ import EnableTwoFactor, {
 import TwoFactorEnabled, {
   TwoFactorEnabledScreenParamList,
 } from './screens/TwoFactorEnabled';
+import {RootStacks} from '../../Root';
+import {TabsScreens} from '../tabs/TabsStack';
 
 export type BitpayIdStackParamList = {
   BitPayIdPairingScreen: BitPayIdPairingScreenParamList;
@@ -87,8 +89,8 @@ const BitpayIdStack = () => {
                     haptic('impactLight');
 
                     if (user) {
-                      navigation.navigate('Tabs', {
-                        screen: 'Settings',
+                      navigation.navigate(RootStacks.TABS, {
+                        screen: TabsScreens.SETTINGS,
                       });
 
                       dispatch(BitPayIdEffects.startDisconnectBitPayId());

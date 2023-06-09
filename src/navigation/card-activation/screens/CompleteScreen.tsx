@@ -6,7 +6,8 @@ import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {H4, Paragraph} from '../../../components/styled/Text';
-import {navigationRef} from '../../../Root';
+import {RootStacks, navigationRef} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
 import OnTheMoonSvg from '../assets/on-the-moon.svg';
 import {CardActivationStackParamList} from '../CardActivationStack';
 
@@ -41,11 +42,8 @@ const CompleteScreen: React.FC<
 > = () => {
   const {t} = useTranslation();
   const onViewCardPress = () => {
-    navigationRef.navigate('Tabs', {
-      screen: 'Card',
-      params: {
-        screen: 'Home',
-      },
+    navigationRef.navigate(RootStacks.TABS, {
+      screen: TabsScreens.CARD,
     });
   };
 

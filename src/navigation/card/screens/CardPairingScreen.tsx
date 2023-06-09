@@ -1,12 +1,14 @@
+import {StackActions, useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useCallback} from 'react';
+import {RootStacks} from '../../../Root';
 import {CardActions} from '../../../store/card';
 import {VirtualDesignCurrency} from '../../../store/card/card.types';
+import {incomingData} from '../../../store/scan/scan.effects';
 import {useAppDispatch} from '../../../utils/hooks';
 import BasePairing from '../../bitpay-id/components/BasePairing';
+import {TabsScreens} from '../../tabs/TabsStack';
 import {CardScreens, CardStackParamList} from '../CardStack';
-import {incomingData} from '../../../store/scan/scan.effects';
-import {StackActions, useNavigation} from '@react-navigation/native';
 
 export type CardPairingScreenParamList =
   | {
@@ -75,13 +77,12 @@ const CardPairingScreen: React.FC<
     if (!paymentUrl) {
       const navState = navigation.getState();
       // @ts-ignore
-      if (navState.routeNames.some(name => name === 'CardHome')) {
-        navigation.navigate('Tabs', {
-          screen: 'Card',
-          params: {screen: 'CardHome'},
+      if (navState.routeNames.some(name => name === TabsScreens.CARD)) {
+        navigation.navigate(RootStacks.TABS, {
+          screen: TabsScreens.CARD,
         });
       } else {
-        navigation.dispatch(StackActions.replace('Card', {screen: 'CardHome'}));
+        navigation.dispatch(StackActions.replace(RootStacks.TABS, {screen: TabsScreens.CARD}));
       }
     }
   }, []);

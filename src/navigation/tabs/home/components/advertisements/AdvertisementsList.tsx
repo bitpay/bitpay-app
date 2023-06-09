@@ -2,11 +2,13 @@ import React from 'react';
 import {ContentCard} from 'react-native-appboy-sdk';
 import styled, {useTheme} from 'styled-components/native';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
+import {RootStacks} from '../../../../../Root';
 import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
 import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {WalletScreens} from '../../../../wallet/WalletStack';
+import {TabsScreens} from '../../../TabsStack';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -47,11 +49,8 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     dev_card: () =>
-      navigation.navigate('Tabs', {
-        screen: 'Card',
-        params: {
-          screen: 'CardHome',
-        },
+      navigation.navigate(RootStacks.TABS, {
+        screen: TabsScreens.CARD,
       }),
     dev_swapCrypto: swapCryptoCta,
     dev_buyCrypto: buyCryptoCta,

@@ -42,7 +42,7 @@ const createErrorConfig = (
   ],
 });
 
-const UpdateCardNameScreen: React.VFC<
+const UpdateCardNameScreen: React.FC<
   StackScreenProps<CardStackParamList, CardScreens.UPDATE_CARD_NAME>
 > = ({navigation, route}) => {
   const {card} = route.params;
@@ -70,7 +70,7 @@ const UpdateCardNameScreen: React.VFC<
         if (navigation.canGoBack()) {
           navigation.goBack();
         } else {
-          navigation.navigate('Settings', {id: card.id});
+          navigation.navigate(CardScreens.SETTINGS, {id: card.id});
         }
         setButtonState(undefined);
       }, 1500);
