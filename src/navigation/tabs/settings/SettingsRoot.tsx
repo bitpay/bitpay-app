@@ -1,3 +1,4 @@
+import {useScrollToTop} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {ReactElement, useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -20,6 +21,7 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {navigationRef} from '../../../Root';
 import {updateSettingsListConfig} from '../../../store/app/app.actions';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
+import {TabsScreens, TabsStackParamList} from '../TabsStack';
 
 import General from './components/General';
 import Security from './components/Security';
@@ -31,8 +33,6 @@ import Contacts from './components/Contacts';
 import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
-import {SettingsStackParamList} from './SettingsStack';
-import {useScrollToTop} from '@react-navigation/native';
 
 interface HomeSetting {
   id: SettingsListType;
@@ -98,7 +98,7 @@ export type SettingsHomeParamList =
     }
   | undefined;
 
-type SettingsHomeProps = StackScreenProps<SettingsStackParamList, 'Root'>;
+type SettingsHomeProps = StackScreenProps<TabsStackParamList, TabsScreens.SETTINGS>;
 
 export type SettingsListType =
   | 'General'

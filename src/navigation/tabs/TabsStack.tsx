@@ -9,8 +9,7 @@ import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 import HomeRoot from './home/HomeRoot';
 import ShopHome, {ShopHomeParamList} from './shop/ShopHome';
-import SettingsRoot from './settings/SettingsStack';
-import {SettingsStackParamList} from './settings/SettingsStack';
+import SettingsRoot, {SettingsHomeParamList} from './settings/SettingsRoot';
 import CardHome, {CardHomeScreenParamList} from '../../navigation/card/screens/CardHome';
 
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
@@ -52,7 +51,7 @@ export type TabsStackParamList = {
   Shop: NavigatorScreenParams<ShopHomeParamList> | undefined;
   TransactButton: undefined;
   CardTab: CardHomeScreenParamList | undefined;
-  Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
+  Settings: SettingsHomeParamList | undefined;
   Camera: undefined;
 };
 
@@ -125,7 +124,18 @@ const TabsStack = () => {
         ...TransitionPresets.SlideFromRightIOS,
         headerLeft: () => null,
       }} />
-      <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
+      <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} options={{
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: 'transparent'
+        },
+        headerShadowVisible: false,
+        headerTitleStyle: {maxWidth: WIDTH - 150},
+        ...TransitionPresets.SlideFromRightIOS,
+        headerShown: true,
+        headerLeft: () => null,
+        headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
+      }} />
     </Tab.Navigator>
   );
 };
