@@ -555,8 +555,8 @@ const BuyCryptoRoot: React.VFC<
         bitpayIdLocationCountry: user?.country,
         bitpayIdLocationState: user?.state,
       };
-      const config: ExternalServicesConfig = await getExternalServicesConfig(
-        requestData,
+      const config: ExternalServicesConfig = await dispatch(
+        getExternalServicesConfig(requestData),
       );
       buyCryptoConfig = config?.buyCrypto;
       logger.debug('buyCryptoConfig: ' + JSON.stringify(buyCryptoConfig));

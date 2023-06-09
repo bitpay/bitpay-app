@@ -930,8 +930,8 @@ const SwapCryptoRoot: React.FC = () => {
         bitpayIdLocationCountry: user?.country,
         bitpayIdLocationState: user?.state,
       };
-      const config: ExternalServicesConfig = await getExternalServicesConfig(
-        requestData,
+      const config: ExternalServicesConfig = await dispatch(
+        getExternalServicesConfig(requestData),
       );
       swapCryptoConfig = config?.swapCrypto;
       logger.debug('swapCryptoConfig: ' + JSON.stringify(swapCryptoConfig));
