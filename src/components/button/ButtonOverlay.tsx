@@ -1,5 +1,5 @@
 import React from 'react';
-import {ColorValue, StyleSheet} from 'react-native';
+import {ColorValue, StyleSheet, View} from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -16,7 +16,7 @@ import {
   PILL_RADIUS,
 } from './Button';
 
-interface ButtonOverlayProps {
+interface ButtonOverlayProps extends React.PropsWithChildren {
   isVisible: boolean;
   animate?: boolean;
   buttonStyle: ButtonStyle;
@@ -68,6 +68,18 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
     })),
   ];
 
+  const overlayStyleStatic = {
+    ...StyleSheet.absoluteFillObject,
+    ...{
+      opacity: isVisible ? 1 : 0,
+      borderWidth: 2,
+      borderStyle: 'solid',
+      borderRadius: buttonType === 'pill' ? PILL_RADIUS : BUTTON_RADIUS,
+      borderColor: backgroundColor || 'transparent',
+      backgroundColor: (isPrimary && backgroundColor) || 'transparent',
+    }
+  } as Record<string, any>;
+
   const iconStyle = [
     useAnimatedStyle(() => ({
       alignItems: 'center',
@@ -79,11 +91,27 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
     })),
   ];
 
+  const iconStyleStatic = {
+    opacity: isVisible ? 1 : 0,
+    alignItems: 'center',
+    display: 'flex',
+    flexGrow: 1,
+    justifyContent: 'center',
+  } as Record<string, any>;
+
   return (
-    <Animated.View style={overlayStyle}>
-      <Animated.View style={iconStyle}>{children}</Animated.View>
-    </Animated.View>
+    <View style={overlayStyleStatic}>
+      <View style={iconStyleStatic}>
+        {children}
+      </View>
+    </View>
   );
+
+  // return (
+  //   <Animated.View style={overlayStyle}>
+  //     <Animated.View style={iconStyle}>{children}</Animated.View>
+  //   </Animated.View>
+  // );
 };
 
 export default ButtonOverlay;

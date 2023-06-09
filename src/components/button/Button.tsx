@@ -53,7 +53,7 @@ interface ButtonProps extends BaseButtonProps {
   accessibilityLabel?: string;
 }
 
-interface ButtonOptionProps {
+interface ButtonOptionProps extends React.PropsWithChildren {
   secondary?: boolean;
   outline?: boolean;
   cancel?: boolean;
@@ -319,7 +319,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         cancel={cancel}
         disabled={disabled}
         action={action}>
-        <Animated.View style={childrenStyle}>
+        {/* <Animated.View style={childrenStyle}> */}
           <ButtonTypeText
             secondary={secondary}
             cancel={cancel}
@@ -328,7 +328,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
             action={action}>
             {children}
           </ButtonTypeText>
-        </Animated.View>
+        {/* </Animated.View> */}
       </ButtonTypeContainer>
 
       <ButtonOverlay
