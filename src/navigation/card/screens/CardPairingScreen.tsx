@@ -1,7 +1,7 @@
-import {StackActions, useNavigation} from '@react-navigation/native';
+import {StackActions} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useCallback} from 'react';
-import {RootStacks} from '../../../Root';
+import {RootStacks, navigationRef} from '../../../Root';
 import {CardActions} from '../../../store/card';
 import {VirtualDesignCurrency} from '../../../store/card/card.types';
 import {incomingData} from '../../../store/scan/scan.effects';
@@ -25,20 +25,10 @@ const CardPairingScreen: React.FC<
 > = props => {
   const {route} = props;
   const {secret, code, paymentUrl, dashboardRedirect} = route.params || {};
-  const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
   const goToHomeTab = () => {
-    const navState = navigation.getState();
-
-    // @ts-ignore
-    if (navState.routeNames.some(name => name === 'Home')) {
-      navigation.navigate('Tabs', {
-        screen: 'Home',
-      });
-    } else {
-      navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
-    }
+    navigationRef.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
   };
 
   const onSuccess = useCallback(() => {
@@ -58,7 +48,7 @@ const CardPairingScreen: React.FC<
     goToHomeTab();
 
     if (paymentUrl) {
-      navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
+      navigationRef.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
       //  Reconstructing the url since paymentUrl from deeplink is not in the right format
       if (paymentUrl.includes('bitpay.com')) {
         let url = 'https://';
@@ -75,14 +65,15 @@ const CardPairingScreen: React.FC<
 
   const onComplete = useCallback(() => {
     if (!paymentUrl) {
-      const navState = navigation.getState();
+      const navState = navigationRef.getState();
+
       // @ts-ignore
-      if (navState.routeNames.some(name => name === TabsScreens.CARD)) {
-        navigation.navigate(RootStacks.TABS, {
+      if (navState.routeNames.some(name => name === RootStacks.TABS)) {
+        navigationRef.navigate(RootStacks.TABS, {
           screen: TabsScreens.CARD,
         });
       } else {
-        navigation.dispatch(StackActions.replace(RootStacks.TABS, {screen: TabsScreens.CARD}));
+        navigationRef.dispatch(StackActions.replace(RootStacks.TABS, {screen: TabsScreens.CARD}));
       }
     }
   }, []);

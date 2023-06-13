@@ -20,7 +20,7 @@ import {Card} from '../../../store/card/card.models';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppSelector} from '../../../utils/hooks';
 import {TabsScreens} from '../../tabs/TabsStack';
-import {CardStackParamList} from '../CardStack';
+import {CardScreens, CardStackParamList} from '../CardStack';
 import SettingsList from '../components/CardSettingsList';
 import SettingsSlide from '../components/CardSettingsSlide';
 
@@ -28,7 +28,7 @@ export type CardSettingsParamList = {
   id: string;
 };
 
-type CardSettingsProps = StackScreenProps<CardStackParamList, 'Settings'>;
+type CardSettingsProps = StackScreenProps<CardStackParamList, CardScreens.SETTINGS>;
 
 const CardSettingsContainer = styled.View`
   padding: 0 ${ScreenGutter} ${ScreenGutter};

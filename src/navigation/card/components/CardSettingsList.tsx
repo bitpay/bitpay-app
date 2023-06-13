@@ -30,7 +30,7 @@ import {ToggleSpinnerState} from './ToggleSpinner';
 interface SettingsListProps {
   card: Card;
   orderPhysical?: boolean;
-  navigation: StackNavigationProp<CardStackParamList, 'Settings'>;
+  navigation: StackNavigationProp<CardStackParamList, CardScreens.SETTINGS>;
 }
 
 const LINKS: {

@@ -81,10 +81,9 @@ import {
   getAvailableGiftCards,
   getCategoriesWithIntegrations,
 } from '../shop/shop.selectors';
-import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
-import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
+import {ShopScreens} from '../../navigation/shop/ShopStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
 import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
@@ -969,8 +968,8 @@ export const incomingShopLink =
           },
         });
       } else {
-        navigationRef.navigate('Shop', {
-          screen: ShopScreens.HOME,
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.SHOP,
           params: {
             screen: ShopTabs.GIFT_CARDS,
           },
@@ -1000,8 +999,8 @@ export const incomingShopLink =
           },
         });
       } else {
-        navigationRef.navigate('Shop', {
-          screen: ShopScreens.HOME,
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.SHOP,
           params: {
             screen: ShopTabs.SHOP_ONLINE,
           },
@@ -1061,10 +1060,7 @@ export const incomingLink =
         navigationRef.navigate(RootStacks.TABS, {
           screen: TabsScreens.SETTINGS,
           params: {
-            screen: SettingsScreens.Root,
-            params: {
-              redirectTo: redirectTo as any,
-            },
+            redirectTo: redirectTo as any,
           },
         });
       };
@@ -1076,6 +1072,15 @@ export const incomingLink =
             params,
           });
         };
+      }
+    } else if (pathSegments[0] === 'wallet-card') {
+      const cardPath = pathSegments[1];
+
+      if (cardPath === 'pairing') {
+        navigationRef.navigate(RootStacks.CARD, {
+          screen: CardScreens.PAIRING,
+          params,
+        });
       }
     } else if (pathSegments[0] === 'card') {
       const cardPath = pathSegments[1];
@@ -1089,9 +1094,6 @@ export const incomingLink =
           } else {
             navigationRef.navigate(RootStacks.TABS, {
               screen: TabsScreens.CARD,
-              params: {
-                screen: CardScreens.HOME,
-              },
             });
           }
         };
@@ -1108,13 +1110,10 @@ export const incomingLink =
         });
       } else if (cardPath === 'offers') {
         handler = createCardHandler(cards => {
-          navigationRef.navigate(RootStacks.TABS, {
-            screen: TabsScreens.CARD,
+          navigationRef.navigate(RootStacks.CARD, {
+            screen: CardScreens.SETTINGS,
             params: {
-              screen: CardScreens.SETTINGS,
-              params: {
-                id: cards[0].id,
-              },
+              id: cards[0].id,
             },
           });
 
@@ -1122,13 +1121,10 @@ export const incomingLink =
         });
       } else if (cardPath === 'referral') {
         handler = createCardHandler(cards => {
-          navigationRef.navigate(RootStacks.TABS, {
-            screen: TabsScreens.CARD,
+          navigationRef.navigate(RootStacks.CARD, {
+            screen: CardScreens.REFERRAL,
             params: {
-              screen: CardScreens.REFERRAL,
-              params: {
-                card: cards[0],
-              },
+              card: cards[0],
             },
           });
         });

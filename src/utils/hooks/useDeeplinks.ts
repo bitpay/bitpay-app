@@ -2,7 +2,6 @@ import {
   getActionFromState,
   getStateFromPath,
   LinkingOptions,
-  PathConfig,
 } from '@react-navigation/native';
 import {useMemo, useRef} from 'react';
 import {Linking} from 'react-native';
@@ -14,12 +13,10 @@ import {
   APP_UNIVERSAL_LINK_DOMAINS,
 } from '../../constants/config';
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
-import {CardScreens} from '../../navigation/card/CardStack';
 import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
 import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseStack';
 import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
-import {TabsScreens, TabsStackParamList} from '../../navigation/tabs/TabsStack';
 import {incomingData} from '../../store/scan/scan.effects';
 import {showBlur} from '../../store/app/app.actions';
 import {incomingLink} from '../../store/app/app.effects';
@@ -40,17 +37,6 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
         [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
       },
     },
-    [RootStacks.TABS]: {
-      screens: {
-        [TabsScreens.CARD]: {
-          path: 'wallet-card',
-          initialRouteName: CardScreens.HOME,
-          screens: {
-            [CardScreens.PAIRING]: 'pairing',
-          },
-        },
-      },
-    } as PathConfig<TabsStackParamList>,
     [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
     [RootStacks.BUY_CRYPTO]: {
       screens: {
