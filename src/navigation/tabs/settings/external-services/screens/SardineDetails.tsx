@@ -50,6 +50,9 @@ import {
 import {sardineGetOrderDetails} from '../../../../../store/buy-crypto/effects/sardine/sardine';
 import {sleep} from '../../../../../utils/helper-methods';
 import {SlateDark, White} from '../../../../../styles/colors';
+import {Br} from '../../../../../components/styled/Containers';
+import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
+import {Link} from '../../../../../components/styled/Text';
 
 export interface SardineDetailsProps {
   paymentRequest: SardinePaymentData;
@@ -266,6 +269,33 @@ const SardineDetails: React.FC = () => {
               {status.statusTitle}
             </RowData>
           </RowDataContainer>
+        )}
+
+        {!!paymentRequest.status && (
+          <LabelTip type="info">
+            <LabelTipText>{status.statusDescription}</LabelTipText>
+            {!['Declined', 'Expired'].includes(paymentRequest.status) ? (
+              <>
+                <Br />
+                <LabelTipText>
+                  {t('Having problems with Sardine?')}
+                </LabelTipText>
+                <TouchableOpacity
+                  onPress={() => {
+                    haptic('impactLight');
+                    dispatch(
+                      openUrlWithInAppBrowser(
+                        'https://crypto.sardine.ai/support',
+                      ),
+                    );
+                  }}>
+                  <Link style={{marginTop: 15}}>
+                    {t('Contact the Sardine support team.')}
+                  </Link>
+                </TouchableOpacity>
+              </>
+            ) : null}
+          </LabelTip>
         )}
 
         <ColumnDataContainer>
