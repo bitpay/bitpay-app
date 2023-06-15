@@ -1546,6 +1546,7 @@ const BuyCryptoOffers: React.FC = () => {
         env: sardineEnv,
         referenceId: sardineExternalId,
         externalUserId: selectedWallet.id,
+        customerId: 'app'
       };
       authTokenData = await selectedWallet.sardineGetToken(quoteData);
     } catch (err) {
