@@ -3,6 +3,14 @@ export interface BuyCryptoLimits {
   max?: number;
 }
 
+export interface MoonpayGetCurrencyLimitsRequestData {
+  env: 'sandbox' | 'production';
+  currencyAbbreviation: string;
+  baseCurrencyCode: string;
+  areFeesIncluded?: boolean;
+  paymentMethod?: string;
+}
+
 export interface MoonpayPaymentData {
   address: string;
   chain: string;
