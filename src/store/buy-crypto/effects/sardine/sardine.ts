@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
+import {sardineEnv} from '../../../../navigation/services/buy-crypto/utils/sardine-utils';
 import {
   SardineGetOrderDetailsRequestData,
   SardinePaymentType,
@@ -20,7 +21,7 @@ export const sardineGetCurrencyLimits = async (
     };
 
     const body = {
-      env: 'sandbox',
+      env: sardineEnv,
     };
 
     const {data} = await axios.post(
