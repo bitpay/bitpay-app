@@ -104,6 +104,7 @@ const PayProConfirm = () => {
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
           payProOptions,
           invoice,
+          skipThreshold: true,
         }),
       ),
     [defaultAltCurrency.isoCode, dispatch, keys, payProOptions, invoice],
