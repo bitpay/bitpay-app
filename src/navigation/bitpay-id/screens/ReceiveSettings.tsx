@@ -21,7 +21,6 @@ import AddSvg from '../../../../assets/img/add.svg';
 import AddWhiteSvg from '../../../../assets/img/add-white.svg';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Button from '../../../components/button/Button';
-import {t} from 'i18next';
 import ChevronRight from '../components/ChevronRight';
 import SendToPill from '../../wallet/components/SendToPill';
 import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
@@ -52,6 +51,7 @@ import TwoFactorRequiredModal from '../components/TwoFactorRequiredModal';
 import {getCurrencyCodeFromCoinAndChain} from '../utils/bitpay-id-utils';
 import {BitpaySupportedCurrencies} from '../../../constants/currencies';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
+import {useTranslation} from 'react-i18next';
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -141,6 +141,7 @@ type ReceiveSettingsProps = StackScreenProps<
 >;
 
 const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const theme = useTheme();

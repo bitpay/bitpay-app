@@ -13,13 +13,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import React, {
-  ReactChild,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, {ReactChild, useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
@@ -515,7 +509,6 @@ export const WalletSelector = ({
   const navigation = useNavigation();
   const {hideAllBalances} = useAppSelector(({APP}) => APP);
   const [selectorVisible, setSelectorVisible] = useState(false);
-  const [showNoWalletsMessage, setShowNoWalletsMessage] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
       ? true
@@ -572,30 +565,32 @@ export const WalletSelector = ({
     ],
   );
 
-  useMemo(() => {
+  const hasWallets = (wa: WalletsAndAccounts) => {
     let hasWallets: boolean = false;
     let hasCoinbase: boolean = false;
 
-    const {keyWallets, coinbaseWallets} = walletsAndAccounts;
-    if (keyWallets.length > 0 && keyWallets[0].wallets.length > 0) {
-      hasWallets = true;
+    const {keyWallets, coinbaseWallets} = wa;
+    for (const keyWallet of keyWallets) {
+      if (keyWallet.wallets.length > 0) {
+        hasWallets = true;
+        break;
+      }
     }
     if (coinbaseWallets.length > 0 && coinbaseWallets[0].wallets.length > 0) {
       hasCoinbase = true;
     }
 
-    if (!hasWallets && !hasCoinbase) {
-      setShowNoWalletsMessage(true);
-    }
-  }, [walletsAndAccounts]);
+    return hasWallets || hasCoinbase;
+  };
 
   useEffect(() => {
+    const noWalletsOrCoinbase = !hasWallets(walletsAndAccounts);
     isVisible
-      ? showNoWalletsMessage
+      ? noWalletsOrCoinbase
         ? dispatch(showNoWalletsModal({navigation}))
         : showSelector(autoSelectSingleWallet)
       : setSelectorVisible(false);
-  }, [isVisible]);
+  }, [isVisible, walletsAndAccounts, autoSelectSingleWallet]);
 
   return (
     <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>
