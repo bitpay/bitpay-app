@@ -237,7 +237,7 @@ const goToPayPro =
 
     try {
       dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
-      const payProOptions = await GetPayProOptions(payProUrl);
+      const payProOptions = await dispatch(GetPayProOptions(payProUrl));
       const getInvoiceResponse = await axios.get(
         `https://${host}/invoices/${invoiceId}`,
       );
@@ -273,7 +273,7 @@ const goToPayPro =
       });
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
+      await sleep(800);
 
       dispatch(
         showBottomNotificationModal({
