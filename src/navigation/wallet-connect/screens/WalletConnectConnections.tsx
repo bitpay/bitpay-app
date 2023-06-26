@@ -151,7 +151,7 @@ const WalletConnectConnections = () => {
                           dispatch(startOnGoingProcessModal('LOADING'));
                           const {topic, pairingTopic} = session || {};
                           if (topic && pairingTopic) {
-                            dispatch(
+                            await dispatch(
                               walletConnectV2OnDeleteSession(
                                 topic,
                                 pairingTopic,
@@ -206,11 +206,16 @@ const WalletConnectConnections = () => {
                           setDappUri(data);
                           showWalletSelector();
                         } else {
-                          // temporarily disabled
-                          const errMsg = t(
-                            'Connection cannot be established. WalletConnect version 2 is still under development.',
-                          );
-                          throw new Error(errMsg);
+                          dispatch(startOnGoingProcessModal('LOADING'));
+                          const _proposal = (await dispatch<any>(
+                            walletConnectV2OnSessionProposal(data),
+                          )) as any;
+                          await sleep(500);
+                          setSessionToUpdate(undefined);
+                          setDappProposal(_proposal);
+                          dispatch(dismissOnGoingProcessModal());
+                          await sleep(500);
+                          showWalletSelectorV2();
                         }
                       }
                     } catch (e: any) {

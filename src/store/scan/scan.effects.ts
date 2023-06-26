@@ -81,6 +81,7 @@ import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
 import {IsUtxoCoin} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
+import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 
 export const incomingData =
   (
@@ -1313,11 +1314,18 @@ const handleWalletConnectUri =
             },
           });
         } else {
-          // temporarily disabled
-          const errMsg = t(
-            'Connection cannot be established. WalletConnect version 2 is still under development.',
-          );
-          throw new Error(errMsg);
+          dispatch(startOnGoingProcessModal('LOADING'));
+          const proposal = (await dispatch<any>(
+            walletConnectV2OnSessionProposal(data),
+          )) as any;
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          navigationRef.navigate('WalletConnect', {
+            screen: 'Root',
+            params: {
+              proposal,
+            },
+          });
         }
       }
     } catch (e: any) {
