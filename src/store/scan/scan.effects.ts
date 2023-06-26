@@ -261,15 +261,13 @@ const goToPayPro =
         );
         return;
       }
-      InteractionManager.runAfterInteractions(() => {
-        navigationRef.navigate('Wallet', {
-          screen: WalletScreens.PAY_PRO_CONFIRM,
-          params: {
-            payProOptions,
-            invoice: _invoice,
-            wallet,
-          },
-        });
+      navigationRef.navigate('Wallet', {
+        screen: WalletScreens.PAY_PRO_CONFIRM,
+        params: {
+          payProOptions,
+          invoice: _invoice,
+          wallet,
+        },
       });
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
