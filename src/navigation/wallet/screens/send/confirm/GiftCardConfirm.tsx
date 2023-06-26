@@ -132,8 +132,16 @@ const Confirm = () => {
   );
 
   const memoizedKeysAndWalletsList = useMemo(
-    () => dispatch(BuildPayProWalletSelectorList({keys, network: APP_NETWORK})),
-    [dispatch, keys],
+    () =>
+      dispatch(
+        BuildPayProWalletSelectorList({
+          keys,
+          network: APP_NETWORK,
+          invoice,
+          skipThreshold: true,
+        }),
+      ),
+    [dispatch, keys, invoice],
   );
 
   const getTransactionCurrency = () => {
