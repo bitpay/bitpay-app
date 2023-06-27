@@ -33,7 +33,13 @@ export const GetPayProOptions =
       paymentUrl,
     };
     const payOpts = await bwc.getPaymentOptions(options).catch(async err => {
-      dispatch(LogActions.error(`PayPro Options ERR: ${err.message}`));
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.error(`PayPro Options ERR: ${errorStr}`));
       if (attempt <= 3) {
         await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
         return dispatch(GetPayProOptions(paymentUrl, ++attempt));
@@ -66,10 +72,14 @@ export const GetPayProDetails =
       payload,
     };
 
-    const payDetails = await bwc
-      .selectPaymentOption(options)
-      .catch(async err => {
-        dispatch(LogActions.error(`PayPro Details ERR: ${err.message}`));
+    const payDetails = await bwc.selectPaymentOption(options).catch(async err => {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
+        dispatch(LogActions.error(`PayPro Details ERR: ${errorStr}`));
         if (attempt <= 3) {
           await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
           return dispatch(GetPayProDetails({
