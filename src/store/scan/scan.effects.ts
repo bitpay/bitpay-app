@@ -334,7 +334,8 @@ const handleUnlock =
             });
           }
         } else {
-          dispatch(goToPayPro(data, undefined, invoice, wallet));
+          const _invoice = invoice?.invoice || invoice;
+          dispatch(goToPayPro(data, undefined, _invoice, wallet));
         }
         return;
       }
