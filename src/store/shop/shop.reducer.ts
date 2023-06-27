@@ -1,6 +1,9 @@
+import _ from 'lodash';
 import {Network} from '../../constants';
 import {APP_NETWORK} from '../../constants/config';
 import {
+  BillPayAccount,
+  BillPayPayment,
   CardConfigMap,
   CategoriesAndCurations,
   DirectIntegrationMap,
@@ -21,6 +24,12 @@ export interface ShopState {
   email: string;
   phone: string;
   phoneCountryInfo: PhoneCountryInfo;
+  billPayAccounts: {
+    [key in Network]: BillPayAccount[];
+  };
+  billPayPayments: {
+    [key in Network]: BillPayPayment[];
+  };
   giftCards: {
     [key in Network]: (GiftCard | UnsoldGiftCard)[];
   };
@@ -37,6 +46,14 @@ export const initialShopState: ShopState = {
   phoneCountryInfo: {
     phoneCountryCode: '',
     countryIsoCode: '',
+  },
+  billPayAccounts: {
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
+  },
+  billPayPayments: {
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
   },
   giftCards: {
     [Network.mainnet]: [],
@@ -80,6 +97,43 @@ export const shopReducer = (
         giftCards: {
           ...state.giftCards,
           [APP_NETWORK]: giftCards,
+        },
+      };
+    case ShopActionTypes.SET_BILL_PAY_ACCOUNTS:
+      const {accounts} = action.payload;
+      return {
+        ...state,
+        billPayAccounts: {
+          ...state.billPayAccounts,
+          [APP_NETWORK]: accounts,
+        },
+      };
+    case ShopActionTypes.CLEARED_BILL_PAY_ACCOUNTS:
+      return {
+        ...state,
+        billPayAccounts: {
+          ...state.billPayAccounts,
+          [APP_NETWORK]: [],
+        },
+      };
+    case ShopActionTypes.SET_BILL_PAY_PAYMENTS:
+      const {billPayPayments} = action.payload;
+      return {
+        ...state,
+        billPayPayments: {
+          ...state.billPayPayments,
+          [APP_NETWORK]: _.uniqBy(
+            [...billPayPayments, ...state.billPayPayments[APP_NETWORK]],
+            billPayPayment => billPayPayment.id,
+          ),
+        },
+      };
+    case ShopActionTypes.CLEARED_BILL_PAY_PAYMENTS:
+      return {
+        ...state,
+        billPayPayments: {
+          ...state.billPayPayments,
+          [APP_NETWORK]: [],
         },
       };
     case ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS:

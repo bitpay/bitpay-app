@@ -6,13 +6,15 @@ import Amount from '../../../components/amount/Amount';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import type {HeaderTitleProps} from '@react-navigation/elements';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
 `;
 
-const WalletScreenContainer = styled.SafeAreaView`
+const WalletScreenContainer = styled.SafeAreaView<{hasHeaderTitle: boolean}>`
   flex: 1;
+  ${hasHeaderTitle => (hasHeaderTitle ? 'margin-top: 30px' : '')}
 `;
 
 export interface AmountScreenParamList {
@@ -29,8 +31,13 @@ export interface AmountScreenParamList {
   sendMaxEnabled?: boolean;
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
+  customAmountSublabel?: any;
   chain?: string;
   context?: string;
+  headerTitle?:
+    | string
+    | ((props: HeaderTitleProps) => React.ReactNode)
+    | undefined;
 }
 
 const AmountScreen: React.VFC<
@@ -44,8 +51,10 @@ const AmountScreen: React.VFC<
     sendMaxEnabled,
     cryptoCurrencyAbbreviation,
     fiatCurrencyAbbreviation,
+    customAmountSublabel,
     chain,
     context,
+    headerTitle,
   } = route.params || {};
 
   const onSendMaxPressed = () => {
@@ -55,28 +64,30 @@ const AmountScreen: React.VFC<
   onSendMaxPressedRef.current = onSendMaxPressed;
 
   useLayoutEffect(() => {
-    if (sendMaxEnabled) {
-      navigation.setOptions({
-        headerRight: () => (
-          <HeaderContainer>
-            <Button
-              buttonType="pill"
-              buttonStyle="cancel"
-              onPress={() => onSendMaxPressedRef.current()}>
-              {t('Send Max')}
-            </Button>
-          </HeaderContainer>
-        ),
-      });
-    }
-  }, [navigation, t, sendMaxEnabled]);
+    navigation.setOptions({
+      ...(headerTitle && {headerTitle}),
+      headerRight: sendMaxEnabled
+        ? () => (
+            <HeaderContainer>
+              <Button
+                buttonType="pill"
+                buttonStyle="cancel"
+                onPress={() => onSendMaxPressedRef.current()}>
+                {t('Send Max')}
+              </Button>
+            </HeaderContainer>
+          )
+        : undefined,
+    });
+  }, [navigation, t, sendMaxEnabled, headerTitle]);
 
   return (
-    <WalletScreenContainer>
+    <WalletScreenContainer hasHeaderTitle={!!headerTitle}>
       <Amount
         buttonState={buttonState}
         context={context}
         cryptoCurrencyAbbreviation={cryptoCurrencyAbbreviation}
+        customAmountSublabel={customAmountSublabel}
         fiatCurrencyAbbreviation={fiatCurrencyAbbreviation}
         chain={chain}
         onSubmit={amt => {

@@ -130,10 +130,12 @@ export const CardContainer = styled.View`
 
 export interface SheetParams {
   placement?: 'top' | 'bottom';
+  paddingHorizontal?: number;
 }
 
 export const SheetContainer = styled.View<SheetParams>`
-  padding: 30px;
+  padding: 30px ${({paddingHorizontal}) =>
+    paddingHorizontal === 0 ? 0 : 30}px;
   background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
   justify-content: center;
   align-content: center;

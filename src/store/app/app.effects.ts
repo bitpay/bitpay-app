@@ -927,7 +927,7 @@ export const incomingShopLink =
     const merchantName = getRouteParam(url, 'merchant');
     const categoryName = getRouteParam(url, 'category');
 
-    if (!['giftcard', 'shoponline'].includes(route.name)) {
+    if (!['giftcard', 'shoponline', 'billpay'].includes(route.name)) {
       return undefined;
     }
 
@@ -982,6 +982,13 @@ export const incomingShopLink =
           },
         });
       }
+    } else if (route.name === 'billpay') {
+      navigationRef.navigate('Shop', {
+        screen: ShopScreens.HOME,
+        params: {
+          screen: ShopTabs.BILLS,
+        },
+      });
     }
     return {merchantName};
   };

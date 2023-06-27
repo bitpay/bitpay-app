@@ -690,6 +690,7 @@ export const BuildUiFriendlyList = (
     const {
       service: customDataService,
       toWalletName,
+      billPayMerchantIds,
       giftCardName,
     } = customData || {};
     const {body: noteBody} = note || {};
@@ -745,8 +746,16 @@ export const BuildUiFriendlyList = (
         ) {
           transaction.uiIcon = 'error';
         } else {
-          transaction.uiIcon = customDataService || 'sent';
-          transaction.uiIconURI = giftCardName;
+          transaction.uiIcon = ['billpay', 'giftcards'].includes(
+            customDataService,
+          )
+            ? 'shop'
+            : customDataService || 'sent';
+          transaction.uiIconURI =
+            (billPayMerchantIds &&
+              billPayMerchantIds.length === 1 &&
+              billPayMerchantIds[0]) ||
+            giftCardName;
         }
         if (notZeroAmountEVM) {
           if (noteBody) {

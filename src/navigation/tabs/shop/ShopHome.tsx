@@ -17,7 +17,12 @@ import {
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
 import {ShopOnline} from './components/ShopOnline';
-import {CardConfig, Category, GiftCard} from '../../../store/shop/shop.models';
+import {
+  BillPayAccount,
+  CardConfig,
+  Category,
+  GiftCard,
+} from '../../../store/shop/shop.models';
 import {ShopEffects} from '../../../store/shop';
 import {
   selectCategories,
@@ -40,15 +45,19 @@ import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {Bills} from './components/Bills';
+import {HEIGHT} from '../../../components/styled/Containers';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
   SHOP_ONLINE = 'Shop Online',
+  BILLS = 'Bills',
 }
 
 export type ShopHomeParamList = {
   [ShopTabs.GIFT_CARDS]: undefined;
   [ShopTabs.SHOP_ONLINE]: undefined;
+  [ShopTabs.BILLS]: undefined;
 };
 
 const Tab = createMaterialTopTabNavigator();
@@ -85,6 +94,13 @@ const getShopOnlineScrollViewHeight = (categories: Category[]) => {
   return categories.length * 273 + 350;
 };
 
+const getBillsScrollViewHeight = (billPayAccounts: BillPayAccount[]) => {
+  const billsListHeight = 130 * billPayAccounts.length + 300;
+  const topShopTabsHeight = 80;
+  const max = Math.max(HEIGHT - topShopTabsHeight, billsListHeight);
+  return max;
+};
+
 const getScrollViewHeight = (
   activeTab: string,
   integrationsCategories: Category[],
@@ -92,6 +108,7 @@ const getScrollViewHeight = (
   numSelectedGiftCards: number,
   purchasedCards: GiftCard[],
   curations: any,
+  billPayAccounts: BillPayAccount[],
 ) => {
   return activeTab === ShopTabs.GIFT_CARDS
     ? getGiftCardsScrollViewHeight(
@@ -100,6 +117,8 @@ const getScrollViewHeight = (
         purchasedCards,
         curations,
       )
+    : activeTab === ShopTabs.BILLS
+    ? getBillsScrollViewHeight(billPayAccounts)
     : getShopOnlineScrollViewHeight(integrationsCategories);
 };
 
@@ -114,6 +133,9 @@ const ShopHome: React.FC<
   const giftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
+  const billPayAccounts = useAppSelector(
+    ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
+  ) as BillPayAccount[];
   const purchasedGiftCards = useMemo(
     () => giftCards.filter(giftCard => giftCard.status !== 'UNREDEEMED'),
     [giftCards],
@@ -151,7 +173,7 @@ const ShopHome: React.FC<
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
-      headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>,
     });
   }, [navigation, t]);
   const integrations = useAppSelector(selectIntegrations);
@@ -180,6 +202,7 @@ const ShopHome: React.FC<
       0,
       activeGiftCards,
       curations,
+      billPayAccounts,
     ),
   );
 
@@ -218,6 +241,11 @@ const ShopHome: React.FC<
   );
 
   const dispatch = useAppDispatch();
+  const memoizedBills = useCallback(
+    () => <Bills />,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useEffect(() => {
     dispatch(ShopEffects.startFetchCatalog());
@@ -247,6 +275,7 @@ const ShopHome: React.FC<
         numSelectedGiftCards,
         activeGiftCards,
         curations,
+        billPayAccounts,
       ),
     );
   }, [
@@ -257,6 +286,7 @@ const ShopHome: React.FC<
     availableGiftCards,
     activeGiftCards,
     curations,
+    billPayAccounts,
   ]);
 
   useFocusEffect(() => {
@@ -283,6 +313,7 @@ const ShopHome: React.FC<
                 setRefreshing(true);
                 await Promise.all([
                   dispatch(ShopEffects.startSyncGiftCards()),
+                  dispatch(ShopEffects.startGetBillPayAccounts()),
                   sleep(600),
                 ]);
                 setRefreshing(false);
@@ -295,13 +326,20 @@ const ShopHome: React.FC<
             style={{
               height: scrollViewHeight,
             }}
-            screenOptions={ScreenOptions(120)}
+            screenOptions={ScreenOptions({
+              fontSize: 15,
+              marginHorizontal: 3,
+              numTabs: 3,
+              tabWidth: 111,
+            })}
             screenListeners={{
               tabPress: tab => {
                 if (tab.target) {
                   setActiveTab(
                     tab.target.includes(ShopTabs.GIFT_CARDS)
                       ? t('Gift Cards')
+                      : tab.target.includes(ShopTabs.BILLS)
+                      ? t('Bills')
                       : t('Shop Online'),
                   );
                 }
@@ -315,6 +353,7 @@ const ShopHome: React.FC<
               name={ShopTabs.SHOP_ONLINE}
               component={memoizedShopOnline}
             />
+            <Tab.Screen name={ShopTabs.BILLS} component={memoizedBills} />
           </Tab.Navigator>
         </ShopInnerContainer>
       </ScrollView>

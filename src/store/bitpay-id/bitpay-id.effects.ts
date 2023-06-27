@@ -16,7 +16,7 @@ import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
-import {ShopEffects} from '../shop';
+import {ShopActions, ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
@@ -439,6 +439,7 @@ const startPairAndLoadUser =
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards());
+      dispatch(ShopEffects.startGetBillPayAccounts());
     } catch (err) {
       let errMsg;
 
@@ -465,6 +466,8 @@ export const startDisconnectBitPayId =
       dispatch(Analytics.track('Log Out User success', {}));
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
       dispatch(CardActions.isJoinedWaitlist(false));
+      dispatch(ShopActions.clearedBillPayAccounts());
+      dispatch(ShopActions.clearedBillPayPayments());
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.error('An error occurred while logging out.'));
