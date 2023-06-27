@@ -12,6 +12,10 @@ import {
   rampSupportedFiatCurrencies,
 } from './ramp-utils';
 import {
+  getSardineSupportedCurrencies,
+  sardineSupportedFiatCurrencies,
+} from './sardine-utils';
+import {
   getSimplexSupportedCurrencies,
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
@@ -23,11 +27,17 @@ import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
-export type BuyCryptoExchangeKey = 'moonpay' | 'ramp' | 'simplex' | 'wyre';
+export type BuyCryptoExchangeKey =
+  | 'moonpay'
+  | 'ramp'
+  | 'sardine'
+  | 'simplex'
+  | 'wyre';
 
 export const BuyCryptoSupportedExchanges: BuyCryptoExchangeKey[] = [
   'moonpay',
   'ramp',
+  'sardine',
   'simplex',
   'wyre',
 ];
@@ -45,6 +55,7 @@ export const getEnabledPaymentMethods = (
   }
   PaymentMethodsAvailable.sepaBankTransfer.enabled =
     !!locationData?.isEuCountry;
+  PaymentMethodsAvailable.ach.enabled = country === 'US';
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
     return exchange && BuyCryptoSupportedExchanges.includes(exchange)
       ? method.enabled &&
@@ -66,6 +77,14 @@ export const getEnabledPaymentMethods = (
             country,
           ) ||
             isPaymentMethodSupported('ramp', method, coin, chain, currency) ||
+            isPaymentMethodSupported(
+              'sardine',
+              method,
+              coin,
+              chain,
+              currency,
+              country,
+            ) ||
             isPaymentMethodSupported(
               'simplex',
               method,
@@ -90,6 +109,8 @@ export const getBuyCryptoSupportedCoins = (
       );
     case 'ramp':
       return getRampSupportedCurrencies();
+    case 'sardine':
+      return getSardineSupportedCurrencies();
     case 'simplex':
       return getSimplexSupportedCurrencies();
     case 'wyre':
@@ -101,6 +122,7 @@ export const getBuyCryptoSupportedCoins = (
             locationData?.countryShortCode || 'US',
           ),
           ...getRampSupportedCurrencies(),
+          ...getSardineSupportedCurrencies(),
           ...getSimplexSupportedCurrencies(),
           ...getWyreSupportedCurrencies(),
         ]),
@@ -115,6 +137,8 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
       return moonpaySupportedFiatCurrencies;
     case 'ramp':
       return rampSupportedFiatCurrencies;
+    case 'sardine':
+      return sardineSupportedFiatCurrencies;
     case 'simplex':
       return simplexSupportedFiatCurrencies;
     case 'wyre':
@@ -124,6 +148,7 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
         ...new Set([
           ...moonpaySupportedFiatCurrencies,
           ...rampSupportedFiatCurrencies,
+          ...sardineSupportedFiatCurrencies,
           ...simplexSupportedFiatCurrencies,
           ...wyreSupportedFiatCurrencies,
         ]),
@@ -156,6 +181,7 @@ export const isCoinSupportedToBuy = (
   return (
     isCoinSupportedBy('moonpay', coin, chain, country) ||
     isCoinSupportedBy('ramp', coin, chain) ||
+    isCoinSupportedBy('sardine', coin, chain) ||
     isCoinSupportedBy('simplex', coin, chain) ||
     isCoinSupportedBy('wyre', coin, chain)
   );
@@ -174,6 +200,10 @@ const isCoinSupportedBy = (
       );
     case 'ramp':
       return getRampSupportedCurrencies().includes(
+        getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
+      );
+    case 'sardine':
+      return getSardineSupportedCurrencies().includes(
         getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
       );
     case 'simplex':
@@ -198,6 +228,8 @@ const isFiatCurrencySupportedBy = (
       return moonpaySupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'ramp':
       return rampSupportedFiatCurrencies.includes(currency.toUpperCase());
+    case 'sardine':
+      return sardineSupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'simplex':
       return simplexSupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'wyre':

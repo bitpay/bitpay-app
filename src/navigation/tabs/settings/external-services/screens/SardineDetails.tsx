@@ -8,17 +8,19 @@ import {
 } from '@react-navigation/native';
 import Clipboard from '@react-native-community/clipboard';
 import moment from 'moment';
-import {Link} from '../../../../../components/styled/Text';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
-import MoonpayLogo from '../../../../../components/icons/external-services/moonpay/moonpay-logo';
-import {MoonpayPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import SardineLogo from '../../../../../components/icons/external-services/sardine/sardine-logo';
+import {
+  SardineGetOrderDetailsRequestData,
+  SardineIncomingData,
+  SardinePaymentData,
+} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
-import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../../store/buy-crypto';
 import {
   RowDataContainer,
@@ -40,17 +42,20 @@ import {
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {moonpayGetTransactionDetails} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
-  moonpayGetStatusColor,
-  moonpayGetStatusDetails,
-  MoonpayStatus,
-} from '../../../../services/buy-crypto/utils/moonpay-utils';
-import {Br} from '../../../../../components/styled/Containers';
+  sardineEnv,
+  sardineGetStatusDetails,
+  SardineStatus,
+} from '../../../../services/buy-crypto/utils/sardine-utils';
+import {sardineGetOrderDetails} from '../../../../../store/buy-crypto/effects/sardine/sardine';
 import {sleep} from '../../../../../utils/helper-methods';
 import {SlateDark, White} from '../../../../../styles/colors';
-export interface MoonpayDetailsProps {
-  paymentRequest: MoonpayPaymentData;
+import {Br} from '../../../../../components/styled/Containers';
+import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
+import {Link} from '../../../../../components/styled/Text';
+
+export interface SardineDetailsProps {
+  paymentRequest: SardinePaymentData;
 }
 
 const copyText = (text: string) => {
@@ -58,59 +63,89 @@ const copyText = (text: string) => {
   Clipboard.setString(text);
 };
 
-const MoonpayDetails: React.FC = () => {
+const SardineDetails: React.FC = () => {
   const {t} = useTranslation();
-  const {
-    params: {paymentRequest},
-  } = useRoute<RouteProp<{params: MoonpayDetailsProps}>>();
-  const navigation = useNavigation();
   const logger = useLogger();
   const theme = useTheme();
+  const {
+    params: {paymentRequest},
+  } = useRoute<RouteProp<{params: SardineDetailsProps}>>();
+  const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const [status, setStatus] = useState<MoonpayStatus>({
+  const [status, setStatus] = useState<SardineStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
   });
   const [refreshing, setRefreshing] = useState(false);
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
-  const [copiedExternalId, setCopiedExternalId] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
+  const [copiedReferenceId, setCopiedReferenceId] = useState(false);
   const [copiedTransactionId, setCopiedTransactionId] = useState(false);
 
   const updateStatusDescription = () => {
-    setStatus(moonpayGetStatusDetails(paymentRequest.status));
+    setStatus(sardineGetStatusDetails(paymentRequest.status));
   };
 
-  const getTransactionDetails = (force?: boolean) => {
-    if (paymentRequest.status === 'completed' && !force) {
+  const getOrderDetails = (force?: boolean) => {
+    if (
+      (['Complete', 'Declined', 'Expired'].includes(paymentRequest.status) ||
+        !paymentRequest.order_id) &&
+      !force
+    ) {
       return;
     }
 
-    moonpayGetTransactionDetails(
-      paymentRequest.transaction_id,
-      paymentRequest.external_id,
-    )
+    const requestData: SardineGetOrderDetailsRequestData = {
+      env: sardineEnv,
+      orderId: paymentRequest.order_id,
+    };
+
+    sardineGetOrderDetails(requestData)
       .then(data => {
-        if (!data || data.type === 'NotFoundError') {
-          logger.error('Moonpay getTransactionDetails Error: ' + data.message);
+        if (!data) {
+          logger.error('Sardine getOrderDetails Error: ' + data.message);
           return;
         }
+        let shouldUpdate = false;
         if (
-          !paymentRequest.transaction_id ||
-          !paymentRequest.status ||
-          data.status != paymentRequest.status
+          data.data?.quantity &&
+          typeof data.data.quantity === 'number' &&
+          data.data.quantity > 0 &&
+          data.data.quantity != paymentRequest.crypto_amount
         ) {
-          logger.debug('Updating status to: ' + data.status);
+          logger.debug(
+            `Updating crypto_amount from: ${paymentRequest.crypto_amount} to: ${data.data.quantity}`,
+          );
+          paymentRequest.crypto_amount = data.data.quantity;
+          shouldUpdate = true;
+        }
+        if (!paymentRequest.order_id && data.id) {
+          paymentRequest.order_id = data.id;
+          shouldUpdate = true;
+        }
+        if (data.withdrawal?.txHash) {
+          paymentRequest.transaction_id = data.withdrawal.txHash;
+          shouldUpdate = true;
+        }
+        if (!paymentRequest.status || data.status != paymentRequest.status) {
+          logger.debug(
+            `Updating status from: ${paymentRequest.status} to: ${data.status}`,
+          );
           paymentRequest.status = data.status;
-          paymentRequest.transaction_id = data.id;
           updateStatusDescription();
-          const stateParams = {
-            externalId: paymentRequest.external_id,
-            transactionId: paymentRequest.transaction_id,
+          shouldUpdate = true;
+        }
+
+        if (shouldUpdate) {
+          const stateParams: SardineIncomingData = {
+            sardineExternalId: paymentRequest.external_id,
             status: paymentRequest.status,
+            cryptoAmount: paymentRequest.crypto_amount,
+            transactionId: paymentRequest.transaction_id,
           };
           dispatch(
-            BuyCryptoActions.updatePaymentRequestMoonpay({
-              moonpayIncomingData: stateParams,
+            BuyCryptoActions.updatePaymentRequestSardine({
+              sardineIncomingData: stateParams,
             }),
           );
 
@@ -120,21 +155,19 @@ const MoonpayDetails: React.FC = () => {
         }
       })
       .catch(err => {
-        logger.error(
-          'Moonpay getTransactionDetails Error: ' + JSON.stringify(err),
-        );
+        logger.error('Sardine getOrderDetails Error: ' + JSON.stringify(err));
       });
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([getTransactionDetails(true), sleep(1000)]);
+    await Promise.all([getOrderDetails(true), sleep(1000)]);
     setRefreshing(false);
   };
 
   useEffect(() => {
     updateStatusDescription();
-    getTransactionDetails();
+    getOrderDetails();
   }, []);
 
   useEffect(() => {
@@ -146,10 +179,17 @@ const MoonpayDetails: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCopiedExternalId(false);
+      setCopiedOrderId(false);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [copiedExternalId]);
+  }, [copiedOrderId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedReferenceId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedReferenceId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -157,8 +197,6 @@ const MoonpayDetails: React.FC = () => {
     }, 3000);
     return () => clearTimeout(timer);
   }, [copiedTransactionId]);
-
-  // moonpayGetTransactionDetails
 
   return (
     <SettingsContainer>
@@ -178,20 +216,20 @@ const MoonpayDetails: React.FC = () => {
               <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
-          <MoonpayLogo iconOnly={true} />
+          <SardineLogo iconOnly={true} />
         </RowDataContainer>
 
         <RowDataContainer>
           <RowLabel>{t('Approximate receiving fiat amount')}</RowLabel>
           <RowData>
-            {paymentRequest.fiat_base_amount}{' '}
+            {paymentRequest.fiat_base_amount.toFixed(2)}{' '}
             {paymentRequest.fiat_total_amount_currency}
           </RowData>
         </RowDataContainer>
         <LabelTip type="warn">
           <LabelTipText>
             {t(
-              "The final crypto amount you receive when the transaction is complete may differ because it is based on Moonpay's exchange rate.",
+              "The final crypto amount you receive when the transaction is complete may differ because it is based on Sardine's exchange rate.",
             )}
           </LabelTipText>
         </LabelTip>
@@ -226,7 +264,6 @@ const MoonpayDetails: React.FC = () => {
             <RowLabel>{t('Status')}</RowLabel>
             <RowData
               style={{
-                color: moonpayGetStatusColor(paymentRequest.status),
                 textTransform: 'capitalize',
               }}>
               {status.statusTitle}
@@ -234,49 +271,26 @@ const MoonpayDetails: React.FC = () => {
           </RowDataContainer>
         )}
 
-        {!paymentRequest.status && (
-          <LabelTip type="info">
-            <LabelTipText>
-              {t(
-                'If you have successfully completed the entire payment process, remember that receiving crypto may take a few hours.',
-              )}
-            </LabelTipText>
-            <TouchableOpacity
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(
-                  openUrlWithInAppBrowser(
-                    'https://buy.moonpay.com/trade_history',
-                  ),
-                );
-              }}>
-              <Link style={{marginTop: 15}}>
-                {t('What is the status of my payment?')}
-              </Link>
-            </TouchableOpacity>
-          </LabelTip>
-        )}
-
         {!!paymentRequest.status && (
           <LabelTip type="info">
             <LabelTipText>{status.statusDescription}</LabelTipText>
-            {['failed'].includes(paymentRequest.status) ? (
+            {!['Declined', 'Expired'].includes(paymentRequest.status) ? (
               <>
                 <Br />
                 <LabelTipText>
-                  {t('Having problems with Moonpay?')}{' '}
+                  {t('Having problems with Sardine?')}
                 </LabelTipText>
                 <TouchableOpacity
                   onPress={() => {
                     haptic('impactLight');
                     dispatch(
                       openUrlWithInAppBrowser(
-                        'https://support.moonpay.com/hc/en-gb/requests/new',
+                        'https://crypto.sardine.ai/support',
                       ),
                     );
                   }}>
                   <Link style={{marginTop: 15}}>
-                    {t('Contact the Moonpay support team.')}
+                    {t('Contact the Sardine support team.')}
                   </Link>
                 </TouchableOpacity>
               </>
@@ -302,6 +316,46 @@ const MoonpayDetails: React.FC = () => {
           </TouchableOpacity>
         </ColumnDataContainer>
 
+        {!!paymentRequest.order_id && (
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(paymentRequest.order_id!);
+                setCopiedOrderId(true);
+              }}>
+              <RowLabel>{t('Order ID')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {paymentRequest.order_id}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedOrderId ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+        )}
+
+        {!!paymentRequest.external_id && (
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(paymentRequest.external_id!);
+                setCopiedReferenceId(true);
+              }}>
+              <RowLabel>{t('Reference ID')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {paymentRequest.external_id}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedReferenceId ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+        )}
+
         {!!paymentRequest.transaction_id && (
           <ColumnDataContainer>
             <TouchableOpacity
@@ -322,24 +376,6 @@ const MoonpayDetails: React.FC = () => {
           </ColumnDataContainer>
         )}
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(paymentRequest.external_id);
-              setCopiedExternalId(true);
-            }}>
-            <RowLabel>{t('External Transaction ID')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {paymentRequest.external_id}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedExternalId ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
-
         <RemoveCta
           onPress={async () => {
             haptic('impactLight');
@@ -357,8 +393,8 @@ const MoonpayDetails: React.FC = () => {
                     action: () => {
                       dispatch(dismissBottomNotificationModal());
                       dispatch(
-                        BuyCryptoActions.removePaymentRequestMoonpay({
-                          externalId: paymentRequest.external_id,
+                        BuyCryptoActions.removePaymentRequestSardine({
+                          sardineExternalId: paymentRequest.external_id,
                         }),
                       );
                       navigation.goBack();
@@ -368,7 +404,7 @@ const MoonpayDetails: React.FC = () => {
                   {
                     text: t('GO BACK'),
                     action: () => {
-                      console.log('Removing payment Request CANCELED');
+                      logger.debug('Removing payment Request CANCELED');
                     },
                   },
                 ],
@@ -382,4 +418,4 @@ const MoonpayDetails: React.FC = () => {
   );
 };
 
-export default MoonpayDetails;
+export default SardineDetails;

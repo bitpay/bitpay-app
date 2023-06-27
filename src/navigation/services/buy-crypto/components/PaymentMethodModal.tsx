@@ -19,6 +19,7 @@ import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
+import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
@@ -139,13 +140,35 @@ const PaymentMethodsModal = ({
   ): JSX.Element | null => {
     switch (exchange) {
       case 'moonpay':
-        return <MoonpayLogo key={exchange} widthIcon={20} heightIcon={20} />;
+        return (
+          <MoonpayLogo
+            key={exchange}
+            iconOnly={true}
+            widthIcon={20}
+            heightIcon={20}
+          />
+        );
       case 'ramp':
-        return <RampLogo key={exchange} width={65} height={15} />;
+        return (
+          <RampLogo key={exchange} iconOnly={true} width={30} height={20} />
+        );
+      case 'sardine':
+        return (
+          <SardineLogo key={exchange} iconOnly={true} width={30} height={20} />
+        );
       case 'simplex':
-        return <SimplexLogo key={exchange} widthIcon={20} heightIcon={20} />;
+        return (
+          <SimplexLogo
+            key={exchange}
+            iconOnly={true}
+            widthIcon={20}
+            heightIcon={20}
+          />
+        );
       case 'wyre':
-        return <WyreLogo key={exchange} width={60} height={15} />;
+        return (
+          <WyreLogo key={exchange} iconOnly={true} width={30} height={15} />
+        );
       default:
         return null;
     }

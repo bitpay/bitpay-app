@@ -4,6 +4,8 @@ import {
   MoonpayIncomingData,
   RampPaymentData,
   RampIncomingData,
+  SardinePaymentData,
+  SardineIncomingData,
   SimplexPaymentData,
   SimplexIncomingData,
   WyrePaymentData,
@@ -48,6 +50,27 @@ export const removePaymentRequestRamp = (payload: {
   rampExternalId: string;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_RAMP,
+  payload,
+});
+
+export const successPaymentRequestSardine = (payload: {
+  sardinePaymentData: SardinePaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SARDINE,
+  payload,
+});
+
+export const updatePaymentRequestSardine = (payload: {
+  sardineIncomingData: SardineIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SARDINE,
+  payload,
+});
+
+export const removePaymentRequestSardine = (payload: {
+  sardineExternalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_SARDINE,
   payload,
 });
 
