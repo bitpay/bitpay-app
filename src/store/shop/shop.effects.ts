@@ -307,6 +307,10 @@ export const startGetAuthElementToken =
 export const startGetBillPayAccounts =
   (): Effect<Promise<BillPayAccount[]>> => async (dispatch, getState) => {
     const {BITPAY_ID} = getState();
+    const user = BITPAY_ID.user[APP_NETWORK];
+    if (!user) {
+      return [];
+    }
     const accounts = await BitPayIdApi.getInstance()
       .request('getBillPayAccounts', BITPAY_ID.apiToken[APP_NETWORK])
       .then(res => {

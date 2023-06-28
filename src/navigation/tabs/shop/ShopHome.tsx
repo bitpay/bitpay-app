@@ -241,11 +241,7 @@ const ShopHome: React.FC<
   );
 
   const dispatch = useAppDispatch();
-  const memoizedBills = useCallback(
-    () => <Bills />,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
+  const memoizedBills = useCallback(() => <Bills />, []);
 
   useEffect(() => {
     dispatch(ShopEffects.startFetchCatalog());
@@ -313,7 +309,9 @@ const ShopHome: React.FC<
                 setRefreshing(true);
                 await Promise.all([
                   dispatch(ShopEffects.startSyncGiftCards()),
-                  dispatch(ShopEffects.startGetBillPayAccounts()),
+                  dispatch(ShopEffects.startGetBillPayAccounts()).catch(
+                    _ => {},
+                  ),
                   sleep(600),
                 ]);
                 setRefreshing(false);
