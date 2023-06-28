@@ -129,7 +129,7 @@ const PayBill = ({
   ];
 
   const onAmountScreenSubmit = (amount: number) => {
-    const minAmount = 0.99;
+    const minAmount = 1;
     const maxAmount = account[account.type].balance;
     if (amount < minAmount) {
       dispatch(
