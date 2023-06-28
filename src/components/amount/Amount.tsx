@@ -112,6 +112,7 @@ export interface AmountProps {
   context?: string;
   buttonState?: ButtonState;
   swapOpts?: SwapOpts;
+  customAmountSublabel?: any;
   onSendMaxPressed?: () => any;
 
   /**
@@ -127,6 +128,7 @@ const Amount: React.VFC<AmountProps> = ({
   context,
   buttonState,
   swapOpts,
+  customAmountSublabel,
   onSendMaxPressed,
   onSubmit,
 }) => {
@@ -390,7 +392,9 @@ const Amount: React.VFC<AmountProps> = ({
               <CurrencyText>{currency || 'USD'}</CurrencyText>
             </CurrencySuperScript>
           </Row>
-          {cryptoCurrencyAbbreviation ? (
+          {customAmountSublabel ? (
+            <>{customAmountSublabel()}</>
+          ) : cryptoCurrencyAbbreviation ? (
             <Row>
               <AmountEquivText>
                 {displayEquivalentAmount || 0}{' '}

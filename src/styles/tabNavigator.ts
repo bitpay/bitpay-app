@@ -10,11 +10,17 @@ import {Platform} from 'react-native';
 import {MaterialTopTabNavigationOptions} from '@react-navigation/material-top-tabs';
 import {useTheme} from 'styled-components/native';
 
+const gutter = 5;
+
 export const ScreenOptions = (
-  width: number,
+  {fontSize, numTabs, marginHorizontal, tabWidth} = {
+    fontSize: 16,
+    numTabs: 2,
+    marginHorizontal: gutter,
+    tabWidth: 150,
+  },
 ): MaterialTopTabNavigationOptions => {
-  const gutter = 5;
-  const totalWidth = width * 2 + gutter * 4;
+  const totalWidth = tabWidth * numTabs + gutter * 4;
   const {dark} = useTheme();
 
   return {
@@ -23,14 +29,15 @@ export const ScreenOptions = (
       height: 46,
       borderRadius: 50,
       backgroundColor: Action,
-      width: width,
+      width: tabWidth,
       margin: gutter,
+      marginHorizontal,
     },
     tabBarActiveTintColor: White,
     tabBarInactiveTintColor: dark ? White : SlateDark,
     tabBarPressColor: dark ? Black : NeutralSlate,
     tabBarLabelStyle: {
-      fontSize: 16,
+      fontSize,
       textTransform: 'none',
       fontWeight: '500',
       paddingVertical: Platform.select({

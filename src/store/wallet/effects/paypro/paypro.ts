@@ -137,6 +137,7 @@ export const HandlePayPro = async ({
     };
     return confirmScreenParams;
   } catch (err) {
+    throw err;
     //Todo: handle me
   }
 };

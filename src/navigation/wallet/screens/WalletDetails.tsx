@@ -126,6 +126,7 @@ import {
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
+import {BillPayAccount} from '../../../store/shop/shop.models';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -304,6 +305,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     rates,
     dispatch,
     'symbol',
+  );
+  const accounts = useAppSelector(
+    ({SHOP}) => SHOP.billPayAccounts[uiFormattedWallet.network],
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
@@ -866,6 +870,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     [],
   );
 
+  const getBillPayIcon = (
+    billPayAccounts: BillPayAccount[],
+    merchantId: string,
+  ): string => {
+    const account = (billPayAccounts || []).find(
+      acct => acct[acct.type].merchantId === merchantId,
+    );
+    return account ? account[account.type].merchantIcon : '';
+  };
+
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
@@ -880,7 +894,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             TransactionIcons[item.uiIcon]
           )
         }
-        iconURI={getGiftCardIcons(supportedCardMap)[item.uiIconURI]}
+        iconURI={
+          getBillPayIcon(accounts, item.uiIconURI) ||
+          getGiftCardIcons(supportedCardMap)[item.uiIconURI]
+        }
         description={item.uiDescription}
         time={item.uiTime}
         value={item.uiValue}

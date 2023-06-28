@@ -10,6 +10,8 @@ interface Props {
   checked: boolean;
   disabled?: boolean;
   radio?: boolean;
+  radioHeight?: number;
+  checkHeight?: number;
 }
 
 interface BorderProps {
@@ -46,8 +48,18 @@ const baseRadioStyles = {
   height: 33,
 };
 
-const Checkbox: React.FC<Props> = ({onPress, checked, disabled, radio}) => {
-  const baseStyles = radio ? baseRadioStyles : baseCheckboxStyles;
+const Checkbox: React.FC<Props> = ({
+  onPress,
+  checked,
+  disabled,
+  radio,
+  radioHeight,
+  checkHeight,
+}) => {
+  const radioStyles = radioHeight
+    ? {height: radioHeight, width: radioHeight}
+    : baseRadioStyles;
+  const baseStyles = radio ? radioStyles : baseCheckboxStyles;
   const theme = useTheme();
 
   return (
@@ -72,7 +84,13 @@ const Checkbox: React.FC<Props> = ({onPress, checked, disabled, radio}) => {
         radio={radio}
         testID="checkboxBorder"
       />
-      {checked && <Check />}
+      {checked ? (
+        checkHeight ? (
+          <Check height={checkHeight} />
+        ) : (
+          <Check />
+        )
+      ) : null}
     </RoundedCheckbox>
   );
 };

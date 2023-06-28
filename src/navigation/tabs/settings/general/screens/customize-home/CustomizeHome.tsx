@@ -167,7 +167,7 @@ const CustomizeHome = () => {
           }
           style={{marginTop: 20}}
           screenOptions={{
-            ...ScreenOptions(150),
+            ...ScreenOptions(),
             tabBarItemStyle: {
               flexDirection: 'row',
             },

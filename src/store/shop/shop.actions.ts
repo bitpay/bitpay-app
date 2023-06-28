@@ -1,5 +1,7 @@
 import {ShopActionType, ShopActionTypes} from './shop.types';
 import {
+  BillPayAccount,
+  BillPayPayment,
   CardConfigMap,
   CategoriesAndCurations,
   DirectIntegrationMap,
@@ -45,6 +47,28 @@ export const setPurchasedGiftCards = (payload: {
 }): ShopActionType => ({
   type: ShopActionTypes.SET_PURCHASED_GIFT_CARDS,
   payload,
+});
+
+export const setBillPayAccounts = (payload: {
+  accounts: BillPayAccount[];
+}): ShopActionType => ({
+  type: ShopActionTypes.SET_BILL_PAY_ACCOUNTS,
+  payload,
+});
+
+export const clearedBillPayAccounts = (): ShopActionType => ({
+  type: ShopActionTypes.CLEARED_BILL_PAY_ACCOUNTS,
+});
+
+export const setBillPayPayments = (payload: {
+  billPayPayments: BillPayPayment[];
+}): ShopActionType => ({
+  type: ShopActionTypes.SET_BILL_PAY_PAYMENTS,
+  payload,
+});
+
+export const clearedBillPayPayments = (): ShopActionType => ({
+  type: ShopActionTypes.CLEARED_BILL_PAY_PAYMENTS,
 });
 
 export const updatedGiftCardStatus = (payload: {

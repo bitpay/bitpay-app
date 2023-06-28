@@ -6,6 +6,10 @@ import {Effect} from '..';
 import BitPayIdApi from '../../api/bitpay';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {
+  BillPayAccount,
+  BillPayInvoiceParams,
+  BillPayOrder,
+  BillPayPayment,
   CardConfig,
   GiftCard,
   GiftCardInvoiceParams,
@@ -108,6 +112,40 @@ export const startSyncGiftCards =
         savedGiftCards as GiftCard[],
       );
       dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+export const startCreateBillPayInvoice =
+  (params: BillPayInvoiceParams): Effect<Promise<BillPayOrder>> =>
+  async (dispatch, getState) => {
+    try {
+      const {BITPAY_ID} = getState();
+      const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
+      const createInvoiceResponse = await BitPayIdApi.getInstance()
+        .request(
+          'createBillPayInvoice',
+          BITPAY_ID.apiToken[APP_NETWORK],
+          params,
+        )
+        .then(res => {
+          if (res?.data?.error) {
+            throw new Error(res.data.error);
+          }
+          return res.data;
+        });
+      const {data: billPayOrder} = createInvoiceResponse as {
+        data: BillPayOrder;
+      };
+      const getInvoiceResponse = await axios.get(
+        `${baseUrl}/invoices/${billPayOrder.invoiceId}`,
+      );
+      const {
+        data: {data: invoice},
+      } = getInvoiceResponse as {data: {data: Invoice}};
+      return {...billPayOrder, invoice} as BillPayOrder;
     } catch (err) {
       console.error(err);
       throw err;
@@ -250,4 +288,90 @@ export const waitForConfirmation =
       dispatch(startRedeemGiftCard(unredeemedGiftCard.invoiceId));
       numTries++;
     }, 10000);
+  };
+
+export const startGetAuthElementToken =
+  (): Effect<Promise<string>> => async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const methodAuthElementToken = await BitPayIdApi.getInstance()
+      .request('getMethodAuthElementToken', BITPAY_ID.apiToken[APP_NETWORK])
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as string;
+      });
+    return methodAuthElementToken;
+  };
+
+export const startGetBillPayAccounts =
+  (): Effect<Promise<BillPayAccount[]>> => async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const accounts = await BitPayIdApi.getInstance()
+      .request('getBillPayAccounts', BITPAY_ID.apiToken[APP_NETWORK])
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as BillPayAccount[];
+      });
+    const billPayAccounts = accounts.map(account => ({
+      ...account,
+      [account.type]: {
+        ...account[account.type],
+        paddedNextPaymentDueDate:
+          account[account.type].paddedNextPaymentDueDate ||
+          account[account.type].nextPaymentDueDate,
+        description: `${account[account.type].type
+          .replace(/_/g, ' ')
+          .split(' ')
+          .map(word => `${word[0].toUpperCase()}${word.slice(1)}`)
+          .join(' ')} ****${account[account.type].mask}`,
+      },
+    }));
+    dispatch(ShopActions.setBillPayAccounts({accounts: billPayAccounts}));
+    return billPayAccounts;
+  };
+
+export const startFindBillPayments =
+  ({
+    partnerAccountId,
+    endDate,
+  }: {
+    partnerAccountId?: string;
+    endDate?: string;
+  } = {}): Effect<Promise<BillPayPayment[]>> =>
+  async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const billPayPayments = await BitPayIdApi.getInstance()
+      .request('findBillPayments', BITPAY_ID.apiToken[APP_NETWORK], {
+        partnerAccountId,
+        endDate,
+      })
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as BillPayPayment[];
+      });
+    dispatch(
+      ShopActions.setBillPayPayments({
+        billPayPayments,
+      }),
+    );
+    return billPayPayments;
+  };
+
+export const startCheckIfBillPayAvailable =
+  (): Effect<Promise<any>> => async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const available = await BitPayIdApi.getInstance()
+      .request('isBillPayAvailable', BITPAY_ID.apiToken[APP_NETWORK])
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as any;
+      });
+    return available;
   };

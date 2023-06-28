@@ -279,7 +279,7 @@ const SendToOptions = () => {
         goToSelectInputsView,
       }}>
       <ImportContainer>
-        <Tab.Navigator screenOptions={{...ScreenOptions(150)}}>
+        <Tab.Navigator screenOptions={{...ScreenOptions()}}>
           <Tab.Screen
             name={t('Addresses')}
             component={SendToAddress}

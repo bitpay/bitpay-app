@@ -37,7 +37,7 @@ const Import: React.FC<ImportScreenProps> = ({route}) => {
 
   return (
     <ImportContainer accessibilityLabel="import-view">
-      <Tab.Navigator screenOptions={{...ScreenOptions(150)}}>
+      <Tab.Navigator screenOptions={{...ScreenOptions()}}>
         <Tab.Screen
           name={t('Phrase')}
           component={RecoveryPhrase}

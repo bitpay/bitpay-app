@@ -201,6 +201,7 @@ export interface CustomTransactionData {
   oneInch?: string;
   shapeShift?: string;
   toWalletName?: any;
+  billPayMerchantIds?: string[];
 }
 
 export type TransactionOptionsContext =

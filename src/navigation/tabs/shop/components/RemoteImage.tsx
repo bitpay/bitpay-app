@@ -58,7 +58,9 @@ export default ({
       height={height}
       width={imageWidth}
       borderRadius={imageBorderRadius}>
-      {uri?.endsWith('.svg') ? (
+      {!uri ? (
+        <>{svgFallbackComponent()}</>
+      ) : uri?.endsWith('.svg') ? (
         <ErrorBoundary FallbackComponent={svgFallbackComponent}>
           <SvgUri height={`${height}px`} width={`${imageWidth}px`} uri={uri} />
         </ErrorBoundary>

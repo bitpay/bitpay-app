@@ -8,6 +8,7 @@ import {
   Cloud,
   LightBlack,
   NeutralSlate,
+  Slate30,
   SlateDark,
   White,
 } from '../../../../../styles/colors';
@@ -114,6 +115,20 @@ export const Terms = styled(BaseText)`
   padding: 20px 10px 50px;
   text-align: justify;
   font-weight: 300;
+`;
+
+export const BillOption = styled.View<{isLast?: boolean}>`
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 24px 0;
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme}) => theme.dark ? SlateDark : Slate30 };
+  margin-top: -30px;
+  ${({isLast}) =>
+    isLast
+      ? 'border-bottom-width: 0; padding-bottom: 0; margin-bottom: -10px;'
+      : ''}
 `;
 
 export interface HideableViewProps {
