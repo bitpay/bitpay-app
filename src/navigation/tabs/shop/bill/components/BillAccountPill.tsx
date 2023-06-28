@@ -5,6 +5,7 @@ import {Image} from 'react-native';
 
 export const BillAccountPill = ({account}: {account: BillPayAccount}) => (
   <SendToPill
+    height={'37px'}
     icon={
       <Image
         style={{
