@@ -20,6 +20,7 @@ const ConnectBills = ({
   const insets = useSafeAreaInsets();
   const [isWebViewShown, setIsWebViewShown] = useState(true);
   const [token, setToken] = useState('');
+  const [exiting, setExiting] = useState(false);
 
   useLayoutEffect(() => {
     dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
@@ -49,6 +50,10 @@ const ConnectBills = ({
   }, []);
 
   const refreshAccountsAndExit = async () => {
+    if (exiting) {
+      return;
+    }
+    setExiting(true);
     await dispatch(ShopEffects.startGetBillPayAccounts());
     navigation.pop();
   };
