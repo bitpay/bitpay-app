@@ -99,6 +99,7 @@ export const Bills = () => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const isVerified = !!(user && user.country);
 
   const [available, setAvailable] = useState(user && user.country === 'US');
 
@@ -118,7 +119,7 @@ export const Bills = () => {
 
   return (
     <SectionContainer style={{height: HEIGHT - 270}}>
-      {!user ? (
+      {!isVerified ? (
         <>
           <WhyUseThis />
           <Button height={50} onPress={() => {}}>
