@@ -372,6 +372,15 @@ export const startCheckIfBillPayAvailable =
           throw new Error(res.data.error);
         }
         return res.data.data as any;
+      })
+      .catch(err => {
+        dispatch(
+          LogActions.error(
+            `failed [startCheckIfBillPayAvailable]: ${err.message}`,
+          ),
+        );
+        throw err;
       });
+    dispatch(LogActions.info(`isBillPayAvailable: ${available}`));
     return available;
   };
