@@ -11,10 +11,12 @@ interface Props {
   onPress?: () => void;
   dropDown?: boolean;
   accent?: 'action';
+  height?: string;
 }
 
 interface StyleProps {
   accent?: 'action';
+  height?: string;
 }
 
 export const PillContainer = styled.Pressable<StyleProps>`
@@ -25,7 +27,7 @@ export const PillContainer = styled.Pressable<StyleProps>`
   align-items: center;
   justify-content: center;
   padding: 0 11px;
-  height: 100%;
+  height: ${({height}) => (height ? height : '100%')};
   max-width: 200px;
 `;
 
@@ -44,7 +46,14 @@ const ArrowContainer = styled.View`
   margin-left: 8px;
 `;
 
-const SendToPill = ({icon, description, onPress, dropDown, accent}: Props) => {
+const SendToPill = ({
+  icon,
+  description,
+  onPress,
+  dropDown,
+  accent,
+  height,
+}: Props) => {
   const [toggleArrow, setToggleArrow] = useState(false);
   const _onPress = () => {
     setToggleArrow(!toggleArrow);
@@ -53,7 +62,11 @@ const SendToPill = ({icon, description, onPress, dropDown, accent}: Props) => {
     }
   };
   return (
-    <PillContainer disabled={!onPress} onPress={_onPress} accent={accent}>
+    <PillContainer
+      disabled={!onPress}
+      onPress={_onPress}
+      accent={accent}
+      height={height}>
       <IconContainer>{icon}</IconContainer>
       <PillText numberOfLines={1} ellipsizeMode={'tail'} accent={accent}>
         {description}
