@@ -198,7 +198,6 @@ export default ({
                       navigation.navigate('WalletConnect', {
                         screen: 'WalletConnectStart',
                         params: {
-                          version: 2,
                           proposal,
                           selectedWallets: getSelectedWallets(),
                         },

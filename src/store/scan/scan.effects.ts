@@ -1376,12 +1376,7 @@ const handleWalletConnectUri =
       if (isValidWalletConnectUri(data)) {
         const {version} = parseUri(data);
         if (version === 1) {
-          navigationRef.navigate('WalletConnect', {
-            screen: 'Root',
-            params: {
-              uri: data,
-            },
-          });
+          // TODO: throw err
         } else {
           dispatch(startOnGoingProcessModal('LOADING'));
           const proposal = (await dispatch<any>(

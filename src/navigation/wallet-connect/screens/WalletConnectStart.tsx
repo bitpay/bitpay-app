@@ -35,21 +35,9 @@ import {
   walletConnectV2ApproveSessionProposal,
   walletConnectV2RejectSessionProposal,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {Wallet} from '../../../store/wallet/wallet.models';
-import {
-  walletConnectApproveSessionRequest,
-  walletConnectRejectSessionRequest,
-} from '../../../store/wallet-connect/wallet-connect.effects';
-import {IWCCustomData} from '../../../store/wallet-connect/wallet-connect.models';
 import {Network} from '../../../constants';
-import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import {LogActions} from '../../../store/log';
 
 export type WalletConnectStartParamList = {
-  version: number;
-  // version 1
-  peer?: any;
-  wallet?: Wallet;
   // version 2
   proposal?: SignClientTypes.EventArguments['session_proposal'];
   selectedWallets?: {chain: string; address: string; network: string}[];
@@ -98,17 +86,15 @@ const WalletConnectStart = () => {
   const navigation = useNavigation();
   const [buttonState, setButtonState] = useState<ButtonState>();
   const {
-    params: {proposal, version, peer, wallet, selectedWallets},
+    params: {proposal, selectedWallets},
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
-  // version 1
-  const {peerId, peerMeta} = peer || {};
   // version 2
   const {id, params} = proposal || {};
   const {proposer, requiredNamespaces, relays, pairingTopic} = params || {};
   const {metadata} = proposer || {};
 
-  const peerName = version === 1 ? peerMeta?.name : metadata?.name;
-  const peerUrl = version === 1 ? peerMeta?.url : metadata?.url;
+  const peerName = metadata?.name;
+  const peerUrl = metadata?.url;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -136,39 +122,13 @@ const WalletConnectStart = () => {
   );
 
   const rejectSessionProposal = () => {
-    if (version === 1) {
-      dispatch(walletConnectRejectSessionRequest(peerId));
-    } else {
-      dispatch(walletConnectV2RejectSessionProposal(id!));
-    }
+    dispatch(walletConnectV2RejectSessionProposal(id!));
     navigation.dispatch(StackActions.popToTop());
   };
   const approveSessionProposal = async () => {
     try {
       setButtonState('loading');
-      if (version === 1 && wallet) {
-        const walletAddress = !wallet.receiveAddress
-          ? ((await dispatch<any>(
-              createWalletAddress({wallet, newAddress: true}),
-            )) as string)
-          : wallet.receiveAddress;
-        dispatch(LogActions.info(`new address generated: ${walletAddress}`));
-        const accounts = [walletAddress];
-        const customData: IWCCustomData = {
-          keyId: wallet!.keyId,
-          walletId: wallet!.id,
-        };
-        await dispatch(
-          walletConnectApproveSessionRequest(
-            peerId,
-            {
-              accounts,
-              chainId: CHAIN_ID[wallet.chain][wallet.network],
-            },
-            customData,
-          ),
-        );
-      } else if (version === 2 && selectedWallets) {
+      if (selectedWallets) {
         const namespaces: SessionTypes.Namespaces = {};
         requiredNamespaces &&
           Object.keys(requiredNamespaces).forEach(key => {
@@ -283,7 +243,7 @@ const WalletConnectStart = () => {
         <ActionContainer>
           <Button
             state={buttonState}
-            disabled={!selectedWallets && version !== 1}
+            disabled={!selectedWallets}
             onPress={() => {
               haptic('impactLight');
               approveSessionProposal();

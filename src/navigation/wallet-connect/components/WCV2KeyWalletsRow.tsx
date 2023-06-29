@@ -52,7 +52,6 @@ interface WCV2KeyWalletProps {
   keys: WCV2Key[];
   onPress: (keyId: string, wallet: WCV2Wallet) => void;
   topic?: string;
-  peerId?: string;
 }
 
 export const WCV2KeyWalletsRow = ({

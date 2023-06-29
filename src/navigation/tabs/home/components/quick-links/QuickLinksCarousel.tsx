@@ -18,20 +18,17 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   const sessions = useAppSelector(
     ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
   );
-  const connectors = useAppSelector(
-    ({WALLET_CONNECT}) => WALLET_CONNECT.connectors,
-  );
 
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     dev_walletConnect: () => {
-      if (Object.keys(sessions).length || Object.keys(connectors).length) {
+      if (Object.keys(sessions).length) {
         navigation.navigate('WalletConnect', {
           screen: 'WalletConnectConnections',
         });
       } else {
         navigation.navigate('WalletConnect', {
           screen: 'Root',
-          params: {uri: undefined},
+          params: {},
         });
       }
     },

@@ -92,7 +92,6 @@ import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
-import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {moralisInit} from '../moralis/moralis.effects';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 
@@ -214,7 +213,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    dispatch(walletConnectInit());
     dispatch(walletConnectV2Init());
     dispatch(initializeBrazeContent());
     dispatch(moralisInit());
