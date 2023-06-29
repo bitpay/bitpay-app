@@ -1376,7 +1376,10 @@ const handleWalletConnectUri =
       if (isValidWalletConnectUri(data)) {
         const {version} = parseUri(data);
         if (version === 1) {
-          // TODO: throw err
+          const errMsg = t(
+            'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+          );
+          throw new Error(errMsg);
         } else {
           dispatch(startOnGoingProcessModal('LOADING'));
           const proposal = (await dispatch<any>(
