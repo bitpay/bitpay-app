@@ -20,6 +20,11 @@ import {
 } from '../../../../../store/shop/shop.models';
 import ChevronDownSvg from '../../../../../../assets/img/bills/chevron-down.svg';
 import ChevronUpSvg from '../../../../../../assets/img/bills/chevron-up.svg';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {ActiveOpacity} from '../../../../../components/styled/Containers';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {AppActions} from '../../../../../store/app';
+import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 
 interface BillItemProps {
   account: BillPayAccount;
@@ -39,7 +44,6 @@ const ItemContainer = styled.View<Partial<BillItemProps>>`
   padding-bottom: ${variation === 'large' ? 16 : 12}px;
   padding-top: ${variation === 'large' ? 16 : 12}px;
   padding-right: ${variation === 'large' ? 16 : 12}px;`}
-
   margin-bottom: 10px;
 `;
 
@@ -102,6 +106,28 @@ const AccountBalance = styled(BaseText)<Partial<BillItemProps>>`
   margin-bottom: ${({variation}) => (variation === 'large' ? -1 : 3)}px;
 `;
 
+const AccountFooter = styled.View`
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
+  flex-direction: row;
+  margin: 13px -16px -16px;
+  padding: 2px 15px;
+  border-bottom-right-radius: 6px;
+  border-bottom-left-radius: 6px;
+`;
+
+const AccountFooterText = styled(Paragraph)`
+  color: ${SlateDark};
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
+  font-size: 12px;
+  flex-grow: 1;
+`;
+
+const AccountFooterActionText = styled(AccountFooterText)`
+  color: ${({theme}) => (theme.dark ? White : Action)};
+  text-align: right;
+  font-weight: ${({theme}) => (theme.dark ? 500 : 400)};
+`;
+
 export default ({
   account,
   payment,
@@ -109,6 +135,7 @@ export default ({
   expanded,
   selectedAmount,
 }: BillItemProps) => {
+  const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
   return (
@@ -141,31 +168,56 @@ export default ({
                   <H6>{formatFiatAmount(selectedAmount, 'USD')}</H6>
                 </SelectedAmountContainer>
               ) : null}
-
               {expanded ? <ChevronDownSvg /> : <ChevronUpSvg />}
             </>
           ) : (
             <>
-              <AccountBalance variation={variation}>
-                {formatFiatAmount(
-                  payment ? payment.amount : account[account.type].balance,
-                  'USD',
-                )}
-              </AccountBalance>
-              {variation === 'small' ? (
-                <BillStatus account={account} payment={payment} />
+              {account.isPayable ? (
+                <>
+                  <AccountBalance variation={variation}>
+                    {formatFiatAmount(
+                      payment ? payment.amount : account[account.type].balance,
+                      'USD',
+                    )}
+                  </AccountBalance>
+                  {variation === 'small' ? (
+                    <BillStatus account={account} payment={payment} />
+                  ) : null}
+                </>
               ) : null}
             </>
           )}
         </AccountDetailsRight>
       </AccountBody>
       {variation === 'large' ? (
-        <AccountActions>
-          <BillStatus account={account} payment={payment} />
-          <PayButton>
-            <PayButtonText>{t('Pay Bill')}</PayButtonText>
-          </PayButton>
-        </AccountActions>
+        account.isPayable ? (
+          <AccountActions>
+            <BillStatus account={account} payment={payment} />
+            <PayButton>
+              <PayButtonText>{t('Pay Bill')}</PayButtonText>
+            </PayButton>
+          </AccountActions>
+        ) : (
+          <AccountFooter>
+            <AccountFooterText>Unable to pay bill</AccountFooterText>
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                dispatch(
+                  AppActions.showBottomNotificationModal(
+                    CustomErrorMessage({
+                      title: t('Unable to pay bill'),
+                      errMsg: t(
+                        'We are currently unable to process payments for this bill. We are actively working on a solution.',
+                      ),
+                    }),
+                  ),
+                );
+              }}>
+              <AccountFooterActionText>Learn More</AccountFooterActionText>
+            </TouchableOpacity>
+          </AccountFooter>
+        )
       ) : null}
     </ItemContainer>
   );

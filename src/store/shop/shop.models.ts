@@ -262,6 +262,7 @@ export interface BillPayAccount {
   id: string;
   status: string;
   type: 'liability';
+  isPayable: boolean;
   liability: {
     merchantId: string;
     merchantIcon: string;

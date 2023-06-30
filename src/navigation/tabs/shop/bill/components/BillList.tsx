@@ -80,8 +80,11 @@ export const BillList = ({
         return (
           <TouchableOpacity
             key={index}
-            activeOpacity={ActiveOpacity}
+            activeOpacity={account.isPayable ? ActiveOpacity : 1}
             onPress={() => {
+              if (!account.isPayable) {
+                return;
+              }
               onPress(account);
             }}>
             <BillItem account={account} variation={variation} />
