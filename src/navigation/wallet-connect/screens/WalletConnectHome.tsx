@@ -110,7 +110,8 @@ const WalletConnectHome = () => {
     WALLET_CONNECT_V2.requests.filter(
       request =>
         request.topic === topic &&
-        getAddressFrom(request) === wallet.receiveAddress &&
+        getAddressFrom(request).toLowerCase() ===
+          wallet.receiveAddress?.toLowerCase() &&
         WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId].chain ===
           wallet.chain,
     ),
@@ -201,7 +202,7 @@ const WalletConnectHome = () => {
 
   const goToConfirmView = async (request: any) => {
     try {
-      let _wallet;
+      let _wallet, tx, txp, txDetails;
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
       dispatch(startOnGoingProcessModal('LOADING'));
@@ -227,26 +228,31 @@ const WalletConnectHome = () => {
             FormatAmount(currencyAbbreviation, chain, parseInt(value, 16)),
           )
         : 0;
-
-      const tx = {
-        wallet: _wallet || wallet,
-        recipient,
-        toAddress,
-        from,
-        amount: Number(amountStr),
-        gasPrice: parseInt(gasPrice, 16),
-        nonce: parseInt(nonce, 16),
-        gasLimit: parseInt(gasLimit, 16),
-        data,
-        customData: {
-          service: 'walletConnect',
-        },
-      };
-      const {txDetails, txp} = (await dispatch<any>(
-        createProposalAndBuildTxDetails(tx),
-      )) as any;
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
+      if (version === 1) {
+        await sleep(500);
+        dispatch(startOnGoingProcessModal('LOADING'));
+        tx = {
+          wallet: _wallet || wallet,
+          recipient,
+          toAddress,
+          from,
+          amount: Number(amountStr),
+          gasPrice: parseInt(gasPrice, 16),
+          nonce: parseInt(nonce, 16),
+          gasLimit: parseInt(gasLimit, 16),
+          data,
+          customData: {
+            service: 'walletConnect',
+          },
+        };
+        const {txDetails: _txDetails, txp: _txp} = (await dispatch<any>(
+          createProposalAndBuildTxDetails(tx),
+        )) as any;
+        txDetails = _txDetails;
+        txp = _txp;
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+      }
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConfirm',
         params: {
@@ -255,8 +261,7 @@ const WalletConnectHome = () => {
           txp,
           txDetails,
           request,
-          amount: tx.amount,
-          data,
+          amount: tx?.amount,
           peerName,
         },
       });

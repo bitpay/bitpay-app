@@ -472,6 +472,10 @@ const approveEIP155Request =
               EIP155_CHAINS[chainId as TEIP155Chain].rpc,
             );
             const sendTransaction = request.params[0];
+            if (sendTransaction.gas) {
+              sendTransaction.gasLimit = sendTransaction.gas;
+              delete sendTransaction.gas;
+            }
             const connectedWallet = signer.connect(provider);
             const {hash} = await connectedWallet.sendTransaction(
               sendTransaction,

@@ -88,7 +88,8 @@ const WCV2WalletRow = ({
     WALLET_CONNECT_V2.requests.filter(
       request =>
         request.topic === topic &&
-        getAddressFrom(request) === wallet.receiveAddress &&
+        getAddressFrom(request).toLowerCase() ===
+          wallet.receiveAddress?.toLowerCase() &&
         WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain ===
           wallet.chain,
     ),
