@@ -9,7 +9,6 @@ import WyreLogo from '../../../../../components/icons/external-services/wyre/wyr
 import {WyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
@@ -31,11 +30,7 @@ import {
   CopiedContainer,
   CopyImgContainerRight,
 } from '../styled/ExternalServicesDetails';
-import {sleep} from '../../../../../utils/helper-methods';
 import {useLogger} from '../../../../../utils/hooks/useLogger';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {wyreGetWalletOrderDetails} from '../../../../../store/buy-crypto/effects/wyre/wyre';
-import {handleWyreStatus} from '../../../../services/buy-crypto/utils/wyre-utils';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
@@ -64,48 +59,6 @@ const WyreDetails: React.FC = () => {
   const [copiedOrderId, setCopiedOrderId] = useState(false);
   const [copiedBlockchainNetworkTx, setCopiedBlockchainNetworkTx] =
     useState(false);
-
-  useEffect(() => {
-    const getWalletOrderDetails = async (orderId: string) => {
-      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
-      await sleep(400);
-      const orderData = await wyreGetWalletOrderDetails(orderId);
-      if (orderData.status) {
-        paymentRequest.status = handleWyreStatus(orderData.status);
-      }
-      if (orderData.blockchainNetworkTx) {
-        paymentRequest.blockchainNetworkTx = orderData.blockchainNetworkTx;
-      }
-      if (orderData.destAmount) {
-        paymentRequest.destAmount = orderData.destAmount;
-      }
-      setPaymentData(paymentRequest);
-
-      dispatch(
-        BuyCryptoActions.successPaymentRequestWyre({
-          wyrePaymentData: paymentRequest,
-        }),
-      );
-    };
-
-    if (
-      paymentRequest.orderId &&
-      (paymentRequest.status != 'success' ||
-        !paymentRequest.transferId ||
-        (paymentRequest.transferId && !paymentRequest.blockchainNetworkTx))
-    ) {
-      getWalletOrderDetails(paymentRequest.orderId)
-        .then(async () => {
-          dispatch(dismissOnGoingProcessModal());
-          await sleep(400);
-        })
-        .catch(err => {
-          logger.error(
-            'Wyre getWalletOrderDetails Error: ' + JSON.stringify(err),
-          );
-        });
-    }
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {

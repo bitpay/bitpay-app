@@ -4,7 +4,6 @@ import {getSardineFiatAmountLimits} from '../../navigation/services/buy-crypto/u
 import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/simplex-utils';
 import {WalletScreens} from '../../navigation/wallet/WalletStack';
 import {navigationRef} from '../../Root';
-import {getWyreFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/wyre-utils';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {BuyCryptoLimits} from './buy-crypto.models';
@@ -111,12 +110,6 @@ export const getBuyCryptoFiatLimits =
         baseFiatArray = ['USD'];
         limits = getSimplexFiatAmountLimits();
         break;
-      case 'wyre':
-        baseFiatArray = ['USD', 'EUR'];
-        limits = getWyreFiatAmountLimits(
-          locationData?.countryShortCode || 'US',
-        );
-        break;
       default:
         baseFiatArray = ['USD', 'EUR'];
         limits = {
@@ -125,14 +118,12 @@ export const getBuyCryptoFiatLimits =
             getRampFiatAmountLimits().min,
             getSardineFiatAmountLimits().min,
             getSimplexFiatAmountLimits().min,
-            getWyreFiatAmountLimits(locationData?.countryShortCode || 'US').min,
           ),
           max: Math.max(
             getMoonpayFiatAmountLimits().max,
             getRampFiatAmountLimits().max,
             getSardineFiatAmountLimits().max,
             getSimplexFiatAmountLimits().max,
-            getWyreFiatAmountLimits(locationData?.countryShortCode || 'US').max,
           ),
         };
         break;

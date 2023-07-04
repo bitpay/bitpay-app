@@ -19,27 +19,17 @@ import {
   getSimplexSupportedCurrencies,
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
-import {
-  getWyreSupportedCurrencies,
-  wyreSupportedFiatCurrencies,
-} from './wyre-utils';
 import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
-export type BuyCryptoExchangeKey =
-  | 'moonpay'
-  | 'ramp'
-  | 'sardine'
-  | 'simplex'
-  | 'wyre';
+export type BuyCryptoExchangeKey = 'moonpay' | 'ramp' | 'sardine' | 'simplex';
 
 export const BuyCryptoSupportedExchanges: BuyCryptoExchangeKey[] = [
   'moonpay',
   'ramp',
   'sardine',
   'simplex',
-  'wyre',
 ];
 
 export const getEnabledPaymentMethods = (
@@ -85,14 +75,7 @@ export const getEnabledPaymentMethods = (
               currency,
               country,
             ) ||
-            isPaymentMethodSupported(
-              'simplex',
-              method,
-              coin,
-              chain,
-              currency,
-            ) ||
-            isPaymentMethodSupported('wyre', method, coin, chain, currency));
+            isPaymentMethodSupported('simplex', method, coin, chain, currency));
   });
 
   return EnabledPaymentMethods;
@@ -113,8 +96,6 @@ export const getBuyCryptoSupportedCoins = (
       return getSardineSupportedCurrencies();
     case 'simplex':
       return getSimplexSupportedCurrencies();
-    case 'wyre':
-      return getWyreSupportedCurrencies();
     default:
       const allSupportedCurrencies = [
         ...new Set([
@@ -124,7 +105,6 @@ export const getBuyCryptoSupportedCoins = (
           ...getRampSupportedCurrencies(),
           ...getSardineSupportedCurrencies(),
           ...getSimplexSupportedCurrencies(),
-          ...getWyreSupportedCurrencies(),
         ]),
       ];
       return allSupportedCurrencies;
@@ -141,8 +121,6 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
       return sardineSupportedFiatCurrencies;
     case 'simplex':
       return simplexSupportedFiatCurrencies;
-    case 'wyre':
-      return wyreSupportedFiatCurrencies;
     default:
       const allSupportedFiatCurrencies = [
         ...new Set([
@@ -150,7 +128,6 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
           ...rampSupportedFiatCurrencies,
           ...sardineSupportedFiatCurrencies,
           ...simplexSupportedFiatCurrencies,
-          ...wyreSupportedFiatCurrencies,
         ]),
       ];
       return allSupportedFiatCurrencies;
@@ -182,8 +159,7 @@ export const isCoinSupportedToBuy = (
     isCoinSupportedBy('moonpay', coin, chain, country) ||
     isCoinSupportedBy('ramp', coin, chain) ||
     isCoinSupportedBy('sardine', coin, chain) ||
-    isCoinSupportedBy('simplex', coin, chain) ||
-    isCoinSupportedBy('wyre', coin, chain)
+    isCoinSupportedBy('simplex', coin, chain)
   );
 };
 
@@ -210,10 +186,6 @@ const isCoinSupportedBy = (
       return getSimplexSupportedCurrencies().includes(
         getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
       );
-    case 'wyre':
-      return getWyreSupportedCurrencies().includes(
-        getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
-      );
     default:
       return false;
   }
@@ -232,8 +204,6 @@ const isFiatCurrencySupportedBy = (
       return sardineSupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'simplex':
       return simplexSupportedFiatCurrencies.includes(currency.toUpperCase());
-    case 'wyre':
-      return wyreSupportedFiatCurrencies.includes(currency.toUpperCase());
     default:
       return false;
   }

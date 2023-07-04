@@ -21,7 +21,6 @@ import MoonpayLogo from '../../../../components/icons/external-services/moonpay/
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
-import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
@@ -164,10 +163,6 @@ const PaymentMethodsModal = ({
             widthIcon={20}
             heightIcon={20}
           />
-        );
-      case 'wyre':
-        return (
-          <WyreLogo key={exchange} iconOnly={true} width={30} height={15} />
         );
       default:
         return null;
