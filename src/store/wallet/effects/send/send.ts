@@ -75,6 +75,8 @@ import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Cry
 import {Analytics} from '../../../analytics/analytics.effects';
 import {AppActions} from '../../../app';
 import {URL} from '../../../../constants';
+import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
+import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -375,6 +377,8 @@ export const buildTxDetails =
     invoice,
     context,
     feeLevel = 'custom',
+    request,
+    feePerKb,
   }: {
     proposal?: TransactionProposal;
     rates: Rates;
@@ -384,12 +388,40 @@ export const buildTxDetails =
     invoice?: Invoice;
     context?: TransactionOptionsContext;
     feeLevel?: string;
+    request?: WCV2RequestType;
+    feePerKb?: number;
   }): Effect<TxDetails> =>
   dispatch => {
-    const {gasPrice, gasLimit, nonce, destinationTag} = proposal || {};
+    let gasPrice, gasLimit, nonce, destinationTag, coin, chain, amount, fee;
+
+    if (context === 'walletConnect' && request) {
+      const {params} = request.params.request;
+      gasPrice = params[0].gasPrice
+        ? parseInt(params[0]?.gasPrice, 16)
+        : feePerKb!;
+      gasLimit =
+        (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
+        (params[0].gas && parseInt(params[0]?.gas, 16));
+      nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
+      coin = chain =
+        WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
+      amount = parseInt(params[0]?.value, 16) || 0;
+      fee = gasLimit * gasPrice;
+    }
+
+    if (proposal) {
+      gasPrice = proposal.gasPrice;
+      gasLimit = proposal.gasLimit;
+      nonce = proposal.nonce;
+      destinationTag = proposal.destinationTag;
+      coin = proposal.coin;
+      chain = proposal.chain;
+      amount = proposal.amount;
+      fee = proposal.fee || 0; // proposal fee is zero for coinbase
+    }
+
     const invoiceCurrency =
       invoice?.buyerProvidedInfo!.selectedTransactionCurrency;
-    let {amount, coin, chain, fee = 0} = proposal || {}; // proposal fee is zero for coinbase
 
     if (invoiceCurrency) {
       amount = invoice.paymentTotals[invoiceCurrency] || 0;
