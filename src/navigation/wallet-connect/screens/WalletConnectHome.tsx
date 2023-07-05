@@ -30,10 +30,8 @@ import {
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {
-  FormatAmount,
   FormatAmountStr,
 } from '../../../store/wallet/effects/amount/amount';
-import {createProposalAndBuildTxDetails} from '../../../store/wallet/effects/send/send';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
@@ -51,7 +49,6 @@ import {
   WCV2SessionType,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../constants/WalletConnectV2';
-import {RootState} from '../../../store';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -120,8 +117,6 @@ const WalletConnectHome = () => {
   const {peer} = sessionV2 || {};
   const {name: peerName, icons, url: peerUrl} = peer?.metadata || {};
   const peerIcon = icons && icons[0];
-
-  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
 
   const {chain, currencyAbbreviation, receiveAddress} = wallet;
   const showErrorMessage = useCallback(
@@ -202,66 +197,25 @@ const WalletConnectHome = () => {
 
   const goToConfirmView = async (request: any) => {
     try {
-      let _wallet, tx, txp, txDetails;
+      let _wallet;
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
       dispatch(startOnGoingProcessModal('LOADING'));
 
       const {
         to: toAddress,
-        from,
-        gasPrice,
-        gasLimit,
-        value,
-        nonce,
-        data,
-      } = request.payload
-        ? request.payload.params[0]
-        : request.params.request.params[0];
+      } = request.params.request.params[0];
 
       const recipient = {
         address: toAddress,
       };
 
-      const amountStr = value
-        ? dispatch(
-            FormatAmount(currencyAbbreviation, chain, parseInt(value, 16)),
-          )
-        : 0;
-      if (version === 1) {
-        await sleep(500);
-        dispatch(startOnGoingProcessModal('LOADING'));
-        tx = {
-          wallet: _wallet || wallet,
-          recipient,
-          toAddress,
-          from,
-          amount: Number(amountStr),
-          gasPrice: parseInt(gasPrice, 16),
-          nonce: parseInt(nonce, 16),
-          gasLimit: parseInt(gasLimit, 16),
-          data,
-          customData: {
-            service: 'walletConnect',
-          },
-        };
-        const {txDetails: _txDetails, txp: _txp} = (await dispatch<any>(
-          createProposalAndBuildTxDetails(tx),
-        )) as any;
-        txDetails = _txDetails;
-        txp = _txp;
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
-      }
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConfirm',
         params: {
           wallet: _wallet || wallet,
           recipient,
-          txp,
-          txDetails,
           request,
-          amount: tx?.amount,
           peerName,
         },
       });
@@ -314,9 +268,7 @@ const WalletConnectHome = () => {
 
   const renderItem = useCallback(({item, index}) => {
     const {createdOn, chain: _chain} = item;
-    const {value = '0x0'} = item.payload
-      ? item.payload.params[0]
-      : item.params.request.params[0];
+    const {value = '0x0'} = item.params.request.params[0];
     const amountStr = dispatch(
       FormatAmountStr(
         _chain || currencyAbbreviation,
@@ -324,9 +276,7 @@ const WalletConnectHome = () => {
         parseInt(value, 16),
       ),
     );
-    const method = item.payload
-      ? item.payload.method
-      : item.params.request.method;
+    const {method} = item.params.request;
 
     return (
       <View key={index.toString()}>
@@ -337,7 +287,7 @@ const WalletConnectHome = () => {
               ? navigation.navigate('WalletConnect', {
                   screen: 'WalletConnectRequestDetails',
                   params: {
-                    request: item.payload ? item.payload : item,
+                    request: item,
                     wallet,
                     peerName,
                     topic,

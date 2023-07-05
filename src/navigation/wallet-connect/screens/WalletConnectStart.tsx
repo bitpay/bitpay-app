@@ -69,17 +69,6 @@ const DescriptionItem = styled(Paragraph)`
   color: ${props => props.theme.colors.text};
 `;
 
-const CHAIN_ID: {[key in string]: any} = {
-  eth: {
-    [Network.mainnet]: 1,
-    [Network.testnet]: 42,
-  },
-  matic: {
-    [Network.mainnet]: 137,
-    [Network.testnet]: 80001,
-  },
-};
-
 const WalletConnectStart = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();

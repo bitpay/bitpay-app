@@ -2,10 +2,9 @@ import React, {useCallback, useLayoutEffect, useState, useEffect} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {RouteProp} from '@react-navigation/core';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   Recipient,
-  TransactionProposal,
   TxDetails,
   Wallet,
 } from '../../../store/wallet/wallet.models';
@@ -51,12 +50,7 @@ import {
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {
-  walletConnectApproveCallRequest,
-  walletConnectRejectCallRequest,
-} from '../../../store/wallet-connect/wallet-connect.effects';
-import {
   buildTxDetails,
-  startSendPayment,
 } from '../../../store/wallet/effects/send/send';
 
 const HeaderRightContainer = styled.View`
@@ -66,14 +60,8 @@ const HeaderRightContainer = styled.View`
 export interface WalletConnectConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
-  version: number;
   peerName?: string;
   request: any;
-  // version 1
-  txp?: Partial<TransactionProposal>;
-  txDetails?: TxDetails;
-  peerId?: string;
-  amount?: number;
 }
 
 const WalletConnectConfirm = () => {
@@ -84,15 +72,10 @@ const WalletConnectConfirm = () => {
     useRoute<RouteProp<WalletConnectStackParamList, 'WalletConnectConfirm'>>();
   const {
     wallet,
-    txp,
-    txDetails: _txDetails,
     request,
     peerName,
-    version,
-    peerId,
     recipient,
   } = route.params;
-  const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
@@ -101,24 +84,19 @@ const WalletConnectConfirm = () => {
   const [txDetails, setTxDetails] = useState<TxDetails>();
 
   const _setTxDetails = async () => {
-    let txDetails;
-    if (version === 1) {
-      txDetails = _txDetails;
-    } else {
-      const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
-      txDetails = dispatch(
-        buildTxDetails({
-          wallet,
-          rates,
-          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-          recipient,
-          context: 'walletConnect',
-          request,
-          feePerKb,
-        }),
-      );
-    }
-    setTxDetails(txDetails);
+    const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
+    const _txDetails = dispatch(
+      buildTxDetails({
+        wallet,
+        rates,
+        defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+        recipient,
+        context: 'walletConnect',
+        request,
+        feePerKb,
+      }),
+    );
+    setTxDetails(_txDetails);
   };
 
   useEffect(() => {
@@ -130,19 +108,7 @@ const WalletConnectConfirm = () => {
   const approveCallRequest = async () => {
     try {
       dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-      if (version === 1 && txp) {
-        const broadcastedTx = (await dispatch<any>(
-          startSendPayment({txp, key, wallet, recipient}),
-        )) as any;
-
-        const response = {
-          id: request.payload.id,
-          result: broadcastedTx.txid,
-        };
-        await dispatch(walletConnectApproveCallRequest(peerId!, response));
-      } else {
-        await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
-      }
+      await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
       dispatch(
