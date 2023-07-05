@@ -54,6 +54,7 @@ const ConnectBills = ({
       return;
     }
     setExiting(true);
+    dispatch(dismissOnGoingProcessModal());
     await dispatch(ShopEffects.startGetBillPayAccounts());
     navigation.pop();
   };

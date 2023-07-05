@@ -439,7 +439,7 @@ const startPairAndLoadUser =
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards());
-      dispatch(ShopEffects.startGetBillPayAccounts());
+      dispatch(ShopEffects.startGetBillPayAccounts()).catch(_ => {});
     } catch (err) {
       let errMsg;
 
