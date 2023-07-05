@@ -154,12 +154,18 @@ export interface SardineGetAuthTokenRequestData {
   externalUserId: string;
   // An ID for tracking between the different origins of purchases
   customerId: 'app' | 'web';
+  paymentMethodTypeConfig: {
+    default: SardinePaymentType;
+    enabled: SardinePaymentType[];
+  };
 }
 
 export type SardinePaymentType =
   | 'ach'
   | 'debit'
   | 'credit'
+  | 'card'
+  | 'us_credit'
   | 'us_debit'
   | 'international_debit'
   | 'international_credit';

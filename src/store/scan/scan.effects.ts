@@ -1158,7 +1158,7 @@ const handleSardineUri =
   (dispatch, getState) => {
     dispatch(LogActions.info('Incoming-data (redirect): Sardine URL: ' + data));
 
-    data = data.replace('?order_id', 'order_id');
+    data = data.replace('?order_id', '&order_id');
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const sardineExternalId = getParameterByName('sardineExternalId', res);
     if (!sardineExternalId) {
@@ -1166,9 +1166,9 @@ const handleSardineUri =
       return;
     }
 
+    const order_id = getParameterByName('order_id', res);
     const walletId = getParameterByName('walletId', res);
     const status = getParameterByName('status', res);
-    const order_id = getParameterByName('order_id', res);
 
     const stateParams: SardineIncomingData = {
       sardineExternalId,

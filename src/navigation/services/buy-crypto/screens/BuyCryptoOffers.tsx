@@ -1371,6 +1371,12 @@ const BuyCryptoOffers: React.FC = () => {
         referenceId: sardineExternalId,
         externalUserId: selectedWallet.id,
         customerId: 'app',
+        paymentMethodTypeConfig: {
+          default:
+            getSardinePaymentMethodFormat(paymentMethod.method, country) ??
+            'debit',
+          enabled: ['ach', 'card'],
+        },
       };
       authTokenData = await selectedWallet.sardineGetToken(quoteData);
     } catch (err) {
