@@ -173,7 +173,7 @@ export default ({
             </>
           ) : (
             <>
-              {account.isPayable ? (
+              {account.isPayable || !!payment ? (
                 <>
                   <AccountBalance variation={variation}>
                     {formatFiatAmount(
