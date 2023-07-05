@@ -19,13 +19,11 @@ const Connections = ({
   session,
   keys,
   wallet: _wallet,
-  peerId,
 }: {
   account?: string;
   session?: WCV2SessionType;
   keys?: {[key in string]: Key};
   wallet?: Wallet;
-  peerId?: string;
 }) => {
   const navigation = useNavigation();
   let address, chain: string;
@@ -59,11 +57,6 @@ const Connections = ({
     chain = EIP155_CHAINS[protocolChainName]?.chainName;
     const network = EIP155_CHAINS[protocolChainName]?.network;
     wallet = findWalletByAddress(address, chain, network, keys);
-  } else if (_wallet) {
-    // version 1
-    address = _wallet.receiveAddress;
-    chain = _wallet.chain;
-    wallet = _wallet;
   }
 
   const {keyId} = wallet || {};
@@ -75,7 +68,6 @@ const Connections = ({
         topic={session?.topic}
         keyId={keyId!}
         isLast={false}
-        peerId={peerId}
         onPress={(_keyId: string, walletObj: WCV2Wallet) => {
           haptic('impactLight');
           navigation.navigate('WalletConnect', {
@@ -83,7 +75,6 @@ const Connections = ({
             params: {
               topic: session?.topic,
               wallet: walletObj.wallet,
-              peerId,
             },
           });
         }}

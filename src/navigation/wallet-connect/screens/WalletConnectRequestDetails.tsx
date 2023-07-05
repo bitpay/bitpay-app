@@ -40,22 +40,12 @@ import {
   walletConnectV2ApproveCallRequest,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {
-  walletConnectApproveCallRequest,
-  walletConnectPersonalSign,
-  walletConnectRejectCallRequest,
-  walletConnectSignTypedData,
-  walletConnectSignTypedDataLegacy,
-  walletConnectUpdateSession,
-} from '../../../store/wallet-connect/wallet-connect.effects';
-import {EVM_BLOCKCHAIN_ID, PROTOCOL_NAME} from '../../../constants/config';
+import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;
   wallet: Wallet;
   peerName?: string;
-  version: number;
-  peerId?: string;
   topic?: string;
 };
 
@@ -111,7 +101,7 @@ const InfoSubTitle = styled(InfoTitle)`
 const WalletConnectRequestDetails = () => {
   const {t} = useTranslation();
   const {
-    params: {request: _request, wallet, peerName, version, peerId, topic},
+    params: {request: _request, wallet, peerName, topic},
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
   const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');
@@ -122,7 +112,7 @@ const WalletConnectRequestDetails = () => {
   const [rejectButtonState, setRejectButtonState] = useState<ButtonState>();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
-  const request = version === 1 ? _request : _request.params.request;
+  const request = _request.params.request;
 
   useEffect(() => {
     if (!request) {
@@ -211,7 +201,6 @@ const WalletConnectRequestDetails = () => {
     navigation.navigate('WalletConnect', {
       screen: 'WalletConnectHome',
       params: {
-        peerId,
         topic,
         wallet: newLinkedWallet || wallet,
       },
@@ -221,15 +210,7 @@ const WalletConnectRequestDetails = () => {
   const rejectRequest = async () => {
     try {
       setRejectButtonState('loading');
-      if (version === 1) {
-        const response = {
-          id: request.id,
-          error: {message: t('User rejected call request')},
-        };
-        await dispatch(walletConnectRejectCallRequest(peerId!, response));
-      } else {
-        await dispatch(walletConnectV2RejectCallRequest(_request));
-      }
+      await dispatch(walletConnectV2RejectCallRequest(_request));
       setRejectButtonState('success');
       dispatch(Analytics.track('WalletConnect Request Rejected', {}));
       goToWalletConnectHome();
@@ -255,74 +236,7 @@ const WalletConnectRequestDetails = () => {
       }
       let newLinkedWallet;
       setApproveButtonState('loading');
-      if (version === 1) {
-        let result: any;
-        if (
-          (wallet.receiveAddress &&
-            wallet.receiveAddress.toLowerCase() === address.toLowerCase()) ||
-          request.method === 'wallet_switchEthereumChain'
-        ) {
-          switch (request.method) {
-            case 'eth_signTypedData':
-            case 'eth_signTypedData_v3':
-            case 'eth_signTypedData_v4':
-              result = (await dispatch<any>(
-                walletConnectSignTypedData(JSON.parse(message), wallet),
-              )) as any;
-              break;
-            case 'eth_signTypedData_v1':
-              result = (await dispatch<any>(
-                walletConnectSignTypedDataLegacy(message, wallet),
-              )) as any;
-              break;
-            case 'personal_sign':
-            case 'eth_sign':
-              result = (await dispatch<any>(
-                walletConnectPersonalSign(message, wallet),
-              )) as any;
-              break;
-            case 'wallet_switchEthereumChain':
-              const allowSwitchNetwork = await showSwitchNetworkWarningMsg();
-              await sleep(500);
-              if (allowSwitchNetwork) {
-                newLinkedWallet = (await dispatch<any>(
-                  walletConnectUpdateSession(
-                    wallet,
-                    request.params[0].chainId,
-                    peerId!,
-                  ),
-                )) as any;
-
-                if (newLinkedWallet) {
-                  result = (await dispatch<any>(
-                    walletConnectPersonalSign(
-                      request.params[0].chainId,
-                      wallet,
-                    ),
-                  )) as any;
-                } else {
-                  setApproveButtonState(undefined);
-                  return;
-                }
-              } else {
-                throw 'user rejection';
-              }
-              break;
-            default:
-              throw methodNotSupportedMsg;
-          }
-        } else {
-          throw t('Address requested does not match active account');
-        }
-        await dispatch(
-          walletConnectApproveCallRequest(peerId!, {
-            id: request.id,
-            result,
-          }),
-        );
-      } else {
-        await dispatch(walletConnectV2ApproveCallRequest(_request, wallet));
-      }
+      await dispatch(walletConnectV2ApproveCallRequest(_request, wallet));
       setApproveButtonState('success');
       dispatch(Analytics.track('WalletConnect Request Approved', {}));
       goToWalletConnectHome(newLinkedWallet);
@@ -361,32 +275,6 @@ const WalletConnectRequestDetails = () => {
     },
     [dispatch],
   );
-
-  const showSwitchNetworkWarningMsg = useCallback((): Promise<boolean> => {
-    return new Promise(async resolve => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'question',
-          title: t('Allow site to switch network?'),
-          message: t('WCSwitchNetworkMsg', {
-            chainName: PROTOCOL_NAME[wallet.chain][wallet.network],
-          }),
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('Switch Network'),
-              action: () => resolve(true),
-              primary: true,
-            },
-            {
-              text: t('Cancel'),
-              action: () => resolve(false),
-            },
-          ],
-        }),
-      );
-    });
-  }, [dispatch]);
 
   return (
     <WalletConnectContainer>

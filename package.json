@@ -59,7 +59,6 @@
     "@segment/analytics-react-native-plugin-idfa": "0.4.1",
     "@segment/sovran-react-native": "0.4.4",
     "@tradle/react-native-http": "2.0.1",
-    "@walletconnect/client": "1.8.0",
     "@walletconnect/jsonrpc-types": "1.0.2",
     "@walletconnect/legacy-utils": "2.0.0-rc.0",
     "@walletconnect/react-native-compat": "2.4.10",

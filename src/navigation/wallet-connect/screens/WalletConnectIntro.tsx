@@ -25,13 +25,11 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {parseUri} from '@walletconnect/utils';
-import WCV1WalletSelector from '../components/WCV1WalletSelector';
 import WCV2WalletSelector from '../components/WCV2WalletSelector';
 import {SignClientTypes} from '@walletconnect/types';
 import {walletConnectV2OnSessionProposal} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 
 export type WalletConnectIntroParamList = {
-  uri?: string;
   proposal?: SignClientTypes.EventArguments['session_proposal'];
 };
 
@@ -45,13 +43,7 @@ const WalletConnectIntro = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();
-  // version 1
-  const {uri, proposal} = route.params || {};
-  const [dappUri, setDappUri] = useState<string>();
-  const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
-    useState(false);
-  const showWalletSelector = () => setWalletSelectorModalVisible(true);
-  const hideWalletSelector = () => setWalletSelectorModalVisible(false);
+  const {proposal} = route.params || {};
 
   // version 2
   const [dappProposal, setDappProposal] = useState<any>();
@@ -67,13 +59,6 @@ const WalletConnectIntro = () => {
     },
     [dispatch],
   );
-
-  useEffect(() => {
-    if (uri) {
-      setDappUri(uri);
-      showWalletSelector();
-    }
-  }, [uri]);
 
   useEffect(() => {
     if (proposal) {
@@ -110,9 +95,10 @@ const WalletConnectIntro = () => {
                     if (isValidWalletConnectUri(data)) {
                       const {version} = parseUri(data);
                       if (version === 1) {
-                        await sleep(500);
-                        setDappUri(data);
-                        showWalletSelector();
+                        const errMsg = t(
+                          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+                        );
+                        throw new Error(errMsg);
                       } else {
                         dispatch(startOnGoingProcessModal('LOADING'));
                         const _proposal = (await dispatch<any>(
@@ -125,7 +111,6 @@ const WalletConnectIntro = () => {
                       }
                     }
                   } catch (e: any) {
-                    setDappUri(undefined);
                     setDappProposal(undefined);
                     dispatch(dismissOnGoingProcessModal());
                     await sleep(500);
@@ -147,13 +132,6 @@ const WalletConnectIntro = () => {
             isVisible={walletSelectorV2ModalVisible}
             proposal={dappProposal}
             onBackdropPress={hideWalletSelectorV2}
-          />
-        ) : null}
-        {dappUri ? (
-          <WCV1WalletSelector
-            isVisible={walletSelectorModalVisible}
-            dappUri={dappUri}
-            onBackdropPress={hideWalletSelector}
           />
         ) : null}
       </ScrollView>

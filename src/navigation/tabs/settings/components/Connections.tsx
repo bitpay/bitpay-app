@@ -35,9 +35,6 @@ const Connections: React.VFC<ConnectionsProps> = props => {
   const {redirectTo} = props;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const connectors = useAppSelector(
-    ({WALLET_CONNECT}) => WALLET_CONNECT.connectors,
-  );
   const sessions = useAppSelector(
     ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
   );
@@ -48,14 +45,14 @@ const Connections: React.VFC<ConnectionsProps> = props => {
         context: 'Settings Connections',
       }),
     );
-    if (Object.keys(sessions).length || Object.keys(connectors).length) {
+    if (Object.keys(sessions).length) {
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConnections',
       });
     } else {
       navigation.navigate('WalletConnect', {
         screen: 'Root',
-        params: {uri: undefined},
+        params: {},
       });
     }
   }, [dispatch, sessions, navigation]);

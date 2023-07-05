@@ -142,11 +142,6 @@ export const bindWalletKeys = createTransform(
   {whitelist: ['keys', 'initLogs']},
 );
 
-export const transformCircular = createTransform(
-  inboundState => Flatted.stringify(inboundState),
-  outboundState => Flatted.parse(outboundState),
-);
-
 export const transformContacts = createTransform(
   inboundState => inboundState,
   (_outboundState, k) => {

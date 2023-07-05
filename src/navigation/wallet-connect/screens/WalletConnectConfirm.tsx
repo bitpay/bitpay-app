@@ -2,7 +2,7 @@ import React, {useCallback, useLayoutEffect, useState, useEffect} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {RouteProp} from '@react-navigation/core';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch} from '../../../utils/hooks';
 import {
   Recipient,
   TransactionProposal,
@@ -47,11 +47,6 @@ import {
   walletConnectV2ApproveCallRequest,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {
-  walletConnectApproveCallRequest,
-  walletConnectRejectCallRequest,
-} from '../../../store/wallet-connect/wallet-connect.effects';
-import {startSendPayment} from '../../../store/wallet/effects/send/send';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
@@ -66,8 +61,6 @@ export interface WalletConnectConfirmParamList {
   amount: number;
   data: string;
   peerName?: string;
-  version: number;
-  peerId?: string;
 }
 
 const WalletConnectConfirm = () => {
@@ -76,17 +69,7 @@ const WalletConnectConfirm = () => {
   const navigation = useNavigation();
   const route =
     useRoute<RouteProp<WalletConnectStackParamList, 'WalletConnectConfirm'>>();
-  const {
-    wallet,
-    txp,
-    txDetails,
-    request,
-    peerName,
-    version,
-    peerId,
-    recipient,
-  } = route.params;
-  const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
+  const {wallet, txDetails, request, peerName} = route.params;
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
@@ -107,19 +90,7 @@ const WalletConnectConfirm = () => {
   const approveCallRequest = async () => {
     try {
       dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-      if (version === 1) {
-        const broadcastedTx = (await dispatch<any>(
-          startSendPayment({txp, key, wallet, recipient}),
-        )) as any;
-
-        const response = {
-          id: request.payload.id,
-          result: broadcastedTx.txid,
-        };
-        await dispatch(walletConnectApproveCallRequest(peerId!, response));
-      } else {
-        await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
-      }
+      await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
       dispatch(
@@ -165,17 +136,7 @@ const WalletConnectConfirm = () => {
     haptic('impactLight');
     try {
       dispatch(startOnGoingProcessModal('REJECTING_CALL_REQUEST'));
-      if (version === 1) {
-        const response = {
-          id: request.payload.id,
-          error: {message: t('User rejected call request')},
-        };
-        (await dispatch<any>(
-          walletConnectRejectCallRequest(peerId!, response),
-        )) as any;
-      } else {
-        await dispatch(walletConnectV2RejectCallRequest(request));
-      }
+      await dispatch(walletConnectV2RejectCallRequest(request));
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
       navigation.goBack();
