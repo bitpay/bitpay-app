@@ -6,6 +6,7 @@ import {H6, Paragraph} from '../../../../../components/styled/Text';
 import {
   Action,
   LightBlack,
+  LuckySevens,
   Slate10,
   Slate30,
   SlateDark,
@@ -49,7 +50,7 @@ const ItemContainer = styled.View<Partial<BillItemProps>>`
 
 const AccountType = styled(Paragraph)`
   font-size: 14px;
-  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
+  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
   margin-top: -5px;
 `;
 

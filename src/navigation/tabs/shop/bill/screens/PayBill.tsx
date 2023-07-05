@@ -6,7 +6,7 @@ import {H5, Paragraph} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import {Linking, ScrollView, View} from 'react-native';
-import {LightBlack, Slate30, SlateDark} from '../../../../../styles/colors';
+import {LightBlack, LuckySevens, Slate30, SlateDark} from '../../../../../styles/colors';
 import {
   BillOption,
   SectionContainer,
@@ -52,7 +52,7 @@ const LineItemLabelContainer = styled.View`
 
 const LineItemSublabel = styled(Paragraph)`
   font-size: 14px;
-  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
+  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
 `;
 
 const AmountSublabel = styled.View`
