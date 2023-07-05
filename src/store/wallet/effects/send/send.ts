@@ -1266,18 +1266,22 @@ export const createPayProTxProposal =
     message?: string;
   }): Promise<Effect<Promise<any>>> =>
   async dispatch => {
-    const payProDetails = await GetPayProDetails({
-      paymentUrl,
-      coin: wallet!.currencyAbbreviation,
-      chain: wallet!.chain,
-    });
-    const confirmScreenParams = await HandlePayPro({
-      payProDetails,
-      payProOptions,
-      url: paymentUrl,
-      coin: wallet!.currencyAbbreviation,
-      chain: wallet!.chain,
-    });
+    const payProDetails = await dispatch(
+      GetPayProDetails({
+        paymentUrl,
+        coin: wallet!.currencyAbbreviation,
+        chain: wallet!.chain,
+      }),
+    );
+    const confirmScreenParams = await dispatch(
+      HandlePayPro({
+        payProDetails,
+        payProOptions,
+        url: paymentUrl,
+        coin: wallet!.currencyAbbreviation,
+        chain: wallet!.chain,
+      }),
+    );
     const {
       toAddress: address,
       requiredFeeRate: feePerKb,

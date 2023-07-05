@@ -433,7 +433,7 @@ const SendTo = () => {
         const invoiceUrl = GetPayProUrl(text);
         dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
 
-        const payProOptions = await GetPayProOptions(invoiceUrl);
+        const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
         const invoiceCurrency = getCurrencyCodeFromCoinAndChain(

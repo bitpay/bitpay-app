@@ -273,12 +273,14 @@ const TransactionProposalDetails = () => {
       const payload = {
         address,
       };
-      const _payProDetails = await GetPayProDetails({
-        paymentUrl: txp.payProUrl,
-        coin: txp.coin,
-        chain: txp.chain,
-        payload,
-      });
+      const _payProDetails = await dispatch(
+        GetPayProDetails({
+          paymentUrl: txp.payProUrl,
+          coin: txp.coin,
+          chain: txp.chain,
+          payload,
+        })
+      );
       paymentTimeControl(_payProDetails.expires);
       setPayProDetails(_payProDetails);
       await sleep(500);

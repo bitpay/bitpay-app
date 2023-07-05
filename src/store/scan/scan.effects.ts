@@ -237,7 +237,7 @@ const goToPayPro =
 
     try {
       dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
-      const payProOptions = await GetPayProOptions(payProUrl);
+      const payProOptions = await dispatch(GetPayProOptions(payProUrl));
       const getInvoiceResponse = await axios.get(
         `https://${host}/invoices/${invoiceId}`,
       );
@@ -261,19 +261,17 @@ const goToPayPro =
         );
         return;
       }
-      InteractionManager.runAfterInteractions(() => {
-        navigationRef.navigate('Wallet', {
-          screen: WalletScreens.PAY_PRO_CONFIRM,
-          params: {
-            payProOptions,
-            invoice: _invoice,
-            wallet,
-          },
-        });
+      navigationRef.navigate('Wallet', {
+        screen: WalletScreens.PAY_PRO_CONFIRM,
+        params: {
+          payProOptions,
+          invoice: _invoice,
+          wallet,
+        },
       });
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
+      await sleep(800);
 
       dispatch(
         showBottomNotificationModal({
