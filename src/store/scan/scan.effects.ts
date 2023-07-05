@@ -34,7 +34,6 @@ import {
   isValidSardineUri,
   isValidSimplexUri,
   isValidWalletConnectUri,
-  isValidWyreUri,
   IsBitPayInvoiceWebUrl,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
@@ -44,7 +43,6 @@ import {
   RampIncomingData,
   SardineIncomingData,
   SimplexIncomingData,
-  WyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
 import {startOnGoingProcessModal} from '../app/app.effects';
@@ -182,9 +180,6 @@ export const incomingData =
         // Simplex
       } else if (isValidSimplexUri(data)) {
         dispatch(handleSimplexUri(data));
-        // Wyre
-      } else if (isValidWyreUri(data)) {
-        dispatch(handleWyreUri(data));
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
         dispatch(handleBitPayUri(data, opts?.wallet));
@@ -1274,92 +1269,6 @@ const handleSimplexUri =
           name: 'ExternalServicesSettings',
           params: {
             screen: 'SimplexSettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
-        },
-      ],
-    });
-  };
-
-const handleWyreUri =
-  (data: string): Effect<void> =>
-  dispatch => {
-    dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
-
-    if (data.indexOf('wyreError') >= 0) {
-      navigationRef.navigate('ExternalServicesSettings', {
-        screen: 'WyreSettings',
-        params: {
-          paymentRequestError: true,
-        },
-      });
-      return;
-    }
-
-    if (data === 'wyre') {
-      return;
-    }
-    const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const orderId = getParameterByName('id', res);
-    if (!orderId) {
-      dispatch(LogActions.warn('No orderId present. Do not redir'));
-      return;
-    }
-
-    const walletId = getParameterByName('walletId', res);
-    const destCurrency = getParameterByName('destCurrency', res);
-    const destChain = getParameterByName('destChain', res);
-    const sourceCurrency = getParameterByName('sourceCurrency', res);
-    const sourceAmount = getParameterByName('sourceAmount', res);
-
-    const stateParams: WyrePaymentData = {
-      orderId,
-      transferId: getParameterByName('transferId', res),
-      owner: getParameterByName('owner', res),
-      accountId: getParameterByName('accountId', res),
-      walletId,
-      dest: getParameterByName('dest', res),
-      destAmount: getParameterByName('destAmount', res),
-      destChain,
-      destCurrency,
-      purchaseAmount: getParameterByName('purchaseAmount', res),
-      sourceAmount,
-      sourceCurrency,
-      status: getParameterByName('status', res),
-      createdAt: getParameterByName('createdAt', res),
-      paymentMethodName: getParameterByName('paymentMethodName', res),
-      blockchainNetworkTx: getParameterByName('blockchainNetworkTx', res),
-      env: __DEV__ ? 'dev' : 'prod',
-      created_on: Date.now(),
-    };
-
-    dispatch(
-      BuyCryptoActions.successPaymentRequestWyre({
-        wyrePaymentData: stateParams,
-      }),
-    );
-
-    dispatch(
-      Analytics.track('Purchased Buy Crypto', {
-        exchange: 'wyre',
-        fiatAmount: sourceAmount || '',
-        fiatCurrency: sourceCurrency || '',
-        coin: destCurrency?.toLowerCase() || '',
-        chain: destChain?.toLowerCase() || '',
-      }),
-    );
-
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'WyreSettings',
             params: {incomingPaymentRequest: stateParams},
           },
         },

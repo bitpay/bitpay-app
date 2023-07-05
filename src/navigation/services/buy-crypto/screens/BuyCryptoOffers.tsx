@@ -19,7 +19,6 @@ import MoonpayLogo from '../../../../components/icons/external-services/moonpay/
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
-import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
 import {Black, SlateDark, ProgressBlue, White} from '../../../../styles/colors';
 import {
@@ -28,7 +27,6 @@ import {
   simplexEnv,
   getSimplexCoinFormat,
 } from '../utils/simplex-utils';
-import {getWyreCoinFormat, wyreEnv} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
@@ -87,7 +85,6 @@ import MoonpayTerms from '../components/terms/MoonpayTerms';
 import RampTerms from '../components/terms/RampTerms';
 import SardineTerms from '../components/terms/SardineTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
-import WyreTerms from '../components/terms/WyreTerms';
 import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
@@ -284,7 +281,6 @@ const offersDefault: {
   ramp: CryptoOffer;
   sardine: CryptoOffer;
   simplex: CryptoOffer;
-  wyre: CryptoOffer;
 } = {
   moonpay: {
     key: 'moonpay',
@@ -334,18 +330,6 @@ const offersDefault: {
         heightLogo={30}
       />
     ),
-    expanded: false,
-    fiatCurrency: 'USD',
-    fiatAmount: 0,
-    fiatMoney: undefined,
-    errorMsg: undefined,
-    outOfLimitMsg: undefined,
-  },
-  wyre: {
-    key: 'wyre',
-    amountReceiving: '0',
-    showOffer: true,
-    logo: <WyreLogo width={70} height={20} />,
     expanded: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
@@ -422,7 +406,6 @@ const BuyCryptoOffers: React.FC = () => {
   const [finishedRamp, setFinishedRamp] = useState(false);
   const [finishedSardine, setFinishedSardine] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
-  const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
 
   const setPrefix = (
@@ -1154,161 +1137,6 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
-  const getWyreQuote = async () => {
-    logger.debug('Wyre getting quote');
-
-    if (buyCryptoConfig?.wyre?.disabled) {
-      let err = buyCryptoConfig?.wyre?.disabledMessage
-        ? buyCryptoConfig?.wyre?.disabledMessage
-        : t("Can't get rates at this moment. Please try again later");
-      const reason = 'wyreGetQuote Error. Exchange disabled from config.';
-      showWyreError(err, reason);
-      return;
-    }
-
-    offers.wyre.fiatAmount =
-      offers.wyre.fiatCurrency === fiatCurrency
-        ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
-
-    offers.wyre.amountLimits = dispatch(
-      getBuyCryptoFiatLimits('wyre', offers.wyre.fiatCurrency),
-    );
-
-    if (
-      (offers.wyre.amountLimits.min &&
-        offers.wyre.fiatAmount < offers.wyre.amountLimits.min) ||
-      (offers.wyre.amountLimits.max &&
-        offers.wyre.fiatAmount > offers.wyre.amountLimits.max)
-    ) {
-      offers.wyre.outOfLimitMsg = t(
-        'There are no Wyre offers available, as the current purchase limits for this exchange must be between and',
-        {
-          min: offers.wyre.amountLimits.min,
-          max: offers.wyre.amountLimits.max,
-          fiatCurrency: offers.wyre.fiatCurrency,
-        },
-      );
-    } else {
-      let address: string = '';
-      try {
-        address = (await dispatch<any>(
-          createWalletAddress({wallet: selectedWallet, newAddress: false}),
-        )) as string;
-      } catch (err) {
-        console.error(err);
-        const reason = 'createWalletAddress Error';
-        showWyreError(err, reason);
-      }
-
-      const dest = setPrefix(
-        address,
-        selectedWallet.chain,
-        selectedWallet.network,
-      );
-
-      let walletType: string;
-      switch (paymentMethod.method) {
-        case 'applePay':
-          walletType = 'APPLE_PAY';
-          break;
-        default:
-          walletType = 'DEBIT_CARD';
-          break;
-      }
-
-      const requestData = {
-        sourceAmount: offers.wyre.fiatAmount.toString(),
-        sourceCurrency: offers.wyre.fiatCurrency.toUpperCase(),
-        destCurrency: getWyreCoinFormat(coin, selectedWallet.chain),
-        dest,
-        country,
-        amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
-        walletType,
-        env: wyreEnv,
-      };
-
-      selectedWallet
-        .wyreWalletOrderQuotation(requestData)
-        .then(data => {
-          if (data && (data.exceptionId || data.error)) {
-            const reason = 'wyreWalletOrderQuotation Error';
-            showWyreError(data, reason);
-            return;
-          }
-
-          offers.wyre.amountCost = data.sourceAmount; // sourceAmount = Total amount (including fees)
-          offers.wyre.buyAmount = data.sourceAmountWithoutFees;
-          offers.wyre.fee = data.sourceAmount - data.sourceAmountWithoutFees;
-
-          if (offers.wyre.fee < 0) {
-            const err =
-              t('Wyre has returned a wrong value for the fee. Fee: ') +
-              offers.wyre.fee;
-            const reason = 'Fee not included';
-            showWyreError(err, reason);
-            return;
-          }
-
-          offers.wyre.fiatMoney =
-            offers.wyre.buyAmount && data.destAmount
-              ? Number(offers.wyre.buyAmount / data.destAmount).toFixed(8)
-              : undefined;
-
-          offers.wyre.amountReceiving = data.destAmount.toFixed(8);
-
-          logger.debug('Wyre getting quote: SUCCESS');
-          setFinishedWyre(!finishedWyre);
-        })
-        .catch((err: any) => {
-          const reason = 'wyreWalletOrderQuotation Error';
-          showWyreError(err, reason);
-        });
-    }
-  };
-
-  const showWyreError = (err?: any, reason?: string) => {
-    let msg = t('Could not get crypto offer. Please try again later.');
-    if (err) {
-      if (typeof err === 'string') {
-        msg = err;
-      } else if (err.exceptionId && err.message) {
-        logger.error('Wyre error: ' + err.message);
-        if (err.errorCode) {
-          switch (err.errorCode) {
-            case 'validation.unsupportedCountry':
-              msg = t('Country not supported: ') + country;
-              break;
-            default:
-              msg = err.message;
-              break;
-          }
-        } else {
-          msg = err.message;
-        }
-      }
-    }
-
-    dispatch(
-      Analytics.track('Failed Buy Crypto', {
-        exchange: 'wyre',
-        context: 'BuyCryptoOffers',
-        reason: reason || 'unknown',
-        paymentMethod: paymentMethod.method || '',
-        amount: Number(offers.wyre.fiatAmount) || '',
-        coin: coin?.toLowerCase() || '',
-        chain: chain?.toLowerCase() || '',
-        fiatCurrency: offers.wyre.fiatCurrency || '',
-      }),
-    );
-
-    logger.error('Crypto offer error: ' + msg);
-    offers.wyre.errorMsg = msg;
-    offers.wyre.fiatMoney = undefined;
-    offers.wyre.expanded = false;
-    setUpdateView(!updateView);
-  };
-
   const goTo = (key: string): void => {
     switch (key) {
       case 'moonpay':
@@ -1325,10 +1153,6 @@ const BuyCryptoOffers: React.FC = () => {
 
       case 'simplex':
         goToSimplexBuyPage();
-        break;
-
-      case 'wyre':
-        goToWyreBuyPage();
         break;
     }
   };
@@ -1546,7 +1370,7 @@ const BuyCryptoOffers: React.FC = () => {
         env: sardineEnv,
         referenceId: sardineExternalId,
         externalUserId: selectedWallet.id,
-        customerId: 'app'
+        customerId: 'app',
       };
       authTokenData = await selectedWallet.sardineGetToken(quoteData);
     } catch (err) {
@@ -1732,90 +1556,6 @@ const BuyCryptoOffers: React.FC = () => {
       });
   };
 
-  const goToWyreBuyPage = async () => {
-    let address: string = '';
-    try {
-      address = (await dispatch<any>(
-        createWalletAddress({wallet: selectedWallet, newAddress: false}),
-      )) as string;
-    } catch (err) {
-      console.error(err);
-      const reason = 'createWalletAddress Error';
-      showWyreError(err, reason);
-    }
-    let _paymentMethod: string;
-    switch (paymentMethod.method) {
-      case 'applePay':
-        _paymentMethod = 'apple-pay';
-        break;
-      default:
-        _paymentMethod = 'debit-card';
-        break;
-    }
-    const destinationChain = selectedWallet.chain;
-    const redirectUrl =
-      APP_DEEPLINK_PREFIX +
-      'wyre?walletId=' +
-      selectedWallet.id +
-      '&destAmount=' +
-      offers.wyre.amountReceiving +
-      '&destChain=' +
-      destinationChain;
-    const failureRedirectUrl = APP_DEEPLINK_PREFIX + 'wyreError';
-    const dest = setPrefix(
-      address,
-      selectedWallet.chain,
-      selectedWallet.network,
-    );
-    const requestData = {
-      sourceAmount: offers.wyre.fiatAmount.toString(),
-      dest,
-      destCurrency: getWyreCoinFormat(coin, destinationChain),
-      lockFields: ['dest', 'destCurrency', 'country'],
-      paymentMethod: _paymentMethod,
-      sourceCurrency: offers.wyre.fiatCurrency.toUpperCase(),
-      country,
-      amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
-      redirectUrl,
-      failureRedirectUrl,
-      env: wyreEnv,
-    };
-
-    selectedWallet
-      .wyreWalletOrderReservation(requestData)
-      .then((data: any) => {
-        if (data && (data.exceptionId || data.error)) {
-          const reason = 'wyreWalletOrderReservation Error';
-          showWyreError(data, reason);
-          return;
-        }
-
-        const {url} = data;
-        continueToWyre(url);
-      })
-      .catch((err: any) => {
-        const reason = 'wyreWalletOrderReservation Error';
-        showWyreError(err, reason);
-      });
-  };
-
-  const continueToWyre = async (paymentUrl: string) => {
-    const destinationChain = selectedWallet.chain;
-    dispatch(
-      Analytics.track('Requested Crypto Purchase', {
-        exchange: 'wyre',
-        fiatAmount: offers.wyre.fiatAmount,
-        fiatCurrency: offers.wyre.fiatCurrency,
-        paymentMethod: paymentMethod.method,
-        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
-        chain: destinationChain?.toLowerCase(),
-      }),
-    );
-    dispatch(openUrlWithInAppBrowser(paymentUrl));
-    await sleep(500);
-    navigation.goBack();
-  };
-
   const expandCard = (offer: CryptoOffer) => {
     const key = offer.key;
     if (!offer.fiatMoney) {
@@ -1873,9 +1613,6 @@ const BuyCryptoOffers: React.FC = () => {
       if (offers.simplex.showOffer) {
         getSimplexQuote();
       }
-      if (offers.wyre.showOffer) {
-        getWyreQuote();
-      }
     }
   }, []);
 
@@ -1886,7 +1623,6 @@ const BuyCryptoOffers: React.FC = () => {
     finishedRamp,
     finishedSardine,
     finishedSimplex,
-    finishedWyre,
     updateView,
   ]);
 
@@ -2073,12 +1809,6 @@ const BuyCryptoOffers: React.FC = () => {
                   ) : null}
                   {offer.key == 'simplex' ? (
                     <SimplexTerms paymentMethod={paymentMethod} />
-                  ) : null}
-                  {offer.key == 'wyre' ? (
-                    <WyreTerms
-                      country={country}
-                      fiatCurrency={offer.fiatCurrency}
-                    />
                   ) : null}
                 </>
               ) : null}

@@ -1034,11 +1034,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 {fullWalletObj ? (
                   <LinkingButtons
                     buy={{
-                      hide: !isCoinSupportedToBuy(
-                        fullWalletObj.currencyAbbreviation,
-                        fullWalletObj.chain,
-                        locationData?.countryShortCode || 'US',
-                      ),
+                      hide:
+                        fullWalletObj.network === 'testnet' ||
+                        !isCoinSupportedToBuy(
+                          fullWalletObj.currencyAbbreviation,
+                          fullWalletObj.chain,
+                          locationData?.countryShortCode || 'US',
+                        ),
                       cta: () => {
                         dispatch(
                           Analytics.track('Clicked Buy Crypto', {

@@ -1,17 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {TouchableOpacity} from 'react-native';
-import {
-  RouteProp,
-  useRoute,
-  useNavigation,
-  useIsFocused,
-} from '@react-navigation/native';
+import {useNavigation, useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
-import {Link} from '../../../../../components/styled/Text';
 import {RootState} from '../../../../../store';
-import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
-import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {WyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
@@ -25,15 +16,11 @@ import {
   PrTxtDate,
   PrTxtFiatAmount,
   PrTxtStatus,
-  FooterSupport,
-  SupportTxt,
 } from '../styled/ExternalServicesSettings';
-import {
-  dismissBottomNotificationModal,
-  showBottomNotificationModal,
-} from '../../../../../store/app/app.actions';
-import {sleep} from '../../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
+import {AppActions} from '../../../../../store/app';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {sleep} from '../../../../../utils/helper-methods';
 
 export interface WyreSettingsProps {
   incomingPaymentRequest?: WyrePaymentData;
@@ -42,57 +29,33 @@ export interface WyreSettingsProps {
 
 const WyreSettings: React.FC = () => {
   const {t} = useTranslation();
-  const wyreHistory = useSelector(({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre);
   const dispatch = useAppDispatch();
+  const wyreHistory = useSelector(({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre);
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const logger = useLogger();
   const [paymentRequests, setTransactions] = useState([] as WyrePaymentData[]);
 
-  const route = useRoute<RouteProp<{params: WyreSettingsProps}>>();
-  const {incomingPaymentRequest, paymentRequestError} = route.params || {};
-
   useEffect(() => {
-    const handlePaymentError = async () => {
+    const showWyreWarning = async () => {
       await sleep(600);
       dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: t('Payment Error'),
-          message: t(
-            'There was an error with the payment process through Wyre.',
-          ),
-          enableBackdropDismiss: true,
+        AppActions.showBottomNotificationModal({
+          title: t('Warning'),
+          message: t('Please note that Wyre is out of service.'),
+          type: 'warning',
           actions: [
             {
-              text: t('Visit Help Center'),
-              action: async () => {
-                await sleep(600);
-                dispatch(
-                  openUrlWithInAppBrowser(
-                    'https://wyre-support.zendesk.com/hc/en-us/requests/new',
-                  ),
-                );
-              },
-              primary: true,
-            },
-            {
-              text: t('GOT IT'),
-              action: () => {
-                dispatch(dismissBottomNotificationModal());
-              },
-              primary: false,
+              text: t('OK'),
+              action: () => {},
             },
           ],
+          enableBackdropDismiss: true,
+          onBackdropDismiss: () => {},
         }),
       );
     };
-    if (incomingPaymentRequest) {
-      logger.debug(`Coming from order: ${incomingPaymentRequest.orderId}`);
-    }
-    if (paymentRequestError) {
-      handlePaymentError();
-    }
+
+    showWyreWarning();
   }, []);
 
   useEffect(() => {
@@ -164,20 +127,6 @@ const WyreSettings: React.FC = () => {
           )}
         </Settings>
       </SettingsContainer>
-      <FooterSupport>
-        <SupportTxt>{t('Having problems with Wyre?')}</SupportTxt>
-        <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                'https://support.sendwyre.com/hc/en-us/requests/new',
-              ),
-            );
-          }}>
-          <Link>{t('Contact the Wyre support team.')}</Link>
-        </TouchableOpacity>
-      </FooterSupport>
     </>
   );
 };

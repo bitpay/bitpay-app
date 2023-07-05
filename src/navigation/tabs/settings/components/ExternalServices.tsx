@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -15,6 +15,9 @@ import RampLogo from '../../../../components/icons/external-services/ramp/ramp-l
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
+import {useAppSelector} from '../../../../utils/hooks';
+import {RootState} from '../../../../store';
+import {WyrePaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 
 const ExternalServicesItemContainer = styled.View`
   justify-content: flex-start;
@@ -29,6 +32,19 @@ const ExternalServicesIconContainer = styled.View`
 
 const ExternalServices = () => {
   const navigation = useNavigation();
+  const wyreHistory = useAppSelector(
+    ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre,
+  );
+  const [wyrePaymentRequests, setTransactions] = useState(
+    [] as WyrePaymentData[],
+  );
+
+  useEffect(() => {
+    const _wyrePaymentRequests = Object.values(wyreHistory).filter(
+      pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+    );
+    setTransactions(_wyrePaymentRequests);
+  }, []);
 
   return (
     <SettingsComponent>
@@ -111,22 +127,26 @@ const ExternalServices = () => {
         </ExternalServicesItemContainer>
         <AngleRight />
       </Setting>
-      <Hr />
-      <Setting
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('ExternalServicesSettings', {
-            screen: 'WyreSettings',
-          });
-        }}>
-        <ExternalServicesItemContainer>
-          <ExternalServicesIconContainer>
-            <WyreLogo iconOnly={true} width={30} height={25} />
-          </ExternalServicesIconContainer>
-          <SettingTitle>Wyre</SettingTitle>
-        </ExternalServicesItemContainer>
-        <AngleRight />
-      </Setting>
+      {wyrePaymentRequests?.length > 0 ? (
+        <>
+          <Hr />
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('ExternalServicesSettings', {
+                screen: 'WyreSettings',
+              });
+            }}>
+            <ExternalServicesItemContainer>
+              <ExternalServicesIconContainer>
+                <WyreLogo iconOnly={true} width={30} height={25} />
+              </ExternalServicesIconContainer>
+              <SettingTitle>Wyre</SettingTitle>
+            </ExternalServicesItemContainer>
+            <AngleRight />
+          </Setting>
+        </>
+      ) : null}
     </SettingsComponent>
   );
 };
