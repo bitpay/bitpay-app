@@ -13,9 +13,18 @@ import {useAppSelector} from '../../../../../utils/hooks';
 
 const sortByAscendingDate = (a: BillPayAccount, b: BillPayAccount) => {
   const farIntoTheFuture = moment().add(1, 'year').toDate();
+  const fartherIntoTheFuture = moment().add(2, 'years').toDate();
   return (
-    new Date(a[a.type].nextPaymentDueDate || farIntoTheFuture).getTime() -
-    new Date(b[b.type].nextPaymentDueDate || farIntoTheFuture).getTime()
+    new Date(
+      a.isPayable
+        ? a[a.type].nextPaymentDueDate || farIntoTheFuture
+        : fartherIntoTheFuture,
+    ).getTime() -
+    new Date(
+      b.isPayable
+        ? b[b.type].nextPaymentDueDate || farIntoTheFuture
+        : fartherIntoTheFuture,
+    ).getTime()
   );
 };
 
@@ -60,19 +69,18 @@ export const BillList = ({
     const newMinPaymentDue = minPaymentDue - processingAmount;
     const nextPaymentMinimumAmount =
       newMinPaymentDue > 0 ? newMinPaymentDue : 0;
-    return processingPayments.length
-      ? {
-          ...account,
-          [account.type]: {
-            ...account[account.type],
-            ...(!nextPaymentMinimumAmount && {
-              nextPaymentDueDate: undefined,
-              paddedNextPaymentDueDate: undefined,
-            }),
-            nextPaymentMinimumAmount,
-          },
-        }
-      : account;
+    return {
+      ...account,
+      [account.type]: {
+        ...account[account.type],
+        ...((!nextPaymentMinimumAmount ||
+          account[account.type].balance < 0) && {
+          nextPaymentDueDate: undefined,
+          paddedNextPaymentDueDate: undefined,
+        }),
+        nextPaymentMinimumAmount,
+      },
+    };
   });
   return (
     <>
