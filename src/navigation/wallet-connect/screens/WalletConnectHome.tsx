@@ -29,9 +29,7 @@ import {
 } from '../../../store/app/app.actions';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
-import {
-  FormatAmountStr,
-} from '../../../store/wallet/effects/amount/amount';
+import {FormatAmountStr} from '../../../store/wallet/effects/amount/amount';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
@@ -200,11 +198,8 @@ const WalletConnectHome = () => {
       let _wallet;
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
-      dispatch(startOnGoingProcessModal('LOADING'));
 
-      const {
-        to: toAddress,
-      } = request.params.request.params[0];
+      const {to: toAddress} = request.params.request.params[0];
 
       const recipient = {
         address: toAddress,
@@ -220,8 +215,6 @@ const WalletConnectHome = () => {
         },
       });
     } catch (error: any) {
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(error.err ? error.err : error),
