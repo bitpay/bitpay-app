@@ -1,3 +1,4 @@
+import {SignClientTypes} from '@walletconnect/types';
 import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
 
 export enum WalletConnectV2ActionTypes {
@@ -11,6 +12,9 @@ export enum WalletConnectV2ActionTypes {
 
 interface SessionProposal {
   type: typeof WalletConnectV2ActionTypes.SESSION_PROPOSAL;
+  payload: {
+    proposal?: SignClientTypes.EventArguments['session_proposal'];
+  };
 }
 
 interface ApproveSessionProposal {

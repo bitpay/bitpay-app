@@ -10,7 +10,6 @@ import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
 import {SessionTypes, SignClientTypes} from '@walletconnect/types';
 import {sleep} from '../../utils/helper-methods';
-import {t} from 'i18next';
 import {getSdkError} from '@walletconnect/utils';
 import {WalletConnectV2Actions} from '.';
 import {utils} from 'ethers';
@@ -47,11 +46,7 @@ export const walletConnectV2Init = (): Effect => async dispatch => {
       core,
       metadata: WALLETCONNECT_V2_METADATA,
     });
-
-    const activeSessions = web3wallet.getActiveSessions();
-    if (Object.keys(activeSessions).length) {
-      dispatch(walletConnectV2SubscribeToEvents());
-    }
+    dispatch(walletConnectV2SubscribeToEvents());
     dispatch(
       LogActions.info(
         '[WC-V2/walletConnectV2Init]: client initialized successfully',
@@ -67,55 +62,21 @@ export const walletConnectV2Init = (): Effect => async dispatch => {
 };
 
 export const walletConnectV2OnSessionProposal =
-  (
-    uri: string,
-  ): Effect<Promise<SignClientTypes.EventArguments['session_proposal']>> =>
-  dispatch => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        let isWaitingForEvent: boolean = true;
-        if (!web3wallet) {
-          web3wallet = await Web3Wallet.init({
-            core,
-            metadata: WALLETCONNECT_V2_METADATA,
-          });
-        }
-        await web3wallet.core.pairing.pair({uri});
-        web3wallet.on(
-          'session_proposal',
-          (proposal: SignClientTypes.EventArguments['session_proposal']) => {
-            isWaitingForEvent = false;
-            dispatch(WalletConnectV2Actions.sessionProposal());
-            dispatch(
-              LogActions.info(
-                `[WC-V2/walletConnectV2OnSessionProposal]: session proposal: ${JSON.stringify(
-                  proposal,
-                )}`,
-              ),
-            );
-            resolve(proposal);
-          },
-        );
-        await sleep(5000);
-        if (isWaitingForEvent) {
-          // reject promise if Dapp doesn't respond
-          const error = t(
-            'Session request failed or rejected. Please try again by refreshing the QR code.',
-          );
-          dispatch(
-            LogActions.error(
-              `[WC-V2/walletConnectV2OnSessionProposal]: ${error}`,
-            ),
-          );
-          throw error;
-        }
-      } catch (e) {
-        dispatch(
-          LogActions.error(`[WC-V2/walletConnectV2OnSessionProposal]: ${e}`),
-        );
-        reject(e);
+  (uri: string): Effect<void> =>
+  async dispatch => {
+    try {
+      if (!web3wallet) {
+        web3wallet = await Web3Wallet.init({
+          core,
+          metadata: WALLETCONNECT_V2_METADATA,
+        });
       }
-    });
+      await web3wallet.core.pairing.pair({uri});
+    } catch (e) {
+      dispatch(
+        LogActions.error(`[WC-V2/walletConnectV2OnSessionProposal]: ${e}`),
+      );
+    }
   };
 
 export const walletConnectV2ApproveSessionProposal =
@@ -139,7 +100,6 @@ export const walletConnectV2ApproveSessionProposal =
             pairingTopic,
           }),
         );
-        dispatch(walletConnectV2SubscribeToEvents());
         resolve();
       } catch (err) {
         dispatch(
@@ -162,7 +122,6 @@ export const walletConnectV2RejectSessionProposal =
         id,
         reason: getSdkError('USER_REJECTED_METHODS'),
       });
-
       dispatch(
         LogActions.info(
           '[WC-V2/walletConnectV2RejectSessionProposal]: session proposal rejection',
@@ -179,6 +138,19 @@ export const walletConnectV2RejectSessionProposal =
 
 export const walletConnectV2SubscribeToEvents =
   (): Effect => (dispatch, getState) => {
+    web3wallet.on(
+      'session_proposal',
+      (proposal: SignClientTypes.EventArguments['session_proposal']) => {
+        dispatch(WalletConnectV2Actions.sessionProposal(proposal));
+        dispatch(
+          LogActions.info(
+            `[WC-V2/walletConnectV2OnSessionProposal]: session proposal: ${JSON.stringify(
+              proposal,
+            )}`,
+          ),
+        );
+      },
+    );
     web3wallet.on('session_request', (event: any) => {
       dispatch(
         LogActions.info(
@@ -209,7 +181,9 @@ export const walletConnectV2SubscribeToEvents =
           );
         const {pairingTopic} = session || {};
         if (pairingTopic) {
-          await dispatch(walletConnectV2OnDeleteSession(topic, pairingTopic));
+          await web3wallet.core.pairing.disconnect({
+            topic: pairingTopic,
+          });
         }
         dispatch(WalletConnectV2DeleteSessions(topic));
         dispatch(WalletConnectV2UpdateRequests({topic}));
@@ -297,7 +271,7 @@ export const walletConnectV2RejectCallRequest =
   };
 
 export const walletConnectV2OnDeleteSession =
-  (topic: string, pairingTopic: string): Effect<Promise<void>> =>
+  (topic: string, pairingTopic?: string): Effect<Promise<void>> =>
   async dispatch => {
     return new Promise(async resolve => {
       try {
@@ -311,9 +285,12 @@ export const walletConnectV2OnDeleteSession =
           topic,
           reason: getSdkError('USER_DISCONNECTED'),
         });
-        await web3wallet.core.pairing.disconnect({
-          topic: pairingTopic,
-        });
+
+        if (pairingTopic) {
+          await web3wallet.core.pairing.disconnect({
+            topic: pairingTopic,
+          });
+        }
         dispatch(WalletConnectV2DeleteSessions(topic));
         dispatch(WalletConnectV2UpdateRequests({topic}));
         dispatch(
