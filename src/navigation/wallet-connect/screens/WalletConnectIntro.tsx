@@ -20,14 +20,12 @@ import {
 } from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
-import {BWCErrorMessage} from '../../../constants/BWCError';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {parseUri} from '@walletconnect/utils';
 import WCV2WalletSelector from '../components/WCV2WalletSelector';
 import {walletConnectV2OnSessionProposal} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {SignClientTypes} from '@walletconnect/types';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {ActionContainer} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 
 export type WalletConnectIntroParamList = {};
@@ -71,6 +69,36 @@ const WalletConnectIntro = () => {
     setProposal(proposal);
   }, [proposal]);
 
+  const validateWalletConnectUri = async (data: string) => {
+    if (isValidWalletConnectUri(data)) {
+      const {version} = parseUri(data);
+      if (version === 1) {
+        const errMsg = t(
+          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+        );
+        await showErrorMessage(
+          CustomErrorMessage({
+            errMsg,
+            title: t('Uh oh, something went wrong'),
+          }),
+        );
+      } else {
+        dispatch(startOnGoingProcessModal('LOADING'));
+        dispatch(walletConnectV2OnSessionProposal(data));
+      }
+    } else {
+      const errMsg = t(
+        'The scanned QR code does not correspond to WalletConnect.',
+      );
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg,
+          title: t('Uh oh, something went wrong'),
+        }),
+      );
+    }
+  };
+
   return (
     <WalletConnectContainer>
       <ScrollView>
@@ -94,43 +122,14 @@ const WalletConnectIntro = () => {
             navigation.navigate('Scan', {
               screen: 'Root',
               params: {
-                onScanComplete: async data => {
-                  if (isValidWalletConnectUri(data)) {
-                    const {version} = parseUri(data);
-                    if (version === 1) {
-                      const errMsg = t(
-                        'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
-                      );
-                      throw new Error(errMsg);
-                    } else {
-                      dispatch(startOnGoingProcessModal('LOADING'));
-                      dispatch(walletConnectV2OnSessionProposal(data));
-                    }
-                  } else {
-                    await showErrorMessage(
-                      CustomErrorMessage({
-                        errMsg: BWCErrorMessage(e),
-                        title: t('Uh oh, something went wrong'),
-                      }),
-                    );
-                  }
+                onScanComplete: (data: string) => {
+                  validateWalletConnectUri(data);
                 },
               },
             });
           }}>
           {t('Connect')}
         </Button>
-        {dappProposal && !walletSelectorV2ModalVisible ? (
-          <ActionContainer>
-            <Button
-              onPress={() => {
-                haptic('impactLight');
-                showWalletSelectorV2();
-              }}>
-              {t('Continue')}
-            </Button>
-          </ActionContainer>
-        ) : null}
       </ScrollView>
       {dappProposal ? (
         <WCV2WalletSelector

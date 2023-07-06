@@ -40,13 +40,28 @@ let core = new Core({
 });
 let web3wallet: IWeb3Wallet;
 
-export const walletConnectV2Init = (): Effect => async dispatch => {
+export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
   try {
     web3wallet = await Web3Wallet.init({
       core,
       metadata: WALLETCONNECT_V2_METADATA,
     });
     dispatch(walletConnectV2SubscribeToEvents());
+
+    // remove inactive connections if they exist
+    const activeSessions = web3wallet.getActiveSessions();
+    const sessions: WCV2SessionType[] | undefined =
+      getState().WALLET_CONNECT_V2.sessions;
+
+    Object.values(activeSessions).forEach(activeSession => {
+      if (
+        sessions.length &&
+        !sessions.some(s => s.topic === activeSession.topic)
+      ) {
+        dispatch(walletConnectV2OnDeleteSession(activeSession.topic));
+      }
+    });
+
     dispatch(
       LogActions.info(
         '[WC-V2/walletConnectV2Init]: client initialized successfully',
