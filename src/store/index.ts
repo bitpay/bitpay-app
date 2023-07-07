@@ -90,6 +90,7 @@ import {LogActions} from './log';
 import {walletBackupReducer} from './wallet-backup/wallet-backup.reducer';
 import {WalletBackupActionType} from './wallet-backup/wallet-backup.types';
 import {
+  walletConnectReducer,
   walletConnectV2Reducer,
   walletConnectV2ReduxPersistBlackList,
   WalletConnectV2State,
@@ -115,6 +116,7 @@ const reducerPersistBlackLists = {
   RATE: rateReduxPersistBlackList,
   CONTACT: ContactReduxPersistBlackList,
   COINBASE: CoinbaseReduxPersistBlackList,
+  WALLET_CONNECT: [],
   WALLET_CONNECT_V2: walletConnectV2ReduxPersistBlackList,
 };
 
@@ -230,6 +232,17 @@ const reducers = {
       blacklist: CoinbaseReduxPersistBlackList,
     },
     coinbaseReducer,
+  ),
+  WALLET_CONNECT: persistReducer<
+    WalletConnectV2State,
+    WalletConnectV2ActionType
+  >(
+    {
+      ...basePersistConfig,
+      key: 'WALLET_CONNECT',
+      blacklist: [],
+    },
+    walletConnectReducer,
   ),
   WALLET_CONNECT_V2: persistReducer<
     WalletConnectV2State,

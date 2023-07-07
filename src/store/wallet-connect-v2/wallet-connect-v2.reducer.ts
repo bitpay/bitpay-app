@@ -20,6 +20,12 @@ const initialState: WalletConnectV2State = {
   proposal: undefined,
 };
 
+export const walletConnectReducer = (
+  state: WalletConnectV2State = initialState,
+): WalletConnectV2State => {
+  return state;
+};
+
 export const walletConnectV2Reducer = (
   state: WalletConnectV2State = initialState,
   action: WalletConnectV2ActionType,
