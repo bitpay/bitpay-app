@@ -35,7 +35,7 @@ import {
   walletConnectV2ApproveSessionProposal,
   walletConnectV2RejectSessionProposal,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {Network} from '../../../constants';
+import {sessionProposal} from '../../../store/wallet-connect-v2/wallet-connect-v2.actions';
 
 export type WalletConnectStartParamList = {
   // version 2
@@ -134,6 +134,7 @@ const WalletConnectStart = () => {
             };
           });
         if (id && relays) {
+          dispatch(sessionProposal());
           await dispatch(
             walletConnectV2ApproveSessionProposal(
               id,

@@ -1,10 +1,8 @@
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import Button from '../../../components/button/Button';
-import haptic from '../../../components/haptic-feedback/haptic';
 import {Link, Paragraph} from '../../../components/styled/Text';
 import {
   ScrollView,
@@ -22,16 +20,15 @@ import {
 } from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
-import {BWCErrorMessage} from '../../../constants/BWCError';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {parseUri} from '@walletconnect/utils';
 import WCV2WalletSelector from '../components/WCV2WalletSelector';
-import {SignClientTypes} from '@walletconnect/types';
 import {walletConnectV2OnSessionProposal} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
+import {SignClientTypes} from '@walletconnect/types';
+import haptic from '../../../components/haptic-feedback/haptic';
+import Button from '../../../components/button/Button';
 
-export type WalletConnectIntroParamList = {
-  proposal?: SignClientTypes.EventArguments['session_proposal'];
-};
+export type WalletConnectIntroParamList = {};
 
 const LinkContainer = styled.View`
   padding-top: 5px;
@@ -42,10 +39,9 @@ const WalletConnectIntro = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();
-  const {proposal} = route.params || {};
 
   // version 2
+  const {proposal} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
   const [dappProposal, setDappProposal] = useState<any>();
   const [walletSelectorV2ModalVisible, setWalletSelectorV2ModalVisible] =
     useState(false);
@@ -60,12 +56,48 @@ const WalletConnectIntro = () => {
     [dispatch],
   );
 
+  const setProposal = async (
+    proposal?: SignClientTypes.EventArguments['session_proposal'],
+  ) => {
+    dispatch(dismissOnGoingProcessModal());
+    await sleep(500);
+    setDappProposal(proposal);
+    showWalletSelectorV2();
+  };
+
   useEffect(() => {
-    if (proposal) {
-      setDappProposal(proposal);
-      showWalletSelectorV2();
-    }
+    setProposal(proposal);
   }, [proposal]);
+
+  const validateWalletConnectUri = async (data: string) => {
+    if (isValidWalletConnectUri(data)) {
+      const {version} = parseUri(data);
+      if (version === 1) {
+        const errMsg = t(
+          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+        );
+        await showErrorMessage(
+          CustomErrorMessage({
+            errMsg,
+            title: t('Uh oh, something went wrong'),
+          }),
+        );
+      } else {
+        dispatch(startOnGoingProcessModal('LOADING'));
+        dispatch(walletConnectV2OnSessionProposal(data));
+      }
+    } else {
+      const errMsg = t(
+        'The scanned QR code does not correspond to WalletConnect.',
+      );
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg,
+          title: t('Uh oh, something went wrong'),
+        }),
+      );
+    }
+  };
 
   return (
     <WalletConnectContainer>
@@ -90,51 +122,22 @@ const WalletConnectIntro = () => {
             navigation.navigate('Scan', {
               screen: 'Root',
               params: {
-                onScanComplete: async data => {
-                  try {
-                    if (isValidWalletConnectUri(data)) {
-                      const {version} = parseUri(data);
-                      if (version === 1) {
-                        const errMsg = t(
-                          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
-                        );
-                        throw new Error(errMsg);
-                      } else {
-                        dispatch(startOnGoingProcessModal('LOADING'));
-                        const _proposal = (await dispatch<any>(
-                          walletConnectV2OnSessionProposal(data),
-                        )) as any;
-                        setDappProposal(_proposal);
-                        dispatch(dismissOnGoingProcessModal());
-                        await sleep(500);
-                        showWalletSelectorV2();
-                      }
-                    }
-                  } catch (e: any) {
-                    setDappProposal(undefined);
-                    dispatch(dismissOnGoingProcessModal());
-                    await sleep(500);
-                    await showErrorMessage(
-                      CustomErrorMessage({
-                        errMsg: BWCErrorMessage(e),
-                        title: t('Uh oh, something went wrong'),
-                      }),
-                    );
-                  }
+                onScanComplete: (data: string) => {
+                  validateWalletConnectUri(data);
                 },
               },
             });
           }}>
           {t('Connect')}
         </Button>
-        {dappProposal ? (
-          <WCV2WalletSelector
-            isVisible={walletSelectorV2ModalVisible}
-            proposal={dappProposal}
-            onBackdropPress={hideWalletSelectorV2}
-          />
-        ) : null}
       </ScrollView>
+      {dappProposal ? (
+        <WCV2WalletSelector
+          isVisible={walletSelectorV2ModalVisible}
+          proposal={dappProposal}
+          onBackdropPress={hideWalletSelectorV2}
+        />
+      ) : null}
     </WalletConnectContainer>
   );
 };

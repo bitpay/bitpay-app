@@ -5,8 +5,11 @@ import {
   WalletConnectV2ActionTypes,
 } from './wallet-connect-v2.types';
 
-export const sessionProposal = (): WalletConnectV2ActionType => ({
+export const sessionProposal = (
+  proposal?: SignClientTypes.EventArguments['session_proposal'],
+): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_PROPOSAL,
+  payload: {proposal},
 });
 
 export const approveSessionProposal = (

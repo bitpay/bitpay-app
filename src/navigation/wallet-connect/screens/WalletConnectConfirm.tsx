@@ -49,9 +49,7 @@ import {
   walletConnectV2ApproveCallRequest,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {
-  buildTxDetails,
-} from '../../../store/wallet/effects/send/send';
+import {buildTxDetails} from '../../../store/wallet/effects/send/send';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
@@ -70,12 +68,7 @@ const WalletConnectConfirm = () => {
   const navigation = useNavigation();
   const route =
     useRoute<RouteProp<WalletConnectStackParamList, 'WalletConnectConfirm'>>();
-  const {
-    wallet,
-    request,
-    peerName,
-    recipient,
-  } = route.params;
+  const {wallet, request, peerName, recipient} = route.params;
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 

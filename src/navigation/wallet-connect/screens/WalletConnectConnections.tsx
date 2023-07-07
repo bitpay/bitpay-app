@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {useCallback, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {BaseText, H5} from '../../../components/styled/Text';
@@ -41,6 +41,7 @@ import WCV2WalletSelector from '../components/WCV2WalletSelector';
 import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import PlusIcon from '../../../components/plus/Plus';
 import {AddButton} from '../../wallet/screens/CreateMultisig';
+import {SignClientTypes} from '@walletconnect/types';
 
 const DappTitleText = styled(BaseText)`
   font-size: 14px;
@@ -70,6 +71,7 @@ const WalletConnectConnections = () => {
   const sessions: WCV2SessionType[] = useAppSelector(
     ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
   );
+  const {proposal} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
 
   const [dappProposal, setDappProposal] = useState<any>();
   const [sessionToUpdate, setSessionToUpdate] = useState<WCV2SessionType>();
@@ -80,6 +82,19 @@ const WalletConnectConnections = () => {
 
   const dispatch = useAppDispatch();
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
+
+  const setProposal = async (
+    proposal?: SignClientTypes.EventArguments['session_proposal'],
+  ) => {
+    dispatch(dismissOnGoingProcessModal());
+    await sleep(500);
+    setDappProposal(proposal);
+    showWalletSelectorV2();
+  };
+
+  useEffect(() => {
+    setProposal(proposal);
+  }, [proposal]);
 
   const ConnectionItem = ({
     peerName,
@@ -178,35 +193,29 @@ const WalletConnectConnections = () => {
                 screen: 'Root',
                 params: {
                   onScanComplete: async data => {
-                    try {
-                      if (isValidWalletConnectUri(data)) {
-                        const {version} = parseUri(data);
-                        if (version === 1) {
-                          const errMsg = t(
-                            'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
-                          );
-                          throw new Error(errMsg);
-                        } else {
-                          dispatch(startOnGoingProcessModal('LOADING'));
-                          const _proposal = (await dispatch<any>(
-                            walletConnectV2OnSessionProposal(data),
-                          )) as any;
-                          await sleep(500);
-                          setSessionToUpdate(undefined);
-                          setDappProposal(_proposal);
-                          dispatch(dismissOnGoingProcessModal());
-                          await sleep(500);
-                          showWalletSelectorV2();
-                        }
+                    if (isValidWalletConnectUri(data)) {
+                      const {version} = parseUri(data);
+                      if (version === 1) {
+                        const errMsg = t(
+                          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+                        );
+                        await showErrorMessage(
+                          CustomErrorMessage({
+                            errMsg,
+                            title: t('Uh oh, something went wrong'),
+                          }),
+                        );
+                      } else {
+                        dispatch(startOnGoingProcessModal('LOADING'));
+                        dispatch(walletConnectV2OnSessionProposal(data));
                       }
-                    } catch (e: any) {
-                      setDappProposal(undefined);
-                      setSessionToUpdate(undefined);
-                      dispatch(dismissOnGoingProcessModal());
-                      await sleep(500);
+                    } else {
+                      const errMsg = t(
+                        'The scanned QR code does not correspond to WalletConnect.',
+                      );
                       await showErrorMessage(
                         CustomErrorMessage({
-                          errMsg: BWCErrorMessage(e),
+                          errMsg,
                           title: t('Uh oh, something went wrong'),
                         }),
                       );

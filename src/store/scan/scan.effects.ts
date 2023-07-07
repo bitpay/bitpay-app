@@ -1288,23 +1288,14 @@ const handleWalletConnectUri =
           );
           throw new Error(errMsg);
         } else {
-          dispatch(startOnGoingProcessModal('LOADING'));
-          const proposal = (await dispatch<any>(
-            walletConnectV2OnSessionProposal(data),
-          )) as any;
-          dispatch(dismissOnGoingProcessModal());
-          await sleep(500);
+          dispatch(walletConnectV2OnSessionProposal(data));
           navigationRef.navigate('WalletConnect', {
             screen: 'Root',
-            params: {
-              proposal,
-            },
+            params: {},
           });
         }
       }
     } catch (e: any) {
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
       dispatch(
         showBottomNotificationModal(
           CustomErrorMessage({
