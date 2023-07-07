@@ -57,4 +57,5 @@ export interface User {
   referralCode?: string;
   state?: string;
   name?: string;
+  verified?: boolean;
 }

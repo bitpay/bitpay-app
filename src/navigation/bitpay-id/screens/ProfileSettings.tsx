@@ -15,6 +15,8 @@ import {RootState} from '../../../store';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {ShopActions, ShopEffects} from '../../../store/shop';
 import {
+  Caution,
+  Caution50,
   LightBlack,
   NeutralSlate,
   Slate,
@@ -52,6 +54,11 @@ const AvatarContainer = styled.View`
 
 const EmailAddress = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+`;
+
+const EmailAddressNotVerified = styled(Paragraph)`
+  font-size: 14px;
+  color: ${({theme: {dark}}) => (dark ? Caution50 : Caution)};
 `;
 
 const SettingsSection = styled.View`
@@ -125,49 +132,58 @@ export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
         ) : null}
 
         <EmailAddress>{user.email}</EmailAddress>
+        {!user.verified ? (
+          <EmailAddressNotVerified>Not Verified</EmailAddressNotVerified>
+        ) : null}
       </ProfileInfoContainer>
 
       <H5>{t('Account Settings')}</H5>
 
-      <TouchableOpacity
-        activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('BitpayId', {
-            screen: BitpayIdScreens.RECEIVE_SETTINGS,
-          })
-        }>
-        <SettingsItem>
-          <SettingsSectionBody>
-            <SettingsSectionHeader>
-              {t('Receive via Email Address')}
-            </SettingsSectionHeader>
-            <SettingsSectionDescription>
-              {t('Receive crypto without wallet addresses or QR codes.')}
-            </SettingsSectionDescription>
-          </SettingsSectionBody>
-          <ChevronRight />
-        </SettingsItem>
-      </TouchableOpacity>
+      {user.verified ? (
+        <>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() =>
+              navigation.navigate('BitpayId', {
+                screen: BitpayIdScreens.RECEIVE_SETTINGS,
+              })
+            }>
+            <SettingsItem>
+              <SettingsSectionBody>
+                <SettingsSectionHeader>
+                  {t('Receive via Email Address')}
+                </SettingsSectionHeader>
+                <SettingsSectionDescription>
+                  {t('Receive crypto without wallet addresses or QR codes.')}
+                </SettingsSectionDescription>
+              </SettingsSectionBody>
+              <ChevronRight />
+            </SettingsItem>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('BitpayId', {
-            screen: BitpayIdScreens.ENABLE_TWO_FACTOR,
-          })
-        }>
-        <SettingsItem>
-          <SettingsSectionBody>
-            <SettingsSectionHeader>
-              {t('Two-Factor Authentication')}
-            </SettingsSectionHeader>
-            <SettingsSectionDescription>
-              {t('Secure your account with time-based one-time 6-digit codes.')}
-            </SettingsSectionDescription>
-          </SettingsSectionBody>
-          <ChevronRight />
-        </SettingsItem>
-      </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() =>
+              navigation.navigate('BitpayId', {
+                screen: BitpayIdScreens.ENABLE_TWO_FACTOR,
+              })
+            }>
+            <SettingsItem>
+              <SettingsSectionBody>
+                <SettingsSectionHeader>
+                  {t('Two-Factor Authentication')}
+                </SettingsSectionHeader>
+                <SettingsSectionDescription>
+                  {t(
+                    'Secure your account with time-based one-time 6-digit codes.',
+                  )}
+                </SettingsSectionDescription>
+              </SettingsSectionBody>
+              <ChevronRight />
+            </SettingsItem>
+          </TouchableOpacity>
+        </>
+      ) : null}
 
       <SettingsSection>
         <SettingsSectionBody>
