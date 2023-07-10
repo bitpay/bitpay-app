@@ -13,10 +13,7 @@ import haptic from '../../haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import {WIDTH} from '../../styled/Containers';
 import {CommonActions, useNavigation} from '@react-navigation/native';
-import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
-import {EIP155_CHAINS} from '../../../constants/WalletConnectV2';
-import {findWalletByAddress} from '../../../store/wallet/utils/wallet';
-import {Wallet} from '../../../store/wallet/wallet.models';
+import {getWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 
 export type InAppNotificationMessages = 'NEW_PENDING_REQUEST';
 
@@ -66,19 +63,10 @@ const InAppNotification: React.FC = () => {
   const navigation = useNavigation();
   const isVisible = useAppSelector(({APP}) => APP.showInAppNotification);
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const inAppNotificationData = useAppSelector(
     ({APP}) => APP.inAppNotificationData,
   );
   const {context, message, request} = inAppNotificationData || {};
-
-  const sessionV2: WCV2SessionType | undefined = useAppSelector(
-    ({WALLET_CONNECT_V2}) =>
-      WALLET_CONNECT_V2.sessions.find(
-        session => session.topic === request?.topic,
-      ),
-  );
-  const {namespaces} = sessionV2 || {};
 
   const onBackdropPress = () => {
     haptic('impactLight');
@@ -91,35 +79,11 @@ const InAppNotification: React.FC = () => {
     }
   };
 
-  const getWallet = (): Wallet | undefined => {
-    let wallet: Wallet | undefined;
-    for (const key in namespaces) {
-      if (namespaces.hasOwnProperty(key)) {
-        const {accounts} = namespaces[key];
-        accounts.forEach(account => {
-          const index = account.indexOf(':', account.indexOf(':') + 1);
-          const address = account.substring(index + 1);
-          const chain =
-            request?.params.chainId &&
-            EIP155_CHAINS[request.params.chainId]?.chainName;
-          const network =
-            request?.params.chainId &&
-            EIP155_CHAINS[request.params.chainId]?.network;
-          wallet = findWalletByAddress(address, chain, network, keys);
-          if (wallet) {
-            return wallet;
-          }
-        });
-      }
-    }
-    return wallet;
-  };
-
   const goToWalletConnectRequestDetails = () => {
     haptic('impactLight');
     dispatch(dismissInAppNotification());
 
-    const wallet = getWallet();
+    const wallet = request && dispatch(getWalletByRequest(request));
     if (!wallet) {
       return;
     }

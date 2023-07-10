@@ -25,7 +25,10 @@ import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../app/app.actions';
-import {checkEncryptPassword} from '../wallet/utils/wallet';
+import {
+  checkEncryptPassword,
+  findWalletByAddress,
+} from '../wallet/utils/wallet';
 import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
 import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
 import {ethers, providers} from 'ethers';
@@ -33,6 +36,7 @@ import {Core} from '@walletconnect/core';
 import {Web3Wallet, IWeb3Wallet} from '@walletconnect/web3wallet';
 import {WALLET_CONNECT_V2_PROJECT_ID} from '@env';
 import {startInAppNotification} from '../app/app.effects';
+import {navigationRef} from '../../Root';
 
 const BWC = BwcProvider.getInstance();
 
@@ -180,9 +184,25 @@ export const walletConnectV2SubscribeToEvents =
           event.params.chainId,
         )
       ) {
-        dispatch(
-          startInAppNotification('NEW_PENDING_REQUEST', event, 'walletconnect'),
-        );
+        const {name, params} =
+          (navigationRef.current?.getCurrentRoute() as any) || {};
+        const wallet = dispatch(getWalletByRequest(event));
+        if (
+          name !== 'WalletConnectHome' ||
+          (name === 'WalletConnectHome' &&
+            (params?.wallet?.receiveAddress !== wallet?.receiveAddress ||
+              params?.wallet?.network !== wallet?.network ||
+              params?.wallet?.chain !== wallet?.chain))
+        ) {
+          dispatch(
+            startInAppNotification(
+              'NEW_PENDING_REQUEST',
+              event,
+              'walletconnect',
+            ),
+          );
+        }
+
         dispatch(
           WalletConnectV2Actions.sesionRequest({
             ...event,
@@ -645,4 +665,40 @@ const WalletConnectV2UpdateSession =
       }
     });
     dispatch(WalletConnectV2Actions.updateSessions([...new Set(allSessions)]));
+  };
+
+export const getWalletByRequest =
+  (
+    request: SignClientTypes.EventArguments['session_request'],
+  ): Effect<Wallet | undefined> =>
+  (_dispatch, getState) => {
+    const sessionV2: WCV2SessionType | undefined =
+      getState().WALLET_CONNECT_V2.sessions.find(
+        session => session.topic === request?.topic,
+      );
+    const {namespaces} = sessionV2 || {};
+    const keys = getState().WALLET.keys;
+
+    let wallet: Wallet | undefined;
+
+    for (const key in namespaces) {
+      if (namespaces.hasOwnProperty(key)) {
+        const {accounts} = namespaces[key];
+        accounts.forEach(account => {
+          const index = account.indexOf(':', account.indexOf(':') + 1);
+          const address = account.substring(index + 1);
+          const chain =
+            request?.params.chainId &&
+            EIP155_CHAINS[request.params.chainId]?.chainName;
+          const network =
+            request?.params.chainId &&
+            EIP155_CHAINS[request.params.chainId]?.network;
+          wallet = findWalletByAddress(address, chain, network, keys);
+          if (wallet) {
+            return wallet;
+          }
+        });
+      }
+    }
+    return wallet;
   };
