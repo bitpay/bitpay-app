@@ -8,11 +8,13 @@ import {
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
+  InAppNotificationContextType,
 } from './app.models';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {FeedbackType, ModalId} from './app.reducer';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
+import {SignClientTypes} from '@walletconnect/types';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -27,6 +29,8 @@ export enum AppActionTypes {
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
+  SHOW_IN_APP_NOTIFICATION = 'APP/SHOW_IN_APP_NOTIFICATION',
+  DISMISS_IN_APP_NOTIFICATION = 'APP/DISMISS_IN_APP_NOTIFICATION',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
   DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
   RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG = 'APP/RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG',
@@ -120,6 +124,19 @@ interface ShowOnGoingProcessModal {
 
 interface DismissOnGoingProcessModal {
   type: typeof AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL;
+}
+
+interface ShowInAppNotification {
+  type: typeof AppActionTypes.SHOW_IN_APP_NOTIFICATION;
+  payload: {
+    message: string;
+    request: SignClientTypes.EventArguments['session_request'];
+    context: InAppNotificationContextType;
+  };
+}
+
+interface DismissInAppNotification {
+  type: typeof AppActionTypes.DISMISS_IN_APP_NOTIFICATION;
 }
 
 interface ShowBottomNotificationModal {
@@ -343,6 +360,8 @@ export type AppActionType =
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal
+  | ShowInAppNotification
+  | DismissInAppNotification
   | ShowBottomNotificationModal
   | DismissBottomNotificationModal
   | ResetBottomNotificationModalConfig

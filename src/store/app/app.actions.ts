@@ -1,3 +1,4 @@
+import {SignClientTypes} from '@walletconnect/types';
 import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
@@ -11,6 +12,7 @@ import {
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
+  InAppNotificationContextType,
 } from './app.models';
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
@@ -61,6 +63,19 @@ export const showOnGoingProcessModal = (message: string): AppActionType => ({
 
 export const dismissOnGoingProcessModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL,
+});
+
+export const showInAppNotification = (
+  context: InAppNotificationContextType,
+  message: string,
+  request: SignClientTypes.EventArguments['session_request'],
+): AppActionType => ({
+  type: AppActionTypes.SHOW_IN_APP_NOTIFICATION,
+  payload: {context, message, request},
+});
+
+export const dismissInAppNotification = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_IN_APP_NOTIFICATION,
 });
 
 export const showBottomNotificationModal = (

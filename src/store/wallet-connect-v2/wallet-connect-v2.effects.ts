@@ -32,6 +32,7 @@ import {ethers, providers} from 'ethers';
 import {Core} from '@walletconnect/core';
 import {Web3Wallet, IWeb3Wallet} from '@walletconnect/web3wallet';
 import {WALLET_CONNECT_V2_PROJECT_ID} from '@env';
+import {startInAppNotification} from '../app/app.effects';
 
 const BWC = BwcProvider.getInstance();
 
@@ -179,6 +180,9 @@ export const walletConnectV2SubscribeToEvents =
           event.params.chainId,
         )
       ) {
+        dispatch(
+          startInAppNotification('NEW_PENDING_REQUEST', event, 'walletconnect'),
+        );
         dispatch(
           WalletConnectV2Actions.sesionRequest({
             ...event,

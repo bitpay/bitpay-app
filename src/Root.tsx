@@ -122,6 +122,7 @@ import {WalletActions} from './store/wallet';
 import BillStack, {
   BillStackParamList,
 } from './navigation/tabs/shop/bill/BillStack';
+import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -701,6 +702,7 @@ export default () => {
             />
           </Root.Navigator>
           <OnGoingProcessModal />
+          <InAppNotification />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
           <BlurContainer />
