@@ -30,7 +30,7 @@ import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 interface BillItemProps {
   account: BillPayAccount;
   payment?: BillPayment;
-  variation: 'small' | 'large' | 'header';
+  variation: 'small' | 'large' | 'header' | 'pay';
   expanded?: boolean;
   selectedAmount?: number;
 }
@@ -41,10 +41,11 @@ const ItemContainer = styled.View<Partial<BillItemProps>>`
   ${({variation}) =>
     variation === 'header'
       ? 'border: 0; margin-left: 0px;'
-      : ` padding: 16px;
-  padding-bottom: ${variation === 'large' ? 16 : 12}px;
-  padding-top: ${variation === 'large' ? 16 : 12}px;
-  padding-right: ${variation === 'large' ? 16 : 12}px;`}
+      : `
+          padding-left: ${variation === 'large' ? 16 : 12}px;
+          padding-bottom: ${variation === 'large' ? 16 : 12}px;
+          padding-top: ${variation === 'large' ? 16 : 12}px;
+          padding-right: ${variation === 'large' ? 16 : 12}px;`}
   margin-bottom: 10px;
 `;
 
@@ -63,7 +64,7 @@ const AccountDetailsLeft = styled.View`
 
 const AccountDetailsRight = styled.View<Partial<BillItemProps>>`
   ${({variation}) =>
-    variation === 'header'
+    variation === 'header' || variation === 'pay'
       ? 'align-items: center; flex-direction:row;'
       : 'align-items: flex-end;'}
 `;
@@ -107,10 +108,13 @@ const AccountBalance = styled(BaseText)<Partial<BillItemProps>>`
   margin-bottom: ${({variation}) => (variation === 'large' ? -1 : 3)}px;
 `;
 
-const AccountFooter = styled.View`
+const AccountFooter = styled.View<Partial<BillItemProps>>`
   background-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
   flex-direction: row;
-  margin: 13px -16px -16px;
+  margin-top: 13px;
+  margin-left: ${({variation}) => (variation === 'large' ? -16 : -12)}px;
+  margin-right: ${({variation}) => (variation === 'large' ? -16 : -12)}px;
+  margin-bottom: ${({variation}) => (variation === 'large' ? -16 : -12)}px;
   padding: 2px 15px;
   border-bottom-right-radius: 6px;
   border-bottom-left-radius: 6px;
@@ -175,23 +179,33 @@ export default ({
             <>
               {account.isPayable || !!payment ? (
                 <>
-                  <AccountBalance variation={variation}>
-                    {formatFiatAmount(
-                      payment ? payment.amount : account[account.type].balance,
-                      'USD',
-                    )}
-                  </AccountBalance>
-                  {variation === 'small' ? (
-                    <BillStatus account={account} payment={payment} />
-                  ) : null}
+                  {variation === 'pay' ? (
+                    <PayButton>
+                      <PayButtonText>{t('Pay Bill')}</PayButtonText>
+                    </PayButton>
+                  ) : (
+                    <>
+                      <AccountBalance variation={variation}>
+                        {formatFiatAmount(
+                          payment
+                            ? payment.amount
+                            : account[account.type].balance,
+                          'USD',
+                        )}
+                      </AccountBalance>
+                      {variation === 'small' ? (
+                        <BillStatus account={account} payment={payment} />
+                      ) : null}
+                    </>
+                  )}
                 </>
               ) : null}
             </>
           )}
         </AccountDetailsRight>
       </AccountBody>
-      {variation === 'large' ? (
-        account.isPayable ? (
+      {variation === 'large' || variation === 'pay' ? (
+        account.isPayable && variation === 'large' ? (
           <AccountActions>
             <BillStatus account={account} payment={payment} />
             <PayButton>
@@ -199,25 +213,29 @@ export default ({
             </PayButton>
           </AccountActions>
         ) : (
-          <AccountFooter>
-            <AccountFooterText>Unable to pay bill</AccountFooterText>
-            <TouchableOpacity
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                dispatch(
-                  AppActions.showBottomNotificationModal(
-                    CustomErrorMessage({
-                      title: t('Unable to pay bill'),
-                      errMsg: t(
-                        'We are currently unable to process payments for this bill. We are actively working on a solution.',
+          <>
+            {!account.isPayable ? (
+              <AccountFooter variation={variation}>
+                <AccountFooterText>Unable to pay bill</AccountFooterText>
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    dispatch(
+                      AppActions.showBottomNotificationModal(
+                        CustomErrorMessage({
+                          title: t('Unable to pay bill'),
+                          errMsg: t(
+                            'We are currently unable to process payments for this bill. We are actively working on a solution.',
+                          ),
+                        }),
                       ),
-                    }),
-                  ),
-                );
-              }}>
-              <AccountFooterActionText>Learn More</AccountFooterActionText>
-            </TouchableOpacity>
-          </AccountFooter>
+                    );
+                  }}>
+                  <AccountFooterActionText>Learn More</AccountFooterActionText>
+                </TouchableOpacity>
+              </AccountFooter>
+            ) : null}
+          </>
         )
       ) : null}
     </ItemContainer>

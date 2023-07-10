@@ -5,8 +5,13 @@ import {BillScreens, BillStackParamList} from '../BillStack';
 import {H5, Paragraph} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
-import {Linking, ScrollView, View} from 'react-native';
-import {LightBlack, LuckySevens, Slate30, SlateDark} from '../../../../../styles/colors';
+import {Linking, ScrollView, TouchableOpacity, View} from 'react-native';
+import {
+  LightBlack,
+  LuckySevens,
+  Slate30,
+  SlateDark,
+} from '../../../../../styles/colors';
 import {
   BillOption,
   SectionContainer,
@@ -17,6 +22,7 @@ import moment from 'moment';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
+  ActiveOpacity,
   CtaContainerAbsolute,
   HeaderRightContainer,
 } from '../../../../../components/styled/Containers';
@@ -130,7 +136,6 @@ const PayBill = ({
 
   const onAmountScreenSubmit = (amount: number) => {
     const minAmount = 1;
-    const maxAmount = account[account.type].balance;
     if (amount < minAmount) {
       dispatch(
         AppActions.showBottomNotificationModal(
@@ -143,21 +148,6 @@ const PayBill = ({
                 customPrecision: 'minimal',
                 currencyDisplay: 'symbol',
               },
-            )}. Please modify your amount.`,
-          }),
-        ),
-      );
-      return;
-    }
-    if (amount > maxAmount) {
-      dispatch(
-        AppActions.showBottomNotificationModal(
-          CustomErrorMessage({
-            title: t('Payment Limit Exceeded'),
-            errMsg: `The payment amount is limited to ${formatFiatAmount(
-              account[account.type].balance,
-              'USD',
-              {customPrecision: 'minimal', currencyDisplay: 'symbol'},
             )}. Please modify your amount.`,
           }),
         ),
@@ -215,92 +205,117 @@ const PayBill = ({
           </SectionHeaderContainer>
           <View>
             {account[account.type].nextPaymentMinimumAmount ? (
-              <BillPayOption hasBorderTop={true}>
-                <CheckboxContainer>
-                  <Checkbox
-                    checked={selectedAmount === 'nextPaymentMinimumAmount'}
-                    radio={true}
-                    onPress={() =>
-                      setSelectedAmount('nextPaymentMinimumAmount')
-                    }
-                  />
-                </CheckboxContainer>
-                <LineItemLabelContainer>
-                  <Paragraph>Minimum Payment</Paragraph>
-                  {account[account.type].paddedNextPaymentDueDate ? (
-                    <LineItemSublabel>
-                      Due{' '}
-                      {moment(
-                        new Date(
-                          account[account.type].paddedNextPaymentDueDate,
-                        ),
-                      )
-                        .utc()
-                        .format('MMMM D, YYYY')}
-                    </LineItemSublabel>
-                  ) : null}
-                </LineItemLabelContainer>
-                <BillPayOptionAmount>
-                  {formatFiatAmount(
-                    account[account.type].nextPaymentMinimumAmount,
-                    'USD',
-                    {customPrecision: 'minimal'},
-                  )}
-                </BillPayOptionAmount>
-              </BillPayOption>
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={() => setSelectedAmount('nextPaymentMinimumAmount')}>
+                <BillPayOption hasBorderTop={true}>
+                  <CheckboxContainer>
+                    <Checkbox
+                      checked={selectedAmount === 'nextPaymentMinimumAmount'}
+                      radio={true}
+                      onPress={() =>
+                        setSelectedAmount('nextPaymentMinimumAmount')
+                      }
+                    />
+                  </CheckboxContainer>
+                  <LineItemLabelContainer>
+                    <Paragraph>Minimum Payment Due</Paragraph>
+                    {account[account.type].paddedNextPaymentDueDate ? (
+                      <LineItemSublabel>
+                        Due{' '}
+                        {moment(
+                          new Date(
+                            account[account.type].paddedNextPaymentDueDate,
+                          ),
+                        )
+                          .utc()
+                          .format('MMMM D, YYYY')}
+                      </LineItemSublabel>
+                    ) : null}
+                  </LineItemLabelContainer>
+                  <BillPayOptionAmount>
+                    {formatFiatAmount(
+                      account[account.type].nextPaymentMinimumAmount,
+                      'USD',
+                      {customPrecision: 'minimal'},
+                    )}
+                  </BillPayOptionAmount>
+                </BillPayOption>
+              </TouchableOpacity>
             ) : null}
             {account[account.type].lastStatementBalance ? (
-              <BillPayOption>
-                <CheckboxContainer>
-                  <Checkbox
-                    checked={selectedAmount === 'lastStatementBalance'}
-                    radio={true}
-                    onPress={() => setSelectedAmount('lastStatementBalance')}
-                  />
-                </CheckboxContainer>
-                <LineItemLabelContainer>
-                  <Paragraph>Last Statement Balance</Paragraph>
-                </LineItemLabelContainer>
-                <BillPayOptionAmount>
-                  {formatFiatAmount(
-                    account[account.type].lastStatementBalance!,
-                    'USD',
-                    {customPrecision: 'minimal'},
-                  )}
-                </BillPayOptionAmount>
-              </BillPayOption>
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={() => setSelectedAmount('lastStatementBalance')}>
+                <BillPayOption>
+                  <CheckboxContainer>
+                    <Checkbox
+                      checked={selectedAmount === 'lastStatementBalance'}
+                      radio={true}
+                      onPress={() => setSelectedAmount('lastStatementBalance')}
+                    />
+                  </CheckboxContainer>
+                  <LineItemLabelContainer>
+                    <Paragraph>Last Statement Balance</Paragraph>
+                  </LineItemLabelContainer>
+                  <BillPayOptionAmount>
+                    {formatFiatAmount(
+                      account[account.type].lastStatementBalance!,
+                      'USD',
+                      {customPrecision: 'minimal'},
+                    )}
+                  </BillPayOptionAmount>
+                </BillPayOption>
+              </TouchableOpacity>
             ) : null}
             {account[account.type].balance ? (
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={() => setSelectedAmount('balance')}>
+                <BillPayOption>
+                  <CheckboxContainer>
+                    <Checkbox
+                      checked={selectedAmount === 'balance'}
+                      radio={true}
+                      onPress={() => setSelectedAmount('balance')}
+                    />
+                  </CheckboxContainer>
+                  <LineItemLabelContainer>
+                    <Paragraph>Current Balance</Paragraph>
+                  </LineItemLabelContainer>
+                  <BillPayOptionAmount>
+                    {formatFiatAmount(account[account.type].balance, 'USD', {
+                      customPrecision: 'minimal',
+                    })}
+                  </BillPayOptionAmount>
+                </BillPayOption>
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
+              onPress={() => setSelectedAmount('other')}>
               <BillPayOption>
                 <CheckboxContainer>
                   <Checkbox
-                    checked={selectedAmount === 'balance'}
+                    checked={selectedAmount === 'other'}
                     radio={true}
-                    onPress={() => setSelectedAmount('balance')}
+                    onPress={() => setSelectedAmount('other')}
                   />
                 </CheckboxContainer>
                 <LineItemLabelContainer>
-                  <Paragraph>Current Balance</Paragraph>
+                  <Paragraph>Other Amount</Paragraph>
                 </LineItemLabelContainer>
-                <BillPayOptionAmount>
-                  {formatFiatAmount(account[account.type].balance, 'USD', {
-                    customPrecision: 'minimal',
-                  })}
-                </BillPayOptionAmount>
               </BillPayOption>
-            ) : null}
-            <BillPayOption>
-              <CheckboxContainer>
-                <Checkbox
-                  checked={selectedAmount === 'other'}
-                  radio={true}
-                  onPress={() => setSelectedAmount('other')}
-                />
-              </CheckboxContainer>
-              <LineItemLabelContainer>
-                <Paragraph>Other Amount</Paragraph>
-              </LineItemLabelContainer>
-            </BillPayOption>
+            </TouchableOpacity>
+            <LineItemSublabel style={{textAlign: 'right', marginTop: 10}}>
+              {account[account.type].lastSuccessfulSync
+                ? `Last synced: ${moment(
+                    new Date(account[account.type].lastSuccessfulSync),
+                  )
+                    .utc()
+                    .format('l, h:mm a')}`
+                : 'Balance may be out of date'}
+            </LineItemSublabel>
           </View>
         </SectionContainer>
       </ScrollView>

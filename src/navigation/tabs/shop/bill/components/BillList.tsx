@@ -34,7 +34,7 @@ export const BillList = ({
   onPress,
 }: {
   accounts: BillPayAccount[];
-  variation: 'large' | 'small';
+  variation: 'large' | 'small' | 'pay';
   onPress: (account: BillPayAccount) => void;
 }) => {
   const persistedBillPayPayments = useAppSelector(

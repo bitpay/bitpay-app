@@ -7,6 +7,7 @@ import {
   Slate30,
   SlateDark,
   LightBlack,
+  LinkBlue,
 } from '../../../../../styles/colors';
 import {
   BillPayAccount,
@@ -76,21 +77,37 @@ const statusFields = {
     backgroundColor: '#CBF3E8',
     color: '#0B754A',
     text: 'Completed',
+    darkTheme: {
+      backgroundColor: '#076A46',
+      color: '#4FEFC4',
+    },
   },
   sent: {
     backgroundColor: '#CBF3E8',
     color: '#0B754A',
     text: 'Completed',
+    darkTheme: {
+      backgroundColor: '#076A46',
+      color: '#4FEFC4',
+    },
   },
   processing: {
     backgroundColor: '#ECEFFD',
     color: Action,
     text: 'Processing',
+    darkTheme: {
+      backgroundColor: '#071A6A',
+      color: LinkBlue,
+    },
   },
   pending: {
     backgroundColor: '#ECEFFD',
     color: Action,
     text: 'Processing',
+    darkTheme: {
+      backgroundColor: '#071A6A',
+      color: LinkBlue,
+    },
   },
   default: {
     backgroundColor: '#ECEFFD',
