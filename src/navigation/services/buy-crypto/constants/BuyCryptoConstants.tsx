@@ -32,7 +32,7 @@ export interface PaymentMethod {
 
 export const PaymentMethodsAvailable: PaymentMethods = {
   ach: {
-    label: 'ACH',
+    label: 'ACH Bank Transfer',
     method: 'ach',
     imgSrc: <BankIcon width={40} height={40} />,
     supportedExchanges: {
