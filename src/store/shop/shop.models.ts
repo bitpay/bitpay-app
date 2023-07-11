@@ -272,6 +272,7 @@ export interface BillPayAccount {
     type: string;
     balance: number;
     lastStatementBalance?: number;
+    lastSuccessfulSync?: string;
     remainingStatementBalance?: number;
     nextPaymentDueDate?: string;
     paddedNextPaymentDueDate?: string;

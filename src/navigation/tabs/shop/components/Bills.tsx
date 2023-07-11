@@ -1,7 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {useTranslation} from 'react-i18next';
+import {Trans, useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import Button from '../../../../components/button/Button';
 import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
@@ -14,7 +14,7 @@ import {
   SectionHeaderButton,
   SectionHeaderContainer,
 } from './styled/ShopTabComponents';
-import {Slate30, SlateDark} from '../../../../styles/colors';
+import {LinkBlue, Slate30, SlateDark} from '../../../../styles/colors';
 import CautionIconSvg from '../../../../../assets/img/bills/caution.svg';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {BillList} from '../bill/components/BillList';
@@ -22,6 +22,7 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {BillPayAccount} from '../../../../store/shop/shop.models';
 import {APP_NETWORK} from '../../../../constants/config';
 import {ShopEffects} from '../../../../store/shop';
+import {AppActions} from '../../../../store/app';
 const BillsZeroState = require('../../../../../assets/img/bills/bills-zero-state.png');
 
 const Title = styled(BaseText)`
@@ -166,7 +167,7 @@ export const Bills = () => {
                   </SectionHeaderContainer>
                   <BillList
                     accounts={accounts}
-                    variation={'large'}
+                    variation={'pay'}
                     onPress={(account: any) =>
                       navigation.navigate('Bill', {
                         screen: BillScreens.PAY_BILL,
@@ -187,6 +188,18 @@ export const Bills = () => {
                     {t('Pay All Bills')}
                   </Button> */}
                   <Button
+                    style={{marginTop: 20, marginBottom: 10}}
+                    height={50}
+                    buttonStyle="secondary"
+                    onPress={() =>
+                      navigation.navigate('Bill', {
+                        screen: BillScreens.PAY_ALL_BILLS,
+                        params: {accounts},
+                      })
+                    }>
+                    {t('Connect More Bills')}
+                  </Button>
+                  {/* <Button
                     buttonType={'link'}
                     onPress={() => {
                       navigation.navigate('Bill', {
@@ -194,8 +207,8 @@ export const Bills = () => {
                         params: {},
                       });
                     }}>
-                    {t('Add Another Bill')}
-                  </Button>
+                    {t('Connect More Bills')}
+                  </Button> */}
                 </>
               )}
             </>
@@ -205,9 +218,35 @@ export const Bills = () => {
                 <CautionIcon />
                 <H5>{t("Bill Pay isn't available in your area")}</H5>
                 <Subtitle>
-                  {t(
-                    'Currently Bill Pay is only supported within a few U.S. states. However, we are constantly adding support for new locations. Check back soon.',
-                  )}
+                  <Trans
+                    i18nKey="BillPayUnavailableInYourLocation"
+                    values={{states: 'states'}}
+                    components={[
+                      <Subtitle
+                        style={{color: LinkBlue}}
+                        onPress={() =>
+                          dispatch(
+                            AppActions.showBottomNotificationModal({
+                              type: 'info',
+                              title: t('Available States'),
+                              message: t(
+                                'Bill Pay is available in Alabama, Alaska, Delaware, District of Columbia, Florida, Georgia, Illinois, Iowa, Kansas, Maine, Massachusetts, Mississippi, Nebraska, New Jersey, New Mexico, Ohio, Oregon, South Dakota, Tennessee, Washington',
+                              ),
+                              enableBackdropDismiss: true,
+                              onBackdropDismiss: () => {},
+                              actions: [
+                                {
+                                  text: t('GOT IT'),
+                                  action: () => {},
+                                  primary: true,
+                                },
+                              ],
+                            }),
+                          )
+                        }
+                      />,
+                    ]}
+                  />
                 </Subtitle>
                 <Button
                   style={{width: WIDTH - 32, marginTop: 24}}

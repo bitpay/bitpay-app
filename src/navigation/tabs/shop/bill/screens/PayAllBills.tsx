@@ -290,7 +290,7 @@ const PayAllBills = ({
                         />
                       </CheckboxContainer>
                       <LineItemLabelContainer>
-                        <Paragraph>Minimum Payment</Paragraph>
+                        <Paragraph>Minimum Payment Due</Paragraph>
                         <LineItemSublabel>
                           Due{' '}
                           {moment(

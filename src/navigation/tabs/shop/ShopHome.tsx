@@ -51,7 +51,7 @@ import {HEIGHT} from '../../../components/styled/Containers';
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
   SHOP_ONLINE = 'Shop Online',
-  BILLS = 'Bills',
+  BILLS = 'Pay Bills',
 }
 
 export type ShopHomeParamList = {
@@ -95,7 +95,7 @@ const getShopOnlineScrollViewHeight = (categories: Category[]) => {
 };
 
 const getBillsScrollViewHeight = (billPayAccounts: BillPayAccount[]) => {
-  const billsListHeight = 130 * billPayAccounts.length + 300;
+  const billsListHeight = 90 * billPayAccounts.length + 300;
   const topShopTabsHeight = 80;
   const max = Math.max(HEIGHT - topShopTabsHeight, billsListHeight);
   return max;
@@ -337,7 +337,7 @@ const ShopHome: React.FC<
                     tab.target.includes(ShopTabs.GIFT_CARDS)
                       ? t('Gift Cards')
                       : tab.target.includes(ShopTabs.BILLS)
-                      ? t('Bills')
+                      ? t('Pay Bills')
                       : t('Shop Online'),
                   );
                 }
