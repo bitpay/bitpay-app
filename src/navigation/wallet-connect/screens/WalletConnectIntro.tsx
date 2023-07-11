@@ -27,6 +27,7 @@ import {walletConnectV2OnSessionProposal} from '../../../store/wallet-connect-v2
 import {SignClientTypes} from '@walletconnect/types';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Button from '../../../components/button/Button';
+import {BWCErrorMessage} from '../../../constants/BWCError';
 
 export type WalletConnectIntroParamList = {};
 
@@ -70,29 +71,30 @@ const WalletConnectIntro = () => {
   }, [proposal]);
 
   const validateWalletConnectUri = async (data: string) => {
-    if (isValidWalletConnectUri(data)) {
-      const {version} = parseUri(data);
-      if (version === 1) {
-        const errMsg = t(
-          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
-        );
-        await showErrorMessage(
-          CustomErrorMessage({
-            errMsg,
-            title: t('Uh oh, something went wrong'),
-          }),
-        );
+    try {
+      if (isValidWalletConnectUri(data)) {
+        const {version} = parseUri(data);
+        if (version === 1) {
+          const errMsg = t(
+            'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+          );
+          throw errMsg;
+        } else {
+          dispatch(startOnGoingProcessModal('LOADING'));
+          await dispatch(walletConnectV2OnSessionProposal(data));
+        }
       } else {
-        dispatch(startOnGoingProcessModal('LOADING'));
-        dispatch(walletConnectV2OnSessionProposal(data));
+        const errMsg = t(
+          'The scanned QR code does not correspond to WalletConnect.',
+        );
+        throw errMsg;
       }
-    } else {
-      const errMsg = t(
-        'The scanned QR code does not correspond to WalletConnect.',
-      );
+    } catch (err) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
       await showErrorMessage(
         CustomErrorMessage({
-          errMsg,
+          errMsg: BWCErrorMessage(err),
           title: t('Uh oh, something went wrong'),
         }),
       );

@@ -1286,14 +1286,19 @@ const handleWalletConnectUri =
           const errMsg = t(
             'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
           );
-          throw new Error(errMsg);
+          throw errMsg;
         } else {
-          dispatch(walletConnectV2OnSessionProposal(data));
+          await dispatch(walletConnectV2OnSessionProposal(data));
           navigationRef.navigate('WalletConnect', {
             screen: 'Root',
             params: {},
           });
         }
+      } else {
+        const errMsg = t(
+          'The scanned QR code does not correspond to WalletConnect.',
+        );
+        throw errMsg;
       }
     } catch (e: any) {
       dispatch(
