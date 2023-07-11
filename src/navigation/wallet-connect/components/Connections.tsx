@@ -9,6 +9,7 @@ import {
   WCV2Wallet,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import styled from 'styled-components/native';
+import {findWalletByAddress} from '../../../store/wallet/utils/wallet';
 
 const NoGutter = styled.View`
   margin: 0 -10px;
@@ -28,26 +29,6 @@ const Connections = ({
   const navigation = useNavigation();
   let address, chain: string;
   let wallet: Wallet | undefined;
-
-  const findWalletByAddress = (
-    address: string,
-    chain: string,
-    network: string,
-    keys: {[key in string]: Key},
-  ): Wallet | undefined => {
-    let wallet: Wallet | undefined;
-    for (let key of Object.values(keys)) {
-      wallet = key.wallets.find(
-        w =>
-          w.receiveAddress === address &&
-          w.chain === chain &&
-          w.network === network,
-      );
-      if (wallet) {
-        return wallet;
-      }
-    }
-  };
 
   if (account && keys) {
     // version 2

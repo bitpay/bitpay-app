@@ -55,7 +55,7 @@ import {
   setUserFeedback,
   showBlur,
 } from './app.actions';
-import {AppIdentity} from './app.models';
+import {AppIdentity, InAppNotificationContextType} from './app.models';
 import {
   findKeyByKeyId,
   findWalletByIdHashed,
@@ -94,6 +94,8 @@ import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import {moralisInit} from '../moralis/moralis.effects';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
+import {InAppNotificationMessages} from '../../components/modal/in-app-notification/InAppNotification';
+import {SignClientTypes} from '@walletconnect/types';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -511,6 +513,32 @@ export const startOnGoingProcessModal =
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
     return sleep(100);
+  };
+
+export const startInAppNotification =
+  (
+    key: InAppNotificationMessages,
+    request: SignClientTypes.EventArguments['session_request'],
+    context: InAppNotificationContextType,
+  ): Effect<Promise<void>> =>
+  async (dispatch, getState: () => RootState) => {
+    const store: RootState = getState();
+
+    const _InAppNotificationMessages = {
+      NEW_PENDING_REQUEST: i18n.t('New Pending Request'),
+    };
+
+    // if modal currently active dismiss and sleep to allow animation to complete before showing next
+    if (store.APP.showInAppNotification) {
+      dispatch(AppActions.dismissInAppNotification());
+      await sleep(500);
+    }
+
+    // Translate message before show message
+    const _message = _InAppNotificationMessages[key];
+
+    dispatch(AppActions.showInAppNotification(context, _message, request));
+    return sleep(500);
   };
 
 /**

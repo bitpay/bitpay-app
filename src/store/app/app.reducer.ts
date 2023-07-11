@@ -16,18 +16,22 @@ import {
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
+  InAppNotificationContextType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import uniqBy from 'lodash.uniqby';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import moment from 'moment';
+import {SignClientTypes} from '@walletconnect/types';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
   'appWasInit',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showInAppNotification',
+  'inAppNotificationData',
   'showDecryptPasswordModal',
   'showPinModal',
   'pinModalConfig',
@@ -39,7 +43,11 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'brazeContentCardSubscription',
 ];
 
-export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
+export type ModalId =
+  | 'sheetModal'
+  | 'ongoingProcess'
+  | 'pin'
+  | 'inAppNotification';
 
 export type FeedbackType = {
   time: number;
@@ -78,6 +86,14 @@ export interface AppState {
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
+  showInAppNotification: boolean;
+  inAppNotificationData:
+    | {
+        context: InAppNotificationContextType;
+        message: string;
+        request?: SignClientTypes.EventArguments['session_request'];
+      }
+    | undefined;
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
   notificationsAccepted: boolean;
@@ -152,6 +168,8 @@ const initialState: AppState = {
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: undefined,
+  showInAppNotification: false,
+  inAppNotificationData: undefined,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
   notificationsAccepted: false,
@@ -267,6 +285,20 @@ export const appReducer = (
       return {
         ...state,
         showOnGoingProcessModal: false,
+      };
+
+    case AppActionTypes.SHOW_IN_APP_NOTIFICATION:
+      return {
+        ...state,
+        showInAppNotification: true,
+        inAppNotificationData: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_IN_APP_NOTIFICATION:
+      return {
+        ...state,
+        showInAppNotification: false,
+        inAppNotificationData: undefined,
       };
 
     case AppActionTypes.SHOW_BOTTOM_NOTIFICATION_MODAL:
