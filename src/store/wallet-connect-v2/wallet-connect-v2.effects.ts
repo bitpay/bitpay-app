@@ -77,21 +77,25 @@ export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
 };
 
 export const walletConnectV2OnSessionProposal =
-  (uri: string): Effect<void> =>
+  (uri: string): Effect<Promise<void>> =>
   async dispatch => {
-    try {
-      if (!web3wallet) {
-        web3wallet = await Web3Wallet.init({
-          core,
-          metadata: WALLETCONNECT_V2_METADATA,
-        });
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!web3wallet) {
+          web3wallet = await Web3Wallet.init({
+            core,
+            metadata: WALLETCONNECT_V2_METADATA,
+          });
+        }
+        await web3wallet.core.pairing.pair({uri});
+        resolve();
+      } catch (e) {
+        dispatch(
+          LogActions.error(`[WC-V2/walletConnectV2OnSessionProposal]: ${e}`),
+        );
+        reject(e);
       }
-      await web3wallet.core.pairing.pair({uri});
-    } catch (e) {
-      dispatch(
-        LogActions.error(`[WC-V2/walletConnectV2OnSessionProposal]: ${e}`),
-      );
-    }
+    });
   };
 
 export const walletConnectV2ApproveSessionProposal =

@@ -96,6 +96,37 @@ const WalletConnectConnections = () => {
     setProposal(proposal);
   }, [proposal]);
 
+  const validateWalletConnectUri = async (data: string) => {
+    try {
+      if (isValidWalletConnectUri(data)) {
+        const {version} = parseUri(data);
+        if (version === 1) {
+          const errMsg = t(
+            'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+          );
+          throw errMsg;
+        } else {
+          dispatch(startOnGoingProcessModal('LOADING'));
+          await dispatch(walletConnectV2OnSessionProposal(data));
+        }
+      } else {
+        const errMsg = t(
+          'The scanned QR code does not correspond to WalletConnect.',
+        );
+        throw errMsg;
+      }
+    } catch (err) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(err),
+          title: t('Uh oh, something went wrong'),
+        }),
+      );
+    }
+  };
+
   const ConnectionItem = ({
     peerName,
     peerIcon,
@@ -192,34 +223,8 @@ const WalletConnectConnections = () => {
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
-                  onScanComplete: async data => {
-                    if (isValidWalletConnectUri(data)) {
-                      const {version} = parseUri(data);
-                      if (version === 1) {
-                        const errMsg = t(
-                          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
-                        );
-                        await showErrorMessage(
-                          CustomErrorMessage({
-                            errMsg,
-                            title: t('Uh oh, something went wrong'),
-                          }),
-                        );
-                      } else {
-                        dispatch(startOnGoingProcessModal('LOADING'));
-                        dispatch(walletConnectV2OnSessionProposal(data));
-                      }
-                    } else {
-                      const errMsg = t(
-                        'The scanned QR code does not correspond to WalletConnect.',
-                      );
-                      await showErrorMessage(
-                        CustomErrorMessage({
-                          errMsg,
-                          title: t('Uh oh, something went wrong'),
-                        }),
-                      );
-                    }
+                  onScanComplete: data => {
+                    validateWalletConnectUri(data);
                   },
                 },
               });
