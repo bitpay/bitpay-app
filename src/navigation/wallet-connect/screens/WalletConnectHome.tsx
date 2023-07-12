@@ -56,6 +56,7 @@ import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
 export type WalletConnectHomeParamList = {
   topic?: string;
   wallet: Wallet;
+  context?: 'notification' | undefined;
 };
 
 const SummaryContainer = styled.View`
@@ -93,7 +94,7 @@ const WalletConnectHome = () => {
   const [accountDisconnected, setAccountDisconnected] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const {
-    params: {topic, wallet},
+    params: {topic, wallet, context},
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
 
   // version 2
@@ -102,14 +103,16 @@ const WalletConnectHome = () => {
       WALLET_CONNECT_V2.sessions.find(session => session.topic === topic),
   );
   const requestsV2 = useAppSelector(({WALLET_CONNECT_V2}) =>
-    WALLET_CONNECT_V2.requests.filter(
-      request =>
-        request.topic === topic &&
-        getAddressFrom(request).toLowerCase() ===
-          wallet.receiveAddress?.toLowerCase() &&
-        WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId].chain ===
-          wallet.chain,
-    ),
+    WALLET_CONNECT_V2.requests
+      .filter(
+        request =>
+          request.topic === topic &&
+          getAddressFrom(request).toLowerCase() ===
+            wallet.receiveAddress?.toLowerCase() &&
+          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId].chain ===
+            wallet.chain,
+      )
+      .reverse(),
   );
 
   const {peer} = sessionV2 || {};
@@ -258,6 +261,12 @@ const WalletConnectHome = () => {
       navigation.goBack();
     }
   }, [accountDisconnected]);
+
+  useEffect(() => {
+    if (context && ['notification'].includes(context)) {
+      goToConfirmView(requestsV2[0]);
+    }
+  }, [context]);
 
   const renderItem = useCallback(({item, index}) => {
     const {createdOn, chain: _chain} = item;

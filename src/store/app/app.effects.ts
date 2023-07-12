@@ -538,7 +538,6 @@ export const startInAppNotification =
     const _message = _InAppNotificationMessages[key];
 
     dispatch(AppActions.showInAppNotification(context, _message, request));
-    return sleep(500);
   };
 
 /**

@@ -12,8 +12,9 @@ import {dismissInAppNotification} from '../../../store/app/app.actions';
 import haptic from '../../haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import {WIDTH} from '../../styled/Containers';
-import {CommonActions, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {getWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
+import {sleep} from '../../../utils/helper-methods';
 
 export type InAppNotificationMessages = 'NEW_PENDING_REQUEST';
 
@@ -79,49 +80,32 @@ const InAppNotification: React.FC = () => {
     }
   };
 
-  const goToWalletConnectRequestDetails = () => {
+  const goToWalletConnectRequestDetails = async () => {
     haptic('impactLight');
     dispatch(dismissInAppNotification());
+
+    await sleep(0);
 
     const wallet = request && dispatch(getWalletByRequest(request));
     if (!wallet) {
       return;
     }
 
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 2,
-        routes: [
-          {
-            name: 'Tabs',
-            params: {screen: 'Settings'},
-          },
-          {
-            name: 'WalletConnect',
-            params: {
-              screen: 'WalletConnectConnections',
-            },
-          },
-          {
-            name: 'WalletConnect',
-            params: {
-              screen: 'WalletConnectHome',
-              params: {
-                topic: request?.topic,
-                wallet,
-              },
-            },
-          },
-        ],
-      }),
-    );
+    navigation.navigate('WalletConnect', {
+      screen: 'WalletConnectHome',
+      params: {
+        topic: request?.topic,
+        wallet,
+        context: 'notification',
+      },
+    });
   };
 
   return (
     <BaseModal
       id={'inAppNotification'}
       isVisible={appWasInit && isVisible}
-      backdropOpacity={theme.dark ? 0.8 : 0.6}
+      backdropOpacity={0.4}
       animationIn={'fadeInDown'}
       animationOut={'fadeOutUp'}
       backdropTransitionOutTiming={0}
@@ -134,7 +118,7 @@ const InAppNotification: React.FC = () => {
         marginTop: insets.top,
       }}
       onBackdropPress={onBackdropPress}>
-      <InAppContainer onPress={goToNextView}>
+      <InAppContainer onPress={goToNextView} activeOpacity={1}>
         <Row>
           <MessageContainer>
             {context === 'walletconnect' ? (
