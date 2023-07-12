@@ -239,6 +239,21 @@ const WalletConnectHome = () => {
     }
   };
 
+  const handleRequestMethod = (request: WCV2RequestType) => {
+    const {method} = request.params.request;
+    method !== 'eth_sendTransaction' && method !== 'eth_signTransaction'
+      ? navigation.navigate('WalletConnect', {
+          screen: 'WalletConnectRequestDetails',
+          params: {
+            request,
+            wallet,
+            peerName,
+            topic,
+          },
+        })
+      : goToConfirmView(request);
+  };
+
   useEffect(() => {
     if (!clipboardObj.copied) {
       return;
@@ -264,7 +279,7 @@ const WalletConnectHome = () => {
 
   useEffect(() => {
     if (context && ['notification'].includes(context)) {
-      goToConfirmView(requestsV2[0]);
+      handleRequestMethod(requestsV2[0]);
     }
   }, [context]);
 
@@ -278,24 +293,13 @@ const WalletConnectHome = () => {
         parseInt(value, 16),
       ),
     );
-    const {method} = item.params.request;
 
     return (
       <View key={index.toString()}>
         <ItemTouchableContainer
           onPress={() => {
             haptic('impactLight');
-            method !== 'eth_sendTransaction' && method !== 'eth_signTransaction'
-              ? navigation.navigate('WalletConnect', {
-                  screen: 'WalletConnectRequestDetails',
-                  params: {
-                    request: item,
-                    wallet,
-                    peerName,
-                    topic,
-                  },
-                })
-              : goToConfirmView(item);
+            handleRequestMethod(item);
           }}>
           <ItemTitleContainer style={{maxWidth: '40%'}}>
             {peerIcon && peerName ? (
