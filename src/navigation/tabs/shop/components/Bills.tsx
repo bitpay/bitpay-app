@@ -193,8 +193,8 @@ export const Bills = () => {
                     buttonStyle="secondary"
                     onPress={() =>
                       navigation.navigate('Bill', {
-                        screen: BillScreens.PAY_ALL_BILLS,
-                        params: {accounts},
+                        screen: BillScreens.CONNECT_BILLS,
+                        params: {},
                       })
                     }>
                     {t('Connect More Bills')}
