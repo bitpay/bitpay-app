@@ -28,4 +28,4 @@ export interface HomeCarouselConfig {
 
 export type HomeCarouselLayoutType = 'carousel' | 'listView';
 
-export type InAppNotificationContextType = 'walletconnect';
+export type InAppNotificationContextType = 'notification';

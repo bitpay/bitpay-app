@@ -7,7 +7,6 @@ import {BaseText} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import WalletConnectIcon from '../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTheme} from 'styled-components';
 import {dismissInAppNotification} from '../../../store/app/app.actions';
 import haptic from '../../haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
@@ -59,7 +58,6 @@ const MessageContainer = styled.View`
 
 const InAppNotification: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isVisible = useAppSelector(({APP}) => APP.showInAppNotification);
@@ -75,7 +73,7 @@ const InAppNotification: React.FC = () => {
   };
 
   const goToNextView = () => {
-    if (context === 'walletconnect') {
+    if (context === 'notification') {
       goToWalletConnectRequestDetails();
     }
   };
@@ -121,7 +119,7 @@ const InAppNotification: React.FC = () => {
       <InAppContainer onPress={goToNextView} activeOpacity={1}>
         <Row>
           <MessageContainer>
-            {context === 'walletconnect' ? (
+            {context === 'notification' ? (
               <WalletConnectIconContainer>
                 <WalletConnectIcon width={20} height={20} />
               </WalletConnectIconContainer>

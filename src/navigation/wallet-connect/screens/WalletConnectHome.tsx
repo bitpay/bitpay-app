@@ -52,11 +52,12 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {WalletConnectHeader} from '../WalletConnectStack';
 import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
+import {InAppNotificationContextType} from '../../../store/app/app.models';
 
 export type WalletConnectHomeParamList = {
   topic?: string;
   wallet: Wallet;
-  context?: 'notification' | undefined;
+  context?: InAppNotificationContextType;
 };
 
 const SummaryContainer = styled.View`
