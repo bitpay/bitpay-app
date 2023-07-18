@@ -182,7 +182,7 @@ const SwapCryptoRoot: React.FC = () => {
   const [useSendMax, setUseSendMax] = useState<boolean>(false);
   const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
 
-  const selectedWallet = route.params?.selectedWallet;
+  let selectedWallet = route.params?.selectedWallet;
   const SupportedEthereumTokens: string[] = SUPPORTED_ETHEREUM_TOKENS;
   const SupportedMaticTokens: string[] = SUPPORTED_MATIC_TOKENS;
   const SupportedChains: string[] = SUPPORTED_COINS;
@@ -900,6 +900,50 @@ const SwapCryptoRoot: React.FC = () => {
           'Our partner Changelly is not currently available. Please try again later.',
         );
         showError(msg, undefined, undefined, true);
+      }
+
+      if (selectedWallet?.chain && selectedWallet?.currencyAbbreviation) {
+        const selectedWalletSymbol = getCurrencyAbbreviation(
+          selectedWallet!.currencyAbbreviation,
+          selectedWallet!.chain,
+        );
+        const isSelectedWalletSymbolEnabled = supportedCoins.find(
+          supportedCoin => supportedCoin.symbol === selectedWalletSymbol,
+        );
+        if (!isSelectedWalletSymbolEnabled) {
+          logger.error(
+            `Changelly has temporarily disabled fixed-rates swaps for ${selectedWalletSymbol}`,
+          );
+          const actions = [
+            {
+              text: t('OK'),
+              action: () => {
+                navigation.goBack();
+              },
+              primary: true,
+            },
+            {
+              text: t('Submit a ticket'),
+              action: async () => {
+                await sleep(1000);
+                dispatch(
+                  openUrlWithInAppBrowser(
+                    'https://support.changelly.com/en/support/tickets/new',
+                  ),
+                );
+                navigation.goBack();
+              },
+              primary: true,
+            },
+          ];
+          const title = t('Changelly Error');
+          const msg = t(
+            'Changelly has temporarily disabled fixed-rate swaps for the selected wallet curreny. If you have further questions please reach out to them.',
+          );
+          selectedWallet = undefined;
+          showError(msg, title, actions, true);
+          return;
+        }
       }
 
       const coinsToRemove =
