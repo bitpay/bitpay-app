@@ -530,17 +530,6 @@ export default () => {
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
   }, [dispatch]);
 
-  // Keyboard event listener
-  useEffect(() => {
-    // if you want to react to keyDown
-    KeyEvent.onKeyDownListener((keyEvent: any) => {
-      console.log(`#### onKeyDown keyCode: ${keyEvent.keyCode}`);
-      console.log(`#### Action: ${keyEvent.action}`);
-      console.log(`#### Key: ${keyEvent.pressedKey}`);
-    });
-    return () => KeyEvent.removeKeyDownListener();
-  }, []);
-
   // THEME
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
