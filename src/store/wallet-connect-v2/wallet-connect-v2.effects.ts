@@ -186,6 +186,9 @@ export const walletConnectV2SubscribeToEvents =
       if (
         Object.keys(WALLET_CONNECT_SUPPORTED_CHAINS).includes(
           event.params.chainId,
+        ) &&
+        Object.values(EIP155_SIGNING_METHODS).includes(
+          event.params.request.method,
         )
       ) {
         const {name, params} =

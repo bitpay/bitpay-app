@@ -79,7 +79,13 @@ const WalletConnectStart = () => {
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
   // version 2
   const {id, params} = proposal || {};
-  const {proposer, requiredNamespaces, relays, pairingTopic} = params || {};
+  const {
+    proposer,
+    requiredNamespaces,
+    relays,
+    pairingTopic,
+    optionalNamespaces,
+  } = params || {};
   const {metadata} = proposer || {};
 
   const peerName = metadata?.name;
@@ -129,8 +135,18 @@ const WalletConnectStart = () => {
             });
             namespaces[key] = {
               accounts: [...new Set(accounts)],
-              methods: requiredNamespaces[key].methods,
-              events: requiredNamespaces[key].events,
+              methods: [
+                ...requiredNamespaces[key].methods,
+                ...(optionalNamespaces && optionalNamespaces[key]
+                  ? optionalNamespaces[key]?.methods
+                  : []),
+              ],
+              events: [
+                ...requiredNamespaces[key].events,
+                ...(optionalNamespaces && optionalNamespaces[key]
+                  ? optionalNamespaces[key]?.events
+                  : []),
+              ],
             };
           });
         if (id && relays) {
