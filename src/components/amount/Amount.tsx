@@ -23,6 +23,7 @@ import useAppSelector from '../../utils/hooks/useAppSelector';
 import CurrencySymbol from '../icons/currency-symbol/CurrencySymbol';
 import {useLogger} from '../../utils/hooks/useLogger';
 import {getBuyCryptoFiatLimits} from '../../store/buy-crypto/buy-crypto.effects';
+import KeyEvent from 'react-native-keyevent';
 
 const AmountContainer = styled.View`
   flex: 1;
@@ -239,6 +240,9 @@ const Amount: React.VFC<AmountProps> = ({
         newValue = '';
         break;
       case 'backspace':
+        if (curValRef.current.length === 0) {
+          return;
+        }
         newValue = curValRef.current.slice(0, -1);
         break;
       case '.':
@@ -375,6 +379,22 @@ const Amount: React.VFC<AmountProps> = ({
   useEffect(() => {
     initRef.current();
     initLimits();
+    KeyEvent.onKeyUpListener((keyEvent: any) => {
+      if (keyEvent.pressedKey === '\b') {
+        onCellPress('backspace');
+      } else if (keyEvent.pressedKey === '\r' && !continueIsDisabled()) {
+        onSubmit?.(+curValRef.current);
+      } else if (keyEvent.pressedKey === 'UIKeyInputEscape') {
+        onCellPress('reset');
+      } else if (keyEvent.pressedKey === '0') {
+        onCellPress('0');
+      } else if (keyEvent.pressedKey === '.') {
+        onCellPress('.');
+      } else if (Number(keyEvent.pressedKey)) {
+        onCellPress(keyEvent.pressedKey);
+      }
+    });
+    return () => KeyEvent.removeKeyUpListener();
   }, []);
 
   return (
