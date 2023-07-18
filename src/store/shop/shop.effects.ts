@@ -319,20 +319,22 @@ export const startGetBillPayAccounts =
         }
         return res.data.data as BillPayAccount[];
       });
-    const billPayAccounts = accounts.map(account => ({
-      ...account,
-      [account.type]: {
-        ...account[account.type],
-        paddedNextPaymentDueDate:
-          account[account.type].paddedNextPaymentDueDate ||
-          account[account.type].nextPaymentDueDate,
-        description: `${account[account.type].type
-          .replace(/_/g, ' ')
-          .split(' ')
-          .map(word => `${word[0].toUpperCase()}${word.slice(1)}`)
-          .join(' ')} ****${account[account.type].mask}`,
-      },
-    }));
+    const billPayAccounts = accounts
+      .filter(account => !!account.type && !!account[account.type])
+      .map(account => ({
+        ...account,
+        [account.type]: {
+          ...account[account.type],
+          paddedNextPaymentDueDate:
+            account[account.type].paddedNextPaymentDueDate ||
+            account[account.type].nextPaymentDueDate,
+          description: `${account[account.type].type
+            .replace(/_/g, ' ')
+            .split(' ')
+            .map(word => `${word[0].toUpperCase()}${word.slice(1)}`)
+            .join(' ')} ****${account[account.type].mask}`,
+        },
+      }));
     dispatch(ShopActions.setBillPayAccounts({accounts: billPayAccounts}));
     return billPayAccounts;
   };

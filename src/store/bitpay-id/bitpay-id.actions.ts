@@ -185,6 +185,13 @@ export const failedFetchBasicInfo = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_FETCH_BASIC_INFO,
 });
 
+export const successResetMethodUser = (
+  network: Network,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_RESET_METHOD_USER,
+  payload: {network},
+});
+
 export const updateFetchBasicInfoStatus = (
   status: FetchBasicInfoStatus,
 ): BitPayIdActionType => ({

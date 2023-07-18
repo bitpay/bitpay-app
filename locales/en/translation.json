@@ -887,6 +887,8 @@
   "Locked": "Locked",
   "The amount of stored in this wallet that is allocated as inputs to your pending transaction proposals. The amount is determined using unspent transaction outputs associated with this wallet and may be more than the actual amounts associated with your pending transaction proposals.": "The amount of {{currencyName}} stored in this wallet that is allocated as inputs to your pending transaction proposals. The amount is determined using unspent transaction outputs associated with this wallet and may be more than the actual amounts associated with your pending transaction proposals.",
   "WeCouldntFindMatchForArg": "We couldn't find a match for <0>{{query}}</0>.",
+  "BillPayPitch": "Pay bills straight from your <0>{{wallet}}</0>",
+  "BillPayUnavailableInYourLocation": "Currently Bill Pay is only supported in these <0>{{states}}</0> within the United States. However, we are constantly adding support for new locations. Check back soon.",
   "Add Custom Token": "Add Custom Token",
   "Enter encryption password": "Enter encryption password",
   "Warning!": "Warning!",
