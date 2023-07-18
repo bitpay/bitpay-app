@@ -150,7 +150,6 @@ const WalletConnectStart = () => {
             };
           });
         if (id && relays) {
-          dispatch(sessionProposal());
           await dispatch(
             walletConnectV2ApproveSessionProposal(
               id,

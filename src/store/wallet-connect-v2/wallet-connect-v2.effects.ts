@@ -37,6 +37,7 @@ import {Web3Wallet, IWeb3Wallet} from '@walletconnect/web3wallet';
 import {WALLET_CONNECT_V2_PROJECT_ID} from '@env';
 import {startInAppNotification} from '../app/app.effects';
 import {navigationRef} from '../../Root';
+import {sessionProposal} from './wallet-connect-v2.actions';
 
 const BWC = BwcProvider.getInstance();
 
@@ -124,6 +125,7 @@ export const walletConnectV2ApproveSessionProposal =
             pairingTopic,
           }),
         );
+        dispatch(sessionProposal());
         resolve();
       } catch (err) {
         dispatch(
@@ -151,6 +153,7 @@ export const walletConnectV2RejectSessionProposal =
           '[WC-V2/walletConnectV2RejectSessionProposal]: session proposal rejection',
         ),
       );
+      dispatch(sessionProposal());
     } catch (e) {
       dispatch(
         LogActions.error(
