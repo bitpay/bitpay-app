@@ -45,6 +45,16 @@ public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void addListener(String eventName) {
+    // no-op
+  }
+
+  @ReactMethod
+  public void removeListeners(Integer count) {
+    // no-op
+  }
+
+  @ReactMethod
   public void startPushProvision(String opc, String name, String lastFourDigits, Promise promise) {
 
     GooglePushProvisioningModule self = this;
