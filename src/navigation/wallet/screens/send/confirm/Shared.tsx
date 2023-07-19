@@ -101,6 +101,10 @@ export const DetailsList = styled(ScrollView)`
   padding: 0 ${ScreenGutter};
 `;
 
+export const DetailsListNoScroll = styled.View`
+  padding: 0 ${ScreenGutter};
+`;
+
 export const ConfirmSubText = styled(H7)`
   color: ${({theme}) => (theme.dark ? LuckySevens : theme.colors.text)};
 `;

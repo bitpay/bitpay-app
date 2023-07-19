@@ -9,6 +9,8 @@ export const basicInfoFields = `
   eid
   incentiveLevel
   incentiveLevelId
+  methodEntityId
+  phone
   name
   country
   state

@@ -379,6 +379,19 @@ export const bitPayIdReducer = (
       };
     }
 
+    case BitPayIdActionTypes.SUCCESS_RESET_METHOD_USER: {
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          [action.payload.network]: {
+            ...state.user[action.payload.network],
+            methodEntityId: undefined,
+          },
+        },
+      };
+    }
+
     case BitPayIdActionTypes.SUCCESS_FETCH_RECEIVING_ADDRESSES: {
       return {
         ...state,

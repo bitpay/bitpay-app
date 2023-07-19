@@ -26,6 +26,7 @@ import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 interface BillItemProps {
   account: BillPayAccount;
@@ -228,6 +229,11 @@ export default ({
                             'We are currently unable to process payments for this bill. We are actively working on a solution.',
                           ),
                         }),
+                      ),
+                    );
+                    dispatch(
+                      Analytics.track(
+                        'Bill Pay — Clicked Unable To Pay Bill Learn More',
                       ),
                     );
                   }}>

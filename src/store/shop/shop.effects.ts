@@ -319,20 +319,22 @@ export const startGetBillPayAccounts =
         }
         return res.data.data as BillPayAccount[];
       });
-    const billPayAccounts = accounts.map(account => ({
-      ...account,
-      [account.type]: {
-        ...account[account.type],
-        paddedNextPaymentDueDate:
-          account[account.type].paddedNextPaymentDueDate ||
-          account[account.type].nextPaymentDueDate,
-        description: `${account[account.type].type
-          .replace(/_/g, ' ')
-          .split(' ')
-          .map(word => `${word[0].toUpperCase()}${word.slice(1)}`)
-          .join(' ')} ****${account[account.type].mask}`,
-      },
-    }));
+    const billPayAccounts = accounts
+      .filter(account => !!account.type && !!account[account.type])
+      .map(account => ({
+        ...account,
+        [account.type]: {
+          ...account[account.type],
+          paddedNextPaymentDueDate:
+            account[account.type].paddedNextPaymentDueDate ||
+            account[account.type].nextPaymentDueDate,
+          description: `${account[account.type].type
+            .replace(/_/g, ' ')
+            .split(' ')
+            .map(word => `${word[0].toUpperCase()}${word.slice(1)}`)
+            .join(' ')} ****${account[account.type].mask}`,
+        },
+      }));
     dispatch(ShopActions.setBillPayAccounts({accounts: billPayAccounts}));
     return billPayAccounts;
   };
@@ -364,6 +366,21 @@ export const startFindBillPayments =
       }),
     );
     return billPayPayments;
+  };
+
+export const startHideBillPayAccount =
+  (accountId: string): Effect<Promise<string>> =>
+  async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const status = await BitPayIdApi.getInstance()
+      .request('hideAccount', BITPAY_ID.apiToken[APP_NETWORK], {accountId})
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as string;
+      });
+    return status;
   };
 
 export const startCheckIfBillPayAvailable =

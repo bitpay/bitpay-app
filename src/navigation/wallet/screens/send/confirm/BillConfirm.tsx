@@ -1,5 +1,9 @@
 import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import {HeaderRightContainer} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -50,9 +54,12 @@ import haptic from '../../../../../components/haptic-feedback/haptic';
 import BillAlert from '../../../../tabs/shop/bill/components/BillAlert';
 import PaymentSent from '../../../components/PaymentSent';
 import {WalletScreens} from '../../../WalletStack';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {getBillAccountEventParams} from '../../../../tabs/shop/bill/utils';
 
 export interface BillConfirmParamList {
   amount: number;
+  amountType?: string;
   billPayAccount: BillPayAccount;
 }
 
@@ -65,6 +72,7 @@ const Confirm: React.FC<
   const route = useRoute<RouteProp<BillStackParamList, 'BillConfirm'>>();
   const {
     amount,
+    amountType,
     billPayAccount,
     wallet: _wallet,
     recipient: _recipient,
@@ -87,6 +95,16 @@ const Confirm: React.FC<
   const [txp, updateTxp] = useState(_txp);
   const {fee, networkCost, sendingFrom, total} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+
+  const baseEventParams = {
+    ...getBillAccountEventParams(billPayAccount),
+    amount,
+    amountType,
+    ...((wallet || coinbaseAccount) && {
+      coin: wallet ? wallet.currencyAbbreviation : coinbaseAccount?.currency,
+      walletType: wallet ? 'BitPay Wallet' : 'Coinbase Account',
+    }),
+  };
 
   const memoizedKeysAndWalletsList = useMemo(
     () =>
@@ -128,11 +146,20 @@ const Confirm: React.FC<
     });
   }, [navigation, t]);
 
+  useFocusEffect(() => {
+    dispatch(
+      Analytics.track('Bill Pay — Viewed Confirm Page', baseEventParams),
+    );
+  });
+
   const openWalletSelector = async (delay?: number) => {
     if (delay) {
       await sleep(delay);
     }
     setWalletSelectorVisible(true);
+    dispatch(
+      Analytics.track('Bill Pay - Viewed Wallet Selector', baseEventParams),
+    );
   };
 
   const createBillPayInvoice = async ({
@@ -211,6 +238,8 @@ const Confirm: React.FC<
       setConvenienceFee(serviceFee);
       setSubtotal(totalBillAmount);
       dispatch(dismissOnGoingProcessModal());
+      await sleep(1000);
+      dispatch(Analytics.track('Bill Pay — Selected Wallet', baseEventParams));
     } catch (err) {
       handleBillPayInvoiceOrTxpError(err);
     }
@@ -264,6 +293,8 @@ const Confirm: React.FC<
       setConvenienceFee(serviceFee);
       setSubtotal(totalBillAmount);
       dispatch(dismissOnGoingProcessModal());
+      await sleep(1000);
+      dispatch(Analytics.track('Bill Pay — Selected Wallet', baseEventParams));
     } catch (err: any) {
       handleBillPayInvoiceOrTxpError(err);
     }
@@ -288,6 +319,9 @@ const Confirm: React.FC<
     await sleep(400);
     setShowPaymentSentModal(true);
     dispatch(ShopEffects.startFindBillPayments()).catch(_ => {});
+    dispatch(
+      Analytics.track('Bill Pay — Successful Bill Paid', baseEventParams),
+    );
   };
 
   const showError = ({
@@ -328,6 +362,7 @@ const Confirm: React.FC<
     });
     await sleep(400);
     setResetSwipeButton(true);
+    dispatch(Analytics.track('Bill Pay — Failed Bill Paid', baseEventParams));
   };
 
   const request2FA = async () => {
@@ -432,6 +467,12 @@ const Confirm: React.FC<
             title={t('Slide to send')}
             forceReset={resetSwipeButton}
             onSwipeComplete={async () => {
+              dispatch(
+                Analytics.track(
+                  'Bill Pay — Clicked Slide to Confirm',
+                  baseEventParams,
+                ),
+              );
               try {
                 await sendPayment();
                 await handlePaymentSuccess();

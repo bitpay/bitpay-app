@@ -340,6 +340,13 @@ const ShopHome: React.FC<
                       ? t('Pay Bills')
                       : t('Shop Online'),
                   );
+                  if (tab.target.includes(ShopTabs.BILLS)) {
+                    dispatch(
+                      Analytics.track('Bill Pay - Clicked Bill Pay', {
+                        context: 'Shop Tab',
+                      }),
+                    );
+                  }
                 }
               },
             }}>

@@ -63,7 +63,7 @@ const BackSvg: React.FC<BackSvgProps> = ({color, background, opacity}) => {
 };
 
 const BackContainer = styled.View<{platform: string}>`
-  padding-top: 10px;
+  padding-top: 5px;
   transform: scale(1.1);
   ${({platform}) =>
     platform === 'ios' &&
