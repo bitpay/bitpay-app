@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -23,17 +23,27 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {parseUri} from '@walletconnect/utils';
 import WCV2WalletSelector from '../components/WCV2WalletSelector';
-import {walletConnectV2OnSessionProposal} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
+import {
+  walletConnectV2OnSessionProposal,
+  walletConnectV2RejectSessionProposal,
+} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {SignClientTypes} from '@walletconnect/types';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Button from '../../../components/button/Button';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {
+  SearchContainer,
+  SearchInput,
+} from '../../../components/styled/Containers';
+import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 
-export type WalletConnectIntroParamList = {};
+export type WalletConnectIntroParamList = {
+  uri?: string;
+};
 
 const LinkContainer = styled.View`
   padding-top: 5px;
-  padding-bottom: 57px;
+  padding-bottom: 30px;
 `;
 
 const WalletConnectIntro = () => {
@@ -48,6 +58,10 @@ const WalletConnectIntro = () => {
     useState(false);
   const showWalletSelectorV2 = () => setWalletSelectorV2ModalVisible(true);
   const hideWalletSelectorV2 = () => setWalletSelectorV2ModalVisible(false);
+  const {
+    params: {uri: _uri},
+  } = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();
+  const [uri, setUri] = useState(_uri || '');
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
@@ -70,6 +84,15 @@ const WalletConnectIntro = () => {
     setProposal(proposal);
   }, [proposal]);
 
+  useEffect(() => {
+    return navigation.addListener('beforeRemove', e => {
+      if (e.data.action.type === 'POP') {
+        proposal && dispatch(walletConnectV2RejectSessionProposal(proposal.id));
+        navigation.goBack();
+      }
+    });
+  }, [navigation]);
+
   const validateWalletConnectUri = async (data: string) => {
     try {
       if (isValidWalletConnectUri(data)) {
@@ -84,20 +107,27 @@ const WalletConnectIntro = () => {
           await dispatch(walletConnectV2OnSessionProposal(data));
         }
       } else {
-        const errMsg = t(
-          'The scanned QR code does not correspond to WalletConnect.',
-        );
+        const errMsg = t('The URI does not correspond to WalletConnect.');
         throw errMsg;
       }
-    } catch (err) {
+    } catch (err: any) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
-      await showErrorMessage(
-        CustomErrorMessage({
-          errMsg: BWCErrorMessage(err),
-          title: t('Uh oh, something went wrong'),
-        }),
-      );
+      if (
+        proposal &&
+        typeof err === 'object' &&
+        err !== null &&
+        err.message?.includes('Pairing already exists:')
+      ) {
+        showWalletSelectorV2();
+      } else {
+        await showErrorMessage(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(err),
+            title: t('Uh oh, something went wrong'),
+          }),
+        );
+      }
     }
   };
 
@@ -118,21 +148,38 @@ const WalletConnectIntro = () => {
             <Link>{t('Learn More')}</Link>
           </TouchableOpacity>
         </LinkContainer>
+        <SearchContainer>
+          <SearchInput
+            placeholder={t('WalletConnect URI')}
+            onChangeText={(text: string) => {
+              setUri(text);
+            }}
+            value={uri}
+          />
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={() => {
+              navigation.navigate('Scan', {
+                screen: 'Root',
+                params: {
+                  onScanComplete: (data: string) => {
+                    validateWalletConnectUri(data);
+                  },
+                },
+              });
+            }}>
+            <ScanSvg />
+          </TouchableOpacity>
+        </SearchContainer>
         <Button
           buttonStyle={'primary'}
           onPress={() => {
-            navigation.navigate('Scan', {
-              screen: 'Root',
-              params: {
-                onScanComplete: (data: string) => {
-                  validateWalletConnectUri(data);
-                },
-              },
-            });
+            validateWalletConnectUri(uri);
           }}>
           {t('Connect')}
         </Button>
       </ScrollView>
+
       {dappProposal ? (
         <WCV2WalletSelector
           isVisible={walletSelectorV2ModalVisible}

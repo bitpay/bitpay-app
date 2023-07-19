@@ -1278,7 +1278,7 @@ const handleSimplexUri =
 
 const handleWalletConnectUri =
   (data: string): Effect<void> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     try {
       if (isValidWalletConnectUri(data)) {
         const {version} = parseUri(data);
@@ -1295,20 +1295,31 @@ const handleWalletConnectUri =
           });
         }
       } else {
-        const errMsg = t(
-          'The scanned QR code does not correspond to WalletConnect.',
-        );
+        const errMsg = t('The URI does not correspond to WalletConnect.');
         throw errMsg;
       }
     } catch (e: any) {
-      dispatch(
-        showBottomNotificationModal(
-          CustomErrorMessage({
-            errMsg: BWCErrorMessage(e),
-            title: t('Uh oh, something went wrong'),
-          }),
-        ),
-      );
+      const proposal = getState().WALLET_CONNECT_V2.proposal;
+      if (
+        proposal &&
+        typeof e === 'object' &&
+        e !== null &&
+        e.message?.includes('Pairing already exists:')
+      ) {
+        navigationRef.navigate('WalletConnect', {
+          screen: 'Root',
+          params: {uri: data},
+        });
+      } else {
+        dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(e),
+              title: t('Uh oh, something went wrong'),
+            }),
+          ),
+        );
+      }
     }
   };
 
