@@ -185,21 +185,6 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
-          <Styled.SettingsLink
-            Icon={OffersIcon}
-            onPress={() => {
-              dispatch(
-                Analytics.track('Clicked Card Offer', {
-                  context: 'Card Settings',
-                }),
-              );
-              dispatch(CardEffects.startOpenDosh());
-            }}>
-            {t('Card Offers')}
-          </Styled.SettingsLink>
-
-          <Hr />
-
           {orderPhysical ? (
             <>
               <Styled.SettingsLink
