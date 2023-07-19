@@ -17,7 +17,7 @@ import {
   SectionContainer,
   SectionHeader,
 } from '../../components/styled/ShopTabComponents';
-import {formatFiatAmount} from '../../../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import moment from 'moment';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
@@ -35,6 +35,9 @@ import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {BillAccountPill} from '../components/BillAccountPill';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
+import {ShopEffects} from '../../../../../store/shop';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 
 const BillPayOption = styled.View<{hasBorderTop?: boolean}>`
   flex-direction: row;
@@ -101,6 +104,7 @@ const PayBill = ({
   const dispatch = useAppDispatch();
   const {account} = route.params;
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
+  const [removingBill, setRemovingBill] = useState(false);
 
   const initialSelectedAmount = account[account.type].nextPaymentMinimumAmount
     ? 'nextPaymentMinimumAmount'
@@ -110,6 +114,16 @@ const PayBill = ({
   const [selectedAmount, setSelectedAmount] = useState(initialSelectedAmount);
 
   const baseEventParams = getBillAccountEventParams(account);
+
+  const removeBill = async () => {
+    setRemovingBill(true);
+    dispatch(startOnGoingProcessModal('REMOVING_BILL'));
+    await dispatch(ShopEffects.startHideBillPayAccount(account.id));
+    await dispatch(ShopEffects.startGetBillPayAccounts());
+    dispatch(dismissOnGoingProcessModal());
+    navigation.pop();
+    dispatch(Analytics.track('Bill Pay — Removed Bill', baseEventParams));
+  };
 
   const sheetOptions: Array<Option> = [
     {
@@ -128,6 +142,30 @@ const PayBill = ({
         return (
           <BillOption isLast={false}>
             <H5>{t('View Payment History')}</H5>
+          </BillOption>
+        );
+      },
+    },
+    {
+      onPress: async () => {
+        removeBill().catch(async err => {
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          dispatch(
+            AppActions.showBottomNotificationModal(
+              CustomErrorMessage({
+                title: t('Could not remove bill'),
+                errMsg: err.message,
+              }),
+            ),
+          );
+          setRemovingBill(false);
+        });
+      },
+      optionElement: () => {
+        return (
+          <BillOption isLast={false}>
+            <H5>{t('Remove Bill')}</H5>
           </BillOption>
         );
       },
@@ -363,6 +401,7 @@ const PayBill = ({
           elevation: 5,
         }}>
         <Button
+          disabled={removingBill}
           onPress={() => {
             selectedAmount === 'other'
               ? goToAmountScreen()
