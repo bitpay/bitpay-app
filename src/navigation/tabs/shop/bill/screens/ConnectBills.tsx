@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import WebView from 'react-native-webview';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -26,7 +26,7 @@ const ConnectBills = ({
     ({BITPAY_ID}) => BITPAY_ID.apiToken[APP_NETWORK],
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

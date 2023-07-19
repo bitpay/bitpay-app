@@ -1007,8 +1007,8 @@ export const incomingShopLink =
         });
       }
     } else if (route.name === 'billpay') {
-      navigationRef.navigate('Shop', {
-        screen: ShopScreens.HOME,
+      navigationRef.navigate(RootStacks.TABS, {
+        screen: TabsScreens.SHOP,
         params: {
           screen: ShopTabs.BILLS,
         },

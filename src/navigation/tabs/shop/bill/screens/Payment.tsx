@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillStackParamList} from '../BillStack';
@@ -102,7 +102,7 @@ const Payment = ({
     },
   ];
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTransparent: true,
       headerTitle: () => {

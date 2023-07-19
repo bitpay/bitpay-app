@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillStackParamList} from '../BillStack';
@@ -26,7 +26,7 @@ const Payments = ({
     ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
   ) as BillPayAccount[];
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
         return (

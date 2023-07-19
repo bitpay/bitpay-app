@@ -2,7 +2,6 @@ import debounce from 'lodash.debounce';
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -33,7 +32,6 @@ import {
 import {APP_NETWORK} from '../../../constants/config';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
-import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
 import {
   useFocusEffect,
@@ -45,8 +43,11 @@ import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {TabsScreens, TabsStackParamList} from '../TabsStack';
 import {Bills} from './components/Bills';
 import {HEIGHT} from '../../../components/styled/Containers';
+
+export type ShopStackScreenProps = StackScreenProps<TabsStackParamList, TabsScreens.SHOP>;
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -122,9 +123,7 @@ const getScrollViewHeight = (
     : getShopOnlineScrollViewHeight(integrationsCategories);
 };
 
-const ShopHome: React.FC<
-  StackScreenProps<ShopStackParamList, ShopScreens.HOME>
-> = ({route}) => {
+const ShopHomeScreen: React.FC<ShopStackScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const availableCardMap = useAppSelector(({SHOP}) => SHOP.availableCardMap);
@@ -170,7 +169,7 @@ const ShopHome: React.FC<
     [availableGiftCards, categoriesAndCurations, purchasedGiftCards],
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
       headerTitle: () => <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>,
@@ -366,4 +365,4 @@ const ShopHome: React.FC<
   );
 };
 
-export default ShopHome;
+export default ShopHomeScreen;

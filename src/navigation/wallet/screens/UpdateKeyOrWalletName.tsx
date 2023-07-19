@@ -48,7 +48,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
   const dispatch = useAppDispatch();
   const {key, wallet, context} = route.params;
   const {walletName, walletId} = wallet || {};
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
         <HeaderTitle>
