@@ -163,21 +163,21 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
       {card.provider === CardProvider.galileo ? (
         <>
-          <Styled.CategoryRow>
-            <Styled.CategoryHeading>{t('Security')}</Styled.CategoryHeading>
-          </Styled.CategoryRow>
+          {/*<Styled.CategoryRow>*/}
+          {/*  <Styled.CategoryHeading>{t('Security')}</Styled.CategoryHeading>*/}
+          {/*</Styled.CategoryRow>*/}
 
-          <Hr />
+          {/*<Hr />*/}
 
-          <Styled.SettingsToggle
-            Icon={LockIcon}
-            value={localLockState}
-            onChange={onLockToggled}
-            state={localLockStatus}>
-            {t('Lock Card')}
-          </Styled.SettingsToggle>
+          {/*<Styled.SettingsToggle*/}
+          {/*  Icon={LockIcon}*/}
+          {/*  value={localLockState}*/}
+          {/*  onChange={onLockToggled}*/}
+          {/*  state={localLockStatus}>*/}
+          {/*  {t('Lock Card')}*/}
+          {/*</Styled.SettingsToggle>*/}
 
-          <Hr />
+          {/*<Hr />*/}
 
           <Styled.CategoryRow>
             <Styled.CategoryHeading>{t('Account')}</Styled.CategoryHeading>
@@ -185,114 +185,114 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
-          <Styled.SettingsLink
-            Icon={OffersIcon}
-            onPress={() => {
-              dispatch(
-                Analytics.track('Clicked Card Offer', {
-                  context: 'Card Settings',
-                }),
-              );
-              dispatch(CardEffects.startOpenDosh());
-            }}>
-            {t('Card Offers')}
-          </Styled.SettingsLink>
+          {/*<Styled.SettingsLink*/}
+          {/*  Icon={OffersIcon}*/}
+          {/*  onPress={() => {*/}
+          {/*    dispatch(*/}
+          {/*      Analytics.track('Clicked Card Offer', {*/}
+          {/*        context: 'Card Settings',*/}
+          {/*      }),*/}
+          {/*    );*/}
+          {/*    dispatch(CardEffects.startOpenDosh());*/}
+          {/*  }}>*/}
+          {/*  {t('Card Offers')}*/}
+          {/*</Styled.SettingsLink>*/}
 
-          <Hr />
+          {/*<Hr />*/}
 
-          {orderPhysical ? (
-            <>
-              <Styled.SettingsLink
-                Icon={OrderPhysicalCardIcon}
-                onPress={async () => {
-                  const baseUrl = BASE_BITPAY_URLS[network];
-                  const url = `${baseUrl}/wallet-card/?order-physical=true`;
-                  const canOpen = await Linking.canOpenURL(url);
+          {/*{orderPhysical ? (*/}
+          {/*  <>*/}
+          {/*    <Styled.SettingsLink*/}
+          {/*      Icon={OrderPhysicalCardIcon}*/}
+          {/*      onPress={async () => {*/}
+          {/*        const baseUrl = BASE_BITPAY_URLS[network];*/}
+          {/*        const url = `${baseUrl}/wallet-card/?order-physical=true`;*/}
+          {/*        const canOpen = await Linking.canOpenURL(url);*/}
 
-                  if (!canOpen) {
-                    dispatch(
-                      AppActions.showBottomNotificationModal({
-                        type: 'error',
-                        title: t('Error'),
-                        message: t('Unknown error'),
-                        enableBackdropDismiss: true,
-                        onBackdropDismiss: () => {},
-                        actions: [
-                          {
-                            text: t('OK'),
-                            action: () => {},
-                          },
-                        ],
-                      }),
-                    );
+          {/*        if (!canOpen) {*/}
+          {/*          dispatch(*/}
+          {/*            AppActions.showBottomNotificationModal({*/}
+          {/*              type: 'error',*/}
+          {/*              title: t('Error'),*/}
+          {/*              message: t('Unknown error'),*/}
+          {/*              enableBackdropDismiss: true,*/}
+          {/*              onBackdropDismiss: () => {},*/}
+          {/*              actions: [*/}
+          {/*                {*/}
+          {/*                  text: t('OK'),*/}
+          {/*                  action: () => {},*/}
+          {/*                },*/}
+          {/*              ],*/}
+          {/*            }),*/}
+          {/*          );*/}
 
-                    return;
-                  }
+          {/*          return;*/}
+          {/*        }*/}
 
-                  Linking.openURL(url);
-                }}>
-                {t('OrderPhysicalCard')}
-              </Styled.SettingsLink>
+          {/*        Linking.openURL(url);*/}
+          {/*      }}>*/}
+          {/*      {t('OrderPhysicalCard')}*/}
+          {/*    </Styled.SettingsLink>*/}
 
-              <Hr />
-            </>
-          ) : null}
+          {/*    <Hr />*/}
+          {/*  </>*/}
+          {/*) : null}*/}
 
-          {card.cardType === 'virtual' ? (
-            <>
-              {Platform.OS === 'ios' ? (
-                <>
-                  <Styled.SettingsLink
-                    Icon={ApplePayIcon}
-                    onPress={onAddAppleWallet}>
-                    {t('Add to Apple Wallet')}
-                  </Styled.SettingsLink>
+          {/*{card.cardType === 'virtual' ? (*/}
+          {/*  <>*/}
+          {/*    {Platform.OS === 'ios' ? (*/}
+          {/*      <>*/}
+          {/*        <Styled.SettingsLink*/}
+          {/*          Icon={ApplePayIcon}*/}
+          {/*          onPress={onAddAppleWallet}>*/}
+          {/*          {t('Add to Apple Wallet')}*/}
+          {/*        </Styled.SettingsLink>*/}
 
-                  <Hr />
-                </>
-              ) : (
-                <>
-                  <Styled.SettingsLink
-                    Icon={GooglePayIcon}
-                    onPress={onAddGooglePay}>
-                    {t('Add to Google Pay')}
-                  </Styled.SettingsLink>
-                  <Hr />
-                </>
-              )}
-              <Styled.SettingsLink
-                Icon={CustomizeCardIcon}
-                onPress={() =>
-                  navigation.navigate('CustomizeVirtualCard', {card})
-                }>
-                {t('Customize Virtual Card')}
-              </Styled.SettingsLink>
+          {/*        <Hr />*/}
+          {/*      </>*/}
+          {/*    ) : (*/}
+          {/*      <>*/}
+          {/*        <Styled.SettingsLink*/}
+          {/*          Icon={GooglePayIcon}*/}
+          {/*          onPress={onAddGooglePay}>*/}
+          {/*          {t('Add to Google Pay')}*/}
+          {/*        </Styled.SettingsLink>*/}
+          {/*        <Hr />*/}
+          {/*      </>*/}
+          {/*    )}*/}
+          {/*    <Styled.SettingsLink*/}
+          {/*      Icon={CustomizeCardIcon}*/}
+          {/*      onPress={() =>*/}
+          {/*        navigation.navigate('CustomizeVirtualCard', {card})*/}
+          {/*      }>*/}
+          {/*      {t('Customize Virtual Card')}*/}
+          {/*    </Styled.SettingsLink>*/}
 
-              <Hr />
-            </>
-          ) : (
-            <>
-              <Styled.SettingsLink
-                Icon={ResetPinIcon}
-                onPress={() => {
-                  navigation.navigate(CardScreens.RESET_PIN, {
-                    id: card.id,
-                  });
-                }}>
-                {t('Reset PIN')}
-              </Styled.SettingsLink>
+          {/*    <Hr />*/}
+          {/*  </>*/}
+          {/*) : (*/}
+          {/*  <>*/}
+          {/*    <Styled.SettingsLink*/}
+          {/*      Icon={ResetPinIcon}*/}
+          {/*      onPress={() => {*/}
+          {/*        navigation.navigate(CardScreens.RESET_PIN, {*/}
+          {/*          id: card.id,*/}
+          {/*        });*/}
+          {/*      }}>*/}
+          {/*      {t('Reset PIN')}*/}
+          {/*    </Styled.SettingsLink>*/}
 
-              <Hr />
-            </>
-          )}
+          {/*    <Hr />*/}
+          {/*  </>*/}
+          {/*)}*/}
 
-          <Styled.SettingsLink
-            Icon={EditCardNameIcon}
-            onPress={() => navigation.navigate('UpdateCardName', {card})}>
-            {t('Update Card Name')}
-          </Styled.SettingsLink>
+          {/*<Styled.SettingsLink*/}
+          {/*  Icon={EditCardNameIcon}*/}
+          {/*  onPress={() => navigation.navigate('UpdateCardName', {card})}>*/}
+          {/*  {t('Update Card Name')}*/}
+          {/*</Styled.SettingsLink>*/}
 
-          <Hr />
+          {/*<Hr />*/}
 
           <Styled.SettingsLink
             Icon={DownloadHistoryIcon}
