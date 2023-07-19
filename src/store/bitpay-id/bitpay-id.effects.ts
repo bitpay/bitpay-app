@@ -23,7 +23,7 @@ import BitPayIdApi from '../../api/bitpay';
 import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import Braze from 'react-native-appboy-sdk';
 import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
 
@@ -680,4 +680,24 @@ export const startSubmitForgotPasswordEmail =
     } finally {
       dispatch(dismissOnGoingProcessModal());
     }
+  };
+
+export const startResetMethodUser =
+  (): Effect<Promise<any>> => async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    await BitPayIdApi.getInstance()
+      .request('resetMethodUser', BITPAY_ID.apiToken[APP_NETWORK])
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        dispatch(BitPayIdActions.successResetMethodUser(APP_NETWORK));
+        return res.data.data as any;
+      })
+      .catch(err => {
+        dispatch(
+          LogActions.error(`failed [startResetMethodUser]: ${err.message}`),
+        );
+        throw err;
+      });
   };

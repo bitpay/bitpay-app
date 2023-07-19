@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
@@ -6,7 +6,6 @@ import {View} from 'react-native';
 import Button from '../../../../components/button/Button';
 import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
 import {H5, Paragraph} from '../../../../components/styled/Text';
-import {BaseText} from '../../../wallet/components/KeyDropdownOption';
 import {BillScreens} from '../bill/BillStack';
 import {
   SectionContainer,
@@ -23,20 +22,9 @@ import {BillPayAccount} from '../../../../store/shop/shop.models';
 import {APP_NETWORK} from '../../../../constants/config';
 import {ShopEffects} from '../../../../store/shop';
 import {AppActions} from '../../../../store/app';
-const BillsZeroState = require('../../../../../assets/img/bills/bills-zero-state.png');
-
-const Title = styled(BaseText)`
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 28px;
-  text-align: center;
-  margin-top: 20px;
-  width: 341px;
-`;
-
-const BoldTitle = styled(Title)`
-  font-weight: 600;
-`;
+import BillPitch from '../bill/components/BillPitch';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {getBillAccountEventParams} from '../bill/utils';
 
 const Subtitle = styled(Paragraph)`
   font-size: 14px;
@@ -48,43 +36,15 @@ const Subtitle = styled(Paragraph)`
   margin-bottom: 20px;
 `;
 
-const TitleContainer = styled.View`
-  align-items: center;
-`;
-
 const BillsValueProp = styled.View`
   flex-grow: 1;
   align-items: center;
   justify-content: center;
 `;
 
-const BillsImage = styled.Image`
-  width: 317px;
-  height: 242px;
-  margin-top: 20px;
-`;
-
 const CautionIcon = styled(CautionIconSvg)`
   margin-bottom: 24px;
 `;
-
-const WhyUseThis = () => {
-  const {t} = useTranslation();
-  return (
-    <BillsValueProp>
-      <BillsImage source={BillsZeroState} />
-      <TitleContainer>
-        <Title>
-          {t('Pay bills straight from your')}{' '}
-          <BoldTitle>{t('BitPay wallet')}</BoldTitle>
-        </Title>
-        <Subtitle>
-          {t('Make payments on everything from credit cards to mortgages.')}
-        </Subtitle>
-      </TitleContainer>
-    </BillsValueProp>
-  );
-};
 
 export const Bills = () => {
   const dispatch = useAppDispatch();
@@ -105,7 +65,7 @@ export const Bills = () => {
   const [available, setAvailable] = useState(user && user.country === 'US');
 
   useEffect(() => {
-    const billsConnected = !!accounts.length;
+    const billsConnected = !!accounts.length && !!user?.methodEntityId;
     setConnected(billsConnected);
     const isAvailable = async () => {
       if (user && user.country === 'US' && !connected) {
@@ -118,11 +78,15 @@ export const Bills = () => {
     isAvailable();
   }, [accounts.length, connected, dispatch, user]);
 
+  useFocusEffect(() => {
+    dispatch(Analytics.track('Bill Pay — Viewed Bills Page'));
+  });
+
   return (
     <SectionContainer style={{height: HEIGHT - 270}}>
       {!isVerified ? (
         <>
-          <WhyUseThis />
+          <BillPitch />
           <Button height={50} onPress={() => {}}>
             {t('Sign Up')}
           </Button>
@@ -137,7 +101,7 @@ export const Bills = () => {
             <>
               {!connected ? (
                 <>
-                  <WhyUseThis />
+                  <BillPitch />
                   <Button
                     height={50}
                     onPress={() => {
@@ -145,6 +109,9 @@ export const Bills = () => {
                         screen: BillScreens.CONNECT_BILLS,
                         params: {},
                       });
+                      dispatch(
+                        Analytics.track('Bill Pay — Clicked Connect My Bills'),
+                      );
                     }}>
                     {t('Connect My Bills')}
                   </Button>
@@ -159,6 +126,11 @@ export const Bills = () => {
                           screen: BillScreens.PAYMENTS,
                           params: {},
                         });
+                        dispatch(
+                          Analytics.track(
+                            'Bill Pay — Clicked View All Payments',
+                          ),
+                        );
                       }}>
                       <SectionHeaderButton>
                         {t('View All Payments')}
@@ -168,12 +140,18 @@ export const Bills = () => {
                   <BillList
                     accounts={accounts}
                     variation={'pay'}
-                    onPress={(account: any) =>
+                    onPress={account => {
                       navigation.navigate('Bill', {
                         screen: BillScreens.PAY_BILL,
                         params: {account},
-                      })
-                    }
+                      });
+                      dispatch(
+                        Analytics.track(
+                          'Bill Pay — Clicked Pay Bill',
+                          getBillAccountEventParams(account),
+                        ),
+                      );
+                    }}
                   />
                   {/* <Button
                     style={{marginTop: 20, marginBottom: 10}}
@@ -191,12 +169,17 @@ export const Bills = () => {
                     style={{marginTop: 20, marginBottom: 10}}
                     height={50}
                     buttonStyle="secondary"
-                    onPress={() =>
+                    onPress={() => {
                       navigation.navigate('Bill', {
-                        screen: BillScreens.PAY_ALL_BILLS,
+                        screen: BillScreens.CONNECT_BILLS,
                         params: {accounts},
-                      })
-                    }>
+                      });
+                      dispatch(
+                        Analytics.track(
+                          'Bill Pay — Clicked Connect More Bills',
+                        ),
+                      );
+                    }}>
                     {t('Connect More Bills')}
                   </Button>
                   {/* <Button
@@ -220,7 +203,7 @@ export const Bills = () => {
                 <Subtitle>
                   <Trans
                     i18nKey="BillPayUnavailableInYourLocation"
-                    values={{states: 'states'}}
+                    values={{states: t('states')}}
                     components={[
                       <Subtitle
                         style={{color: LinkBlue}}

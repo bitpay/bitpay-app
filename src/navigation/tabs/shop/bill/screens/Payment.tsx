@@ -19,6 +19,10 @@ import Settings from '../../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
 import {LightBlack, Slate30} from '../../../../../styles/colors';
 import {BillAccountPill} from '../components/BillAccountPill';
+import {useFocusEffect} from '@react-navigation/native';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {getBillAccountEventParams} from '../utils';
 
 const HeroSection = styled.View`
   width: 100%;
@@ -68,12 +72,26 @@ const Payment = ({
   route,
 }: StackScreenProps<BillStackParamList, 'Payment'>) => {
   const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const {account, payment} = route.params;
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
 
+  const baseEventParams = {
+    ...getBillAccountEventParams(account),
+    amount: payment.amount,
+  };
+
   const sheetOptions: Array<Option> = [
     {
-      onPress: () => Linking.openURL('https://bitpay.com/request-help/wizard'),
+      onPress: () => {
+        Linking.openURL('https://bitpay.com/request-help/wizard');
+        dispatch(
+          Analytics.track('Bill Pay — Clicked Contact Support', {
+            ...baseEventParams,
+            context: 'Bill Payment',
+          }),
+        );
+      },
       optionElement: () => {
         return (
           <BillOption isLast={true}>
@@ -97,6 +115,12 @@ const Payment = ({
               <Settings
                 onPress={() => {
                   setIsOptionsSheetVisible(true);
+                  dispatch(
+                    Analytics.track(
+                      'Bill Pay — Viewed Bill Payment Menu Modal',
+                      baseEventParams,
+                    ),
+                  );
                 }}
               />
             </HeaderRightContainer>
@@ -105,6 +129,13 @@ const Payment = ({
       },
     });
   });
+
+  useFocusEffect(() => {
+    dispatch(
+      Analytics.track('Bill Pay — Viewed Bill Payment Page', baseEventParams),
+    );
+  });
+
   return (
     <ScrollView>
       <HeroSection>

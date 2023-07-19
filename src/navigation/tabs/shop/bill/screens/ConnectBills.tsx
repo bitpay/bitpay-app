@@ -4,13 +4,14 @@ import WebView from 'react-native-webview';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {BillStackParamList} from '../BillStack';
 import {ShopEffects} from '../../../../../store/shop';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
-import {METHOD_ENV} from '../../../../../constants/config';
+import {APP_NETWORK, METHOD_ENV} from '../../../../../constants/config';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
+import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 
 const ConnectBills = ({
   navigation,
@@ -21,6 +22,9 @@ const ConnectBills = ({
   const [isWebViewShown, setIsWebViewShown] = useState(true);
   const [token, setToken] = useState('');
   const [exiting, setExiting] = useState(false);
+  const apiToken = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.apiToken[APP_NETWORK],
+  );
 
   useLayoutEffect(() => {
     dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
@@ -55,7 +59,10 @@ const ConnectBills = ({
     }
     setExiting(true);
     dispatch(dismissOnGoingProcessModal());
-    await dispatch(ShopEffects.startGetBillPayAccounts());
+    await Promise.all([
+      dispatch(ShopEffects.startGetBillPayAccounts()),
+      dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken)),
+    ]);
     navigation.pop();
   };
 

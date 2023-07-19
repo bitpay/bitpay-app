@@ -37,6 +37,7 @@ export type OnGoingProcessMessages =
   | 'CREATING_TXP'
   | 'SENDING_EMAIL'
   | 'REDIRECTING'
+  | 'REMOVING_BILL'
   | 'BROADCASTING_TXP';
 
 const OnGoingProcessContainer = styled.View`

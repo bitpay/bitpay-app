@@ -21,12 +21,14 @@ import PayProConfirmTwoFactor, {
 import {BillPayAccount, BillPayment} from '../../../../store/shop/shop.models';
 import PayBill from './screens/PayBill';
 import PayAllBills from './screens/PayAllBills';
+import BillSettings from './screens/BillSettings';
 
 export type BillStackParamList = {
   BillAmount: AmountScreenParamList;
   BillConfirm: BillConfirmParamList;
   BillConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   ConnectBills: {};
+  BillSettings: {};
   Payment: {account: BillPayAccount; payment: BillPayment};
   PayBill: {account: BillPayAccount};
   PayAllBills: {accounts: BillPayAccount[]};
@@ -37,6 +39,7 @@ export enum BillScreens {
   BILL_AMOUNT = 'BillAmount',
   BILL_CONFIRM = 'BillConfirm',
   BILL_CONFIRM_TWO_FACTOR = 'BillConfirmTwoFactor',
+  BILL_SETTINGS = 'BillSettings',
   CONNECT_BILLS = 'ConnectBills',
   PAYMENT = 'Payment',
   PAY_BILL = 'PayBill',
@@ -71,6 +74,13 @@ const BillStack = () => {
         }}
         name={BillScreens.BILL_CONFIRM_TWO_FACTOR}
         component={PayProConfirmTwoFactor}
+      />
+      <Bill.Screen
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Method (Bill Pay) Settings')}</HeaderTitle>,
+        }}
+        name={BillScreens.BILL_SETTINGS}
+        component={BillSettings}
       />
       <Bill.Screen
         options={{headerShown: false}}
