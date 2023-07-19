@@ -43,16 +43,6 @@ allprojects {
                 excludeGroup "com.facebook.react"
             }
         }
-        //The maven repository for Dosh.
-        maven {
-            url = "https://dosh.jfrog.io/dosh/libs"
-            //Note: There is a bug with Artifactory and though this is a public repository
-            //      you will need to submit blank credentials in order for access to the repository.
-            credentials {
-                username = ""
-                password = ""
-            }
-        }
         google()
         jcenter()
         mavenCentral()
