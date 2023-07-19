@@ -208,7 +208,7 @@ export const walletConnectV2SubscribeToEvents =
             startInAppNotification(
               'NEW_PENDING_REQUEST',
               event,
-              'walletconnect',
+              'notification',
             ),
           );
         }
