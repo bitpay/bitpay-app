@@ -31,7 +31,7 @@ import {
   Amount,
   ConfirmContainer,
   ConfirmScrollView,
-  DetailsList,
+  DetailsListNoScroll,
   ExchangeRate,
   Fee,
   Header,
@@ -392,7 +392,7 @@ const Confirm = () => {
         extraScrollHeight={50}
         contentContainerStyle={{paddingBottom: 50}}
         keyboardShouldPersistTaps={'handled'}>
-        <DetailsList keyboardShouldPersistTaps={'handled'}>
+        <DetailsListNoScroll keyboardShouldPersistTaps={'handled'}>
           <Header>Summary</Header>
           <SendingTo
             recipient={recipientData}
@@ -535,7 +535,7 @@ const Confirm = () => {
               dispatch(showConfirmAmountInfoSheet('total'));
             }}
           />
-        </DetailsList>
+        </DetailsListNoScroll>
 
         <PaymentSent
           isVisible={showPaymentSentModal}
