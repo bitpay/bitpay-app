@@ -48,12 +48,5 @@ allprojects {
         mavenCentral()
         maven { url 'https://www.jitpack.io' }
         maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
-        maven {
-          if (project.hasProperty('M2_REPOSITORY_URL')) {
-            url M2_REPOSITORY_URL
-          } else {
-            url "REPLACE_ME"
-          }
-        }
     }
 }

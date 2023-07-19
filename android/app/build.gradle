@@ -180,7 +180,6 @@ dependencies {
 
     // AppsFlyer
     implementation project(':react-native-appsflyer')
-    implementation 'com.google.android.gms:play-services-tapandpay:18.2.0'
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
