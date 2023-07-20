@@ -3,7 +3,7 @@ import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
 import {View} from 'react-native';
-import Button from '../../../../components/button/Button';
+import Button, {ButtonState} from '../../../../components/button/Button';
 import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
 import {H5, Paragraph} from '../../../../components/styled/Text';
 import {BillScreens} from '../bill/BillStack';
@@ -17,7 +17,11 @@ import {LinkBlue, Slate30, SlateDark} from '../../../../styles/colors';
 import CautionIconSvg from '../../../../../assets/img/bills/caution.svg';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {BillList} from '../bill/components/BillList';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../utils/hooks';
 import {BillPayAccount} from '../../../../store/shop/shop.models';
 import {APP_NETWORK} from '../../../../constants/config';
 import {ShopEffects} from '../../../../store/shop';
@@ -25,6 +29,11 @@ import {AppActions} from '../../../../store/app';
 import BillPitch from '../bill/components/BillPitch';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../bill/utils';
+import {sleep} from '../../../../utils/helper-methods';
+import {BWCErrorMessage} from '../../../../constants/BWCError';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {CustomErrorMessage} from '../../../wallet/components/ErrorMessages';
+import {joinWaitlist} from '../../../../store/app/app.effects';
 
 const Subtitle = styled(Paragraph)`
   font-size: 14px;
@@ -50,10 +59,13 @@ export const Bills = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {t} = useTranslation();
+  const logger = useLogger();
 
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
   ) as BillPayAccount[];
+
+  const isJoinedWaitlist = useAppSelector(({SHOP}) => SHOP.isJoinedWaitlist);
 
   const [connected, setConnected] = useState(!!accounts.length);
 
@@ -63,6 +75,7 @@ export const Bills = () => {
   const isVerified = !!(user && user.country);
 
   const [available, setAvailable] = useState(user && user.country === 'US');
+  const [buttonState, setButtonState] = useState<ButtonState>();
 
   useEffect(() => {
     const billsConnected = !!accounts.length && !!user?.methodEntityId;
@@ -81,6 +94,29 @@ export const Bills = () => {
   useFocusEffect(() => {
     dispatch(Analytics.track('Bill Pay — Viewed Bills Page'));
   });
+
+  const onSubmit = async () => {
+    try {
+      setButtonState('loading');
+      await dispatch(joinWaitlist(user.email, 'bill pay waitlist', 'bill-pay'));
+      await sleep(500);
+      setButtonState('success');
+    } catch (err) {
+      setButtonState('failed');
+      logger.warn('Error joining waitlist: ' + BWCErrorMessage(err));
+      await sleep(500);
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(err),
+            title: t('Error joining waitlist'),
+          }),
+        ),
+      );
+      await sleep(500);
+      setButtonState(undefined);
+    }
+  };
 
   return (
     <SectionContainer style={{height: HEIGHT - 270}}>
@@ -231,15 +267,20 @@ export const Bills = () => {
                     ]}
                   />
                 </Subtitle>
-                <Button
-                  style={{width: WIDTH - 32, marginTop: 24}}
-                  height={50}
-                  buttonStyle="secondary"
-                  onPress={() => {
-                    console.log('joining waitlist');
-                  }}>
-                  {t('Join waitlist')}
-                </Button>
+                {isJoinedWaitlist ? (
+                  <Paragraph style={{textAlign: 'center', fontSize: 14}}>
+                    {t('You have joined the waitlist.')}
+                  </Paragraph>
+                ) : (
+                  <Button
+                    state={buttonState}
+                    style={{width: WIDTH - 32, marginTop: 24}}
+                    height={50}
+                    buttonStyle="secondary"
+                    onPress={onSubmit}>
+                    {t('Join waitlist')}
+                  </Button>
+                )}
               </BillsValueProp>
             </>
           )}

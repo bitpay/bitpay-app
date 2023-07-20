@@ -34,6 +34,7 @@ export interface ShopState {
     [key in Network]: (GiftCard | UnsoldGiftCard)[];
   };
   syncGiftCardPurchasesWithBitPayId: boolean;
+  isJoinedWaitlist: boolean;
 }
 
 export const initialShopState: ShopState = {
@@ -60,6 +61,7 @@ export const initialShopState: ShopState = {
     [Network.testnet]: [],
   },
   syncGiftCardPurchasesWithBitPayId: true,
+  isJoinedWaitlist: false,
 };
 
 export const shopReducer = (
@@ -209,6 +211,11 @@ export const shopReducer = (
           [Network.mainnet]: [],
           [Network.testnet]: [],
         },
+      };
+    case ShopActionTypes.IS_JOINED_WAITLIST:
+      return {
+        ...state,
+        isJoinedWaitlist: action.payload.isJoinedWaitlist,
       };
 
     default:
