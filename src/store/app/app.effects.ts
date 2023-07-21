@@ -499,6 +499,7 @@ export const startOnGoingProcessModal =
       CREATING_TXP: i18n.t('Creating Transaction'),
       SENDING_EMAIL: i18n.t('Sending Email'),
       REDIRECTING: i18n.t('Redirecting'),
+      REMOVING_BILL: i18n.t('Removing Bill'),
       BROADCASTING_TXP: i18n.t('Broadcasting transaction...'),
     };
 
