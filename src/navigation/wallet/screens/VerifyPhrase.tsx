@@ -20,7 +20,7 @@ import {
   NeutralSlate,
   ProgressBlue,
 } from '../../../styles/colors';
-import Carousel from 'react-native-snap-carousel';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   BodyContainer,
@@ -162,7 +162,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     });
   }, [navigation, t]);
 
-  const ref = useRef(null);
+  const ref = useRef<ICarouselInstance>(null);
   const shuffledWords = useRef<Array<{word: string; isActive: boolean}>>(
     [...words].sort(() => Math.random() - 0.5),
   );
@@ -192,12 +192,12 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     const update = [...attemptWords.filter(w => w), value.word, ''];
     // store words and update index
     setAttemptWords(update);
+    await sleep(500);
     setActiveSlideIndex(activeSlideIndex + 1);
     // sleep for animation time
     await sleep(0);
     if (activeSlideIndex !== words.length - 1) {
-      // @ts-ignore
-      ref.current.snapToNext();
+      ref.current?.next();
     } else {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
@@ -274,10 +274,16 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
 
       <BodyContainer>
         <Carousel
+          loop={false}
           vertical={false}
-          layout={'default'}
-          useExperimentalSnap={true}
+          width={WIDTH}
+          height={Math.round(WIDTH) / 2}
+          autoPlay={false}
           data={attemptWords}
+          ref={ref}
+          scrollAnimationDuration={500}
+          onSnapToItem={() => setIsAnimating(false)}
+          enabled={false}
           renderItem={({item: word, index}: {item: string; index: number}) => {
             return (
               <WordContainer key={index}>
@@ -285,19 +291,6 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                 <DottedBorder />
               </WordContainer>
             );
-          }}
-          ref={ref}
-          sliderWidth={WIDTH}
-          itemWidth={Math.round(WIDTH)}
-          onSnapToItem={() => setIsAnimating(false)}
-          scrollEnabled={false}
-          // @ts-ignore
-          disableIntervalMomentum={true}
-          animationOptions={{
-            friction: 4,
-            tension: 40,
-            isInteraction: false,
-            useNativeDriver: true,
           }}
         />
         <CountTracker>
