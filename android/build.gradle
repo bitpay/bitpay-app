@@ -43,27 +43,10 @@ allprojects {
                 excludeGroup "com.facebook.react"
             }
         }
-        //The maven repository for Dosh.
-        maven {
-            url = "https://dosh.jfrog.io/dosh/libs"
-            //Note: There is a bug with Artifactory and though this is a public repository
-            //      you will need to submit blank credentials in order for access to the repository.
-            credentials {
-                username = ""
-                password = ""
-            }
-        }
         google()
         jcenter()
         mavenCentral()
         maven { url 'https://www.jitpack.io' }
         maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
-        maven {
-          if (project.hasProperty('M2_REPOSITORY_URL')) {
-            url M2_REPOSITORY_URL
-          } else {
-            url "REPLACE_ME"
-          }
-        }
     }
 }

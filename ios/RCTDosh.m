@@ -15,28 +15,24 @@ RCT_EXPORT_MODULE();
 
 RCT_EXPORT_METHOD(initializeDosh:(NSString *) id:(NSDictionary *)uiOptions:(RCTPromiseResolveBlock)resolve:(RCTPromiseRejectBlock)reject)
 {
-  [DoshAdapter initDoshWithApplicationId:id uiOptions:uiOptions];
   RCTLogInfo(@"Initialized Dosh");
   resolve([NSNumber numberWithBool:true]);
 }
 
 RCT_EXPORT_METHOD(present:(RCTPromiseResolveBlock)resolve:(RCTPromiseRejectBlock)reject)
 {
-  [DoshAdapter present];
   RCTLogInfo(@"Dosh present");
   resolve([NSNumber numberWithBool:true]);
 }
 
 RCT_EXPORT_METHOD(setDoshToken:(NSString *)token:(RCTPromiseResolveBlock)resolve:(RCTPromiseRejectBlock)reject)
 {
-  [DoshAdapter setDoshTokenWithToken:token];
   RCTLogInfo(@"Dosh set token");
   resolve([NSNumber numberWithBool:true]);
 }
 
 RCT_EXPORT_METHOD(clearUser:(RCTPromiseResolveBlock)resolve:(RCTPromiseRejectBlock)reject)
 {
-  [DoshAdapter clearUser];
   RCTLogInfo(@"Dosh clear user");
   resolve([NSNumber numberWithBool:true]);
 }

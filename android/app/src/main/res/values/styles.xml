@@ -15,8 +15,4 @@
         <!-- set the generated bootsplash.xml drawable as activity background -->
         <item name="android:background">@drawable/bootsplash</item>
     </style>
-
-    <style name="PoweredBy.Default.Main">
-        <item name="android:statusBarColor">@color/dosh_core_navigation_bar_background</item>
-    </style>
 </resources>
