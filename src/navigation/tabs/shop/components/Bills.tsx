@@ -19,9 +19,9 @@ import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {BillList} from '../bill/components/BillList';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {BillPayAccount} from '../../../../store/shop/shop.models';
-import {APP_NETWORK} from '../../../../constants/config';
+import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../../store/shop';
-import {AppActions} from '../../../../store/app';
+import {AppActions, AppEffects} from '../../../../store/app';
 import BillPitch from '../bill/components/BillPitch';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../bill/utils';
@@ -45,6 +45,8 @@ const BillsValueProp = styled.View`
 const CautionIcon = styled(CautionIconSvg)`
   margin-bottom: 24px;
 `;
+
+const verificationBaseUrl = `${BASE_BITPAY_URLS[APP_NETWORK]}/wallet-verify?product=billpay`;
 
 export const Bills = () => {
   const dispatch = useAppDispatch();
@@ -87,11 +89,32 @@ export const Bills = () => {
       {!isVerified ? (
         <>
           <BillPitch />
-          <Button height={50} onPress={() => {}}>
+          <Button
+            height={50}
+            onPress={() => {
+              dispatch(
+                AppEffects.openUrlWithInAppBrowser(
+                  `${verificationBaseUrl}&context=createAccount`,
+                ),
+              );
+              dispatch(Analytics.track('Bill Pay — Clicked Sign Up'));
+            }}>
             {t('Sign Up')}
           </Button>
           <View style={{height: 10}} />
-          <Button height={50} buttonStyle="secondary" onPress={() => {}}>
+          <Button
+            height={50}
+            buttonStyle="secondary"
+            onPress={() => {
+              dispatch(
+                AppEffects.openUrlWithInAppBrowser(
+                  `${verificationBaseUrl}&context=login`,
+                ),
+              );
+              dispatch(
+                Analytics.track('Bill Pay — Clicked I Already Have an Account'),
+              );
+            }}>
             {t('I already have an account')}
           </Button>
         </>
