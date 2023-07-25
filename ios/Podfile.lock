@@ -112,9 +112,6 @@ PODS:
   - OpenSSL-Universal (1.1.1100)
   - Permission-Notifications (3.7.2):
     - RNPermissions
-  - PoweredByDosh (2.8.0):
-    - PoweredByDosh/PoweredByDosh (= 2.8.0)
-  - PoweredByDosh/PoweredByDosh (2.8.0)
   - RCT-Folly (2021.07.22.00):
     - boost
     - DoubleConversion
@@ -620,7 +617,6 @@ DEPENDENCIES:
   - libevent (~> 2.1.12)
   - OpenSSL-Universal (= 1.1.1100)
   - Permission-Notifications (from `../node_modules/react-native-permissions/ios/Notifications/Permission-Notifications.podspec`)
-  - PoweredByDosh
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
   - RCTTypeSafety (from `../node_modules/react-native/Libraries/TypeSafety`)
@@ -712,7 +708,6 @@ SPEC REPOS:
     - libevent
     - libwebp
     - OpenSSL-Universal
-    - PoweredByDosh
     - SDWebImage
     - SDWebImageWebPCoder
     - SocketRocket
@@ -900,7 +895,6 @@ SPEC CHECKSUMS:
   libwebp: f62cb61d0a484ba548448a4bd52aabf150ff6eef
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
   Permission-Notifications: dbc8cb572cdfbc3c2941feecce4c7900bbdccea1
-  PoweredByDosh: 122ff7b1c598d62cbae8d3a481df2ad9f5d837a1
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: 5a024fdf458fa8c0d82fc262e76f982d4dcdecdd
   RCTTypeSafety: b6c253064466411c6810b45f66bc1e43ce0c54ba
@@ -975,6 +969,6 @@ SPEC CHECKSUMS:
   Yoga: 79dd7410de6f8ad73a77c868d3d368843f0c93e0
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: fe2ed3756c1d0a13e122332e57fd8bb6d6538bab
+PODFILE CHECKSUM: 43d1d98bad36cb295d2549a3d9457936e8d60af2
 
 COCOAPODS: 1.11.3
