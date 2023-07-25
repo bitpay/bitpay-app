@@ -157,7 +157,9 @@ const Payment = ({
         <LineItem>
           <LineItemLabel>Convenience fee</LineItemLabel>
           <Paragraph>
-            {formatFiatAmount(payment.convenienceFee, 'USD')}
+            {payment.convenienceFee
+              ? formatFiatAmount(payment.convenienceFee, 'USD')
+              : t('Waived')}
           </Paragraph>
         </LineItem>
         <LineItem>
