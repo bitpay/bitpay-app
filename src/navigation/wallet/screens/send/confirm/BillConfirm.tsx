@@ -450,7 +450,9 @@ const Confirm: React.FC<
             <Amount
               description={'Convenience fee'}
               amount={{
-                fiatAmount: `${formatFiatAmount(convenienceFee, 'USD')}`,
+                fiatAmount: convenienceFee
+                  ? formatFiatAmount(convenienceFee, 'USD')
+                  : t('Waived'),
                 cryptoAmount: '',
               }}
               fiatOnly
