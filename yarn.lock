@@ -13549,6 +13549,11 @@ react-native-screens@3.20.0:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
 
+react-native-sensitive-info@5.5.8:
+  version "5.5.8"
+  resolved "https://registry.yarnpkg.com/react-native-sensitive-info/-/react-native-sensitive-info-5.5.8.tgz#6ebb67eed83d1c2867bd435630ef2c41eef204ed"
+  integrity sha512-p99oaEW4QG1RdUNrkvd/c6Qdm856dQw/Rk81f9fA6Y3DlPs6ADNdU+jbPuTz3CcOUJwuKBDNenX6LR9KfmGFEg==
+
 react-native-share@8.2.0:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/react-native-share/-/react-native-share-8.2.0.tgz#6ad15ca3bedca5b7d0ec2b65c78a167d712f1fc8"
@@ -13956,6 +13961,11 @@ redux-logger@3.0.6:
   integrity sha512-JoCIok7bg/XpqA1JqCqXFypuqBbQzGQySrhFzewB7ThcnysTO30l4VCst86AuB9T9tuT03MAA56Jw2PNhRSNCg==
   dependencies:
     deep-diff "^0.3.5"
+
+redux-persist-sensitive-storage@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/redux-persist-sensitive-storage/-/redux-persist-sensitive-storage-1.0.0.tgz#19f5e5bd8ce4c4a4bc852eec61d18360abe07b66"
+  integrity sha512-AD8JyDsTpj+H+ZOGcg1qs9MkdcNOmHsBu+QL2kq2aKDB5HaCjy15qP4eryz7RVhWBatu4WC51R//1bfKHNb6yg==
 
 redux-persist-transform-encrypt@3.0.1:
   version "3.0.1"

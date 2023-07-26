@@ -403,6 +403,8 @@ PODS:
     - RCTTypeSafety
     - React-Core
     - ReactCommon/turbomodule/core
+  - react-native-sensitive-info (5.5.8):
+    - React
   - react-native-slider (4.2.4):
     - React-Core
   - react-native-text-input-mask (3.1.4):
@@ -646,6 +648,7 @@ DEPENDENCIES:
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-restart (from `../node_modules/react-native-restart`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-sensitive-info (from `../node_modules/react-native-sensitive-info`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-text-input-mask (from `../node_modules/react-native-text-input-mask`)
   - react-native-user-agent (from `../node_modules/react-native-user-agent`)
@@ -784,6 +787,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-restart"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-sensitive-info:
+    :path: "../node_modules/react-native-sensitive-info"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
   react-native-text-input-mask:
@@ -922,6 +927,7 @@ SPEC CHECKSUMS:
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
   react-native-safe-area-context: 39c2d8be3328df5d437ac1700f4f3a4f75716acc
+  react-native-sensitive-info: 400c6e3d27945e15c8cddb5b4b92233c85ee06f8
   react-native-slider: cecabb58ecffad671d2ad3ccc58c7f4d2d029e95
   react-native-text-input-mask: 36a546b378fadd2efe1b7484a859d34bc2c80395
   react-native-user-agent: a90a1e839b99801baad67a73dd6f361a52aa3cf1
