@@ -92,8 +92,8 @@ const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
 `;
 
-const ContentView = styled(ScrollView)`
-  padding: 0 ${ScreenGutter};
+const ContentView = styled.View`
+  padding: 0 ${ScreenGutter} 20px ${ScreenGutter};
 `;
 
 const PasswordParagraph = styled(BaseText)`

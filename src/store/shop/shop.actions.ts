@@ -119,3 +119,10 @@ export const updatedPhone = (payload: {
 export const clearedGiftCards = (): ShopActionType => ({
   type: ShopActionTypes.CLEARED_GIFT_CARDS,
 });
+
+export const isJoinedWaitlist = (
+  isJoinedWaitlist: boolean,
+): ShopActionType => ({
+  type: ShopActionTypes.IS_JOINED_WAITLIST,
+  payload: {isJoinedWaitlist},
+});
