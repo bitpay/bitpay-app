@@ -77,7 +77,9 @@ const BillStack = () => {
       />
       <Bill.Screen
         options={{
-          headerTitle: () => <HeaderTitle>{t('Method (Bill Pay) Settings')}</HeaderTitle>,
+          headerTitle: () => (
+            <HeaderTitle>{t('Method (Bill Pay) Settings')}</HeaderTitle>
+          ),
         }}
         name={BillScreens.BILL_SETTINGS}
         component={BillSettings}
