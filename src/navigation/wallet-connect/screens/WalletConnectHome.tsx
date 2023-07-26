@@ -3,8 +3,6 @@ import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {H7, Smallest} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
-import EthIcon from '../../../../assets/img/currencies/eth.svg';
-import MaticIcon from '../../../../assets/img/currencies/matic.svg';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Hr} from '../../../components/styled/Containers';
@@ -53,10 +51,12 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {WalletConnectHeader} from '../WalletConnectStack';
 import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
 import {InAppNotificationContextType} from '../../../store/app/app.models';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 
 export type WalletConnectHomeParamList = {
   topic?: string;
-  wallet: Wallet;
+  wallet: Partial<Wallet>;
   context?: InAppNotificationContextType;
 };
 
@@ -101,12 +101,14 @@ const WalletConnectHome = () => {
   // version 2
   const sessionV2: WCV2SessionType | undefined = useAppSelector(
     ({WALLET_CONNECT_V2}) =>
-      WALLET_CONNECT_V2.sessions.find(session => session.topic === topic),
+      WALLET_CONNECT_V2.sessions.find(
+        (session: WCV2SessionType) => session.topic === topic,
+      ),
   );
-  const requestsV2 = useAppSelector(({WALLET_CONNECT_V2}) =>
+  const requestsV2: WCV2RequestType[] = useAppSelector(({WALLET_CONNECT_V2}) =>
     WALLET_CONNECT_V2.requests
       .filter(
-        request =>
+        (request: WCV2RequestType) =>
           request.topic === topic &&
           getAddressFrom(request).toLowerCase() ===
             wallet.receiveAddress?.toLowerCase() &&
@@ -199,7 +201,6 @@ const WalletConnectHome = () => {
 
   const goToConfirmView = async (request: any) => {
     try {
-      let _wallet;
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
@@ -212,7 +213,7 @@ const WalletConnectHome = () => {
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConfirm',
         params: {
-          wallet: _wallet || wallet,
+          wallet,
           recipient,
           request,
           peerName,
@@ -284,66 +285,66 @@ const WalletConnectHome = () => {
     }
   }, [context]);
 
-  const renderItem = useCallback(({item, index}) => {
-    const {createdOn, chain: _chain} = item;
-    const {value = '0x0'} = item.params.request.params[0];
-    const amountStr = dispatch(
-      FormatAmountStr(
-        _chain || currencyAbbreviation,
-        _chain || chain,
-        parseInt(value, 16),
-      ),
-    );
+  const renderItem = useCallback(
+    ({item, index}: {item: WCV2RequestType; index: number}) => {
+      const {createdOn} = item;
+      const {value = '0x0'} = item.params.request.params[0];
 
-    return (
-      <View key={index.toString()}>
-        <ItemTouchableContainer
-          onPress={() => {
-            haptic('impactLight');
-            handleRequestMethod(item);
-          }}>
-          <ItemTitleContainer style={{maxWidth: '40%'}}>
-            {peerIcon && peerName ? (
-              <>
-                <IconContainer>
-                  <FastImage
-                    source={{uri: peerIcon}}
-                    style={{width: 25, height: 25}}
-                  />
-                </IconContainer>
-                <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
-                  {peerName}
-                </IconLabel>
-              </>
-            ) : null}
-          </ItemTitleContainer>
-          <ItemNoteContainer>
-            <View style={{alignItems: 'flex-end'}}>
-              <IconLabel>{amountStr}</IconLabel>
-              {createdOn &&
-                (WithinPastDay(createdOn) ? (
-                  <Smallest style={{marginRight: 12}}>
-                    {t('Created ', {
-                      date: GetAmTimeAgo(createdOn),
-                    })}
-                  </Smallest>
-                ) : (
-                  <Smallest style={{marginRight: 12}}>
-                    {t('Created on', {
-                      date: GetAmFormatDate(createdOn),
-                    })}
-                  </Smallest>
-                ))}
-            </View>
-            <IconContainer>
-              <AngleRight />
-            </IconContainer>
-          </ItemNoteContainer>
-        </ItemTouchableContainer>
-        <Hr />
-      </View>
-    );
-  }, []);
+      const amountStr = dispatch(
+        FormatAmountStr(currencyAbbreviation!, chain!, parseInt(value, 16)),
+      );
+
+      return (
+        <View key={index.toString()}>
+          <ItemTouchableContainer
+            onPress={() => {
+              haptic('impactLight');
+              handleRequestMethod(item);
+            }}>
+            <ItemTitleContainer style={{maxWidth: '40%'}}>
+              {peerIcon && peerName ? (
+                <>
+                  <IconContainer>
+                    <FastImage
+                      source={{uri: peerIcon}}
+                      style={{width: 25, height: 25}}
+                    />
+                  </IconContainer>
+                  <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
+                    {peerName}
+                  </IconLabel>
+                </>
+              ) : null}
+            </ItemTitleContainer>
+            <ItemNoteContainer>
+              <View style={{alignItems: 'flex-end'}}>
+                {amountStr ? <IconLabel>{amountStr}</IconLabel> : null}
+                {createdOn &&
+                  (WithinPastDay(createdOn) ? (
+                    <Smallest style={{marginRight: 12}}>
+                      {t('Created ', {
+                        date: GetAmTimeAgo(createdOn),
+                      })}
+                    </Smallest>
+                  ) : (
+                    <Smallest style={{marginRight: 12}}>
+                      {t('Created on', {
+                        date: GetAmFormatDate(createdOn),
+                      })}
+                    </Smallest>
+                  ))}
+              </View>
+              <IconContainer>
+                <AngleRight />
+              </IconContainer>
+            </ItemNoteContainer>
+          </ItemTouchableContainer>
+          <Hr />
+        </View>
+      );
+    },
+    [],
+  );
 
   return (
     <WalletConnectContainer>
@@ -391,11 +392,7 @@ const WalletConnectHome = () => {
                     copyToClipboard(wallet.receiveAddress!, 'address')
                   }>
                   <IconContainer>
-                    {chain === 'eth' ? (
-                      <EthIcon width={18} height={18} />
-                    ) : (
-                      <MaticIcon width={18} height={18} />
-                    )}
+                    <CurrencyImage img={CurrencyListIcons[chain!]} size={18} />
                   </IconContainer>
                   <NoteLabel numberOfLines={1} ellipsizeMode={'middle'}>
                     {wallet.receiveAddress}
@@ -411,10 +408,10 @@ const WalletConnectHome = () => {
           <Hr />
           {requestsV2 && requestsV2.length ? (
             <FlatList
-              data={
-                requestsV2 && requestsV2.length ? requestsV2 : ([] as any[])
+              data={requestsV2}
+              keyExtractor={(_item: WCV2RequestType, index: number) =>
+                index.toString()
               }
-              keyExtractor={(_item, index) => index.toString()}
               renderItem={({
                 item,
                 index,

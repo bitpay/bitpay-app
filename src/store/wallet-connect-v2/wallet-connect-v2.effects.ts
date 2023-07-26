@@ -5,6 +5,7 @@ import {
   TEIP155Chain,
   WALLETCONNECT_V2_METADATA,
   WALLET_CONNECT_SUPPORTED_CHAINS,
+  WC_EVM_SUPPORTED_COINS,
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
@@ -38,6 +39,8 @@ import {WALLET_CONNECT_V2_PROJECT_ID} from '@env';
 import {startInAppNotification} from '../app/app.effects';
 import {navigationRef} from '../../Root';
 import {sessionProposal} from './wallet-connect-v2.actions';
+import {Keys} from '../wallet/wallet.reducer';
+import {SUPPORTED_EVM_COINS} from '../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 
@@ -153,13 +156,14 @@ export const walletConnectV2RejectSessionProposal =
           '[WC-V2/walletConnectV2RejectSessionProposal]: session proposal rejection',
         ),
       );
-      dispatch(sessionProposal());
     } catch (e) {
       dispatch(
         LogActions.error(
           '[WC-V2/walletConnectV2RejectSessionProposal]: an error occurred while rejecting session.',
         ),
       );
+    } finally {
+      dispatch(sessionProposal());
     }
   };
 
@@ -212,7 +216,6 @@ export const walletConnectV2SubscribeToEvents =
             ),
           );
         }
-
         dispatch(
           WalletConnectV2Actions.sesionRequest({
             ...event,
@@ -254,12 +257,22 @@ export const walletConnectV2SubscribeToEvents =
   };
 
 export const walletConnectV2ApproveCallRequest =
-  (request: WCV2RequestType, wallet: Wallet): Effect<Promise<void>> =>
-  dispatch => {
+  (request: WCV2RequestType, wallet: Partial<Wallet>): Effect<Promise<void>> =>
+  (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {topic, id} = request;
       try {
-        const response = await dispatch(approveEIP155Request(request, wallet));
+        const keys = getState().WALLET.keys;
+        const _wallet: Wallet | undefined = WC_EVM_SUPPORTED_COINS.includes(
+          wallet.chain!,
+        )
+          ? getWallet(wallet, keys)
+          : (wallet as Wallet);
+        if (!_wallet) {
+          throw new Error('Wallet not found');
+        }
+
+        const response = await dispatch(approveEIP155Request(request, _wallet));
         await web3wallet.respondSessionRequest({
           topic,
           response,
@@ -545,6 +558,9 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
         addressFrom = params[0];
         break;
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+        addressFrom = params[0];
+        break;
       default:
         break;
     }
@@ -701,7 +717,7 @@ export const getWalletByRequest =
           const address = account.substring(index + 1);
           const chain =
             request?.params.chainId &&
-            EIP155_CHAINS[request.params.chainId]?.chainName;
+            EIP155_CHAINS[request.params.chainId]?.chain;
           const network =
             request?.params.chainId &&
             EIP155_CHAINS[request.params.chainId]?.network;
@@ -714,3 +730,17 @@ export const getWalletByRequest =
     }
     return wallet;
   };
+
+// temporary workaround for supported WalletConnect chains only
+const getWallet = (wallet: Partial<Wallet>, keys: Keys): Wallet | undefined => {
+  const {receiveAddress, network} = wallet;
+
+  for (const chain of SUPPORTED_EVM_COINS) {
+    const _wallet = findWalletByAddress(receiveAddress!, chain, network!, keys);
+    if (_wallet) {
+      return _wallet;
+    }
+  }
+
+  return undefined;
+};

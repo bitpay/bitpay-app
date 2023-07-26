@@ -9,7 +9,11 @@ import {
   WCV2Wallet,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import styled from 'styled-components/native';
-import {findWalletByAddress} from '../../../store/wallet/utils/wallet';
+import {
+  findWalletByAddress,
+  getKeyIdByAddress,
+} from '../../../store/wallet/utils/wallet';
+import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 
 const NoGutter = styled.View`
   margin: 0 -10px;
@@ -24,20 +28,35 @@ const Connections = ({
   account?: string;
   session?: WCV2SessionType;
   keys?: {[key in string]: Key};
-  wallet?: Wallet;
+  wallet?: Partial<Wallet>;
 }) => {
   const navigation = useNavigation();
   let address, chain: string;
-  let wallet: Wallet | undefined;
+  let wallet: Partial<Wallet> | undefined;
 
   if (account && keys) {
     // version 2
     const index = account.indexOf(':', account.indexOf(':') + 1);
     const protocolChainName = account.substring(0, index);
     address = account.substring(index + 1);
-    chain = EIP155_CHAINS[protocolChainName]?.chainName;
+    chain = EIP155_CHAINS[protocolChainName]?.chain;
     const network = EIP155_CHAINS[protocolChainName]?.network;
     wallet = findWalletByAddress(address, chain, network, keys);
+    if (!wallet && chain && network) {
+      const keyId = getKeyIdByAddress(address, keys);
+      wallet = {
+        id: Math.random().toString(),
+        network,
+        receiveAddress: address,
+        keyId,
+        chain,
+        img: CurrencyListIcons[chain],
+        walletName: EIP155_CHAINS[protocolChainName]?.name,
+        currencyName: EIP155_CHAINS[protocolChainName]?.name,
+        currencyAbbreviation:
+          EIP155_CHAINS[protocolChainName]?.currencyAbbreviation,
+      };
+    }
   }
 
   const {keyId} = wallet || {};

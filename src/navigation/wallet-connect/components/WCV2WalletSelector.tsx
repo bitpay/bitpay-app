@@ -28,6 +28,8 @@ import {
   CtaContainerAbsolute,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
+import {Network} from '../../../constants';
+import {Wallet, Key} from '../../../store/wallet/wallet.models';
 
 const DescriptionText = styled(BaseText)`
   font-style: normal;
@@ -52,21 +54,24 @@ export default ({
   const navigation = useNavigation();
 
   const [chainsSelected, setChainsSelected] =
-    useState<{chain: string; network: string}[]>();
+    useState<{chainId: string; chain: string; network: Network}[]>();
   const {requiredNamespaces, namespaces = undefined} =
     proposal?.params || session;
 
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [allKeys, setAllkeys] = useState<any>();
   const _allKeys = Object.values(keys).filter(key => key.backupComplete);
 
   const getSelectedWallets = (): {
     chain: string;
     address: string;
-    network: string;
+    network: Network;
   }[] => {
-    const selectedWallets: {chain: string; address: string; network: string}[] =
-      [];
+    const selectedWallets: {
+      chain: string;
+      address: string;
+      network: Network;
+    }[] = [];
     allKeys &&
       allKeys.forEach((key: any) => {
         key.wallets.forEach((walletObj: WCV2Wallet) => {
@@ -75,8 +80,8 @@ export default ({
           if (checked && receiveAddress) {
             selectedWallets.push({
               address: receiveAddress,
-              chain,
-              network,
+              chain: chain!,
+              network: network!,
             });
           }
         });
@@ -87,10 +92,13 @@ export default ({
   useEffect(() => {
     if (requiredNamespaces) {
       Object.keys(requiredNamespaces).forEach(key => {
-        const chains: {chain: string; network: string}[] = [];
+        const chains: {chainId: string; chain: string; network: Network}[] = [];
         requiredNamespaces[key].chains.map((chain: string) => {
           if (WALLET_CONNECT_SUPPORTED_CHAINS[chain]) {
-            chains.push(WALLET_CONNECT_SUPPORTED_CHAINS[chain]);
+            chains.push({
+              chainId: chain,
+              ...WALLET_CONNECT_SUPPORTED_CHAINS[chain],
+            });
           }
         });
         setChainsSelected(chains);
@@ -118,7 +126,7 @@ export default ({
                 ),
             ),
           )
-          .map(wallet => {
+          .map((wallet: Wallet) => {
             return {
               wallet,
               checked: false,
@@ -157,6 +165,7 @@ export default ({
             <View>
               <WCV2KeyWalletsRow
                 keys={allKeys}
+                chainsSelected={chainsSelected}
                 onPress={(keyId: string, wallet: WCV2Wallet) => {
                   haptic('impactLight');
                   setAllkeys((prev: any) => {

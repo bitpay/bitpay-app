@@ -79,7 +79,10 @@ import {Analytics} from '../../../analytics/analytics.effects';
 import {AppActions} from '../../../app';
 import {URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
+import {
+  WALLET_CONNECT_SUPPORTED_CHAINS,
+  WC_EVM_SUPPORTED_COINS,
+} from '../../../../constants/WalletConnectV2';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -384,7 +387,7 @@ export const buildTxDetails =
     proposal?: TransactionProposal;
     rates: Rates;
     defaultAltCurrencyIsoCode: string;
-    wallet: Wallet | WalletRowProps;
+    wallet: Wallet | WalletRowProps | Partial<Wallet>;
     recipient?: Recipient;
     invoice?: Invoice;
     context?: TransactionOptionsContext;
@@ -399,7 +402,7 @@ export const buildTxDetails =
       const {params} = request.params.request;
       gasPrice = params[0].gasPrice
         ? parseInt(params[0]?.gasPrice, 16)
-        : feePerKb!;
+        : feePerKb;
       gasLimit =
         (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
         (params[0].gas && parseInt(params[0]?.gas, 16));
@@ -407,7 +410,7 @@ export const buildTxDetails =
       coin = chain =
         WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
       amount = parseInt(params[0]?.value, 16) || 0;
-      fee = gasLimit * gasPrice;
+      fee = gasPrice ? gasLimit * gasPrice : 0;
     }
 
     if (proposal) {
@@ -457,7 +460,10 @@ export const buildTxDetails =
       coin,
       chain,
     };
-    const rateStr = getRateStr(opts);
+    const rateStr =
+      context === 'walletConnect' && WC_EVM_SUPPORTED_COINS.includes(chain)
+        ? undefined
+        : getRateStr(opts);
     const networkCost =
       !isOffChain &&
       invoiceCurrency &&

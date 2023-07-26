@@ -50,13 +50,14 @@ import {
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {buildTxDetails} from '../../../store/wallet/effects/send/send';
+import {WC_EVM_SUPPORTED_COINS} from '../../../constants/WalletConnectV2';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
 `;
 
 export interface WalletConnectConfirmParamList {
-  wallet: Wallet;
+  wallet: Partial<Wallet>;
   recipient: Recipient;
   peerName?: string;
   request: any;
@@ -74,13 +75,16 @@ const WalletConnectConfirm = () => {
 
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const rates = useAppSelector(({RATE}) => RATE.rates);
-  const [txDetails, setTxDetails] = useState<TxDetails>();
+  const [txDetails, setTxDetails] = useState<Partial<TxDetails>>();
 
   const _setTxDetails = async () => {
-    const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
+    const feePerKb: number | undefined =
+      wallet.chain && !WC_EVM_SUPPORTED_COINS.includes(wallet.chain)
+        ? await getFeeRatePerKb({wallet: wallet as Wallet, feeLevel: 'normal'})
+        : undefined;
     const _txDetails = dispatch(
       buildTxDetails({
-        wallet,
+        wallet: wallet as Wallet,
         rates,
         defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
         recipient,
@@ -96,7 +100,10 @@ const WalletConnectConfirm = () => {
     _setTxDetails();
   }, []);
 
-  const feeOptions = GetFeeOptions(wallet.chain);
+  const feeOptions =
+    wallet.chain &&
+    !WC_EVM_SUPPORTED_COINS.includes(wallet.chain) &&
+    GetFeeOptions(wallet.chain);
 
   const approveCallRequest = async () => {
     try {
@@ -201,12 +208,14 @@ const WalletConnectConfirm = () => {
         />
         <Hr />
         <SendingTo recipient={txDetails?.sendingTo} hr />
-        <Fee
-          fee={txDetails?.fee}
-          feeOptions={feeOptions}
-          hideFeeOptions={true}
-          hr
-        />
+        {feeOptions ? (
+          <Fee
+            fee={txDetails?.fee}
+            feeOptions={feeOptions}
+            hideFeeOptions={true}
+            hr
+          />
+        ) : null}
         {txDetails?.gasPrice !== undefined ? (
           <SharedDetailRow
             description={t('Gas price')}

@@ -1,4 +1,5 @@
 import React, {memo, useEffect} from 'react';
+import {View} from 'react-native';
 import styled from 'styled-components/native';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
@@ -11,10 +12,19 @@ import {
   RowContainer,
 } from '../../../components/styled/Containers';
 import {H5, ListItemSubText} from '../../../components/styled/Text';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../constants/WalletConnectV2';
+import {Network} from '../../../constants';
+import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
+import {
+  WALLET_CONNECT_SUPPORTED_CHAINS,
+  WC_EVM_SUPPORTED_COINS,
+} from '../../../constants/WalletConnectV2';
 import {getAddressFrom} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {WCV2Wallet} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
+import {
+  WCV2RequestType,
+  WCV2Wallet,
+} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
+import {Wallet} from '../../../store/wallet/wallet.models';
 import {formatCryptoAddress} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {PillContainer, PillText} from '../../wallet/components/SendToPill';
@@ -26,7 +36,7 @@ const BalanceColumn = styled(Column)`
 
 const CurrencyColumn = styled.View`
   margin-left: 2px;
-  max-width: 35%;
+  max-width: 40%;
 `;
 
 const CheckBoxContainer = styled.View`
@@ -72,6 +82,7 @@ interface Props {
   onPress: (keyId: string, wallet: WCV2Wallet) => void;
   showCheckbox: boolean;
   topic?: string;
+  chainsSelected?: {chainId: string; chain: string; network: Network}[];
 }
 
 const WCV2WalletRow = ({
@@ -81,18 +92,20 @@ const WCV2WalletRow = ({
   isLast,
   showCheckbox,
   topic,
+  chainsSelected,
 }: Props) => {
   const dispatch = useAppDispatch();
   const {wallet} = walletObj;
   const requests = useAppSelector(({WALLET_CONNECT_V2}) =>
-    WALLET_CONNECT_V2.requests.filter(
-      request =>
+    WALLET_CONNECT_V2.requests.filter((request: WCV2RequestType) => {
+      return (
         request.topic === topic &&
         getAddressFrom(request).toLowerCase() ===
           wallet.receiveAddress?.toLowerCase() &&
         WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain ===
-          wallet.chain,
-    ),
+          wallet.chain
+      );
+    }),
   );
   const {hideAllBalances} = useAppSelector(({APP}) => APP);
 
@@ -105,13 +118,14 @@ const WCV2WalletRow = ({
     receiveAddress,
     network,
     chain,
+    id,
   } = wallet;
 
   useEffect(() => {
     const createAddress = async () => {
-      if (!receiveAddress) {
+      if (!receiveAddress && !WC_EVM_SUPPORTED_COINS.includes(chain!)) {
         receiveAddress = await dispatch(
-          createWalletAddress({wallet, newAddress: false}),
+          createWalletAddress({wallet: wallet as Wallet, newAddress: false}),
         );
       }
     };
@@ -120,6 +134,7 @@ const WCV2WalletRow = ({
 
   return (
     <RowContainer
+      key={`${keyId}_${id}`}
       isLast={isLast}
       onPress={() => onPress(keyId, walletObj)}
       style={{
@@ -130,8 +145,8 @@ const WCV2WalletRow = ({
       ) : null}
 
       <CurrencyImageContainer>
-        <CurrencyImage img={img} badgeUri={badgeImg} size={45} />
-        {requests && requests.length ? <Badge /> : null}
+        <CurrencyImage img={img!} badgeUri={badgeImg} size={45} />
+        {requests && requests.length ? <Badge key={`${keyId}_${id}`} /> : null}
       </CurrencyImageContainer>
       <CurrencyColumn>
         <Row>
@@ -139,22 +154,50 @@ const WCV2WalletRow = ({
             {walletName || currencyName}
           </H5>
           <TestBadgeContainer>
-            {buildTestBadge(network, chain, false)}
+            {buildTestBadge(network as string, chain!, false)}
           </TestBadgeContainer>
         </Row>
-        <ListItemSubText style={{marginTop: -4}}>
-          {!hideAllBalances ? balance?.crypto : '****'}
+        <ListItemSubText style={{marginTop: -4}} numberOfLines={1}>
+          {!WC_EVM_SUPPORTED_COINS.includes(chain!)
+            ? !hideAllBalances
+              ? balance?.crypto
+              : '****'
+            : 'wc support only'}
         </ListItemSubText>
       </CurrencyColumn>
       {receiveAddress ? (
         <BalanceColumn>
-          <SendToPillContainer>
-            <PillContainer>
-              <PillText accent={'action'}>
-                {receiveAddress && formatCryptoAddress(receiveAddress)}
-              </PillText>
-            </PillContainer>
-          </SendToPillContainer>
+          <>
+            <SendToPillContainer>
+              <PillContainer height="30px">
+                <PillText accent={'action'}>
+                  {receiveAddress && formatCryptoAddress(receiveAddress)}
+                </PillText>
+              </PillContainer>
+            </SendToPillContainer>
+            {chainsSelected?.length ? (
+              <Row>
+                {chainsSelected.map((c, index) => {
+                  if (
+                    c.network !== network ||
+                    c.chain === chain ||
+                    !WALLET_CONNECT_SUPPORTED_CHAINS[c.chainId]
+                  ) {
+                    return <View key={`${keyId}_${index}`} />;
+                  } else {
+                    return (
+                      <View style={{marginLeft: 1}} key={`${keyId}_${index}`}>
+                        <CurrencyImage
+                          img={CurrencyListIcons[c.chain]}
+                          size={15}
+                        />
+                      </View>
+                    );
+                  }
+                })}
+              </Row>
+            ) : null}
+          </>
         </BalanceColumn>
       ) : null}
     </RowContainer>

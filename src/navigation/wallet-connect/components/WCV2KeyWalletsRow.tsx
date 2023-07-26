@@ -11,6 +11,7 @@ import {
   WCV2Wallet,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {NoGutter} from '../styled/WalletConnectContainers';
+import {Network} from '../../../constants';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -52,17 +53,29 @@ interface WCV2KeyWalletProps {
   keys: WCV2Key[];
   onPress: (keyId: string, wallet: WCV2Wallet) => void;
   topic?: string;
+  chainsSelected?: {chainId: string; chain: string; network: Network}[];
 }
 
 export const WCV2KeyWalletsRow = ({
   keys,
   onPress,
   topic,
+  chainsSelected,
 }: WCV2KeyWalletProps) => {
   const renderItem = useCallback(
-    ({item, keyId, isLast}) => {
-      return item ? (
-        <NoGutter key={item.id}>
+    ({
+      item,
+      keyId,
+      isLast,
+      index,
+    }: {
+      item: WCV2Wallet;
+      keyId: string;
+      isLast: boolean;
+      index: number;
+    }) => {
+      return item && item.wallet.id ? (
+        <NoGutter key={`${item.wallet.id}_${index}`}>
           <WCV2WalletRow
             walletObj={item}
             keyId={keyId}
@@ -70,6 +83,7 @@ export const WCV2KeyWalletsRow = ({
             onPress={onPress}
             showCheckbox={true}
             topic={topic}
+            chainsSelected={chainsSelected}
           />
         </NoGutter>
       ) : null;
@@ -78,7 +92,7 @@ export const WCV2KeyWalletsRow = ({
   );
 
   const renderKey = useCallback(
-    ({item, isLast}) => {
+    ({item, isLast}: {item: WCV2Key; isLast: boolean}) => {
       const {wallets, keyName, keyId} = item;
 
       return wallets.length ? (
@@ -96,7 +110,7 @@ export const WCV2KeyWalletsRow = ({
               <FlatList
                 contentContainerStyle={{paddingBottom: 20}}
                 data={wallets}
-                keyExtractor={(_item, index) => index.toString()}
+                keyExtractor={(_item, index) => `${keyId}_${index}`}
                 renderItem={({
                   item,
                   index,
@@ -105,7 +119,7 @@ export const WCV2KeyWalletsRow = ({
                   index: number;
                 }) => {
                   const isLast = index === wallets.length - 1;
-                  return renderItem({item, keyId, isLast});
+                  return renderItem({item, keyId, isLast, index});
                 }}
               />
             </View>
@@ -121,7 +135,7 @@ export const WCV2KeyWalletsRow = ({
       {keys ? (
         <FlatList
           data={keys}
-          keyExtractor={(_item, index) => index.toString()}
+          keyExtractor={item => item.keyId.toString()}
           renderItem={({item, index}: {item: WCV2Key; index: number}) => {
             const isLast = index === keys.length - 1;
             return renderKey({item, isLast});

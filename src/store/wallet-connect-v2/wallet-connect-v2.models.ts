@@ -4,13 +4,13 @@ import {Wallet} from '../wallet/wallet.models';
 export type WCV2Key = {
   keyName: string | undefined;
   keyId: string;
-  checked: boolean;
-  showWallets: boolean;
+  checked?: boolean;
+  showWallets?: boolean;
   wallets: WCV2Wallet[];
 };
 
 export type WCV2Wallet = {
-  wallet: Wallet;
+  wallet: Partial<Wallet> | Wallet;
   checked?: boolean;
 };
 
