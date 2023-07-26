@@ -19,3 +19,5 @@ declare module '@env' {
   export const MORALIS_API_KEY: string;
   export const ONEINCH_API_KEY: string;
 }
+
+declare module 'redux-persist-sensitive-storage';
