@@ -12,7 +12,7 @@ import {Paragraph} from '../../../components/styled/Text';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import yup from '../../../lib/yup';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {joinWaitlist} from '../../../store/card/card.effects';
+import {joinWaitlist} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
@@ -94,7 +94,9 @@ const CardIntro: React.FC = () => {
     try {
       setButtonState('loading');
       Keyboard.dismiss();
-      await dispatch(joinWaitlist(userEmail || email));
+      await dispatch(
+        joinWaitlist(userEmail || email, 'CFSB Card Waitlist', 'bitpay-card'),
+      );
       await sleep(500);
       setButtonState('success');
     } catch (err) {

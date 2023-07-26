@@ -35,7 +35,7 @@ import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
-import {CardEffects} from '../card';
+import {CardActions, CardEffects} from '../card';
 import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {Effect, RootState} from '../index';
@@ -71,6 +71,7 @@ import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME,
+  BASE_BITPAY_URLS,
   DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
 import {updatePortfolioBalance} from '../wallet/wallet.actions';
@@ -95,6 +96,9 @@ import {moralisInit} from '../moralis/moralis.effects';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {InAppNotificationMessages} from '../../components/modal/in-app-notification/InAppNotification';
 import {SignClientTypes} from '@walletconnect/types';
+import axios from 'axios';
+import AuthApi from '../../api/auth';
+import {ShopActions} from '../shop';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -498,6 +502,7 @@ export const startOnGoingProcessModal =
       CREATING_TXP: i18n.t('Creating Transaction'),
       SENDING_EMAIL: i18n.t('Sending Email'),
       REDIRECTING: i18n.t('Redirecting'),
+      REMOVING_BILL: i18n.t('Removing Bill'),
       BROADCASTING_TXP: i18n.t('Broadcasting transaction...'),
     };
 
@@ -1285,5 +1290,43 @@ export const requestInAppReview =
           `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
         ),
       );
+    }
+  };
+
+export const joinWaitlist =
+  (
+    email: string,
+    attribute: string,
+    context: 'bill-pay' | 'bitpay-card',
+  ): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      const network = APP.network as Network;
+      const session = await AuthApi.fetchSession(network);
+      const baseUrl = BASE_BITPAY_URLS[network];
+
+      const config = {
+        headers: {
+          'x-csrf-token': session.csrfToken,
+        },
+      };
+      const data = {
+        email,
+        attribute,
+      };
+
+      await axios.post(`${baseUrl}/marketing/marketingOptIn`, data, config);
+      switch (context) {
+        case 'bitpay-card':
+          dispatch(CardActions.isJoinedWaitlist(true));
+          break;
+        case 'bill-pay':
+          dispatch(ShopActions.isJoinedWaitlist(true));
+          break;
+      }
+    } catch (err) {
+      dispatch(LogActions.error(`Error joining waitlist: ${err}`));
+      throw err;
     }
   };
