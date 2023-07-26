@@ -16,8 +16,9 @@ import {
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
-import {ShopScreens} from '../../shop/ShopStack';
 import {ShopTabs} from '../../shop/ShopHome';
+import { TabsScreens } from '../../TabsStack';
+import { RootStacks } from '../../../../Root';
 
 const MethodIcon = require('../../../../../assets/img/logos/method.png');
 
@@ -92,8 +93,8 @@ const Connections: React.VFC<ConnectionsProps> = props => {
         params: {},
       });
     } else {
-      navigation.navigate('Shop', {
-        screen: ShopScreens.HOME,
+      navigation.navigate(RootStacks.TABS, {
+        screen: TabsScreens.SHOP,
         params: {
           screen: ShopTabs.BILLS,
         },

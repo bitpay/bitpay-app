@@ -84,7 +84,6 @@ import {
 } from '../shop/shop.selectors';
 import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
-import {ShopScreens} from '../../navigation/shop/ShopStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
 import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
