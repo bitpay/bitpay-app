@@ -18,3 +18,5 @@ declare module '@env' {
   export const WALLET_CONNECT_V2_PROJECT_ID: string;
   export const MORALIS_API_KEY: string;
 }
+
+declare module 'redux-persist-sensitive-storage';
