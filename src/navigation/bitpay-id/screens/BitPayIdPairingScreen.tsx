@@ -2,7 +2,9 @@ import {CommonActions} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useCallback} from 'react';
 import {RootStacks} from '../../../Root';
+import {AppEffects} from '../../../store/app';
 import {TabsScreens} from '../../tabs/TabsStack';
+import {useAppDispatch} from '../../../utils/hooks';
 import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
 import BasePairing from '../components/BasePairing';
 
@@ -10,18 +12,28 @@ export type BitPayIdPairingScreenParamList =
   | {
       secret?: string;
       code?: string;
+      redirect?: string;
     }
   | undefined;
 
 const BitPayIdPairingScreen: React.FC<
   StackScreenProps<BitpayIdStackParamList, BitpayIdScreens.PAIRING>
 > = props => {
+  const dispatch = useAppDispatch();
   const {navigation, route} = props;
-  const {secret, code} = route.params || {};
+  const {secret, code, redirect} = route.params || {};
 
   const onSuccess = useCallback(() => {
-    navigation.replace('Profile');
-  }, [navigation]);
+    let handled = false;
+
+    if (redirect) {
+      handled = dispatch(AppEffects.incomingLink(redirect));
+    }
+    
+    if (!handled) {
+      navigation.replace('Profile');
+    }
+  }, [navigation, redirect]);
 
   const onFailure = () => {
     navigation.dispatch(
