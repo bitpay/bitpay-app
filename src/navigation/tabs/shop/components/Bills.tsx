@@ -98,7 +98,10 @@ export const Bills = () => {
   const onSubmit = async () => {
     try {
       setButtonState('loading');
-      await dispatch(joinWaitlist(user.email, 'bill pay waitlist', 'bill-pay'));
+      user &&
+        (await dispatch(
+          joinWaitlist(user.email, 'BillPay Waitlist', 'bill-pay'),
+        ));
       await sleep(500);
       setButtonState('success');
     } catch (err) {
