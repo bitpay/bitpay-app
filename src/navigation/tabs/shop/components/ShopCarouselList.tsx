@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
-import Carousel from 'react-native-snap-carousel';
+import Carousel from 'react-native-reanimated-carousel';
 import {
   CardConfig,
   DirectIntegrationApiObject,
@@ -68,41 +68,47 @@ export default ({
 
   return (
     <Carousel
+      loop={false}
+      autoFillData={false}
       vertical={false}
-      layout={'default'}
-      useExperimentalSnap={false}
+      style={{width: screenWidth}}
+      width={isSingleSlide ? screenWidth : carouselItemWidth}
+      height={isSingleSlide ? carouselItemWidth / 4 : carouselItemWidth * 1.3}
+      autoPlay={false}
       data={slides}
-      inactiveSlideOpacity={1}
-      inactiveSlideScale={1}
-      activeSlideAlignment={'start'}
-      sliderWidth={screenWidth}
-      itemWidth={isSingleSlide ? screenWidth : carouselItemWidth}
-      scrollEnabled={!isSingleSlide}
-      // @ts-ignore
-      disableIntervalMomentum={true}
-      renderItem={(item: {dataIndex: number; item: ShopCarouselItem[]}) => (
-        <SlideContainer
-          inLastSlide={item.dataIndex === slides.length - 1}
-          isSingleSlide={isSingleSlide}
-          nextColumnVisiblePixels={nextColumnVisiblePixels}>
-          {item.item.map((listItem: ShopCarouselItem) => (
-            <ItemTouchableHighlight
-              width={
-                item.dataIndex === slides.length - 1
-                  ? carouselItemWidthInLastSlide
-                  : carouselItemWidth
-              }
-              key={listItem.displayName}
-              onPress={() => {
-                console.log('press', listItem.displayName);
-                onItemPress(listItem);
-              }}
-              underlayColor={itemUnderlayColor || 'transparent'}>
-              {itemComponent(listItem)}
-            </ItemTouchableHighlight>
-          ))}
-        </SlideContainer>
-      )}
+      scrollAnimationDuration={1000}
+      enabled={!isSingleSlide}
+      renderItem={({
+        item,
+        index,
+      }: {
+        item: ShopCarouselItem[];
+        index: number;
+      }) => {
+        return (
+          <SlideContainer
+            inLastSlide={index === slides.length - 1}
+            isSingleSlide={isSingleSlide}
+            nextColumnVisiblePixels={nextColumnVisiblePixels}>
+            {item.map((listItem: ShopCarouselItem) => (
+              <ItemTouchableHighlight
+                width={
+                  index === slides.length - 1
+                    ? carouselItemWidthInLastSlide
+                    : carouselItemWidth
+                }
+                key={listItem.displayName}
+                onPress={() => {
+                  console.log('press', listItem.displayName);
+                  onItemPress(listItem);
+                }}
+                underlayColor={itemUnderlayColor || 'transparent'}>
+                {itemComponent(listItem)}
+              </ItemTouchableHighlight>
+            ))}
+          </SlideContainer>
+        );
+      }}
     />
   );
 };

@@ -29,7 +29,7 @@ const BitPayIdPairingScreen: React.FC<
     if (redirect) {
       handled = dispatch(AppEffects.incomingLink(redirect));
     }
-    
+
     if (!handled) {
       navigation.replace('Profile');
     }
