@@ -154,6 +154,8 @@ const Amount: React.VFC<AmountProps> = ({
     return defaultAltCurrency.isoCode;
   }, [context, defaultAltCurrency.isoCode, fiatCurrencyAbbreviation]);
 
+  const [continueEnabled, setContinueEnabled] = useState(false);
+
   // flag for primary selector type
   const [rate, setRate] = useState(0);
   const [amountConfig, updateAmountConfig] = useState({
@@ -288,21 +290,23 @@ const Amount: React.VFC<AmountProps> = ({
     }
   };
 
-  const continueIsDisabled = () => {
+  useEffect(() => {
     if (limits.min && +amount > 0 && +amount < limits.min) {
-      return true;
+      setContinueEnabled(false);
     } else if (
       swapOpts?.maxWalletAmount &&
       +amount > 0 &&
       +amount > Number(swapOpts.maxWalletAmount)
     ) {
-      return true;
+      setContinueEnabled(false);
     } else if (limits.max && +amount > 0 && +amount > limits.max) {
-      return true;
+      setContinueEnabled(false);
+    } else if (!+amount && buttonState !== 'loading') {
+      setContinueEnabled(false); // Default case
     } else {
-      return !+amount && buttonState !== 'loading'; // Default case
+      setContinueEnabled(true);
     }
-  };
+  }, [amount, limits.max, limits.min, buttonState, swapOpts?.maxWalletAmount]);
 
   const getWarnMsg = useMemo<JSX.Element>(() => {
     let msg: string | undefined;
@@ -379,10 +383,13 @@ const Amount: React.VFC<AmountProps> = ({
   useEffect(() => {
     initRef.current();
     initLimits();
+  }, []);
+
+  useEffect(() => {
     KeyEvent.onKeyUpListener((keyEvent: any) => {
       if (keyEvent.pressedKey === '\b') {
         onCellPress('backspace');
-      } else if (keyEvent.pressedKey === '\r' && !continueIsDisabled()) {
+      } else if (keyEvent.pressedKey === '\r' && continueEnabled) {
         onSubmit?.(+curValRef.current);
       } else if (keyEvent.pressedKey === 'UIKeyInputEscape') {
         onCellPress('reset');
@@ -395,7 +402,7 @@ const Amount: React.VFC<AmountProps> = ({
       }
     });
     return () => KeyEvent.removeKeyUpListener();
-  }, []);
+  }, [continueEnabled]);
 
   return (
     <AmountContainer>
@@ -465,7 +472,7 @@ const Amount: React.VFC<AmountProps> = ({
           <ButtonContainer>
             <Button
               state={buttonState}
-              disabled={continueIsDisabled()}
+              disabled={!continueEnabled}
               onPress={() =>
                 useSendMax && onSendMaxPressed
                   ? onSendMaxPressed()
