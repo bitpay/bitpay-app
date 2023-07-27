@@ -98,7 +98,10 @@ export type SettingsHomeParamList =
     }
   | undefined;
 
-type SettingsHomeProps = StackScreenProps<TabsStackParamList, TabsScreens.SETTINGS>;
+type SettingsHomeProps = StackScreenProps<
+  TabsStackParamList,
+  TabsScreens.SETTINGS
+>;
 
 export type SettingsListType =
   | 'General'

@@ -10,7 +10,9 @@ import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import HomeRoot from './home/HomeRoot';
 import ShopHome, {ShopHomeParamList} from './shop/ShopHome';
 import SettingsRoot, {SettingsHomeParamList} from './settings/SettingsRoot';
-import CardHome, {CardHomeScreenParamList} from '../../navigation/card/screens/CardHome';
+import CardHome, {
+  CardHomeScreenParamList,
+} from '../../navigation/card/screens/CardHome';
 
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
 import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
@@ -90,22 +92,30 @@ const TabsStack = () => {
           return <Icon />;
         },
       })}>
-      <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} options={{
-        headerShown: true,
-        header: () => <ZeroHeightHeader />,
-      }} />
-      <Tab.Screen name={TabsScreens.SHOP} component={ShopHome} options={{
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: 'transparent',
-        },
-        headerShadowVisible: false,
-        headerTitleStyle: {maxWidth: WIDTH - 150},
-        ...TransitionPresets.SlideFromRightIOS,
-        headerShown: true,
-        headerLeft: () => null,
-        headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
-      }} />
+      <Tab.Screen
+        name={TabsScreens.HOME}
+        component={HomeRoot}
+        options={{
+          headerShown: true,
+          header: () => <ZeroHeightHeader />,
+        }}
+      />
+      <Tab.Screen
+        name={TabsScreens.SHOP}
+        component={ShopHome}
+        options={{
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: 'transparent',
+          },
+          headerShadowVisible: false,
+          headerTitleStyle: {maxWidth: WIDTH - 150},
+          ...TransitionPresets.SlideFromRightIOS,
+          headerShown: true,
+          headerLeft: () => null,
+          headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
+        }}
+      />
       <Tab.Screen
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
@@ -114,28 +124,36 @@ const TabsStack = () => {
           tabBarButton: props => <View {...props} />,
         }}
       />
-      <Tab.Screen name={TabsScreens.CARD} component={CardHome} options={{
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: 'transparent'
-        },
-        headerShadowVisible: false,
-        headerTitleStyle: {maxWidth: WIDTH - 150},
-        ...TransitionPresets.SlideFromRightIOS,
-        headerLeft: () => null,
-      }} />
-      <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} options={{
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: 'transparent'
-        },
-        headerShadowVisible: false,
-        headerTitleStyle: {maxWidth: WIDTH - 150},
-        ...TransitionPresets.SlideFromRightIOS,
-        headerShown: true,
-        headerLeft: () => null,
-        headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
-      }} />
+      <Tab.Screen
+        name={TabsScreens.CARD}
+        component={CardHome}
+        options={{
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: 'transparent',
+          },
+          headerShadowVisible: false,
+          headerTitleStyle: {maxWidth: WIDTH - 150},
+          ...TransitionPresets.SlideFromRightIOS,
+          headerLeft: () => null,
+        }}
+      />
+      <Tab.Screen
+        name={TabsScreens.SETTINGS}
+        component={SettingsRoot}
+        options={{
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: 'transparent',
+          },
+          headerShadowVisible: false,
+          headerTitleStyle: {maxWidth: WIDTH - 150},
+          ...TransitionPresets.SlideFromRightIOS,
+          headerShown: true,
+          headerLeft: () => null,
+          headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
+        }}
+      />
     </Tab.Navigator>
   );
 };

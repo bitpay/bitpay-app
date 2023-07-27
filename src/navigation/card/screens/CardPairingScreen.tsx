@@ -73,7 +73,9 @@ const CardPairingScreen: React.FC<
           screen: TabsScreens.CARD,
         });
       } else {
-        navigationRef.dispatch(StackActions.replace(RootStacks.TABS, {screen: TabsScreens.CARD}));
+        navigationRef.dispatch(
+          StackActions.replace(RootStacks.TABS, {screen: TabsScreens.CARD}),
+        );
       }
     }
   }, []);

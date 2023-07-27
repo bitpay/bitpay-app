@@ -41,95 +41,94 @@ type ClearTransactionHistoryCacheProps = StackScreenProps<
 >;
 const BWC = BwcProvider.getInstance();
 
-const ClearTransactionHistoryCache: React.FC<
-  ClearTransactionHistoryCacheProps
-> = ({navigation, route}) => {
-  const {t} = useTranslation();
-  const dispatch = useAppDispatch();
-  const [buttonState, setButtonState] = useState<ButtonState>();
+const ClearTransactionHistoryCache: React.FC<ClearTransactionHistoryCacheProps> =
+  ({navigation, route}) => {
+    const {t} = useTranslation();
+    const dispatch = useAppDispatch();
+    const [buttonState, setButtonState] = useState<ButtonState>();
 
-  const {wallet, key} = route.params;
+    const {wallet, key} = route.params;
 
-  const clearCache = async () => {
-    setButtonState('loading');
+    const clearCache = async () => {
+      setButtonState('loading');
 
-    const walletClient = BWC.getClient(JSON.stringify(wallet.credentials));
+      const walletClient = BWC.getClient(JSON.stringify(wallet.credentials));
 
-    walletClient.clearCache(async (err: any) => {
-      if (err) {
-        setButtonState('failed');
-        showErrorMessage(
-          CustomErrorMessage({
-            errMsg: BWCErrorMessage(err),
-            title: t('Uh oh, something went wrong'),
-            action: () => {
-              setButtonState(undefined);
-            },
-          }),
-        );
-      } else {
-        setButtonState('success');
-        dispatch(
-          updateWalletTxHistory({
-            walletId: wallet.id,
-            keyId: key.id,
-            transactionHistory: {
-              transactions: [],
-              loadMore: true,
-              hasConfirmingTxs: false,
-            },
-          }),
-        );
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 1,
-            routes: [
-              {
-                name: 'KeyOverview',
-                params: {
-                  id: key.id,
-                },
+      walletClient.clearCache(async (err: any) => {
+        if (err) {
+          setButtonState('failed');
+          showErrorMessage(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(err),
+              title: t('Uh oh, something went wrong'),
+              action: () => {
+                setButtonState(undefined);
               },
-              {
-                name: 'WalletDetails',
-                params: {
-                  walletId: wallet.id,
-                  key,
-                  skipInitializeHistory: false,
-                },
+            }),
+          );
+        } else {
+          setButtonState('success');
+          dispatch(
+            updateWalletTxHistory({
+              walletId: wallet.id,
+              keyId: key.id,
+              transactionHistory: {
+                transactions: [],
+                loadMore: true,
+                hasConfirmingTxs: false,
               },
-            ],
-          }),
-        );
-      }
-    });
+            }),
+          );
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 1,
+              routes: [
+                {
+                  name: 'KeyOverview',
+                  params: {
+                    id: key.id,
+                  },
+                },
+                {
+                  name: 'WalletDetails',
+                  params: {
+                    walletId: wallet.id,
+                    key,
+                    skipInitializeHistory: false,
+                  },
+                },
+              ],
+            }),
+          );
+        }
+      });
+    };
+
+    const showErrorMessage = useCallback(
+      async (msg: BottomNotificationConfig) => {
+        await sleep(500);
+        dispatch(showBottomNotificationModal(msg));
+      },
+      [dispatch],
+    );
+
+    return (
+      <ClearTransactionHistoryCacheContainer>
+        <ScrollView>
+          <ClearTransactionHistoryCacheDescription>
+            {t(
+              'The transaction history and every new incoming transaction are cached in the app. Clearing the cache cleans up the transaction history and synchronizes again from the server.',
+            )}
+          </ClearTransactionHistoryCacheDescription>
+
+          <ButtonContainer>
+            <Button onPress={() => clearCache()} state={buttonState}>
+              {t('Clear cache')}
+            </Button>
+          </ButtonContainer>
+        </ScrollView>
+      </ClearTransactionHistoryCacheContainer>
+    );
   };
-
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
-
-  return (
-    <ClearTransactionHistoryCacheContainer>
-      <ScrollView>
-        <ClearTransactionHistoryCacheDescription>
-          {t(
-            'The transaction history and every new incoming transaction are cached in the app. Clearing the cache cleans up the transaction history and synchronizes again from the server.',
-          )}
-        </ClearTransactionHistoryCacheDescription>
-
-        <ButtonContainer>
-          <Button onPress={() => clearCache()} state={buttonState}>
-            {t('Clear cache')}
-          </Button>
-        </ButtonContainer>
-      </ScrollView>
-    </ClearTransactionHistoryCacheContainer>
-  );
-};
 
 export default ClearTransactionHistoryCache;

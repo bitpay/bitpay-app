@@ -16,42 +16,41 @@ interface CurrencySelectionNoResultsProps {
   walletKey?: Key | undefined;
 }
 
-const CurrencySelectionNoResults: React.VFC<
-  CurrencySelectionNoResultsProps
-> = props => {
-  const navigation = useNavigation();
-  const {t} = useTranslation();
-  const {query, walletKey} = props;
+const CurrencySelectionNoResults: React.VFC<CurrencySelectionNoResultsProps> =
+  props => {
+    const navigation = useNavigation();
+    const {t} = useTranslation();
+    const {query, walletKey} = props;
 
-  return (
-    <NoResultsContainer>
-      <NoResultsImgContainer>
-        <GhostSvg style={{marginTop: 20}} />
-      </NoResultsImgContainer>
+    return (
+      <NoResultsContainer>
+        <NoResultsImgContainer>
+          <GhostSvg style={{marginTop: 20}} />
+        </NoResultsImgContainer>
 
-      <NoResultsDescription>
-        <Trans
-          i18nKey="WeCouldntFindMatchForArg"
-          values={{query}}
-          components={[<BaseText style={{fontWeight: 'bold'}} />]}
-        />
-      </NoResultsDescription>
+        <NoResultsDescription>
+          <Trans
+            i18nKey="WeCouldntFindMatchForArg"
+            values={{query}}
+            components={[<BaseText style={{fontWeight: 'bold'}} />]}
+          />
+        </NoResultsDescription>
 
-      {walletKey ? (
-        <Link
-          style={{marginTop: 10, height: 50}}
-          onPress={() => {
-            haptic('soft');
-            navigation.navigate('Wallet', {
-              screen: 'AddWallet',
-              params: {key: walletKey, isCustomToken: true, isToken: true},
-            });
-          }}>
-          {t('Add Custom Token')}
-        </Link>
-      ) : null}
-    </NoResultsContainer>
-  );
-};
+        {walletKey ? (
+          <Link
+            style={{marginTop: 10, height: 50}}
+            onPress={() => {
+              haptic('soft');
+              navigation.navigate('Wallet', {
+                screen: 'AddWallet',
+                params: {key: walletKey, isCustomToken: true, isToken: true},
+              });
+            }}>
+            {t('Add Custom Token')}
+          </Link>
+        ) : null}
+      </NoResultsContainer>
+    );
+  };
 
 export default CurrencySelectionNoResults;

@@ -20,12 +20,7 @@ import {
 } from '../../../components/styled/Text';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WalletStackParamList} from '../WalletStack';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import _ from 'lodash';
 import {
   Key,

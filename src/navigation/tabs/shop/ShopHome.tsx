@@ -1,11 +1,5 @@
 import debounce from 'lodash.debounce';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {Keyboard, RefreshControl, ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
@@ -47,7 +41,10 @@ import {TabsScreens, TabsStackParamList} from '../TabsStack';
 import {Bills} from './components/Bills';
 import {HEIGHT} from '../../../components/styled/Containers';
 
-export type ShopStackScreenProps = StackScreenProps<TabsStackParamList, TabsScreens.SHOP>;
+export type ShopStackScreenProps = StackScreenProps<
+  TabsStackParamList,
+  TabsScreens.SHOP
+>;
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',

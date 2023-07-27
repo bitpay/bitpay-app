@@ -46,25 +46,29 @@ import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
-const GradientBox: React.FC<PropsWithChildren & {[k:string]: any}> = (props) => {
+const GradientBox: React.FC<PropsWithChildren & {[k: string]: any}> = props => {
   const {children, ...rest} = props;
   return (
-    <View style={{
-      width: WIDTH,
-      alignItems: 'center',
-      paddingTop: 40,
-      flexGrow: 1,
-      flexDirection: 'column',
-      justifyContent: 'center',
-      position: 'relative'
-    }}>
-      <LinearGradient {...rest} style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        right: 0
-      }} />
+    <View
+      style={{
+        width: WIDTH,
+        alignItems: 'center',
+        paddingTop: 40,
+        flexGrow: 1,
+        flexDirection: 'column',
+        justifyContent: 'center',
+        position: 'relative',
+      }}>
+      <LinearGradient
+        {...rest}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+        }}
+      />
       {children}
     </View>
   );

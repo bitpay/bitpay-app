@@ -320,14 +320,14 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         disabled={disabled}
         action={action}>
         {/* <Animated.View style={childrenStyle}> */}
-          <ButtonTypeText
-            secondary={secondary}
-            cancel={cancel}
-            danger={danger}
-            disabled={disabled}
-            action={action}>
-            {children}
-          </ButtonTypeText>
+        <ButtonTypeText
+          secondary={secondary}
+          cancel={cancel}
+          danger={danger}
+          disabled={disabled}
+          action={action}>
+          {children}
+        </ButtonTypeText>
         {/* </Animated.View> */}
       </ButtonTypeContainer>
 

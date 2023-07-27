@@ -1,11 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {

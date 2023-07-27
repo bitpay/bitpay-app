@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, {useState, useMemo, useCallback, useEffect} from 'react';
 import {FlatList, View} from 'react-native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';

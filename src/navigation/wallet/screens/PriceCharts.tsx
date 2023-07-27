@@ -1,10 +1,5 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {
-  ComponentType,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import React, {ComponentType, useCallback, useEffect, useState} from 'react';
 import {Platform} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import Button from '../../../components/button/Button';

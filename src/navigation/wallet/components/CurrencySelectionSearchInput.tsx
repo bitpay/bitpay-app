@@ -13,70 +13,69 @@ interface CurrencySelectionSearchInputProps {
   onSearch?: (query: string) => any;
 }
 
-const CurrencySelectionSearchInput: React.VFC<
-  CurrencySelectionSearchInputProps
-> = props => {
-  const theme = useTheme();
-  const {t} = useTranslation();
-  const {debounceWait, onSearch} = props;
-  const [query, setQuery] = useState('');
-  const queryRef = useRef(query);
-  queryRef.current = query;
+const CurrencySelectionSearchInput: React.VFC<CurrencySelectionSearchInputProps> =
+  props => {
+    const theme = useTheme();
+    const {t} = useTranslation();
+    const {debounceWait, onSearch} = props;
+    const [query, setQuery] = useState('');
+    const queryRef = useRef(query);
+    queryRef.current = query;
 
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+    const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
 
-  const debouncedOnSearch = useMemo(() => {
-    const fn = (text: string) => {
-      onSearch?.(text);
-    };
-
-    if (!debounceWait) {
-      return fn;
-    }
-
-    return debounce((text: string) => {
-      if (queryRef.current) {
-        fn(text);
-      }
-    }, debounceWait);
-  }, [onSearch, debounceWait]);
-
-  const onChangeText = useMemo(() => {
-    return (text: string) => {
-      setQuery(text);
-
-      // if 2+ char, trigger debounced search
-      // else if 1 char, do nothing
-      // else if 0 char, clear search immediately
-      if (!text) {
+    const debouncedOnSearch = useMemo(() => {
+      const fn = (text: string) => {
         onSearch?.(text);
-      } else if (text.length > 1) {
-        debouncedOnSearch(text);
+      };
+
+      if (!debounceWait) {
+        return fn;
+      }
+
+      return debounce((text: string) => {
+        if (queryRef.current) {
+          fn(text);
+        }
+      }, debounceWait);
+    }, [onSearch, debounceWait]);
+
+    const onChangeText = useMemo(() => {
+      return (text: string) => {
+        setQuery(text);
+
+        // if 2+ char, trigger debounced search
+        // else if 1 char, do nothing
+        // else if 0 char, clear search immediately
+        if (!text) {
+          onSearch?.(text);
+        } else if (text.length > 1) {
+          debouncedOnSearch(text);
+        }
+      };
+    }, [setQuery, debouncedOnSearch, onSearch]);
+
+    const onSearchPress = () => {
+      // clear search immediately
+      if (query) {
+        setQuery('');
+        onSearch?.('');
       }
     };
-  }, [setQuery, debouncedOnSearch, onSearch]);
 
-  const onSearchPress = () => {
-    // clear search immediately
-    if (query) {
-      setQuery('');
-      onSearch?.('');
-    }
+    return (
+      <BoxInput
+        placeholder={t('Search Currency')}
+        placeholderTextColor={placeHolderTextColor}
+        value={query}
+        onChangeText={onChangeText}
+        suffix={() => (
+          <IconContainer activeOpacity={ActiveOpacity} onPress={onSearchPress}>
+            {query ? <WalletIcons.Delete /> : <SearchIcon />}
+          </IconContainer>
+        )}
+      />
+    );
   };
-
-  return (
-    <BoxInput
-      placeholder={t('Search Currency')}
-      placeholderTextColor={placeHolderTextColor}
-      value={query}
-      onChangeText={onChangeText}
-      suffix={() => (
-        <IconContainer activeOpacity={ActiveOpacity} onPress={onSearchPress}>
-          {query ? <WalletIcons.Delete /> : <SearchIcon />}
-        </IconContainer>
-      )}
-    />
-  );
-};
 
 export default CurrencySelectionSearchInput;

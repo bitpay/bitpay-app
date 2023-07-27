@@ -30,7 +30,10 @@ export type CardSettingsParamList = {
   id: string;
 };
 
-type CardSettingsProps = StackScreenProps<CardStackParamList, CardScreens.SETTINGS>;
+type CardSettingsProps = StackScreenProps<
+  CardStackParamList,
+  CardScreens.SETTINGS
+>;
 
 const CardSettingsContainer = styled.View`
   padding: 0 ${ScreenGutter} ${ScreenGutter};
@@ -229,7 +232,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
 
           return isActive ? (
             <View key={c.id}>
-            {/* <Animated.View
+              {/* <Animated.View
               key={c.id}
               entering={transitionEnter}
               exiting={transitionLeave}> */}
@@ -238,7 +241,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
                 orderPhysical={isVirtual && !physicalCard}
                 navigation={navigation}
               />
-            {/* </Animated.View> */}
+              {/* </Animated.View> */}
             </View>
           ) : null;
         })}

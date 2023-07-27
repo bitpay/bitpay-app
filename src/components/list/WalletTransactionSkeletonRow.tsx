@@ -8,7 +8,7 @@ import {LightBlack} from '../../styles/colors';
 const USE_NEW_ARCH_WORKAROUND = true;
 
 const WorkaroundSkeletonItem = styled.View`
-  background: ${({theme}) => theme.dark ? LightBlack : '#E1E9EE'};
+  background: ${({theme}) => (theme.dark ? LightBlack : '#E1E9EE')};
 `;
 
 const WorkaroundHeader = styled(WorkaroundSkeletonItem)`
@@ -80,7 +80,7 @@ const WalletTransactionSkeletonRow = () => {
   const theme = useTheme();
 
   if (USE_NEW_ARCH_WORKAROUND) {
-    return <NonAnimatedNewArchWorkaround />
+    return <NonAnimatedNewArchWorkaround />;
   }
 
   return (

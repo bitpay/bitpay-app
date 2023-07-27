@@ -17,8 +17,8 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
 import {ShopTabs} from '../../shop/ShopHome';
-import { TabsScreens } from '../../TabsStack';
-import { RootStacks } from '../../../../Root';
+import {TabsScreens} from '../../TabsStack';
+import {RootStacks} from '../../../../Root';
 
 const MethodIcon = require('../../../../../assets/img/logos/method.png');
 

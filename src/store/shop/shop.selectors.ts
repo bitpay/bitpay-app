@@ -21,11 +21,10 @@ export const selectAvailableGiftCards = createSelector(
   availableCardMap => getAvailableGiftCards(availableCardMap),
 );
 
-export const selectCategoriesAndCurations: AppSelector<
-  CategoriesAndCurations
-> = ({SHOP}) => {
-  return SHOP.categoriesAndCurations;
-};
+export const selectCategoriesAndCurations: AppSelector<CategoriesAndCurations> =
+  ({SHOP}) => {
+    return SHOP.categoriesAndCurations;
+  };
 
 export const selectCategories = createSelector(
   [selectCategoriesAndCurations],

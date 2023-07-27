@@ -5,13 +5,13 @@ import {ScreenGutter} from '../styled/Containers';
 import RemoteImage from '../../navigation/tabs/shop/components/RemoteImage';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
 import {Action} from '../../styles/colors';
+import {View} from 'react-native';
 export const TRANSACTION_ROW_HEIGHT = 75;
 
 const TransactionContainer = styled.TouchableOpacity`
   flex-direction: row;
   padding: ${ScreenGutter};
-  justify-content: center;
-  align-items: center;
+  justify-content: space-between;
   height: ${TRANSACTION_ROW_HEIGHT}px;
 `;
 
@@ -33,7 +33,6 @@ const Description = styled(BaseText)<{
       : theme.colors.text};
   font-weight: ${({RBFInfo}) => (RBFInfo?.isRBF ? 500 : 400)};
   overflow: hidden;
-  margin-right: 175px;
   font-size: 16px;
 `;
 
@@ -84,32 +83,40 @@ const TransactionRow = ({
 }: Props) => {
   return (
     <TransactionContainer onPress={onPressTransaction}>
-      {iconURI ? (
-        <IconContainer>
-          <RemoteImage
-            borderRadius={50}
-            fallbackComponent={() => icon as JSX.Element}
-            height={TRANSACTION_ICON_SIZE}
-            uri={iconURI}
-          />
-        </IconContainer>
-      ) : (
-        icon && <IconContainer>{icon}</IconContainer>
-      )}
-      {!!description && (
-        <Description
-          RBFInfo={RBFInfo}
-          numberOfLines={details ? 2 : 1}
-          ellipsizeMode={'tail'}>
-          {description}
-          {details && (
-            <ListItemSubText>
-              {'\n'}
-              {details}
-            </ListItemSubText>
-          )}
-        </Description>
-      )}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          width: '40%',
+        }}>
+        {iconURI ? (
+          <IconContainer>
+            <RemoteImage
+              borderRadius={50}
+              fallbackComponent={() => icon as JSX.Element}
+              height={TRANSACTION_ICON_SIZE}
+              uri={iconURI}
+            />
+          </IconContainer>
+        ) : (
+          icon && <IconContainer>{icon}</IconContainer>
+        )}
+        {!!description && (
+          <Description
+            RBFInfo={RBFInfo}
+            numberOfLines={details ? 2 : 1}
+            ellipsizeMode={'tail'}>
+            {description}
+            {details && (
+              <ListItemSubText>
+                {'\n'}
+                {details}
+              </ListItemSubText>
+            )}
+          </Description>
+        )}
+      </View>
       <TailContainer>
         {value && <Value RBFInfo={RBFInfo}>{value}</Value>}
         {time && <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>}

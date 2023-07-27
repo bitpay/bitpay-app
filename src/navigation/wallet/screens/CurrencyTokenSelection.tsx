@@ -1,11 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {StyleSheet} from 'react-native';
 import {FlatList} from 'react-native-gesture-handler';

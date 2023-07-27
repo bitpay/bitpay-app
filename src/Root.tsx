@@ -635,10 +635,7 @@ export default () => {
                 gestureEnabled: false,
               }}
             />
-            <Root.Screen
-              name={RootStacks.SHOP}
-              component={ShopStack}
-            />
+            <Root.Screen name={RootStacks.SHOP} component={ShopStack} />
             <Root.Screen
               name={RootStacks.BITPAY_ID}
               component={BitpayIdStack}

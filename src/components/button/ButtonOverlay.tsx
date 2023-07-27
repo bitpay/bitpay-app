@@ -77,7 +77,7 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
       borderRadius: buttonType === 'pill' ? PILL_RADIUS : BUTTON_RADIUS,
       borderColor: backgroundColor || 'transparent',
       backgroundColor: (isPrimary && backgroundColor) || 'transparent',
-    }
+    },
   } as Record<string, any>;
 
   const iconStyle = [
@@ -101,9 +101,7 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
 
   return (
     <View style={overlayStyleStatic}>
-      <View style={iconStyleStatic}>
-        {children}
-      </View>
+      <View style={iconStyleStatic}>{children}</View>
     </View>
   );
 

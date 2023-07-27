@@ -59,7 +59,10 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
-export type HomeRootScreenProps = StackScreenProps<TabsStackParamList, TabsScreens.HOME>;
+export type HomeRootScreenProps = StackScreenProps<
+  TabsStackParamList,
+  TabsScreens.HOME
+>;
 
 const HomeRootScreen: React.FC<HomeRootScreenProps> = () => {
   const {t} = useTranslation();

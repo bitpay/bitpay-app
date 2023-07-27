@@ -53,111 +53,110 @@ const PinContainer = styled.SafeAreaView`
   align-items: stretch;
 `;
 
-const PinScreen: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'Pin'>
-> = ({navigation}) => {
-  const {t} = useTranslation();
-  const dispatch = useAppDispatch();
-  const themeType = useThemeType();
+const PinScreen: React.VFC<StackScreenProps<OnboardingStackParamList, 'Pin'>> =
+  ({navigation}) => {
+    const {t} = useTranslation();
+    const dispatch = useAppDispatch();
+    const themeType = useThemeType();
 
-  useAndroidBackHandler(() => true);
+    useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
+    const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
-  const onSkipPressRef = useRef(async () => {
-    haptic('impactLight');
-    askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
-  });
-
-  useEffect(() => {
-    navigation.setOptions({
-      gestureEnabled: false,
-      headerLeft: () => null,
-      headerRight: () => (
-        <HeaderRightContainer>
-          <Button
-            accessibilityLabel="skip-button"
-            buttonType={'pill'}
-            onPress={onSkipPressRef.current}>
-            {t('Skip')}
-          </Button>
-        </HeaderRightContainer>
-      ),
+    const onSkipPressRef = useRef(async () => {
+      haptic('impactLight');
+      askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
     });
-  }, [navigation, t]);
 
-  const onSetPinPress = () => {
-    haptic('impactLight');
-    askForTrackingThenNavigate(() => {
-      dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
-    });
-  };
-
-  const onSetBiometricPress = () => {
-    haptic('impactLight');
-    TouchID.isSupported(isSupportedOptionalConfigObject)
-      .then(biometryType => {
-        return TouchID.authenticate(
-          'Authentication Check',
-          authOptionalConfigObject,
-        );
-      })
-      .then(() => {
-        dispatch(AppActions.biometricLockActive(true));
-        askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
-      })
-      .catch((error: BiometricError) => {
-        if (error.code && TO_HANDLE_ERRORS[error.code]) {
-          const err = TO_HANDLE_ERRORS[error.code];
-          dispatch(
-            showBottomNotificationModal(BiometricErrorNotification(err)),
-          );
-        }
+    useEffect(() => {
+      navigation.setOptions({
+        gestureEnabled: false,
+        headerLeft: () => null,
+        headerRight: () => (
+          <HeaderRightContainer>
+            <Button
+              accessibilityLabel="skip-button"
+              buttonType={'pill'}
+              onPress={onSkipPressRef.current}>
+              {t('Skip')}
+            </Button>
+          </HeaderRightContainer>
+        ),
       });
-  };
+    }, [navigation, t]);
 
-  return (
-    <PinContainer accessibilityLabel="security-view">
-      <ScrollView
-        contentContainerStyle={{
-          alignItems: 'center',
-        }}>
-        <ImageContainer>{PinImage[themeType]}</ImageContainer>
-        <TitleContainer>
-          <TextAlign align={'center'}>
-            <H3>{t('Protect your wallet')}</H3>
-          </TextAlign>
-        </TitleContainer>
-        <TextContainer>
-          <TextAlign align={'center'}>
-            <Paragraph>
-              {t(
-                'Set up an extra layer of security to keep your wallet secure.',
-              )}
-            </Paragraph>
-          </TextAlign>
-        </TextContainer>
-        <CtaContainer accessibilityLabel="cta-container">
-          <ActionContainer>
-            <Button
-              accessibilityLabel="pin-button"
-              onPress={() => onSetPinPress()}
-              buttonStyle={'primary'}>
-              {t('PIN')}
-            </Button>
-          </ActionContainer>
-          <ActionContainer>
-            <Button
-              accessibilityLabel="biometric-button"
-              onPress={() => onSetBiometricPress()}
-              buttonStyle={'secondary'}>
-              {t('Biometric')}
-            </Button>
-          </ActionContainer>
-        </CtaContainer>
-      </ScrollView>
-    </PinContainer>
-  );
-};
+    const onSetPinPress = () => {
+      haptic('impactLight');
+      askForTrackingThenNavigate(() => {
+        dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
+      });
+    };
+
+    const onSetBiometricPress = () => {
+      haptic('impactLight');
+      TouchID.isSupported(isSupportedOptionalConfigObject)
+        .then(biometryType => {
+          return TouchID.authenticate(
+            'Authentication Check',
+            authOptionalConfigObject,
+          );
+        })
+        .then(() => {
+          dispatch(AppActions.biometricLockActive(true));
+          askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
+        })
+        .catch((error: BiometricError) => {
+          if (error.code && TO_HANDLE_ERRORS[error.code]) {
+            const err = TO_HANDLE_ERRORS[error.code];
+            dispatch(
+              showBottomNotificationModal(BiometricErrorNotification(err)),
+            );
+          }
+        });
+    };
+
+    return (
+      <PinContainer accessibilityLabel="security-view">
+        <ScrollView
+          contentContainerStyle={{
+            alignItems: 'center',
+          }}>
+          <ImageContainer>{PinImage[themeType]}</ImageContainer>
+          <TitleContainer>
+            <TextAlign align={'center'}>
+              <H3>{t('Protect your wallet')}</H3>
+            </TextAlign>
+          </TitleContainer>
+          <TextContainer>
+            <TextAlign align={'center'}>
+              <Paragraph>
+                {t(
+                  'Set up an extra layer of security to keep your wallet secure.',
+                )}
+              </Paragraph>
+            </TextAlign>
+          </TextContainer>
+          <CtaContainer accessibilityLabel="cta-container">
+            <ActionContainer>
+              <Button
+                accessibilityLabel="pin-button"
+                onPress={() => onSetPinPress()}
+                buttonStyle={'primary'}>
+                {t('PIN')}
+              </Button>
+            </ActionContainer>
+            <ActionContainer>
+              <Button
+                accessibilityLabel="biometric-button"
+                onPress={() => onSetBiometricPress()}
+                buttonStyle={'secondary'}>
+                {t('Biometric')}
+              </Button>
+            </ActionContainer>
+          </CtaContainer>
+        </ScrollView>
+      </PinContainer>
+    );
+  };
 
 export default PinScreen;
