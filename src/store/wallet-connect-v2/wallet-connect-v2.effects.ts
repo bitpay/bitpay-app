@@ -202,11 +202,12 @@ export const walletConnectV2SubscribeToEvents =
           (navigationRef.current?.getCurrentRoute() as any) || {};
         const wallet = dispatch(getWalletByRequest(event));
         if (
-          name !== 'WalletConnectHome' ||
-          (name === 'WalletConnectHome' &&
-            (params?.wallet?.receiveAddress !== wallet?.receiveAddress ||
-              params?.wallet?.network !== wallet?.network ||
-              params?.wallet?.chain !== wallet?.chain))
+          wallet &&
+          (name !== 'WalletConnectHome' ||
+            (name === 'WalletConnectHome' &&
+              (params?.wallet?.receiveAddress !== wallet?.receiveAddress ||
+                params?.wallet?.network !== wallet?.network ||
+                params?.wallet?.chain !== wallet?.chain)))
         ) {
           dispatch(
             startInAppNotification(
