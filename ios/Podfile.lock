@@ -387,6 +387,8 @@ PODS:
     - React-Core
   - react-native-in-app-review (4.3.1):
     - React-Core
+  - react-native-keyevent (0.3.1):
+    - React
   - react-native-mail (6.1.1):
     - React-Core
   - react-native-pager-view (6.1.4):
@@ -640,6 +642,7 @@ DEPENDENCIES:
   - react-native-config (from `../node_modules/react-native-config`)
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
+  - react-native-keyevent (from `../node_modules/react-native-keyevent`)
   - react-native-mail (from `../node_modules/react-native-mail`)
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-print (from `../node_modules/react-native-print`)
@@ -772,6 +775,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-get-random-values"
   react-native-in-app-review:
     :path: "../node_modules/react-native-in-app-review"
+  react-native-keyevent:
+    :path: "../node_modules/react-native-keyevent"
   react-native-mail:
     :path: "../node_modules/react-native-mail"
   react-native-pager-view:
@@ -916,6 +921,7 @@ SPEC CHECKSUMS:
   react-native-config: 5330c8258265c1e5fdb8c009d2cabd6badd96727
   react-native-get-random-values: a6ea6a8a65dc93e96e24a11105b1a9c8cfe1d72a
   react-native-in-app-review: ae45cc55e168a3b78eea9eea031ca57dccd7eb5a
+  react-native-keyevent: fa167ff93e90b5d86b1678885669ff8ec099bf09
   react-native-mail: 8fdcd3aef007c33a6877a18eb4cf7447a1d4ce4a
   react-native-pager-view: b58cb9e9f42f64e50cab3040815772c1d119a2e2
   react-native-print: f704aef52d931bfce6d1d84351dbb5232d7ecb89

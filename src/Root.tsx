@@ -123,7 +123,6 @@ import BillStack, {
   BillStackParamList,
 } from './navigation/tabs/shop/bill/BillStack';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
-import KeyEvent from 'react-native-keyevent';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
