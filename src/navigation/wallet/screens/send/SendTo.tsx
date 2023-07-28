@@ -92,6 +92,7 @@ import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
+import CopySvg from '../../../../../assets/img/copy.svg';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -124,8 +125,9 @@ const ScrollView = styled.ScrollView`
 const PasteClipboardContainer = styled.TouchableOpacity`
   display: flex;
   flex-direction: row;
-  justify-content: center;
-  padding: 10px;
+  align-items: center;
+  margin: 10px auto;
+  cursor: pointer;
 `;
 
 export const ContactTitleContainer = styled.View`
@@ -682,6 +684,7 @@ const SendTo = () => {
               setSearchInput(clipboardData);
               validateAndNavigateToConfirm(clipboardData);
             }}>
+            <CopySvg style={{marginRight: 10}} />
             <Link>{t('Paste from clipboard')}</Link>
           </PasteClipboardContainer>
         ) : null}
