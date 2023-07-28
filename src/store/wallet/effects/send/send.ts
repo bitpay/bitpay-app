@@ -383,6 +383,7 @@ export const buildTxDetails =
     feeLevel = 'custom',
     request,
     feePerKb,
+    unitName,
   }: {
     proposal?: TransactionProposal;
     rates: Rates;
@@ -394,6 +395,7 @@ export const buildTxDetails =
     feeLevel?: string;
     request?: WCV2RequestType;
     feePerKb?: number;
+    unitName?: string;
   }): Effect<TxDetails> =>
   dispatch => {
     let gasPrice, gasLimit, nonce, destinationTag, coin, chain, amount, fee;
@@ -530,7 +532,9 @@ export const buildTxDetails =
         badgeImg: wallet.badgeImg,
       },
       subTotal: {
-        cryptoAmount: dispatch(FormatAmountStr(coin, chain, amount)),
+        cryptoAmount: dispatch(
+          FormatAmountStr(coin, chain, amount, undefined, unitName),
+        ),
         fiatAmount: formatFiatAmount(
           dispatch(
             toFiat(
@@ -547,10 +551,14 @@ export const buildTxDetails =
       },
       total: {
         cryptoAmount: isERC20
-          ? `${dispatch(FormatAmountStr(coin, chain, amount))} + ${dispatch(
-              FormatAmountStr(chain, chain, fee),
+          ? `${dispatch(
+              FormatAmountStr(coin, chain, amount, undefined, unitName),
+            )} + ${dispatch(
+              FormatAmountStr(chain, chain, fee, undefined, unitName),
             )}`
-          : dispatch(FormatAmountStr(coin, chain, amount + fee)),
+          : dispatch(
+              FormatAmountStr(coin, chain, amount + fee, undefined, unitName),
+            ),
         fiatAmount: formatFiatAmount(
           dispatch(
             toFiat(

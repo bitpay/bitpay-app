@@ -44,7 +44,10 @@ import {
   WCV2RequestType,
   WCV2SessionType,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../constants/WalletConnectV2';
+import {
+  WalletConnectSupportedEvmCoins,
+  WALLET_CONNECT_SUPPORTED_CHAINS,
+} from '../../../constants/WalletConnectV2';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -291,7 +294,13 @@ const WalletConnectHome = () => {
       const {value = '0x0'} = item.params.request.params[0];
 
       const amountStr = dispatch(
-        FormatAmountStr(currencyAbbreviation!, chain!, parseInt(value, 16)),
+        FormatAmountStr(
+          currencyAbbreviation!,
+          chain!,
+          parseInt(value, 16),
+          undefined,
+          WalletConnectSupportedEvmCoins[chain!]?.unitInfo?.unitName,
+        ),
       );
 
       return (

@@ -86,6 +86,7 @@ export const FormatAmountStr =
     chain: string,
     satoshis: number,
     fullPrecision?: boolean,
+    unitName?: string,
   ): Effect<string> =>
   dispatch => {
     if (isNaN(satoshis)) {
@@ -98,7 +99,7 @@ export const FormatAmountStr =
           FormatAmount(currencyAbbreviation, chain, satoshis, fullPrecision),
         ) +
         ' ' +
-        currencyAbbreviation.toUpperCase()
+        (unitName ? unitName : currencyAbbreviation.toUpperCase())
       );
     } catch (e) {
       throw e;

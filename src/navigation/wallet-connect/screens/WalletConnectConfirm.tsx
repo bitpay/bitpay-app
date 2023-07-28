@@ -50,7 +50,10 @@ import {
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {buildTxDetails} from '../../../store/wallet/effects/send/send';
-import {WC_EVM_SUPPORTED_COINS} from '../../../constants/WalletConnectV2';
+import {
+  WalletConnectSupportedEvmCoins,
+  WC_EVM_SUPPORTED_COINS,
+} from '../../../constants/WalletConnectV2';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
@@ -91,6 +94,8 @@ const WalletConnectConfirm = () => {
         context: 'walletConnect',
         request,
         feePerKb,
+        unitName:
+          WalletConnectSupportedEvmCoins[wallet.chain!]?.unitInfo?.unitName,
       }),
     );
     setTxDetails(_txDetails);
