@@ -40,6 +40,14 @@ export const EIP155_MAINNET_CHAINS: {[key in string]: any} = {
     rpc: 'https://api.avax.network/ext/bc/C/rpc',
     network: Network.mainnet,
   },
+  'eip155:43114': {
+    chainId: 43114,
+    name: 'Avalanche C-Chain',
+    chain: 'avax',
+    currencyAbbreviation: 'avax',
+    rpc: 'https://api.avax.network/ext/bc/C/rpc',
+    network: Network.mainnet,
+  },
 };
 
 export const EIP155_TEST_CHAINS = {
@@ -74,6 +82,14 @@ export const EIP155_TEST_CHAINS = {
     rpc: 'https://testnet.era.zsync.dev/',
     network: Network.testnet,
   },
+  'eip155:43113': {
+    chainId: 43113,
+    name: 'Avalanche Fuji',
+    chain: 'avax',
+    currencyAbbreviation: 'avax',
+    rpc: 'https://api.avax-test.network/ext/bc/C/rpc',
+    network: Network.testnet,
+  },
 };
 
 export const EIP155_SIGNING_METHODS = {
@@ -94,10 +110,12 @@ export const WALLET_CONNECT_SUPPORTED_CHAINS: {
   'eip155:137': {chain: 'matic', network: Network.mainnet},
   'eip155:10': {chain: 'op', network: Network.mainnet},
   'eip155:324': {chain: 'zksync', network: Network.mainnet},
+  'eip155:43114': {chain: 'avax', network: Network.mainnet},
   'eip155:5': {chain: 'eth', network: Network.testnet},
   'eip155:80001': {chain: 'matic', network: Network.testnet},
   'eip155:420': {chain: 'op', network: Network.testnet},
   'eip155:280': {chain: 'zksync', network: Network.testnet},
+  'eip155:43113': {chain: 'avax', network: Network.testnet},
 };
 export type TEIP155Chain = keyof typeof EIP155_CHAINS;
 
@@ -115,6 +133,10 @@ export const WC_EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
     [Network.mainnet]: 'explorer.zksync.io/',
     [Network.testnet]: 'goerli.explorer.zksync.io/',
   },
+  avax: {
+    [Network.mainnet]: 'explorer.zksync.io/',
+    [Network.testnet]: 'goerli.explorer.zksync.io/',
+  },
 };
 
 export const WC_PROTOCOL_NAME: {[key in string]: any} = {
@@ -125,6 +147,10 @@ export const WC_PROTOCOL_NAME: {[key in string]: any} = {
   zksync: {
     [Network.mainnet]: 'zkSync Era',
     [Network.testnet]: 'zkSync Era Testnet',
+  },
+  avax: {
+    [Network.mainnet]: 'Avalanche C-Chain',
+    [Network.testnet]: 'Avalanche Fuji',
   },
 };
 
@@ -198,9 +224,46 @@ export const WalletConnectSupportedEvmCoins: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#6b71d6',
-      backgroundColor: '#6b71d6',
-      gradientBackgroundColor: '#6b71d6',
+      coinColor: '#000000',
+      backgroundColor: '#000000',
+      gradientBackgroundColor: '#000000',
+    },
+  },
+  avax: {
+    name: 'Avalanche',
+    chain: 'avax',
+    coin: 'avax',
+    unitInfo: {
+      unitName: 'AVAX',
+      unitToSatoshi: 1e9,
+      unitDecimals: 9,
+      unitCode: 'avax',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: {livenet: 'avax', testnet: 'avax'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
+      blockExplorerUrls: WC_EVM_BLOCKCHAIN_EXPLORERS.avax.livenet,
+      blockExplorerUrlsTestnet: WC_EVM_BLOCKCHAIN_EXPLORERS.avax.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#e84242',
+      backgroundColor: '#e84242',
+      gradientBackgroundColor: '#e84242',
     },
   },
 };
