@@ -14,7 +14,7 @@ import {Linking, View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {SlateDark, White} from '../../../../styles/colors';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
 import {sleep} from '../../../../utils/helper-methods';

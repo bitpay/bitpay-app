@@ -25,7 +25,7 @@ import {HeaderTitle} from '../styled/WalletConnectText';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {useAppDispatch} from '../../../utils/hooks';
 import haptic from '../../../components/haptic-feedback/haptic';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {sleep} from '../../../utils/helper-methods';

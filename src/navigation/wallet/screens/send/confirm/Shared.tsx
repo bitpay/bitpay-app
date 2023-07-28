@@ -43,7 +43,7 @@ import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 
 import {useTranslation} from 'react-i18next';

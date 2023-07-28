@@ -10,7 +10,7 @@ import {
   SettingTitle,
 } from '../../../../components/styled/Containers';
 import {LightBlack, NeutralSlate} from '../../../../styles/colors';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {Key, Wallet, Status} from '../../../../store/wallet/wallet.models';
 import {

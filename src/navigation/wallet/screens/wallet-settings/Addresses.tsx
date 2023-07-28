@@ -35,7 +35,7 @@ import {
 } from '../../../../store/wallet/effects/amount/amount';
 import {View} from 'react-native';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import AddressesSkeleton from './AddressesSkeleton';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
