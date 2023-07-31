@@ -131,6 +131,8 @@ export interface AppState {
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
+  migrationSensitiveStorageComplete: boolean;
+  migrationSensitiveStorageFailure: boolean;
   showKeyMigrationFailureModal: boolean;
   keyMigrationFailureModalHasBeenShown: boolean;
   activeModalId: ModalId | null;
@@ -207,6 +209,8 @@ const initialState: AppState = {
   recentDefaultAltCurrency: [],
   migrationComplete: false,
   keyMigrationFailure: false,
+  migrationSensitiveStorageComplete: false,
+  migrationSensitiveStorageFailure: false,
   showKeyMigrationFailureModal: false,
   keyMigrationFailureModalHasBeenShown: false,
   activeModalId: null,
@@ -566,6 +570,18 @@ export const appReducer = (
       return {
         ...state,
         keyMigrationFailure: true,
+      };
+
+    case AppActionTypes.SET_MIGRATION_SENSITIVE_STORAGE_COMPLETE:
+      return {
+        ...state,
+        migrationSensitiveStorageComplete: true,
+      };
+
+    case AppActionTypes.SET_KEY_MIGRATION_SENSITIVE_STORAGE_FAILURE:
+      return {
+        ...state,
+        migrationSensitiveStorageFailure: true,
       };
 
     case AppActionTypes.SET_SHOW_KEY_MIGRATION_FAILURE_MODAL:

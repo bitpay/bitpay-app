@@ -293,6 +293,14 @@ export const setKeyMigrationFailure = (): AppActionType => ({
   type: AppActionTypes.SET_KEY_MIGRATION_FAILURE,
 });
 
+export const setMigrationSensitiveStorageComplete = (): AppActionType => ({
+  type: AppActionTypes.SET_MIGRATION_SENSITIVE_STORAGE_COMPLETE,
+});
+
+export const setKeyMigrationSensitiveStorageFailure = (): AppActionType => ({
+  type: AppActionTypes.SET_KEY_MIGRATION_SENSITIVE_STORAGE_FAILURE,
+});
+
 export const setShowKeyMigrationFailureModal = (
   payload: boolean,
 ): AppActionType => ({

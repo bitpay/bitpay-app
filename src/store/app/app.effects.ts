@@ -42,7 +42,11 @@ import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
-import {startMigration, startWalletStoreInit} from '../wallet/effects';
+import {
+  startMigration,
+  startMigrationSensitiveStorage,
+  startWalletStoreInit,
+} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -51,6 +55,7 @@ import {
   setConfirmedTxAccepted,
   setEmailNotificationsAccepted,
   setMigrationComplete,
+  setMigrationSensitiveStorageComplete,
   setNotificationsAccepted,
   setUserFeedback,
   showBlur,
@@ -128,7 +133,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    const {appFirstOpenData, onboardingCompleted, migrationComplete} = APP;
+    const {
+      appFirstOpenData,
+      onboardingCompleted,
+      migrationComplete,
+      migrationSensitiveStorageComplete,
+    } = APP;
 
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
@@ -164,6 +174,18 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
       dispatch(LogActions.info('success [setMigrationComplete]'));
+    }
+
+    if (!migrationSensitiveStorageComplete) {
+      if (Platform.OS === 'ios') {
+        await dispatch(startMigrationSensitiveStorage());
+      }
+      dispatch(setMigrationSensitiveStorageComplete());
+      dispatch(
+        LogActions.info(
+          'success [setMigrationSensitiveStorageComplete] or not iOS',
+        ),
+      );
     }
 
     const token = BITPAY_ID.apiToken[network];

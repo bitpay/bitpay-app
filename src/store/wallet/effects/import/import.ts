@@ -29,6 +29,7 @@ import {
   setUseUnconfirmedFunds,
   setWalletTermsAccepted,
   successImport,
+  setSensitiveStorage,
   updateCacheFeeLevel,
 } from '../../wallet.actions';
 import {
@@ -88,6 +89,7 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BWC = BwcProvider.getInstance();
 
@@ -110,6 +112,51 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
 
   return wordList.join(isJA ? '\u3000' : ' ');
 };
+
+export const startMigrationSensitiveStorage =
+  (): Effect<Promise<void>> =>
+  async (dispatch): Promise<void> => {
+    dispatch(LogActions.info('[startMigrationSensitiveStorage] - starting...'));
+    try {
+      const migrateKey = async (key: string) => {
+        try {
+          const item = await AsyncStorage.getItem(key);
+          if (!item) {
+            dispatch(
+              LogActions.info(
+                '[SensitiveStorage] nothing to migrate for ',
+                key,
+              ),
+            );
+            return Promise.resolve();
+          }
+          const parsedObject = JSON.parse(item);
+          Object.keys(parsedObject).forEach(key => {
+            parsedObject[key] = JSON.parse(parsedObject[key]);
+          });
+          dispatch(LogActions.info('[SensitiveStorage] success setItem'));
+          dispatch(setSensitiveStorage(parsedObject));
+          dispatch(
+            LogActions.info('[SensitiveStorage] migration completed for ', key),
+          );
+          Promise.resolve();
+        } catch (error) {
+          dispatch(
+            LogActions.error('[SensitiveStorage] migration failed for ', key),
+          );
+          Promise.reject();
+        }
+      };
+      // no need to migrate WALLET_BACKUP. Backup is done right after WALLET migration
+      await migrateKey('persist:WALLET');
+      dispatch(LogActions.info('[migrationSensitiveStorage - completed'));
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(
+        LogActions.error('SensitiveStorage migration failed - ', errStr),
+      );
+    }
+  };
 
 export const startMigration =
   (): Effect<Promise<void>> =>

@@ -8,6 +8,7 @@ import {
   Wallet,
 } from './wallet.models';
 import {CurrencyOpts} from '../../constants/currencies';
+import {WalletState} from './wallet.reducer';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -244,4 +245,11 @@ export const setExpectedKeyLengthChange = (
 ): WalletActionType => ({
   type: WalletActionTypes.EXPECTED_KEY_LENGTH_CHANGE,
   payload: lengthChange,
+});
+
+export const setSensitiveStorage = (
+  payload: WalletState,
+): WalletActionType => ({
+  type: WalletActionTypes.SET_SENSITIVE_STORAGE,
+  payload,
 });

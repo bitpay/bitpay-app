@@ -279,7 +279,7 @@ const TransactionProposalDetails = () => {
           coin: txp.coin,
           chain: txp.chain,
           payload,
-        })
+        }),
       );
       paymentTimeControl(_payProDetails.expires);
       setPayProDetails(_payProDetails);

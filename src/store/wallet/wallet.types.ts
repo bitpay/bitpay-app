@@ -7,6 +7,7 @@ import {
   CacheFeeLevel,
   CryptoBalance,
 } from './wallet.models';
+import {WalletState} from './wallet.reducer';
 
 export enum WalletActionTypes {
   SET_WALLET_TERMS_ACCEPTED = 'WALLET/SET_WALLET_TERMS_ACCEPTED',
@@ -49,6 +50,7 @@ export enum WalletActionTypes {
   UPDATE_DEFERRED_IMPORT = 'WALLET/UPDATE_DEFERRED_IMPORT',
   CLEAR_DEFERRED_IMPORT = 'WALLET/CLEAR_DEFERRED_IMPORT',
   EXPECTED_KEY_LENGTH_CHANGE = 'WALLET/EXPECTED_KEY_LENGTH_CHANGE',
+  SET_SENSITIVE_STORAGE = 'WALLET/SET_SENSITIVE_STORAGE',
 }
 
 interface successWalletStoreInit {
@@ -285,6 +287,11 @@ interface setExpectedKeyLengthChange {
   payload: number;
 }
 
+interface setSensitiveStorage {
+  type: typeof WalletActionTypes.SET_SENSITIVE_STORAGE;
+  payload: WalletState;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -322,4 +329,5 @@ export type WalletActionType =
   | syncWallets
   | toggleHideWallet
   | updateCacheFeeLevel
-  | setExpectedKeyLengthChange;
+  | setExpectedKeyLengthChange
+  | setSensitiveStorage;

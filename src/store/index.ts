@@ -99,7 +99,7 @@ import {WalletConnectV2ActionType} from './wallet-connect-v2/wallet-connect-v2.t
 import createSensitiveStorage from 'redux-persist-sensitive-storage';
 import {Platform} from 'react-native';
 
-const sensitiveStorage = createSensitiveStorage({
+export const sensitiveStorage = createSensitiveStorage({
   keychainService: 'com.bitpay.wallet',
   sharedPreferencesName: 'BitPayWalletSharedPrefs',
   encrypt: true,
