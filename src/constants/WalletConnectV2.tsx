@@ -57,6 +57,7 @@ export const EIP155_TEST_CHAINS = {
     chain: 'eth',
     currencyAbbreviation: 'eth',
     rpc: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    network: Network.testnet,
   },
   'eip155:80001': {
     chainId: 80001,
@@ -134,8 +135,8 @@ export const WC_EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
     [Network.testnet]: 'goerli.explorer.zksync.io/',
   },
   avax: {
-    [Network.mainnet]: 'explorer.zksync.io/',
-    [Network.testnet]: 'goerli.explorer.zksync.io/',
+    [Network.mainnet]: 'snowtrace.io/',
+    [Network.testnet]: 'testnet.snowtrace.io/',
   },
 };
 
@@ -213,7 +214,7 @@ export const WalletConnectSupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681',
       protocolPrefix: {livenet: 'zksync', testnet: 'zksync'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
+      ratesApi: '',
       blockExplorerUrls: WC_EVM_BLOCKCHAIN_EXPLORERS.zksync.livenet,
       blockExplorerUrlsTestnet: WC_EVM_BLOCKCHAIN_EXPLORERS.zksync.testnet,
     },
@@ -250,7 +251,7 @@ export const WalletConnectSupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681',
       protocolPrefix: {livenet: 'avax', testnet: 'avax'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
+      ratesApi: '',
       blockExplorerUrls: WC_EVM_BLOCKCHAIN_EXPLORERS.avax.livenet,
       blockExplorerUrlsTestnet: WC_EVM_BLOCKCHAIN_EXPLORERS.avax.testnet,
     },
