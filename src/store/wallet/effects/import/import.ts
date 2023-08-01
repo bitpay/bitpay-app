@@ -90,6 +90,7 @@ import {
 } from '../../../app/app.effects';
 import {t} from 'i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {bootstrapKey, bootstrapWallets} from '../../../transforms/transforms';
 
 const BWC = BwcProvider.getInstance();
 
@@ -134,15 +135,48 @@ export const startMigrationSensitiveStorage =
           Object.keys(parsedObject).forEach(key => {
             parsedObject[key] = JSON.parse(parsedObject[key]);
           });
-          dispatch(LogActions.info('[SensitiveStorage] success setItem'));
+
+          Object.keys(parsedObject.keys).forEach((keyId: string) => {
+            parsedObject.keys[keyId] = bootstrapKey(
+              parsedObject.keys[keyId],
+              keyId,
+              log => dispatch(log),
+            ) as Key;
+            if (!parsedObject.keys[keyId]) {
+              throw new Error('bootstrapKey function failed');
+            }
+            parsedObject.keys[keyId].wallets = bootstrapWallets(
+              parsedObject.keys[keyId].wallets,
+              log => dispatch(log),
+            ) as Wallet[];
+          });
+          const previousKeysLength = 0;
+          const numNewKeys = Object.keys(parsedObject.keys).length - 1;
+          parsedObject.expectedKeyLengthChange =
+            previousKeysLength - numNewKeys;
           dispatch(setSensitiveStorage(parsedObject));
+          dispatch(LogActions.info('[SensitiveStorage] success setItem'));
+
+          // update store with token rates from coin gecko and update balances
+          await dispatch(startGetRates({force: true}));
+          await dispatch(startUpdateAllKeyAndWalletStatus({force: true}));
+
           dispatch(
-            LogActions.info('[SensitiveStorage] migration completed for ', key),
+            LogActions.info('[SensitiveStorage] migration completed for', key),
           );
+
+          let keys = ['persist:WALLET', 'persist:WALLET_BACKUP'];
+          await AsyncStorage.multiRemove(keys);
+          dispatch(
+            LogActions.info(
+              '[SensitiveStorage] successfuly removed all data from persist:WALLET and persist:WALLET_BACKUP',
+            ),
+          );
+
           Promise.resolve();
         } catch (error) {
           dispatch(
-            LogActions.error('[SensitiveStorage] migration failed for ', key),
+            LogActions.error('[SensitiveStorage] migration failed for', key),
           );
           Promise.reject();
         }
