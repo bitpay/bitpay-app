@@ -76,9 +76,7 @@ export const walletReducer = (
 ): WalletState => {
   switch (action.type) {
     case WalletActionTypes.SET_SENSITIVE_STORAGE: {
-      return {
-        ...action.payload,
-      };
+      return action.payload;
     }
 
     case WalletActionTypes.SUCCESS_CREATE_KEY: {

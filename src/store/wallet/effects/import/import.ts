@@ -91,6 +91,7 @@ import {
 import {t} from 'i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {bootstrapKey, bootstrapWallets} from '../../../transforms/transforms';
+import {clone} from 'lodash';
 
 const BWC = BwcProvider.getInstance();
 
@@ -128,7 +129,7 @@ export const startMigrationSensitiveStorage =
             );
             return Promise.resolve();
           }
-          const parsedObject = JSON.parse(item);
+          const parsedObject = JSON.parse(clone(item));
           Object.keys(parsedObject).forEach(key => {
             parsedObject[key] = JSON.parse(parsedObject[key]);
           });
