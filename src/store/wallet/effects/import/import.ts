@@ -124,10 +124,7 @@ export const startMigrationSensitiveStorage =
           const item = await AsyncStorage.getItem(key);
           if (!item) {
             dispatch(
-              LogActions.info(
-                '[SensitiveStorage] nothing to migrate for ',
-                key,
-              ),
+              LogActions.info('[SensitiveStorage] nothing to migrate for', key),
             );
             return Promise.resolve();
           }
@@ -150,10 +147,7 @@ export const startMigrationSensitiveStorage =
               log => dispatch(log),
             ) as Wallet[];
           });
-          const previousKeysLength = 0;
-          const numNewKeys = Object.keys(parsedObject.keys).length - 1;
-          parsedObject.expectedKeyLengthChange =
-            previousKeysLength - numNewKeys;
+
           dispatch(setSensitiveStorage(parsedObject));
           dispatch(LogActions.info('[SensitiveStorage] success setItem'));
 
