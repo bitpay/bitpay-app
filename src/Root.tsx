@@ -16,6 +16,7 @@ import {
   Linking,
   NativeEventEmitter,
   NativeModules,
+  Platform,
   StatusBar,
 } from 'react-native';
 import 'react-native-gesture-handler';
@@ -123,6 +124,7 @@ import BillStack, {
   BillStackParamList,
 } from './navigation/tabs/shop/bill/BillStack';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
+import {sensitiveStorage} from './store';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -327,6 +329,11 @@ export default () => {
           bootstrapKeyAndWallets({keyId, keys: newKeyBackup}),
         );
         dispatch(WalletBackupActions.successBackupUpWalletKeys(newKeyBackup));
+
+        // second backup for iOS using sensitive storage
+        if (Platform.OS === 'ios') {
+          sensitiveStorage.setItem('WALLET_BACKUP', newKeyBackup);
+        }
       }, 1500),
     [],
   );
@@ -387,6 +394,49 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
+
+  // SENSITIVE STORAGE KEY LOGIC
+  useEffect(() => {
+    // check if there are any differences between the keys in the sensitive storage and the keys in the redux store
+    // check for differences on app start
+    const checkSensitiveStorageForDiffs = async () => {
+      if (Platform.OS === 'ios') {
+        dispatch(
+          LogActions.debug(
+            'checking sensitive storage for differences with redux store',
+          ),
+        );
+        try {
+          const storedKeys = await sensitiveStorage.getItem('WALLET_BACKUP');
+          if (storedKeys) {
+            dispatch(
+              LogActions.debug(
+                'sensitive storage keys found.. checking diffs...',
+              ),
+            );
+            const storedKeysLength = Object.keys(storedKeys).length;
+            const keysLength = Object.keys(keys).length;
+            if (storedKeysLength !== keysLength) {
+              const sensitiveStorageWalletBackup =
+                await sensitiveStorage.getItem('WALLET_BACKUP');
+              recoverKeys({backupKeys: sensitiveStorageWalletBackup, keys});
+            }
+          }
+        } catch (err) {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(
+            LogActions.persistLog(
+              LogActions.warn(
+                `Something went wrong backing up with sensitive storage most recent version of keys. ${errStr}`,
+              ),
+            ),
+          );
+        }
+      }
+    };
+    checkSensitiveStorageForDiffs();
+  }, []);
 
   // BACKUP KEY LOGIC
   useEffect(() => {
