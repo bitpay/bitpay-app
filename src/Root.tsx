@@ -424,7 +424,6 @@ export default () => {
         try {
           const _storedKeys = await sensitiveStorage.getItem('WALLET_BACKUP');
           const storedKeys = JSON.parse(_storedKeys);
-          console.log('### storedKeys', storedKeys);
           if (storedKeys) {
             dispatch(
               LogActions.debug(
