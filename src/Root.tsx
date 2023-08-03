@@ -304,6 +304,7 @@ export default () => {
       backupKeyId => !keys[backupKeyId],
     );
 
+    const listCarousel: Array<HomeCarouselConfig> = [];
     // use backup keys to recover the missing keys
     missingKeys.forEach((missingKey: string) => {
       try {
@@ -314,6 +315,7 @@ export default () => {
             lengthChange: 0,
           }),
         );
+        listCarousel.push({id: missingKey, show: true});
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
@@ -323,6 +325,11 @@ export default () => {
         );
       }
     });
+    // Update Home Carousel Config
+    if (listCarousel.length > 0) {
+      dispatch(setHomeCarouselConfig(listCarousel));
+      dispatch(setHomeCarouselLayoutType('listView'));
+    }
   };
 
   const debounceBoostrapAndSave = useMemo(
@@ -439,14 +446,6 @@ export default () => {
             const keysLength = Object.keys(keys).length;
             if (storedKeysLength !== keysLength) {
               recoverKeys({backupKeys: storedKeys, keys});
-              // Update Home Carousel Config
-              const parsedObject = JSON.parse(_storedKeys);
-              const listCarousel: Array<HomeCarouselConfig> = [];
-              Object.keys(parsedObject).forEach((keyId: string) => {
-                listCarousel.push({id: keyId, show: true});
-              });
-              dispatch(setHomeCarouselConfig(listCarousel));
-              dispatch(setHomeCarouselLayoutType('listView'));
             }
           }
         } catch (err) {
