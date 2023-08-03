@@ -97,9 +97,8 @@ import {
 } from './wallet-connect-v2/wallet-connect-v2.reducer';
 import {WalletConnectV2ActionType} from './wallet-connect-v2/wallet-connect-v2.types';
 import createSensitiveStorage from 'redux-persist-sensitive-storage';
-import {Platform} from 'react-native';
 
-const sensitiveStorage = createSensitiveStorage({
+export const sensitiveStorage = createSensitiveStorage({
   keychainService: 'com.bitpay.wallet',
   sharedPreferencesName: 'BitPayWalletSharedPrefs',
   encrypt: true,
@@ -201,7 +200,7 @@ const reducers = {
   ),
   WALLET: persistReducer<WalletState, WalletActionType>(
     {
-      storage: Platform.OS === 'ios' ? sensitiveStorage : AsyncStorage,
+      storage: AsyncStorage,
       transforms: [bindWalletClient, bindWalletKeys],
       key: 'WALLET',
       blacklist: walletReduxPersistBlackList,
@@ -210,7 +209,7 @@ const reducers = {
   ),
   WALLET_BACKUP: persistReducer<WalletState, WalletBackupActionType>(
     {
-      storage: Platform.OS === 'ios' ? sensitiveStorage : AsyncStorage,
+      storage: AsyncStorage,
       key: 'WALLET_BACKUP',
       blacklist: walletReduxPersistBlackList,
     },
