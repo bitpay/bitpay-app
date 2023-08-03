@@ -322,7 +322,7 @@ export default () => {
 
   const debounceBoostrapAndSave = useMemo(
     () =>
-      debounce((keys: Keys) => {
+      debounce(async (keys: Keys) => {
         const newKeyBackup = {...keys};
         const keyIds = Object.keys(newKeyBackup);
         keyIds.forEach(keyId =>
@@ -332,7 +332,22 @@ export default () => {
 
         // second backup for iOS using sensitive storage
         if (Platform.OS === 'ios') {
-          sensitiveStorage.setItem('WALLET_BACKUP', newKeyBackup);
+          try {
+            await sensitiveStorage.setItem(
+              'WALLET_BACKUP',
+              JSON.stringify(newKeyBackup),
+            );
+          } catch (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(
+              LogActions.persistLog(
+                LogActions.warn(
+                  `Error trying to save backup in sensitive storage. ${errStr}`,
+                ),
+              ),
+            );
+          }
         }
       }, 1500),
     [],
@@ -407,7 +422,9 @@ export default () => {
           ),
         );
         try {
-          const storedKeys = await sensitiveStorage.getItem('WALLET_BACKUP');
+          const _storedKeys = await sensitiveStorage.getItem('WALLET_BACKUP');
+          const storedKeys = JSON.parse(_storedKeys);
+          console.log('### storedKeys', storedKeys);
           if (storedKeys) {
             dispatch(
               LogActions.debug(
@@ -417,9 +434,7 @@ export default () => {
             const storedKeysLength = Object.keys(storedKeys).length;
             const keysLength = Object.keys(keys).length;
             if (storedKeysLength !== keysLength) {
-              const sensitiveStorageWalletBackup =
-                await sensitiveStorage.getItem('WALLET_BACKUP');
-              recoverKeys({backupKeys: sensitiveStorageWalletBackup, keys});
+              recoverKeys({backupKeys: storedKeys, keys});
             }
           }
         } catch (err) {
