@@ -14,8 +14,6 @@ import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {
   dismissDecryptPasswordModal,
-  setHomeCarouselConfig,
-  setHomeCarouselLayoutType,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../../store/app/app.actions';
@@ -49,7 +47,6 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {createCustomizeCardList} from '../../settings/general/screens/customize-home/Shared';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -241,20 +238,6 @@ export const createHomeCardList = ({
 
   if (hasGiftCards) {
     // TODO
-  }
-
-  if (hasKeys && homeCarouselConfig.length === 0) {
-    const [_visible, _hidden] = createCustomizeCardList({
-      keys: Object.values(keys),
-      hasCoinbase,
-      homeCarouselConfig,
-    });
-    const list = [..._visible, ..._hidden].map(({key}) => ({
-      id: key,
-      show: true,
-    }));
-    dispatch(setHomeCarouselConfig(list));
-    dispatch(setHomeCarouselLayoutType('listView'));
   }
 
   list = list.filter(

@@ -46,6 +46,7 @@ import {
   setColorScheme,
   setDefaultAltCurrency,
   setHomeCarouselConfig,
+  setHomeCarouselLayoutType,
   setIntroCompleted,
   setKeyMigrationFailure,
   setOnboardingCompleted,
@@ -56,7 +57,7 @@ import {createContact} from '../../../contact/contact.actions';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
-import {AppIdentity} from '../../../app/app.models';
+import {AppIdentity, HomeCarouselConfig} from '../../../app/app.models';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {startGetRates} from '../rates/rates';
 import {
@@ -129,6 +130,7 @@ export const startMigrationSensitiveStorage =
             );
             return Promise.resolve();
           }
+          const listCarousel: Array<HomeCarouselConfig> = [];
           const parsedObject = JSON.parse(clone(item));
           Object.keys(parsedObject).forEach(key => {
             parsedObject[key] = JSON.parse(parsedObject[key]);
@@ -147,10 +149,15 @@ export const startMigrationSensitiveStorage =
               parsedObject.keys[keyId].wallets,
               log => dispatch(log),
             ) as Wallet[];
+            listCarousel.push({id: keyId, show: true});
           });
 
           dispatch(setSensitiveStorage(parsedObject));
           dispatch(LogActions.info('[SensitiveStorage] success setItem'));
+
+          // Update Home Carousel Config
+          dispatch(setHomeCarouselConfig(listCarousel));
+          dispatch(setHomeCarouselLayoutType('listView'));
 
           // update store with token rates from coin gecko and update balances
           await dispatch(startGetRates({force: true}));
