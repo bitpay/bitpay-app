@@ -125,6 +125,11 @@ import BillStack, {
 } from './navigation/tabs/shop/bill/BillStack';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import {sensitiveStorage} from './store';
+import {HomeCarouselConfig} from './store/app/app.models';
+import {
+  setHomeCarouselConfig,
+  setHomeCarouselLayoutType,
+} from './store/app/app.actions';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -434,6 +439,14 @@ export default () => {
             const keysLength = Object.keys(keys).length;
             if (storedKeysLength !== keysLength) {
               recoverKeys({backupKeys: storedKeys, keys});
+              // Update Home Carousel Config
+              const parsedObject = JSON.parse(_storedKeys);
+              const listCarousel: Array<HomeCarouselConfig> = [];
+              Object.keys(parsedObject).forEach((keyId: string) => {
+                listCarousel.push({id: keyId, show: true});
+              });
+              dispatch(setHomeCarouselConfig(listCarousel));
+              dispatch(setHomeCarouselLayoutType('listView'));
             }
           }
         } catch (err) {
