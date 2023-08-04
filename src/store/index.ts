@@ -96,13 +96,6 @@ import {
   WalletConnectV2State,
 } from './wallet-connect-v2/wallet-connect-v2.reducer';
 import {WalletConnectV2ActionType} from './wallet-connect-v2/wallet-connect-v2.types';
-import createSensitiveStorage from 'redux-persist-sensitive-storage';
-
-export const sensitiveStorage = createSensitiveStorage({
-  keychainService: 'com.bitpay.wallet',
-  sharedPreferencesName: 'BitPayWalletSharedPrefs',
-  encrypt: true,
-});
 
 const basePersistConfig = {
   storage: AsyncStorage,

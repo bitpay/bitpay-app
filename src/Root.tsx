@@ -95,7 +95,10 @@ import PinModal from './components/modal/pin/PinModal';
 import CoinbaseStack, {
   CoinbaseStackParamList,
 } from './navigation/coinbase/CoinbaseStack';
-import {APP_ANALYTICS_ENABLED} from './constants/config';
+import {
+  APP_ANALYTICS_ENABLED,
+  SENSITIVE_STORAGE_KEYCHAIN_OPTIONS,
+} from './constants/config';
 import {BlurContainer} from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
@@ -124,7 +127,7 @@ import BillStack, {
   BillStackParamList,
 } from './navigation/tabs/shop/bill/BillStack';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
-import {sensitiveStorage} from './store';
+import SInfo from 'react-native-sensitive-info';
 import {HomeCarouselConfig} from './store/app/app.models';
 import {
   setHomeCarouselConfig,
@@ -345,9 +348,10 @@ export default () => {
         // second backup for iOS using sensitive storage
         if (Platform.OS === 'ios') {
           try {
-            await sensitiveStorage.setItem(
+            await SInfo.setItem(
               'WALLET_BACKUP',
               JSON.stringify(newKeyBackup),
+              SENSITIVE_STORAGE_KEYCHAIN_OPTIONS,
             );
           } catch (err) {
             const errStr =
@@ -434,7 +438,10 @@ export default () => {
           ),
         );
         try {
-          const _storedKeys = await sensitiveStorage.getItem('WALLET_BACKUP');
+          const _storedKeys = await SInfo.getItem(
+            'WALLET_BACKUP',
+            SENSITIVE_STORAGE_KEYCHAIN_OPTIONS,
+          );
           const storedKeys = JSON.parse(_storedKeys);
           if (storedKeys) {
             dispatch(
