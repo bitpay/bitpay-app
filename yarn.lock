@@ -13210,12 +13210,7 @@ react-native-animatable@1.3.3:
   dependencies:
     prop-types "^15.7.2"
 
-react-native-appboy-sdk@1.40.0:
-  version "1.40.0"
-  resolved "https://registry.yarnpkg.com/react-native-appboy-sdk/-/react-native-appboy-sdk-1.40.0.tgz#04b237a806acb5da980608efcd702c4120a1da13"
-  integrity sha512-wBbk9/1PBhgVKiR44NHA8QYFS4nN6ajy9DAoLHDB08IC6Fq70YBnP4HHd5sYJzi98qu7yF7eN/dYo0ylXzEmSw==
-
-react-native-appboy-sdk@^1.32.0:
+react-native-appboy-sdk@1.41.0, react-native-appboy-sdk@^1.32.0:
   version "1.41.0"
   resolved "https://registry.yarnpkg.com/react-native-appboy-sdk/-/react-native-appboy-sdk-1.41.0.tgz#6b1668139417fc9d21808db48cb279ecbada07ef"
   integrity sha512-amCRb+87cG3ERjNnlNJ78FstfQK6TAtYj+wBPcEnirB36SV2HNUMDsmT2D9SFebEz2CE73oo2f48cxUsRgGXEQ==
