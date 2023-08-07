@@ -77,8 +77,6 @@ jest.mock('react-native-fs', () => {
   };
 });
 
-jest.mock('react-native-text-input-mask', () => 'TextInputMask');
-
 jest.mock('rn-swipe-button', () => ({
   default: jest.fn(),
 }));
