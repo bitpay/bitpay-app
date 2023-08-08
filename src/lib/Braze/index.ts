@@ -92,7 +92,9 @@ export const BrazeWrapper = (() => {
   } = {};
 
   return {
-    init() {},
+    init() {
+      return Promise.resolve();
+    },
 
     identify(
       userId: string | undefined,
