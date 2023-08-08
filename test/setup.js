@@ -21,12 +21,6 @@ jest.mock('react-native-reanimated', () =>
 global.__reanimatedWorkletInit = jest.fn();
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
 
-jest.mock('@segment/analytics-react-native', () => ({
-  setup: () => null,
-  identify: () => null,
-  reset: () => null,
-}));
-
 jest.mock('react-native-permissions', () =>
   require('react-native-permissions/mock'),
 );

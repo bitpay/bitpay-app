@@ -12,7 +12,6 @@ import {URL} from '../../../../constants';
 import {APP_VERSION} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
-import {useDispatch} from 'react-redux';
 import {
   openUrlWithInAppBrowser,
   shareApp,
@@ -20,6 +19,7 @@ import {
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {GIT_COMMIT_HASH} from '@env';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {useAppDispatch} from '../../../../utils/hooks';
 
 interface LinkSetting {
   key: string;
@@ -30,7 +30,7 @@ interface LinkSetting {
 const About = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const LINKS: LinkSetting[] = [
     {
@@ -110,12 +110,12 @@ const About = () => {
             <Setting
               activeOpacity={ActiveOpacity}
               onPress={() => {
-                const segmentEvent =
+                const eventName =
                   key === 'HelpAndSupport'
                     ? 'Clicked Support'
                     : 'Clicked About BitPay Link';
                 dispatch(
-                  Analytics.track(segmentEvent, {
+                  Analytics.track(eventName, {
                     key,
                   }),
                 );

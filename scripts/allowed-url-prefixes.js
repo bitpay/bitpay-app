@@ -40,8 +40,6 @@ const allowedUrlPrefixes = [
   'https://api.zenledger.io/bitpay/wallets/',
   'https://rest.iad-05.braze.com',
   'https://sdk.iad-05.braze.com',
-  'https://cdn-settings.segment.com',
-  'https://api.segment.io',
   'https://cloudflare-eth.com/',
   'https://polygon-rpc.com/',
   'https://matic-mumbai.chainstacklabs.com',
