@@ -1,3 +1,4 @@
+import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
@@ -292,7 +293,8 @@ const logger = createLogger({
 
 const getStore = () => {
   const middlewares = [thunkMiddleware];
-  if (__DEV__) {
+
+  if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
     // @ts-ignore
     middlewares.push(logger);
   }

@@ -9,6 +9,7 @@ declare module '@env' {
   export const BRAZE_REST_API_ENDPOINT: string;
   export const COINBASE_CLIENT_ID: string;
   export const COINBASE_CLIENT_SECRET: string;
+  export const DISABLE_DEVELOPMENT_LOGGING: string;
   export const DOSH_APP_ID: string;
   export const DOSH_WHITELIST: string;
   export const GIT_COMMIT_HASH: string;
