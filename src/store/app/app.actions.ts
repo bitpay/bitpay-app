@@ -293,6 +293,14 @@ export const setKeyMigrationFailure = (): AppActionType => ({
   type: AppActionTypes.SET_KEY_MIGRATION_FAILURE,
 });
 
+export const setMigrationMMKVStorageComplete = (): AppActionType => ({
+  type: AppActionTypes.SET_MIGRATION_MMKV_STORAGE_COMPLETE,
+});
+
+export const setKeyMigrationMMKVStorageFailure = (): AppActionType => ({
+  type: AppActionTypes.SET_KEY_MIGRATION_MMKV_STORAGE_FAILURE,
+});
+
 export const setShowKeyMigrationFailureModal = (
   payload: boolean,
 ): AppActionType => ({

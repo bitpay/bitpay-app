@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
@@ -51,8 +50,28 @@ import {
   walletConnectV2ReduxPersistBlackList,
 } from './wallet-connect-v2/wallet-connect-v2.reducer';
 
+import {Storage} from 'redux-persist';
+import {MMKV} from 'react-native-mmkv';
+
+export const storage = new MMKV();
+
+export const reduxStorage: Storage = {
+  setItem: (key, value) => {
+    storage.set(key, value);
+    return Promise.resolve(true);
+  },
+  getItem: key => {
+    const value = storage.getString(key);
+    return Promise.resolve(value);
+  },
+  removeItem: key => {
+    storage.delete(key);
+    return Promise.resolve();
+  },
+};
+
 const basePersistConfig = {
-  storage: AsyncStorage,
+  storage: reduxStorage,
   stateReconciler: autoMergeLevel2,
 };
 

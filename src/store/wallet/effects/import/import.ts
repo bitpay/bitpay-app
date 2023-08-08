@@ -5,7 +5,7 @@ import {
   KeyProperties,
   Wallet,
 } from '../../wallet.models';
-import {Effect} from '../../../index';
+import {Effect, storage} from '../../../index';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {
@@ -47,6 +47,7 @@ import {
   setHomeCarouselConfig,
   setIntroCompleted,
   setKeyMigrationFailure,
+  setMigrationMMKVStorageComplete,
   setOnboardingCompleted,
   showPortfolioValue,
   successGenerateAppIdentity,
@@ -55,7 +56,7 @@ import {createContact} from '../../../contact/contact.actions';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
-import {AppIdentity} from '../../../app/app.models';
+import {AppIdentity, HomeCarouselConfig} from '../../../app/app.models';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {startGetRates} from '../rates/rates';
 import {
@@ -88,6 +89,8 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNRestart from 'react-native-restart';
 
 const BWC = BwcProvider.getInstance();
 
@@ -110,6 +113,43 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
 
   return wordList.join(isJA ? '\u3000' : ' ');
 };
+
+export const startMigrationMMKVStorage =
+  (): Effect<Promise<void>> =>
+  async (dispatch): Promise<void> => {
+    dispatch(LogActions.info('[startMigrationMMKVStorage] - starting...'));
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      if (!keys.includes('persist:root')) {
+        dispatch(setMigrationMMKVStorageComplete());
+        dispatch(LogActions.info('[MMKVStorage] nothing to migrate'));
+        return Promise.resolve();
+      }
+      const value = await AsyncStorage.getItem('persist:root');
+      if (value != null) {
+        storage.set('persist:root', value);
+      }
+      dispatch(
+        LogActions.persistLog(
+          LogActions.info('success [setMigrationMMKVStorageComplete]'),
+        ),
+      );
+      await AsyncStorage.multiRemove(keys);
+      dispatch(
+        LogActions.persistLog(
+          LogActions.info('success removing all AsyncStorage data'),
+        ),
+      );
+      RNRestart.restart();
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(
+        LogActions.persistLog(
+          LogActions.error('[migrationMMKVStorage] failed - ', errStr),
+        ),
+      );
+    }
+  };
 
 export const startMigration =
   (): Effect<Promise<void>> =>

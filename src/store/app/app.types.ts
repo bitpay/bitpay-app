@@ -70,6 +70,8 @@ export enum AppActionTypes {
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
+  SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
+  SET_KEY_MIGRATION_MMKV_STORAGE_FAILURE = 'APP/SET_KEY_MIGRATION_MMKV_STORAGE_FAILURE',
   SET_SHOW_KEY_MIGRATION_FAILURE_MODAL = 'APP/SET_SHOW_KEY_MIGRATION_FAILURE_MODAL',
   SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN = 'APP/SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN',
   ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
@@ -319,6 +321,14 @@ interface SetKeyMigrationFailure {
   type: typeof AppActionTypes.SET_KEY_MIGRATION_FAILURE;
 }
 
+interface SetMigrationMMKVStorageComplete {
+  type: typeof AppActionTypes.SET_MIGRATION_MMKV_STORAGE_COMPLETE;
+}
+
+interface SetKeyMigrationMMKVStorageFailure {
+  type: typeof AppActionTypes.SET_KEY_MIGRATION_MMKV_STORAGE_FAILURE;
+}
+
 interface SetShowKeyMigrationFailureModal {
   type: typeof AppActionTypes.SET_SHOW_KEY_MIGRATION_FAILURE_MODAL;
   payload: boolean;
@@ -399,6 +409,8 @@ export type AppActionType =
   | AddAltCurrencyList
   | SetMigrationComplete
   | SetKeyMigrationFailure
+  | SetMigrationMMKVStorageComplete
+  | SetKeyMigrationMMKVStorageFailure
   | SetShowKeyMigrationFailureModal
   | SetKeyMigrationFailureModalHasBeenShown
   | SetDefaultAltCurrency
