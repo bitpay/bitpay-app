@@ -1,4 +1,4 @@
-import 'react-native-get-random-values';// must import before @ethersproject/shims
+import 'react-native-get-random-values'; // must import before @ethersproject/shims
 import '@ethersproject/shims';
 import './shim';
 import '@walletconnect/react-native-compat';
