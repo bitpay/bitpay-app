@@ -1,6 +1,7 @@
 import {Effect} from '..';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
-import {BrazeUserAttributes, BrazeWrapper} from '../../lib/Braze';
+import {BrazeWrapper} from '../../lib/Braze';
+import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {LogActions} from '../log';
 
 export const Analytics = (() => {
@@ -27,20 +28,46 @@ export const Analytics = (() => {
      *
      * @returns Promise<void>
      */
-    initialize: (): Effect<Promise<void>> => async (dispatch) => {
+    initialize: (): Effect<Promise<void>> => async dispatch => {
       if (_isInitialized) {
         return;
       }
 
-      if (!APP_ANALYTICS_ENABLED) {
-        _isInitialized = true;
-        return;
+      if (APP_ANALYTICS_ENABLED) {
+        await BrazeWrapper.init()
+          .then(() => {
+            dispatch(LogActions.debug('Successfully initialized Braze SDK.'));
+          })
+          .catch(err => {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+
+            dispatch(
+              LogActions.debug('Failed to initialize Braze SDK.', errMsg),
+            );
+          });
+
+        await MixpanelWrapper.init()
+          .then(() => {
+            dispatch(
+              LogActions.debug('Successfully initialized Mixpanel SDK.'),
+            );
+          })
+          .catch(err => {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+
+            dispatch(
+              LogActions.debug('Failed to initialize Mixpanel SDK.', errMsg),
+            );
+          });
       }
 
       _isInitialized = true;
+
       dispatch(LogActions.info('Successfully initialized analytics.'));
 
-      return Promise.resolve();
+      return;
     },
 
     /**
@@ -53,12 +80,14 @@ export const Analytics = (() => {
     identify:
       (
         user: string | undefined,
-        traits?: BrazeUserAttributes | undefined,
+        traits?: Record<string, any> | undefined,
         onComplete?: () => void,
       ): Effect<void> =>
       () => {
         guard(async () => {
           BrazeWrapper.identify(user, traits);
+          MixpanelWrapper.identify(user);
+
           onComplete?.();
         });
       },
@@ -79,6 +108,8 @@ export const Analytics = (() => {
       () => {
         guard(async () => {
           BrazeWrapper.screen(name, properties);
+          MixpanelWrapper.screen(name, properties);
+
           onComplete?.();
         });
       },
@@ -101,6 +132,8 @@ export const Analytics = (() => {
           const eventName = `BitPay App - ${event}`;
 
           BrazeWrapper.track(eventName, properties);
+          MixpanelWrapper.track(eventName, properties);
+
           onComplete?.();
         });
       },
