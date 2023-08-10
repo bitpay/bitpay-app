@@ -56,7 +56,7 @@ import {createContact} from '../../../contact/contact.actions';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
-import {AppIdentity, HomeCarouselConfig} from '../../../app/app.models';
+import {AppIdentity} from '../../../app/app.models';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {startGetRates} from '../rates/rates';
 import {
@@ -123,23 +123,20 @@ export const startMigrationMMKVStorage =
       if (!keys.includes('persist:root')) {
         dispatch(setMigrationMMKVStorageComplete());
         dispatch(LogActions.info('[MMKVStorage] nothing to migrate'));
+        if (storage.getString('persist:root')) {
+          dispatch(
+            LogActions.persistLog(
+              LogActions.info('success [setMigrationMMKVStorageComplete]'),
+            ),
+          );
+        }
         return Promise.resolve();
       }
       const value = await AsyncStorage.getItem('persist:root');
       if (value != null) {
         storage.set('persist:root', value);
       }
-      dispatch(
-        LogActions.persistLog(
-          LogActions.info('success [setMigrationMMKVStorageComplete]'),
-        ),
-      );
       await AsyncStorage.multiRemove(keys);
-      dispatch(
-        LogActions.persistLog(
-          LogActions.info('success removing all AsyncStorage data'),
-        ),
-      );
       RNRestart.restart();
     } catch (err) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);

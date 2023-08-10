@@ -43,11 +43,7 @@ import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
-import {
-  startMigration,
-  startMigrationMMKVStorage,
-  startWalletStoreInit,
-} from '../wallet/effects';
+import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -133,16 +129,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    const {
-      appFirstOpenData,
-      onboardingCompleted,
-      migrationComplete,
-      migrationMMKVStorageComplete,
-    } = APP;
+    const {appFirstOpenData, onboardingCompleted, migrationComplete} = APP;
 
-    if (!migrationMMKVStorageComplete) {
-      await dispatch(startMigrationMMKVStorage());
-    }
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
       await dispatch(Analytics.initialize());
