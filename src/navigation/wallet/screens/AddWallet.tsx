@@ -611,7 +611,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         name: tokenContractInfo.name,
         symbol: tokenContractInfo.symbol,
         decimals: Number(tokenContractInfo.decimals),
-        address: tokenAddress,
+        address: tokenAddress?.toLowerCase(),
       };
       setCurrencyAbbreviation(tokenContractInfo.symbol);
       setCurrencyName(tokenContractInfo.name);
