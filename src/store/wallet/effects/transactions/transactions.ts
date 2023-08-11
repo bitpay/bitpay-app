@@ -141,7 +141,9 @@ const ProcessTx =
 
     if (coin === chain && tokenAddress) {
       tokenSymbol = Object.values(tokensOptsByAddress)
-        .find(({address}) => tokenAddress.toLowerCase() === address)
+        .find(
+          ({address}) => tokenAddress?.toLowerCase() === address?.toLowerCase(),
+        )
         ?.symbol.toLowerCase();
     }
 
