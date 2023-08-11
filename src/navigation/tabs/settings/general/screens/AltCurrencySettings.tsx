@@ -14,13 +14,7 @@ import {
   NoResultsImgContainer,
   NoResultsDescription,
 } from '../../../../../components/styled/Containers';
-import {
-  FlatList,
-  InteractionManager,
-  Keyboard,
-  SectionList,
-  View,
-} from 'react-native';
+import {FlatList, Keyboard, SectionList, View} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
 import {
   dismissOnGoingProcessModal,
@@ -173,13 +167,12 @@ const AltCurrencySettings = () => {
                   currency: item.isoCode,
                 }),
               );
-              InteractionManager.runAfterInteractions(() => {
-                dispatch(setDefaultAltCurrency(item));
-                dispatch(FormatKeyBalances());
-                dispatch(updatePortfolioBalance());
-                dispatch(coinbaseInitialize());
-                dispatch(getPriceHistory(item.isoCode));
-              });
+              dispatch(setDefaultAltCurrency(item));
+              dispatch(FormatKeyBalances());
+              dispatch(updatePortfolioBalance());
+              await dispatch(coinbaseInitialize());
+              dispatch(getPriceHistory(item.isoCode));
+              await sleep(500);
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);
               navigation.goBack();
