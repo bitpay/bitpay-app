@@ -15,7 +15,6 @@ import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import {Caution} from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {startGetRates, startImportFile} from '../../../store/wallet/effects';
 import {
@@ -35,6 +34,7 @@ import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScrollView} from 'react-native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -70,10 +70,10 @@ const schema = yup.object().shape({
 const FileOrText = () => {
   const {t} = useTranslation();
   const logger = useLogger();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
-  const walletTermsAccepted = useSelector(
+  const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
 
@@ -92,7 +92,7 @@ const FileOrText = () => {
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
 
-      await dispatch(startGetRates({}));
+      await dispatch(startGetRates({force: true}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await sleep(1000);
       await dispatch(updatePortfolioBalance());
