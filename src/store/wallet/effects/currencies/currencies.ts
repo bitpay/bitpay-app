@@ -17,6 +17,8 @@ import {
   EVM_BLOCKCHAIN_ID,
 } from '../../../../constants/config';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {ONEINCH_API_KEY} from '@env';
+import {OneInchApiUrl} from '../../../../constants/tokens';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
@@ -26,11 +28,17 @@ export const startGetTokenOptions =
       let tokenOptionsByAddress: {[key in string]: Token} = {};
       let tokenData: {[key in string]: CurrencyOpts} = {};
       for await (const chain of SUPPORTED_EVM_COINS) {
+        const url = `${OneInchApiUrl}${EVM_BLOCKCHAIN_ID[chain]}/tokens`;
+        const headers = {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + ONEINCH_API_KEY,
+        };
         let {
           data: {tokens},
         } = await axios.get<{
           tokens: {[key in string]: Token};
-        }>(`https://api.1inch.io/v4.0/${EVM_BLOCKCHAIN_ID[chain]}/tokens`);
+        }>(url, {headers});
         Object.values(tokens).forEach(token => {
           if (
             BitpaySupportedCurrencies[
