@@ -5,12 +5,12 @@ import {RowContainer} from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
 import haptic from '../haptic-feedback/haptic';
 import Checkbox from '../checkbox/Checkbox';
-import {Utxo} from '../../store/wallet/wallet.models';
+import {UtxoWithFiatAmount} from '../../navigation/wallet/screens/SelectInputs';
 
 interface Props {
-  item: Utxo;
+  item: UtxoWithFiatAmount;
   unitCode?: string;
-  emit: (item: Utxo, index: number) => void;
+  emit: (item: UtxoWithFiatAmount, index: number) => void;
   index: number;
 }
 
@@ -24,7 +24,7 @@ const InputColumn = styled(Column)`
 `;
 
 const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
-  const {amount, address, checked: initialCheckValue} = item;
+  const {amount, address, checked: initialCheckValue, fiatAmount} = item;
 
   const [checked, setChecked] = useState(!!initialCheckValue);
   const toggle = (): void => {
@@ -45,6 +45,9 @@ const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
         <H5>
           {amount} {unitCode?.toUpperCase()}{' '}
         </H5>
+        {item.network !== 'testnet' ? (
+          <ListItemSubText textAlign={'left'}>{fiatAmount}</ListItemSubText>
+        ) : null}
         <ListItemSubText numberOfLines={1} ellipsizeMode={'middle'}>
           {address}
         </ListItemSubText>
