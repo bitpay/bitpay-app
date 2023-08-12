@@ -431,7 +431,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         }
 
         // new wallet might have funds
-        await dispatch(startGetRates({}));
+        await dispatch(startGetRates({force: true}));
         await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
         await sleep(1000);
         dispatch(updatePortfolioBalance());

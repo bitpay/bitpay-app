@@ -24,7 +24,6 @@ import {
   SheetContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import {useDispatch, useSelector} from 'react-redux';
 import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
@@ -87,6 +86,7 @@ import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {IS_ANDROID, IS_IOS} from '../../../constants';
+import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -183,11 +183,11 @@ const CtaContainer = styled(_CtaContainer)`
 
 const RecoveryPhrase = () => {
   const {t} = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
-  const walletTermsAccepted = useSelector(
+  const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
@@ -418,7 +418,7 @@ const RecoveryPhrase = () => {
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
-      await dispatch(startGetRates({}));
+      await dispatch(startGetRates({force: true}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
@@ -483,7 +483,7 @@ const RecoveryPhrase = () => {
       await dispatch(startOnGoingProcessModal('CREATING_KEY'));
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
-      await dispatch(startGetRates({}));
+      await dispatch(startGetRates({force: true}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await sleep(1000);
       await dispatch(updatePortfolioBalance());
