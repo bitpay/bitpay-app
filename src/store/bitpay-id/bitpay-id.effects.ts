@@ -462,7 +462,8 @@ export const startDisconnectBitPayId =
     const {APP} = getState();
 
     try {
-      const {isAuthenticated, csrfToken} = (await AuthApi.fetchSession(APP.network)) || {};
+      const {isAuthenticated, csrfToken} =
+        (await AuthApi.fetchSession(APP.network)) || {};
 
       if (isAuthenticated && csrfToken) {
         await AuthApi.logout(APP.network, csrfToken);
@@ -486,7 +487,9 @@ export const startDisconnectBitPayId =
     try {
       await MixpanelWrapper.reset();
     } catch (err) {
-      dispatch(LogActions.debug('An error occured while clearing Mixpanel data.'));
+      dispatch(
+        LogActions.debug('An error occured while clearing Mixpanel data.'),
+      );
       dispatch(LogActions.debug(JSON.stringify(err)));
     }
 

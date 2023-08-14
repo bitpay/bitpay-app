@@ -55,7 +55,9 @@ const BitpayIdStack = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const user = useAppSelector(({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network]);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   return (
     <BitpayId.Navigator
@@ -77,7 +79,7 @@ const BitpayIdStack = () => {
           headerRight: () => {
             return (
               <HeaderRightContainer>
-                {user ? <>
+                {user ? (
                   <Button
                     buttonType={'pill'}
                     onPress={async () => {
@@ -92,7 +94,7 @@ const BitpayIdStack = () => {
                     }}>
                     {t('Log Out')}
                   </Button>
-                </> : <>
+                ) : (
                   <Button
                     buttonType={'pill'}
                     onPress={() => {
@@ -101,7 +103,7 @@ const BitpayIdStack = () => {
                     }}>
                     {t('Log In')}
                   </Button>
-                </>}
+                )}
               </HeaderRightContainer>
             );
           },

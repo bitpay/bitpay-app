@@ -46,8 +46,8 @@ export const MixpanelWrapper = (() => {
     /**
      * No-op. Mixpanel does not track screen events.
      *
-     * @param {string} screenName The name of the screen to track.
-     * @param {object} properties Properties to include with this screen.
+     * @param {string} _screenName The name of the screen to track.
+     * @param {object} _properties Properties to include with this screen.
      */
     screen(_screenName: string, _properties?: MixpanelProperties) {
       // no-op
@@ -57,7 +57,7 @@ export const MixpanelWrapper = (() => {
      * Track an event.
      *
      * @param {string} eventName The name of the event to send.
-     * @param {object}properties Properties to include with this event.
+     * @param {object} properties Properties to include with this event.
      */
     track(eventName: string, properties?: MixpanelProperties) {
       return guard(client => {
