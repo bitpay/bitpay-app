@@ -16,7 +16,7 @@ const initLogs: AddLog[] = [];
 
 export const bootstrapWallets = (
   wallets: Wallet[],
-  logHandler: (addLog: AddLog) => {},
+  logHandler?: (addLog: AddLog) => {},
 ) => {
   return wallets
     .map(wallet => {
@@ -31,7 +31,9 @@ export const bootstrapWallets = (
           JSON.stringify(wallet.credentials),
         );
         const successLog = `bindWalletClient - ${wallet.id}`;
-        logHandler(LogActions.info(successLog));
+        if (logHandler) {
+          logHandler(LogActions.info(successLog));
+        }
         // build wallet obj with bwc client credentials
         return merge(
           walletClient,
@@ -44,7 +46,9 @@ export const bootstrapWallets = (
       } catch (err: unknown) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         const errorLog = `Failed to bindWalletClient - ${wallet.id} - ${errStr}`;
-        logHandler(LogActions.persistLog(LogActions.error(errorLog)));
+        if (logHandler) {
+          logHandler(LogActions.persistLog(LogActions.error(errorLog)));
+        }
       }
     })
     .filter(w => w !== undefined);
@@ -53,7 +57,7 @@ export const bootstrapWallets = (
 export const bootstrapKey = (
   key: Key,
   id: string,
-  logHandler: (addLog: AddLog) => {},
+  logHandler?: (addLog: AddLog) => {},
 ) => {
   if (id === 'readonly') {
     return key;
@@ -66,12 +70,16 @@ export const bootstrapKey = (
         }),
       });
       const successLog = `bindKey - ${id}`;
-      logHandler(LogActions.info(successLog));
+      if (logHandler) {
+        logHandler(LogActions.info(successLog));
+      }
       return _key;
     } catch (err: unknown) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
       const errorLog = `Failed to bindWalletKeys - ${id} - ${errStr}`;
-      logHandler(LogActions.persistLog(LogActions.error(errorLog)));
+      if (logHandler) {
+        logHandler(LogActions.persistLog(LogActions.error(errorLog)));
+      }
     }
   }
 };
