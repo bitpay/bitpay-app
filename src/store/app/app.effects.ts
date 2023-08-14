@@ -477,6 +477,7 @@ export const startOnGoingProcessModal =
       GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
       CREATING_KEY: i18n.t('Creating Key'),
       LOGGING_IN: i18n.t('Logging In'),
+      LOGGING_OUT: i18n.t('Logging Out'),
       PAIRING: i18n.t('Pairing'),
       CREATING_ACCOUNT: i18n.t('Creating Account'),
       UPDATING_ACCOUNT: i18n.t('Updating Account'),

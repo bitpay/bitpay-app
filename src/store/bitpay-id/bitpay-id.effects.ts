@@ -455,33 +455,47 @@ const startPairAndLoadUser =
   };
 
 export const startDisconnectBitPayId =
-  (): Effect => async (dispatch, getState) => {
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    dispatch(startOnGoingProcessModal('LOGGING_OUT'));
+
+    const {APP} = getState();
+
     try {
-      const {APP, BITPAY_ID} = getState();
-      const {isAuthenticated, csrfToken} = BITPAY_ID.session;
+      const {isAuthenticated, csrfToken} = (await AuthApi.fetchSession(APP.network)) || {};
 
       if (isAuthenticated && csrfToken) {
         await AuthApi.logout(APP.network, csrfToken);
       }
-      dispatch(Analytics.track('Log Out User success', {}));
-      dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
-      dispatch(CardActions.isJoinedWaitlist(false));
-      dispatch(ShopActions.clearedBillPayAccounts());
-      dispatch(ShopActions.clearedBillPayPayments());
     } catch (err) {
       // log but swallow this error
-      dispatch(LogActions.error('An error occurred while logging out.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(LogActions.debug('An error occurred while logging out.'));
+      dispatch(LogActions.debug(JSON.stringify(err)));
+    }
+
+    try {
+      const session = await AuthApi.fetchSession(APP.network);
+
+      dispatch(BitPayIdActions.successFetchSession(session));
+    } catch (err) {
+      // log but swallow this error
+      dispatch(LogActions.debug('An error occurred while refreshing session.'));
+      dispatch(LogActions.debug(JSON.stringify(err)));
     }
 
     try {
       Dosh.clearUser();
     } catch (err) {
       // log but swallow this error
-      dispatch(LogActions.error('An error occured while clearing Dosh user.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
-      return;
+      dispatch(LogActions.debug('An error occured while clearing Dosh user.'));
+      dispatch(LogActions.debug(JSON.stringify(err)));
     }
+
+    dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+    dispatch(Analytics.track('Log Out User success', {}));
+    dispatch(CardActions.isJoinedWaitlist(false));
+    dispatch(ShopActions.clearedBillPayAccounts());
+    dispatch(ShopActions.clearedBillPayPayments());
+    dispatch(dismissOnGoingProcessModal());
   };
 
 export const startFetchBasicInfo =
