@@ -59,7 +59,7 @@ import {
 import {Key, Wallet} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
-import {InteractionManager, Linking} from 'react-native';
+import {Linking} from 'react-native';
 import {
   BitcoreLibs,
   bitcoreLibs,
