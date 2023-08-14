@@ -132,6 +132,7 @@ import {HomeCarouselConfig} from './store/app/app.models';
 import {
   setHomeCarouselConfig,
   setHomeCarouselLayoutType,
+  setOnboardingCompleted,
 } from './store/app/app.actions';
 
 // ROOT NAVIGATION CONFIG
@@ -162,6 +163,7 @@ export type RootStackParamList = {
   ZenLedger: NavigatorScreenParams<ZenLedgerStackParamsList>;
   NetworkFeePolicySettings: NavigatorScreenParams<NetworkFeePolicySettingsStackParamsList>;
 };
+
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
   HOME = 'Home',
@@ -255,6 +257,8 @@ export default () => {
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
+  const [isOnboardingCompleted, setIsOnboardingCompleted] =
+    useState(onboardingCompleted);
   const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const checkingBiometricForSending = useAppSelector(
@@ -453,6 +457,9 @@ export default () => {
             const keysLength = Object.keys(keys).length;
             if (storedKeysLength !== keysLength) {
               recoverKeys({backupKeys: storedKeys, keys});
+              // Set Onboarding as finished
+              dispatch(setOnboardingCompleted());
+              setIsOnboardingCompleted(true);
             }
           }
         } catch (err) {
@@ -551,7 +558,7 @@ export default () => {
         }
       };
 
-      if (onboardingCompleted) {
+      if (isOnboardingCompleted) {
         if (status === 'active' && checkingBiometricForSending) {
           dispatch(AppActions.checkingBiometricForSending(false));
           dispatch(AppActions.showBlur(false));
@@ -582,6 +589,7 @@ export default () => {
         }
       }
     }
+
     const subscriptionAppStateChange = AppState.addEventListener(
       'change',
       onAppStateChange,
@@ -589,7 +597,7 @@ export default () => {
     return () => subscriptionAppStateChange.remove();
   }, [
     dispatch,
-    onboardingCompleted,
+    isOnboardingCompleted,
     pinLockActive,
     lockAuthorizedUntil,
     biometricLockActive,
@@ -607,6 +615,7 @@ export default () => {
       );
       dispatch(handleBwsEvent(response));
     }
+
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
@@ -634,7 +643,7 @@ export default () => {
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
   // ROOT STACKS AND GLOBAL COMPONENTS
-  const initialRoute = onboardingCompleted
+  const initialRoute = isOnboardingCompleted
     ? RootStacks.TABS
     : introCompleted
     ? RootStacks.ONBOARDING
@@ -657,7 +666,7 @@ export default () => {
           onReady={async () => {
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
 
-            if (onboardingCompleted) {
+            if (isOnboardingCompleted) {
               const getBrazeInitialUrl = async (): Promise<string> =>
                 new Promise(resolve =>
                   Braze.getInitialURL(deepLink => resolve(deepLink)),
