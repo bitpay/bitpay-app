@@ -64,6 +64,16 @@ export const MixpanelWrapper = (() => {
         client.track(eventName, properties);
       });
     },
+
+    /**
+     * Resets data and generates a new random Mixpanel ID for this instance.
+     * Typically for when a user logs out.
+     */
+    reset() {
+      return guard(client => {
+        client.reset();
+      });
+    },
   };
 })();
 
