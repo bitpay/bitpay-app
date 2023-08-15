@@ -23,7 +23,7 @@ import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import haptic from '../../../components/haptic-feedback/haptic';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 

@@ -26,7 +26,7 @@ import Checkbox from '../../../../components/checkbox/Checkbox';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {BwcProvider} from '../../../../lib/bwc';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {sleep} from '../../../../utils/helper-methods';
 import {Linking} from 'react-native';
 import {useTranslation} from 'react-i18next';

@@ -6,7 +6,7 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {useTranslation} from 'react-i18next';
 
 const ExtendedPrivateKeyContainer = styled.SafeAreaView`

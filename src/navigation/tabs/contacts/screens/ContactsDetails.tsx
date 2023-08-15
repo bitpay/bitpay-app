@@ -3,7 +3,7 @@ import {useAppSelector} from '../../../../utils/hooks';
 import styled, {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/core';
 import {StackScreenProps} from '@react-navigation/stack';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
 import {ContactsStackParamList} from '../ContactsStack';
 import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
