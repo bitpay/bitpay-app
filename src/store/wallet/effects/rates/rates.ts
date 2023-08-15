@@ -232,18 +232,12 @@ export const getTokenRates =
 
         for (const chain of SUPPORTED_EVM_COINS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
-          const url = `https://api.coingecko.com/api/v3/simple/token_price/${
-            // @ts-ignore
-            EVM_BLOCKCHAIN_NETWORK[chain]
-          }?contract_addresses=${contractAddresses.join(
+          const url = `${BASE_BWS_URL}/v1/service/coinGecko/getRates/${contractAddresses.join(
             ',',
-          )}&vs_currencies=${altCurrencies.join(
-            ',',
-          )}&include_24hr_change=true&include_last_updated_at=true`;
+          )}/${altCurrencies.join(',')}/${chain}`;
           dispatch(LogActions.debug(`getTokenRates: get request to: ${url}`));
           const {data} = await axios.get(url);
           dispatch(LogActions.debug('getTokenRates: success get request'));
-
           Object.entries(data).map(([key, value]: [string, any]) => {
             const formattedTokenAddress = addTokenChainSuffix(key, chain);
 
