@@ -7,8 +7,6 @@ export type TokenOptsType = {
 export const TokensListAPIUrl =
   'https://bitpay.api.enterprise.1inch.exchange/v3.0/1/tokens';
 
-export const OneInchApiUrl = 'https://api.1inch.dev/swap/v5.2/';
-
 export const BitpaySupportedEthereumTokenOpts: TokenOptsType = {
   usdc_e: {
     name: 'USD Coin',
