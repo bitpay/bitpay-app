@@ -4,6 +4,10 @@ import {
   PaymentMethodsAvailable,
 } from '../constants/BuyCryptoConstants';
 import {
+  getBanxaSupportedCurrencies,
+  banxaSupportedFiatCurrencies,
+} from './banxa-utils';
+import {
   getMoonpaySupportedCurrencies,
   moonpaySupportedFiatCurrencies,
 } from './moonpay-utils';
@@ -23,9 +27,15 @@ import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
-export type BuyCryptoExchangeKey = 'moonpay' | 'ramp' | 'sardine' | 'simplex';
+export type BuyCryptoExchangeKey =
+  | 'banxa'
+  | 'moonpay'
+  | 'ramp'
+  | 'sardine'
+  | 'simplex';
 
 export const BuyCryptoSupportedExchanges: BuyCryptoExchangeKey[] = [
+  'banxa',
   'moonpay',
   'ramp',
   'sardine',
@@ -59,13 +69,21 @@ export const getEnabledPaymentMethods = (
           )
       : method.enabled &&
           (isPaymentMethodSupported(
-            'moonpay',
+            'banxa',
             method,
             coin,
             chain,
             currency,
             country,
           ) ||
+            isPaymentMethodSupported(
+              'moonpay',
+              method,
+              coin,
+              chain,
+              currency,
+              country,
+            ) ||
             isPaymentMethodSupported('ramp', method, coin, chain, currency) ||
             isPaymentMethodSupported(
               'sardine',
@@ -86,6 +104,8 @@ export const getBuyCryptoSupportedCoins = (
   exchange?: string,
 ): string[] => {
   switch (exchange) {
+    case 'banxa':
+      return getBanxaSupportedCurrencies();
     case 'moonpay':
       return getMoonpaySupportedCurrencies(
         locationData?.countryShortCode || 'US',
@@ -99,6 +119,7 @@ export const getBuyCryptoSupportedCoins = (
     default:
       const allSupportedCurrencies = [
         ...new Set([
+          ...getBanxaSupportedCurrencies(),
           ...getMoonpaySupportedCurrencies(
             locationData?.countryShortCode || 'US',
           ),
@@ -113,6 +134,8 @@ export const getBuyCryptoSupportedCoins = (
 
 export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
   switch (exchange) {
+    case 'banxa':
+      return banxaSupportedFiatCurrencies;
     case 'moonpay':
       return moonpaySupportedFiatCurrencies;
     case 'ramp':
@@ -124,6 +147,7 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
     default:
       const allSupportedFiatCurrencies = [
         ...new Set([
+          ...banxaSupportedFiatCurrencies,
           ...moonpaySupportedFiatCurrencies,
           ...rampSupportedFiatCurrencies,
           ...sardineSupportedFiatCurrencies,
@@ -156,6 +180,7 @@ export const isCoinSupportedToBuy = (
   country?: string,
 ): boolean => {
   return (
+    isCoinSupportedBy('banxa', coin, chain) ||
     isCoinSupportedBy('moonpay', coin, chain, country) ||
     isCoinSupportedBy('ramp', coin, chain) ||
     isCoinSupportedBy('sardine', coin, chain) ||
@@ -170,6 +195,10 @@ const isCoinSupportedBy = (
   country?: string,
 ): boolean => {
   switch (exchange) {
+    case 'banxa':
+      return getBanxaSupportedCurrencies().includes(
+        getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
+      );
     case 'moonpay':
       return getMoonpaySupportedCurrencies(country).includes(
         getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
@@ -196,6 +225,8 @@ const isFiatCurrencySupportedBy = (
   currency: string,
 ): boolean => {
   switch (exchange) {
+    case 'banxa':
+      return banxaSupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'moonpay':
       return moonpaySupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'ramp':
