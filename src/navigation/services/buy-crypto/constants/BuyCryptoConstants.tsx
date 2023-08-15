@@ -36,6 +36,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     method: 'ach',
     imgSrc: <BankIcon width={40} height={40} />,
     supportedExchanges: {
+      banxa: false,
       moonpay: false,
       ramp: false,
       sardine: true,
@@ -48,6 +49,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     method: 'applePay',
     imgSrc: <ApplePayIcon width={40} height={40} />,
     supportedExchanges: {
+      banxa: true,
       moonpay: true,
       ramp: true,
       sardine: false,
@@ -60,6 +62,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     method: 'creditCard',
     imgSrc: <CreditCardIcon width={40} height={40} />,
     supportedExchanges: {
+      banxa: true,
       moonpay: true,
       ramp: true,
       sardine: true,
@@ -72,6 +75,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     method: 'debitCard',
     imgSrc: <DebitCardIcon width={40} height={40} />,
     supportedExchanges: {
+      banxa: true,
       moonpay: true,
       ramp: true,
       sardine: true,
@@ -84,6 +88,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     method: 'sepaBankTransfer',
     imgSrc: <BankIcon width={40} height={40} />,
     supportedExchanges: {
+      banxa: true,
       moonpay: true,
       ramp: true,
       sardine: false,
@@ -96,6 +101,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     method: 'other',
     imgSrc: <CreditCardIcon width={40} height={40} />,
     supportedExchanges: {
+      banxa: true,
       moonpay: true,
       ramp: true,
       sardine: true,
