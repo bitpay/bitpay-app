@@ -1,17 +1,18 @@
+import merge from 'lodash.merge';
 import {createTransform} from 'redux-persist';
 import {Key, Wallet} from '../wallet/wallet.models';
-import merge from 'lodash.merge';
 import {BwcProvider} from '../../lib/bwc';
 import {
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
 } from '../../constants/currencies';
-import Flatted from 'flatted';
+import {ContactState} from '../contact/contact.reducer';
+import {WalletState} from '../wallet/wallet.reducer';
 import {buildWalletObj} from '../wallet/utils/wallet';
 import {ContactRowProps} from '../../components/list/ContactRow';
 import {AddLog} from '../log/log.types';
 import {LogActions} from '../log';
-import cloneDeep from 'lodash.clonedeep';
+
 const BWCProvider = BwcProvider.getInstance();
 const initLogs: AddLog[] = [];
 
@@ -52,7 +53,7 @@ export const bootstrapWallets = (
         }
       }
     })
-    .filter(w => w !== undefined);
+    .filter((w): w is NonNullable<typeof w> => w !== undefined);
 };
 
 export const bootstrapKey = (
@@ -85,15 +86,14 @@ export const bootstrapKey = (
   }
 };
 
-export const bindWalletKeys = createTransform(
+export const bindWalletKeys = createTransform<WalletState, WalletState>(
   // transform state on its way to being serialized and persisted.
-  (inboundState, k) => {
-    // @ts-ignore
+  inboundState => {
     const keys = inboundState.keys || {};
     if (Object.keys(keys).length > 0) {
-      for (const [id, key] of Object.entries(keys as {[key in string]: Key})) {
+      for (const [id, key] of Object.entries(keys)) {
         key.wallets.forEach(wallet => delete wallet.transactionHistory);
-        // @ts-ignore
+
         inboundState.keys[id] = {
           ...key,
         };
@@ -102,21 +102,22 @@ export const bindWalletKeys = createTransform(
     return inboundState;
   },
   // transform state being rehydrated
-  (outboundState, k) => {
-    // @ts-ignore
+  outboundState => {
     const keys = outboundState.keys || {};
     if (Object.keys(keys).length > 0) {
-      for (const [id, key] of Object.entries(keys as {[key in string]: Key})) {
-        const bootstrapedKey = bootstrapKey(key, id, log => initLogs.push(log));
+      for (const [id, key] of Object.entries(keys)) {
+        const bootstrappedKey = bootstrapKey(key, id, log =>
+          initLogs.push(log),
+        );
         const wallets = bootstrapWallets(key.wallets, log =>
           initLogs.push(log),
         );
-        if (bootstrapedKey) {
-          // @ts-ignore
-          outboundState.keys[id] = {...bootstrapedKey, wallets};
+
+        if (bootstrappedKey) {
+          outboundState.keys[id] = {...bootstrappedKey, wallets};
         }
       }
-      // @ts-ignore
+
       outboundState.initLogs = initLogs;
     }
     return outboundState;
@@ -124,12 +125,12 @@ export const bindWalletKeys = createTransform(
   {whitelist: ['WALLET']},
 );
 
-export const transformContacts = createTransform(
+export const transformContacts = createTransform<ContactState, ContactState>(
   inboundState => inboundState,
-  (outboundState, k) => {
-    // @ts-ignore
+  outboundState => {
     const contactList = outboundState.list || [];
     if (contactList.length > 0) {
+      // @ts-ignore
       const contacts = outboundState as ContactRowProps[];
       const migratedContacts = contacts.map(contact => ({
         ...contact,
@@ -140,7 +141,7 @@ export const transformContacts = createTransform(
             ? contact.coin
             : 'eth'),
       }));
-      // @ts-ignore
+
       outboundState.list = migratedContacts;
     }
     return outboundState;

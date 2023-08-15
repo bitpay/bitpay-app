@@ -56,7 +56,7 @@ const basePersistConfig = {
   stateReconciler: autoMergeLevel2,
 };
 
-const reducerPersistBlackLists = {
+const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   APP: appReduxPersistBlackList,
   BITPAY_ID: bitPayIdReduxPersistBlackList,
   BUY_CRYPTO: buyCryptoReduxPersistBlackList,
@@ -151,20 +151,20 @@ const getStore = () => {
     transforms: [
       bindWalletKeys,
       transformContacts,
-      createTransform(
-        (inboundState: any, key: keyof typeof reducerPersistBlackLists) => {
-          // Clear out nested blacklisted fields before encrypting and persisting
-          if (Object.keys(reducerPersistBlackLists).includes(key)) {
-            const reducerPersistBlackList = reducerPersistBlackLists[key];
-            const fieldOverrides = (reducerPersistBlackList as string[]).reduce(
-              (allFields, field) => ({...allFields, ...{[field]: undefined}}),
-              {},
-            );
-            return {...inboundState, ...fieldOverrides};
-          }
-          return inboundState;
-        },
-      ),
+      createTransform<RootState, RootState, RootState>((inboundState, key) => {
+        // Clear out nested blacklisted fields before encrypting and persisting
+        if (typeof key === 'string' && reducerPersistBlackLists[key]) {
+          const reducerPersistBlackList = reducerPersistBlackLists[key];
+          const fieldOverrides = (reducerPersistBlackList as string[]).reduce(
+            (allFields, field) => ({...allFields, ...{[field]: undefined}}),
+            {},
+          );
+
+          return {...inboundState, ...fieldOverrides};
+        }
+
+        return inboundState;
+      }),
       encryptTransform({
         secretKey: getUniqueId(),
         onError: err => {
