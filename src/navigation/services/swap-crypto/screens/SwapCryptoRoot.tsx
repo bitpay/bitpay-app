@@ -936,9 +936,17 @@ const SwapCryptoRoot: React.FC = () => {
               primary: true,
             },
           ];
+          const selectedCoin = cloneDeep(
+            selectedWallet.currencyAbbreviation,
+          ).toUpperCase();
+          const selectedChain = cloneDeep(selectedWallet.chain).toUpperCase();
           const title = t('Changelly Error');
           const msg = t(
-            'Changelly has temporarily disabled fixed-rate swaps for the selected wallet curreny. If you have further questions please reach out to them.',
+            'Changelly has temporarily disabled fixed-rate swaps for the selected wallet (selectedCoin-selectedChain). If you have further questions please reach out to them.',
+            {
+              selectedCoin,
+              selectedChain,
+            },
           );
           selectedWallet = undefined;
           showError(msg, title, actions, true);
