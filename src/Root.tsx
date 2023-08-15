@@ -276,13 +276,11 @@ export default () => {
     keyId: string;
     keys: Keys;
   }) => {
-    keys[keyId] = bootstrapKey(keys[keyId], keyId, log => dispatch(log)) as Key;
+    keys[keyId] = bootstrapKey(keys[keyId], keyId) as Key;
     if (!keys[keyId]) {
       throw new Error('bootstrapKey function failed');
     }
-    keys[keyId].wallets = bootstrapWallets(keys[keyId].wallets, log =>
-      dispatch(log),
-    ) as Wallet[];
+    keys[keyId].wallets = bootstrapWallets(keys[keyId].wallets) as Wallet[];
   };
 
   const recoverKeys = ({backupKeys, keys}: {backupKeys: Keys; keys: Keys}) => {
