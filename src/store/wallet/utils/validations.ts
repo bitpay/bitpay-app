@@ -65,6 +65,11 @@ export const isValidBuyCryptoUri = (data: string): boolean => {
   return !!data?.includes('buyCrypto');
 };
 
+export const isValidBanxaUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!data?.includes('banxa');
+};
+
 export const isValidMoonpayUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!data?.includes('moonpay');

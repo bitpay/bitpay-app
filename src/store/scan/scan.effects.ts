@@ -34,10 +34,13 @@ import {
   isValidSimplexUri,
   isValidWalletConnectUri,
   IsBitPayInvoiceWebUrl,
+  isValidBanxaUri,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
+  BanxaIncomingData,
+  BanxaStatusKey,
   MoonpayIncomingData,
   RampIncomingData,
   SardineIncomingData,
@@ -162,6 +165,9 @@ export const incomingData =
         // Buy Crypto
       } else if (isValidBuyCryptoUri(data)) {
         dispatch(handleBuyCryptoUri(data));
+        // Banxa
+      } else if (isValidBanxaUri(data)) {
+        dispatch(handleBanxaUri(data));
         // Moonpay
       } else if (isValidMoonpayUri(data)) {
         dispatch(handleMoonpayUri(data));
@@ -1030,6 +1036,64 @@ const handleBuyCryptoUri =
               currencyAbbreviation: coin,
               chain,
             },
+          },
+        },
+      ],
+    });
+  };
+
+const handleBanxaUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Banxa URL: ' + data));
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+
+    const banxaOrderId = getParameterByName('orderId', res);
+    if (!banxaOrderId) {
+      dispatch(LogActions.warn('No banxaOrderId present. Do not redir'));
+      return;
+    }
+
+    const status = getParameterByName('orderStatus', res) as BanxaStatusKey;
+    const ref = Number(getParameterByName('orderRef', res));
+
+    const stateParams: BanxaIncomingData = {
+      banxaOrderId,
+      status,
+      ref,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestBanxa({
+        banxaIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.banxa[banxaOrderId];
+    if (order) {
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'banxa',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin || '',
+        }),
+      );
+    }
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'BanxaSettings',
+            params: {incomingPaymentRequest: stateParams},
           },
         },
       ],
