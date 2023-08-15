@@ -115,7 +115,10 @@ import ZenLedgerStack, {
   ZenLedgerStackParamsList,
 } from './navigation/zenledger/ZenLedgerStack';
 import {WalletBackupActions} from './store/wallet-backup';
-import {successCreateKey} from './store/wallet/wallet.actions';
+import {
+  setWalletTermsAccepted,
+  successCreateKey,
+} from './store/wallet/wallet.actions';
 import {bootstrapKey, bootstrapWallets} from './store/transforms/transforms';
 import {Key, Wallet} from './store/wallet/wallet.models';
 import {Keys} from './store/wallet/wallet.reducer';
@@ -457,9 +460,18 @@ export default () => {
             const keysLength = Object.keys(keys).length;
             if (storedKeysLength !== keysLength) {
               recoverKeys({backupKeys: storedKeys, keys});
-              // Set Onboarding as finished
+              // Set Onboarding and Terms of Use as finished
               dispatch(setOnboardingCompleted());
               setIsOnboardingCompleted(true);
+              dispatch(setWalletTermsAccepted());
+              DeviceEventEmitter.emit(
+                DeviceEmitterEvents.APP_ONBOARDING_COMPLETED,
+              );
+              dispatch(
+                LogActions.persistLog(
+                  LogActions.warn('Keys recovered from sensitive storage'),
+                ),
+              );
             }
           }
         } catch (err) {
