@@ -11,6 +11,8 @@
 #import "RNQuickActionManager.h"
 #import "AppboyReactUtils.h"
 #import <React/RCTLinkingManager.h>
+// react-native-keyevent
+#import <RNKeyEvent.h>
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -125,4 +127,34 @@
 {
   return true;
 }
+
+/*!
+ * react-native-keyevent support
+ */
+RNKeyEvent *keyEvent = nil;
+
+- (NSMutableArray<UIKeyCommand *> *)keyCommands {
+  NSMutableArray *keys = [NSMutableArray new];
+  
+  if (keyEvent == nil) {
+    keyEvent = [[RNKeyEvent alloc] init];
+  }
+  
+  if ([keyEvent isListening]) {
+    
+    NSArray *namesArray = [[keyEvent getKeys] componentsSeparatedByString:@","];
+    
+    for (NSString* names in namesArray) {
+      [keys addObject: [UIKeyCommand keyCommandWithInput:names modifierFlags:0 action:@selector(keyInput:)]];
+    }
+  }
+  
+  return keys;
+}
+
+- (void)keyInput:(UIKeyCommand *)sender {
+  NSString *selected = sender.input;
+  [keyEvent sendKeyEvent:selected];
+}
+
 @end

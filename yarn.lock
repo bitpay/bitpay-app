@@ -13388,6 +13388,11 @@ react-native-keyboard-aware-scroll-view@0.9.5:
     prop-types "^15.6.2"
     react-native-iphone-x-helper "^1.0.3"
 
+react-native-keyevent@0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/react-native-keyevent/-/react-native-keyevent-0.3.1.tgz#7dbe8ed7044e4f4d1ef8e11f577cd1925039729d"
+  integrity sha512-7Ev7RXh3cAwZ4Oap80xs30eMUBAmJf7bKuemBPXsdKnekRfZfrblzRqzl43WsUh8lk0Bf9XOfSKkwIIL/2UFYw==
+
 react-native-level-fs@3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/react-native-level-fs/-/react-native-level-fs-3.0.1.tgz#f3054614c2bc1a379dcb3d3ee51b6a1b66123283"
