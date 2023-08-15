@@ -123,7 +123,7 @@ export const BillOption = styled.View<{isLast?: boolean}>`
   width: 100%;
   padding: 24px 0;
   border-bottom-width: 1px;
-  border-bottom-color: ${({theme}) => theme.dark ? SlateDark : Slate30 };
+  border-bottom-color: ${({theme}) => (theme.dark ? SlateDark : Slate30)};
   margin-top: -30px;
   ${({isLast}) =>
     isLast

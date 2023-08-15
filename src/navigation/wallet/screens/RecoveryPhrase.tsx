@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -17,7 +17,7 @@ import {
 } from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
 import {Air, BitPay, ProgressBlue} from '../../../styles/colors';
-import Carousel from 'react-native-snap-carousel';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {Platform, TouchableOpacity} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -30,6 +30,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import Back from '../../../components/back/Back';
+import throttle from 'lodash.throttle';
 
 type RecoveryPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -93,7 +94,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const {words, context, key} = params;
 
   useAndroidBackHandler(() => true);
-  const ref = useRef<Carousel<string>>(null);
+  const ref = useRef<ICarouselInstance>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   useLayoutEffect(() => {
@@ -105,10 +106,10 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
           style={{marginLeft: Platform.OS === 'android' ? 10 : 0}}
           activeOpacity={ActiveOpacity}
           onPress={() => {
-            if (ref.current?.currentIndex === 0) {
+            if (ref.current?.getCurrentIndex() === 0) {
               navigation.goBack();
             } else {
-              ref.current?.snapToPrev();
+              ref.current?.prev();
             }
           }}>
           <Back opacity={1} />
@@ -165,9 +166,17 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
         params: {...params, walletTermsAccepted},
       });
     } else {
-      ref.current?.snapToNext();
+      ref.current?.next();
     }
   };
+
+  const throttleOnActiveSlideChange = useMemo(
+    () =>
+      throttle((index: number) => {
+        setActiveSlideIndex(Math.round(index));
+      }, 300),
+    [],
+  );
 
   return (
     <RecoveryPhraseContainer accessibilityLabel="recovery-phrase-view">
@@ -190,11 +199,27 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
           </TextAlign>
         </DirectionsContainer>
         <Carousel
+          loop={false}
           vertical={false}
-          layout={'stack'}
-          layoutCardOffset={words.length}
-          useExperimentalSnap={true}
+          mode={'horizontal-stack'}
+          modeConfig={{
+            snapDirection: 'left',
+            stackInterval: 25,
+            scaleInterval: 0.08,
+            showLength: 3,
+          }}
+          width={Math.round(WIDTH)}
+          height={Math.round(WIDTH) / 2}
+          autoPlay={false}
           data={words}
+          ref={ref}
+          scrollAnimationDuration={1000}
+          enabled={false}
+          onProgressChange={(_, index) => {
+            if (Math.round(index) !== activeSlideIndex) {
+              throttleOnActiveSlideChange(index);
+            }
+          }}
           renderItem={({item: word}: {item: string}) => {
             return (
               <WordContainer>
@@ -202,15 +227,6 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
               </WordContainer>
             );
           }}
-          ref={ref}
-          sliderWidth={WIDTH}
-          itemWidth={Math.round(WIDTH)}
-          onScrollIndexChanged={(index: number) => {
-            setActiveSlideIndex(index);
-          }}
-          scrollEnabled={false}
-          // @ts-ignore
-          disableIntervalMomentum={true}
         />
         <CountTracker>
           <CountText>
