@@ -170,8 +170,11 @@ const getStore = () => {
         onError: err => {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
-          LogActions.persistLog(
-            LogActions.error(`Encrypt transform failed - ${errStr}`),
+
+          store.dispatch(
+            LogActions.persistLog(
+              LogActions.error(`Encrypt transform failed - ${errStr}`),
+            ),
           );
         },
       }),

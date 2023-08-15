@@ -14,7 +14,7 @@ import Button from '../../../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../../store/log';
 import {Black, Feather, LightBlack, White} from '../../../../../styles/colors';
-import {useAppSelector} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../../constants/config';
 
 const HeaderTitle = styled(Setting)`
@@ -30,6 +30,7 @@ const storagePath =
 
 const StorageUsage: React.VFC = () => {
   const {t} = useTranslation();
+  const dispatch = useAppDispatch();
 
   const [walletsCount, setWalletsCount] = useState<number>(0);
   const [giftCount, setGiftCount] = useState<number>(0);
@@ -129,9 +130,9 @@ const StorageUsage: React.VFC = () => {
       setContactStorage(formatBytes(_contactStorageSize));
     } catch (err) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      LogActions.error('[StorageUsage] Error ', errStr);
+      dispatch(LogActions.error('[StorageUsage] Error ', errStr));
     }
-  }, []);
+  }, [dispatch]);
 
   return (
     <SettingsContainer>
