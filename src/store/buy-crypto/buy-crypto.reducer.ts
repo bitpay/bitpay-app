@@ -1,4 +1,5 @@
 import {
+  BanxaPaymentData,
   MoonpayPaymentData,
   RampPaymentData,
   SardinePaymentData,
@@ -13,6 +14,7 @@ export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
   [];
 
 export interface BuyCryptoState {
+  banxa: {[key in string]: BanxaPaymentData};
   moonpay: {[key in string]: MoonpayPaymentData};
   ramp: {[key in string]: RampPaymentData};
   sardine: {[key in string]: SardinePaymentData};
@@ -21,6 +23,7 @@ export interface BuyCryptoState {
 }
 
 const initialState: BuyCryptoState = {
+  banxa: {},
   moonpay: {},
   ramp: {},
   sardine: {},
@@ -33,6 +36,112 @@ export const buyCryptoReducer = (
   action: BuyCryptoActionType,
 ): BuyCryptoState => {
   switch (action.type) {
+    case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_BANXA:
+      const {banxaPaymentData} = action.payload;
+      return {
+        ...state,
+        banxa: {
+          ...state.banxa,
+          [banxaPaymentData.order_id]: banxaPaymentData,
+        },
+      };
+
+    case BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_BANXA:
+      const {banxaIncomingData} = action.payload;
+
+      if (
+        banxaIncomingData.banxaOrderId &&
+        state.banxa[banxaIncomingData.banxaOrderId]
+      ) {
+        state.banxa[banxaIncomingData.banxaOrderId] = {
+          ...state.banxa[banxaIncomingData.banxaOrderId],
+          status:
+            banxaIncomingData.status ??
+            state.banxa[banxaIncomingData.banxaOrderId].status,
+          crypto_amount:
+            banxaIncomingData.cryptoAmount ??
+            state.banxa[banxaIncomingData.banxaOrderId].crypto_amount,
+          fiat_total_amount:
+            banxaIncomingData.fiatTotalAmount ??
+            state.banxa[banxaIncomingData.banxaOrderId].fiat_total_amount,
+          fiat_base_amount:
+            banxaIncomingData.fiatBaseAmount ??
+            state.banxa[banxaIncomingData.banxaOrderId].fiat_base_amount,
+          coin:
+            banxaIncomingData.coin ??
+            state.banxa[banxaIncomingData.banxaOrderId].coin,
+          chain:
+            banxaIncomingData.chain ??
+            state.banxa[banxaIncomingData.banxaOrderId].chain,
+          fiat_total_amount_currency:
+            banxaIncomingData.fiatTotalAmountCurrency ??
+            state.banxa[banxaIncomingData.banxaOrderId]
+              .fiat_total_amount_currency,
+          ref:
+            banxaIncomingData.ref ??
+            state.banxa[banxaIncomingData.banxaOrderId].ref,
+          transaction_id:
+            banxaIncomingData.transactionId ??
+            state.banxa[banxaIncomingData.banxaOrderId].transaction_id,
+        };
+        // if (banxaIncomingData.status) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].status =
+        //     banxaIncomingData.status;
+        // }
+        // if (banxaIncomingData.cryptoAmount) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].crypto_amount =
+        //     banxaIncomingData.cryptoAmount;
+        // }
+        // if (banxaIncomingData.fiatTotalAmount) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].fiat_total_amount =
+        //     banxaIncomingData.fiatTotalAmount;
+        // }
+        // if (banxaIncomingData.fiatBaseAmount) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].fiat_base_amount =
+        //     banxaIncomingData.fiatBaseAmount;
+        // }
+        // if (banxaIncomingData.coin) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].coin =
+        //     banxaIncomingData.coin;
+        // }
+        // if (banxaIncomingData.chain) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].chain =
+        //     banxaIncomingData.chain;
+        // }
+        // if (banxaIncomingData.fiatTotalAmountCurrency) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].fiat_total_amount_currency =
+        //     banxaIncomingData.fiatTotalAmountCurrency;
+        // }
+        // if (banxaIncomingData.ref) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].ref =
+        //     banxaIncomingData.ref;
+        // }
+        // if (banxaIncomingData.transactionId) {
+        //   state.banxa[banxaIncomingData.banxaOrderId].transaction_id =
+        //     banxaIncomingData.transactionId;
+        // }
+        return {
+          ...state,
+          banxa: {
+            ...state.banxa,
+            [banxaIncomingData.banxaOrderId]:
+              state.banxa[banxaIncomingData.banxaOrderId],
+          },
+        };
+      } else {
+        return state;
+      }
+
+    case BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_BANXA:
+      const {banxaOrderId} = action.payload;
+      const banxaPaymentRequestsList = {...state.banxa};
+      delete banxaPaymentRequestsList[banxaOrderId];
+
+      return {
+        ...state,
+        banxa: {...banxaPaymentRequestsList},
+      };
+
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_MOONPAY:
       const {moonpayPaymentData} = action.payload;
       return {
