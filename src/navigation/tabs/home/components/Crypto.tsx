@@ -376,12 +376,12 @@ const Crypto = () => {
       {homeCarouselLayoutType === 'carousel' ? (
         <CarouselContainer style={{marginBottom: 22}}>
           <Carousel
-            loop
+            loop={false}
             autoFillData={false}
             vertical={false}
             style={{width: WIDTH}}
             width={190}
-            height={190 / 2}
+            height={220}
             autoPlay={false}
             data={cardsList.list}
             scrollAnimationDuration={0}
