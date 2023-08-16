@@ -228,6 +228,7 @@ const Pin = gestureHandlerRootHOC(() => {
     };
     onCellPress();
   }, [
+    pin,
     setCurrentPin,
     setMessage,
     setFirstPinEntered,
