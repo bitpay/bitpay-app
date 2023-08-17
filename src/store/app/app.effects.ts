@@ -20,6 +20,7 @@ import {
   RESULTS,
 } from 'react-native-permissions';
 import uuid from 'react-native-uuid';
+import {store} from '../../..';
 import {AppActions} from '.';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
@@ -1203,13 +1204,17 @@ export const isVersionUpdated = (
   };
 
   if (!verifyTagFormat(currentVersion)) {
-    LogActions.error(
-      'Cannot verify the format of version tag: ' + currentVersion,
+    store.dispatch(
+      LogActions.error(
+        'Cannot verify the format of version tag: ' + currentVersion,
+      ),
     );
   }
   if (!verifyTagFormat(savedVersion)) {
-    LogActions.error(
-      'Cannot verify the format of the saved version tag: ' + savedVersion,
+    store.dispatch(
+      LogActions.error(
+        'Cannot verify the format of the saved version tag: ' + savedVersion,
+      ),
     );
   }
 

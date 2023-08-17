@@ -285,8 +285,10 @@ export default () => {
 
   const recoverKeys = ({backupKeys, keys}: {backupKeys: Keys; keys: Keys}) => {
     if (Object.keys(backupKeys).length === 0) {
-      LogActions.persistLog(
-        LogActions.warn('No backup available for recovering keys.'),
+      dispatch(
+        LogActions.persistLog(
+          LogActions.warn('No backup available for recovering keys.'),
+        ),
       );
       return;
     }
@@ -516,9 +518,11 @@ export default () => {
   // Silent Push Notifications
   useEffect(() => {
     function onMessageReceived(response: SilentPushEvent) {
-      LogActions.debug(
-        '[Root] Silent Push Notification',
-        JSON.stringify(response),
+      dispatch(
+        LogActions.debug(
+          '[Root] Silent Push Notification',
+          JSON.stringify(response),
+        ),
       );
       dispatch(handleBwsEvent(response));
     }
@@ -585,7 +589,7 @@ export default () => {
               urlEventHandler({url: url || brazeUrl});
             }
 
-            LogActions.info('QuickActions Initialized');
+            dispatch(LogActions.info('QuickActions Initialized'));
             QuickActions.popInitialAction()
               .then(item =>
                 dispatch(shortcutListener(item, navigationRef as any)),
