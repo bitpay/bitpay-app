@@ -3,7 +3,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, View} from 'react-native';
+import {Keyboard, View, TouchableWithoutFeedback} from 'react-native';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
@@ -17,7 +17,6 @@ import RemoteImage from '../../components/RemoteImage';
 import {GiftCardStackParamList} from '../GiftCardStack';
 
 import {BaseText} from '../../../../../components/styled/Text';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {AppActions} from '../../../../../store/app';
 import PhoneCountryModal from '../../components/PhoneCountryModal';
 import {

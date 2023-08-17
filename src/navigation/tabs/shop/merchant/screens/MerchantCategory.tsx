@@ -1,8 +1,7 @@
 import React, {useLayoutEffect} from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, TouchableWithoutFeedback} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {
   MerchantScreens,

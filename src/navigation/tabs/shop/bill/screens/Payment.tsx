@@ -151,11 +151,11 @@ const Payment = ({
       </HeroSection>
       <SectionContainer style={{marginTop: 20, flexGrow: 1}}>
         <LineItem>
-          <LineItemLabel>Sent to</LineItemLabel>
+          <LineItemLabel>{t('Sent to')}</LineItemLabel>
           <BillAccountPill account={account} />
         </LineItem>
         <LineItem>
-          <LineItemLabel>Convenience fee</LineItemLabel>
+          <LineItemLabel>{t('Convenience fee')}</LineItemLabel>
           <Paragraph>
             {payment.convenienceFee
               ? formatFiatAmount(payment.convenienceFee, 'USD')
@@ -166,6 +166,15 @@ const Payment = ({
           <LineItemLabel>Status</LineItemLabel>
           <BillStatus account={account} payment={payment} />
         </LineItem>
+        {payment.estimatedCompletionDate ? (
+          <LineItem>
+            <LineItemLabel>{t('Estimated Completion Date')}</LineItemLabel>
+            <Paragraph>
+              {moment(payment.estimatedCompletionDate).format('MM/DD/YY')}
+            </Paragraph>
+          </LineItem>
+        ) : null}
+
         {!payment.status ||
         ['pending', 'processing'].includes(payment.status) ? (
           <AlertContainer>

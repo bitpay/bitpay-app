@@ -1,5 +1,5 @@
 import React from 'react';
-import {Image, View} from 'react-native';
+import {Image, View, TouchableOpacity} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
 import {H6, Paragraph} from '../../../../../components/styled/Text';
@@ -21,7 +21,6 @@ import {
 } from '../../../../../store/shop/shop.models';
 import ChevronDownSvg from '../../../../../../assets/img/bills/chevron-down.svg';
 import ChevronUpSvg from '../../../../../../assets/img/bills/chevron-up.svg';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {AppActions} from '../../../../../store/app';

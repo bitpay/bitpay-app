@@ -2,7 +2,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import {Linking, View, TouchableWithoutFeedback} from 'react-native';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
 import {H5, Paragraph} from '../../../../components/styled/Text';
@@ -15,7 +15,6 @@ import {
 } from './styled/ShopTabComponents';
 import {LinkBlue, Slate30, SlateDark} from '../../../../styles/colors';
 import CautionIconSvg from '../../../../../assets/img/bills/caution.svg';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {BillList} from '../bill/components/BillList';
 import {
   useAppDispatch,
@@ -34,6 +33,8 @@ import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../../wallet/components/ErrorMessages';
 import {joinWaitlist} from '../../../../store/app/app.effects';
+import UserInfo from './UserInfo';
+import {BitPayIdEffects} from '../../../../store/bitpay-id';
 
 const Subtitle = styled(Paragraph)`
   font-size: 14px;
@@ -67,6 +68,10 @@ export const Bills = () => {
     ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
   ) as BillPayAccount[];
 
+  const apiToken = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.apiToken[APP_NETWORK],
+  );
+
   const isJoinedWaitlist = useAppSelector(({SHOP}) => SHOP.isJoinedWaitlist);
 
   const [connected, setConnected] = useState(!!accounts.length);
@@ -77,7 +82,8 @@ export const Bills = () => {
   const isVerified = !!(user && user.country);
 
   const [available, setAvailable] = useState(user && user.country === 'US');
-  const [buttonState, setButtonState] = useState<ButtonState>();
+  const [waitlistButtonState, setWaitlistButtonState] = useState<ButtonState>();
+  const [connectButtonState, setConnectButtonState] = useState<ButtonState>();
 
   useEffect(() => {
     const billsConnected = !!accounts.length && !!user?.methodEntityId;
@@ -99,15 +105,15 @@ export const Bills = () => {
 
   const onSubmit = async () => {
     try {
-      setButtonState('loading');
+      setWaitlistButtonState('loading');
       user &&
         (await dispatch(
           joinWaitlist(user.email, 'BillPay Waitlist', 'bill-pay'),
         ));
       await sleep(500);
-      setButtonState('success');
+      setWaitlistButtonState('success');
     } catch (err) {
-      setButtonState('failed');
+      setWaitlistButtonState('failed');
       logger.warn('Error joining waitlist: ' + BWCErrorMessage(err));
       await sleep(500);
       await dispatch(
@@ -119,8 +125,49 @@ export const Bills = () => {
         ),
       );
       await sleep(500);
-      setButtonState(undefined);
+      setWaitlistButtonState(undefined);
     }
+  };
+
+  const verifyUserInfo = async () => {
+    setConnectButtonState('loading');
+    await dispatch(
+      BitPayIdEffects.startFetchBasicInfo(apiToken, {
+        includeExternalData: true,
+      }),
+    );
+    setConnectButtonState(undefined);
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title: t('Confirm Your Info'),
+        message: '',
+        message2: <UserInfo />,
+        enableBackdropDismiss: true,
+        onBackdropDismiss: () => {},
+        actions: [
+          {
+            text: t('THIS IS CORRECT'),
+            action: () => {
+              navigation.navigate('Bill', {
+                screen: BillScreens.CONNECT_BILLS,
+                params: {},
+              });
+              dispatch(Analytics.track('Bill Pay — Confirmed User Info'));
+            },
+            primary: true,
+          },
+          {
+            text: t('UPDATE INFO'),
+            action: () => {
+              Linking.openURL('https://bitpay.com/request-help/wizard');
+              dispatch(Analytics.track('Bill Pay — Clicked Update User Info'));
+            },
+          },
+        ],
+      }),
+    );
+    dispatch(Analytics.track('Bill Pay — Clicked Connect My Bills'));
   };
 
   return (
@@ -165,12 +212,10 @@ export const Bills = () => {
                 <>
                   <BillPitch />
                   <Button
+                    state={connectButtonState}
                     height={50}
-                    onPress={() => {
-                      navigation.navigate('Bill', {
-                        screen: BillScreens.CONNECT_BILLS,
-                        params: {},
-                      });
+                    onPress={async () => {
+                      verifyUserInfo();
                       dispatch(
                         Analytics.track('Bill Pay — Clicked Connect My Bills'),
                       );
@@ -229,13 +274,11 @@ export const Bills = () => {
                   </Button> */}
                   <Button
                     style={{marginTop: 20, marginBottom: 10}}
+                    state={connectButtonState}
                     height={50}
                     buttonStyle="secondary"
                     onPress={() => {
-                      navigation.navigate('Bill', {
-                        screen: BillScreens.CONNECT_BILLS,
-                        params: {accounts},
-                      });
+                      verifyUserInfo();
                       dispatch(
                         Analytics.track(
                           'Bill Pay — Clicked Connect More Bills',
@@ -299,7 +342,7 @@ export const Bills = () => {
                   </Paragraph>
                 ) : (
                   <Button
-                    state={buttonState}
+                    state={waitlistButtonState}
                     style={{width: WIDTH - 32, marginTop: 24}}
                     height={50}
                     buttonStyle="secondary"

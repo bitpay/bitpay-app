@@ -3,13 +3,12 @@ import styled from 'styled-components/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillStackParamList} from '../BillStack';
-import {ScrollView} from 'react-native';
+import {ScrollView, TouchableOpacity} from 'react-native';
 import {LightBlack, LinkBlue, Slate10} from '../../../../../styles/colors';
 import {BaseText} from '../../../../../components/styled/Text';
 import {horizontalPadding} from '../../components/styled/ShopTabComponents';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {AppActions} from '../../../../../store/app';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   ActiveOpacity,
   HEIGHT,
@@ -18,6 +17,7 @@ import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 import {ShopEffects} from '../../../../../store/shop';
 import {useFocusEffect} from '@react-navigation/native';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {formatUSPhone} from '../utils';
 
 const AccountBox = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : Slate10)};
@@ -46,16 +46,6 @@ const UnlinkButton = styled(BaseText)`
   font-size: 16px;
   color: ${LinkBlue};
 `;
-
-const formatUSPhone = (unformattedPhone: string) => {
-  if (!unformattedPhone.startsWith('+1') || unformattedPhone.length !== 12) {
-    return unformattedPhone;
-  }
-  const areaCode = unformattedPhone.substring(2, 5);
-  const nextThree = unformattedPhone.substring(5, 8);
-  const lastFour = unformattedPhone.substring(8, 12);
-  return `(${areaCode}) ${nextThree}-${lastFour}`;
-};
 
 const BillSettings = ({
   navigation,

@@ -1,5 +1,10 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {Platform, ScrollView, View} from 'react-native';
+import {
+  Platform,
+  ScrollView,
+  View,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
@@ -42,7 +47,6 @@ import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {ShopActions} from '../../../../../store/shop';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {useAppSelector} from '../../../../../utils/hooks';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 

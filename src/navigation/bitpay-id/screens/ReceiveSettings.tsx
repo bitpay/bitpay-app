@@ -19,7 +19,7 @@ import {
 } from '../../../styles/colors';
 import AddSvg from '../../../../assets/img/add.svg';
 import AddWhiteSvg from '../../../../assets/img/add-white.svg';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from 'react-native';
 import Button from '../../../components/button/Button';
 import ChevronRight from '../components/ChevronRight';
 import SendToPill from '../../wallet/components/SendToPill';

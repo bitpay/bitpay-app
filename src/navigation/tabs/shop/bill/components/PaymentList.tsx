@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import NoPaymentsSvg from '../../../../../../assets/img/bills/no-payments.svg';
@@ -11,7 +10,7 @@ import {
 } from '../../../../../store/shop/shop.models';
 import {Paragraph} from '../../../../../components/styled/Text';
 import {LightBlack, Slate30} from '../../../../../styles/colors';
-import {FlatList} from 'react-native';
+import {FlatList, TouchableOpacity} from 'react-native';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {ShopEffects} from '../../../../../store/shop';
