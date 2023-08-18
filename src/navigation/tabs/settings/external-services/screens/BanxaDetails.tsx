@@ -46,6 +46,7 @@ import {
   banxaEnv,
   banxaGetStatusDetails,
   BanxaStatus,
+  banxaUrl,
 } from '../../../../services/buy-crypto/utils/banxa-utils';
 import {banxaGetOrderDetails} from '../../../../../store/buy-crypto/effects/banxa/banxa';
 import {sleep} from '../../../../../utils/helper-methods';
@@ -376,7 +377,7 @@ const BanxaDetails: React.FC = () => {
                     haptic('impactLight');
                     dispatch(
                       openUrlWithInAppBrowser(
-                        'https://crypto.banxa.ai/support',
+                        'https://support.banxa.com/en/support/solutions/',
                       ),
                     );
                   }}>
@@ -403,16 +404,32 @@ const BanxaDetails: React.FC = () => {
             <LabelTipText>
               {t(
                 'If you have successfully completed the entire payment process, remember that receiving crypto may take a few hours.',
-              )}
+              ) +
+                ' ' +
+                t(
+                  'Orders through bank transfers may take one or more business days.',
+                )}
             </LabelTipText>
             <TouchableOpacity
               onPress={() => {
                 haptic('impactLight');
                 dispatch(
                   openUrlWithInAppBrowser(
-                    `https://bitpay.${
-                      __DEV__ ? 'banxa-sandbox' : 'banxa'
-                    }.com/status/${paymentRequest.order_id}`,
+                    'https://support.banxa.com/en/support/solutions/articles/44002216503-how-long-will-my-order-take-',
+                  ),
+                );
+              }}>
+              <Link style={{fontSize: 12, marginLeft: 2, top: 2}}>
+                {t('Read more')}
+              </Link>
+            </TouchableOpacity>
+            <Br />
+            <TouchableOpacity
+              onPress={() => {
+                haptic('impactLight');
+                dispatch(
+                  openUrlWithInAppBrowser(
+                    `${banxaUrl}/status/${paymentRequest.order_id}`,
                   ),
                 );
               }}>
@@ -468,7 +485,7 @@ const BanxaDetails: React.FC = () => {
                 copyText(paymentRequest.ref?.toString()!);
                 setCopiedReferenceId(true);
               }}>
-              <RowLabel>{t('Order Reference')}</RowLabel>
+              <RowLabel>{t('Order Number')}</RowLabel>
               <CopiedContainer>
                 <ColumnData style={{maxWidth: '90%'}}>
                   {paymentRequest.ref}

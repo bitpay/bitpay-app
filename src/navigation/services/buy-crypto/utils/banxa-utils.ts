@@ -8,6 +8,10 @@ import {PaymentMethod} from '../constants/BuyCryptoConstants';
 
 export const banxaEnv = __DEV__ ? 'sandbox' : 'production';
 
+export const banxaUrl = __DEV__
+  ? 'https://bitpay.banxa-sandbox.com'
+  : 'https://bitpay.banxa.com';
+
 export const banxaSupportedFiatCurrencies = [
   'AED',
   'ARS',

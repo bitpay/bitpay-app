@@ -1417,7 +1417,7 @@ const BuyCryptoOffers: React.FC = () => {
       blockchain: getBanxaChainFormat(selectedWallet.chain),
       return_url_on_success: `${APP_DEEPLINK_PREFIX}banxa`,
       return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled`,
-      return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFail`,
+      return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed`,
       // meta_data: 'testmetadata', // TODO: this property is not working
       // email?: string,
       // mobile?: string,
@@ -2116,7 +2116,10 @@ const BuyCryptoOffers: React.FC = () => {
                     </OfferDataInfoTotal>
                   </OfferExpandibleItem>
                   {offer.key == 'banxa' ? (
-                    <BanxaTerms quoteData={offer.quoteData} />
+                    <BanxaTerms
+                      paymentMethod={paymentMethod}
+                      country={country}
+                    />
                   ) : null}
                   {offer.key == 'moonpay' ? (
                     <MoonpayTerms

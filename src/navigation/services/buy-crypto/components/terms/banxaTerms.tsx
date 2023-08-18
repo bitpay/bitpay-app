@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from 'react-native';
 import {
@@ -9,48 +9,58 @@ import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
+import {PaymentMethod} from '../../constants/BuyCryptoConstants';
 
-// TODO: review this terms
 const BanxaTerms: React.FC<{
-  quoteData: any;
-}> = ({quoteData}) => {
+  paymentMethod: PaymentMethod;
+  country?: string;
+}> = ({paymentMethod, country = 'US'}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const [networkFee, setNetworkFee] = useState<number>();
-  const [transactionFee, setTransactionFee] = useState<number>();
-
-  useEffect(() => {
-    if (quoteData?.total) {
-      if (quoteData.networkFee) {
-        setNetworkFee(
-          Number(((quoteData.networkFee * 100) / quoteData.total).toFixed(2)),
-        );
-      }
-      if (quoteData.transactionFee) {
-        setTransactionFee(
-          Number(
-            ((quoteData.transactionFee * 100) / quoteData.total).toFixed(2),
-          ),
-        );
-      }
-    }
-  }, [quoteData]);
 
   return (
     <ExchangeTermsContainer>
       <ExchangeTermsText>
         {t('What service fees am I paying?')}
       </ExchangeTermsText>
-      <ExchangeTermsText>
-        {t('BanxaTermsFeeInfo', {
-          networkFee,
-          transactionFee,
-        })}
-      </ExchangeTermsText>
+      {['applePay', 'creditCard', 'debitCard', 'other'].includes(
+        paymentMethod.method,
+      ) ? (
+        <ExchangeTermsText>
+          {t(
+            'For debit/credit card or Apple Pay payments, fees are 1.99% of the transaction.',
+          )}
+        </ExchangeTermsText>
+      ) : null}
+      {['sepaBankTransfer', 'other'].includes(paymentMethod.method) ? (
+        <ExchangeTermsText>
+          {t(
+            'Most bank transfers do not charge a fee. But there may be exceptions for particular cases.',
+          )}
+        </ExchangeTermsText>
+      ) : null}
+      {['other'].includes(paymentMethod.method) ? (
+        <ExchangeTermsText>
+          {t('For payments through PIX 3.00% of the transaction.')}
+        </ExchangeTermsText>
+      ) : null}
       <ExchangeTermsText>
         {t(
-          'The network fee is paid to crypto miners to ensure that the transaction is processed on the crypto network.',
+          'Banxa also charges a service fee, which is included in the unit price for the transaction, based the cost of each payment method.',
         )}
+        <TouchableOpacity
+          onPress={() => {
+            haptic('impactLight');
+            dispatch(
+              openUrlWithInAppBrowser(
+                'https://support.banxa.com/en/support/solutions/articles/44002465167-how-does-banxa-set-the-price-of-cryptocurrency-',
+              ),
+            );
+          }}>
+          <Link style={{fontSize: 12, marginLeft: 2, top: 2}}>
+            {t('Read more')}
+          </Link>
+        </TouchableOpacity>
       </ExchangeTermsText>
       <ExchangeTermsText style={{marginTop: 4}}>
         {t(
@@ -60,10 +70,12 @@ const BanxaTerms: React.FC<{
           onPress={() => {
             haptic('impactLight');
             dispatch(
-              openUrlWithInAppBrowser('https://crypto.sardine.ai/terms'),
+              openUrlWithInAppBrowser(
+                'https://banxa.com/wp-content/uploads/2023/06/Customer-Terms-and-Conditions-19-June-2023.pdf',
+              ),
             );
           }}>
-          <Link style={{fontSize: 12, top: 2}}>{t('Terms of service')}</Link>
+          <Link style={{fontSize: 12, top: 2}}>{t('Terms of use')}</Link>
         </TouchableOpacity>
       </ExchangeTermsText>
     </ExchangeTermsContainer>

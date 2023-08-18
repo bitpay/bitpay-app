@@ -1046,6 +1046,17 @@ const handleBanxaUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
     dispatch(LogActions.info('Incoming-data (redirect): Banxa URL: ' + data));
+    if (
+      data.indexOf('banxaCancelled') >= 0 ||
+      data.indexOf('banxaFailed') >= 0
+    ) {
+      return;
+    }
+
+    if (data === 'banxa') {
+      return;
+    }
+
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
 
     const banxaOrderId = getParameterByName('orderId', res);

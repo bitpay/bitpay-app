@@ -164,7 +164,9 @@ const BanxaSettings: React.FC = () => {
           onPress={() => {
             haptic('impactLight');
             dispatch(
-              openUrlWithInAppBrowser('https://crypto.banxa.ai/support'),
+              openUrlWithInAppBrowser(
+                'https://support.banxa.com/en/support/solutions/',
+              ),
             );
           }}>
           <Link>{t('Contact the Banxa support team.')}</Link>
