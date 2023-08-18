@@ -20,7 +20,7 @@ import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
 import {
   LightBlack,
   Midnight,
-  NeutralSlate,
+  Slate30,
   SlateDark,
   White,
 } from '../../../../styles/colors';
@@ -31,7 +31,6 @@ import {
   convertToFiat,
   formatFiatAmount,
   getErrorString,
-  sleep,
 } from '../../../../utils/helper-methods';
 import {Key} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
@@ -40,7 +39,7 @@ import {
   CheckIfLegacyBCH,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {TouchableOpacity, View} from 'react-native';
+import {AppState, AppStateStatus, TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
@@ -67,11 +66,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import {
-  BchLegacyAddressInfo,
-  CustomErrorMessage,
-  Mismatch,
-} from '../../components/ErrorMessages';
+import {BchLegacyAddressInfo, Mismatch} from '../../components/ErrorMessages';
 import {
   CoinNetwork,
   createWalletAddress,
@@ -265,7 +260,7 @@ const SendTo = () => {
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const theme = useTheme();
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? LightBlack : Slate30;
   const [searchInput, setSearchInput] = useState('');
   const [clipboardData, setClipboardData] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
@@ -414,6 +409,50 @@ const SendTo = () => {
       return false;
     };
 
+  const validateAddress = async (text: string): Promise<boolean> => {
+    return new Promise(async resolve => {
+      const data = ValidateURI(text);
+      if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
+        try {
+          const invoiceUrl = GetPayProUrl(text);
+          dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
+
+          const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
+          dispatch(dismissOnGoingProcessModal());
+          const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
+            GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
+            chain,
+          );
+          const selected = payProOptions.paymentOptions.find(
+            (option: PayProPaymentOption) =>
+              option.selected && invoiceCurrency === option.currency,
+          );
+          if (selected) {
+            const isValid = dispatch(checkCoinAndNetwork(selected, true));
+            if (isValid) {
+              return resolve(true);
+            }
+          } else {
+            return resolve(false);
+          }
+        } catch (err) {
+          const formattedErrMsg = BWCErrorMessage(err);
+          dispatch(dismissOnGoingProcessModal());
+          logger.warn(formattedErrMsg);
+          return resolve(false);
+        }
+      } else if (ValidDataTypes.includes(data?.type)) {
+        if (dispatch(checkCoinAndNetwork(text))) {
+          return resolve(true);
+        } else {
+          return resolve(false);
+        }
+      } else {
+        return resolve(false);
+      }
+    });
+  };
+
   const validateAndNavigateToConfirm = async (
     text: string,
     opts: {
@@ -421,74 +460,23 @@ const SendTo = () => {
       name?: string;
       email?: string;
       destinationTag?: number;
+      searching?: boolean;
     } = {},
   ) => {
-    const {context, name, email, destinationTag} = opts;
-    if (isEmailAddress(text.trim())) {
-      setSearchIsEmailAddress(true);
-      return;
-    }
-    setSearchIsEmailAddress(false);
-    const data = ValidateURI(text);
-    if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
-      try {
-        const invoiceUrl = GetPayProUrl(text);
-        dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
-
-        const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
-        const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
-          GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
-          chain,
-        );
-        const selected = payProOptions.paymentOptions.find(
-          (option: PayProPaymentOption) =>
-            option.selected && invoiceCurrency === option.currency,
-        );
-        if (selected) {
-          const isValid = dispatch(checkCoinAndNetwork(selected, true));
-          if (isValid) {
-            await sleep(0);
-            dispatch(
-              incomingData(text, {
-                wallet,
-                context,
-                name,
-                email,
-                destinationTag,
-              }),
-            );
-          }
-        } else {
-          dispatch(
-            showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
-          );
-        }
-      } catch (err) {
-        const formattedErrMsg = BWCErrorMessage(err);
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
-        logger.warn(formattedErrMsg);
-        dispatch(
-          showBottomNotificationModal(
-            CustomErrorMessage({errMsg: formattedErrMsg, title: 'Error'}),
-          ),
-        );
-      }
-    } else if (ValidDataTypes.includes(data?.type)) {
-      if (dispatch(checkCoinAndNetwork(text))) {
-        setSearchInput(text);
-        await sleep(0);
-        dispatch(
-          incomingData(text, {wallet, context, name, email, destinationTag}),
-        );
-      }
+    const {context, name, email, destinationTag, searching} = opts;
+    const isValid = await validateAddress(text);
+    if (isValid) {
+      clearClipboard();
+      await dispatch(
+        incomingData(text, {wallet, context, name, email, destinationTag}),
+      );
+    } else if (!searching) {
+      dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
     }
   };
 
   const onSearchInputChange = debounce((text: string) => {
-    validateAndNavigateToConfirm(text);
+    validateAndNavigateToConfirm(text, {searching: true});
   }, 300);
 
   const onSendToWallet = async (selectedWallet: KeyWallet) => {
@@ -537,20 +525,6 @@ const SendTo = () => {
   };
 
   useEffect(() => {
-    const getString = async () => {
-      const clipboardData = await Clipboard.getString();
-      setClipboardData(clipboardData);
-    };
-    getString();
-  }, []);
-
-  useEffect(() => {
-    return navigation.addListener('blur', () =>
-      setTimeout(() => setSearchInput(''), 300),
-    );
-  }, [navigation]);
-
-  useEffect(() => {
     const getReceivingAddresses = async () => {
       const email = searchInput.trim().toLowerCase();
       const searchPromise = dispatch(
@@ -577,6 +551,42 @@ const SendTo = () => {
     currencyAbbreviation,
     wallet.chain,
   ]);
+
+  const clearClipboard = () => {
+    Clipboard.setString('');
+    setClipboardData('');
+  };
+  const getString = async () => {
+    const _clipboardData = await Clipboard.getString();
+    if (_clipboardData) {
+      const isValid = await validateAddress(_clipboardData);
+      if (isValid) {
+        setClipboardData(_clipboardData);
+      }
+    }
+  };
+
+  useEffect(() => {
+    getString();
+    return navigation.addListener('blur', () =>
+      setTimeout(() => setSearchInput(''), 300),
+    );
+  }, [navigation]);
+
+  useEffect(() => {
+    function onAppStateChange(status: AppStateStatus) {
+      if (status === 'active') {
+        getString();
+      }
+    }
+
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+
+    return () => subscriptionAppStateChange.remove();
+  }, []);
 
   return (
     <SafeAreaView>
@@ -678,7 +688,6 @@ const SendTo = () => {
 
         {clipboardData ? (
           <PasteClipboardContainer
-            activeOpacity={0.75}
             onPress={() => {
               haptic('impactLight');
               setSearchInput(clipboardData);
