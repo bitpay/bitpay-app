@@ -62,6 +62,7 @@ import {
 } from '../../../../tabs/shop/gift-card/GiftCardStack';
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -244,7 +245,10 @@ const Confirm = () => {
     try {
       const {invoice: newInvoice, invoiceId} = await createGiftCardInvoice({
         clientId: selectedWallet.id,
-        transactionCurrency: selectedWallet.currencyAbbreviation.toUpperCase(),
+        transactionCurrency: getCurrencyCodeFromCoinAndChain(
+          selectedWallet.currencyAbbreviation.toUpperCase(),
+          selectedWallet.chain,
+        ),
       });
       const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;

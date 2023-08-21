@@ -56,6 +56,7 @@ import PaymentSent from '../../../components/PaymentSent';
 import {WalletScreens} from '../../../WalletStack';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../../../../tabs/shop/bill/utils';
+import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
 
 export interface BillConfirmParamList {
   amount: number;
@@ -253,7 +254,10 @@ const Confirm: React.FC<
         payments,
       } = await createBillPayInvoice({
         clientId: selectedWallet.id,
-        transactionCurrency: selectedWallet.currencyAbbreviation.toUpperCase(),
+        transactionCurrency: getCurrencyCodeFromCoinAndChain(
+          selectedWallet.currencyAbbreviation.toUpperCase(),
+          selectedWallet.chain,
+        ),
       });
       const {totalBillAmount, serviceFee} = payments.reduce(
         (totals, payment) => {
