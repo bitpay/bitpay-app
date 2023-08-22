@@ -108,7 +108,7 @@ const AddressBadge = styled.View`
 
 const DomainBadge = styled.View`
   position: absolute;
-  left: 5px;
+  left: 12px;
   top: 52%;
   z-index: 1;
 `;
@@ -479,7 +479,7 @@ const ContactsAdd = ({
       });
       return;
     }
-
+    
     if (addressValue && domainValue) {
       contact.address = addressValue;
       contact.domain = domainValue;
@@ -721,12 +721,15 @@ const ContactsAdd = ({
               <>
                 <BoxInput
                   style={{
-                    paddingLeft: validDomain && domainValue ? 30 : 12,
+                    paddingLeft: validDomain && domainValue ? 40 : 12,
+                    paddingRight: 45,
                   }}
                   placeholder={'Crypto address or domain'}
                   label={t('ADDRESS OR DOMAIN')}
                   onBlur={onBlur}
                   onChangeText={(newValue: string) => {
+                    setValidDomain(false);
+                    setDomainValue(undefined);
                     onChange(newValue);
                     processAddressOrDomain({address: newValue});
                   }}
@@ -781,7 +784,7 @@ const ContactsAdd = ({
                     label={t('DOMAIN')}
                     value={value?.domainName}
                     style={{
-                      paddingLeft: 30,
+                      paddingLeft: 40,
                     }}
                   />
                 )}
