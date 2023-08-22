@@ -959,6 +959,7 @@ export const publishAndSign =
               }),
             );
           });
+          dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         } catch (error) {
           return reject(error);
         }
