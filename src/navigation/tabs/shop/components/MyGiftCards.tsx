@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import {TouchableWithoutFeedback} from 'react-native';
 import styled from 'styled-components/native';
 import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
@@ -132,7 +132,7 @@ const MyGiftCards = ({
         autoPlay={false}
         data={slides}
         enabled={false}
-        renderItem={({item, index}: {item: GiftCard[]; index: number}) => (
+        renderItem={({item}: {item: GiftCard[]; index: number}) => (
           <>
             {item.length ? (
               <>

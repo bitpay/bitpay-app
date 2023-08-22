@@ -4,7 +4,7 @@ import {Network} from '.';
 
 export const STATIC_CONTENT_CARDS_ENABLED = true;
 export const APP_ANALYTICS_ENABLED = !__DEV__;
-export const METHOD_ENV = __DEV__ ? 'dev' : 'sandbox'; // TODO: change 'sandbox' to 'production' after internal testing
+export const METHOD_ENV = __DEV__ ? 'dev' : 'production';
 
 // GENERAL
 export const APP_NAME = 'bitpay';

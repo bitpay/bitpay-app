@@ -51,6 +51,8 @@ export interface User {
   incentiveLevelId?: string;
   methodEntityId?: string;
   phone?: string;
+  address?: string;
+  dateOfBirth?: string;
   userSettings: {
     acknowledgePrivacyNotice?: boolean;
     agreedCardholderAgreement?: boolean;

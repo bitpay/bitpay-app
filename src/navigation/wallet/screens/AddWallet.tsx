@@ -62,7 +62,7 @@ import {
 } from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
-import {FlatList, Keyboard, View} from 'react-native';
+import {FlatList, Keyboard, View, TouchableOpacity} from 'react-native';
 import {
   getProtocolName,
   keyExtractor,
@@ -90,7 +90,6 @@ import {
   BitpaySupportedCurrencies,
   SUPPORTED_EVM_COINS,
 } from '../../../constants/currencies';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
