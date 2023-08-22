@@ -413,6 +413,7 @@
   "User Agreement": "Acuerdo de usuario",
   "There are no Moonpay offers available, as the current purchase limits for this exchange must be between and": "There are no Moonpay offers available, as the current purchase limits for this exchange must be between and",
   "Can't get rates at this moment. Please try again later": "No se pueden obtener los tipos de cambio en este momento. Inténtelo de nuevo más tarde",
+  "Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).": "Banxa currently does not support operations with the selected combination crypto({{coin}})-fiat({{fiatCurrency}})-paymentMethod({{paymentMethod}}).",
   "Could not get crypto offer. Please try again later.": "No se pudo obtener la oferta de criptomoneda. Por favor inténtalo de nuevo más tarde.",
   "There are no Sardine offers available, as the current purchase limits for this exchange must be between and": "There are no Sardine offers available, as the current purchase limits for this exchange must be between and",
   "There are no Simplex offers available, as the current purchase limits for this exchange must be between and": "No hay ofertas disponibles en Simplex, ya que los límites de compra actuales para este intercambio deben estar entre {{min}} {{fiatCurrency}} y {{max}} {{fiatCurrency}}",

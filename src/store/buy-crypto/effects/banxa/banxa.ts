@@ -37,54 +37,6 @@ export const banxaGetPaymentMethods = async (
   }
 };
 
-export const banxaGetQuote = async (
-  requestData: BanxaGetQuoteRequestData,
-): Promise<BanxaQuoteData> => {
-  try {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const body = requestData;
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/banxa/quote',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    return Promise.reject(err);
-  }
-};
-
-export const banxaCreateOrder = async (
-  requestData: BanxaCreateOrderRequestData,
-): Promise<BanxaCreateOrderData> => {
-  try {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const body = requestData;
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/banxa/createOrder',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    return Promise.reject(err);
-  }
-};
-
 export const banxaGetOrderDetails = async (
   requestData: BanxaGetOrderDetailsRequestData,
 ): Promise<BanxaOrderDetailsData> => {

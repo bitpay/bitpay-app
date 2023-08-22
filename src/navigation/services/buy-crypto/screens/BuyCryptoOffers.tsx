@@ -64,6 +64,7 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME_UPPERCASE,
+  APP_NETWORK,
 } from '../../../../constants/config';
 import {
   BuyCryptoExchangeKey,
@@ -392,6 +393,7 @@ const BuyCryptoOffers: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
 
   BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
     if (offersDefault[exchange]) {
@@ -471,11 +473,18 @@ const BuyCryptoOffers: React.FC = () => {
         !banxaPaymentMethods?.data?.payment_methods ||
         banxaPaymentMethods.errors
       ) {
-        // TODO: review this
-        logger.debug(
-          `Banxa does not support operations with the selected crypto(${coin})-fiat(${offers.banxa.fiatCurrency})-paymentMethod(${paymentMethod.method}) combination. Hiding card`,
+        const msg = t(
+          'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
+          {
+            coin: coin.toUpperCase(),
+            fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
+            paymentMethod: paymentMethod.label,
+          },
         );
-        offers.banxa.showOffer = false;
+        const reason =
+          'banxaGetPaymentMethods Error: No banxaPaymentMethods data';
+        showBanxaError(msg, reason);
+        setFinishedBanxa(!finishedBanxa);
         return;
       }
 
@@ -485,10 +494,18 @@ const BuyCryptoOffers: React.FC = () => {
       );
 
       if (!banxaSelectedPaymentMethodData) {
-        logger.debug(
-          `Banxa does not support operations with the selected crypto(${coin})-fiat(${offers.banxa.fiatCurrency})-paymentMethod(${paymentMethod.method}) combination. Hiding card`,
+        const msg = t(
+          'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
+          {
+            coin: coin.toUpperCase(),
+            fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
+            paymentMethod: paymentMethod.label,
+          },
         );
-        offers.banxa.showOffer = false;
+        const reason =
+          'banxaGetPaymentMethods Error: No banxaSelectedPaymentMethodData';
+        showBanxaError(msg, reason);
+        setFinishedBanxa(!finishedBanxa);
         return;
       }
 
@@ -541,13 +558,12 @@ const BuyCryptoOffers: React.FC = () => {
         target: getBanxaCoinFormat(coin),
         source_amount: offers.banxa.fiatAmount,
         payment_method_id: offers.banxa.paymentMethodId,
-        account_reference: selectedWallet.id,
+        account_reference: user?.eid ?? selectedWallet.id,
         blockchain: getBanxaChainFormat(selectedWallet.chain),
       };
 
-      // selectedWallet
-      //   .banxaGetQuote(requestData)
-      banxaGetQuote(requestData)
+      selectedWallet
+        .banxaGetQuote(requestData)
         .then((quoteData: BanxaQuoteData) => {
           if (quoteData?.data?.prices?.[0]?.coin_amount) {
             const data = quoteData.data.prices[0];
@@ -1404,11 +1420,9 @@ const BuyCryptoOffers: React.FC = () => {
       }),
     );
 
-    // const metaData =  `banxaExternalId=${externalTransactionId}&walletId=${selectedWallet.id}&status=pending`;
-
     const quoteData: BanxaCreateOrderRequestData = {
       env: banxaEnv,
-      account_reference: selectedWallet.id, // TODO: use bitpayId
+      account_reference: user?.eid ?? selectedWallet.id,
       payment_method_id: offers.banxa.paymentMethodId,
       source: offers.banxa.fiatCurrency,
       source_amount: cloneDeep(offers.banxa.fiatAmount).toString(),
@@ -1418,16 +1432,11 @@ const BuyCryptoOffers: React.FC = () => {
       return_url_on_success: `${APP_DEEPLINK_PREFIX}banxa`,
       return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled`,
       return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed`,
-      // meta_data: 'testmetadata', // TODO: this property is not working
-      // email?: string,
-      // mobile?: string,
     };
 
     let data: BanxaCreateOrderData, banxaOrderData: BanxaOrderData;
     try {
-      // TODO use: selectedWallet.banxaCreateOrder
-      // data = await selectedWallet.banxaCreateOrder(quoteData);
-      data = await banxaCreateOrder(quoteData);
+      data = await selectedWallet.banxaCreateOrder(quoteData);
     } catch (err) {
       const reason = 'banxaCreateOrder Error';
       showBanxaError(err, reason);
