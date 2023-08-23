@@ -128,23 +128,24 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
 export const transformContacts = createTransform<ContactState, ContactState>(
   inboundState => inboundState,
   outboundState => {
-    const contactList = outboundState.list || [];
-    if (contactList.length > 0) {
-      // @ts-ignore
-      const contacts = outboundState as ContactRowProps[];
-      const migratedContacts = contacts.map(contact => ({
-        ...contact,
-        chain:
-          contact.chain ||
-          (OtherBitpaySupportedCoins[contact.coin] ||
-          BitpaySupportedUtxoCoins[contact.coin]
-            ? contact.coin
-            : 'eth'),
-      }));
-
-      outboundState.list = migratedContacts;
+    try {
+      const contactList = outboundState.list || [];
+      if (contactList.length > 0) {
+        const migratedContacts = contactList.map(contact => ({
+          ...contact,
+          chain:
+            contact.chain ||
+            (OtherBitpaySupportedCoins[contact.coin] ||
+            BitpaySupportedUtxoCoins[contact.coin]
+              ? contact.coin
+              : 'eth'),
+        })) as ContactRowProps[];
+        outboundState.list = migratedContacts;
+      }
+      return outboundState;
+    } catch (_) {
+      return outboundState;
     }
-    return outboundState;
   },
-  {whitelist: ['CONTACTS']},
+  {whitelist: ['CONTACT']},
 );
