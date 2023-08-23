@@ -37,6 +37,7 @@ export default ({
   items,
   itemComponent,
   itemWidth,
+  itemHeight,
   itemWidthInLastSlide,
   itemUnderlayColor,
   maxItemsPerColumn,
@@ -46,6 +47,7 @@ export default ({
   items: ShopCarouselItem[];
   itemComponent: (item: ShopCarouselItem) => JSX.Element;
   itemWidth?: number;
+  itemHeight: number;
   itemWidthInLastSlide?: number;
   itemUnderlayColor?: string;
   maxItemsPerColumn: number;
@@ -65,6 +67,7 @@ export default ({
   }, [] as any);
 
   const isSingleSlide = slides.length === 1;
+  const numRows = (slides[0] && slides[0].length) || 0;
 
   return (
     <Carousel
@@ -73,10 +76,13 @@ export default ({
       vertical={false}
       style={{width: screenWidth}}
       width={isSingleSlide ? screenWidth : carouselItemWidth}
-      height={isSingleSlide ? carouselItemWidth / 4 : carouselItemWidth * 1.3}
+      height={numRows * itemHeight}
       autoPlay={false}
       data={slides}
       scrollAnimationDuration={1000}
+      panGestureHandlerProps={{
+        activeOffsetX: [-10, 10],
+      }}
       enabled={!isSingleSlide}
       renderItem={({
         item,
