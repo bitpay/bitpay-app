@@ -26,9 +26,15 @@ import {
   SearchInput,
   Column,
 } from '../../../../components/styled/Containers';
-import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
+import {
+  ValidateCoinAddress,
+  ValidateURI,
+} from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
-import {ContactRowProps} from '../../../../components/list/ContactRow';
+import {
+  ContactRowProps,
+  DomainProps,
+} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
 import {RootState} from '../../../../store';
 import {
@@ -68,6 +74,14 @@ import {
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {
+  getAddressByENSDomain,
+  getAddressByUnstoppableDomain,
+  getENSDomainByAddress,
+} from '../../../../store/moralis/moralis.effects';
+import ENSDomainIcon from '../../../../components/avatar/ENSDomainIcon';
+import UnstoppableDomainIcon from '../../../../components/avatar/UnstoppableDomainIcon';
+import _ from 'lodash';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -89,6 +103,13 @@ const AddressBadge = styled.View`
   position: absolute;
   right: 13px;
   top: 50%;
+`;
+
+const DomainBadge = styled.View`
+  position: absolute;
+  left: 12px;
+  top: 52%;
+  z-index: 1;
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
@@ -149,6 +170,10 @@ const schema = yup.object().shape({
   email: yup.string().email().trim(),
   destinationTag: yup.number(),
   address: yup.string().required(),
+  domain: yup.object().shape({
+    domainName: yup.string(),
+    domainType: yup.string(),
+  }),
 });
 
 const SearchImageContainer = styled.View`
@@ -193,6 +218,7 @@ const ContactsAdd = ({
   const dispatch = useAppDispatch();
 
   const [validAddress, setValidAddress] = useState(false);
+  const [validDomain, setValidDomain] = useState(false);
   const [xrpValidAddress, setXrpValidAddress] = useState(false);
   const [evmValidAddress, setEvmValidAddress] = useState(false);
   const [searchInput, setSearchInput] = useState('');
@@ -201,6 +227,7 @@ const ContactsAdd = ({
   const [coinValue, setCoinValue] = useState('');
   const [networkValue, setNetworkValue] = useState('');
   const [chainValue, setChainValue] = useState('');
+  const [domainValue, setDomainValue] = useState<DomainProps>();
 
   const [tokenModalVisible, setTokenModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
@@ -298,12 +325,17 @@ const ContactsAdd = ({
     coin: string,
     network: string,
     chain: string,
+    domain?: DomainProps,
   ) => {
     setValidAddress(true);
     setAddressValue(address);
     setCoinValue(coin);
     setNetworkValue(network);
     setChainValue(chain);
+    if (!_.values(domain).every(_.isEmpty)) {
+      setValidDomain(true);
+      setDomainValue(domain);
+    }
 
     _setSelectedCurrency(coin);
 
@@ -319,13 +351,19 @@ const ContactsAdd = ({
         return;
     }
   };
-
-  const processAddress = (
-    address?: string,
-    coin?: string,
-    network?: string,
-    chain?: string,
-  ) => {
+  const processAddressOrDomain = ({
+    address,
+    coin,
+    network,
+    chain,
+    domain,
+  }: {
+    address?: string;
+    coin?: string;
+    network?: string;
+    chain?: string;
+    domain?: DomainProps;
+  }) => {
     if (address) {
       const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
       if (coinAndNetwork) {
@@ -340,6 +378,7 @@ const ContactsAdd = ({
             coin || coinAndNetwork.coin,
             network || coinAndNetwork.network,
             chain || coinAndNetwork.coin,
+            domain,
           );
         } else {
           // try testnet
@@ -354,27 +393,95 @@ const ContactsAdd = ({
               coin || coinAndNetwork.coin,
               network || 'testnet',
               chain || coinAndNetwork.coin,
+              domain,
             );
           }
         }
       } else {
-        setCoinValue('');
-        setNetworkValue('');
-        setAddressValue('');
-        setValidAddress(false);
-        setEvmValidAddress(false);
-        setXrpValidAddress(false);
+        const data = ValidateURI(address);
+        processDomain({data});
       }
+    } else {
+      resetValues();
     }
+  };
+
+  const processDomain = useMemo(
+    () =>
+      debounce(async ({data}: {data: any}) => {
+        try {
+          if (!data.data) {
+            return;
+          }
+          if (data.type === 'UnstoppableDomain') {
+            const addressByUnstoppableDomain = await dispatch(
+              getAddressByUnstoppableDomain({domain: data.data}),
+            );
+            if (addressByUnstoppableDomain) {
+              setValidDomain(true);
+              processAddressOrDomain({
+                address: addressByUnstoppableDomain,
+                domain: {
+                  domainName: data.data,
+                  domainType: data.type,
+                },
+              });
+            }
+          } else if (data.type === 'ENSDomain') {
+            const addressByENS = await dispatch(
+              getAddressByENSDomain({domain: data.data}),
+            );
+            if (addressByENS) {
+              setValidDomain(true);
+              processAddressOrDomain({
+                address: addressByENS,
+                domain: {
+                  domainName: data.data,
+                  domainType: data.type,
+                },
+              });
+            }
+          } else {
+            resetValues();
+          }
+        } catch (e) {
+          resetValues();
+        }
+      }, 300),
+    [],
+  );
+
+  const resetValues = () => {
+    setCoinValue('');
+    setNetworkValue('');
+    setAddressValue('');
+    setValidAddress(false);
+    setEvmValidAddress(false);
+    setXrpValidAddress(false);
+    setValidDomain(false);
+    setDomainValue(undefined);
   };
 
   const onSubmit = handleSubmit((contact: ContactRowProps) => {
     if (!validAddress) {
       setError('address', {
         type: 'manual',
-        message: t('Invalid address'),
+        message: t('Invalid address or domain'),
       });
       return;
+    }
+
+    if (!validDomain && !_.values(domainValue).every(_.isEmpty)) {
+      setError('domain', {
+        type: 'manual',
+        message: t('Invalid domain'),
+      });
+      return;
+    }
+    
+    if (addressValue && domainValue) {
+      contact.address = addressValue;
+      contact.domain = domainValue;
     }
 
     if (coinValue && chainValue && networkValue) {
@@ -515,25 +622,45 @@ const ContactsAdd = ({
       params: {
         onScanComplete: address => {
           setValue('address', address, {shouldDirty: true});
-          processAddress(address);
+          processAddressOrDomain({address});
         },
       },
     });
   };
 
+  const fetchENSDomainByAddress = async (address: string) => {
+    try {
+      const domainName = await dispatch(getENSDomainByAddress({address}));
+      if (domainName) {
+        const _domain: DomainProps = {
+          domainName,
+          domainType: 'ENSDomain',
+        };
+        setValue('domain', _domain);
+        setDomainValue(_domain);
+        setValidDomain(true);
+      }
+    } catch (e) {}
+  };
+
   useEffect(() => {
     if (contact) {
-      processAddress(
-        contact.address,
-        contact.coin,
-        contact.network,
-        contact.chain,
-      );
+      processAddressOrDomain({
+        address: contact.address,
+        coin: contact.coin,
+        network: contact.network,
+        chain: contact.chain,
+        domain: contact.domain,
+      });
       setValue('address', contact.address!, {shouldDirty: true});
       setValue('name', contact.name || '');
       setValue('email', contact.email);
       setValue('chain', contact.chain!);
       setValue('destinationTag', contact.tag || contact.destinationTag);
+      setValue('domain', contact.domain);
+      if (context === 'edit' && _.values(contact.domain).every(_.isEmpty)) {
+        fetchENSDomainByAddress(contact.address!);
+      }
     }
   }, [contact]);
 
@@ -576,20 +703,39 @@ const ContactsAdd = ({
       </InputContainer>
       {!contact ? (
         <InputContainer>
+          {validDomain && domainValue ? (
+            domainValue.domainType === 'ENSDomain' ? (
+              <DomainBadge>
+                <ENSDomainIcon />
+              </DomainBadge>
+            ) : (
+              <DomainBadge>
+                <UnstoppableDomainIcon />
+              </DomainBadge>
+            )
+          ) : null}
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
-              <BoxInput
-                placeholder={'Crypto address'}
-                label={t('ADDRESS')}
-                onBlur={onBlur}
-                onChangeText={(newValue: string) => {
-                  onChange(newValue);
-                  processAddress(newValue);
-                }}
-                error={errors.address?.message}
-                value={value}
-              />
+              <>
+                <BoxInput
+                  style={{
+                    paddingLeft: validDomain && domainValue ? 40 : 12,
+                    paddingRight: 45,
+                  }}
+                  placeholder={'Crypto address or domain'}
+                  label={t('ADDRESS OR DOMAIN')}
+                  onBlur={onBlur}
+                  onChangeText={(newValue: string) => {
+                    setValidDomain(false);
+                    setDomainValue(undefined);
+                    onChange(newValue);
+                    processAddressOrDomain({address: newValue});
+                  }}
+                  error={errors.address?.message}
+                  value={value}
+                />
+              </>
             )}
             name="address"
             defaultValue=""
@@ -605,16 +751,48 @@ const ContactsAdd = ({
           )}
         </InputContainer>
       ) : (
-        <InputContainer>
-          <Controller
-            control={control}
-            render={({field: {value}}) => (
-              <BoxInput disabled={true} label={t('ADDRESS')} value={value} />
-            )}
-            name="address"
-            defaultValue=""
-          />
-        </InputContainer>
+        <>
+          <InputContainer>
+            <Controller
+              control={control}
+              render={({field: {value}}) => (
+                <BoxInput disabled={true} label={t('ADDRESS')} value={value} />
+              )}
+              name="address"
+              defaultValue=""
+            />
+          </InputContainer>
+          {domainValue ? (
+            <InputContainer>
+              {validDomain && domainValue ? (
+                domainValue.domainType === 'ENSDomain' ? (
+                  <DomainBadge>
+                    <ENSDomainIcon />
+                  </DomainBadge>
+                ) : (
+                  <DomainBadge>
+                    <UnstoppableDomainIcon />
+                  </DomainBadge>
+                )
+              ) : null}
+              <Controller
+                control={control}
+                render={({field: {value}}) => (
+                  <BoxInput
+                    disabled={true}
+                    label={t('DOMAIN')}
+                    value={value?.domainName}
+                    style={{
+                      paddingLeft: 40,
+                    }}
+                  />
+                )}
+                name="domain"
+                defaultValue={undefined}
+              />
+            </InputContainer>
+          ) : null}
+        </>
       )}
 
       {!contact && evmValidAddress ? (

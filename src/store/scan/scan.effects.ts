@@ -82,6 +82,7 @@ import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
 import {IsUtxoCoin} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
+import {DomainProps} from '../../components/list/ContactRow';
 
 export const incomingData =
   (
@@ -92,6 +93,7 @@ export const incomingData =
       name?: string;
       email?: string;
       destinationTag?: number;
+      domain?: DomainProps;
     },
   ): Effect<Promise<boolean>> =>
   async dispatch => {
@@ -455,6 +457,7 @@ const goToConfirm =
       chain: string;
       destinationTag?: number;
       network?: Network;
+      domain?: DomainProps;
     };
     amount: number;
     wallet?: Wallet;
@@ -568,6 +571,7 @@ export const goToAmount =
       chain: string;
       network?: Network;
       destinationTag?: number;
+      domain?: DomainProps;
     };
     wallet?: Wallet;
     opts?: {
@@ -1334,6 +1338,7 @@ const handlePlainAddress =
       name?: string;
       email?: string;
       destinationTag?: number;
+      domain?: DomainProps;
     },
   ): Effect<void> =>
   dispatch => {
@@ -1350,6 +1355,7 @@ const handlePlainAddress =
       address,
       network,
       destinationTag: opts?.destinationTag,
+      domain: opts?.domain,
     };
     dispatch(goToAmount({coin, chain, recipient, wallet: opts?.wallet}));
   };

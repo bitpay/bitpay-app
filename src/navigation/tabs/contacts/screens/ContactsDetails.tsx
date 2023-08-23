@@ -293,6 +293,7 @@ const ContactsDetails = ({
             size={100}
             name={contact.name}
             chain={contact.chain}
+            domainType={contact.domain?.domainType}
           />
         </ContactImageHeader>
         <Details>
@@ -323,6 +324,17 @@ const ContactsDetails = ({
               </AddressContainer>
             </DetailInfo>
           </Detail>
+          {contact.domain?.domainName ? (
+            <>
+              <Hr />
+              <Detail>
+                <Title>{t('Domain')}</Title>
+                <DetailInfo align="right">
+                  {contact.domain.domainName}
+                </DetailInfo>
+              </Detail>
+            </>
+          ) : null}
           {contact.network !== 'livenet' ? (
             <>
               <Hr />

@@ -53,6 +53,8 @@ import {LuckySevens} from '../../../../../styles/colors';
 import {IsERCToken} from '../../../../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
+import ENSDomainIcon from '../../../../../components/avatar/ENSDomainIcon';
+import UnstoppableDomainIcon from '../../../../../components/avatar/UnstoppableDomainIcon';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -172,6 +174,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
     recipientCoin,
     recipientChain,
     recipientType,
+    recipientDomain,
   } = recipient;
 
   let badgeImg;
@@ -201,7 +204,12 @@ export const SendingTo: React.VFC<SendingToProps> = ({
       ' ' +
       (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
   } else {
-    description = recipientName || recipientEmail || recipientAddress || '';
+    description =
+      recipientDomain?.domainName ||
+      recipientName ||
+      recipientEmail ||
+      recipientAddress ||
+      '';
   }
 
   return (
@@ -219,7 +227,17 @@ export const SendingTo: React.VFC<SendingToProps> = ({
               copied ? (
                 <CopiedSvg width={18} />
               ) : recipientType === 'contact' || recipientEmail ? (
-                <ContactIcon name={description} size={20} />
+                <ContactIcon
+                  name={description}
+                  size={20}
+                  domainType={recipientDomain?.domainType}
+                />
+              ) : recipientType === 'domain' && recipientDomain ? (
+                recipientDomain.domainType === 'ENSDomain' ? (
+                  <ENSDomainIcon size={18} />
+                ) : (
+                  <UnstoppableDomainIcon size={18} />
+                )
               ) : (
                 <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
               )
