@@ -11,6 +11,7 @@ export type OnGoingProcessMessages =
   | 'GENERAL_AWAITING'
   | 'CREATING_KEY'
   | 'LOGGING_IN'
+  | 'LOGGING_OUT'
   | 'PAIRING'
   | 'CREATING_ACCOUNT'
   | 'UPDATING_ACCOUNT'

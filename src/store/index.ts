@@ -1,3 +1,4 @@
+import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
 import {
   Action,
   applyMiddleware,
@@ -156,7 +157,8 @@ const logger = createLogger({
 
 const getStore = () => {
   const middlewares = [thunkMiddleware];
-  if (__DEV__) {
+
+  if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
     // @ts-ignore
     middlewares.push(logger);
   }

@@ -1,3 +1,4 @@
+import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
 import {AddLog, LogActionType, LogActionTypes} from './log.types';
 import {LogEntry, LogLevel} from './log.models';
 
@@ -28,7 +29,7 @@ function _log(
   level: LogLevel,
   ...messages: (string | null | undefined)[]
 ): AddLog {
-  if (__DEV__ && !!messages) {
+  if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true') && !!messages) {
     switch (LogLevel[level]) {
       case 'Debug':
         console.debug('[Debug]', ...messages);

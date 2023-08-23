@@ -1,7 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
-import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import {HeaderRightContainer} from '../../components/styled/Containers';
@@ -10,10 +9,9 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
-import {RootState} from '../../store';
 import {BitPayIdEffects} from '../../store/bitpay-id';
-import {User} from '../../store/bitpay-id/bitpay-id.models';
 import {ShopEffects} from '../../store/shop';
+import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import PairingScreen, {
   BitPayIdPairingScreenParamList,
 } from './screens/BitPayIdPairingScreen';
@@ -55,9 +53,9 @@ const BitpayId = createStackNavigator<BitpayIdStackParamList>();
 
 const BitpayIdStack = () => {
   const {t} = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const user = useSelector<RootState, User | null>(
+  const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
 
@@ -81,24 +79,31 @@ const BitpayIdStack = () => {
           headerRight: () => {
             return (
               <HeaderRightContainer>
-                <Button
-                  buttonType={'pill'}
-                  onPress={() => {
-                    haptic('impactLight');
+                {user ? (
+                  <Button
+                    buttonType={'pill'}
+                    onPress={async () => {
+                      haptic('impactLight');
 
-                    if (user) {
+                      await dispatch(BitPayIdEffects.startDisconnectBitPayId());
+                      dispatch(ShopEffects.startFetchCatalog());
+
                       navigation.navigate('Tabs', {
                         screen: 'Settings',
                       });
-
-                      dispatch(BitPayIdEffects.startDisconnectBitPayId());
-                      dispatch(ShopEffects.startFetchCatalog());
-                    } else {
+                    }}>
+                    {t('Log Out')}
+                  </Button>
+                ) : (
+                  <Button
+                    buttonType={'pill'}
+                    onPress={() => {
+                      haptic('impactLight');
                       navigation.navigate('Auth', {screen: 'Login'});
-                    }
-                  }}>
-                  {user ? t('Log Out') : t('Log In')}
-                </Button>
+                    }}>
+                    {t('Log In')}
+                  </Button>
+                )}
               </HeaderRightContainer>
             );
           },
