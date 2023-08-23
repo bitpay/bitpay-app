@@ -61,7 +61,7 @@ const ThemeSettings: React.FC = () => {
               action: async () => {
                 dispatch(networkChanged(changeNetwork));
                 await sleep(200);
-                RNRestart.Restart();
+                RNRestart.restart();
               },
             },
             {

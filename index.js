@@ -12,6 +12,8 @@ import {Provider} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import 'react-native-url-polyfill/auto'; // https://github.com/facebook/react-native/issues/23922#issuecomment-648096619
 import {enableFreeze} from 'react-native-screens';
+import {AppInitialization} from './src/AppInitialization';
+
 enableFreeze(true);
 
 export const {store, persistor} = getStore();
@@ -20,7 +22,13 @@ const ReduxProvider = () => {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        {storeRehydrated => (storeRehydrated ? <Root /> : null)}
+        {storeRehydrated =>
+          storeRehydrated ? (
+            <AppInitialization>
+              <Root />
+            </AppInitialization>
+          ) : null
+        }
       </PersistGate>
     </Provider>
   );

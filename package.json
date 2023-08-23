@@ -118,6 +118,7 @@
     "react-native-localize": "2.2.4",
     "react-native-mail": "6.1.1",
     "react-native-markdown-display": "7.0.0-alpha.2",
+    "react-native-mmkv": "2.10.1",
     "react-native-modal": "13.0.1",
     "react-native-os": "1.2.6",
     "react-native-pager-view": "6.1.4",

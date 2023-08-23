@@ -5,7 +5,7 @@ import {
   KeyProperties,
   Wallet,
 } from '../../wallet.models';
-import {Effect} from '../../../index';
+import {Effect, storage} from '../../../index';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {
@@ -47,6 +47,7 @@ import {
   setHomeCarouselConfig,
   setIntroCompleted,
   setKeyMigrationFailure,
+  setMigrationMMKVStorageComplete,
   setOnboardingCompleted,
   showPortfolioValue,
   successGenerateAppIdentity,
@@ -88,6 +89,8 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNRestart from 'react-native-restart';
 
 const BWC = BwcProvider.getInstance();
 
@@ -110,6 +113,40 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
 
   return wordList.join(isJA ? '\u3000' : ' ');
 };
+
+export const startMigrationMMKVStorage =
+  (): Effect<Promise<void>> =>
+  async (dispatch): Promise<void> => {
+    dispatch(LogActions.info('[startMigrationMMKVStorage] - starting...'));
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      if (!keys.includes('persist:root')) {
+        dispatch(setMigrationMMKVStorageComplete());
+        dispatch(LogActions.info('[MMKVStorage] nothing to migrate'));
+        if (storage.getString('persist:root')) {
+          dispatch(
+            LogActions.persistLog(
+              LogActions.info('success [setMigrationMMKVStorageComplete]'),
+            ),
+          );
+        }
+        return Promise.resolve();
+      }
+      const value = await AsyncStorage.getItem('persist:root');
+      if (value != null) {
+        storage.set('persist:root', value);
+      }
+      await AsyncStorage.multiRemove(keys);
+      RNRestart.restart();
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(
+        LogActions.persistLog(
+          LogActions.error('[migrationMMKVStorage] failed - ', errStr),
+        ),
+      );
+    }
+  };
 
 export const startMigration =
   (): Effect<Promise<void>> =>
