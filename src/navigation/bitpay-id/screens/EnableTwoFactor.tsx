@@ -10,7 +10,7 @@ import {Action, SlateDark, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
-import {View, Keyboard} from 'react-native';
+import {View, Keyboard, TouchableOpacity} from 'react-native';
 import yup from '../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';
@@ -23,8 +23,7 @@ import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import haptic from '../../../components/haptic-feedback/haptic';
-import Clipboard from '@react-native-community/clipboard';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const ViewContainer = styled.ScrollView`

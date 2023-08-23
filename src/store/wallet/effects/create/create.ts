@@ -1,3 +1,4 @@
+import {store} from '../../../../..';
 import {
   BitpaySupportedCoins,
   SupportedCoins,
@@ -405,7 +406,7 @@ const createWallet = (params: {
 
           reject(err);
         } else {
-          LogActions.info(`Added Coin ${coin}`);
+          store.dispatch(LogActions.info(`Added Coin ${coin}`));
           resolve(bwcClient);
         }
       },
@@ -615,7 +616,7 @@ export const createWalletWithOpts = (params: {
 
             reject(err);
           } else {
-            LogActions.info(`Added Coin ${opts.coin || 'btc'}`);
+            store.dispatch(LogActions.info(`Added Coin ${opts.coin || 'btc'}`));
             resolve(bwcClient);
           }
         },

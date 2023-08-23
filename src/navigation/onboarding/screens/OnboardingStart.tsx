@@ -3,7 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
-import Carousel, {Pagination} from 'react-native-snap-carousel';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -28,6 +28,8 @@ import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import ScrollHint, {ScrollHintContainer} from '../components/ScrollHint';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import PaginationDots from '../../../components/pagination-dots/PaginationDots';
+import {useSharedValue} from 'react-native-reanimated';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -183,9 +185,10 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
     });
   }, [navigation, isPaired, t]);
 
-  const carouselRef = useRef(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [scrollHintHeight, setScrollHintHeight] = useState(0);
+  const progressValue = useSharedValue<number>(0);
 
   const onboardingSlides = [
     // {
@@ -225,20 +228,23 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
     <OnboardingContainer accessibilityLabel="onboarding-start-view">
       <ScrollView scrollEnabled={scrollEnabledForSmallScreens}>
         <Carousel
+          loop={false}
           vertical={false}
-          layout={'default'}
-          useExperimentalSnap={true}
+          width={WIDTH}
+          height={WIDTH * 2}
+          autoPlay={false}
           data={onboardingSlides}
-          renderItem={({item}) => <OnboardingSlide item={item} />}
+          pagingEnabled={true}
+          snapEnabled={true}
           ref={carouselRef}
-          sliderWidth={WIDTH}
-          itemWidth={Math.round(WIDTH)}
-          onScrollIndexChanged={(index: number) => {
-            haptic('impactLight');
-            setActiveSlideIndex(index);
+          scrollAnimationDuration={1000}
+          onProgressChange={(_, index) => {
+            if (Number.isInteger(index)) {
+              setActiveSlideIndex(index);
+            }
+            progressValue.value = index;
           }}
-          // @ts-ignore
-          disableIntervalMomentum={true}
+          renderItem={({item}) => <OnboardingSlide item={item} />}
         />
         <View style={{height: scrollHintHeight}} />
       </ScrollView>
@@ -254,25 +260,19 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
         }}>
         <Row>
           <Column>
-            <Pagination
-              accessibilityLabel="pagination-button"
-              dotsLength={onboardingSlides.length}
-              activeDotIndex={activeSlideIndex}
-              tappableDots={true}
-              carouselRef={carouselRef}
-              animatedDuration={100}
-              animatedFriction={100}
-              animatedTension={100}
-              dotStyle={{
-                width: 15,
-                height: 15,
-                borderRadius: 10,
-                marginHorizontal: 1,
-              }}
-              dotColor={Action}
-              inactiveDotColor={LuckySevens}
-              inactiveDotScale={0.5}
-            />
+            <Row>
+              {[...Array(onboardingSlides.length)].map((_, index) => {
+                return (
+                  <PaginationDots
+                    animValue={progressValue}
+                    index={index}
+                    key={index}
+                    isRotate={false}
+                    length={onboardingSlides.length}
+                  />
+                );
+              })}
+            </Row>
           </Column>
           <Column>
             {!isPaired ? (

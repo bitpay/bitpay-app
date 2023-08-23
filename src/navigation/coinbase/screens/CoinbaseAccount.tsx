@@ -8,7 +8,6 @@ import React, {
   useMemo,
 } from 'react';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   useAppDispatch,
   useAppSelector,
@@ -16,7 +15,12 @@ import {
   useMount,
 } from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {RefreshControl, SectionList, View} from 'react-native';
+import {
+  RefreshControl,
+  SectionList,
+  View,
+  TouchableOpacity,
+} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {

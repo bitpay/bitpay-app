@@ -6,6 +6,7 @@ import {
   RefreshControl,
   Image,
   DeviceEventEmitter,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import RNPrint from 'react-native-print';
 import TimeAgo from 'react-native-timeago';
@@ -46,11 +47,10 @@ import {
   PrintSvg,
 } from '../../components/svg/ShopTabSvgs';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {AppActions} from '../../../../../store/app';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {
   CardConfig,
   ClaimCodeType,

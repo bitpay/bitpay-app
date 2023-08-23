@@ -37,7 +37,7 @@ import {TouchableOpacity} from 'react-native';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import MultipleOutputsTx from '../components/MultipleOutputsTx';
 import {URL} from '../../../constants';
 import {

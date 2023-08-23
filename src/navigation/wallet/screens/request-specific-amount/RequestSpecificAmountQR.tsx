@@ -14,7 +14,7 @@ import {ScreenGutter} from '../../../../components/styled/Containers';
 import CopySvg from '../../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import {LightBlack, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';

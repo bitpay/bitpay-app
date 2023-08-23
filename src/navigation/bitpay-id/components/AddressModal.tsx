@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Modal from 'react-native-modal';
 import styled, {useTheme} from 'styled-components/native';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {
   ActionContainer,
   ActiveOpacity,

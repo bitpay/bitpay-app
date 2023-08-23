@@ -290,6 +290,7 @@ export interface BillPayment {
   creditedOn: string;
   convenienceFee: number;
   status: 'complete' | 'processing' | 'failed';
+  estimatedCompletionDate?: string;
 }
 
 export interface BillPayPayment {

@@ -1,0 +1,28 @@
+diff --git a/node_modules/react-native-keyevent/ios/RNKeyEvent.m b/node_modules/react-native-keyevent/ios/RNKeyEvent.m
+index 8c6eaea..922f15c 100644
+--- a/node_modules/react-native-keyevent/ios/RNKeyEvent.m
++++ b/node_modules/react-native-keyevent/ios/RNKeyEvent.m
+@@ -1,4 +1,3 @@
+-
+ #import <Foundation/Foundation.h>
+ #import "RNKeyEvent.h"
+ 
+@@ -32,7 +31,11 @@ - (BOOL)isListening {
+ }
+ 
+ - (NSString *)getKeys {
+-    return  [NSString stringWithFormat:@"!,1,2,3,4,5,6,7,8,9,0,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,~,-,\r,%@,%@,%@,%@",UIKeyInputLeftArrow, UIKeyInputRightArrow, UIKeyInputUpArrow, UIKeyInputDownArrow];
++    if (@available(iOS 15.0, *)) {
++        return  [NSString stringWithFormat:@"!,1,2,3,4,5,6,7,8,9,0,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,.,~,-,\r, \n,%@,%@,%@,%@,%@,%@",UIKeyInputLeftArrow, UIKeyInputRightArrow, UIKeyInputUpArrow, UIKeyInputDownArrow, UIKeyInputEscape, UIKeyInputDelete];
++    } else {
++        return  [NSString stringWithFormat:@"!,1,2,3,4,5,6,7,8,9,0,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,.,~,-,\r,%@,%@,%@,%@",UIKeyInputLeftArrow, UIKeyInputRightArrow, UIKeyInputUpArrow, UIKeyInputDownArrow];
++    }
+ }
+ 
+ - (void)sendKeyEvent:(NSString *)keyString {
+@@ -62,4 +65,3 @@ - (void)stopObserving {
+ }
+ 
+ @end
+\ No newline at end of file
+-

@@ -167,44 +167,46 @@ const Pin = gestureHandlerRootHOC(() => {
 
   const handleCellPress = useCallback(
     (value: string) => {
-      let newPin = pin.slice();
-      switch (value) {
-        case 'reset':
-          reset();
-          newPin = [];
-          break;
-        case 'backspace':
-          newPin.splice(-1);
-          setPin(newPin);
-          break;
-        default:
-          if (
-            Number(value) >= PIN_MIN_VALUE &&
-            Number(value) <= PIN_MAX_VALUE &&
-            pin.length <= PIN_LENGTH
-          ) {
-            // Adding new PIN
-            newPin[newPin.length] = value;
-            setPin(newPin);
-          }
-          break;
-      }
-      return newPin;
-    },
-    [setPin, reset, pin],
-  );
-
-  const onCellPress = useCallback(
-    async (value: string) => {
       if (pinBannedUntil) {
         // banned wait for entering new pin
         return;
       }
       haptic('soft');
+      switch (value) {
+        case 'reset':
+          reset();
+          break;
+        case 'backspace':
+          setPin(prevValue => {
+            const newPin = prevValue.slice();
+            newPin.splice(-1);
+            return newPin;
+          });
+          break;
+        default:
+          // Adding new PIN
+          setPin(prevValue => {
+            if (
+              Number(value) >= PIN_MIN_VALUE &&
+              Number(value) <= PIN_MAX_VALUE &&
+              prevValue.length < PIN_LENGTH
+            ) {
+              const newPin = prevValue.slice();
+              newPin[newPin.length] = value;
+              return newPin;
+            } else {
+              return prevValue;
+            }
+          });
+          break;
+      }
+    },
+    [setPin, reset, pin],
+  );
 
-      const newPin = handleCellPress(value);
-
-      if (newPin.length !== PIN_LENGTH) {
+  useEffect(() => {
+    const onCellPress = async () => {
+      if (pin.length !== PIN_LENGTH) {
         // Waiting for more PIN digits
         return;
       }
@@ -214,29 +216,28 @@ const Pin = gestureHandlerRootHOC(() => {
 
       if (type === 'set') {
         if (firstPinEntered.length) {
-          setCurrentPin(newPin as Array<string>);
+          setCurrentPin(pin as Array<string>);
         } else {
           setMessage(t('Confirm your PIN'));
-          setFirstPinEntered(newPin);
+          setFirstPinEntered(pin);
           setPin([]);
         }
       } else {
-        checkPin(newPin as Array<string>);
+        checkPin(pin as Array<string>);
       }
-    },
-    [
-      setCurrentPin,
-      setMessage,
-      setFirstPinEntered,
-      setPin,
-      handleCellPress,
-      checkPin,
-      firstPinEntered.length,
-      pinBannedUntil,
-      type,
-      t,
-    ],
-  );
+    };
+    onCellPress();
+  }, [
+    pin,
+    setCurrentPin,
+    setMessage,
+    setFirstPinEntered,
+    setPin,
+    checkPin,
+    firstPinEntered.length,
+    type,
+    t,
+  ]);
 
   const setCountDown = (
     bannedUntil: number,
@@ -344,7 +345,7 @@ const Pin = gestureHandlerRootHOC(() => {
       <VirtualKeyboardContainer accessibilityLabel="virtual-key-container">
         <VirtualKeyboard
           showDot={false}
-          onCellPress={onCellPress}
+          onCellPress={handleCellPress}
           darkModeOnly={true}
         />
       </VirtualKeyboardContainer>

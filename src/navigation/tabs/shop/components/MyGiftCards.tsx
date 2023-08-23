@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
-import {Carousel} from 'react-native-snap-carousel';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import {TouchableWithoutFeedback} from 'react-native';
 import styled from 'styled-components/native';
 import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
@@ -49,7 +49,7 @@ const MyGiftCards = ({
   supportedGiftCards: CardConfig[];
 }) => {
   const {t} = useTranslation();
-  const carouselRef = useRef<Carousel<GiftCard[]>>(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
   const navigation = useNavigation();
   const [slideIndex, setSlideIndex] = useState(0);
   const allGiftCards = useAppSelector(
@@ -95,7 +95,7 @@ const MyGiftCards = ({
   }, [archivedGiftCards.length]);
 
   useEffect(() => {
-    setTimeout(() => carouselRef.current?.snapToItem(slideIndex), 50);
+    setTimeout(() => carouselRef.current?.scrollTo({index: slideIndex}), 50);
   }, [slideIndex]);
 
   return (
@@ -124,25 +124,19 @@ const MyGiftCards = ({
         </MyGiftCardsHeaderContainer>
       </SectionContainer>
       <Carousel
-        ref={carouselRef}
+        loop={false}
         vertical={false}
-        layout={'default'}
-        useExperimentalSnap={false}
+        style={{width: '100%', paddingHorizontal: horizontalPadding}}
+        width={WIDTH}
+        height={WIDTH / 5}
+        autoPlay={false}
         data={slides}
-        inactiveSlideOpacity={1}
-        inactiveSlideScale={1}
-        activeSlideAlignment={'start'}
-        sliderWidth={WIDTH}
-        itemWidth={WIDTH}
-        scrollEnabled={false}
-        slideStyle={{paddingHorizontal: horizontalPadding}}
-        // @ts-ignore
-        disableIntervalMomentum={true}
-        renderItem={(item: {dataIndex: number; item: GiftCard[]}) => (
+        enabled={false}
+        renderItem={({item}: {item: GiftCard[]; index: number}) => (
           <>
-            {item.item.length ? (
+            {item.length ? (
               <>
-                {item.item.sort(sortByDescendingDate).map(giftCard => {
+                {item.sort(sortByDescendingDate).map(giftCard => {
                   const cardConfig = supportedGiftCardMap[giftCard.name];
                   return (
                     cardConfig && (

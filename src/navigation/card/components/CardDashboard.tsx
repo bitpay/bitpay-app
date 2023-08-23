@@ -2,10 +2,9 @@ import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
 import React, {useCallback, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
-import Carousel from 'react-native-snap-carousel';
+import {FlatList, TouchableOpacity} from 'react-native';
 import {SharedElement} from 'react-navigation-shared-element';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
@@ -68,7 +67,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {id, navigation} = props;
-  const carouselRef = useRef<Carousel<Card[]>>(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
   const cardGroups = useAppSelector(selectCardGroups);
   const fetchOverviewStatus = useAppSelector(
     ({CARD}) => CARD.fetchOverviewStatus[id],
@@ -284,27 +283,34 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         onEndReached={() => fetchNextPage()}
         ListHeaderComponent={
           <>
-            <Carousel<Card[]>
-              ref={carouselRef}
+            <Carousel
+              mode="parallax"
+              modeConfig={{
+                parallaxScrollingScale: 1,
+                parallaxScrollingOffset: 0,
+                parallaxAdjacentItemScale: 0.9,
+              }}
+              style={{
+                width: WIDTH,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              loop={false}
               vertical={false}
-              layout="default"
-              activeSlideAlignment="center"
-              firstItem={currentGroupIdx}
+              width={CARD_WIDTH + 20}
+              height={Math.round(CARD_WIDTH) / 1.5}
+              autoPlay={false}
               data={cardGroups}
-              renderItem={renderSlide}
+              ref={carouselRef}
+              scrollAnimationDuration={1000}
+              enabled={true}
               onSnapToItem={idx => {
                 navigation.setParams({
                   id: cardGroups[idx][0].id,
                 });
               }}
-              itemWidth={CARD_WIDTH + 20}
-              sliderWidth={WIDTH}
-              inactiveSlideScale={1}
-              inactiveSlideOpacity={1}
-              containerCustomStyle={{
-                flexGrow: 0,
-                marginTop: 32,
-              }}
+              renderItem={renderSlide}
             />
 
             {additionalContent.length ? (

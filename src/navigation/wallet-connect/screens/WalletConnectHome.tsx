@@ -27,7 +27,7 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {FormatAmountStr} from '../../../store/wallet/effects/amount/amount';
 import {Wallet} from '../../../store/wallet/wallet.models';

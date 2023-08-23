@@ -33,8 +33,9 @@ export const contactReducer = (
           ...state,
           list: [...state.list, {...action.contact}],
         };
+      } else {
+        return state;
       }
-      return {...state};
 
     case ContactActionTypes.UPDATE_CONTACT:
       const {address, chain, network} = action.contact;
@@ -78,6 +79,6 @@ export const contactReducer = (
       };
 
     default:
-      return {...state};
+      return state;
   }
 };

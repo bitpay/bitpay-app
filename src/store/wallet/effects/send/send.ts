@@ -423,13 +423,19 @@ export const buildTxDetails =
     const invoiceCurrency =
       invoice?.buyerProvidedInfo!.selectedTransactionCurrency;
 
+    const isOffChain = !proposal;
     if (invoiceCurrency) {
-      amount = invoice.paymentTotals[invoiceCurrency] || 0;
+      amount = isOffChain
+        ? invoice.paymentSubtotals[invoiceCurrency]
+        : invoice.paymentTotals[invoiceCurrency];
       const coinAndChain = getCoinAndChainFromCurrencyCode(
         invoiceCurrency.toLowerCase(),
       );
       coin = coinAndChain.coin;
       chain = coinAndChain.chain;
+      if (isOffChain) {
+        fee = 0;
+      }
     }
 
     if (!coin || !chain) {
@@ -450,13 +456,12 @@ export const buildTxDetails =
     };
     const rateStr = getRateStr(opts);
     const networkCost =
-      invoiceCurrency && invoice?.minerFees[invoiceCurrency]?.totalFee;
+      !isOffChain &&
+      invoiceCurrency &&
+      invoice?.minerFees[invoiceCurrency]?.totalFee;
     const isERC20 = IsERCToken(coin, chain);
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
-    if (invoiceCurrency && context === 'paypro') {
-      amount = invoice.paymentTotals[invoiceCurrency];
-    }
     const {type, name, address, email} = recipient || {};
     const percentageOfTotalAmount = (fee / (amount + fee)) * 100;
     return {
@@ -959,6 +964,7 @@ export const publishAndSign =
               }),
             );
           });
+          dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         } catch (error) {
           return reject(error);
         }

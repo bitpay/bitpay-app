@@ -6,7 +6,7 @@ import {
   useNavigation,
   useTheme,
 } from '@react-navigation/native';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';

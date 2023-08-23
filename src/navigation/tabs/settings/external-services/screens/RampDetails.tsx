@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {Settings, SettingsContainer} from '../../SettingsRoot';

@@ -23,6 +23,11 @@ export const basicInfoFields = `
   referralCode
 `;
 
+export const basicInfoExternalFields = `
+  address
+  dateOfBirth
+`;
+
 /**
  * Fetches all user data, for example for initializing data after pairing
  * or refreshing user data on init.
@@ -54,13 +59,17 @@ export const FETCH_ALL_USER_DATA = (token: string): GqlQueryParams => {
   };
 };
 
-export const FETCH_BASIC_INFO = (token: string): GqlQueryParams => {
+export const FETCH_BASIC_INFO = (
+  token: string,
+  params: {includeExternalData: boolean},
+): GqlQueryParams => {
   return {
     query: `
       query FETCH_BASIC_INFO ($token:String!) {
         user:bitpayUser(token:$token) {
-          basicInfo:user {
+          basicInfo:user(includeExternalData:${params.includeExternalData}) {
             ${basicInfoFields}
+            ${params.includeExternalData ? basicInfoExternalFields : ''}
           }
         }
       }

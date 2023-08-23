@@ -1,6 +1,6 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import Carousel from 'react-native-snap-carousel';
+import Carousel from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -376,15 +376,17 @@ const Crypto = () => {
       {homeCarouselLayoutType === 'carousel' ? (
         <CarouselContainer style={{marginBottom: 22}}>
           <Carousel
+            loop={false}
+            autoFillData={false}
             vertical={false}
-            layout={'default'}
-            useExperimentalSnap={true}
+            style={{width: WIDTH}}
+            width={190}
+            height={220}
+            autoPlay={false}
             data={cardsList.list}
+            scrollAnimationDuration={0}
             renderItem={_renderItem}
-            sliderWidth={WIDTH}
-            itemWidth={190}
-            inactiveSlideScale={1}
-            inactiveSlideOpacity={1}
+            enabled={true}
           />
         </CarouselContainer>
       ) : (
@@ -402,18 +404,15 @@ const Crypto = () => {
           </HomeSectionSubTitle>
         </SectionHeaderContainer>
         <Carousel
+          loop={false}
           vertical={false}
-          layout={'default'}
-          containerCustomStyle={{
-            marginTop: 20,
-          }}
-          useExperimentalSnap={true}
+          style={{width: WIDTH, marginTop: 20}}
+          width={190}
+          height={190 / 2}
+          autoPlay={false}
           data={cardsList.defaults}
+          enabled={false}
           renderItem={_renderItem}
-          sliderWidth={WIDTH}
-          itemWidth={200}
-          inactiveSlideScale={1}
-          inactiveSlideOpacity={1}
         />
       </CarouselContainer>
     </CryptoContainer>

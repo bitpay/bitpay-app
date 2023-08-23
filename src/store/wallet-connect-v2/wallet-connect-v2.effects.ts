@@ -242,10 +242,12 @@ export const walletConnectV2SubscribeToEvents =
           ),
         );
       } catch (err) {
-        LogActions.error(
-          `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${JSON.stringify(
-            err,
-          )}`,
+        dispatch(
+          LogActions.error(
+            `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${JSON.stringify(
+              err,
+            )}`,
+          ),
         );
       }
     });

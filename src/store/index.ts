@@ -1,6 +1,10 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
+import {
+  Action,
+  applyMiddleware,
+  combineReducers,
+  legacy_createStore as createStore,
+} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
@@ -9,101 +13,75 @@ import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
-import {
-  bindWalletClient,
-  bindWalletKeys,
-  transformContacts,
-} from './transforms/transforms';
+import {bindWalletKeys, transformContacts} from './transforms/transforms';
 
-import {
-  appReducer,
-  appReduxPersistBlackList,
-  AppState,
-} from './app/app.reducer';
-import {AppActionType} from './app/app.types';
+import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
 import {
   bitPayIdReducer,
   bitPayIdReduxPersistBlackList,
-  BitPayIdState,
 } from './bitpay-id/bitpay-id.reducer';
-import {BitPayIdActionType} from './bitpay-id/bitpay-id.types';
 import {
   buyCryptoReducer,
   buyCryptoReduxPersistBlackList,
-  BuyCryptoState,
 } from './buy-crypto/buy-crypto.reducer';
-import {BuyCryptoActionType} from './buy-crypto/buy-crypto.types';
-import {
-  cardReducer,
-  cardReduxPersistBlacklist,
-  CardState,
-} from './card/card.reducer';
-import {CardActionType} from './card/card.types';
+import {cardReducer, cardReduxPersistBlacklist} from './card/card.reducer';
 import {
   locationReducer,
   locationReduxPersistBlackList,
-  LocationState,
 } from './location/location.reducer';
-import {LocationActionType} from './location/location.types';
-import {
-  logReducer,
-  logReduxPersistBlackList,
-  LogState,
-} from './log/log.reducer';
-import {LogActionType} from './log/log.types';
-import {
-  shopReducer,
-  shopReduxPersistBlackList,
-  ShopState,
-} from './shop/shop.reducer';
-import {ShopActionType} from './shop/shop.types';
+import {logReducer, logReduxPersistBlackList} from './log/log.reducer';
+import {shopReducer, shopReduxPersistBlackList} from './shop/shop.reducer';
 import {
   swapCryptoReducer,
   swapCryptoReduxPersistBlackList,
-  SwapCryptoState,
 } from './swap-crypto/swap-crypto.reducer';
-import {SwapCryptoActionType} from './swap-crypto/swap-crypto.types';
 import {
   walletReducer,
   walletReduxPersistBlackList,
-  WalletState,
 } from './wallet/wallet.reducer';
-import {WalletActionType} from './wallet/wallet.types';
 import {
   contactReducer,
   ContactReduxPersistBlackList,
-  ContactState,
 } from './contact/contact.reducer';
-import {ContactActionType} from './contact/contact.types';
-import {CoinbaseActionType} from './coinbase/coinbase.types';
 import {
   coinbaseReducer,
   CoinbaseReduxPersistBlackList,
-  CoinbaseState,
 } from './coinbase/coinbase.reducer';
-import {
-  rateReducer,
-  rateReduxPersistBlackList,
-  RateState,
-} from './rate/rate.reducer';
-import {RateActionType} from './rate/rate.types';
+import {rateReducer, rateReduxPersistBlackList} from './rate/rate.reducer';
 import {LogActions} from './log';
 import {walletBackupReducer} from './wallet-backup/wallet-backup.reducer';
-import {WalletBackupActionType} from './wallet-backup/wallet-backup.types';
 import {
   walletConnectReducer,
   walletConnectV2Reducer,
   walletConnectV2ReduxPersistBlackList,
-  WalletConnectV2State,
 } from './wallet-connect-v2/wallet-connect-v2.reducer';
-import {WalletConnectV2ActionType} from './wallet-connect-v2/wallet-connect-v2.types';
+
+import {Storage} from 'redux-persist';
+import {MMKV} from 'react-native-mmkv';
+
+export const storage = new MMKV();
+
+export const reduxStorage: Storage = {
+  setItem: (key, value) => {
+    storage.set(key, value);
+    return Promise.resolve(true);
+  },
+  getItem: key => {
+    const value = storage.getString(key);
+    return Promise.resolve(value);
+  },
+  removeItem: key => {
+    storage.delete(key);
+    return Promise.resolve();
+  },
+};
 
 const basePersistConfig = {
-  storage: AsyncStorage,
+  storage: reduxStorage,
   stateReconciler: autoMergeLevel2,
 };
 
-const reducerPersistBlackLists = {
+const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   APP: appReduxPersistBlackList,
   BITPAY_ID: bitPayIdReduxPersistBlackList,
   BUY_CRYPTO: buyCryptoReduxPersistBlackList,
@@ -123,139 +101,25 @@ const reducerPersistBlackLists = {
 
 /*
  * Create a rootReducer using combineReducers
- * Set persist config for each and import blacklist to omit values
  * redux-persist will automatically persist and rehydrate store from async storage during app init
  * */
 
 const reducers = {
-  APP: persistReducer<AppState, AppActionType>(
-    {
-      ...basePersistConfig,
-      key: 'APP',
-      blacklist: appReduxPersistBlackList,
-    },
-    appReducer,
-  ),
-  BITPAY_ID: persistReducer<BitPayIdState, BitPayIdActionType>(
-    {
-      ...basePersistConfig,
-      key: 'BITPAY_ID',
-      blacklist: bitPayIdReduxPersistBlackList,
-    },
-    bitPayIdReducer,
-  ),
-  BUY_CRYPTO: persistReducer<BuyCryptoState, BuyCryptoActionType>(
-    {
-      ...basePersistConfig,
-      key: 'BUY_CRYPTO',
-      blacklist: buyCryptoReduxPersistBlackList,
-    },
-    buyCryptoReducer,
-  ),
-  CARD: persistReducer<CardState, CardActionType>(
-    {
-      ...basePersistConfig,
-      key: 'CARD',
-      blacklist: cardReduxPersistBlacklist,
-    },
-    cardReducer,
-  ),
-  LOCATION: persistReducer<LocationState, LocationActionType>(
-    {
-      ...basePersistConfig,
-      key: 'LOCATION',
-      blacklist: locationReduxPersistBlackList,
-    },
-    locationReducer,
-  ),
-  LOG: persistReducer<LogState, LogActionType>(
-    {
-      ...basePersistConfig,
-      key: 'LOG',
-      blacklist: logReduxPersistBlackList,
-    },
-    logReducer,
-  ),
-  SHOP: persistReducer<ShopState, ShopActionType>(
-    {
-      ...basePersistConfig,
-      key: 'SHOP',
-      blacklist: shopReduxPersistBlackList,
-    },
-    shopReducer,
-  ),
-  SWAP_CRYPTO: persistReducer<SwapCryptoState, SwapCryptoActionType>(
-    {
-      ...basePersistConfig,
-      key: 'SWAP_CRYPTO',
-      blacklist: swapCryptoReduxPersistBlackList,
-    },
-    swapCryptoReducer,
-  ),
-  WALLET: persistReducer<WalletState, WalletActionType>(
-    {
-      storage: AsyncStorage,
-      transforms: [bindWalletClient, bindWalletKeys],
-      key: 'WALLET',
-      blacklist: walletReduxPersistBlackList,
-    },
-    walletReducer,
-  ),
-  WALLET_BACKUP: persistReducer<WalletState, WalletBackupActionType>(
-    {
-      storage: AsyncStorage,
-      key: 'WALLET_BACKUP',
-      blacklist: walletReduxPersistBlackList,
-    },
-    walletBackupReducer,
-  ),
-  RATE: persistReducer<RateState, RateActionType>(
-    {
-      ...basePersistConfig,
-      key: 'RATE',
-      blacklist: rateReduxPersistBlackList,
-    },
-    rateReducer,
-  ),
-  CONTACT: persistReducer<ContactState, ContactActionType>(
-    {
-      ...basePersistConfig,
-      key: 'CONTACT',
-      transforms: [transformContacts],
-      blacklist: ContactReduxPersistBlackList,
-    },
-    contactReducer,
-  ),
-  COINBASE: persistReducer<CoinbaseState, CoinbaseActionType>(
-    {
-      ...basePersistConfig,
-      key: 'COINBASE',
-      blacklist: CoinbaseReduxPersistBlackList,
-    },
-    coinbaseReducer,
-  ),
-  WALLET_CONNECT: persistReducer<
-    WalletConnectV2State,
-    WalletConnectV2ActionType
-  >(
-    {
-      ...basePersistConfig,
-      key: 'WALLET_CONNECT',
-      blacklist: [],
-    },
-    walletConnectReducer,
-  ),
-  WALLET_CONNECT_V2: persistReducer<
-    WalletConnectV2State,
-    WalletConnectV2ActionType
-  >(
-    {
-      ...basePersistConfig,
-      key: 'WALLET_CONNECT_V2',
-      blacklist: walletConnectV2ReduxPersistBlackList,
-    },
-    walletConnectV2Reducer,
-  ),
+  APP: appReducer,
+  BITPAY_ID: bitPayIdReducer,
+  BUY_CRYPTO: buyCryptoReducer,
+  CARD: cardReducer,
+  LOCATION: locationReducer,
+  LOG: logReducer,
+  SHOP: shopReducer,
+  SWAP_CRYPTO: swapCryptoReducer,
+  WALLET: walletReducer,
+  WALLET_BACKUP: walletBackupReducer,
+  RATE: rateReducer,
+  CONTACT: contactReducer,
+  COINBASE: coinbaseReducer,
+  WALLET_CONNECT: walletConnectReducer,
+  WALLET_CONNECT_V2: walletConnectV2Reducer,
 };
 
 const rootReducer = combineReducers(reducers);
@@ -311,27 +175,32 @@ const getStore = () => {
     ...basePersistConfig,
     key: 'root',
     transforms: [
-      createTransform(
-        (inboundState: any, key: keyof typeof reducerPersistBlackLists) => {
-          // Clear out nested blacklisted fields before encrypting and persisting
-          if (Object.keys(reducerPersistBlackLists).includes(key)) {
-            const reducerPersistBlackList = reducerPersistBlackLists[key];
-            const fieldOverrides = (reducerPersistBlackList as string[]).reduce(
-              (allFields, field) => ({...allFields, ...{[field]: undefined}}),
-              {},
-            );
-            return {...inboundState, ...fieldOverrides};
-          }
-          return inboundState;
-        },
-      ),
+      bindWalletKeys,
+      transformContacts,
+      createTransform<RootState, RootState, RootState>((inboundState, key) => {
+        // Clear out nested blacklisted fields before encrypting and persisting
+        if (typeof key === 'string' && reducerPersistBlackLists[key]) {
+          const reducerPersistBlackList = reducerPersistBlackLists[key];
+          const fieldOverrides = (reducerPersistBlackList as string[]).reduce(
+            (allFields, field) => ({...allFields, ...{[field]: undefined}}),
+            {},
+          );
+
+          return {...inboundState, ...fieldOverrides};
+        }
+
+        return inboundState;
+      }),
       encryptTransform({
         secretKey: getUniqueId(),
         onError: err => {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
-          LogActions.persistLog(
-            LogActions.error(`Encrypt transform failed - ${errStr}`),
+
+          store.dispatch(
+            LogActions.persistLog(
+              LogActions.error(`Encrypt transform failed - ${errStr}`),
+            ),
           );
         },
       }),

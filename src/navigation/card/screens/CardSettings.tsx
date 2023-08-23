@@ -1,8 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView, View} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {ScrollView, View, TouchableOpacity} from 'react-native';
 import Animated, {
   Easing,
   FadeOutLeft,
@@ -10,8 +9,8 @@ import Animated, {
   SlideInLeft,
   SlideInRight,
 } from 'react-native-reanimated';
-import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
@@ -22,6 +21,7 @@ import {useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import SettingsList from '../components/CardSettingsList';
 import SettingsSlide from '../components/CardSettingsSlide';
+import {throttle} from 'lodash';
 
 export type CardSettingsParamList = {
   id: string;
@@ -55,7 +55,8 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   }, []);
   const {id} = route.params;
   const {t} = useTranslation();
-  const carouselRef = useRef<Carousel<Card>>(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const currentGroup = useAppSelector(selectCardGroups).find(g =>
     g.some(c => c.id === id),
   );
@@ -86,25 +87,36 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   );
   const [activeCard, setActiveCard] = useState(cardsToShow[initialIdx]);
 
-  const onCardChange = (idx: number) => {
-    const nextCard = cardsToShow[idx];
+  const throttleOnActiveSlideChange = useMemo(
+    () =>
+      throttle((index: number) => {
+        const nextCard = cardsToShow[Math.round(index)];
 
-    if (nextCard.cardType) {
-      setActiveCard(nextCard);
+        if (nextCard.cardType) {
+          setActiveCard(nextCard);
+        }
+        setActiveSlideIndex(Math.round(index));
+      }, 300),
+    [],
+  );
+
+  const onCardChange = (_: number, index: number) => {
+    if (Math.round(index) !== activeSlideIndex) {
+      throttleOnActiveSlideChange(index);
     }
   };
 
   const onVirtualPress = useCallback(() => {
     if (virtualCard) {
       setActiveCard(virtualCard);
-      carouselRef.current?.snapToItem(0);
+      carouselRef.current?.scrollTo({index: 0});
     }
   }, [virtualCard]);
 
   const onPhysicalPress = useCallback(() => {
     if (physicalCard) {
       setActiveCard(physicalCard);
-      carouselRef.current?.snapToItem(1);
+      carouselRef.current?.scrollTo({index: 1});
     }
   }, [physicalCard]);
 
@@ -158,18 +170,32 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           ) : null}
         </CardSettingsHeader>
       </CardSettingsContainer>
-      <Carousel<Card>
-        ref={carouselRef}
-        data={cardsToShow}
+      <Carousel
+        loop={false}
+        mode="parallax"
+        modeConfig={{
+          parallaxScrollingScale: 1,
+          parallaxScrollingOffset: 0,
+          parallaxAdjacentItemScale: 0.9,
+        }}
+        style={{
+          width: WIDTH,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        autoFillData={false}
         vertical={false}
-        firstItem={initialIdx}
-        itemWidth={CARD_WIDTH}
-        sliderWidth={WIDTH}
+        width={CARD_WIDTH}
+        height={CARD_WIDTH / 1.5}
+        autoPlay={false}
+        data={cardsToShow}
+        ref={carouselRef}
+        enabled={true}
+        scrollAnimationDuration={1000}
+        onProgressChange={onCardChange}
         renderItem={renderSettingsSlide}
-        onScrollIndexChanged={onCardChange}
-        layout="default"
       />
-
       <CardSettingsContainer>
         {cardsToShow.map(c => {
           const isActive = c.id === activeCard.id;

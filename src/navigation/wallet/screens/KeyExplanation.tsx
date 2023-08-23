@@ -1,7 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useRef, useState} from 'react';
-import Carousel, {Pagination} from 'react-native-snap-carousel';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -10,12 +10,14 @@ import {
   CtaContainerAbsolute,
   WIDTH,
 } from '../../../components/styled/Containers';
-import {Action} from '../../../styles/colors';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import OnboardingSlide from '../../onboarding/components/OnboardingSlide';
 import {OnboardingImage} from '../../onboarding/components/Containers';
 import {WalletStackParamList} from '../WalletStack';
 import {useTranslation} from 'react-i18next';
+import {useSharedValue} from 'react-native-reanimated';
+import PaginationDots from '../../../components/pagination-dots/PaginationDots';
+import throttle from 'lodash.throttle';
 
 type KeyExplanationScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -85,7 +87,7 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const themeType = useThemeType();
-  const ref = useRef(null);
+  const ref = useRef<ICarouselInstance>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   const keyExplanationSlides = [
@@ -112,46 +114,52 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
     },
   ];
 
+  const throttleOnActiveSlideChange = useMemo(
+    () =>
+      throttle((index: number) => {
+        setActiveSlideIndex(Math.round(index));
+      }, 300),
+    [],
+  );
+
+  const progressValue = useSharedValue<number>(0);
+
   return (
     <KeyExplanationContainer>
       <CarouselContainer>
         <Carousel
+          loop={false}
           vertical={false}
-          layout={'default'}
-          useExperimentalSnap={true}
+          width={WIDTH}
+          height={Math.round(WIDTH) * 1.5}
+          autoPlay={false}
           data={keyExplanationSlides}
-          renderItem={slideProps => <OnboardingSlide {...slideProps} />}
+          pagingEnabled={true}
+          snapEnabled={true}
           ref={ref}
-          sliderWidth={WIDTH}
-          itemWidth={Math.round(WIDTH)}
-          onScrollIndexChanged={(index: number) => {
-            haptic('impactLight');
-            setActiveSlideIndex(index);
+          scrollAnimationDuration={1000}
+          onProgressChange={(_, index) => {
+            if (Math.round(index) !== activeSlideIndex) {
+              throttleOnActiveSlideChange(index);
+            }
+            progressValue.value = index;
           }}
-          // @ts-ignore
-          disableIntervalMomentum={true}
+          renderItem={slideProps => <OnboardingSlide {...slideProps} />}
         />
       </CarouselContainer>
       <CtaContainerAbsolute>
         <Row>
-          <Pagination
-            dotsLength={keyExplanationSlides.length}
-            activeDotIndex={activeSlideIndex}
-            tappableDots={true}
-            carouselRef={ref}
-            animatedDuration={100}
-            animatedFriction={100}
-            animatedTension={100}
-            dotStyle={{
-              backgroundColor: Action,
-              width: 15,
-              height: 15,
-              borderRadius: 10,
-              marginHorizontal: 1,
-            }}
-            inactiveDotOpacity={0.4}
-            inactiveDotScale={0.5}
-          />
+          {[...Array(keyExplanationSlides.length)].map((_, index) => {
+            return (
+              <PaginationDots
+                animValue={progressValue}
+                index={index}
+                key={index}
+                isRotate={false}
+                length={keyExplanationSlides.length}
+              />
+            );
+          })}
         </Row>
         <ActionContainer>
           <Button
@@ -161,7 +169,7 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
                 navigation.goBack();
               } else {
                 // @ts-ignore
-                ref.current.snapToNext();
+                ref.current.next();
               }
             }}>
             {activeSlideIndex === keyExplanationSlides.length - 1
