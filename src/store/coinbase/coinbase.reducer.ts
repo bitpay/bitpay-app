@@ -425,6 +425,6 @@ export const coinbaseReducer = (
       };
 
     default:
-      return {...state};
+      return state;
   }
 };
