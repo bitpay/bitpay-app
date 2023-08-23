@@ -498,6 +498,7 @@
   "The amount entered is lower than the minimum allowed: ": "El monto introducido es inferior al mínimo permitido: ",
   "Use Min Amount": "Usar monto mínimo",
   "Our partner Changelly is not currently available. Please try again later.": "Nuestro socio Changelly no esta disponible en este momento. Por favor, intenta más tarde.",
+  "Changelly has temporarily disabled fixed-rate swaps for the selected wallet (selectedCoin-selectedChain). If you have further questions please reach out to them.": "Changelly has temporarily disabled fixed-rate swaps for the selected wallet ({{selectedCoin}}-{{selectedChain}}). If you have further questions please reach out to them.",
   "From": "De",
   "Select Wallet": "Seleccionar billetera",
   "Enter Amount": "Ingrese Valor",

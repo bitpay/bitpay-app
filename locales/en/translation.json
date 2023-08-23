@@ -508,6 +508,7 @@
   "The amount entered is lower than the minimum allowed: ": "The amount entered is lower than the minimum allowed: ",
   "Use Min Amount": "Use Min Amount",
   "Our partner Changelly is not currently available. Please try again later.": "Our partner Changelly is not currently available. Please try again later.",
+  "Changelly has temporarily disabled fixed-rate swaps for the selected wallet (selectedCoin-selectedChain). If you have further questions please reach out to them.": "Changelly has temporarily disabled fixed-rate swaps for the selected wallet ({{selectedCoin}}-{{selectedChain}}). If you have further questions please reach out to them.",
   "From": "From",
   "Select Wallet": "Select Wallet",
   "Enter Amount": "Enter Amount",
