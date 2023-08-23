@@ -75,55 +75,58 @@ export const ShopOnline = ({
 
   const FullIntegrationsList = () => (
     <>
-      {categories.map(category => (
-        <View key={category.displayName}>
-          <SectionContainer>
-            <SectionHeaderContainer>
-              <SectionHeader>{category.displayName}</SectionHeader>
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  navigation.navigate('Merchant', {
-                    screen: MerchantScreens.MERCHANT_CATEGORY,
-                    params: {
-                      category,
-                      integrations: category.integrations,
-                    },
-                  });
-                }}>
-                <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
-              </TouchableWithoutFeedback>
-            </SectionHeaderContainer>
-          </SectionContainer>
-          <ShopCarouselList
-            items={category.integrations.slice(0, 5)}
-            itemComponent={(item: ShopCarouselItem) => {
-              const categoryHasDiscount = category.integrations.some(
-                merchant => !!merchant.discount,
-              );
-              const merchantItem = item as DirectIntegrationApiObject;
-              return (
-                <MerchantItem
-                  merchant={merchantItem}
-                  marginLeft={horizontalPadding}
-                  height={categoryHasDiscount ? 200 : 168}
-                  width={133}
-                />
-              );
-            }}
-            itemWidth={146}
-            maxItemsPerColumn={1}
-            screenWidth={WIDTH}
-            onItemPress={item =>
-              navigation.navigate('Merchant', {
-                screen: MerchantScreens.MERCHANT_DETAILS,
-                params: {
-                  directIntegration: item as DirectIntegrationApiObject,
-                },
-              })
-            }
-          />
-        </View>
-      ))}
+      {categories.map(category => {
+        const categoryHasDiscount = category.integrations.some(
+          merchant => !!merchant.discount,
+        );
+        return (
+          <View key={category.displayName}>
+            <SectionContainer>
+              <SectionHeaderContainer>
+                <SectionHeader>{category.displayName}</SectionHeader>
+                <TouchableWithoutFeedback
+                  onPress={() => {
+                    navigation.navigate('Merchant', {
+                      screen: MerchantScreens.MERCHANT_CATEGORY,
+                      params: {
+                        category,
+                        integrations: category.integrations,
+                      },
+                    });
+                  }}>
+                  <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
+                </TouchableWithoutFeedback>
+              </SectionHeaderContainer>
+            </SectionContainer>
+            <ShopCarouselList
+              itemHeight={categoryHasDiscount ? 205 : 173}
+              items={category.integrations.slice(0, 5)}
+              itemComponent={(item: ShopCarouselItem) => {
+                const merchantItem = item as DirectIntegrationApiObject;
+                return (
+                  <MerchantItem
+                    merchant={merchantItem}
+                    marginLeft={horizontalPadding}
+                    height={categoryHasDiscount ? 200 : 168}
+                    width={133}
+                  />
+                );
+              }}
+              itemWidth={146}
+              maxItemsPerColumn={1}
+              screenWidth={WIDTH}
+              onItemPress={item =>
+                navigation.navigate('Merchant', {
+                  screen: MerchantScreens.MERCHANT_DETAILS,
+                  params: {
+                    directIntegration: item as DirectIntegrationApiObject,
+                  },
+                })
+              }
+            />
+          </View>
+        );
+      })}
     </>
   );
 

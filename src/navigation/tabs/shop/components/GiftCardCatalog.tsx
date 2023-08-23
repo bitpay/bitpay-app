@@ -61,6 +61,7 @@ const Curations = ({
             )}
             itemUnderlayColor={underlayColor}
             itemWidthInLastSlide={WIDTH}
+            itemHeight={85}
             maxItemsPerColumn={3}
             screenWidth={WIDTH}
             onItemPress={item => {
