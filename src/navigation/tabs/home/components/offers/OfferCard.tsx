@@ -58,16 +58,21 @@ const OfferCard: React.FC<OfferCardProps> = props => {
 
     try {
       const handled = await urlEventHandler({url});
-      const merchantName = getRouteParam(url, 'merchant');
-      if (handled && merchantName) {
-        dispatch(
-          Analytics.track('Clicked Shop with Crypto', {
-            context: 'OfferCard',
-            merchantName,
-          }),
-        );
+
+      if (handled) {
+        const merchantName = getRouteParam(url, 'merchant');
+
+        if (merchantName) {
+          dispatch(
+            Analytics.track('Clicked Shop with Crypto', {
+              context: 'OfferCard',
+              merchantName,
+            }),
+          );
+        }
+
+        return;
       }
-      return;
     } catch (err) {
       dispatch(
         LogActions.debug('Something went wrong parsing offer URL: ' + url),
