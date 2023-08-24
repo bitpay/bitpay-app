@@ -49,7 +49,7 @@ interface updatePaymentRequestBanxa {
 interface removePaymentRequestBanxa {
   type: typeof BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_BANXA;
   payload: {
-    banxaOrderId: string;
+    banxaExternalId: string;
   };
 }
 

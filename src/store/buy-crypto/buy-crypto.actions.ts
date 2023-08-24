@@ -28,7 +28,7 @@ export const updatePaymentRequestBanxa = (payload: {
 });
 
 export const removePaymentRequestBanxa = (payload: {
-  banxaOrderId: string;
+  banxaExternalId: string;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_BANXA,
   payload,

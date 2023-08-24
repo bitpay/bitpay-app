@@ -42,7 +42,7 @@ export const buyCryptoReducer = (
         ...state,
         banxa: {
           ...state.banxa,
-          [banxaPaymentData.order_id]: banxaPaymentData,
+          [banxaPaymentData.external_id]: banxaPaymentData,
         },
       };
 
@@ -50,82 +50,49 @@ export const buyCryptoReducer = (
       const {banxaIncomingData} = action.payload;
 
       if (
-        banxaIncomingData.banxaOrderId &&
-        state.banxa[banxaIncomingData.banxaOrderId]
+        banxaIncomingData.banxaExternalId &&
+        state.banxa[banxaIncomingData.banxaExternalId]
       ) {
-        state.banxa[banxaIncomingData.banxaOrderId] = {
-          ...state.banxa[banxaIncomingData.banxaOrderId],
+        state.banxa[banxaIncomingData.banxaExternalId] = {
+          ...state.banxa[banxaIncomingData.banxaExternalId],
+          order_id:
+            banxaIncomingData.banxaOrderId ??
+            state.banxa[banxaIncomingData.banxaExternalId].order_id,
           status:
             banxaIncomingData.status ??
-            state.banxa[banxaIncomingData.banxaOrderId].status,
+            state.banxa[banxaIncomingData.banxaExternalId].status,
           crypto_amount:
             banxaIncomingData.cryptoAmount ??
-            state.banxa[banxaIncomingData.banxaOrderId].crypto_amount,
+            state.banxa[banxaIncomingData.banxaExternalId].crypto_amount,
           fiat_total_amount:
             banxaIncomingData.fiatTotalAmount ??
-            state.banxa[banxaIncomingData.banxaOrderId].fiat_total_amount,
+            state.banxa[banxaIncomingData.banxaExternalId].fiat_total_amount,
           fiat_base_amount:
             banxaIncomingData.fiatBaseAmount ??
-            state.banxa[banxaIncomingData.banxaOrderId].fiat_base_amount,
+            state.banxa[banxaIncomingData.banxaExternalId].fiat_base_amount,
           coin:
             banxaIncomingData.coin ??
-            state.banxa[banxaIncomingData.banxaOrderId].coin,
+            state.banxa[banxaIncomingData.banxaExternalId].coin,
           chain:
             banxaIncomingData.chain ??
-            state.banxa[banxaIncomingData.banxaOrderId].chain,
+            state.banxa[banxaIncomingData.banxaExternalId].chain,
           fiat_total_amount_currency:
             banxaIncomingData.fiatTotalAmountCurrency ??
-            state.banxa[banxaIncomingData.banxaOrderId]
+            state.banxa[banxaIncomingData.banxaExternalId]
               .fiat_total_amount_currency,
           ref:
             banxaIncomingData.ref ??
-            state.banxa[banxaIncomingData.banxaOrderId].ref,
+            state.banxa[banxaIncomingData.banxaExternalId].ref,
           transaction_id:
             banxaIncomingData.transactionId ??
-            state.banxa[banxaIncomingData.banxaOrderId].transaction_id,
+            state.banxa[banxaIncomingData.banxaExternalId].transaction_id,
         };
-        // if (banxaIncomingData.status) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].status =
-        //     banxaIncomingData.status;
-        // }
-        // if (banxaIncomingData.cryptoAmount) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].crypto_amount =
-        //     banxaIncomingData.cryptoAmount;
-        // }
-        // if (banxaIncomingData.fiatTotalAmount) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].fiat_total_amount =
-        //     banxaIncomingData.fiatTotalAmount;
-        // }
-        // if (banxaIncomingData.fiatBaseAmount) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].fiat_base_amount =
-        //     banxaIncomingData.fiatBaseAmount;
-        // }
-        // if (banxaIncomingData.coin) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].coin =
-        //     banxaIncomingData.coin;
-        // }
-        // if (banxaIncomingData.chain) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].chain =
-        //     banxaIncomingData.chain;
-        // }
-        // if (banxaIncomingData.fiatTotalAmountCurrency) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].fiat_total_amount_currency =
-        //     banxaIncomingData.fiatTotalAmountCurrency;
-        // }
-        // if (banxaIncomingData.ref) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].ref =
-        //     banxaIncomingData.ref;
-        // }
-        // if (banxaIncomingData.transactionId) {
-        //   state.banxa[banxaIncomingData.banxaOrderId].transaction_id =
-        //     banxaIncomingData.transactionId;
-        // }
         return {
           ...state,
           banxa: {
             ...state.banxa,
-            [banxaIncomingData.banxaOrderId]:
-              state.banxa[banxaIncomingData.banxaOrderId],
+            [banxaIncomingData.banxaExternalId]:
+              state.banxa[banxaIncomingData.banxaExternalId],
           },
         };
       } else {
@@ -133,9 +100,9 @@ export const buyCryptoReducer = (
       }
 
     case BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_BANXA:
-      const {banxaOrderId} = action.payload;
+      const {banxaExternalId} = action.payload;
       const banxaPaymentRequestsList = {...state.banxa};
-      delete banxaPaymentRequestsList[banxaOrderId];
+      delete banxaPaymentRequestsList[banxaExternalId];
 
       return {
         ...state,

@@ -200,7 +200,7 @@ export interface BanxaStatus {
 
 export const banxaGetStatusDetails = (status: string): BanxaStatus => {
   let statusDescription, statusTitle;
-  // pendingPayment | waitingPayment | paymentReceived | inProgress | coinTransferred | cancelled | declined | expired | complete | refunded
+  // pendingPayment | waitingPayment | paymentReceived | inProgress | coinTransferred | cancelled | declined | expired | failed | complete | refunded
 
   switch (status) {
     case 'paymentRequestSent':
@@ -259,6 +259,12 @@ export const banxaGetStatusDetails = (status: string): BanxaStatus => {
       statusTitle = t('Order expired');
       statusDescription = t(
         'The order has been created, but the customer has not made payment for the order within the expiry time.',
+      );
+      break;
+    case 'failed':
+      statusTitle = t('Order failed');
+      statusDescription = t(
+        'The order has failed at some point in the process.',
       );
       break;
     case 'complete':

@@ -1408,6 +1408,7 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     const destinationChain = selectedWallet.chain;
+    const banxaExternalId = uuid.v4().toString();
 
     dispatch(
       Analytics.track('Requested Crypto Purchase', {
@@ -1429,9 +1430,9 @@ const BuyCryptoOffers: React.FC = () => {
       target: getBanxaCoinFormat(coin),
       wallet_address: address,
       blockchain: getBanxaChainFormat(selectedWallet.chain),
-      return_url_on_success: `${APP_DEEPLINK_PREFIX}banxa`,
-      return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled`,
-      return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed`,
+      return_url_on_success: `${APP_DEEPLINK_PREFIX}banxa?externalId=${banxaExternalId}&status=pending`,
+      return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled?externalId=${banxaExternalId}&status=cancelled`,
+      return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed?externalId=${banxaExternalId}&status=failed`,
     };
 
     let data: BanxaCreateOrderData, banxaOrderData: BanxaOrderData;
@@ -1464,6 +1465,7 @@ const BuyCryptoOffers: React.FC = () => {
       fiat_total_amount: offers.banxa.amountCost!,
       fiat_total_amount_currency: offers.banxa.fiatCurrency,
       order_id: banxaOrderData.id,
+      external_id: banxaExternalId,
       status: 'paymentRequestSent',
       user_id: selectedWallet.id,
     };

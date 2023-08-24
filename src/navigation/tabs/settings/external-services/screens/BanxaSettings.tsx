@@ -32,7 +32,8 @@ import {useTranslation} from 'react-i18next';
 
 export interface BanxaSettingsProps {
   incomingPaymentRequest: {
-    banxaOrderId: string;
+    banxaExternalId: string;
+    banxaOrderId?: string;
     walletId?: string;
     status?: string;
   };
@@ -55,7 +56,7 @@ const BanxaSettings: React.FC = () => {
   useEffect(() => {
     if (incomingPaymentRequest) {
       logger.debug(
-        `Coming from payment request: banxaOrderId: ${incomingPaymentRequest.banxaOrderId}`,
+        `Coming from payment request: banxaExternalId: ${incomingPaymentRequest.banxaExternalId}`,
       );
     }
   }, []);
@@ -105,6 +106,11 @@ const BanxaSettings: React.FC = () => {
                       {pr.status === 'expired' && (
                         <PrTxtStatus style={{color: '#df5264'}}>
                           {t('Payment request expired')}
+                        </PrTxtStatus>
+                      )}
+                      {pr.status === 'failed' && (
+                        <PrTxtStatus style={{color: '#df5264'}}>
+                          {t('Payment request failed')}
                         </PrTxtStatus>
                       )}
                       {pr.status === 'cancelled' && (

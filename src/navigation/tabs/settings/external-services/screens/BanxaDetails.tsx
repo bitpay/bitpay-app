@@ -54,6 +54,7 @@ import {SlateDark, White} from '../../../../../styles/colors';
 import {Br} from '../../../../../components/styled/Containers';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Link} from '../../../../../components/styled/Text';
+import cloneDeep from 'lodash.clonedeep';
 
 export interface BanxaDetailsProps {
   paymentRequest: BanxaPaymentData;
@@ -136,18 +137,26 @@ const BanxaDetails: React.FC = () => {
             `Updating fiat_total_amount from: ${paymentRequest.fiat_total_amount} to: ${orderData.fiat_amount}`,
           );
           paymentRequest.fiat_total_amount = orderData.fiat_amount;
+          let fiatBaseAmount: number = cloneDeep(orderData.fiat_amount);
           if (
             orderData.payment_fee &&
             typeof orderData.payment_fee === 'number' &&
             orderData.payment_fee >= 0
           ) {
-            const fiatBaseAmount =
-              orderData.fiat_amount - orderData.payment_fee;
-            logger.debug(
-              `Updating fiat_base_amount from: ${paymentRequest.fiat_base_amount} to: ${fiatBaseAmount}`,
-            );
+            fiatBaseAmount = orderData.fiat_amount - orderData.payment_fee;
             paymentRequest.fiat_base_amount = fiatBaseAmount;
           }
+          if (
+            orderData.network_fee &&
+            typeof orderData.network_fee === 'number' &&
+            orderData.network_fee >= 0
+          ) {
+            fiatBaseAmount = orderData.fiat_amount - orderData.network_fee;
+            paymentRequest.fiat_base_amount = fiatBaseAmount;
+          }
+          logger.debug(
+            `Updating fiat_base_amount from: ${paymentRequest.fiat_base_amount} to: ${fiatBaseAmount}`,
+          );
           shouldUpdate = true;
         }
         if (
@@ -224,6 +233,7 @@ const BanxaDetails: React.FC = () => {
 
         if (shouldUpdate) {
           const stateParams: BanxaIncomingData = {
+            banxaExternalId: paymentRequest.external_id,
             banxaOrderId: paymentRequest.order_id,
             status: paymentRequest.status,
             cryptoAmount: paymentRequest.crypto_amount,
@@ -366,9 +376,13 @@ const BanxaDetails: React.FC = () => {
         {paymentRequest.status ? (
           <LabelTip type="info">
             <LabelTipText>{status.statusDescription}</LabelTipText>
-            {['declined', 'expired', 'refunded', 'cancelled'].includes(
-              paymentRequest.status,
-            ) ? (
+            {[
+              'declined',
+              'expired',
+              'refunded',
+              'cancelled',
+              'failed',
+            ].includes(paymentRequest.status) ? (
               <>
                 <Br />
                 <LabelTipText>{t('Having problems with Banxa?')}</LabelTipText>
@@ -536,7 +550,7 @@ const BanxaDetails: React.FC = () => {
                       dispatch(dismissBottomNotificationModal());
                       dispatch(
                         BuyCryptoActions.removePaymentRequestBanxa({
-                          banxaOrderId: paymentRequest.order_id,
+                          banxaExternalId: paymentRequest.external_id,
                         }),
                       );
                       navigation.goBack();

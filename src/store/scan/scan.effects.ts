@@ -1059,19 +1059,19 @@ const handleBanxaUri =
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
 
-    const banxaOrderId = getParameterByName('orderId', res);
-    if (!banxaOrderId) {
-      dispatch(LogActions.warn('No banxaOrderId present. Do not redir'));
+    const banxaExternalId = getParameterByName('externalId', res);
+    if (!banxaExternalId) {
+      dispatch(LogActions.warn('No banxaExternalId present. Do not redir'));
       return;
     }
 
-    const status = getParameterByName('orderStatus', res) as BanxaStatusKey;
-    const ref = Number(getParameterByName('orderRef', res));
+    const status =
+      (getParameterByName('orderStatus', res) as BanxaStatusKey) ??
+      (getParameterByName('status', res) as BanxaStatusKey);
 
     const stateParams: BanxaIncomingData = {
-      banxaOrderId,
+      banxaExternalId,
       status,
-      ref,
     };
 
     dispatch(
@@ -1081,7 +1081,7 @@ const handleBanxaUri =
     );
 
     const {BUY_CRYPTO} = getState();
-    const order = BUY_CRYPTO.banxa[banxaOrderId];
+    const order = BUY_CRYPTO.banxa[banxaExternalId];
     if (order) {
       dispatch(
         Analytics.track('Purchased Buy Crypto', {

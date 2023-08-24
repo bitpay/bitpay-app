@@ -14,6 +14,7 @@ export type BanxaStatusKey =
   | 'cancelled'
   | 'declined'
   | 'expired'
+  | 'failed'
   | 'complete'
   | 'refunded';
 
@@ -28,6 +29,7 @@ export interface BanxaPaymentData {
   fiat_total_amount: number;
   fiat_total_amount_currency: string;
   order_id: string; // order id provided by Banxa
+  external_id: string; // bitpay-app custom id
   status: BanxaStatusKey;
   user_id: string;
   transaction_id?: string;
@@ -35,8 +37,8 @@ export interface BanxaPaymentData {
 }
 
 export interface BanxaIncomingData {
-  // TODO: review this
-  banxaOrderId: string;
+  banxaExternalId: string;
+  banxaOrderId?: string;
   walletId?: string;
   status?: BanxaStatusKey;
   cryptoAmount?: number;
