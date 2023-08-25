@@ -12,7 +12,8 @@ export type SupportedEthereumTokens =
   | 'shib_e'
   | 'ape_e'
   | 'euroc_e'
-  | 'matic_e';
+  | 'matic_e'
+  | 'pyusd_e';
 export type SupportedMaticTokens =
   | 'usdc_m'
   | 'busd_m'
@@ -428,6 +429,38 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  pyusd_e: {
+    name: 'PayPal USD',
+    chain: 'eth',
+    coin: 'pyusd',
+    unitInfo: {
+      unitName: 'PYUSD',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'pyusd',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/pyusd_e',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
