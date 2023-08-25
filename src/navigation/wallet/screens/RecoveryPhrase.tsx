@@ -151,13 +151,12 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const onPressHeaderCancelRef = useRef(onPressHeaderCancel);
   onPressHeaderCancelRef.current = onPressHeaderCancel;
 
-  const headerTitle = useMemo(
-    () => <HeaderTitle>{t('Recovery Phrase')}</HeaderTitle>,
-    [t],
-  );
+  const headerTitle = useMemo(() => {
+    return () => <HeaderTitle>{t('Recovery Phrase')}</HeaderTitle>;
+  }, [t]);
 
   const headerLeft = useMemo(() => {
-    return (
+    return () => (
       <TouchableOpacity
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
@@ -168,7 +167,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   }, []);
 
   const headerRight = useMemo(() => {
-    return (
+    return () => (
       <HeaderRightContainer>
         <Button
           accessibilityLabel="cancel-button"
