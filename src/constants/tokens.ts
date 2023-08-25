@@ -77,6 +77,12 @@ export const BitpaySupportedEthereumTokenOpts: TokenOptsType = {
     decimals: 18,
     address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
   },
+  pyusd_e: {
+    name: 'PayPal USD',
+    symbol: 'PYUSD',
+    decimals: 6,
+    address: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+  },
 };
 
 export const BitpaySupportedMaticTokenOpts: TokenOptsType = {

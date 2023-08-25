@@ -15,6 +15,7 @@ import ShibIcon from '../../assets/img/currencies/shib.svg';
 import ApeIcon from '../../assets/img/currencies/ape.svg';
 import EurocIcon from '../../assets/img/currencies/euroc.svg';
 import MaticIcon from '../../assets/img/currencies/matic.svg';
+import PyusdIcon from '../../assets/img/currencies/pyusd.svg';
 import {ImageSourcePropType} from 'react-native';
 import {orderBy} from 'lodash';
 
@@ -52,6 +53,7 @@ export const CurrencyListIcons: {
   ape_e: props => <ApeIcon {...props} />,
   euroc_e: props => <EurocIcon {...props} />,
   matic_e: props => <MaticIcon {...props} />,
+  pyusd_e: props => <PyusdIcon {...props} />,
   usdc_m: props => <UsdcIcon {...props} />,
   busd_m: props => <BusdIcon {...props} />,
   dai_m: props => <DaiIcon {...props} />,
@@ -229,6 +231,17 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     chain: 'eth',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/WBTC.png'),
+    badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
+    badgeUri: CurrencyListIcons.eth,
+  },
+  {
+    id: Math.random().toString(),
+    img: CurrencyListIcons.pyusd_e,
+    currencyName: 'PayPal USD',
+    currencyAbbreviation: 'pyusd',
+    chain: 'eth',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/PYUSD.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
     badgeUri: CurrencyListIcons.eth,
   },
