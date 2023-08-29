@@ -1,10 +1,5 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {
-  Platform,
-  ScrollView,
-  View,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import {Platform, ScrollView, View, TouchableOpacity} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
@@ -19,6 +14,7 @@ import {
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {
+  ActiveOpacity,
   CtaContainerAbsolute,
   HEIGHT,
   WIDTH,
@@ -356,13 +352,15 @@ const BuyGiftCard = ({
                 </SupportedAmounts>
               </DenomSelectionContainer>
             ) : (
-              <TouchableWithoutFeedback onPress={() => buyGiftCard()}>
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={() => buyGiftCard()}>
                 <Amount>
                   {formatFiatAmount(0, cardConfig.currency, {
                     currencyDisplay: 'symbol',
                   })}
                 </Amount>
-              </TouchableWithoutFeedback>
+              </TouchableOpacity>
             )}
           </AmountContainer>
         </GradientBox>

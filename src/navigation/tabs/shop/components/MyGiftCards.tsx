@@ -1,7 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import {TouchableWithoutFeedback} from 'react-native';
 import styled from 'styled-components/native';
 import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
@@ -13,7 +12,7 @@ import {
   SectionHeaderButton,
   SectionHeaderContainer,
 } from './styled/ShopTabComponents';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {BaseText} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useAppSelector} from '../../../../utils/hooks';
@@ -24,6 +23,7 @@ import {
 } from '../../../../lib/gift-cards/gift-card';
 import {ShopScreens} from '../ShopStack';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from 'react-native';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: -10px;
@@ -42,6 +42,8 @@ const NoGiftCards = styled.View`
 const NoGiftCardsText = styled(BaseText)`
   color: ${({theme}) => (theme.dark ? White : SlateDark)};
 `;
+
+const giftCardHeight = 67;
 
 const MyGiftCards = ({
   supportedGiftCards,
@@ -95,8 +97,13 @@ const MyGiftCards = ({
   }, [archivedGiftCards.length]);
 
   useEffect(() => {
-    setTimeout(() => carouselRef.current?.scrollTo({index: slideIndex}), 50);
+    setTimeout(
+      () => carouselRef.current?.scrollTo({index: slideIndex, animated: true}),
+      50,
+    );
   }, [slideIndex]);
+
+  const longestSlideLength = Math.max(...slides.map(slide => slide.length));
 
   return (
     <>
@@ -110,25 +117,28 @@ const MyGiftCards = ({
           {archivedGiftCards.length ? (
             <>
               {slideIndex === 0 ? (
-                <TouchableWithoutFeedback
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
                   onPress={() => seeArchivedGiftCards()}>
                   <SectionHeaderButton>{t('See Archived')}</SectionHeaderButton>
-                </TouchableWithoutFeedback>
+                </TouchableOpacity>
               ) : (
-                <TouchableWithoutFeedback onPress={() => setSlideIndex(0)}>
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => setSlideIndex(0)}>
                   <SectionHeaderButton>{t('See Active')}</SectionHeaderButton>
-                </TouchableWithoutFeedback>
+                </TouchableOpacity>
               )}
             </>
           ) : null}
         </MyGiftCardsHeaderContainer>
       </SectionContainer>
       <Carousel
+        ref={carouselRef}
         loop={false}
         vertical={false}
-        style={{width: '100%', paddingHorizontal: horizontalPadding}}
         width={WIDTH}
-        height={WIDTH / 5}
+        height={longestSlideLength * giftCardHeight}
         autoPlay={false}
         data={slides}
         enabled={false}
@@ -140,7 +150,9 @@ const MyGiftCards = ({
                   const cardConfig = supportedGiftCardMap[giftCard.name];
                   return (
                     cardConfig && (
-                      <TouchableWithoutFeedback
+                      <TouchableOpacity
+                        style={{paddingHorizontal: horizontalPadding}}
+                        activeOpacity={ActiveOpacity}
                         key={giftCard.invoiceId}
                         onPress={() => {
                           navigation.navigate('GiftCard', {
@@ -156,7 +168,7 @@ const MyGiftCards = ({
                           cardConfig={cardConfig}
                           amount={giftCard.amount}
                         />
-                      </TouchableWithoutFeedback>
+                      </TouchableOpacity>
                     )
                   );
                 })}
