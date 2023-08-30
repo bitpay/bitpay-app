@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Modal, TouchableWithoutFeedback, FlatList} from 'react-native';
+import {Modal, TouchableOpacity, FlatList} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {PhoneCountryCode} from '../../../../lib/gift-cards/gift-card';
@@ -13,6 +13,7 @@ import {CloseSvg} from '../components/svg/ShopTabSvgs';
 import {Action, Cloud, LightBlack} from '../../../../styles/colors';
 import RemoteImage from './RemoteImage';
 import {useTranslation} from 'react-i18next';
+import {ActiveOpacity} from '../../../../components/styled/Containers';
 
 const ModalHeader = styled.View`
   flex-direction: row;
@@ -120,7 +121,8 @@ const PhoneCountryModal = ({
         }}
         data={searchResults}
         renderItem={({item: countryCode}: {item: PhoneCountryCode}) => (
-          <TouchableWithoutFeedback
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
             key={`${countryCode.phone}${countryCode.name}`}
             onPress={() => onSelectedPhoneCountryCode(countryCode)}>
             <CountryItem>
@@ -131,7 +133,7 @@ const PhoneCountryModal = ({
               <CountryName>{countryCode.name}</CountryName>
               <CountryCode>+{countryCode.phone}</CountryCode>
             </CountryItem>
-          </TouchableWithoutFeedback>
+          </TouchableOpacity>
         )}
         keyExtractor={item => `${item.phone}${item.name}`}
       />
