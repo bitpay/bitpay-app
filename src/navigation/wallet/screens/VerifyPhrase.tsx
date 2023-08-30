@@ -1,4 +1,10 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -32,7 +38,7 @@ import {
 } from './RecoveryPhrase';
 import {sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
-import {useDispatch} from 'react-redux';
+import {useAppDispatch} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -52,6 +58,11 @@ export interface VerifyPhraseParamList {
   context: string;
   key: Key;
   walletTermsAccepted: boolean;
+}
+
+interface WordItem {
+  word: string;
+  isActive: boolean;
 }
 
 const VerifyPhraseContainer = styled.View`
@@ -98,115 +109,139 @@ const WordSelectorText = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
+const renderItem = ({item: word, index}: {item: string; index: number}) => {
+  return (
+    <WordContainer key={index}>
+      <H2>{word}</H2>
+      <DottedBorder />
+    </WordContainer>
+  );
+};
+
 const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const {params} = route;
-  const {keyId, words: _words, context, key, walletTermsAccepted} = params;
+  const dispatch = useAppDispatch();
 
-  let words = _words.map(w => {
-    return {word: w, isActive: true};
-  });
+  const {params} = route;
+  const {keyId, context, key, walletTermsAccepted} = params;
+  const [words] = useState(() =>
+    params.words.map<WordItem>(w => {
+      return {word: w, isActive: true};
+    }),
+  );
+
+  const onPressHeaderCancel = () => {
+    haptic('impactLight');
+
+    if (context === 'settings') {
+      backupRedirect({
+        context,
+        navigation,
+        walletTermsAccepted,
+        key,
+      });
+      return;
+    }
+
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'warning',
+        title: t("Don't risk losing your money"),
+        message: t(
+          'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in order they appear.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t("I'M SURE"),
+            action: () =>
+              backupRedirect({
+                context,
+                navigation,
+                walletTermsAccepted,
+                key,
+              }),
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+  const onPressHeaderCancelRef = useRef(onPressHeaderCancel);
+  onPressHeaderCancelRef.current = onPressHeaderCancel;
+
+  const headerTitle = useMemo(() => {
+    return () => <HeaderTitle>{t('Verify your Phrase')}</HeaderTitle>;
+  }, [t]);
+
+  const headerRight = useMemo(() => {
+    return () => (
+      <HeaderRightContainer>
+        <Button
+          accessibilityLabel="cancel-button"
+          buttonType={'pill'}
+          onPress={onPressHeaderCancelRef.current}>
+          {t('Cancel')}
+        </Button>
+      </HeaderRightContainer>
+    );
+  }, [t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>{t('Verify your Phrase')}</HeaderTitle>,
-      headerRight: () => (
-        <HeaderRightContainer>
-          <Button
-            accessibilityLabel="cancel-button"
-            buttonType={'pill'}
-            onPress={() => {
-              haptic('impactLight');
-
-              if (context === 'settings') {
-                backupRedirect({
-                  context,
-                  navigation,
-                  walletTermsAccepted,
-                  key,
-                });
-                return;
-              }
-
-              dispatch(
-                AppActions.showBottomNotificationModal({
-                  type: 'warning',
-                  title: t("Don't risk losing your money"),
-                  message: t(
-                    'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in order they appear.',
-                  ),
-                  enableBackdropDismiss: true,
-                  actions: [
-                    {
-                      text: t("I'M SURE"),
-                      action: () =>
-                        backupRedirect({
-                          context,
-                          navigation,
-                          walletTermsAccepted,
-                          key,
-                        }),
-                      primary: true,
-                    },
-                  ],
-                }),
-              );
-            }}>
-            {t('Cancel')}
-          </Button>
-        </HeaderRightContainer>
-      ),
+      headerTitle,
+      headerRight,
     });
-  }, [navigation, t]);
+  }, [navigation, headerTitle, headerRight]);
 
-  const ref = useRef<ICarouselInstance>(null);
-  const shuffledWords = useRef<Array<{word: string; isActive: boolean}>>(
+  const carouselRef = useRef<ICarouselInstance>(null);
+  const shuffledWords = useRef<Array<WordItem>>(
     [...words].sort(() => Math.random() - 0.5),
   );
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-  const [attemptWords, setAttemptWords] = useState(['']);
   const [progress, setProgress] = useState(0.5);
+  const [attemptedWords, setAttemptedWords] = useState<string[]>([]);
+  const [carouselItems, setCarouselItems] = useState(['']);
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     return navigation.addListener('blur', async () => {
       await sleep(400);
-      setActiveSlideIndex(0);
-      setAttemptWords(['undefined']);
+      setAttemptedWords([]);
       setIsAnimating(false);
+      shuffledWords.current.forEach(w => (w.isActive = true));
     });
   }, [navigation]);
 
-  const wordSelected = async (value: {word: string; isActive: boolean}) => {
+  const wordSelected = async (value: WordItem) => {
     if (isAnimating) {
       return;
     }
+
+    // lock UI
+    setIsAnimating(true);
     value.isActive = false;
     haptic('impactLight');
-    // lock UI - (unlocks from onSnap event in carousel props in jsx)
-    setIsAnimating(true);
-    // update words and append empty string for next entry
-    const update = [...attemptWords.filter(w => w), value.word, ''];
+
     // store words and update index
-    setAttemptWords(update);
+    const currentAttemptedWords = attemptedWords.concat(value.word);
+    setAttemptedWords(currentAttemptedWords);
+    setCarouselItems(currentAttemptedWords.concat(''));
+
     await sleep(500);
-    setActiveSlideIndex(activeSlideIndex + 1);
-    // sleep for animation time
-    await sleep(0);
-    if (activeSlideIndex !== words.length - 1) {
-      ref.current?.next();
+
+    if (currentAttemptedWords.length < words.length) {
+      carouselRef.current?.next();
     } else {
-      // filter out empty string and compare words against real order
-      const compareWords = update.filter(w => w);
-      if (words.every((w, index) => w.word === compareWords[index])) {
+      if (words.every((w, index) => w.word === currentAttemptedWords[index])) {
         // user have already been through the backup flow no need to set the flag again
         if (context !== 'keySettings') {
           dispatch(WalletActions.setBackupComplete(keyId));
         }
+
         setProgress(1);
+
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'success',
@@ -279,23 +314,16 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
           width={WIDTH}
           height={Math.round(WIDTH) / 2}
           autoPlay={false}
-          data={attemptWords}
-          ref={ref}
-          scrollAnimationDuration={500}
+          data={carouselItems}
+          ref={carouselRef}
+          scrollAnimationDuration={250}
           onSnapToItem={() => setIsAnimating(false)}
           enabled={false}
-          renderItem={({item: word, index}: {item: string; index: number}) => {
-            return (
-              <WordContainer key={index}>
-                <H2>{word}</H2>
-                <DottedBorder />
-              </WordContainer>
-            );
-          }}
+          renderItem={renderItem}
         />
         <CountTracker>
           <CountText>
-            {activeSlideIndex}/{words.length}
+            {attemptedWords.length}/{words.length}
           </CountText>
         </CountTracker>
         <BottomContainer>
