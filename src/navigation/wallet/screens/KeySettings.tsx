@@ -120,7 +120,9 @@ const KeySettings = () => {
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
 
-  const _wallets = key.wallets;
+  const _wallets = key.wallets.filter(wallet =>
+    wallet.credentials.isComplete(),
+  );
   const coins = _wallets.filter(wallet => !wallet.credentials.token);
   const tokens = _wallets.filter(wallet => wallet.credentials.token);
   const wallets = buildNestedWalletList(
