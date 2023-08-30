@@ -73,7 +73,10 @@ const Pin = gestureHandlerRootHOC(() => {
   const dispatch = useAppDispatch();
   const {type, context, onClose} =
     useAppSelector(({APP}) => APP.pinModalConfig) || {};
-  const [pin, setPin] = useState<Array<string | undefined>>([]);
+  const [pinStatus, setPinStatus] = useState<{
+    pin: Array<string | undefined>;
+    firstPinEntered: Array<string | undefined>;
+  }>({pin: [], firstPinEntered: []});
   const [headerMargin, setHeaderMargin] = useState<string>(
     type === 'set' || onClose ? '10%' : '40%',
   );
@@ -94,17 +97,11 @@ const Pin = gestureHandlerRootHOC(() => {
   const pinBannedUntil = useAppSelector(({APP}) => APP.pinBannedUntil);
   const [attempts, setAttempts] = useState<number>(0);
 
-  // setPin
-  const [firstPinEntered, setFirstPinEntered] = useState<
-    Array<string | undefined>
-  >([]);
-
   const reset = useCallback(() => {
     setMessage(t('Please enter your PIN'));
-    setFirstPinEntered([]);
+    setPinStatus({pin: [], firstPinEntered: []});
     setAttempts(0);
-    setPin([]);
-  }, [setMessage, setFirstPinEntered, setAttempts, setPin, t]);
+  }, [setMessage, setAttempts, setPinStatus, t]);
 
   const checkPin = useCallback(
     async (pinToCheck: Array<string>) => {
@@ -116,15 +113,24 @@ const Pin = gestureHandlerRootHOC(() => {
         const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
+        reset();
         onClose?.(true);
       } else {
         setShakeDots(true);
         setMessage(t('Incorrect PIN, try again'));
-        setPin([]);
+        setPinStatus({pin: [], firstPinEntered: []});
         setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
       }
     },
-    [dispatch, setShakeDots, setMessage, setPin, setAttempts, currentPin, t],
+    [
+      dispatch,
+      setShakeDots,
+      setMessage,
+      setPinStatus,
+      setAttempts,
+      currentPin,
+      t,
+    ],
   );
 
   const gotoCreateKey = async () => {
@@ -138,11 +144,11 @@ const Pin = gestureHandlerRootHOC(() => {
   gotoCreateKeyRef.current = gotoCreateKey;
 
   const setCurrentPin = useCallback(
-    async (newPin: Array<string>) => {
+    async (newPin: {firstPinEntered: Array<string>; pin: Array<string>}) => {
       try {
-        if (isEqual(firstPinEntered, newPin)) {
+        if (isEqual(newPin.firstPinEntered, newPin.pin)) {
           dispatch(AppActions.pinLockActive(true));
-          const pinHash = hashPin(newPin);
+          const pinHash = hashPin(newPin.pin);
           dispatch(AppActions.currentPin(pinHash));
           dispatch(AppActions.showBlur(false));
           const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
@@ -162,7 +168,7 @@ const Pin = gestureHandlerRootHOC(() => {
         logger.error(`setCurrentPin error: ${err}`);
       }
     },
-    [dispatch, setShakeDots, reset, firstPinEntered, context],
+    [dispatch, setShakeDots, reset, context],
   );
 
   const handleCellPress = useCallback(
@@ -177,23 +183,23 @@ const Pin = gestureHandlerRootHOC(() => {
           reset();
           break;
         case 'backspace':
-          setPin(prevValue => {
-            const newPin = prevValue.slice();
+          setPinStatus(prevValue => {
+            const newPin = prevValue.pin.slice();
             newPin.splice(-1);
-            return newPin;
+            return {...prevValue, pin: newPin};
           });
           break;
         default:
           // Adding new PIN
-          setPin(prevValue => {
+          setPinStatus(prevValue => {
             if (
               Number(value) >= PIN_MIN_VALUE &&
               Number(value) <= PIN_MAX_VALUE &&
-              prevValue.length < PIN_LENGTH
+              prevValue.pin.length < PIN_LENGTH
             ) {
-              const newPin = prevValue.slice();
+              const newPin = prevValue.pin.slice();
               newPin[newPin.length] = value;
-              return newPin;
+              return {...prevValue, pin: newPin};
             } else {
               return prevValue;
             }
@@ -201,43 +207,32 @@ const Pin = gestureHandlerRootHOC(() => {
           break;
       }
     },
-    [setPin, reset, pin],
+    [setPinStatus, reset, pinStatus],
   );
 
   useEffect(() => {
     const onCellPress = async () => {
-      if (pin.length !== PIN_LENGTH) {
+      if (pinStatus.pin.length !== PIN_LENGTH) {
         // Waiting for more PIN digits
         return;
       }
-
       // Give some time for dot to fill
       await sleep(0);
-
       if (type === 'set') {
-        if (firstPinEntered.length) {
-          setCurrentPin(pin as Array<string>);
+        if (pinStatus.firstPinEntered.length) {
+          setCurrentPin(
+            pinStatus as {firstPinEntered: Array<string>; pin: Array<string>},
+          );
         } else {
           setMessage(t('Confirm your PIN'));
-          setFirstPinEntered(pin);
-          setPin([]);
+          setPinStatus({pin: [], firstPinEntered: pinStatus.pin});
         }
       } else {
-        checkPin(pin as Array<string>);
+        checkPin(pinStatus.pin as Array<string>);
       }
     };
     onCellPress();
-  }, [
-    pin,
-    setCurrentPin,
-    setMessage,
-    setFirstPinEntered,
-    setPin,
-    checkPin,
-    firstPinEntered.length,
-    type,
-    t,
-  ]);
+  }, [pinStatus]);
 
   const setCountDown = (
     bannedUntil: number,
@@ -340,7 +335,7 @@ const Pin = gestureHandlerRootHOC(() => {
         shakeDots={shakeDots}
         setShakeDots={setShakeDots}
         pinLength={PIN_LENGTH}
-        pin={pin}
+        pin={pinStatus.pin}
       />
       <VirtualKeyboardContainer accessibilityLabel="virtual-key-container">
         <VirtualKeyboard
