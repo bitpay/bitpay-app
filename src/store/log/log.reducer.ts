@@ -1,17 +1,16 @@
 import moment from 'moment';
 import {LogEntry} from './log.models';
 import {LogActionType, LogActionTypes} from './log.types';
+import {storage} from '..';
 
 export const logReduxPersistBlackList = ['logs'];
 
 export interface LogState {
   logs: LogEntry[];
-  persistedLogs: LogEntry[];
 }
 
 const initialState: LogState = {
   logs: [] as LogEntry[],
-  persistedLogs: [] as LogEntry[],
 };
 
 export const logReducer = (
@@ -38,20 +37,47 @@ export const logReducer = (
         message: sanitizeLogMessage(action.payload.message),
       };
 
+      // Store persisted logs in a different entry in storage
+      // to avoid losing them if anything happens to persist:root
+      try {
+        const persistLogs = storage.getString('persist:logs') || '[]';
+        storage.set(
+          'persist:logs',
+          JSON.stringify([...JSON.parse(persistLogs), newPersistedLog]),
+        );
+      } catch (error) {
+        // nothing
+      }
+
       return {
         ...state,
         logs: [...state.logs, newPersistedLog],
-        persistedLogs: [...state.persistedLogs, newPersistedLog],
       };
 
     case LogActionTypes.CLEAR_LOGS:
       const weekAgo = moment().subtract(7, 'day').toDate();
+
+      // Store persisted logs in a different entry in storage
+      // to avoid losing them if anything happens to persist:root
+      try {
+        const persistLogs = storage.getString('persist:logs');
+        if (persistLogs) {
+          storage.set(
+            'persist:logs',
+            JSON.stringify(
+              (JSON.parse(persistLogs) || []).filter(
+                (logEvent: LogEntry) => new Date(logEvent.timestamp) > weekAgo,
+              ),
+            ),
+          );
+        }
+      } catch (error) {
+        // nothing
+      }
+
       return {
         ...state,
         logs: [],
-        persistedLogs: (state.persistedLogs || []).filter(
-          logEvent => new Date(logEvent.timestamp) > weekAgo,
-        ),
       };
 
     default:

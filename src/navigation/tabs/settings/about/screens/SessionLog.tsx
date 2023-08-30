@@ -1,7 +1,7 @@
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {memo, useLayoutEffect, useState} from 'react';
+import React, {memo, useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Alert, SectionList} from 'react-native';
 import Mailer from 'react-native-mail';
@@ -33,6 +33,7 @@ import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
 import SendIcon from '../../../../../../assets/img/send-icon.svg';
 import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
 import {ListHeader} from '../../general/screens/customize-home/Shared';
+import {storage} from '../../../../../store';
 
 export interface SessionLogsParamList {}
 
@@ -150,15 +151,12 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);
   const logs = useAppSelector(({LOG}) => LOG.logs);
-  const persistedLogs = useAppSelector(({LOG}) => LOG.persistedLogs);
   const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
   const currentSessionStartTime = new Date(logs[0].timestamp);
-  const filteredPersistedLogs = persistedLogs.filter(
-    log =>
-      log.level <= filterLevel &&
-      new Date(log.timestamp) < currentSessionStartTime,
+  const [filteredPersistedLogs, setFilteredPersistedLogs] = useState(
+    [] as LogEntry[],
   );
 
   const onFilterLevelChange = (level: LogLevel) => {
@@ -220,6 +218,18 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
       headerRight: () => <Settings onPress={() => setShowOptions(true)} />,
     });
   }, [navigation]);
+
+  useEffect(() => {
+    const value = storage.getString('persist:logs');
+    if (value) {
+      const _filteredPersistedLogs = JSON.parse(value).filter(
+        (log: LogEntry) =>
+          log.level <= filterLevel &&
+          new Date(log.timestamp) < currentSessionStartTime,
+      );
+      setFilteredPersistedLogs(_filteredPersistedLogs);
+    }
+  }, []);
 
   return (
     <LogsContainer>
