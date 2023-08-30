@@ -2,9 +2,13 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
-import {Linking, View, TouchableWithoutFeedback} from 'react-native';
+import {Linking, View, TouchableOpacity} from 'react-native';
 import Button, {ButtonState} from '../../../../components/button/Button';
-import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  HEIGHT,
+  WIDTH,
+} from '../../../../components/styled/Containers';
 import {H5, Paragraph} from '../../../../components/styled/Text';
 import {BillScreens} from '../bill/BillStack';
 import {
@@ -227,7 +231,8 @@ export const Bills = () => {
                 <>
                   <SectionHeaderContainer>
                     <SectionHeader>{t('My Bills')}</SectionHeader>
-                    <TouchableWithoutFeedback
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
                       onPress={() => {
                         navigation.navigate('Bill', {
                           screen: BillScreens.PAYMENTS,
@@ -242,7 +247,7 @@ export const Bills = () => {
                       <SectionHeaderButton>
                         {t('View All Payments')}
                       </SectionHeaderButton>
-                    </TouchableWithoutFeedback>
+                    </TouchableOpacity>
                   </SectionHeaderContainer>
                   <BillList
                     accounts={accounts}

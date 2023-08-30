@@ -1,5 +1,5 @@
 import React, {useLayoutEffect} from 'react';
-import {ScrollView, TouchableWithoutFeedback} from 'react-native';
+import {ScrollView, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled from 'styled-components/native';
@@ -9,6 +9,7 @@ import {
 } from '../../merchant/MerchantStack';
 import MerchantItem from './../../components/MerchantItem';
 import {horizontalPadding} from './../../components/styled/ShopTabComponents';
+import {ActiveOpacity} from '../../../../../components/styled/Containers';
 
 const SearchResults = styled.View`
   display: flex;
@@ -33,7 +34,8 @@ const MerchantCategory = ({
     <ScrollView>
       <SearchResults>
         {integrations.map(integration => (
-          <TouchableWithoutFeedback
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
             key={integration.displayName}
             onPress={() =>
               navigator.navigate('Merchant', {
@@ -48,7 +50,7 @@ const MerchantCategory = ({
               height={200}
               key={integration.displayName}
             />
-          </TouchableWithoutFeedback>
+          </TouchableOpacity>
         ))}
       </SearchResults>
     </ScrollView>

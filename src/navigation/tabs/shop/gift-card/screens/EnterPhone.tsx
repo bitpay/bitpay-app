@@ -3,7 +3,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, View, TouchableWithoutFeedback} from 'react-native';
+import {Keyboard, View, TouchableOpacity} from 'react-native';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
@@ -24,6 +24,7 @@ import {
   PhoneCountryCode,
 } from '../../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
+import {ActiveOpacity} from '../../../../../components/styled/Containers';
 
 function getPhoneMask(phoneCountryCode: string) {
   const usMask = '([000]) [000]-[0000]';
@@ -174,7 +175,8 @@ const EnterPhone = ({
                 }
                 prefix={() => (
                   <AreaCodeContainer>
-                    <TouchableWithoutFeedback
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
                       onPress={() => {
                         (cardConfig.allowedPhoneCountries || []).length === 1
                           ? dispatch(
@@ -191,7 +193,7 @@ const EnterPhone = ({
                         />
                         <AreaCode>+{selectedPhoneCountryCode.phone}</AreaCode>
                       </View>
-                    </TouchableWithoutFeedback>
+                    </TouchableOpacity>
                   </AreaCodeContainer>
                 )}
                 error={

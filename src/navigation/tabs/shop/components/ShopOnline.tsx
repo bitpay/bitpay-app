@@ -2,9 +2,9 @@ import {useNavigation} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {View, TouchableWithoutFeedback} from 'react-native';
+import {View, TouchableOpacity} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {BaseText, Paragraph} from '../../../../components/styled/Text';
 import {
   Category,
@@ -84,7 +84,8 @@ export const ShopOnline = ({
             <SectionContainer>
               <SectionHeaderContainer>
                 <SectionHeader>{category.displayName}</SectionHeader>
-                <TouchableWithoutFeedback
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
                   onPress={() => {
                     navigation.navigate('Merchant', {
                       screen: MerchantScreens.MERCHANT_CATEGORY,
@@ -95,7 +96,7 @@ export const ShopOnline = ({
                     });
                   }}>
                   <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
-                </TouchableWithoutFeedback>
+                </TouchableOpacity>
               </SectionHeaderContainer>
             </SectionContainer>
             <ShopCarouselList
@@ -189,7 +190,8 @@ export const ShopOnline = ({
         <SearchResults>
           {searchResults.map(integration => {
             return (
-              <TouchableWithoutFeedback
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
                 key={integration.displayName}
                 onPress={() =>
                   navigation.navigate('Merchant', {
@@ -204,7 +206,7 @@ export const ShopOnline = ({
                   height={200}
                   key={integration.displayName}
                 />
-              </TouchableWithoutFeedback>
+              </TouchableOpacity>
             );
           })}
         </SearchResults>
