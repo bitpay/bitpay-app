@@ -6,7 +6,7 @@ import {
   RefreshControl,
   Image,
   DeviceEventEmitter,
-  TouchableWithoutFeedback,
+  TouchableOpacity,
 } from 'react-native';
 import RNPrint from 'react-native-print';
 import TimeAgo from 'react-native-timeago';
@@ -15,6 +15,7 @@ import styled from 'styled-components/native';
 import {useTheme} from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import {
+  ActiveOpacity,
   CtaContainer,
   HeaderRightContainer,
 } from '../../../../../components/styled/Containers';
@@ -317,14 +318,15 @@ const GiftCardDetails = ({
             />
           ) : undefined
         }>
-        <TouchableWithoutFeedback
+        <TouchableOpacity
+          activeOpacity={ActiveOpacity}
           onPress={() => copyToClipboard(`${giftCard.amount}`)}>
           <Amount>
             {formatFiatAmount(giftCard.amount, giftCard.currency, {
               currencyDisplay: 'symbol',
             })}
           </Amount>
-        </TouchableWithoutFeedback>
+        </TouchableOpacity>
         <RemoteImage
           uri={cardConfig.cardImage}
           height={169}
@@ -353,18 +355,20 @@ const GiftCardDetails = ({
                     />
                   </ScannableCodeContainer>
                 ) : null}
-                <TouchableWithoutFeedback
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
                   onPress={() => copyToClipboard(giftCard.claimCode)}>
                   <ClaimCode>{giftCard.claimCode}</ClaimCode>
-                </TouchableWithoutFeedback>
+                </TouchableOpacity>
                 {giftCard.pin ? (
                   <>
                     <Divider />
                     <Paragraph>{t('Pin')}</Paragraph>
-                    <TouchableWithoutFeedback
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
                       onPress={() => copyToClipboard(giftCard.pin as string)}>
                       <ClaimCode>{giftCard.pin}</ClaimCode>
-                    </TouchableWithoutFeedback>
+                    </TouchableOpacity>
                   </>
                 ) : (
                   <Paragraph style={{marginBottom: 30}}>
@@ -463,7 +467,8 @@ const GiftCardDetails = ({
                     </Link>
                     {t(', and provide this invoice ID: ')}
                   </Paragraph>
-                  <TouchableWithoutFeedback
+                  <TouchableOpacity
+                    activeOpacity={ActiveOpacity}
                     onPress={() =>
                       copyToClipboard(
                         giftCard.invoiceId,
@@ -473,7 +478,7 @@ const GiftCardDetails = ({
                       )
                     }>
                     <Paragraph>{giftCard.invoiceId}</Paragraph>
-                  </TouchableWithoutFeedback>
+                  </TouchableOpacity>
                 </TextAlign>
               </>
             )}
