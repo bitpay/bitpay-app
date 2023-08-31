@@ -446,7 +446,8 @@ export const buildTxDetails =
 
     amount = Number(amount); // Support BN (use number instead string only for view)
     const effectiveRate =
-      (invoiceCurrency &&
+      (invoice &&
+        invoiceCurrency &&
         dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain))) ||
       undefined;
     const opts = {
