@@ -22,6 +22,7 @@ interface ButtonOverlayProps {
   buttonStyle: ButtonStyle;
   buttonType: ButtonType;
   backgroundColor?: ColorValue;
+  children?: React.ReactNode;
 }
 
 const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {

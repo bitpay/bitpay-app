@@ -1,5 +1,5 @@
 import {getDecryptPassword} from './create';
-import {configureTestStore} from '../../../store';
+import configureTestStore from '@test/store';
 import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
@@ -45,12 +45,15 @@ describe('getDecryptPassword', () => {
     expect(typeof argument.onSubmitHandler).toEqual('function');
   });
 
-  it('calls dismissDecryptPasswordModal when submit handler is called', () => {
+  it('calls dismissDecryptPasswordModal when submit handler is called', async () => {
     const store = configureTestStore({});
-    store.dispatch(getDecryptPassword('test'));
+    const promiseResult = store.dispatch(getDecryptPassword('test'));
 
     const argument = showDecryptPasswordModal.mock.calls[0][0];
-    argument.onSubmitHandler();
+    await argument.onSubmitHandler();
+    await expect(promiseResult).rejects.toEqual({
+      message: 'invalid password',
+    });
     expect(dismissDecryptPasswordModal).toHaveBeenCalledTimes(1);
   });
 

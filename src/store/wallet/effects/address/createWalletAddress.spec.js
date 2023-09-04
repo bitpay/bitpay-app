@@ -1,5 +1,5 @@
 import {createWalletAddress} from './address';
-import {configureTestStore} from '../../../../store';
+import configureTestStore from '@test/store';
 import {successGetReceiveAddress} from '../../wallet.actions';
 import {ValidateCoinAddress} from '../../utils/validations';
 
