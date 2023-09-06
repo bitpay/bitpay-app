@@ -12,7 +12,7 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import {formatFiatAmount} from '../../../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {BaseText} from '../../../../wallet/components/KeyDropdownOption';
 import BillStatus from './BillStatus';
 import {
@@ -24,8 +24,11 @@ import ChevronUpSvg from '../../../../../../assets/img/bills/chevron-up.svg';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {AppActions} from '../../../../../store/app';
-import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {ShopEffects} from '../../../../../store/shop';
+import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
+import {getBillAccountEventParams} from '../utils';
 
 interface BillItemProps {
   account: BillPayAccount;
@@ -143,6 +146,18 @@ export default ({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
+
+  const baseEventParams = getBillAccountEventParams(account);
+
+  const removeBill = async () => {
+    await sleep(500);
+    dispatch(startOnGoingProcessModal('REMOVING_BILL'));
+    await dispatch(ShopEffects.startHideBillPayAccount(account.id));
+    await dispatch(ShopEffects.startGetBillPayAccounts());
+    dispatch(dismissOnGoingProcessModal());
+    dispatch(Analytics.track('Bill Pay — Removed Bill', baseEventParams));
+  };
+
   return (
     <ItemContainer variation={variation}>
       <AccountBody>
@@ -221,14 +236,28 @@ export default ({
                   activeOpacity={ActiveOpacity}
                   onPress={() => {
                     dispatch(
-                      AppActions.showBottomNotificationModal(
-                        CustomErrorMessage({
-                          title: t('Unable to pay bill'),
-                          errMsg: t(
-                            'We are currently unable to process payments for this bill. We are actively working on a solution.',
-                          ),
-                        }),
-                      ),
+                      AppActions.showBottomNotificationModal({
+                        type: 'error',
+                        title: t('Unable to pay bill'),
+                        message: t(
+                          'We are currently unable to process payments for this bill. We are actively working on a solution.',
+                        ),
+                        enableBackdropDismiss: true,
+                        onBackdropDismiss: () => {},
+                        actions: [
+                          {
+                            text: t('OK'),
+                            action: () => {},
+                            primary: true,
+                          },
+                          {
+                            text: t('REMOVE BILL'),
+                            action: () => {
+                              removeBill();
+                            },
+                          },
+                        ],
+                      }),
                     );
                     dispatch(
                       Analytics.track(
