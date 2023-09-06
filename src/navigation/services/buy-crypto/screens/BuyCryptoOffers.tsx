@@ -20,8 +20,15 @@ import MoonpayLogo from '../../../../components/icons/external-services/moonpay/
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
+import TransakLogo from '../../../../components/icons/external-services/transak/transak-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
-import {Black, SlateDark, ProgressBlue, White} from '../../../../styles/colors';
+import {
+  Black,
+  SlateDark,
+  ProgressBlue,
+  White,
+  BitPay,
+} from '../../../../styles/colors';
 import {
   getPaymentUrl,
   simplexPaymentRequest,
@@ -53,6 +60,12 @@ import {
   SardinePaymentUrlConfigParams,
   SimplexGetQuoteRequestData,
   SimplexPaymentData,
+  TransakGetQuoteRequestData,
+  TransakGetSignedUrlRequestData,
+  TransakPaymentData,
+  TransakPaymentType,
+  TransakQuoteData,
+  TransakSignedUrlData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {
   calculateAltFiatToUsd,
@@ -117,6 +130,18 @@ import {
   sardineGetCurrencyLimits,
   sardineGetSignedPaymentUrl,
 } from '../../../../store/buy-crypto/effects/sardine/sardine';
+import {
+  transakGetFiatCurrencies,
+  transakGetQuote,
+  transakGetSignedPaymentUrl,
+} from '../../../../store/buy-crypto/effects/transak/transak';
+import {
+  getTransakChainFormat,
+  getTransakCoinFormat,
+  getTransakPaymentMethodFormat,
+  getTransakSelectedPaymentMethodData,
+  transakEnv,
+} from '../utils/transak-utils';
 
 export type BuyCryptoOffersScreenParams = {
   amount: number;
@@ -146,8 +171,9 @@ export type CryptoOffer = {
   amountReceivingUnit?: string; // Ramp
   amountLimits?: BuyCryptoLimits;
   errorMsg?: string;
-  quoteData?: any; // Banxa | Moonpay | Ramp | Sardine | Simplex
+  quoteData?: any; // Banxa | Moonpay | Ramp | Sardine | Simplex | Transak
   paymentMethodId?: number; // Banxa
+  paymentMethodKey?: TransakPaymentType; // Transak
   outOfLimitMsg?: string;
 };
 
@@ -303,6 +329,7 @@ const offersDefault: {
   ramp: CryptoOffer;
   sardine: CryptoOffer;
   simplex: CryptoOffer;
+  transak: CryptoOffer;
 } = {
   banxa: {
     key: 'banxa',
@@ -370,6 +397,18 @@ const offersDefault: {
     ),
     expanded: false,
     buyClicked: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  transak: {
+    key: 'transak',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <TransakLogo width={80} height={25} />,
+    expanded: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
     fiatMoney: undefined,
@@ -448,6 +487,7 @@ const BuyCryptoOffers: React.FC = () => {
   const [finishedRamp, setFinishedRamp] = useState(false);
   const [finishedSardine, setFinishedSardine] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
+  const [finishedTransak, setFinishedTransak] = useState(false);
   const [updateView, setUpdateView] = useState(false);
 
   const getBanxaQuote = async (): Promise<void> => {
@@ -1380,6 +1420,180 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
+  const getTransakQuote = async (): Promise<void> => {
+    logger.debug('Transak getting quote');
+
+    if (buyCryptoConfig?.transak?.disabled) {
+      let err = buyCryptoConfig?.transak?.disabledMessage
+        ? buyCryptoConfig?.transak?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'transakGetQuote Error. Exchange disabled from config.';
+      showTransakError(err, reason);
+      return;
+    }
+
+    offers.transak.fiatAmount =
+      offers.transak.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    try {
+      // Transak getFiatCurrencies to validate pairs and get currency limits (transakGetCurrencyLimits)
+      const transakFiatCurrenciesData = await transakGetFiatCurrencies({
+        env: transakEnv,
+      });
+
+      const transakSelectedPaymentMethodData =
+        getTransakSelectedPaymentMethodData(
+          transakFiatCurrenciesData.response,
+          offers.transak.fiatCurrency,
+          paymentMethod,
+        );
+
+      if (!transakSelectedPaymentMethodData) {
+        const msg = t(
+          'Transak currently does not support operations with the selected combination fiat(fiatCurrency)-paymentMethod(paymentMethod).',
+          {
+            fiatCurrency: offers.transak.fiatCurrency.toUpperCase(),
+            paymentMethod: paymentMethod.label,
+          },
+        );
+        const reason =
+          'transakGetPaymentMethods Error: No transakSelectedPaymentMethodData';
+        showTransakError(msg, reason);
+        setFinishedTransak(!finishedTransak);
+        return;
+      }
+
+      offers.transak.paymentMethodKey = transakSelectedPaymentMethodData.id;
+      offers.transak.amountLimits = {
+        min: transakSelectedPaymentMethodData.minAmount,
+        max: transakSelectedPaymentMethodData.maxAmount,
+      };
+    } catch (err) {
+      offers.transak.amountLimits = dispatch(
+        getBuyCryptoFiatLimits('transak', offers.transak.fiatCurrency),
+      );
+    }
+
+    if (
+      (offers.transak.amountLimits.min &&
+        offers.transak.fiatAmount < offers.transak.amountLimits.min) ||
+      (offers.transak.amountLimits.max &&
+        offers.transak.fiatAmount > offers.transak.amountLimits.max)
+    ) {
+      offers.transak.outOfLimitMsg = t(
+        'There are no Transak offers available, as the current purchase limits for this exchange must be between and',
+        {
+          min: offers.transak.amountLimits.min,
+          max: offers.transak.amountLimits.max,
+          fiatCurrency: offers.transak.fiatCurrency,
+        },
+      );
+      setFinishedTransak(!finishedTransak);
+      return;
+    } else {
+      const requestData: TransakGetQuoteRequestData = {
+        env: transakEnv,
+        fiatCurrency: offers.transak.fiatCurrency.toUpperCase(),
+        cryptoCurrency: getTransakCoinFormat(coin),
+        network: getTransakChainFormat(selectedWallet.chain) ?? 'mainnet', // TODO: review 'mainnet'
+        paymentMethod:
+          offers.transak.paymentMethodKey ??
+          getTransakPaymentMethodFormat(paymentMethod.method) ??
+          'credit_debit_card',
+        fiatAmount: offers.transak.fiatAmount,
+      };
+
+      // TODO: selectedWallet.transakGetQuote
+      // selectedWallet
+      //   .transakGetQuote(requestData)
+      transakGetQuote(requestData)
+        .then((data: TransakQuoteData) => {
+          if (data?.response?.cryptoAmount) {
+            const transakQuoteData = data.response;
+            offers.transak.outOfLimitMsg = undefined;
+            offers.transak.errorMsg = undefined;
+            offers.transak.quoteData = transakQuoteData;
+            offers.transak.amountCost = transakQuoteData.fiatAmount;
+            offers.transak.fee = transakQuoteData.totalFee;
+            offers.transak.buyAmount =
+              transakQuoteData.fiatAmount - transakQuoteData.totalFee;
+
+            const precision = dispatch(GetPrecision(coin, chain));
+            if (offers.transak.buyAmount && coin && precision) {
+              offers.transak.fiatMoney = Number(
+                offers.transak.buyAmount / transakQuoteData.cryptoAmount,
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(
+                `Transak error: Could not get precision for ${coin}`,
+              );
+            }
+            offers.transak.amountReceiving =
+              transakQuoteData.cryptoAmount.toString();
+            logger.debug('Transak getting quote: SUCCESS');
+            setFinishedTransak(!finishedTransak);
+          } else {
+            if (data.message && typeof data.message === 'string') {
+              logger.error('Transak error: ' + data.message);
+            }
+            if (data.error && typeof data.error === 'string') {
+              logger.error('Transak error: ' + data.error);
+            }
+            if (data.errors) {
+              logger.error(data.errors);
+            }
+            let err = t(
+              "Can't get rates at this moment. Please try again later",
+            );
+            const reason =
+              'transakGetQuote Error. "cryptoAmount" not included.';
+            showTransakError(err, reason);
+          }
+        })
+        .catch((err: any) => {
+          const reason = 'transakGetQuote Error';
+          showTransakError(err, reason);
+        });
+    }
+  };
+
+  const showTransakError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Transak error: ' + msg);
+
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'transak',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.transak.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.transak.fiatCurrency || '',
+      }),
+    );
+
+    offers.transak.errorMsg = msg;
+    offers.transak.fiatMoney = undefined;
+    offers.transak.expanded = false;
+    setUpdateView(!updateView);
+  };
+
   const goTo = (key: string): void => {
     switch (key) {
       case 'banxa':
@@ -1400,6 +1614,10 @@ const BuyCryptoOffers: React.FC = () => {
 
       case 'simplex':
         goToSimplexBuyPage();
+        break;
+
+      case 'transak':
+        goToTransakBuyPage();
         break;
     }
   };
@@ -1909,6 +2127,106 @@ const BuyCryptoOffers: React.FC = () => {
       });
   };
 
+  const goToTransakBuyPage = () => {
+    if (offers.transak.errorMsg || offers.transak.outOfLimitMsg) {
+      return;
+    }
+    continueToTransak();
+  };
+
+  const continueToTransak = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showTransakError(err, reason);
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const transakExternalId = uuid.v4().toString();
+
+    const newData: TransakPaymentData = {
+      address,
+      chain: destinationChain,
+      created_on: Date.now(),
+      crypto_amount: Number(offers.transak.amountReceiving),
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offers.transak.buyAmount!,
+      fiat_total_amount: offers.transak.amountCost!,
+      fiat_total_amount_currency: offers.transak.fiatCurrency,
+      external_id: transakExternalId,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestTransak({
+        transakPaymentData: newData,
+      }),
+    );
+
+    dispatch(
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'transak',
+        fiatAmount: offers.transak.fiatAmount,
+        fiatCurrency: offers.transak.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const quoteData: TransakGetSignedUrlRequestData = {
+      env: transakEnv,
+      walletAddress: address,
+      disableWalletAddressForm: true,
+      redirectURL: 'https://gamboster.github.io/transak/',
+      exchangeScreenTitle: 'Bitpay - Buy crypto',
+      fiatAmount: offers.transak.fiatAmount,
+      fiatCurrency: offers.transak.fiatCurrency.toUpperCase(),
+      network: getTransakChainFormat(chain),
+      paymentMethod:
+        offers.transak.paymentMethodKey ??
+        getTransakPaymentMethodFormat(paymentMethod.method) ??
+        'credit_debit_card',
+      cryptoCurrencyCode: getTransakCoinFormat(coin),
+      cryptoCurrencyList: getTransakCoinFormat(coin),
+      hideExchangeScreen: true,
+      themeColor: BitPay.replace(/#/g, ''),
+      hideMenu: false,
+      partnerOrderId: transakExternalId,
+      partnerCustomerId: selectedWallet.id,
+    };
+
+    let data: TransakSignedUrlData;
+    try {
+      data = await transakGetSignedPaymentUrl(quoteData);
+    } catch (err) {
+      const reason = 'transakGetSignedPaymentUrl Error';
+      showTransakError(err, reason);
+      return;
+    }
+
+    if (!data || !data.urlWithSignature) {
+      const err = t(
+        'It was not possible to generate the checkout URL correctly',
+      );
+      const reason =
+        'rampGetSignedPaymentUrl Error. Could not generate urlWithSignature';
+      showRampError(err, reason);
+      return;
+    }
+
+    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    await sleep(500);
+    navigation.goBack();
+  };
+
   const expandCard = (offer: CryptoOffer) => {
     const key = offer.key;
     if (!offer.fiatMoney) {
@@ -1969,6 +2287,9 @@ const BuyCryptoOffers: React.FC = () => {
       if (offers.simplex.showOffer) {
         getSimplexQuote();
       }
+      if (offers.transak.showOffer) {
+        getTransakQuote();
+      }
     }
   }, []);
 
@@ -1980,6 +2301,7 @@ const BuyCryptoOffers: React.FC = () => {
     finishedRamp,
     finishedSardine,
     finishedSimplex,
+    finishedTransak,
     updateView,
   ]);
 
@@ -2194,6 +2516,9 @@ const BuyCryptoOffers: React.FC = () => {
                     {offer.key == 'simplex' ? (
                       <SimplexTerms paymentMethod={paymentMethod} />
                     ) : null}
+                    {offer.key == 'transak' ? (
+                    <SimplexTerms paymentMethod={paymentMethod} /> // TODO: TransakTerms
+                  ) : null}
                   </>
                 ) : null}
               </BuyCryptoExpandibleCard>

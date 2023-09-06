@@ -448,6 +448,14 @@ const BuyCryptoRoot = ({
               selectedWallet.currencyAbbreviation,
               selectedWallet.chain,
               fiatCurrency,
+            ) ||
+            isPaymentMethodSupported(
+              'transak',
+              PaymentMethodsAvailable.applePay,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              fiatCurrency,
+              locationData?.countryShortCode || 'US',
             )
             ? PaymentMethodsAvailable.applePay
             : PaymentMethodsAvailable.debitCard,
@@ -518,6 +526,14 @@ const BuyCryptoRoot = ({
             selectedWallet.currencyAbbreviation,
             selectedWallet.chain,
             fiatCurrency,
+          ) ||
+          isPaymentMethodSupported(
+            'transak',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
           )))
     ) {
       logger.debug(
