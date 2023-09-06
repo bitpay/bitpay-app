@@ -4,6 +4,7 @@ import {getRampFiatAmountLimits} from '../../navigation/services/buy-crypto/util
 import {getSardineFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/sardine-utils';
 import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/simplex-utils';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
+import {getTransakFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/transak-utils';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -115,6 +116,10 @@ export const getBuyCryptoFiatLimits =
         baseFiatArray = ['USD'];
         limits = getSimplexFiatAmountLimits();
         break;
+      case 'transak':
+        baseFiatArray = ['USD'];
+        limits = getTransakFiatAmountLimits();
+        break;
       default:
         baseFiatArray = ['USD', 'EUR'];
         limits = {
@@ -124,6 +129,7 @@ export const getBuyCryptoFiatLimits =
             getRampFiatAmountLimits().min,
             getSardineFiatAmountLimits().min,
             getSimplexFiatAmountLimits().min,
+            getTransakFiatAmountLimits().min,
           ),
           max: Math.max(
             getBanxaFiatAmountLimits().max,
@@ -131,6 +137,7 @@ export const getBuyCryptoFiatLimits =
             getRampFiatAmountLimits().max,
             getSardineFiatAmountLimits().max,
             getSimplexFiatAmountLimits().max,
+            getTransakFiatAmountLimits().max,
           ),
         };
         break;

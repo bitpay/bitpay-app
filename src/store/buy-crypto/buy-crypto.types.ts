@@ -9,6 +9,8 @@ import {
   SardineIncomingData,
   SimplexPaymentData,
   SimplexIncomingData,
+  TransakPaymentData,
+  TransakIncomingData,
   WyrePaymentData,
 } from './buy-crypto.models';
 
@@ -28,6 +30,9 @@ export enum BuyCryptoActionTypes {
   SUCCESS_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_SIMPLEX',
   UPDATE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_SIMPLEX',
   REMOVE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_SIMPLEX',
+  SUCCESS_PAYMENT_REQUEST_TRANSAK = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_TRANSAK',
+  UPDATE_PAYMENT_REQUEST_TRANSAK = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_TRANSAK',
+  REMOVE_PAYMENT_REQUEST_TRANSAK = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_TRANSAK',
   SUCCESS_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_WYRE',
   REMOVE_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_WYRE',
 }
@@ -137,6 +142,27 @@ interface removePaymentRequestSimplex {
   };
 }
 
+interface successPaymentRequestTransak {
+  type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_TRANSAK;
+  payload: {
+    transakPaymentData: TransakPaymentData;
+  };
+}
+
+interface updatePaymentRequestTransak {
+  type: typeof BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_TRANSAK;
+  payload: {
+    transakIncomingData: TransakIncomingData;
+  };
+}
+
+interface removePaymentRequestTransak {
+  type: typeof BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_TRANSAK;
+  payload: {
+    transakExternalId: string;
+  };
+}
+
 interface successPaymentRequestWyre {
   type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE;
   payload: {
@@ -167,5 +193,8 @@ export type BuyCryptoActionType =
   | successPaymentRequestSimplex
   | updatePaymentRequestSimplex
   | removePaymentRequestSimplex
+  | successPaymentRequestTransak
+  | updatePaymentRequestTransak
+  | removePaymentRequestTransak
   | successPaymentRequestWyre
   | removePaymentRequestWyre;
