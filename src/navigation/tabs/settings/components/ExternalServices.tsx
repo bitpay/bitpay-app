@@ -15,6 +15,7 @@ import MoonpayLogo from '../../../../components/icons/external-services/moonpay/
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
+import TransakLogo from '../../../../components/icons/external-services/transak/transak-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {useAppSelector} from '../../../../utils/hooks';
 import {RootState} from '../../../../store';
@@ -129,6 +130,22 @@ const ExternalServices = () => {
             <SimplexLogo iconOnly={true} widthIcon={30} heightIcon={25} />
           </ExternalServicesIconContainer>
           <SettingTitle>Simplex</SettingTitle>
+        </ExternalServicesItemContainer>
+        <AngleRight />
+      </Setting>
+      <Hr />
+      <Setting
+        onPress={() => {
+          haptic('impactLight');
+          navigation.navigate('ExternalServicesSettings', {
+            screen: 'TransakSettings',
+          });
+        }}>
+        <ExternalServicesItemContainer>
+          <ExternalServicesIconContainer>
+            <TransakLogo iconOnly={true} width={30} height={25} />
+          </ExternalServicesIconContainer>
+          <SettingTitle>Transak</SettingTitle>
         </ExternalServicesItemContainer>
         <AngleRight />
       </Setting>
