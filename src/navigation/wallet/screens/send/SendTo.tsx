@@ -395,62 +395,53 @@ const SendTo = () => {
                 }),
               ),
             );
-          } else {
-            dispatch(
-              showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
-            );
           }
-        } else {
-          dispatch(
-            showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
-          );
         }
       }
       return false;
     };
 
-  const validateAddress = async (text: string): Promise<boolean> => {
-    return new Promise(async resolve => {
-      const data = ValidateURI(text);
-      if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
-        try {
-          const invoiceUrl = GetPayProUrl(text);
-          dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
+  const validateAddress = async (text: string) => {
+    const data = ValidateURI(text);
+    if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
+      try {
+        const invoiceUrl = GetPayProUrl(text);
+        dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
 
-          const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
-          dispatch(dismissOnGoingProcessModal());
-          const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
-            GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
-            chain,
-          );
-          const selected = payProOptions.paymentOptions.find(
-            (option: PayProPaymentOption) =>
-              option.selected && invoiceCurrency === option.currency,
-          );
-          if (selected) {
-            const isValid = dispatch(checkCoinAndNetwork(selected, true));
-            if (isValid) {
-              return resolve(true);
-            }
-          } else {
-            return resolve(false);
+        const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
+        dispatch(dismissOnGoingProcessModal());
+        const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
+          GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
+          chain,
+        );
+        const selected = payProOptions.paymentOptions.find(
+          (option: PayProPaymentOption) =>
+            option.selected && invoiceCurrency === option.currency,
+        );
+        if (selected) {
+          const isValid = dispatch(checkCoinAndNetwork(selected, true));
+          if (isValid) {
+            return Promise.resolve(true);
           }
-        } catch (err) {
-          const formattedErrMsg = BWCErrorMessage(err);
-          dispatch(dismissOnGoingProcessModal());
-          logger.warn(formattedErrMsg);
-          return resolve(false);
-        }
-      } else if (ValidDataTypes.includes(data?.type)) {
-        if (dispatch(checkCoinAndNetwork(text))) {
-          return resolve(true);
         } else {
-          return resolve(false);
+          return Promise.resolve(false);
         }
-      } else {
-        return resolve(false);
+      } catch (err) {
+        clearClipboard();
+        const formattedErrMsg = BWCErrorMessage(err);
+        dispatch(dismissOnGoingProcessModal());
+        logger.warn(formattedErrMsg);
+        return Promise.resolve(false);
       }
-    });
+    } else if (ValidDataTypes.includes(data?.type)) {
+      if (dispatch(checkCoinAndNetwork(text))) {
+        return Promise.resolve(true);
+      } else {
+        return Promise.resolve(false);
+      }
+    } else {
+      return Promise.resolve(false);
+    }
   };
 
   const validateAndNavigateToConfirm = async (
@@ -463,10 +454,15 @@ const SendTo = () => {
       searching?: boolean;
     } = {},
   ) => {
+    clearClipboard();
     const {context, name, email, destinationTag, searching} = opts;
+    if (isEmailAddress(text.trim())) {
+      setSearchIsEmailAddress(true);
+      return;
+    }
+    setSearchIsEmailAddress(false);
     const isValid = await validateAddress(text);
     if (isValid) {
-      clearClipboard();
       await dispatch(
         incomingData(text, {wallet, context, name, email, destinationTag}),
       );
