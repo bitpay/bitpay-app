@@ -131,11 +131,7 @@ import {
   sardineGetCurrencyLimits,
   sardineGetSignedPaymentUrl,
 } from '../../../../store/buy-crypto/effects/sardine/sardine';
-import {
-  transakGetFiatCurrencies,
-  transakGetQuote,
-  transakGetSignedPaymentUrl,
-} from '../../../../store/buy-crypto/effects/transak/transak';
+import {transakGetFiatCurrencies} from '../../../../store/buy-crypto/effects/transak/transak';
 import {
   getTransakChainFormat,
   getTransakCoinFormat,
