@@ -168,10 +168,12 @@ const TransakSettings: React.FC = () => {
           onPress={() => {
             haptic('impactLight');
             dispatch(
-              openUrlWithInAppBrowser('https://crypto.transak.ai/support'),
+              openUrlWithInAppBrowser(
+                'https://support.transak.com/en/collections/3985810-customer-help-center',
+              ),
             );
           }}>
-          <Link>{t('Contact the Transak support team.')}</Link>
+          <Link>{t('Visit the Transak customer help center.')}</Link>
         </TouchableOpacity>
       </FooterSupport>
     </>

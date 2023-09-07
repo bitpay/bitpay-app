@@ -1357,7 +1357,9 @@ const handleTransakUri =
     }
 
     const order_id = getParameterByName('orderId', res);
-    const status = getParameterByName('status', res) as TransakStatusKey | undefined;
+    const status = getParameterByName('status', res) as
+      | TransakStatusKey
+      | undefined;
 
     const stateParams: TransakIncomingData = {
       transakExternalId,

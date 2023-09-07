@@ -97,7 +97,7 @@ const TransakDetails: React.FC = () => {
     }
 
     if (!paymentRequest.order_id) {
-      logger.warn('Transak getOrderDetails Warn: No order_id');
+      logger.debug('Transak getOrderDetails Warn: No order_id');
       return;
     }
 
@@ -371,12 +371,12 @@ const TransakDetails: React.FC = () => {
                     haptic('impactLight');
                     dispatch(
                       openUrlWithInAppBrowser(
-                        'https://crypto.transak.ai/support',
+                        'https://support.transak.com/en/collections/3985810-customer-help-center',
                       ),
                     );
                   }}>
                   <Link style={{marginTop: 15}}>
-                    {t('Contact the Transak support team.')}
+                    {t('Visit the Transak customer help center.')}
                   </Link>
                 </TouchableOpacity>
               </>

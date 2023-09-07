@@ -113,6 +113,7 @@ import MoonpayTerms from '../components/terms/MoonpayTerms';
 import RampTerms from '../components/terms/RampTerms';
 import SardineTerms from '../components/terms/SardineTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
+import TransakTerms from '../components/terms/TransakTerms';
 import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
@@ -1505,10 +1506,8 @@ const BuyCryptoOffers: React.FC = () => {
         fiatAmount: offers.transak.fiatAmount,
       };
 
-      // TODO: selectedWallet.transakGetQuote
-      // selectedWallet
-      //   .transakGetQuote(requestData)
-      transakGetQuote(requestData)
+      selectedWallet
+        .transakGetQuote(requestData)
         .then((data: TransakQuoteData) => {
           if (data?.response?.cryptoAmount) {
             const transakQuoteData = data.response;
@@ -2205,7 +2204,7 @@ const BuyCryptoOffers: React.FC = () => {
 
     let data: TransakSignedUrlData;
     try {
-      data = await transakGetSignedPaymentUrl(quoteData);
+      data = await selectedWallet.transakGetSignedPaymentUrl(quoteData);
     } catch (err) {
       const reason = 'transakGetSignedPaymentUrl Error';
       showTransakError(err, reason);
@@ -2517,7 +2516,10 @@ const BuyCryptoOffers: React.FC = () => {
                       <SimplexTerms paymentMethod={paymentMethod} />
                     ) : null}
                     {offer.key == 'transak' ? (
-                    <SimplexTerms paymentMethod={paymentMethod} /> // TODO: TransakTerms
+                    <TransakTerms
+                      paymentMethod={paymentMethod}
+                      country={country}
+                    />
                   ) : null}
                   </>
                 ) : null}
