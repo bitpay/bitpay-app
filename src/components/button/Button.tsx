@@ -61,6 +61,7 @@ interface ButtonOptionProps {
   disabled?: boolean;
   action?: boolean;
   height?: number;
+  children?: React.ReactNode;
 }
 
 export const DURATION = 100;
