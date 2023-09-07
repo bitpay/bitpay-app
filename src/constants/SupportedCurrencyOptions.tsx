@@ -16,6 +16,9 @@ import ApeIcon from '../../assets/img/currencies/ape.svg';
 import EurocIcon from '../../assets/img/currencies/euroc.svg';
 import MaticIcon from '../../assets/img/currencies/matic.svg';
 import PyusdIcon from '../../assets/img/currencies/pyusd.svg';
+import OptimismIcon from '../../assets/img/currencies/optimism.svg';
+import ZkSyncEraIcon from '../../assets/img/currencies/zkSyncEra.svg';
+import AvaxIcon from '../../assets/img/currencies/avax.svg';
 import {ImageSourcePropType} from 'react-native';
 import {orderBy} from 'lodash';
 
@@ -61,6 +64,9 @@ export const CurrencyListIcons: {
   shib_m: props => <ShibIcon {...props} />,
   ape_m: props => <ApeIcon {...props} />,
   euroc_m: props => <EurocIcon {...props} />,
+  op: props => <OptimismIcon {...props} />,
+  zksync: props => <ZkSyncEraIcon {...props} />,
+  avax: props => <AvaxIcon {...props} />,
 };
 
 export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [

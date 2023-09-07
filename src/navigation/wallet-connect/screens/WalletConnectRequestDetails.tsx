@@ -44,7 +44,7 @@ import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;
-  wallet: Wallet;
+  wallet: Partial<Wallet>;
   peerName?: string;
   topic?: string;
 };
@@ -196,13 +196,13 @@ const WalletConnectRequestDetails = () => {
     return () => clearTimeout(timer);
   }, [clipboardObj]);
 
-  const goToWalletConnectHome = async (newLinkedWallet?: Wallet) => {
+  const goToWalletConnectHome = async () => {
     await sleep(500);
     navigation.navigate('WalletConnect', {
       screen: 'WalletConnectHome',
       params: {
         topic,
-        wallet: newLinkedWallet || wallet,
+        wallet,
       },
     });
   };
@@ -234,12 +234,11 @@ const WalletConnectRequestDetails = () => {
       if (!request) {
         return;
       }
-      let newLinkedWallet;
       setApproveButtonState('loading');
       await dispatch(walletConnectV2ApproveCallRequest(_request, wallet));
       setApproveButtonState('success');
       dispatch(Analytics.track('WalletConnect Request Approved', {}));
-      goToWalletConnectHome(newLinkedWallet);
+      goToWalletConnectHome();
     } catch (err) {
       switch (err) {
         case 'user rejection':

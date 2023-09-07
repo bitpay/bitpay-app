@@ -3,6 +3,7 @@ import {
   BitpaySupportedCurrencies,
   BitpaySupportedUtxoCoins,
 } from '../../../constants/currencies';
+import {WalletConnectSupportedEvmCoins} from '../../../constants/WalletConnectV2';
 import {getCurrencyAbbreviation} from '../../../utils/helper-methods';
 
 export const GetProtocolPrefix =
@@ -47,10 +48,10 @@ export const GetPrecision =
     } = getState();
     const tokens = {...tokenData, ...customTokenData};
     const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
-
     return (
       BitpaySupportedCurrencies[currencyName]?.unitInfo ||
-      tokens[currencyName]?.unitInfo
+      tokens[currencyName]?.unitInfo ||
+      WalletConnectSupportedEvmCoins[currencyName]?.unitInfo
     );
   };
 

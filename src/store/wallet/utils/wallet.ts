@@ -296,6 +296,20 @@ export const findWalletByAddress = (
   }
 };
 
+export const getKeyIdByAddress = (
+  address: string,
+  keys: {[key in string]: Key},
+) => {
+  for (let key of Object.values(keys)) {
+    const wallet = key.wallets.find(
+      w => w.receiveAddress?.toLowerCase() === address.toLowerCase(),
+    );
+    if (wallet) {
+      return key.id;
+    }
+  }
+};
+
 export const isCacheKeyStale = (
   timestamp: number | undefined,
   duration: number,
