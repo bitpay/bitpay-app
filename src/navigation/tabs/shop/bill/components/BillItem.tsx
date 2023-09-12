@@ -29,6 +29,7 @@ import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {ShopEffects} from '../../../../../store/shop';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {getBillAccountEventParams} from '../utils';
+import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 
 interface BillItemProps {
   account: BillPayAccount;
@@ -253,7 +254,20 @@ export default ({
                           {
                             text: t('REMOVE BILL'),
                             action: () => {
-                              removeBill();
+                              removeBill().catch(async err => {
+                                dispatch(dismissOnGoingProcessModal());
+                                await sleep(500);
+                                dispatch(
+                                  AppActions.showBottomNotificationModal(
+                                    CustomErrorMessage({
+                                      title: t('Could not remove bill'),
+                                      errMsg:
+                                        err?.message ||
+                                        t('Please try again later.'),
+                                    }),
+                                  ),
+                                );
+                              });
                             },
                           },
                         ],
