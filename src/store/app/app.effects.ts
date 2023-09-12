@@ -917,6 +917,7 @@ export const handleBwsEvent =
 export const resetAllSettings = (): Effect => dispatch => {
   dispatch(AppActions.setColorScheme(null));
   dispatch(AppActions.showPortfolioValue(true));
+  dispatch(AppActions.toggleHideAllBalances(false));
   dispatch(
     AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
   );
