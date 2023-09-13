@@ -155,7 +155,7 @@ const PayBill = ({
             AppActions.showBottomNotificationModal(
               CustomErrorMessage({
                 title: t('Could not remove bill'),
-                errMsg: err.message,
+                errMsg: err?.message || t('Please try again later.'),
               }),
             ),
           );

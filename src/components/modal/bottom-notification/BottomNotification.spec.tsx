@@ -1,8 +1,8 @@
 import React from 'react';
-import {fireEvent, render, cleanup} from '@testing-library/react-native';
+import {fireEvent, cleanup, render} from '@test/render';
 import {Provider} from 'react-redux';
 import BottomNotification from './BottomNotification';
-import {configureTestStore} from '../../../store';
+import configureTestStore from '@test/store';
 
 const mockFn = jest.fn();
 

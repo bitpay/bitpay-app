@@ -16,7 +16,7 @@ import {AppInitialization} from './src/AppInitialization';
 
 enableFreeze(true);
 
-export const {store, persistor} = getStore();
+const {store, persistor} = getStore();
 
 const ReduxProvider = () => {
   return (

@@ -20,7 +20,7 @@ import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
 import {
   LightBlack,
   Midnight,
-  NeutralSlate,
+  Slate30,
   SlateDark,
   White,
 } from '../../../../styles/colors';
@@ -31,7 +31,6 @@ import {
   convertToFiat,
   formatFiatAmount,
   getErrorString,
-  sleep,
 } from '../../../../utils/helper-methods';
 import {Key} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
@@ -40,7 +39,7 @@ import {
   CheckIfLegacyBCH,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {TouchableOpacity, View} from 'react-native';
+import {AppState, AppStateStatus, TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
@@ -67,11 +66,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import {
-  BchLegacyAddressInfo,
-  CustomErrorMessage,
-  Mismatch,
-} from '../../components/ErrorMessages';
+import {BchLegacyAddressInfo, Mismatch} from '../../components/ErrorMessages';
 import {
   CoinNetwork,
   createWalletAddress,
@@ -130,6 +125,10 @@ const PasteClipboardContainer = styled.TouchableOpacity`
   cursor: pointer;
 `;
 
+const ContactContainer = styled.View`
+  margin-top: 20px;
+`;
+
 export const ContactTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
@@ -145,7 +144,6 @@ export const ContactTitle = styled(BaseText)`
 `;
 
 const EmailContainer = styled.View`
-  align-items: center;
   flex-direction: row;
   margin-top: 10px;
 `;
@@ -158,6 +156,10 @@ const EmailIconContainer = styled.View`
   margin-right: 13px;
   height: 50px;
   width: 50px;
+`;
+
+const EmailTextContainer = styled.View`
+  justify-content: center;
 `;
 
 const EmailText = styled(Paragraph)`
@@ -265,7 +267,7 @@ const SendTo = () => {
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const theme = useTheme();
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? LightBlack : Slate30;
   const [searchInput, setSearchInput] = useState('');
   const [clipboardData, setClipboardData] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
@@ -400,35 +402,13 @@ const SendTo = () => {
                 }),
               ),
             );
-          } else {
-            dispatch(
-              showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
-            );
           }
-        } else {
-          dispatch(
-            showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
-          );
         }
       }
       return false;
     };
 
-  const validateAndNavigateToConfirm = async (
-    text: string,
-    opts: {
-      context?: string;
-      name?: string;
-      email?: string;
-      destinationTag?: number;
-    } = {},
-  ) => {
-    const {context, name, email, destinationTag} = opts;
-    if (isEmailAddress(text.trim())) {
-      setSearchIsEmailAddress(true);
-      return;
-    }
-    setSearchIsEmailAddress(false);
+  const validateAddress = async (text: string) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
@@ -437,7 +417,6 @@ const SendTo = () => {
 
         const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
         dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
         const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
           GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
           chain,
@@ -449,46 +428,58 @@ const SendTo = () => {
         if (selected) {
           const isValid = dispatch(checkCoinAndNetwork(selected, true));
           if (isValid) {
-            await sleep(0);
-            dispatch(
-              incomingData(text, {
-                wallet,
-                context,
-                name,
-                email,
-                destinationTag,
-              }),
-            );
+            return Promise.resolve(true);
           }
         } else {
-          dispatch(
-            showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
-          );
+          return Promise.resolve(false);
         }
       } catch (err) {
+        clearClipboard();
         const formattedErrMsg = BWCErrorMessage(err);
         dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
         logger.warn(formattedErrMsg);
-        dispatch(
-          showBottomNotificationModal(
-            CustomErrorMessage({errMsg: formattedErrMsg, title: 'Error'}),
-          ),
-        );
+        return Promise.resolve(false);
       }
     } else if (ValidDataTypes.includes(data?.type)) {
       if (dispatch(checkCoinAndNetwork(text))) {
-        setSearchInput(text);
-        await sleep(0);
-        dispatch(
-          incomingData(text, {wallet, context, name, email, destinationTag}),
-        );
+        return Promise.resolve(true);
+      } else {
+        return Promise.resolve(false);
       }
+    } else {
+      return Promise.resolve(false);
+    }
+  };
+
+  const validateAndNavigateToConfirm = async (
+    text: string,
+    opts: {
+      context?: string;
+      name?: string;
+      email?: string;
+      destinationTag?: number;
+      searching?: boolean;
+    } = {},
+  ) => {
+    clearClipboard();
+    const {context, name, email, destinationTag, searching} = opts;
+    if (isEmailAddress(text.trim())) {
+      setSearchIsEmailAddress(true);
+      return;
+    }
+    setSearchIsEmailAddress(false);
+    const isValid = await validateAddress(text);
+    if (isValid) {
+      await dispatch(
+        incomingData(text, {wallet, context, name, email, destinationTag}),
+      );
+    } else if (!searching) {
+      dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
     }
   };
 
   const onSearchInputChange = debounce((text: string) => {
-    validateAndNavigateToConfirm(text);
+    validateAndNavigateToConfirm(text, {searching: true});
   }, 300);
 
   const onSendToWallet = async (selectedWallet: KeyWallet) => {
@@ -537,20 +528,6 @@ const SendTo = () => {
   };
 
   useEffect(() => {
-    const getString = async () => {
-      const clipboardData = await Clipboard.getString();
-      setClipboardData(clipboardData);
-    };
-    getString();
-  }, []);
-
-  useEffect(() => {
-    return navigation.addListener('blur', () =>
-      setTimeout(() => setSearchInput(''), 300),
-    );
-  }, [navigation]);
-
-  useEffect(() => {
     const getReceivingAddresses = async () => {
       const email = searchInput.trim().toLowerCase();
       const searchPromise = dispatch(
@@ -577,6 +554,42 @@ const SendTo = () => {
     currencyAbbreviation,
     wallet.chain,
   ]);
+
+  const clearClipboard = () => {
+    Clipboard.setString('');
+    setClipboardData('');
+  };
+  const getString = async () => {
+    const _clipboardData = await Clipboard.getString();
+    if (_clipboardData) {
+      const isValid = await validateAddress(_clipboardData);
+      if (isValid) {
+        setClipboardData(_clipboardData);
+      }
+    }
+  };
+
+  useEffect(() => {
+    getString();
+    return navigation.addListener('blur', () =>
+      setTimeout(() => setSearchInput(''), 300),
+    );
+  }, [navigation]);
+
+  useEffect(() => {
+    function onAppStateChange(status: AppStateStatus) {
+      if (status === 'active') {
+        getString();
+      }
+    }
+
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+
+    return () => subscriptionAppStateChange.remove();
+  }, []);
 
   return (
     <SafeAreaView>
@@ -669,16 +682,17 @@ const SendTo = () => {
               <EmailIconContainer>
                 <SendLightSvg />
               </EmailIconContainer>
-              <Paragraph>
-                Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
-              </Paragraph>
+              <EmailTextContainer>
+                <Paragraph>
+                  Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
+                </Paragraph>
+              </EmailTextContainer>
             </EmailContainer>
           </TouchableOpacity>
         ) : null}
 
-        {clipboardData ? (
+        {clipboardData && !searchIsEmailAddress && !searchInput ? (
           <PasteClipboardContainer
-            activeOpacity={0.75}
             onPress={() => {
               haptic('impactLight');
               setSearchInput(clipboardData);
@@ -689,8 +703,8 @@ const SendTo = () => {
           </PasteClipboardContainer>
         ) : null}
 
-        {contacts.length > 0 ? (
-          <>
+        {contacts.length > 0 && !searchIsEmailAddress ? (
+          <ContactContainer>
             <ContactTitleContainer>
               {ContactsSvg({})}
               <ContactTitle>{t('Contacts')}</ContactTitle>
@@ -719,7 +733,7 @@ const SendTo = () => {
                 />
               );
             })}
-          </>
+          </ContactContainer>
         ) : null}
 
         <OptionsSheet

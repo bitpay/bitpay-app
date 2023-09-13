@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.14.1",
+  "version": "14.14.2",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -11,6 +11,7 @@
     "start": "export NODE_OPTIONS=--openssl-legacy-provider && react-native start",
     "test:coverage": "jest --coverage --testMatch='**/*.spec.{js,tsx}' --config='jest.config.js'",
     "test:unit": "jest --watch --testMatch='**/*.spec.{js,tsx}' --config='jest.config.js'",
+    "test:cache": "jest --cache",
     "prebuild:android:debug": "yarn set:dev",
     "build:android:debug": "export NODE_OPTIONS=--openssl-legacy-provider && ./scripts/android-debug.sh",
     "postbuild:android:debug": "yarn reset:dev",
@@ -224,7 +225,7 @@
     "react-native-version": "4.0.0",
     "react-test-renderer": "18.2.0",
     "redux-devtools-extension": "2.13.9",
-    "ts-jest": "28.0.5",
+    "ts-jest": "29.1.1",
     "typescript": "4.8.4"
   },
   "resolutions": {

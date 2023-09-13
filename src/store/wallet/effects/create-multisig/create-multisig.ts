@@ -36,7 +36,7 @@ export const startCreateKeyMultisig =
           seedType: 'new',
         });
 
-        const _wallet = await createWalletWithOpts({key: _key, opts});
+        const _wallet = await dispatch(createWalletWithOpts({key: _key, opts}));
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
@@ -106,10 +106,12 @@ export const addWalletMultisig =
             defaultLanguage,
           },
         } = getState();
-        const newWallet = (await createWalletWithOpts({
-          key: key.methods!,
-          opts,
-        })) as Wallet;
+        const newWallet = (await dispatch(
+          createWalletWithOpts({
+            key: key.methods!,
+            opts,
+          }),
+        )) as Wallet;
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {

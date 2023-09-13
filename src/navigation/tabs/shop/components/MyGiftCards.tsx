@@ -36,7 +36,7 @@ const NoGiftCards = styled.View`
   align-items: center;
   justify-content: center;
   height: 50px;
-  margin-top: 10px;
+  margin: 10px ${horizontalPadding}px;
 `;
 
 const NoGiftCardsText = styled(BaseText)`
@@ -138,7 +138,7 @@ const MyGiftCards = ({
         loop={false}
         vertical={false}
         width={WIDTH}
-        height={longestSlideLength * giftCardHeight}
+        height={longestSlideLength * giftCardHeight || 60}
         autoPlay={false}
         data={slides}
         enabled={false}

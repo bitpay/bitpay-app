@@ -1,6 +1,6 @@
 import React from 'react';
 import Checkbox from './Checkbox';
-import {fireEvent, render} from '@testing-library/react-native';
+import {fireEvent, render} from '@test/render';
 import {SlateDark, Action} from '../../styles/colors';
 
 it('renders correctly', async () => {
