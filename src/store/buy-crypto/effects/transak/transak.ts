@@ -8,52 +8,6 @@ import {
 
 const bwsUri = BASE_BWS_URL;
 
-export const transakGetAccessToken = async (requestData: any): Promise<any> => {
-  try {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const body = requestData;
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/transak/getAccessToken',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    return Promise.reject(err);
-  }
-};
-
-export const transakGetCryptoCurrencies = async (
-  requestData: any,
-): Promise<any> => {
-  try {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const body = requestData;
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/transak/cryptoCurrencies',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    return Promise.reject(err);
-  }
-};
-
 export const transakGetFiatCurrencies = async (requestData: {
   env: 'sandbox' | 'production';
 }): Promise<TransakFiatCurrenciesData> => {
