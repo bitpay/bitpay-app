@@ -1530,6 +1530,7 @@ const BuyCryptoOffers: React.FC = () => {
             logger.debug('Transak getting quote: SUCCESS');
             setFinishedTransak(!finishedTransak);
           } else {
+            let err;
             if (data.message && typeof data.message === 'string') {
               logger.error('Transak error: ' + data.message);
             }
@@ -1539,9 +1540,27 @@ const BuyCryptoOffers: React.FC = () => {
             if (data.errors) {
               logger.error(data.errors);
             }
-            let err = t(
-              "Can't get rates at this moment. Please try again later",
-            );
+            if (data.error?.message && typeof data.error.message === 'string') {
+              logger.error('Transak error: ' + data.error.message);
+              if (
+                data.error.message
+                  .toLowerCase()
+                  .includes('invalid cryptocurrency')
+              ) {
+                err = t(
+                  'Transak has temporarily discontinued operations with the selected crypto currency.',
+                );
+              } else if (
+                data.error.message
+                  .toLowerCase()
+                  .includes('temporarily suspended')
+              ) {
+                err = data.error.message;
+              }
+            }
+            err =
+              err ??
+              t("Can't get rates at this moment. Please try again later");
             const reason =
               'transakGetQuote Error. "cryptoAmount" not included.';
             showTransakError(err, reason);
