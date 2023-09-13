@@ -125,6 +125,10 @@ const PasteClipboardContainer = styled.TouchableOpacity`
   cursor: pointer;
 `;
 
+const ContactContainer = styled.View`
+  margin-top: 20px;
+`;
+
 export const ContactTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
@@ -140,7 +144,6 @@ export const ContactTitle = styled(BaseText)`
 `;
 
 const EmailContainer = styled.View`
-  align-items: center;
   flex-direction: row;
   margin-top: 10px;
 `;
@@ -153,6 +156,10 @@ const EmailIconContainer = styled.View`
   margin-right: 13px;
   height: 50px;
   width: 50px;
+`;
+
+const EmailTextContainer = styled.View`
+  justify-content: center;
 `;
 
 const EmailText = styled(Paragraph)`
@@ -675,14 +682,16 @@ const SendTo = () => {
               <EmailIconContainer>
                 <SendLightSvg />
               </EmailIconContainer>
-              <Paragraph>
-                Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
-              </Paragraph>
+              <EmailTextContainer>
+                <Paragraph>
+                  Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
+                </Paragraph>
+              </EmailTextContainer>
             </EmailContainer>
           </TouchableOpacity>
         ) : null}
 
-        {clipboardData ? (
+        {clipboardData && !searchIsEmailAddress && !searchInput ? (
           <PasteClipboardContainer
             onPress={() => {
               haptic('impactLight');
@@ -694,8 +703,8 @@ const SendTo = () => {
           </PasteClipboardContainer>
         ) : null}
 
-        {contacts.length > 0 ? (
-          <>
+        {contacts.length > 0 && !searchIsEmailAddress ? (
+          <ContactContainer>
             <ContactTitleContainer>
               {ContactsSvg({})}
               <ContactTitle>{t('Contacts')}</ContactTitle>
@@ -724,7 +733,7 @@ const SendTo = () => {
                 />
               );
             })}
-          </>
+          </ContactContainer>
         ) : null}
 
         <OptionsSheet
