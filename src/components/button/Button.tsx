@@ -61,6 +61,7 @@ interface ButtonOptionProps {
   disabled?: boolean;
   action?: boolean;
   height?: number;
+  children?: React.ReactNode;
 }
 
 export const DURATION = 100;
@@ -306,7 +307,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   return (
     <ButtonContainer
       accessibilityLabel={accessibilityLabel}
-      style={style}
+      style={style as any}
       buttonType={buttonType}
       onPress={debouncedOnPress}
       activeOpacity={disabled ? 1 : ActiveOpacity}

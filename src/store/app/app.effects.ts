@@ -20,7 +20,6 @@ import {
   RESULTS,
 } from 'react-native-permissions';
 import uuid from 'react-native-uuid';
-import {store} from '../../..';
 import {AppActions} from '.';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
@@ -1187,47 +1186,46 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
   }
 };
 
-export const isVersionUpdated = (
-  currentVersion: string,
-  savedVersion: string,
-): boolean => {
-  const verifyTagFormat = (tag: string) => {
-    const regex = /^v?\d+\.\d+\.\d+$/i;
-    return regex.exec(tag);
-  };
-
-  const formatTagNumber = (tag: string) => {
-    const formattedNumber = tag.replace(/^v/i, '').split('.');
-    return {
-      major: +formattedNumber[0],
-      minor: +formattedNumber[1],
-      patch: +formattedNumber[2],
+export const isVersionUpdated =
+  (currentVersion: string, savedVersion: string): Effect<Promise<boolean>> =>
+  async dispatch => {
+    const verifyTagFormat = (tag: string) => {
+      const regex = /^v?\d+\.\d+\.\d+$/i;
+      return regex.exec(tag);
     };
+
+    const formatTagNumber = (tag: string) => {
+      const formattedNumber = tag.replace(/^v/i, '').split('.');
+      return {
+        major: +formattedNumber[0],
+        minor: +formattedNumber[1],
+        patch: +formattedNumber[2],
+      };
+    };
+
+    if (!verifyTagFormat(currentVersion)) {
+      dispatch(
+        LogActions.error(
+          'Cannot verify the format of version tag: ' + currentVersion,
+        ),
+      );
+    }
+    if (!verifyTagFormat(savedVersion)) {
+      dispatch(
+        LogActions.error(
+          'Cannot verify the format of the saved version tag: ' + savedVersion,
+        ),
+      );
+    }
+
+    const current = formatTagNumber(currentVersion);
+    const saved = formatTagNumber(savedVersion);
+    if (saved.major === current.major && saved.minor === current.minor) {
+      return true;
+    }
+
+    return false;
   };
-
-  if (!verifyTagFormat(currentVersion)) {
-    store.dispatch(
-      LogActions.error(
-        'Cannot verify the format of version tag: ' + currentVersion,
-      ),
-    );
-  }
-  if (!verifyTagFormat(savedVersion)) {
-    store.dispatch(
-      LogActions.error(
-        'Cannot verify the format of the saved version tag: ' + savedVersion,
-      ),
-    );
-  }
-
-  const current = formatTagNumber(currentVersion);
-  const saved = formatTagNumber(savedVersion);
-  if (saved.major === current.major && saved.minor === current.minor) {
-    return true;
-  }
-
-  return false;
-};
 
 export const saveUserFeedback =
   (rate: FeedbackRateType, version: string, sent: boolean): Effect<any> =>
