@@ -81,6 +81,11 @@ jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');
   return {
     ...actualNav,
+    createNavigationContainerRef: jest.fn(() => ({
+      navigate: jest.fn(),
+      dispatch: jest.fn(),
+      addListener: jest.fn(),
+    })),
     useNavigation: () => ({
       navigate: jest.fn(),
       dispatch: jest.fn(),
@@ -92,6 +97,7 @@ jest.mock('@react-navigation/native', () => {
 jest.mock('mixpanel-react-native', () => ({
   __esModule: true,
   default: () => jest.fn(),
+  MixpanelProperties: {},
   Mixpanel: jest.fn(() => ({
     init: jest.fn(),
   })),
@@ -137,4 +143,10 @@ jest.mock('react-native-localize', () => ({
 
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
+}));
+
+jest.mock('axios');
+
+jest.mock('i18next', () => ({
+  t: key => key,
 }));

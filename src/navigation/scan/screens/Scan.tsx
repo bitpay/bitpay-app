@@ -2,7 +2,6 @@ import React from 'react';
 import {RNCamera} from 'react-native-camera';
 import styled from 'styled-components/native';
 import ScanGuideSvg from '../../../../assets/img/qr-scan-guides.svg';
-import {useDispatch} from 'react-redux';
 import {incomingData} from '../../../store/scan/scan.effects';
 import debounce from 'lodash.debounce';
 import {useRoute} from '@react-navigation/native';
@@ -12,6 +11,7 @@ import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
+import {useAppDispatch} from '../../../utils/hooks';
 
 const ScanContainer = styled.SafeAreaView`
   flex: 1;
@@ -31,7 +31,7 @@ interface Props {
 
 const Scan = () => {
   const {t} = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const route = useRoute<RouteProp<ScanStackParamList, 'Root'>>();
   const {onScanComplete} = route.params || {};
 

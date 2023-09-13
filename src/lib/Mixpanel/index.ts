@@ -2,9 +2,8 @@ import {MIXPANEL_PROJECT_TOKEN} from '@env';
 import {Mixpanel, MixpanelProperties} from 'mixpanel-react-native';
 
 export const MixpanelWrapper = (() => {
-  const _client = MIXPANEL_PROJECT_TOKEN
-    ? new Mixpanel(MIXPANEL_PROJECT_TOKEN, true)
-    : null;
+  const token = MIXPANEL_PROJECT_TOKEN;
+  const _client = token ? new Mixpanel(token, true) : null;
 
   const guard = async <T = void>(cb: (mp: Mixpanel) => T) => {
     if (_client) {

@@ -185,7 +185,7 @@ export const incomingData =
         dispatch(handleBitPayUri(data, opts?.wallet));
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
-        goToImport(data);
+        dispatch(goToImport(data));
         // Join multisig wallet
       } else if (IsValidJoinCode(data)) {
         dispatch(goToJoinWallet(data));
@@ -229,7 +229,7 @@ const goToPayPro =
     const invoiceId = data.split('/i/')[1].split('?')[0];
     const payProUrl = GetPayProUrl(data);
     const {host} = new URL(payProUrl);
-
+    dispatch(LogActions.info('[scan] Incoming-data: Payment Protocol request'));
     try {
       dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
       const payProOptions = await dispatch(GetPayProOptions(payProUrl));
@@ -266,8 +266,6 @@ const goToPayPro =
       });
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
-      await sleep(800);
-
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
@@ -476,9 +474,10 @@ const goToConfirm =
               ...recipient,
               ...{
                 opts: {
-                  showERC20Tokens:
-                    !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if ETH address show token wallets in next view
+                  showEVMWalletsAndTokens:
+                    !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
                   message: opts?.message || '',
+                  feePerKb: opts?.feePerKb,
                 },
               },
             },
@@ -556,7 +555,7 @@ export const goToAmount =
     chain,
     recipient,
     wallet,
-    opts: urlOpts,
+    opts,
   }: {
     coin: string;
     chain: string;
@@ -585,8 +584,10 @@ export const goToAmount =
             ...recipient,
             ...{
               opts: {
-                showERC20Tokens:
-                  !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if ETH address show token wallets in next view
+                showEVMWalletsAndTokens:
+                  !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
+                message: opts?.message || '',
+                feePerKb: opts?.feePerKb,
               },
             },
           },
@@ -607,7 +608,7 @@ export const goToAmount =
               amount: Number(amount),
               wallet,
               setButtonState,
-              opts: {...urlOpts, ...amountOpts},
+              opts: {...opts, ...amountOpts},
             }),
           );
         },
@@ -755,7 +756,7 @@ const handleBitcoinCashUriLegacyAddress =
   dispatch => {
     dispatch(
       LogActions.info(
-        '[scan] Incoming-data: Bitcoin Cash URI with legacy address',
+        '[scan] Incoming-data: BitcoinCash URI with legacy address',
       ),
     );
     const coin = 'bch';
@@ -899,7 +900,7 @@ const handleRippleUri =
       currency: coin,
       chain,
       address,
-      destinationTag: Number(destinationTag),
+      destinationTag: destinationTag ? Number(destinationTag) : undefined,
     };
     if (!amountParam.exec(data)) {
       dispatch(goToAmount({coin, chain, recipient, wallet}));
@@ -1340,7 +1341,7 @@ const handlePlainAddress =
     dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
-      : undefined; // There is no way to tell if an eth address is goerli or livenet so let's skip the network filter
+      : undefined; // There is no way to tell if an evm address is goerli or livenet so let's skip the network filter
     const recipient = {
       type: opts?.context || 'address',
       name: opts?.name,
@@ -1354,14 +1355,21 @@ const handlePlainAddress =
     dispatch(goToAmount({coin, chain, recipient, wallet: opts?.wallet}));
   };
 
-const goToImport = (importQrCodeData: string): void => {
-  navigationRef.navigate('Wallet', {
-    screen: WalletScreens.IMPORT,
-    params: {
-      importQrCodeData,
-    },
-  });
-};
+const goToImport =
+  (importQrCodeData: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(
+      LogActions.info(
+        '[scan] Incoming-data (redirect): QR code export feature',
+      ),
+    );
+    navigationRef.navigate('Wallet', {
+      screen: WalletScreens.IMPORT,
+      params: {
+        importQrCodeData,
+      },
+    });
+  };
 
 const goToJoinWallet =
   (data: string): Effect<void> =>

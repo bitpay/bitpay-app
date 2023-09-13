@@ -1,6 +1,8 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
 import {
   Action,
+  AnyAction,
+  Store,
   applyMiddleware,
   combineReducers,
   legacy_createStore as createStore,
@@ -58,6 +60,7 @@ import {
 
 import {Storage} from 'redux-persist';
 import {MMKV} from 'react-native-mmkv';
+import {AppDispatch} from '../utils/hooks';
 
 export const storage = new MMKV();
 
@@ -241,5 +244,8 @@ export function configureTestStore(initialState: any) {
     trace: true,
     traceLimit: 25,
   })(applyMiddleware(...middlewares));
-  return createStore(rootReducer, initialState, middlewareEnhancers);
+  const store = createStore(rootReducer, initialState, middlewareEnhancers);
+  return store as Store<RootState, AnyAction> & {
+    dispatch: AppDispatch;
+  };
 }
