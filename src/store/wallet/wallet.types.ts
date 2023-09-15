@@ -48,7 +48,6 @@ export enum WalletActionTypes {
   UPDATE_CACHE_FEE_LEVEL = 'WALLET/UPDATE_CACHE_FEE_LEVEL',
   UPDATE_DEFERRED_IMPORT = 'WALLET/UPDATE_DEFERRED_IMPORT',
   CLEAR_DEFERRED_IMPORT = 'WALLET/CLEAR_DEFERRED_IMPORT',
-  EXPECTED_KEY_LENGTH_CHANGE = 'WALLET/EXPECTED_KEY_LENGTH_CHANGE',
 }
 
 interface successWalletStoreInit {
@@ -63,7 +62,6 @@ interface successCreateKey {
   type: typeof WalletActionTypes.SUCCESS_CREATE_KEY;
   payload: {
     key: Key;
-    lengthChange: number;
   };
 }
 
@@ -120,7 +118,6 @@ interface deleteKey {
   type: typeof WalletActionTypes.DELETE_KEY;
   payload: {
     keyId: string;
-    lengthChange: number;
   };
 }
 
@@ -280,11 +277,6 @@ interface updateCacheFeeLevel {
   payload: CacheFeeLevel;
 }
 
-interface setExpectedKeyLengthChange {
-  type: typeof WalletActionTypes.EXPECTED_KEY_LENGTH_CHANGE;
-  payload: number;
-}
-
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -321,5 +313,4 @@ export type WalletActionType =
   | updateWalletTxHistory
   | syncWallets
   | toggleHideWallet
-  | updateCacheFeeLevel
-  | setExpectedKeyLengthChange;
+  | updateCacheFeeLevel;

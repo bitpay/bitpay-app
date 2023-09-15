@@ -49,7 +49,6 @@ import {
 } from './coinbase/coinbase.reducer';
 import {rateReducer, rateReduxPersistBlackList} from './rate/rate.reducer';
 import {LogActions} from './log';
-import {walletBackupReducer} from './wallet-backup/wallet-backup.reducer';
 import {
   walletConnectReducer,
   walletConnectV2Reducer,
@@ -90,7 +89,6 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   LOG: logReduxPersistBlackList,
   SHOP: shopReduxPersistBlackList,
   SWAP_CRYPTO: swapCryptoReduxPersistBlackList,
-  WALLET_BACKUP: walletReduxPersistBlackList,
   WALLET: walletReduxPersistBlackList,
   RATE: rateReduxPersistBlackList,
   CONTACT: ContactReduxPersistBlackList,
@@ -114,7 +112,6 @@ const reducers = {
   SHOP: shopReducer,
   SWAP_CRYPTO: swapCryptoReducer,
   WALLET: walletReducer,
-  WALLET_BACKUP: walletBackupReducer,
   RATE: rateReducer,
   CONTACT: contactReducer,
   COINBASE: coinbaseReducer,
