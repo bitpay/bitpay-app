@@ -7,7 +7,11 @@ import React, {
 } from 'react';
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {SUPPORTED_COINS, SUPPORTED_TOKENS} from '../../../constants/currencies';
+import {
+  BitpaySupportedEvmCoins,
+  SUPPORTED_COINS,
+  SUPPORTED_TOKENS,
+} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
@@ -144,7 +148,7 @@ export type GlobalSelectParamList = {
       sendMax?: boolean | undefined;
       message?: string;
       feePerKb?: number;
-      showERC20Tokens?: boolean;
+      showEVMWalletsAndTokens?: boolean;
     };
   };
   amount?: number;
@@ -262,8 +266,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     if (recipient.currency && recipient.chain) {
       wallets = wallets.filter(
         wallet =>
-          wallet.currencyAbbreviation === recipient?.currency &&
-          wallet.chain === recipient?.chain,
+          (wallet.currencyAbbreviation === recipient?.currency &&
+            wallet.chain === recipient?.chain) ||
+          (recipient?.opts?.showEVMWalletsAndTokens &&
+            BitpaySupportedEvmCoins[wallet.currencyAbbreviation]),
       );
     }
     if (recipient?.network) {

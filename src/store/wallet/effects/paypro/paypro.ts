@@ -22,6 +22,7 @@ export interface PayProOptions {
   paymentId: string;
   paymentOptions: PayProPaymentOption[];
   payProUrl: string;
+  verified: boolean;
 }
 
 export const GetPayProOptions =
