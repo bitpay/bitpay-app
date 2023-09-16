@@ -844,10 +844,7 @@ export const startImportMnemonic =
 
         // To clear encrypt password
         if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
-          const previousKeysLength = Object.keys(WALLET.keys).length;
-          const numNewKeys = Object.keys(WALLET.keys).length - 1;
-          const lengthChange = previousKeysLength - numNewKeys;
-          dispatch(deleteKey({keyId: opts.keyId, lengthChange}));
+          dispatch(deleteKey({keyId: opts.keyId}));
         }
 
         const key = buildKeyObj({
@@ -946,10 +943,7 @@ export const startImportFile =
           );
           filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
           wallets = wallets.concat(filteredKeys);
-          const previousKeysLength = Object.keys(WALLET.keys).length;
-          const numNewKeys = Object.keys(WALLET.keys).length - 1;
-          const lengthChange = previousKeysLength - numNewKeys;
-          dispatch(deleteKey({keyId: opts.keyId, lengthChange}));
+          dispatch(deleteKey({keyId: opts.keyId}));
         }
 
         const key = buildKeyObj({

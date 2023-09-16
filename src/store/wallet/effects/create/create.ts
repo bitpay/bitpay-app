@@ -85,13 +85,9 @@ export const startCreateKey =
         );
 
         const key = buildKeyObj({key: _key, wallets});
-        const previousKeysLength = Object.keys(keys).length;
-        const numNewKeys = Object.keys(keys).length + 1;
-        const lengthChange = previousKeysLength - numNewKeys;
         dispatch(
           successCreateKey({
             key,
-            lengthChange,
           }),
         );
         resolve(key);
@@ -548,13 +544,9 @@ export const startCreateKeyWithOpts =
           wallets: [wallet],
           backupComplete: true,
         });
-        const previousKeysLength = Object.keys(keys).length;
-        const numNewKeys = Object.keys(keys).length + 1;
-        const lengthChange = previousKeysLength - numNewKeys;
         dispatch(
           successCreateKey({
             key,
-            lengthChange,
           }),
         );
         resolve(key);

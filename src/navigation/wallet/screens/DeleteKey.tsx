@@ -88,10 +88,7 @@ const DeleteKey = () => {
       });
 
     await sleep(300);
-    const previousKeysLength = Object.keys(keys).length;
-    const numNewKeys = Object.keys(keys).length - 1;
-    const lengthChange = previousKeysLength - numNewKeys;
-    dispatch(deleteKey({keyId, lengthChange}));
+    dispatch(deleteKey({keyId}));
 
     dispatch(
       setHomeCarouselConfig(

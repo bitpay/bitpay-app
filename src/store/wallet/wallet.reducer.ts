@@ -9,7 +9,6 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
   'tokenData',
   'tokenOptions',
   'tokenOptionsByAddress',
-  'expectedKeyLengthChange',
 ];
 
 export type Keys = {
@@ -38,7 +37,6 @@ export interface WalletState {
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
   initLogs: AddLog[];
-  expectedKeyLengthChange: number;
 }
 
 export const initialState: WalletState = {
@@ -67,7 +65,6 @@ export const initialState: WalletState = {
   queuedTransactions: false,
   enableReplaceByFee: false,
   initLogs: [], // keep init logs at the end (order is important)
-  expectedKeyLengthChange: 0,
 };
 
 export const walletReducer = (
@@ -76,11 +73,10 @@ export const walletReducer = (
 ): WalletState => {
   switch (action.type) {
     case WalletActionTypes.SUCCESS_CREATE_KEY: {
-      const {key, lengthChange} = action.payload;
+      const {key} = action.payload;
       return {
         ...state,
         keys: {...state.keys, [key.id]: key},
-        expectedKeyLengthChange: lengthChange,
       };
     }
 
@@ -237,7 +233,7 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.DELETE_KEY: {
-      const {keyId, lengthChange} = action.payload;
+      const {keyId} = action.payload;
       const keyToUpdate = state.keys[keyId];
       if (!keyToUpdate) {
         return state;
@@ -255,7 +251,6 @@ export const walletReducer = (
           lastDay: state.portfolioBalance.lastDay - balanceToRemove,
           previous: 0,
         },
-        expectedKeyLengthChange: lengthChange,
       };
     }
 
@@ -498,12 +493,6 @@ export const walletReducer = (
         },
       };
     }
-
-    case WalletActionTypes.EXPECTED_KEY_LENGTH_CHANGE:
-      return {
-        ...state,
-        expectedKeyLengthChange: action.payload,
-      };
 
     default:
       return state;

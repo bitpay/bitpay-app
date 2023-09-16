@@ -74,13 +74,9 @@ export const startCreateKeyMultisig =
         ) as Wallet;
 
         const key = buildKeyObj({key: _key, wallets: [wallet]});
-        const previousKeysLength = Object.keys(keys).length;
-        const numNewKeys = Object.keys(keys).length + 1;
-        const lengthChange = previousKeysLength - numNewKeys;
         dispatch(
           successCreateKey({
             key,
-            lengthChange,
           }),
         );
         resolve(key);
