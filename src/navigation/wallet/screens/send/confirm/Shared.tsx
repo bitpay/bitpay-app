@@ -269,6 +269,7 @@ export const Fee = ({
                 {feeLevel && !hideFeeOptions ? <H5>{viewFee}</H5> : null}
                 <H6>{cryptoAmount}</H6>
                 <ConfirmSubText>
+                  ~
                   {t(' ( of total amount)', {
                     fiatAmount,
                     percentageOfTotalAmountStr,

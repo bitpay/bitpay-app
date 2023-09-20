@@ -505,7 +505,7 @@ export const buildTxDetails =
           feeLevel,
           cryptoAmount: dispatch(FormatAmountStr(chain, chain, fee)),
           fiatAmount: formatFiatAmount(feeToFiat, defaultAltCurrencyIsoCode),
-          percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(2)} %`,
+          percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(2)}%`,
           percentageOfTotalAmount,
         },
       }),
