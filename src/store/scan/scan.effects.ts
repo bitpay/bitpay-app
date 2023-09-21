@@ -17,10 +17,9 @@ import {
   IsValidBitPayUri,
   IsValidDogecoinAddress,
   IsValidDogecoinUri,
-  IsValidEthereumAddress,
+  IsValidEVMAddress,
   IsValidEthereumUri,
   IsValidMaticUri,
-  IsValidMaticAddress,
   isValidBuyCryptoUri,
   isValidMoonpayUri,
   IsValidImportPrivateKey,
@@ -119,14 +118,9 @@ export const incomingData =
         // Plain Address (Bitcoin Cash)
       } else if (IsValidBitcoinCashAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'bch', chain || 'bch', opts));
-        // Address (Ethereum)
-      } else if (IsValidEthereumAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts));
-        // Address (Matic)
-      } else if (IsValidMaticAddress(data)) {
-        dispatch(
-          handlePlainAddress(data, coin || 'matic', chain || 'matic', opts),
-        );
+        // EVM Address (Ethereum/Matic)
+      } else if (IsValidEVMAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts)); // using eth for simplicity
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'xrp', chain || 'xrp', opts));
@@ -287,6 +281,8 @@ const goToPayPro =
 const handleUnlock =
   (data: string, wallet?: Wallet): Effect =>
   async dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: BitPay invoice'));
+
     const invoiceId = data.split('/i/')[1].split('?')[0];
     const network = data.includes('test.bitpay.com')
       ? Network.testnet
@@ -1338,7 +1334,8 @@ const handlePlainAddress =
     },
   ): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
+    let _coin = coin === 'eth' ? 'EVM' : coin;
+    dispatch(LogActions.info(`[scan] Incoming-data: ${_coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an evm address is goerli or livenet so let's skip the network filter
