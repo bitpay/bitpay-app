@@ -63,12 +63,12 @@ const statusFields = {
     color: '#b51b16',
     text: 'Failed',
   },
-  reversal_required: {
+  reversalRequired: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
     text: 'Failed',
   },
-  reversal_processing: {
+  reversalProcessing: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
     text: 'Failed',
