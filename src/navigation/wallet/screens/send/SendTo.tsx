@@ -31,6 +31,7 @@ import {
   convertToFiat,
   formatFiatAmount,
   getErrorString,
+  sleep,
 } from '../../../../utils/helper-methods';
 import {Key} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
@@ -416,6 +417,7 @@ const SendTo = () => {
         dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
 
         const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
+        await sleep(500);
         dispatch(dismissOnGoingProcessModal());
         const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
           GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
@@ -436,6 +438,7 @@ const SendTo = () => {
       } catch (err) {
         clearClipboard();
         const formattedErrMsg = BWCErrorMessage(err);
+        await sleep(500);
         dispatch(dismissOnGoingProcessModal());
         logger.warn(formattedErrMsg);
         return Promise.resolve(false);
