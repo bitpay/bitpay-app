@@ -581,7 +581,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 3F22DF1C884C608E7099039C /* Pods-BitPayApp.debug.xcconfig */;
 			buildSettings = {
-				ALLOWED_URL_PREFIXES = "https://bitpay.com,https://test.bitpay.com,https://staging.bitpay.com,https://bws.bitpay.com,https://www.coinbase.com,https://api.coinbase.com,https://api.1inch.dev/swap/v5.2/,https://api.coingecko.com/api/v3/simple/token_price/,https://checkout.simplexcc.com,https://sandbox.test-simplexcc.com,https://api.zenledger.io/bitpay/wallets/,https://rest.iad-05.braze.com,https://sdk.iad-05.braze.com,https://cloudflare-eth.com/,https://polygon-rpc.com/,https://matic-mumbai.chainstacklabs.com,https://api.demo.ramp.network/api,https://api.demo.ramp.network,https://api.ramp.network/api,https://api.ramp.network,http://192.168.100.62:3232/bws/api,http://192.168.100.62:3232,http://192.168.100.62,http://192.168.100.40:3232/bws/api,http://192.168.100.40:3232,http://192.168.100.40,";
+				ALLOWED_URL_PREFIXES = "ALLOWED-URL-PREFIXES-REPLACE-ME";
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
@@ -619,7 +619,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 780EA24A31E2DB5EB6F58453 /* Pods-BitPayApp.release.xcconfig */;
 			buildSettings = {
-				ALLOWED_URL_PREFIXES = "https://bitpay.com,https://test.bitpay.com,https://staging.bitpay.com,https://bws.bitpay.com,https://www.coinbase.com,https://api.coinbase.com,https://api.1inch.dev/swap/v5.2/,https://api.coingecko.com/api/v3/simple/token_price/,https://checkout.simplexcc.com,https://sandbox.test-simplexcc.com,https://api.zenledger.io/bitpay/wallets/,https://rest.iad-05.braze.com,https://sdk.iad-05.braze.com,https://cloudflare-eth.com/,https://polygon-rpc.com/,https://matic-mumbai.chainstacklabs.com,https://api.demo.ramp.network/api,https://api.demo.ramp.network,https://api.ramp.network/api,https://api.ramp.network,http://192.168.100.62:3232/bws/api,http://192.168.100.62:3232,http://192.168.100.62,http://192.168.100.40:3232/bws/api,http://192.168.100.40:3232,http://192.168.100.40,";
+				ALLOWED_URL_PREFIXES = "ALLOWED-URL-PREFIXES-REPLACE-ME";
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
