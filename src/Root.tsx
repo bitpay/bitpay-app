@@ -117,6 +117,8 @@ import BillStack, {
   BillStackParamList,
 } from './navigation/tabs/shop/bill/BillStack';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
+import RNBootSplash from 'react-native-bootsplash';
+import {showBlur} from './store/app/app.actions';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -254,7 +256,6 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const debouncedOnStateChange = useMemo(
     () =>
@@ -328,13 +329,13 @@ export default () => {
         }
       };
 
-      if (onboardingCompleted) {
+      if (onboardingCompleted && navigationRef.isReady()) {
         if (status === 'active' && checkingBiometricForSending) {
           dispatch(AppActions.checkingBiometricForSending(false));
           dispatch(AppActions.showBlur(false));
         } else if (status === 'inactive' && checkingBiometricForSending) {
           dispatch(AppActions.showBlur(false));
-        } else if (status === 'active' && !appIsLoading) {
+        } else if (status === 'active' && !failedAppInit) {
           if (lockAuthorizedUntil) {
             const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
             const totalSecs =
@@ -371,7 +372,6 @@ export default () => {
     lockAuthorizedUntil,
     biometricLockActive,
     checkingBiometricForSending,
-    appIsLoading,
     failedAppInit,
   ]);
 
@@ -435,6 +435,23 @@ export default () => {
           linking={linking}
           onReady={async () => {
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
+
+            dispatch(showBlur(pinLockActive || biometricLockActive));
+            await RNBootSplash.hide({fade: true});
+            // avoid splash conflicting with modal in iOS
+            // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
+            dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
+            dispatch(
+              LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`),
+            );
+            if (pinLockActive) {
+              await sleep(500);
+              dispatch(AppActions.showPinModal({type: 'check'}));
+            }
+            if (biometricLockActive) {
+              await sleep(500);
+              dispatch(AppActions.showBiometricModal({}));
+            }
 
             if (onboardingCompleted) {
               const getBrazeInitialUrl = async (): Promise<string> =>
