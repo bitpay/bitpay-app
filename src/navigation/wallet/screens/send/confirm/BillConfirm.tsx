@@ -217,11 +217,7 @@ const Confirm: React.FC<
       ),
     );
     try {
-      const {
-        invoice: newInvoice,
-        invoiceId,
-        payments,
-      } = await createBillPayInvoice({
+      const {invoice: newInvoice, payments} = await createBillPayInvoice({
         clientId: selectedCoinbaseAccount.id,
         transactionCurrency,
       });
@@ -434,6 +430,7 @@ const Confirm: React.FC<
                         width: 18,
                         marginTop: -2,
                         borderRadius: 10,
+                        marginRight: 2,
                         ...(billPayments.length > 1 && {
                           marginRight:
                             index === billPayments.length - 1 ? -5 : -3,
