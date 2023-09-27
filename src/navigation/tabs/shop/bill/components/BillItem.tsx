@@ -147,7 +147,7 @@ export default ({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
 
-  const baseEventParams = getBillAccountEventParams(account);
+  const baseEventParams = getBillAccountEventParams(account, payment);
 
   const removeBill = async () => {
     await sleep(500);
@@ -171,12 +171,14 @@ export default ({
               borderRadius: 30,
             }}
             resizeMode={'contain'}
-            source={{uri: account[account.type].merchantIcon}}
+            source={{uri: payment?.icon || account[account.type].merchantIcon}}
           />
           <View style={{maxWidth: 175}}>
-            <H6 numberOfLines={1}>{account[account.type].merchantName}</H6>
+            <H6 numberOfLines={1}>
+              {payment?.merchantName || account[account.type].merchantName}
+            </H6>
             <AccountType numberOfLines={1}>
-              {account[account.type].description}
+              {payment?.accountDescription || account[account.type].description}
             </AccountType>
           </View>
         </AccountDetailsLeft>
@@ -192,7 +194,7 @@ export default ({
             </>
           ) : (
             <>
-              {account.isPayable || !!payment ? (
+              {!!payment || account?.isPayable ? (
                 <>
                   {variation === 'pay' ? (
                     <PayButton>

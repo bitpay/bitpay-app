@@ -159,8 +159,6 @@ const getBillStatus = (account: BillPayAccount) => {
 };
 
 export default ({account, payment}: BillStatusProps) => {
-  const {status: billStatusStyle, statusText: billStatusText} =
-    getBillStatus(account);
   const paymentStatusStyle =
     payment && statusFields[payment.status]
       ? payment.status || 'processing'
@@ -168,8 +166,12 @@ export default ({account, payment}: BillStatusProps) => {
   const paymentStatusText = statusFields[payment && payment.status]
     ? statusFields[paymentStatusStyle].text
     : payment?.status || 'Processing';
-  const statusStyle = payment ? paymentStatusStyle : billStatusStyle;
-  const statusText = payment ? paymentStatusText : billStatusText;
+  const statusStyle = payment
+    ? paymentStatusStyle
+    : getBillStatus(account).status;
+  const statusText = payment
+    ? paymentStatusText
+    : getBillStatus(account).statusText;
   return (
     <StatusContainer status={statusStyle as BillStatusString}>
       <StatusText status={statusStyle as BillStatusString}>

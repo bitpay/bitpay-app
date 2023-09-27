@@ -291,6 +291,11 @@ export interface BillPayment {
   convenienceFee: number;
   status: 'complete' | 'processing' | 'failed';
   estimatedCompletionDate?: string;
+  icon: string;
+  merchantName: string;
+  mask: string;
+  accountType: string;
+  accountDescription: string;
 }
 
 export interface BillPayPayment {
