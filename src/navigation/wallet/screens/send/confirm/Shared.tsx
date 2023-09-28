@@ -379,7 +379,7 @@ export const Amount = ({
                 <H7>{fiatAmount}</H7>
               ) : (
                 <>
-                  <H4>{cryptoAmount}</H4>
+                  <H4 style={{textAlign: 'right'}}>{cryptoAmount}</H4>
                   {network &&
                   !['livenet', 'mainnet'].includes(network) &&
                   chain ? (

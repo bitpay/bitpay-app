@@ -523,11 +523,14 @@ const Confirm = () => {
             height={83}
             chain={chain}
             network={wallet.credentials.network}
+            hr
           />
           <Amount
             description={t('Total')}
             amount={total}
-            height={83}
+            height={
+              IsERCToken(wallet.currencyAbbreviation, wallet.chain) ? 110 : 83
+            }
             chain={chain}
             network={wallet.credentials.network}
             showInfoIcon={!!subTotal}
