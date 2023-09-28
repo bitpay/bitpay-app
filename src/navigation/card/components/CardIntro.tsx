@@ -40,7 +40,8 @@ const CardIntroImgContainer = styled.View`
 const TitleText = styled(BaseText)`
   width: ${WIDTH * 1.2}px;
   text-align: center;
-  font-size: 38.4px;
+  font-size: ${WIDTH < 380 ? 32 : 38.4}px;
+  margin-bottom: ${WIDTH < 380 ? 3 : 0}px;
 `;
 
 const IntroHero = () => {
