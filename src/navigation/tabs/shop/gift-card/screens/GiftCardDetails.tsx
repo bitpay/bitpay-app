@@ -25,6 +25,7 @@ import {
   Link,
   Paragraph,
   TextAlign,
+  fontFamily,
 } from '../../../../../components/styled/Text';
 import {
   Grey,
@@ -64,6 +65,8 @@ import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
 import {generateGiftCardPrintHtml} from '../../../../../lib/gift-cards/gift-card';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import Markdown from 'react-native-markdown-display';
+import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
 
 const maxWidth = 320;
 
@@ -217,13 +220,28 @@ const GiftCardDetails = ({
     AppActions.showBottomNotificationModal({
       type: 'success',
       title: t('Copied: ', {copiedValue}),
-      message:
-        customMessage ||
-        cardConfig.redeemInstructions ||
-        t(
-          'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
-          {website: cardConfig.website},
-        ),
+      message: '',
+      message2: (
+        <ScrollableBottomNotificationMessageContainer
+          contentContainerStyle={{paddingBottom: 10}}>
+          <Markdown
+            style={{
+              body: {
+                color: theme.colors.text,
+                fontFamily,
+                fontSize: 16,
+                lineHeight: 24,
+              },
+            }}>
+            {customMessage ||
+              cardConfig.redeemInstructions ||
+              t(
+                'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
+                {website: cardConfig.website},
+              )}
+          </Markdown>
+        </ScrollableBottomNotificationMessageContainer>
+      ),
       enableBackdropDismiss: true,
       actions: [
         {

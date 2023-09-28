@@ -1,6 +1,5 @@
 import React from 'react';
 import moment from 'moment';
-import styled from 'styled-components/native';
 import {useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
 import {formatUSPhone} from '../bill/utils';
@@ -10,15 +9,13 @@ import {
   FieldLabel,
   FieldValue,
 } from './styled/ShopTabComponents';
-
-const UserInfoContainer = styled.ScrollView`
-  padding-top: 15px;
-`;
+import {ScrollableBottomNotificationMessageContainer} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 const UserInfo = () => {
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
   return (
-    <UserInfoContainer contentContainerStyle={{paddingBottom: 10}}>
+    <ScrollableBottomNotificationMessageContainer
+      contentContainerStyle={{paddingBottom: 10}}>
       <FieldGroup>
         <FieldLabel>First Name</FieldLabel>
         <Field disabled>
@@ -61,7 +58,7 @@ const UserInfo = () => {
           <FieldValue>{user?.address}</FieldValue>
         </Field>
       </FieldGroup>
-    </UserInfoContainer>
+    </ScrollableBottomNotificationMessageContainer>
   );
 };
 
