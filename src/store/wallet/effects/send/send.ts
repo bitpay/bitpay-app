@@ -421,17 +421,17 @@ export const buildTxDetails =
       fee = proposal.fee || 0; // proposal fee is zero for coinbase
     }
 
-    const invoiceCurrency =
+    const selectedTransactionCurrency =
       invoice?.buyerProvidedInfo!.selectedTransactionCurrency ||
       wallet.currencyAbbreviation.toUpperCase();
 
     const isOffChain = !proposal;
-    if (invoice && invoiceCurrency) {
+    if (invoice && selectedTransactionCurrency) {
       amount = isOffChain
-        ? invoice.paymentSubtotals[invoiceCurrency]
-        : invoice.paymentTotals[invoiceCurrency];
+        ? invoice.paymentSubtotals[selectedTransactionCurrency]
+        : invoice.paymentTotals[selectedTransactionCurrency];
       const coinAndChain = getCoinAndChainFromCurrencyCode(
-        invoiceCurrency.toLowerCase(),
+        selectedTransactionCurrency.toLowerCase(),
       );
       coin = coinAndChain.coin;
       chain = coinAndChain.chain;
@@ -445,11 +445,16 @@ export const buildTxDetails =
     }
 
     amount = Number(amount); // Support BN (use number instead string only for view)
-    const effectiveRate =
-      (invoice &&
-        invoiceCurrency &&
-        dispatch(getInvoiceEffectiveRate(invoice, invoiceCurrency, chain))) ||
-      undefined;
+    let effectiveRate;
+    if (
+      invoice &&
+      selectedTransactionCurrency &&
+      defaultAltCurrencyIsoCode === invoice.currency
+    ) {
+      effectiveRate = dispatch(
+        getInvoiceEffectiveRate(invoice, selectedTransactionCurrency, chain),
+      );
+    }
     const opts = {
       effectiveRate,
       defaultAltCurrencyIsoCode,
@@ -460,8 +465,8 @@ export const buildTxDetails =
     const rateStr = getRateStr(opts);
     const networkCost =
       !isOffChain &&
-      invoiceCurrency &&
-      invoice?.minerFees[invoiceCurrency]?.totalFee;
+      selectedTransactionCurrency &&
+      invoice?.minerFees[selectedTransactionCurrency]?.totalFee;
     const isERC20 = IsERCToken(coin, chain);
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
