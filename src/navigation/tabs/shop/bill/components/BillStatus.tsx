@@ -91,6 +91,15 @@ const statusFields = {
       color: '#4FEFC4',
     },
   },
+  refunded: {
+    backgroundColor: '#ECEFFD',
+    color: Action,
+    text: 'Refunded',
+    darkTheme: {
+      backgroundColor: '#071A6A',
+      color: LinkBlue,
+    },
+  },
   processing: {
     backgroundColor: '#ECEFFD',
     color: Action,
@@ -136,6 +145,7 @@ const StatusContainer = styled.View<BillStatusStyleProps>`
 const StatusText = styled(Paragraph)<BillStatusStyleProps>`
   color: ${({status, theme}) => getStatusStyle(status, 'color', theme.dark)};
   font-size: 14px;
+  text-transform: capitalize;
 `;
 
 const getBillStatus = (account: BillPayAccount) => {
