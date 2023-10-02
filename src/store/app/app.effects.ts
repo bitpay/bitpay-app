@@ -226,28 +226,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // Update Coinbase
     dispatch(coinbaseInitialize());
 
-    dispatch(showBlur(pinLockActive || biometricLockActive));
-
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
-
-    await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
-    dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
-    dispatch(LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`));
-    RNBootSplash.hide({fade: true}).then(() => {
-      // avoid splash conflicting with modal in iOS
-      // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
-      if (pinLockActive) {
-        dispatch(AppActions.showPinModal({type: 'check'}));
-      }
-      if (biometricLockActive) {
-        dispatch(AppActions.showBiometricModal({}));
-      }
-
-      dispatch(AppActions.appInitCompleted());
-      DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
-    });
+    dispatch(AppActions.appInitCompleted());
+    DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
