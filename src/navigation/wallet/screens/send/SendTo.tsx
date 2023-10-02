@@ -2,12 +2,10 @@ import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {
   BaseText,
   HeaderTitle,
-  Link,
   Paragraph,
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import Clipboard from '@react-native-clipboard/clipboard';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -41,7 +39,7 @@ import {
   ValidDataTypes,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {AppState, AppStateStatus, TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
@@ -89,7 +87,6 @@ import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
-import CopySvg from '../../../../../assets/img/copy.svg';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -99,14 +96,6 @@ const ScrollView = styled.ScrollView`
   flex: 1;
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
-`;
-
-const PasteClipboardContainer = styled.TouchableOpacity`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin: 10px auto;
-  cursor: pointer;
 `;
 
 const ContactContainer = styled.View`
@@ -253,7 +242,6 @@ const SendTo = () => {
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? LightBlack : Slate30;
   const [searchInput, setSearchInput] = useState('');
-  const [clipboardData, setClipboardData] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [searchIsEmailAddress, setSearchIsEmailAddress] = useState(false);
   const [emailAddressSearchPromise, setEmailAddressSearchPromise] = useState<
@@ -419,7 +407,6 @@ const SendTo = () => {
           return Promise.resolve(false);
         }
       } catch (err) {
-        clearClipboard();
         const formattedErrMsg = BWCErrorMessage(err);
         await sleep(500);
         dispatch(dismissOnGoingProcessModal());
@@ -447,7 +434,6 @@ const SendTo = () => {
       searching?: boolean;
     } = {},
   ) => {
-    clearClipboard();
     const {context, name, email, destinationTag, searching} = opts;
     if (isEmailAddress(text.trim())) {
       setSearchIsEmailAddress(true);
@@ -541,41 +527,11 @@ const SendTo = () => {
     wallet.chain,
   ]);
 
-  const clearClipboard = () => {
-    Clipboard.setString('');
-    setClipboardData('');
-  };
-  const getString = async () => {
-    const _clipboardData = await Clipboard.getString();
-    if (_clipboardData) {
-      const isValid = await validateAddress(_clipboardData);
-      if (isValid) {
-        setClipboardData(_clipboardData);
-      }
-    }
-  };
-
   useEffect(() => {
-    getString();
     return navigation.addListener('blur', () =>
       setTimeout(() => setSearchInput(''), 300),
     );
   }, [navigation]);
-
-  useEffect(() => {
-    function onAppStateChange(status: AppStateStatus) {
-      if (status === 'active') {
-        getString();
-      }
-    }
-
-    const subscriptionAppStateChange = AppState.addEventListener(
-      'change',
-      onAppStateChange,
-    );
-
-    return () => subscriptionAppStateChange.remove();
-  }, []);
 
   return (
     <SafeAreaView>
@@ -675,18 +631,6 @@ const SendTo = () => {
               </EmailTextContainer>
             </EmailContainer>
           </TouchableOpacity>
-        ) : null}
-
-        {clipboardData && !searchIsEmailAddress && !searchInput ? (
-          <PasteClipboardContainer
-            onPress={() => {
-              haptic('impactLight');
-              setSearchInput(clipboardData);
-              validateAndNavigateToConfirm(clipboardData);
-            }}>
-            <CopySvg style={{marginRight: 10}} />
-            <Link>{t('Paste from clipboard')}</Link>
-          </PasteClipboardContainer>
         ) : null}
 
         {contacts.length > 0 && !searchIsEmailAddress ? (
