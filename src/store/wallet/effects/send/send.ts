@@ -543,7 +543,7 @@ export const buildTxDetails =
       },
       total: {
         cryptoAmount: isERC20
-          ? `${dispatch(FormatAmountStr(coin, chain, amount))} + ${dispatch(
+          ? `${dispatch(FormatAmountStr(coin, chain, amount))}\n + ${dispatch(
               FormatAmountStr(chain, chain, fee),
             )}`
           : dispatch(FormatAmountStr(coin, chain, amount + fee)),
