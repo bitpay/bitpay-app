@@ -178,6 +178,7 @@ export interface Invoice {
       threshold: number;
     };
   };
+  usdAmount: number;
 }
 
 export interface PhoneCountryInfo {
