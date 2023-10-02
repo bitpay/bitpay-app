@@ -218,10 +218,6 @@ interface ShowPinModal {
   type: typeof AppActionTypes.SHOW_PIN_MODAL;
   payload: PinModalConfig;
 }
-interface ShowBottomNotificationModal {
-  type: typeof AppActionTypes.SHOW_BOTTOM_NOTIFICATION_MODAL;
-  payload: BottomNotificationConfig;
-}
 interface DismissPinModal {
   type: typeof AppActionTypes.DISMISS_PIN_MODAL;
 }
