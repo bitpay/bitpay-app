@@ -63,12 +63,12 @@ const statusFields = {
     color: '#b51b16',
     text: 'Failed',
   },
-  reversal_required: {
+  reversalRequired: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
     text: 'Failed',
   },
-  reversal_processing: {
+  reversalProcessing: {
     backgroundColor: '#ffd8de',
     color: '#b51b16',
     text: 'Failed',
@@ -89,6 +89,15 @@ const statusFields = {
     darkTheme: {
       backgroundColor: '#076A46',
       color: '#4FEFC4',
+    },
+  },
+  refunded: {
+    backgroundColor: '#ECEFFD',
+    color: Action,
+    text: 'Refunded',
+    darkTheme: {
+      backgroundColor: '#071A6A',
+      color: LinkBlue,
     },
   },
   processing: {
@@ -136,6 +145,7 @@ const StatusContainer = styled.View<BillStatusStyleProps>`
 const StatusText = styled(Paragraph)<BillStatusStyleProps>`
   color: ${({status, theme}) => getStatusStyle(status, 'color', theme.dark)};
   font-size: 14px;
+  text-transform: capitalize;
 `;
 
 const getBillStatus = (account: BillPayAccount) => {
@@ -159,8 +169,6 @@ const getBillStatus = (account: BillPayAccount) => {
 };
 
 export default ({account, payment}: BillStatusProps) => {
-  const {status: billStatusStyle, statusText: billStatusText} =
-    getBillStatus(account);
   const paymentStatusStyle =
     payment && statusFields[payment.status]
       ? payment.status || 'processing'
@@ -168,8 +176,12 @@ export default ({account, payment}: BillStatusProps) => {
   const paymentStatusText = statusFields[payment && payment.status]
     ? statusFields[paymentStatusStyle].text
     : payment?.status || 'Processing';
-  const statusStyle = payment ? paymentStatusStyle : billStatusStyle;
-  const statusText = payment ? paymentStatusText : billStatusText;
+  const statusStyle = payment
+    ? paymentStatusStyle
+    : getBillStatus(account).status;
+  const statusText = payment
+    ? paymentStatusText
+    : getBillStatus(account).statusText;
   return (
     <StatusContainer status={statusStyle as BillStatusString}>
       <StatusText status={statusStyle as BillStatusString}>

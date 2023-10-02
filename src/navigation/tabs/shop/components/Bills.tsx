@@ -265,7 +265,7 @@ export const Bills = () => {
                       );
                     }}
                   />
-                  {/* <Button
+                  <Button
                     style={{marginTop: 20, marginBottom: 10}}
                     height={50}
                     buttonStyle="secondary"
@@ -276,8 +276,8 @@ export const Bills = () => {
                       })
                     }>
                     {t('Pay All Bills')}
-                  </Button> */}
-                  <Button
+                  </Button>
+                  {/* <Button
                     style={{marginTop: 20, marginBottom: 10}}
                     state={connectButtonState}
                     height={50}
@@ -291,17 +291,21 @@ export const Bills = () => {
                       );
                     }}>
                     {t('Connect More Bills')}
-                  </Button>
-                  {/* <Button
+                  </Button> */}
+                  <Button
                     buttonType={'link'}
                     onPress={() => {
-                      navigation.navigate('Bill', {
-                        screen: BillScreens.CONNECT_BILLS,
-                        params: {},
-                      });
+                      verifyUserInfo();
+                      dispatch(
+                        Analytics.track(
+                          'Bill Pay — Clicked Connect More Bills',
+                        ),
+                      );
                     }}>
-                    {t('Connect More Bills')}
-                  </Button> */}
+                    {connectButtonState
+                      ? t('Loading...')
+                      : t('Connect More Bills')}
+                  </Button>
                 </>
               )}
             </>

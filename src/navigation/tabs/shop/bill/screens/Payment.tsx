@@ -77,7 +77,7 @@ const Payment = ({
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
 
   const baseEventParams = {
-    ...getBillAccountEventParams(account),
+    ...getBillAccountEventParams(account, payment),
     amount: payment.amount,
   };
 
@@ -106,7 +106,7 @@ const Payment = ({
     navigation.setOptions({
       headerTransparent: true,
       headerTitle: () => {
-        return <BillAccountPill account={account} />;
+        return <BillAccountPill account={account} payment={payment} />;
       },
       headerRight: () => {
         return (
@@ -152,7 +152,7 @@ const Payment = ({
       <SectionContainer style={{marginTop: 20, flexGrow: 1}}>
         <LineItem>
           <LineItemLabel>{t('Sent to')}</LineItemLabel>
-          <BillAccountPill account={account} />
+          <BillAccountPill account={account} payment={payment} />
         </LineItem>
         <LineItem>
           <LineItemLabel>{t('Convenience fee')}</LineItemLabel>

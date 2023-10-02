@@ -49,7 +49,8 @@ const Payments = ({
           </SendToPillContainer>
         ) : null}
         <PaymentList
-          accounts={account ? [account] : accounts}
+          accounts={accounts}
+          account={account}
           variation={'small'}
           onPress={(accountObj, payment) => {
             navigation.navigate(BillScreens.PAYMENT, {

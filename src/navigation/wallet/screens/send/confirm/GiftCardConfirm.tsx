@@ -303,9 +303,9 @@ const Confirm = () => {
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),
     );
-    await sleep(200);
+    await sleep(500);
     dispatch(dismissOnGoingProcessModal());
-    await sleep(200);
+    await sleep(500);
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
