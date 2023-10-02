@@ -37,6 +37,7 @@ import {Rates} from '../../../../store/rate/rate.models';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
+  ValidDataTypes,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
 import {AppState, AppStateStatus, TouchableOpacity, View} from 'react-native';
@@ -88,24 +89,6 @@ import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-i
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
 import CopySvg from '../../../../../assets/img/copy.svg';
-
-const ValidDataTypes: string[] = [
-  'BitcoinAddress',
-  'BitcoinCashAddress',
-  'EthereumAddress',
-  'MaticAddress',
-  'RippleAddress',
-  'DogecoinAddress',
-  'LitecoinAddress',
-  'RippleUri',
-  'BitcoinUri',
-  'BitcoinCashUri',
-  'EthereumUri',
-  'MaticUri',
-  'DogecoinUri',
-  'LitecoinUri',
-  'BitPayUri',
-];
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
