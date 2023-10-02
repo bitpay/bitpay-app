@@ -466,7 +466,28 @@ export const buildTxDetails =
     const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
 
     const {type, name, address, email} = recipient || {};
-    const percentageOfTotalAmount = (fee / (amount + fee)) * 100;
+    const feeToFiat = dispatch(
+      toFiat(
+        fee,
+        defaultAltCurrencyIsoCode,
+        chain,
+        chain,
+        rates,
+        effectiveRateForFee,
+      ),
+    );
+    const amountToFiat = dispatch(
+      toFiat(
+        amount,
+        defaultAltCurrencyIsoCode,
+        coin,
+        chain,
+        rates,
+        effectiveRate,
+      ),
+    );
+    const percentageOfTotalAmount =
+      (feeToFiat / (amountToFiat + feeToFiat)) * 100;
     return {
       context,
       currency: coin,
@@ -483,20 +504,8 @@ export const buildTxDetails =
         fee: {
           feeLevel,
           cryptoAmount: dispatch(FormatAmountStr(chain, chain, fee)),
-          fiatAmount: formatFiatAmount(
-            dispatch(
-              toFiat(
-                fee,
-                defaultAltCurrencyIsoCode,
-                chain,
-                chain,
-                rates,
-                effectiveRateForFee,
-              ),
-            ),
-            defaultAltCurrencyIsoCode,
-          ),
-          percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(2)} %`,
+          fiatAmount: formatFiatAmount(feeToFiat, defaultAltCurrencyIsoCode),
+          percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(2)}%`,
           percentageOfTotalAmount,
         },
       }),
@@ -525,19 +534,7 @@ export const buildTxDetails =
       },
       subTotal: {
         cryptoAmount: dispatch(FormatAmountStr(coin, chain, amount)),
-        fiatAmount: formatFiatAmount(
-          dispatch(
-            toFiat(
-              amount,
-              defaultAltCurrencyIsoCode,
-              coin,
-              chain,
-              rates,
-              effectiveRate,
-            ),
-          ),
-          defaultAltCurrencyIsoCode,
-        ),
+        fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
       },
       total: {
         cryptoAmount: isERC20
@@ -546,26 +543,7 @@ export const buildTxDetails =
             )}`
           : dispatch(FormatAmountStr(coin, chain, amount + fee)),
         fiatAmount: formatFiatAmount(
-          dispatch(
-            toFiat(
-              amount,
-              defaultAltCurrencyIsoCode,
-              coin,
-              chain,
-              rates,
-              effectiveRate,
-            ),
-          ) +
-            dispatch(
-              toFiat(
-                fee,
-                defaultAltCurrencyIsoCode,
-                chain,
-                chain,
-                rates,
-                effectiveRateForFee,
-              ),
-            ),
+          amountToFiat + feeToFiat,
           defaultAltCurrencyIsoCode,
         ),
       },

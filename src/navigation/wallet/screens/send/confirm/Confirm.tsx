@@ -458,7 +458,7 @@ const Confirm = () => {
           {gasLimit !== undefined ? (
             <SharedDetailRow
               description={t('Gas limit')}
-              value={gasLimit}
+              value={gasLimit.toLocaleString()}
               onPress={() => editValue(t('Edit gas limit'), 'gasLimit')}
               hr
             />
