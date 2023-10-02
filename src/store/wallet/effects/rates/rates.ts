@@ -177,7 +177,7 @@ export const startGetRates =
   };
 
 export const getContractAddresses =
-  (chain: string): Effect<Array<string | undefined>> =>
+  (chain: string): Effect<Array<string>> =>
   (dispatch, getState) => {
     dispatch(LogActions.info('getContractAddresses: starting...'));
     const {
@@ -232,50 +232,53 @@ export const getTokenRates =
 
         for (const chain of SUPPORTED_EVM_COINS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
-          const url = `${BASE_BWS_URL}/v1/service/coinGecko/getRates/${contractAddresses.join(
-            ',',
-          )}/${altCurrencies.join(',')}/${chain}`;
-          dispatch(LogActions.debug(`getTokenRates: get request to: ${url}`));
-          const {data} = await axios.get(url);
-          dispatch(LogActions.debug('getTokenRates: success get request'));
-          Object.entries(data).map(([key, value]: [string, any]) => {
-            const formattedTokenAddress = addTokenChainSuffix(key, chain);
+          if (contractAddresses?.length > 0) {
+            const url = `${BASE_BWS_URL}/v1/service/coinGecko/getRates/${contractAddresses.join(
+              ',',
+            )}/${altCurrencies.join(',')}/${chain}`;
+            dispatch(LogActions.debug(`getTokenRates: get request to: ${url}`));
+            const {data} = await axios.get(url);
+            dispatch(LogActions.debug('getTokenRates: success get request'));
+            Object.entries(data).map(([key, value]: [string, any]) => {
+              const formattedTokenAddress = addTokenChainSuffix(key, chain);
 
-            // only save token rates if exist in tokens list
-            if (tokensOptsByAddress[formattedTokenAddress]) {
-              const tokenName = getCurrencyAbbreviation(
-                tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                chain,
-              );
-              tokenRates[tokenName] = [];
-              tokenLastDayRates[tokenName] = [];
+              // only save token rates if exist in tokens list
+              if (tokensOptsByAddress[formattedTokenAddress]) {
+                const tokenName = getCurrencyAbbreviation(
+                  tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                  chain,
+                );
+                tokenRates[tokenName] = [];
+                tokenLastDayRates[tokenName] = [];
 
-              altCurrencies.forEach(altCurrency => {
-                tokenRates[tokenName].push({
-                  code: altCurrency.toUpperCase(),
-                  fetchedOn: value.last_updated_at,
-                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                  rate: value[altCurrency],
-                  ts: value.last_updated_at,
+                altCurrencies.forEach(altCurrency => {
+                  tokenRates[tokenName].push({
+                    code: altCurrency.toUpperCase(),
+                    fetchedOn: value.last_updated_at,
+                    name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                    rate: value[altCurrency],
+                    ts: value.last_updated_at,
+                  });
+
+                  const yesterday = moment
+                    .unix(value.last_updated_at)
+                    .subtract(1, 'days')
+                    .unix();
+                  tokenLastDayRates[tokenName].push({
+                    code: altCurrency.toUpperCase(),
+                    fetchedOn: yesterday,
+                    name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                    rate:
+                      value[altCurrency] +
+                      (value[altCurrency] *
+                        value[`${altCurrency}_24h_change`]) /
+                        100,
+                    ts: yesterday,
+                  });
                 });
-
-                const yesterday = moment
-                  .unix(value.last_updated_at)
-                  .subtract(1, 'days')
-                  .unix();
-                tokenLastDayRates[tokenName].push({
-                  code: altCurrency.toUpperCase(),
-                  fetchedOn: yesterday,
-                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                  rate:
-                    value[altCurrency] +
-                    (value[altCurrency] * value[`${altCurrency}_24h_change`]) /
-                      100,
-                  ts: yesterday,
-                });
-              });
-            }
-          });
+              }
+            });
+          }
         }
 
         dispatch(LogActions.info('getTokenRates: success'));
