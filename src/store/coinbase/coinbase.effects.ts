@@ -204,6 +204,7 @@ export const coinbaseRefreshToken =
           'coinbaseRefreshToken: ' + coinbaseParseErrorToString(error),
         ),
       );
+      dispatch(coinbaseDisconnectAccount());
     }
   };
 
