@@ -19,8 +19,9 @@ const SheetModal: React.FC<Props> = ({
   const [isModalVisible, setModalVisible] = useState(isVisible);
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
-      if (status === 'background') {
+      if (isVisible && status === 'background') {
         setModalVisible(false);
+        onBackdropPress();
       }
     }
     setModalVisible(isVisible);
