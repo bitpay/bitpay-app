@@ -100,6 +100,15 @@ const statusFields = {
       color: LinkBlue,
     },
   },
+  refundCreated: {
+    backgroundColor: '#ECEFFD',
+    color: Action,
+    text: 'Refunding',
+    darkTheme: {
+      backgroundColor: '#071A6A',
+      color: LinkBlue,
+    },
+  },
   processing: {
     backgroundColor: '#ECEFFD',
     color: Action,
@@ -121,6 +130,10 @@ const statusFields = {
   default: {
     backgroundColor: '#ECEFFD',
     color: Action,
+    darkTheme: {
+      backgroundColor: '#071A6A',
+      color: LinkBlue,
+    },
   },
 };
 
