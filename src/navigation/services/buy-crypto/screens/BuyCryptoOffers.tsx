@@ -105,11 +105,7 @@ import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../../store/app';
-import {
-  banxaCreateOrder,
-  banxaGetPaymentMethods,
-  banxaGetQuote,
-} from '../../../../store/buy-crypto/effects/banxa/banxa';
+import {banxaGetPaymentMethods} from '../../../../store/buy-crypto/effects/banxa/banxa';
 import {moonpayGetCurrencyLimits} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {
