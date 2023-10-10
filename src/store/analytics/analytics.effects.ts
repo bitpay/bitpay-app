@@ -1,12 +1,37 @@
+import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {Effect} from '..';
 import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import {BrazeWrapper} from '../../lib/Braze';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {LogActions} from '../log';
 
+const getTrackingAuthorizedByUser =
+  (): Effect<Promise<boolean>> => dispatch => {
+    return requestTrackingPermission()
+      .then(status => {
+        return ['authorized', 'unavailable'].includes(status);
+      })
+      .catch(err => {
+        dispatch(
+          LogActions.error(
+            'An error occurred while requesting tracking permission',
+          ),
+        );
+
+        dispatch(
+          LogActions.error(
+            err instanceof Error ? err.message : JSON.stringify(err),
+          ),
+        );
+
+        return false;
+      });
+  };
+
 export const Analytics = (() => {
   let _preInitQueue: Array<() => void> = [];
   let _isInitialized = false;
+  let _isTrackingAuthorized = false;
 
   const guard = (cb: () => void) => {
     if (!APP_ANALYTICS_ENABLED) {
@@ -34,6 +59,8 @@ export const Analytics = (() => {
       }
 
       if (APP_ANALYTICS_ENABLED) {
+        _isTrackingAuthorized = await dispatch(getTrackingAuthorizedByUser());
+
         await BrazeWrapper.init()
           .then(() => {
             dispatch(LogActions.debug('Successfully initialized Braze SDK.'));
@@ -47,7 +74,7 @@ export const Analytics = (() => {
             );
           });
 
-        await MixpanelWrapper.init()
+        await MixpanelWrapper.init(!_isTrackingAuthorized)
           .then(() => {
             dispatch(
               LogActions.debug('Successfully initialized Mixpanel SDK.'),
@@ -73,20 +100,25 @@ export const Analytics = (() => {
     /**
      * Makes a call to identify a user through the analytics SDK.
      *
-     * @param user BitPay EID for this user.
+     * @param userEid BitPay EID for this user.
      * @param traits An object of known user attributes. Things like: email, name, plan, etc.
      * @param onComplete A function to run once the identify event has been successfully sent.
      */
     identify:
       (
-        user: string | undefined,
+        userEid: string | undefined,
         traits?: Record<string, any> | undefined,
         onComplete?: () => void,
       ): Effect<void> =>
       () => {
         guard(async () => {
-          BrazeWrapper.identify(user, traits);
-          MixpanelWrapper.identify(user);
+          if (_isTrackingAuthorized) {
+            BrazeWrapper.identify(userEid, traits);
+            MixpanelWrapper.identify(userEid);
+          } else {
+            // require EID for functionality
+            BrazeWrapper.identify(userEid);
+          }
 
           onComplete?.();
         });
@@ -107,8 +139,10 @@ export const Analytics = (() => {
       ): Effect<any> =>
       () => {
         guard(async () => {
-          BrazeWrapper.screen(name, properties);
-          MixpanelWrapper.screen(name, properties);
+          if (_isTrackingAuthorized) {
+            BrazeWrapper.screen(name, properties);
+            MixpanelWrapper.screen(name, properties);
+          }
 
           onComplete?.();
         });
@@ -131,8 +165,10 @@ export const Analytics = (() => {
         guard(async () => {
           const eventName = `BitPay App - ${event}`;
 
-          BrazeWrapper.track(eventName, properties);
-          MixpanelWrapper.track(eventName, properties);
+          if (_isTrackingAuthorized) {
+            BrazeWrapper.track(eventName, properties);
+            MixpanelWrapper.track(eventName, properties);
+          }
 
           onComplete?.();
         });
