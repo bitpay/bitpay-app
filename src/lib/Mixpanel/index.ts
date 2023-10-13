@@ -15,7 +15,7 @@ export const MixpanelWrapper = (() => {
     /**
      * Initialize the Mixpanel SDK.
      *
-     * @param {boolean} [optOutTrackingDefault=false]  - Optional. Whether or not Mixpanel can start tracking by default.
+     * @param {boolean} [optOutTrackingDefault=false]  - Optional. Whether or not Mixpanel should opt out of tracking by default.
      * @param {object} [superProperties={}] Optional. An object containing the key value pairs of the super properties to register.
      * @param {string} [serverURL='https://api.mixpanel.com'] Optional. Set the base URL used for Mixpanel API requests.
      */
