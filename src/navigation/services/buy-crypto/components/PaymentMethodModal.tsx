@@ -17,6 +17,7 @@ import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
+import BanxaLogo from '../../../../components/icons/external-services/banxa/banxa-logo';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
@@ -24,13 +25,14 @@ import SimplexLogo from '../../../../components/icons/external-services/simplex/
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
-import {AppActions} from '../../../../store/app';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {sleep} from '../../../../utils/helper-methods';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
   onBackdropPress?: () => void;
-  onPress?: (paymentMethod: any) => any;
+  onPress: (paymentMethod: any) => any;
   selectedPaymentMethod: any;
   coin?: string;
   chain?: string;
@@ -106,12 +108,14 @@ const PaymentMethodsModal = ({
     preSetPartner,
   );
 
-  const showOtherPaymentMethodsInfoSheet = (
+  const showOtherPaymentMethodsInfoSheet = async (
     paymentMethod: PaymentMethod,
-    onPress?: Function,
+    onPress: Function,
   ) => {
+    onPress(paymentMethod);
+    await sleep(800);
     dispatch(
-      AppActions.showBottomNotificationModal({
+      showBottomNotificationModal({
         type: 'info',
         title: t('Other Payment Methods'),
         message: t(
@@ -121,13 +125,8 @@ const PaymentMethodsModal = ({
         actions: [
           {
             text: t('GOT IT'),
-            action: () => onPress?.(paymentMethod),
-            primary: true,
-          },
-          {
-            text: t('CANCEL'),
             action: () => {},
-            primary: false,
+            primary: true,
           },
         ],
       }),
@@ -138,6 +137,10 @@ const PaymentMethodsModal = ({
     exchange: BuyCryptoExchangeKey,
   ): JSX.Element | null => {
     switch (exchange) {
+      case 'banxa':
+        return (
+          <BanxaLogo key={exchange} iconOnly={true} width={35} height={20} />
+        );
       case 'moonpay':
         return (
           <MoonpayLogo
@@ -194,7 +197,7 @@ const PaymentMethodsModal = ({
                   key={paymentMethod.method}
                   onPress={() => {
                     paymentMethod.method !== 'other'
-                      ? onPress?.(paymentMethod)
+                      ? onPress(paymentMethod)
                       : showOtherPaymentMethodsInfoSheet(
                           paymentMethod,
                           onPress,
@@ -203,7 +206,7 @@ const PaymentMethodsModal = ({
                   <PaymentMethodCardContainer>
                     <Checkbox
                       radio={true}
-                      onPress={() => onPress?.(paymentMethod)}
+                      onPress={() => onPress(paymentMethod)}
                       checked={
                         selectedPaymentMethod.method == paymentMethod.method
                       }

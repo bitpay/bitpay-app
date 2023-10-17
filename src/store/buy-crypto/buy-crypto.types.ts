@@ -1,4 +1,6 @@
 import {
+  BanxaPaymentData,
+  BanxaIncomingData,
   MoonpayPaymentData,
   MoonpayIncomingData,
   RampPaymentData,
@@ -11,6 +13,9 @@ import {
 } from './buy-crypto.models';
 
 export enum BuyCryptoActionTypes {
+  SUCCESS_PAYMENT_REQUEST_BANXA = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_BANXA',
+  UPDATE_PAYMENT_REQUEST_BANXA = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_BANXA',
+  REMOVE_PAYMENT_REQUEST_BANXA = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_BANXA',
   SUCCESS_PAYMENT_REQUEST_MOONPAY = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_MOONPAY',
   UPDATE_PAYMENT_REQUEST_MOONPAY = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_MOONPAY',
   REMOVE_PAYMENT_REQUEST_MOONPAY = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_MOONPAY',
@@ -25,6 +30,27 @@ export enum BuyCryptoActionTypes {
   REMOVE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_SIMPLEX',
   SUCCESS_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_WYRE',
   REMOVE_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_WYRE',
+}
+
+interface successPaymentRequestBanxa {
+  type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_BANXA;
+  payload: {
+    banxaPaymentData: BanxaPaymentData;
+  };
+}
+
+interface updatePaymentRequestBanxa {
+  type: typeof BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_BANXA;
+  payload: {
+    banxaIncomingData: BanxaIncomingData;
+  };
+}
+
+interface removePaymentRequestBanxa {
+  type: typeof BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_BANXA;
+  payload: {
+    banxaExternalId: string;
+  };
 }
 
 interface successPaymentRequestMoonpay {
@@ -126,6 +152,9 @@ interface removePaymentRequestWyre {
 }
 
 export type BuyCryptoActionType =
+  | successPaymentRequestBanxa
+  | updatePaymentRequestBanxa
+  | removePaymentRequestBanxa
   | successPaymentRequestMoonpay
   | updatePaymentRequestMoonpay
   | removePaymentRequestMoonpay

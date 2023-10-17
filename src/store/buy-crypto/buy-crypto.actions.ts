@@ -1,5 +1,7 @@
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
 import {
+  BanxaPaymentData,
+  BanxaIncomingData,
   MoonpayPaymentData,
   MoonpayIncomingData,
   RampPaymentData,
@@ -10,6 +12,27 @@ import {
   SimplexIncomingData,
   WyrePaymentData,
 } from './buy-crypto.models';
+
+export const successPaymentRequestBanxa = (payload: {
+  banxaPaymentData: BanxaPaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_BANXA,
+  payload,
+});
+
+export const updatePaymentRequestBanxa = (payload: {
+  banxaIncomingData: BanxaIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_BANXA,
+  payload,
+});
+
+export const removePaymentRequestBanxa = (payload: {
+  banxaExternalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_BANXA,
+  payload,
+});
 
 export const successPaymentRequestMoonpay = (payload: {
   moonpayPaymentData: MoonpayPaymentData;

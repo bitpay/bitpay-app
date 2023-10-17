@@ -405,13 +405,21 @@ const BuyCryptoRoot: React.VFC<
       } else {
         setSelectedPaymentMethod(
           isPaymentMethodSupported(
-            'moonpay',
+            'banxa',
             PaymentMethodsAvailable.applePay,
             selectedWallet.currencyAbbreviation,
             selectedWallet.chain,
             fiatCurrency,
             locationData?.countryShortCode || 'US',
           ) ||
+            isPaymentMethodSupported(
+              'moonpay',
+              PaymentMethodsAvailable.applePay,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              fiatCurrency,
+              locationData?.countryShortCode || 'US',
+            ) ||
             isPaymentMethodSupported(
               'ramp',
               PaymentMethodsAvailable.applePay,
@@ -467,13 +475,21 @@ const BuyCryptoRoot: React.VFC<
         )) ||
       (!preSetPartner &&
         (isPaymentMethodSupported(
-          'moonpay',
-          selectedPaymentMethod,
+          'banxa',
+          PaymentMethodsAvailable.applePay,
           selectedWallet.currencyAbbreviation,
           selectedWallet.chain,
           fiatCurrency,
           locationData?.countryShortCode || 'US',
         ) ||
+          isPaymentMethodSupported(
+            'moonpay',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
+          ) ||
           isPaymentMethodSupported(
             'ramp',
             selectedPaymentMethod,

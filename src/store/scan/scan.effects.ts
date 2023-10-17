@@ -34,10 +34,13 @@ import {
   isValidSimplexUri,
   isValidWalletConnectUri,
   IsBitPayInvoiceWebUrl,
+  isValidBanxaUri,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
+  BanxaIncomingData,
+  BanxaStatusKey,
   MoonpayIncomingData,
   RampIncomingData,
   SardineIncomingData,
@@ -162,6 +165,9 @@ export const incomingData =
         // Buy Crypto
       } else if (isValidBuyCryptoUri(data)) {
         dispatch(handleBuyCryptoUri(data));
+        // Banxa
+      } else if (isValidBanxaUri(data)) {
+        dispatch(handleBanxaUri(data));
         // Moonpay
       } else if (isValidMoonpayUri(data)) {
         dispatch(handleMoonpayUri(data));
@@ -1030,6 +1036,75 @@ const handleBuyCryptoUri =
               currencyAbbreviation: coin,
               chain,
             },
+          },
+        },
+      ],
+    });
+  };
+
+const handleBanxaUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Banxa URL: ' + data));
+    if (
+      data.indexOf('banxaCancelled') >= 0 ||
+      data.indexOf('banxaFailed') >= 0
+    ) {
+      return;
+    }
+
+    if (data === 'banxa') {
+      return;
+    }
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+
+    const banxaExternalId = getParameterByName('externalId', res);
+    if (!banxaExternalId) {
+      dispatch(LogActions.warn('No banxaExternalId present. Do not redir'));
+      return;
+    }
+
+    const status =
+      (getParameterByName('orderStatus', res) as BanxaStatusKey) ??
+      (getParameterByName('status', res) as BanxaStatusKey);
+
+    const stateParams: BanxaIncomingData = {
+      banxaExternalId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestBanxa({
+        banxaIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.banxa[banxaExternalId];
+    if (order) {
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'banxa',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin || '',
+        }),
+      );
+    }
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'BanxaSettings',
+            params: {incomingPaymentRequest: stateParams},
           },
         },
       ],

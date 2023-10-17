@@ -15,6 +15,7 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText, H5, H7, Small} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
+import BanxaLogo from '../../../../components/icons/external-services/banxa/banxa-logo';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
@@ -32,6 +33,12 @@ import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {
+  BanxaCreateOrderData,
+  BanxaCreateOrderRequestData,
+  BanxaGetQuoteRequestData,
+  BanxaOrderData,
+  BanxaPaymentData,
+  BanxaQuoteData,
   BuyCryptoLimits,
   MoonpayGetCurrencyLimitsRequestData,
   MoonpayPaymentData,
@@ -57,6 +64,7 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME_UPPERCASE,
+  APP_NETWORK,
 } from '../../../../constants/config';
 import {
   BuyCryptoExchangeKey,
@@ -73,6 +81,13 @@ import {
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import {useTranslation} from 'react-i18next';
 import {
+  banxaEnv,
+  getBanxaChainFormat,
+  getBanxaCoinFormat,
+  getBanxaFiatAmountLimits,
+  getBanxaSelectedPaymentMethodData,
+} from '../utils/banxa-utils';
+import {
   getMoonpayFixedCurrencyAbbreviation,
   moonpayEnv,
 } from '../utils/moonpay-utils';
@@ -81,17 +96,18 @@ import {
   getRampCoinFormat,
   rampEnv,
 } from '../utils/ramp-utils';
+import BanxaTerms from '../components/terms/banxaTerms';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
 import RampTerms from '../components/terms/RampTerms';
 import SardineTerms from '../components/terms/SardineTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
 import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {AppActions} from '../../../../store/app';
+import {banxaGetPaymentMethods} from '../../../../store/buy-crypto/effects/banxa/banxa';
 import {moonpayGetCurrencyLimits} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
+import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {
   getSardineChainFormat,
   getSardineCoinFormat,
@@ -130,7 +146,8 @@ export type CryptoOffer = {
   amountReceivingUnit?: string; // Ramp
   amountLimits?: BuyCryptoLimits;
   errorMsg?: string;
-  quoteData?: any; // Moonpay | Ramp | Sardine | Simplex
+  quoteData?: any; // Banxa | Moonpay | Ramp | Sardine | Simplex
+  paymentMethodId?: number; // Banxa
   outOfLimitMsg?: string;
 };
 
@@ -277,11 +294,24 @@ const OfferDataRightContainer = styled.View`
 `;
 
 const offersDefault: {
+  banxa: CryptoOffer;
   moonpay: CryptoOffer;
   ramp: CryptoOffer;
   sardine: CryptoOffer;
   simplex: CryptoOffer;
 } = {
+  banxa: {
+    key: 'banxa',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <BanxaLogo width={70} height={20} />,
+    expanded: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
   moonpay: {
     key: 'moonpay',
     amountReceiving: '0',
@@ -359,6 +389,7 @@ const BuyCryptoOffers: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
 
   BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
     if (offersDefault[exchange]) {
@@ -402,21 +433,213 @@ const BuyCryptoOffers: React.FC = () => {
   });
 
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
+  const [finishedBanxa, setFinishedBanxa] = useState(false);
   const [finishedMoonpay, setFinishedMoonpay] = useState(false);
   const [finishedRamp, setFinishedRamp] = useState(false);
   const [finishedSardine, setFinishedSardine] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [updateView, setUpdateView] = useState(false);
 
-  const setPrefix = (
-    address: string,
-    chain: string,
-    network: 'livenet' | 'testnet',
-  ): string => {
-    const prefix =
-      BitpaySupportedCoins[chain].paymentInfo.protocolPrefix[network];
-    const addr = `${prefix}:${address}`;
-    return addr;
+  const getBanxaQuote = async (): Promise<void> => {
+    logger.debug('Banxa getting quote');
+
+    if (buyCryptoConfig?.banxa?.disabled) {
+      let err = buyCryptoConfig?.banxa?.disabledMessage
+        ? buyCryptoConfig?.banxa?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'banxaGetQuote Error. Exchange disabled from config.';
+      showBanxaError(err, reason);
+      return;
+    }
+
+    offers.banxa.fiatAmount =
+      offers.banxa.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    try {
+      // Banxa getPaymentMethods to validate pairs and get currency limits (banxaGetCurrencyLimits)
+      const banxaPaymentMethods = await banxaGetPaymentMethods({
+        env: banxaEnv,
+        source: offers.banxa.fiatCurrency,
+        target: getBanxaCoinFormat(coin),
+      });
+
+      if (
+        !banxaPaymentMethods?.data?.payment_methods ||
+        banxaPaymentMethods.errors
+      ) {
+        const msg = t(
+          'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
+          {
+            coin: coin.toUpperCase(),
+            fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
+            paymentMethod: paymentMethod.label,
+          },
+        );
+        const reason =
+          'banxaGetPaymentMethods Error: No banxaPaymentMethods data';
+        showBanxaError(msg, reason);
+        setFinishedBanxa(!finishedBanxa);
+        return;
+      }
+
+      const banxaSelectedPaymentMethodData = getBanxaSelectedPaymentMethodData(
+        banxaPaymentMethods.data.payment_methods,
+        paymentMethod,
+      );
+
+      if (!banxaSelectedPaymentMethodData) {
+        const msg = t(
+          'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
+          {
+            coin: coin.toUpperCase(),
+            fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
+            paymentMethod: paymentMethod.label,
+          },
+        );
+        const reason =
+          'banxaGetPaymentMethods Error: No banxaSelectedPaymentMethodData';
+        showBanxaError(msg, reason);
+        setFinishedBanxa(!finishedBanxa);
+        return;
+      }
+
+      offers.banxa.paymentMethodId = banxaSelectedPaymentMethodData.id;
+
+      const banxaCurrencyLimitsData =
+        banxaSelectedPaymentMethodData.transaction_limits.find(
+          tx_limit =>
+            tx_limit.fiat_code.toUpperCase() ===
+            offers.banxa.fiatCurrency.toUpperCase(),
+        );
+
+      offers.banxa.amountLimits = {
+        min: banxaCurrencyLimitsData
+          ? Number(banxaCurrencyLimitsData.min)
+          : getBanxaFiatAmountLimits().min,
+        max: banxaCurrencyLimitsData
+          ? Number(banxaCurrencyLimitsData.max)
+          : getBanxaFiatAmountLimits().max,
+      };
+    } catch (err) {
+      logger.debug(
+        'Error getting Banxa transaction limits. Setting default values.',
+      );
+      offers.banxa.amountLimits = dispatch(
+        getBuyCryptoFiatLimits('banxa', offers.banxa.fiatCurrency),
+      );
+    }
+
+    if (
+      (offers.banxa.amountLimits?.min &&
+        offers.banxa.fiatAmount < offers.banxa.amountLimits.min) ||
+      (offers.banxa.amountLimits?.max &&
+        offers.banxa.fiatAmount > offers.banxa.amountLimits.max)
+    ) {
+      offers.banxa.outOfLimitMsg = t(
+        'There are no Banxa offers available, as the current purchase limits for this exchange must be between and',
+        {
+          min: offers.banxa.amountLimits.min,
+          max: offers.banxa.amountLimits.max,
+          fiatCurrency: offers.banxa.fiatCurrency,
+        },
+      );
+      setFinishedBanxa(!finishedBanxa);
+      return;
+    } else {
+      const requestData: BanxaGetQuoteRequestData = {
+        env: banxaEnv,
+        source: offers.banxa.fiatCurrency,
+        target: getBanxaCoinFormat(coin),
+        source_amount: offers.banxa.fiatAmount,
+        payment_method_id: offers.banxa.paymentMethodId,
+        account_reference: user?.eid ?? selectedWallet.id,
+        blockchain: getBanxaChainFormat(selectedWallet.chain),
+      };
+
+      selectedWallet
+        .banxaGetQuote(requestData)
+        .then((quoteData: BanxaQuoteData) => {
+          if (quoteData?.data?.prices?.[0]?.coin_amount) {
+            const data = quoteData.data.prices[0];
+
+            offers.banxa.outOfLimitMsg = undefined;
+            offers.banxa.errorMsg = undefined;
+            offers.banxa.quoteData = data;
+            offers.banxa.amountCost = Number(data.fiat_amount);
+            offers.banxa.fee =
+              Number(data.fee_amount) + Number(data.network_fee);
+            offers.banxa.buyAmount = offers.banxa.amountCost - offers.banxa.fee;
+
+            const precision = dispatch(GetPrecision(coin, chain));
+            if (offers.banxa.buyAmount && coin && precision) {
+              offers.banxa.fiatMoney = Number(
+                offers.banxa.buyAmount / Number(data.coin_amount),
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(`Banxa error: Could not get precision for ${coin}`);
+            }
+            offers.banxa.amountReceiving = Number(data.coin_amount).toString();
+            logger.debug('Banxa getting quote: SUCCESS');
+            setFinishedBanxa(!finishedBanxa);
+          } else {
+            if (quoteData.message && typeof quoteData.message === 'string') {
+              logger.error('Banxa error: ' + quoteData.message);
+            }
+            if (quoteData.error && typeof quoteData.error === 'string') {
+              logger.error('Banxa error: ' + quoteData.error);
+            }
+            if (quoteData.errors) {
+              logger.error(JSON.stringify(quoteData.errors));
+            }
+            let err = t(
+              "Can't get rates at this moment. Please try again later",
+            );
+            const reason = 'banxaGetQuote Error. "coin_amount" not included.';
+            showBanxaError(err, reason);
+          }
+        })
+        .catch((err: any) => {
+          const reason = 'banxaGetQuote Error';
+          showBanxaError(err, reason);
+        });
+    }
+  };
+
+  const showBanxaError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Banxa error: ' + msg);
+
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'banxa',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.banxa.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.banxa.fiatCurrency || '',
+      }),
+    );
+
+    offers.banxa.errorMsg = msg;
+    offers.banxa.fiatMoney = undefined;
+    offers.banxa.expanded = false;
+    setUpdateView(!updateView);
   };
 
   const getMoonpayQuote = async (): Promise<void> => {
@@ -879,9 +1102,9 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     if (
-      (offers.sardine.amountLimits.min &&
+      (offers.sardine.amountLimits?.min &&
         offers.sardine.fiatAmount < offers.sardine.amountLimits.min) ||
-      (offers.sardine.amountLimits.max &&
+      (offers.sardine.amountLimits?.max &&
         offers.sardine.fiatAmount > offers.sardine.amountLimits.max)
     ) {
       offers.sardine.outOfLimitMsg = t(
@@ -1012,9 +1235,9 @@ const BuyCryptoOffers: React.FC = () => {
     );
 
     if (
-      (offers.simplex.amountLimits.min &&
+      (offers.simplex.amountLimits?.min &&
         offers.simplex.fiatAmount < offers.simplex.amountLimits.min) ||
-      (offers.simplex.amountLimits.max &&
+      (offers.simplex.amountLimits?.max &&
         offers.simplex.fiatAmount > offers.simplex.amountLimits.max)
     ) {
       offers.simplex.outOfLimitMsg = t(
@@ -1139,6 +1362,10 @@ const BuyCryptoOffers: React.FC = () => {
 
   const goTo = (key: string): void => {
     switch (key) {
+      case 'banxa':
+        goToBanxaBuyPage();
+        break;
+
       case 'moonpay':
         goToMoonpayBuyPage();
         break;
@@ -1155,6 +1382,99 @@ const BuyCryptoOffers: React.FC = () => {
         goToSimplexBuyPage();
         break;
     }
+  };
+
+  const goToBanxaBuyPage = () => {
+    if (offers.banxa.errorMsg || offers.banxa.outOfLimitMsg) {
+      return;
+    }
+    continueToBanxa();
+  };
+
+  const continueToBanxa = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showBanxaError(err, reason);
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const banxaExternalId = uuid.v4().toString();
+
+    dispatch(
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'banxa',
+        fiatAmount: offers.banxa.fiatAmount,
+        fiatCurrency: offers.banxa.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const quoteData: BanxaCreateOrderRequestData = {
+      env: banxaEnv,
+      account_reference: user?.eid ?? selectedWallet.id,
+      payment_method_id: offers.banxa.paymentMethodId,
+      source: offers.banxa.fiatCurrency,
+      source_amount: cloneDeep(offers.banxa.fiatAmount).toString(),
+      target: getBanxaCoinFormat(coin),
+      wallet_address: address,
+      blockchain: getBanxaChainFormat(selectedWallet.chain),
+      return_url_on_success: `${APP_DEEPLINK_PREFIX}banxa?externalId=${banxaExternalId}&status=pending`,
+      return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled?externalId=${banxaExternalId}&status=cancelled`,
+      return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed?externalId=${banxaExternalId}&status=failed`,
+    };
+
+    let data: BanxaCreateOrderData, banxaOrderData: BanxaOrderData;
+    try {
+      data = await selectedWallet.banxaCreateOrder(quoteData);
+    } catch (err) {
+      const reason = 'banxaCreateOrder Error';
+      showBanxaError(err, reason);
+      return;
+    }
+
+    if (data?.data?.order?.checkout_url && data?.data?.order?.id) {
+      banxaOrderData = data.data.order;
+    } else {
+      const reason =
+        'banxaCreateOrder Error: No checkout_url or id value provided from Banxa';
+      logger.error(reason);
+      showBanxaError(undefined, reason);
+      return;
+    }
+
+    const newData: BanxaPaymentData = {
+      address,
+      created_on: Date.now(),
+      crypto_amount: Number(offers.banxa.amountReceiving),
+      chain: destinationChain,
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offers.banxa.buyAmount!,
+      fiat_total_amount: offers.banxa.amountCost!,
+      fiat_total_amount_currency: offers.banxa.fiatCurrency,
+      order_id: banxaOrderData.id,
+      external_id: banxaExternalId,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestBanxa({
+        banxaPaymentData: newData,
+      }),
+    );
+
+    dispatch(openUrlWithInAppBrowser(banxaOrderData.checkout_url));
+    await sleep(500);
+    navigation.goBack();
   };
 
   const goToMoonpayBuyPage = () => {
@@ -1607,6 +1927,9 @@ const BuyCryptoOffers: React.FC = () => {
       logger.error(msg);
       showError(title, msg);
     } else {
+      if (offers.banxa.showOffer) {
+        getBanxaQuote();
+      }
       if (offers.moonpay.showOffer) {
         getMoonpayQuote();
       }
@@ -1625,6 +1948,7 @@ const BuyCryptoOffers: React.FC = () => {
   useEffect(() => {
     setOffers(offers);
   }, [
+    finishedBanxa,
     finishedMoonpay,
     finishedRamp,
     finishedSardine,
@@ -1798,6 +2122,12 @@ const BuyCryptoOffers: React.FC = () => {
                       )}
                     </OfferDataInfoTotal>
                   </OfferExpandibleItem>
+                  {offer.key == 'banxa' ? (
+                    <BanxaTerms
+                      paymentMethod={paymentMethod}
+                      country={country}
+                    />
+                  ) : null}
                   {offer.key == 'moonpay' ? (
                     <MoonpayTerms
                       paymentMethod={paymentMethod}

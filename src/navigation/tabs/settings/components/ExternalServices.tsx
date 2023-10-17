@@ -9,6 +9,7 @@ import {
   SettingTitle,
 } from '../../../../components/styled/Containers';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
+import BanxaLogo from '../../../../components/icons/external-services/banxa/banxa-logo';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
@@ -48,6 +49,22 @@ const ExternalServices = () => {
 
   return (
     <SettingsComponent>
+      <Setting
+        onPress={() => {
+          haptic('impactLight');
+          navigation.navigate('ExternalServicesSettings', {
+            screen: 'BanxaSettings',
+          });
+        }}>
+        <ExternalServicesItemContainer>
+          <ExternalServicesIconContainer>
+            <BanxaLogo iconOnly={true} width={30} height={25} />
+          </ExternalServicesIconContainer>
+          <SettingTitle>Banxa</SettingTitle>
+        </ExternalServicesItemContainer>
+        <AngleRight />
+      </Setting>
+      <Hr />
       <Setting
         onPress={() => {
           haptic('impactLight');

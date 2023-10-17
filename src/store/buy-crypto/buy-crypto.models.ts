@@ -3,6 +3,251 @@ export interface BuyCryptoLimits {
   max?: number;
 }
 
+export type BanxaStatusKey =
+  | 'paymentRequestSent'
+  | 'pending'
+  | 'pendingPayment'
+  | 'waitingPayment'
+  | 'paymentReceived'
+  | 'inProgress'
+  | 'coinTransferred'
+  | 'cancelled'
+  | 'declined'
+  | 'expired'
+  | 'failed'
+  | 'complete'
+  | 'refunded';
+
+export interface BanxaPaymentData {
+  address: string;
+  chain: string;
+  created_on: number;
+  crypto_amount: number;
+  coin: string;
+  env: 'dev' | 'prod';
+  fiat_base_amount: number;
+  fiat_total_amount: number;
+  fiat_total_amount_currency: string;
+  order_id: string; // order id provided by Banxa
+  external_id: string; // bitpay-app custom id
+  status: BanxaStatusKey;
+  user_id: string;
+  transaction_id?: string;
+  ref?: number; // Reference number for order
+}
+
+export interface BanxaIncomingData {
+  banxaExternalId: string;
+  banxaOrderId?: string;
+  walletId?: string;
+  status?: BanxaStatusKey;
+  cryptoAmount?: number;
+  fiatTotalAmount?: number;
+  fiatBaseAmount?: number;
+  coin?: string;
+  chain?: string;
+  fiatTotalAmountCurrency?: string;
+  ref?: number;
+  transactionId?: string;
+}
+
+export interface BanxaErrorResponse {
+  errors: {
+    status: number;
+    code: number;
+    title: string;
+  }[];
+}
+
+export interface BanxaGetPaymentMethodsRequestData {
+  env: 'sandbox' | 'production';
+  source: string;
+  target: string;
+}
+
+export interface BanxaPaymentMethod {
+  id: number;
+  paymentType: string;
+  name: string;
+  description: string;
+  logo_url: string;
+  status: string;
+  supported_agents: any;
+  type: string;
+  supported_fiat: string[];
+  supported_coin: string[];
+  transaction_fees: {
+    fiat_code: string;
+    coin_code: string;
+    fees: {
+      name: string;
+      amount: number;
+      type: string;
+    }[];
+  }[];
+  transaction_limits: {
+    fiat_code: string;
+    min: string;
+    max: string;
+    weekly: string;
+  }[];
+}
+
+export interface BanxaPaymentMethodsData {
+  data: {
+    payment_methods: BanxaPaymentMethod[];
+  };
+  errors?: BanxaErrorResponse;
+  error?: any;
+  message?: any;
+}
+
+export type BanxaBlockchainKey =
+  | 'BTC'
+  | 'DOGE'
+  | 'ETH'
+  | 'LTC'
+  | 'MATIC'
+  | 'XRP';
+export interface BanxaGetQuoteRequestData {
+  env: 'sandbox' | 'production';
+  source: string;
+  target: string;
+  source_amount?: number;
+  target_amount?: number; // Do not include if source_amount is defined
+  payment_method_id?: number;
+  account_reference?: string;
+  blockchain?: BanxaBlockchainKey;
+}
+
+export interface BanxaQuoteData {
+  data: {
+    spot_price: string;
+    prices: {
+      payment_method_id: number;
+      type: string;
+      spot_price_fee: string;
+      spot_price_including_fee: string;
+      coin_amount: string;
+      coin_code: string;
+      fiat_amount: string;
+      fiat_code: string;
+      fee_amount: string;
+      network_fee: string;
+    }[];
+  };
+  errors?: BanxaErrorResponse;
+  error?: any;
+  message?: any;
+}
+
+export interface BanxaCreateOrderRequestData {
+  env: 'sandbox' | 'production';
+  // required: Unique customer reference provided by you. Used to check whether customer has completed KYC.
+  account_reference: string;
+  // Payment method ID associated with the order.
+  payment_method_id?: number;
+  // required: Source currency or cryptocurrency code. This parameter indicates whether the order is a buy or a sell cryptocurrency order.
+  source: string;
+  // Source amount
+  source_amount: string;
+  // required: Target currency or cryptocurrency code. This parameter indicates whether the order is a buy or a sell cryptocurrency order.
+  target: string;
+  // Target amount. This will be overridden if a source_amount is also passed.
+  target_amount?: string;
+  // required: Wallet address to receive cryptocurrency. Should be sent for buy cryptocurrency orders only.
+  wallet_address: string;
+  // required?: Wallet tag or memo associated with the wallet address. Should be sent for buy cryptocurrency orders only. This is required when the Customer's wallet address has a Memo or Tag such as BNB (Memo) and XRP (Tag).
+  wallet_address_tag?: string;
+  // Blockchain network code. If not provided, the default blockchain configured for the cryptocurrency will be used. Refer to the Get Crypto Currencies endpoint to retrieve a list of supported blockchain network codes.
+  blockchain?: string;
+  // required: Return URL when the customer has completed the checkout process.
+  return_url_on_success: string;
+  // Return URL when the customer cancels the checkout process.
+  return_url_on_cancelled?: string;
+  // Return URL when the customer fails to complete the checkout process.
+  return_url_on_failure?: string;
+  // Free form string that you can use to send us any information that will be returned in the Get Orders endpoint
+  meta_data?: string;
+  // Refund wallet address. Should be sent for sell cryptocurrency orders only. Used in the event in the event that a refund is necessary and the transferred coins need to be returned.
+  refund_address?: string;
+  // Refund wallet address tag or memo. Should be sent for sell cryptocurrency orders only. This is required when the Customer's wallet address has a Memo or Tag such as BNB (Memo) and XRP (Tag).
+  refund_address_tag?: string;
+  // Source wallet address. Should be sent for sell cryptocurrency orders only.
+  source_address?: string;
+  // Source wallet address tag or memo. Should be sent for sell cryptocurrency orders only. Required when source wallet address for BNB (Memo) or XRP (Tag).
+  source_address_tag?: string;
+  // Customer's email address. This will pre-populate the customers' email address field when they are redirected to Banxa checkout
+  email?: string;
+  // Customer's mobile number. This will pre-populate the customers' mobile number field when they are redirected to Banxa checkout
+  mobile?: string;
+}
+
+export interface BanxaOrderData {
+  account_id: string;
+  account_reference: string;
+  blockchain: {
+    code: string;
+    description: string;
+    id: number;
+  };
+  checkout_url: string;
+  coin_code: string;
+  country: string;
+  created_at: string;
+  fiat_amount: number;
+  fiat_code: string;
+  id: string;
+  order_type: string;
+  payment_code: string;
+  payment_id: number;
+  wallet_address: string;
+
+  // Order details properties
+  coin_amount?: number;
+  commission?: number;
+  completed_at?: string | null;
+  created_date?: string;
+  fee?: number;
+  fee_tax?: number;
+  merchant_commission?: number;
+  merchant_fee?: number;
+  meta_data?: string | null;
+  network_fee?: number;
+  payment_fee?: number;
+  payment_fee_tax?: number;
+  payment_type?: string;
+  ref?: number;
+  status?: BanxaStatusKey;
+  tx_confirms?: number;
+  tx_hash?: string | null;
+  wallet_address_tag?: string | null;
+}
+
+export interface BanxaCreateOrderData {
+  data: {
+    order: BanxaOrderData;
+  };
+  errors?: BanxaErrorResponse;
+  error?: any;
+  message?: any;
+}
+
+export interface BanxaGetOrderDetailsRequestData {
+  env: 'sandbox' | 'production';
+  order_id: string;
+  fx_currency?: string;
+}
+
+export interface BanxaOrderDetailsData {
+  data: {
+    order: BanxaOrderData;
+  };
+  errors?: BanxaErrorResponse;
+  error?: any;
+  message?: any;
+}
+
 export interface MoonpayGetCurrencyLimitsRequestData {
   env: 'sandbox' | 'production';
   currencyAbbreviation: string;
