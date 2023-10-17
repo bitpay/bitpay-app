@@ -16,8 +16,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
+    borderRightWidth: 0,
+    borderLeftWidth: 0,
   },
   secondary: {
     borderTopColor: NotificationPrimary,
