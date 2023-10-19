@@ -161,6 +161,9 @@ const GiftCardDetails = ({
     giftCards.find(card => card.invoiceId === initialGiftCard.invoiceId) ||
       initialGiftCard,
   );
+  const [defaultClaimCodeType, setDefaultClaimCodeType] = useState(
+    cardConfig.defaultClaimCodeType,
+  );
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
@@ -185,18 +188,33 @@ const GiftCardDetails = ({
   useEffect(() => {
     if (!giftCard.barcodeImage) {
       if (
-        cardConfig.defaultClaimCodeType === ClaimCodeType.barcode &&
+        defaultClaimCodeType === ClaimCodeType.barcode &&
         giftCard.claimLink
       ) {
-        cardConfig.defaultClaimCodeType = ClaimCodeType.link;
+        setDefaultClaimCodeType(ClaimCodeType.link);
       }
       return;
     }
     Image.getSize(giftCard.barcodeImage, (width, height) => {
-      setIsBarcode(width / height > 3);
-      setScannableCodeDimensions({width, height});
+      const resemblesBarcode = width / height > 3;
+      setIsBarcode(resemblesBarcode);
+      const minHeight = 60;
+      const scaleFactor = minHeight / height;
+      const dimensions =
+        height < minHeight && !resemblesBarcode
+          ? {
+              height: height * scaleFactor,
+              width: width * scaleFactor,
+            }
+          : {height: minHeight, width: 200};
+      setScannableCodeDimensions(dimensions);
     });
-  }, [cardConfig, giftCard.barcodeImage, giftCard.claimLink]);
+  }, [
+    cardConfig,
+    defaultClaimCodeType,
+    giftCard.barcodeImage,
+    giftCard.claimLink,
+  ]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -278,7 +296,7 @@ const GiftCardDetails = ({
         );
       },
     },
-    ...(cardConfig.defaultClaimCodeType !== 'link'
+    ...(defaultClaimCodeType !== 'link'
       ? [
           {
             img: <PrintSvg theme={theme} />,
@@ -353,23 +371,18 @@ const GiftCardDetails = ({
         />
         {giftCard.status === 'SUCCESS' ? (
           <>
-            {cardConfig.defaultClaimCodeType !== 'link' ? (
+            {defaultClaimCodeType !== 'link' ? (
               <ClaimCodeBox>
                 <Paragraph>{t('Claim Code')}</Paragraph>
-                {giftCard.barcodeImage &&
-                cardConfig.defaultClaimCodeType === 'barcode' ? (
+                {giftCard.barcodeImage && defaultClaimCodeType === 'barcode' ? (
                   <ScannableCodeContainer
-                    height={scannableCodeDimensions.height}
-                    width={scannableCodeDimensions.width}>
+                    height={scannableCodeDimensions.height + 20}
+                    width={scannableCodeDimensions.width + 20}>
                     <ScannableCode
-                      height={
-                        isBarcode
-                          ? scannableCodeDimensions.height * 0.7
-                          : scannableCodeDimensions.height
-                      }
+                      height={scannableCodeDimensions.height}
                       width={scannableCodeDimensions.width}
                       source={{uri: giftCard.barcodeImage}}
-                      resizeMode={isBarcode ? 'cover' : 'contain'}
+                      resizeMode={isBarcode ? 'stretch' : 'contain'}
                     />
                   </ScannableCodeContainer>
                 ) : null}
@@ -395,13 +408,12 @@ const GiftCardDetails = ({
                 )}
               </ClaimCodeBox>
             ) : null}
-            {giftCard.pin || cardConfig.defaultClaimCodeType === 'link' ? (
+            {giftCard.pin || defaultClaimCodeType === 'link' ? (
               <Paragraph style={{marginTop: 15}}>
                 {t('Created')} <TimeAgo time={giftCard.date} />
               </Paragraph>
             ) : null}
-            {!giftCard.archived ||
-            cardConfig.defaultClaimCodeType === 'link' ? (
+            {!giftCard.archived || defaultClaimCodeType === 'link' ? (
               <ActionContainer>
                 {cardConfig.redeemUrl ? (
                   <Button
@@ -422,7 +434,7 @@ const GiftCardDetails = ({
                     buttonStyle={'primary'}>
                     {t('Redeem Now')}
                   </Button>
-                ) : cardConfig.defaultClaimCodeType === 'link' ? (
+                ) : defaultClaimCodeType === 'link' ? (
                   <Button
                     onPress={() =>
                       Linking.openURL(giftCard.claimLink as string)
