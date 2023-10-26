@@ -24,13 +24,14 @@ import {useTranslation} from 'react-i18next';
 import AddContactIcon from '../../../components/icons/add-contacts/AddContacts';
 import {useNavigation} from '@react-navigation/native';
 import {
+  addTokenChainSuffix,
   findContact,
   formatCryptoAddress,
   getBadgeImg,
   getCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {BitpaySupportedEthereumTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
 import {
   DetailColumn,
@@ -38,6 +39,7 @@ import {
   DetailRow,
   SendToPillContainer,
 } from '../screens/send/confirm/Shared';
+import {RootState} from '../../../store';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -68,18 +70,30 @@ const ContactsIconContainer = styled.TouchableOpacity`
   margin-left: 5px;
 `;
 
-const MultipleOutputsTx = ({tx}: {tx: any}) => {
+const MultipleOutputsTx = ({
+  tx,
+  tokenAddress,
+}: {
+  tx: any;
+  tokenAddress: string | undefined;
+}) => {
   const {t} = useTranslation();
   let {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const {tokenOptions, customTokenOptions} = useAppSelector(
-    ({WALLET}) => WALLET.customTokenOptions,
-  );
-  const tokenOpts = {
-    ...BitpaySupportedEthereumTokenOpts,
-    ...tokenOptions,
-    ...customTokenOptions,
-  };
+
+  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
+    };
+  });
+  const foundToken =
+    tokenAddress &&
+    tokenOptionsByAddress[
+      addTokenChainSuffix(tokenAddress.toLowerCase(), chain)
+    ];
+
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
 
@@ -148,11 +162,11 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
     const img = SUPPORTED_CURRENCIES.includes(coin)
       ? CurrencyListIcons[coin]
-      : tokenOpts &&
+      : foundToken &&
         // @ts-ignore
-        tokenOpts[coin]?.logoURI
+        foundToken?.logoURI
       ? // @ts-ignore
-        (tokenOpts[coin].logoURI as string)
+        (foundToken.logoURI as string)
       : '';
     const badgeImg = getBadgeImg(coin, chain);
     const icon = tx.customData?.recipientEmail ? (

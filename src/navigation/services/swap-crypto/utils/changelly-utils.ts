@@ -139,7 +139,7 @@ export interface ChangellyCurrency {
   notifications?: {
     payin?: string;
   };
-  contractAddress?: string;
+  tokenAddress?: string;
 }
 
 export interface ChangellyFixRateDataType {
@@ -169,7 +169,7 @@ export const getChangellyCurrenciesFixedProps = (
     if (
       currency.name.toLowerCase() === 'usdt20' &&
       currency.protocol?.toLowerCase() === 'erc20' &&
-      currency.contractAddress === '0xdac17f958d2ee523a2206206994597c13d831ec7'
+      currency.tokenAddress === '0xdac17f958d2ee523a2206206994597c13d831ec7'
     ) {
       currency.name = 'usdt';
       currency.fullName = 'Tether USD';

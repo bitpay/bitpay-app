@@ -208,8 +208,7 @@ const ShopHome: React.FC<
 
   const [activeTab, setActiveTab] = useState(ShopTabs.GIFT_CARDS);
   const [refreshing, setRefreshing] = useState(false);
-  const [initialSyncComplete, setInitialSyncComplete] =
-    useState(false);
+  const [initialSyncComplete, setInitialSyncComplete] = useState(false);
 
   const memoizedGiftCardCatalog = useCallback(
     () => (

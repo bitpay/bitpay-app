@@ -49,7 +49,7 @@ import {keyBackupRequired} from '../../tabs/home/components/Crypto';
 import {StackScreenProps} from '@react-navigation/stack';
 import TwoFactorRequiredModal from '../components/TwoFactorRequiredModal';
 import {getCurrencyCodeFromCoinAndChain} from '../utils/bitpay-id-utils';
-import {BitpaySupportedCurrencies} from '../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../constants/currencies';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import {useTranslation} from 'react-i18next';
 
@@ -172,7 +172,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
       .filter(
         wallet =>
           wallet.network === Network.mainnet &&
-          Object.values(BitpaySupportedCurrencies).some(
+          Object.values(BitpaySupportedCoins).some(
             ({coin, chain}) =>
               wallet.currencyAbbreviation === coin && wallet.chain === chain,
           ),

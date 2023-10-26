@@ -192,7 +192,9 @@ const CoinbaseAccount = ({
   const navigation = useNavigation();
   const {accountId, refresh} = route.params;
   const logger = useLogger();
-  const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
+  const tokenDataByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.tokenDataByAddress,
+  );
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -316,6 +318,9 @@ const CoinbaseAccount = ({
   };
 
   const getLogoUri = (coin: string, _chain: string) => {
+    const foundToken = Object.values(tokenDataByAddress).find(
+      token => token.coin === coin,
+    );
     if (
       SupportedCurrencyOptions.find(
         ({currencyAbbreviation, chain}) =>
@@ -328,8 +333,8 @@ const CoinbaseAccount = ({
           currencyAbbreviation === coin.toLowerCase() &&
           (!chain || chain === _chain),
       )!.img;
-    } else if (tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI) {
-      return tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI;
+    } else if (foundToken?.logoURI) {
+      return foundToken?.logoURI;
     } else {
       return undefined;
     }
@@ -718,6 +723,7 @@ const CoinbaseAccount = ({
         cryptoCurrencyAbbreviation={currencyAbbreviation}
         fiatCurrencyAbbreviation={defaultAltCurrency.isoCode}
         chain={chain}
+        tokenAddress={undefined} // TODO
         onClose={() => setAmountModalVisible(false)}
         onSubmit={amt => onEnteredAmount(amt)}
       />

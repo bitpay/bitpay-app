@@ -43,6 +43,7 @@ import {
   keyExtractor,
   findContact,
   getBadgeImg,
+  getChainUsingSuffix,
 } from '../../../../utils/helper-methods';
 import CurrencySelectionRow, {
   TokenSelectionRow,
@@ -53,8 +54,8 @@ import NetworkSelectionRow, {
 import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
-import {SUPPORTED_TOKENS} from '../../../../constants/currencies';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokens} from '../../../../constants/currencies';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import debounce from 'lodash.debounce';
 import {useTranslation} from 'react-i18next';
@@ -199,6 +200,9 @@ const ContactsAdd = ({
 
   const [addressValue, setAddressValue] = useState('');
   const [coinValue, setCoinValue] = useState('');
+  const [tokenAddressValue, setTokenAddressValue] = useState(
+    undefined as string | undefined,
+  );
   const [networkValue, setNetworkValue] = useState('');
   const [chainValue, setChainValue] = useState('');
 
@@ -209,29 +213,17 @@ const ContactsAdd = ({
     IsERCToken(contact?.coin || '', contact?.chain || ''),
   );
 
-  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
+  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
   });
 
-  const getChainUsingSuffix = (symbol: string) => {
-    const suffix = symbol.charAt(symbol.length - 1);
-    switch (suffix) {
-      case 'e':
-        return 'eth';
-      case 'm':
-        return 'matic';
-      default:
-        return 'eth';
-    }
-  };
-
   const ALL_CUSTOM_TOKENS = useMemo(() => {
-    return Object.entries(tokenOptions)
-      .filter(([k]) => !SUPPORTED_TOKENS.includes(k))
+    return Object.entries(tokenOptionsByAddress)
+      .filter(([k]) => !BitpaySupportedTokens[k])
       .map(([k, {symbol, name, logoURI}]) => {
         const chain = getChainUsingSuffix(k);
         return {
@@ -245,7 +237,7 @@ const ContactsAdd = ({
           badgeUri: getBadgeImg(symbol.toLowerCase(), chain),
         } as SupportedCurrencyOption;
       });
-  }, [tokenOptions]);
+  }, [tokenOptionsByAddress]);
 
   const ALL_TOKENS = useMemo(
     () => [...SupportedTokenOptions, ...ALL_CUSTOM_TOKENS],
@@ -253,7 +245,6 @@ const ContactsAdd = ({
   );
 
   const [allTokenOptions, setAllTokenOptions] = useState(ALL_TOKENS);
-
   const [selectedToken, setSelectedToken] = useState(ALL_TOKENS[0]);
   const [selectedCurrency, setSelectedCurrency] = useState(
     SupportedEvmCurrencyOptions[0],
@@ -361,6 +352,7 @@ const ContactsAdd = ({
         setCoinValue('');
         setNetworkValue('');
         setAddressValue('');
+        setTokenAddressValue(undefined);
         setValidAddress(false);
         setEvmValidAddress(false);
         setXrpValidAddress(false);
@@ -381,6 +373,7 @@ const ContactsAdd = ({
       contact.coin = coinValue;
       contact.chain = chainValue;
       contact.network = networkValue;
+      contact.tokenAddress = tokenAddressValue;
     } else {
       setError('address', {
         type: 'manual',
@@ -405,7 +398,14 @@ const ContactsAdd = ({
     }
 
     if (
-      findContact(contacts, addressValue, coinValue, networkValue, chainValue)
+      findContact(
+        contacts,
+        addressValue,
+        coinValue,
+        networkValue,
+        chainValue,
+        tokenAddressValue,
+      )
     ) {
       setError('address', {
         type: 'manual',
@@ -434,9 +434,14 @@ const ContactsAdd = ({
     setSelectedCurrency(_selectedCurrency[0]);
   };
 
-  const tokenSelected = (currencyAbbreviation: string, chain: string) => {
+  const tokenSelected = (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress: string | undefined,
+  ) => {
     _setSelectedToken(currencyAbbreviation, chain);
     setCoinValue(currencyAbbreviation);
+    setTokenAddressValue(tokenAddress);
     setTokenModalVisible(false);
   };
 
@@ -451,6 +456,7 @@ const ContactsAdd = ({
         allTokenOptions.find(t => t.chain === currencyAbbreviation)
           ?.currencyAbbreviation!,
         currencyAbbreviation,
+        undefined,
       );
     } else {
       setCoinValue(currencyAbbreviation);

@@ -20,6 +20,7 @@ import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
+  addTokenChainSuffix,
   convertToFiat,
   formatFiatAmount,
   getBadgeImg,
@@ -51,18 +52,19 @@ export const mapAbbreviationAndName =
   (
     coin: string,
     chain: string,
+    tokenAddress: string | undefined,
   ): Effect<{currencyAbbreviation: string; currencyName: string}> =>
   dispatch => {
     switch (coin) {
       case 'pax':
         return {
           currencyAbbreviation: 'usdp',
-          currencyName: dispatch(GetName('usdp', chain)),
+          currencyName: dispatch(GetName('usdp', chain, tokenAddress)),
         };
       default:
         return {
           currencyAbbreviation: coin,
-          currencyName: dispatch(GetName(coin, chain)),
+          currencyName: dispatch(GetName(coin, chain, tokenAddress)),
         };
     }
   };
@@ -94,6 +96,7 @@ export const buildWalletObj = (
       satPending: 0,
     },
     tokens,
+    token,
     keyId,
     network,
     n,
@@ -108,6 +111,12 @@ export const buildWalletObj = (
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
+    token?: {
+      address: string;
+      decimals: number;
+      name: string;
+      symbol: string;
+    };
     hideWallet?: boolean; // ionic migration only
     hideBalance?: boolean; // ionic migration only
     network: Network;
@@ -116,16 +125,21 @@ export const buildWalletObj = (
     img: any;
     pendingTxps: TransactionProposal[];
   },
-  tokenOpts?: {[key in string]: Token},
+  tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
   const _currencyAbbreviation = getCurrencyAbbreviation(
     currencyAbbreviation,
     chain,
   );
+  const foundToken =
+    tokenOptsByAddress &&
+    token?.address &&
+    tokenOptsByAddress[addTokenChainSuffix(token.address.toLowerCase(), chain)];
   return {
     id: walletId,
     currencyName,
     currencyAbbreviation,
+    tokenAddress: token?.address?.toLowerCase(),
     chain,
     walletName,
     balance,
@@ -134,8 +148,8 @@ export const buildWalletObj = (
     keyId: keyId ? keyId : 'readonly',
     img: SUPPORTED_CURRENCIES.includes(_currencyAbbreviation)
       ? CurrencyListIcons[_currencyAbbreviation]
-      : tokenOpts && tokenOpts[_currencyAbbreviation]?.logoURI
-      ? (tokenOpts[_currencyAbbreviation]?.logoURI as string)
+      : foundToken && foundToken?.logoURI
+      ? (foundToken?.logoURI as string)
       : img || '',
     badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
@@ -226,6 +240,7 @@ export const toFiat =
     currencyAbbreviation: string,
     chain: string,
     rates: Rates = {},
+    tokenAddress: string | undefined,
     customRate?: number,
   ): Effect<number> =>
   dispatch => {
@@ -257,7 +272,9 @@ export const toFiat =
       return 0;
     }
 
-    const precision = dispatch(GetPrecision(currencyAbbreviation, chain));
+    const precision = dispatch(
+      GetPrecision(currencyAbbreviation, chain, tokenAddress),
+    );
 
     if (!precision) {
       // precision not found return 0
@@ -339,11 +356,7 @@ export const GetProtocolPrefixAddress =
     if (currencyAbbreviation !== 'bch') {
       return address;
     }
-    return (
-      dispatch(GetProtocolPrefix(currencyAbbreviation, network, chain)) +
-      ':' +
-      address
-    );
+    return GetProtocolPrefix(network, chain) + ':' + address;
   };
 
 export const getRemainingWalletCount = (
@@ -527,6 +540,7 @@ export const BuildKeysAndWalletsList = ({
               chain,
               credentials: {walletName: fallbackName},
               walletName,
+              tokenAddress,
             } = walletObj;
             return merge(cloneDeep(walletObj), {
               cryptoBalance: balance.crypto,
@@ -539,6 +553,7 @@ export const BuildKeysAndWalletsList = ({
                       currencyAbbreviation,
                       chain,
                       rates,
+                      tokenAddress,
                     ),
                   ),
                   hideWallet,
@@ -556,6 +571,7 @@ export const BuildKeysAndWalletsList = ({
                       currencyAbbreviation,
                       chain,
                       rates,
+                      tokenAddress,
                     ),
                   ),
                   hideWallet,

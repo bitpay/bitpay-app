@@ -2,30 +2,26 @@ import {EVM_BLOCKCHAIN_EXPLORERS} from './config';
 
 export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth' | 'matic';
 export type SupportedEthereumTokens =
-  | 'usdc_e'
-  | 'gusd_e'
-  | 'usdp_e'
-  | 'pax_e' // backward compatibility
-  | 'busd_e'
-  | 'dai_e'
-  | 'wbtc_e'
-  | 'shib_e'
-  | 'ape_e'
-  | 'euroc_e'
-  | 'matic_e'
-  | 'pyusd_e';
+  | '0x4fabb145d64652a948d72533023f6e7a623c7c53_e' // 'busd_e'
+  | '0x8e870d67f660d95d5be530380d0ec0bd388289e1_e' // 'usdp_e'
+  | '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_e' // 'usdc_e'
+  | '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd_e' // 'gusd_e'
+  | '0x6b175474e89094c44da98b954eedeac495271d0f_e' // 'dai_e'
+  | '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599_e' // 'wbtc_e'
+  | '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce_e' // 'shib_e'
+  | '0x4d224452801aced8b2f0aebe155379bb5d594381_e' // 'ape_e'
+  | '0x1abaea1f7c830bd89acc67ec4af516284b1bc33c' // 'euroc_e'
+  | '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0_e' // 'matic_e';
+  | '0x6c3ea9036406852006290770bedfcaba0e23a0e8_e'; // 'pyusd_e';
+
 export type SupportedMaticTokens =
-  | 'usdc_m'
-  | 'busd_m'
-  | 'dai_m'
-  | 'wbtc_m'
-  | 'shib_m'
-  | 'ape_m'
-  | 'euroc_m';
-export type SupportedCurrencies =
-  | SupportedCoins
-  | SupportedEthereumTokens
-  | SupportedMaticTokens;
+  | '0xdab529f40e671a1d4bf91361c21bf9f0c9712ab7_m' // 'busd_m'
+  | '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m' // 'usdc_m'
+  | '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063_m' // 'dai_m'
+  | '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6_m' // 'wbtc_m'
+  | '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec_m' // 'shib_m'
+  | '0xb7b31a6bc18e48888545ce79e83e06003be70930_m'; // 'ape_m'
+
 export type EVM_CHAINS = 'eth' | 'matic';
 export type UTXO_CHAINS = 'btc' | 'bch' | 'doge' | 'ltc';
 
@@ -73,13 +69,15 @@ export interface CurrencyOpts {
     gradientBackgroundColor: string;
   };
   tokens?: {[key in string]: CurrencyOpts};
+  address?: string;
 }
 
 export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
-  busd_e: {
+  '0x4fabb145d64652a948d72533023f6e7a623c7c53_e': {
     name: 'Binance USD',
     chain: 'eth',
     coin: 'busd',
+    address: '0x4fabb145d64652a948d72533023f6e7a623c7c53',
     unitInfo: {
       unitName: 'BUSD',
       unitToSatoshi: 1e18,
@@ -108,10 +106,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  usdp_e: {
+  '0x8e870d67f660d95d5be530380d0ec0bd388289e1_e': {
     name: 'Paxos Dollar',
     chain: 'eth',
     coin: 'usdp',
+    address: '0x8e870d67f660d95d5be530380d0ec0bd388289e1',
     unitInfo: {
       unitName: 'USDP',
       unitToSatoshi: 1e18,
@@ -140,43 +139,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  pax_e: {
-    // backward compatibility
-    name: 'Paxos Standard',
-    chain: 'eth',
-    coin: 'pax',
-    unitInfo: {
-      unitName: 'PAX',
-      unitToSatoshi: 1e18,
-      unitDecimals: 18,
-      unitCode: 'pax',
-    },
-    properties: {
-      hasMultiSig: false,
-      hasMultiSend: false,
-      isUtxo: false,
-      isERCToken: true,
-      isStableCoin: true,
-      singleAddress: true,
-    },
-    paymentInfo: {
-      paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/pax',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
-    },
-    feeInfo: {
-      feeUnit: 'Gwei',
-      feeUnitAmount: 1e9,
-      blockTime: 0.2,
-      maxMerchantFee: 'urgent',
-    },
-  },
-  usdc_e: {
+  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_e': {
     name: 'USD Coin',
     chain: 'eth',
     coin: 'usdc',
+    address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
     unitInfo: {
       unitName: 'USDC',
       unitToSatoshi: 1e6,
@@ -205,10 +172,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  gusd_e: {
+  '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd_e': {
     name: 'Gemini Dollar',
     chain: 'eth',
     coin: 'gusd',
+    address: '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd',
     unitInfo: {
       unitName: 'GUSD',
       unitToSatoshi: 1e2,
@@ -237,10 +205,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  dai_e: {
+  '0x6b175474e89094c44da98b954eedeac495271d0f_e': {
     name: 'DAI',
     chain: 'eth',
     coin: 'dai',
+    address: '0x6b175474e89094c44da98b954eedeac495271d0f',
     unitInfo: {
       unitName: 'DAI',
       unitToSatoshi: 1e18,
@@ -269,10 +238,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  wbtc_e: {
+  '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599_e': {
     name: 'Wrapped Bitcoin',
     chain: 'eth',
     coin: 'wbtc',
+    address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     unitInfo: {
       unitName: 'WBTC',
       unitToSatoshi: 1e8,
@@ -301,10 +271,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  shib_e: {
+  '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce_e': {
     name: 'Shiba Inu',
     chain: 'eth',
     coin: 'shib',
+    address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce',
     unitInfo: {
       unitName: 'SHIB',
       unitToSatoshi: 1e18,
@@ -334,10 +305,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  ape_e: {
+  '0x4d224452801aced8b2f0aebe155379bb5d594381_e': {
     name: 'ApeCoin',
     chain: 'eth',
     coin: 'ape',
+    address: '0x4d224452801aced8b2f0aebe155379bb5d594381',
     unitInfo: {
       unitName: 'APE',
       unitToSatoshi: 1e18,
@@ -367,10 +339,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  euroc_e: {
+  '0x1abaea1f7c830bd89acc67ec4af516284b1bc33c_e': {
     name: 'Euro Coin',
     chain: 'eth',
     coin: 'euroc',
+    address: '0x1abaea1f7c830bd89acc67ec4af516284b1bc33c',
     unitInfo: {
       unitName: 'EUROC',
       unitToSatoshi: 1e6,
@@ -400,10 +373,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  matic_e: {
+  '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0_e': {
     name: 'Matic Token',
     chain: 'eth',
     coin: 'matic',
+    address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
     unitInfo: {
       unitName: 'MATIC',
       unitToSatoshi: 1e18,
@@ -433,10 +407,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  pyusd_e: {
+  '0x6c3ea9036406852006290770bedfcaba0e23a0e8_e': {
     name: 'PayPal USD',
     chain: 'eth',
     coin: 'pyusd',
+    address: '0x6c3ea9036406852006290770bedfcaba0e23a0e8',
     unitInfo: {
       unitName: 'PYUSD',
       unitToSatoshi: 1e6,
@@ -468,10 +443,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
 };
 
 export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
-  busd_m: {
+  '0xdab529f40e671a1d4bf91361c21bf9f0c9712ab7_m': {
     name: 'Binance USD',
     chain: 'matic',
     coin: 'busd',
+    address: '0xdab529f40e671a1d4bf91361c21bf9f0c9712ab7',
     unitInfo: {
       unitName: 'BUSD',
       unitToSatoshi: 1e18,
@@ -500,10 +476,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  usdc_m: {
+  '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m': {
     name: 'USD Coin',
     chain: 'matic',
     coin: 'usdc',
+    address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
     unitInfo: {
       unitName: 'USDC',
       unitToSatoshi: 1e6,
@@ -532,10 +509,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  dai_m: {
+  '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063_m': {
     name: 'DAI',
     chain: 'matic',
     coin: 'dai',
+    address: '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063',
     unitInfo: {
       unitName: 'DAI',
       unitToSatoshi: 1e18,
@@ -553,7 +531,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
-      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd_m',
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/dai_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
@@ -564,10 +542,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  wbtc_m: {
+  '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6_m': {
     name: 'Wrapped Bitcoin',
     chain: 'matic',
     coin: 'wbtc',
+    address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
     unitInfo: {
       unitName: 'WBTC',
       unitToSatoshi: 1e8,
@@ -596,10 +575,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  shib_m: {
+  '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec_m': {
     name: 'Shiba Inu',
     chain: 'matic',
     coin: 'shib',
+    address: '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec',
     unitInfo: {
       unitName: 'SHIB',
       unitToSatoshi: 1e18,
@@ -629,10 +609,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  ape_m: {
+  '0xb7b31a6bc18e48888545ce79e83e06003be70930_m': {
     name: 'ApeCoin',
     chain: 'matic',
     coin: 'ape',
+    address: '0xb7b31a6bc18e48888545ce79e83e06003be70930',
     unitInfo: {
       unitName: 'APE',
       unitToSatoshi: 1e18,
@@ -942,25 +923,22 @@ export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
   ...OtherBitpaySupportedCoins,
 };
 
-export const BitpaySupportedCurrencies: {[key in string]: CurrencyOpts} = {
-  ...BitpaySupportedCoins,
-  ...BitpaySupportedTokens,
-};
-
-export const SUPPORTED_UTXO_COINS = Object.keys(BitpaySupportedUtxoCoins);
 export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
-export const SUPPORTED_ETHEREUM_TOKENS = Object.keys(
+export const SUPPORTED_ETHEREUM_TOKENS = Object.values(
   BitpaySupportedEthereumTokens,
-);
+).map(token => `${token.coin}_e`);
+export const SUPPORTED_MATIC_TOKENS = Object.values(
+  BitpaySupportedMaticTokens,
+).map(token => `${token.coin}_m`);
 
-export const SUPPORTED_MATIC_TOKENS = Object.keys(BitpaySupportedMaticTokens);
 export const SUPPORTED_TOKENS = [
   ...SUPPORTED_ETHEREUM_TOKENS,
   ...SUPPORTED_MATIC_TOKENS,
 ];
 
 export const SUPPORTED_COINS = Object.keys(BitpaySupportedCoins);
-export const SUPPORTED_CURRENCIES = Object.keys(BitpaySupportedCurrencies);
+export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];
+
 export const EVM_SUPPORTED_TOKENS_LENGTH = {
   eth: SUPPORTED_ETHEREUM_TOKENS.length,
   matic: SUPPORTED_MATIC_TOKENS.length,

@@ -33,6 +33,7 @@ export interface AmountScreenParamList {
   fiatCurrencyAbbreviation?: string;
   customAmountSublabel?: any;
   chain?: string;
+  tokenAddress?: string;
   context?: string;
   headerTitle?:
     | string
@@ -53,6 +54,7 @@ const AmountScreen: React.VFC<
     fiatCurrencyAbbreviation,
     customAmountSublabel,
     chain,
+    tokenAddress,
     context,
     headerTitle,
   } = route.params || {};
@@ -90,6 +92,7 @@ const AmountScreen: React.VFC<
         customAmountSublabel={customAmountSublabel}
         fiatCurrencyAbbreviation={fiatCurrencyAbbreviation}
         chain={chain}
+        tokenAddress={tokenAddress}
         onSubmit={amt => {
           onAmountSelected?.(amt.toString(), setButtonState);
         }}

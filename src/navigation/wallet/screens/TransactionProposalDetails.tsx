@@ -223,7 +223,7 @@ const TransactionProposalDetails = () => {
   const [lastSigner, setLastSigner] = useState(false);
 
   const title = getDetailsTitle(transaction, wallet);
-  let {currencyAbbreviation, chain, network} = wallet;
+  let {currencyAbbreviation, chain, network, tokenAddress} = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
   const isTestnet = network === 'testnet';
 
@@ -498,7 +498,7 @@ const TransactionProposalDetails = () => {
               <H2 medium={true}>{txp.amountStr}</H2>
             ) : null}
 
-            {!IsCustomERCToken(currencyAbbreviation, chain) ? (
+            {!IsCustomERCToken(tokenAddress, chain) ? (
               <SubTitle>
                 {!txp.fiatRateStr
                   ? '...'
@@ -647,7 +647,7 @@ const TransactionProposalDetails = () => {
               hr
             />
           ) : (
-            <MultipleOutputsTx tx={txp} />
+            <MultipleOutputsTx tx={txp} tokenAddress={wallet.tokenAddress} />
           )}
 
           <>

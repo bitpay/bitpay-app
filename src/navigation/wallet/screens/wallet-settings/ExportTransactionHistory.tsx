@@ -55,7 +55,7 @@ const ExportTransactionHistory = () => {
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'ExportTransactionHistory'>>();
-  const {currencyAbbreviation, chain, walletName} = wallet;
+  const {currencyAbbreviation, chain, walletName, tokenAddress} = wallet;
 
   const formatDate = (date: number): string => {
     const dateObj = new Date(date);
@@ -130,7 +130,7 @@ const ExportTransactionHistory = () => {
 
       // @ts-ignore
       const {unitToSatoshi} = dispatch(
-        GetPrecision(currencyAbbreviation, chain),
+        GetPrecision(currencyAbbreviation, chain, tokenAddress),
       );
       const satToUnit = 1 / unitToSatoshi;
 

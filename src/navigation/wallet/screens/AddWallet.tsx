@@ -87,7 +87,7 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
 import {
-  BitpaySupportedCurrencies,
+  BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
 } from '../../../constants/currencies';
 import InfoSvg from '../../../../assets/img/info.svg';
@@ -110,6 +110,7 @@ export type AddWalletParamList = {
   currencyName?: string;
   isToken?: boolean;
   isCustomToken?: boolean;
+  tokenAddress?: string;
 };
 
 const CreateWalletContainer = styled.SafeAreaView`
@@ -203,6 +204,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     currencyAbbreviation: _currencyAbbreviation,
     currencyName: _currencyName,
     chain: _chain,
+    tokenAddress: _tokenAddress,
     key,
     isToken,
     isCustomToken,
@@ -215,9 +217,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const network = useAppSelector(({APP}) => APP.network);
   const rates = useAppSelector(({RATE}) => RATE.rates);
-  const [customTokenAddress, setCustomTokenAddress] = useState<
-    string | undefined
-  >('');
+  const [tokenAddress, setTokenAddress] = useState<string | undefined>(
+    _tokenAddress,
+  );
   const [currencyName, setCurrencyName] = useState(_currencyName);
   const [currencyAbbreviation, setCurrencyAbbreviation] = useState(
     _currencyAbbreviation,
@@ -226,7 +228,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     _chain || SupportedEvmCurrencyOptions[0].currencyAbbreviation,
   );
   const singleAddressCurrency =
-    BitpaySupportedCurrencies[currencyAbbreviation?.toLowerCase() as string]
+    BitpaySupportedCoins[currencyAbbreviation?.toLowerCase() as string]
       ?.properties?.singleAddress;
   const nativeSegwitCurrency = _currencyAbbreviation
     ? ['btc', 'ltc'].includes(_currencyAbbreviation.toLowerCase())
@@ -332,7 +334,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       return;
     }
     if (isCustomToken) {
-      setCustomTokenAddress(undefined);
+      setTokenAddress(undefined);
       setCurrencyName(undefined);
     }
     // find all evm wallets for key
@@ -411,6 +413,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               chain,
               currencyAbbreviation: _currencyAbbreviation,
               isToken: _associatedWallet ? isToken! : false,
+              tokenAddress: tokenAddress,
             },
             options: {
               password,
@@ -468,7 +471,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
             if (
               key?.wallets
                 .find(wallet => wallet.id === token)
-                ?.currencyAbbreviation.toLowerCase() === currency
+                ?.tokenAddress?.toLowerCase() === tokenAddress
             ) {
               dispatch(
                 showBottomNotificationModal({
@@ -549,8 +552,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         onPress={() => {
           haptic('soft');
           setAssociatedWallet(item);
-          if (isCustomToken && !!customTokenAddress) {
-            setCustomTokenAddress(undefined);
+          if (isCustomToken && !!tokenAddress) {
+            setTokenAddress(undefined);
           }
           setAssociatedWalletModalVisible(false);
         }}
@@ -587,7 +590,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         return;
       }
 
-      setCustomTokenAddress(tokenAddress);
+      setTokenAddress(tokenAddress);
       const fullWalletObj = key.wallets.find(
         ({id}) => id === associatedWallet?.id,
       )!;
@@ -608,7 +611,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       const tokenContractInfo = await getTokenContractInfo(fullWalletObj, opts);
       let customToken: Token = {
         name: tokenContractInfo.name,
-        symbol: tokenContractInfo.symbol,
+        symbol: tokenContractInfo.symbol?.toLowerCase(),
         decimals: Number(tokenContractInfo.decimals),
         address: tokenAddress?.toLowerCase(),
       };
@@ -618,7 +621,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       Keyboard.dismiss();
     } catch (error) {
       Keyboard.dismiss();
-      setCustomTokenAddress(undefined);
+      setTokenAddress(undefined);
       await sleep(200);
       const err = t(
         'Could not find any ERC20 contract attached to the provided address. Recheck the contract address and network of the associated wallet.',
@@ -710,7 +713,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
                 setTokenInfo(text);
               }}
               error={errors.walletName?.message}
-              value={customTokenAddress}
+              value={tokenAddress}
             />
           </View>
         ) : null}

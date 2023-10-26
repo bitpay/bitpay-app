@@ -225,9 +225,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
       )) as string;
       setLoading(false);
       if (currencyAbbreviation === 'bch') {
-        const protocolPrefix = dispatch(
-          GetProtocolPrefix(currencyAbbreviation, network, chain),
-        );
+        const protocolPrefix = GetProtocolPrefix(network, chain);
         const formattedAddr = protocolPrefix + ':' + walletAddress;
         setAddress(formattedAddr);
         setBchAddress(formattedAddr);
@@ -383,7 +381,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
               </LinkContainer>
             </ContractHeaderContainer>
             <ContractAddressText>
-              {wallet.credentials.token.address}
+              {wallet.credentials.token?.address}
             </ContractAddressText>
           </WarningContainer>
         ) : null}

@@ -110,8 +110,10 @@ const SelectInputs = () => {
   const {rates} = useAppSelector(({RATE}) => RATE);
   const [inputs, setInputs] = useState<UtxoWithFiatAmount[]>([]);
   const {wallet, recipient} = route.params;
-  const {currencyAbbreviation, chain, network} = wallet;
-  const precision = dispatch(GetPrecision(currencyAbbreviation, chain));
+  const {currencyAbbreviation, chain, network, tokenAddress} = wallet;
+  const precision = dispatch(
+    GetPrecision(currencyAbbreviation, chain, tokenAddress),
+  );
   const [totalAmount, setTotalAmount] = useState(
     Number(0).toFixed(precision?.unitDecimals),
   );
@@ -152,6 +154,7 @@ const SelectInputs = () => {
                 currencyAbbreviation,
                 chain,
                 rates,
+                tokenAddress,
               ),
             ),
             false,
@@ -188,6 +191,7 @@ const SelectInputs = () => {
               currencyAbbreviation,
               chain,
               rates,
+              tokenAddress,
             ),
           ),
           false,
@@ -248,7 +252,7 @@ const SelectInputs = () => {
       const estimatedFee = await GetMinFee(wallet, 1, selectedInputs.length);
       logger.debug(`Estimated fee: ${estimatedFee}`);
       const formattedestimatedFee = dispatch(
-        SatToUnit(estimatedFee, currencyAbbreviation, chain),
+        SatToUnit(estimatedFee, currencyAbbreviation, chain, tokenAddress),
       );
 
       const amount = Number(totalAmount) - formattedestimatedFee!;

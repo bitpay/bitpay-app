@@ -38,6 +38,7 @@ export interface WalletRowProps {
   badgeImg?: string | ((props?: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
+  tokenAddress?: string;
   chain: string;
   walletName?: string;
   cryptoBalance: string;

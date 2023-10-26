@@ -39,6 +39,7 @@ export interface ContactRowProps {
   tag?: number; // backward compatibility
   destinationTag?: number;
   email?: string;
+  tokenAddress?: string;
 }
 
 interface Props {
@@ -49,13 +50,19 @@ interface Props {
 const ContactRow = ({contact, onPress}: Props) => {
   const theme = useTheme();
   const underlayColor = theme.dark ? '#121212' : '#fbfbff';
-  const {coin: _coin, name, email, address, chain} = contact;
+  const {coin: _coin, name, email, address, chain, tokenAddress} = contact;
   const coin = getCurrencyAbbreviation(_coin, chain);
   return (
     <ContactContainer underlayColor={underlayColor} onPress={onPress}>
       <RowContainer>
         <ContactImageContainer>
-          <ContactIcon name={name} coin={coin} size={45} chain={chain} />
+          <ContactIcon
+            name={name}
+            coin={coin}
+            size={45}
+            chain={chain}
+            tokenAddress={tokenAddress}
+          />
         </ContactImageContainer>
         <ContactColumn>
           <H5>{name}</H5>

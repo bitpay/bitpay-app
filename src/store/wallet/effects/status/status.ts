@@ -214,6 +214,7 @@ export const startUpdateWalletStatus =
                     wallets[index].currencyAbbreviation,
                     wallets[index].chain,
                     rates,
+                    wallets[index].tokenAddress,
                   ),
                 ),
                 false, // already filtered by hideWallet
@@ -232,6 +233,7 @@ export const startUpdateWalletStatus =
                     wallets[index].currencyAbbreviation,
                     wallets[index].chain,
                     lastDayRates,
+                    wallets[index].tokenAddress,
                   ),
                 ),
                 false, // already filtered by hideWallet
@@ -714,7 +716,7 @@ const updateWalletStatus =
 const buildBalance =
   ({wallet, status}: {wallet: Wallet; status: Status}): Effect<CryptoBalance> =>
   (dispatch, getState) => {
-    const {currencyAbbreviation, chain} = wallet;
+    const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     const {
       WALLET: {useUnconfirmedFunds},
@@ -756,23 +758,44 @@ const buildBalance =
       satSpendable: spendableAmount,
       satPending: pendingAmount,
       crypto: dispatch(
-        FormatAmount(currencyAbbreviation, chain, Number(satTotalAmount)),
+        FormatAmount(
+          currencyAbbreviation,
+          chain,
+          tokenAddress,
+          Number(satTotalAmount),
+        ),
       ),
       cryptoLocked: dispatch(
-        FormatAmount(currencyAbbreviation, chain, Number(satLockedAmount)),
+        FormatAmount(
+          currencyAbbreviation,
+          chain,
+          tokenAddress,
+          Number(satLockedAmount),
+        ),
       ),
       cryptoConfirmedLocked: dispatch(
         FormatAmount(
           currencyAbbreviation,
           chain,
+          tokenAddress,
           Number(lockedConfirmedAmount),
         ),
       ),
       cryptoSpendable: dispatch(
-        FormatAmount(currencyAbbreviation, chain, Number(spendableAmount)),
+        FormatAmount(
+          currencyAbbreviation,
+          chain,
+          tokenAddress,
+          Number(spendableAmount),
+        ),
       ),
       cryptoPending: dispatch(
-        FormatAmount(currencyAbbreviation, chain, Number(pendingAmount)),
+        FormatAmount(
+          currencyAbbreviation,
+          chain,
+          tokenAddress,
+          Number(pendingAmount),
+        ),
       ),
     };
   };
@@ -792,7 +815,8 @@ const buildFiatBalance =
     cryptoBalance: CryptoBalance;
   }): Effect<FiatBalance> =>
   dispatch => {
-    const {currencyAbbreviation, network, chain, hideWallet} = wallet;
+    const {currencyAbbreviation, network, chain, hideWallet, tokenAddress} =
+      wallet;
 
     let {sat, satLocked, satConfirmedLocked, satSpendable, satPending} =
       cryptoBalance;
@@ -806,6 +830,7 @@ const buildFiatBalance =
             currencyAbbreviation,
             chain,
             rates,
+            tokenAddress,
           ),
         ),
         hideWallet,
@@ -819,6 +844,7 @@ const buildFiatBalance =
             currencyAbbreviation,
             chain,
             rates,
+            tokenAddress,
           ),
         ),
         hideWallet,
@@ -832,6 +858,7 @@ const buildFiatBalance =
             currencyAbbreviation,
             chain,
             rates,
+            tokenAddress,
           ),
         ),
         hideWallet,
@@ -845,6 +872,7 @@ const buildFiatBalance =
             currencyAbbreviation,
             chain,
             rates,
+            tokenAddress,
           ),
         ),
         hideWallet,
@@ -858,6 +886,7 @@ const buildFiatBalance =
             currencyAbbreviation,
             chain,
             rates,
+            tokenAddress,
           ),
         ),
         hideWallet,
@@ -871,6 +900,7 @@ const buildFiatBalance =
             currencyAbbreviation,
             chain,
             lastDayRates,
+            tokenAddress,
           ),
         ),
         hideWallet,
@@ -967,14 +997,22 @@ export const startFormatBalanceAllWalletsForKey =
             network,
             chain,
             hideWallet,
+            tokenAddress,
           } = wallet;
           try {
             const {sat, satLocked} = cachedBalance;
 
             const newBalance = {
-              crypto: dispatch(FormatAmount(currencyAbbreviation, chain, sat)),
+              crypto: dispatch(
+                FormatAmount(currencyAbbreviation, chain, tokenAddress, sat),
+              ),
               cryptoLocked: dispatch(
-                FormatAmount(currencyAbbreviation, chain, satLocked),
+                FormatAmount(
+                  currencyAbbreviation,
+                  chain,
+                  tokenAddress,
+                  satLocked,
+                ),
               ),
               fiat: convertToFiat(
                 dispatch(
@@ -984,6 +1022,7 @@ export const startFormatBalanceAllWalletsForKey =
                     currencyAbbreviation,
                     chain,
                     rates,
+                    tokenAddress,
                   ),
                 ),
                 hideWallet,
@@ -997,6 +1036,7 @@ export const startFormatBalanceAllWalletsForKey =
                     currencyAbbreviation,
                     chain,
                     rates,
+                    tokenAddress,
                   ),
                 ),
                 hideWallet,
@@ -1010,6 +1050,7 @@ export const startFormatBalanceAllWalletsForKey =
                     currencyAbbreviation,
                     chain,
                     lastDayRates,
+                    tokenAddress,
                   ),
                 ),
                 hideWallet,

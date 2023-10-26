@@ -62,7 +62,7 @@ import merge from 'lodash.merge';
 import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
-import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
 
@@ -178,11 +178,11 @@ const KeySettings = () => {
     };
   };
 
-  const _tokenOptions = useAppSelector(({WALLET}: RootState) => {
+  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
   });
 
@@ -216,13 +216,14 @@ const KeySettings = () => {
               mapAbbreviationAndName(
                 syncWallet.credentials.coin,
                 syncWallet.credentials.chain,
+                syncWallet.credentials.token?.address,
               ),
             );
             return merge(
               syncWallet,
               buildWalletObj(
                 {...syncWallet.credentials, currencyAbbreviation, currencyName},
-                _tokenOptions,
+                _tokenOptionsByAddress,
               ),
             );
           });

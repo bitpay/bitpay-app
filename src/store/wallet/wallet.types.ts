@@ -48,6 +48,7 @@ export enum WalletActionTypes {
   UPDATE_CACHE_FEE_LEVEL = 'WALLET/UPDATE_CACHE_FEE_LEVEL',
   UPDATE_DEFERRED_IMPORT = 'WALLET/UPDATE_DEFERRED_IMPORT',
   CLEAR_DEFERRED_IMPORT = 'WALLET/CLEAR_DEFERRED_IMPORT',
+  SET_CUSTOM_TOKENS_MIGRATION_COMPLETE = 'APP/SET_CUSTOM_TOKENS_MIGRATION_COMPLETE',
 }
 
 interface successWalletStoreInit {
@@ -124,18 +125,16 @@ interface deleteKey {
 interface successGetTokenOptions {
   type: typeof WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS;
   payload: {
-    tokenOptions: {[key in string]: Token};
-    tokenData: {[key in string]: CurrencyOpts};
     tokenOptionsByAddress: {[key in string]: Token};
+    tokenDataByAddress: {[key in string]: CurrencyOpts};
   };
 }
 
 interface successGetCustomTokenOptions {
   type: typeof WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS;
   payload: {
-    customTokenOptions: {[key in string]: Token};
-    customTokenData: {[key in string]: CurrencyOpts};
     customTokenOptionsByAddress: {[key in string]: Token};
+    customTokenDataByAddress: {[key in string]: CurrencyOpts};
   };
 }
 
@@ -277,6 +276,10 @@ interface updateCacheFeeLevel {
   payload: CacheFeeLevel;
 }
 
+interface SetCustomTokensMigrationComplete {
+  type: typeof WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -313,4 +316,5 @@ export type WalletActionType =
   | updateWalletTxHistory
   | syncWallets
   | toggleHideWallet
-  | updateCacheFeeLevel;
+  | updateCacheFeeLevel
+  | SetCustomTokensMigrationComplete;

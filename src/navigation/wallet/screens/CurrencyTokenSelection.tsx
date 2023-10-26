@@ -45,7 +45,7 @@ export type CurrencyTokenSelectionScreenParamList = {
   description?: string;
   hideCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
-  onToggle: (id: string, chain?: string) => any;
+  onToggle: (id: string, chain: string, tokenAddress?: string) => any;
   contextHandler: () => ContextHandler;
 };
 
@@ -97,7 +97,8 @@ const CurrencyTokenSelectionScreen: React.VFC<
       (accum, item) => {
         if (
           item.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
-          item.currencyName.toLowerCase().includes(searchFilter)
+          item.currencyName.toLowerCase().includes(searchFilter) ||
+          item?.tokenAddress?.toLowerCase().includes(searchFilter)
         ) {
           accum.push(item);
         }
@@ -185,7 +186,8 @@ const CurrencyTokenSelectionScreen: React.VFC<
 
   const onTokenToggle = (
     currencyAbbreviation: string,
-    currencyChain?: string,
+    currencyChain: string,
+    tokenAddress: string,
   ) => {
     haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
 
@@ -199,7 +201,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
 
       setTokens(prev =>
         prev.map(token =>
-          token.currencyAbbreviation === currencyAbbreviation
+          token.tokenAddress === tokenAddress
             ? {
                 ...token,
                 selected: !token.selected,
@@ -219,7 +221,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
 
       setTokens(prev =>
         prev.map(token => {
-          if (token.currencyAbbreviation === currencyAbbreviation) {
+          if (token.tokenAddress === tokenAddress) {
             return {
               ...token,
               selected: !token.selected,
@@ -236,14 +238,15 @@ const CurrencyTokenSelectionScreen: React.VFC<
       );
     }
 
-    params.onToggle(currencyAbbreviation, currencyChain);
+    params.onToggle(currencyAbbreviation, currencyChain, tokenAddress);
   };
 
   const onTokenToggleRef = useRef(onTokenToggle);
   onTokenToggleRef.current = onTokenToggle;
 
   const memoizedOnTokenToggle = useCallback(
-    (id, chain) => onTokenToggleRef.current(id, chain),
+    (currencyAbbreviation: string, chain: string, tokenAddress: string) =>
+      onTokenToggleRef.current(currencyAbbreviation, chain, tokenAddress),
     [],
   );
 

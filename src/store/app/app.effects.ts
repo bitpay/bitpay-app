@@ -74,7 +74,10 @@ import {
   BASE_BITPAY_URLS,
   DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
-import {updatePortfolioBalance} from '../wallet/wallet.actions';
+import {
+  updatePortfolioBalance,
+  setCustomTokensMigrationComplete,
+} from '../wallet/wallet.actions';
 import {setContactMigrationComplete} from '../contact/contact.actions';
 import {startContactMigration} from '../contact/contact.effects';
 import {getStateFromPath, NavigationProp} from '@react-navigation/native';
@@ -100,6 +103,7 @@ import {SignClientTypes} from '@walletconnect/types';
 import axios from 'axios';
 import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
+import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -129,7 +133,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
     const {appFirstOpenData, onboardingCompleted, migrationComplete} = APP;
-
+    const {customTokensMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
       await dispatch(Analytics.initialize());
@@ -158,6 +162,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       await dispatch(startContactMigration());
       dispatch(setContactMigrationComplete());
       dispatch(LogActions.info('success [setContactMigrationComplete]'));
+    }
+    if (!customTokensMigrationComplete) {
+      await dispatch(startCustomTokensMigration());
+      dispatch(setCustomTokensMigrationComplete());
+      dispatch(LogActions.info('success [setCustomTokensMigrationComplete]'));
     }
 
     if (!migrationComplete) {

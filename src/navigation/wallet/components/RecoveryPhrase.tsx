@@ -80,7 +80,7 @@ import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow'
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
   GetName,
-  isSingleAddressCoin,
+  isSingleAddressChain,
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -341,9 +341,7 @@ const RecoveryPhrase = () => {
         : 1;
 
       keyOpts.coin = advancedOpts.coin.toLowerCase();
-      keyOpts.singleAddress = dispatch(
-        isSingleAddressCoin(advancedOpts.coin, advancedOpts.chain),
-      );
+      keyOpts.singleAddress = isSingleAddressChain(advancedOpts.chain);
 
       // set opts.useLegacyPurpose
       if (parsePath(derivationPath).purpose === "44'" && keyOpts.n > 1) {

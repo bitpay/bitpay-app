@@ -385,6 +385,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             cryptoCurrencyAbbreviation:
               fullWalletObj.currencyAbbreviation.toUpperCase(),
             chain: fullWalletObj.chain,
+            tokenAddress: fullWalletObj.tokenAddress,
             onAmountSelected: async (amount, setButtonState) => {
               setButtonState('success');
               await sleep(500);
@@ -452,6 +453,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     fiatSpendableBalance,
     currencyAbbreviation,
     chain,
+    tokenAddress,
     network,
     pendingTxps,
   } = uiFormattedWallet;
@@ -481,6 +483,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       currencyAbbreviation,
       chain,
       [],
+      tokenAddress,
     );
     formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {

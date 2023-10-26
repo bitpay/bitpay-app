@@ -168,6 +168,7 @@ export interface ToWalletSelectorCustomCurrency {
   chain: string;
   name: string;
   logoUri?: any;
+  tokenAddress?: string;
 }
 
 interface ToWalletSelectorCoinObj {
@@ -175,6 +176,7 @@ interface ToWalletSelectorCoinObj {
   chain: string;
   currencyAbbreviation: string;
   currencyName: string;
+  tokenAddress?: string;
   img?: string | ((props?: any) => ReactElement);
   total: number;
   availableWalletsByKey: {
@@ -213,6 +215,7 @@ const buildList = (
         availableWallets,
         wallet => wallet.keyId,
       ),
+      tokenAddress: coin.tokenAddress,
     });
   });
 
@@ -321,6 +324,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
           selectedCurrency.currencyAbbreviation.toLowerCase() !==
           selectedCurrency.chain,
         chain: selectedCurrency.chain,
+        tokenAddress: selectedCurrency.tokenAddress,
       },
       options: {
         network: Network.mainnet,
@@ -374,6 +378,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                   balance,
                   hideWallet,
                   currencyAbbreviation,
+                  tokenAddress,
                   network,
                   chain,
                   credentials: {walletName: fallbackName},
@@ -391,6 +396,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                           currencyAbbreviation,
                           chain,
                           rates,
+                          tokenAddress,
                         ),
                       ),
                       hideWallet,
@@ -407,6 +413,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                           currencyAbbreviation,
                           chain,
                           rates,
+                          tokenAddress,
                         ),
                       ),
                       hideWallet,
@@ -462,6 +469,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
         currencyAbbreviation: addTokenToLinkedWallet.currencyAbbreviation,
         isToken: true,
         chain: addTokenToLinkedWallet.chain,
+        tokenAddress: addTokenToLinkedWallet.tokenAddress,
       },
       options: {
         network: Network.mainnet,

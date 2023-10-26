@@ -293,6 +293,7 @@ const ContactsDetails = ({
             size={100}
             name={contact.name}
             chain={contact.chain}
+            tokenAddress={contact.tokenAddress}
           />
         </ContactImageHeader>
         <Details>

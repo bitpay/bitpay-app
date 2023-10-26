@@ -96,7 +96,7 @@ const FeeOptions = ({
   };
 
   const getBackgroundColor = (index?: number) => {
-    const {coinColor: backgroundColor} = GetTheme(currencyAbbreviation)!;
+    const {coinColor: backgroundColor} = GetTheme(chain)!;
 
     if (index !== undefined) {
       const selectedIndex =
@@ -213,9 +213,7 @@ const NetworkFeePolicy = () => {
 
   const initFeeLevel = async (currencyAbbreviation: string, chain: string) => {
     let feeOptions: any[] = [];
-    const {feeUnit, feeUnitAmount, blockTime} = dispatch(
-      GetFeeUnits(currencyAbbreviation, chain),
-    );
+    const {feeUnit, feeUnitAmount, blockTime} = GetFeeUnits(chain);
     try {
       const _feeLevels = await getFeeLevelsUsingBwcClient(
         currencyAbbreviation,
