@@ -19,6 +19,7 @@ export type SupportedMaticTokens =
   | 'busd_m'
   | 'dai_m'
   | 'wbtc_m'
+  | 'weth_m'
   | 'shib_m'
   | 'ape_m'
   | 'euroc_m';
@@ -586,6 +587,38 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/wbtc_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  weth_m: {
+    name: 'Wrapped Ether',
+    chain: 'matic',
+    coin: 'weth',
+    unitInfo: {
+      unitName: 'WETH',
+      unitToSatoshi: 1e8,
+      unitDecimals: 8,
+      unitCode: 'weth',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/weth_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },

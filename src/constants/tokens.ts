@@ -108,6 +108,12 @@ export const BitpaySupportedMaticTokenOpts: TokenOptsType = {
     decimals: 8,
     address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
   },
+  weth_m: {
+    name: 'Wrapped Ether',
+    symbol: 'WETH',
+    decimals: 8,
+    address: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
+  },
   shib_m: {
     name: 'Shiba Inu',
     symbol: 'SHIB',
@@ -214,6 +220,12 @@ export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
     symbol: 'WBTC',
     decimals: 8,
     address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
+  },
+  '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619_m': {
+    name: 'Wrapped Ether',
+    symbol: 'WETH',
+    decimals: 8,
+    address: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
   },
   '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec_m': {
     name: 'Shiba Inu',
