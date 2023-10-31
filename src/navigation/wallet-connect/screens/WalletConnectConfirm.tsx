@@ -189,6 +189,7 @@ const WalletConnectConfirm = () => {
       <DetailsList>
         <Header>Summary</Header>
         <Banner
+          height={100}
           type={'warning'}
           description={''}
           transComponent={

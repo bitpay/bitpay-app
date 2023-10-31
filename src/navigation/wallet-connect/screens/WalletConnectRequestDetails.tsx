@@ -118,7 +118,8 @@ const WalletConnectRequestDetails = () => {
     if (!request) {
       return;
     }
-
+    let _chainId: number;
+    let chain: string | undefined;
     switch (request.method) {
       case 'eth_signTypedData':
       case 'eth_signTypedData_v1':
@@ -135,8 +136,8 @@ const WalletConnectRequestDetails = () => {
         setIsMethodSupported(true);
         break;
       case 'wallet_switchEthereumChain':
-        const _chainId = parseInt(request.params[0].chainId, 16);
-        const chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
+        _chainId = parseInt(request.params[0].chainId, 16);
+        chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
           key => EVM_BLOCKCHAIN_ID[key] === _chainId,
         );
         setIsMethodSupported(!!chain);
@@ -155,6 +156,19 @@ const WalletConnectRequestDetails = () => {
           ),
         );
         break;
+      case 'wallet_addEthereumChain':
+        _chainId = parseInt(request.params[0].chainId, 16);
+        chain = Object.keys(EVM_BLOCKCHAIN_ID).find(
+          key => EVM_BLOCKCHAIN_ID[key] === _chainId,
+        );
+        setIsMethodSupported(!!chain);
+        if (!chain) {
+          const msg = t('WCNotSupportedChainMsg', {peerName});
+          setMethodNotSupportedMsg(msg);
+        }
+        setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
+        break;
+
       default:
         const defaultErrorMsg = t(
           'Sorry, we currently do not support this method.',

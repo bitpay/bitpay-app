@@ -53,8 +53,11 @@ export default ({
 
   const [chainsSelected, setChainsSelected] =
     useState<{chain: string; network: string}[]>();
-  const {requiredNamespaces, namespaces = undefined} =
-    proposal?.params || session;
+  const {
+    requiredNamespaces,
+    optionalNamespaces,
+    namespaces = undefined,
+  } = proposal?.params || session;
 
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [allKeys, setAllkeys] = useState<any>();
@@ -86,15 +89,22 @@ export default ({
 
   useEffect(() => {
     if (requiredNamespaces) {
-      Object.keys(requiredNamespaces).forEach(key => {
-        const chains: {chain: string; network: string}[] = [];
-        requiredNamespaces[key].chains.map((chain: string) => {
-          if (WALLET_CONNECT_SUPPORTED_CHAINS[chain]) {
-            chains.push(WALLET_CONNECT_SUPPORTED_CHAINS[chain]);
-          }
+      Object.keys(requiredNamespaces)
+        .concat(Object.keys(optionalNamespaces || {}))
+        .forEach(key => {
+          const chains: {chain: string; network: string}[] = [];
+          [
+            ...new Set([
+              ...(requiredNamespaces[key]?.chains || []),
+              ...(optionalNamespaces[key]?.chains || []),
+            ]),
+          ].map((chain: string) => {
+            if (WALLET_CONNECT_SUPPORTED_CHAINS[chain]) {
+              chains.push(WALLET_CONNECT_SUPPORTED_CHAINS[chain]);
+            }
+          });
+          setChainsSelected(chains);
         });
-        setChainsSelected(chains);
-      });
     }
   }, [requiredNamespaces]);
 

@@ -214,7 +214,7 @@ export const walletConnectV2SubscribeToEvents =
         }
 
         dispatch(
-          WalletConnectV2Actions.sesionRequest({
+          WalletConnectV2Actions.sessionRequest({
             ...event,
             createdOn: Date.now(),
           }),
@@ -504,6 +504,9 @@ const approveEIP155Request =
               sendTransaction.gasLimit = sendTransaction.gas;
               delete sendTransaction.gas;
             }
+            if (sendTransaction.chainId) {
+              delete sendTransaction.chainId;
+            }
             const connectedWallet = signer.connect(provider);
             const {hash} = await connectedWallet.sendTransaction(
               sendTransaction,
@@ -514,6 +517,9 @@ const approveEIP155Request =
             const signTransaction = request.params[0];
             const signature = await signer.signTransaction(signTransaction);
             resolve(formatJsonRpcResult(id, signature));
+
+          case EIP155_SIGNING_METHODS.WALLET_ADD_ETHEREUM_CHAIN:
+            resolve(formatJsonRpcResult(id, 'success'));
 
           default:
             throw new Error(getSdkError('INVALID_METHOD').message);
