@@ -11,6 +11,7 @@ import BusdIcon from '../../assets/img/currencies/busd.svg';
 import DaiIcon from '../../assets/img/currencies/dai.svg';
 import UsdpIcon from '../../assets/img/currencies/usdp.svg';
 import WbtcIcon from '../../assets/img/currencies/wbtc.svg';
+import WethIcon from '../../assets/img/currencies/weth.svg';
 import ShibIcon from '../../assets/img/currencies/shib.svg';
 import ApeIcon from '../../assets/img/currencies/ape.svg';
 import EurocIcon from '../../assets/img/currencies/euroc.svg';
@@ -59,6 +60,7 @@ export const CurrencyListIcons: {
   busd_m: props => <BusdIcon {...props} />,
   dai_m: props => <DaiIcon {...props} />,
   wbtc_m: props => <WbtcIcon {...props} />,
+  weth_m: props => <WethIcon {...props} />,
   shib_m: props => <ShibIcon {...props} />,
   ape_m: props => <ApeIcon {...props} />,
   euroc_m: props => <EurocIcon {...props} />,
@@ -327,6 +329,18 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     badgeSrc: require('../../assets/img/currencies/png/MATIC.png'),
     badgeUri: CurrencyListIcons.matic,
     tokenAddress: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
+  },
+  {
+    id: Math.random().toString(),
+    img: CurrencyListIcons.weth_m,
+    currencyName: 'Wrapped Ether',
+    currencyAbbreviation: 'weth',
+    chain: 'matic',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/WETH.png'),
+    badgeSrc: require('../../assets/img/currencies/png/MATIC.png'),
+    badgeUri: CurrencyListIcons.matic,
+    tokenAddress: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
   },
   {
     id: Math.random().toString(),

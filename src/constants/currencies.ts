@@ -19,6 +19,7 @@ export type SupportedMaticTokens =
   | '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m' // 'usdc_m'
   | '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063_m' // 'dai_m'
   | '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6_m' // 'wbtc_m'
+  | '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619_m' // 'weth_m'
   | '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec_m' // 'shib_m'
   | '0xb7b31a6bc18e48888545ce79e83e06003be70930_m'; // 'ape_m'
 
@@ -565,6 +566,39 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'matic', testnet: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/wbtc_m',
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619_m': {
+    name: 'Wrapped Ether',
+    chain: 'matic',
+    coin: 'weth',
+    address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
+    unitInfo: {
+      unitName: 'WETH',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'weth',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: { livenet: 'matic', testnet: 'matic' },
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/weth_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },

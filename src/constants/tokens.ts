@@ -101,6 +101,12 @@ export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
     decimals: 8,
     address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
   },
+  '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619_m': {
+    name: 'Wrapped Ether',
+    symbol: 'weth',
+    decimals: 18,
+    address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
+  },
   '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec_m': {
     name: 'Shiba Inu',
     symbol: 'shib',
