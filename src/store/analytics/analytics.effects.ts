@@ -1,6 +1,6 @@
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {Effect} from '..';
-import {APP_ANALYTICS_ENABLED} from '../../constants/config';
+import {APP_ANALYTICS_ENABLED, APP_VERSION} from '../../constants/config';
 import {BrazeWrapper} from '../../lib/Braze';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {LogActions} from '../log';
@@ -74,7 +74,9 @@ export const Analytics = (() => {
             );
           });
 
-        await MixpanelWrapper.init(!_isTrackingAuthorized)
+        // Force App Version
+        const superProperties = {'app_version_string': APP_VERSION};
+        await MixpanelWrapper.init(!_isTrackingAuthorized, superProperties)
           .then(() => {
             dispatch(
               LogActions.debug('Successfully initialized Mixpanel SDK.'),
