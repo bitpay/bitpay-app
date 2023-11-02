@@ -88,6 +88,7 @@ import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
 import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {BitpaySupportedTokens} from '../../../constants/currencies';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -257,6 +258,9 @@ const CoinbaseAccount = ({
 
   const [currencyAbbreviation, setCurrencyAbbreviation] = useState('');
   const [chain, setChain] = useState('');
+  const [tokenAddress, setTokenAddress] = useState(
+    undefined as string | undefined,
+  );
   const [protocolName, setProtocolName] = useState('');
 
   const onPressTransaction = useMemo(
@@ -319,7 +323,7 @@ const CoinbaseAccount = ({
 
   const getLogoUri = (coin: string, _chain: string) => {
     const foundToken = Object.values(tokenDataByAddress).find(
-      token => token.coin === coin,
+      token => token.coin === coin && token.chain === _chain,
     );
     if (
       SupportedCurrencyOptions.find(
@@ -399,6 +403,14 @@ const CoinbaseAccount = ({
 
       setCurrencyAbbreviation(_currencyAbbreviation);
       setChain(_chain);
+      const foundToken = Object.values({
+        ...BitpaySupportedTokens,
+        ...tokenDataByAddress,
+      }).find(
+        token => token.coin === _currencyAbbreviation && token.chain === _chain,
+      );
+
+      setTokenAddress(foundToken?.address);
       setProtocolName(getProtocolName(_chain, 'livenet') || '');
 
       const _currency: ToWalletSelectorCustomCurrency = {
@@ -723,7 +735,7 @@ const CoinbaseAccount = ({
         cryptoCurrencyAbbreviation={currencyAbbreviation}
         fiatCurrencyAbbreviation={defaultAltCurrency.isoCode}
         chain={chain}
-        tokenAddress={undefined} // TODO
+        tokenAddress={tokenAddress}
         onClose={() => setAmountModalVisible(false)}
         onSubmit={amt => onEnteredAmount(amt)}
       />

@@ -531,7 +531,7 @@ const BuyCryptoRoot: React.VFC<
 
   const getLogoUri = (coin: string, _chain: string) => {
     const foundToken = Object.values(tokenDataByAddress).find(
-      token => token.coin === coin,
+      token => token.coin === coin && token.chain === _chain,
     );
     if (
       SupportedCurrencyOptions.find(
@@ -658,12 +658,11 @@ const BuyCryptoRoot: React.VFC<
           const foundToken = Object.values({
             ...BitpaySupportedTokens,
             ...tokenDataByAddress,
-          }).find(token => token.coin === coin);
+          }).find(token => token.coin === coin && token.chain === chain);
           return {
             currencyAbbreviation: coin,
             symbol,
-            name:
-              BitpaySupportedCoins[symbol]?.name || foundToken?.name || symbol,
+            name: (BitpaySupportedCoins[symbol]?.name || foundToken?.name)!,
             chain,
             logoUri: getLogoUri(coin, chain),
             tokenAddress: foundToken?.address,

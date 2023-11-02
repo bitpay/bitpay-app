@@ -827,7 +827,7 @@ const SwapCryptoRoot: React.FC = () => {
     if (changellyCurrenciesData?.result?.length) {
       const getLogoUri = (coin: string, _chain: string) => {
         const foundToken = Object.values(tokenDataByAddress).find(
-          token => token.coin === coin,
+          token => token.coin === coin && token.chain === _chain,
         );
         if (
           SupportedCurrencyOptions.find(
