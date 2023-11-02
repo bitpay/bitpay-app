@@ -78,8 +78,14 @@ import {
   updatePortfolioBalance,
   setCustomTokensMigrationComplete,
 } from '../wallet/wallet.actions';
-import {setContactMigrationComplete} from '../contact/contact.actions';
-import {startContactMigration} from '../contact/contact.effects';
+import {
+  setContactMigrationComplete,
+  setContactTokenAddressMigrationComplete,
+} from '../contact/contact.actions';
+import {
+  startContactMigration,
+  startContactTokenAddressMigration,
+} from '../contact/contact.effects';
 import {getStateFromPath, NavigationProp} from '@react-navigation/native';
 import {
   getAvailableGiftCards,
@@ -156,12 +162,20 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(startWalletStoreInit());
 
-    const {contactMigrationComplete} = CONTACT;
+    const {contactMigrationComplete, contactTokenAddressMigrationComplete} =
+      CONTACT;
 
     if (!contactMigrationComplete) {
       await dispatch(startContactMigration());
       dispatch(setContactMigrationComplete());
       dispatch(LogActions.info('success [setContactMigrationComplete]'));
+    }
+    if (!contactTokenAddressMigrationComplete) {
+      await dispatch(startContactTokenAddressMigration());
+      dispatch(setContactTokenAddressMigrationComplete());
+      dispatch(
+        LogActions.info('success [setContactTokenAddressMigrationComplete]'),
+      );
     }
     if (!customTokensMigrationComplete) {
       await dispatch(startCustomTokensMigration());

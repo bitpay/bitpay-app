@@ -157,6 +157,7 @@ const MultipleOutputsTx = ({
       tx.coin,
       network,
       tx.chain,
+      tokenAddress,
     );
 
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
@@ -203,6 +204,7 @@ const MultipleOutputsTx = ({
           network,
           coin,
           chain,
+          tokenAddress: tokenAddress?.toLowerCase(),
         },
       },
     });

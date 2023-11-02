@@ -77,6 +77,7 @@ const InputContainer = styled.View<{hideInput?: boolean}>`
 
 const ActionContainer = styled.View`
   margin-top: 30px;
+  margin-bottom: 60px;
 `;
 
 const Container = styled.ScrollView`
@@ -200,9 +201,9 @@ const ContactsAdd = ({
 
   const [addressValue, setAddressValue] = useState('');
   const [coinValue, setCoinValue] = useState('');
-  const [tokenAddressValue, setTokenAddressValue] = useState(
-    undefined as string | undefined,
-  );
+  const [tokenAddressValue, setTokenAddressValue] = useState<
+    string | undefined
+  >();
   const [networkValue, setNetworkValue] = useState('');
   const [chainValue, setChainValue] = useState('');
 
@@ -224,7 +225,7 @@ const ContactsAdd = ({
   const ALL_CUSTOM_TOKENS = useMemo(() => {
     return Object.entries(tokenOptionsByAddress)
       .filter(([k]) => !BitpaySupportedTokens[k])
-      .map(([k, {symbol, name, logoURI}]) => {
+      .map(([k, {symbol, name, logoURI, address}]) => {
         const chain = getChainUsingSuffix(k);
         return {
           id: Math.random().toString(),
@@ -235,6 +236,7 @@ const ContactsAdd = ({
           isToken: true,
           chain,
           badgeUri: getBadgeImg(symbol.toLowerCase(), chain),
+          tokenAddress: address,
         } as SupportedCurrencyOption;
       });
   }, [tokenOptionsByAddress]);
@@ -289,12 +291,14 @@ const ContactsAdd = ({
     coin: string,
     network: string,
     chain: string,
+    tokenAddress: string | undefined,
   ) => {
     setValidAddress(true);
     setAddressValue(address);
     setCoinValue(coin);
     setNetworkValue(network);
     setChainValue(chain);
+    setTokenAddressValue(tokenAddress);
 
     _setSelectedCurrency(coin);
 
@@ -316,6 +320,7 @@ const ContactsAdd = ({
     coin?: string,
     network?: string,
     chain?: string,
+    tokenAddress?: string,
   ) => {
     if (address) {
       const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
@@ -331,6 +336,7 @@ const ContactsAdd = ({
             coin || coinAndNetwork.coin,
             network || coinAndNetwork.network,
             chain || coinAndNetwork.coin,
+            tokenAddress,
           );
         } else {
           // try testnet
@@ -345,6 +351,7 @@ const ContactsAdd = ({
               coin || coinAndNetwork.coin,
               network || 'testnet',
               chain || coinAndNetwork.coin,
+              tokenAddress,
             );
           }
         }
@@ -452,11 +459,13 @@ const ContactsAdd = ({
     _setSelectedCurrency(currencyAbbreviation);
     if (isTokenAddress) {
       setChainValue(currencyAbbreviation);
+      const firstTokenOption = allTokenOptions.find(
+        t => t.chain === currencyAbbreviation,
+      );
       tokenSelected(
-        allTokenOptions.find(t => t.chain === currencyAbbreviation)
-          ?.currencyAbbreviation!,
+        firstTokenOption?.currencyAbbreviation!,
         currencyAbbreviation,
-        undefined,
+        firstTokenOption?.tokenAddress,
       );
     } else {
       setCoinValue(currencyAbbreviation);
@@ -534,6 +543,7 @@ const ContactsAdd = ({
         contact.coin,
         contact.network,
         contact.chain,
+        contact.tokenAddress,
       );
       setValue('address', contact.address!, {shouldDirty: true});
       setValue('name', contact.name || '');
@@ -693,7 +703,7 @@ const ContactsAdd = ({
         </CurrencySelectorContainer>
       ) : null}
 
-      {isTokenAddress ? (
+      {!contact && isTokenAddress ? (
         <CurrencySelectorContainer hideSelector={!evmValidAddress}>
           <Label>{t('TOKEN')}</Label>
           <CurrencyContainer
@@ -729,26 +739,28 @@ const ContactsAdd = ({
         </CurrencySelectorContainer>
       ) : null}
 
-      <CurrencySelectorContainer
-        hideSelector={!isDev || !(xrpValidAddress || evmValidAddress)}>
-        <Label>{t('NETWORK')}</Label>
-        <CurrencyContainer
-          activeOpacity={ActiveOpacity}
-          onPress={() => {
-            setNetworkModalVisible(true);
-          }}>
-          <Row
-            style={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
+      {!contact ? (
+        <CurrencySelectorContainer
+          hideSelector={!isDev || !(xrpValidAddress || evmValidAddress)}>
+          <Label>{t('NETWORK')}</Label>
+          <CurrencyContainer
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              setNetworkModalVisible(true);
             }}>
-            <Row style={{alignItems: 'center'}}>
-              <NetworkName>{networkValue}</NetworkName>
+            <Row
+              style={{
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+              <Row style={{alignItems: 'center'}}>
+                <NetworkName>{networkValue}</NetworkName>
+              </Row>
+              <WalletIcons.DownToggle />
             </Row>
-            <WalletIcons.DownToggle />
-          </Row>
-        </CurrencyContainer>
-      </CurrencySelectorContainer>
+          </CurrencyContainer>
+        </CurrencySelectorContainer>
+      ) : null}
 
       <ActionContainer>
         <Button onPress={onSubmit}>

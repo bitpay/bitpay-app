@@ -208,13 +208,14 @@ export const findContact = (
   tokenAddress: string | undefined,
 ) => {
   const foundContacts = contactList.filter((contact: ContactRowProps) => {
-    return contact.address === address &&
+    return (
+      contact.address === address &&
       contact.coin === coin &&
       contact.network === network &&
       contact.chain === chain &&
-      contact.tokenAddress
-      ? contact.tokenAddress === tokenAddress
-      : true;
+      (!contact.tokenAddress ||
+        contact.tokenAddress.toLowerCase() === tokenAddress)
+    );
   });
   return !!foundContacts.length;
 };

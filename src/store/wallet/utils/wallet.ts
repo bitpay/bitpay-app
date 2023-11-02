@@ -131,10 +131,15 @@ export const buildWalletObj = (
     currencyAbbreviation,
     chain,
   );
-  const foundToken =
-    tokenOptsByAddress &&
-    token?.address &&
-    tokenOptsByAddress[addTokenChainSuffix(token.address.toLowerCase(), chain)];
+
+  let foundToken;
+  if (tokenOptsByAddress && token?.address) {
+    foundToken =
+      tokenOptsByAddress[
+        addTokenChainSuffix(token.address.toLowerCase(), chain)
+      ];
+  }
+
   return {
     id: walletId,
     currencyName,
