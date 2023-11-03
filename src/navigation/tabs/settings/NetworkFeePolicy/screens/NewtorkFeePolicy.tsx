@@ -78,18 +78,16 @@ const TopLabelContainer = styled.View`
 
 const FeeOptions = ({
   feeOptions,
-  currencyAbbreviation,
-  currencyName,
+  chain,
+  chainName,
 }: {
   feeOptions: any[];
-  currencyAbbreviation: 'btc' | 'eth' | 'matic';
-  currencyName: string;
+  chain: 'btc' | 'eth' | 'matic';
+  chainName: string;
 }) => {
   const dispatch = useAppDispatch();
   const cachedFeeLevels = useAppSelector(({WALLET}) => WALLET.feeLevel);
-  const [selectedLevel, setSelectedLevel] = useState(
-    cachedFeeLevels[currencyAbbreviation],
-  );
+  const [selectedLevel, setSelectedLevel] = useState(cachedFeeLevels[chain]);
 
   const getSelectedFeeOption = () => {
     return feeOptions?.find(({level}) => level === selectedLevel);
@@ -123,13 +121,10 @@ const FeeOptions = ({
       <StepsHeaderContainer>
         <FeeLevelStepsHeader>
           <CurrencyImageContainer>
-            <CurrencyImage
-              img={CurrencyListIcons[currencyAbbreviation]}
-              size={20}
-            />
+            <CurrencyImage img={CurrencyListIcons[chain]} size={20} />
           </CurrencyImageContainer>
           <H4>
-            {currencyName} {i18next.t('Network Fee Policy')}
+            {chainName} {i18next.t('Network Fee Policy')}
           </H4>
         </FeeLevelStepsHeader>
 
@@ -163,7 +158,7 @@ const FeeOptions = ({
                     setSelectedLevel(fee.level);
                     dispatch(
                       updateCacheFeeLevel({
-                        currency: currencyAbbreviation,
+                        currency: chain,
                         feeLevel: fee.level,
                       }),
                     );
@@ -294,8 +289,8 @@ const NetworkFeePolicy = () => {
               {btcFeeOptions && btcFeeOptions.length > 0 ? (
                 <FeeOptions
                   feeOptions={btcFeeOptions}
-                  currencyAbbreviation={'btc'}
-                  currencyName={'Bitcoin'}
+                  chain={'btc'}
+                  chainName={'Bitcoin'}
                 />
               ) : null}
             </View>
@@ -304,8 +299,8 @@ const NetworkFeePolicy = () => {
               {ethFeeOptions && ethFeeOptions.length > 0 ? (
                 <FeeOptions
                   feeOptions={ethFeeOptions}
-                  currencyAbbreviation={'eth'}
-                  currencyName={'Ethereum'}
+                  chain={'eth'}
+                  chainName={'Ethereum'}
                 />
               ) : null}
             </View>
@@ -314,8 +309,8 @@ const NetworkFeePolicy = () => {
               {maticFeeOptions && maticFeeOptions.length > 0 ? (
                 <FeeOptions
                   feeOptions={maticFeeOptions}
-                  currencyAbbreviation={'matic'}
-                  currencyName={'Polygon'}
+                  chain={'matic'}
+                  chainName={'Polygon'}
                 />
               ) : null}
             </View>
