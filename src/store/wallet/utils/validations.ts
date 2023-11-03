@@ -338,11 +338,10 @@ export const ValidateURI = (data: string): any => {
   if (IsValidEVMAddress(data)) {
     return {
       data,
-      type: 'EthereumAddress',
-      title: 'Ethereum Address',
+      type: 'EVMAddress',
+      title: 'EVM Address',
     };
   }
-
 
   if (IsValidRippleAddress(data)) {
     return {
