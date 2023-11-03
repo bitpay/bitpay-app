@@ -321,20 +321,22 @@ const CoinbaseAccount = ({
     );
   };
 
-  const getLogoUri = (coin: string, _chain: string) => {
+  const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
     const foundToken = Object.values(tokenDataByAddress).find(
-      token => token.coin === coin && token.chain === _chain,
+      token =>
+        token.coin === _currencyAbbreviation.toLowerCase() &&
+        token.chain === _chain,
     );
     if (
       SupportedCurrencyOptions.find(
         ({currencyAbbreviation, chain}) =>
-          currencyAbbreviation === coin.toLowerCase() &&
+          currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           (!chain || chain === _chain),
       )
     ) {
       return SupportedCurrencyOptions.find(
         ({currencyAbbreviation, chain}) =>
-          currencyAbbreviation === coin.toLowerCase() &&
+          currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           (!chain || chain === _chain),
       )!.img;
     } else if (foundToken?.logoURI) {

@@ -52,6 +52,7 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
   getBadgeImg,
+  getChainUsingSuffix,
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -156,6 +157,12 @@ const SwapCryptoRoot: React.FC = () => {
   );
   const tokenOptionsByAddress = useAppSelector(
     ({WALLET}) => WALLET.tokenOptionsByAddress,
+  );
+  const tokenOptions = Object.entries(tokenOptionsByAddress).map(
+    ([k, {symbol}]) => {
+      const chain = getChainUsingSuffix(k);
+      return getCurrencyAbbreviation(symbol.toLowerCase(), chain);
+    },
   );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -796,9 +803,7 @@ const SwapCryptoRoot: React.FC = () => {
   ): boolean => {
     // TODO: accept all Changelly supported tokens => If no wallets: create a custom token wallet
     const allSupportedTokens: string[] = [
-      ...Object.values(tokenOptionsByAddress).map(token =>
-        token.symbol.toLowerCase(),
-      ),
+      ...tokenOptions,
       ...SupportedEthereumTokens,
       ...SupportedMaticTokens,
     ];
@@ -825,20 +830,21 @@ const SwapCryptoRoot: React.FC = () => {
     const changellyCurrenciesData = await changellyGetCurrencies(true);
 
     if (changellyCurrenciesData?.result?.length) {
-      const getLogoUri = (coin: string, _chain: string) => {
+      const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
         const foundToken = Object.values(tokenDataByAddress).find(
-          token => token.coin === coin && token.chain === _chain,
+          token =>
+            token.coin === _currencyAbbreviation && token.chain === _chain,
         );
         if (
           SupportedCurrencyOptions.find(
             ({currencyAbbreviation, chain}) =>
-              currencyAbbreviation === coin.toLowerCase() &&
+              currencyAbbreviation === _currencyAbbreviation &&
               (!chain || chain === _chain),
           )
         ) {
           return SupportedCurrencyOptions.find(
             ({currencyAbbreviation, chain}) =>
-              currencyAbbreviation === coin.toLowerCase() &&
+              currencyAbbreviation === _currencyAbbreviation &&
               (!chain || chain === _chain),
           )!.img;
         } else if (foundToken?.logoURI) {
@@ -877,7 +883,7 @@ const SwapCryptoRoot: React.FC = () => {
                 name: fullName,
                 chain,
                 protocol,
-                logoUri: getLogoUri(name, chain),
+                logoUri: getLogoUri(name.toLowerCase(), chain),
                 tokenAddress: contractAddress,
               };
             },
