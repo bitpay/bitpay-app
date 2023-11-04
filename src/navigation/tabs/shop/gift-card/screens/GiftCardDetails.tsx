@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import RNPrint from 'react-native-print';
+import RenderHtml from 'react-native-render-html';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled from 'styled-components/native';
@@ -18,6 +19,7 @@ import {
   ActiveOpacity,
   CtaContainer,
   HeaderRightContainer,
+  WIDTH,
 } from '../../../../../components/styled/Containers';
 import {
   BaseText,
@@ -234,30 +236,47 @@ const GiftCardDetails = ({
     copiedValue: string,
     cardConfig: CardConfig,
     customMessage?: string,
-  ) =>
-    AppActions.showBottomNotificationModal({
+  ) => {
+    const redeemInstructions =
+      customMessage ||
+      cardConfig.redeemInstructions ||
+      t(
+        'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
+        {website: cardConfig.website},
+      );
+    const containsHtml = redeemInstructions.includes('</');
+    const redeemHtml = redeemInstructions
+      .replaceAll(': \n', ': <br>')
+      .replaceAll('\n\n', '<br><br>');
+    const redeemTextStyle = {
+      color: theme.colors.text,
+      fontFamily,
+      fontSize: 16,
+      lineHeight: 24,
+    };
+    return AppActions.showBottomNotificationModal({
       type: 'success',
       title: t('Copied: ', {copiedValue}),
       message: '',
       message2: (
         <ScrollableBottomNotificationMessageContainer
           contentContainerStyle={{paddingBottom: 10}}>
-          <Markdown
-            style={{
-              body: {
-                color: theme.colors.text,
-                fontFamily,
-                fontSize: 16,
-                lineHeight: 24,
-              },
-            }}>
-            {customMessage ||
-              cardConfig.redeemInstructions ||
-              t(
-                'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
-                {website: cardConfig.website},
-              )}
-          </Markdown>
+          {containsHtml ? (
+            <RenderHtml
+              baseStyle={redeemTextStyle}
+              contentWidth={WIDTH - 2 * horizontalPadding}
+              source={{
+                html: redeemHtml,
+              }}
+            />
+          ) : (
+            <Markdown
+              style={{
+                body: redeemTextStyle,
+              }}>
+              {redeemInstructions}
+            </Markdown>
+          )}
         </ScrollableBottomNotificationMessageContainer>
       ),
       enableBackdropDismiss: true,
@@ -269,6 +288,7 @@ const GiftCardDetails = ({
         },
       ],
     });
+  };
 
   const assetOptions: Array<Option> = [
     {
