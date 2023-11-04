@@ -105,14 +105,19 @@ const WalletConnectHome = () => {
   );
   const requestsV2 = useAppSelector(({WALLET_CONNECT_V2}) =>
     WALLET_CONNECT_V2.requests
-      .filter(
-        request =>
+      .filter(request => {
+        const addressFrom = getAddressFrom(request)?.toLowerCase();
+        const filterWithAddress = addressFrom
+          ? addressFrom === wallet.receiveAddress?.toLowerCase()
+          : true; // if address exist in request check if it matches with connected wallets addresses
+        const walletConnectChain =
+          WALLET_CONNECT_SUPPORTED_CHAINS[request?.params.chainId]?.chain;
+        return (
           request.topic === topic &&
-          getAddressFrom(request).toLowerCase() ===
-            wallet.receiveAddress?.toLowerCase() &&
-          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId].chain ===
-            wallet.chain,
-      )
+          filterWithAddress &&
+          walletConnectChain === wallet.chain
+        );
+      })
       .reverse(),
   );
 
@@ -279,7 +284,7 @@ const WalletConnectHome = () => {
   }, [accountDisconnected]);
 
   useEffect(() => {
-    if (context && ['notification'].includes(context)) {
+    if (context && ['notification'].includes(context) && requestsV2[0]) {
       handleRequestMethod(requestsV2[0]);
     }
   }, [context]);

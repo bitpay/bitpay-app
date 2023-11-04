@@ -23,7 +23,7 @@ export const rejectSessionProposal = (): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_REJECTION,
 });
 
-export const sesionRequest = (
+export const sessionRequest = (
   request: SignClientTypes.EventArguments['session_request'],
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_REQUEST,

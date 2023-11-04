@@ -125,30 +125,38 @@ const WalletConnectStart = () => {
       setButtonState('loading');
       if (selectedWallets) {
         const namespaces: SessionTypes.Namespaces = {};
-        requiredNamespaces &&
-          Object.keys(requiredNamespaces).forEach(key => {
-            const accounts: string[] = [];
-            requiredNamespaces[key].chains?.map((chain: string) => {
-              selectedWallets.forEach(selectedWallet => {
-                accounts.push(`${chain}:${selectedWallet.address}`);
+        if (requiredNamespaces) {
+          Object.keys(requiredNamespaces)
+            .concat(Object.keys(optionalNamespaces || {}))
+            .forEach(key => {
+              const accounts: string[] = [];
+              [
+                ...new Set([
+                  ...(requiredNamespaces[key]?.chains || []),
+                  ...(optionalNamespaces?.[key]?.chains || []),
+                ]),
+              ]?.map((chain: string) => {
+                selectedWallets.forEach(selectedWallet => {
+                  accounts.push(`${chain}:${selectedWallet.address}`);
+                });
               });
+              namespaces[key] = {
+                accounts: [...new Set(accounts)],
+                methods: [
+                  ...requiredNamespaces[key].methods,
+                  ...(optionalNamespaces && optionalNamespaces[key]
+                    ? optionalNamespaces[key]?.methods
+                    : []),
+                ],
+                events: [
+                  ...requiredNamespaces[key].events,
+                  ...(optionalNamespaces && optionalNamespaces[key]
+                    ? optionalNamespaces[key]?.events
+                    : []),
+                ],
+              };
             });
-            namespaces[key] = {
-              accounts: [...new Set(accounts)],
-              methods: [
-                ...requiredNamespaces[key].methods,
-                ...(optionalNamespaces && optionalNamespaces[key]
-                  ? optionalNamespaces[key]?.methods
-                  : []),
-              ],
-              events: [
-                ...requiredNamespaces[key].events,
-                ...(optionalNamespaces && optionalNamespaces[key]
-                  ? optionalNamespaces[key]?.events
-                  : []),
-              ],
-            };
-          });
+        }
         if (id && relays) {
           await dispatch(
             walletConnectV2ApproveSessionProposal(
