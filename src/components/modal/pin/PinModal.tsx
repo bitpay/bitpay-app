@@ -2,12 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  Animated,
-  TouchableOpacity,
-  View,
-  NativeModules,
-} from 'react-native';
+import {Animated, TouchableOpacity, View, NativeModules} from 'react-native';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {useTheme} from 'styled-components/native';

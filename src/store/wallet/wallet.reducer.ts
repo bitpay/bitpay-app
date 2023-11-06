@@ -6,9 +6,8 @@ import {AddLog} from '../log/log.types';
 
 type WalletReduxPersistBlackList = string[];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
-  'tokenData',
-  'tokenOptions',
   'tokenOptionsByAddress',
+  'tokenDataByAddress',
 ];
 
 export type Keys = {
@@ -18,12 +17,12 @@ export type Keys = {
 export interface WalletState {
   createdOn: number;
   keys: Keys;
-  tokenOptions: {[key in string]: Token};
-  tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
-  customTokenOptions: {[key in string]: Token};
-  customTokenData: {[key in string]: CurrencyOpts};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
   customTokenOptionsByAddress: {[key in string]: Token};
+  customTokenOptions: {[key in string]: Token};
+  customTokenDataByAddress: {[key in string]: CurrencyOpts};
+  customTokenData: {[key in string]: CurrencyOpts};
   walletTermsAccepted: boolean;
   portfolioBalance: {
     current: number;
@@ -37,17 +36,18 @@ export interface WalletState {
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
   initLogs: AddLog[];
+  customTokensMigrationComplete: boolean;
 }
 
 export const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
-  tokenOptions: {},
-  tokenData: {},
   tokenOptionsByAddress: {},
-  customTokenOptions: {},
-  customTokenData: {},
+  tokenDataByAddress: {},
   customTokenOptionsByAddress: {},
+  customTokenOptions: {},
+  customTokenDataByAddress: {},
+  customTokenData: {},
   walletTermsAccepted: false,
   portfolioBalance: {
     current: 0,
@@ -65,6 +65,7 @@ export const initialState: WalletState = {
   queuedTransactions: false,
   enableReplaceByFee: false,
   initLogs: [], // keep init logs at the end (order is important)
+  customTokensMigrationComplete: false,
 };
 
 export const walletReducer = (
@@ -255,37 +256,30 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS: {
-      const {tokenOptions, tokenData, tokenOptionsByAddress} = action.payload;
+      const {tokenOptionsByAddress, tokenDataByAddress} = action.payload;
       return {
         ...state,
-        tokenOptions: {
-          ...tokenOptions,
-        },
-        tokenData: {
-          ...tokenData,
-        },
         tokenOptionsByAddress: {
           ...tokenOptionsByAddress,
+        },
+        tokenDataByAddress: {
+          ...tokenDataByAddress,
         },
       };
     }
 
     case WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS: {
-      const {customTokenOptions, customTokenData, customTokenOptionsByAddress} =
+      const {customTokenOptionsByAddress, customTokenDataByAddress} =
         action.payload;
       return {
         ...state,
-        customTokenOptions: {
-          ...state.customTokenOptions,
-          ...customTokenOptions,
-        },
-        customTokenData: {
-          ...state.customTokenData,
-          ...customTokenData,
-        },
         customTokenOptionsByAddress: {
           ...state.customTokenOptionsByAddress,
           ...customTokenOptionsByAddress,
+        },
+        customTokenDataByAddress: {
+          ...state.customTokenDataByAddress,
+          ...customTokenDataByAddress,
         },
       };
     }
@@ -493,6 +487,12 @@ export const walletReducer = (
         },
       };
     }
+
+    case WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        customTokensMigrationComplete: true,
+      };
 
     default:
       return state;

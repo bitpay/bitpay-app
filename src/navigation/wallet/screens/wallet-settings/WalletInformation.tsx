@@ -105,6 +105,7 @@ const WalletInformation = () => {
       copayerId,
       publicKeyRing,
     },
+    tokenAddress,
   } = wallet;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -162,7 +163,9 @@ const WalletInformation = () => {
     return () => clearTimeout(timer);
   }, [copiedAddress]);
 
-  const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation, chain))!;
+  const {unitToSatoshi} = dispatch(
+    GetPrecision(currencyAbbreviation, chain, tokenAddress),
+  )!;
 
   const [copayers, setCopayers] = useState<any[]>();
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();

@@ -572,7 +572,9 @@ const BuyCryptoOffers: React.FC = () => {
               Number(data.fee_amount) + Number(data.network_fee);
             offers.banxa.buyAmount = offers.banxa.amountCost - offers.banxa.fee;
 
-            const precision = dispatch(GetPrecision(coin, chain));
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
             if (offers.banxa.buyAmount && coin && precision) {
               offers.banxa.fiatMoney = Number(
                 offers.banxa.buyAmount / Number(data.coin_amount),
@@ -770,7 +772,9 @@ const BuyCryptoOffers: React.FC = () => {
             offers.moonpay.fee =
               Number(data.totalAmount) - Number(data.baseCurrencyAmount);
 
-            const precision = dispatch(GetPrecision(coin, chain));
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
             if (offers.moonpay.buyAmount && coin && precision) {
               offers.moonpay.fiatMoney = Number(
                 offers.moonpay.buyAmount / data.quoteCurrencyAmount,
@@ -982,7 +986,9 @@ const BuyCryptoOffers: React.FC = () => {
             Number(paymentMethodData.appliedFee);
           offers.ramp.fee = Number(paymentMethodData.appliedFee);
 
-          const precision = dispatch(GetPrecision(coin, chain));
+          const precision = dispatch(
+            GetPrecision(coin, chain, selectedWallet.tokenAddress),
+          );
           let decimals: number | undefined;
 
           if (data.asset.decimals && data.asset.decimals > 0) {
@@ -1141,7 +1147,9 @@ const BuyCryptoOffers: React.FC = () => {
             offers.sardine.buyAmount = data.subtotal;
             offers.sardine.fee = data.total - data.subtotal;
 
-            const precision = dispatch(GetPrecision(coin, chain));
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
             if (offers.sardine.buyAmount && coin && precision) {
               offers.sardine.fiatMoney = Number(
                 offers.sardine.buyAmount / data.quantity,
@@ -1287,7 +1295,9 @@ const BuyCryptoOffers: React.FC = () => {
             offers.simplex.fee =
               data.fiat_money.total_amount - data.fiat_money.base_amount;
 
-            const precision = dispatch(GetPrecision(coin, chain));
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
             if (offers.simplex.buyAmount && coin && precision) {
               offers.simplex.fiatMoney = Number(
                 offers.simplex.buyAmount / data.digital_money.amount,

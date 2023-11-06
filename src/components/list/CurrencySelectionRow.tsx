@@ -25,6 +25,7 @@ export type CurrencySelectionItem = Pick<
   'id' | 'currencyAbbreviation' | 'currencyName' | 'img' | 'isToken'
 > & {
   chain: string;
+  tokenAddress?: string;
   imgSrc?: ImageRequireSource | undefined;
   selected?: boolean;
   disabled?: boolean;
@@ -36,7 +37,11 @@ export type CurrencySelectionRowProps = {
   description?: string;
   hideCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
-  onToggle?: (currencyAbbreviation: string, chain: string) => void;
+  onToggle?: (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress?: string,
+  ) => void;
   onViewAllTokensPressed?: (
     currency: CurrencySelectionItem,
     tokens: CurrencySelectionItem[],
@@ -151,7 +156,11 @@ interface TokenSelectionRowProps {
   token: CurrencySelectionItem;
   hideCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
-  onToggle?: (currencyAbbreviation: string, chain: string) => any;
+  onToggle?: (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress: string,
+  ) => any;
   hideArrow?: boolean;
   badgeUri?: string | ((props?: any) => ReactElement);
 }
@@ -173,7 +182,13 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
       <FlexRow
         accessibilityLabel="token-selection-row"
         style={{marginBottom: 24}}
-        onPress={() => onToggle?.(token.currencyAbbreviation, token.chain)}>
+        onPress={() =>
+          onToggle?.(
+            token.currencyAbbreviation,
+            token.chain,
+            token.tokenAddress!,
+          )
+        }>
         {!hideArrow ? (
           <CurrencyColumn style={{marginRight: 16}}>
             <NestedArrowIcon />
@@ -203,7 +218,11 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
               radio={selectionMode === 'single'}
               disabled={!!token.disabled}
               onPress={() =>
-                onToggle?.(token.currencyAbbreviation, token.chain)
+                onToggle?.(
+                  token.currencyAbbreviation,
+                  token.chain,
+                  token.tokenAddress!,
+                )
               }
             />
           </CurrencyColumn>
@@ -233,9 +252,13 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   const {t} = useTranslation();
   const {currencyName} = currency;
   const onPress = useCallback(
-    (currencyAbbreviation: string, chain: string): void => {
+    (
+      currencyAbbreviation: string,
+      chain: string,
+      tokenAddress?: string,
+    ): void => {
       haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
-      onToggle?.(currencyAbbreviation, chain);
+      onToggle?.(currencyAbbreviation, chain, tokenAddress);
     },
     [onToggle],
   );
@@ -262,7 +285,11 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
               key={token.id}
               token={token}
               onToggle={() => {
-                onPress(token.currencyAbbreviation, token.chain);
+                onPress(
+                  token.currencyAbbreviation,
+                  token.chain,
+                  token.tokenAddress,
+                );
               }}
               hideCheckbox={hideCheckbox}
               selectionMode={selectionMode}

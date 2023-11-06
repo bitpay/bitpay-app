@@ -96,6 +96,7 @@ export interface WalletObj {
   n: number;
   balance: CryptoBalance;
   pendingTxps: TransactionProposal[];
+  tokenAddress?: string;
   tokens?: string[];
   walletName?: string;
   preferences?: {
@@ -191,6 +192,7 @@ export interface Recipient {
   amount?: number;
   destinationTag?: number;
   chain?: string;
+  tokenAddress?: string;
 }
 
 export interface CustomTransactionData {
@@ -370,6 +372,7 @@ export interface TxDetailsSendingTo {
   recipientAltAmountStr?: string;
   recipientCoin?: string;
   recipientChain?: string;
+  recipientTokenAddress?: string;
 }
 
 export interface TxDetailsSendingFrom {

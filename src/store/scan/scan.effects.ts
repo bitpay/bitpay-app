@@ -603,6 +603,7 @@ export const goToAmount =
         sendMaxEnabled: true,
         cryptoCurrencyAbbreviation: coin.toUpperCase(),
         chain,
+        tokenAddress: wallet.tokenAddress,
         onAmountSelected: async (amount, setButtonState, amountOpts) => {
           dispatch(
             goToConfirm({
@@ -713,7 +714,7 @@ const handleBitcoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -747,7 +748,7 @@ const handleBitcoinCashUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -803,7 +804,7 @@ const handleBitcoinCashUriLegacyAddress =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -833,7 +834,9 @@ const handleEthereumUri =
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
       );
       dispatch(
         goToConfirm({
@@ -870,7 +873,9 @@ const handleMaticUri =
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
       );
       dispatch(
         goToConfirm({
@@ -943,7 +948,7 @@ const handleDogecoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -972,7 +977,7 @@ const handleLitecoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }

@@ -125,7 +125,7 @@ const WalletConnectHome = () => {
   const {name: peerName, icons, url: peerUrl} = peer?.metadata || {};
   const peerIcon = icons && icons[0];
 
-  const {chain, currencyAbbreviation, receiveAddress} = wallet;
+  const {chain, currencyAbbreviation, receiveAddress, tokenAddress} = wallet;
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
       await sleep(500);
@@ -296,6 +296,7 @@ const WalletConnectHome = () => {
       FormatAmountStr(
         _chain || currencyAbbreviation,
         _chain || chain,
+        tokenAddress,
         parseInt(value, 16),
       ),
     );

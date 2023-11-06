@@ -15,7 +15,6 @@ import {
   useLogger,
 } from '../../../../utils/hooks';
 import ChangellyCheckoutSkeleton from './ChangellyCheckoutSkeleton';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Slate, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -146,13 +145,6 @@ const ChangellyCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[fromWalletSelected.keyId],
   );
-  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
-    };
-  }) as {[key in string]: Token};
 
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
@@ -309,6 +301,7 @@ const ChangellyCheckout: React.FC = () => {
             GetPrecision(
               toWalletSelected.currencyAbbreviation,
               toWalletSelected.chain,
+              toWalletSelected.tokenAddress,
             ),
           );
           const newFiatAmountTo = dispatch(
@@ -318,6 +311,7 @@ const ChangellyCheckout: React.FC = () => {
               toWalletSelected.currencyAbbreviation.toLowerCase(),
               toWalletSelected.chain,
               rates,
+              toWalletSelected.tokenAddress,
             ),
           );
           setFiatAmountTo(newFiatAmountTo);
@@ -331,6 +325,7 @@ const ChangellyCheckout: React.FC = () => {
           GetPrecision(
             fromWalletSelected.currencyAbbreviation,
             fromWalletSelected.chain,
+            fromWalletSelected.tokenAddress,
           ),
         );
         // To Sat
@@ -357,7 +352,11 @@ const ChangellyCheckout: React.FC = () => {
             await sleep(400);
 
             if (useSendMax) {
-              showSendMaxWarning(ctxp.coin, ctxp.chain);
+              showSendMaxWarning(
+                ctxp.coin,
+                ctxp.chain,
+                fromWalletSelected.tokenAddress,
+              );
             }
             return;
           })
@@ -498,13 +497,8 @@ const ChangellyCheckout: React.FC = () => {
       };
 
       if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
-        const token =
-          tokenOptions[
-            getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain)
-          ];
-
-        if (token && token.address) {
-          txp.tokenAddress = token.address;
+        if (wallet.tokenAddress) {
+          txp.tokenAddress = wallet.tokenAddress;
           if (txp.outputs) {
             for (const output of txp.outputs) {
               if (output.amount) {
@@ -517,7 +511,7 @@ const ChangellyCheckout: React.FC = () => {
                     recipients: [
                       {address: output.toAddress, amount: output.amount},
                     ],
-                    tokenAddress: token.address,
+                    tokenAddress: wallet.tokenAddress,
                   });
               }
             }
@@ -621,15 +615,19 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showSendMaxWarning = async (coin: string, chain: string) => {
+  const showSendMaxWarning = async (
+    coin: string,
+    chain: string,
+    tokenAddress: string | undefined,
+  ) => {
     if (!sendMaxInfo || !coin) {
       return;
     }
 
     const warningMsg = dispatch(
-      GetExcludedUtxosMessage(coin, chain, sendMaxInfo),
+      GetExcludedUtxosMessage(coin, chain, tokenAddress, sendMaxInfo),
     );
-    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain));
+    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
 
     const msg =
       `Because you are sending the maximum amount contained in this wallet, the ${chain} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
@@ -793,6 +791,7 @@ const ChangellyCheckout: React.FC = () => {
                     FormatAmountStr(
                       fromWalletSelected.chain, // use chain for miner fee
                       fromWalletSelected.chain,
+                      undefined,
                       fee,
                     ),
                   )}

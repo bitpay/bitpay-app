@@ -125,11 +125,11 @@ export const viewOnBlockchain =
   (wallet: Wallet): Effect =>
   async dispatch => {
     const chain = wallet.chain.toLowerCase();
-    const contractAddress = wallet.credentials.token.address;
+    const tokenAddress = wallet.credentials.token?.address;
     const url =
       wallet.network === 'livenet'
-        ? `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrls}address/${contractAddress}`
-        : `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${contractAddress}`;
+        ? `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrls}address/${tokenAddress}`
+        : `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${tokenAddress}`;
     dispatch(openUrlWithInAppBrowser(url));
   };
 
@@ -180,7 +180,7 @@ const SendingToERC20Warning = ({isVisible, closeModal, wallet}: Props) => {
             </LinkContainer>
           </ContractHeaderContainer>
           <ContractAddressText>
-            {wallet.credentials.token.address}
+            {wallet.credentials.token?.address}
           </ContractAddressText>
         </SendingInfoContainer>
         <CloseButton onPress={closeModal}>

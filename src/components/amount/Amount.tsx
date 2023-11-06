@@ -109,6 +109,7 @@ export interface Limits {
 export interface AmountProps {
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
+  tokenAddress?: string;
   chain?: string;
   context?: string;
   buttonState?: ButtonState;
@@ -126,6 +127,7 @@ const Amount: React.VFC<AmountProps> = ({
   cryptoCurrencyAbbreviation,
   fiatCurrencyAbbreviation,
   chain,
+  tokenAddress,
   context,
   buttonState,
   swapOpts,
@@ -212,6 +214,7 @@ const Amount: React.VFC<AmountProps> = ({
               primaryIsFiat ? val / rate : val,
               cryptoCurrencyAbbreviation.toLowerCase(),
               chain,
+              tokenAddress,
             ),
           ).amount;
 

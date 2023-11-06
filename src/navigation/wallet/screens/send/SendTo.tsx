@@ -191,6 +191,7 @@ export const BuildKeyWalletRow = (
           chain,
           credentials: {walletName: fallbackName},
           walletName,
+          tokenAddress,
         } = wallet;
         // Clone wallet to avoid altering store values
         const _wallet = merge(cloneDeep(wallet), {
@@ -205,6 +206,7 @@ export const BuildKeyWalletRow = (
                   currencyAbbreviation,
                   chain,
                   rates,
+                  tokenAddress,
                 ),
               ),
               hideWallet,

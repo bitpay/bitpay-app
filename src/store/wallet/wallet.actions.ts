@@ -71,18 +71,16 @@ export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
 });
 
 export const successGetTokenOptions = (payload: {
-  tokenOptions: {[key in string]: Token};
-  tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
   payload,
 });
 
 export const successGetCustomTokenOptions = (payload: {
-  customTokenOptions: {[key in string]: Token};
-  customTokenData: {[key in string]: CurrencyOpts};
   customTokenOptionsByAddress: {[key in string]: Token};
+  customTokenDataByAddress: {[key in string]: CurrencyOpts};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS,
   payload,
@@ -231,4 +229,8 @@ export const updateCacheFeeLevel = (
 ): WalletActionType => ({
   type: WalletActionTypes.UPDATE_CACHE_FEE_LEVEL,
   payload,
+});
+
+export const setCustomTokensMigrationComplete = (): WalletActionType => ({
+  type: WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE,
 });

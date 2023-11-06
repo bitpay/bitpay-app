@@ -179,10 +179,10 @@ const Confirm = () => {
   const [destinationTag, setDestinationTag] = useState(
     recipient?.destinationTag || _destinationTag,
   );
-  const {currencyAbbreviation, chain} = wallet;
+  const {currencyAbbreviation, chain, tokenAddress} = wallet;
   const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
-    dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+    dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -332,7 +332,7 @@ const Confirm = () => {
   );
 
   const checkHighFees = async () => {
-    const {feeUnitAmount} = dispatch(GetFeeUnits(currencyAbbreviation, chain));
+    const {feeUnitAmount} = GetFeeUnits(chain);
     let feePerKb: number;
     if (txp.feePerKb) {
       feePerKb = txp.feePerKb;
@@ -360,7 +360,14 @@ const Confirm = () => {
         recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
         recipientAltAmountStr: formatFiatAmount(
           dispatch(
-            toFiat(amountSat, isoCode, currencyAbbreviation, chain, rates),
+            toFiat(
+              amountSat,
+              isoCode,
+              currencyAbbreviation,
+              chain,
+              rates,
+              tokenAddress,
+            ),
           ),
           isoCode,
         ),
@@ -381,6 +388,7 @@ const Confirm = () => {
       img: recipient.type,
       recipientChain: recipient.chain,
       recipientType: recipient.type,
+      recipientTokenAddress: recipient.tokenAddress,
     };
   } else {
     recipientData = sendingTo;

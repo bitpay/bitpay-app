@@ -52,6 +52,7 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
   getBadgeImg,
+  getChainUsingSuffix,
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -122,7 +123,7 @@ export interface SwapCryptoCoin {
   name: string;
   protocol?: string;
   logoUri?: any;
-  contractAddress?: string;
+  tokenAddress?: string;
 }
 
 export const getChainFromChangellyProtocol = (
@@ -151,8 +152,18 @@ const SwapCryptoRoot: React.FC = () => {
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-  const tokenData = useAppSelector(({WALLET}) => WALLET.tokenData);
-  const tokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+  const tokenDataByAddress = useAppSelector(
+    ({WALLET}) => WALLET.tokenDataByAddress,
+  );
+  const tokenOptionsByAddress = useAppSelector(
+    ({WALLET}) => WALLET.tokenOptionsByAddress,
+  );
+  const tokenOptions = Object.entries(tokenOptionsByAddress).map(
+    ([k, {symbol}]) => {
+      const chain = getChainUsingSuffix(k);
+      return getCurrencyAbbreviation(symbol.toLowerCase(), chain);
+    },
+  );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
@@ -326,6 +337,7 @@ const SwapCryptoRoot: React.FC = () => {
           fromWalletSelected.balance.satSpendable,
           fromWalletSelected.currencyAbbreviation,
           fromWalletSelected.chain,
+          fromWalletSelected.tokenAddress,
         ),
       );
 
@@ -532,6 +544,7 @@ const SwapCryptoRoot: React.FC = () => {
                   GetExcludedUtxosMessage(
                     fromWalletSelected.currencyAbbreviation,
                     fromWalletSelected.chain,
+                    fromWalletSelected.tokenAddress,
                     sendMaxInfo,
                   ),
                 );
@@ -543,6 +556,7 @@ const SwapCryptoRoot: React.FC = () => {
                   sendMaxInfo.fee,
                   fromWalletSelected.currencyAbbreviation,
                   fromWalletSelected.chain,
+                  fromWalletSelected.tokenAddress,
                 ),
               );
               const coin =
@@ -789,7 +803,7 @@ const SwapCryptoRoot: React.FC = () => {
   ): boolean => {
     // TODO: accept all Changelly supported tokens => If no wallets: create a custom token wallet
     const allSupportedTokens: string[] = [
-      ...Object.keys(tokenOptions),
+      ...tokenOptions,
       ...SupportedEthereumTokens,
       ...SupportedMaticTokens,
     ];
@@ -816,21 +830,25 @@ const SwapCryptoRoot: React.FC = () => {
     const changellyCurrenciesData = await changellyGetCurrencies(true);
 
     if (changellyCurrenciesData?.result?.length) {
-      const getLogoUri = (coin: string, _chain: string) => {
+      const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
+        const foundToken = Object.values(tokenDataByAddress).find(
+          token =>
+            token.coin === _currencyAbbreviation && token.chain === _chain,
+        );
         if (
           SupportedCurrencyOptions.find(
             ({currencyAbbreviation, chain}) =>
-              currencyAbbreviation === coin.toLowerCase() &&
+              currencyAbbreviation === _currencyAbbreviation &&
               (!chain || chain === _chain),
           )
         ) {
           return SupportedCurrencyOptions.find(
             ({currencyAbbreviation, chain}) =>
-              currencyAbbreviation === coin.toLowerCase() &&
+              currencyAbbreviation === _currencyAbbreviation &&
               (!chain || chain === _chain),
           )!.img;
-        } else if (tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI) {
-          return tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI;
+        } else if (foundToken?.logoURI) {
+          return foundToken?.logoURI;
         } else {
           return undefined;
         }
@@ -865,8 +883,8 @@ const SwapCryptoRoot: React.FC = () => {
                 name: fullName,
                 chain,
                 protocol,
-                logoUri: getLogoUri(name, chain),
-                contractAddress,
+                logoUri: getLogoUri(name.toLowerCase(), chain),
+                tokenAddress: contractAddress,
               };
             },
           );
@@ -1437,6 +1455,7 @@ const SwapCryptoRoot: React.FC = () => {
           swapLimits,
         }}
         cryptoCurrencyAbbreviation={fromWalletSelected?.currencyAbbreviation.toUpperCase()}
+        tokenAddress={fromWalletSelected?.tokenAddress}
         chain={fromWalletSelected?.chain}
         onClose={() => hideModal('amount')}
         onSubmit={newAmount => {
@@ -1476,6 +1495,7 @@ const SwapCryptoRoot: React.FC = () => {
                   data.amount,
                   fromWalletSelected.currencyAbbreviation,
                   fromWalletSelected.chain,
+                  fromWalletSelected.tokenAddress,
                 ),
               );
             }

@@ -205,13 +205,16 @@ export const findContact = (
   coin: string,
   network: string,
   chain: string,
+  tokenAddress: string | undefined,
 ) => {
   const foundContacts = contactList.filter((contact: ContactRowProps) => {
     return (
       contact.address === address &&
       contact.coin === coin &&
       contact.network === network &&
-      contact.chain === chain
+      contact.chain === chain &&
+      (!contact.tokenAddress ||
+        contact.tokenAddress.toLowerCase() === tokenAddress)
     );
   });
   return !!foundContacts.length;
@@ -359,5 +362,17 @@ export const getCWCChain = (chain: string): string => {
 
     default:
       return 'ETHERC20';
+  }
+};
+
+export const getChainUsingSuffix = (symbol: string) => {
+  const suffix = symbol.charAt(symbol.length - 1);
+  switch (suffix) {
+    case 'e':
+      return 'eth';
+    case 'm':
+      return 'matic';
+    default:
+      return 'eth';
   }
 };

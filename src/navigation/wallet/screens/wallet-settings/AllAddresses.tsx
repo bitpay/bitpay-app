@@ -31,6 +31,7 @@ export type AllAddressesParamList = {
   unusedAddresses?: any[];
   currencyAbbreviation: string;
   chain: string;
+  tokenAddress: string | undefined;
 };
 
 const AddressesContainer = styled.SafeAreaView`
@@ -74,6 +75,7 @@ const AllAddresses = () => {
       usedAddresses,
       unusedAddresses,
       chain,
+      tokenAddress,
     },
   } = useRoute<RouteProp<WalletStackParamList, 'AllAddresses'>>();
 
@@ -176,7 +178,12 @@ const AllAddresses = () => {
 
                     <H7>
                       {dispatch(
-                        FormatAmountStr(currencyAbbreviation, chain, amount),
+                        FormatAmountStr(
+                          currencyAbbreviation,
+                          chain,
+                          tokenAddress,
+                          amount,
+                        ),
                       )}
                     </H7>
                   </SettingView>

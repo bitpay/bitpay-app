@@ -82,10 +82,10 @@ export const ProcessPendingTxps =
   (txps: TransactionProposal[], wallet: any): Effect<any> =>
   dispatch => {
     const now = Math.floor(Date.now() / 1000);
-    const {currencyAbbreviation, chain} = wallet;
+    const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
-      tx = dispatch(ProcessTx(tx));
+      tx = dispatch(ProcessTx(tx, wallet));
 
       // no future transactions...
       if (tx.createdOn > now) {
@@ -115,11 +115,17 @@ export const ProcessPendingTxps =
         tx.canBeRemoved = true;
       }
     });
-    return BuildUiFriendlyList(txps, currencyAbbreviation, chain, []);
+    return BuildUiFriendlyList(
+      txps,
+      currencyAbbreviation,
+      chain,
+      [],
+      tokenAddress,
+    );
   };
 
 const ProcessTx =
-  (tx: TransactionProposal): Effect<TransactionProposal> =>
+  (tx: TransactionProposal, wallet: Wallet): Effect<TransactionProposal> =>
   (dispatch, getState) => {
     if (!tx || tx.action === 'invalid') {
       return tx;
@@ -133,8 +139,8 @@ const ProcessTx =
       ...customTokenOptionsByAddress,
     };
 
-    const {chain, coin, tokenAddress} = tx;
-
+    const {chain, coin} = tx;
+    const {tokenAddress} = wallet;
     // Only for payouts. For this case chain and coin have the same value.
     // Therefore, to identify an ERC20 token payout it is necessary to check if exist the tokenAddress field
     let tokenSymbol: string | undefined;
@@ -159,7 +165,12 @@ const ProcessTx =
         }
         tx.amount = tx.outputs.reduce((total: number, o: any) => {
           o.amountStr = dispatch(
-            FormatAmountStr(tokenSymbol || coin, chain, Number(o.amount)),
+            FormatAmountStr(
+              tokenSymbol || coin,
+              chain,
+              tokenAddress,
+              Number(o.amount),
+            ),
           );
           return total + Number(o.amount);
         }, 0);
@@ -189,13 +200,13 @@ const ProcessTx =
     }
 
     tx.amountStr = dispatch(
-      FormatAmountStr(tokenSymbol || coin, chain, tx.amount),
+      FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
     );
 
     tx.feeStr = tx.fee
-      ? dispatch(FormatAmountStr(chain, chain, tx.fee))
+      ? dispatch(FormatAmountStr(chain, chain, undefined, tx.fee))
       : tx.fees
-      ? dispatch(FormatAmountStr(chain, chain, tx.fees))
+      ? dispatch(FormatAmountStr(chain, chain, undefined, tx.fees))
       : 'N/A';
 
     if (tx.amountStr) {
@@ -227,7 +238,7 @@ const ProcessNewTxs =
       tx.coin = wallet.currencyAbbreviation;
       tx.chain = wallet.chain;
 
-      tx = dispatch(ProcessTx(tx));
+      tx = dispatch(ProcessTx(tx, wallet));
 
       // no future transactions...
       if (tx.time > now) {
@@ -522,6 +533,7 @@ export const GetTransactionHistory =
           wallet.currencyAbbreviation,
           wallet.chain,
           contactList,
+          wallet.tokenAddress,
         );
 
         const array = transactions
@@ -672,6 +684,7 @@ export const BuildUiFriendlyList = (
   currencyAbbreviation: string,
   chain: string,
   contactList: any[] = [],
+  tokenAddress: string | undefined,
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -743,7 +756,7 @@ export const BuildUiFriendlyList = (
       if (isSent) {
         if (
           (currencyAbbreviation === 'eth' ||
-            IsCustomERCToken(currencyAbbreviation, chain)) &&
+            IsCustomERCToken(tokenAddress, chain)) &&
           error
         ) {
           transaction.uiIcon = 'error';
@@ -923,7 +936,16 @@ export const buildTransactionDetails =
         const rates = await dispatch(startGetRates({}));
 
         _transaction.feeFiatStr = formatFiatAmount(
-          dispatch(toFiat(_fee, alternativeCurrency, chain, chain, rates)),
+          dispatch(
+            toFiat(
+              _fee,
+              alternativeCurrency,
+              chain,
+              chain,
+              rates,
+              wallet.tokenAddress,
+            ),
+          ),
           alternativeCurrency,
         );
 
@@ -932,7 +954,14 @@ export const buildTransactionDetails =
             _transaction.outputs = _transaction.outputs.map((o: any) => {
               o.alternativeAmountStr = formatFiatAmount(
                 dispatch(
-                  toFiat(o.amount, alternativeCurrency, coin, chain, rates),
+                  toFiat(
+                    o.amount,
+                    alternativeCurrency,
+                    coin,
+                    chain,
+                    rates,
+                    wallet.tokenAddress,
+                  ),
                 ),
                 alternativeCurrency,
               );
@@ -979,6 +1008,7 @@ export const buildTransactionDetails =
             coin,
             alternativeCurrency,
             chain,
+            wallet.tokenAddress,
           ),
         );
 
@@ -997,6 +1027,7 @@ const UpdateFiatRate =
     currency: string,
     alternativeCurrency: string,
     chain: string,
+    tokenAddress: string | undefined,
   ): Effect<string> =>
   dispatch => {
     const {amountValueStr, amount} = transaction;
@@ -1014,7 +1045,14 @@ const UpdateFiatRate =
     } else {
       // Get current fiat value when historic rates are unavailable
       fiatRateStr = dispatch(
-        toFiat(amount, alternativeCurrency, currency, chain, rates),
+        toFiat(
+          amount,
+          alternativeCurrency,
+          currency,
+          chain,
+          rates,
+          tokenAddress,
+        ),
       );
       fiatRateStr = formatFiatAmount(fiatRateStr, alternativeCurrency);
     }
