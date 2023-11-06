@@ -178,7 +178,7 @@ export const walletConnectV2SubscribeToEvents =
         );
       },
     );
-    web3wallet.on('session_request', (event: any) => {
+    web3wallet.on('session_request', async (event: any) => {
       dispatch(
         LogActions.info(
           `[WC-V2/walletConnectV2SubscribeToEvents]: new pending request: ${JSON.stringify(
