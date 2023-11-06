@@ -60,9 +60,17 @@ export const WCV2KeyWalletsRow = ({
   topic,
 }: WCV2KeyWalletProps) => {
   const renderItem = useCallback(
-    ({item, keyId, isLast}) => {
+    ({
+      item,
+      keyId,
+      isLast,
+    }: {
+      item: WCV2Wallet;
+      keyId: string;
+      isLast: boolean;
+    }) => {
       return item ? (
-        <NoGutter key={item.id}>
+        <NoGutter key={item.wallet.id}>
           <WCV2WalletRow
             walletObj={item}
             keyId={keyId}
@@ -78,7 +86,7 @@ export const WCV2KeyWalletsRow = ({
   );
 
   const renderKey = useCallback(
-    ({item, isLast}) => {
+    ({item, isLast}: {item: WCV2Key; isLast: boolean}) => {
       const {wallets, keyName, keyId} = item;
 
       return wallets.length ? (

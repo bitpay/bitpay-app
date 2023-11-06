@@ -70,9 +70,7 @@ const TransactionRow = ({
         icon && <IconContainer>{icon}</IconContainer>
       )}
       {!!description && (
-        <Description
-          numberOfLines={details ? 2 : 1}
-          ellipsizeMode={'tail'}>
+        <Description numberOfLines={details ? 2 : 1} ellipsizeMode={'tail'}>
           {description}
           {details && (
             <ListItemSubText>
@@ -84,7 +82,9 @@ const TransactionRow = ({
       )}
       <TailContainer>
         {value ? <Value>{value}</Value> : null}
-        {time ? <ListItemSubText textAlign={'right'}>{time}</ListItemSubText> : null}
+        {time ? (
+          <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>
+        ) : null}
       </TailContainer>
     </TransactionContainer>
   );

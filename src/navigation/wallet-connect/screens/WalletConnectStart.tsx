@@ -35,12 +35,18 @@ import {
   walletConnectV2ApproveSessionProposal,
   walletConnectV2RejectSessionProposal,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {sessionProposal} from '../../../store/wallet-connect-v2/wallet-connect-v2.actions';
+import {buildApprovedNamespaces} from '@walletconnect/utils';
+import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
 
 export type WalletConnectStartParamList = {
   // version 2
-  proposal?: SignClientTypes.EventArguments['session_proposal'];
-  selectedWallets?: {chain: string; address: string; network: string}[];
+  proposal: SignClientTypes.EventArguments['session_proposal'];
+  selectedWallets?: {
+    chain: string;
+    address: string;
+    network: string;
+    supportedChain: string;
+  }[];
 };
 
 const UriContainer = styled.View`
@@ -124,39 +130,25 @@ const WalletConnectStart = () => {
     try {
       setButtonState('loading');
       if (selectedWallets) {
-        const namespaces: SessionTypes.Namespaces = {};
-        if (requiredNamespaces) {
-          Object.keys(requiredNamespaces)
-            .concat(Object.keys(optionalNamespaces || {}))
-            .forEach(key => {
-              const accounts: string[] = [];
-              [
-                ...new Set([
-                  ...(requiredNamespaces[key]?.chains || []),
-                  ...(optionalNamespaces?.[key]?.chains || []),
-                ]),
-              ]?.map((chain: string) => {
-                selectedWallets.forEach(selectedWallet => {
-                  accounts.push(`${chain}:${selectedWallet.address}`);
-                });
-              });
-              namespaces[key] = {
-                accounts: [...new Set(accounts)],
-                methods: [
-                  ...requiredNamespaces[key].methods,
-                  ...(optionalNamespaces && optionalNamespaces[key]
-                    ? optionalNamespaces[key]?.methods
-                    : []),
-                ],
-                events: [
-                  ...requiredNamespaces[key].events,
-                  ...(optionalNamespaces && optionalNamespaces[key]
-                    ? optionalNamespaces[key]?.events
-                    : []),
-                ],
-              };
-            });
-        }
+        const accounts: string[] = [];
+        const chains: string[] = [];
+        selectedWallets.forEach(selectedWallet => {
+          accounts.push(
+            `${selectedWallet.supportedChain}:${selectedWallet.address}`,
+          );
+          chains.push(selectedWallet.supportedChain);
+        });
+        const namespaces: SessionTypes.Namespaces = buildApprovedNamespaces({
+          proposal: params,
+          supportedNamespaces: {
+            eip155: {
+              chains,
+              methods: Object.values(EIP155_SIGNING_METHODS),
+              events: ['chainChanged', 'accountsChanged'],
+              accounts,
+            },
+          },
+        });
         if (id && relays) {
           await dispatch(
             walletConnectV2ApproveSessionProposal(
