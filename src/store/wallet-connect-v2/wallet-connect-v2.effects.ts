@@ -197,6 +197,15 @@ export const walletConnectV2SubscribeToEvents =
         const {name, params} =
           (navigationRef.current?.getCurrentRoute() as any) || {};
         const wallet = dispatch(getWalletByRequest(event));
+
+        if (event.params.request.method === 'wallet_addEthereumChain') {
+          await web3wallet.respondSessionRequest({
+            topic: event.topic,
+            response: formatJsonRpcResult(event.id, null),
+          });
+          return;
+        }
+
         if (
           name !== 'WalletConnectHome' ||
           (name === 'WalletConnectHome' &&
