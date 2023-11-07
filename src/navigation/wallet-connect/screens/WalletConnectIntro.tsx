@@ -27,7 +27,6 @@ import {
   walletConnectV2OnSessionProposal,
   walletConnectV2RejectSessionProposal,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {SignClientTypes} from '@walletconnect/types';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Button from '../../../components/button/Button';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -36,6 +35,7 @@ import {
   SearchInput,
 } from '../../../components/styled/Containers';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -72,7 +72,7 @@ const WalletConnectIntro = () => {
   );
 
   const setProposal = async (
-    proposal?: SignClientTypes.EventArguments['session_proposal'],
+    proposal?: Web3WalletTypes.EventArguments['session_proposal'],
   ) => {
     dispatch(dismissOnGoingProcessModal());
     await sleep(500);

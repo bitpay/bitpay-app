@@ -51,6 +51,10 @@ export const EIP155_SIGNING_METHODS = {
   WALLET_ADD_ETHEREUM_CHAIN: 'wallet_addEthereumChain',
 };
 
+export const EIP155_METHODS_NOT_INTERACTION_NEEDED = [
+  'wallet_addEthereumChain',
+];
+
 export const WALLET_CONNECT_SUPPORTED_CHAINS: {
   [key in string]: {chain: string; network: string};
 } = {

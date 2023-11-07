@@ -107,11 +107,11 @@ import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/Sen
 import {moralisInit} from '../moralis/moralis.effects';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {InAppNotificationMessages} from '../../components/modal/in-app-notification/InAppNotification';
-import {SignClientTypes} from '@walletconnect/types';
 import axios from 'axios';
 import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
 import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -556,7 +556,7 @@ export const startOnGoingProcessModal =
 export const startInAppNotification =
   (
     key: InAppNotificationMessages,
-    request: SignClientTypes.EventArguments['session_request'],
+    request: Web3WalletTypes.EventArguments['session_request'],
     context: InAppNotificationContextType,
   ): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {

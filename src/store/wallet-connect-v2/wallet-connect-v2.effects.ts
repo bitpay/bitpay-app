@@ -2,13 +2,14 @@ import {Effect} from '..';
 import {
   EIP155_CHAINS,
   EIP155_SIGNING_METHODS,
+  EIP155_METHODS_NOT_INTERACTION_NEEDED,
   TEIP155Chain,
   WALLETCONNECT_V2_METADATA,
   WALLET_CONNECT_SUPPORTED_CHAINS,
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
-import {SessionTypes, SignClientTypes} from '@walletconnect/types';
+import {SessionTypes} from '@walletconnect/types';
 import {sleep} from '../../utils/helper-methods';
 import {getSdkError} from '@walletconnect/utils';
 import {WalletConnectV2Actions} from '.';
@@ -33,7 +34,11 @@ import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessag
 import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
 import {ethers, providers} from 'ethers';
 import {Core} from '@walletconnect/core';
-import {Web3Wallet, IWeb3Wallet} from '@walletconnect/web3wallet';
+import {
+  Web3Wallet,
+  IWeb3Wallet,
+  Web3WalletTypes,
+} from '@walletconnect/web3wallet';
 import {WALLET_CONNECT_V2_PROJECT_ID} from '@env';
 import {startInAppNotification} from '../app/app.effects';
 import {navigationRef} from '../../Root';
@@ -167,7 +172,7 @@ export const walletConnectV2SubscribeToEvents =
   (): Effect => (dispatch, getState) => {
     web3wallet.on(
       'session_proposal',
-      (proposal: SignClientTypes.EventArguments['session_proposal']) => {
+      (proposal: Web3WalletTypes.EventArguments['session_proposal']) => {
         dispatch(WalletConnectV2Actions.sessionProposal(proposal));
         dispatch(
           LogActions.info(
@@ -178,88 +183,114 @@ export const walletConnectV2SubscribeToEvents =
         );
       },
     );
-    web3wallet.on('session_request', async (event: any) => {
-      dispatch(
-        LogActions.info(
-          `[WC-V2/walletConnectV2SubscribeToEvents]: new pending request: ${JSON.stringify(
-            event,
-          )}`,
-        ),
-      );
-      if (
-        Object.keys(WALLET_CONNECT_SUPPORTED_CHAINS).includes(
-          event.params.chainId,
-        ) &&
-        Object.values(EIP155_SIGNING_METHODS).includes(
-          event.params.request.method,
-        )
-      ) {
-        const {name, params} =
-          (navigationRef.current?.getCurrentRoute() as any) || {};
-        const wallet = dispatch(getWalletByRequest(event));
-
-        if (event.params.request.method === 'wallet_addEthereumChain') {
-          await web3wallet.respondSessionRequest({
-            topic: event.topic,
-            response: formatJsonRpcResult(event.id, null),
-          });
-          return;
-        }
-
-        if (
-          name !== 'WalletConnectHome' ||
-          (name === 'WalletConnectHome' &&
-            (params?.wallet?.receiveAddress !== wallet?.receiveAddress ||
-              params?.wallet?.network !== wallet?.network ||
-              params?.wallet?.chain !== wallet?.chain))
-        ) {
-          dispatch(
-            startInAppNotification(
-              'NEW_PENDING_REQUEST',
-              event,
-              'notification',
-            ),
-          );
-        }
-
-        dispatch(
-          WalletConnectV2Actions.sessionRequest({
-            ...event,
-            createdOn: Date.now(),
-          }),
-        );
-      }
-    });
-    web3wallet.on('session_delete', async data => {
-      try {
-        const {topic} = data;
-        const session: WCV2SessionType | undefined =
-          getState().WALLET_CONNECT_V2.sessions.find(
-            (session: WCV2SessionType) => session.topic === topic,
-          );
-        const {pairingTopic} = session || {};
-        if (pairingTopic) {
-          await web3wallet.core.pairing.disconnect({
-            topic: pairingTopic,
-          });
-        }
-        dispatch(WalletConnectV2DeleteSessions(topic));
-        dispatch(WalletConnectV2UpdateRequests({topic}));
+    web3wallet.on(
+      'session_request',
+      async (event: Web3WalletTypes.EventArguments['session_request']) => {
         dispatch(
           LogActions.info(
-            `[WC-V2/walletConnectV2SubscribeToEvents]: session disconnected: ${topic}`,
-          ),
-        );
-      } catch (err) {
-        dispatch(
-          LogActions.error(
-            `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${JSON.stringify(
-              err,
+            `[WC-V2/walletConnectV2SubscribeToEvents]: new pending request: ${JSON.stringify(
+              event,
             )}`,
           ),
         );
-      }
-    });
+        if (
+          Object.keys(WALLET_CONNECT_SUPPORTED_CHAINS).includes(
+            event.params.chainId,
+          ) &&
+          Object.values(EIP155_SIGNING_METHODS).includes(
+            event.params.request.method,
+          )
+        ) {
+          const {name, params} =
+            (navigationRef.current?.getCurrentRoute() as any) || {};
+          const wallet = dispatch(getWalletByRequest(event));
+
+          // events that needs to be approved automatically without user interaction
+          if (
+            EIP155_METHODS_NOT_INTERACTION_NEEDED.includes(
+              event.params.request.method,
+            )
+          ) {
+            await web3wallet.respondSessionRequest({
+              topic: event.topic,
+              response: formatJsonRpcResult(event.id, null),
+            });
+            return;
+          }
+
+          if (
+            name !== 'WalletConnectHome' ||
+            (name === 'WalletConnectHome' &&
+              (params?.wallet?.receiveAddress !== wallet?.receiveAddress ||
+                params?.wallet?.network !== wallet?.network ||
+                params?.wallet?.chain !== wallet?.chain))
+          ) {
+            dispatch(
+              startInAppNotification(
+                'NEW_PENDING_REQUEST',
+                event,
+                'notification',
+              ),
+            );
+          }
+
+          dispatch(
+            WalletConnectV2Actions.sessionRequest({
+              ...event,
+              createdOn: Date.now(),
+            }),
+          );
+        }
+      },
+    );
+    web3wallet.on(
+      'session_delete',
+      async (data: Web3WalletTypes.EventArguments['session_delete']) => {
+        try {
+          const {topic} = data;
+          const session: WCV2SessionType | undefined =
+            getState().WALLET_CONNECT_V2.sessions.find(
+              (session: WCV2SessionType) => session.topic === topic,
+            );
+          const {pairingTopic} = session || {};
+          if (pairingTopic) {
+            await web3wallet.core.pairing.disconnect({
+              topic: pairingTopic,
+            });
+          }
+          dispatch(WalletConnectV2DeleteSessions(topic));
+          dispatch(WalletConnectV2UpdateRequests({topic}));
+          dispatch(
+            LogActions.info(
+              `[WC-V2/walletConnectV2SubscribeToEvents]: session disconnected: ${topic}`,
+            ),
+          );
+        } catch (err) {
+          dispatch(
+            LogActions.error(
+              `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${JSON.stringify(
+                err,
+              )}`,
+            ),
+          );
+        }
+      },
+    );
+    web3wallet.on(
+      'auth_request',
+      async (data: Web3WalletTypes.EventArguments['auth_request']) => {
+        // TODO Handle auth_request
+        try {
+          dispatch(
+            LogActions.info(
+              `[WC-V2/walletConnectV2SubscribeToEvents]: session disconnected: ${JSON.stringify(
+                data,
+              )}`,
+            ),
+          );
+        } catch (error) {}
+      },
+    );
   };
 
 export const walletConnectV2ApproveCallRequest =
@@ -527,9 +558,6 @@ const approveEIP155Request =
             const signature = await signer.signTransaction(signTransaction);
             resolve(formatJsonRpcResult(id, signature));
 
-          case EIP155_SIGNING_METHODS.WALLET_ADD_ETHEREUM_CHAIN:
-            resolve(formatJsonRpcResult(id, 'success'));
-
           default:
             throw new Error(getSdkError('INVALID_METHOD').message);
         }
@@ -696,7 +724,7 @@ const WalletConnectV2UpdateSession =
 
 export const getWalletByRequest =
   (
-    request: SignClientTypes.EventArguments['session_request'],
+    request: Web3WalletTypes.EventArguments['session_request'],
   ): Effect<Wallet | undefined> =>
   (_dispatch, getState) => {
     const sessionV2: WCV2SessionType | undefined =

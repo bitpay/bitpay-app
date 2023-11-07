@@ -30,17 +30,18 @@ import {
   CtaContainerAbsolute,
   HeaderRightContainer,
 } from '../../../components/styled/Containers';
-import {SessionTypes, SignClientTypes} from '@walletconnect/types';
+import {SessionTypes} from '@walletconnect/types';
 import {
   walletConnectV2ApproveSessionProposal,
   walletConnectV2RejectSessionProposal,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {buildApprovedNamespaces} from '@walletconnect/utils';
 import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export type WalletConnectStartParamList = {
   // version 2
-  proposal: SignClientTypes.EventArguments['session_proposal'];
+  proposal: Web3WalletTypes.EventArguments['session_proposal'];
   selectedWallets?: {
     chain: string;
     address: string;

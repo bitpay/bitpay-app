@@ -1,4 +1,3 @@
-import {SignClientTypes} from '@walletconnect/types';
 import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
@@ -16,6 +15,7 @@ import {
 } from './app.models';
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
@@ -68,7 +68,7 @@ export const dismissOnGoingProcessModal = (): AppActionType => ({
 export const showInAppNotification = (
   context: InAppNotificationContextType,
   message: string,
-  request: SignClientTypes.EventArguments['session_request'],
+  request: Web3WalletTypes.EventArguments['session_request'],
 ): AppActionType => ({
   type: AppActionTypes.SHOW_IN_APP_NOTIFICATION,
   payload: {context, message, request},

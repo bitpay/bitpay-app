@@ -289,67 +289,70 @@ const WalletConnectHome = () => {
     }
   }, [context]);
 
-  const renderItem = useCallback(({item, index}) => {
-    const {createdOn, chain: _chain} = item;
-    const {value = '0x0'} = item.params.request.params[0];
-    const amountStr = dispatch(
-      FormatAmountStr(
-        _chain || currencyAbbreviation,
-        _chain || chain,
-        tokenAddress,
-        parseInt(value, 16),
-      ),
-    );
+  const renderItem = useCallback(
+    ({item, index}: {item: WCV2RequestType; index: number}) => {
+      const {createdOn, chain: _chain} = item;
+      const {value = '0x0'} = item.params.request.params[0];
+      const amountStr = dispatch(
+        FormatAmountStr(
+          _chain || currencyAbbreviation,
+          _chain || chain,
+          tokenAddress,
+          parseInt(value, 16),
+        ),
+      );
 
-    return (
-      <View key={index.toString()}>
-        <ItemTouchableContainer
-          onPress={() => {
-            haptic('impactLight');
-            handleRequestMethod(item);
-          }}>
-          <ItemTitleContainer style={{maxWidth: '40%'}}>
-            {peerIcon && peerName ? (
-              <>
-                <IconContainer>
-                  <FastImage
-                    source={{uri: peerIcon}}
-                    style={{width: 25, height: 25}}
-                  />
-                </IconContainer>
-                <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
-                  {peerName}
-                </IconLabel>
-              </>
-            ) : null}
-          </ItemTitleContainer>
-          <ItemNoteContainer>
-            <View style={{alignItems: 'flex-end'}}>
-              <IconLabel>{amountStr}</IconLabel>
-              {createdOn &&
-                (WithinPastDay(createdOn) ? (
-                  <Smallest style={{marginRight: 12}}>
-                    {t('Created ', {
-                      date: GetAmTimeAgo(createdOn),
-                    })}
-                  </Smallest>
-                ) : (
-                  <Smallest style={{marginRight: 12}}>
-                    {t('Created on', {
-                      date: GetAmFormatDate(createdOn),
-                    })}
-                  </Smallest>
-                ))}
-            </View>
-            <IconContainer>
-              <AngleRight />
-            </IconContainer>
-          </ItemNoteContainer>
-        </ItemTouchableContainer>
-        <Hr />
-      </View>
-    );
-  }, []);
+      return (
+        <View key={index.toString()}>
+          <ItemTouchableContainer
+            onPress={() => {
+              haptic('impactLight');
+              handleRequestMethod(item);
+            }}>
+            <ItemTitleContainer style={{maxWidth: '40%'}}>
+              {peerIcon && peerName ? (
+                <>
+                  <IconContainer>
+                    <FastImage
+                      source={{uri: peerIcon}}
+                      style={{width: 25, height: 25}}
+                    />
+                  </IconContainer>
+                  <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
+                    {peerName}
+                  </IconLabel>
+                </>
+              ) : null}
+            </ItemTitleContainer>
+            <ItemNoteContainer>
+              <View style={{alignItems: 'flex-end'}}>
+                <IconLabel>{amountStr}</IconLabel>
+                {createdOn &&
+                  (WithinPastDay(createdOn) ? (
+                    <Smallest style={{marginRight: 12}}>
+                      {t('Created ', {
+                        date: GetAmTimeAgo(createdOn),
+                      })}
+                    </Smallest>
+                  ) : (
+                    <Smallest style={{marginRight: 12}}>
+                      {t('Created on', {
+                        date: GetAmFormatDate(createdOn),
+                      })}
+                    </Smallest>
+                  ))}
+              </View>
+              <IconContainer>
+                <AngleRight />
+              </IconContainer>
+            </ItemNoteContainer>
+          </ItemTouchableContainer>
+          <Hr />
+        </View>
+      );
+    },
+    [],
+  );
 
   return (
     <WalletConnectContainer>
