@@ -44,6 +44,7 @@ import {
   MoonpayIncomingData,
   RampIncomingData,
   SardineIncomingData,
+  SardinePaymentData,
   SimplexIncomingData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
@@ -1244,53 +1245,78 @@ const handleSardineUri =
     }
 
     const order_id = getParameterByName('order_id', res);
-    const walletId = getParameterByName('walletId', res);
-    const status = getParameterByName('status', res);
+    const walletId = getParameterByName('walletId', res)!;
+    const status = getParameterByName('status', res)!;
+    const chain = getParameterByName('chain', res)!;
+    const address = getParameterByName('address', res)!;
+    const createdOn = getParameterByName('createdOn', res);
+    const cryptoAmount = getParameterByName('cryptoAmount', res);
+    const coin = getParameterByName('coin', res)!;
+    const env = (getParameterByName('env', res) as 'dev' | 'prod')!;
+    const fiatBaseAmount = getParameterByName('fiatBaseAmount', res)!;
+    const fiatTotalAmount = getParameterByName('fiatTotalAmount', res)!;
+    const fiatTotalAmountCurrency = getParameterByName(
+      'fiatTotalAmountCurrency',
+      res,
+    )!;
 
-    const stateParams: SardineIncomingData = {
-      sardineExternalId,
-      walletId,
-      status,
+    const newData: SardinePaymentData = {
+      address,
+      chain,
+      created_on: Number(createdOn),
+      crypto_amount: Number(cryptoAmount),
+      coin,
+      env,
+      external_id: sardineExternalId,
+      fiat_base_amount: Number(fiatBaseAmount),
+      fiat_total_amount: Number(fiatTotalAmount),
+      fiat_total_amount_currency: fiatTotalAmountCurrency,
       order_id,
+      status,
+      user_id: walletId,
     };
 
     dispatch(
-      BuyCryptoActions.updatePaymentRequestSardine({
-        sardineIncomingData: stateParams,
+      BuyCryptoActions.successPaymentRequestSardine({
+        sardinePaymentData: newData,
       }),
     );
 
     if (order_id) {
-      const {BUY_CRYPTO} = getState();
-      const order = BUY_CRYPTO.sardine[sardineExternalId];
-
       dispatch(
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'sardine',
-          fiatAmount: order?.fiat_total_amount || '',
-          fiatCurrency: order?.fiat_total_amount_currency || '',
-          coin: order?.coin?.toLowerCase() || '',
-          chain: order?.chain?.toLowerCase() || '',
+          fiatAmount: Number(fiatTotalAmount) || '',
+          fiatCurrency: fiatTotalAmountCurrency || '',
+          coin: coin?.toLowerCase() || '',
+          chain: chain?.toLowerCase() || '',
         }),
       );
-    }
 
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'SardineSettings',
-            params: {incomingPaymentRequest: stateParams},
+      const stateParams: SardineIncomingData = {
+        sardineExternalId,
+        walletId,
+        status,
+        order_id,
+      };
+
+      navigationRef.reset({
+        index: 2,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
           },
-        },
-      ],
-    });
+          {
+            name: 'ExternalServicesSettings',
+            params: {
+              screen: 'SardineSettings',
+              params: {incomingPaymentRequest: stateParams},
+            },
+          },
+        ],
+      });
+    }
   };
 
 const handleSimplexUri =

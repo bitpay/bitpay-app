@@ -65,7 +65,7 @@ const SardineSettings: React.FC = () => {
   useEffect(() => {
     if (isFocused) {
       const sardinePaymentRequests = Object.values(sardineHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod') && !!pr.order_id,
       );
       setTransactions(sardinePaymentRequests);
     }
