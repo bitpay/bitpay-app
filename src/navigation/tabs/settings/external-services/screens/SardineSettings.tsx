@@ -106,7 +106,7 @@ const SardineSettings: React.FC = () => {
                             : t('Payment request expired')}
                         </PrTxtStatus>
                       )}
-                      {pr.status === 'Complete' && (
+                      {['Complete', 'Completed'].includes(pr.status) && (
                         <PrTxtStatus style={{color: '#01d1a2'}}>
                           {t('Payment request completed')}
                         </PrTxtStatus>
