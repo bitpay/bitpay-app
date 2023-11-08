@@ -244,7 +244,8 @@ const GiftCardDetails = ({
         'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
         {website: cardConfig.website},
       );
-    const containsHtml = redeemInstructions.includes('</');
+    const containsHtml =
+      redeemInstructions.includes('</') || redeemInstructions.includes('/>');
     const redeemHtml = redeemInstructions
       .replaceAll(': \n', ': <br>')
       .replaceAll('\n\n', '<br><br>');
