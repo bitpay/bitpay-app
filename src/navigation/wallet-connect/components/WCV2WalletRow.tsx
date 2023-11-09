@@ -71,6 +71,7 @@ interface Props {
   isLast?: boolean;
   onPress: (keyId: string, wallet: WCV2Wallet) => void;
   showCheckbox: boolean;
+  showAddress: boolean;
   topic?: string;
 }
 
@@ -80,6 +81,7 @@ const WCV2WalletRow = ({
   onPress,
   isLast,
   showCheckbox,
+  showAddress,
   topic,
 }: Props) => {
   const dispatch = useAppDispatch();
@@ -146,7 +148,7 @@ const WCV2WalletRow = ({
           {!hideAllBalances ? balance?.crypto : '****'}
         </ListItemSubText>
       </CurrencyColumn>
-      {receiveAddress ? (
+      {receiveAddress && showAddress ? (
         <BalanceColumn>
           <SendToPillContainer>
             <PillContainer>

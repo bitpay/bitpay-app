@@ -78,23 +78,25 @@ export default ({
     }[] = [];
     allKeys &&
       allKeys.forEach((key: WCV2Key) => {
-        key.wallets.forEach((walletObj: WCV2Wallet) => {
-          const {checked, wallet} = walletObj;
-          const {receiveAddress, chain, network} = wallet;
-          let _supportedChain: [string, {chain: string; network: string}];
-          if (checked && receiveAddress) {
-            _supportedChain = Object.entries(
-              WALLET_CONNECT_SUPPORTED_CHAINS,
-            ).find(
-              ([_, {chain: c, network: n}]) => c === chain && n === network,
-            )! as [string, {chain: string; network: string}];
-            selectedWallets.push({
-              address: receiveAddress,
-              chain,
-              network,
-              supportedChain: _supportedChain[0],
-            });
-          }
+        key.wallets.forEach((walletNestedArray: WCV2Wallet[]) => {
+          walletNestedArray.forEach((walletObj: WCV2Wallet) => {
+            const {checked, wallet} = walletObj;
+            const {receiveAddress, chain, network} = wallet;
+            let _supportedChain: [string, {chain: string; network: string}];
+            if (checked && receiveAddress) {
+              _supportedChain = Object.entries(
+                WALLET_CONNECT_SUPPORTED_CHAINS,
+              ).find(
+                ([_, {chain: c, network: n}]) => c === chain && n === network,
+              )! as [string, {chain: string; network: string}];
+              selectedWallets.push({
+                address: receiveAddress,
+                chain,
+                network,
+                supportedChain: _supportedChain[0],
+              });
+            }
+          });
         });
       });
     return selectedWallets;
@@ -148,10 +150,20 @@ export default ({
           .sort((a, b) => {
             return a.wallet.credentials.account - b.wallet.credentials.account;
           });
+
+        const groupedWalletsByAccount: {[id: string]: WCV2Wallet[]} = {};
+        wallets.forEach(w => {
+          const accountId = w.wallet.credentials.account;
+          if (!groupedWalletsByAccount[accountId]) {
+            groupedWalletsByAccount[accountId] = [];
+          }
+          groupedWalletsByAccount[accountId].push(w);
+        });
+
         return {
           keyName: key.keyName,
           keyId: key.id,
-          wallets,
+          wallets: Object.values(groupedWalletsByAccount),
         };
       })
       .filter(key => key.wallets?.length > 0);
@@ -190,12 +202,14 @@ export default ({
                           wallet.wallet.credentials.account;
                         if (k?.keyId === keyId) {
                           const {wallets} = k;
-                          wallets.forEach((w: WCV2Wallet) => {
-                            if (
-                              w.wallet.credentials.account === accountChoosed
-                            ) {
-                              w.checked = !w.checked;
-                            }
+                          wallets.forEach((walletNestedArray: WCV2Wallet[]) => {
+                            walletNestedArray.forEach((w: WCV2Wallet) => {
+                              if (
+                                w.wallet.credentials.account === accountChoosed
+                              ) {
+                                w.checked = !w.checked;
+                              }
+                            });
                           });
                         }
                       });
@@ -219,6 +233,7 @@ export default ({
                   disabled={!getSelectedWallets().length}
                   onPress={async () => {
                     haptic('impactLight');
+                    const selectedWallets = getSelectedWallets();
                     if (proposal) {
                       onBackdropPress();
                       await sleep(500);
@@ -226,11 +241,11 @@ export default ({
                         screen: 'WalletConnectStart',
                         params: {
                           proposal,
-                          selectedWallets: getSelectedWallets(),
+                          selectedWallets: selectedWallets,
                         },
                       });
                     } else if (session) {
-                      onBackdropPress(getSelectedWallets(), session);
+                      onBackdropPress(selectedWallets, session);
                       await sleep(500);
                     }
                   }}>

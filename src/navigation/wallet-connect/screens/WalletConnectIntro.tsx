@@ -87,7 +87,9 @@ const WalletConnectIntro = () => {
   useEffect(() => {
     return navigation.addListener('beforeRemove', e => {
       if (e.data.action.type === 'POP') {
-        proposal && dispatch(walletConnectV2RejectSessionProposal(proposal.id));
+        if (proposal) {
+          dispatch(walletConnectV2RejectSessionProposal(proposal.id));
+        }
         navigation.goBack();
       }
     });

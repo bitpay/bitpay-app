@@ -133,6 +133,10 @@ export const walletConnectV2ApproveSessionProposal =
         dispatch(sessionProposal());
         resolve();
       } catch (err) {
+        await web3wallet.rejectSession({
+          id,
+          reason: getSdkError('USER_REJECTED'),
+        });
         dispatch(
           LogActions.error(
             `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${JSON.stringify(
@@ -283,7 +287,7 @@ export const walletConnectV2SubscribeToEvents =
         try {
           dispatch(
             LogActions.info(
-              `[WC-V2/walletConnectV2SubscribeToEvents]: session disconnected: ${JSON.stringify(
+              `[WC-V2/walletConnectV2SubscribeToEvents] auth request: ${JSON.stringify(
                 data,
               )}`,
             ),
@@ -432,6 +436,7 @@ export const walletConnectV2OnUpdateSession =
           topic,
           pairingTopic,
           requiredNamespaces,
+          optionalNamespaces,
         } = session;
         let hasAccounts: boolean = false;
 
@@ -451,8 +456,9 @@ export const walletConnectV2OnUpdateSession =
           });
         } else if (action === 'add_accounts' && session) {
           hasAccounts = true;
-          requiredNamespaces &&
-            Object.keys(requiredNamespaces).forEach(key => {
+          Object.keys(requiredNamespaces || {})
+            .concat(Object.keys(optionalNamespaces || {}))
+            .forEach(key => {
               const accounts: string[] = [];
               requiredNamespaces[key].chains?.map((chain: string) => {
                 selectedWallets.forEach((selectedWallet: any) => {

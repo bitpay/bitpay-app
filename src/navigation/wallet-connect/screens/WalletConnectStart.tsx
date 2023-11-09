@@ -86,13 +86,7 @@ const WalletConnectStart = () => {
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
   // version 2
   const {id, params} = proposal || {};
-  const {
-    proposer,
-    requiredNamespaces,
-    relays,
-    pairingTopic,
-    optionalNamespaces,
-  } = params || {};
+  const {proposer, relays, pairingTopic} = params || {};
   const {metadata} = proposer || {};
 
   const peerName = metadata?.name;
