@@ -77,9 +77,15 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
 };
 
 export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
-  '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m': {
-    name: 'USD Coin',
+  '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359_m': {
+    name: 'Native USD Coin (PoS)',
     symbol: 'usdc',
+    decimals: 6,
+    address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+  },
+  '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m': {
+    name: 'USD Coin (PoS)',
+    symbol: 'usdc_1',
     decimals: 6,
     address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
   },

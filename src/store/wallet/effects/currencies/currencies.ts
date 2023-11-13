@@ -107,7 +107,7 @@ const populateTokenInfo = ({
 }) => {
   const tokenAddressWithSuffix = addTokenChainSuffix(token.address, chain);
   const tokenData = {
-    name: token.name.replace('(PoS)', '').trim(),
+    name: token.name,
     chain,
     coin: token.symbol.toLowerCase(),
     logoURI: token.logoURI,
