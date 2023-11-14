@@ -50,7 +50,6 @@ import {
   RampQuoteResultForPaymentMethod,
   SardineGetAuthTokenRequestData,
   SardineGetQuoteRequestData,
-  SardinePaymentData,
   SardinePaymentUrlConfigParams,
   SimplexGetQuoteRequestData,
   SimplexPaymentData,
@@ -1715,26 +1714,6 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     }
 
-    const newData: SardinePaymentData = {
-      address,
-      chain: destinationChain,
-      created_on: Date.now(),
-      crypto_amount: Number(offers.sardine.amountReceiving),
-      coin: coin.toUpperCase(),
-      env: __DEV__ ? 'dev' : 'prod',
-      fiat_base_amount: offers.sardine.buyAmount!,
-      fiat_total_amount: offers.sardine.amountCost!,
-      fiat_total_amount_currency: offers.sardine.fiatCurrency,
-      external_id: sardineExternalId,
-      status: 'paymentRequestSent',
-      user_id: selectedWallet.id,
-    };
-
-    dispatch(
-      BuyCryptoActions.successPaymentRequestSardine({
-        sardinePaymentData: newData,
-      }),
-    );
 
     dispatch(
       Analytics.track('Requested Crypto Purchase', {
@@ -1753,7 +1732,25 @@ const BuyCryptoOffers: React.FC = () => {
       sardineExternalId +
       '&walletId=' +
       selectedWallet.id +
-      '&status=pending';
+      '&status=pending' +
+      '&address=' +
+      address +
+      '&chain=' +
+      destinationChain +
+      '&createdOn=' +
+      Date.now() +
+      '&cryptoAmount=' +
+      Number(offers.sardine.amountReceiving) +
+      '&coin=' +
+      coin.toUpperCase() +
+      '&env=' +
+      (__DEV__ ? 'dev' : 'prod') +
+      '&fiatBaseAmount=' +
+      offers.sardine.buyAmount +
+      '&fiatTotalAmount=' +
+      offers.sardine.amountCost +
+      '&fiatTotalAmountCurrency=' +
+      offers.sardine.fiatCurrency;
 
     const quoteData: SardinePaymentUrlConfigParams = {
       env: sardineEnv,
