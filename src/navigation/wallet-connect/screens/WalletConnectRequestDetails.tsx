@@ -147,15 +147,6 @@ const WalletConnectRequestDetails = () => {
         }
         setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
         break;
-      case 'wallet_switchEthereumChain':
-        setIsMethodSupported(false);
-        setMethodNotSupportedMsg(
-          t(
-            'wants to change network to a different one than the selected wallet. Please, try connecting to a different DeFi or DApp.',
-            {peerName},
-          ),
-        );
-        break;
       case 'wallet_addEthereumChain':
         _chainId = parseInt(request.params[0].chainId, 16);
         chain = Object.keys(EVM_BLOCKCHAIN_ID).find(

@@ -140,7 +140,9 @@ const WalletConnectHome = () => {
       showBottomNotificationModal({
         type: 'question',
         title: t('Confirm delete'),
-        message: t('Are you sure you want to delete this connection?'),
+        message: t(
+          'Are you sure you want to delete this account from the connection?',
+        ),
         enableBackdropDismiss: true,
         actions: [
           {

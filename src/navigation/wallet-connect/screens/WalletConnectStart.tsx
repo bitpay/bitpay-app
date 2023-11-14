@@ -133,6 +133,8 @@ const WalletConnectStart = () => {
           );
           chains.push(selectedWallet.supportedChain);
         });
+        // Remove duplicate values from chains array
+        const uniqueChains = [...new Set(chains)];
         const namespaces: SessionTypes.Namespaces = buildApprovedNamespaces({
           proposal: params,
           supportedNamespaces: {
@@ -151,6 +153,9 @@ const WalletConnectStart = () => {
               relays[0].protocol,
               namespaces,
               pairingTopic!,
+              proposal.params,
+              accounts,
+              uniqueChains,
             ),
           );
         }

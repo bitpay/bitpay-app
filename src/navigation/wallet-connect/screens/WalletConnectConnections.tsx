@@ -237,12 +237,17 @@ const WalletConnectConnections = () => {
             proposal={dappProposal}
             session={sessionToUpdate}
             onBackdropPress={async (
-              selectedWallets?: any,
+              selectedWallets?: {
+                chain: string;
+                address: string;
+                network: string;
+                supportedChain: string;
+              }[],
               session?: WCV2SessionType,
             ) => {
               hideWalletSelectorV2();
               await sleep(500);
-              if (selectedWallets && session) {
+              if (selectedWallets && selectedWallets.length > 0 && session) {
                 try {
                   dispatch(startOnGoingProcessModal('LOADING'));
                   await sleep(500);

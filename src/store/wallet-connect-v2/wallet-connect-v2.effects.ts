@@ -9,9 +9,9 @@ import {
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
-import {SessionTypes} from '@walletconnect/types';
+import {ProposalTypes, SessionTypes} from '@walletconnect/types';
 import {sleep} from '../../utils/helper-methods';
-import {getSdkError} from '@walletconnect/utils';
+import {BuildApprovedNamespacesParams, getSdkError} from '@walletconnect/utils';
 import {WalletConnectV2Actions} from '.';
 import {utils} from 'ethers';
 import {
@@ -31,7 +31,11 @@ import {
   findWalletByAddress,
 } from '../wallet/utils/wallet';
 import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
-import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
+import {
+  WCV2RequestType,
+  WCV2SessionType,
+  WCV2Wallet,
+} from './wallet-connect-v2.models';
 import {ethers, providers} from 'ethers';
 import {Core} from '@walletconnect/core';
 import {
@@ -43,6 +47,7 @@ import {WALLET_CONNECT_V2_PROJECT_ID} from '@env';
 import {startInAppNotification} from '../app/app.effects';
 import {navigationRef} from '../../Root';
 import {sessionProposal} from './wallet-connect-v2.actions';
+import {buildApprovedNamespaces} from '@walletconnect/utils';
 
 const BWC = BwcProvider.getInstance();
 
@@ -115,6 +120,9 @@ export const walletConnectV2ApproveSessionProposal =
     relayProtocol: string,
     namespaces: SessionTypes.Namespaces,
     pairingTopic: string,
+    proposalParams: ProposalTypes.Struct,
+    accounts: string[],
+    chains: string[],
   ): Effect<Promise<void>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -128,6 +136,9 @@ export const walletConnectV2ApproveSessionProposal =
           WalletConnectV2Actions.approveSessionProposal({
             ...session,
             pairingTopic,
+            proposalParams,
+            accounts,
+            chains,
           }),
         );
         dispatch(sessionProposal());
@@ -417,96 +428,131 @@ export const walletConnectV2OnUpdateSession =
   }: {
     session: WCV2SessionType;
     address?: string;
-    selectedWallets?: any;
+    selectedWallets?: {
+      chain: string;
+      address: string;
+      network: string;
+      supportedChain: string;
+    }[];
     action: string;
   }): Effect<Promise<void>> =>
-  dispatch => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        if (!web3wallet) {
-          web3wallet = await Web3Wallet.init({
-            core,
-            metadata: WALLETCONNECT_V2_METADATA,
-          });
-        }
+  async dispatch => {
+    try {
+      if (!web3wallet) {
+        web3wallet = await Web3Wallet.init({
+          core,
+          metadata: WALLETCONNECT_V2_METADATA,
+        });
+      }
 
-        const namespaces: SessionTypes.Namespaces = {};
-        const {
-          namespaces: _namespaces,
-          topic,
-          pairingTopic,
-          requiredNamespaces,
-          optionalNamespaces,
-        } = session;
-        let hasAccounts: boolean = false;
+      let namespaces: SessionTypes.Namespaces = {};
+      const {
+        namespaces: _namespaces,
+        topic,
+        pairingTopic,
+        requiredNamespaces,
+        optionalNamespaces,
+      } = session;
+      let {accounts: _accounts = [], chains: _chains} = session;
+      let hasAccounts: boolean = false;
 
-        if (action === 'disconnect' && address) {
-          Object.keys(_namespaces).forEach(key => {
-            const accounts: string[] = _namespaces[key].accounts.filter(
-              account => !account.includes(address),
-            );
-            if (accounts.length > 0) {
-              hasAccounts = true;
-            }
-            namespaces[key] = {
-              accounts: [...new Set(accounts)],
-              methods: _namespaces[key].methods,
-              events: _namespaces[key].events,
-            };
-          });
-        } else if (action === 'add_accounts' && session) {
-          hasAccounts = true;
+      if (action === 'disconnect' && address) {
+        if (_accounts.length === 0 || _chains.length === 0) {
           Object.keys(requiredNamespaces || {})
             .concat(Object.keys(optionalNamespaces || {}))
             .forEach(key => {
-              const accounts: string[] = [];
-              requiredNamespaces[key].chains?.map((chain: string) => {
-                selectedWallets.forEach((selectedWallet: any) => {
-                  accounts.push(`${chain}:${selectedWallet.address}`);
-                });
-              });
-              namespaces[key] = {
-                accounts: [
-                  ...new Set([..._namespaces[key].accounts, ...accounts]),
-                ],
-                methods: requiredNamespaces[key].methods,
-                events: requiredNamespaces[key].events,
-              };
+              _accounts = [
+                ...new Set([..._namespaces[key].accounts, ..._accounts]),
+              ];
+              _chains = [
+                ...new Set([...(_namespaces[key].chains || []), ..._chains]),
+              ];
             });
         }
 
-        if (!hasAccounts) {
-          dispatch(
-            LogActions.info(
-              "[WC-V2/walletConnectV2OnUpdateSession]: session disconnected. Namespaces accounts don't satisfy requiredNamespaces",
-            ),
-          );
-          await dispatch(walletConnectV2OnDeleteSession(topic, pairingTopic));
-          resolve();
-        } else {
-          await web3wallet.updateSession({
-            topic,
-            namespaces,
-          });
-          dispatch(
-            LogActions.info(
-              '[WC-V2/walletConnectV2OnUpdateSession]: session updated',
-            ),
-          );
-          dispatch(WalletConnectV2UpdateSession({...session, ...{namespaces}}));
-          resolve();
+        const accounts: string[] = _accounts.filter(
+          account => !account.includes(address),
+        );
+        let chains = accounts.length > 0 ? _chains : []; // reset chains if no accounts
+        hasAccounts = accounts.length > 0;
+
+        namespaces = buildApprovedNamespaces({
+          proposal: session.proposalParams,
+          supportedNamespaces: {
+            eip155: {
+              chains,
+              methods: Object.values(EIP155_SIGNING_METHODS),
+              events: ['chainChanged', 'accountsChanged'],
+              accounts,
+            },
+          },
+        } as BuildApprovedNamespacesParams);
+      } else if (action === 'add_accounts' && session) {
+        hasAccounts = true;
+        if (_accounts.length === 0 || _chains.length === 0) {
+          Object.keys(requiredNamespaces || {})
+            .concat(Object.keys(optionalNamespaces || {}))
+            .forEach(key => {
+              _accounts = [
+                ...new Set([..._namespaces[key].accounts, ..._accounts]),
+              ];
+              _chains = [
+                ...new Set([...(_namespaces[key].chains || []), ..._chains]),
+              ];
+            });
         }
-      } catch (err) {
+        const accounts: string[] = [];
+        const chains: string[] = [];
+        (selectedWallets || []).forEach(selectedWallet => {
+          accounts.push(
+            `${selectedWallet.supportedChain}:${selectedWallet.address}`,
+          );
+          chains.push(selectedWallet.supportedChain);
+        });
+        namespaces = buildApprovedNamespaces({
+          proposal: session.proposalParams,
+          supportedNamespaces: {
+            eip155: {
+              chains: [...new Set([..._chains, ...chains])],
+              methods: Object.values(EIP155_SIGNING_METHODS),
+              events: ['chainChanged', 'accountsChanged'],
+              accounts: [...new Set([..._accounts, ...accounts])],
+            },
+          },
+        } as BuildApprovedNamespacesParams);
+      }
+
+      if (!hasAccounts) {
         dispatch(
-          LogActions.error(
-            `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${JSON.stringify(
-              err,
-            )}`,
+          LogActions.info(
+            "[WC-V2/walletConnectV2OnUpdateSession]: session disconnected. Namespaces accounts don't satisfy requiredNamespaces",
           ),
         );
-        reject(err);
+        await dispatch(walletConnectV2OnDeleteSession(topic, pairingTopic));
+        Promise.resolve();
+      } else {
+        await web3wallet.updateSession({
+          topic,
+          namespaces,
+        });
+        dispatch(
+          LogActions.info(
+            '[WC-V2/walletConnectV2OnUpdateSession]: session updated',
+          ),
+        );
+        dispatch(WalletConnectV2UpdateSession({...session, ...{namespaces}}));
+        Promise.resolve();
       }
-    });
+    } catch (err) {
+      dispatch(
+        LogActions.error(
+          `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${JSON.stringify(
+            err,
+          )}`,
+        ),
+      );
+      Promise.reject(err);
+    }
   };
 
 const approveEIP155Request =
