@@ -139,18 +139,22 @@ const ProcessTx =
       ...customTokenOptionsByAddress,
     };
 
-    const {chain, coin} = tx;
-    const {tokenAddress} = wallet;
+    const {chain, coin, tokenAddress: payoutContractAddress} = tx;
+    let {tokenAddress} = wallet;
     // Only for payouts. For this case chain and coin have the same value.
     // Therefore, to identify an ERC20 token payout it is necessary to check if exist the tokenAddress field
     let tokenSymbol: string | undefined;
 
-    if (coin === chain && tokenAddress) {
+    if (coin === chain && payoutContractAddress) {
       tokenSymbol = Object.values(tokensOptsByAddress)
         .find(
-          ({address}) => tokenAddress?.toLowerCase() === address?.toLowerCase(),
+          ({address}) =>
+            payoutContractAddress?.toLowerCase() === address?.toLowerCase(),
         )
         ?.symbol.toLowerCase();
+      if (tokenSymbol) {
+        tokenAddress = payoutContractAddress?.toLowerCase();
+      }
     }
 
     // New transaction output format. Fill tx.amount and tx.toAmount for
