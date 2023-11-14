@@ -271,6 +271,7 @@ export function getGiftCardIcons(supportedCardMap: CardConfigMap) {
 export function generateGiftCardPrintHtml(
   cardConfig: CardConfig,
   giftCard: GiftCard,
+  scannableCodeDimensions: {height: number; width: number},
 ): string {
   return `<div style="text-align: center; margin-top: 50px; font-family: Arial;">
  <h1 style="font-size: 30px;">${formatFiatAmount(
@@ -287,7 +288,7 @@ export function generateGiftCardPrintHtml(
  <h3 style="color: gray;">Claim Code</h3>
  ${
    giftCard.barcodeImage
-     ? `<img src="${giftCard.barcodeImage}" style="margin-top: 10px;">`
+     ? `<img src="${giftCard.barcodeImage}" style="margin-top: 10px; height: ${scannableCodeDimensions.height}px; width: ${scannableCodeDimensions.width}px; ">`
      : ''
  }
  <h1 style="font-size: 22px;">${giftCard.claimCode}</h1>

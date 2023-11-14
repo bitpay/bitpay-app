@@ -325,7 +325,11 @@ const GiftCardDetails = ({
             onPress: async () => {
               await sleep(600); // Wait for options sheet to close on iOS
               await RNPrint.print({
-                html: generateGiftCardPrintHtml(cardConfig, giftCard),
+                html: generateGiftCardPrintHtml(
+                  cardConfig,
+                  giftCard,
+                  scannableCodeDimensions,
+                ),
               });
             },
           },
