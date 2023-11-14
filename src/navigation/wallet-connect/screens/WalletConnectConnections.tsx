@@ -77,6 +77,7 @@ const WalletConnectConnections = () => {
 
   const dispatch = useAppDispatch();
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
+  const accountRegex = /0x[a-fA-F0-9]{40}/;
 
   const ConnectionItem = ({
     peerName,
@@ -207,16 +208,22 @@ const WalletConnectConnections = () => {
                   />
                   {Object.keys(namespaces).length
                     ? Object.keys(namespaces).map(key => {
-                        return namespaces[key].accounts.map(
-                          (account, index) => (
+                        return namespaces[key].accounts
+                          .sort((a, b) => {
+                            const getAddress = (str: string) =>
+                              str.match(accountRegex)?.[0];
+                            return (getAddress(a) || '').localeCompare(
+                              getAddress(b) || '',
+                            );
+                          })
+                          .map((account, index) => (
                             <Connections
                               keys={allKeys}
                               account={account}
                               session={session}
                               key={index.toString()}
                             />
-                          ),
-                        );
+                          ));
                       })
                     : null}
                 </View>

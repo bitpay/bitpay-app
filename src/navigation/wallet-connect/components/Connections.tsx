@@ -60,6 +60,7 @@ const Connections = ({
           });
         }}
         showCheckbox={false}
+        showAddress={true}
       />
     </NoGutter>
   ) : null;
