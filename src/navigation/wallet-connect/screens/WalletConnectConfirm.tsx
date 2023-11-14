@@ -77,19 +77,28 @@ const WalletConnectConfirm = () => {
   const [txDetails, setTxDetails] = useState<TxDetails>();
 
   const _setTxDetails = async () => {
-    const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
-    const _txDetails = dispatch(
-      buildTxDetails({
-        wallet,
-        rates,
-        defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-        recipient,
-        context: 'walletConnect',
-        request,
-        feePerKb,
-      }),
-    );
-    setTxDetails(_txDetails);
+    try {
+      const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
+      const _txDetails = dispatch(
+        buildTxDetails({
+          wallet,
+          rates,
+          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+          recipient,
+          context: 'walletConnect',
+          request,
+          feePerKb,
+        }),
+      );
+      setTxDetails(_txDetails);
+    } catch (err) {
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(err),
+          title: t('Uh oh, something went wrong'),
+        }),
+      );
+    }
   };
 
   useEffect(() => {

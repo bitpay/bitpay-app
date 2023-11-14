@@ -411,6 +411,9 @@ export const buildTxDetails =
       gasLimit =
         (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
         (params[0].gas && parseInt(params[0]?.gas, 16));
+      if (!gasLimit) {
+        throw new Error('Wallet Connect request is missing gasLimit.');
+      }
       nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
       coin = chain =
         WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
