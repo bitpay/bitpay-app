@@ -354,9 +354,14 @@ export const getNonce = (
 };
 
 export const getInvoiceEffectiveRate =
-  (invoice: Invoice, coin: string, chain: string): Effect<number | undefined> =>
+  (
+    invoice: Invoice,
+    coin: string,
+    chain: string,
+    tokenAddress: string | undefined,
+  ): Effect<number | undefined> =>
   dispatch => {
-    const precision = dispatch(GetPrecision(coin, chain));
+    const precision = dispatch(GetPrecision(coin, chain, tokenAddress));
     const invoiceCurrency = getCurrencyCodeFromCoinAndChain(coin, chain);
     return (
       precision &&
@@ -454,7 +459,12 @@ export const buildTxDetails =
       defaultAltCurrencyIsoCode === invoice.currency
     ) {
       effectiveRate = dispatch(
-        getInvoiceEffectiveRate(invoice, selectedTransactionCurrency, chain),
+        getInvoiceEffectiveRate(
+          invoice,
+          selectedTransactionCurrency,
+          chain,
+          tokenAddress,
+        ),
       );
     }
     const opts = {
