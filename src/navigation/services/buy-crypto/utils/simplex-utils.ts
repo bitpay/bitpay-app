@@ -136,10 +136,12 @@ export const simplexSupportedErc20Tokens = [
 ];
 
 export const simplexSupportedMaticTokens = [
-  'eth', // ETH-MATIC
+  'eth', // WETH-MATIC
   'gmee',
   'pla', // PLA-MATIC
   'usdc', // USDC-MATIC
+  'usdt', // USDT-MATIC
+  'weth', // WETH-MATIC
 ];
 
 export const simplexErc20TokensWithSuffix = [
@@ -157,9 +159,11 @@ export const simplexErc20TokensWithSuffix = [
 ];
 
 export const simplexMaticTokensWithSuffix = [
-  'eth', // ETH-MATIC
+  'eth', // WETH-MATIC
   'pla', // PLA-MATIC
   'usdc', // USDC-MATIC
+  'usdt', // USDT-MATIC
+  'weth', // WETH-MATIC
 ];
 
 export const getSimplexSupportedCurrencies = (): string[] => {
@@ -187,7 +191,14 @@ export const getSimplexCoinFormat = (coin: string, chain: string): string => {
       break;
     case 'matic':
       if (simplexMaticTokensWithSuffix.includes(coin.toLowerCase())) {
-        formattedCoin = `${coin.toUpperCase()}-MATIC`;
+        switch (coin.toLowerCase()) {
+          case 'eth':
+            formattedCoin = 'WETH-MATIC';
+            break;
+          default:
+            formattedCoin = `${coin.toUpperCase()}-MATIC`;
+            break;
+        }
       }
       break;
     default:
