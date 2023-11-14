@@ -177,7 +177,7 @@ const ExportWallet = () => {
   const onSendByEmail = async ({password}: {password: string}) => {
     try {
       setSendButtonState('loading');
-      const _sendWallet = walletExport(password);
+      const _sendWallet = encodeURIComponent(walletExport(password));
       const {
         credentials: {walletName: cWalletName, walletId},
         walletName,
