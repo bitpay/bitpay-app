@@ -42,7 +42,6 @@ import {
   horizontalPadding,
   NavIconButtonContainer,
   SectionSpacer,
-  Terms,
 } from '../../components/styled/ShopTabComponents';
 import {
   ArchiveSvg,
@@ -69,6 +68,7 @@ import {generateGiftCardPrintHtml} from '../../../../../lib/gift-cards/gift-card
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import Markdown from 'react-native-markdown-display';
 import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
+import GiftCardTerms from '../../components/GiftCardTerms';
 
 const maxWidth = 320;
 
@@ -244,7 +244,8 @@ const GiftCardDetails = ({
         'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
         {website: cardConfig.website},
       );
-    const containsHtml = redeemInstructions.includes('</');
+    const containsHtml =
+      redeemInstructions.includes('</') || redeemInstructions.includes('/>');
     const redeemHtml = redeemInstructions
       .replaceAll(': \n', ': <br>')
       .replaceAll('\n\n', '<br><br>');
@@ -324,7 +325,11 @@ const GiftCardDetails = ({
             onPress: async () => {
               await sleep(600); // Wait for options sheet to close on iOS
               await RNPrint.print({
-                html: generateGiftCardPrintHtml(cardConfig, giftCard),
+                html: generateGiftCardPrintHtml(
+                  cardConfig,
+                  giftCard,
+                  scannableCodeDimensions,
+                ),
               });
             },
           },
@@ -357,6 +362,7 @@ const GiftCardDetails = ({
         contentContainerStyle={{
           alignItems: 'center',
           paddingHorizontal: horizontalPadding,
+          paddingBottom: 50,
         }}
         refreshControl={
           giftCard.status !== 'SUCCESS' ? (
@@ -540,7 +546,7 @@ const GiftCardDetails = ({
             {t('Created')} <TimeAgo time={giftCard.date} />
           </Paragraph>
         ) : null}
-        <Terms>{cardConfig.terms}</Terms>
+        <GiftCardTerms terms={cardConfig.terms} />
       </ScrollView>
     </>
   );

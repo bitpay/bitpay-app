@@ -42,7 +42,6 @@ import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {URL} from '../../../../../constants';
-import {Terms} from '../../../../tabs/shop/components/styled/ShopTabComponents';
 import {
   CardConfig,
   GiftCardDiscount,
@@ -63,6 +62,7 @@ import {
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
+import GiftCardTerms from '../../../../tabs/shop/components/GiftCardTerms';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -454,7 +454,7 @@ const Confirm = () => {
               }}
             />
             <Amount description={t('Total')} amount={total} />
-            <Terms>{cardConfig.terms}</Terms>
+            <GiftCardTerms terms={cardConfig.terms} />
           </>
         ) : null}
       </DetailsList>
