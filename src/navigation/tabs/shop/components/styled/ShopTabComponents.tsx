@@ -116,15 +116,6 @@ export const NavIconButtonContainer = styled.TouchableOpacity`
   overflow: hidden;
 `;
 
-export const Terms = styled(BaseText)`
-  color: ${SlateDark};
-  font-size: 12px;
-  line-height: 15px;
-  padding: 20px 10px 50px;
-  text-align: justify;
-  font-weight: 300;
-`;
-
 export const BillOption = styled.View<{isLast?: boolean}>`
   align-items: center;
   justify-content: center;
