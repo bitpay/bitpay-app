@@ -6,6 +6,22 @@ export const WALLETCONNECT_V2_METADATA = {
   icons: ['https://bitpay.com/resources/content/images/2019/10/bitpay.png'],
 };
 
+export const CHAIN_NAME_MAPPING: {[key: string]: string} = {
+  '1': 'Ethereum Mainnet',
+  '5': 'Ethereum Goerli',
+  '10': 'Optimistic Mainnet',
+  '42': 'LUKSO Mainnet',
+  '69': 'Optimistic Kovan',
+  '100': 'xDai',
+  '137': 'Polygon Mainnet',
+  '42161': 'Arbitrum Mainnet',
+  '42220': 'Celo Mainnet',
+  '44787': 'Celo Alfajores',
+  '80001': 'Polygon Mumbai',
+  '421611': 'Arbitrum Rinkeby',
+  // Add more mappings for other chain codes as needed
+};
+
 export const EIP155_MAINNET_CHAINS: {[key in string]: any} = {
   'eip155:1': {
     chainId: 1,

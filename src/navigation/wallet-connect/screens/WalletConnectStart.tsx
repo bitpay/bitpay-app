@@ -36,7 +36,10 @@ import {
   walletConnectV2RejectSessionProposal,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {buildApprovedNamespaces} from '@walletconnect/utils';
-import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
+import {
+  CHAIN_NAME_MAPPING,
+  EIP155_SIGNING_METHODS,
+} from '../../../constants/WalletConnectV2';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export type WalletConnectStartParamList = {
@@ -117,6 +120,26 @@ const WalletConnectStart = () => {
     [dispatch],
   );
 
+  const transformErrorMessage = (error: string) => {
+    const NETWORK_ERROR_PREFIX =
+      "Non conforming namespaces. approve() namespaces chains don't satisfy required namespaces.";
+
+    if (error.includes(NETWORK_ERROR_PREFIX)) {
+      // Replace chain codes with corresponding chain names
+      error = error.replace(/eip155:\d+/g, match => {
+        const chainCode = match.split(':')[1];
+        return CHAIN_NAME_MAPPING[chainCode] || match;
+      });
+      let parts = error.split('Required: ')[1].split('Approved: ');
+      let requiredPart = parts[0].replace(/,/g, ', ');
+      let approvedPart = parts[1].replace(/,/g, ', ');
+      const transformedMessage = `Network compatibility issue. The supported networks do not meet the requirements.\n\nRequired Networks:\n${requiredPart}\n\nSupported Networks:\n${approvedPart}`;
+      return transformedMessage;
+    } else {
+      return error;
+    }
+  };
+
   const rejectSessionProposal = () => {
     dispatch(walletConnectV2RejectSessionProposal(id!));
     navigation.dispatch(StackActions.popToTop());
@@ -186,9 +209,10 @@ const WalletConnectStart = () => {
       );
     } catch (e) {
       setButtonState('failed');
+      const transformedMessage = transformErrorMessage(BWCErrorMessage(e));
       await showErrorMessage(
         CustomErrorMessage({
-          errMsg: BWCErrorMessage(e),
+          errMsg: transformedMessage,
           title: t('Uh oh, something went wrong'),
         }),
       );
