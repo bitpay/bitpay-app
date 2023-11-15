@@ -1,6 +1,6 @@
 import {Effect} from '../../..';
-import {BwcProvider} from '../../../../lib/bwc';
-import {GetPrecision, IsCustomERCToken} from '../../utils/currency';
+import {GetPrecision} from '../../utils/currency';
+import {transformAmount} from '../../../../utils/helper-methods';
 import {SendMaxInfo, Wallet} from '../../wallet.models';
 import {GetMinFee} from '../fee/fee';
 const LOW_AMOUNT_RATIO = 0.15;
@@ -128,12 +128,12 @@ export const FormatAmount =
     fullPrecision?: boolean,
   ): Effect<string> =>
   dispatch => {
-    // TODO : now only works for english, specify opts to change thousand separator and decimal separator
-    let opts: any = {
-      fullPrecision: !!fullPrecision,
-    };
+    try {
+      // TODO : now only works for english, specify opts to change thousand separator and decimal separator
+      let opts: any = {
+        fullPrecision: !!fullPrecision,
+      };
 
-    if (tokenAddress && IsCustomERCToken(tokenAddress, chain)) {
       const {unitToSatoshi, unitDecimals} =
         dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
       if (unitToSatoshi) {
@@ -149,11 +149,11 @@ export const FormatAmount =
           minDecimals: 2,
         },
       };
-    }
 
-    return BwcProvider.getInstance()
-      .getUtils()
-      .formatAmount(satoshis, currencyAbbreviation.toLowerCase(), opts); // This util returns a string
+      return transformAmount(satoshis, opts);
+    } catch (e) {
+      throw e;
+    }
   };
 
 export const SatToUnit =
