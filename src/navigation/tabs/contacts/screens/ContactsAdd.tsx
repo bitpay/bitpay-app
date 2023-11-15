@@ -469,6 +469,7 @@ const ContactsAdd = ({
       );
     } else {
       setCoinValue(currencyAbbreviation);
+      setChainValue(currencyAbbreviation);
     }
     setCurrencyModalVisible(false);
   };
