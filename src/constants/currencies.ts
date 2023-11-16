@@ -478,15 +478,15 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
   },
   '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m': {
-    name: 'USD Coin (PoS)',
+    name: 'USD Coin',
     chain: 'matic',
-    coin: 'usdc',
+    coin: 'usdc.e',
     address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
     unitInfo: {
       unitName: 'USDC.e',
       unitToSatoshi: 1e6,
       unitDecimals: 6,
-      unitCode: 'usdc_1',
+      unitCode: 'usdc.e',
     },
     properties: {
       hasMultiSig: false,
@@ -510,11 +510,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
   },
-  '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359_m': {
-    name: 'Native USD Coin (PoS)',
+  '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359_m': {
+    name: 'USD Coin',
     chain: 'matic',
     coin: 'usdc',
-    address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+    address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
     unitInfo: {
       unitName: 'USDC',
       unitToSatoshi: 1e6,

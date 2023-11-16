@@ -261,8 +261,8 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.usdc_m,
-    currencyName: 'USD Coin (PoS)',
-    currencyAbbreviation: 'usdc_1',
+    currencyName: 'USD Coin',
+    currencyAbbreviation: 'usdc.e',
     chain: 'matic',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDC.png'),
@@ -273,7 +273,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.usdc_m,
-    currencyName: 'Native USD Coin (PoS)',
+    currencyName: 'USD Coin',
     currencyAbbreviation: 'usdc',
     chain: 'matic',
     isToken: true,

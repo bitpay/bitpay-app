@@ -75,7 +75,7 @@ export const Analytics = (() => {
           });
 
         // Force App Version
-        const superProperties = {'app_version_string': APP_VERSION};
+        const superProperties = {app_version_string: APP_VERSION};
         await MixpanelWrapper.init(!_isTrackingAuthorized, superProperties)
           .then(() => {
             dispatch(
