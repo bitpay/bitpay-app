@@ -165,8 +165,7 @@ export function redemptionFailuresLessThanADayOld(
 ) {
   const dayAgo = moment().subtract(1, 'day').toDate();
   return (
-    ['FAILURE', 'PENDING'].includes(giftCard.status) &&
-    new Date(giftCard.date) > dayAgo
+    ['PENDING'].includes(giftCard.status) && new Date(giftCard.date) > dayAgo
   );
 }
 

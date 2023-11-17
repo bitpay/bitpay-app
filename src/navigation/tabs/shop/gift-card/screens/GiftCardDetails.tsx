@@ -503,7 +503,7 @@ const GiftCardDetails = ({
                 <TextAlign align="center">
                   <Paragraph>
                     {t(
-                      'Claim code not yet available. Please check back later.',
+                      'Unable to fetch claim information. Please check back later.',
                     )}
                   </Paragraph>
                 </TextAlign>
