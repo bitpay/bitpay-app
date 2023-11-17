@@ -4,7 +4,6 @@ import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
 import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
-import RemoteImage from '../../components/RemoteImage';
 import TagsSvg from '../../../../../../assets/img/tags-stack.svg';
 import {
   BaseText,
@@ -46,6 +45,7 @@ import {APP_NETWORK} from '../../../../../constants/config';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import GiftCardImage from '../../components/GiftCardImage';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -335,12 +335,7 @@ const BuyGiftCard = ({
               shadowRadius: 30,
               elevation: 5,
             }}>
-            <RemoteImage
-              uri={cardImage}
-              height={169}
-              width={270}
-              borderRadius={10}
-            />
+            <GiftCardImage uri={cardImage} />
           </View>
           <AmountContainer>
             {cardConfig.supportedAmounts ? (

@@ -36,7 +36,6 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import RemoteImage from '../../components/RemoteImage';
 import {GiftCardStackParamList} from '../GiftCardStack';
 import {
   horizontalPadding,
@@ -72,6 +71,7 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import Markdown from 'react-native-markdown-display';
 import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import GiftCardTerms from '../../components/GiftCardTerms';
+import GiftCardImage from '../../components/GiftCardImage';
 
 const maxWidth = 320;
 
@@ -393,12 +393,7 @@ const GiftCardDetails = ({
             })}
           </Amount>
         </TouchableOpacity>
-        <RemoteImage
-          uri={cardImage}
-          height={169}
-          width={270}
-          borderRadius={10}
-        />
+        <GiftCardImage uri={cardImage} />
         {giftCard.status === 'SUCCESS' ? (
           <>
             {defaultClaimCodeType !== 'link' ? (
