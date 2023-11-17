@@ -354,14 +354,16 @@ const BuyGiftCard = ({
                     );
                   }}
                 />
-                <SupportedAmounts>
-                  <SupportedAmountsLabel>
-                    {t('Purchase Amounts:')}
-                  </SupportedAmountsLabel>
-                  <TextAlign align="center">
-                    <GiftCardDenoms cardConfig={cardConfig} />
-                  </TextAlign>
-                </SupportedAmounts>
+                {cardConfig.supportedAmounts.length > 1 ? (
+                  <SupportedAmounts>
+                    <SupportedAmountsLabel>
+                      {t('Purchase Amounts:')}
+                    </SupportedAmountsLabel>
+                    <TextAlign align="center">
+                      <GiftCardDenoms cardConfig={cardConfig} />
+                    </TextAlign>
+                  </SupportedAmounts>
+                ) : null}
               </DenomSelectionContainer>
             ) : (
               <TouchableOpacity
