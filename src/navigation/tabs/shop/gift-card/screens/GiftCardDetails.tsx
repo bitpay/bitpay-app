@@ -64,7 +64,10 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
-import {generateGiftCardPrintHtml} from '../../../../../lib/gift-cards/gift-card';
+import {
+  generateGiftCardPrintHtml,
+  getCardImage,
+} from '../../../../../lib/gift-cards/gift-card';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import Markdown from 'react-native-markdown-display';
 import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
@@ -166,6 +169,7 @@ const GiftCardDetails = ({
   const [defaultClaimCodeType, setDefaultClaimCodeType] = useState(
     cardConfig.defaultClaimCodeType,
   );
+  const cardImage = getCardImage(cardConfig, giftCard.amount);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
@@ -390,7 +394,7 @@ const GiftCardDetails = ({
           </Amount>
         </TouchableOpacity>
         <RemoteImage
-          uri={cardConfig.cardImage}
+          uri={cardImage}
           height={169}
           width={270}
           borderRadius={10}

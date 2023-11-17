@@ -31,6 +31,7 @@ import GiftCardDenoms, {
 } from '../../components/GiftCardDenoms';
 import {
   getActivationFee,
+  getCardImage,
   getVisibleDiscount,
   isSupportedDiscountType,
 } from '../../../../../lib/gift-cards/gift-card';
@@ -130,6 +131,15 @@ const BuyGiftCard = ({
   const shouldSync = user && syncGiftCardPurchasesWithBitPayId;
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
+  );
+  const [cardImage, setCardImage] = useState(
+    getCardImage(
+      cardConfig,
+      cardConfig.supportedAmounts &&
+        cardConfig.supportedAmounts[
+          getMiddleIndex(cardConfig.supportedAmounts || [])
+        ],
+    ),
   );
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -326,7 +336,7 @@ const BuyGiftCard = ({
               elevation: 5,
             }}>
             <RemoteImage
-              uri={cardConfig.cardImage}
+              uri={cardImage}
               height={169}
               width={270}
               borderRadius={10}
@@ -338,9 +348,16 @@ const BuyGiftCard = ({
                 <GiftCardDenomSelector
                   cardConfig={cardConfig}
                   selectedIndex={selectedAmountIndex}
-                  onChange={(newIndex: number) =>
-                    setSelectedAmountIndex(newIndex)
-                  }
+                  onChange={(newIndex: number) => {
+                    setSelectedAmountIndex(newIndex);
+                    setCardImage(
+                      getCardImage(
+                        cardConfig,
+                        cardConfig.supportedAmounts &&
+                          cardConfig.supportedAmounts[newIndex],
+                      ),
+                    );
+                  }}
                 />
                 <SupportedAmounts>
                   <SupportedAmountsLabel>
