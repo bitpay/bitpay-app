@@ -98,3 +98,51 @@ export const startContactTokenAddressMigration =
       }
     });
   };
+
+export const startContactBridgeUsdcMigration =
+  (): Effect<Promise<void>> =>
+  async (dispatch, getState): Promise<void> => {
+    return new Promise(async resolve => {
+      try {
+        dispatch(
+          LogActions.info('[startContactBridgeUsdcMigration] - starting...'),
+        );
+        const contacts = getState().CONTACT.list;
+        dispatch(
+          LogActions.persistLog(
+            LogActions.info(`Migrating: ${JSON.stringify(contacts)}`),
+          ),
+        );
+        const usdcBridgeTokenAddress =
+          '0x2791bca1f2de4661ed88a30c99a7a9449aa84174';
+
+        const migratedContacts = contacts.map(contact =>
+          contact.tokenAddress === usdcBridgeTokenAddress
+            ? {...contact, coin: 'usdc.e'}
+            : contact,
+        );
+        await dispatch(migrateContacts(migratedContacts));
+        dispatch(
+          LogActions.persistLog(
+            LogActions.info(
+              `success [startContactBridgeUsdcMigration]: ${JSON.stringify(
+                migratedContacts,
+              )}`,
+            ),
+          ),
+        );
+        return resolve();
+      } catch (err: unknown) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.persistLog(
+            LogActions.error(
+              '[startContactBridgeUsdcMigration] failed - ',
+              errStr,
+            ),
+          ),
+        );
+        return resolve();
+      }
+    });
+  };
