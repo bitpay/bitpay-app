@@ -25,6 +25,7 @@ import {
   SearchContainer,
   SearchInput,
   Column,
+  CurrencyColumn,
 } from '../../../../components/styled/Containers';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
@@ -44,6 +45,7 @@ import {
   findContact,
   getBadgeImg,
   getChainUsingSuffix,
+  formatCurrencyAbbreviation,
 } from '../../../../utils/helper-methods';
 import CurrencySelectionRow, {
   TokenSelectionRow,
@@ -171,6 +173,17 @@ const IsTokenAddressTitle = styled(BaseText)`
 const CheckBoxContainer = styled.View`
   flex-direction: column;
   justify-content: center;
+`;
+
+const CurrencyTitleColumn = styled(CurrencyColumn)`
+  flex-direction: column;
+  align-items: flex-start;
+`;
+
+const CurrencySubTitle = styled(BaseText)`
+  color: #9ba3ae;
+  font-size: 12px;
+  margin-left: 10px;
 `;
 
 const ContactsAdd = ({
@@ -732,7 +745,14 @@ const ContactsAdd = ({
                     />
                   </View>
                 ) : null}
-                <CurrencyName>{selectedToken?.currencyName}</CurrencyName>
+                <CurrencyTitleColumn>
+                  <CurrencyName>{selectedToken?.currencyName}</CurrencyName>
+                  <CurrencySubTitle>
+                    {formatCurrencyAbbreviation(
+                      selectedToken.currencyAbbreviation,
+                    )}
+                  </CurrencySubTitle>
+                </CurrencyTitleColumn>
               </Row>
               <WalletIcons.DownToggle />
             </Row>
