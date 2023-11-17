@@ -362,7 +362,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
                 {t(
                   'Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.',
                   {
-                    coin: wallet.currencyAbbreviation.toUpperCase(),
+                    coin: wallet.currencyAbbreviation,
                     protocolName: titleCasing(
                       getProtocolName(wallet.chain, wallet.network)!,
                     ),

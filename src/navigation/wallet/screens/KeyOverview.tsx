@@ -47,6 +47,7 @@ import {
 } from '../../../styles/colors';
 import {
   convertToFiat,
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   shouldScale,
   sleep,
@@ -193,7 +194,7 @@ export const buildUIFormattedWallet: (
   img,
   badgeImg,
   currencyName,
-  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+  currencyAbbreviation: formatCurrencyAbbreviation(currencyAbbreviation),
   chain,
   walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,

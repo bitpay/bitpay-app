@@ -10,6 +10,7 @@ import {
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {
+  BitpaySupportedMaticTokens,
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
   SUPPORTED_CURRENCIES,
@@ -127,8 +128,19 @@ export const buildWalletObj = (
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
+  let updatedCurrencyAbbreviation = currencyAbbreviation;
+  // Only for USDC.e
+  const usdcToken = '0x2791bca1f2de4661ed88a30c99a7a9449aa84174';
+  if (token && token.address.toLowerCase() === usdcToken) {
+    const tokenAddressSuffix = addTokenChainSuffix(
+      token.address.toLowerCase(),
+      chain,
+    );
+    updatedCurrencyAbbreviation =
+      BitpaySupportedMaticTokens[tokenAddressSuffix].coin;
+  }
   const _currencyAbbreviation = getCurrencyAbbreviation(
-    currencyAbbreviation,
+    updatedCurrencyAbbreviation,
     chain,
   );
 
@@ -143,7 +155,7 @@ export const buildWalletObj = (
   return {
     id: walletId,
     currencyName,
-    currencyAbbreviation,
+    currencyAbbreviation: updatedCurrencyAbbreviation,
     tokenAddress: token?.address?.toLowerCase(),
     chain,
     walletName,

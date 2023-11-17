@@ -57,6 +57,7 @@ export const CurrencyListIcons: {
   matic_e: props => <MaticIcon {...props} />,
   pyusd_e: props => <PyusdIcon {...props} />,
   usdc_m: props => <UsdcIcon {...props} />,
+  'usdc.e_m': props => <UsdcIcon {...props} />,
   busd_m: props => <BusdIcon {...props} />,
   dai_m: props => <DaiIcon {...props} />,
   wbtc_m: props => <WbtcIcon {...props} />,

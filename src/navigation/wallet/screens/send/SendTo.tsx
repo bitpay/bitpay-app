@@ -27,6 +27,7 @@ import {WalletStackParamList} from '../../WalletStack';
 import {Effect, RootState} from '../../../../store';
 import {
   convertToFiat,
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getErrorString,
   sleep,
@@ -215,7 +216,8 @@ export const BuildKeyWalletRow = (
             defaultAltCurrencyIsoCode,
           ),
           fiatLockedBalance: '',
-          currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+          currencyAbbreviation:
+            formatCurrencyAbbreviation(currencyAbbreviation),
           network,
           walletName: walletName || fallbackName,
         });

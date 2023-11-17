@@ -40,7 +40,7 @@ import {
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {AppActions} from '../../../store/app';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {sleep} from '../../../utils/helper-methods';
+import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {ReceivingAddress} from '../../../store/bitpay-id/bitpay-id.models';
 import {WalletScreens} from '../../wallet/WalletStack';
@@ -260,7 +260,9 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
         id: '',
         coin: wallet.currencyAbbreviation,
         chain: wallet.chain,
-        label: wallet.walletName || wallet.currencyAbbreviation.toUpperCase(),
+        label:
+          wallet.walletName ||
+          formatCurrencyAbbreviation(wallet.currencyAbbreviation),
         address,
         provider: 'BitPay',
         currency: getCurrencyCodeFromCoinAndChain(

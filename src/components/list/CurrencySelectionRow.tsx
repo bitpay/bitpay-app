@@ -12,7 +12,10 @@ import {
   Slate30,
   SlateDark,
 } from '../../styles/colors';
-import {getBadgeImg} from '../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  getBadgeImg,
+} from '../../utils/helper-methods';
 import Checkbox from '../checkbox/Checkbox';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import haptic from '../haptic-feedback/haptic';
@@ -121,6 +124,9 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
       disabled,
     } = currency;
 
+    const _currencyAbbreviation =
+      formatCurrencyAbbreviation(currencyAbbreviation);
+
     return (
       <FlexRow
         accessibilityLabel="chain-selection-row"
@@ -132,9 +138,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         <CurrencyTitleColumn style={{flexGrow: 1}}>
           <CurrencyTitle>{currencyName}</CurrencyTitle>
 
-          <CurrencySubTitle>
-            {currencyAbbreviation.toUpperCase()}
-          </CurrencySubTitle>
+          <CurrencySubTitle>{_currencyAbbreviation}</CurrencySubTitle>
         </CurrencyTitleColumn>
 
         {!hideCheckbox && (
@@ -177,6 +181,9 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
     } = props;
     const badgeUri =
       _badgeUri || getBadgeImg(token.currencyAbbreviation, token.chain);
+    const _currencyAbbreviation = formatCurrencyAbbreviation(
+      token.currencyAbbreviation,
+    );
 
     return (
       <FlexRow
@@ -207,7 +214,7 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
           <CurrencyTitle>{token.currencyName}</CurrencyTitle>
 
           <CurrencySubTitle style={{flexShrink: 1, flexGrow: 1}}>
-            {token.currencyAbbreviation.toUpperCase()}
+            {_currencyAbbreviation}
           </CurrencySubTitle>
         </CurrencyTitleColumn>
 

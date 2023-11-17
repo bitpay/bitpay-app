@@ -15,6 +15,7 @@ import {SwapOpts} from '../../navigation/services/swap-crypto/screens/SwapCrypto
 import {ParseAmount} from '../../store/wallet/effects/amount/amount';
 import {Caution, Slate30, SlateDark} from '../../styles/colors';
 import {
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getRateByCurrencyName,
 } from '../../utils/helper-methods';
@@ -181,7 +182,12 @@ const Amount: React.VFC<AmountProps> = ({
 
   const swapList = useMemo(() => {
     return cryptoCurrencyAbbreviation
-      ? [...new Set([cryptoCurrencyAbbreviation, fiatCurrency])]
+      ? [
+          ...new Set([
+            formatCurrencyAbbreviation(cryptoCurrencyAbbreviation),
+            fiatCurrency,
+          ]),
+        ]
       : [fiatCurrency];
   }, [cryptoCurrencyAbbreviation, fiatCurrency]);
 
@@ -419,7 +425,9 @@ const Amount: React.VFC<AmountProps> = ({
               {displayAmount || 0}
             </AmountText>
             <CurrencySuperScript>
-              <CurrencyText>{currency || 'USD'}</CurrencyText>
+              <CurrencyText>
+                {formatCurrencyAbbreviation(currency) || 'USD'}
+              </CurrencyText>
             </CurrencySuperScript>
           </Row>
           {customAmountSublabel ? (
@@ -428,7 +436,8 @@ const Amount: React.VFC<AmountProps> = ({
             <Row>
               <AmountEquivText>
                 {displayEquivalentAmount || 0}{' '}
-                {primaryIsFiat && cryptoCurrencyAbbreviation}
+                {primaryIsFiat &&
+                  formatCurrencyAbbreviation(cryptoCurrencyAbbreviation)}
               </AmountEquivText>
             </Row>
           ) : null}

@@ -24,7 +24,7 @@ import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
-import {sleep} from '../../../utils/helper-methods';
+import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -110,7 +110,7 @@ export const RecipientList: React.FC<RecipientListProps> = ({
               <H5>
                 {recipient.amount +
                   ' ' +
-                  wallet.currencyAbbreviation.toUpperCase()}
+                  formatCurrencyAbbreviation(wallet.currencyAbbreviation)}
               </H5>
             </TouchableOpacity>
           ) : null}
@@ -295,7 +295,7 @@ const SendToOptions = () => {
 
       <AmountModal
         isVisible={recipientAmount.showModal}
-        cryptoCurrencyAbbreviation={params.wallet.currencyAbbreviation.toUpperCase()}
+        cryptoCurrencyAbbreviation={params.wallet.currencyAbbreviation}
         chain={params.wallet.chain}
         onClose={() => {
           setRecipientAmount({showModal: false});

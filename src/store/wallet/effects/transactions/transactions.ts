@@ -21,7 +21,10 @@ import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  formatFiatAmount,
+} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';

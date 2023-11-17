@@ -18,7 +18,11 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
-import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  formatFiatAmount,
+  sleep,
+} from '../../../../../utils/helper-methods';
 import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
@@ -357,7 +361,9 @@ const Confirm = () => {
         recipientName: r.name,
         recipientAddress: r.address,
         img: r.type === 'contact' ? r.type : wallet.img,
-        recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
+        recipientAmountStr: `${r.amount} ${formatCurrencyAbbreviation(
+          currencyAbbreviation,
+        )}`,
         recipientAltAmountStr: formatFiatAmount(
           dispatch(
             toFiat(

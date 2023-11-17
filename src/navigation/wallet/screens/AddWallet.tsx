@@ -694,7 +694,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
                   />
                   <AssociateWalletName>
                     {associatedWallet?.walletName ||
-                      `${associatedWallet.currencyAbbreviation.toUpperCase()} Wallet`}
+                      `${associatedWallet.currencyAbbreviation} Wallet`}
                   </AssociateWalletName>
                 </Row>
                 <Icons.DownToggle />
