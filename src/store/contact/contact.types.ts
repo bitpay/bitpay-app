@@ -7,6 +7,7 @@ export enum ContactActionTypes {
   MIGRATE_CONTACTS = 'CONTACT/MIGRATE_CONTACTS',
   SET_CONTACT_MIGRATION_COMPLETE = 'CONTACT/SET_CONTACT_MIGRATION_COMPLETE',
   SET_CONTACT_TOKEN_ADDRESS_MIGRATION_COMPLETE = 'CONTACT/SET_CONTACT_TOKEN_ADDRESS_MIGRATION_COMPLETE',
+  SET_CONTACT_BRIDGE_USDC_MIGRATION_COMPLETE = 'CONTACT/SET_CONTACT_BRIDGE_USDC_MIGRATION_COMPLETE',
 }
 
 interface CreateContact {
@@ -40,10 +41,15 @@ interface SetContactTokenAddressMigrationComplete {
   type: typeof ContactActionTypes.SET_CONTACT_TOKEN_ADDRESS_MIGRATION_COMPLETE;
 }
 
+interface SetContactBridgeUsdcMigrationComplete {
+  type: typeof ContactActionTypes.SET_CONTACT_BRIDGE_USDC_MIGRATION_COMPLETE;
+}
+
 export type ContactActionType =
   | CreateContact
   | UpdateContact
   | DeleteContact
   | MigrateContacts
   | SetContactMigrationComplete
-  | SetContactTokenAddressMigrationComplete;
+  | SetContactTokenAddressMigrationComplete
+  | SetContactBridgeUsdcMigrationComplete;

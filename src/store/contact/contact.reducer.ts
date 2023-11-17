@@ -8,12 +8,14 @@ export interface ContactState {
   list: Array<ContactRowProps>;
   contactMigrationComplete: boolean;
   contactTokenAddressMigrationComplete: boolean;
+  contactBridgeUsdcMigrationComplete: boolean;
 }
 
 const initialState: ContactState = {
   list: [],
   contactMigrationComplete: false,
   contactTokenAddressMigrationComplete: false,
+  contactBridgeUsdcMigrationComplete: false,
 };
 
 export const contactReducer = (
@@ -88,6 +90,12 @@ export const contactReducer = (
       return {
         ...state,
         contactTokenAddressMigrationComplete: true,
+      };
+
+    case ContactActionTypes.SET_CONTACT_BRIDGE_USDC_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        contactBridgeUsdcMigrationComplete: true,
       };
 
     default:

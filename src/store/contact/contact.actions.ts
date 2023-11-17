@@ -27,6 +27,10 @@ export const setContactTokenAddressMigrationComplete =
     type: ContactActionTypes.SET_CONTACT_TOKEN_ADDRESS_MIGRATION_COMPLETE,
   });
 
+export const setContactBridgeUsdcMigrationComplete = (): ContactActionType => ({
+  type: ContactActionTypes.SET_CONTACT_BRIDGE_USDC_MIGRATION_COMPLETE,
+});
+
 export const deleteContact = (
   address: string,
   coin: string,
