@@ -56,6 +56,41 @@ export function getCardConfigFromApiConfigMap(
   return availableCards;
 }
 
+export function getAmountSpecificConfig(cards: ApiCard[]) {
+  if (cards.length < 2) {
+    return undefined;
+  }
+  const fieldIsIdentical = (fieldName: keyof ApiCard) => (c: ApiCard) =>
+    c[fieldName] === cards[0][fieldName];
+  const cardImagesAreIdentical = cards.every(fieldIsIdentical('cardImage'));
+  const descriptionsAreIdentical = cards.every(fieldIsIdentical('description'));
+  const termsAreIdentical = cards.every(fieldIsIdentical('terms'));
+  if (cardImagesAreIdentical && descriptionsAreIdentical && termsAreIdentical) {
+    return undefined;
+  }
+  return cards.reduce(
+    (cardSpecificConfig, card) => ({
+      ...cardSpecificConfig,
+      [card.amount as number]: {
+        ...(!cardImagesAreIdentical && {cardImage: card.cardImage}),
+        ...(!descriptionsAreIdentical && {description: card.description}),
+        ...(!termsAreIdentical && {terms: card.terms}),
+      },
+    }),
+    {},
+  );
+}
+
+export function getCardImage(cardConfig: CardConfig, amount?: number): string {
+  return (
+    (amount &&
+      cardConfig.amountSpecificConfig &&
+      cardConfig.amountSpecificConfig[amount] &&
+      cardConfig.amountSpecificConfig[amount].cardImage) ||
+    cardConfig.cardImage
+  );
+}
+
 export function getCardConfigFromApiBrandConfig(
   cardName: string,
   apiBrandConfig: ApiCardConfig,
@@ -96,7 +131,11 @@ export function getCardConfigFromApiBrandConfig(
         minAmount: rangeMin < 1 ? 1 : range.minAmount,
         maxAmount: range.maxAmount,
       }
-    : {...baseConfig, supportedAmounts};
+    : {
+        ...baseConfig,
+        supportedAmounts,
+        amountSpecificConfig: getAmountSpecificConfig(apiBrandConfig),
+      };
 }
 
 function getDisplayNameSortValue(displayName: string): string {
@@ -126,8 +165,7 @@ export function redemptionFailuresLessThanADayOld(
 ) {
   const dayAgo = moment().subtract(1, 'day').toDate();
   return (
-    ['FAILURE', 'PENDING'].includes(giftCard.status) &&
-    new Date(giftCard.date) > dayAgo
+    ['PENDING'].includes(giftCard.status) && new Date(giftCard.date) > dayAgo
   );
 }
 

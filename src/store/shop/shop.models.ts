@@ -62,6 +62,11 @@ export interface CommonCardConfig {
 export interface CardConfig extends CommonCardConfig {
   name: string;
   supportedAmounts?: number[];
+  amountSpecificConfig?: {
+    [amount: number]: {
+      cardImage: string;
+    };
+  };
 }
 
 export interface UnsoldGiftCard {

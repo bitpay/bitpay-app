@@ -36,7 +36,6 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import RemoteImage from '../../components/RemoteImage';
 import {GiftCardStackParamList} from '../GiftCardStack';
 import {
   horizontalPadding,
@@ -64,11 +63,15 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
-import {generateGiftCardPrintHtml} from '../../../../../lib/gift-cards/gift-card';
+import {
+  generateGiftCardPrintHtml,
+  getCardImage,
+} from '../../../../../lib/gift-cards/gift-card';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import Markdown from 'react-native-markdown-display';
 import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import GiftCardTerms from '../../components/GiftCardTerms';
+import GiftCardImage from '../../components/GiftCardImage';
 
 const maxWidth = 320;
 
@@ -166,6 +169,7 @@ const GiftCardDetails = ({
   const [defaultClaimCodeType, setDefaultClaimCodeType] = useState(
     cardConfig.defaultClaimCodeType,
   );
+  const cardImage = getCardImage(cardConfig, giftCard.amount);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
@@ -389,12 +393,7 @@ const GiftCardDetails = ({
             })}
           </Amount>
         </TouchableOpacity>
-        <RemoteImage
-          uri={cardConfig.cardImage}
-          height={169}
-          width={270}
-          borderRadius={10}
-        />
+        <GiftCardImage uri={cardImage} />
         {giftCard.status === 'SUCCESS' ? (
           <>
             {defaultClaimCodeType !== 'link' ? (
@@ -504,7 +503,7 @@ const GiftCardDetails = ({
                 <TextAlign align="center">
                   <Paragraph>
                     {t(
-                      'Claim code not yet available. Please check back later.',
+                      'Unable to fetch claim information. Please check back later.',
                     )}
                   </Paragraph>
                 </TextAlign>
