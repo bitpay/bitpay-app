@@ -138,27 +138,10 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    const {appFirstOpenData, onboardingCompleted, migrationComplete} = APP;
+    const {migrationComplete} = APP;
     const {customTokensMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
-    if (onboardingCompleted) {
-      await dispatch(Analytics.initialize());
-      QuickActions.clearShortcutItems();
-      QuickActions.setShortcutItems(ShortcutList);
-    }
-
-    if (!appFirstOpenData?.firstOpenDate) {
-      const firstOpen = Math.floor(Date.now() / 1000);
-
-      dispatch(setAppFirstOpenEventDate(firstOpen));
-      dispatch(trackFirstOpenEvent(firstOpen));
-    } else {
-      dispatch(Analytics.track('Last Opened App'));
-
-      if (!appFirstOpenData?.firstOpenEventComplete) {
-        dispatch(trackFirstOpenEvent(appFirstOpenData.firstOpenDate));
-      }
-    }
+    dispatch(initAnalytics());
 
     dispatch(startWalletStoreInit());
 
@@ -227,6 +210,30 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await sleep(500);
     dispatch(showBlur(false));
     RNBootSplash.hide();
+  }
+};
+
+const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
+  const {APP} = getState();
+  const {appFirstOpenData, onboardingCompleted} = APP;
+
+  if (onboardingCompleted) {
+    await dispatch(Analytics.initialize());
+    QuickActions.clearShortcutItems();
+    QuickActions.setShortcutItems(ShortcutList);
+  }
+
+  if (!appFirstOpenData?.firstOpenDate) {
+    const firstOpen = Math.floor(Date.now() / 1000);
+
+    dispatch(setAppFirstOpenEventDate(firstOpen));
+    dispatch(trackFirstOpenEvent(firstOpen));
+  } else {
+    dispatch(Analytics.track('Last Opened App'));
+
+    if (!appFirstOpenData?.firstOpenEventComplete) {
+      dispatch(trackFirstOpenEvent(appFirstOpenData.firstOpenDate));
+    }
   }
 };
 
