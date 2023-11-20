@@ -127,7 +127,10 @@ const SardineDetails: React.FC = () => {
           paymentRequest.transaction_id = data.withdrawal.txHash;
           shouldUpdate = true;
         }
-        if (!paymentRequest.status || data.status != paymentRequest.status) {
+        if (
+          data.status &&
+          (!paymentRequest.status || data.status != paymentRequest.status)
+        ) {
           logger.debug(
             `Updating status from: ${paymentRequest.status} to: ${data.status}`,
           );
@@ -212,7 +215,9 @@ const SardineDetails: React.FC = () => {
           <CryptoAmountContainer>
             <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
             <CryptoContainer>
-              <CryptoAmount>{paymentRequest.crypto_amount}</CryptoAmount>
+              <CryptoAmount>
+                {paymentRequest.crypto_amount.toFixed(8).replace(/\.?0+$/, '')}
+              </CryptoAmount>
               <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
