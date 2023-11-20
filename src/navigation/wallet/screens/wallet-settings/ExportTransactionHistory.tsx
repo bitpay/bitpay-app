@@ -18,7 +18,10 @@ import {PermissionsAndroid, Platform} from 'react-native';
 import Share, {ShareOptions} from 'react-native-share';
 import Papa from 'papaparse';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
-import {sleep} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -168,7 +171,7 @@ const ExportTransactionHistory = () => {
           Destination: tx.addressTo || '',
           Description: _note,
           Amount: _amount,
-          Currency: currencyAbbreviation.toUpperCase(),
+          Currency: formatCurrencyAbbreviation(currencyAbbreviation),
           Txid: tx.txid,
           Creator: _creator,
           Copayers: _copayers,

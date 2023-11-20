@@ -6,7 +6,11 @@ import {StackScreenProps} from '@react-navigation/stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
 import {ContactsStackParamList} from '../ContactsStack';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  getCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {BaseText, TextAlign} from '../../../../components/styled/Text';
 import {Hr} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -380,7 +384,7 @@ const ContactsDetails = ({
               <Detail>
                 <Title>{t('Coin')}</Title>
                 <DetailInfo align="right">
-                  {contact.coin.toUpperCase()}
+                  {formatCurrencyAbbreviation(contact.coin)}
                 </DetailInfo>
               </Detail>
             </>

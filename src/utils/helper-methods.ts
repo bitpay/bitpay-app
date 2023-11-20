@@ -1,4 +1,7 @@
-import {SUPPORTED_COINS} from '../constants/currencies';
+import {
+  BitpaySupportedMaticTokens,
+  SUPPORTED_COINS,
+} from '../constants/currencies';
 import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
@@ -333,6 +336,17 @@ export const getRateByCurrencyName = (
 
 export const addTokenChainSuffix = (name: string, chain: string) => {
   return `${name.toLowerCase()}_${chain.charAt(0)}`;
+};
+
+export const formatCurrencyAbbreviation = (currencyAbbreviation: string) => {
+  if (currencyAbbreviation.split('.')[1]) {
+    return (
+      currencyAbbreviation.split('.')[0].toUpperCase() +
+      '.' +
+      currencyAbbreviation.split('.')[1].toLowerCase()
+    );
+  }
+  return currencyAbbreviation.toUpperCase();
 };
 
 export const getCurrencyAbbreviation = (name: string, chain: string) => {

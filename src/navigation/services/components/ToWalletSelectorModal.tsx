@@ -10,6 +10,7 @@ import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getCurrencyAbbreviation,
   keyExtractor,
@@ -421,7 +422,8 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                     ),
                     defaultAltCurrency.isoCode,
                   ),
-                  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+                  currencyAbbreviation:
+                    formatCurrencyAbbreviation(currencyAbbreviation),
                   network,
                   walletName: walletName || fallbackName,
                 });
@@ -594,7 +596,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
           <CurrencyColumn>
             <H7 medium={true}>{currencyName}</H7>
             <CurrencySubTitle>
-              {currencyAbbreviation.toUpperCase()}
+              {formatCurrencyAbbreviation(currencyAbbreviation)}
             </CurrencySubTitle>
           </CurrencyColumn>
           {total >= 1 &&
@@ -646,7 +648,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                     <CurrencyColumn>
                       <H7 medium={true}>{token.currencyName}</H7>
                       <CurrencySubTitle>
-                        {token.currencyAbbreviation.toUpperCase()}
+                        {formatCurrencyAbbreviation(token.currencyAbbreviation)}
                       </CurrencySubTitle>
                     </CurrencyColumn>
                     {token.total >= 1 && (

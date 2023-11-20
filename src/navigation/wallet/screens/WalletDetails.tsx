@@ -57,6 +57,7 @@ import {
   White,
 } from '../../../styles/colors';
 import {
+  formatCurrencyAbbreviation,
   getProtocolName,
   shouldScale,
   sleep,
@@ -382,8 +383,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         navigation.navigate('Wallet', {
           screen: WalletScreens.AMOUNT,
           params: {
-            cryptoCurrencyAbbreviation:
-              fullWalletObj.currencyAbbreviation.toUpperCase(),
+            cryptoCurrencyAbbreviation: fullWalletObj.currencyAbbreviation,
             chain: fullWalletObj.chain,
             tokenAddress: fullWalletObj.tokenAddress,
             onAmountSelected: async (amount, setButtonState) => {
@@ -962,7 +962,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     <Row>
                       {!hideAllBalances ? (
                         <Balance scale={shouldScale(cryptoBalance)}>
-                          {cryptoBalance} {currencyAbbreviation}
+                          {cryptoBalance}{' '}
+                          {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Balance>
                       ) : (
                         <H2>****</H2>
@@ -984,7 +985,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       />
                       <Small>
                         <Text style={{fontWeight: 'bold'}}>
-                          {cryptoSpendableBalance} {currencyAbbreviation}
+                          {cryptoSpendableBalance}{' '}
+                          {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Text>
                         {showFiatBalance && (
                           <Text> ({fiatSpendableBalance})</Text>
@@ -1167,7 +1169,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
                   <TailContainer>
                     <Value>
-                      {cryptoLockedBalance} {currencyAbbreviation}
+                      {cryptoLockedBalance}{' '}
+                      {formatCurrencyAbbreviation(currencyAbbreviation)}
                     </Value>
                     <Fiat>
                       {network === 'testnet'

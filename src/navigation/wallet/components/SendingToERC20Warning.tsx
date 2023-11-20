@@ -14,6 +14,7 @@ import {
   getProtocolName,
   getBadgeImg,
   titleCasing,
+  formatCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import InfoSvg from '../../../../assets/img/info.svg';
@@ -151,7 +152,7 @@ const SendingToERC20Warning = ({isVisible, closeModal, wallet}: Props) => {
             {t(
               'You are about to send COIN using the PROTOCOLNAME Network. Make sure your recipient is expecting this exact asset and network. BitPay is not responsible for any funds lost.',
               {
-                coin: wallet.currencyAbbreviation.toUpperCase(),
+                coin: formatCurrencyAbbreviation(wallet.currencyAbbreviation),
                 protocolName: titleCasing(
                   getProtocolName(wallet.chain, wallet.network)!,
                 ),

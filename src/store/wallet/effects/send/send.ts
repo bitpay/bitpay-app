@@ -21,6 +21,7 @@ import {FeeLevels, GetBitcoinSpeedUpTxFee, getFeeRatePerKb} from '../fee/fee';
 import {GetInput} from '../transactions/transactions';
 import {
   formatCryptoAddress,
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getCWCChain,
   getRateByCurrencyName,
@@ -593,7 +594,7 @@ const getRateStr = (opts: {
         opts.chain,
       ).find(r => r.code === opts.defaultAltCurrencyIsoCode)!.rate
     : opts.effectiveRate;
-  return `1 ${opts.coin.toUpperCase()} @ ${formatFiatAmount(
+  return `1 ${formatCurrencyAbbreviation(opts.coin)} @ ${formatFiatAmount(
     parseFloat(fiatRate.toFixed(2)),
     opts.defaultAltCurrencyIsoCode,
   )}`;

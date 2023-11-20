@@ -1,6 +1,9 @@
 import {Effect} from '../../..';
 import {GetPrecision} from '../../utils/currency';
-import {transformAmount} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  transformAmount,
+} from '../../../../utils/helper-methods';
 import {SendMaxInfo, Wallet} from '../../wallet.models';
 import {GetMinFee} from '../fee/fee';
 const LOW_AMOUNT_RATIO = 0.15;
@@ -59,7 +62,7 @@ export const ParseAmount =
       amountDecimals < unitDecimals ? amountDecimals : unitDecimals,
     );
 
-    const currency = currencyAbbreviation.toUpperCase();
+    const currency = formatCurrencyAbbreviation(currencyAbbreviation);
 
     return {
       amount: _amount,
@@ -112,7 +115,7 @@ export const FormatAmountStr =
           ),
         ) +
         ' ' +
-        currencyAbbreviation.toUpperCase()
+        formatCurrencyAbbreviation(currencyAbbreviation)
       );
     } catch (e) {
       throw e;

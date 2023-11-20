@@ -81,8 +81,10 @@ import {
 import {
   setContactMigrationComplete,
   setContactTokenAddressMigrationComplete,
+  setContactBridgeUsdcMigrationComplete,
 } from '../contact/contact.actions';
 import {
+  startContactBridgeUsdcMigration,
   startContactMigration,
   startContactTokenAddressMigration,
 } from '../contact/contact.effects';
@@ -162,8 +164,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(startWalletStoreInit());
 
-    const {contactMigrationComplete, contactTokenAddressMigrationComplete} =
-      CONTACT;
+    const {
+      contactMigrationComplete,
+      contactTokenAddressMigrationComplete,
+      contactBridgeUsdcMigrationComplete,
+    } = CONTACT;
 
     if (!contactMigrationComplete) {
       await dispatch(startContactMigration());
@@ -175,6 +180,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(setContactTokenAddressMigrationComplete());
       dispatch(
         LogActions.info('success [setContactTokenAddressMigrationComplete]'),
+      );
+    }
+    if (!contactBridgeUsdcMigrationComplete) {
+      await dispatch(startContactBridgeUsdcMigration());
+      dispatch(setContactBridgeUsdcMigrationComplete());
+      dispatch(
+        LogActions.info('success [setContactBridgeUsdcMigrationComplete]'),
       );
     }
     if (!customTokensMigrationComplete) {

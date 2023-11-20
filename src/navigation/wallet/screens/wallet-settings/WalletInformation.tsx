@@ -19,7 +19,10 @@ import {
 } from '../../../../store/wallet/utils/currency';
 import {View} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
-import {sleep} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -212,7 +215,7 @@ const WalletInformation = () => {
               <SettingTitle>{t('Coin')}</SettingTitle>
 
               <InfoLabel>
-                <H7>{currencyAbbreviation.toUpperCase()}</H7>
+                <H7>{formatCurrencyAbbreviation(currencyAbbreviation)}</H7>
               </InfoLabel>
             </InfoSettingsRow>
             <Hr />
@@ -415,7 +418,7 @@ const WalletInformation = () => {
                       <InfoLabel>
                         <H7>
                           {(a.amount / unitToSatoshi).toFixed(8)}{' '}
-                          {currencyAbbreviation.toUpperCase()}
+                          {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </H7>
                       </InfoLabel>
                     </InfoSettingsRow>
