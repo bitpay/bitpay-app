@@ -478,7 +478,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
   },
   '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m': {
-    name: 'USD Coin',
+    name: 'USDC.e',
     chain: 'matic',
     coin: 'usdc.e',
     address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
@@ -511,7 +511,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
   },
   '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359_m': {
-    name: 'USD Coin',
+    name: 'USDC',
     chain: 'matic',
     coin: 'usdc',
     address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',

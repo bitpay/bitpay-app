@@ -262,7 +262,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.usdc_m,
-    currencyName: 'USD Coin',
+    currencyName: 'USDC.e',
     currencyAbbreviation: 'usdc.e',
     chain: 'matic',
     isToken: true,
@@ -274,7 +274,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.usdc_m,
-    currencyName: 'USD Coin',
+    currencyName: 'USDC',
     currencyAbbreviation: 'usdc',
     chain: 'matic',
     isToken: true,
