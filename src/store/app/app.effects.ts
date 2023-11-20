@@ -130,8 +130,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
-    const {APP, BITPAY_ID, CONTACT, WALLET} = getState();
-    const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
+    const {APP, CONTACT, WALLET} = getState();
+    const {network, colorScheme} = APP;
 
     WALLET.initLogs.forEach(log => dispatch(log));
 
@@ -189,57 +189,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(LogActions.info('success [setMigrationComplete]'));
     }
 
-    const token = BITPAY_ID.apiToken[network];
-    const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
 
     dispatch(initializeApi(network, identity));
 
     dispatch(LocationEffects.getLocationData());
 
-    if (isPaired) {
-      try {
-        dispatch(
-          LogActions.info(
-            'App is paired with BitPayID, refreshing user data...',
-          ),
-        );
-
-        const {errors, data} = await UserApi.fetchInitialUserData(token);
-
-        // handle partial errors
-        if (errors) {
-          const msg = errors
-            .map(e => `${e.path.join('.')}: ${e.message}`)
-            .join(',\n');
-
-          dispatch(
-            LogActions.error(
-              'One or more errors occurred while fetching initial user data:\n' +
-                msg,
-            ),
-          );
-        }
-        dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
-        dispatch(CardEffects.startCardStoreInit(data.user));
-      } catch (err: any) {
-        if (isAxiosError(err)) {
-          dispatch(LogActions.error(`${err.name}: ${err.message}`));
-          dispatch(LogActions.error(err.config.url));
-          dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
-        } else if (err instanceof Error) {
-          dispatch(LogActions.error(`${err.name}: ${err.message}`));
-        } else {
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
-
-        dispatch(
-          LogActions.info(
-            'Failed to refresh user data. Continuing initialization.',
-          ),
-        );
-      }
-    }
+    dispatch(fetchInitialUserData());
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     dispatch(walletConnectV2Init());
@@ -271,6 +227,57 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await sleep(500);
     dispatch(showBlur(false));
     RNBootSplash.hide();
+  }
+};
+
+const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
+  const {APP, BITPAY_ID} = getState();
+  const {network} = APP;
+
+  const token = BITPAY_ID.apiToken[network];
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    dispatch(
+      LogActions.info('App is paired with BitPayID, refreshing user data...'),
+    );
+
+    const {errors, data} = await UserApi.fetchInitialUserData(token);
+
+    // handle partial errors
+    if (errors) {
+      const msg = errors
+        .map(e => `${e.path.join('.')}: ${e.message}`)
+        .join(',\n');
+
+      dispatch(
+        LogActions.error(
+          'One or more errors occurred while fetching initial user data:\n' +
+            msg,
+        ),
+      );
+    }
+    dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
+    dispatch(CardEffects.startCardStoreInit(data.user));
+  } catch (err: any) {
+    if (isAxiosError(err)) {
+      dispatch(LogActions.error(`${err.name}: ${err.message}`));
+      dispatch(LogActions.error(err.config.url));
+      dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
+    } else if (err instanceof Error) {
+      dispatch(LogActions.error(`${err.name}: ${err.message}`));
+    } else {
+      dispatch(LogActions.error(JSON.stringify(err)));
+    }
+
+    dispatch(
+      LogActions.info(
+        'Failed to refresh user data. Continuing initialization.',
+      ),
+    );
   }
 };
 
