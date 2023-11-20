@@ -135,6 +135,7 @@ export type CryptoOffer = {
   showOffer: boolean;
   logo: JSX.Element;
   expanded: boolean;
+  buyClicked: boolean;
   fiatCurrency: string;
   fiatAmount: number;
   amountCost?: number;
@@ -305,6 +306,7 @@ const offersDefault: {
     showOffer: true,
     logo: <BanxaLogo width={70} height={20} />,
     expanded: false,
+    buyClicked: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
     fiatMoney: undefined,
@@ -317,6 +319,7 @@ const offersDefault: {
     showOffer: true,
     logo: <MoonpayLogo widthIcon={25} heightIcon={25} />,
     expanded: false,
+    buyClicked: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
     fiatMoney: undefined,
@@ -329,6 +332,7 @@ const offersDefault: {
     showOffer: true,
     logo: <RampLogo width={70} height={20} />,
     expanded: false,
+    buyClicked: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
     fiatMoney: undefined,
@@ -341,6 +345,7 @@ const offersDefault: {
     showOffer: true,
     logo: <SardineLogo width={70} height={20} />,
     expanded: false,
+    buyClicked: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
     fiatMoney: undefined,
@@ -360,6 +365,7 @@ const offersDefault: {
       />
     ),
     expanded: false,
+    buyClicked: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
     fiatMoney: undefined,
@@ -432,6 +438,7 @@ const BuyCryptoOffers: React.FC = () => {
   });
 
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
+  const [openingBrowser, setOpeningBrowser] = useState(false);
   const [finishedBanxa, setFinishedBanxa] = useState(false);
   const [finishedMoonpay, setFinishedMoonpay] = useState(false);
   const [finishedRamp, setFinishedRamp] = useState(false);
@@ -1446,6 +1453,7 @@ const BuyCryptoOffers: React.FC = () => {
     } catch (err) {
       const reason = 'banxaCreateOrder Error';
       showBanxaError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
 
@@ -1456,6 +1464,7 @@ const BuyCryptoOffers: React.FC = () => {
         'banxaCreateOrder Error: No checkout_url or id value provided from Banxa';
       logger.error(reason);
       showBanxaError(undefined, reason);
+      setOpeningBrowser(false);
       return;
     }
 
@@ -1562,6 +1571,7 @@ const BuyCryptoOffers: React.FC = () => {
     } catch (err) {
       const reason = 'moonpayGetSignedPaymentUrl Error';
       showMoonpayError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
 
@@ -1653,6 +1663,7 @@ const BuyCryptoOffers: React.FC = () => {
     } catch (err) {
       const reason = 'rampGetSignedPaymentUrl Error';
       showRampError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
 
@@ -1663,6 +1674,7 @@ const BuyCryptoOffers: React.FC = () => {
       const reason =
         'rampGetSignedPaymentUrl Error. Could not generate urlWithSignature';
       showRampError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
 
@@ -1711,9 +1723,9 @@ const BuyCryptoOffers: React.FC = () => {
     } catch (err) {
       const reason = 'sardineGetAuthToken Error';
       showSardineError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
-
 
     dispatch(
       Analytics.track('Requested Crypto Purchase', {
@@ -1775,6 +1787,7 @@ const BuyCryptoOffers: React.FC = () => {
     } catch (err) {
       const reason = 'sardineGetSignedPaymentUrl Error';
       showSardineError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
 
@@ -1785,6 +1798,7 @@ const BuyCryptoOffers: React.FC = () => {
       const reason =
         'sardineGetSignedPaymentUrl Error. Could not generate urlWithSignature';
       showSardineError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
 
@@ -1824,6 +1838,7 @@ const BuyCryptoOffers: React.FC = () => {
         if (req && req.error) {
           const reason = 'simplexPaymentRequest Error';
           showSimplexError(req.error, reason);
+          setOpeningBrowser(false);
           return;
         }
 
@@ -1886,6 +1901,7 @@ const BuyCryptoOffers: React.FC = () => {
       .catch(err => {
         const reason = 'simplexPaymentRequest Error';
         showSimplexError(err, reason);
+        setOpeningBrowser(false);
       });
   };
 
@@ -2056,7 +2072,10 @@ const BuyCryptoOffers: React.FC = () => {
                         </BestOfferTagContainer>
                       ) : null}
                       <OfferDataCryptoAmount>
-                        {offer.amountReceiving} {coin.toUpperCase()}
+                        {Number(offer.amountReceiving)
+                          .toFixed(8)
+                          .replace(/\.?0+$/, '')}{' '}
+                        {coin.toUpperCase()}
                       </OfferDataCryptoAmount>
                       {offer.fiatCurrency !== fiatCurrency ? (
                         <OfferDataWarningContainer>
@@ -2083,11 +2102,21 @@ const BuyCryptoOffers: React.FC = () => {
                     <Button
                       action={true}
                       buttonType={'pill'}
+                      disabled={openingBrowser}
                       onPress={() => {
                         haptic('impactLight');
+                        offer.buyClicked = true;
+                        setOpeningBrowser(true);
                         goTo(offer.key);
                       }}>
-                      {t('Buy')}
+                      {offer.buyClicked ? (
+                        <ActivityIndicator
+                          style={{marginBottom: -5}}
+                          color={White}
+                        />
+                      ) : (
+                        t('Buy')
+                      )}
                     </Button>
                   </SummaryCtaContainer>
                 ) : null}
