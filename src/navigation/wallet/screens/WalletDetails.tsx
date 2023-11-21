@@ -920,6 +920,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         onPressTransaction={() => onPressTxp(item)}
         recipientCount={item.recipientCount}
         toAddress={item.toAddress}
+        tokenAddress={item.tokenAddress}
         chain={item.chain}
         contactList={contactList}
       />

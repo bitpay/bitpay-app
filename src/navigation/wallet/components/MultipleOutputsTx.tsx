@@ -134,7 +134,12 @@ const MultipleOutputsTx = ({
     output.addressToShow =
       addressToShow === 'false' ? t('Unparsed address') : addressToShow;
 
-    output.contactName = GetContactName(outputAddr, chain, contactList);
+    output.contactName = GetContactName(
+      outputAddr,
+      tokenAddress,
+      chain,
+      contactList,
+    );
   });
 
   const getDesc = () => {
