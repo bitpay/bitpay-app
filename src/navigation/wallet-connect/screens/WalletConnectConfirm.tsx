@@ -79,7 +79,7 @@ const WalletConnectConfirm = () => {
   const _setTxDetails = async () => {
     try {
       const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
-      const _txDetails = dispatch(
+      const _txDetails = await dispatch(
         buildTxDetails({
           wallet,
           rates,
@@ -161,6 +161,7 @@ const WalletConnectConfirm = () => {
       await sleep(1000);
       navigation.goBack();
     } catch (err) {
+      dispatch(dismissOnGoingProcessModal());
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(err),
