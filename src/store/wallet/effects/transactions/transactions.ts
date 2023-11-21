@@ -629,6 +629,7 @@ export const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
 
 export const GetContactName = (
   address: string | undefined,
+  tokenAddress: string | undefined,
   chain: string,
   contactList: any[] = [],
 ) => {
@@ -637,7 +638,9 @@ export const GetContactName = (
   }
   const existsContact = contactList.find(
     contact =>
-      contact.address === address && contact.chain === chain?.toLowerCase(),
+      contact.address === address &&
+      contact.chain === chain?.toLowerCase() &&
+      (!contact.tokenAddress || contact.tokenAddress === tokenAddress),
   );
   if (existsContact) {
     return existsContact.name;
@@ -718,21 +721,25 @@ export const BuildUiFriendlyList = (
     const {body: noteBody} = note || {};
 
     const notZeroAmountEVM = NotZeroAmountEVM(amount, currencyAbbreviation);
-    let contactName;
-
-    if (
-      contactList?.length &&
-      outputs?.length &&
-      chain &&
-      GetContactName(outputs[0]?.address, chain, contactList)
-    ) {
-      contactName = GetContactName(outputs[0]?.address, chain, contactList);
-    }
-
     const isSent = IsSent(action);
     const isMoved = IsMoved(action);
     const isReceived = IsReceived(action);
     const isInvalid = IsInvalid(action);
+    let contactName;
+    if (
+      (isSent || isMoved) &&
+      contactList?.length &&
+      outputs?.length &&
+      chain &&
+      GetContactName(outputs[0]?.address, tokenAddress, chain, contactList)
+    ) {
+      contactName = GetContactName(
+        outputs[0]?.address,
+        tokenAddress,
+        chain,
+        contactList,
+      );
+    }
 
     if (!confirmations || confirmations <= 0) {
       transaction.uiIcon = 'confirming';

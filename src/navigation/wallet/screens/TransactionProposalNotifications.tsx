@@ -432,6 +432,7 @@ const TransactionProposalNotifications = () => {
                       hideIcon={true}
                       recipientCount={txp.recipientCount}
                       toAddress={txp.toAddress}
+                      tokenAddress={txp.tokenAddress}
                       chain={txp.chain}
                       contactList={contactList}
                     />

@@ -50,6 +50,7 @@ interface Props {
   hideIcon?: boolean;
   recipientCount?: number;
   toAddress?: string;
+  tokenAddress?: string;
   contactList?: ContactRowProps[];
   chain?: string;
 }
@@ -64,6 +65,7 @@ const TransactionProposalRow = ({
   hideIcon,
   recipientCount,
   toAddress,
+  tokenAddress,
   contactList,
   chain,
 }: Props) => {
@@ -77,7 +79,12 @@ const TransactionProposalRow = ({
     });
     labelLines = 2;
   } else if (toAddress && chain && contactList) {
-    const contactName = GetContactName(toAddress, chain, contactList);
+    const contactName = GetContactName(
+      toAddress,
+      tokenAddress,
+      chain,
+      contactList,
+    );
     if (contactName) {
       label = t('Sending to contactName', {contactName});
       labelLines = 2;
