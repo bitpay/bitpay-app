@@ -550,6 +550,16 @@ export const startOnGoingProcessModal =
     const _message = _OnGoingProcessMessages[key];
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
+
+    // After 20 seconds, check if the modal is active. If so, dismiss it.
+    setTimeout(async () => {
+      const currentStore = getState();
+      if (currentStore.APP.showOnGoingProcessModal) {
+        dispatch(AppActions.dismissOnGoingProcessModal());
+        await sleep(500);
+      }
+    }, 20000);
+
     return sleep(100);
   };
 
