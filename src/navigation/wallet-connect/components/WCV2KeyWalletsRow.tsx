@@ -117,6 +117,7 @@ export const WCV2KeyWalletsRow = ({
             showCheckbox={showCheckbox}
             showAddress={showAddress}
             topic={topic}
+            touchable={showCheckbox}
           />
         </NoGutter>
       ) : null;

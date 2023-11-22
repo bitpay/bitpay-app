@@ -107,6 +107,7 @@ const WalletConnectIntro = () => {
         } else {
           dispatch(startOnGoingProcessModal('LOADING'));
           await dispatch(walletConnectV2OnSessionProposal(data));
+          dispatch(dismissOnGoingProcessModal());
         }
       } else {
         const errMsg = t('The URI does not correspond to WalletConnect.');
