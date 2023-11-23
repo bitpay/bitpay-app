@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../components/button/Button';
-import {Paragraph} from '../../../components/styled/Text';
+import {H6, H5, Paragraph} from '../../../components/styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
 import {
@@ -14,7 +14,7 @@ import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useAppDispatch} from '../../../utils/hooks';
 import {WalletConnectContainer} from '../styled/WalletConnectContainers';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
 import {
   dismissBottomNotificationModal,
@@ -41,6 +41,7 @@ import {
   EIP155_SIGNING_METHODS,
 } from '../../../constants/WalletConnectV2';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import FastImage from 'react-native-fast-image';
 
 export type WalletConnectStartParamList = {
   // version 2
@@ -57,8 +58,12 @@ const UriContainer = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 6px;
   height: 64px;
-  margin-top: 25px;
   margin-bottom: 35px;
+  justify-content: center;
+  align-items: center;
+`;
+
+const TitleContainer = styled.View`
   justify-content: center;
   align-items: center;
 `;
@@ -70,7 +75,7 @@ const DescriptionContainer = styled.View`
 const DescriptionItemContainer = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 10px 10px;
 `;
 
 const DescriptionItem = styled(Paragraph)`
@@ -78,6 +83,20 @@ const DescriptionItem = styled(Paragraph)`
   padding-top: 2px;
   color: ${props => props.theme.colors.text};
 `;
+
+const IconContainer = styled.View`
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+`;
+
+const styles = StyleSheet.create({
+  icon: {
+    height: 80,
+    width: 80,
+    borderRadius: 10,
+  },
+});
 
 const WalletConnectStart = () => {
   const {t} = useTranslation();
@@ -94,6 +113,7 @@ const WalletConnectStart = () => {
 
   const peerName = metadata?.name;
   const peerUrl = metadata?.url;
+  const peerImg = metadata?.icons?.[0];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -229,6 +249,18 @@ const WalletConnectStart = () => {
 
   return (
     <WalletConnectContainer>
+      {peerImg ? (
+        <IconContainer>
+          <FastImage
+            style={styles.icon}
+            source={{
+              uri: peerImg,
+              priority: FastImage.priority.normal,
+            }}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+        </IconContainer>
+      ) : null}
       <View
         style={{
           marginLeft: 16,
@@ -237,13 +269,14 @@ const WalletConnectStart = () => {
         }}>
         {peerName && peerUrl && (
           <View>
-            <Paragraph>
-              {peerName + t(' wants to connect to your wallet.')}
-            </Paragraph>
+            <TitleContainer>
+              <H5>{peerName + t(' wants to connect')}</H5>
+            </TitleContainer>
             <UriContainer>
               <Paragraph>{peerUrl}</Paragraph>
             </UriContainer>
             <DescriptionContainer>
+              <H6>{t('Required permissions')}</H6>
               <DescriptionItemContainer>
                 <WalletIcon />
                 <DescriptionItem>
