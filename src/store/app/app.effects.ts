@@ -551,14 +551,17 @@ export const startOnGoingProcessModal =
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
 
-    // After 20 seconds, check if the modal is active. If so, dismiss it.
+    // After 30 seconds, check if the modal is active. If so, dismiss it.
     setTimeout(async () => {
       const currentStore = getState();
-      if (currentStore.APP.showOnGoingProcessModal) {
+      if (
+        currentStore.APP.showOnGoingProcessModal &&
+        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing')
+      ) {
         dispatch(AppActions.dismissOnGoingProcessModal());
         await sleep(500);
       }
-    }, 20000);
+    }, 30000);
 
     return sleep(100);
   };
