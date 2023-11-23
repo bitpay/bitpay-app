@@ -50,15 +50,20 @@ const WCV2WalletRowInfo = ({walletObj, showAddress, topic}: Props) => {
   const dispatch = useAppDispatch();
   const {wallet} = walletObj;
   const requests = useAppSelector(({WALLET_CONNECT_V2}) =>
-    WALLET_CONNECT_V2.requests.filter(
-      request =>
+    WALLET_CONNECT_V2.requests.filter(request => {
+      const {chain, network} =
+        WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId];
+      const requestAddress = getAddressFrom(request).toLowerCase();
+      const walletAddress = wallet.receiveAddress?.toLowerCase();
+      return (
         request.topic === topic &&
-        getAddressFrom(request).toLowerCase() ===
-          wallet.receiveAddress?.toLowerCase() &&
-        WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain ===
-          wallet.chain,
-    ),
+        requestAddress === walletAddress &&
+        chain === wallet.chain &&
+        network === wallet.network
+      );
+    }),
   );
+
   const {hideAllBalances} = useAppSelector(({APP}) => APP);
 
   let {

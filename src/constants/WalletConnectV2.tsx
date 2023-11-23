@@ -45,6 +45,7 @@ export const EIP155_TEST_CHAINS = {
     name: 'Ethereum Goerli',
     chainName: 'eth',
     rpc: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    network: Network.testnet,
   },
   'eip155:80001': {
     chainId: 80001,
