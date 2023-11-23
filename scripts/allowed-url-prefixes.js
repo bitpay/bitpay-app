@@ -41,6 +41,7 @@ const allowedUrlPrefixes = [
   'https://rest.iad-05.braze.com',
   'https://sdk.iad-05.braze.com',
   'https://cloudflare-eth.com/',
+  'https://goerli.infura.io/v3/',
   'https://polygon-rpc.com/',
   'https://matic-mumbai.chainstacklabs.com',
 ].concat(developmentOnlyAllowedUrlPrefixes);
