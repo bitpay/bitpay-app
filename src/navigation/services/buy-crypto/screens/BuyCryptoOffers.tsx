@@ -406,6 +406,7 @@ const offersDefault: {
     showOffer: true,
     logo: <TransakLogo width={80} height={25} />,
     expanded: false,
+    buyClicked: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
     fiatMoney: undefined,
@@ -1515,7 +1516,9 @@ const BuyCryptoOffers: React.FC = () => {
             offers.transak.buyAmount =
               transakQuoteData.fiatAmount - transakQuoteData.totalFee;
 
-            const precision = dispatch(GetPrecision(coin, chain));
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
             if (offers.transak.buyAmount && coin && precision) {
               offers.transak.fiatMoney = Number(
                 offers.transak.buyAmount / transakQuoteData.cryptoAmount,
@@ -2223,6 +2226,7 @@ const BuyCryptoOffers: React.FC = () => {
     } catch (err) {
       const reason = 'transakGetSignedPaymentUrl Error';
       showTransakError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
 
@@ -2231,8 +2235,9 @@ const BuyCryptoOffers: React.FC = () => {
         'It was not possible to generate the checkout URL correctly',
       );
       const reason =
-        'rampGetSignedPaymentUrl Error. Could not generate urlWithSignature';
-      showRampError(err, reason);
+        'transakGetSignedPaymentUrl Error. Could not generate urlWithSignature';
+      showTransakError(err, reason);
+      setOpeningBrowser(false);
       return;
     }
 
