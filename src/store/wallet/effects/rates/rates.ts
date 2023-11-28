@@ -179,7 +179,7 @@ export const startGetRates =
 export const getContractAddresses =
   (chain: string): Effect<Array<string>> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('getContractAddresses: starting...'));
+    dispatch(LogActions.info(`getContractAddresses ${chain}: starting...`));
     const {
       WALLET: {keys},
     } = getState();
@@ -278,6 +278,10 @@ export const getTokenRates =
                 });
               }
             });
+          } else {
+            dispatch(
+              LogActions.info(`No tokens wallets for ${chain} found. Skipping getTokenRates...`),
+            );
           }
         }
 
