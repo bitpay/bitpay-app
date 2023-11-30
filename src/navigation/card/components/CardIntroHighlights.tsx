@@ -87,56 +87,66 @@ const CARD_HIGHLIGHTS = (): CardHighlight[] => {
         </HighlightTitle>
       ),
       description: (
-        <SubText>
-          <>
-            {t(
-              `The BitPay Card is only one of the ways we help you live on crypto. More ways to spend and cash out crypto with BitPay include:
-            \u2022 Pay with crypto -`,
-            )}{' '}
-            <UnderlineLink
-              onPress={() =>
-                dispatch(
-                  openUrlWithInAppBrowser('https://bitpay.com/spend-crypto/'),
-                )
-              }>
-              <>{t('Spend crypto')}</>
-            </UnderlineLink>{' '}
-            {t(
-              'directly from your wallet with BitPay merchants. View a curated list of merchants who accept crypto in the',
-            )}{' '}
-            <UnderlineLink
-              onPress={() =>
-                dispatch(
-                  openUrlWithInAppBrowser('https://bitpay.com/directory'),
-                )
-              }>
-              <>{t('BitPay Merchant Directory')}</>
-            </UnderlineLink>
-            {t(`.
-            \u2022 Buy gift cards -`)}{' '}
-            <UnderlineLink
-              onPress={() =>
-                dispatch(
-                  openUrlWithInAppBrowser('https://bitpay.com/gift-cards/'),
-                )
-              }>
-              <>{t('Convert crypto into gift cards')}</>
-            </UnderlineLink>{' '}
-            {t(`for the most popular brands and retailers.
-            \u2022 Swap crypto -`)}{' '}
-            <UnderlineLink
-              onPress={() =>
-                dispatch(
-                  openUrlWithInAppBrowser(
-                    'https://bitpay.com/blog/what-is-a-crypto-swap/',
-                  ),
-                )
-              }>
-              <>{t('Swap crypto')}</>
-            </UnderlineLink>{' '}
-            {t('into a stablecoin like USDC using the BitPay app.')}
-          </>
-        </SubText>
+        <>
+          <SubText>
+            <>
+              {t(
+                'The BitPay Card is only one of the ways we help you live on crypto. More ways to spend and cash out crypto with BitPay include:',
+              )}
+            </>
+          </SubText>
+          <SubText style={{marginHorizontal: 15}}>
+            <>
+              {'\u2022 ' + t('Pay with crypto')}
+              {' - '}
+              <UnderlineLink
+                onPress={() =>
+                  dispatch(
+                    openUrlWithInAppBrowser('https://bitpay.com/spend-crypto/'),
+                  )
+                }>
+                <>{t('Spend crypto')}</>
+              </UnderlineLink>{' '}
+              {t(
+                'directly from your wallet with BitPay merchants. View a curated list of merchants who accept crypto in the',
+              )}{' '}
+              <UnderlineLink
+                onPress={() =>
+                  dispatch(
+                    openUrlWithInAppBrowser('https://bitpay.com/directory'),
+                  )
+                }>
+                <>{t('BitPay Merchant Directory')}</>
+              </UnderlineLink>
+              {'.'}
+              {'\n\u2022 ' + t('Buy gift cards')}
+              {' - '}
+              <UnderlineLink
+                onPress={() =>
+                  dispatch(
+                    openUrlWithInAppBrowser('https://bitpay.com/gift-cards/'),
+                  )
+                }>
+                <>{t('Convert crypto into gift cards')}</>
+              </UnderlineLink>{' '}
+              {t('for the most popular brands and retailers.') +
+                '\n\u2022 ' +
+                t('Swap crypto')}
+              {' - '}
+              <UnderlineLink
+                onPress={() =>
+                  dispatch(
+                    openUrlWithInAppBrowser(
+                      'https://bitpay.com/blog/what-is-a-crypto-swap/',
+                    ),
+                  )
+                }>
+                <>{t('Swap crypto')}</>
+              </UnderlineLink>{' '}
+              {t('into a stablecoin like USDC using the BitPay app.')}
+            </>
+          </SubText>
+        </>
       ),
     },
     {
@@ -190,29 +200,35 @@ const CARD_HIGHLIGHTS = (): CardHighlight[] => {
         </HighlightTitle>
       ),
       description: (
-        <SubText>
-          <>
-            {t(
-              `BitPay supports Bitcoin, major alt coins, tokens, and stablecoins. We are constantly evaluating and adding new coins. Currently we support:
-            \u2022 Bitcoin (BTC)
-            \u2022 Ethereum (ETH)
-            \u2022 Bitcoin Cash (BCH)
-            \u2022 Dogecoin (DOGE)
-            \u2022 Shiba Inu (SHIB)
-            \u2022 Litecoin (LTC)
-            \u2022 XRP (XRP)
-            \u2022 ApeCoin (APE)
-            \u2022 Polygon (MATIC)
-            \u2022 Dai (DAI)
-            \u2022 Binance USD (BUSD)
-            \u2022 USD Coin (USDC)
-            \u2022 Wrapped Bitcoin (WBTC)
-            \u2022 Pax Dollar (USDP)
-            \u2022 Gemini Dollar (GUSD)
-            \u2022 Euro Coin (EUROC)`,
-            )}
-          </>
-        </SubText>
+        <>
+          <SubText>
+            <>
+              {t(
+                'BitPay supports Bitcoin, major alt coins, tokens, and stablecoins. We are constantly evaluating and adding new coins. Currently we support:',
+              )}
+            </>
+          </SubText>
+          <SubText style={{marginHorizontal: 15}}>
+            <>
+              {'\n\u2022 Bitcoin (BTC)'}
+              {'\n\u2022 Ethereum (ETH)'}
+              {'\n\u2022 Bitcoin Cash (BCH)'}
+              {'\n\u2022 Dogecoin (DOGE)'}
+              {'\n\u2022 Shiba Inu (SHIB)'}
+              {'\n\u2022 Litecoin (LTC)'}
+              {'\n\u2022 XRP (XRP)'}
+              {'\n\u2022 ApeCoin (APE)'}
+              {'\n\u2022 Polygon (MATIC)'}
+              {'\n\u2022 Dai (DAI)'}
+              {'\n\u2022 Binance USD (BUSD)'}
+              {'\n\u2022 USD Coin (USDC)'}
+              {'\n\u2022 Wrapped Bitcoin (WBTC)'}
+              {'\n\u2022 Pax Dollar (USDP)'}
+              {'\n\u2022 Gemini Dollar (GUSD)'}
+              {'\n\u2022 Euro Coin (EUROC)'}
+            </>
+          </SubText>
+        </>
       ),
     },
     {

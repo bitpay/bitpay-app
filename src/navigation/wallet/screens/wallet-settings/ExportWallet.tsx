@@ -185,7 +185,7 @@ const ExportWallet = () => {
       let name = walletName || cWalletName || walletId;
 
       if (dontIncludePrivateKey) {
-        name = name + t(' (No Private Key)');
+        name = name + ' ' + t('(No Private Key)');
       }
 
       // TODO: Update app name

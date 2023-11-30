@@ -133,7 +133,7 @@ const SimplexSettings: React.FC = () => {
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Simplex?</SupportTxt>
+        <SupportTxt>{t('Having problems with Simplex?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');

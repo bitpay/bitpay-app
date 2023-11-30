@@ -358,7 +358,7 @@ const Confirm = () => {
                 <RightMargin>
                   <VisaCardSvg height={55} width={55} />
                 </RightMargin>
-                <H6>{t('BitPay Visa&reg; Card ()', {lastFourDigits})}</H6>
+                <H6>{t('BitPay Visa® Card ()', {lastFourDigits})}</H6>
               </CardDetailsContainer>
             )}
 

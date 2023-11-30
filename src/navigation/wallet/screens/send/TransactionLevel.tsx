@@ -602,7 +602,8 @@ const TransactionLevel = ({
                       ) : null}
                       {error === 'showMaxWarning' ? (
                         <ErrorText>
-                          {t('Fee should not be higher than ') +
+                          {t('Fee should not be higher than') +
+                            ' ' +
                             maxFeeRecommended +
                             ' ' +
                             feeUnit +
@@ -611,7 +612,8 @@ const TransactionLevel = ({
                       ) : null}
                       {error === 'showMinError' ? (
                         <ErrorText>
-                          {t('Fee should be higher than ') +
+                          {t('Fee should be higher than') +
+                            ' ' +
                             minFeeAllowed +
                             ' ' +
                             feeUnit +
@@ -620,7 +622,8 @@ const TransactionLevel = ({
                       ) : null}
                       {error === 'showMaxError' ? (
                         <ErrorText>
-                          {t('Fee Should be lesser than ') +
+                          {t('Fee Should be lesser than') +
+                            ' ' +
                             maxFeeAllowed +
                             ' ' +
                             feeUnit +

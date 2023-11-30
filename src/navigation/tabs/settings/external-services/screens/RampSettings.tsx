@@ -124,7 +124,7 @@ const RampSettings: React.FC = () => {
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Ramp?</SupportTxt>
+        <SupportTxt>{t('Having problems with Ramp?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');

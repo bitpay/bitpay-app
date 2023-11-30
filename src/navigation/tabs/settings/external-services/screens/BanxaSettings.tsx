@@ -165,7 +165,7 @@ const BanxaSettings: React.FC = () => {
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Banxa?</SupportTxt>
+        <SupportTxt>{t('Having problems with Banxa?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');

@@ -149,7 +149,7 @@ const MoonpaySettings: React.FC = () => {
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Moonpay?</SupportTxt>
+        <SupportTxt>{t('Having problems with Moonpay?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');

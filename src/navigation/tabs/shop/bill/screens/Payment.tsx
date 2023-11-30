@@ -142,7 +142,7 @@ const Payment = ({
         <AmountDue>{formatFiatAmount(payment.amount, 'USD')}</AmountDue>
         <PaymentDateContainer>
           <PaymentDate>
-            {t('Amount paid on: ')}
+            {t('Amount paid on:') + ' '}
             <Paragraph style={{fontWeight: '500'}}>
               {moment(payment.createdOn).format('MM/DD/YY')}
             </Paragraph>

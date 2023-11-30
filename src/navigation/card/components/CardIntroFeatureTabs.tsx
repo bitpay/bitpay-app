@@ -94,7 +94,7 @@ const FEES = (): CardTableData[] => {
       title: 'Card Load',
       description: (
         <>
-          <TextAlign align="right">{t('No conversion fee\n')}</TextAlign>
+          <TextAlign align="right">{t('No conversion fee') + '\n'}</TextAlign>
           <TextAlign align="right">
             <A href={URL.HELP_MINER_FEES}>
               {t('Network and miner fees may apply')}

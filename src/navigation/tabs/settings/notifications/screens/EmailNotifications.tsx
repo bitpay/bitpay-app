@@ -193,11 +193,11 @@ const EmailNotifications = () => {
                           />
 
                           <CheckboxLabel>
-                            {t('I agree to the ')}
+                            {t('I agree to the') + ' '}
                             <A href={URL.TOU_BITPAY_ID}>
                               {t('Terms of Use')}
                             </A>{' '}
-                            {t('and ')}
+                            {t('and') + ' '}
                             <A href={URL.PRIVACY_POLICY}>
                               {t('Privacy Policy')}
                             </A>

@@ -473,7 +473,9 @@ const ChangellyCheckout: React.FC = () => {
     try {
       const message =
         fromWalletSelected.currencyAbbreviation.toUpperCase() +
-        t(' to ') +
+        ' ' +
+        t('to') +
+        ' ' +
         toWalletSelected.currencyAbbreviation.toUpperCase();
       let outputs = [];
 
