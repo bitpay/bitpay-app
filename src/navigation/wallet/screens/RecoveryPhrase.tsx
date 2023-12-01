@@ -1,24 +1,35 @@
-import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
-  H2,
   HeaderTitle,
+  HeaderSubtitle,
   Paragraph,
-  TextAlign,
 } from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
 import {
   ActiveOpacity,
-  CtaContainer,
-  HeaderRightContainer,
-  WIDTH,
+  CtaContainerAbsolute,
 } from '../../../components/styled/Containers';
-import * as Progress from 'react-native-progress';
-import {Air, BitPay, ProgressBlue} from '../../../styles/colors';
-import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {
+  Caution,
+  Caution25,
+  Caution60,
+  Feather,
+  Grey,
+  LightBlack,
+  NotificationPrimary,
+  Slate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {Platform, TouchableOpacity} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
@@ -30,8 +41,10 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import Back from '../../../components/back/Back';
-import throttle from 'lodash.throttle';
 import {IS_ANDROID} from '../../../constants';
+import CopySvg from '../../../../assets/img/copy.svg';
+import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 type RecoveryPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -46,75 +59,146 @@ export interface RecoveryPhraseParamList {
   walletTermsAccepted: boolean;
 }
 
-const RecoveryPhraseContainer = styled.View`
+const RecoveryPhraseContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-export const ProgressBarContainer = styled.View`
-  padding: 15px 0;
+const RecoveryContainer = styled.ScrollView`
+  padding: 20px 15px;
 `;
 
-export const BodyContainer = styled.ScrollView`
-  margin-top: 50px;
+const WordPairContainer = styled.View`
+  margin: 30px 15px 15px 20px;
 `;
 
-export const DirectionsContainer = styled.View`
-  padding: 0 10px 10px 10px;
+const WordPairActions = styled.View`
+  margin-top: 20px;
+  flex-direction: row;
+  justify-content: space-between;
 `;
 
-export const WordContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? BitPay : Air)};
-  justify-content: center;
+const WordPairLine = styled.View`
+  flex-direction: row;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom-color: ${({theme}) => (theme.dark ? SlateDark : Grey)};
+  border-bottom-width: 1px;
+`;
+
+const WordPairColumn = styled.View`
+  flex: 1;
+  flex-direction: row;
+  line-height: 24px;
+  letter-spacing: 0.5px;
+`;
+
+const WordText = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+`;
+
+const WordTextIndex = styled(BaseText)`
+  margin-right: 20px;
+  font-size: 16px;
+  color: ${({theme: {dark}}) => (dark ? SlateDark : Slate)};
+`;
+
+const WarningMessageContainer = styled.View`
+  flex-direction: column;
   align-items: center;
-  height: 200px;
-  margin: 0 30px;
-`;
-
-export const CountTracker = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? Caution25 : Caution25)};
+  border-radius: 8px;
   padding: 10px;
   width: 100%;
 `;
 
-export const CountText = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px;
-  letter-spacing: 0.5px;
-  text-align: center;
+const WarningMessageTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
 `;
 
-const renderItem = ({item: word}: {item: string}) => {
-  return (
-    <WordContainer>
-      <H2>{word}</H2>
-    </WordContainer>
-  );
-};
+const WarningMessageDescContainer = styled.View`
+  flex: 1;
+  margin-top: 5px;
+`;
+
+const WarningMessageTextContainer = styled.View`
+  flex: 1;
+  margin-top: 5px;
+`;
+
+const WarningMessageTitle = styled(HeaderSubtitle)`
+  color: ${({theme: {dark}}) => (dark ? Caution : Caution60)};
+`;
+
+const WarningMessageText = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? Caution60 : Caution)};
+`;
+
+const RecoveryActionsContainer = styled.View`
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
+  border-radius: 6px;
+  width: 45%;
+  justify-content: center;
+`;
+
+const RecoveryActionsButton = styled.TouchableOpacity`
+  height: 40px;
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
+  padding: 12px;
+  flex-direction: row;
+  justify-content: center;
+  border-radius: 6px;
+`;
+
+const RecoveryActionsButtonText = styled(BaseText)`
+  font-size: 14px;
+  margin-left: 8px;
+  margin-top: -2px;
+  color: ${({theme: {dark}}) => (dark ? White : NotificationPrimary)};
+`;
+
+const CopyImgContainer = styled.View`
+  padding-right: 2px;
+`;
 
 const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const [copied, setCopied] = useState(false);
   const {params} = route;
   const walletTermsAccepted = useAppSelector(
     ({WALLET}) => WALLET.walletTermsAccepted,
   );
   const {words, context, key} = params;
 
-  useAndroidBackHandler(() => true);
-  const ref = useRef<ICarouselInstance>(null);
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const renderWordPairs = () => {
+    const wordPairs = [];
 
-  const onPressHeaderBack = () => {
-    if (!ref.current || ref.current.getCurrentIndex() === 0) {
-      navigation.goBack();
-    } else {
-      ref.current?.prev();
+    for (let i = 0; i < words.length - 6; i++) {
+      const word1 = words[i];
+      const word2 = words[i + 6];
+
+      const pair = (
+        <WordPairLine key={i}>
+          <WordPairColumn>
+            <WordTextIndex>{i + 1}.</WordTextIndex>
+            <WordText>{word1}</WordText>
+          </WordPairColumn>
+          <WordPairColumn>
+            <WordTextIndex>{i + 7}.</WordTextIndex>
+            <WordText>{word2}</WordText>
+          </WordPairColumn>
+        </WordPairLine>
+      );
+
+      wordPairs.push(pair);
     }
+
+    return wordPairs;
   };
-  const onPressHeaderBackRef = useRef(onPressHeaderBack);
-  onPressHeaderBackRef.current = onPressHeaderBack;
 
   const onPressHeaderCancel = () => {
     haptic('impactLight');
@@ -160,113 +244,99 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
       <TouchableOpacity
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
-        onPress={onPressHeaderBackRef.current}>
+        onPress={onPressHeaderCancelRef.current}>
         <Back opacity={1} />
       </TouchableOpacity>
     );
   }, []);
-
-  const headerRight = useMemo(() => {
-    return () => (
-      <HeaderRightContainer>
-        <Button
-          accessibilityLabel="cancel-button"
-          buttonType={'pill'}
-          onPress={onPressHeaderCancelRef.current}>
-          {t('Cancel')}
-        </Button>
-      </HeaderRightContainer>
-    );
-  }, [t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle,
       headerLeft,
-      headerRight,
     });
-  }, [navigation, headerTitle, headerLeft, headerRight]);
+  }, [navigation, headerTitle, headerLeft]);
 
   const next = () => {
-    if (activeSlideIndex === words.length - 1) {
-      navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
-        screen: 'VerifyPhrase',
-        params: {...params, walletTermsAccepted},
+    navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
+      screen: 'VerifyPhrase',
+      params: {...params, walletTermsAccepted},
+    });
+  };
+
+  const copyToClipboard = () => {
+    haptic('impactLight');
+    if (!copied) {
+      const _words = Object.values(words).map((word, index) => {
+        return `${index + 1}. ${word}`;
       });
-    } else {
-      ref.current?.next();
+      Clipboard.setString(_words.toString());
+      setCopied(true);
     }
   };
 
-  const throttleOnActiveSlideChange = useMemo(
-    () =>
-      throttle((index: number) => {
-        setActiveSlideIndex(Math.round(index));
-      }, 300),
-    [],
-  );
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   return (
     <RecoveryPhraseContainer accessibilityLabel="recovery-phrase-view">
-      <ProgressBarContainer>
-        <Progress.Bar
-          progress={0.3}
-          width={null}
-          color={ProgressBlue}
-          unfilledColor={Air}
-          borderColor={Air}
-          borderWidth={0}
-          borderRadius={0}
-        />
-      </ProgressBarContainer>
+      <RecoveryContainer>
+        <WarningMessageContainer>
+          <WarningMessageTitleContainer>
+            <WarningMessageTitle>{t('CONFIDENTIAL')}</WarningMessageTitle>
+          </WarningMessageTitleContainer>
+          <WarningMessageDescContainer>
+            <Paragraph>{t('Your 12-word recovery phrase')}</Paragraph>
+          </WarningMessageDescContainer>
+          <WarningMessageTextContainer>
+            <WarningMessageText>
+              {t('Store Securely - Never share')}
+            </WarningMessageText>
+          </WarningMessageTextContainer>
+        </WarningMessageContainer>
 
-      <BodyContainer>
-        <DirectionsContainer>
-          <TextAlign align={'center'}>
-            <Paragraph>{t('Write down each word.')}</Paragraph>
-          </TextAlign>
-        </DirectionsContainer>
-
-        <Carousel
-          loop={false}
-          vertical={false}
-          mode={'horizontal-stack'}
-          modeConfig={{
-            snapDirection: 'left',
-            stackInterval: 25,
-            scaleInterval: 0.08,
-            showLength: 3,
-          }}
-          width={Math.round(WIDTH)}
-          height={Math.round(WIDTH) / 2}
-          autoPlay={false}
-          data={words}
-          ref={ref}
-          scrollAnimationDuration={1000}
-          enabled={false}
-          onProgressChange={(_, index) => {
-            if (Math.round(index) !== activeSlideIndex) {
-              throttleOnActiveSlideChange(index);
-            }
-          }}
-          renderItem={renderItem}
-        />
-        <CountTracker>
-          <CountText>
-            {activeSlideIndex + 1}/{words.length}
-          </CountText>
-        </CountTracker>
-        <CtaContainer accessibilityLabel="cta-container">
-          <Button
-            accessibilityLabel="next-button"
-            buttonStyle={'primary'}
-            debounceTime={Platform.OS === 'android' ? 200 : 0}
-            onPress={next}>
-            {t('Next')}
-          </Button>
-        </CtaContainer>
-      </BodyContainer>
+        <WordPairContainer>
+          {renderWordPairs()}
+          <WordPairActions>
+            <RecoveryActionsContainer>
+              <RecoveryActionsButton onPress={copyToClipboard}>
+                <CopyImgContainer>
+                  {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
+                </CopyImgContainer>
+                <RecoveryActionsButtonText>
+                  {t('Copy')}
+                </RecoveryActionsButtonText>
+              </RecoveryActionsButton>
+            </RecoveryActionsContainer>
+            <RecoveryActionsContainer style={{display: 'none'}}>
+              <RecoveryActionsButton>
+                <CopySvg />
+                <RecoveryActionsButtonText>
+                  {t('Print')}
+                </RecoveryActionsButtonText>
+              </RecoveryActionsButton>
+            </RecoveryActionsContainer>
+          </WordPairActions>
+        </WordPairContainer>
+      </RecoveryContainer>
+      <CtaContainerAbsolute accessibilityLabel="cta-container">
+        <Button
+          accessibilityLabel="next-button"
+          buttonStyle={'primary'}
+          debounceTime={Platform.OS === 'android' ? 200 : 0}
+          onPress={next}>
+          {t('Verify')}
+        </Button>
+      </CtaContainerAbsolute>
     </RecoveryPhraseContainer>
   );
 };
