@@ -28,7 +28,6 @@ import {
   Wallet,
   TransactionProposal,
   SendMaxInfo,
-  Token,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -548,10 +547,9 @@ const ChangellyCheckout: React.FC = () => {
     try {
       dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
       await sleep(400);
-
-      const broadcastedTx = (await dispatch<any>(
+      await dispatch(
         publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
-      )) as any;
+      );
       saveChangellyTx();
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
