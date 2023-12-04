@@ -897,6 +897,7 @@
   "In order to protect your funds from being accessible to hackers and thieves, the recovery phrase must be kept somewhere safe and remain a secret.": "ハッカーや窃盗犯から資産を守るため、リカバリーフレーズは安全な場所に保管し、秘密にしておく必要があります。",
   "I Understand": "わかりました",
   "Next": "次へ",
+  "Choose another currency you would like to add to your key.": "Choose another currency you would like to add to your key.",
   "Encrypt your Key": "鍵を暗号化する",
   "Prevent an unauthorized user from sending funds out of your wallet.": "権限のないユーザーによるウォレットからの資産送付を防ぐことができます。",
   "Key Settings": "鍵の設定",
