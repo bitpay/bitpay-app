@@ -1,8 +1,8 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import {
   CardConfig,
@@ -24,6 +24,7 @@ import {useTranslation} from 'react-i18next';
 import PayProConfirmTwoFactor, {
   PayProConfirmTwoFactorParamList,
 } from '../../../wallet/screens/send/confirm/PayProConfirmTwoFactor';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type GiftCardStackParamList = {
   BuyGiftCard: {cardConfig: CardConfig};
@@ -61,17 +62,24 @@ export enum GiftCardScreens {
   GIFT_CARD_CONFIRM_TWO_FACTOR = 'GiftCardConfirmTwoFactor',
 }
 
-const GiftCards = createStackNavigator<GiftCardStackParamList>();
+const GiftCards = createNativeStackNavigator<GiftCardStackParamList>();
 
 const GiftCardStack = () => {
   const {t} = useTranslation();
   return (
     <GiftCards.Navigator
       initialRouteName={GiftCardScreens.BUY_GIFT_CARD}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <GiftCards.Screen
         name={GiftCardScreens.BUY_GIFT_CARD}
         component={BuyGiftCard}

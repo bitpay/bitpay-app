@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback} from 'react';
 import {CardActions} from '../../../store/card';
 import {VirtualDesignCurrency} from '../../../store/card/card.types';
@@ -19,7 +19,7 @@ export type CardPairingScreenParamList =
   | undefined;
 
 const CardPairingScreen: React.FC<
-  StackScreenProps<CardStackParamList, CardScreens.PAIRING>
+  NativeStackScreenProps<CardStackParamList, CardScreens.PAIRING>
 > = props => {
   const {route} = props;
   const {secret, code, paymentUrl, dashboardRedirect} = route.params || {};

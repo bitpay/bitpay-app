@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from 'react-navigation/native-stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -31,7 +31,10 @@ export type LoginScreenParamList =
     }
   | undefined;
 
-type LoginScreenProps = StackScreenProps<AuthStackParamList, AuthScreens.LOGIN>;
+type LoginScreenProps = NativeStackScreenProps<
+  AuthStackParamList,
+  AuthScreens.LOGIN
+>;
 
 const schema = yup.object().shape({
   email: yup.string().email().required().trim(),

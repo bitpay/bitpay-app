@@ -41,8 +41,6 @@ const LanguageSettingsScreen: React.VFC = () => {
   return (
     <SettingsContainer>
       <Settings>
-        <Hr />
-
         {LanguageList.map(({name, isoCode}, index) => {
           return (
             <View key={isoCode}>

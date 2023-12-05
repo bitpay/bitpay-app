@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {BillStackParamList} from '../BillStack';
 import {H5, H7, Paragraph} from '../../../../../components/styled/Text';
@@ -70,7 +70,7 @@ const LineItemLabel = styled(H7)`
 const Payment = ({
   navigation,
   route,
-}: StackScreenProps<BillStackParamList, 'Payment'>) => {
+}: NativeStackScreenProps<BillStackParamList, 'Payment'>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {account, payment} = route.params;

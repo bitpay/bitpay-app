@@ -1,6 +1,6 @@
 import yup from '../../../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, View, TouchableOpacity} from 'react-native';
@@ -80,7 +80,7 @@ interface PhoneFormFieldValues {
 
 const EnterPhone = ({
   route,
-}: StackScreenProps<GiftCardStackParamList, 'EnterPhone'>) => {
+}: NativeStackScreenProps<GiftCardStackParamList, 'EnterPhone'>) => {
   const basePhoneSchema = yup.string().required();
   const usPhoneSchema = basePhoneSchema.min(10, t('Must be exactly 10 digits'));
   const intlPhoneSchema = basePhoneSchema.max(

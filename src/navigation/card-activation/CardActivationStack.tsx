@@ -1,10 +1,11 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {HeaderBackButton} from '@react-navigation/elements';
 import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../components/styled/Text';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import ActivateScreen, {
   ActivateScreenParamList,
@@ -23,17 +24,25 @@ export enum CardActivationScreens {
   COMPLETE = 'Complete',
 }
 
-const CardActivation = createStackNavigator<CardActivationStackParamList>();
+const CardActivation =
+  createNativeStackNavigator<CardActivationStackParamList>();
 
 const CardActivationStack: React.FC = () => {
   const {t} = useTranslation();
   return (
     <CardActivation.Navigator
       initialRouteName={CardActivationScreens.ACTIVATE}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <CardActivation.Screen
         name={CardActivationScreens.ACTIVATE}
         component={ActivateScreen}

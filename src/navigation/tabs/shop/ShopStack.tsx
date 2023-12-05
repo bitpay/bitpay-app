@@ -1,15 +1,16 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../constants/NavigationOptions';
 import ShopHome, {ShopHomeParamList} from './ShopHome';
 import {HeaderTitle} from '../../../components/styled/Text';
-import {t} from 'i18next';
 import {NavigatorScreenParams} from '@react-navigation/native';
 import {CardConfigMap, GiftCard} from '../../../store/shop/shop.models';
 import ArchivedGiftCards from './gift-card/screens/ArchivedGiftCards';
+import {HeaderBackButton} from '@react-navigation/elements';
+import {useTranslation} from 'react-i18next';
 
 export type ShopStackParamList = {
   Home: NavigatorScreenParams<ShopHomeParamList>;
@@ -24,17 +25,24 @@ export enum ShopScreens {
   ARCHIVED_GIFT_CARDS = 'ArchivedGiftCards',
 }
 
-const Shop = createStackNavigator<ShopStackParamList>();
+const Shop = createNativeStackNavigator<ShopStackParamList>();
 
 const ShopStack = () => {
+  const {t} = useTranslation();
   return (
     <Shop.Navigator
       initialRouteName={ShopScreens.HOME}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-        gestureEnabled: false,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Shop.Screen name={ShopScreens.HOME} component={ShopHome} />
       <Shop.Screen
         name={ShopScreens.ARCHIVED_GIFT_CARDS}

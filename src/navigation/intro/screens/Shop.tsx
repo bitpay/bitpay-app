@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
@@ -33,7 +33,7 @@ const TextContainer = styled.View`
   margin-bottom: 10px;
 `;
 
-type IntroShopScreenProps = StackScreenProps<RootStackParamList, 'Intro'>;
+type IntroShopScreenProps = NativeStackScreenProps<RootStackParamList, 'Intro'>;
 
 const IntroShop: React.VFC<IntroShopScreenProps> = ({navigation}) => {
   const {t} = useTranslation();

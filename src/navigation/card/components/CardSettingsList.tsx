@@ -1,4 +1,4 @@
-import {StackNavigationProp} from '@react-navigation/stack';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Linking, Platform, View} from 'react-native';
@@ -30,7 +30,7 @@ import {ToggleSpinnerState} from './ToggleSpinner';
 interface SettingsListProps {
   card: Card;
   orderPhysical?: boolean;
-  navigation: StackNavigationProp<CardStackParamList, 'Settings'>;
+  navigation: NativeStackNavigationProp<CardStackParamList, 'Settings'>;
 }
 
 const LINKS: {

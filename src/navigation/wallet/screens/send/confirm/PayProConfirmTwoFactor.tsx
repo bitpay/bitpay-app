@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -38,8 +38,8 @@ const schema = yup.object().shape({
 const PayProConfirmTwoFactor = ({
   route,
 }:
-  | StackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>
-  | StackScreenProps<BillStackParamList, 'BillConfirmTwoFactor'>) => {
+  | NativeStackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>
+  | NativeStackScreenProps<BillStackParamList, 'BillConfirmTwoFactor'>) => {
   const {t} = useTranslation();
   const {onSubmit, twoFactorCodeLength} = route.params;
   const codeRef = useRef<TextInput>(null);

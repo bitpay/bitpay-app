@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -29,7 +29,7 @@ const schema = yup.object().shape({
 
 const EnterEmail = ({
   route,
-}: StackScreenProps<GiftCardStackParamList, 'EnterEmail'>) => {
+}: NativeStackScreenProps<GiftCardStackParamList, 'EnterEmail'>) => {
   const {t} = useTranslation();
   const {onSubmit, initialEmail} = route.params;
 

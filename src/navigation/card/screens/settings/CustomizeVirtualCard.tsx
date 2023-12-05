@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, TouchableOpacity, View} from 'react-native';
@@ -143,7 +143,7 @@ const Icons: IconMap = {
 };
 
 const CustomizeVirtualCard: React.FC<
-  StackScreenProps<CardStackParamList, 'CustomizeVirtualCard'>
+  NativeStackScreenProps<CardStackParamList, 'CustomizeVirtualCard'>
 > = ({navigation, route}) => {
   const {card} = route.params;
   const dispatch = useDispatch();

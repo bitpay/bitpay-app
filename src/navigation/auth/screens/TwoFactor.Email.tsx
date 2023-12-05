@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
@@ -22,7 +22,7 @@ export type EmailAuthenticationParamList =
     }
   | undefined;
 
-type EmailAuthenticationScreenProps = StackScreenProps<
+type EmailAuthenticationScreenProps = NativeStackScreenProps<
   AuthStackParamList,
   'EmailAuthentication'
 >;

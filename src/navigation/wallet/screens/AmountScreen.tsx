@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
@@ -42,7 +42,7 @@ export interface AmountScreenParamList {
 }
 
 const AmountScreen: React.VFC<
-  StackScreenProps<WalletStackParamList, WalletScreens.AMOUNT>
+  NativeStackScreenProps<WalletStackParamList, WalletScreens.AMOUNT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const [buttonState, setButtonState] = useState<ButtonState>();

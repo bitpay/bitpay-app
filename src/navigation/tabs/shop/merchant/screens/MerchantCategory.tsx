@@ -1,7 +1,7 @@
 import React, {useLayoutEffect} from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled from 'styled-components/native';
 import {
   MerchantScreens,
@@ -21,7 +21,7 @@ const SearchResults = styled.View`
 const MerchantCategory = ({
   route,
   navigation,
-}: StackScreenProps<MerchantStackParamList, 'MerchantCategory'>) => {
+}: NativeStackScreenProps<MerchantStackParamList, 'MerchantCategory'>) => {
   const navigator = useNavigation();
   const {integrations, category} = route.params;
   useLayoutEffect(() => {

@@ -19,9 +19,7 @@ const SettingsSvg: React.FC<SettingsSvgProps> = ({color, background}) => {
   );
 };
 
-const SettingsSvgContainer = styled.TouchableOpacity`
-  transform: scale(1.1);
-`;
+const SettingsSvgContainer = styled.TouchableOpacity``;
 
 const Settings = ({onPress}: {onPress: () => void}) => {
   const theme = useTheme();

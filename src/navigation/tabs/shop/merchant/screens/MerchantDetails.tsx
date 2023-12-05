@@ -1,6 +1,6 @@
 import React, {useLayoutEffect} from 'react';
 import {Linking, ScrollView} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import {MerchantStackParamList} from '../MerchantStack';
 import RemoteImage from '../../components/RemoteImage';
@@ -24,6 +24,10 @@ import {
 } from '../../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+
+const MerchantDetailsContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -53,7 +57,7 @@ const FooterButton = styled(CtaContainerAbsolute)`
 const MerchantDetails = ({
   route,
   navigation,
-}: StackScreenProps<MerchantStackParamList, 'MerchantDetails'>) => {
+}: NativeStackScreenProps<MerchantStackParamList, 'MerchantDetails'>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const {directIntegration} = route.params;
@@ -66,7 +70,7 @@ const MerchantDetails = ({
     });
   });
   return (
-    <>
+    <MerchantDetailsContainer>
       <ScrollView>
         <GradientBox colors={getMastheadGradient(theme)} />
         <SectionContainer style={{marginTop: -iconHeight / 2}}>
@@ -101,7 +105,7 @@ const MerchantDetails = ({
           {t('Go to') + ' ' + directIntegration.displayName}
         </Button>
       </FooterButton>
-    </>
+    </MerchantDetailsContainer>
   );
 };
 

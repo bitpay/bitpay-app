@@ -95,11 +95,7 @@ const CopyImgContainer = styled.View`
   justify-content: center;
 `;
 
-const ShareIconContainer = styled.TouchableOpacity`
-  padding-top: 10px;
-  transform: scale(1.1);
-  padding-right: 15px;
-`;
+const ShareIconContainer = styled.TouchableOpacity``;
 
 const RequestSpecificAmountQR = () => {
   const {t} = useTranslation();

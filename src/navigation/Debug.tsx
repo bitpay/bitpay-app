@@ -1,7 +1,7 @@
 import React from 'react';
 import {Alert} from 'react-native';
 import Mailer from 'react-native-mail';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../utils/hooks';
 import {LogLevel} from '../store/log/log.models';
 import {RootStackParamList} from '../Root';
@@ -47,9 +47,9 @@ const LogError = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? '#E1E4E7' : SlateDark)};
 `;
 
-const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
-  route,
-}) => {
+const DebugScreen: React.FC<
+  NativeStackScreenProps<RootStackParamList, 'Debug'>
+> = ({route}) => {
   const logs = useAppSelector(({LOG}: RootState) => LOG.logs);
   const {name} = route.params || {};
 

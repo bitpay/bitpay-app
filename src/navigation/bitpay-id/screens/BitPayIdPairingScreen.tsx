@@ -1,5 +1,5 @@
 import {CommonActions} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback} from 'react';
 import {RootStacks} from '../../../Root';
 import {AppEffects} from '../../../store/app';
@@ -17,7 +17,7 @@ export type BitPayIdPairingScreenParamList =
   | undefined;
 
 const BitPayIdPairingScreen: React.FC<
-  StackScreenProps<BitpayIdStackParamList, BitpayIdScreens.PAIRING>
+  NativeStackScreenProps<BitpayIdStackParamList, BitpayIdScreens.PAIRING>
 > = props => {
   const dispatch = useAppDispatch();
   const {navigation, route} = props;

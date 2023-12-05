@@ -1,13 +1,14 @@
 import {useNavigation} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {HeaderBackButton} from '@react-navigation/elements';
 import React from 'react';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import {BitPayIdEffects} from '../../store/bitpay-id';
 import {ShopEffects} from '../../store/shop';
@@ -49,7 +50,7 @@ export enum BitpayIdScreens {
   TWO_FACTOR_ENABLED = 'TwoFactorEnabled',
 }
 
-const BitpayId = createStackNavigator<BitpayIdStackParamList>();
+const BitpayId = createNativeStackNavigator<BitpayIdStackParamList>();
 
 const BitpayIdStack = () => {
   const {t} = useTranslation();
@@ -61,13 +62,22 @@ const BitpayIdStack = () => {
 
   return (
     <BitpayId.Navigator
-      screenOptions={{...baseNavigatorOptions}}
+      screenOptions={({navigation}) => ({
+        ...baseNavigatorOptions,
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}
       initialRouteName={BitpayIdScreens.PROFILE}>
       <BitpayId.Screen
         name={BitpayIdScreens.PAIRING}
         component={PairingScreen}
         options={{
-          ...baseScreenOptions,
           headerTitle: () => <HeaderTitle>{t('Pairing...')}</HeaderTitle>,
         }}
       />
@@ -75,7 +85,6 @@ const BitpayIdStack = () => {
         name={BitpayIdScreens.PROFILE}
         component={Profile}
         options={{
-          ...baseScreenOptions,
           headerRight: () => {
             return (
               <HeaderRightContainer>
@@ -113,36 +122,25 @@ const BitpayIdStack = () => {
         name={BitpayIdScreens.RECEIVE_SETTINGS}
         component={ReceiveSettings}
         options={{
-          ...baseScreenOptions,
           headerTitle: () => <HeaderTitle>{t('Receive Settings')}</HeaderTitle>,
         }}
       />
       <BitpayId.Screen
         name={BitpayIdScreens.RECEIVING_ENABLED}
         component={ReceivingEnabled}
-        options={{
-          ...baseScreenOptions,
-        }}
       />
       <BitpayId.Screen
         name={BitpayIdScreens.TWO_FACTOR}
         component={PayProConfirmTwoFactor}
-        options={{
-          ...baseScreenOptions,
-        }}
       />
       <BitpayId.Screen
         name={BitpayIdScreens.ENABLE_TWO_FACTOR}
         component={EnableTwoFactor}
-        options={{
-          ...baseScreenOptions,
-        }}
       />
       <BitpayId.Screen
         name={BitpayIdScreens.TWO_FACTOR_ENABLED}
         component={TwoFactorEnabled}
         options={{
-          ...baseScreenOptions,
           headerLeft: () => null,
         }}
       />

@@ -17,6 +17,8 @@ import {Black, Feather, LightBlack, White} from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../../constants/config';
 
+const ScrollContainer = styled.ScrollView``;
+
 const HeaderTitle = styled(Setting)`
   margin-top: 20px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
@@ -136,70 +138,72 @@ const StorageUsage: React.VFC = () => {
 
   return (
     <SettingsContainer>
-      <HeaderTitle>
-        <SettingTitle>{t('Total Size')}</SettingTitle>
-      </HeaderTitle>
-      <SettingsComponent>
-        <Setting>
-          <SettingTitle>BitPay</SettingTitle>
+      <ScrollContainer>
+        <HeaderTitle>
+          <SettingTitle>{t('Total Size')}</SettingTitle>
+        </HeaderTitle>
+        <SettingsComponent>
+          <Setting>
+            <SettingTitle>BitPay</SettingTitle>
 
-          <Button buttonType="pill">{appSize}</Button>
-        </Setting>
+            <Button buttonType="pill">{appSize}</Button>
+          </Setting>
 
-        <Hr />
+          <Hr />
 
-        <Setting>
-          <SettingTitle>{t('Free Disk Storage')}</SettingTitle>
+          <Setting>
+            <SettingTitle>{t('Free Disk Storage')}</SettingTitle>
 
-          <Button buttonType="pill">{deviceFreeStorage}</Button>
-        </Setting>
+            <Button buttonType="pill">{deviceFreeStorage}</Button>
+          </Setting>
 
-        <Hr />
-        <Setting>
-          <SettingTitle>{t('Total Disk Storage')}</SettingTitle>
+          <Hr />
+          <Setting>
+            <SettingTitle>{t('Total Disk Storage')}</SettingTitle>
 
-          <Button buttonType="pill">{deviceTotalStorage}</Button>
-        </Setting>
-      </SettingsComponent>
-      <HeaderTitle>
-        <SettingTitle>{t('Details')}</SettingTitle>
-      </HeaderTitle>
-      <SettingsComponent style={{marginBottom: 10}}>
-        <Setting>
-          <SettingTitle>
-            {t('Wallets')} ({walletsCount || '0'})
-          </SettingTitle>
+            <Button buttonType="pill">{deviceTotalStorage}</Button>
+          </Setting>
+        </SettingsComponent>
+        <HeaderTitle>
+          <SettingTitle>{t('Details')}</SettingTitle>
+        </HeaderTitle>
+        <SettingsComponent style={{marginBottom: 10}}>
+          <Setting>
+            <SettingTitle>
+              {t('Wallets')} ({walletsCount || '0'})
+            </SettingTitle>
 
-          <Button buttonType="pill">{walletStorage}</Button>
-        </Setting>
+            <Button buttonType="pill">{walletStorage}</Button>
+          </Setting>
 
-        <Hr />
-        <Setting>
-          <SettingTitle>
-            {t('Gift Cards')} ({giftCount || '0'})
-          </SettingTitle>
+          <Hr />
+          <Setting>
+            <SettingTitle>
+              {t('Gift Cards')} ({giftCount || '0'})
+            </SettingTitle>
 
-          <Button buttonType="pill">{giftCardtStorage}</Button>
-        </Setting>
+            <Button buttonType="pill">{giftCardtStorage}</Button>
+          </Setting>
 
-        <Hr />
-        <Setting>
-          <SettingTitle>
-            {t('Custom Tokens')} ({customTokenCount || '0'})
-          </SettingTitle>
+          <Hr />
+          <Setting>
+            <SettingTitle>
+              {t('Custom Tokens')} ({customTokenCount || '0'})
+            </SettingTitle>
 
-          <Button buttonType="pill">{customTokenStorage}</Button>
-        </Setting>
+            <Button buttonType="pill">{customTokenStorage}</Button>
+          </Setting>
 
-        <Hr />
-        <Setting>
-          <SettingTitle>
-            {t('Contacts')} ({contactCount || '0'})
-          </SettingTitle>
+          <Hr />
+          <Setting>
+            <SettingTitle>
+              {t('Contacts')} ({contactCount || '0'})
+            </SettingTitle>
 
-          <Button buttonType="pill">{contactStorage}</Button>
-        </Setting>
-      </SettingsComponent>
+            <Button buttonType="pill">{contactStorage}</Button>
+          </Setting>
+        </SettingsComponent>
+      </ScrollContainer>
     </SettingsContainer>
   );
 };

@@ -1,8 +1,8 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import {
   Category,
@@ -10,6 +10,7 @@ import {
 } from '../../../../store/shop/shop.models';
 import MerchantDetails from './screens/MerchantDetails';
 import MerchantCategory from './screens/MerchantCategory';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type MerchantStackParamList = {
   MerchantCategory: {
@@ -24,16 +25,23 @@ export enum MerchantScreens {
   MERCHANT_DETAILS = 'MerchantDetails',
 }
 
-const Merchant = createStackNavigator<MerchantStackParamList>();
+const Merchant = createNativeStackNavigator<MerchantStackParamList>();
 
 const MerchantStack = () => {
   return (
     <Merchant.Navigator
       initialRouteName={MerchantScreens.MERCHANT_DETAILS}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Merchant.Screen
         name={MerchantScreens.MERCHANT_CATEGORY}
         component={MerchantCategory}

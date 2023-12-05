@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -37,7 +37,7 @@ const Description = styled(Paragraph)`
 `;
 
 const CompleteScreen: React.FC<
-  StackScreenProps<CardActivationStackParamList, 'Complete'>
+  NativeStackScreenProps<CardActivationStackParamList, 'Complete'>
 > = () => {
   const {t} = useTranslation();
   const onViewCardPress = () => {

@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Keyboard} from 'react-native';
@@ -43,7 +43,7 @@ const createErrorConfig = (
 });
 
 const UpdateCardNameScreen: React.VFC<
-  StackScreenProps<CardStackParamList, CardScreens.UPDATE_CARD_NAME>
+  NativeStackScreenProps<CardStackParamList, CardScreens.UPDATE_CARD_NAME>
 > = ({navigation, route}) => {
   const {card} = route.params;
   const dispatch = useAppDispatch();

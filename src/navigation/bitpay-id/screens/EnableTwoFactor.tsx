@@ -4,7 +4,7 @@ import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {H3, Paragraph} from '../../../components/styled/Text';
 import {t} from 'i18next';
 import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BaseText} from '../../wallet/components/KeyDropdownOption';
 import {Action, SlateDark, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
@@ -25,6 +25,10 @@ import {BASE_BITPAY_URLS} from '../../../constants/config';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+
+const EnableTwoFactorContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -93,7 +97,7 @@ const QRContainer = styled.View`
       : ''};
 `;
 
-type EnableTwoFactorProps = StackScreenProps<
+type EnableTwoFactorProps = NativeStackScreenProps<
   BitpayIdStackParamList,
   'EnableTwoFactor'
 >;
@@ -215,7 +219,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
   const twoFactorSetupCode = `otpauth://totp/%5Bbitpay%5D%20${email}?secret=${otpAuthKey}&issuer=${otpIssuer}`;
 
   return (
-    <>
+    <EnableTwoFactorContainer>
       <KeyboardAwareScrollView
         extraScrollHeight={111}
         keyboardShouldPersistTaps={'handled'}>
@@ -362,7 +366,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
           )}
         </ViewContainer>
       </KeyboardAwareScrollView>
-    </>
+    </EnableTwoFactorContainer>
   );
 };
 

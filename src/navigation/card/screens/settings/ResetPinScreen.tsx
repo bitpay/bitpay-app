@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
 import styled from 'styled-components/native';
@@ -37,7 +37,7 @@ const SpinnerWrapper = styled.View`
 `;
 
 const ResetPinScreen: React.VFC<
-  StackScreenProps<CardStackParamList, CardScreens.RESET_PIN>
+  NativeStackScreenProps<CardStackParamList, CardScreens.RESET_PIN>
 > = ({navigation, route}) => {
   const {id} = route.params;
   const dispatch = useAppDispatch();

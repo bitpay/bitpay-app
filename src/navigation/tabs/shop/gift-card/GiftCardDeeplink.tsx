@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
 import {RootStackParamList} from '../../../../Root';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
@@ -16,7 +16,7 @@ export type GiftCardDeeplinkScreenParamList =
  * Otherwise we should configure the deeplink directly.
  */
 const GiftCardDeeplinkScreen: React.FC<
-  StackScreenProps<RootStackParamList, 'GiftCardDeeplink'>
+  NativeStackScreenProps<RootStackParamList, 'GiftCardDeeplink'>
 > = ({navigation, route}) => {
   const merchantName = ((route.params || {}).merchant || '').toLowerCase();
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);

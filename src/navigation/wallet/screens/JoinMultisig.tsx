@@ -45,9 +45,8 @@ export type JoinMultisigParamList = {
   invitationCode?: string;
 };
 
-const Gutter = '10px';
-export const JoinContainer = styled.View`
-  padding: ${Gutter} 0;
+export const JoinContainer = styled.SafeAreaView`
+  flex: 1;
 `;
 
 const ScrollViewContainer = styled.ScrollView`
@@ -231,8 +230,8 @@ const JoinMultisig = () => {
   };
 
   return (
-    <ScrollViewContainer>
-      <JoinContainer>
+    <JoinContainer>
+      <ScrollViewContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -293,8 +292,8 @@ const JoinMultisig = () => {
             {t('Join')}
           </Button>
         </CtaContainer>
-      </JoinContainer>
-    </ScrollViewContainer>
+      </ScrollViewContainer>
+    </JoinContainer>
   );
 };
 

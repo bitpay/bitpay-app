@@ -1,5 +1,5 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {
   useEffect,
   useLayoutEffect,
@@ -186,7 +186,7 @@ export type CoinbaseAccountScreenParamList = {
 
 const CoinbaseAccount = ({
   route,
-}: StackScreenProps<CoinbaseStackParamList, 'CoinbaseAccount'>) => {
+}: NativeStackScreenProps<CoinbaseStackParamList, 'CoinbaseAccount'>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();

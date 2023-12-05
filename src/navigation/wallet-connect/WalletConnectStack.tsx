@@ -1,9 +1,9 @@
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import React from 'react';
 import {HeaderTitle} from '../../components/styled/Text';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import WalletConnectIntro, {
   WalletConnectIntroParamList,
@@ -25,6 +25,7 @@ import WalletConnectConfirm, {
   WalletConnectConfirmParamList,
 } from './screens/WalletConnectConfirm';
 import {useTranslation} from 'react-i18next';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 const WalletConnectHeaderTitle = styled.View`
   align-items: center;
@@ -60,17 +61,24 @@ export enum WalletConnectScreens {
   WC_CONFIRM = 'WalletConnectConfirm',
 }
 
-const WalletConnect = createStackNavigator<WalletConnectStackParamList>();
+const WalletConnect = createNativeStackNavigator<WalletConnectStackParamList>();
 
 const WalletConnectStack = () => {
   const {t} = useTranslation();
   return (
     <WalletConnect.Navigator
       initialRouteName={WalletConnectScreens.ROOT}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <WalletConnect.Screen
         name={WalletConnectScreens.ROOT}
         component={WalletConnectIntro}
@@ -82,7 +90,6 @@ const WalletConnectStack = () => {
         name={WalletConnectScreens.WC_START}
         component={WalletConnectStart}
         options={{
-          ...TransitionPresets.ModalPresentationIOS,
           headerTitle: () => WalletConnectHeader(),
         }}
       />
@@ -109,7 +116,6 @@ const WalletConnectStack = () => {
         component={WalletConnectConfirm}
         options={{
           headerTitle: () => <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>,
-          ...TransitionPresets.ModalPresentationIOS,
           gestureEnabled: false,
         }}
       />

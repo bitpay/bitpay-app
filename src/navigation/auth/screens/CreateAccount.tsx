@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Trans, useTranslation} from 'react-i18next';
@@ -29,7 +29,7 @@ import AuthFormContainer, {
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
 export type CreateAccountScreenParamList = {} | undefined;
-type CreateAccountScreenProps = StackScreenProps<
+type CreateAccountScreenProps = NativeStackScreenProps<
   AuthStackParamList,
   AuthScreens.CREATE_ACCOUNT
 >;

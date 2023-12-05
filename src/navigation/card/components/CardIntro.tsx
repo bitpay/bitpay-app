@@ -1,6 +1,6 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {useScrollToTop} from '@react-navigation/native';
-import React, {useEffect, useRef, useState} from 'react';
+import {useNavigation, useScrollToTop} from '@react-navigation/native';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {Keyboard, ScrollView, View} from 'react-native';
@@ -19,6 +19,10 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BaseText} from '../../wallet/components/KeyDropdownOption';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
+
+const CardIntroContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const Spacer = styled.View<{height: number}>`
   height: ${({height}) => height}px;
@@ -46,6 +50,14 @@ const TitleText = styled(BaseText)`
 
 const IntroHero = () => {
   const {t} = useTranslation();
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: '',
+    });
+  }, [navigation]);
+
   return (
     <IntroTitleContainer>
       <TitleText numberOfLines={1} ellipsizeMode={'clip'}>
@@ -134,7 +146,7 @@ const CardIntro: React.FC = () => {
   }, [isJoinedWaitlist, isUSResident]);
 
   return (
-    <>
+    <CardIntroContainer>
       <ScrollView ref={scrollViewRef}>
         <ContentContainer>
           <IntroHero />
@@ -210,7 +222,7 @@ const CardIntro: React.FC = () => {
 
         <Spacer height={56} />
       </ScrollView>
-    </>
+    </CardIntroContainer>
   );
 };
 

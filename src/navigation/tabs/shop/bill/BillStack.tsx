@@ -1,9 +1,9 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import ConnectBills from './screens/ConnectBills';
 import Payments from './screens/Payments';
@@ -23,6 +23,7 @@ import PayBill from './screens/PayBill';
 import PayAllBills from './screens/PayAllBills';
 import BillSettings from './screens/BillSettings';
 import ConnectBillsOptions from './screens/ConnectBillsOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type BillStackParamList = {
   BillAmount: AmountScreenParamList;
@@ -50,17 +51,24 @@ export enum BillScreens {
   PAYMENTS = 'Payments',
 }
 
-const Bill = createStackNavigator<BillStackParamList>();
+const Bill = createNativeStackNavigator<BillStackParamList>();
 
 const BillStack = () => {
   const {t} = useTranslation();
   return (
     <Bill.Navigator
       initialRouteName={BillScreens.CONNECT_BILLS}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Bill.Screen name={BillScreens.BILL_AMOUNT} component={AmountScreen} />
       <Bill.Screen
         options={{

@@ -280,7 +280,9 @@ export const getTokenRates =
             });
           } else {
             dispatch(
-              LogActions.info(`No tokens wallets for ${chain} found. Skipping getTokenRates...`),
+              LogActions.info(
+                `No tokens wallets for ${chain} found. Skipping getTokenRates...`,
+              ),
             );
           }
         }

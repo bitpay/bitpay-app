@@ -193,7 +193,6 @@ const WalletConnectHome = () => {
       headerRight: () => {
         return (
           <ItemNoteTouchableContainer
-            style={{marginRight: 12}}
             onPress={() => {
               disconnectAccount();
             }}>

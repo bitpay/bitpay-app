@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -26,7 +26,7 @@ export type CoinbaseRootScreenParamList =
     }
   | undefined;
 
-type CoinbaseRootScreenProps = StackScreenProps<
+type CoinbaseRootScreenProps = NativeStackScreenProps<
   CoinbaseStackParamList,
   'CoinbaseRoot'
 >;

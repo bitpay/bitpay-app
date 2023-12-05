@@ -1,10 +1,11 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Scan from './screens/Scan';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export enum ScanScreens {
   Root = 'Root',
@@ -14,17 +15,23 @@ export type ScanStackParamList = {
   Root: {onScanComplete?: (data: string) => void} | undefined;
 };
 
-const ScanNavigator = createStackNavigator<ScanStackParamList>();
+const ScanNavigator = createNativeStackNavigator<ScanStackParamList>();
 
 const ScanStack = () => {
   return (
     <ScanNavigator.Navigator
       initialRouteName={ScanScreens.Root}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-        headerTransparent: true,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <ScanNavigator.Screen name={ScanScreens.Root} component={Scan} />
     </ScanNavigator.Navigator>
   );

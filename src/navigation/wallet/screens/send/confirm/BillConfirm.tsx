@@ -49,7 +49,7 @@ import {
 } from '../../../../tabs/shop/bill/BillStack';
 import {Image, View} from 'react-native';
 import Button from '../../../../../components/button/Button';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import BillAlert from '../../../../tabs/shop/bill/components/BillAlert';
 import PaymentSent from '../../../components/PaymentSent';
@@ -68,7 +68,7 @@ export interface BillConfirmParamList {
 }
 
 const Confirm: React.FC<
-  StackScreenProps<BillStackParamList, 'BillConfirm'>
+  NativeStackScreenProps<BillStackParamList, 'BillConfirm'>
 > = ({navigation}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();

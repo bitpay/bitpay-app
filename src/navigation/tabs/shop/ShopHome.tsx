@@ -32,7 +32,7 @@ import {
 } from '../../../store/shop/shop.selectors';
 import {APP_NETWORK} from '../../../constants/config';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
 import {
@@ -62,7 +62,7 @@ export type ShopHomeParamList = {
 
 const Tab = createMaterialTopTabNavigator();
 
-const ShopContainer = styled.View`
+const ShopContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -123,7 +123,7 @@ const getScrollViewHeight = (
 };
 
 const ShopHome: React.FC<
-  StackScreenProps<ShopStackParamList, ShopScreens.HOME>
+  NativeStackScreenProps<ShopStackParamList, ShopScreens.HOME>
 > = ({route}) => {
   const {t} = useTranslation();
   const theme = useTheme();

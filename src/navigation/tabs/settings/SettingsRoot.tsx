@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {ReactElement, useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View, LayoutAnimation, ScrollView} from 'react-native';
@@ -98,7 +98,7 @@ export type SettingsHomeParamList =
     }
   | undefined;
 
-type SettingsHomeProps = StackScreenProps<SettingsStackParamList, 'Root'>;
+type SettingsHomeProps = NativeStackScreenProps<SettingsStackParamList, 'Root'>;
 
 export type SettingsListType =
   | 'General'

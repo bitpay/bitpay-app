@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useSelector} from 'react-redux';
@@ -30,9 +30,13 @@ import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch} from '../../../utils/hooks';
 import {SectionSpacer} from '../../tabs/shop/components/styled/ShopTabComponents';
 
-type ProfileProps = StackScreenProps<BitpayIdStackParamList, 'Profile'>;
+type ProfileProps = NativeStackScreenProps<BitpayIdStackParamList, 'Profile'>;
 
-const ProfileSettingsScreenContainer = styled.ScrollView`
+const ProfileSettingsScreenContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
+const ScrollView = styled.ScrollView`
   margin: 0 ${ScreenGutter};
   padding-bottom: 100px;
 `;
@@ -120,91 +124,93 @@ export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
 
   return (
     <ProfileSettingsScreenContainer>
-      <ProfileInfoContainer>
-        <AvatarContainer>
-          <Avatar size={77} bright={true} />
-        </AvatarContainer>
+      <ScrollView>
+        <ProfileInfoContainer>
+          <AvatarContainer>
+            <Avatar size={77} bright={true} />
+          </AvatarContainer>
 
-        {hasName ? (
-          <H3>
-            {user.givenName} {user.familyName}
-          </H3>
+          {hasName ? (
+            <H3>
+              {user.givenName} {user.familyName}
+            </H3>
+          ) : null}
+
+          <EmailAddress>{user.email}</EmailAddress>
+          {!user.verified ? (
+            <EmailAddressNotVerified>Not Verified</EmailAddressNotVerified>
+          ) : null}
+        </ProfileInfoContainer>
+
+        <H5>{t('Account Settings')}</H5>
+
+        {user.verified ? (
+          <>
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
+              onPress={() =>
+                navigation.navigate('BitpayId', {
+                  screen: BitpayIdScreens.RECEIVE_SETTINGS,
+                })
+              }>
+              <SettingsItem>
+                <SettingsSectionBody>
+                  <SettingsSectionHeader>
+                    {t('Receive via Email Address')}
+                  </SettingsSectionHeader>
+                  <SettingsSectionDescription>
+                    {t('Receive crypto without wallet addresses or QR codes.')}
+                  </SettingsSectionDescription>
+                </SettingsSectionBody>
+                <ChevronRight />
+              </SettingsItem>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
+              onPress={() =>
+                navigation.navigate('BitpayId', {
+                  screen: BitpayIdScreens.ENABLE_TWO_FACTOR,
+                })
+              }>
+              <SettingsItem>
+                <SettingsSectionBody>
+                  <SettingsSectionHeader>
+                    {t('Two-Factor Authentication')}
+                  </SettingsSectionHeader>
+                  <SettingsSectionDescription>
+                    {t(
+                      'Secure your account with time-based one-time 6-digit codes.',
+                    )}
+                  </SettingsSectionDescription>
+                </SettingsSectionBody>
+                <ChevronRight />
+              </SettingsItem>
+            </TouchableOpacity>
+          </>
         ) : null}
 
-        <EmailAddress>{user.email}</EmailAddress>
-        {!user.verified ? (
-          <EmailAddressNotVerified>Not Verified</EmailAddressNotVerified>
-        ) : null}
-      </ProfileInfoContainer>
-
-      <H5>{t('Account Settings')}</H5>
-
-      {user.verified ? (
-        <>
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() =>
-              navigation.navigate('BitpayId', {
-                screen: BitpayIdScreens.RECEIVE_SETTINGS,
-              })
-            }>
-            <SettingsItem>
-              <SettingsSectionBody>
-                <SettingsSectionHeader>
-                  {t('Receive via Email Address')}
-                </SettingsSectionHeader>
-                <SettingsSectionDescription>
-                  {t('Receive crypto without wallet addresses or QR codes.')}
-                </SettingsSectionDescription>
-              </SettingsSectionBody>
-              <ChevronRight />
-            </SettingsItem>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() =>
-              navigation.navigate('BitpayId', {
-                screen: BitpayIdScreens.ENABLE_TWO_FACTOR,
-              })
-            }>
-            <SettingsItem>
-              <SettingsSectionBody>
-                <SettingsSectionHeader>
-                  {t('Two-Factor Authentication')}
-                </SettingsSectionHeader>
-                <SettingsSectionDescription>
-                  {t(
-                    'Secure your account with time-based one-time 6-digit codes.',
-                  )}
-                </SettingsSectionDescription>
-              </SettingsSectionBody>
-              <ChevronRight />
-            </SettingsItem>
-          </TouchableOpacity>
-        </>
-      ) : null}
-
-      <SettingsSection>
-        <SettingsSectionBody>
-          <SettingsSectionHeader>
-            {t('Sync Gift Card Purchases')}
-          </SettingsSectionHeader>
-          <SettingsSectionDescription>
-            {t(
-              'If enabled, your gift card purchases will be associated with your BitPay ID, allowing you to keep track of your gift card purchases even if this device is lost.',
-            )}
-          </SettingsSectionDescription>
-        </SettingsSectionBody>
-        <ToggleSwitch
-          isEnabled={syncGiftCardPurchasesWithBitPayId}
-          onChange={() => {
-            dispatch(ShopActions.toggledSyncGiftCardPurchasesWithBitPayId());
-            dispatch(ShopEffects.startFetchCatalog());
-          }}
-        />
-      </SettingsSection>
-      <SectionSpacer />
+        <SettingsSection>
+          <SettingsSectionBody>
+            <SettingsSectionHeader>
+              {t('Sync Gift Card Purchases')}
+            </SettingsSectionHeader>
+            <SettingsSectionDescription>
+              {t(
+                'If enabled, your gift card purchases will be associated with your BitPay ID, allowing you to keep track of your gift card purchases even if this device is lost.',
+              )}
+            </SettingsSectionDescription>
+          </SettingsSectionBody>
+          <ToggleSwitch
+            isEnabled={syncGiftCardPurchasesWithBitPayId}
+            onChange={() => {
+              dispatch(ShopActions.toggledSyncGiftCardPurchasesWithBitPayId());
+              dispatch(ShopEffects.startFetchCatalog());
+            }}
+          />
+        </SettingsSection>
+        <SectionSpacer />
+      </ScrollView>
     </ProfileSettingsScreenContainer>
   );
 };

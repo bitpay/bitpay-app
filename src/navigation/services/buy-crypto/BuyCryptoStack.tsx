@@ -1,9 +1,9 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useNavigation} from '@react-navigation/native';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
 import BuyCryptoRoot, {
@@ -13,6 +13,7 @@ import BuyCryptoOffers, {
   BuyCryptoOffersScreenParams,
 } from './screens/BuyCryptoOffers';
 import {useTranslation} from 'react-i18next';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type BuyCryptoStackParamList = {
   BuyCryptoRoot: BuyCryptoRootScreenParams;
@@ -24,19 +25,24 @@ export enum BuyCryptoScreens {
   OFFERS = 'BuyCryptoOffers',
 }
 
-const BuyCrypto = createStackNavigator<BuyCryptoStackParamList>();
+const BuyCrypto = createNativeStackNavigator<BuyCryptoStackParamList>();
 
 const BuyCryptoStack = () => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
-
   return (
     <BuyCrypto.Navigator
       initialRouteName={BuyCryptoScreens.ROOT}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <BuyCrypto.Screen
         name={BuyCryptoScreens.ROOT}
         component={BuyCryptoRoot}
@@ -48,7 +54,6 @@ const BuyCryptoStack = () => {
         name={BuyCryptoScreens.OFFERS}
         component={BuyCryptoOffers}
         options={{
-          ...baseScreenOptions,
           headerTitle: () => <HeaderTitle>{t('Offers')}</HeaderTitle>,
         }}
       />

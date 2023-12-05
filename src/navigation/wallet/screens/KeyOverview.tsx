@@ -85,7 +85,7 @@ const Row = styled.View`
   align-items: flex-end;
 `;
 
-const OverviewContainer = styled.View`
+const OverviewContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -419,14 +419,15 @@ const KeyOverview = () => {
               ) : null}
               {key?.methods?.isPrivKeyEncrypted() ? (
                 <CogIconContainer
-                  onPress={() =>
+                  onPress={async () => {
+                    await sleep(500);
                     navigation.navigate('Wallet', {
                       screen: 'KeySettings',
                       params: {
                         key,
                       },
-                    })
-                  }
+                    });
+                  }}
                   activeOpacity={ActiveOpacity}>
                   <Icons.Cog />
                 </CogIconContainer>
@@ -502,8 +503,9 @@ const KeyOverview = () => {
       description: t(
         'Choose another currency you would like to add to your key.',
       ),
-      onPress: () => {
+      onPress: async () => {
         haptic('impactLight');
+        await sleep(500);
         navigation.navigate('Wallet', {
           screen: 'AddingOptions',
           params: {
@@ -520,9 +522,9 @@ const KeyOverview = () => {
         description: t(
           'Prevent an unauthorized user from sending funds out of your wallet.',
         ),
-        onPress: () => {
+        onPress: async () => {
           haptic('impactLight');
-
+          await sleep(500);
           navigation.navigate('Wallet', {
             screen: 'CreateEncryptPassword',
             params: {
@@ -537,8 +539,9 @@ const KeyOverview = () => {
       img: <Icons.Settings />,
       title: t('Key Settings'),
       description: t('View all the ways to manage and configure your key.'),
-      onPress: () => {
+      onPress: async () => {
         haptic('impactLight');
+        await sleep(500);
         navigation.navigate('Wallet', {
           screen: 'KeySettings',
           params: {
@@ -674,7 +677,7 @@ const KeyOverview = () => {
           return (
             <WalletListFooter
               activeOpacity={ActiveOpacity}
-              onPress={() => {
+              onPress={async () => {
                 haptic('impactLight');
                 navigation.navigate('Wallet', {
                   screen: 'AddingOptions',

@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import {useNavigation, useScrollToTop} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {SectionContainer} from '../../components/styled/ShopTabComponents';
 import {GiftCardScreens} from '../GiftCardStack';
 import {GiftCard} from '../../../../../store/shop/shop.models';
@@ -14,7 +14,7 @@ import {ShopStackParamList} from '../../ShopStack';
 const ArchivedGiftCards = ({
   route,
   navigation,
-}: StackScreenProps<ShopStackParamList, 'ArchivedGiftCards'>) => {
+}: NativeStackScreenProps<ShopStackParamList, 'ArchivedGiftCards'>) => {
   const navigator = useNavigation();
   const {supportedGiftCardMap} = route.params;
   const allGiftCards = useAppSelector(

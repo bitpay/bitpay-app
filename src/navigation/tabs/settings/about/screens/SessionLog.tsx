@@ -1,6 +1,6 @@
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import React, {memo, useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Alert, SectionList} from 'react-native';
@@ -37,7 +37,7 @@ import {storage} from '../../../../../store';
 
 export interface SessionLogsParamList {}
 
-type SessionLogsScreenProps = StackNavigationProp<
+type SessionLogsScreenProps = NativeStackNavigationProp<
   AboutStackParamList,
   'SessionLogs'
 >;
@@ -234,7 +234,11 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   return (
     <LogsContainer>
       <SectionList
-        contentContainerStyle={{paddingBottom: 150, marginTop: 5}}
+        contentContainerStyle={{
+          paddingBottom: 150,
+          marginTop: 5,
+          marginLeft: 5,
+        }}
         sections={[
           {title: t('Previous Sessions'), data: filteredPersistedLogs},
           {title: t('Current Session'), data: filteredLogs},

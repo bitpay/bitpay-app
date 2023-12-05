@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
@@ -16,7 +16,7 @@ const POLL_TIMEOUT = 1000 * 60 * 5;
 
 export type VerifyEmailScreenParamList = {} | undefined;
 
-type VerifyEmailScreenProps = StackScreenProps<
+type VerifyEmailScreenProps = NativeStackScreenProps<
   AuthStackParamList,
   'EmailAuthentication'
 >;

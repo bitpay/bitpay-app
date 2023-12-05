@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -40,7 +40,7 @@ const KeyImage = {
 };
 
 const CreateOrImportKey: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'CreateKey'>
+  NativeStackScreenProps<OnboardingStackParamList, 'CreateKey'>
 > = ({navigation}) => {
   const {t} = useTranslation();
   const themeType = useThemeType();

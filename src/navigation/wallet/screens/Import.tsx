@@ -7,10 +7,10 @@ import {ScreenOptions} from '../../../styles/tabNavigator';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {WalletStackParamList} from '../WalletStack';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 
-type ImportScreenProps = StackScreenProps<WalletStackParamList, 'Import'>;
+type ImportScreenProps = NativeStackScreenProps<WalletStackParamList, 'Import'>;
 
 export interface ImportParamList {
   context?: string;

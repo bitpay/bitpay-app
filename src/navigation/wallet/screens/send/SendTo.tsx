@@ -261,7 +261,8 @@ const SendTo = () => {
     img: <Icons.SelectInputs />,
     title: t('Select Inputs for this Transaction'),
     description: t("Choose which inputs you'd like to use to send crypto."),
-    onPress: () => {
+    onPress: async () => {
+      await sleep(500);
       navigation.navigate('Wallet', {
         screen: 'SendToOptions',
         params: {
@@ -277,7 +278,8 @@ const SendTo = () => {
     img: <Icons.Multisend />,
     title: t('Transfer to Multiple Recipients'),
     description: t('Send crypto to multiple contacts or addresses.'),
-    onPress: () => {
+    onPress: async () => {
+      await sleep(500);
       navigation.navigate('Wallet', {
         screen: 'SendToOptions',
         params: {

@@ -1,8 +1,8 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
 import ContactsRoot from './screens/ContactsRoot';
@@ -11,6 +11,7 @@ import ContactsAdd from './screens/ContactsAdd';
 import {ContactRowProps} from '../../../components/list/ContactRow';
 
 import {useTranslation} from 'react-i18next';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type ContactsStackParamList = {
   Root: undefined;
@@ -30,33 +31,33 @@ export enum ContactsScreens {
   ADD = 'ContactsAdd',
 }
 
-const Contacts = createStackNavigator<ContactsStackParamList>();
+const Contacts = createNativeStackNavigator<ContactsStackParamList>();
 
 const ContactsStack = () => {
   const {t} = useTranslation();
   return (
     <Contacts.Navigator
       initialRouteName={ContactsScreens.ROOT}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Contacts.Screen name={ContactsScreens.ROOT} component={ContactsRoot} />
       <Contacts.Screen
         name={ContactsScreens.DETAILS}
         component={ContactsDetails}
         options={{
-          headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Details')}</HeaderTitle>,
         }}
       />
-      <Contacts.Screen
-        name={ContactsScreens.ADD}
-        component={ContactsAdd}
-        options={{
-          headerMode: 'screen',
-        }}
-      />
+      <Contacts.Screen name={ContactsScreens.ADD} component={ContactsAdd} />
     </Contacts.Navigator>
   );
 };

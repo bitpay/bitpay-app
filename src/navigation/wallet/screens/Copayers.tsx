@@ -1,5 +1,5 @@
 import React, {useState, useLayoutEffect} from 'react';
-import {StackNavigationProp} from '@react-navigation/stack';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
@@ -35,7 +35,7 @@ import {Status} from '../../../store/wallet/wallet.models';
 
 const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 interface CopayersProps {
-  navigation: StackNavigationProp<WalletStackParamList, 'Copayers'>;
+  navigation: NativeStackNavigationProp<WalletStackParamList, 'Copayers'>;
 }
 
 const Gutter = '10px';

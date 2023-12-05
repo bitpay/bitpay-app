@@ -27,7 +27,7 @@ import {BoxShadow} from '../../../home/components/Styled';
 import Rate, {AndroidMarket} from 'react-native-rate';
 import {useTranslation} from 'react-i18next';
 import {APP_VERSION} from '../../../../../constants/config';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {AboutStackParamList} from '../AboutStack';
 
 export type FeedbackRateType = 'love' | 'ok' | 'disappointed' | 'default';
@@ -38,7 +38,11 @@ export interface SendFeedbackParamList {
 
 const SendFeedbackContainer = styled.SafeAreaView`
   flex: 1;
-  margin: 20px ${ScreenGutter};
+`;
+
+const ScrollContainer = styled.ScrollView`
+  margin-top: 20px;
+  padding: 0 ${ScreenGutter};
 `;
 
 const SendFeedbackEmoji = styled.View`
@@ -95,7 +99,7 @@ const LeftIconContainer = styled.View`
 
 const SendFeedback = ({
   route,
-}: StackScreenProps<AboutStackParamList, 'SendFeedback'>) => {
+}: NativeStackScreenProps<AboutStackParamList, 'SendFeedback'>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -190,84 +194,86 @@ const SendFeedback = ({
 
   return (
     <SendFeedbackContainer>
-      {showEmojis ? (
-        <SendFeedbackParagraph>
-          {t('How satisfied are you with using BitPay?')}
-        </SendFeedbackParagraph>
-      ) : (
-        <>
-          <SendFeedbackEmoji>
-            {rateApp && rateApp === 'love' ? (
-              <HearFace width={36} height={36} />
-            ) : null}
-            {rateApp && rateApp === 'ok' ? (
-              <Smile width={36} height={36} />
-            ) : null}
-            {rateApp && rateApp === 'disappointed' ? (
-              <Speechless width={36} height={36} />
-            ) : null}
-          </SendFeedbackEmoji>
-          <SendFeedbackTitle>
-            {rateApp && rateApp === 'love' ? t('Thanks!') : null}
-            {rateApp && rateApp === 'ok' ? t('How can we improve?') : null}
-            {rateApp && rateApp === 'disappointed' ? 'Ouch!' : null}
-          </SendFeedbackTitle>
+      <ScrollContainer>
+        {showEmojis ? (
           <SendFeedbackParagraph>
-            {rateApp && rateApp === 'love'
-              ? t(
-                  "We're always listening for ways we can improve your experience. Feel free to leave us 5 star review in the app store or request a new feature.",
-                )
-              : null}
-            {rateApp && rateApp === 'ok'
-              ? t(
-                  "We're always listening for ways we can improve your experience. Let us know if you experience any technical issues.",
-                )
-              : null}
-            {rateApp && rateApp === 'disappointed'
-              ? t(
-                  "There's obviously something we’re doing wrong. Is there anything we could do to improve your experience?",
-                )
-              : null}
-            {rateApp && rateApp === 'default'
-              ? t(
-                  'We’re always listening for ways we can improve your experience. Feel free to leave us a review in the app store or request a new feature. Also, let us know if you experience any technical issues.',
-                )
-              : null}
+            {t('How satisfied are you with using BitPay?')}
           </SendFeedbackParagraph>
-        </>
-      )}
+        ) : (
+          <>
+            <SendFeedbackEmoji>
+              {rateApp && rateApp === 'love' ? (
+                <HearFace width={36} height={36} />
+              ) : null}
+              {rateApp && rateApp === 'ok' ? (
+                <Smile width={36} height={36} />
+              ) : null}
+              {rateApp && rateApp === 'disappointed' ? (
+                <Speechless width={36} height={36} />
+              ) : null}
+            </SendFeedbackEmoji>
+            <SendFeedbackTitle>
+              {rateApp && rateApp === 'love' ? t('Thanks!') : null}
+              {rateApp && rateApp === 'ok' ? t('How can we improve?') : null}
+              {rateApp && rateApp === 'disappointed' ? 'Ouch!' : null}
+            </SendFeedbackTitle>
+            <SendFeedbackParagraph>
+              {rateApp && rateApp === 'love'
+                ? t(
+                    "We're always listening for ways we can improve your experience. Feel free to leave us 5 star review in the app store or request a new feature.",
+                  )
+                : null}
+              {rateApp && rateApp === 'ok'
+                ? t(
+                    "We're always listening for ways we can improve your experience. Let us know if you experience any technical issues.",
+                  )
+                : null}
+              {rateApp && rateApp === 'disappointed'
+                ? t(
+                    "There's obviously something we’re doing wrong. Is there anything we could do to improve your experience?",
+                  )
+                : null}
+              {rateApp && rateApp === 'default'
+                ? t(
+                    'We’re always listening for ways we can improve your experience. Feel free to leave us a review in the app store or request a new feature. Also, let us know if you experience any technical issues.',
+                  )
+                : null}
+            </SendFeedbackParagraph>
+          </>
+        )}
 
-      {!showEmojis
-        ? feedbackList
-            .filter(elem => elem.showOn.includes(rateApp))
-            .map(item => (
-              <ListItem
-                key={item.key}
-                onPress={item.onPress}
-                style={theme.dark ? null : BoxShadow}>
-                <LeftIconContainer>{item.leftIcon}</LeftIconContainer>
+        {!showEmojis
+          ? feedbackList
+              .filter(elem => elem.showOn.includes(rateApp))
+              .map(item => (
+                <ListItem
+                  key={item.key}
+                  onPress={item.onPress}
+                  style={theme.dark ? null : BoxShadow}>
+                  <LeftIconContainer>{item.leftIcon}</LeftIconContainer>
 
-                <SettingTitle>{item.description}</SettingTitle>
-                {item.rightIcon}
-              </ListItem>
-            ))
-        : null}
-      {showEmojis ? (
-        <EmojisContainer>
-          <EmojiActionContainer>
-            <EmojiAction onPress={() => chooseRateApp('disappointed')}>
-              <Speechless width={44} height={44} />
-            </EmojiAction>
-            <EmojiAction onPress={() => chooseRateApp('ok')}>
-              <Smile width={44} height={44} />
-            </EmojiAction>
+                  <SettingTitle>{item.description}</SettingTitle>
+                  {item.rightIcon}
+                </ListItem>
+              ))
+          : null}
+        {showEmojis ? (
+          <EmojisContainer>
+            <EmojiActionContainer>
+              <EmojiAction onPress={() => chooseRateApp('disappointed')}>
+                <Speechless width={44} height={44} />
+              </EmojiAction>
+              <EmojiAction onPress={() => chooseRateApp('ok')}>
+                <Smile width={44} height={44} />
+              </EmojiAction>
 
-            <EmojiAction onPress={() => chooseRateApp('love')}>
-              <HearFace width={44} height={44} />
-            </EmojiAction>
-          </EmojiActionContainer>
-        </EmojisContainer>
-      ) : null}
+              <EmojiAction onPress={() => chooseRateApp('love')}>
+                <HearFace width={44} height={44} />
+              </EmojiAction>
+            </EmojiActionContainer>
+          </EmojisContainer>
+        ) : null}
+      </ScrollContainer>
     </SendFeedbackContainer>
   );
 };

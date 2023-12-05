@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -24,10 +24,15 @@ import {
   CardActivationScreens,
   CardActivationStackParamList,
 } from '../CardActivationStack';
+import styled from 'styled-components/native';
 
 export type ActivateScreenParamList = {
   card: Card;
 };
+
+const ActivateScreenContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const getDisplayFields = (card: Card) => {
   const {activation} = ProviderConfig[card.provider];
@@ -92,7 +97,10 @@ const formatExpirationDateForBackend = (expirationDate: string) => {
 };
 
 const ActivateScreen: React.VFC<
-  StackScreenProps<CardActivationStackParamList, CardActivationScreens.ACTIVATE>
+  NativeStackScreenProps<
+    CardActivationStackParamList,
+    CardActivationScreens.ACTIVATE
+  >
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const {card} = route.params;
@@ -214,61 +222,31 @@ const ActivateScreen: React.VFC<
   const [expDateMaxlen, setExpDateMaxLen] = useState(4);
 
   return (
-    <AuthFormContainer>
-      <AuthRowContainer>
-        <BaseText>{description}</BaseText>
-      </AuthRowContainer>
-
-      {displayFields.cardNumber ? (
+    <ActivateScreenContainer>
+      <AuthFormContainer>
         <AuthRowContainer>
-          <Controller
-            name="cardNumber"
-            control={control}
-            render={({field: {value, onChange, onBlur}}) => (
-              <BoxInput
-                label={t('Card Number')}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.cardNumber?.message}
-                value={value}
-                keyboardType={'number-pad'}
-                returnKeyType={'next'}
-                onSubmitEditing={() => {
-                  const nextRef =
-                    lastFourRef.current || expDateRef.current || cvvRef.current;
-
-                  if (nextRef) {
-                    nextRef.focus();
-                  } else {
-                    onSubmit();
-                  }
-                }}
-                blurOnSubmit={false}
-              />
-            )}
-          />
+          <BaseText>{description}</BaseText>
         </AuthRowContainer>
-      ) : null}
 
-      {displayFields.lastFourDigits ? (
-        <AuthRowContainer>
-          <Controller
-            name="lastFourDigits"
-            control={control}
-            render={({field: {value, onChange, onBlur}}) => {
-              return (
+        {displayFields.cardNumber ? (
+          <AuthRowContainer>
+            <Controller
+              name="cardNumber"
+              control={control}
+              render={({field: {value, onChange, onBlur}}) => (
                 <BoxInput
-                  label={t('Last 4 Digits')}
+                  label={t('Card Number')}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  error={errors.lastFourDigits?.message}
+                  error={errors.cardNumber?.message}
                   value={value}
                   keyboardType={'number-pad'}
-                  maxLength={4}
-                  ref={lastFourRef}
                   returnKeyType={'next'}
                   onSubmitEditing={() => {
-                    const nextRef = expDateRef.current || cvvRef.current;
+                    const nextRef =
+                      lastFourRef.current ||
+                      expDateRef.current ||
+                      cvvRef.current;
 
                     if (nextRef) {
                       nextRef.focus();
@@ -278,94 +256,128 @@ const ActivateScreen: React.VFC<
                   }}
                   blurOnSubmit={false}
                 />
-              );
-            }}
-          />
-        </AuthRowContainer>
-      ) : null}
+              )}
+            />
+          </AuthRowContainer>
+        ) : null}
 
-      {displayFields.expirationDate ? (
-        <AuthRowContainer>
-          <Controller
-            name="expirationDate"
-            control={control}
-            render={({field: {value, onChange, onBlur}}) => {
-              const _onBlur = () => {
-                const formValues = getValues();
-                const valueNumericOnly =
-                  formValues.expirationDate?.replace(/\D/g, '') || '';
-                let formattedExpDate = formValues.expirationDate || '';
+        {displayFields.lastFourDigits ? (
+          <AuthRowContainer>
+            <Controller
+              name="lastFourDigits"
+              control={control}
+              render={({field: {value, onChange, onBlur}}) => {
+                return (
+                  <BoxInput
+                    label={t('Last 4 Digits')}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    error={errors.lastFourDigits?.message}
+                    value={value}
+                    keyboardType={'number-pad'}
+                    maxLength={4}
+                    ref={lastFourRef}
+                    returnKeyType={'next'}
+                    onSubmitEditing={() => {
+                      const nextRef = expDateRef.current || cvvRef.current;
 
-                if (valueNumericOnly && valueNumericOnly.length >= 2) {
-                  formattedExpDate = `${valueNumericOnly.slice(
-                    0,
-                    2,
-                  )}/${valueNumericOnly.slice(2, 4)}`;
-                }
+                      if (nextRef) {
+                        nextRef.focus();
+                      } else {
+                        onSubmit();
+                      }
+                    }}
+                    blurOnSubmit={false}
+                  />
+                );
+              }}
+            />
+          </AuthRowContainer>
+        ) : null}
 
-                setExpDateMaxLen(formattedExpDate.length > 4 ? 5 : 4);
-                setValue('expirationDate', formattedExpDate);
+        {displayFields.expirationDate ? (
+          <AuthRowContainer>
+            <Controller
+              name="expirationDate"
+              control={control}
+              render={({field: {value, onChange, onBlur}}) => {
+                const _onBlur = () => {
+                  const formValues = getValues();
+                  const valueNumericOnly =
+                    formValues.expirationDate?.replace(/\D/g, '') || '';
+                  let formattedExpDate = formValues.expirationDate || '';
 
-                onBlur();
-              };
+                  if (valueNumericOnly && valueNumericOnly.length >= 2) {
+                    formattedExpDate = `${valueNumericOnly.slice(
+                      0,
+                      2,
+                    )}/${valueNumericOnly.slice(2, 4)}`;
+                  }
 
-              return (
+                  setExpDateMaxLen(formattedExpDate.length > 4 ? 5 : 4);
+                  setValue('expirationDate', formattedExpDate);
+
+                  onBlur();
+                };
+
+                return (
+                  <BoxInput
+                    label={t('Expiration Date (MM/YY)')}
+                    onBlur={_onBlur}
+                    onChangeText={onChange}
+                    error={errors.expirationDate?.message}
+                    value={value}
+                    keyboardType={'number-pad'}
+                    maxLength={expDateMaxlen}
+                    ref={expDateRef}
+                    returnKeyType={'next'}
+                    onSubmitEditing={() => {
+                      if (cvvRef.current) {
+                        cvvRef.current.focus();
+                      } else {
+                        onSubmit();
+                      }
+                    }}
+                    blurOnSubmit={false}
+                  />
+                );
+              }}
+            />
+          </AuthRowContainer>
+        ) : null}
+
+        {displayFields.cvv ? (
+          <AuthRowContainer>
+            <Controller
+              name="cvv"
+              control={control}
+              render={({field: {value, onChange, onBlur}}) => (
                 <BoxInput
-                  label={t('Expiration Date (MM/YY)')}
-                  onBlur={_onBlur}
+                  label={t('CVV')}
                   onChangeText={onChange}
-                  error={errors.expirationDate?.message}
+                  onBlur={onBlur}
+                  error={errors.cvv?.message}
                   value={value}
+                  maxLength={3}
+                  ref={cvvRef}
                   keyboardType={'number-pad'}
-                  maxLength={expDateMaxlen}
-                  ref={expDateRef}
                   returnKeyType={'next'}
-                  onSubmitEditing={() => {
-                    if (cvvRef.current) {
-                      cvvRef.current.focus();
-                    } else {
-                      onSubmit();
-                    }
-                  }}
-                  blurOnSubmit={false}
+                  onSubmitEditing={onSubmit}
                 />
-              );
-            }}
-          />
-        </AuthRowContainer>
-      ) : null}
+              )}
+            />
+          </AuthRowContainer>
+        ) : null}
 
-      {displayFields.cvv ? (
-        <AuthRowContainer>
-          <Controller
-            name="cvv"
-            control={control}
-            render={({field: {value, onChange, onBlur}}) => (
-              <BoxInput
-                label={t('CVV')}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.cvv?.message}
-                value={value}
-                maxLength={3}
-                ref={cvvRef}
-                keyboardType={'number-pad'}
-                returnKeyType={'next'}
-                onSubmitEditing={onSubmit}
-              />
-            )}
-          />
-        </AuthRowContainer>
-      ) : null}
-
-      <AuthActionsContainer>
-        <AuthActionRow>
-          <Button onPress={onSubmit} state={buttonState}>
-            {t('Activate Card')}
-          </Button>
-        </AuthActionRow>
-      </AuthActionsContainer>
-    </AuthFormContainer>
+        <AuthActionsContainer>
+          <AuthActionRow>
+            <Button onPress={onSubmit} state={buttonState}>
+              {t('Activate Card')}
+            </Button>
+          </AuthActionRow>
+        </AuthActionsContainer>
+      </AuthFormContainer>
+    </ActivateScreenContainer>
   );
 };
 

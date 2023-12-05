@@ -26,7 +26,7 @@ import {useLogger} from '../../utils/hooks/useLogger';
 import {getBuyCryptoFiatLimits} from '../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
 
-const AmountContainer = styled.View`
+const AmountContainer = styled.SafeAreaView`
   flex: 1;
 `;
 

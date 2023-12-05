@@ -75,10 +75,7 @@ const AddSvg: React.FC<AddSvgProps> = ({color, background, opacity}) => {
   );
 };
 
-const AddContainer = styled.View<{platform: string}>`
-  padding-top: 10px;
-  transform: scale(1.1);
-`;
+const AddContainer = styled.View<{platform: string}>``;
 
 const Add = ({color, background, opacity}: Props) => {
   const theme = useTheme();

@@ -5,10 +5,10 @@ import Button from '../../../components/button/Button';
 import {HEIGHT} from '../../../components/styled/Containers';
 import SuccessSvg from '../../../../assets/img/success.svg';
 import {H3, TextAlign} from '../../../components/styled/Text';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BitpayIdStackParamList} from '../BitpayIdStack';
 
-type TwoFactorEnabledProps = StackScreenProps<
+type TwoFactorEnabledProps = NativeStackScreenProps<
   BitpayIdStackParamList,
   'TwoFactorEnabled'
 >;

@@ -66,7 +66,7 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
 
-const WalletSettingsContainer = styled.View`
+const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 

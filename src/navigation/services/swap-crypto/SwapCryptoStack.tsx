@@ -1,10 +1,10 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
 import SwapCryptoRoot from './screens/SwapCryptoRoot';
@@ -14,6 +14,7 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import HistoryIcon from '../../../../assets/img/services/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type SwapCryptoStackParamList = {
   Root:
@@ -38,7 +39,7 @@ export enum SwapCryptoScreens {
   CHANGELLY_CHECKOUT = 'ChangellyCheckout',
 }
 
-const SwapCrypto = createStackNavigator<SwapCryptoStackParamList>();
+const SwapCrypto = createNativeStackNavigator<SwapCryptoStackParamList>();
 
 const SwapCryptoStack = () => {
   const {t} = useTranslation();
@@ -51,10 +52,17 @@ const SwapCryptoStack = () => {
   return (
     <SwapCrypto.Navigator
       initialRouteName={SwapCryptoScreens.ROOT}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <SwapCrypto.Screen
         name={SwapCryptoScreens.ROOT}
         component={SwapCryptoRoot}

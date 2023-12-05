@@ -46,7 +46,7 @@ import {ReceivingAddress} from '../../../store/bitpay-id/bitpay-id.models';
 import {WalletScreens} from '../../wallet/WalletStack';
 import AddressModal from '../components/AddressModal';
 import {keyBackupRequired} from '../../tabs/home/components/Crypto';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import TwoFactorRequiredModal from '../components/TwoFactorRequiredModal';
 import {getCurrencyCodeFromCoinAndChain} from '../utils/bitpay-id-utils';
 import {
@@ -55,6 +55,10 @@ import {
 } from '../../../constants/currencies';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import {useTranslation} from 'react-i18next';
+
+const ReceiveSettingsContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -138,7 +142,7 @@ const createAddressMap = (receivingAddresses: ReceivingAddress[]) => {
   );
 };
 
-type ReceiveSettingsProps = StackScreenProps<
+type ReceiveSettingsProps = NativeStackScreenProps<
   BitpayIdStackParamList,
   'ReceiveSettings'
 >;
@@ -331,7 +335,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   };
 
   return (
-    <>
+    <ReceiveSettingsContainer>
       <ViewContainer>
         <ViewBody>
           <H3>{t('Choose your Primary Wallet to Receive Payments')}</H3>
@@ -562,7 +566,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
           }
         }}
       />
-    </>
+    </ReceiveSettingsContainer>
   );
 };
 

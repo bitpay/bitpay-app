@@ -1,13 +1,14 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import EmailNotifications from './screens/EmailNotifications';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import PushNotifications from './screens/PushNotifications';
+import {useTranslation} from 'react-i18next';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type NotificationsSettingsStackParamsList = {
   EmailNotifications: undefined;
@@ -19,17 +20,24 @@ export enum NotificationsSettingsScreens {
   PUSH_NOTIFICATIONS = 'PushNotifications',
 }
 const Notifications =
-  createStackNavigator<NotificationsSettingsStackParamsList>();
+  createNativeStackNavigator<NotificationsSettingsStackParamsList>();
 
 const NotificationsSettingsStack = () => {
   const {t} = useTranslation();
 
   return (
     <Notifications.Navigator
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Notifications.Screen
         name={NotificationsSettingsScreens.EMAIL_NOTIFICATIONS}
         component={EmailNotifications}
