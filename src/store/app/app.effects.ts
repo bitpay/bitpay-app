@@ -42,7 +42,11 @@ import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
-import {startMigration, startWalletStoreInit, getPriceHistory} from '../wallet/effects';
+import {
+  startMigration,
+  startWalletStoreInit,
+  getPriceHistory,
+} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
