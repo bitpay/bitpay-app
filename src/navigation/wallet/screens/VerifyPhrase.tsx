@@ -21,6 +21,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import {Slate30, SlateDark} from '../../../styles/colors';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
+import SuccessIcon from '../../../../assets/img/success.svg';
 
 type VerifyPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -60,6 +61,13 @@ const HeaderText = styled(BaseText)`
   font-weight: 400;
 `;
 
+const ValidationBadge = styled.View`
+  background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
+  position: absolute;
+  right: 13px;
+  top: 50%;
+`;
+
 const schema = yup.object().shape({
   word1: yup.string().required().trim(),
   word2: yup.string().required().trim(),
@@ -71,19 +79,25 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
-  const {control, handleSubmit, setError, reset, formState} = useForm({
-    mode: 'onChange',
-    resolver: yupResolver(schema),
-    defaultValues: {
-      word1: '',
-      word2: '',
-      word3: '',
+  const {control, handleSubmit, setValue, setError, reset, formState} = useForm(
+    {
+      mode: 'onChange',
+      resolver: yupResolver(schema),
+      defaultValues: {
+        word1: '',
+        word2: '',
+        word3: '',
+      },
     },
-  });
-  const {errors, isValid} = formState;
+  );
+  const {errors} = formState;
 
   const {params} = route;
   const {words, keyId, context, key, walletTermsAccepted} = params;
+
+  const [word1Validation, setWord1Validation] = useState(false);
+  const [word2Validation, setWord2Validation] = useState(false);
+  const [word3Validation, setWord3Validation] = useState(false);
 
   const ordinalNumbers: string[] = [
     'first',
@@ -129,6 +143,11 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   };
 
   const [randomWords, setRandomWords] = useState(generateRandomWords());
+
+  const checkValidWord = (userInput: string, index: number): boolean => {
+    const word = randomWords[index].word;
+    return userInput.toLowerCase() === word.toLowerCase();
+  };
 
   const checkAnswer = (data: {word1: string; word2: string; word3: string}) => {
     const allData = [data.word1, data.word2, data.word3];
@@ -296,15 +315,26 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             render={({field}) => (
               <BoxInput
                 label={randomWords[0].indexStr + ' Word'}
-                onChangeText={field.onChange}
                 onBlur={field.onBlur}
-                value={field.value}
                 error={errors.word1?.message}
+                disabled={word1Validation}
                 autoCorrect={false}
+                onChangeText={async (newValue: string) => {
+                  field.onChange(newValue);
+                  if (checkValidWord(newValue, 0)) {
+                    setValue('word1', newValue);
+                    setWord1Validation(true);
+                  }
+                }}
               />
             )}
             name={'word1'}
           />
+          {word1Validation ? (
+            <ValidationBadge>
+              <SuccessIcon />
+            </ValidationBadge>
+          ) : null}
         </VerifyPhraseField>
         <VerifyPhraseField>
           <Controller
@@ -313,15 +343,26 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             render={({field}) => (
               <BoxInput
                 label={randomWords[1].indexStr + ' Word'}
-                onChangeText={field.onChange}
                 onBlur={field.onBlur}
-                value={field.value}
                 error={errors.word2?.message}
+                disabled={word2Validation}
                 autoCorrect={false}
+                onChangeText={async (newValue: string) => {
+                  field.onChange(newValue);
+                  if (checkValidWord(newValue, 1)) {
+                    setValue('word2', newValue);
+                    setWord2Validation(true);
+                  }
+                }}
               />
             )}
             name={'word2'}
           />
+          {word2Validation ? (
+            <ValidationBadge>
+              <SuccessIcon />
+            </ValidationBadge>
+          ) : null}
         </VerifyPhraseField>
         <VerifyPhraseField>
           <Controller
@@ -330,19 +371,32 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             render={({field}) => (
               <BoxInput
                 label={randomWords[2].indexStr + ' Word'}
-                onChangeText={field.onChange}
                 onBlur={field.onBlur}
-                value={field.value}
                 error={errors.word3?.message}
+                disabled={word3Validation}
                 autoCorrect={false}
+                onChangeText={async (newValue: string) => {
+                  field.onChange(newValue);
+                  if (checkValidWord(newValue, 2)) {
+                    setValue('word3', newValue);
+                    setWord3Validation(true);
+                  }
+                }}
               />
             )}
             name={'word3'}
           />
+          {word3Validation ? (
+            <ValidationBadge>
+              <SuccessIcon />
+            </ValidationBadge>
+          ) : null}
         </VerifyPhraseField>
       </VerifyPhraseForm>
       <CtaContainerAbsolute accessibilityLabel="cta-container">
-        <Button disabled={!isValid} onPress={handleSubmit(checkAnswer)}>
+        <Button
+          disabled={!word1Validation || !word2Validation || !word3Validation}
+          onPress={handleSubmit(checkAnswer)}>
           Confirm
         </Button>
       </CtaContainerAbsolute>
