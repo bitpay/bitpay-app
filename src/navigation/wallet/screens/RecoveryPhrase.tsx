@@ -139,7 +139,7 @@ const WarningMessageText = styled(BaseText)`
 const RecoveryActionsContainer = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   border-radius: 6px;
-  width: 45%;
+  width: 100%;
   justify-content: center;
 `;
 
@@ -314,14 +314,6 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
                 </CopyImgContainer>
                 <RecoveryActionsButtonText>
                   {t('Copy')}
-                </RecoveryActionsButtonText>
-              </RecoveryActionsButton>
-            </RecoveryActionsContainer>
-            <RecoveryActionsContainer style={{display: 'none'}}>
-              <RecoveryActionsButton>
-                <CopySvg />
-                <RecoveryActionsButtonText>
-                  {t('Print')}
                 </RecoveryActionsButtonText>
               </RecoveryActionsButton>
             </RecoveryActionsContainer>
