@@ -231,12 +231,12 @@ const Delete = () => {
   );
 };
 
-const Wallet = () => {
+const Wallet = ({width = '9', height = '9'}) => {
   const theme = useTheme() as BitPayTheme;
   const fill = theme.dark ? White : Action;
 
   return (
-    <Svg.Svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+    <Svg.Svg width={width} height={height} viewBox="0 0 9 9" fill="none">
       <Svg.Path
         d="M5.625 0H0.84375C0.39375 0 0 0.39375 0 0.84375C0 1.29375 0.39375 1.6875 0.84375 1.6875H5.625V0Z"
         fill={fill}

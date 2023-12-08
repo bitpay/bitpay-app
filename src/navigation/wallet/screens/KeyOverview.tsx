@@ -496,6 +496,23 @@ const KeyOverview = () => {
   const keyOptions: Array<Option> = [];
 
   if (!key?.methods?.isPrivKeyEncrypted()) {
+    keyOptions.push({
+      img: <Icons.Wallet width="15" height="15" />,
+      title: t('Add Wallet'),
+      description: t(
+        'Choose another currency you would like to add to your key.',
+      ),
+      onPress: () => {
+        haptic('impactLight');
+        navigation.navigate('Wallet', {
+          screen: 'AddingOptions',
+          params: {
+            key,
+          },
+        });
+      },
+    });
+
     if (!key?.isReadOnly) {
       keyOptions.push({
         img: <Icons.Encrypt />,
