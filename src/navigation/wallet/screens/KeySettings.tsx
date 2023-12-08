@@ -386,36 +386,13 @@ const KeySettings = () => {
             <Title>{t('Security')}</Title>
             <Setting
               onPress={() => {
-                haptic('impactLight');
-                if (!_key.isPrivKeyEncrypted) {
-                  navigation.navigate('Wallet', {
-                    screen: 'RecoveryPhrase',
-                    params: {
-                      keyId: key.id,
-                      words: getMnemonic(_key),
-                      walletTermsAccepted: true,
-                      context: 'keySettings',
-                      key,
-                    },
-                  });
-                } else {
-                  dispatch(
-                    AppActions.showDecryptPasswordModal(
-                      buildEncryptModalConfig(async ({mnemonic}) => {
-                        navigation.navigate('Wallet', {
-                          screen: 'RecoveryPhrase',
-                          params: {
-                            keyId: key.id,
-                            words: mnemonic.trim().split(' '),
-                            walletTermsAccepted: true,
-                            context: 'keySettings',
-                            key,
-                          },
-                        });
-                      }),
-                    ),
-                  );
-                }
+                navigation.navigate('Wallet', {
+                  screen: 'BackupOnboarding',
+                  params: {
+                    key,
+                    buildEncryptModalConfig,
+                  },
+                });
               }}>
               <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
             </Setting>

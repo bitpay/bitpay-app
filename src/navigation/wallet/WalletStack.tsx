@@ -79,12 +79,16 @@ import CurrencyTokenSelectionScreen, {
 import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
 import ExportTransactionHistory from './screens/wallet-settings/ExportTransactionHistory';
 import ClearTransactionHistoryCache from './screens/wallet-settings/ClearTransactionHistoryCache';
+import BackupOnboarding, {
+  BackupOnboardingParamList,
+} from './screens/BackupOnboarding';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
   WalletCurrencyTokenSelectionScreen: CurrencyTokenSelectionScreenParamList;
   AddWallet: AddWalletParamList;
   BackupKey: BackupParamList;
+  BackupOnboarding: BackupOnboardingParamList;
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
@@ -155,6 +159,7 @@ export enum WalletScreens {
   CURRENCY_TOKEN_SELECTION = 'WalletCurrencyTokenSelectionScreen',
   ADD_WALLET = 'AddWallet',
   BACKUP_KEY = 'BackupKey',
+  BACKUP_ONBOARDING = 'BackupOnboarding',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
   TERMS_OF_USE = 'TermsOfUse',
@@ -238,6 +243,10 @@ const WalletStack = () => {
           }}
           name={WalletScreens.BACKUP_KEY}
           component={Backup}
+        />
+        <Wallet.Screen
+          name={WalletScreens.BACKUP_ONBOARDING}
+          component={BackupOnboarding}
         />
         <Wallet.Screen
           name={WalletScreens.RECOVERY_PHRASE}

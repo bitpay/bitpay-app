@@ -60,7 +60,9 @@ public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
 
       @Override
       public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-        requestPaymentPromise.resolve("DEFAULT");
+        if (requestPaymentPromise != null) {
+          requestPaymentPromise.resolve("DEFAULT");
+        }
       }
     };
 

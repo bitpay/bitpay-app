@@ -236,7 +236,7 @@ const ExportTransactionHistory = () => {
 
   const shareFile = async (csv: any, option: string) => {
     try {
-      if (Platform.OS === 'android') {
+      if (Platform.OS === 'android' && Platform.Version < 30) {
         await isAndroidStoragePermissionGranted();
       }
       const rootPath =

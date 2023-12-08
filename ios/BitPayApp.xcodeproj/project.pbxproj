@@ -13,6 +13,7 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		256B92C82AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 256B92C72AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf */; };
 		4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.m */; };
 		5B31AAFE2786387B002765E1 /* RCTDosh.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.m */; };
 		5B31AAFF2786387B002765E1 /* RCTDosh.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.m */; };
@@ -54,6 +55,7 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BitPayApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = BitPayApp/main.m; sourceTree = "<group>"; };
 		141E0937F93CC9740D8F8CC9 /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp-BitPayAppTests.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp-BitPayAppTests/Pods-BitPayApp-BitPayAppTests.release.xcconfig"; sourceTree = "<group>"; };
+		256B92C72AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = "bitpay-recovery-phrase-template.pdf"; path = "../assets/files/bitpay-recovery-phrase-template.pdf"; sourceTree = "<group>"; };
 		3F22DF1C884C608E7099039C /* Pods-BitPayApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.debug.xcconfig"; sourceTree = "<group>"; };
 		4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AllowedUrlPrefixProtocol.m; sourceTree = "<group>"; };
 		4054F0E629AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AllowedUrlPrefixProtocol.h; sourceTree = "<group>"; };
@@ -164,6 +166,7 @@
 		3A6F88D6BF7C4F7A8D93264A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				256B92C72AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf */,
 				F4435EB64D2448EC885B3036 /* Heebo-Black.ttf */,
 				715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */,
 				4BD0D9E39B2B473191E700CE /* Heebo-ExtraBold.ttf */,
@@ -318,6 +321,7 @@
 				D9739196BA804EA29143DA96 /* Heebo-Bold.ttf in Resources */,
 				0F819B33648D4741AAFCAD09 /* Heebo-ExtraBold.ttf in Resources */,
 				5BCF1C352740B8B2006D872E /* BootSplash.storyboard in Resources */,
+				256B92C82AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf in Resources */,
 				71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */,
 				03632D4B8959429DA3B141C2 /* Heebo-Medium.ttf in Resources */,
 				F64C0BF216CE4402A51A5ACC /* Heebo-Regular.ttf in Resources */,
