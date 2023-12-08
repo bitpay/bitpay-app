@@ -329,16 +329,17 @@ const ShopHome: React.FC<
               marginHorizontal: 3,
               numTabs: 3,
               tabWidth: 111,
+              langAdjustments: true,
             })}
             screenListeners={{
               tabPress: tab => {
                 if (tab.target) {
                   setActiveTab(
                     tab.target.includes(ShopTabs.GIFT_CARDS)
-                      ? t('Gift Cards')
+                      ? ShopTabs.GIFT_CARDS
                       : tab.target.includes(ShopTabs.BILLS)
-                      ? t('Pay Bills')
-                      : t('Shop Online'),
+                      ? ShopTabs.BILLS
+                      : ShopTabs.SHOP_ONLINE,
                   );
                   if (tab.target.includes(ShopTabs.BILLS)) {
                     dispatch(
@@ -351,14 +352,14 @@ const ShopHome: React.FC<
               },
             }}>
             <Tab.Screen
-              name={ShopTabs.GIFT_CARDS}
+              name={t('Gift Cards')}
               component={memoizedGiftCardCatalog}
             />
             <Tab.Screen
-              name={ShopTabs.SHOP_ONLINE}
+              name={t('Shop Online')}
               component={memoizedShopOnline}
             />
-            <Tab.Screen name={ShopTabs.BILLS} component={memoizedBills} />
+            <Tab.Screen name={t('Pay Bills')} component={memoizedBills} />
           </Tab.Navigator>
         </ShopInnerContainer>
       </ScrollView>

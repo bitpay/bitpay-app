@@ -106,9 +106,9 @@ const DeleteKey = () => {
       <ScrollView>
         <Title>{t('Warning!')}</Title>
         <DeleteKeyParagraph>
-          {t(
-            'Permanently deletes all wallets using this key. \nTHIS ACTION CANNOT BE REVERSED.',
-          )}
+          {t('Permanently deletes all wallets using this key.') +
+            '\n' +
+            t('THIS ACTION CANNOT BE REVERSED.')}
         </DeleteKeyParagraph>
 
         <Button onPress={() => setIsVisible(true)}>{t('Delete')}</Button>

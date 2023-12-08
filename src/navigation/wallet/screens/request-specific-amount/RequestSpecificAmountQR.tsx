@@ -219,7 +219,7 @@ const RequestSpecificAmountQR = () => {
           {qrValue ? (
             <>
               <QRHeader>
-                {t('Receive ') + formattedAmountObj?.amountUnitStr}
+                {t('Receive') + ' ' + formattedAmountObj?.amountUnitStr}
               </QRHeader>
               <CopyToClipboard onPress={copyToClipboard} activeOpacity={0.7}>
                 <CopyImgContainer>

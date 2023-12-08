@@ -98,7 +98,7 @@ const MerchantDetails = ({
         <Button
           onPress={() => Linking.openURL(directIntegration.link)}
           buttonStyle={'primary'}>
-          {t('Go to ') + directIntegration.displayName}
+          {t('Go to') + ' ' + directIntegration.displayName}
         </Button>
       </FooterButton>
     </>

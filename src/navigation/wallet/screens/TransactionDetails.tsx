@@ -503,7 +503,11 @@ const TransactionDetails = () => {
                       <H7>
                         {txs.feeFiatStr}{' '}
                         {txs.feeRateStr
-                          ? '(' + txs.feeRateStr + ' of total amount)'
+                          ? '(' +
+                            txs.feeRateStr +
+                            ' ' +
+                            t('of total amount') +
+                            ')'
                           : null}
                       </H7>
                     ) : (

@@ -617,7 +617,11 @@ const TransactionProposalDetails = () => {
                       <H7>
                         {txp.feeFiatStr}{' '}
                         {txp.feeRateStr
-                          ? '(' + txp.feeRateStr + t(' of total amount') + ')'
+                          ? '(' +
+                            txp.feeRateStr +
+                            ' ' +
+                            t('of total amount') +
+                            ')'
                           : null}
                       </H7>
                     ) : (

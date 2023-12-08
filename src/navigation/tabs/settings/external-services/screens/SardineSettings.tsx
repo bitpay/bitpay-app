@@ -146,7 +146,7 @@ const SardineSettings: React.FC = () => {
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Sardine?</SupportTxt>
+        <SupportTxt>{t('Having problems with Sardine?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
