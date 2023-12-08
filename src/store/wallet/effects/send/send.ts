@@ -213,7 +213,7 @@ export const createProposalAndBuildTxDetails =
             try {
               const rates = await dispatch(startGetRates({}));
               // building UI object for details
-              const txDetails = dispatch(
+              const txDetails = await dispatch(
                 buildTxDetails({
                   proposal,
                   rates,
@@ -354,6 +354,25 @@ export const getNonce = (
   });
 };
 
+export const getEstimateGas = (params: {
+  wallet: Wallet;
+  network: string;
+  value: number;
+  from: string;
+  data: string;
+  to: string;
+  chain: string;
+}): Promise<number> => {
+  return new Promise((resolve, reject) => {
+    params.wallet.getEstimateGas(params, (err: any, nonce: number) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(nonce);
+    });
+  });
+};
+
 export const getInvoiceEffectiveRate =
   (
     invoice: Invoice,
@@ -397,187 +416,205 @@ export const buildTxDetails =
     feeLevel?: string;
     request?: WCV2RequestType;
     feePerKb?: number;
-  }): Effect<TxDetails> =>
-  dispatch => {
-    let gasPrice, gasLimit, nonce, destinationTag, coin, chain, amount, fee;
+  }): Effect<Promise<TxDetails>> =>
+  async dispatch => {
+    return new Promise(async resolve => {
+      let gasPrice, gasLimit, nonce, destinationTag, coin, chain, amount, fee;
 
-    const tokenAddress = wallet.tokenAddress;
+      const tokenAddress = wallet.tokenAddress;
 
-    if (context === 'walletConnect' && request) {
-      const {params} = request.params.request;
-      gasPrice = params[0].gasPrice
-        ? parseInt(params[0]?.gasPrice, 16)
-        : feePerKb!;
-      gasLimit =
-        (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
-        (params[0].gas && parseInt(params[0]?.gas, 16));
-      nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
-      coin = chain =
-        WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
-      amount = parseInt(params[0]?.value, 16) || 0;
-      fee = gasLimit * gasPrice;
-    }
-
-    if (proposal) {
-      gasPrice = proposal.gasPrice;
-      gasLimit = proposal.gasLimit;
-      nonce = proposal.nonce;
-      destinationTag = proposal.destinationTag;
-      coin = proposal.coin;
-      chain = proposal.chain;
-      amount = proposal.amount;
-      fee = proposal.fee || 0; // proposal fee is zero for coinbase
-    }
-
-    const selectedTransactionCurrency =
-      invoice?.buyerProvidedInfo!.selectedTransactionCurrency ||
-      wallet.currencyAbbreviation.toUpperCase();
-
-    const isOffChain = !proposal;
-    if (invoice && selectedTransactionCurrency) {
-      amount = isOffChain
-        ? invoice.paymentSubtotals[selectedTransactionCurrency]
-        : invoice.paymentTotals[selectedTransactionCurrency];
-      const coinAndChain = getCoinAndChainFromCurrencyCode(
-        selectedTransactionCurrency.toLowerCase(),
-      );
-      coin = coinAndChain.coin;
-      chain = coinAndChain.chain;
-      if (isOffChain) {
-        fee = 0;
+      if (context === 'walletConnect' && request) {
+        const {params} = request.params.request;
+        gasPrice = params[0].gasPrice
+          ? parseInt(params[0]?.gasPrice, 16)
+          : feePerKb!;
+        nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
+        coin = chain =
+          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
+        amount = parseInt(params[0]?.value, 16) || 0;
+        gasLimit =
+          (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
+          (params[0].gas && parseInt(params[0]?.gas, 16)) ||
+          (await getEstimateGas({
+            wallet: wallet as Wallet,
+            network: wallet.network,
+            value: amount,
+            from: params[0].from,
+            to: params[0].to,
+            data: params[0].data,
+            chain,
+          }));
+        fee = gasLimit * gasPrice;
       }
-    }
 
-    if (!coin || !chain) {
-      throw new Error('Invalid coin or chain');
-    }
+      if (proposal) {
+        gasPrice = proposal.gasPrice;
+        gasLimit = proposal.gasLimit;
+        nonce = proposal.nonce;
+        destinationTag = proposal.destinationTag;
+        coin = proposal.coin;
+        chain = proposal.chain;
+        amount = proposal.amount;
+        fee = proposal.fee || 0; // proposal fee is zero for coinbase
+      }
 
-    amount = Number(amount); // Support BN (use number instead string only for view)
-    let effectiveRate;
-    if (
-      invoice &&
-      selectedTransactionCurrency &&
-      defaultAltCurrencyIsoCode === invoice.currency
-    ) {
-      effectiveRate = dispatch(
-        getInvoiceEffectiveRate(
-          invoice,
-          selectedTransactionCurrency,
-          chain,
-          tokenAddress,
-        ),
-      );
-    }
-    const opts = {
-      effectiveRate,
-      defaultAltCurrencyIsoCode,
-      rates,
-      coin,
-      chain,
-    };
-    const rateStr = getRateStr(opts);
-    const networkCost =
-      !isOffChain &&
-      selectedTransactionCurrency &&
-      invoice?.minerFees[selectedTransactionCurrency]?.totalFee;
-    const isERC20 = IsERCToken(coin, chain);
-    const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
+      const selectedTransactionCurrency =
+        invoice?.buyerProvidedInfo!.selectedTransactionCurrency ||
+        wallet.currencyAbbreviation.toUpperCase();
 
-    const {type, name, address, email} = recipient || {};
-    const feeToFiat = dispatch(
-      toFiat(
-        fee,
+      const isOffChain = !proposal;
+      if (invoice && selectedTransactionCurrency) {
+        amount = isOffChain
+          ? invoice.paymentSubtotals[selectedTransactionCurrency]
+          : invoice.paymentTotals[selectedTransactionCurrency];
+        const coinAndChain = getCoinAndChainFromCurrencyCode(
+          selectedTransactionCurrency.toLowerCase(),
+        );
+        coin = coinAndChain.coin;
+        chain = coinAndChain.chain;
+        if (isOffChain) {
+          fee = 0;
+        }
+      }
+
+      if (!coin || !chain) {
+        throw new Error('Invalid coin or chain');
+      }
+
+      amount = Number(amount); // Support BN (use number instead string only for view)
+      let effectiveRate;
+      if (
+        invoice &&
+        selectedTransactionCurrency &&
+        defaultAltCurrencyIsoCode === invoice.currency
+      ) {
+        effectiveRate = dispatch(
+          getInvoiceEffectiveRate(
+            invoice,
+            selectedTransactionCurrency,
+            chain,
+            tokenAddress,
+          ),
+        );
+      }
+      const opts = {
+        effectiveRate,
         defaultAltCurrencyIsoCode,
-        chain,
-        chain,
         rates,
-        undefined,
-        effectiveRateForFee,
-      ),
-    );
-    const amountToFiat = dispatch(
-      toFiat(
-        amount,
-        defaultAltCurrencyIsoCode,
         coin,
         chain,
-        rates,
-        tokenAddress,
-        effectiveRate,
-      ),
-    );
-    const percentageOfTotalAmount =
-      (feeToFiat / (amountToFiat + feeToFiat)) * 100;
-    return {
-      context,
-      currency: coin,
-      sendingTo: {
-        recipientType: type,
-        recipientName: name,
-        recipientEmail: email,
-        recipientAddress: address && formatCryptoAddress(address),
-        img: wallet.img,
-        recipientFullAddress: address,
-        recipientChain: chain,
-      },
-      ...(fee !== 0 && {
-        fee: {
-          feeLevel,
-          cryptoAmount: dispatch(FormatAmountStr(chain, chain, undefined, fee)),
-          fiatAmount: formatFiatAmount(feeToFiat, defaultAltCurrencyIsoCode),
-          percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(2)}%`,
-          percentageOfTotalAmount,
+      };
+      const rateStr = getRateStr(opts);
+      const networkCost =
+        !isOffChain &&
+        selectedTransactionCurrency &&
+        invoice?.minerFees[selectedTransactionCurrency]?.totalFee;
+      const isERC20 = IsERCToken(coin, chain);
+      const effectiveRateForFee = isERC20 ? undefined : effectiveRate; // always use chain rates for fee values
+
+      const {type, name, address, email} = recipient || {};
+      const feeToFiat = dispatch(
+        toFiat(
+          fee,
+          defaultAltCurrencyIsoCode,
+          chain,
+          chain,
+          rates,
+          undefined,
+          effectiveRateForFee,
+        ),
+      );
+      const amountToFiat = dispatch(
+        toFiat(
+          amount,
+          defaultAltCurrencyIsoCode,
+          coin,
+          chain,
+          rates,
+          tokenAddress,
+          effectiveRate,
+        ),
+      );
+      const percentageOfTotalAmount =
+        (feeToFiat / (amountToFiat + feeToFiat)) * 100;
+      const tx = {
+        context,
+        currency: coin,
+        sendingTo: {
+          recipientType: type,
+          recipientName: name,
+          recipientEmail: email,
+          recipientAddress: address && formatCryptoAddress(address),
+          img: wallet.img,
+          recipientFullAddress: address,
+          recipientChain: chain,
         },
-      }),
-      ...(networkCost && {
-        networkCost: {
-          cryptoAmount: dispatch(
-            FormatAmountStr(chain, chain, undefined, networkCost),
-          ),
-          fiatAmount: formatFiatAmount(
-            dispatch(
-              toFiat(
-                networkCost,
-                defaultAltCurrencyIsoCode,
-                chain,
-                chain,
-                rates,
-                undefined,
-                effectiveRateForFee,
-              ),
+        ...(fee !== 0 && {
+          fee: {
+            feeLevel,
+            cryptoAmount: dispatch(
+              FormatAmountStr(chain, chain, undefined, fee),
             ),
+            fiatAmount: formatFiatAmount(feeToFiat, defaultAltCurrencyIsoCode),
+            percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(
+              2,
+            )}%`,
+            percentageOfTotalAmount,
+          },
+        }),
+        ...(networkCost && {
+          networkCost: {
+            cryptoAmount: dispatch(
+              FormatAmountStr(chain, chain, undefined, networkCost),
+            ),
+            fiatAmount: formatFiatAmount(
+              dispatch(
+                toFiat(
+                  networkCost,
+                  defaultAltCurrencyIsoCode,
+                  chain,
+                  chain,
+                  rates,
+                  undefined,
+                  effectiveRateForFee,
+                ),
+              ),
+              defaultAltCurrencyIsoCode,
+            ),
+          },
+        }),
+        sendingFrom: {
+          walletName: wallet.walletName || wallet.credentials.walletName,
+          img: wallet.img,
+          badgeImg: wallet.badgeImg,
+        },
+        subTotal: {
+          cryptoAmount: dispatch(
+            FormatAmountStr(coin, chain, tokenAddress, amount),
+          ),
+          fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
+        },
+        total: {
+          cryptoAmount: isERC20
+            ? `${dispatch(
+                FormatAmountStr(coin, chain, tokenAddress, amount),
+              )}\n + ${dispatch(FormatAmountStr(chain, chain, undefined, fee))}`
+            : dispatch(
+                FormatAmountStr(coin, chain, tokenAddress, amount + fee),
+              ),
+          fiatAmount: formatFiatAmount(
+            amountToFiat + feeToFiat,
             defaultAltCurrencyIsoCode,
           ),
         },
-      }),
-      sendingFrom: {
-        walletName: wallet.walletName || wallet.credentials.walletName,
-        img: wallet.img,
-        badgeImg: wallet.badgeImg,
-      },
-      subTotal: {
-        cryptoAmount: dispatch(
-          FormatAmountStr(coin, chain, tokenAddress, amount),
-        ),
-        fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
-      },
-      total: {
-        cryptoAmount: isERC20
-          ? `${dispatch(
-              FormatAmountStr(coin, chain, tokenAddress, amount),
-            )}\n + ${dispatch(FormatAmountStr(chain, chain, undefined, fee))}`
-          : dispatch(FormatAmountStr(coin, chain, tokenAddress, amount + fee)),
-        fiatAmount: formatFiatAmount(
-          amountToFiat + feeToFiat,
-          defaultAltCurrencyIsoCode,
-        ),
-      },
-      gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
-      gasLimit,
-      nonce,
-      destinationTag,
-      rateStr,
-    };
+        gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
+        gasLimit,
+        nonce,
+        destinationTag,
+        rateStr,
+      };
+      return resolve(tx);
+    });
   };
 
 const getRateStr = (opts: {

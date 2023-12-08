@@ -108,11 +108,11 @@ import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/Sen
 import {moralisInit} from '../moralis/moralis.effects';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {InAppNotificationMessages} from '../../components/modal/in-app-notification/InAppNotification';
-import {SignClientTypes} from '@walletconnect/types';
 import axios from 'axios';
 import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
 import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -551,13 +551,26 @@ export const startOnGoingProcessModal =
     const _message = _OnGoingProcessMessages[key];
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
+
+    // After 30 seconds, check if the modal is active. If so, dismiss it.
+    setTimeout(async () => {
+      const currentStore = getState();
+      if (
+        currentStore.APP.showOnGoingProcessModal &&
+        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing')
+      ) {
+        dispatch(AppActions.dismissOnGoingProcessModal());
+        await sleep(500);
+      }
+    }, 30000);
+
     return sleep(100);
   };
 
 export const startInAppNotification =
   (
     key: InAppNotificationMessages,
-    request: SignClientTypes.EventArguments['session_request'],
+    request: Web3WalletTypes.EventArguments['session_request'],
     context: InAppNotificationContextType,
   ): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {

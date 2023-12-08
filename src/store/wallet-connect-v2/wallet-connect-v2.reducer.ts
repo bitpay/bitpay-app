@@ -1,9 +1,9 @@
-import {SignClientTypes} from '@walletconnect/types';
 import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
 import {
   WalletConnectV2ActionType,
   WalletConnectV2ActionTypes,
 } from './wallet-connect-v2.types';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export const walletConnectV2ReduxPersistBlackList: (keyof WalletConnectV2State)[] =
   ['proposal'];
@@ -11,7 +11,7 @@ export const walletConnectV2ReduxPersistBlackList: (keyof WalletConnectV2State)[
 export interface WalletConnectV2State {
   sessions: WCV2SessionType[];
   requests: WCV2RequestType[];
-  proposal?: SignClientTypes.EventArguments['session_proposal'];
+  proposal?: Web3WalletTypes.EventArguments['session_proposal'];
 }
 
 const initialState: WalletConnectV2State = {

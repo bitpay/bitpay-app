@@ -224,7 +224,7 @@ const Confirm = () => {
         transactionCurrency,
       });
       const rates = await dispatch(startGetRates({}));
-      const newTxDetails = dispatch(
+      const newTxDetails = await dispatch(
         buildTxDetails({
           invoice: newInvoice,
           wallet: walletRowProps,

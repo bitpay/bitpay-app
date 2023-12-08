@@ -231,7 +231,7 @@ const Confirm: React.FC<
         {totalBillAmount: 0, serviceFee: 0},
       );
       const rates = await dispatch(startGetRates({}));
-      const newTxDetails = dispatch(
+      const newTxDetails = await dispatch(
         buildTxDetails({
           invoice: newInvoice,
           wallet: walletRowProps,

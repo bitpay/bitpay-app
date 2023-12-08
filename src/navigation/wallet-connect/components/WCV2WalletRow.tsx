@@ -1,52 +1,17 @@
-import React, {memo, useEffect} from 'react';
+import React, {memo} from 'react';
 import styled from 'styled-components/native';
 import Checkbox from '../../../components/checkbox/Checkbox';
-import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {buildTestBadge} from '../../../components/list/WalletRow';
 import {
-  Column,
-  CurrencyImageContainer,
-  Row,
   RowContainer,
+  RowContainerWithoutFeedback,
 } from '../../../components/styled/Containers';
-import {H5, ListItemSubText} from '../../../components/styled/Text';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../constants/WalletConnectV2';
-import {getAddressFrom} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {WCV2Wallet} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
-import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import {formatCryptoAddress} from '../../../utils/helper-methods';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {PillContainer, PillText} from '../../wallet/components/SendToPill';
-import {SendToPillContainer} from '../../wallet/screens/send/confirm/Shared';
-
-const BalanceColumn = styled(Column)`
-  align-items: flex-end;
-`;
-
-const CurrencyColumn = styled.View`
-  margin-left: 2px;
-  max-width: 35%;
-`;
+import WCV2WalletRowInfo from './WCV2WalletRowInfo';
 
 const CheckBoxContainer = styled.View`
   margin-right: 12px;
 `;
-
-const Badge = styled.View`
-  position: absolute;
-  border-radius: 8px;
-  width: 10px;
-  height: 10px;
-  left: 35px;
-  top: 3px;
-  background: #ff647c;
-`;
-
-const TestBadgeContainer = styled.View`
-  margin-top: 4px;
-`;
-
 interface WalletBoxProps {
   onPress: (keyId: string, wallet: WCV2Wallet) => void;
   wallet: WCV2Wallet;
@@ -71,6 +36,8 @@ interface Props {
   isLast?: boolean;
   onPress: (keyId: string, wallet: WCV2Wallet) => void;
   showCheckbox: boolean;
+  showAddress: boolean;
+  touchable: boolean;
   topic?: string;
 }
 
@@ -80,45 +47,11 @@ const WCV2WalletRow = ({
   onPress,
   isLast,
   showCheckbox,
+  showAddress,
   topic,
+  touchable,
 }: Props) => {
-  const dispatch = useAppDispatch();
-  const {wallet} = walletObj;
-  const requests = useAppSelector(({WALLET_CONNECT_V2}) =>
-    WALLET_CONNECT_V2.requests.filter(
-      request =>
-        request.topic === topic &&
-        getAddressFrom(request).toLowerCase() ===
-          wallet.receiveAddress?.toLowerCase() &&
-        WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain ===
-          wallet.chain,
-    ),
-  );
-  const {hideAllBalances} = useAppSelector(({APP}) => APP);
-
-  let {
-    img,
-    badgeImg,
-    walletName,
-    currencyName,
-    balance,
-    receiveAddress,
-    network,
-    chain,
-  } = wallet;
-
-  useEffect(() => {
-    const createAddress = async () => {
-      if (!receiveAddress) {
-        receiveAddress = await dispatch(
-          createWalletAddress({wallet, newAddress: false}),
-        );
-      }
-    };
-    createAddress();
-  }, []);
-
-  return (
+  return touchable ? (
     <RowContainer
       isLast={isLast}
       onPress={() => onPress(keyId, walletObj)}
@@ -128,36 +61,24 @@ const WCV2WalletRow = ({
       {showCheckbox ? (
         <WalletBox keyId={keyId} wallet={walletObj} onPress={onPress} />
       ) : null}
-
-      <CurrencyImageContainer>
-        <CurrencyImage img={img} badgeUri={badgeImg} size={45} />
-        {requests && requests.length ? <Badge /> : null}
-      </CurrencyImageContainer>
-      <CurrencyColumn>
-        <Row>
-          <H5 ellipsizeMode="tail" numberOfLines={1}>
-            {walletName || currencyName}
-          </H5>
-          <TestBadgeContainer>
-            {buildTestBadge(network, chain, false)}
-          </TestBadgeContainer>
-        </Row>
-        <ListItemSubText style={{marginTop: -4}}>
-          {!hideAllBalances ? balance?.crypto : '****'}
-        </ListItemSubText>
-      </CurrencyColumn>
-      {receiveAddress ? (
-        <BalanceColumn>
-          <SendToPillContainer>
-            <PillContainer>
-              <PillText accent={'action'}>
-                {receiveAddress && formatCryptoAddress(receiveAddress)}
-              </PillText>
-            </PillContainer>
-          </SendToPillContainer>
-        </BalanceColumn>
-      ) : null}
+      <WCV2WalletRowInfo
+        walletObj={walletObj}
+        showAddress={showAddress}
+        topic={topic}
+      />
     </RowContainer>
+  ) : (
+    <RowContainerWithoutFeedback
+      isLast={isLast}
+      style={{
+        height: 74,
+      }}>
+      <WCV2WalletRowInfo
+        walletObj={walletObj}
+        showAddress={showAddress}
+        topic={topic}
+      />
+    </RowContainerWithoutFeedback>
   );
 };
 

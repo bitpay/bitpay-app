@@ -1,12 +1,11 @@
-import {SessionTypes, SignClientTypes} from '@walletconnect/types';
+import {ProposalTypes, SessionTypes} from '@walletconnect/types';
 import {Wallet} from '../wallet/wallet.models';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export type WCV2Key = {
   keyName: string | undefined;
   keyId: string;
-  checked: boolean;
-  showWallets: boolean;
-  wallets: WCV2Wallet[];
+  wallets: WCV2Wallet[][];
 };
 
 export type WCV2Wallet = {
@@ -21,6 +20,14 @@ export type WCV2RequestWalletsType = {
 };
 
 export type WCV2RequestType =
-  SignClientTypes.EventArguments['session_request'] & {createdOn?: number};
+  Web3WalletTypes.EventArguments['session_request'] & {
+    createdOn?: number;
+    chain?: string;
+  };
 
-export type WCV2SessionType = SessionTypes.Struct & {pairingTopic: string};
+export type WCV2SessionType = SessionTypes.Struct & {
+  pairingTopic: string;
+  proposalParams: ProposalTypes.Struct;
+  accounts: string[];
+  chains: string[];
+};

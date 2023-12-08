@@ -23,7 +23,7 @@ import uniqBy from 'lodash.uniqby';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import moment from 'moment';
-import {SignClientTypes} from '@walletconnect/types';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
@@ -91,7 +91,7 @@ export interface AppState {
     | {
         context: InAppNotificationContextType;
         message: string;
-        request?: SignClientTypes.EventArguments['session_request'];
+        request?: Web3WalletTypes.EventArguments['session_request'];
       }
     | undefined;
   showBottomNotificationModal: boolean;

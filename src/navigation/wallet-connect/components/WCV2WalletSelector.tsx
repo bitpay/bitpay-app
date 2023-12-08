@@ -19,6 +19,7 @@ import {Platform, View} from 'react-native';
 import {WalletConnectCtaContainer} from '../styled/WalletConnectContainers';
 import WCV2KeyWalletsRow from './WCV2KeyWalletsRow';
 import {
+  WCV2Key,
   WCV2SessionType,
   WCV2Wallet,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
@@ -60,53 +61,65 @@ export default ({
   } = proposal?.params || session;
 
   const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const [allKeys, setAllkeys] = useState<any>();
+  const [allKeys, setAllkeys] = useState<WCV2Key[]>();
   const _allKeys = Object.values(keys).filter(key => key.backupComplete);
 
   const getSelectedWallets = (): {
     chain: string;
     address: string;
     network: string;
+    supportedChain: string;
   }[] => {
-    const selectedWallets: {chain: string; address: string; network: string}[] =
-      [];
+    const selectedWallets: {
+      chain: string;
+      address: string;
+      network: string;
+      supportedChain: string;
+    }[] = [];
     allKeys &&
-      allKeys.forEach((key: any) => {
-        key.wallets.forEach((walletObj: WCV2Wallet) => {
-          const {checked, wallet} = walletObj;
-          const {receiveAddress, chain, network} = wallet;
-          if (checked && receiveAddress) {
-            selectedWallets.push({
-              address: receiveAddress,
-              chain,
-              network,
-            });
-          }
+      allKeys.forEach((key: WCV2Key) => {
+        key.wallets.forEach((walletNestedArray: WCV2Wallet[]) => {
+          walletNestedArray.forEach((walletObj: WCV2Wallet) => {
+            const {checked, wallet} = walletObj;
+            const {receiveAddress, chain, network} = wallet;
+            let _supportedChain: [string, {chain: string; network: string}];
+            if (checked && receiveAddress) {
+              _supportedChain = Object.entries(
+                WALLET_CONNECT_SUPPORTED_CHAINS,
+              ).find(
+                ([_, {chain: c, network: n}]) => c === chain && n === network,
+              )! as [string, {chain: string; network: string}];
+              selectedWallets.push({
+                address: receiveAddress,
+                chain,
+                network,
+                supportedChain: _supportedChain[0],
+              });
+            }
+          });
         });
       });
     return selectedWallets;
   };
 
   useEffect(() => {
-    if (requiredNamespaces) {
-      Object.keys(requiredNamespaces)
-        .concat(Object.keys(optionalNamespaces || {}))
-        .forEach(key => {
-          const chains: {chain: string; network: string}[] = [];
-          [
-            ...new Set([
-              ...(requiredNamespaces[key]?.chains || []),
-              ...(optionalNamespaces[key]?.chains || []),
-            ]),
-          ].map((chain: string) => {
-            if (WALLET_CONNECT_SUPPORTED_CHAINS[chain]) {
-              chains.push(WALLET_CONNECT_SUPPORTED_CHAINS[chain]);
-            }
-          });
-          setChainsSelected(chains);
+    Object.keys(requiredNamespaces || {})
+      .concat(Object.keys(optionalNamespaces || {}))
+      .forEach(key => {
+        const chains: {chain: string; network: string}[] = [];
+        [
+          ...new Set([
+            ...(requiredNamespaces[key]?.chains || []),
+            ...(optionalNamespaces[key]?.chains || []),
+          ]),
+        ].map((chain: string) => {
+          if (WALLET_CONNECT_SUPPORTED_CHAINS[chain]) {
+            chains.push(WALLET_CONNECT_SUPPORTED_CHAINS[chain]);
+          }
         });
-    }
-  }, [requiredNamespaces]);
+        setChainsSelected(chains);
+      });
+  }, [requiredNamespaces, optionalNamespaces]);
 
   const setFormattedKeys = () => {
     let allAccounts: string[] = [];
@@ -133,11 +146,24 @@ export default ({
               wallet,
               checked: false,
             };
+          })
+          .sort((a, b) => {
+            return a.wallet.credentials.account - b.wallet.credentials.account;
           });
+
+        const groupedWalletsByAccount: {[id: string]: WCV2Wallet[]} = {};
+        wallets.forEach(w => {
+          const accountId = w.wallet.credentials.account;
+          if (!groupedWalletsByAccount[accountId]) {
+            groupedWalletsByAccount[accountId] = [];
+          }
+          groupedWalletsByAccount[accountId].push(w);
+        });
+
         return {
           keyName: key.keyName,
           keyId: key.id,
-          wallets,
+          wallets: Object.values(groupedWalletsByAccount),
         };
       })
       .filter(key => key.wallets?.length > 0);
@@ -160,8 +186,8 @@ export default ({
             </WalletSelectMenuHeaderContainer>
             <DescriptionText>
               {session
-                ? t('Which wallets would you like to add to this connection?')
-                : t('Which wallets would you like to use for WalletConnect?')}
+                ? t('Which accounts would you like to add to this connection?')
+                : t('Which accounts would you like to use for WalletConnect?')}
             </DescriptionText>
 
             <View>
@@ -172,13 +198,18 @@ export default ({
                   setAllkeys((prev: any) => {
                     prev &&
                       prev.forEach((k: any) => {
-                        if (k && k.keyId === keyId) {
+                        const accountChoosed =
+                          wallet.wallet.credentials.account;
+                        if (k?.keyId === keyId) {
                           const {wallets} = k;
-                          wallets.forEach((w: WCV2Wallet) => {
-                            if (w.wallet.id === wallet.wallet.id) {
-                              w.checked = !w.checked;
-                            }
-                            return w;
+                          wallets.forEach((walletNestedArray: WCV2Wallet[]) => {
+                            walletNestedArray.forEach((w: WCV2Wallet) => {
+                              if (
+                                w.wallet.credentials.account === accountChoosed
+                              ) {
+                                w.checked = !w.checked;
+                              }
+                            });
                           });
                         }
                       });
@@ -202,6 +233,7 @@ export default ({
                   disabled={!getSelectedWallets().length}
                   onPress={async () => {
                     haptic('impactLight');
+                    const selectedWallets = getSelectedWallets();
                     if (proposal) {
                       onBackdropPress();
                       await sleep(500);
@@ -209,11 +241,11 @@ export default ({
                         screen: 'WalletConnectStart',
                         params: {
                           proposal,
-                          selectedWallets: getSelectedWallets(),
+                          selectedWallets: selectedWallets,
                         },
                       });
                     } else if (session) {
-                      onBackdropPress(getSelectedWallets(), session);
+                      onBackdropPress(selectedWallets, session);
                       await sleep(500);
                     }
                   }}>

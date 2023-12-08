@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../components/button/Button';
-import {Paragraph} from '../../../components/styled/Text';
+import {H6, H5, Paragraph} from '../../../components/styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
 import {
@@ -14,7 +14,7 @@ import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useAppDispatch} from '../../../utils/hooks';
 import {WalletConnectContainer} from '../styled/WalletConnectContainers';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
 import {
   dismissBottomNotificationModal,
@@ -30,25 +30,40 @@ import {
   CtaContainerAbsolute,
   HeaderRightContainer,
 } from '../../../components/styled/Containers';
-import {SessionTypes, SignClientTypes} from '@walletconnect/types';
+import {SessionTypes} from '@walletconnect/types';
 import {
   walletConnectV2ApproveSessionProposal,
   walletConnectV2RejectSessionProposal,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {sessionProposal} from '../../../store/wallet-connect-v2/wallet-connect-v2.actions';
+import {buildApprovedNamespaces} from '@walletconnect/utils';
+import {
+  CHAIN_NAME_MAPPING,
+  EIP155_SIGNING_METHODS,
+} from '../../../constants/WalletConnectV2';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import FastImage from 'react-native-fast-image';
 
 export type WalletConnectStartParamList = {
   // version 2
-  proposal?: SignClientTypes.EventArguments['session_proposal'];
-  selectedWallets?: {chain: string; address: string; network: string}[];
+  proposal: Web3WalletTypes.EventArguments['session_proposal'];
+  selectedWallets?: {
+    chain: string;
+    address: string;
+    network: string;
+    supportedChain: string;
+  }[];
 };
 
 const UriContainer = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 6px;
   height: 64px;
-  margin-top: 25px;
   margin-bottom: 35px;
+  justify-content: center;
+  align-items: center;
+`;
+
+const TitleContainer = styled.View`
   justify-content: center;
   align-items: center;
 `;
@@ -60,7 +75,7 @@ const DescriptionContainer = styled.View`
 const DescriptionItemContainer = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 10px 10px;
 `;
 
 const DescriptionItem = styled(Paragraph)`
@@ -68,6 +83,20 @@ const DescriptionItem = styled(Paragraph)`
   padding-top: 2px;
   color: ${props => props.theme.colors.text};
 `;
+
+const IconContainer = styled.View`
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+`;
+
+const styles = StyleSheet.create({
+  icon: {
+    height: 80,
+    width: 80,
+    borderRadius: 10,
+  },
+});
 
 const WalletConnectStart = () => {
   const {t} = useTranslation();
@@ -79,17 +108,12 @@ const WalletConnectStart = () => {
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
   // version 2
   const {id, params} = proposal || {};
-  const {
-    proposer,
-    requiredNamespaces,
-    relays,
-    pairingTopic,
-    optionalNamespaces,
-  } = params || {};
+  const {proposer, relays, pairingTopic} = params || {};
   const {metadata} = proposer || {};
 
   const peerName = metadata?.name;
   const peerUrl = metadata?.url;
+  const peerImg = metadata?.icons?.[0];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -116,6 +140,26 @@ const WalletConnectStart = () => {
     [dispatch],
   );
 
+  const transformErrorMessage = (error: string) => {
+    const NETWORK_ERROR_PREFIX =
+      "Non conforming namespaces. approve() namespaces chains don't satisfy required namespaces.";
+
+    if (error.includes(NETWORK_ERROR_PREFIX)) {
+      // Replace chain codes with corresponding chain names
+      error = error.replace(/eip155:\d+/g, match => {
+        const chainCode = match.split(':')[1];
+        return CHAIN_NAME_MAPPING[chainCode] || match;
+      });
+      let parts = error.split('Required: ')[1].split('Approved: ');
+      let requiredPart = parts[0].replace(/,/g, ', ');
+      let approvedPart = parts[1].replace(/,/g, ', ');
+      const transformedMessage = `Network compatibility issue. The supported networks do not meet the requirements.\n\nRequired Networks:\n${requiredPart}\n\nSupported Networks:\n${approvedPart}`;
+      return transformedMessage;
+    } else {
+      return error;
+    }
+  };
+
   const rejectSessionProposal = () => {
     dispatch(walletConnectV2RejectSessionProposal(id!));
     navigation.dispatch(StackActions.popToTop());
@@ -124,39 +168,27 @@ const WalletConnectStart = () => {
     try {
       setButtonState('loading');
       if (selectedWallets) {
-        const namespaces: SessionTypes.Namespaces = {};
-        if (requiredNamespaces) {
-          Object.keys(requiredNamespaces)
-            .concat(Object.keys(optionalNamespaces || {}))
-            .forEach(key => {
-              const accounts: string[] = [];
-              [
-                ...new Set([
-                  ...(requiredNamespaces[key]?.chains || []),
-                  ...(optionalNamespaces?.[key]?.chains || []),
-                ]),
-              ]?.map((chain: string) => {
-                selectedWallets.forEach(selectedWallet => {
-                  accounts.push(`${chain}:${selectedWallet.address}`);
-                });
-              });
-              namespaces[key] = {
-                accounts: [...new Set(accounts)],
-                methods: [
-                  ...requiredNamespaces[key].methods,
-                  ...(optionalNamespaces && optionalNamespaces[key]
-                    ? optionalNamespaces[key]?.methods
-                    : []),
-                ],
-                events: [
-                  ...requiredNamespaces[key].events,
-                  ...(optionalNamespaces && optionalNamespaces[key]
-                    ? optionalNamespaces[key]?.events
-                    : []),
-                ],
-              };
-            });
-        }
+        const accounts: string[] = [];
+        const chains: string[] = [];
+        selectedWallets.forEach(selectedWallet => {
+          accounts.push(
+            `${selectedWallet.supportedChain}:${selectedWallet.address}`,
+          );
+          chains.push(selectedWallet.supportedChain);
+        });
+        // Remove duplicate values from chains array
+        const uniqueChains = [...new Set(chains)];
+        const namespaces: SessionTypes.Namespaces = buildApprovedNamespaces({
+          proposal: params,
+          supportedNamespaces: {
+            eip155: {
+              chains,
+              methods: Object.values(EIP155_SIGNING_METHODS),
+              events: ['chainChanged', 'accountsChanged'],
+              accounts,
+            },
+          },
+        });
         if (id && relays) {
           await dispatch(
             walletConnectV2ApproveSessionProposal(
@@ -164,6 +196,9 @@ const WalletConnectStart = () => {
               relays[0].protocol,
               namespaces,
               pairingTopic!,
+              proposal.params,
+              accounts,
+              uniqueChains,
             ),
           );
         }
@@ -194,9 +229,10 @@ const WalletConnectStart = () => {
       );
     } catch (e) {
       setButtonState('failed');
+      const transformedMessage = transformErrorMessage(BWCErrorMessage(e));
       await showErrorMessage(
         CustomErrorMessage({
-          errMsg: BWCErrorMessage(e),
+          errMsg: transformedMessage,
           title: t('Uh oh, something went wrong'),
         }),
       );
@@ -213,6 +249,18 @@ const WalletConnectStart = () => {
 
   return (
     <WalletConnectContainer>
+      {peerImg ? (
+        <IconContainer>
+          <FastImage
+            style={styles.icon}
+            source={{
+              uri: peerImg,
+              priority: FastImage.priority.normal,
+            }}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+        </IconContainer>
+      ) : null}
       <View
         style={{
           marginLeft: 16,
@@ -221,13 +269,14 @@ const WalletConnectStart = () => {
         }}>
         {peerName && peerUrl && (
           <View>
-            <Paragraph>
-              {peerName + t(' wants to connect to your wallet.')}
-            </Paragraph>
+            <TitleContainer>
+              <H5>{peerName + t(' wants to connect')}</H5>
+            </TitleContainer>
             <UriContainer>
               <Paragraph>{peerUrl}</Paragraph>
             </UriContainer>
             <DescriptionContainer>
+              <H6>{t('Required permissions')}</H6>
               <DescriptionItemContainer>
                 <WalletIcon />
                 <DescriptionItem>

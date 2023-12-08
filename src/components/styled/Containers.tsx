@@ -106,6 +106,15 @@ export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
 `;
 
+export const RowContainerWithoutFeedback = styled.View<RowContainerProps>`
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 4px;
+  margin: 0 10px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
+`;
+
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
 `;
