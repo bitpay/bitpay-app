@@ -1195,7 +1195,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         onEndReached={() => {
           loadHistory();
         }}
-        onEndReachedThreshold={0.01}
+        onEndReachedThreshold={0.5}
         ListEmptyComponent={listEmptyComponent}
         maxToRenderPerBatch={15}
         getItemLayout={getItemLayout}
