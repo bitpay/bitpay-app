@@ -6,7 +6,11 @@ import {StackScreenProps} from '@react-navigation/stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
 import {ContactsStackParamList} from '../ContactsStack';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  getCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {BaseText, TextAlign} from '../../../../components/styled/Text';
 import {Hr} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -141,6 +145,7 @@ const ContactsDetails = ({
   const [contact, setContact] = useState(_contact);
 
   const [copied, setCopied] = useState(false);
+  const [copiedContractAddress, setCopiedContractAddress] = useState(false);
   const [showIconOptions, setShowIconOptions] = useState(false);
 
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -244,6 +249,23 @@ const ContactsDetails = ({
     setCopied(true);
   };
 
+  useEffect(() => {
+    if (!copiedContractAddress) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopiedContractAddress(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [copiedContractAddress]);
+
+  const copyContractAddressToClipboard = () => {
+    haptic('impactLight');
+    Clipboard.setString(contact.tokenAddress!);
+    setCopiedContractAddress(true);
+  };
+
   const deleteContactView = async () => {
     await sleep(500);
     dispatch(
@@ -252,6 +274,7 @@ const ContactsDetails = ({
         contact.coin,
         contact.network,
         contact.chain,
+        contact.tokenAddress,
       ),
     );
     navigation.goBack();
@@ -293,6 +316,7 @@ const ContactsDetails = ({
             size={100}
             name={contact.name}
             chain={contact.chain}
+            tokenAddress={contact.tokenAddress}
           />
         </ContactImageHeader>
         <Details>
@@ -323,6 +347,28 @@ const ContactsDetails = ({
               </AddressContainer>
             </DetailInfo>
           </Detail>
+
+          {contact.tokenAddress ? (
+            <>
+              <Hr />
+              <Detail>
+                <Title>{t('Contract')}</Title>
+                <DetailInfo align="right">
+                  <AddressContainer
+                    onPress={copyContractAddressToClipboard}
+                    activeOpacity={0.7}>
+                    <CopyImgContainer>
+                      {copiedContractAddress ? <CopiedSvg width={17} /> : null}
+                    </CopyImgContainer>
+                    <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
+                      {contact.tokenAddress}
+                    </AddressText>
+                  </AddressContainer>
+                </DetailInfo>
+              </Detail>
+            </>
+          ) : null}
+
           {contact.network !== 'livenet' ? (
             <>
               <Hr />
@@ -338,7 +384,7 @@ const ContactsDetails = ({
               <Detail>
                 <Title>{t('Coin')}</Title>
                 <DetailInfo align="right">
-                  {contact.coin.toUpperCase()}
+                  {formatCurrencyAbbreviation(contact.coin)}
                 </DetailInfo>
               </Detail>
             </>

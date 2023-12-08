@@ -71,8 +71,14 @@ const ZenLedgerImport: React.FC = () => {
             network === Network.mainnet && credentials.isComplete(),
         )
         .map(wallet => {
-          const {currencyAbbreviation, chain, network, balance, hideWallet} =
-            wallet;
+          const {
+            currencyAbbreviation,
+            chain,
+            network,
+            balance,
+            hideWallet,
+            tokenAddress,
+          } = wallet;
 
           const fiatBalance = formatFiatAmount(
             convertToFiat(
@@ -83,6 +89,7 @@ const ZenLedgerImport: React.FC = () => {
                   currencyAbbreviation,
                   chain,
                   rates,
+                  tokenAddress,
                 ),
               ),
               hideWallet,

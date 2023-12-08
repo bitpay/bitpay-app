@@ -1,7 +1,7 @@
 import React from 'react';
 import {Image, View, TouchableOpacity} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {H6, Paragraph} from '../../../../../components/styled/Text';
 import {
   Action,
@@ -31,7 +31,7 @@ import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {getBillAccountEventParams} from '../utils';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 
-interface BillItemProps {
+export interface BillItemProps {
   account: BillPayAccount;
   payment?: BillPayment;
   variation: 'small' | 'large' | 'header' | 'pay';
@@ -146,9 +146,8 @@ export default ({
 }: BillItemProps) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
-  const theme = useTheme();
 
-  const baseEventParams = getBillAccountEventParams(account);
+  const baseEventParams = getBillAccountEventParams(account, payment);
 
   const removeBill = async () => {
     await sleep(500);
@@ -169,15 +168,17 @@ export default ({
               width: 30,
               marginRight: 10,
               marginTop: -4,
-              borderRadius: theme.dark ? 30 : 0,
+              borderRadius: 30,
             }}
             resizeMode={'contain'}
-            source={{uri: account[account.type].merchantIcon}}
+            source={{uri: payment?.icon || account[account.type].merchantIcon}}
           />
           <View style={{maxWidth: 175}}>
-            <H6 numberOfLines={1}>{account[account.type].merchantName}</H6>
+            <H6 numberOfLines={1}>
+              {payment?.merchantName || account[account.type].merchantName}
+            </H6>
             <AccountType numberOfLines={1}>
-              {account[account.type].description}
+              {payment?.accountDescription || account[account.type].description}
             </AccountType>
           </View>
         </AccountDetailsLeft>
@@ -193,7 +194,7 @@ export default ({
             </>
           ) : (
             <>
-              {account.isPayable || !!payment ? (
+              {!!payment || account?.isPayable ? (
                 <>
                   {variation === 'pay' ? (
                     <PayButton>

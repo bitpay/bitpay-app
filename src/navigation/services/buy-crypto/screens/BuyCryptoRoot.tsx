@@ -52,7 +52,7 @@ import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   BitpaySupportedCoins,
-  BitpaySupportedCurrencies,
+  BitpaySupportedTokens,
 } from '../../../../constants/currencies';
 import ToWalletSelectorModal, {
   ToWalletSelectorCustomCurrency,
@@ -105,7 +105,9 @@ const BuyCryptoRoot: React.VFC<
   const theme = useTheme();
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-  const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
+  const tokenDataByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.tokenDataByAddress,
+  );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -405,13 +407,21 @@ const BuyCryptoRoot: React.VFC<
       } else {
         setSelectedPaymentMethod(
           isPaymentMethodSupported(
-            'moonpay',
+            'banxa',
             PaymentMethodsAvailable.applePay,
             selectedWallet.currencyAbbreviation,
             selectedWallet.chain,
             fiatCurrency,
             locationData?.countryShortCode || 'US',
           ) ||
+            isPaymentMethodSupported(
+              'moonpay',
+              PaymentMethodsAvailable.applePay,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              fiatCurrency,
+              locationData?.countryShortCode || 'US',
+            ) ||
             isPaymentMethodSupported(
               'ramp',
               PaymentMethodsAvailable.applePay,
@@ -467,13 +477,21 @@ const BuyCryptoRoot: React.VFC<
         )) ||
       (!preSetPartner &&
         (isPaymentMethodSupported(
-          'moonpay',
-          selectedPaymentMethod,
+          'banxa',
+          PaymentMethodsAvailable.applePay,
           selectedWallet.currencyAbbreviation,
           selectedWallet.chain,
           fiatCurrency,
           locationData?.countryShortCode || 'US',
         ) ||
+          isPaymentMethodSupported(
+            'moonpay',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
+          ) ||
           isPaymentMethodSupported(
             'ramp',
             selectedPaymentMethod,
@@ -511,21 +529,26 @@ const BuyCryptoRoot: React.VFC<
   const checkPaymentMethodRef = useRef(checkPaymentMethod);
   checkPaymentMethodRef.current = checkPaymentMethod;
 
-  const getLogoUri = (coin: string, _chain: string) => {
+  const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
+    const foundToken = Object.values(tokenDataByAddress).find(
+      token =>
+        token.coin === _currencyAbbreviation.toLowerCase() &&
+        token.chain === _chain,
+    );
     if (
       SupportedCurrencyOptions.find(
         ({currencyAbbreviation, chain}) =>
-          currencyAbbreviation === coin.toLowerCase() &&
+          currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           (!chain || chain === _chain),
       )
     ) {
       return SupportedCurrencyOptions.find(
         ({currencyAbbreviation, chain}) =>
-          currencyAbbreviation === coin.toLowerCase() &&
+          currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           (!chain || chain === _chain),
       )!.img;
-    } else if (tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI) {
-      return tokenData[getCurrencyAbbreviation(coin, _chain)].logoURI;
+    } else if (foundToken?.logoURI) {
+      return foundToken.logoURI;
     } else {
       return undefined;
     }
@@ -634,14 +657,17 @@ const BuyCryptoRoot: React.VFC<
       supportedCoins
         .map((symbol: string) => {
           const {coin, chain} = getCoinAndChainFromCurrencyCode(symbol);
+          const foundToken = Object.values({
+            ...BitpaySupportedTokens,
+            ...tokenDataByAddress,
+          }).find(token => token.coin === coin && token.chain === chain);
           return {
             currencyAbbreviation: coin,
             symbol,
-            name:
-              BitpaySupportedCurrencies[symbol]?.name ||
-              tokenData[symbol]?.name,
+            name: (BitpaySupportedCoins[symbol]?.name || foundToken?.name)!,
             chain,
             logoUri: getLogoUri(coin, chain),
+            tokenAddress: foundToken?.address,
           };
         })
         .filter(currency => !!currency.name);

@@ -216,6 +216,7 @@ const TransactionDetails = () => {
     currencyAbbreviation,
     network,
     chain,
+    tokenAddress,
     credentials: {walletId},
   } = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
@@ -280,7 +281,12 @@ const TransactionDetails = () => {
             address: output.toAddress,
             amount: Number(
               dispatch(
-                FormatAmount(currencyAbbreviation, chain, output.amount),
+                FormatAmount(
+                  currencyAbbreviation,
+                  chain,
+                  tokenAddress,
+                  output.amount,
+                ),
               ),
             ),
           });
@@ -292,7 +298,12 @@ const TransactionDetails = () => {
         context: 'fromReplaceByFee' as TransactionOptionsContext,
         amount: Number(
           dispatch(
-            FormatAmount(currencyAbbreviation, chain, transaction.amount),
+            FormatAmount(
+              currencyAbbreviation,
+              chain,
+              tokenAddress,
+              transaction.amount,
+            ),
           ),
         ),
         toAddress,
@@ -362,9 +373,7 @@ const TransactionDetails = () => {
   }, [copied]);
 
   const goToBlockchain = () => {
-    let url = dispatch(
-      GetBlockExplorerUrl(currencyAbbreviation, network, chain),
-    );
+    let url = GetBlockExplorerUrl(network, chain);
     switch (currencyAbbreviation) {
       case 'doge':
         url =
@@ -407,7 +416,7 @@ const TransactionDetails = () => {
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
-            {!IsCustomERCToken(currencyAbbreviation, chain) ? (
+            {!IsCustomERCToken(tokenAddress, chain) ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'
@@ -510,7 +519,9 @@ const TransactionDetails = () => {
             </>
           ) : null}
 
-          {IsSent(txs.action) ? <MultipleOutputsTx tx={txs} /> : null}
+          {IsSent(txs.action) ? (
+            <MultipleOutputsTx tx={txs} tokenAddress={wallet.tokenAddress} />
+          ) : null}
 
           {txs.creatorName && IsShared(wallet) ? (
             <>

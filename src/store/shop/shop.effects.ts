@@ -25,7 +25,7 @@ import {
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {LogActions} from '../log';
-
+import {getBillPayAccountDescription} from '../../navigation/tabs/shop/bill/utils';
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
     const {APP, BITPAY_ID, LOCATION, SHOP} = getState();
@@ -308,17 +308,16 @@ export const startGetBillPayAccounts =
   (): Effect<Promise<BillPayAccount[]>> => async (dispatch, getState) => {
     const {BITPAY_ID} = getState();
     const user = BITPAY_ID.user[APP_NETWORK];
-    if (!user) {
-      return [];
-    }
-    const accounts = await BitPayIdApi.getInstance()
-      .request('getBillPayAccounts', BITPAY_ID.apiToken[APP_NETWORK])
-      .then(res => {
-        if (res?.data?.error) {
-          throw new Error(res.data.error);
-        }
-        return res.data.data as BillPayAccount[];
-      });
+    const accounts = user?.methodEntityId
+      ? await BitPayIdApi.getInstance()
+          .request('getBillPayAccounts', BITPAY_ID.apiToken[APP_NETWORK])
+          .then(res => {
+            if (res?.data?.error) {
+              throw new Error(res.data.error);
+            }
+            return res.data.data as BillPayAccount[];
+          })
+      : [];
     const billPayAccounts = accounts
       .filter(account => !!account.type && !!account[account.type])
       .map(account => ({
@@ -328,11 +327,10 @@ export const startGetBillPayAccounts =
           paddedNextPaymentDueDate:
             account[account.type].paddedNextPaymentDueDate ||
             account[account.type].nextPaymentDueDate,
-          description: `${account[account.type].type
-            .replace(/_/g, ' ')
-            .split(' ')
-            .map(word => `${word[0].toUpperCase()}${word.slice(1)}`)
-            .join(' ')} ****${account[account.type].mask}`,
+          description: getBillPayAccountDescription(
+            account[account.type].type,
+            account[account.type].mask,
+          ),
         },
       }));
     dispatch(ShopActions.setBillPayAccounts({accounts: billPayAccounts}));
@@ -360,12 +358,25 @@ export const startFindBillPayments =
         }
         return res.data.data as BillPayPayment[];
       });
+    const storedBillPayPayments = billPayPayments.map(billPayPayment => ({
+      ...billPayPayment,
+      payments: billPayPayment.payments.map(payment => ({
+        ...payment,
+        ...(payment.accountType &&
+          payment.mask && {
+            accountDescription: getBillPayAccountDescription(
+              payment.accountType,
+              payment.mask,
+            ),
+          }),
+      })),
+    }));
     dispatch(
       ShopActions.setBillPayPayments({
-        billPayPayments,
+        billPayPayments: storedBillPayPayments,
       }),
     );
-    return billPayPayments;
+    return storedBillPayPayments;
   };
 
 export const startHideBillPayAccount =

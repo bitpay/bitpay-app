@@ -32,8 +32,8 @@ import {
   updateCacheFeeLevel,
 } from '../../wallet.actions';
 import {
-  BitpaySupportedEthereumTokenOpts,
-  BitpaySupportedTokenOpts,
+  BitpaySupportedEthereumTokenOptsByAddress,
+  BitpaySupportedTokenOptsByAddress,
 } from '../../../../constants/tokens';
 import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
@@ -703,10 +703,10 @@ export const migrateKeyAndWallets =
         dispatch(LogActions.info('starting [migrateKeyAndWallets]'));
         const state = getState();
         const {backupComplete, keyName} = migrationData.keyConfig;
-        const tokenOpts = {
-          ...BitpaySupportedEthereumTokenOpts,
-          ...state.WALLET.tokenOptions,
-          ...state.WALLET.customTokenOptions,
+        const tokenOptsByAddress = {
+          ...BitpaySupportedEthereumTokenOptsByAddress,
+          ...state.WALLET.tokenOptionsByAddress,
+          ...state.WALLET.customTokenOptionsByAddress,
         };
         const keyObj = merge(migrationData.key, {
           methods: BWC.createKey({
@@ -741,6 +741,7 @@ export const migrateKeyAndWallets =
             mapAbbreviationAndName(
               walletObj.credentials.coin,
               walletObj.credentials.chain,
+              walletObj.credentials.token?.address,
             ),
           );
 
@@ -755,7 +756,7 @@ export const migrateKeyAndWallets =
                   currencyAbbreviation,
                   currencyName,
                 },
-                tokenOpts,
+                tokenOptsByAddress,
               ),
             ),
           );
@@ -823,10 +824,10 @@ export const startImportMnemonic =
             defaultLanguage,
           },
         } = getState();
-        const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
-          ...WALLET.tokenOptions,
-          ...WALLET.customTokenOptions,
+        const tokenOptsByAddress = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...WALLET.tokenOptionsByAddress,
+          ...WALLET.customTokenOptionsByAddress,
         };
         const {words, xPrivKey} = importData;
         opts.words = normalizeMnemonic(words);
@@ -871,13 +872,14 @@ export const startImportMnemonic =
               mapAbbreviationAndName(
                 wallet.credentials.coin,
                 wallet.credentials.chain,
+                wallet.credentials.token?.address,
               ),
             );
             return merge(
               wallet,
               buildWalletObj(
                 {...wallet.credentials, currencyAbbreviation, currencyName},
-                tokenOpts,
+                tokenOptsByAddress,
               ),
             );
           }),
@@ -911,10 +913,10 @@ export const startImportFile =
             defaultLanguage,
           },
         } = getState();
-        const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
-          ...WALLET.tokenOptions,
-          ...WALLET.customTokenOptions,
+        const tokenOptsByAddress = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...WALLET.tokenOptionsByAddress,
+          ...WALLET.customTokenOptionsByAddress,
         };
         let {key: _key, wallet} = await createKeyAndCredentialsWithFile(
           decryptBackupText,
@@ -970,13 +972,14 @@ export const startImportFile =
               mapAbbreviationAndName(
                 wallet.credentials.coin,
                 wallet.credentials.chain,
+                wallet.credentials.token?.address,
               ),
             );
             return merge(
               wallet,
               buildWalletObj(
                 {...wallet.credentials, currencyAbbreviation, currencyName},
-                tokenOpts,
+                tokenOptsByAddress,
               ),
             );
           }),
@@ -1014,10 +1017,10 @@ export const startImportWithDerivationPath =
             defaultLanguage,
           },
         } = getState();
-        const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
-          ...WALLET.tokenOptions,
-          ...WALLET.customTokenOptions,
+        const tokenOptsByAddress = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...WALLET.tokenOptionsByAddress,
+          ...WALLET.customTokenOptionsByAddress,
         };
         const {words, xPrivKey} = importData;
         opts.mnemonic = words;
@@ -1066,6 +1069,7 @@ export const startImportWithDerivationPath =
             mapAbbreviationAndName(
               wallet.credentials.coin,
               wallet.credentials.chain,
+              wallet.credentials.token?.address,
             ),
           );
 
@@ -1084,7 +1088,7 @@ export const startImportWithDerivationPath =
                     currencyAbbreviation,
                     currencyName,
                   },
-                  tokenOpts,
+                  tokenOptsByAddress,
                 ),
               ),
             );
@@ -1096,7 +1100,7 @@ export const startImportWithDerivationPath =
                   wallet,
                   buildWalletObj(
                     {...wallet.credentials, currencyAbbreviation, currencyName},
-                    tokenOpts,
+                    tokenOptsByAddress,
                   ),
                 ),
               ],

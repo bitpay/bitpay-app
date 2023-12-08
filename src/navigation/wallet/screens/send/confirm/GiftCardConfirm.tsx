@@ -42,7 +42,6 @@ import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {URL} from '../../../../../constants';
-import {Terms} from '../../../../tabs/shop/components/styled/ShopTabComponents';
 import {
   CardConfig,
   GiftCardDiscount,
@@ -63,6 +62,7 @@ import {
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
+import GiftCardTerms from '../../../../tabs/shop/components/GiftCardTerms';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -224,7 +224,7 @@ const Confirm = () => {
         transactionCurrency,
       });
       const rates = await dispatch(startGetRates({}));
-      const newTxDetails = dispatch(
+      const newTxDetails = await dispatch(
         buildTxDetails({
           invoice: newInvoice,
           wallet: walletRowProps,
@@ -303,9 +303,9 @@ const Confirm = () => {
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),
     );
-    await sleep(200);
+    await sleep(500);
     dispatch(dismissOnGoingProcessModal());
-    await sleep(200);
+    await sleep(500);
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
@@ -454,7 +454,7 @@ const Confirm = () => {
               }}
             />
             <Amount description={t('Total')} amount={total} />
-            <Terms>{cardConfig.terms}</Terms>
+            <GiftCardTerms terms={cardConfig.terms} />
           </>
         ) : null}
       </DetailsList>

@@ -9,6 +9,7 @@ import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   BitpaySupportedEvmCoins,
+  BitpaySupportedTokens,
   SUPPORTED_COINS,
   SUPPORTED_TOKENS,
 } from '../../../constants/currencies';
@@ -48,7 +49,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Effect, RootState} from '../../../store';
-import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {ButtonState} from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
@@ -225,14 +226,13 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   }
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const {keys, tokenOptions, customTokenOptions} = useAppSelector(
-    ({WALLET}) => WALLET,
-  );
+  const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
+    useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const allTokens = {
-    ...BitpaySupportedTokenOpts,
-    ...tokenOptions,
-    ...customTokenOptions,
+  const allTokensByAddress = {
+    ...BitpaySupportedTokenOptsByAddress,
+    ...tokenOptionsByAddress,
+    ...customTokenOptionsByAddress,
   };
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
@@ -245,8 +245,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
 
-  const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(allTokens).filter(
-    token => !SUPPORTED_TOKENS.includes(token),
+  const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(allTokensByAddress).filter(
+    token => !BitpaySupportedTokens[token],
   );
 
   // all wallets
@@ -321,6 +321,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                   balance,
                   hideWallet,
                   currencyAbbreviation,
+                  tokenAddress,
                   network,
                   chain,
                   credentials: {walletName: fallbackName},
@@ -338,6 +339,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                           currencyAbbreviation,
                           chain,
                           rates,
+                          tokenAddress,
                         ),
                       ),
                       hideWallet,
@@ -354,6 +356,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                           currencyAbbreviation,
                           chain,
                           rates,
+                          tokenAddress,
                         ),
                       ),
                       hideWallet,
@@ -404,6 +407,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                 cryptoCurrencyAbbreviation:
                   wallet.currencyAbbreviation.toUpperCase(),
                 chain: wallet.chain,
+                tokenAddress: wallet.tokenAddress,
                 onAmountSelected: async (amount, setButtonState, opts) => {
                   dispatch(
                     _createProposalAndBuildTxDetails({

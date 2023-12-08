@@ -56,6 +56,41 @@ export function getCardConfigFromApiConfigMap(
   return availableCards;
 }
 
+export function getAmountSpecificConfig(cards: ApiCard[]) {
+  if (cards.length < 2) {
+    return undefined;
+  }
+  const fieldIsIdentical = (fieldName: keyof ApiCard) => (c: ApiCard) =>
+    c[fieldName] === cards[0][fieldName];
+  const cardImagesAreIdentical = cards.every(fieldIsIdentical('cardImage'));
+  const descriptionsAreIdentical = cards.every(fieldIsIdentical('description'));
+  const termsAreIdentical = cards.every(fieldIsIdentical('terms'));
+  if (cardImagesAreIdentical && descriptionsAreIdentical && termsAreIdentical) {
+    return undefined;
+  }
+  return cards.reduce(
+    (cardSpecificConfig, card) => ({
+      ...cardSpecificConfig,
+      [card.amount as number]: {
+        ...(!cardImagesAreIdentical && {cardImage: card.cardImage}),
+        ...(!descriptionsAreIdentical && {description: card.description}),
+        ...(!termsAreIdentical && {terms: card.terms}),
+      },
+    }),
+    {},
+  );
+}
+
+export function getCardImage(cardConfig: CardConfig, amount?: number): string {
+  return (
+    (amount &&
+      cardConfig.amountSpecificConfig &&
+      cardConfig.amountSpecificConfig[amount] &&
+      cardConfig.amountSpecificConfig[amount].cardImage) ||
+    cardConfig.cardImage
+  );
+}
+
 export function getCardConfigFromApiBrandConfig(
   cardName: string,
   apiBrandConfig: ApiCardConfig,
@@ -96,7 +131,11 @@ export function getCardConfigFromApiBrandConfig(
         minAmount: rangeMin < 1 ? 1 : range.minAmount,
         maxAmount: range.maxAmount,
       }
-    : {...baseConfig, supportedAmounts};
+    : {
+        ...baseConfig,
+        supportedAmounts,
+        amountSpecificConfig: getAmountSpecificConfig(apiBrandConfig),
+      };
 }
 
 function getDisplayNameSortValue(displayName: string): string {
@@ -126,8 +165,7 @@ export function redemptionFailuresLessThanADayOld(
 ) {
   const dayAgo = moment().subtract(1, 'day').toDate();
   return (
-    ['FAILURE', 'PENDING'].includes(giftCard.status) &&
-    new Date(giftCard.date) > dayAgo
+    ['PENDING'].includes(giftCard.status) && new Date(giftCard.date) > dayAgo
   );
 }
 
@@ -271,6 +309,7 @@ export function getGiftCardIcons(supportedCardMap: CardConfigMap) {
 export function generateGiftCardPrintHtml(
   cardConfig: CardConfig,
   giftCard: GiftCard,
+  scannableCodeDimensions: {height: number; width: number},
 ): string {
   return `<div style="text-align: center; margin-top: 50px; font-family: Arial;">
  <h1 style="font-size: 30px;">${formatFiatAmount(
@@ -287,7 +326,7 @@ export function generateGiftCardPrintHtml(
  <h3 style="color: gray;">Claim Code</h3>
  ${
    giftCard.barcodeImage
-     ? `<img src="${giftCard.barcodeImage}" style="margin-top: 10px;">`
+     ? `<img src="${giftCard.barcodeImage}" style="margin-top: 10px; height: ${scannableCodeDimensions.height}px; width: ${scannableCodeDimensions.width}px; ">`
      : ''
  }
  <h1 style="font-size: 22px;">${giftCard.claimCode}</h1>

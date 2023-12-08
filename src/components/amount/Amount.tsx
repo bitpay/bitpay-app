@@ -15,6 +15,7 @@ import {SwapOpts} from '../../navigation/services/swap-crypto/screens/SwapCrypto
 import {ParseAmount} from '../../store/wallet/effects/amount/amount';
 import {Caution, Slate30, SlateDark} from '../../styles/colors';
 import {
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getRateByCurrencyName,
 } from '../../utils/helper-methods';
@@ -109,6 +110,7 @@ export interface Limits {
 export interface AmountProps {
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
+  tokenAddress?: string;
   chain?: string;
   context?: string;
   buttonState?: ButtonState;
@@ -126,6 +128,7 @@ const Amount: React.VFC<AmountProps> = ({
   cryptoCurrencyAbbreviation,
   fiatCurrencyAbbreviation,
   chain,
+  tokenAddress,
   context,
   buttonState,
   swapOpts,
@@ -179,7 +182,12 @@ const Amount: React.VFC<AmountProps> = ({
 
   const swapList = useMemo(() => {
     return cryptoCurrencyAbbreviation
-      ? [...new Set([cryptoCurrencyAbbreviation, fiatCurrency])]
+      ? [
+          ...new Set([
+            formatCurrencyAbbreviation(cryptoCurrencyAbbreviation),
+            fiatCurrency,
+          ]),
+        ]
       : [fiatCurrency];
   }, [cryptoCurrencyAbbreviation, fiatCurrency]);
 
@@ -212,6 +220,7 @@ const Amount: React.VFC<AmountProps> = ({
               primaryIsFiat ? val / rate : val,
               cryptoCurrencyAbbreviation.toLowerCase(),
               chain,
+              tokenAddress,
             ),
           ).amount;
 
@@ -416,7 +425,9 @@ const Amount: React.VFC<AmountProps> = ({
               {displayAmount || 0}
             </AmountText>
             <CurrencySuperScript>
-              <CurrencyText>{currency || 'USD'}</CurrencyText>
+              <CurrencyText>
+                {formatCurrencyAbbreviation(currency) || 'USD'}
+              </CurrencyText>
             </CurrencySuperScript>
           </Row>
           {customAmountSublabel ? (
@@ -425,7 +436,8 @@ const Amount: React.VFC<AmountProps> = ({
             <Row>
               <AmountEquivText>
                 {displayEquivalentAmount || 0}{' '}
-                {primaryIsFiat && cryptoCurrencyAbbreviation}
+                {primaryIsFiat &&
+                  formatCurrencyAbbreviation(cryptoCurrencyAbbreviation)}
               </AmountEquivText>
             </Row>
           ) : null}

@@ -225,9 +225,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
       )) as string;
       setLoading(false);
       if (currencyAbbreviation === 'bch') {
-        const protocolPrefix = dispatch(
-          GetProtocolPrefix(currencyAbbreviation, network, chain),
-        );
+        const protocolPrefix = GetProtocolPrefix(network, chain);
         const formattedAddr = protocolPrefix + ':' + walletAddress;
         setAddress(formattedAddr);
         setBchAddress(formattedAddr);
@@ -364,7 +362,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
                 {t(
                   'Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.',
                   {
-                    coin: wallet.currencyAbbreviation.toUpperCase(),
+                    coin: wallet.currencyAbbreviation,
                     protocolName: titleCasing(
                       getProtocolName(wallet.chain, wallet.network)!,
                     ),
@@ -383,7 +381,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
               </LinkContainer>
             </ContractHeaderContainer>
             <ContractAddressText>
-              {wallet.credentials.token.address}
+              {wallet.credentials.token?.address}
             </ContractAddressText>
           </WarningContainer>
         ) : null}

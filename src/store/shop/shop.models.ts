@@ -62,6 +62,11 @@ export interface CommonCardConfig {
 export interface CardConfig extends CommonCardConfig {
   name: string;
   supportedAmounts?: number[];
+  amountSpecificConfig?: {
+    [amount: number]: {
+      cardImage: string;
+    };
+  };
 }
 
 export interface UnsoldGiftCard {
@@ -178,6 +183,7 @@ export interface Invoice {
       threshold: number;
     };
   };
+  usdAmount: number;
 }
 
 export interface PhoneCountryInfo {
@@ -291,6 +297,11 @@ export interface BillPayment {
   convenienceFee: number;
   status: 'complete' | 'processing' | 'failed';
   estimatedCompletionDate?: string;
+  icon: string;
+  merchantName: string;
+  mask: string;
+  accountType: string;
+  accountDescription: string;
 }
 
 export interface BillPayPayment {

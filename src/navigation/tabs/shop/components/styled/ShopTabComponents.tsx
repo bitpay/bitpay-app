@@ -2,12 +2,20 @@ import {Theme} from '@react-navigation/native';
 import styled, {css} from 'styled-components/native';
 import BoxInput from '../../../../../components/form/BoxInput';
 import {HEIGHT, WIDTH} from '../../../../../components/styled/Containers';
-import {BaseText, H4, Link} from '../../../../../components/styled/Text';
+import {
+  BaseText,
+  H4,
+  Link,
+  Paragraph,
+} from '../../../../../components/styled/Text';
 import {
   Black,
   Cloud,
+  Feather,
   LightBlack,
   NeutralSlate,
+  Slate,
+  Slate10,
   Slate30,
   SlateDark,
   White,
@@ -108,15 +116,6 @@ export const NavIconButtonContainer = styled.TouchableOpacity`
   overflow: hidden;
 `;
 
-export const Terms = styled(BaseText)`
-  color: ${SlateDark};
-  font-size: 12px;
-  line-height: 15px;
-  padding: 20px 10px 50px;
-  text-align: justify;
-  font-weight: 300;
-`;
-
 export const BillOption = styled.View<{isLast?: boolean}>`
   align-items: center;
   justify-content: center;
@@ -139,4 +138,29 @@ export const HideableView = styled.View<HideableViewProps>`
     css`
       display: ${show ? 'flex' : 'none'};
     `}
+`;
+
+export const Field = styled.View<{disabled?: boolean}>`
+  background-color: ${({theme, disabled}) =>
+    !disabled || theme.dark ? 'transparent' : Slate10};
+  border-radius: 4px;
+  border: 1px solid ${({theme}) => (theme.dark ? SlateDark : Slate30)};
+  padding: 8px 14px;
+  margin-top: 5px;
+  min-height: 43px;
+`;
+
+export const FieldGroup = styled.View`
+  margin-bottom: 10px;
+`;
+
+export const FieldLabel = styled(Paragraph)`
+  color: ${({theme}) => (theme.dark ? Feather : LightBlack)};
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.75;
+`;
+
+export const FieldValue = styled(Paragraph)`
+  color: ${({theme}) => (theme.dark ? Slate : SlateDark)};
 `;

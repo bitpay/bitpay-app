@@ -269,6 +269,7 @@ export const Fee = ({
                 {feeLevel && !hideFeeOptions ? <H5>{viewFee}</H5> : null}
                 <H6>{cryptoAmount}</H6>
                 <ConfirmSubText>
+                  ~
                   {t(' ( of total amount)', {
                     fiatAmount,
                     percentageOfTotalAmountStr,
@@ -379,7 +380,7 @@ export const Amount = ({
                 <H7>{fiatAmount}</H7>
               ) : (
                 <>
-                  <H4>{cryptoAmount}</H4>
+                  <H4 style={{textAlign: 'right'}}>{cryptoAmount}</H4>
                   {network &&
                   !['livenet', 'mainnet'].includes(network) &&
                   chain ? (

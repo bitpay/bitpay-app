@@ -16,7 +16,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity} from '../../styled/Containers';
+import {ActiveOpacity, HEIGHT} from '../../styled/Containers';
 import {H5} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import PinDots from './PinDots';
@@ -67,6 +67,17 @@ export const hashPin = (pin: string[]) => {
   return sjcl.codec.hex.fromBits(bits);
 };
 
+const getHeaderMargin = (
+  type?: 'set' | 'check',
+  onClosePresent?: boolean,
+): string => {
+  if (HEIGHT < 700) {
+    return type === 'set' || onClosePresent ? '1%' : '20%';
+  } else {
+    return type === 'set' || onClosePresent ? '10%' : '40%';
+  }
+};
+
 const Pin = gestureHandlerRootHOC(() => {
   const {t} = useTranslation();
   const logger = useLogger();
@@ -78,7 +89,7 @@ const Pin = gestureHandlerRootHOC(() => {
     firstPinEntered: Array<string | undefined>;
   }>({pin: [], firstPinEntered: []});
   const [headerMargin, setHeaderMargin] = useState<string>(
-    type === 'set' || onClose ? '10%' : '40%',
+    getHeaderMargin(type, !!onClose),
   );
   const [message, setMessage] = useState<string>(t('Please enter your PIN'));
   const [shakeDots, setShakeDots] = useState(false);

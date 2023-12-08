@@ -36,7 +36,7 @@ import {
 import {RefreshControl, SectionList, View} from 'react-native';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
-import {sleep} from '../../../utils/helper-methods';
+import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {TRANSACTION_ROW_HEIGHT} from '../../../components/list/TransactionRow';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {useTranslation} from 'react-i18next';
@@ -404,7 +404,7 @@ const TransactionProposalNotifications = () => {
                 </H5>
               </Row>
               <ListItemSubText>
-                {currencyAbbreviation.toUpperCase()}{' '}
+                {formatCurrencyAbbreviation(currencyAbbreviation)}{' '}
                 {n > 1 ? `- Multisig ${m}/${n}` : null}
                 {keyId === 'readonly' ? '- Read Only' : null}
               </ListItemSubText>
@@ -432,6 +432,7 @@ const TransactionProposalNotifications = () => {
                       hideIcon={true}
                       recipientCount={txp.recipientCount}
                       toAddress={txp.toAddress}
+                      tokenAddress={txp.tokenAddress}
                       chain={txp.chain}
                       contactList={contactList}
                     />

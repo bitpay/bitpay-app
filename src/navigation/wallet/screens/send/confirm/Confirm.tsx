@@ -18,7 +18,11 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
-import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  formatFiatAmount,
+  sleep,
+} from '../../../../../utils/helper-methods';
 import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
@@ -179,10 +183,10 @@ const Confirm = () => {
   const [destinationTag, setDestinationTag] = useState(
     recipient?.destinationTag || _destinationTag,
   );
-  const {currencyAbbreviation, chain} = wallet;
+  const {currencyAbbreviation, chain, tokenAddress} = wallet;
   const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
-    dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+    dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -332,7 +336,7 @@ const Confirm = () => {
   );
 
   const checkHighFees = async () => {
-    const {feeUnitAmount} = dispatch(GetFeeUnits(currencyAbbreviation, chain));
+    const {feeUnitAmount} = GetFeeUnits(chain);
     let feePerKb: number;
     if (txp.feePerKb) {
       feePerKb = txp.feePerKb;
@@ -357,10 +361,19 @@ const Confirm = () => {
         recipientName: r.name,
         recipientAddress: r.address,
         img: r.type === 'contact' ? r.type : wallet.img,
-        recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
+        recipientAmountStr: `${r.amount} ${formatCurrencyAbbreviation(
+          currencyAbbreviation,
+        )}`,
         recipientAltAmountStr: formatFiatAmount(
           dispatch(
-            toFiat(amountSat, isoCode, currencyAbbreviation, chain, rates),
+            toFiat(
+              amountSat,
+              isoCode,
+              currencyAbbreviation,
+              chain,
+              rates,
+              tokenAddress,
+            ),
           ),
           isoCode,
         ),
@@ -381,6 +394,7 @@ const Confirm = () => {
       img: recipient.type,
       recipientChain: recipient.chain,
       recipientType: recipient.type,
+      recipientTokenAddress: recipient.tokenAddress,
     };
   } else {
     recipientData = sendingTo;
@@ -458,7 +472,7 @@ const Confirm = () => {
           {gasLimit !== undefined ? (
             <SharedDetailRow
               description={t('Gas limit')}
-              value={gasLimit}
+              value={gasLimit.toLocaleString()}
               onPress={() => editValue(t('Edit gas limit'), 'gasLimit')}
               hr
             />
@@ -523,11 +537,14 @@ const Confirm = () => {
             height={83}
             chain={chain}
             network={wallet.credentials.network}
+            hr
           />
           <Amount
             description={t('Total')}
             amount={total}
-            height={83}
+            height={
+              IsERCToken(wallet.currencyAbbreviation, wallet.chain) ? 110 : 83
+            }
             chain={chain}
             network={wallet.credentials.network}
             showInfoIcon={!!subTotal}

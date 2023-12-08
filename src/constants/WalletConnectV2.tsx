@@ -6,6 +6,22 @@ export const WALLETCONNECT_V2_METADATA = {
   icons: ['https://bitpay.com/resources/content/images/2019/10/bitpay.png'],
 };
 
+export const CHAIN_NAME_MAPPING: {[key: string]: string} = {
+  '1': 'Ethereum Mainnet',
+  '5': 'Ethereum Goerli',
+  '10': 'Optimistic Mainnet',
+  '42': 'LUKSO Mainnet',
+  '69': 'Optimistic Kovan',
+  '100': 'xDai',
+  '137': 'Polygon Mainnet',
+  '42161': 'Arbitrum Mainnet',
+  '42220': 'Celo Mainnet',
+  '44787': 'Celo Alfajores',
+  '80001': 'Polygon Mumbai',
+  '421611': 'Arbitrum Rinkeby',
+  // Add more mappings for other chain codes as needed
+};
+
 export const EIP155_MAINNET_CHAINS: {[key in string]: any} = {
   'eip155:1': {
     chainId: 1,
@@ -29,6 +45,7 @@ export const EIP155_TEST_CHAINS = {
     name: 'Ethereum Goerli',
     chainName: 'eth',
     rpc: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    network: Network.testnet,
   },
   'eip155:80001': {
     chainId: 80001,
@@ -48,7 +65,12 @@ export const EIP155_SIGNING_METHODS = {
   ETH_SIGN_TYPED_DATA_V4: 'eth_signTypedData_v4',
   ETH_SEND_RAW_TRANSACTION: 'eth_sendRawTransaction',
   ETH_SEND_TRANSACTION: 'eth_sendTransaction',
+  WALLET_ADD_ETHEREUM_CHAIN: 'wallet_addEthereumChain',
 };
+
+export const EIP155_METHODS_NOT_INTERACTION_NEEDED = [
+  'wallet_addEthereumChain',
+];
 
 export const WALLET_CONNECT_SUPPORTED_CHAINS: {
   [key in string]: {chain: string; network: string};

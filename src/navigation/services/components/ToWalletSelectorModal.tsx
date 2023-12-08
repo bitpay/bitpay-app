@@ -10,6 +10,7 @@ import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getCurrencyAbbreviation,
   keyExtractor,
@@ -168,6 +169,7 @@ export interface ToWalletSelectorCustomCurrency {
   chain: string;
   name: string;
   logoUri?: any;
+  tokenAddress?: string;
 }
 
 interface ToWalletSelectorCoinObj {
@@ -175,6 +177,7 @@ interface ToWalletSelectorCoinObj {
   chain: string;
   currencyAbbreviation: string;
   currencyName: string;
+  tokenAddress?: string;
   img?: string | ((props?: any) => ReactElement);
   total: number;
   availableWalletsByKey: {
@@ -213,6 +216,7 @@ const buildList = (
         availableWallets,
         wallet => wallet.keyId,
       ),
+      tokenAddress: coin.tokenAddress,
     });
   });
 
@@ -321,6 +325,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
           selectedCurrency.currencyAbbreviation.toLowerCase() !==
           selectedCurrency.chain,
         chain: selectedCurrency.chain,
+        tokenAddress: selectedCurrency.tokenAddress,
       },
       options: {
         network: Network.mainnet,
@@ -374,6 +379,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                   balance,
                   hideWallet,
                   currencyAbbreviation,
+                  tokenAddress,
                   network,
                   chain,
                   credentials: {walletName: fallbackName},
@@ -391,6 +397,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                           currencyAbbreviation,
                           chain,
                           rates,
+                          tokenAddress,
                         ),
                       ),
                       hideWallet,
@@ -407,6 +414,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                           currencyAbbreviation,
                           chain,
                           rates,
+                          tokenAddress,
                         ),
                       ),
                       hideWallet,
@@ -414,7 +422,8 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                     ),
                     defaultAltCurrency.isoCode,
                   ),
-                  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+                  currencyAbbreviation:
+                    formatCurrencyAbbreviation(currencyAbbreviation),
                   network,
                   walletName: walletName || fallbackName,
                 });
@@ -462,6 +471,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
         currencyAbbreviation: addTokenToLinkedWallet.currencyAbbreviation,
         isToken: true,
         chain: addTokenToLinkedWallet.chain,
+        tokenAddress: addTokenToLinkedWallet.tokenAddress,
       },
       options: {
         network: Network.mainnet,
@@ -586,7 +596,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
           <CurrencyColumn>
             <H7 medium={true}>{currencyName}</H7>
             <CurrencySubTitle>
-              {currencyAbbreviation.toUpperCase()}
+              {formatCurrencyAbbreviation(currencyAbbreviation)}
             </CurrencySubTitle>
           </CurrencyColumn>
           {total >= 1 &&
@@ -638,7 +648,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                     <CurrencyColumn>
                       <H7 medium={true}>{token.currencyName}</H7>
                       <CurrencySubTitle>
-                        {token.currencyAbbreviation.toUpperCase()}
+                        {formatCurrencyAbbreviation(token.currencyAbbreviation)}
                       </CurrencySubTitle>
                     </CurrencyColumn>
                     {token.total >= 1 && (

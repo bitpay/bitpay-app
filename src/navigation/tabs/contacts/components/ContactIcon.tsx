@@ -8,9 +8,10 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
 import {useAppSelector} from '../../../../utils/hooks';
 import {RootState} from '../../../../store';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {Token} from '../../../../store/wallet/wallet.models';
 import {
+  addTokenChainSuffix,
   getBadgeImg,
   getCurrencyAbbreviation,
 } from '../../../../utils/helper-methods';
@@ -21,6 +22,7 @@ interface ContactIconProps {
   coin?: string;
   chain?: string;
   badge?: JSX.Element;
+  tokenAddress?: string;
 }
 
 interface BadgeProps {
@@ -50,27 +52,32 @@ const CoinBadge: React.FC<BadgeProps> = ({size = 20, img, badgeImg}) => {
 const ContactIcon: React.FC<ContactIconProps> = ({
   coin,
   chain,
+  tokenAddress,
   size = 50,
   name,
   badge,
 }) => {
-  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
+  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
   }) as {[key in string]: Token};
+  const foundToken =
+    tokenAddress &&
+    chain &&
+    tokenOptionsByAddress[
+      addTokenChainSuffix(tokenAddress.toLowerCase(), chain)
+    ];
 
   const img =
     coin &&
     chain &&
     (SUPPORTED_CURRENCIES.includes(coin)
       ? CurrencyListIcons[coin]
-      : tokenOptions &&
-        tokenOptions[getCurrencyAbbreviation(coin, chain)] &&
-        tokenOptions[getCurrencyAbbreviation(coin, chain)]?.logoURI
-      ? (tokenOptions[getCurrencyAbbreviation(coin, chain)].logoURI as string)
+      : foundToken && foundToken?.logoURI
+      ? (foundToken.logoURI as string)
       : '');
 
   const coinBadge = img ? (

@@ -20,6 +20,23 @@ const SanitizeUri = (data: string): string => {
   return newUri;
 };
 
+export const ValidDataTypes: string[] = [
+  'BitcoinAddress',
+  'BitcoinCashAddress',
+  'EVMAddress',
+  'RippleAddress',
+  'DogecoinAddress',
+  'LitecoinAddress',
+  'RippleUri',
+  'BitcoinUri',
+  'BitcoinCashUri',
+  'EthereumUri',
+  'MaticUri',
+  'DogecoinUri',
+  'LitecoinUri',
+  'BitPayUri',
+];
+
 export const IsBitPayInvoiceWebUrl = (data: string): boolean => {
   return !!/^https:\/\/(www\.|link\.)?(test\.|staging\.)?bitpay\.com\/(invoice\?)\w+/.exec(
     data,
@@ -46,6 +63,15 @@ export const isValidWalletConnectUri = (data: string): boolean => {
 export const isValidBuyCryptoUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!data?.includes('buyCrypto');
+};
+
+export const isValidBanxaUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!(
+    data?.includes('banxa') ||
+    data?.includes('banxaCancelled') ||
+    data?.includes('banxaFailed')
+  );
 };
 
 export const isValidMoonpayUri = (data: string): boolean => {
@@ -124,6 +150,10 @@ export const IsValidBitcoinCashAddress = (data: string): boolean => {
     BWC.getBitcoreCash().Address.isValid(data, 'livenet') ||
     BWC.getBitcoreCash().Address.isValid(data, 'testnet')
   );
+};
+
+export const IsValidEVMAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('ETH', 'livenet', data); // using ETH for simplicity
 };
 
 export const IsValidEthereumAddress = (data: string): boolean => {
@@ -305,19 +335,11 @@ export const ValidateURI = (data: string): any => {
     };
   }
 
-  if (IsValidEthereumAddress(data)) {
+  if (IsValidEVMAddress(data)) {
     return {
       data,
-      type: 'EthereumAddress',
-      title: 'Ethereum Address',
-    };
-  }
-
-  if (IsValidMaticAddress(data)) {
-    return {
-      data,
-      type: 'MaticAddress',
-      title: 'Matic Address',
+      type: 'EVMAddress',
+      title: 'EVM Address',
     };
   }
 

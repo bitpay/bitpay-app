@@ -17,10 +17,9 @@ import {
   IsValidBitPayUri,
   IsValidDogecoinAddress,
   IsValidDogecoinUri,
-  IsValidEthereumAddress,
+  IsValidEVMAddress,
   IsValidEthereumUri,
   IsValidMaticUri,
-  IsValidMaticAddress,
   isValidBuyCryptoUri,
   isValidMoonpayUri,
   IsValidImportPrivateKey,
@@ -35,13 +34,17 @@ import {
   isValidSimplexUri,
   isValidWalletConnectUri,
   IsBitPayInvoiceWebUrl,
+  isValidBanxaUri,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
+  BanxaIncomingData,
+  BanxaStatusKey,
   MoonpayIncomingData,
   RampIncomingData,
   SardineIncomingData,
+  SardinePaymentData,
   SimplexIncomingData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
@@ -119,14 +122,9 @@ export const incomingData =
         // Plain Address (Bitcoin Cash)
       } else if (IsValidBitcoinCashAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'bch', chain || 'bch', opts));
-        // Address (Ethereum)
-      } else if (IsValidEthereumAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts));
-        // Address (Matic)
-      } else if (IsValidMaticAddress(data)) {
-        dispatch(
-          handlePlainAddress(data, coin || 'matic', chain || 'matic', opts),
-        );
+        // EVM Address (Ethereum/Matic)
+      } else if (IsValidEVMAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts)); // using eth for simplicity
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'xrp', chain || 'xrp', opts));
@@ -168,6 +166,9 @@ export const incomingData =
         // Buy Crypto
       } else if (isValidBuyCryptoUri(data)) {
         dispatch(handleBuyCryptoUri(data));
+        // Banxa
+      } else if (isValidBanxaUri(data)) {
+        dispatch(handleBanxaUri(data));
         // Moonpay
       } else if (isValidMoonpayUri(data)) {
         dispatch(handleMoonpayUri(data));
@@ -287,6 +288,8 @@ const goToPayPro =
 const handleUnlock =
   (data: string, wallet?: Wallet): Effect =>
   async dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: BitPay invoice'));
+
     const invoiceId = data.split('/i/')[1].split('?')[0];
     const network = data.includes('test.bitpay.com')
       ? Network.testnet
@@ -601,6 +604,7 @@ export const goToAmount =
         sendMaxEnabled: true,
         cryptoCurrencyAbbreviation: coin.toUpperCase(),
         chain,
+        tokenAddress: wallet.tokenAddress,
         onAmountSelected: async (amount, setButtonState, amountOpts) => {
           dispatch(
             goToConfirm({
@@ -711,7 +715,7 @@ const handleBitcoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -745,7 +749,7 @@ const handleBitcoinCashUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -801,7 +805,7 @@ const handleBitcoinCashUriLegacyAddress =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -831,7 +835,9 @@ const handleEthereumUri =
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
       );
       dispatch(
         goToConfirm({
@@ -868,7 +874,9 @@ const handleMaticUri =
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
       );
       dispatch(
         goToConfirm({
@@ -941,7 +949,7 @@ const handleDogecoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -970,7 +978,7 @@ const handleLitecoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -1034,6 +1042,75 @@ const handleBuyCryptoUri =
               currencyAbbreviation: coin,
               chain,
             },
+          },
+        },
+      ],
+    });
+  };
+
+const handleBanxaUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Banxa URL: ' + data));
+    if (
+      data.indexOf('banxaCancelled') >= 0 ||
+      data.indexOf('banxaFailed') >= 0
+    ) {
+      return;
+    }
+
+    if (data === 'banxa') {
+      return;
+    }
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+
+    const banxaExternalId = getParameterByName('externalId', res);
+    if (!banxaExternalId) {
+      dispatch(LogActions.warn('No banxaExternalId present. Do not redir'));
+      return;
+    }
+
+    const status =
+      (getParameterByName('orderStatus', res) as BanxaStatusKey) ??
+      (getParameterByName('status', res) as BanxaStatusKey);
+
+    const stateParams: BanxaIncomingData = {
+      banxaExternalId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestBanxa({
+        banxaIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.banxa[banxaExternalId];
+    if (order) {
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'banxa',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin || '',
+        }),
+      );
+    }
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'ExternalServicesSettings',
+          params: {
+            screen: 'BanxaSettings',
+            params: {incomingPaymentRequest: stateParams},
           },
         },
       ],
@@ -1168,53 +1245,78 @@ const handleSardineUri =
     }
 
     const order_id = getParameterByName('order_id', res);
-    const walletId = getParameterByName('walletId', res);
-    const status = getParameterByName('status', res);
+    const walletId = getParameterByName('walletId', res)!;
+    const status = getParameterByName('status', res)!;
+    const chain = getParameterByName('chain', res)!;
+    const address = getParameterByName('address', res)!;
+    const createdOn = getParameterByName('createdOn', res);
+    const cryptoAmount = getParameterByName('cryptoAmount', res);
+    const coin = getParameterByName('coin', res)!;
+    const env = (getParameterByName('env', res) as 'dev' | 'prod')!;
+    const fiatBaseAmount = getParameterByName('fiatBaseAmount', res)!;
+    const fiatTotalAmount = getParameterByName('fiatTotalAmount', res)!;
+    const fiatTotalAmountCurrency = getParameterByName(
+      'fiatTotalAmountCurrency',
+      res,
+    )!;
 
-    const stateParams: SardineIncomingData = {
-      sardineExternalId,
-      walletId,
-      status,
+    const newData: SardinePaymentData = {
+      address,
+      chain,
+      created_on: Number(createdOn),
+      crypto_amount: Number(cryptoAmount),
+      coin,
+      env,
+      external_id: sardineExternalId,
+      fiat_base_amount: Number(fiatBaseAmount),
+      fiat_total_amount: Number(fiatTotalAmount),
+      fiat_total_amount_currency: fiatTotalAmountCurrency,
       order_id,
+      status,
+      user_id: walletId,
     };
 
     dispatch(
-      BuyCryptoActions.updatePaymentRequestSardine({
-        sardineIncomingData: stateParams,
+      BuyCryptoActions.successPaymentRequestSardine({
+        sardinePaymentData: newData,
       }),
     );
 
     if (order_id) {
-      const {BUY_CRYPTO} = getState();
-      const order = BUY_CRYPTO.sardine[sardineExternalId];
-
       dispatch(
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'sardine',
-          fiatAmount: order?.fiat_total_amount || '',
-          fiatCurrency: order?.fiat_total_amount_currency || '',
-          coin: order?.coin?.toLowerCase() || '',
-          chain: order?.chain?.toLowerCase() || '',
+          fiatAmount: Number(fiatTotalAmount) || '',
+          fiatCurrency: fiatTotalAmountCurrency || '',
+          coin: coin?.toLowerCase() || '',
+          chain: chain?.toLowerCase() || '',
         }),
       );
-    }
 
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'SardineSettings',
-            params: {incomingPaymentRequest: stateParams},
+      const stateParams: SardineIncomingData = {
+        sardineExternalId,
+        walletId,
+        status,
+        order_id,
+      };
+
+      navigationRef.reset({
+        index: 2,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
           },
-        },
-      ],
-    });
+          {
+            name: 'ExternalServicesSettings',
+            params: {
+              screen: 'SardineSettings',
+              params: {incomingPaymentRequest: stateParams},
+            },
+          },
+        ],
+      });
+    }
   };
 
 const handleSimplexUri =
@@ -1338,7 +1440,8 @@ const handlePlainAddress =
     },
   ): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
+    let _coin = coin === 'eth' ? 'EVM' : coin;
+    dispatch(LogActions.info(`[scan] Incoming-data: ${_coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an evm address is goerli or livenet so let's skip the network filter

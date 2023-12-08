@@ -65,7 +65,7 @@ const SardineSettings: React.FC = () => {
   useEffect(() => {
     if (isFocused) {
       const sardinePaymentRequests = Object.values(sardineHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod') && !!pr.order_id,
       );
       setTransactions(sardinePaymentRequests);
     }
@@ -106,7 +106,7 @@ const SardineSettings: React.FC = () => {
                             : t('Payment request expired')}
                         </PrTxtStatus>
                       )}
-                      {pr.status === 'Complete' && (
+                      {['Complete', 'Completed'].includes(pr.status) && (
                         <PrTxtStatus style={{color: '#01d1a2'}}>
                           {t('Payment request completed')}
                         </PrTxtStatus>

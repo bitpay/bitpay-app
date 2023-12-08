@@ -6,6 +6,8 @@ import {
   baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../../components/styled/Text';
+import BanxaDetails from './screens/BanxaDetails';
+import BanxaSettings from './screens/BanxaSettings';
 import MoonpaySettings from './screens/MoonpaySettings';
 import MoonpayDetails from './screens/MoonpayDetails';
 import RampSettings from './screens/RampSettings';
@@ -19,6 +21,8 @@ import WyreDetails from './screens/WyreDetails';
 import ChangellySettings from './screens/ChangellySettings';
 import ChangellyDetails from './screens/ChangellyDetails';
 import {
+  BanxaIncomingData,
+  BanxaPaymentData,
   MoonpayIncomingData,
   MoonpayPaymentData,
   RampIncomingData,
@@ -32,6 +36,14 @@ import {
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 
 export type ExternalServicesSettingsStackParamList = {
+  BanxaSettings:
+    | {
+        incomingPaymentRequest?: BanxaIncomingData;
+      }
+    | undefined;
+  BanxaDetails: {
+    paymentRequest: BanxaPaymentData;
+  };
   MoonpaySettings:
     | {
         incomingPaymentRequest?: MoonpayIncomingData;
@@ -80,6 +92,8 @@ export type ExternalServicesSettingsStackParamList = {
 };
 
 export enum ExternalServicesSettingsScreens {
+  BANXA_SETTINGS = 'BanxaSettings',
+  BANXA_DETAILS = 'BanxaDetails',
   MOONPAY_SETTINGS = 'MoonpaySettings',
   MOONPAY_DETAILS = 'MoonpayDetails',
   RAMP_SETTINGS = 'RampSettings',
@@ -105,6 +119,20 @@ const ExternalServicesSettingsStack = () => {
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.BANXA_SETTINGS}
+        component={BanxaSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Banxa Settings')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.BANXA_DETAILS}
+        component={BanxaDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.MOONPAY_SETTINGS}
         component={MoonpaySettings}

@@ -42,7 +42,7 @@ import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
-import {startMigration, startWalletStoreInit} from '../wallet/effects';
+import {startMigration, startWalletStoreInit, getPriceHistory} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -65,6 +65,7 @@ import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
+  FormatKeyBalances,
 } from '../wallet/effects/status/status';
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
@@ -74,9 +75,20 @@ import {
   BASE_BITPAY_URLS,
   DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
-import {updatePortfolioBalance} from '../wallet/wallet.actions';
-import {setContactMigrationComplete} from '../contact/contact.actions';
-import {startContactMigration} from '../contact/contact.effects';
+import {
+  updatePortfolioBalance,
+  setCustomTokensMigrationComplete,
+} from '../wallet/wallet.actions';
+import {
+  setContactMigrationComplete,
+  setContactTokenAddressMigrationComplete,
+  setContactBridgeUsdcMigrationComplete,
+} from '../contact/contact.actions';
+import {
+  startContactBridgeUsdcMigration,
+  startContactMigration,
+  startContactTokenAddressMigration,
+} from '../contact/contact.effects';
 import {getStateFromPath, NavigationProp} from '@react-navigation/native';
 import {
   getAvailableGiftCards,
@@ -96,10 +108,11 @@ import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/Sen
 import {moralisInit} from '../moralis/moralis.effects';
 import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {InAppNotificationMessages} from '../../components/modal/in-app-notification/InAppNotification';
-import {SignClientTypes} from '@walletconnect/types';
 import axios from 'axios';
 import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
+import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -120,44 +133,50 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
-    const {APP, BITPAY_ID, CONTACT, WALLET} = getState();
-    const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
+    const {APP, CONTACT, WALLET} = getState();
+    const {network, colorScheme} = APP;
 
     WALLET.initLogs.forEach(log => dispatch(log));
 
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    const {appFirstOpenData, onboardingCompleted, migrationComplete} = APP;
-
+    const {migrationComplete} = APP;
+    const {customTokensMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
-    if (onboardingCompleted) {
-      await dispatch(Analytics.initialize());
-      QuickActions.clearShortcutItems();
-      QuickActions.setShortcutItems(ShortcutList);
-    }
-
-    if (!appFirstOpenData?.firstOpenDate) {
-      const firstOpen = Math.floor(Date.now() / 1000);
-
-      dispatch(setAppFirstOpenEventDate(firstOpen));
-      dispatch(trackFirstOpenEvent(firstOpen));
-    } else {
-      dispatch(Analytics.track('Last Opened App'));
-
-      if (!appFirstOpenData?.firstOpenEventComplete) {
-        dispatch(trackFirstOpenEvent(appFirstOpenData.firstOpenDate));
-      }
-    }
+    dispatch(initAnalytics());
 
     dispatch(startWalletStoreInit());
 
-    const {contactMigrationComplete} = CONTACT;
+    const {
+      contactMigrationComplete,
+      contactTokenAddressMigrationComplete,
+      contactBridgeUsdcMigrationComplete,
+    } = CONTACT;
 
     if (!contactMigrationComplete) {
       await dispatch(startContactMigration());
       dispatch(setContactMigrationComplete());
       dispatch(LogActions.info('success [setContactMigrationComplete]'));
+    }
+    if (!contactTokenAddressMigrationComplete) {
+      await dispatch(startContactTokenAddressMigration());
+      dispatch(setContactTokenAddressMigrationComplete());
+      dispatch(
+        LogActions.info('success [setContactTokenAddressMigrationComplete]'),
+      );
+    }
+    if (!contactBridgeUsdcMigrationComplete) {
+      await dispatch(startContactBridgeUsdcMigration());
+      dispatch(setContactBridgeUsdcMigrationComplete());
+      dispatch(
+        LogActions.info('success [setContactBridgeUsdcMigrationComplete]'),
+      );
+    }
+    if (!customTokensMigrationComplete) {
+      await dispatch(startCustomTokensMigration());
+      dispatch(setCustomTokensMigrationComplete());
+      dispatch(LogActions.info('success [setCustomTokensMigrationComplete]'));
     }
 
     if (!migrationComplete) {
@@ -166,57 +185,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(LogActions.info('success [setMigrationComplete]'));
     }
 
-    const token = BITPAY_ID.apiToken[network];
-    const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
 
     dispatch(initializeApi(network, identity));
 
     dispatch(LocationEffects.getLocationData());
 
-    if (isPaired) {
-      try {
-        dispatch(
-          LogActions.info(
-            'App is paired with BitPayID, refreshing user data...',
-          ),
-        );
-
-        const {errors, data} = await UserApi.fetchInitialUserData(token);
-
-        // handle partial errors
-        if (errors) {
-          const msg = errors
-            .map(e => `${e.path.join('.')}: ${e.message}`)
-            .join(',\n');
-
-          dispatch(
-            LogActions.error(
-              'One or more errors occurred while fetching initial user data:\n' +
-                msg,
-            ),
-          );
-        }
-        dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
-        dispatch(CardEffects.startCardStoreInit(data.user));
-      } catch (err: any) {
-        if (isAxiosError(err)) {
-          dispatch(LogActions.error(`${err.name}: ${err.message}`));
-          dispatch(LogActions.error(err.config.url));
-          dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
-        } else if (err instanceof Error) {
-          dispatch(LogActions.error(`${err.name}: ${err.message}`));
-        } else {
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
-
-        dispatch(
-          LogActions.info(
-            'Failed to refresh user data. Continuing initialization.',
-          ),
-        );
-      }
-    }
+    dispatch(fetchInitialUserData());
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     dispatch(walletConnectV2Init());
@@ -226,28 +201,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // Update Coinbase
     dispatch(coinbaseInitialize());
 
-    dispatch(showBlur(pinLockActive || biometricLockActive));
-
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
-
-    await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
-    dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
-    dispatch(LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`));
-    RNBootSplash.hide({fade: true}).then(() => {
-      // avoid splash conflicting with modal in iOS
-      // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
-      if (pinLockActive) {
-        dispatch(AppActions.showPinModal({type: 'check'}));
-      }
-      if (biometricLockActive) {
-        dispatch(AppActions.showBiometricModal({}));
-      }
-
-      dispatch(AppActions.appInitCompleted());
-      DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
-    });
+    dispatch(AppActions.appInitCompleted());
+    DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
@@ -265,6 +223,81 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await sleep(500);
     dispatch(showBlur(false));
     RNBootSplash.hide();
+  }
+};
+
+const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
+  const {APP} = getState();
+  const {appFirstOpenData, onboardingCompleted} = APP;
+
+  if (onboardingCompleted) {
+    await dispatch(Analytics.initialize());
+    QuickActions.clearShortcutItems();
+    QuickActions.setShortcutItems(ShortcutList);
+  }
+
+  if (!appFirstOpenData?.firstOpenDate) {
+    const firstOpen = Math.floor(Date.now() / 1000);
+
+    dispatch(setAppFirstOpenEventDate(firstOpen));
+    dispatch(trackFirstOpenEvent(firstOpen));
+  } else {
+    dispatch(Analytics.track('Last Opened App'));
+
+    if (!appFirstOpenData?.firstOpenEventComplete) {
+      dispatch(trackFirstOpenEvent(appFirstOpenData.firstOpenDate));
+    }
+  }
+};
+
+const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
+  const {APP, BITPAY_ID} = getState();
+  const {network} = APP;
+
+  const token = BITPAY_ID.apiToken[network];
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    dispatch(
+      LogActions.info('App is paired with BitPayID, refreshing user data...'),
+    );
+
+    const {errors, data} = await UserApi.fetchInitialUserData(token);
+
+    // handle partial errors
+    if (errors) {
+      const msg = errors
+        .map(e => `${e.path.join('.')}: ${e.message}`)
+        .join(',\n');
+
+      dispatch(
+        LogActions.error(
+          'One or more errors occurred while fetching initial user data:\n' +
+            msg,
+        ),
+      );
+    }
+    dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
+    dispatch(CardEffects.startCardStoreInit(data.user));
+  } catch (err: any) {
+    if (isAxiosError(err)) {
+      dispatch(LogActions.error(`${err.name}: ${err.message}`));
+      dispatch(LogActions.error(err.config.url));
+      dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
+    } else if (err instanceof Error) {
+      dispatch(LogActions.error(`${err.name}: ${err.message}`));
+    } else {
+      dispatch(LogActions.error(JSON.stringify(err)));
+    }
+
+    dispatch(
+      LogActions.info(
+        'Failed to refresh user data. Continuing initialization.',
+      ),
+    );
   }
 };
 
@@ -518,13 +551,26 @@ export const startOnGoingProcessModal =
     const _message = _OnGoingProcessMessages[key];
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
+
+    // After 30 seconds, check if the modal is active. If so, dismiss it.
+    setTimeout(async () => {
+      const currentStore = getState();
+      if (
+        currentStore.APP.showOnGoingProcessModal &&
+        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing')
+      ) {
+        dispatch(AppActions.dismissOnGoingProcessModal());
+        await sleep(500);
+      }
+    }, 30000);
+
     return sleep(100);
   };
 
 export const startInAppNotification =
   (
     key: InAppNotificationMessages,
-    request: SignClientTypes.EventArguments['session_request'],
+    request: Web3WalletTypes.EventArguments['session_request'],
     context: InAppNotificationContextType,
   ): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
@@ -917,10 +963,17 @@ export const resetAllSettings = (): Effect => dispatch => {
   dispatch(AppActions.setColorScheme(null));
   dispatch(AppActions.showPortfolioValue(true));
   dispatch(AppActions.toggleHideAllBalances(false));
+  // Reset AltCurrency
   dispatch(
     AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
   );
-  dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
+  dispatch(FormatKeyBalances());
+  dispatch(updatePortfolioBalance());
+  dispatch(coinbaseInitialize());
+  dispatch(getPriceHistory('USD'));
+  // Reset Default Language
+  i18n.changeLanguage('en');
+  dispatch(AppActions.setDefaultLanguage('en'));
   dispatch(WalletActions.setUseUnconfirmedFunds(false));
   dispatch(WalletActions.setCustomizeNonce(false));
   dispatch(WalletActions.setQueuedTransactions(false));

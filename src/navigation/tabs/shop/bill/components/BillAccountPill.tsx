@@ -1,9 +1,18 @@
 import React from 'react';
-import {BillPayAccount} from '../../../../../store/shop/shop.models';
+import {
+  BillPayAccount,
+  BillPayment,
+} from '../../../../../store/shop/shop.models';
 import SendToPill from '../../../../wallet/components/SendToPill';
 import {Image} from 'react-native';
 
-export const BillAccountPill = ({account}: {account: BillPayAccount}) => (
+export const BillAccountPill = ({
+  account,
+  payment,
+}: {
+  account: BillPayAccount;
+  payment?: BillPayment;
+}) => (
   <SendToPill
     height={'37px'}
     icon={
@@ -16,13 +25,13 @@ export const BillAccountPill = ({account}: {account: BillPayAccount}) => (
         }}
         resizeMode={'contain'}
         source={{
-          uri: account[account.type].merchantIcon,
+          uri: payment?.icon || account[account.type].merchantIcon,
         }}
       />
     }
-    description={`${account[account.type].merchantName.slice(0, 11)} ****${
-      account[account.type].mask
-    }`}
+    description={
+      payment?.accountDescription || account[account.type].description
+    }
     dropDown={false}
   />
 );

@@ -1,3 +1,4 @@
+import {getBanxaFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/banxa-utils';
 import {getMoonpayFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/moonpay-utils';
 import {getRampFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/ramp-utils';
 import {getSardineFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/sardine-utils';
@@ -94,6 +95,10 @@ export const getBuyCryptoFiatLimits =
     );
 
     switch (exchange) {
+      case 'banxa':
+        baseFiatArray = ['USD', 'EUR'];
+        limits = getBanxaFiatAmountLimits();
+        break;
       case 'moonpay':
         baseFiatArray = ['USD', 'EUR'];
         limits = getMoonpayFiatAmountLimits();
@@ -114,12 +119,14 @@ export const getBuyCryptoFiatLimits =
         baseFiatArray = ['USD', 'EUR'];
         limits = {
           min: Math.min(
+            getBanxaFiatAmountLimits().min,
             getMoonpayFiatAmountLimits().min,
             getRampFiatAmountLimits().min,
             getSardineFiatAmountLimits().min,
             getSimplexFiatAmountLimits().min,
           ),
           max: Math.max(
+            getBanxaFiatAmountLimits().max,
             getMoonpayFiatAmountLimits().max,
             getRampFiatAmountLimits().max,
             getSardineFiatAmountLimits().max,

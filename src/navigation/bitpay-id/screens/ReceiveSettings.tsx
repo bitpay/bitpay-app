@@ -40,7 +40,7 @@ import {
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {AppActions} from '../../../store/app';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {sleep} from '../../../utils/helper-methods';
+import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {ReceivingAddress} from '../../../store/bitpay-id/bitpay-id.models';
 import {WalletScreens} from '../../wallet/WalletStack';
@@ -49,7 +49,10 @@ import {keyBackupRequired} from '../../tabs/home/components/Crypto';
 import {StackScreenProps} from '@react-navigation/stack';
 import TwoFactorRequiredModal from '../components/TwoFactorRequiredModal';
 import {getCurrencyCodeFromCoinAndChain} from '../utils/bitpay-id-utils';
-import {BitpaySupportedCurrencies} from '../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedTokens,
+} from '../../../constants/currencies';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import {useTranslation} from 'react-i18next';
 
@@ -172,7 +175,10 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
       .filter(
         wallet =>
           wallet.network === Network.mainnet &&
-          Object.values(BitpaySupportedCurrencies).some(
+          Object.values({
+            ...BitpaySupportedCoins,
+            ...BitpaySupportedTokens,
+          }).some(
             ({coin, chain}) =>
               wallet.currencyAbbreviation === coin && wallet.chain === chain,
           ),
@@ -254,7 +260,9 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
         id: '',
         coin: wallet.currencyAbbreviation,
         chain: wallet.chain,
-        label: wallet.walletName || wallet.currencyAbbreviation.toUpperCase(),
+        label:
+          wallet.walletName ||
+          formatCurrencyAbbreviation(wallet.currencyAbbreviation),
         address,
         provider: 'BitPay',
         currency: getCurrencyCodeFromCoinAndChain(

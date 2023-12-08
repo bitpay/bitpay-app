@@ -14,7 +14,7 @@ import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {FeedbackType, ModalId} from './app.reducer';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
-import {SignClientTypes} from '@walletconnect/types';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -132,7 +132,7 @@ interface ShowInAppNotification {
   type: typeof AppActionTypes.SHOW_IN_APP_NOTIFICATION;
   payload: {
     message: string;
-    request: SignClientTypes.EventArguments['session_request'];
+    request: Web3WalletTypes.EventArguments['session_request'];
     context: InAppNotificationContextType;
   };
 }
@@ -217,10 +217,6 @@ interface ResetDecryptPasswordConfig {
 interface ShowPinModal {
   type: typeof AppActionTypes.SHOW_PIN_MODAL;
   payload: PinModalConfig;
-}
-interface ShowBottomNotificationModal {
-  type: typeof AppActionTypes.SHOW_BOTTOM_NOTIFICATION_MODAL;
-  payload: BottomNotificationConfig;
 }
 interface DismissPinModal {
   type: typeof AppActionTypes.DISMISS_PIN_MODAL;

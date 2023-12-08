@@ -7,7 +7,7 @@ import {
   successGetTokenOptions,
 } from '../../wallet.actions';
 import {
-  BitpaySupportedCurrencies,
+  BitpaySupportedTokens,
   CurrencyOpts,
   SUPPORTED_EVM_COINS,
 } from '../../../../constants/currencies';
@@ -16,41 +16,39 @@ import {
   BASE_BWS_URL,
   EVM_BLOCKCHAIN_EXPLORERS,
 } from '../../../../constants/config';
-import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {
+  addTokenChainSuffix,
+  getCurrencyAbbreviation,
+} from '../../../../utils/helper-methods';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
     try {
       dispatch(LogActions.info('starting [startGetTokenOptions]'));
-      let tokenOptions: {[key in string]: Token} = {};
       let tokenOptionsByAddress: {[key in string]: Token} = {};
-      let tokenData: {[key in string]: CurrencyOpts} = {};
+      let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
       for await (const chain of SUPPORTED_EVM_COINS) {
         let {data: tokens} = await axios.get<{[key in string]: Token}>(
           `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
         );
         Object.values(tokens).forEach(token => {
           if (
-            BitpaySupportedCurrencies[
-              getCurrencyAbbreviation(token.symbol, chain)
-            ]
+            BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
           ) {
             return;
           } // remove bitpay supported tokens and currencies
           populateTokenInfo({
             chain,
             token,
-            tokenOptions,
-            tokenData,
             tokenOptionsByAddress,
+            tokenDataByAddress,
           });
         });
       }
       dispatch(
         successGetTokenOptions({
-          tokenOptions,
-          tokenData,
           tokenOptionsByAddress,
+          tokenDataByAddress,
         }),
       );
       dispatch(LogActions.info('successful [startGetTokenOptions]'));
@@ -70,26 +68,23 @@ export const addCustomTokenOption =
   (token: Token, chain: string): Effect =>
   async dispatch => {
     try {
-      const customTokenOptions: {[key in string]: Token} = {};
       const customTokenOptionsByAddress: {[key in string]: Token} = {};
-      const customTokenData: {[key in string]: CurrencyOpts} = {};
+      const customTokenDataByAddress: {[key in string]: CurrencyOpts} = {};
       if (
-        BitpaySupportedCurrencies[getCurrencyAbbreviation(token.symbol, chain)]
+        BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
       ) {
         return;
       } // remove bitpay supported tokens and currencies
       populateTokenInfo({
         chain,
         token,
-        tokenOptions: customTokenOptions,
-        tokenData: customTokenData,
         tokenOptionsByAddress: customTokenOptionsByAddress,
+        tokenDataByAddress: customTokenDataByAddress,
       });
       dispatch(
         successGetCustomTokenOptions({
-          customTokenOptions,
-          customTokenData,
           customTokenOptionsByAddress,
+          customTokenDataByAddress,
         }),
       );
     } catch (e) {
@@ -102,23 +97,21 @@ export const addCustomTokenOption =
 const populateTokenInfo = ({
   chain,
   token,
-  tokenOptions,
-  tokenData,
   tokenOptionsByAddress,
+  tokenDataByAddress,
 }: {
   chain: string;
   token: Token;
-  tokenOptions: {[key in string]: Token};
-  tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
 }) => {
-  tokenOptions[getCurrencyAbbreviation(token.symbol, chain)] = token;
-  tokenOptionsByAddress[getCurrencyAbbreviation(token.address, chain)] = token;
-  tokenData[getCurrencyAbbreviation(token.symbol, chain)] = {
+  const tokenAddressWithSuffix = addTokenChainSuffix(token.address, chain);
+  const tokenData = {
     name: token.name.replace('(PoS)', '').trim(),
     chain,
-    coin: token.symbol,
+    coin: token.symbol.toLowerCase(),
     logoURI: token.logoURI,
+    address: token.address,
     unitInfo: {
       unitName: token.symbol.toUpperCase(),
       unitToSatoshi: 10 ** token.decimals,
@@ -148,4 +141,29 @@ const populateTokenInfo = ({
       maxMerchantFee: 'urgent',
     },
   };
+  tokenOptionsByAddress[tokenAddressWithSuffix] = token;
+  tokenDataByAddress[tokenAddressWithSuffix] = tokenData;
 };
+
+export const startCustomTokensMigration =
+  (): Effect<Promise<void>> =>
+  async (dispatch, getState): Promise<void> => {
+    return new Promise(async resolve => {
+      dispatch(LogActions.info('[startCustomTokensMigration] - starting...'));
+      const {customTokenOptions, customTokenData} = getState().WALLET;
+      Object.values(customTokenOptions || {}).forEach(token => {
+        dispatch(LogActions.info(`Migrating: ${JSON.stringify(token)}`));
+        const chain =
+          customTokenData[token.symbol.toLowerCase()]?.chain || 'eth';
+        let customToken: Token = {
+          name: token.name,
+          symbol: token.symbol?.toLowerCase(),
+          decimals: Number(token.decimals),
+          address: token.address?.toLowerCase(),
+        };
+        addCustomTokenOption(customToken, chain);
+      });
+      dispatch(LogActions.info('success [startCustomTokensMigration]}'));
+      return resolve();
+    });
+  };

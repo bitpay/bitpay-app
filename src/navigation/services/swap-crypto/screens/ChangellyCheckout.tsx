@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {ScrollView} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {ScrollView, TouchableOpacity} from 'react-native';
 import {
   useTheme,
   RouteProp,
@@ -15,7 +15,6 @@ import {
   useLogger,
 } from '../../../../utils/hooks';
 import ChangellyCheckoutSkeleton from './ChangellyCheckoutSkeleton';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Slate, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -29,7 +28,6 @@ import {
   Wallet,
   TransactionProposal,
   SendMaxInfo,
-  Token,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -128,9 +126,11 @@ const ChangellyCheckout: React.FC = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const BWC = BwcProvider.getInstance();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showCheckTermsMsg, setShowCheckTermsMsg] = useState(false);
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [amountExpectedFrom, setAmountExpectedFrom] =
     useState<number>(amountFrom);
@@ -146,13 +146,6 @@ const ChangellyCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[fromWalletSelected.keyId],
   );
-  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
-    };
-  }) as {[key in string]: Token};
 
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
@@ -309,6 +302,7 @@ const ChangellyCheckout: React.FC = () => {
             GetPrecision(
               toWalletSelected.currencyAbbreviation,
               toWalletSelected.chain,
+              toWalletSelected.tokenAddress,
             ),
           );
           const newFiatAmountTo = dispatch(
@@ -318,6 +312,7 @@ const ChangellyCheckout: React.FC = () => {
               toWalletSelected.currencyAbbreviation.toLowerCase(),
               toWalletSelected.chain,
               rates,
+              toWalletSelected.tokenAddress,
             ),
           );
           setFiatAmountTo(newFiatAmountTo);
@@ -331,6 +326,7 @@ const ChangellyCheckout: React.FC = () => {
           GetPrecision(
             fromWalletSelected.currencyAbbreviation,
             fromWalletSelected.chain,
+            fromWalletSelected.tokenAddress,
           ),
         );
         // To Sat
@@ -357,7 +353,11 @@ const ChangellyCheckout: React.FC = () => {
             await sleep(400);
 
             if (useSendMax) {
-              showSendMaxWarning(ctxp.coin, ctxp.chain);
+              showSendMaxWarning(
+                ctxp.coin,
+                ctxp.chain,
+                fromWalletSelected.tokenAddress,
+              );
             }
             return;
           })
@@ -498,13 +498,8 @@ const ChangellyCheckout: React.FC = () => {
       };
 
       if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
-        const token =
-          tokenOptions[
-            getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain)
-          ];
-
-        if (token && token.address) {
-          txp.tokenAddress = token.address;
+        if (wallet.tokenAddress) {
+          txp.tokenAddress = wallet.tokenAddress;
           if (txp.outputs) {
             for (const output of txp.outputs) {
               if (output.amount) {
@@ -517,7 +512,7 @@ const ChangellyCheckout: React.FC = () => {
                     recipients: [
                       {address: output.toAddress, amount: output.amount},
                     ],
-                    tokenAddress: token.address,
+                    tokenAddress: wallet.tokenAddress,
                   });
               }
             }
@@ -554,10 +549,9 @@ const ChangellyCheckout: React.FC = () => {
     try {
       dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
       await sleep(400);
-
-      const broadcastedTx = (await dispatch<any>(
+      await dispatch(
         publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
-      )) as any;
+      );
       saveChangellyTx();
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
@@ -621,15 +615,19 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showSendMaxWarning = async (coin: string, chain: string) => {
+  const showSendMaxWarning = async (
+    coin: string,
+    chain: string,
+    tokenAddress: string | undefined,
+  ) => {
     if (!sendMaxInfo || !coin) {
       return;
     }
 
     const warningMsg = dispatch(
-      GetExcludedUtxosMessage(coin, chain, sendMaxInfo),
+      GetExcludedUtxosMessage(coin, chain, tokenAddress, sendMaxInfo),
     );
-    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain));
+    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
 
     const msg =
       `Because you are sending the maximum amount contained in this wallet, the ${chain} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
@@ -714,7 +712,7 @@ const ChangellyCheckout: React.FC = () => {
 
   return (
     <SwapCheckoutContainer>
-      <ScrollView>
+      <ScrollView ref={scrollViewRef}>
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
@@ -793,6 +791,7 @@ const ChangellyCheckout: React.FC = () => {
                     FormatAmountStr(
                       fromWalletSelected.chain, // use chain for miner fee
                       fromWalletSelected.chain,
+                      undefined,
                       fee,
                     ),
                   )}
@@ -848,11 +847,19 @@ const ChangellyCheckout: React.FC = () => {
                 </FiatAmountContainer>
               </>
             )}
+            {!termsAccepted && showCheckTermsMsg ? (
+              <RowDataContainer>
+                <RowLabel style={{color: Caution}}>
+                  {t('Tap the checkbox to accept and continue.')}
+                </RowLabel>
+              </RowDataContainer>
+            ) : null}
             <CheckBoxContainer>
               <Checkbox
                 radio={false}
                 onPress={() => {
                   setTermsAccepted(!termsAccepted);
+                  setShowCheckTermsMsg(!!termsAccepted);
                 }}
                 checked={termsAccepted}
               />
@@ -881,18 +888,27 @@ const ChangellyCheckout: React.FC = () => {
         )}
       </ScrollView>
 
-      {termsAccepted && !paymentExpired && !!exchangeTxId && (
-        <SwipeButton
-          title={'Slide to send'}
-          onSwipeComplete={async () => {
-            try {
-              logger.debug('Swipe completed. Making payment...');
-              makePayment();
-            } catch (err) {}
-          }}
-          forceReset={resetSwipeButton}
-        />
-      )}
+      {!paymentExpired && !!exchangeTxId ? (
+        <TouchableOpacity
+          onPress={() => {
+            if (!termsAccepted) {
+              scrollViewRef?.current?.scrollToEnd({animated: true});
+            }
+            setShowCheckTermsMsg(!termsAccepted);
+          }}>
+          <SwipeButton
+            title={'Slide to send'}
+            disabled={!termsAccepted}
+            onSwipeComplete={async () => {
+              try {
+                logger.debug('Swipe completed. Making payment...');
+                makePayment();
+              } catch (err) {}
+            }}
+            forceReset={resetSwipeButton}
+          />
+        </TouchableOpacity>
+      ) : null}
 
       <ChangellyPoliciesModal
         isVisible={changellyPoliciesModalVisible}

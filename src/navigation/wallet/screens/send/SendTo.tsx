@@ -2,12 +2,10 @@ import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {
   BaseText,
   HeaderTitle,
-  Link,
   Paragraph,
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import Clipboard from '@react-native-clipboard/clipboard';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -29,17 +27,20 @@ import {WalletStackParamList} from '../../WalletStack';
 import {Effect, RootState} from '../../../../store';
 import {
   convertToFiat,
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getErrorString,
+  sleep,
 } from '../../../../utils/helper-methods';
 import {Key} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
+  ValidDataTypes,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {AppState, AppStateStatus, TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
@@ -87,25 +88,6 @@ import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
-import CopySvg from '../../../../../assets/img/copy.svg';
-
-const ValidDataTypes: string[] = [
-  'BitcoinAddress',
-  'BitcoinCashAddress',
-  'EthereumAddress',
-  'MaticAddress',
-  'RippleAddress',
-  'DogecoinAddress',
-  'LitecoinAddress',
-  'RippleUri',
-  'BitcoinUri',
-  'BitcoinCashUri',
-  'EthereumUri',
-  'MaticUri',
-  'DogecoinUri',
-  'LitecoinUri',
-  'BitPayUri',
-];
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -115,14 +97,6 @@ const ScrollView = styled.ScrollView`
   flex: 1;
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
-`;
-
-const PasteClipboardContainer = styled.TouchableOpacity`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin: 10px auto;
-  cursor: pointer;
 `;
 
 const ContactContainer = styled.View`
@@ -218,6 +192,7 @@ export const BuildKeyWalletRow = (
           chain,
           credentials: {walletName: fallbackName},
           walletName,
+          tokenAddress,
         } = wallet;
         // Clone wallet to avoid altering store values
         const _wallet = merge(cloneDeep(wallet), {
@@ -232,6 +207,7 @@ export const BuildKeyWalletRow = (
                   currencyAbbreviation,
                   chain,
                   rates,
+                  tokenAddress,
                 ),
               ),
               hideWallet,
@@ -240,7 +216,8 @@ export const BuildKeyWalletRow = (
             defaultAltCurrencyIsoCode,
           ),
           fiatLockedBalance: '',
-          currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+          currencyAbbreviation:
+            formatCurrencyAbbreviation(currencyAbbreviation),
           network,
           walletName: walletName || fallbackName,
         });
@@ -269,7 +246,6 @@ const SendTo = () => {
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? LightBlack : Slate30;
   const [searchInput, setSearchInput] = useState('');
-  const [clipboardData, setClipboardData] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [searchIsEmailAddress, setSearchIsEmailAddress] = useState(false);
   const [emailAddressSearchPromise, setEmailAddressSearchPromise] = useState<
@@ -416,6 +392,7 @@ const SendTo = () => {
         dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
 
         const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
+        await sleep(500);
         dispatch(dismissOnGoingProcessModal());
         const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
           GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
@@ -434,8 +411,8 @@ const SendTo = () => {
           return Promise.resolve(false);
         }
       } catch (err) {
-        clearClipboard();
         const formattedErrMsg = BWCErrorMessage(err);
+        await sleep(500);
         dispatch(dismissOnGoingProcessModal());
         logger.warn(formattedErrMsg);
         return Promise.resolve(false);
@@ -461,7 +438,6 @@ const SendTo = () => {
       searching?: boolean;
     } = {},
   ) => {
-    clearClipboard();
     const {context, name, email, destinationTag, searching} = opts;
     if (isEmailAddress(text.trim())) {
       setSearchIsEmailAddress(true);
@@ -555,41 +531,11 @@ const SendTo = () => {
     wallet.chain,
   ]);
 
-  const clearClipboard = () => {
-    Clipboard.setString('');
-    setClipboardData('');
-  };
-  const getString = async () => {
-    const _clipboardData = await Clipboard.getString();
-    if (_clipboardData) {
-      const isValid = await validateAddress(_clipboardData);
-      if (isValid) {
-        setClipboardData(_clipboardData);
-      }
-    }
-  };
-
   useEffect(() => {
-    getString();
     return navigation.addListener('blur', () =>
       setTimeout(() => setSearchInput(''), 300),
     );
   }, [navigation]);
-
-  useEffect(() => {
-    function onAppStateChange(status: AppStateStatus) {
-      if (status === 'active') {
-        getString();
-      }
-    }
-
-    const subscriptionAppStateChange = AppState.addEventListener(
-      'change',
-      onAppStateChange,
-    );
-
-    return () => subscriptionAppStateChange.remove();
-  }, []);
 
   return (
     <SafeAreaView>
@@ -689,18 +635,6 @@ const SendTo = () => {
               </EmailTextContainer>
             </EmailContainer>
           </TouchableOpacity>
-        ) : null}
-
-        {clipboardData && !searchIsEmailAddress && !searchInput ? (
-          <PasteClipboardContainer
-            onPress={() => {
-              haptic('impactLight');
-              setSearchInput(clipboardData);
-              validateAndNavigateToConfirm(clipboardData);
-            }}>
-            <CopySvg style={{marginRight: 10}} />
-            <Link>{t('Paste from clipboard')}</Link>
-          </PasteClipboardContainer>
         ) : null}
 
         {contacts.length > 0 && !searchIsEmailAddress ? (

@@ -101,6 +101,7 @@ const Addresses = () => {
     currencyName,
     currencyAbbreviation,
     chain,
+    tokenAddress,
   } = wallet;
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
@@ -202,17 +203,30 @@ const Addresses = () => {
 
           setLowUtxosSum(
             dispatch(
-              FormatAmountStr(currencyAbbreviation, chain, _lowUtoxosSum),
+              FormatAmountStr(
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+                _lowUtoxosSum,
+              ),
             ),
           );
           setAllUtxosSum(
-            dispatch(FormatAmountStr(currencyAbbreviation, chain, allSum)),
+            dispatch(
+              FormatAmountStr(
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+                allSum,
+              ),
+            ),
           );
           setMinFee(
             dispatch(
               FormatAmountStr(
                 currencyAbbreviation,
                 chain,
+                tokenAddress,
                 response.minFee || 0,
               ),
             ),
@@ -342,6 +356,7 @@ const Addresses = () => {
                       walletName: walletName || currencyName,
                       usedAddresses: usedAddress,
                       unusedAddresses: unusedAddress,
+                      tokenAddress,
                     },
                   });
                 }}>
@@ -423,6 +438,7 @@ const Addresses = () => {
                             FormatAmountStr(
                               currencyAbbreviation,
                               chain,
+                              tokenAddress,
                               amount,
                             ),
                           )}

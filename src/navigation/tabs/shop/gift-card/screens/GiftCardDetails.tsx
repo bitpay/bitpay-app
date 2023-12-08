@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import RNPrint from 'react-native-print';
+import RenderHtml from 'react-native-render-html';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled from 'styled-components/native';
@@ -18,6 +19,7 @@ import {
   ActiveOpacity,
   CtaContainer,
   HeaderRightContainer,
+  WIDTH,
 } from '../../../../../components/styled/Containers';
 import {
   BaseText,
@@ -25,6 +27,7 @@ import {
   Link,
   Paragraph,
   TextAlign,
+  fontFamily,
 } from '../../../../../components/styled/Text';
 import {
   Grey,
@@ -33,13 +36,11 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import RemoteImage from '../../components/RemoteImage';
 import {GiftCardStackParamList} from '../GiftCardStack';
 import {
   horizontalPadding,
   NavIconButtonContainer,
   SectionSpacer,
-  Terms,
 } from '../../components/styled/ShopTabComponents';
 import {
   ArchiveSvg,
@@ -62,8 +63,15 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
-import {generateGiftCardPrintHtml} from '../../../../../lib/gift-cards/gift-card';
+import {
+  generateGiftCardPrintHtml,
+  getCardImage,
+} from '../../../../../lib/gift-cards/gift-card';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import Markdown from 'react-native-markdown-display';
+import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
+import GiftCardTerms from '../../components/GiftCardTerms';
+import GiftCardImage from '../../components/GiftCardImage';
 
 const maxWidth = 320;
 
@@ -158,6 +166,10 @@ const GiftCardDetails = ({
     giftCards.find(card => card.invoiceId === initialGiftCard.invoiceId) ||
       initialGiftCard,
   );
+  const [defaultClaimCodeType, setDefaultClaimCodeType] = useState(
+    cardConfig.defaultClaimCodeType,
+  );
+  const cardImage = getCardImage(cardConfig, giftCard.amount);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
@@ -182,18 +194,33 @@ const GiftCardDetails = ({
   useEffect(() => {
     if (!giftCard.barcodeImage) {
       if (
-        cardConfig.defaultClaimCodeType === ClaimCodeType.barcode &&
+        defaultClaimCodeType === ClaimCodeType.barcode &&
         giftCard.claimLink
       ) {
-        cardConfig.defaultClaimCodeType = ClaimCodeType.link;
+        setDefaultClaimCodeType(ClaimCodeType.link);
       }
       return;
     }
     Image.getSize(giftCard.barcodeImage, (width, height) => {
-      setIsBarcode(width / height > 3);
-      setScannableCodeDimensions({width, height});
+      const resemblesBarcode = width / height > 3;
+      setIsBarcode(resemblesBarcode);
+      const minHeight = 60;
+      const scaleFactor = minHeight / height;
+      const dimensions =
+        height < minHeight && !resemblesBarcode
+          ? {
+              height: height * scaleFactor,
+              width: width * scaleFactor,
+            }
+          : {height: minHeight, width: 200};
+      setScannableCodeDimensions(dimensions);
     });
-  }, [cardConfig, giftCard.barcodeImage, giftCard.claimLink]);
+  }, [
+    cardConfig,
+    defaultClaimCodeType,
+    giftCard.barcodeImage,
+    giftCard.claimLink,
+  ]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -213,17 +240,50 @@ const GiftCardDetails = ({
     copiedValue: string,
     cardConfig: CardConfig,
     customMessage?: string,
-  ) =>
-    AppActions.showBottomNotificationModal({
+  ) => {
+    const redeemInstructions =
+      customMessage ||
+      cardConfig.redeemInstructions ||
+      t(
+        'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
+        {website: cardConfig.website},
+      );
+    const containsHtml =
+      redeemInstructions.includes('</') || redeemInstructions.includes('/>');
+    const redeemHtml = redeemInstructions
+      .replaceAll(': \n', ': <br>')
+      .replaceAll('\n\n', '<br><br>');
+    const redeemTextStyle = {
+      color: theme.colors.text,
+      fontFamily,
+      fontSize: 16,
+      lineHeight: 24,
+    };
+    return AppActions.showBottomNotificationModal({
       type: 'success',
       title: t('Copied: ', {copiedValue}),
-      message:
-        customMessage ||
-        cardConfig.redeemInstructions ||
-        t(
-          'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
-          {website: cardConfig.website},
-        ),
+      message: '',
+      message2: (
+        <ScrollableBottomNotificationMessageContainer
+          contentContainerStyle={{paddingBottom: 10}}>
+          {containsHtml ? (
+            <RenderHtml
+              baseStyle={redeemTextStyle}
+              contentWidth={WIDTH - 2 * horizontalPadding}
+              source={{
+                html: redeemHtml,
+              }}
+            />
+          ) : (
+            <Markdown
+              style={{
+                body: redeemTextStyle,
+              }}>
+              {redeemInstructions}
+            </Markdown>
+          )}
+        </ScrollableBottomNotificationMessageContainer>
+      ),
       enableBackdropDismiss: true,
       actions: [
         {
@@ -233,6 +293,7 @@ const GiftCardDetails = ({
         },
       ],
     });
+  };
 
   const assetOptions: Array<Option> = [
     {
@@ -260,7 +321,7 @@ const GiftCardDetails = ({
         );
       },
     },
-    ...(cardConfig.defaultClaimCodeType !== 'link'
+    ...(defaultClaimCodeType !== 'link'
       ? [
           {
             img: <PrintSvg theme={theme} />,
@@ -268,7 +329,11 @@ const GiftCardDetails = ({
             onPress: async () => {
               await sleep(600); // Wait for options sheet to close on iOS
               await RNPrint.print({
-                html: generateGiftCardPrintHtml(cardConfig, giftCard),
+                html: generateGiftCardPrintHtml(
+                  cardConfig,
+                  giftCard,
+                  scannableCodeDimensions,
+                ),
               });
             },
           },
@@ -301,6 +366,7 @@ const GiftCardDetails = ({
         contentContainerStyle={{
           alignItems: 'center',
           paddingHorizontal: horizontalPadding,
+          paddingBottom: 50,
         }}
         refreshControl={
           giftCard.status !== 'SUCCESS' ? (
@@ -327,31 +393,21 @@ const GiftCardDetails = ({
             })}
           </Amount>
         </TouchableOpacity>
-        <RemoteImage
-          uri={cardConfig.cardImage}
-          height={169}
-          width={270}
-          borderRadius={10}
-        />
+        <GiftCardImage uri={cardImage} />
         {giftCard.status === 'SUCCESS' ? (
           <>
-            {cardConfig.defaultClaimCodeType !== 'link' ? (
+            {defaultClaimCodeType !== 'link' ? (
               <ClaimCodeBox>
                 <Paragraph>{t('Claim Code')}</Paragraph>
-                {giftCard.barcodeImage &&
-                cardConfig.defaultClaimCodeType === 'barcode' ? (
+                {giftCard.barcodeImage && defaultClaimCodeType === 'barcode' ? (
                   <ScannableCodeContainer
-                    height={scannableCodeDimensions.height}
-                    width={scannableCodeDimensions.width}>
+                    height={scannableCodeDimensions.height + 20}
+                    width={scannableCodeDimensions.width + 20}>
                     <ScannableCode
-                      height={
-                        isBarcode
-                          ? scannableCodeDimensions.height * 0.7
-                          : scannableCodeDimensions.height
-                      }
+                      height={scannableCodeDimensions.height}
                       width={scannableCodeDimensions.width}
                       source={{uri: giftCard.barcodeImage}}
-                      resizeMode={isBarcode ? 'cover' : 'contain'}
+                      resizeMode={isBarcode ? 'stretch' : 'contain'}
                     />
                   </ScannableCodeContainer>
                 ) : null}
@@ -377,13 +433,12 @@ const GiftCardDetails = ({
                 )}
               </ClaimCodeBox>
             ) : null}
-            {giftCard.pin || cardConfig.defaultClaimCodeType === 'link' ? (
+            {giftCard.pin || defaultClaimCodeType === 'link' ? (
               <Paragraph style={{marginTop: 15}}>
                 {t('Created')} <TimeAgo time={giftCard.date} />
               </Paragraph>
             ) : null}
-            {!giftCard.archived ||
-            cardConfig.defaultClaimCodeType === 'link' ? (
+            {!giftCard.archived || defaultClaimCodeType === 'link' ? (
               <ActionContainer>
                 {cardConfig.redeemUrl ? (
                   <Button
@@ -404,7 +459,7 @@ const GiftCardDetails = ({
                     buttonStyle={'primary'}>
                     {t('Redeem Now')}
                   </Button>
-                ) : cardConfig.defaultClaimCodeType === 'link' ? (
+                ) : defaultClaimCodeType === 'link' ? (
                   <Button
                     onPress={() =>
                       Linking.openURL(giftCard.claimLink as string)
@@ -448,7 +503,7 @@ const GiftCardDetails = ({
                 <TextAlign align="center">
                   <Paragraph>
                     {t(
-                      'Claim code not yet available. Please check back later.',
+                      'Unable to fetch claim information. Please check back later.',
                     )}
                   </Paragraph>
                 </TextAlign>
@@ -490,7 +545,7 @@ const GiftCardDetails = ({
             {t('Created')} <TimeAgo time={giftCard.date} />
           </Paragraph>
         ) : null}
-        <Terms>{cardConfig.terms}</Terms>
+        <GiftCardTerms terms={cardConfig.terms} />
       </ScrollView>
     </>
   );

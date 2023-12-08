@@ -196,9 +196,7 @@ const TransactionLevel = ({
   const theme = useTheme();
 
   const [speedUpMinFeePerKb, setSpeedUpMinFeePerKb] = useState<number>();
-  const {feeUnit, feeUnitAmount, blockTime} = dispatch(
-    GetFeeUnits(currencyAbbreviation, chain),
-  );
+  const {feeUnit, feeUnitAmount, blockTime} = GetFeeUnits(chain);
   const [feeOptions, setFeeOptions] = useState<any[]>();
   const [feePerSatByte, setFeePerSatByte] = useState<
     number | string | undefined
@@ -214,7 +212,7 @@ const TransactionLevel = ({
   const minFeeAllowed = FEE_MIN;
   const [maxFeeAllowed, setMaxFeeAllowed] = useState<number>();
 
-  const {coinColor: backgroundColor} = GetTheme(currencyAbbreviation)!;
+  const {coinColor: backgroundColor} = GetTheme(chain)!;
   const themedBackground = theme.dark ? '#464646' : NeutralSlate;
 
   const setSpeedUpMinFee = (_feeLevels: Fee[]): number | undefined => {

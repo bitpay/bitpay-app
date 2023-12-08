@@ -20,6 +20,7 @@ import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
+  ValidDataTypes,
   ValidateURI,
 } from '../../../store/wallet/utils/validations';
 import {FlatList, TouchableOpacity, View} from 'react-native';
@@ -55,17 +56,6 @@ import {
 import {sleep} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../store/log';
-
-const ValidDataTypes: string[] = [
-  'BitcoinAddress',
-  'BitcoinCashAddress',
-  'DogecoinAddress',
-  'LitecoinAddress',
-  'BitcoinUri',
-  'BitcoinCashUri',
-  'DogecoinUri',
-  'LitecoinUri',
-];
 
 const SendToAddressContainer = styled.View`
   margin-top: 20px;

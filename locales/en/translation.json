@@ -417,6 +417,8 @@
   "User Agreement": "User Agreement",
   "There are no Moonpay offers available, as the current purchase limits for this exchange must be between and": "There are no Moonpay offers available, as the current purchase limits for this exchange must be between {{min}} {{fiatCurrency}} and {{max}} {{fiatCurrency}}",
   "Can't get rates at this moment. Please try again later": "Can't get rates at this moment. Please try again later",
+  "Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).": "Banxa currently does not support operations with the selected combination crypto({{coin}})-fiat({{fiatCurrency}})-paymentMethod({{paymentMethod}}).",
+  "There are no Banxa offers available, as the current purchase limits for this exchange must be between and": "There are no Banxa offers available, as the current purchase limits for this exchange must be between {{min}} {{fiatCurrency}} and {{max}} {{fiatCurrency}}",
   "Could not get crypto offer. Please try again later.": "Could not get crypto offer. Please try again later.",
   "The selected coin is not available in your region for purchases through Ramp at the moment.": "The selected coin is not available in your region for purchases through Ramp at the moment.",
   "There are no Ramp offers available, as the current purchase limits for this exchange must be between and": "There are no Ramp offers available, as the current purchase limits for this exchange must be between {{min}} {{fiatCurrency}} and {{max}} {{fiatCurrency}}",

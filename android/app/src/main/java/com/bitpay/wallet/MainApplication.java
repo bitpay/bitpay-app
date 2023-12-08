@@ -15,6 +15,8 @@ import java.util.List;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.facebook.react.modules.network.NetworkingModule;
 import okhttp3.OkHttpClient;
+import java.lang.reflect.Field;
+import android.database.CursorWindow;
 
 // Register custom font
 import com.facebook.react.views.text.ReactFontManager;
@@ -92,6 +94,17 @@ public class MainApplication extends Application implements ReactApplication {
 
     // Braze
     registerActivityLifecycleCallbacks(new BrazeActivityLifecycleCallbackListener());
+
+    // https://github.com/react-native-async-storage/async-storage/issues/617
+    try {
+      Field field = CursorWindow.class.getDeclaredField("sCursorWindowSize");
+      field.setAccessible(true);
+      field.set(null, 100 * 1024 * 1024); //100MB
+    } catch (Exception e) {
+      if (BuildConfig.DEBUG) {
+      e.printStackTrace();
+      }
+    }
   }
   /*
     Fix for IAB TODO

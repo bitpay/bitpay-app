@@ -195,7 +195,7 @@ const PayProConfirm = () => {
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
     try {
       const rates = await dispatch(startGetRates({}));
-      const newTxDetails = dispatch(
+      const newTxDetails = await dispatch(
         buildTxDetails({
           invoice,
           wallet: walletRowProps,

@@ -14,7 +14,10 @@ import {Network} from '../../constants';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
 import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
-import {getProtocolName} from '../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  getProtocolName,
+} from '../../utils/helper-methods';
 import {Platform} from 'react-native';
 
 const BadgeContainer = styled.View`
@@ -38,6 +41,7 @@ export interface WalletRowProps {
   badgeImg?: string | ((props?: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
+  tokenAddress?: string;
   chain: string;
   walletName?: string;
   cryptoBalance: string;
@@ -104,6 +108,8 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
 
   // @ts-ignore
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
+  const _currencyAbbreviation =
+    formatCurrencyAbbreviation(currencyAbbreviation);
 
   return (
     <RowContainer
@@ -131,8 +137,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             ellipsizeMode="tail"
             numberOfLines={1}
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-            {currencyAbbreviation.toUpperCase()}{' '}
-            {multisig ? `${multisig} ` : null}
+            {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
           {buildTestBadge(network, chain, isToken)}
         </Row>

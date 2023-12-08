@@ -57,6 +57,7 @@ import {
   White,
 } from '../../../styles/colors';
 import {
+  formatCurrencyAbbreviation,
   getProtocolName,
   shouldScale,
   sleep,
@@ -382,9 +383,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         navigation.navigate('Wallet', {
           screen: WalletScreens.AMOUNT,
           params: {
-            cryptoCurrencyAbbreviation:
-              fullWalletObj.currencyAbbreviation.toUpperCase(),
+            cryptoCurrencyAbbreviation: fullWalletObj.currencyAbbreviation,
             chain: fullWalletObj.chain,
+            tokenAddress: fullWalletObj.tokenAddress,
             onAmountSelected: async (amount, setButtonState) => {
               setButtonState('success');
               await sleep(500);
@@ -452,6 +453,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     fiatSpendableBalance,
     currencyAbbreviation,
     chain,
+    tokenAddress,
     network,
     pendingTxps,
   } = uiFormattedWallet;
@@ -481,6 +483,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       currencyAbbreviation,
       chain,
       [],
+      tokenAddress,
     );
     formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
@@ -901,7 +904,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         description={item.uiDescription}
         time={item.uiTime}
         value={item.uiValue}
-        RBFInfo={{isRBF: item.isRBF, isReceived: IsReceived(item.action)}}
         onPressTransaction={() => onPressTransaction(item)}
       />
     );
@@ -918,6 +920,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         onPressTransaction={() => onPressTxp(item)}
         recipientCount={item.recipientCount}
         toAddress={item.toAddress}
+        tokenAddress={item.tokenAddress}
         chain={item.chain}
         contactList={contactList}
       />
@@ -960,7 +963,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     <Row>
                       {!hideAllBalances ? (
                         <Balance scale={shouldScale(cryptoBalance)}>
-                          {cryptoBalance} {currencyAbbreviation}
+                          {cryptoBalance}{' '}
+                          {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Balance>
                       ) : (
                         <H2>****</H2>
@@ -982,7 +986,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       />
                       <Small>
                         <Text style={{fontWeight: 'bold'}}>
-                          {cryptoSpendableBalance} {currencyAbbreviation}
+                          {cryptoSpendableBalance}{' '}
+                          {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Text>
                         {showFiatBalance && (
                           <Text> ({fiatSpendableBalance})</Text>
@@ -1165,7 +1170,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
                   <TailContainer>
                     <Value>
-                      {cryptoLockedBalance} {currencyAbbreviation}
+                      {cryptoLockedBalance}{' '}
+                      {formatCurrencyAbbreviation(currencyAbbreviation)}
                     </Value>
                     <Fiat>
                       {network === 'testnet'

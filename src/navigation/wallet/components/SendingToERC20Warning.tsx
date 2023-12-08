@@ -14,6 +14,7 @@ import {
   getProtocolName,
   getBadgeImg,
   titleCasing,
+  formatCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import InfoSvg from '../../../../assets/img/info.svg';
@@ -125,11 +126,11 @@ export const viewOnBlockchain =
   (wallet: Wallet): Effect =>
   async dispatch => {
     const chain = wallet.chain.toLowerCase();
-    const contractAddress = wallet.credentials.token.address;
+    const tokenAddress = wallet.credentials.token?.address;
     const url =
       wallet.network === 'livenet'
-        ? `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrls}address/${contractAddress}`
-        : `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${contractAddress}`;
+        ? `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrls}address/${tokenAddress}`
+        : `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${tokenAddress}`;
     dispatch(openUrlWithInAppBrowser(url));
   };
 
@@ -151,7 +152,7 @@ const SendingToERC20Warning = ({isVisible, closeModal, wallet}: Props) => {
             {t(
               'You are about to send COIN using the PROTOCOLNAME Network. Make sure your recipient is expecting this exact asset and network. BitPay is not responsible for any funds lost.',
               {
-                coin: wallet.currencyAbbreviation.toUpperCase(),
+                coin: formatCurrencyAbbreviation(wallet.currencyAbbreviation),
                 protocolName: titleCasing(
                   getProtocolName(wallet.chain, wallet.network)!,
                 ),
@@ -180,7 +181,7 @@ const SendingToERC20Warning = ({isVisible, closeModal, wallet}: Props) => {
             </LinkContainer>
           </ContractHeaderContainer>
           <ContractAddressText>
-            {wallet.credentials.token.address}
+            {wallet.credentials.token?.address}
           </ContractAddressText>
         </SendingInfoContainer>
         <CloseButton onPress={closeModal}>

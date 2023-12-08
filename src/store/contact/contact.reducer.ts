@@ -7,11 +7,15 @@ export const ContactReduxPersistBlackList = [];
 export interface ContactState {
   list: Array<ContactRowProps>;
   contactMigrationComplete: boolean;
+  contactTokenAddressMigrationComplete: boolean;
+  contactBridgeUsdcMigrationComplete: boolean;
 }
 
 const initialState: ContactState = {
   list: [],
   contactMigrationComplete: false,
+  contactTokenAddressMigrationComplete: false,
+  contactBridgeUsdcMigrationComplete: false,
 };
 
 export const contactReducer = (
@@ -27,6 +31,7 @@ export const contactReducer = (
           action.contact.coin,
           action.contact.network,
           action.contact.chain,
+          action.contact.tokenAddress,
         )
       ) {
         return {
@@ -38,14 +43,15 @@ export const contactReducer = (
       }
 
     case ContactActionTypes.UPDATE_CONTACT:
-      const {address, chain, network} = action.contact;
+      const {address, chain, network, tokenAddress} = action.contact;
       return {
         ...state,
         list: state.list.map((contact: ContactRowProps) => {
           if (
             contact.address === address &&
             contact.network === network &&
-            contact.chain === chain
+            contact.chain === chain &&
+            (!contact.tokenAddress || contact.tokenAddress === tokenAddress)
           ) {
             contact = action.contact;
           }
@@ -61,7 +67,9 @@ export const contactReducer = (
             contact.address !== action.address ||
             contact.coin !== action.coin ||
             contact.network !== action.network ||
-            contact.chain !== action.chain
+            contact.chain !== action.chain ||
+            (contact.tokenAddress &&
+              contact.tokenAddress !== action.tokenAddress)
           );
         }),
       };
@@ -76,6 +84,18 @@ export const contactReducer = (
       return {
         ...state,
         contactMigrationComplete: true,
+      };
+
+    case ContactActionTypes.SET_CONTACT_TOKEN_ADDRESS_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        contactTokenAddressMigrationComplete: true,
+      };
+
+    case ContactActionTypes.SET_CONTACT_BRIDGE_USDC_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        contactBridgeUsdcMigrationComplete: true,
       };
 
     default:

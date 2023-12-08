@@ -9,6 +9,7 @@ export type BuyCryptoConfig = {
   disabled?: boolean;
   disabledTitle?: string;
   disabledMessage?: string;
+  banxa?: ExchangeConfig;
   moonpay?: ExchangeConfig;
   ramp?: ExchangeConfig;
   sardine?: ExchangeConfig;

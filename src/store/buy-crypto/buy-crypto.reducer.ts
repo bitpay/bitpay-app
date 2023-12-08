@@ -1,4 +1,5 @@
 import {
+  BanxaPaymentData,
   MoonpayPaymentData,
   RampPaymentData,
   SardinePaymentData,
@@ -13,6 +14,7 @@ export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
   [];
 
 export interface BuyCryptoState {
+  banxa: {[key in string]: BanxaPaymentData};
   moonpay: {[key in string]: MoonpayPaymentData};
   ramp: {[key in string]: RampPaymentData};
   sardine: {[key in string]: SardinePaymentData};
@@ -21,6 +23,7 @@ export interface BuyCryptoState {
 }
 
 const initialState: BuyCryptoState = {
+  banxa: {},
   moonpay: {},
   ramp: {},
   sardine: {},
@@ -33,6 +36,79 @@ export const buyCryptoReducer = (
   action: BuyCryptoActionType,
 ): BuyCryptoState => {
   switch (action.type) {
+    case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_BANXA:
+      const {banxaPaymentData} = action.payload;
+      return {
+        ...state,
+        banxa: {
+          ...state.banxa,
+          [banxaPaymentData.external_id]: banxaPaymentData,
+        },
+      };
+
+    case BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_BANXA:
+      const {banxaIncomingData} = action.payload;
+
+      if (
+        banxaIncomingData.banxaExternalId &&
+        state.banxa[banxaIncomingData.banxaExternalId]
+      ) {
+        state.banxa[banxaIncomingData.banxaExternalId] = {
+          ...state.banxa[banxaIncomingData.banxaExternalId],
+          order_id:
+            banxaIncomingData.banxaOrderId ??
+            state.banxa[banxaIncomingData.banxaExternalId].order_id,
+          status:
+            banxaIncomingData.status ??
+            state.banxa[banxaIncomingData.banxaExternalId].status,
+          crypto_amount:
+            banxaIncomingData.cryptoAmount ??
+            state.banxa[banxaIncomingData.banxaExternalId].crypto_amount,
+          fiat_total_amount:
+            banxaIncomingData.fiatTotalAmount ??
+            state.banxa[banxaIncomingData.banxaExternalId].fiat_total_amount,
+          fiat_base_amount:
+            banxaIncomingData.fiatBaseAmount ??
+            state.banxa[banxaIncomingData.banxaExternalId].fiat_base_amount,
+          coin:
+            banxaIncomingData.coin ??
+            state.banxa[banxaIncomingData.banxaExternalId].coin,
+          chain:
+            banxaIncomingData.chain ??
+            state.banxa[banxaIncomingData.banxaExternalId].chain,
+          fiat_total_amount_currency:
+            banxaIncomingData.fiatTotalAmountCurrency ??
+            state.banxa[banxaIncomingData.banxaExternalId]
+              .fiat_total_amount_currency,
+          ref:
+            banxaIncomingData.ref ??
+            state.banxa[banxaIncomingData.banxaExternalId].ref,
+          transaction_id:
+            banxaIncomingData.transactionId ??
+            state.banxa[banxaIncomingData.banxaExternalId].transaction_id,
+        };
+        return {
+          ...state,
+          banxa: {
+            ...state.banxa,
+            [banxaIncomingData.banxaExternalId]:
+              state.banxa[banxaIncomingData.banxaExternalId],
+          },
+        };
+      } else {
+        return state;
+      }
+
+    case BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_BANXA:
+      const {banxaExternalId} = action.payload;
+      const banxaPaymentRequestsList = {...state.banxa};
+      delete banxaPaymentRequestsList[banxaExternalId];
+
+      return {
+        ...state,
+        banxa: {...banxaPaymentRequestsList},
+      };
+
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_MOONPAY:
       const {moonpayPaymentData} = action.payload;
       return {

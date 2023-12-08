@@ -208,8 +208,7 @@ const ShopHome: React.FC<
 
   const [activeTab, setActiveTab] = useState(ShopTabs.GIFT_CARDS);
   const [refreshing, setRefreshing] = useState(false);
-  const [initialGiftCardSyncComplete, setInitialGiftCardSyncComplete] =
-    useState(false);
+  const [initialSyncComplete, setInitialSyncComplete] = useState(false);
 
   const memoizedGiftCardCatalog = useCallback(
     () => (
@@ -287,9 +286,10 @@ const ShopHome: React.FC<
 
   useFocusEffect(() => {
     dispatch(Analytics.track('Viewed Shop Tab', undefined));
-    if (!initialGiftCardSyncComplete) {
+    if (!initialSyncComplete) {
       dispatch(ShopEffects.startSyncGiftCards());
-      setInitialGiftCardSyncComplete(true);
+      dispatch(ShopEffects.startGetBillPayAccounts()).catch(_ => {});
+      setInitialSyncComplete(true);
     }
   });
 

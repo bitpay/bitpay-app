@@ -1,12 +1,12 @@
-import {SignClientTypes} from '@walletconnect/types';
 import {WCV2SessionType} from './wallet-connect-v2.models';
 import {
   WalletConnectV2ActionType,
   WalletConnectV2ActionTypes,
 } from './wallet-connect-v2.types';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export const sessionProposal = (
-  proposal?: SignClientTypes.EventArguments['session_proposal'],
+  proposal?: Web3WalletTypes.EventArguments['session_proposal'],
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_PROPOSAL,
   payload: {proposal},
@@ -23,15 +23,17 @@ export const rejectSessionProposal = (): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_REJECTION,
 });
 
-export const sesionRequest = (
-  request: SignClientTypes.EventArguments['session_request'],
+export const sessionRequest = (
+  request: Web3WalletTypes.EventArguments['session_request'] & {
+    createdOn?: number;
+  },
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_REQUEST,
   payload: {request},
 });
 
 export const updateRequests = (
-  requests: SignClientTypes.EventArguments['session_request'][],
+  requests: Web3WalletTypes.EventArguments['session_request'][],
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.UPDATE_REQUESTS,
   payload: {requests},

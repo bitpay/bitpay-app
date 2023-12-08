@@ -184,7 +184,7 @@ export interface SardineStatus {
 
 export const sardineGetStatusDetails = (status: string): SardineStatus => {
   let statusDescription, statusTitle;
-  // Draft | Processed | Declined | UserCustody | Complete
+  // Draft | Processed | Declined | UserCustody | Complete | Completed
 
   switch (status) {
     case 'paymentRequestSent':
@@ -224,6 +224,7 @@ export const sardineGetStatusDetails = (status: string): SardineStatus => {
       );
       break;
     case 'Complete':
+    case 'Completed':
       statusTitle = t('Payment completed');
       statusDescription = t(
         "The payment is complete and the crypto has been delivered to the user's wallet.",

@@ -18,7 +18,10 @@ import {PermissionsAndroid, Platform} from 'react-native';
 import Share, {ShareOptions} from 'react-native-share';
 import Papa from 'papaparse';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
-import {sleep} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -55,7 +58,7 @@ const ExportTransactionHistory = () => {
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'ExportTransactionHistory'>>();
-  const {currencyAbbreviation, chain, walletName} = wallet;
+  const {currencyAbbreviation, chain, walletName, tokenAddress} = wallet;
 
   const formatDate = (date: number): string => {
     const dateObj = new Date(date);
@@ -130,7 +133,7 @@ const ExportTransactionHistory = () => {
 
       // @ts-ignore
       const {unitToSatoshi} = dispatch(
-        GetPrecision(currencyAbbreviation, chain),
+        GetPrecision(currencyAbbreviation, chain, tokenAddress),
       );
       const satToUnit = 1 / unitToSatoshi;
 
@@ -168,7 +171,7 @@ const ExportTransactionHistory = () => {
           Destination: tx.addressTo || '',
           Description: _note,
           Amount: _amount,
-          Currency: currencyAbbreviation.toUpperCase(),
+          Currency: formatCurrencyAbbreviation(currencyAbbreviation),
           Txid: tx.txid,
           Creator: _creator,
           Copayers: _copayers,
