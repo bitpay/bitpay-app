@@ -42,7 +42,7 @@ import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
-import {startMigration, startWalletStoreInit} from '../wallet/effects';
+import {startMigration, startWalletStoreInit, getPriceHistory} from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
@@ -65,6 +65,7 @@ import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
+  FormatKeyBalances,
 } from '../wallet/effects/status/status';
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
@@ -949,10 +950,17 @@ export const resetAllSettings = (): Effect => dispatch => {
   dispatch(AppActions.setColorScheme(null));
   dispatch(AppActions.showPortfolioValue(true));
   dispatch(AppActions.toggleHideAllBalances(false));
+  // Reset AltCurrency
   dispatch(
     AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
   );
-  dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
+  dispatch(FormatKeyBalances());
+  dispatch(updatePortfolioBalance());
+  dispatch(coinbaseInitialize());
+  dispatch(getPriceHistory('USD'));
+  // Reset Default Language
+  i18n.changeLanguage('en');
+  dispatch(AppActions.setDefaultLanguage('en'));
   dispatch(WalletActions.setUseUnconfirmedFunds(false));
   dispatch(WalletActions.setCustomizeNonce(false));
   dispatch(WalletActions.setQueuedTransactions(false));
