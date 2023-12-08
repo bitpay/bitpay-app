@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {ScrollView} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {ScrollView, TouchableOpacity} from 'react-native';
 import {
   useTheme,
   RouteProp,
@@ -126,9 +126,11 @@ const ChangellyCheckout: React.FC = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const BWC = BwcProvider.getInstance();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showCheckTermsMsg, setShowCheckTermsMsg] = useState(false);
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [amountExpectedFrom, setAmountExpectedFrom] =
     useState<number>(amountFrom);
@@ -710,7 +712,7 @@ const ChangellyCheckout: React.FC = () => {
 
   return (
     <SwapCheckoutContainer>
-      <ScrollView>
+      <ScrollView ref={scrollViewRef}>
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
@@ -845,11 +847,19 @@ const ChangellyCheckout: React.FC = () => {
                 </FiatAmountContainer>
               </>
             )}
+            {!termsAccepted && showCheckTermsMsg ? (
+              <RowDataContainer>
+                <RowLabel style={{color: Caution}}>
+                  {t('Tap the checkbox to accept and continue.')}
+                </RowLabel>
+              </RowDataContainer>
+            ) : null}
             <CheckBoxContainer>
               <Checkbox
                 radio={false}
                 onPress={() => {
                   setTermsAccepted(!termsAccepted);
+                  setShowCheckTermsMsg(!!termsAccepted);
                 }}
                 checked={termsAccepted}
               />
@@ -878,18 +888,27 @@ const ChangellyCheckout: React.FC = () => {
         )}
       </ScrollView>
 
-      {termsAccepted && !paymentExpired && !!exchangeTxId && (
-        <SwipeButton
-          title={'Slide to send'}
-          onSwipeComplete={async () => {
-            try {
-              logger.debug('Swipe completed. Making payment...');
-              makePayment();
-            } catch (err) {}
-          }}
-          forceReset={resetSwipeButton}
-        />
-      )}
+      {!paymentExpired && !!exchangeTxId ? (
+        <TouchableOpacity
+          onPress={() => {
+            if (!termsAccepted) {
+              scrollViewRef?.current?.scrollToEnd({animated: true});
+            }
+            setShowCheckTermsMsg(!termsAccepted);
+          }}>
+          <SwipeButton
+            title={'Slide to send'}
+            disabled={!termsAccepted}
+            onSwipeComplete={async () => {
+              try {
+                logger.debug('Swipe completed. Making payment...');
+                makePayment();
+              } catch (err) {}
+            }}
+            forceReset={resetSwipeButton}
+          />
+        </TouchableOpacity>
+      ) : null}
 
       <ChangellyPoliciesModal
         isVisible={changellyPoliciesModalVisible}
