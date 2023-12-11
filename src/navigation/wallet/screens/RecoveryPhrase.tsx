@@ -144,7 +144,6 @@ const RecoveryActionsContainer = styled.View`
 `;
 
 const RecoveryActionsButton = styled.TouchableOpacity`
-  height: 40px;
   background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   padding: 12px;
   flex-direction: row;
@@ -268,10 +267,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const copyToClipboard = () => {
     haptic('impactLight');
     if (!copied) {
-      const _words = Object.values(words).map((word, index) => {
-        return `${index + 1}. ${word}`;
-      });
-      Clipboard.setString(_words.toString());
+      Clipboard.setString(words.join(' '));
       setCopied(true);
     }
   };
