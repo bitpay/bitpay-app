@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, {useLayoutEffect, useMemo, useRef} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -22,13 +16,9 @@ import {
   Caution,
   Caution25,
   Caution60,
-  Feather,
   Grey,
-  LightBlack,
-  NotificationPrimary,
   Slate,
   SlateDark,
-  White,
 } from '../../../styles/colors';
 import {Platform, TouchableOpacity} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -42,9 +32,6 @@ import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import Back from '../../../components/back/Back';
 import {IS_ANDROID} from '../../../constants';
-import CopySvg from '../../../../assets/img/copy.svg';
-import CopiedSvg from '../../../../assets/img/copied-success.svg';
-import Clipboard from '@react-native-clipboard/clipboard';
 
 type RecoveryPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -69,12 +56,6 @@ const RecoveryContainer = styled.ScrollView`
 
 const WordPairContainer = styled.View`
   margin: 30px 15px 15px 20px;
-`;
-
-const WordPairActions = styled.View`
-  margin-top: 20px;
-  flex-direction: row;
-  justify-content: space-between;
 `;
 
 const WordPairLine = styled.View`
@@ -136,37 +117,10 @@ const WarningMessageText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? Caution60 : Caution)};
 `;
 
-const RecoveryActionsContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
-  border-radius: 6px;
-  width: 100%;
-  justify-content: center;
-`;
-
-const RecoveryActionsButton = styled.TouchableOpacity`
-  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
-  padding: 12px;
-  flex-direction: row;
-  justify-content: center;
-  border-radius: 6px;
-`;
-
-const RecoveryActionsButtonText = styled(BaseText)`
-  font-size: 14px;
-  margin-left: 8px;
-  margin-top: -2px;
-  color: ${({theme: {dark}}) => (dark ? White : NotificationPrimary)};
-`;
-
-const CopyImgContainer = styled.View`
-  padding-right: 2px;
-`;
-
 const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [copied, setCopied] = useState(false);
   const {params} = route;
   const walletTermsAccepted = useAppSelector(
     ({WALLET}) => WALLET.walletTermsAccepted,
@@ -264,25 +218,6 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
     });
   };
 
-  const copyToClipboard = () => {
-    haptic('impactLight');
-    if (!copied) {
-      Clipboard.setString(words.join(' '));
-      setCopied(true);
-    }
-  };
-
-  useEffect(() => {
-    if (!copied) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      setCopied(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [copied]);
-
   return (
     <RecoveryPhraseContainer accessibilityLabel="recovery-phrase-view">
       <RecoveryContainer>
@@ -300,21 +235,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
           </WarningMessageTextContainer>
         </WarningMessageContainer>
 
-        <WordPairContainer>
-          {renderWordPairs()}
-          <WordPairActions>
-            <RecoveryActionsContainer>
-              <RecoveryActionsButton onPress={copyToClipboard}>
-                <CopyImgContainer>
-                  {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
-                </CopyImgContainer>
-                <RecoveryActionsButtonText>
-                  {t('Copy')}
-                </RecoveryActionsButtonText>
-              </RecoveryActionsButton>
-            </RecoveryActionsContainer>
-          </WordPairActions>
-        </WordPairContainer>
+        <WordPairContainer>{renderWordPairs()}</WordPairContainer>
       </RecoveryContainer>
       <CtaContainerAbsolute accessibilityLabel="cta-container">
         <Button
