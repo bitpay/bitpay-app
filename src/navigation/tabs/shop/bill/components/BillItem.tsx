@@ -30,6 +30,8 @@ import {ShopEffects} from '../../../../../store/shop';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {getBillAccountEventParams} from '../utils';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
+import {InfoSvg} from '../../components/svg/ShopTabSvgs';
+import {useTheme} from 'styled-components/native';
 
 export interface BillItemProps {
   account: BillPayAccount;
@@ -137,6 +139,12 @@ const AccountFooterActionText = styled(AccountFooterText)`
   font-weight: ${({theme}) => (theme.dark ? 500 : 400)};
 `;
 
+const ConnectingStatusContainer = styled.View`
+  align-items: center;
+  flex-direction: row;
+  gap: 6px;
+`;
+
 export default ({
   account,
   payment,
@@ -146,6 +154,7 @@ export default ({
 }: BillItemProps) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+  const theme = useTheme();
 
   const baseEventParams = getBillAccountEventParams(account, payment);
 
@@ -216,6 +225,11 @@ export default ({
                     </>
                   )}
                 </>
+              ) : account.paymentStatus === 'activating' ? (
+                <ConnectingStatusContainer>
+                  <InfoSvg theme={theme} />
+                  <BillStatus account={account} payment={payment} />
+                </ConnectingStatusContainer>
               ) : null}
             </>
           )}
@@ -231,7 +245,7 @@ export default ({
           </AccountActions>
         ) : (
           <>
-            {!account.isPayable ? (
+            {!account.isPayable && account.paymentStatus !== 'activating' ? (
               <AccountFooter variation={variation}>
                 <AccountFooterText>Unable to pay bill</AccountFooterText>
                 <TouchableOpacity

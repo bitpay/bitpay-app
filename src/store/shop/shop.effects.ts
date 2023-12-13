@@ -290,11 +290,14 @@ export const waitForConfirmation =
     }, 10000);
   };
 
-export const startGetAuthElementToken =
-  (): Effect<Promise<string>> => async (dispatch, getState) => {
+export const startGetMethodToken =
+  (
+    {tokenType}: {tokenType: 'auth' | 'link'} = {tokenType: 'auth'},
+  ): Effect<Promise<string>> =>
+  async (dispatch, getState) => {
     const {BITPAY_ID} = getState();
     const methodAuthElementToken = await BitPayIdApi.getInstance()
-      .request('getMethodAuthElementToken', BITPAY_ID.apiToken[APP_NETWORK])
+      .request('getMethodToken', BITPAY_ID.apiToken[APP_NETWORK], {tokenType})
       .then(res => {
         if (res?.data?.error) {
           throw new Error(res.data.error);
@@ -302,6 +305,19 @@ export const startGetAuthElementToken =
         return res.data.data as string;
       });
     return methodAuthElementToken;
+  };
+
+export const exchangeMethodAccountToken =
+  (token: string): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    await BitPayIdApi.getInstance()
+      .request('exchangeAccountToken', BITPAY_ID.apiToken[APP_NETWORK], {token})
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+      });
   };
 
 export const startGetBillPayAccounts =

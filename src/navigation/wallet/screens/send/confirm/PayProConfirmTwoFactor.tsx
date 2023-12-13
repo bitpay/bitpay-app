@@ -14,6 +14,7 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../../../../auth/components/AuthFormContainer';
 import {WalletStackParamList} from '../../../WalletStack';
+import {BillStackParamList} from '@/navigation/tabs/shop/bill/BillStack';
 
 const COINBASE_SMS_2FA_CODE_LENGTH = 7;
 
@@ -36,7 +37,9 @@ const schema = yup.object().shape({
 
 const PayProConfirmTwoFactor = ({
   route,
-}: StackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>) => {
+}:
+  | StackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>
+  | StackScreenProps<BillStackParamList, 'BillConfirmTwoFactor'>) => {
   const {t} = useTranslation();
   const {onSubmit, twoFactorCodeLength} = route.params;
   const codeRef = useRef<TextInput>(null);
