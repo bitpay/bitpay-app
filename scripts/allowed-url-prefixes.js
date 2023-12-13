@@ -21,29 +21,32 @@ const androidManifestPath = `${__dirname}/../android/app/src/main/AndroidManifes
 const xcodeProjectContent = fs.readFileSync(xcodeProjectPath, 'utf8');
 const androidManifestContent = fs.readFileSync(androidManifestPath, 'utf8');
 
+const developmentAssetsPrefix = 'http://localhost:8081';
+
 const developmentOnlyAllowedUrlPrefixes =
   process.env.NODE_ENV === 'development'
-    ? (process.env.ALLOWED_URL_PREFIXES_DEVELOPMENT || '').split(',')
+    ? (process.env.ALLOWED_URL_PREFIXES_DEVELOPMENT || '').split(',').concat([developmentAssetsPrefix])
     : [];
 
 const allowedUrlPrefixes = [
-  'https://bitpay.com',
-  'https://test.bitpay.com',
-  'https://staging.bitpay.com',
-  'https://bws.bitpay.com',
-  'https://www.coinbase.com',
-  'https://api.coinbase.com',
+  'https://bitpay.com/',
+  'https://test.bitpay.com/',
+  'https://staging.bitpay.com/',
+  'https://bws.bitpay.com/',
+  'https://www.coinbase.com/',
+  'https://api.coinbase.com/',
   'https://api.1inch.dev/swap/v5.2/',
   'https://api.coingecko.com/api/v3/simple/token_price/',
-  'https://checkout.simplexcc.com',
+  'https://checkout.simplexcc.com/',
   'https://sandbox.test-simplexcc.com',
   'https://api.zenledger.io/bitpay/wallets/',
-  'https://rest.iad-05.braze.com',
-  'https://sdk.iad-05.braze.com',
+  'https://rest.iad-05.braze.com/',
+  'https://sdk.iad-05.braze.com/',
   'https://cloudflare-eth.com/',
   'https://goerli.infura.io/v3/',
   'https://polygon-rpc.com/',
-  'https://matic-mumbai.chainstacklabs.com',
+  'https://matic-mumbai.chainstacklabs.com/',
+  'https://static.methodfi.com/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');
