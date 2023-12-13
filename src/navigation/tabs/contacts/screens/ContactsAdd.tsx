@@ -151,7 +151,7 @@ const NetworkName = styled(BaseText)`
 const schema = yup.object().shape({
   name: yup.string().required().trim(),
   email: yup.string().email().trim(),
-  destinationTag: yup.number(),
+  destinationTag: yup.string().trim(),
   address: yup.string().required(),
 });
 
@@ -402,10 +402,14 @@ const ContactsAdd = ({
       return;
     }
 
-    if (coinValue === 'xrp' && !contact.destinationTag) {
+    if (
+      coinValue === 'xrp' &&
+      contact.destinationTag &&
+      isNaN(contact.destinationTag)
+    ) {
       setError('destinationTag', {
         type: 'manual',
-        message: t('Tag number is required for XRP address'),
+        message: t('Only numbers are allowed'),
       });
       return;
     }
