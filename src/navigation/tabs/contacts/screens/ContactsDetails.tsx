@@ -5,7 +5,7 @@ import {useNavigation} from '@react-navigation/core';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
-import {ContactsStackParamList} from '../ContactsStack';
+import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
 import {
   formatCurrencyAbbreviation,
   getCurrencyAbbreviation,
@@ -136,7 +136,7 @@ interface ModalOpt {
 
 const ContactsDetails = ({
   route,
-}: NativeStackScreenProps<ContactsStackParamList, 'ContactsDetails'>) => {
+}: NativeStackScreenProps<ContactsGroupParamList, ContactsScreens.DETAILS>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation();
@@ -175,18 +175,15 @@ const ContactsDetails = ({
       onPress: async () => {
         setShowIconOptions(false);
         await sleep(500);
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {
-            context: 'contact',
-            recipient: {
-              name: contact.name,
-              address: newAddress,
-              currency: contact.coin,
-              chain: contact.chain,
-              network: contact.network,
-              destinationTag: contact.tag || contact.destinationTag,
-            },
+        navigation.navigate('GlobalSelect', {
+          context: 'contact',
+          recipient: {
+            name: contact.name,
+            address: newAddress,
+            currency: contact.coin,
+            chain: contact.chain,
+            network: contact.network,
+            destinationTag: contact.tag || contact.destinationTag,
           },
         });
       },
@@ -199,14 +196,11 @@ const ContactsDetails = ({
     onPress: async () => {
       setShowIconOptions(false);
       await sleep(500);
-      navigation.navigate('Contacts', {
-        screen: 'ContactsAdd',
-        params: {
-          contact,
-          context: 'edit',
-          onEditComplete: (c: ContactRowProps) => {
-            setContact(c);
-          },
+      navigation.navigate('ContactsAdd', {
+        contact,
+        context: 'edit',
+        onEditComplete: (c: ContactRowProps) => {
+          setContact(c);
         },
       });
     },

@@ -244,7 +244,6 @@ const Amount: React.VFC<AmountProps> = ({
   const onCellPress = useCallback((val: string) => {
     haptic('soft');
     setUseSendMax(false);
-
     let newValue;
     switch (val) {
       case 'reset':

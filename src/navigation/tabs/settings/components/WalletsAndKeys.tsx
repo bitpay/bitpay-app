@@ -30,10 +30,7 @@ const WalletsAndKeys = () => {
 
   const onPressKey = (key: Key) => {
     key.backupComplete
-      ? navigation.navigate('Wallet', {
-          screen: 'KeySettings',
-          params: {key},
-        })
+      ? navigation.navigate('KeySettings', {key})
       : dispatch(
           showBottomNotificationModal(
             keyBackupRequired(key, navigation, dispatch, 'settings'),
@@ -65,9 +62,7 @@ const WalletsAndKeys = () => {
         : null}
       <Setting
         style={{justifyContent: 'center'}}
-        onPress={() =>
-          navigation.navigate('Wallet', {screen: 'CreationOptions'})
-        }
+        onPress={() => navigation.navigate('CreationOptions')}
         activeOpacity={ActiveOpacity}>
         <CreateOrImportLink>{t('Create or Import Key')}</CreateOrImportLink>
       </Setting>

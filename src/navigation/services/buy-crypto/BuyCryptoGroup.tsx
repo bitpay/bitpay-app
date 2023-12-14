@@ -1,10 +1,4 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {useNavigation} from '@react-navigation/native';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
 import BuyCryptoRoot, {
   BuyCryptoRootScreenParams,
@@ -13,9 +7,18 @@ import BuyCryptoOffers, {
   BuyCryptoOffersScreenParams,
 } from './screens/BuyCryptoOffers';
 import {useTranslation} from 'react-i18next';
+import {Root} from '../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
 
-export type BuyCryptoStackParamList = {
+interface BuyCryptoProps {
+  BuyCrypto: typeof Root;
+}
+
+export type BuyCryptoGroupParamList = {
   BuyCryptoRoot: BuyCryptoRootScreenParams;
   BuyCryptoOffers: BuyCryptoOffersScreenParams;
 };
@@ -25,13 +28,10 @@ export enum BuyCryptoScreens {
   OFFERS = 'BuyCryptoOffers',
 }
 
-const BuyCrypto = createNativeStackNavigator<BuyCryptoStackParamList>();
-
-const BuyCryptoStack = () => {
+const BuyCryptoGroup: React.FC<BuyCryptoProps> = ({BuyCrypto}) => {
   const {t} = useTranslation();
   return (
-    <BuyCrypto.Navigator
-      initialRouteName={BuyCryptoScreens.ROOT}
+    <BuyCrypto.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -57,8 +57,8 @@ const BuyCryptoStack = () => {
           headerTitle: () => <HeaderTitle>{t('Offers')}</HeaderTitle>,
         }}
       />
-    </BuyCrypto.Navigator>
+    </BuyCrypto.Group>
   );
 };
 
-export default BuyCryptoStack;
+export default BuyCryptoGroup;

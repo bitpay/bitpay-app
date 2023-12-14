@@ -1,37 +1,39 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {HeaderBackButton} from '@react-navigation/elements';
 import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../components/styled/Text';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
 import ActivateScreen, {
   ActivateScreenParamList,
 } from './screens/ActivateScreen';
 import CompleteScreen, {
   CompleteScreenParamList,
 } from './screens/CompleteScreen';
+import {Root} from '../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
-export type CardActivationStackParamList = {
-  Activate: ActivateScreenParamList;
-  Complete: CompleteScreenParamList;
+interface CardActivationProps {
+  CardActivation: typeof Root;
+}
+
+export type CardActivationGroupParamList = {
+  CardActivate: ActivateScreenParamList;
+  CardComplete: CompleteScreenParamList;
 };
 
 export enum CardActivationScreens {
-  ACTIVATE = 'Activate',
-  COMPLETE = 'Complete',
+  ACTIVATE = 'CardActivate',
+  COMPLETE = 'CardComplete',
 }
 
-const CardActivation =
-  createNativeStackNavigator<CardActivationStackParamList>();
-
-const CardActivationStack: React.FC = () => {
+const CardActivationGroup: React.FC<CardActivationProps> = ({
+  CardActivation,
+}) => {
   const {t} = useTranslation();
   return (
-    <CardActivation.Navigator
-      initialRouteName={CardActivationScreens.ACTIVATE}
+    <CardActivation.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -59,8 +61,8 @@ const CardActivationStack: React.FC = () => {
           headerShown: false,
         }}
       />
-    </CardActivation.Navigator>
+    </CardActivation.Group>
   );
 };
 
-export default CardActivationStack;
+export default CardActivationGroup;

@@ -15,7 +15,7 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {WalletConnectStackParamList} from '../WalletConnectStack';
+import {WalletConnectGroupParamList} from '../WalletConnectGroup';
 import PaymentSent from '../../wallet/components/PaymentSent';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -65,7 +65,7 @@ const WalletConnectConfirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route =
-    useRoute<RouteProp<WalletConnectStackParamList, 'WalletConnectConfirm'>>();
+    useRoute<RouteProp<WalletConnectGroupParamList, 'WalletConnectConfirm'>>();
   const {wallet, request, peerName, recipient} = route.params;
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);

@@ -11,11 +11,15 @@ import styled from 'styled-components/native';
 import {Caution, SlateDark, White} from '../styles/colors';
 import Button from '../components/button/Button';
 
-export type DebugScreenParamList =
-  | {
-      name: string | undefined | null;
-    }
-  | undefined;
+export enum DebugScreens {
+  DEBUG = 'Debug',
+}
+
+export type DebugScreenParamList = {
+  Debug: {
+    name: string | undefined | null;
+  };
+};
 
 const DebugContainer = styled.SafeAreaView`
   flex: 1;

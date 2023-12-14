@@ -19,7 +19,7 @@ import {
   ListItemSubText,
 } from '../../../components/styled/Text';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import React, {
   useCallback,
   useEffect,
@@ -111,7 +111,7 @@ const TransactionProposalNotifications = () => {
     params: {walletId, keyId},
   } =
     useRoute<
-      RouteProp<WalletStackParamList, 'TransactionProposalNotifications'>
+      RouteProp<WalletGroupParamList, 'TransactionProposalNotifications'>
     >();
   const {t} = useTranslation();
   const navigation = useNavigation();
@@ -294,13 +294,10 @@ const TransactionProposalNotifications = () => {
   const onPressTxp = useMemo(
     () => (transaction: TransactionProposal, fullWalletObj: Wallet) => {
       const key = keys[fullWalletObj.keyId];
-      navigation.navigate('Wallet', {
-        screen: 'TransactionProposalDetails',
-        params: {
-          walletId: fullWalletObj.id,
-          transactionId: transaction.id,
-          keyId: key.id,
-        },
+      navigation.navigate('TransactionProposalDetails', {
+        walletId: fullWalletObj.id,
+        transactionId: transaction.id,
+        keyId: key.id,
       });
     },
     [keys, navigation],

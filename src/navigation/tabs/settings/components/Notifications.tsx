@@ -125,11 +125,7 @@ const Notifications = () => {
     <SettingsComponent>
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('NotificationsSettings', {
-            screen: 'PushNotifications',
-          })
-        }>
+        onPress={() => navigation.navigate('PushNotifications')}>
         <SettingTitle>{t('Push Notifications')}</SettingTitle>
         <AngleRight />
       </Setting>
@@ -139,11 +135,7 @@ const Notifications = () => {
 
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('NotificationsSettings', {
-            screen: 'EmailNotifications',
-          })
-        }>
+        onPress={() => navigation.navigate('EmailNotifications')}>
         <SettingTitle>{t('Email Notifications')}</SettingTitle>
         <AngleRight />
       </Setting>

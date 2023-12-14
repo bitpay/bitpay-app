@@ -42,9 +42,9 @@ const MultisigOptions = ({
             context: walletKey ? 'AddingOptions' : 'CreationOptions',
           }),
         );
-        navigation.navigate('Wallet', {
-          screen: 'CurrencySelection',
-          params: {context: 'addWalletMultisig', key: walletKey},
+        navigation.navigate('CurrencySelection', {
+          context: 'addWalletMultisig',
+          key: walletKey!,
         });
       },
       imgSrc: MultisigSharedOptionImage[themeType],
@@ -60,10 +60,7 @@ const MultisigOptions = ({
             context: walletKey ? 'AddingOptions' : 'CreationOptions',
           }),
         );
-        navigation.navigate('Wallet', {
-          screen: 'JoinMultisig',
-          params: {key: walletKey},
-        });
+        navigation.navigate('JoinMultisig', {key: walletKey});
       },
       imgSrc: MultisigJoinOptionImage[themeType],
     },

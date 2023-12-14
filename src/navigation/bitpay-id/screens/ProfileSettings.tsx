@@ -22,7 +22,7 @@ import {
   Slate,
   SlateDark,
 } from '../../../styles/colors';
-import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
+import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import {TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import ChevronRight from '../components/ChevronRight';
@@ -30,7 +30,10 @@ import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch} from '../../../utils/hooks';
 import {SectionSpacer} from '../../tabs/shop/components/styled/ShopTabComponents';
 
-type ProfileProps = NativeStackScreenProps<BitpayIdStackParamList, 'Profile'>;
+type ProfileProps = NativeStackScreenProps<
+  BitpayIdGroupParamList,
+  BitpayIdScreens.PROFILE
+>;
 
 const ProfileSettingsScreenContainer = styled.SafeAreaView`
   flex: 1;
@@ -100,7 +103,7 @@ const SettingsSectionDescription = styled(BaseText)`
   line-height: 18px;
 `;
 
-export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
+export const ProfileSettingsScreen = ({route}: ProfileProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -149,9 +152,7 @@ export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               onPress={() =>
-                navigation.navigate('BitpayId', {
-                  screen: BitpayIdScreens.RECEIVE_SETTINGS,
-                })
+                navigation.navigate(BitpayIdScreens.RECEIVE_SETTINGS)
               }>
               <SettingsItem>
                 <SettingsSectionBody>
@@ -169,9 +170,7 @@ export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               onPress={() =>
-                navigation.navigate('BitpayId', {
-                  screen: BitpayIdScreens.ENABLE_TWO_FACTOR,
-                })
+                navigation.navigate(BitpayIdScreens.ENABLE_TWO_FACTOR)
               }>
               <SettingsItem>
                 <SettingsSectionBody>

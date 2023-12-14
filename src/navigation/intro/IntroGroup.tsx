@@ -1,16 +1,21 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
 import ShopScreen from './screens/Shop';
 import StartScreen from './screens/Start';
 import WhatsNew from './screens/WhatsNew';
 import CustomizeHome from './screens/CustomizeHome';
+import {Root} from '../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
 
-export type IntroStackParamList = {
+interface IntroProps {
+  Intro: typeof Root;
+}
+
+export type IntroGroupParamList = {
   Start: undefined;
   Shop: undefined;
   WhatsNew: undefined;
@@ -24,12 +29,11 @@ export enum IntroScreens {
   CUSTOMIZE_HOME = 'CustomizeHome',
 }
 
-const Intro = createNativeStackNavigator<IntroStackParamList>();
 export const IntroAnimeDelay = 300;
 
-const IntroStack = () => {
+const IntroStack: React.FC<IntroProps> = ({Intro}) => {
   return (
-    <Intro.Navigator
+    <Intro.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerShown: false,
@@ -41,8 +45,7 @@ const IntroStack = () => {
             {...baseNativeHeaderBackButtonProps}
           />
         ),
-      })}
-      initialRouteName="Start">
+      })}>
       <Intro.Screen name={IntroScreens.START} component={StartScreen} />
       <Intro.Screen name={IntroScreens.WHATS_NEW} component={WhatsNew} />
       <Intro.Screen
@@ -50,7 +53,7 @@ const IntroStack = () => {
         component={CustomizeHome}
       />
       <Intro.Screen name={IntroScreens.SHOP} component={ShopScreen} />
-    </Intro.Navigator>
+    </Intro.Group>
   );
 };
 

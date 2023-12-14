@@ -1,23 +1,22 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
-import {RootStackParamList} from '../../../../Root';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {selectAvailableGiftCards} from '../../../../store/shop/shop.selectors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {GiftCardGroupParamList} from './GiftCardGroup';
 
-export type GiftCardDeeplinkScreenParamList =
-  | {
-      merchant?: string | undefined | null;
-    }
-  | undefined;
+export type GiftCardDeeplinkScreenParamList = {
+  merchant?: string | undefined | null;
+};
 
 /**
  * Creating a dedicated deeplink screen since we rely on the store to get card config.
  * Otherwise we should configure the deeplink directly.
  */
-const GiftCardDeeplinkScreen: React.FC<
-  NativeStackScreenProps<RootStackParamList, 'GiftCardDeeplink'>
-> = ({navigation, route}) => {
+const GiftCardDeeplinkScreen = ({
+  route,
+  navigation,
+}: NativeStackScreenProps<GiftCardGroupParamList, 'GiftCardDeeplink'>) => {
   const merchantName = ((route.params || {}).merchant || '').toLowerCase();
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
   const dispatch = useAppDispatch();
@@ -34,11 +33,8 @@ const GiftCardDeeplinkScreen: React.FC<
       }),
     );
     if (targetedGiftCardRef.current) {
-      navigation.replace('GiftCard', {
-        screen: 'BuyGiftCard',
-        params: {
-          cardConfig: targetedGiftCardRef.current,
-        },
+      navigation.replace('BuyGiftCard', {
+        cardConfig: targetedGiftCardRef.current,
       });
     } else {
       navigation.replace('Tabs', {

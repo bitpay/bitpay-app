@@ -12,7 +12,7 @@ import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {TwoFactorAuthStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthFormParagraph,
@@ -27,7 +27,7 @@ export type TwoFactorAuthenticationParamList =
   | undefined;
 
 type TwoFactorAuthenticationScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
+  AuthGroupParamList,
   AuthScreens.TWO_FACTOR_AUTH
 >;
 

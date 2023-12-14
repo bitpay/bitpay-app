@@ -23,7 +23,7 @@ import {TouchableOpacity} from 'react-native';
 import Button from '../../../components/button/Button';
 import ChevronRight from '../components/ChevronRight';
 import SendToPill from '../../wallet/components/SendToPill';
-import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
+import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BuildKeysAndWalletsList} from '../../../store/wallet/utils/wallet';
 import {Network} from '../../../constants';
@@ -43,7 +43,7 @@ import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {ReceivingAddress} from '../../../store/bitpay-id/bitpay-id.models';
-import {WalletScreens} from '../../wallet/WalletStack';
+import {WalletScreens} from '../../wallet/WalletGroup';
 import AddressModal from '../components/AddressModal';
 import {keyBackupRequired} from '../../tabs/home/components/Crypto';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -143,11 +143,11 @@ const createAddressMap = (receivingAddresses: ReceivingAddress[]) => {
 };
 
 type ReceiveSettingsProps = NativeStackScreenProps<
-  BitpayIdStackParamList,
-  'ReceiveSettings'
+  BitpayIdGroupParamList,
+  BitpayIdScreens.RECEIVE_SETTINGS
 >;
 
-const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
+const ReceiveSettings = ({route}: ReceiveSettingsProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
@@ -298,9 +298,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
     );
     await dispatch(dismissOnGoingProcessModal());
     return !receivingAddresses.length && newReceivingAddresses.length
-      ? navigator.navigate('BitpayId', {
-          screen: BitpayIdScreens.RECEIVING_ENABLED,
-        })
+      ? navigator.navigate(BitpayIdScreens.RECEIVING_ENABLED)
       : navigation.popToTop();
   };
 
@@ -319,11 +317,8 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   }, [otpEnabled]);
 
   const addWallet = (key: Key) => {
-    navigator.navigate('Wallet', {
-      screen: 'AddingOptions',
-      params: {
-        key,
-      },
+    navigator.navigate('AddingOptions', {
+      key,
     });
   };
 
@@ -414,18 +409,15 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
                 onPress={() => {
                   const keyList = Object.values(keys);
                   if (!keyList.length) {
-                    navigator.navigate('Wallet', {screen: 'CreationOptions'});
+                    navigator.navigate('CreationOptions');
                     return;
                   }
                   if (keyList.length === 1) {
                     addWallet(keyList[0]);
                     return;
                   }
-                  navigator.navigate('Wallet', {
-                    screen: WalletScreens.KEY_GLOBAL_SELECT,
-                    params: {
-                      onKeySelect: (selectedKey: Key) => addWallet(selectedKey),
-                    },
+                  navigator.navigate(WalletScreens.KEY_GLOBAL_SELECT, {
+                    onKeySelect: (selectedKey: Key) => addWallet(selectedKey),
                   });
                 }}>
                 <AddressItem>
@@ -523,21 +515,18 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
         }}>
         <Button
           onPress={() =>
-            navigator.navigate('BitpayId', {
-              screen: BitpayIdScreens.TWO_FACTOR,
-              params: {
-                onSubmit: async (twoFactorCode: string) => {
-                  saveAddresses(twoFactorCode).catch(async error => {
-                    dispatch(dismissOnGoingProcessModal());
-                    await sleep(300);
-                    showError({
-                      error,
-                      defaultErrorMessage: t('Could not save addresses'),
-                    });
+            navigator.navigate(BitpayIdScreens.TWO_FACTOR, {
+              onSubmit: async (twoFactorCode: string) => {
+                saveAddresses(twoFactorCode).catch(async error => {
+                  dispatch(dismissOnGoingProcessModal());
+                  await sleep(300);
+                  showError({
+                    error,
+                    defaultErrorMessage: t('Could not save addresses'),
                   });
-                },
-                twoFactorCodeLength: 6,
+                });
               },
+              twoFactorCodeLength: 6,
             })
           }
           buttonStyle={'primary'}>
@@ -560,9 +549,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
           setTwoFactorModalRequiredVisible(false);
           navigation.pop();
           if (enable) {
-            navigator.navigate('BitpayId', {
-              screen: BitpayIdScreens.ENABLE_TWO_FACTOR,
-            });
+            navigator.navigate(BitpayIdScreens.ENABLE_TWO_FACTOR);
           }
         }}
       />

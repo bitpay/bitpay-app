@@ -216,9 +216,7 @@ const WalletConnectStart = () => {
               text: t('GOT IT'),
               action: () => {
                 navigation.dispatch(
-                  StackActions.replace('WalletConnect', {
-                    screen: 'WalletConnectConnections',
-                  }),
+                  StackActions.replace('WalletConnectConnections'),
                 );
                 dispatch(dismissBottomNotificationModal());
               },

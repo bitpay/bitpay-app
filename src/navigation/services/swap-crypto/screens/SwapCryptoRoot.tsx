@@ -35,7 +35,7 @@ import {
   SpinnerContainer,
   BalanceContainer,
 } from '../styled/SwapCryptoRoot.styled';
-import {SwapCryptoStackParamList} from '../SwapCryptoStack';
+import {SwapCryptoGroupParamList} from '../SwapCryptoGroup';
 import Button from '../../../../components/button/Button';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -171,7 +171,7 @@ const SwapCryptoRoot: React.FC = () => {
   );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
+  const route = useRoute<RouteProp<SwapCryptoGroupParamList, 'Root'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
     useState(false);
@@ -785,21 +785,18 @@ const SwapCryptoRoot: React.FC = () => {
         exchange: 'changelly',
       }),
     );
-    navigation.navigate('SwapCrypto', {
-      screen: 'ChangellyCheckout',
-      params: {
-        fromWalletSelected: fromWalletSelected!,
-        toWalletSelected: toWalletSelected!,
-        fixedRateId: rateData!.fixedRateId,
-        amountFrom: amountFrom,
-        useSendMax: IsERCToken(
-          fromWalletSelected!.currencyAbbreviation,
-          fromWalletSelected!.chain,
-        )
-          ? false
-          : useSendMax,
-        sendMaxInfo: sendMaxInfo,
-      },
+    navigation.navigate('ChangellyCheckout', {
+      fromWalletSelected: fromWalletSelected!,
+      toWalletSelected: toWalletSelected!,
+      fixedRateId: rateData!.fixedRateId,
+      amountFrom: amountFrom,
+      useSendMax: IsERCToken(
+        fromWalletSelected!.currencyAbbreviation,
+        fromWalletSelected!.chain,
+      )
+        ? false
+        : useSendMax,
+      sendMaxInfo: sendMaxInfo,
     });
   };
 

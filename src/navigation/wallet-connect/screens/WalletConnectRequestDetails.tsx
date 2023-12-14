@@ -203,12 +203,9 @@ const WalletConnectRequestDetails = () => {
 
   const goToWalletConnectHome = async (newLinkedWallet?: Wallet) => {
     await sleep(500);
-    navigation.navigate('WalletConnect', {
-      screen: 'WalletConnectHome',
-      params: {
-        topic,
-        wallet: newLinkedWallet || wallet,
-      },
+    navigation.navigate('WalletConnectHome', {
+      topic,
+      wallet: newLinkedWallet || wallet,
     });
   };
 

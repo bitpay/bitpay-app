@@ -13,8 +13,8 @@ import AuthFormContainer, {
   AuthFormParagraph,
   AuthRowContainer,
 } from '../../../../auth/components/AuthFormContainer';
-import {WalletStackParamList} from '../../../WalletStack';
-import {BillStackParamList} from '@/navigation/tabs/shop/bill/BillStack';
+import {BillGroupParamList} from '../../../../../navigation/tabs/shop/bill/BillGroup';
+import {WalletGroupParamList} from '../../../WalletGroup';
 
 const COINBASE_SMS_2FA_CODE_LENGTH = 7;
 
@@ -38,8 +38,8 @@ const schema = yup.object().shape({
 const PayProConfirmTwoFactor = ({
   route,
 }:
-  | NativeStackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>
-  | NativeStackScreenProps<BillStackParamList, 'BillConfirmTwoFactor'>) => {
+  | NativeStackScreenProps<WalletGroupParamList, 'PayProConfirmTwoFactor'>
+  | NativeStackScreenProps<BillGroupParamList, 'BillConfirmTwoFactor'>) => {
   const {t} = useTranslation();
   const {onSubmit, twoFactorCodeLength} = route.params;
   const codeRef = useRef<TextInput>(null);

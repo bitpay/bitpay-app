@@ -5,7 +5,7 @@ import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {SlateDark, White} from '../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import QRCode from 'react-native-qrcode-svg';
 import {useTranslation} from 'react-i18next';
 
@@ -45,7 +45,7 @@ const ExportKey = () => {
   const {t} = useTranslation();
   const {
     params: {code, keyName},
-  } = useRoute<RouteProp<WalletStackParamList, 'ExportKey'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'ExportKey'>>();
 
   const navigation = useNavigation();
 

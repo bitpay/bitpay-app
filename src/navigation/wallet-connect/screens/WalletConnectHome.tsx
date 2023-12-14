@@ -50,7 +50,7 @@ import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../constants/WalletConnectV
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {WalletConnectHeader} from '../WalletConnectStack';
+import {WalletConnectHeader} from '../WalletConnectGroup';
 import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
 import {InAppNotificationContextType} from '../../../store/app/app.models';
 
@@ -215,14 +215,11 @@ const WalletConnectHome = () => {
         address: toAddress,
       };
 
-      navigation.navigate('WalletConnect', {
-        screen: 'WalletConnectConfirm',
-        params: {
-          wallet: _wallet || wallet,
-          recipient,
-          request,
-          peerName,
-        },
+      navigation.navigate('WalletConnectConfirm', {
+        wallet: _wallet || wallet,
+        recipient,
+        request,
+        peerName,
       });
     } catch (error: any) {
       await showErrorMessage(
@@ -249,14 +246,11 @@ const WalletConnectHome = () => {
   const handleRequestMethod = (request: WCV2RequestType) => {
     const {method} = request.params.request;
     method !== 'eth_sendTransaction' && method !== 'eth_signTransaction'
-      ? navigation.navigate('WalletConnect', {
-          screen: 'WalletConnectRequestDetails',
-          params: {
-            request,
-            wallet,
-            peerName,
-            topic,
-          },
+      ? navigation.navigate('WalletConnectRequestDetails', {
+          request,
+          wallet,
+          peerName,
+          topic,
         })
       : goToConfirmView(request);
   };

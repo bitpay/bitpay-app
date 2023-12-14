@@ -1,11 +1,6 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
 import SwapCryptoRoot from './screens/SwapCryptoRoot';
 import ChangellyCheckout from './screens/ChangellyCheckout';
@@ -14,10 +9,19 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import HistoryIcon from '../../../../assets/img/services/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {Root, navigationRef} from '../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
 
-export type SwapCryptoStackParamList = {
-  Root:
+interface SwapCryptoProps {
+  SwapCrypto: typeof Root;
+}
+
+export type SwapCryptoGroupParamList = {
+  SwapCryptoRoot:
     | {
         selectedWallet?: Wallet;
       }
@@ -35,23 +39,19 @@ export type SwapCryptoStackParamList = {
 };
 
 export enum SwapCryptoScreens {
-  ROOT = 'Root',
+  SWAPCRYPTO_ROOT = 'SwapCryptoRoot',
   CHANGELLY_CHECKOUT = 'ChangellyCheckout',
 }
 
-const SwapCrypto = createNativeStackNavigator<SwapCryptoStackParamList>();
-
-const SwapCryptoStack = () => {
+const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
   const changellyHistory = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
   const changellyTxs = Object.values(changellyHistory);
 
   return (
-    <SwapCrypto.Navigator
-      initialRouteName={SwapCryptoScreens.ROOT}
+    <SwapCrypto.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -64,7 +64,7 @@ const SwapCryptoStack = () => {
         ),
       })}>
       <SwapCrypto.Screen
-        name={SwapCryptoScreens.ROOT}
+        name={SwapCryptoScreens.SWAPCRYPTO_ROOT}
         component={SwapCryptoRoot}
         options={{
           headerTitle: () => <HeaderTitle>{t('Swap Crypto')}</HeaderTitle>,
@@ -73,9 +73,7 @@ const SwapCryptoStack = () => {
               {!!changellyTxs.length && (
                 <TouchableOpacity
                   onPress={() => {
-                    navigation.navigate('ExternalServicesSettings', {
-                      screen: 'ChangellySettings',
-                    });
+                    navigationRef.navigate('ChangellySettings');
                   }}>
                   <HistoryIcon width={42} height={42} />
                 </TouchableOpacity>
@@ -92,8 +90,8 @@ const SwapCryptoStack = () => {
           headerTitle: () => <HeaderTitle>{t('Swap Checkout')}</HeaderTitle>,
         }}
       />
-    </SwapCrypto.Navigator>
+    </SwapCrypto.Group>
   );
 };
 
-export default SwapCryptoStack;
+export default SwapCryptoGroup;

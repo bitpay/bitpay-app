@@ -1,29 +1,33 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {HeaderTitle} from '../../../../components/styled/Text';
+import {Root} from '../../../../Root';
+import NetworkFeePolicy from './screens/NewtorkFeePolicy';
 import {
   baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
 } from '../../../../constants/NavigationOptions';
-import {HeaderTitle} from '../../../../components/styled/Text';
-import NetworkFeePolicy from './screens/NewtorkFeePolicy';
 import {HeaderBackButton} from '@react-navigation/elements';
 
-export type NetworkFeePolicySettingsStackParamsList = {
+interface NetworkFeePolicyProps {
+  NetworkFeePolicySettings: typeof Root;
+}
+
+export type NetworkFeePolicySettingsGroupParamsList = {
   NetworkFeePolicy: undefined;
 };
 
 export enum NetworkFeePolicySettingsScreens {
   NETWORK_FEE_POLICY = 'NetworkFeePolicy',
 }
-const Notifications =
-  createNativeStackNavigator<NetworkFeePolicySettingsStackParamsList>();
 
-const NetworkFeePolicySettingsStack = () => {
+const NetworkFeePolicySettingsGroup: React.FC<NetworkFeePolicyProps> = ({
+  NetworkFeePolicySettings,
+}) => {
   const {t} = useTranslation();
 
   return (
-    <Notifications.Navigator
+    <NetworkFeePolicySettings.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -35,7 +39,7 @@ const NetworkFeePolicySettingsStack = () => {
           />
         ),
       })}>
-      <Notifications.Screen
+      <NetworkFeePolicySettings.Screen
         name={NetworkFeePolicySettingsScreens.NETWORK_FEE_POLICY}
         component={NetworkFeePolicy}
         options={{
@@ -44,7 +48,7 @@ const NetworkFeePolicySettingsStack = () => {
           ),
         }}
       />
-    </Notifications.Navigator>
+    </NetworkFeePolicySettings.Group>
   );
 };
-export default NetworkFeePolicySettingsStack;
+export default NetworkFeePolicySettingsGroup;

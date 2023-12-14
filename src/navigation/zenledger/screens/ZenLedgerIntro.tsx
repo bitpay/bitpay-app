@@ -96,7 +96,7 @@ const ZenLedgerIntro: React.VFC = () => {
             text: t('GOT IT'),
             action: () => {
               haptic('impactLight');
-              navigation.navigate('ZenLedger', {screen: 'ZenLedgerImport'});
+              navigation.navigate('ZenLedgerImport');
             },
             primary: true,
           },

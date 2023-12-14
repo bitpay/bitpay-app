@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
-import {BillStackParamList} from '../BillStack';
+import {BillGroupParamList} from '../BillGroup';
 import {ScrollView, TouchableOpacity} from 'react-native';
 import {LightBlack, LinkBlue, Slate10} from '../../../../../styles/colors';
 import {BaseText} from '../../../../../components/styled/Text';
@@ -49,7 +49,7 @@ const UnlinkButton = styled(BaseText)`
 
 const BillSettings = ({
   navigation,
-}: NativeStackScreenProps<BillStackParamList, 'BillSettings'>) => {
+}: NativeStackScreenProps<BillGroupParamList, 'BillSettings'>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const user = useAppSelector(

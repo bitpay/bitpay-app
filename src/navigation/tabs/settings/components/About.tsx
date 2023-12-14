@@ -75,24 +75,21 @@ const About = () => {
         </>
       ) : null}
 
-      <Setting
-        onPress={() => navigation.navigate('About', {screen: 'StorageUsage'})}>
+      <Setting onPress={() => navigation.navigate('StorageUsage')}>
         <SettingTitle>{t('Storage Usage')}</SettingTitle>
         <AngleRight />
       </Setting>
 
       <Hr />
 
-      <Setting
-        onPress={() => navigation.navigate('About', {screen: 'SessionLogs'})}>
+      <Setting onPress={() => navigation.navigate('SessionLogs')}>
         <SettingTitle>{t('Session Log')}</SettingTitle>
         <AngleRight />
       </Setting>
 
       <Hr />
 
-      <Setting
-        onPress={() => navigation.navigate('About', {screen: 'SendFeedback'})}>
+      <Setting onPress={() => navigation.navigate('SendFeedback')}>
         <SettingTitle>{t('Send Feedback')}</SettingTitle>
         <AngleRight />
       </Setting>

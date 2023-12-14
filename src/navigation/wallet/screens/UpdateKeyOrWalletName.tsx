@@ -3,7 +3,7 @@ import {HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {Controller, useForm} from 'react-hook-form';
@@ -19,7 +19,7 @@ import {
 import {useTranslation} from 'react-i18next';
 
 type UpdateKeyOrWalletNameScreenProps = NativeStackScreenProps<
-  WalletStackParamList,
+  WalletGroupParamList,
   'UpdateKeyOrWalletName'
 >;
 

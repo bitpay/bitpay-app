@@ -13,7 +13,7 @@ import {
   Overlay,
   BodyContainer,
 } from '../components/styled/Styled';
-import {IntroStackParamList} from '../IntroStack';
+import {IntroGroupParamList, IntroScreens} from '../IntroGroup';
 
 const lightImage = require('../../../../assets/img/intro/light/whats-new.png');
 const darkImage = require('../../../../assets/img/intro/dark/whats-new.png');
@@ -24,11 +24,11 @@ const IntroWhatsNewContainer = styled.View`
 `;
 
 type WhatsNewScreenProps = NativeStackScreenProps<
-  IntroStackParamList,
-  'WhatsNew'
+  IntroGroupParamList,
+  IntroScreens.WHATS_NEW
 >;
 
-const WhatsNew: React.VFC<WhatsNewScreenProps> = ({navigation}) => {
+const WhatsNew = ({navigation}: WhatsNewScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
 

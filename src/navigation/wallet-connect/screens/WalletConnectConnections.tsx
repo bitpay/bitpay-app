@@ -174,10 +174,7 @@ const WalletConnectConnections = () => {
         return (
           <AddConnectionContainer
             onPress={() => {
-              navigation.navigate('WalletConnect', {
-                screen: 'Root',
-                params: {},
-              });
+              navigation.navigate('WalletConnectRoot', {});
             }}>
             <AddConnection opacity={1} />
           </AddConnectionContainer>

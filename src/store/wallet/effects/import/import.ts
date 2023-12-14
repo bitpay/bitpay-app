@@ -156,11 +156,7 @@ export const startMigration =
       dispatch(LogActions.info('[startMigration] - starting...'));
       const goToNewUserOnboarding = () => {
         dispatch(setIntroCompleted());
-        navigationRef.dispatch(
-          StackActions.replace('Onboarding', {
-            screen: 'OnboardingStart',
-          }),
-        );
+        navigationRef.dispatch(StackActions.replace('OnboardingStart'));
       };
 
       // keys and wallets

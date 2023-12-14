@@ -13,8 +13,8 @@ import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {TwoFactorPairingStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
-import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthFormParagraph,
@@ -28,7 +28,7 @@ export type TwoFactorPairingParamList = {
 };
 
 type TwoFactorPairingScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
+  AuthGroupParamList,
   AuthScreens.TWO_FACTOR_PAIR
 >;
 
@@ -94,9 +94,7 @@ const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
         if (parentNav?.canGoBack()) {
           parentNav.goBack();
         } else {
-          navigationRef.navigate(RootStacks.BITPAY_ID, {
-            screen: BitpayIdScreens.PROFILE,
-          });
+          navigationRef.navigate(BitpayIdScreens.PROFILE);
         }
 
         return;

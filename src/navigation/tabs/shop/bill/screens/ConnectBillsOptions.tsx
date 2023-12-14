@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
-import {BillScreens, BillStackParamList} from '../BillStack';
+import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {Linking, ScrollView, TouchableOpacity} from 'react-native';
 import {horizontalPadding} from '../../components/styled/ShopTabComponents';
 import Button from '../../../../../components/button/Button';
@@ -118,7 +118,7 @@ const ConnectOptionLabelText = styled(OptionDescription)`
 
 const ConnectBillsOptions = ({
   navigation,
-}: StackScreenProps<BillStackParamList, 'ConnectBillsOptions'>) => {
+}: StackScreenProps<BillGroupParamList, 'ConnectBillsOptions'>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const theme = useTheme();

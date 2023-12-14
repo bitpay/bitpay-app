@@ -12,7 +12,7 @@ import {useAppDispatch} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
 import {Key} from '../../../store/wallet/wallet.models';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {backupRedirect} from './Backup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
@@ -24,8 +24,8 @@ import yup from '../../../lib/yup';
 import SuccessIcon from '../../../../assets/img/success.svg';
 
 type VerifyPhraseScreenProps = NativeStackScreenProps<
-  WalletStackParamList,
-  'VerifyPhrase'
+  WalletGroupParamList,
+  WalletScreens.VERIFY_PHRASE
 >;
 
 export interface VerifyPhraseParamList {

@@ -1,7 +1,7 @@
 import React, {useLayoutEffect, useState} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
-import {BillScreens, BillStackParamList} from '../BillStack';
+import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {
   H5,
   HeaderTitle,
@@ -139,7 +139,7 @@ const getCustomAmountSublabel = (account: BillPayAccount) => {
 const PayAllBills = ({
   navigation,
   route,
-}: NativeStackScreenProps<BillStackParamList, 'PayAllBills'>) => {
+}: NativeStackScreenProps<BillGroupParamList, 'PayAllBills'>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {accounts} = route.params;

@@ -9,7 +9,7 @@ import {
 } from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {View, TouchableOpacity, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import {
@@ -113,7 +113,7 @@ const KeySettings = () => {
   const {t} = useTranslation();
   const {
     params: {key, context},
-  } = useRoute<RouteProp<WalletStackParamList, 'KeySettings'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'KeySettings'>>();
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -138,10 +138,7 @@ const KeySettings = () => {
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
-      navigation.navigate('Wallet', {
-        screen: 'CreateEncryptPassword',
-        params: {key},
-      });
+      navigation.navigate('CreateEncryptPassword', {key});
       scrollViewRef?.current?.scrollToEnd({animated: false});
     }
   }, [context, key, navigation]);
@@ -290,10 +287,7 @@ const KeySettings = () => {
           activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
-            navigation.navigate('Wallet', {
-              screen: 'UpdateKeyOrWalletName',
-              params: {key, context: 'key'},
-            });
+            navigation.navigate('UpdateKeyOrWalletName', {key, context: 'key'});
           }}>
           <View>
             <Title>{t('Key Name')}</Title>
@@ -321,7 +315,7 @@ const KeySettings = () => {
             <TouchableOpacity
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Wallet', {screen: 'KeyExplanation'});
+                navigation.navigate('KeyExplanation');
               }}>
               <InfoSvg />
             </TouchableOpacity>
@@ -343,10 +337,7 @@ const KeySettings = () => {
             <TouchableOpacity
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Wallet', {
-                  screen: 'WalletSettings',
-                  params: {walletId: id, key},
-                });
+                navigation.navigate('WalletSettings', {walletId: id, key});
               }}
               key={id}
               activeOpacity={ActiveOpacity}>
@@ -371,10 +362,7 @@ const KeySettings = () => {
             <AddWalletText
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Wallet', {
-                  screen: 'AddingOptions',
-                  params: {key},
-                });
+                navigation.navigate('AddingOptions', {key});
               }}>
               {t('Add Wallet')}
             </AddWalletText>
@@ -386,12 +374,9 @@ const KeySettings = () => {
             <Title>{t('Security')}</Title>
             <Setting
               onPress={() => {
-                navigation.navigate('Wallet', {
-                  screen: 'BackupOnboarding',
-                  params: {
-                    key,
-                    buildEncryptModalConfig,
-                  },
+                navigation.navigate('BackupOnboarding', {
+                  key,
+                  buildEncryptModalConfig,
                 });
               }}>
               <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
@@ -445,9 +430,8 @@ const KeySettings = () => {
                   <Setting
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
-                      navigation.navigate('Wallet', {
-                        screen: 'ClearEncryptPassword',
-                        params: {keyId: key.id},
+                      navigation.navigate('ClearEncryptPassword', {
+                        keyId: key.id,
                       });
                     }}>
                     <WalletSettingsTitle>
@@ -496,25 +480,19 @@ const KeySettings = () => {
                 onPress={() => {
                   haptic('impactLight');
                   if (!_key.isPrivKeyEncrypted) {
-                    navigation.navigate('Wallet', {
-                      screen: 'ExportKey',
-                      params: {
-                        code: generateKeyExportCode(
-                          _key,
-                          _key.properties!.mnemonic,
-                        ),
-                        keyName,
-                      },
+                    navigation.navigate('ExportKey', {
+                      code: generateKeyExportCode(
+                        _key,
+                        _key.properties!.mnemonic,
+                      ),
+                      keyName,
                     });
                   } else {
                     dispatch(
                       AppActions.showDecryptPasswordModal(
                         buildEncryptModalConfig(async ({mnemonic}) => {
                           const code = generateKeyExportCode(key, mnemonic);
-                          navigation.navigate('Wallet', {
-                            screen: 'ExportKey',
-                            params: {code, keyName},
-                          });
+                          navigation.navigate('ExportKey', {code, keyName});
                         }),
                       ),
                     );
@@ -534,20 +512,14 @@ const KeySettings = () => {
                 onPress={() => {
                   haptic('impactLight');
                   if (!_key.isPrivKeyEncrypted) {
-                    navigation.navigate('Wallet', {
-                      screen: 'ExtendedPrivateKey',
-                      params: {
-                        xPrivKey: _key.properties!.xPrivKey,
-                      },
+                    navigation.navigate('ExtendedPrivateKey', {
+                      xPrivKey: _key.properties!.xPrivKey,
                     });
                   } else {
                     dispatch(
                       AppActions.showDecryptPasswordModal(
                         buildEncryptModalConfig(async ({xPrivKey}) => {
-                          navigation.navigate('Wallet', {
-                            screen: 'ExtendedPrivateKey',
-                            params: {xPrivKey},
-                          });
+                          navigation.navigate('ExtendedPrivateKey', {xPrivKey});
                         }),
                       ),
                     );
@@ -567,10 +539,7 @@ const KeySettings = () => {
             style={{marginBottom: 50}}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'DeleteKey',
-                params: {keyId: key.id},
-              });
+              navigation.navigate('DeleteKey', {keyId: key.id});
             }}>
             <WalletSettingsTitle>{t('Delete')}</WalletSettingsTitle>
           </Setting>

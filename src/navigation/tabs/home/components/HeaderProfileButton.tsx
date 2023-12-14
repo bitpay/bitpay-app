@@ -18,8 +18,8 @@ const ProfileButton: React.FC = () => {
       <TouchableOpacity
         onPress={() => {
           user
-            ? navigation.navigate('BitpayId', {screen: 'Profile'})
-            : navigation.navigate('Auth', {screen: 'Login'});
+            ? navigation.navigate('BitPayIdProfile')
+            : navigation.navigate('Login');
         }}>
         <Avatar size={35} />
       </TouchableOpacity>

@@ -5,8 +5,9 @@ import styled from 'styled-components/native';
 import Amount from '../../../components/amount/Amount';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import type {HeaderTitleProps} from '@react-navigation/elements';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
@@ -41,8 +42,12 @@ export interface AmountScreenParamList {
     | undefined;
 }
 
+const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
+  return <>{props.children}</>;
+});
+
 const AmountScreen: React.VFC<
-  NativeStackScreenProps<WalletStackParamList, WalletScreens.AMOUNT>
+  NativeStackScreenProps<WalletGroupParamList, WalletScreens.AMOUNT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const [buttonState, setButtonState] = useState<ButtonState>();
@@ -84,20 +89,22 @@ const AmountScreen: React.VFC<
   }, [navigation, t, sendMaxEnabled, headerTitle]);
 
   return (
-    <WalletScreenContainer hasHeaderTitle={!!headerTitle}>
-      <Amount
-        buttonState={buttonState}
-        context={context}
-        cryptoCurrencyAbbreviation={cryptoCurrencyAbbreviation}
-        customAmountSublabel={customAmountSublabel}
-        fiatCurrencyAbbreviation={fiatCurrencyAbbreviation}
-        chain={chain}
-        tokenAddress={tokenAddress}
-        onSubmit={amt => {
-          onAmountSelected?.(amt.toString(), setButtonState);
-        }}
-      />
-    </WalletScreenContainer>
+    <AmountModalContainerHOC>
+      <WalletScreenContainer hasHeaderTitle={!!headerTitle}>
+        <Amount
+          buttonState={buttonState}
+          context={context}
+          cryptoCurrencyAbbreviation={cryptoCurrencyAbbreviation}
+          customAmountSublabel={customAmountSublabel}
+          fiatCurrencyAbbreviation={fiatCurrencyAbbreviation}
+          chain={chain}
+          tokenAddress={tokenAddress}
+          onSubmit={amt => {
+            onAmountSelected?.(amt.toString(), setButtonState);
+          }}
+        />
+      </WalletScreenContainer>
+    </AmountModalContainerHOC>
   );
 };
 

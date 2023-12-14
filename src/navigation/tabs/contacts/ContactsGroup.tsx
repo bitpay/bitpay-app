@@ -1,20 +1,23 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
 import ContactsRoot from './screens/ContactsRoot';
 import ContactsDetails from './screens/ContactsDetails';
 import ContactsAdd from './screens/ContactsAdd';
 import {ContactRowProps} from '../../../components/list/ContactRow';
-
 import {useTranslation} from 'react-i18next';
+import {Root} from '../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
 
-export type ContactsStackParamList = {
-  Root: undefined;
+interface ContactsProps {
+  Contacts: typeof Root;
+}
+
+export type ContactsGroupParamList = {
+  ContactsRoot: undefined;
   ContactsDetails: {contact: ContactRowProps};
   ContactsAdd:
     | {
@@ -26,18 +29,15 @@ export type ContactsStackParamList = {
 };
 
 export enum ContactsScreens {
-  ROOT = 'Root',
+  ROOT = 'ContactsRoot',
   DETAILS = 'ContactsDetails',
   ADD = 'ContactsAdd',
 }
 
-const Contacts = createNativeStackNavigator<ContactsStackParamList>();
-
-const ContactsStack = () => {
+const ContactsGroup: React.FC<ContactsProps> = ({Contacts}) => {
   const {t} = useTranslation();
   return (
-    <Contacts.Navigator
-      initialRouteName={ContactsScreens.ROOT}
+    <Contacts.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -58,8 +58,8 @@ const ContactsStack = () => {
         }}
       />
       <Contacts.Screen name={ContactsScreens.ADD} component={ContactsAdd} />
-    </Contacts.Navigator>
+    </Contacts.Group>
   );
 };
 
-export default ContactsStack;
+export default ContactsGroup;

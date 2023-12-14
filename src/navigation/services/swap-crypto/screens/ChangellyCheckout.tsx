@@ -91,6 +91,9 @@ import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../../store';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {changellyGetTransactions} from '../../../../store/swap-crypto/effects/changelly/changelly';
+import {RootStacks} from '../../../../Root';
+import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
+import {ExternalServicesSettingsScreens} from '../../../../navigation/tabs/settings/external-services/ExternalServicesGroup';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -926,17 +929,14 @@ const ChangellyCheckout: React.FC = () => {
           await sleep(300);
           navigation.dispatch(
             CommonActions.reset({
-              index: 2,
+              index: 1,
               routes: [
                 {
-                  name: 'Tabs',
-                  params: {screen: 'Home'},
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
                 },
                 {
-                  name: 'ExternalServicesSettings',
-                  params: {
-                    screen: 'ChangellySettings',
-                  },
+                  name: ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
                 },
               ],
             }),

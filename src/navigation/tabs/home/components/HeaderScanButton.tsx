@@ -117,7 +117,7 @@ const ScanButton: React.FC = () => {
               context: 'HeaderScanButton',
             }),
           );
-          navigation.navigate('Scan', {screen: 'Root'});
+          navigation.navigate('ScanRoot');
         }}>
         <ScanIcon />
       </TouchableOpacity>

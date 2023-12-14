@@ -22,8 +22,8 @@ import AuthFormContainer, {
 } from '../../auth/components/AuthFormContainer';
 import {
   CardActivationScreens,
-  CardActivationStackParamList,
-} from '../CardActivationStack';
+  CardActivationGroupParamList,
+} from '../CardActivationGroup';
 import styled from 'styled-components/native';
 
 export type ActivateScreenParamList = {
@@ -96,9 +96,9 @@ const formatExpirationDateForBackend = (expirationDate: string) => {
   return `${expYear}${expMonth}`;
 };
 
-const ActivateScreen: React.VFC<
+const ActivateScreen: React.FC<
   NativeStackScreenProps<
-    CardActivationStackParamList,
+    CardActivationGroupParamList,
     CardActivationScreens.ACTIVATE
   >
 > = ({navigation, route}) => {
@@ -165,7 +165,7 @@ const ActivateScreen: React.VFC<
 
   const init = () => {
     if (!isActivationRequired(card)) {
-      navigation.replace('Complete');
+      navigation.replace('CardComplete');
     }
   };
   const initRef = useRef(init);
@@ -209,7 +209,7 @@ const ActivateScreen: React.VFC<
       setButtonState('success');
       dispatch(CardActions.updateActivateCardStatus(null));
       setTimeout(() => {
-        navigation.replace('Complete');
+        navigation.replace('CardComplete');
       }, 1000);
     } else if (activateStatus === 'failed') {
       setButtonState('failed');

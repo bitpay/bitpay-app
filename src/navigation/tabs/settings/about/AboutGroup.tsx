@@ -1,19 +1,22 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import SessionLogs from './screens/SessionLog';
+import SendFeedback, {SendFeedbackParamList} from './screens/SendFeedback';
+import {useTranslation} from 'react-i18next';
+import StorageUsage from './screens/StorageUsage';
+import {Root} from '../../../../Root';
 import {
   baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
 } from '../../../../constants/NavigationOptions';
-
-import SessionLogsScreen, {SessionLogsParamList} from './screens/SessionLog';
-import SendFeedback, {SendFeedbackParamList} from './screens/SendFeedback';
-import {useTranslation} from 'react-i18next';
-import StorageUsage from './screens/StorageUsage';
 import {HeaderBackButton} from '@react-navigation/elements';
 
-export type AboutStackParamList = {
+interface AboutProps {
+  About: typeof Root;
+}
+
+export type AboutGroupParamList = {
   StorageUsage: undefined;
-  SessionLogs: SessionLogsParamList | undefined;
+  SessionLogs: undefined;
   SendFeedback: SendFeedbackParamList | undefined;
 };
 
@@ -23,12 +26,10 @@ export enum AboutScreens {
   SEND_FEEDBACK = 'SendFeedback',
 }
 
-const About = createNativeStackNavigator<AboutStackParamList>();
-
-const AboutStack = () => {
+const AboutGroup: React.FC<AboutProps> = ({About}) => {
   const {t} = useTranslation();
   return (
-    <About.Navigator
+    <About.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -49,7 +50,7 @@ const AboutStack = () => {
       />
       <About.Screen
         name={AboutScreens.SESSION_LOGS}
-        component={SessionLogsScreen}
+        component={SessionLogs}
         options={{
           headerTitle: t('Session Logs'),
         }}
@@ -62,8 +63,8 @@ const AboutStack = () => {
           headerTitle: t('Send Feedback'),
         }}
       />
-    </About.Navigator>
+    </About.Group>
   );
 };
 
-export default AboutStack;
+export default AboutGroup;

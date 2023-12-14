@@ -2,7 +2,7 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {H5, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -89,7 +89,7 @@ const WalletInformation = () => {
   const logger = useLogger();
   const {
     params: {wallet},
-  } = useRoute<RouteProp<WalletStackParamList, 'WalletInformation'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'WalletInformation'>>();
 
   const {
     chain,

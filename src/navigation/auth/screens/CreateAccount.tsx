@@ -16,7 +16,7 @@ import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -30,7 +30,7 @@ import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
 export type CreateAccountScreenParamList = {} | undefined;
 type CreateAccountScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
+  AuthGroupParamList,
   AuthScreens.CREATE_ACCOUNT
 >;
 
@@ -103,9 +103,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
       if (navParent?.canGoBack()) {
         navParent.goBack();
       } else {
-        navigationRef.navigate('BitpayId', {
-          screen: 'Profile',
-        });
+        navigationRef.navigate('BitPayIdProfile');
       }
     } else if (createAccountStatus === 'failed') {
       captchaRef.current?.reset();

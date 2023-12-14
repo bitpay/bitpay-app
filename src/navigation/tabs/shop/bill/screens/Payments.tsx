@@ -1,7 +1,7 @@
 import React, {useLayoutEffect} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
-import {BillScreens, BillStackParamList} from '../BillStack';
+import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {HeaderTitle} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {View} from 'react-native';
@@ -19,7 +19,7 @@ const BillListContainer = styled.View`
 const Payments = ({
   navigation,
   route,
-}: NativeStackScreenProps<BillStackParamList, 'Payments'>) => {
+}: NativeStackScreenProps<BillGroupParamList, BillScreens.PAYMENTS>) => {
   const {t} = useTranslation();
   const {account} = route.params;
   const accounts = useAppSelector(

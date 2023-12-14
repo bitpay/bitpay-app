@@ -43,7 +43,7 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import TransactionRow from '../../../components/list/TransactionRow';
 
-import {CoinbaseStackParamList} from '../CoinbaseStack';
+import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {
   CoinbaseErrorsProps,
   CoinbaseTransactionProps,
@@ -186,7 +186,7 @@ export type CoinbaseAccountScreenParamList = {
 
 const CoinbaseAccount = ({
   route,
-}: NativeStackScreenProps<CoinbaseStackParamList, 'CoinbaseAccount'>) => {
+}: NativeStackScreenProps<CoinbaseGroupParamList, 'CoinbaseAccount'>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -265,10 +265,7 @@ const CoinbaseAccount = ({
 
   const onPressTransaction = useMemo(
     () => (transaction: any) => {
-      navigation.navigate('Coinbase', {
-        screen: 'CoinbaseTransaction',
-        params: {tx: transaction},
-      });
+      navigation.navigate('CoinbaseTransaction', {tx: transaction});
     },
     [navigation],
   );
@@ -498,17 +495,14 @@ const CoinbaseAccount = ({
           newAddress = ToCashAddress(newAddress, false);
         }
         await sleep(400);
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {
-            context: 'coinbase',
-            recipient: {
-              name: account.name || 'Coinbase',
-              currency: currencyAbbreviation.toLowerCase(),
-              chain: chain,
-              address: newAddress,
-              network: 'livenet',
-            },
+        navigation.navigate('GlobalSelect', {
+          context: 'coinbase',
+          recipient: {
+            name: account.name || 'Coinbase',
+            currency: currencyAbbreviation.toLowerCase(),
+            chain: chain,
+            address: newAddress,
+            network: 'livenet',
           },
         });
       })
@@ -546,9 +540,10 @@ const CoinbaseAccount = ({
   const onEnteredAmount = (newAmount?: number) => {
     setAmountModalVisible(false);
     if (newAmount && selectedWallet) {
-      navigation.navigate('Coinbase', {
-        screen: 'CoinbaseWithdraw',
-        params: {accountId, wallet: selectedWallet, amount: newAmount},
+      navigation.navigate('CoinbaseWithdraw', {
+        accountId,
+        wallet: selectedWallet,
+        amount: newAmount,
       });
     }
   };

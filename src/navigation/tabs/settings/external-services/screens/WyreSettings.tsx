@@ -84,11 +84,8 @@ const WyreSettings: React.FC = () => {
                     key={pr.orderId}
                     onPress={() => {
                       haptic('impactLight');
-                      navigation.navigate('ExternalServicesSettings', {
-                        screen: 'WyreDetails',
-                        params: {
-                          paymentRequest: pr,
-                        },
+                      navigation.navigate('WyreDetails', {
+                        paymentRequest: pr,
                       });
                     }}>
                     <PrRowLeft>

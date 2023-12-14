@@ -1,9 +1,4 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
 import {
   CardConfig,
   GiftCard,
@@ -14,19 +9,25 @@ import GiftCardDetails from './screens/GiftCardDetails';
 import EnterPhone from './screens/EnterPhone';
 import EnterEmail from './screens/EnterEmail';
 import {HeaderTitle} from '../../../../components/styled/Text';
-import AmountScreen, {
-  AmountScreenParamList,
-} from '../../../wallet/screens/AmountScreen';
 import Confirm, {
   GiftCardConfirmParamList,
 } from '../../../wallet/screens/send/confirm/GiftCardConfirm';
 import {useTranslation} from 'react-i18next';
-import PayProConfirmTwoFactor, {
-  PayProConfirmTwoFactorParamList,
-} from '../../../wallet/screens/send/confirm/PayProConfirmTwoFactor';
+import {Root} from '../../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
+import GiftCardDeeplinkScreen, {
+  GiftCardDeeplinkScreenParamList,
+} from './GiftCardDeeplink';
 
-export type GiftCardStackParamList = {
+interface GiftCardProps {
+  GiftCard: typeof Root;
+}
+
+export type GiftCardGroupParamList = {
   BuyGiftCard: {cardConfig: CardConfig};
   EnterEmail: {
     cardConfig: CardConfig;
@@ -46,9 +47,8 @@ export type GiftCardStackParamList = {
     }) => void;
   };
   GiftCardDetails: {cardConfig: CardConfig; giftCard: GiftCard};
-  GiftCardAmount: AmountScreenParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
-  GiftCardConfirmTwoFactor: PayProConfirmTwoFactorParamList;
+  GiftCardDeeplink: GiftCardDeeplinkScreenParamList;
 };
 
 export enum GiftCardScreens {
@@ -57,18 +57,14 @@ export enum GiftCardScreens {
   ENTER_PHONE = 'EnterPhone',
   GIFT_CARD_DETAILS = 'GiftCardDetails',
   GIFT_CARD_DETAILS_MODAL = 'GiftCardDetailsModal',
-  GIFT_CARD_AMOUNT = 'GiftCardAmount',
   GIFT_CARD_CONFIRM = 'GiftCardConfirm',
-  GIFT_CARD_CONFIRM_TWO_FACTOR = 'GiftCardConfirmTwoFactor',
+  GIFT_CARD_DEEPLINK = 'GiftCardDeeplink',
 }
 
-const GiftCards = createNativeStackNavigator<GiftCardStackParamList>();
-
-const GiftCardStack = () => {
+const GiftCardGroup: React.FC<GiftCardProps> = ({GiftCard}) => {
   const {t} = useTranslation();
   return (
-    <GiftCards.Navigator
-      initialRouteName={GiftCardScreens.BUY_GIFT_CARD}
+    <GiftCard.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -80,53 +76,44 @@ const GiftCardStack = () => {
           />
         ),
       })}>
-      <GiftCards.Screen
+      <GiftCard.Screen
         name={GiftCardScreens.BUY_GIFT_CARD}
         component={BuyGiftCard}
       />
-      <GiftCards.Screen
+      <GiftCard.Screen
         name={GiftCardScreens.ENTER_EMAIL}
         component={EnterEmail}
         options={{
           headerTitle: () => <HeaderTitle>{t('Enter Email')}</HeaderTitle>,
         }}
       />
-      <GiftCards.Screen
+      <GiftCard.Screen
         name={GiftCardScreens.ENTER_PHONE}
         component={EnterPhone}
         options={{
           headerTitle: () => <HeaderTitle>{t('Enter Phone')}</HeaderTitle>,
         }}
       />
-      <GiftCards.Screen
+      <GiftCard.Screen
         name={GiftCardScreens.GIFT_CARD_DETAILS}
         component={GiftCardDetails}
         options={{
           gestureEnabled: false,
         }}
       />
-      <GiftCards.Screen
-        name={GiftCardScreens.GIFT_CARD_AMOUNT}
-        component={AmountScreen}
-      />
-      <GiftCards.Screen
+      <GiftCard.Screen
         name={GiftCardScreens.GIFT_CARD_CONFIRM}
         component={Confirm}
         options={{
           gestureEnabled: false,
         }}
       />
-      <GiftCards.Screen
-        options={{
-          headerTitle: () => (
-            <HeaderTitle>{t('Two-Step Verification')}</HeaderTitle>
-          ),
-        }}
-        name={GiftCardScreens.GIFT_CARD_CONFIRM_TWO_FACTOR}
-        component={PayProConfirmTwoFactor}
+      <GiftCard.Screen
+        name={GiftCardScreens.GIFT_CARD_DEEPLINK}
+        component={GiftCardDeeplinkScreen}
       />
-    </GiftCards.Navigator>
+    </GiftCard.Group>
   );
 };
 
-export default GiftCardStack;
+export default GiftCardGroup;

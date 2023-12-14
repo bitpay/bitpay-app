@@ -30,7 +30,7 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {
   ContextHandler,
   CurrencySelectionContainer,
@@ -78,7 +78,7 @@ const keyExtractor = (item: CurrencySelectionItem) => item.id;
 
 const CurrencyTokenSelectionScreen: React.VFC<
   NativeStackScreenProps<
-    WalletStackParamList,
+    WalletGroupParamList,
     WalletScreens.CURRENCY_TOKEN_SELECTION
   >
 > = ({navigation, route}) => {

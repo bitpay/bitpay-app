@@ -25,8 +25,6 @@ import {
   InfoTriangle,
   InfoImageContainer,
 } from '../../../components/styled/Containers';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {WalletStackParamList} from '../WalletStack';
 import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
@@ -93,18 +91,16 @@ import {
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
-import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
+import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {CommonActions} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-
-type AddWalletScreenProps = NativeStackScreenProps<
-  WalletStackParamList,
-  'AddWallet'
->;
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {RootStacks, getNavigationTabName} from '../../../Root';
 
 export type AddWalletParamList = {
   key: Key;
@@ -200,7 +196,10 @@ const isWithinReceiveSettings = (parent: any): boolean => {
     );
 };
 
-const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
+const AddWallet = ({
+  route,
+  navigation,
+}: NativeStackScreenProps<WalletGroupParamList, WalletScreens.ADD_WALLET>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {
@@ -504,16 +503,20 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       if (!withinReceiveSettings) {
         navigation.dispatch(
           CommonActions.reset({
-            index: 1,
+            index: 2,
             routes: [
               {
-                name: 'KeyOverview',
+                name: RootStacks.TABS,
+                params: {screen: getNavigationTabName()},
+              },
+              {
+                name: WalletScreens.KEY_OVERVIEW,
                 params: {
                   id: key.id,
                 },
               },
               {
-                name: 'WalletDetails',
+                name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet.id,
                   key,

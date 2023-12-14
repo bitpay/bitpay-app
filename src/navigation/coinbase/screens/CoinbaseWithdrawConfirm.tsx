@@ -17,7 +17,7 @@ import {
   SendingFrom,
   SendingTo,
 } from '../../wallet/screens/send/confirm/Shared';
-import {CoinbaseStackParamList} from '../CoinbaseStack';
+import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {find} from 'lodash';
 import {
@@ -44,7 +44,7 @@ const CoinbaseWithdrawConfirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route =
-    useRoute<RouteProp<CoinbaseStackParamList, 'CoinbaseWithdraw'>>();
+    useRoute<RouteProp<CoinbaseGroupParamList, 'CoinbaseWithdraw'>>();
   const {accountId, wallet, amount} = route.params;
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);

@@ -98,14 +98,11 @@ export const keyBackupRequired = (
                     const decryptedKey = key.methods!.get(encryptPassword);
                     await dispatch(dismissDecryptPasswordModal());
                     await sleep(300);
-                    navigation.navigate('Wallet', {
-                      screen: 'RecoveryPhrase',
-                      params: {
-                        keyId: key.id,
-                        words: decryptedKey.mnemonic.trim().split(' '),
-                        key,
-                        context,
-                      },
+                    navigation.navigate('RecoveryPhrase', {
+                      keyId: key.id,
+                      words: decryptedKey.mnemonic.trim().split(' '),
+                      key,
+                      context,
                     });
                   } catch (e) {
                     console.log(`Decrypt Error: ${e}`);
@@ -117,14 +114,11 @@ export const keyBackupRequired = (
               }),
             );
           } else {
-            navigation.navigate('Wallet', {
-              screen: 'RecoveryPhrase',
-              params: {
-                keyId: key.id,
-                words: getMnemonic(key),
-                key,
-                context,
-              },
+            navigation.navigate('RecoveryPhrase', {
+              keyId: key.id,
+              words: getMnemonic(key),
+              key,
+              context,
             });
           }
         },
@@ -204,10 +198,7 @@ export const createHomeCardList = ({
                 : () => {
                     haptic('soft');
                     if (backupComplete) {
-                      navigation.navigate('Wallet', {
-                        screen: 'KeyOverview',
-                        params: {id: key.id},
-                      });
+                      navigation.navigate('KeyOverview', {id: key.id});
                     } else {
                       dispatch(
                         showBottomNotificationModal(
@@ -323,7 +314,7 @@ const Crypto = () => {
                       context: 'NoKeysCryptoContainer',
                     }),
                   );
-                  navigation.navigate('Wallet', {screen: 'CreationOptions'});
+                  navigation.navigate('CreationOptions');
                 }}>
                 {t('Create, import or join a shared wallet')}
               </Button>
@@ -335,7 +326,7 @@ const Crypto = () => {
                       context: 'NoKeysCryptoContainer',
                     }),
                   );
-                  navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
+                  navigation.navigate('CoinbaseRoot');
                 }}>
                 {linkedCoinbase
                   ? 'Coinbase'
@@ -363,9 +354,7 @@ const Crypto = () => {
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('soft');
-                navigation.navigate('GeneralSettings', {
-                  screen: 'CustomizeHome',
-                });
+                navigation.navigate('CustomizeHomeSettings');
               }}>
               <CustomizeSvg width={37} height={37} />
             </TouchableOpacity>

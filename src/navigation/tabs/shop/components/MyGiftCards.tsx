@@ -3,7 +3,7 @@ import {useNavigation} from '@react-navigation/native';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
-import {GiftCardScreens} from '../gift-card/GiftCardStack';
+import {GiftCardScreens} from '../gift-card/GiftCardGroup';
 import GiftCardCreditsItem from './GiftCardCreditsItem';
 import {
   horizontalPadding,
@@ -155,13 +155,13 @@ const MyGiftCards = ({
                         activeOpacity={ActiveOpacity}
                         key={giftCard.invoiceId}
                         onPress={() => {
-                          navigation.navigate('GiftCard', {
-                            screen: GiftCardScreens.GIFT_CARD_DETAILS,
-                            params: {
+                          navigation.navigate(
+                            GiftCardScreens.GIFT_CARD_DETAILS,
+                            {
                               cardConfig,
                               giftCard,
                             },
-                          });
+                          );
                         }}>
                         <GiftCardCreditsItem
                           key={giftCard.invoiceId}

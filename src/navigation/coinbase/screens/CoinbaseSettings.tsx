@@ -28,7 +28,7 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
-import {CoinbaseStackParamList} from '../CoinbaseStack';
+import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
@@ -106,7 +106,7 @@ const CoinbaseSettings = () => {
   const navigation = useNavigation();
   const {
     params: {fromScreen},
-  } = useRoute<RouteProp<CoinbaseStackParamList, 'CoinbaseSettings'>>();
+  } = useRoute<RouteProp<CoinbaseGroupParamList, 'CoinbaseSettings'>>();
 
   const [refreshing, setRefreshing] = useState(false);
 

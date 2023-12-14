@@ -4,7 +4,7 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {CoinbaseStackParamList} from '../CoinbaseStack';
+import {CoinbaseGroupParamList, CoinbaseScreens} from '../CoinbaseGroup';
 import CoinbaseDashboard from '../components/CoinbaseDashboard';
 import CoinbaseIntro from '../components/CoinbaseIntro';
 import {
@@ -27,14 +27,11 @@ export type CoinbaseRootScreenParamList =
   | undefined;
 
 type CoinbaseRootScreenProps = NativeStackScreenProps<
-  CoinbaseStackParamList,
-  'CoinbaseRoot'
+  CoinbaseGroupParamList,
+  CoinbaseScreens.ROOT
 >;
 
-const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
-  navigation,
-  route,
-}) => {
+const CoinbaseRoot = ({route, navigation}: CoinbaseRootScreenProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
 

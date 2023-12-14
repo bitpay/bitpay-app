@@ -90,7 +90,7 @@ const FeedbackCard: React.FC = () => {
   const rateApp = (rate: FeedbackRateType) => {
     dispatch(saveUserFeedback(rate, APP_VERSION, true));
     if (rate !== 'default') {
-      navigation.navigate('About', {screen: 'SendFeedback', params: {rate}});
+      navigation.navigate('SendFeedback', {rate});
     }
   };
 

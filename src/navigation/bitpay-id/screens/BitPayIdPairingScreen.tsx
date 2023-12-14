@@ -5,7 +5,7 @@ import {RootStacks} from '../../../Root';
 import {AppEffects} from '../../../store/app';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {useAppDispatch} from '../../../utils/hooks';
-import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
+import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import BasePairing from '../components/BasePairing';
 
 export type BitPayIdPairingScreenParamList =
@@ -16,9 +16,12 @@ export type BitPayIdPairingScreenParamList =
     }
   | undefined;
 
-const BitPayIdPairingScreen: React.FC<
-  NativeStackScreenProps<BitpayIdStackParamList, BitpayIdScreens.PAIRING>
-> = props => {
+const BitPayIdPairingScreen = (
+  props: NativeStackScreenProps<
+    BitpayIdGroupParamList,
+    BitpayIdScreens.PAIRING
+  >,
+) => {
   const dispatch = useAppDispatch();
   const {navigation, route} = props;
   const {secret, code, redirect} = route.params || {};
@@ -31,7 +34,7 @@ const BitPayIdPairingScreen: React.FC<
     }
 
     if (!handled) {
-      navigation.replace('Profile');
+      navigation.replace('BitPayIdProfile');
     }
   }, [navigation, redirect]);
 

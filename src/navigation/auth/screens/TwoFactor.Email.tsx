@@ -11,7 +11,7 @@ import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {AuthStackParamList} from '../AuthStack';
+import {AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
@@ -23,7 +23,7 @@ export type EmailAuthenticationParamList =
   | undefined;
 
 type EmailAuthenticationScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
+  AuthGroupParamList,
   'EmailAuthentication'
 >;
 
@@ -102,9 +102,7 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         if (navParent?.canGoBack()) {
           navParent.goBack();
         } else {
-          navigationRef.navigate('BitpayId', {
-            screen: 'Profile',
-          });
+          navigationRef.navigate('BitPayIdProfile');
         }
 
         return;

@@ -61,7 +61,7 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import debounce from 'lodash.debounce';
 import {useTranslation} from 'react-i18next';
-import {ContactsStackParamList} from '../ContactsStack';
+import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   SupportedCurrencyOption,
@@ -191,7 +191,7 @@ const CurrencySubTitle = styled(BaseText)`
 
 const ContactsAdd = ({
   route,
-}: NativeStackScreenProps<ContactsStackParamList, 'ContactsAdd'>) => {
+}: NativeStackScreenProps<ContactsGroupParamList, ContactsScreens.ADD>) => {
   const {t} = useTranslation();
   const {
     control,
@@ -546,13 +546,10 @@ const ContactsAdd = ({
         context: 'contactsAdd',
       }),
     );
-    navigation.navigate('Scan', {
-      screen: 'Root',
-      params: {
-        onScanComplete: address => {
-          setValue('address', address, {shouldDirty: true});
-          processAddress(address);
-        },
+    navigation.navigate('ScanRoot', {
+      onScanComplete: address => {
+        setValue('address', address, {shouldDirty: true});
+        processAddress(address);
       },
     });
   };

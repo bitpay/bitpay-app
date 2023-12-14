@@ -12,13 +12,6 @@ export const baseNavigatorOptions: NativeStackNavigationOptions = {
   headerTitleAlign: 'center',
   headerShown: true,
   headerTransparent: Platform.OS === 'ios' ? true : false,
-  ...(Platform.OS === 'android'
-    ? {
-        headerStyle: {
-          backgroundColor: 'transparent',
-        },
-      }
-    : {}),
   headerShadowVisible: false,
   headerBackButtonMenuEnabled: false,
   headerBackVisible: false,

@@ -15,7 +15,7 @@ import {
   TopNavFill,
   TopNavFillOverlay,
 } from '../components/styled/Styled';
-import {IntroStackParamList} from '../IntroStack';
+import {IntroGroupParamList, IntroScreens} from '../IntroGroup';
 
 const lightBackground = require('../../../../assets/img/intro/light/home-customize.png');
 const darkBackground = require('../../../../assets/img/intro/dark/home-customize.png');
@@ -25,11 +25,11 @@ const HomeContainer = styled.View`
 `;
 
 type CustomizeHomeScreenProps = NativeStackScreenProps<
-  IntroStackParamList,
-  'CustomizeHome'
+  IntroGroupParamList,
+  IntroScreens.CUSTOMIZE_HOME
 >;
 
-const CustomizeHome: React.VFC<CustomizeHomeScreenProps> = ({navigation}) => {
+const CustomizeHome = ({navigation}: CustomizeHomeScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
 

@@ -1,26 +1,26 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import Scan from './screens/Scan';
+import ScanRoot from './screens/Scan';
+import {Root} from '../../Root';
 import {
   baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
 } from '../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
 
+interface ScanProps {
+  Scan: typeof Root;
+}
 export enum ScanScreens {
-  Root = 'Root',
+  Root = 'ScanRoot',
 }
 
-export type ScanStackParamList = {
-  Root: {onScanComplete?: (data: string) => void} | undefined;
+export type ScanGroupParamList = {
+  ScanRoot: {onScanComplete?: (data: string) => void} | undefined;
 };
 
-const ScanNavigator = createNativeStackNavigator<ScanStackParamList>();
-
-const ScanStack = () => {
+const ScanGroup: React.FC<ScanProps> = ({Scan}) => {
   return (
-    <ScanNavigator.Navigator
-      initialRouteName={ScanScreens.Root}
+    <Scan.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -32,9 +32,9 @@ const ScanStack = () => {
           />
         ),
       })}>
-      <ScanNavigator.Screen name={ScanScreens.Root} component={Scan} />
-    </ScanNavigator.Navigator>
+      <Scan.Screen name={ScanScreens.Root} component={ScanRoot} />
+    </Scan.Group>
   );
 };
 
-export default ScanStack;
+export default ScanGroup;

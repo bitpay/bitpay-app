@@ -22,12 +22,7 @@ import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {KeyOptions, Status} from '../../../store/wallet/wallet.models';
-import {
-  RouteProp,
-  useNavigation,
-  useRoute,
-  CommonActions,
-} from '@react-navigation/native';
+import {CommonActions} from '@react-navigation/native';
 import {
   Info,
   InfoTriangle,
@@ -45,7 +40,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {BitpaySupportedCoins} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
@@ -63,8 +58,11 @@ import {URL} from '../../../constants';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 
-export interface CreateMultisigProps {
+export interface CreateMultisigParamsList {
   currency: string;
   key: Key;
 }
@@ -176,12 +174,15 @@ const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
 `;
 
-const CreateMultisig = () => {
+type CreateMultisigProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.CREATE_MULTISIG
+>;
+
+const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const logger = useLogger();
-  const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
   const {currency, key} = route.params;
   const segwitSupported = ['btc', 'ltc'].includes(currency.toLowerCase());
   const [showOptions, setShowOptions] = useState(false);
@@ -275,12 +276,12 @@ const CreateMultisig = () => {
                   index: 1,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Wallet',
-                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                      name: WalletScreens.KEY_OVERVIEW,
+                      params: {id: key.id},
                     },
                   ],
                 }),
@@ -291,19 +292,16 @@ const CreateMultisig = () => {
                   index: 2,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Wallet',
-                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                      name: WalletScreens.KEY_OVERVIEW,
+                      params: {id: key.id},
                     },
                     {
-                      name: 'Wallet',
-                      params: {
-                        screen: 'Copayers',
-                        params: {wallet: wallet, status: status.wallet},
-                      },
+                      name: WalletScreens.COPAYERS,
+                      params: {wallet: wallet, status: status.wallet},
                     },
                   ],
                 }),
@@ -335,9 +333,9 @@ const CreateMultisig = () => {
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
-        navigation.navigate('Wallet', {
-          screen: 'BackupKey',
-          params: {context: 'createNewMultisigKey', key: multisigKey},
+        navigation.navigate('BackupKey', {
+          context: 'createNewMultisigKey',
+          key: multisigKey,
         });
         dispatch(dismissOnGoingProcessModal());
       }

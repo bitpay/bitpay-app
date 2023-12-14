@@ -94,11 +94,8 @@ const MoonpaySettings: React.FC = () => {
                     key={pr.external_id}
                     onPress={() => {
                       haptic('impactLight');
-                      navigation.navigate('ExternalServicesSettings', {
-                        screen: 'MoonpayDetails',
-                        params: {
-                          paymentRequest: pr,
-                        },
+                      navigation.navigate('MoonpayDetails', {
+                        paymentRequest: pr,
                       });
                     }}>
                     <PrRowLeft>

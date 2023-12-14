@@ -78,62 +78,107 @@ const StorageUsage: React.VFC = () => {
   };
 
   useMemo(async () => {
-    try {
-      // App Data Storage
-      const resultStorage = await RNFS.readDir(storagePath);
-      let _appSize: number = 0;
-      forEach(resultStorage, data => {
-        _appSize = _appSize + data.size;
-      });
-      setAppSize(formatBytes(_appSize));
-
-      // Device Storage
-      const resultDeviceStorage = await RNFS.getFSInfo();
-      if (resultDeviceStorage) {
-        setDeviceFreeStorage(formatBytes(resultDeviceStorage.freeSpace));
-        setDeviceTotalStorage(formatBytes(resultDeviceStorage.totalSpace));
+    const _setAppSize = async () => {
+      try {
+        // App Data Storage
+        const resultStorage = await RNFS.readDir(storagePath);
+        let _appSize: number = 0;
+        forEach(resultStorage, data => {
+          _appSize = _appSize + data.size;
+        });
+        setAppSize(formatBytes(_appSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setAppSize] Error ', errStr));
       }
-
-      // Data counter
-      const wallets = Object.values(keys).map(k => {
-        const {wallets} = k;
-        return wallets.length;
-      });
-      const walletsCount = wallets.reduce((a, b) => a + b, 0);
-      setWalletsCount(walletsCount);
-      setGiftCount(giftCards.length);
-      setContactCount(contacts.length);
-      const _customTokenCount = Object.values(customTokens).length;
-      setCustomTokenCount(_customTokenCount);
-
-      // Specific Data Storage
-      const _walletStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/wallets.txt',
-        JSON.stringify(keys),
-      );
-      setWalletStorage(formatBytes(_walletStorageSize));
-
-      const _giftCardStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/gift-cards.txt',
-        JSON.stringify(giftCards),
-      );
-      setGiftCardStorage(formatBytes(_giftCardStorageSize));
-
-      const _customTokenStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/custom-tokens.txt',
-        JSON.stringify(customTokens),
-      );
-      setCustomTokenStorage(formatBytes(_customTokenStorageSize));
-
-      const _contactStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/contacts.txt',
-        JSON.stringify(contacts),
-      );
-      setContactStorage(formatBytes(_contactStorageSize));
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[StorageUsage] Error ', errStr));
-    }
+    };
+    const _setDeviceStorage = async () => {
+      try {
+        // Device Storage
+        const resultDeviceStorage = await RNFS.getFSInfo();
+        if (resultDeviceStorage) {
+          setDeviceFreeStorage(formatBytes(resultDeviceStorage.freeSpace));
+          setDeviceTotalStorage(formatBytes(resultDeviceStorage.totalSpace));
+        }
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setDeviceStorage] Error ', errStr));
+      }
+    };
+    const _setDataCounterStorage = async () => {
+      try {
+        // Data counter
+        const wallets = Object.values(keys).map(k => {
+          const {wallets} = k;
+          return wallets.length;
+        });
+        const walletsCount = wallets.reduce((a, b) => a + b, 0);
+        setWalletsCount(walletsCount);
+        setGiftCount(giftCards.length);
+        setContactCount(contacts.length);
+        const _customTokenCount = Object.values(customTokens).length;
+        setCustomTokenCount(_customTokenCount);
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setDataCounterStorage] Error ', errStr));
+      }
+    };
+    const _setWalletStorage = async () => {
+      try {
+        // Specific Data Storage
+        const _walletStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/wallets.txt',
+          JSON.stringify(keys),
+        );
+        setWalletStorage(formatBytes(_walletStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setWalletStorage] Error ', errStr));
+      }
+    };
+    const _setGiftCardStorage = async () => {
+      try {
+        const _giftCardStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/gift-cards.txt',
+          JSON.stringify(giftCards),
+        );
+        setGiftCardStorage(formatBytes(_giftCardStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setGiftCardStorage] Error ', errStr));
+      }
+    };
+    const _setCustomTokensStorage = async () => {
+      try {
+        const _customTokenStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/custom-tokens.txt',
+          JSON.stringify(customTokens),
+        );
+        setCustomTokenStorage(formatBytes(_customTokenStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setCustomTokensStorage] Error ', errStr));
+      }
+    };
+    const _setContactStorage = async () => {
+      try {
+        const _contactStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/contacts.txt',
+          JSON.stringify(contacts),
+        );
+        setContactStorage(formatBytes(_contactStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setContactStorage] Error ', errStr));
+      }
+    };
+    _setAppSize();
+    _setDeviceStorage();
+    _setDataCounterStorage();
+    _setWalletStorage();
+    _setGiftCardStorage();
+    _setCustomTokensStorage();
+    _setContactStorage();
   }, [dispatch]);
 
   return (

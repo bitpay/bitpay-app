@@ -1,6 +1,6 @@
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {memo, useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Alert, SectionList} from 'react-native';
@@ -27,7 +27,7 @@ import {
   Black,
 } from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {AboutStackParamList} from '../AboutStack';
+import {AboutGroupParamList, AboutScreens} from '../AboutGroup';
 import Settings from '../../../../../components/settings/Settings';
 import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
 import SendIcon from '../../../../../../assets/img/send-icon.svg';
@@ -35,11 +35,9 @@ import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
 import {ListHeader} from '../../general/screens/customize-home/Shared';
 import {storage} from '../../../../../store';
 
-export interface SessionLogsParamList {}
-
-type SessionLogsScreenProps = NativeStackNavigationProp<
-  AboutStackParamList,
-  'SessionLogs'
+type SessionLogsScreenProps = NativeStackScreenProps<
+  AboutGroupParamList,
+  AboutScreens.SESSION_LOGS
 >;
 
 const LogsContainer = styled.SafeAreaView`
@@ -144,7 +142,7 @@ const renderItem = ({item}: {item: LogEntry}) => (
 
 const keyExtractor = (item: LogEntry, index: number) => item.message + index;
 
-const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
+const SessionLogs = ({}: SessionLogsScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();

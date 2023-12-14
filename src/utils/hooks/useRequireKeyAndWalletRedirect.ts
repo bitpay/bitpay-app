@@ -39,10 +39,7 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
               {
                 text: t('Add wallet'),
                 action: () => {
-                  navigation.navigate('Wallet', {
-                    screen: 'AddingOptions',
-                    params: {key: backedUpKey},
-                  });
+                  navigation.navigate('AddingOptions', {key: backedUpKey});
                 },
                 primary: true,
               },
@@ -71,7 +68,7 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
             {
               text: t('Continue'),
               action: () => {
-                navigation.navigate('Wallet', {screen: 'CreationOptions'});
+                navigation.navigate('CreationOptions');
               },
               primary: true,
             },

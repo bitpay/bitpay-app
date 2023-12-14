@@ -1,11 +1,6 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../components/styled/Text';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
 import CoinbaseAccount, {
   CoinbaseAccountScreenParamList,
 } from './screens/CoinbaseAccount';
@@ -20,9 +15,18 @@ import CoinbaseTransaction, {
   CoinbaseTransactionScreenParamList,
 } from './screens/CoinbaseTransaction';
 import {CoinbaseWithdrawConfirmParamList} from './screens/CoinbaseWithdrawConfirm';
+import {Root} from '../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
 
-export type CoinbaseStackParamList = {
+interface CoinbaseProps {
+  Coinbase: typeof Root;
+}
+
+export type CoinbaseGroupParamList = {
   CoinbaseRoot: CoinbaseRootScreenParamList;
   CoinbaseSettings: CoinbaseSettingsScreenParamList;
   CoinbaseAccount: CoinbaseAccountScreenParamList;
@@ -38,13 +42,10 @@ export enum CoinbaseScreens {
   WITHDRAW = 'CoinbaseWithdraw',
 }
 
-const Coinbase = createNativeStackNavigator<CoinbaseStackParamList>();
-
-const CoinbaseStack = () => {
+const CoinbaseGroup: React.FC<CoinbaseProps> = ({Coinbase}) => {
   const {t} = useTranslation();
   return (
-    <Coinbase.Navigator
-      initialRouteName={CoinbaseScreens.ROOT}
+    <Coinbase.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerShown: false,
@@ -90,8 +91,8 @@ const CoinbaseStack = () => {
           gestureEnabled: false,
         }}
       />
-    </Coinbase.Navigator>
+    </Coinbase.Group>
   );
 };
 
-export default CoinbaseStack;
+export default CoinbaseGroup;

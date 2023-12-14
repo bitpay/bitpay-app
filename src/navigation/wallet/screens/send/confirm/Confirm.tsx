@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {RouteProp, StackActions} from '@react-navigation/core';
-import {WalletStackParamList} from '../../../WalletStack';
+import {WalletGroupParamList} from '../../../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
   Recipient,
@@ -88,6 +88,9 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
+import {CoinbaseScreens} from '../../../../../navigation/coinbase/CoinbaseGroup';
+import {RootStacks} from '../../../../../Root';
+import {TabsScreens} from '../../../../../navigation/tabs/TabsStack';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -129,7 +132,7 @@ const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {t} = useTranslation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'Confirm'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'Confirm'>>();
   const {
     wallet,
     recipient,
@@ -564,31 +567,28 @@ const Confirm = () => {
             if (recipient.type === 'coinbase') {
               navigation.dispatch(
                 CommonActions.reset({
-                  index: 2,
+                  index: 1,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Coinbase',
-                      params: {
-                        screen: 'CoinbaseRoot',
-                      },
+                      name: CoinbaseScreens.ROOT,
+                      params: {},
                     },
                   ],
                 }),
               );
             } else {
+              await sleep(500);
               navigation.dispatch(StackActions.popToTop());
               navigation.dispatch(
-                StackActions.replace('WalletDetails', {
+                StackActions.push('WalletDetails', {
                   walletId: wallet!.id,
                   key,
                 }),
               );
-              await sleep(0);
-              setShowPaymentSentModal(false);
             }
           }}
         />

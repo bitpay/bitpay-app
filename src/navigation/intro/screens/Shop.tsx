@@ -19,6 +19,7 @@ import {
   TopNavFillOverlay,
   Overlay,
 } from '../components/styled/Styled';
+import {IntroScreens} from '../IntroGroup';
 
 const lightBackground = require('../../../../assets/img/intro/light/shop-background.png');
 const darkBackground = require('../../../../assets/img/intro/dark/shop-background.png');
@@ -33,9 +34,12 @@ const TextContainer = styled.View`
   margin-bottom: 10px;
 `;
 
-type IntroShopScreenProps = NativeStackScreenProps<RootStackParamList, 'Intro'>;
+type IntroShopScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  IntroScreens.SHOP
+>;
 
-const IntroShop: React.VFC<IntroShopScreenProps> = ({navigation}) => {
+const IntroShop = ({navigation}: IntroShopScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();

@@ -15,8 +15,8 @@ import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -32,7 +32,7 @@ export type LoginScreenParamList =
   | undefined;
 
 type LoginScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
+  AuthGroupParamList,
   AuthScreens.LOGIN
 >;
 
@@ -85,9 +85,7 @@ const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
       if (parentNav?.canGoBack()) {
         parentNav.goBack();
       } else {
-        navigationRef.navigate(RootStacks.BITPAY_ID, {
-          screen: BitpayIdScreens.PROFILE,
-        });
+        navigationRef.navigate(BitpayIdScreens.PROFILE);
       }
 
       dispatch(BitPayIdActions.updateLoginStatus(null));

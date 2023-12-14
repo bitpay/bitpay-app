@@ -14,7 +14,7 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../../../../auth/components/AuthFormContainer';
 import RemoteImage from '../../components/RemoteImage';
-import {GiftCardStackParamList} from '../GiftCardStack';
+import {GiftCardGroupParamList} from '../GiftCardGroup';
 
 import {BaseText} from '../../../../../components/styled/Text';
 import {AppActions} from '../../../../../store/app';
@@ -80,7 +80,7 @@ interface PhoneFormFieldValues {
 
 const EnterPhone = ({
   route,
-}: NativeStackScreenProps<GiftCardStackParamList, 'EnterPhone'>) => {
+}: NativeStackScreenProps<GiftCardGroupParamList, 'EnterPhone'>) => {
   const basePhoneSchema = yup.string().required();
   const usPhoneSchema = basePhoneSchema.min(10, t('Must be exactly 10 digits'));
   const intlPhoneSchema = basePhoneSchema.max(

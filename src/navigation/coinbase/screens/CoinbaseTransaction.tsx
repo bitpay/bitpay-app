@@ -8,7 +8,7 @@ import {SlateDark, White} from '../../../styles/colors';
 import {Hr} from '../../../components/styled/Containers';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {CoinbaseStackParamList} from '../CoinbaseStack';
+import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import CoinbaseIcon from '../components/CoinbaseIcon';
 import {View} from 'react-native';
 import {formatCryptoAddress} from '../../../utils/helper-methods';
@@ -91,7 +91,7 @@ export type CoinbaseTransactionScreenParamList = {
 
 const CoinbaseTransaction = ({
   route,
-}: NativeStackScreenProps<CoinbaseStackParamList, 'CoinbaseTransaction'>) => {
+}: NativeStackScreenProps<CoinbaseGroupParamList, 'CoinbaseTransaction'>) => {
   const {t} = useTranslation();
   const {tx} = route.params;
 

@@ -14,7 +14,7 @@ import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch} from '../../../utils/hooks/useAppDispatch';
 import {useAppSelector} from '../../../utils/hooks/useAppSelector';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -33,7 +33,7 @@ interface ResetPasswordFormFieldValues {
 }
 
 const ForgotPasswordScreen: React.VFC<
-  NativeStackScreenProps<AuthStackParamList, AuthScreens.FORGOT_PASSWORD>
+  NativeStackScreenProps<AuthGroupParamList, AuthScreens.FORGOT_PASSWORD>
 > = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();

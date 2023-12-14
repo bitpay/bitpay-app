@@ -22,7 +22,7 @@ import {
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
 
@@ -49,9 +49,12 @@ const NotificationImage = {
 // estimated a number, tweak if neccessary based on the content length
 const scrollEnabledForSmallScreens = HEIGHT < 600;
 
-const NotificationsScreen: React.VFC<
-  NativeStackScreenProps<OnboardingStackParamList, 'Notifications'>
-> = ({navigation}) => {
+const NotificationsScreen = ({
+  navigation,
+}: NativeStackScreenProps<
+  OnboardingGroupParamList,
+  OnboardingScreens.NOTIFICATIONS
+>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const themeType = useThemeType();

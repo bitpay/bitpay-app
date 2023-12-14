@@ -36,7 +36,7 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import {GiftCardStackParamList} from '../GiftCardStack';
+import {GiftCardGroupParamList} from '../GiftCardGroup';
 import {
   horizontalPadding,
   NavIconButtonContainer,
@@ -151,7 +151,7 @@ const ArchiveButtonContainer = styled.View`
 const GiftCardDetails = ({
   route,
   navigation,
-}: NativeStackScreenProps<GiftCardStackParamList, 'GiftCardDetails'>) => {
+}: NativeStackScreenProps<GiftCardGroupParamList, 'GiftCardDetails'>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();

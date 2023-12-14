@@ -10,7 +10,7 @@ import {useNavigation} from '@react-navigation/native';
 import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
-import {WalletScreens} from '../../../wallet/WalletStack';
+import {WalletScreens} from '../../../wallet/WalletGroup';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const ButtonsRow = styled.View`
@@ -141,19 +141,13 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
               context: 'LinkingButtons',
             }),
           );
-          navigation.navigate('Wallet', {
-            screen: WalletScreens.AMOUNT,
-            params: {
-              onAmountSelected: async (amount: string) => {
-                navigation.navigate('BuyCrypto', {
-                  screen: 'BuyCryptoRoot',
-                  params: {
-                    amount: Number(amount),
-                  },
-                });
-              },
-              context: 'buyCrypto',
+          navigation.navigate(WalletScreens.AMOUNT, {
+            onAmountSelected: async (amount: string) => {
+              navigation.navigate('BuyCryptoRoot', {
+                amount: Number(amount),
+              });
             },
+            context: 'buyCrypto',
           });
         },
   );
@@ -166,7 +160,7 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
               context: 'LinkingButtons',
             }),
           );
-          navigation.navigate('SwapCrypto', {screen: 'Root'});
+          navigation.navigate('SwapCryptoRoot');
         },
   );
   const buttonsList: Array<ButtonListProps> = [

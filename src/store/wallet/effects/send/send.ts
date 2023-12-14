@@ -73,14 +73,15 @@ import {
   getCoinAndChainFromCurrencyCode,
   getCurrencyCodeFromCoinAndChain,
 } from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
-import {navigationRef} from '../../../../Root';
-import {WalletScreens} from '../../../../navigation/wallet/WalletStack';
+import {RootStacks, navigationRef} from '../../../../Root';
+import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 import {Analytics} from '../../../analytics/analytics.effects';
 import {AppActions} from '../../../app';
 import {URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
 import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
+import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1577,17 +1578,14 @@ export const showNoWalletsModal =
               dispatch(dismissBottomNotificationModal());
               navigation.dispatch(
                 CommonActions.reset({
-                  index: 2,
+                  index: 1,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Wallet',
-                      params: {
-                        screen: 'CreationOptions',
-                      },
+                      name: WalletScreens.CREATION_OPTIONS,
                     },
                   ],
                 }),
@@ -1664,19 +1662,13 @@ export const sendCrypto =
                     context: 'HomeRoot',
                   }),
                 );
-                navigationRef.navigate('Wallet', {
-                  screen: WalletScreens.AMOUNT,
-                  params: {
-                    onAmountSelected: (amount: string) => {
-                      navigationRef.navigate('BuyCrypto', {
-                        screen: 'BuyCryptoRoot',
-                        params: {
-                          amount: Number(amount),
-                        },
-                      });
-                    },
-                    context: 'buyCrypto',
+                navigationRef.navigate(WalletScreens.AMOUNT, {
+                  onAmountSelected: (amount: string) => {
+                    navigationRef.navigate('BuyCryptoRoot', {
+                      amount: Number(amount),
+                    });
                   },
+                  context: 'buyCrypto',
                 });
               },
               primary: true,
@@ -1695,10 +1687,7 @@ export const sendCrypto =
           context: loggerContext,
         }),
       );
-      navigationRef.navigate('Wallet', {
-        screen: 'GlobalSelect',
-        params: {context: 'send'},
-      });
+      navigationRef.navigate('GlobalSelect', {context: 'send'});
     }
   };
 
@@ -1739,10 +1728,7 @@ export const receiveCrypto =
             context: loggerContext,
           }),
         );
-        navigationRef.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {context: 'receive'},
-        });
+        navigationRef.navigate('GlobalSelect', {context: 'receive'});
       }
     }
   };

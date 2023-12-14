@@ -10,7 +10,7 @@ import {
   WIDTH,
 } from '../../../../components/styled/Containers';
 import {H5, Paragraph} from '../../../../components/styled/Text';
-import {BillScreens} from '../bill/BillStack';
+import {BillScreens} from '../bill/BillGroup';
 import {
   SectionContainer,
   SectionHeader,
@@ -153,9 +153,8 @@ export const Bills = () => {
           {
             text: t('THIS IS CORRECT'),
             action: () => {
-              navigation.navigate('Bill', {
-                screen: BillScreens.CONNECT_BILLS,
-                params: {tokenType: 'auth'},
+              navigation.navigate(BillScreens.CONNECT_BILLS, {
+                tokenType: 'auth',
               });
               dispatch(Analytics.track('Bill Pay — Confirmed User Info'));
             },
@@ -234,10 +233,7 @@ export const Bills = () => {
                     <TouchableOpacity
                       activeOpacity={ActiveOpacity}
                       onPress={() => {
-                        navigation.navigate('Bill', {
-                          screen: BillScreens.PAYMENTS,
-                          params: {},
-                        });
+                        navigation.navigate(BillScreens.PAYMENTS, {});
                         dispatch(
                           Analytics.track(
                             'Bill Pay — Clicked View All Payments',
@@ -253,10 +249,7 @@ export const Bills = () => {
                     accounts={accounts}
                     variation={'pay'}
                     onPress={account => {
-                      navigation.navigate('Bill', {
-                        screen: BillScreens.PAY_BILL,
-                        params: {account},
-                      });
+                      navigation.navigate(BillScreens.PAY_BILL, {account});
                       dispatch(
                         Analytics.track(
                           'Bill Pay — Clicked Pay Bill',
@@ -270,10 +263,7 @@ export const Bills = () => {
                     height={50}
                     buttonStyle="secondary"
                     onPress={() =>
-                      navigation.navigate('Bill', {
-                        screen: BillScreens.PAY_ALL_BILLS,
-                        params: {accounts},
-                      })
+                      navigation.navigate(BillScreens.PAY_ALL_BILLS, {accounts})
                     }>
                     {t('Pay All Bills')}
                   </Button>

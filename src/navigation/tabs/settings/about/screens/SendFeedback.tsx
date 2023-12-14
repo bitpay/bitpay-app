@@ -28,7 +28,7 @@ import Rate, {AndroidMarket} from 'react-native-rate';
 import {useTranslation} from 'react-i18next';
 import {APP_VERSION} from '../../../../../constants/config';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {AboutStackParamList} from '../AboutStack';
+import {AboutScreens, AboutStackParamList} from '../AboutGroup';
 
 export type FeedbackRateType = 'love' | 'ok' | 'disappointed' | 'default';
 
@@ -99,7 +99,7 @@ const LeftIconContainer = styled.View`
 
 const SendFeedback = ({
   route,
-}: NativeStackScreenProps<AboutStackParamList, 'SendFeedback'>) => {
+}: NativeStackScreenProps<AboutStackParamList, AboutScreens.SEND_FEEDBACK>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();

@@ -10,7 +10,7 @@ import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
-import {WalletScreens} from '../../../navigation/wallet/WalletStack';
+import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
 
@@ -99,19 +99,13 @@ const TransactModal = () => {
             context: 'TransactMenu',
           }),
         );
-        navigation.navigate('Wallet', {
-          screen: WalletScreens.AMOUNT,
-          params: {
-            onAmountSelected: async (amount: string, setButtonState: any) => {
-              navigation.navigate('BuyCrypto', {
-                screen: 'BuyCryptoRoot',
-                params: {
-                  amount: Number(amount),
-                },
-              });
-            },
-            context: 'buyCrypto',
+        navigation.navigate(WalletScreens.AMOUNT, {
+          onAmountSelected: async (amount: string, setButtonState: any) => {
+            navigation.navigate('BuyCryptoRoot', {
+              amount: Number(amount),
+            });
           },
+          context: 'buyCrypto',
         });
       },
     },
@@ -126,7 +120,7 @@ const TransactModal = () => {
             context: 'TransactMenu',
           }),
         );
-        navigation.navigate('SwapCrypto', {screen: 'Root'});
+        navigation.navigate('SwapCryptoRoot');
       },
     },
     {
@@ -135,10 +129,7 @@ const TransactModal = () => {
       title: t('Receive'),
       description: t('Get crypto from another wallet'),
       onPress: () => {
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {context: 'receive'},
-        });
+        navigation.navigate('GlobalSelect', {context: 'receive'});
       },
     },
     {
@@ -147,10 +138,7 @@ const TransactModal = () => {
       title: t('Send'),
       description: t('Send crypto to another wallet'),
       onPress: () => {
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {context: 'send'},
-        });
+        navigation.navigate('GlobalSelect', {context: 'send'});
       },
     },
     {
@@ -181,7 +169,7 @@ const TransactModal = () => {
           context: 'TransactMenu',
         }),
       );
-      navigation.navigate('Scan', {screen: 'Root'});
+      navigation.navigate('ScanRoot');
     },
   };
 

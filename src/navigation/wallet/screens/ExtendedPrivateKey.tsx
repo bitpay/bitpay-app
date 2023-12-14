@@ -5,7 +5,7 @@ import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useTranslation} from 'react-i18next';
 
@@ -32,7 +32,7 @@ const ExtendedPrivateKey = () => {
 
   const {
     params: {xPrivKey},
-  } = useRoute<RouteProp<WalletStackParamList, 'ExtendedPrivateKey'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'ExtendedPrivateKey'>>();
 
   const [copied, setCopied] = useState(false);
 

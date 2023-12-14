@@ -8,7 +8,10 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import {H4, Paragraph} from '../../../components/styled/Text';
 import {navigationRef} from '../../../Root';
 import OnTheMoonSvg from '../assets/on-the-moon.svg';
-import {CardActivationStackParamList} from '../CardActivationStack';
+import {
+  CardActivationGroupParamList,
+  CardActivationScreens,
+} from '../CardActivationGroup';
 
 export type CompleteScreenParamList = undefined;
 
@@ -37,7 +40,10 @@ const Description = styled(Paragraph)`
 `;
 
 const CompleteScreen: React.FC<
-  NativeStackScreenProps<CardActivationStackParamList, 'Complete'>
+  NativeStackScreenProps<
+    CardActivationGroupParamList,
+    CardActivationScreens.COMPLETE
+  >
 > = () => {
   const {t} = useTranslation();
   const onViewCardPress = () => {

@@ -6,7 +6,7 @@ import {Link} from '../../../components/styled/Text';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {AuthStackParamList} from '../AuthStack';
+import {AuthGroupParamList, AuthScreens} from '../AuthGroup';
 import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
@@ -17,8 +17,8 @@ const POLL_TIMEOUT = 1000 * 60 * 5;
 export type VerifyEmailScreenParamList = {} | undefined;
 
 type VerifyEmailScreenProps = NativeStackScreenProps<
-  AuthStackParamList,
-  'EmailAuthentication'
+  AuthGroupParamList,
+  AuthScreens.VERIFY_EMAIL
 >;
 
 const VerifyEmailParagraph = styled(AuthFormParagraph)`

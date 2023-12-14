@@ -57,8 +57,8 @@ import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
 import {
   GiftCardScreens,
-  GiftCardStackParamList,
-} from '../../../../tabs/shop/gift-card/GiftCardStack';
+  GiftCardGroupParamList,
+} from '../../../../tabs/shop/gift-card/GiftCardGroup';
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
@@ -103,7 +103,7 @@ const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route =
-    useRoute<RouteProp<GiftCardStackParamList, 'GiftCardConfirm'>>();
+    useRoute<RouteProp<GiftCardGroupParamList, 'GiftCardConfirm'>>();
   const {
     amount,
     cardConfig,
@@ -311,12 +311,9 @@ const Confirm = () => {
     }
     navigation.dispatch(StackActions.popToTop());
     navigation.dispatch(StackActions.pop());
-    navigation.navigate('GiftCard', {
-      screen: 'GiftCardDetails',
-      params: {
-        giftCard,
-        cardConfig,
-      },
+    navigation.navigate('GiftCardDetails', {
+      giftCard,
+      cardConfig,
     });
     const purchaseEventName =
       giftCard.status === 'FAILURE'
@@ -373,22 +370,19 @@ const Confirm = () => {
   };
 
   const request2FA = async () => {
-    navigation.navigate('GiftCard', {
-      screen: GiftCardScreens.GIFT_CARD_CONFIRM_TWO_FACTOR,
-      params: {
-        onSubmit: async twoFactorCode => {
-          try {
-            await sendPayment(twoFactorCode);
-            await redeemGiftCardAndNavigateToGiftCardDetails();
-          } catch (error: any) {
-            dispatch(dismissOnGoingProcessModal());
-            const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
-            error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
-              ? showError({defaultErrorMessage: invalid2faMessage})
-              : handlePaymentFailure(error);
-            throw error;
-          }
-        },
+    navigation.navigate(GiftCardScreens.GIFT_CARD_CONFIRM_TWO_FACTOR, {
+      onSubmit: async twoFactorCode => {
+        try {
+          await sendPayment(twoFactorCode);
+          await redeemGiftCardAndNavigateToGiftCardDetails();
+        } catch (error: any) {
+          dispatch(dismissOnGoingProcessModal());
+          const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
+          error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
+            ? showError({defaultErrorMessage: invalid2faMessage})
+            : handlePaymentFailure(error);
+          throw error;
+        }
       },
     });
     await sleep(400);

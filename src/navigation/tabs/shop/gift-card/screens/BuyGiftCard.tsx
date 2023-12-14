@@ -3,7 +3,7 @@ import {Platform, ScrollView, View, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
-import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
+import {GiftCardScreens, GiftCardGroupParamList} from '../GiftCardGroup';
 import TagsSvg from '../../../../../../assets/img/tags-stack.svg';
 import {
   BaseText,
@@ -46,6 +46,7 @@ import {useAppSelector} from '../../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import GiftCardImage from '../../components/GiftCardImage';
+import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
 
 const BuyGiftCardContainer = styled.SafeAreaView`
   flex: 1;
@@ -117,7 +118,7 @@ const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
 const BuyGiftCard = ({
   route,
   navigation,
-}: NativeStackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
+}: NativeStackScreenProps<GiftCardGroupParamList, 'BuyGiftCard'>) => {
   const {t} = useTranslation();
   const navigator = useNavigation();
   const dispatch = useDispatch();
@@ -196,25 +197,19 @@ const BuyGiftCard = ({
 
   const goToConfirmScreen = async (amount: number) => {
     const discount = getVisibleDiscount(cardConfig);
-    navigator.navigate('GiftCard', {
-      screen: GiftCardScreens.GIFT_CARD_CONFIRM,
-      params: {
-        amount,
-        cardConfig,
-        discounts: discount ? [discount] : [],
-      },
+    navigation.navigate(GiftCardScreens.GIFT_CARD_CONFIRM, {
+      amount,
+      cardConfig,
+      discounts: discount ? [discount] : [],
     });
   };
 
   const goToAmountScreen = (phone?: string) => {
-    navigator.navigate('GiftCard', {
-      screen: GiftCardScreens.GIFT_CARD_AMOUNT,
-      params: {
-        fiatCurrencyAbbreviation: cardConfig.currency,
-        opts: {hideSendMax: true},
-        onAmountSelected: selectedAmount =>
-          onAmountScreenSubmit(+selectedAmount, phone),
-      },
+    navigation.navigate(WalletScreens.AMOUNT, {
+      fiatCurrencyAbbreviation: cardConfig.currency,
+      opts: {hideSendMax: true},
+      onAmountSelected: selectedAmount =>
+        onAmountScreenSubmit(+selectedAmount, phone),
     });
   };
 
@@ -267,16 +262,13 @@ const BuyGiftCard = ({
   };
 
   const requestPhone = (amount: number) => {
-    navigator.navigate('GiftCard', {
-      screen: GiftCardScreens.ENTER_PHONE,
-      params: {
-        cardConfig,
-        initialPhone: savedPhone,
-        initialPhoneCountryInfo: savedPhoneCountryInfo,
-        onSubmit: ({phone, phoneCountryInfo}) => {
-          dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
-          requestAmountIfNeeded(amount, phone);
-        },
+    navigation.navigate(GiftCardScreens.ENTER_PHONE, {
+      cardConfig,
+      initialPhone: savedPhone,
+      initialPhoneCountryInfo: savedPhoneCountryInfo,
+      onSubmit: ({phone, phoneCountryInfo}) => {
+        dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
+        requestAmountIfNeeded(amount, phone);
       },
     });
   };
@@ -293,15 +285,12 @@ const BuyGiftCard = ({
 
   const next = (amount: number, phone?: string) => {
     if (cardConfig.emailRequired && !shouldSync) {
-      return navigator.navigate('GiftCard', {
-        screen: GiftCardScreens.ENTER_EMAIL,
-        params: {
-          cardConfig,
-          initialEmail: savedEmail,
-          onSubmit: email => {
-            dispatch(ShopActions.updatedEmailAddress({email}));
-            requestPhoneIfNeeded(amount, phone);
-          },
+      return navigation.navigate(GiftCardScreens.ENTER_EMAIL, {
+        cardConfig,
+        initialEmail: savedEmail,
+        onSubmit: email => {
+          dispatch(ShopActions.updatedEmailAddress({email}));
+          requestPhoneIfNeeded(amount, phone);
         },
       });
     }

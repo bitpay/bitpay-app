@@ -27,13 +27,13 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import ScrollHint, {ScrollHintContainer} from '../components/ScrollHint';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import PaginationDots from '../../../components/pagination-dots/PaginationDots';
 import {useSharedValue} from 'react-native-reanimated';
 
 type OnboardingStartScreenProps = NativeStackScreenProps<
-  OnboardingStackParamList,
-  'OnboardingStart'
+  OnboardingGroupParamList,
+  OnboardingScreens.START
 >;
 
 // IMAGES
@@ -121,10 +121,9 @@ const LinkText = styled(Link)`
 // estimated a number, tweak if neccessary based on the content length
 const scrollEnabledForSmallScreens = HEIGHT < 700;
 
-const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
+const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
   const themeType = useThemeType();
   const isPaired = useAppSelector(
     ({APP, BITPAY_ID}) => !!BITPAY_ID.apiToken[APP.network],
@@ -137,15 +136,10 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
   const onLoginPress = () => {
     haptic('impactLight');
     askForTrackingThenNavigate(() => {
-      navigation.navigate('Auth', {
-        screen: 'Login',
-        params: {
-          onLoginSuccess: async () => {
-            haptic('impactLight');
-            navigation.navigate('Onboarding', {
-              screen: 'Notifications',
-            });
-          },
+      navigation.navigate('Login', {
+        onLoginSuccess: async () => {
+          haptic('impactLight');
+          navigation.navigate('Notifications');
         },
       });
     });
@@ -282,9 +276,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
                 onPress={() => {
                   haptic('impactLight');
                   askForTrackingThenNavigate(() => {
-                    navigation.navigate('Auth', {
-                      screen: 'CreateAccount',
-                    });
+                    navigation.navigate('CreateAccount');
                   });
                 }}>
                 {t('Get Started')}
@@ -296,9 +288,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
                 onPress={() => {
                   haptic('impactLight');
                   askForTrackingThenNavigate(() => {
-                    navigation.navigate('Onboarding', {
-                      screen: 'Notifications',
-                    });
+                    navigation.navigate('Notifications');
                   });
                 }}>
                 {t('Continue')}
@@ -314,9 +304,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
                 buttonType={'link'}
                 onPress={() => {
                   askForTrackingThenNavigate(() => {
-                    navigation.navigate('Onboarding', {
-                      screen: 'Notifications',
-                    });
+                    navigation.navigate('Notifications');
                   });
                 }}>
                 <LinkText>{t('Continue without an account')}</LinkText>

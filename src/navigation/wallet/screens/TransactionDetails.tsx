@@ -9,7 +9,7 @@ import {
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
@@ -202,7 +202,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 const TransactionDetails = () => {
   const {
     params: {transaction, wallet, onMemoChange},
-  } = useRoute<RouteProp<WalletStackParamList, 'TransactionDetails'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {t} = useTranslation();
@@ -320,17 +320,14 @@ const TransactionDetails = () => {
         createProposalAndBuildTxDetails(tx),
       );
 
-      navigation.navigate('Wallet', {
-        screen: 'Confirm',
-        params: {
-          wallet,
-          recipient,
-          recipientList,
-          txp: newTxp,
-          txDetails,
-          amount: tx.amount,
-          speedup: true,
-        },
+      navigation.navigate('Confirm', {
+        wallet,
+        recipient,
+        recipientList,
+        txp: newTxp,
+        txDetails,
+        amount: tx.amount,
+        speedup: true,
       });
     } catch (err: any) {
       const [errorMessageConfig] = await Promise.all([

@@ -45,8 +45,8 @@ import {useTranslation} from 'react-i18next';
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {
   BillScreens,
-  BillStackParamList,
-} from '../../../../tabs/shop/bill/BillStack';
+  BillGroupParamList,
+} from '../../../../tabs/shop/bill/BillGroup';
 import {Image, View} from 'react-native';
 import Button from '../../../../../components/button/Button';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -56,6 +56,7 @@ import PaymentSent from '../../../components/PaymentSent';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../../../../tabs/shop/bill/utils';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
+import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
 
 export interface BillPaymentRequest {
   amount: number;
@@ -67,13 +68,14 @@ export interface BillConfirmParamList {
   billPayments: BillPaymentRequest[];
 }
 
-const Confirm: React.FC<
-  NativeStackScreenProps<BillStackParamList, 'BillConfirm'>
+const BillConfirm: React.VFC<
+  NativeStackScreenProps<BillGroupParamList, BillScreens.BILL_CONFIRM>
 > = ({navigation}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
-  const route = useRoute<RouteProp<BillStackParamList, 'BillConfirm'>>();
+  const route =
+    useRoute<RouteProp<BillGroupParamList, BillScreens.BILL_CONFIRM>>();
   const {
     billPayments,
     wallet: _wallet,
@@ -382,7 +384,7 @@ const Confirm: React.FC<
   };
 
   const request2FA = async () => {
-    navigation.navigate(BillScreens.BILL_CONFIRM_TWO_FACTOR, {
+    navigation.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
       onSubmit: async twoFactorCode => {
         try {
           await sendPayment(twoFactorCode);
@@ -541,10 +543,7 @@ const Confirm: React.FC<
         onCloseModal={async () => {
           navigation.dispatch(StackActions.popToTop());
           navigation.dispatch(StackActions.pop());
-          navigator.navigate('Bill', {
-            screen: BillScreens.PAYMENTS,
-            params: {},
-          });
+          navigator.navigate(BillScreens.PAYMENTS, {});
           await sleep(0);
           setShowPaymentSentModal(false);
         }}
@@ -553,4 +552,4 @@ const Confirm: React.FC<
   );
 };
 
-export default Confirm;
+export default BillConfirm;

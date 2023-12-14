@@ -2,7 +2,7 @@ import React, {useLayoutEffect} from 'react';
 import {Linking, ScrollView} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
-import {MerchantStackParamList} from '../MerchantStack';
+import {MerchantGroupParamList} from '../MerchantGroup';
 import RemoteImage from '../../components/RemoteImage';
 import styled from 'styled-components/native';
 import {
@@ -57,7 +57,7 @@ const FooterButton = styled(CtaContainerAbsolute)`
 const MerchantDetails = ({
   route,
   navigation,
-}: NativeStackScreenProps<MerchantStackParamList, 'MerchantDetails'>) => {
+}: NativeStackScreenProps<MerchantGroupParamList, 'MerchantDetails'>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const {directIntegration} = route.params;

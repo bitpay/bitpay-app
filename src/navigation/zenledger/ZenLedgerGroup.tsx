@@ -1,32 +1,33 @@
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../components/styled/Text';
+import ZenLedgerImport from './screens/ZenLedgerImport';
+import ZenLedgerIntro from './screens/ZenLedgerIntro';
+import {Root} from '../../Root';
 import {
   baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
 } from '../../constants/NavigationOptions';
-import ZenLedgerImport from './screens/ZenLedgerImport';
-import ZenLedgerIntro from './screens/ZenLedgerIntro';
 import {HeaderBackButton} from '@react-navigation/elements';
 
-export type ZenLedgerStackParamsList = {
-  Root: undefined;
+interface ZenLedgerProps {
+  ZenLedger: typeof Root;
+}
+
+export type ZenLedgerGroupParamsList = {
+  ZenLedgerRoot: undefined;
   ZenLedgerImport: undefined;
 };
 
 export enum ZenLedgerScreens {
-  Root = 'Root',
+  ROOT = 'ZenLedgerRoot',
   ZENLEDGER_IMPORT = 'ZenLedgerImport',
 }
 
-const ZenLedger = createNativeStackNavigator<ZenLedgerStackParamsList>();
-
-const ZenLedgerStack = () => {
+const ZenLedgerGroup: React.FC<ZenLedgerProps> = ({ZenLedger}) => {
   const {t} = useTranslation();
   return (
-    <ZenLedger.Navigator
-      initialRouteName={ZenLedgerScreens.Root}
+    <ZenLedger.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
         headerLeft: () => (
@@ -39,7 +40,7 @@ const ZenLedgerStack = () => {
         ),
       })}>
       <ZenLedger.Screen
-        name={ZenLedgerScreens.Root}
+        name={ZenLedgerScreens.ROOT}
         component={ZenLedgerIntro}
       />
       <ZenLedger.Screen
@@ -49,8 +50,8 @@ const ZenLedgerStack = () => {
           headerTitle: () => <HeaderTitle>{t('ZenLedger')}</HeaderTitle>,
         }}
       />
-    </ZenLedger.Navigator>
+    </ZenLedger.Group>
   );
 };
 
-export default ZenLedgerStack;
+export default ZenLedgerGroup;

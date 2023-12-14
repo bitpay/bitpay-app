@@ -45,7 +45,7 @@ import {Analytics} from '../../../../../../store/analytics/analytics.effects';
 // Layout selector
 const Noop = () => null;
 
-const CustomizeHome = () => {
+const CustomizeHomeSettings = () => {
   const {t} = useTranslation();
   useAndroidBackHandler(() => true);
   const dispatch = useAppDispatch();
@@ -238,4 +238,4 @@ const CustomizeHome = () => {
   );
 };
 
-export default CustomizeHome;
+export default CustomizeHomeSettings;

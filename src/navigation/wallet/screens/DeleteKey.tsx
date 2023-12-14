@@ -2,7 +2,7 @@ import React, {useLayoutEffect, useState} from 'react';
 import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -57,7 +57,7 @@ const DeleteKey = () => {
 
   const {
     params: {keyId},
-  } = useRoute<RouteProp<WalletStackParamList, 'DeleteKey'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'DeleteKey'>>();
 
   useLayoutEffect(() => {
     navigation.setOptions({

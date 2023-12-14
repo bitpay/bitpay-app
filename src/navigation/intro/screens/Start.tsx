@@ -3,7 +3,7 @@ import React from 'react';
 import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
 import FeatureCard from '../../../components/feature-card/FeatureCard';
-import {IntroStackParamList} from '../IntroStack';
+import {IntroGroupParamList, IntroScreens} from '../IntroGroup';
 
 const lightImage = require('../../../../assets/img/intro/light/whats-new.png');
 const darkImage = require('../../../../assets/img/intro/dark/whats-new.png');
@@ -13,11 +13,11 @@ const IntroStartContainer = styled.View`
 `;
 
 type IntroStartScreenProps = NativeStackScreenProps<
-  IntroStackParamList,
-  'Start'
+  IntroGroupParamList,
+  IntroScreens.START
 >;
 
-const Start: React.VFC<IntroStartScreenProps> = ({navigation}) => {
+const Start = ({navigation}: IntroStartScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
 

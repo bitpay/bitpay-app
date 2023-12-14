@@ -26,11 +26,11 @@ import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
+import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoGroup';
 import {CardScreens} from '../../navigation/card/CardStack';
-import {CardActivationScreens} from '../../navigation/card-activation/CardActivationStack';
+import {CardActivationScreens} from '../../navigation/card-activation/CardActivationGroup';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
-import {WalletScreens} from '../../navigation/wallet/WalletStack';
+import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {Analytics} from '../analytics/analytics.effects';
@@ -98,8 +98,7 @@ import {
   getAvailableGiftCards,
   getCategoriesWithIntegrations,
 } from '../shop/shop.selectors';
-import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
-import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantStack';
+import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantGroup';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
@@ -1026,11 +1025,8 @@ export const incomingShopLink =
       );
 
       if (cardConfig) {
-        navigationRef.navigate('GiftCard', {
-          screen: 'BuyGiftCard',
-          params: {
-            cardConfig,
-          },
+        navigationRef.navigate('BuyGiftCard', {
+          cardConfig,
         });
       } else {
         navigationRef.navigate('Shop', {
@@ -1049,19 +1045,13 @@ export const incomingShopLink =
       );
 
       if (category) {
-        navigationRef.navigate('Merchant', {
-          screen: MerchantScreens.MERCHANT_CATEGORY,
-          params: {
-            category,
-            integrations: category.integrations,
-          },
+        navigationRef.navigate(MerchantScreens.MERCHANT_CATEGORY, {
+          category,
+          integrations: category.integrations,
         });
       } else if (directIntegration) {
-        navigationRef.navigate('Merchant', {
-          screen: MerchantScreens.MERCHANT_DETAILS,
-          params: {
-            directIntegration,
-          },
+        navigationRef.navigate(MerchantScreens.MERCHANT_DETAILS, {
+          directIntegration,
         });
       } else {
         navigationRef.navigate('Shop', {
@@ -1113,10 +1103,7 @@ export const incomingLink =
       }
     } else if (pathSegments[0] === 'buy-crypto') {
       handler = () => {
-        navigationRef.navigate(RootStacks.BUY_CRYPTO, {
-          screen: BuyCryptoScreens.ROOT,
-          params,
-        });
+        navigationRef.navigate(BuyCryptoScreens.ROOT, params);
       };
     } else if (pathSegments[0] === 'connections') {
       const redirectTo = pathSegments[1];
@@ -1125,20 +1112,14 @@ export const incomingLink =
         navigationRef.navigate(RootStacks.TABS, {
           screen: TabsScreens.SETTINGS,
           params: {
-            screen: SettingsScreens.Root,
-            params: {
-              redirectTo: redirectTo as any,
-            },
+            redirectTo: redirectTo as any,
           },
         });
       };
     } else if (pathSegments[0] === 'wallet') {
       if (pathSegments[1] === 'create') {
         handler = () => {
-          navigationRef.navigate(RootStacks.WALLET, {
-            screen: WalletScreens.CREATION_OPTIONS,
-            params,
-          });
+          navigationRef.navigate(WalletScreens.CREATION_OPTIONS, params);
         };
       }
     } else if (pathSegments[0] === 'card') {
@@ -1163,11 +1144,8 @@ export const incomingLink =
 
       if (cardPath === 'activate') {
         handler = createCardHandler(cards => {
-          navigationRef.navigate(RootStacks.CARD_ACTIVATION, {
-            screen: CardActivationScreens.ACTIVATE,
-            params: {
-              card: cards[0],
-            },
+          navigationRef.navigate(CardActivationScreens.ACTIVATE, {
+            card: cards[0],
           });
         });
       } else if (cardPath === 'offers') {

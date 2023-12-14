@@ -8,7 +8,7 @@ import {
   useLogger,
   useMount,
 } from '../../../../utils/hooks';
-import {BuyCryptoScreens, BuyCryptoStackParamList} from '../BuyCryptoStack';
+import {BuyCryptoScreens, BuyCryptoGroupParamList} from '../BuyCryptoGroup';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
 import AmountModal from '../../../../components/amount/AmountModal';
@@ -101,9 +101,10 @@ const ArrowContainer = styled.View`
 
 let buyCryptoConfig: BuyCryptoConfig | undefined;
 
-const BuyCryptoRoot: React.VFC<
-  NativeStackScreenProps<BuyCryptoStackParamList, BuyCryptoScreens.ROOT>
-> = ({navigation, route}) => {
+const BuyCryptoRoot = ({
+  route,
+  navigation,
+}: NativeStackScreenProps<BuyCryptoGroupParamList, BuyCryptoScreens.ROOT>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();

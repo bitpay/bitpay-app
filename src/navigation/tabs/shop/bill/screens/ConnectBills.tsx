@@ -2,7 +2,7 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import WebView from 'react-native-webview';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {BillStackParamList} from '../BillStack';
+import {BillGroupParamList} from '../BillGroup';
 import {ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
@@ -16,7 +16,7 @@ import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 const ConnectBills = ({
   navigation,
   route,
-}: NativeStackScreenProps<BillStackParamList, 'ConnectBills'>) => {
+}: NativeStackScreenProps<BillGroupParamList, 'ConnectBills'>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();

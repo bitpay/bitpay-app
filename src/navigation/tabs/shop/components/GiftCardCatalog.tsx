@@ -30,7 +30,7 @@ import {
   SectionSpacer,
 } from './styled/ShopTabComponents';
 import {useNavigation} from '@react-navigation/native';
-import {GiftCardScreens} from '../gift-card/GiftCardStack';
+import {GiftCardScreens} from '../gift-card/GiftCardGroup';
 import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
@@ -65,9 +65,8 @@ const Curations = ({
             maxItemsPerColumn={3}
             screenWidth={WIDTH}
             onItemPress={item => {
-              navigation.navigate('GiftCard', {
-                screen: GiftCardScreens.BUY_GIFT_CARD,
-                params: {cardConfig: item as CardConfig},
+              navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                cardConfig: item as CardConfig,
               });
             }}
           />
@@ -254,9 +253,8 @@ export default ({
                 <ListItemTouchableHighlight
                   key={cardConfig.name}
                   onPress={() => {
-                    navigation.navigate('GiftCard', {
-                      screen: GiftCardScreens.BUY_GIFT_CARD,
-                      params: {cardConfig},
+                    navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                      cardConfig,
                     });
                   }}
                   underlayColor={underlayColor}>
@@ -297,9 +295,8 @@ export default ({
               <ListItemTouchableHighlight
                 key={cardConfig.name}
                 onPress={() => {
-                  navigation.navigate('GiftCard', {
-                    screen: GiftCardScreens.BUY_GIFT_CARD,
-                    params: {cardConfig},
+                  navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                    cardConfig,
                   });
                 }}
                 underlayColor={underlayColor}>
