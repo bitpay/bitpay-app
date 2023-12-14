@@ -1094,7 +1094,8 @@ const handleBanxaUri =
           exchange: 'banxa',
           fiatAmount: order?.fiat_total_amount || '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
-          coin: order?.coin || '',
+          coin: order?.coin?.toLowerCase() || '',
+          chain: order?.chain?.toLowerCase() || '',
         }),
       );
     }
@@ -1152,7 +1153,8 @@ const handleMoonpayUri =
         exchange: 'moonpay',
         fiatAmount: order?.fiat_total_amount || '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin || '',
+        coin: order?.coin?.toLowerCase() || '',
+        chain: order?.chain?.toLowerCase() || '',
       }),
     );
 
@@ -1209,7 +1211,8 @@ const handleRampUri =
         exchange: 'ramp',
         fiatAmount: order?.fiat_total_amount || '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin || '',
+        coin: order?.coin?.toLowerCase() || '',
+        chain: order?.chain?.toLowerCase() || '',
       }),
     );
 
