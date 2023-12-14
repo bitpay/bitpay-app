@@ -9,21 +9,28 @@ import {
   BillPayment,
 } from '../../../../../store/shop/shop.models';
 import {APP_NETWORK} from '../../../../../constants/config';
-import {useAppSelector} from '../../../../../utils/hooks';
+import {AppActions} from '../../../../../store/app';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 const sortByAscendingDate = (a: BillPayAccount, b: BillPayAccount) => {
   const farIntoTheFuture = moment().add(1, 'year').toDate();
   const fartherIntoTheFuture = moment().add(2, 'years').toDate();
+  const evenFartherIntoTheFuture = moment().add(3, 'years').toDate();
   return (
     new Date(
       a.isPayable
         ? a[a.type].nextPaymentDueDate || farIntoTheFuture
-        : fartherIntoTheFuture,
+        : a.paymentStatus === 'activating'
+        ? fartherIntoTheFuture
+        : evenFartherIntoTheFuture,
     ).getTime() -
     new Date(
       b.isPayable
         ? b[b.type].nextPaymentDueDate || farIntoTheFuture
-        : fartherIntoTheFuture,
+        : b.paymentStatus === 'activating'
+        ? fartherIntoTheFuture
+        : evenFartherIntoTheFuture,
     ).getTime()
   );
 };
@@ -37,6 +44,8 @@ export const BillList = ({
   variation: 'large' | 'small' | 'pay';
   onPress: (account: BillPayAccount) => void;
 }) => {
+  const dispatch = useAppDispatch();
+  const {t} = useTranslation();
   const persistedBillPayPayments = useAppSelector(
     ({SHOP}) => SHOP.billPayPayments[APP_NETWORK],
   ) as BillPayPayment[];
@@ -91,6 +100,26 @@ export const BillList = ({
             activeOpacity={account.isPayable ? ActiveOpacity : 1}
             onPress={() => {
               if (!account.isPayable) {
+                if (account.paymentStatus === 'activating') {
+                  dispatch(
+                    AppActions.showBottomNotificationModal({
+                      type: 'info',
+                      title: t('Why is my bill connecting?'),
+                      message: t(
+                        'Account verification and connections can take up to 3-5 business days. Please check back soon.',
+                      ),
+                      enableBackdropDismiss: true,
+                      onBackdropDismiss: () => {},
+                      actions: [
+                        {
+                          text: t('Close'),
+                          action: () => {},
+                          primary: true,
+                        },
+                      ],
+                    }),
+                  );
+                }
                 return;
               }
               onPress(account);

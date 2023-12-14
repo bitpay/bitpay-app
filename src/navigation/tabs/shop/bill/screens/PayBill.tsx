@@ -99,7 +99,7 @@ const getCustomAmountSublabel = (account: BillPayAccount) => {
 const PayBill = ({
   navigation,
   route,
-}: StackScreenProps<BillStackParamList, 'Payment'>) => {
+}: StackScreenProps<BillStackParamList, 'PayBill'>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {account} = route.params;
@@ -110,7 +110,9 @@ const PayBill = ({
     ? 'nextPaymentMinimumAmount'
     : account[account.type].lastStatementBalance
     ? 'lastStatementBalance'
-    : 'balance';
+    : account[account.type].lastStatementBalance
+    ? 'balance'
+    : 'other';
   const [selectedAmount, setSelectedAmount] = useState(initialSelectedAmount);
 
   const baseEventParams = getBillAccountEventParams(account);

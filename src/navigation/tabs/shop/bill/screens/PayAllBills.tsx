@@ -486,7 +486,13 @@ const PayAllBills = ({
                           />
                         </CheckboxContainer>
                         <LineItemLabelContainer>
-                          <Paragraph>Other Amount</Paragraph>
+                          <Paragraph>
+                            {account[account.type].balance ||
+                            account[account.type].lastStatementBalance ||
+                            account[account.type].nextPaymentMinimumAmount
+                              ? 'Other Amount'
+                              : 'Amount'}
+                          </Paragraph>
                         </LineItemLabelContainer>
                         <Field
                           style={{

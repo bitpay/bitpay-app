@@ -155,7 +155,7 @@ export const Bills = () => {
             action: () => {
               navigation.navigate('Bill', {
                 screen: BillScreens.CONNECT_BILLS,
-                params: {},
+                params: {tokenType: 'auth'},
               });
               dispatch(Analytics.track('Bill Pay — Confirmed User Info'));
             },
@@ -295,7 +295,10 @@ export const Bills = () => {
                   <Button
                     buttonType={'link'}
                     onPress={() => {
-                      verifyUserInfo();
+                      navigation.navigate('Bill', {
+                        screen: BillScreens.CONNECT_BILLS_OPTIONS,
+                        params: {},
+                      });
                       dispatch(
                         Analytics.track(
                           'Bill Pay — Clicked Connect More Bills',

@@ -127,6 +127,15 @@ const statusFields = {
       color: LinkBlue,
     },
   },
+  connecting: {
+    backgroundColor: '#ECEFFD',
+    color: Action,
+    text: 'Connecting',
+    darkTheme: {
+      backgroundColor: '#071A6A',
+      color: LinkBlue,
+    },
+  },
   default: {
     backgroundColor: '#ECEFFD',
     color: Action,
@@ -162,6 +171,9 @@ const StatusText = styled(Paragraph)<BillStatusStyleProps>`
 `;
 
 const getBillStatus = (account: BillPayAccount) => {
+  if (account.paymentStatus === 'activating') {
+    return {status: 'connecting', statusText: 'Connecting'};
+  }
   const nextPaymentDueDate = account[account.type].paddedNextPaymentDueDate;
   if (!nextPaymentDueDate) {
     return {status: 'dueLater', statusText: 'No payment due'};

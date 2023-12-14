@@ -269,6 +269,8 @@ export interface BillPayAccount {
   status: string;
   type: 'liability';
   isPayable: boolean;
+  isManuallyAdded: boolean;
+  paymentStatus: 'active' | 'activating' | 'unavailable';
   liability: {
     merchantId: string;
     merchantIcon: string;
