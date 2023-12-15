@@ -176,6 +176,13 @@ const ConnectBillsOptions = ({
     dispatch(Analytics.track('Bill Pay — Clicked Connect My Bills'));
   };
 
+  const searchBills = () => {
+    navigation.navigate(BillScreens.CONNECT_BILLS, {
+      tokenType: 'link',
+    });
+    dispatch(Analytics.track('Bill Pay — Clicked Search Bills'));
+  };
+
   return (
     <>
       <ScrollView
@@ -246,11 +253,7 @@ const ConnectBillsOptions = ({
         <Button
           state={continueButtonState}
           onPress={() => {
-            selectedOption === 'auto'
-              ? verifyUserInfo()
-              : navigation.navigate(BillScreens.CONNECT_BILLS, {
-                  tokenType: 'link',
-                });
+            selectedOption === 'auto' ? verifyUserInfo() : searchBills();
           }}
           buttonStyle={'primary'}>
           {continueButtonState === 'loading' ? t('Loading...') : t('Continue')}
