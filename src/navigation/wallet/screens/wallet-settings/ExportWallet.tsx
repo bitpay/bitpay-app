@@ -28,9 +28,9 @@ import {WalletStackParamList} from '../../WalletStack';
 import {BwcProvider} from '../../../../lib/bwc';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {sleep} from '../../../../utils/helper-methods';
-import {Linking} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../store/log';
+import Mailer from 'react-native-mail';
 
 const BWC = BwcProvider.getInstance();
 
@@ -174,10 +174,28 @@ const ExportWallet = () => {
     }
   };
 
+  const handleEmail = (subject: string, body: string) => {
+    Mailer.mail(
+      {
+        subject,
+        body,
+        isHTML: false,
+      },
+      (error, event) => {
+        if (error) {
+          dispatch(LogActions.error('Error sending email: ' + error));
+        }
+        if (event) {
+          dispatch(LogActions.debug('Email Backup: ' + event));
+        }
+      },
+    );
+  };
+
   const onSendByEmail = async ({password}: {password: string}) => {
     try {
       setSendButtonState('loading');
-      const _sendWallet = encodeURIComponent(walletExport(password));
+      const _sendWallet = walletExport(password);
       const {
         credentials: {walletName: cWalletName, walletId},
         walletName,
@@ -195,8 +213,7 @@ const ExportWallet = () => {
         {name, sendWallet: _sendWallet},
       );
 
-      // Works only on device
-      await Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+      handleEmail(subject, body);
 
       setSendButtonState('success');
       await sleep(200);
