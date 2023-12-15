@@ -276,9 +276,10 @@ const ExportTransactionHistory = () => {
     try {
       dispatch(startOnGoingProcessModal('LOADING'));
       const csv = await buildCVSFile();
-      await shareFile(csv, option);
+      await sleep(200);
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
+      await shareFile(csv, option);
     } catch (e) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
