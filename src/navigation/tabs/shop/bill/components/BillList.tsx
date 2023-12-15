@@ -1,6 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 import {TouchableOpacity} from 'react-native';
+import {useTranslation} from 'react-i18next';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import BillItem from './BillItem';
 import {
@@ -10,8 +11,9 @@ import {
 } from '../../../../../store/shop/shop.models';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {AppActions} from '../../../../../store/app';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {useTranslation} from 'react-i18next';
+import {getBillAccountEventParams} from '../utils';
 
 const sortByAscendingDate = (a: BillPayAccount, b: BillPayAccount) => {
   const farIntoTheFuture = moment().add(1, 'year').toDate();
@@ -118,6 +120,12 @@ export const BillList = ({
                         },
                       ],
                     }),
+                  );
+                  dispatch(
+                    Analytics.track(
+                      'Bill Pay — Viewed Why Is My Bill Connecting',
+                      getBillAccountEventParams(account),
+                    ),
                   );
                 }
                 return;
