@@ -17,6 +17,7 @@ import {
   Caution25,
   Caution60,
   Grey,
+  LightBlack,
   Slate,
   SlateDark,
 } from '../../../styles/colors';
@@ -115,6 +116,10 @@ const WarningMessageTitle = styled(HeaderSubtitle)`
 
 const WarningMessageText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? Caution60 : Caution)};
+`;
+
+const ParagraphRecovery = styled(Paragraph)`
+  color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlack)};
 `;
 
 const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
@@ -226,7 +231,9 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
             <WarningMessageTitle>{t('CONFIDENTIAL')}</WarningMessageTitle>
           </WarningMessageTitleContainer>
           <WarningMessageDescContainer>
-            <Paragraph>{t('Your 12-word recovery phrase')}</Paragraph>
+            <ParagraphRecovery>
+              {t('Your 12-word recovery phrase')}
+            </ParagraphRecovery>
           </WarningMessageDescContainer>
           <WarningMessageTextContainer>
             <WarningMessageText>
