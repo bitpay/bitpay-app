@@ -242,7 +242,6 @@ export default () => {
     ({APP}) => APP.onboardingCompleted,
   );
   const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
-  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const checkingBiometricForSending = useAppSelector(
     ({APP}) => APP.checkingBiometricForSending,
   );
