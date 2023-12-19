@@ -28,13 +28,13 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {WalletStackParamList} from '../WalletStack';
 import {backupRedirect} from './Backup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import Back from '../../../components/back/Back';
 import {IS_ANDROID} from '../../../constants';
 
-type RecoveryPhraseScreenProps = StackScreenProps<
+type RecoveryPhraseScreenProps = NativeStackScreenProps<
   WalletStackParamList,
   'RecoveryPhrase'
 >;

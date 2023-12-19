@@ -39,6 +39,10 @@ import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v
 import PlusIcon from '../../../components/plus/Plus';
 import {AddButton} from '../../wallet/screens/CreateMultisig';
 
+const WalletConnectConnectionsContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
 const DappTitleText = styled(BaseText)`
   font-size: 14px;
   font-weight: 700;
@@ -49,9 +53,7 @@ const DappTitleText = styled(BaseText)`
   padding-top: ${Platform.OS === 'ios' ? '4px' : '8px'};
 `;
 
-const AddConnectionContainer = styled.TouchableOpacity`
-  margin-right: 15px;
-`;
+const AddConnectionContainer = styled.TouchableOpacity``;
 
 const EmptyListContainer = styled.View`
   justify-content: space-between;
@@ -193,99 +195,101 @@ const WalletConnectConnections = () => {
   );
 
   return (
-    <ScrollView>
-      <View style={{marginTop: 20, padding: 16}}>
-        <HeaderTitle>{t('Connections')}</HeaderTitle>
-        {sessions.length
-          ? sessions.map((session, index: number) => {
-              const {peer, namespaces} = session;
-              return (
-                <View style={{marginVertical: 15}} key={index.toString()}>
-                  <ConnectionItem
-                    peerIcon={peer.metadata.icons[0]}
-                    peerName={peer.metadata.name}
-                    session={session}
-                  />
-                  {Object.keys(namespaces).length
-                    ? Object.keys(namespaces).map(key => {
-                        return namespaces[key].accounts
-                          .sort((a, b) => {
-                            const getAddress = (str: string) =>
-                              str.match(accountRegex)?.[0];
-                            return (getAddress(a) || '').localeCompare(
-                              getAddress(b) || '',
-                            );
-                          })
-                          .map((account, index) => (
-                            <Connections
-                              keys={allKeys}
-                              account={account}
-                              session={session}
-                              key={index.toString()}
-                            />
-                          ));
-                      })
-                    : null}
-                </View>
-              );
-            })
-          : null}
+    <WalletConnectConnectionsContainer>
+      <ScrollView>
+        <View style={{marginTop: 20, padding: 16}}>
+          <HeaderTitle>{t('Connections')}</HeaderTitle>
+          {sessions.length
+            ? sessions.map((session, index: number) => {
+                const {peer, namespaces} = session;
+                return (
+                  <View style={{marginVertical: 15}} key={index.toString()}>
+                    <ConnectionItem
+                      peerIcon={peer.metadata.icons[0]}
+                      peerName={peer.metadata.name}
+                      session={session}
+                    />
+                    {Object.keys(namespaces).length
+                      ? Object.keys(namespaces).map(key => {
+                          return namespaces[key].accounts
+                            .sort((a, b) => {
+                              const getAddress = (str: string) =>
+                                str.match(accountRegex)?.[0];
+                              return (getAddress(a) || '').localeCompare(
+                                getAddress(b) || '',
+                              );
+                            })
+                            .map((account, index) => (
+                              <Connections
+                                keys={allKeys}
+                                account={account}
+                                session={session}
+                                key={index.toString()}
+                              />
+                            ));
+                        })
+                      : null}
+                  </View>
+                );
+              })
+            : null}
 
-        {!sessions.length ? (
-          <EmptyListContainer>
-            <H5>{t("It's a ghost town in here")}</H5>
-            <GhostSvg style={{marginTop: 20}} />
-          </EmptyListContainer>
-        ) : null}
+          {!sessions.length ? (
+            <EmptyListContainer>
+              <H5>{t("It's a ghost town in here")}</H5>
+              <GhostSvg style={{marginTop: 20}} />
+            </EmptyListContainer>
+          ) : null}
 
-        {dappProposal || sessionToUpdate ? (
-          <WCV2WalletSelector
-            isVisible={walletSelectorV2ModalVisible}
-            proposal={dappProposal}
-            session={sessionToUpdate}
-            onBackdropPress={async (
-              selectedWallets?: {
-                chain: string;
-                address: string;
-                network: string;
-                supportedChain: string;
-              }[],
-              session?: WCV2SessionType,
-            ) => {
-              hideWalletSelectorV2();
-              await sleep(500);
-              if (selectedWallets && selectedWallets.length > 0 && session) {
-                try {
-                  dispatch(startOnGoingProcessModal('LOADING'));
-                  await sleep(500);
-                  await dispatch(
-                    walletConnectV2OnUpdateSession({
-                      session,
-                      selectedWallets,
-                      action: 'add_accounts',
-                    }),
-                  );
-                  dispatch(dismissOnGoingProcessModal());
-                  await sleep(500);
-                } catch (err) {
-                  dispatch(dismissOnGoingProcessModal());
-                  await sleep(500);
-                  await showErrorMessage(
-                    CustomErrorMessage({
-                      errMsg: BWCErrorMessage(err),
-                      title: t('Uh oh, something went wrong'),
-                    }),
-                  );
-                } finally {
-                  setDappProposal(undefined);
-                  setSessionToUpdate(undefined);
+          {dappProposal || sessionToUpdate ? (
+            <WCV2WalletSelector
+              isVisible={walletSelectorV2ModalVisible}
+              proposal={dappProposal}
+              session={sessionToUpdate}
+              onBackdropPress={async (
+                selectedWallets?: {
+                  chain: string;
+                  address: string;
+                  network: string;
+                  supportedChain: string;
+                }[],
+                session?: WCV2SessionType,
+              ) => {
+                hideWalletSelectorV2();
+                await sleep(500);
+                if (selectedWallets && selectedWallets.length > 0 && session) {
+                  try {
+                    dispatch(startOnGoingProcessModal('LOADING'));
+                    await sleep(500);
+                    await dispatch(
+                      walletConnectV2OnUpdateSession({
+                        session,
+                        selectedWallets,
+                        action: 'add_accounts',
+                      }),
+                    );
+                    dispatch(dismissOnGoingProcessModal());
+                    await sleep(500);
+                  } catch (err) {
+                    dispatch(dismissOnGoingProcessModal());
+                    await sleep(500);
+                    await showErrorMessage(
+                      CustomErrorMessage({
+                        errMsg: BWCErrorMessage(err),
+                        title: t('Uh oh, something went wrong'),
+                      }),
+                    );
+                  } finally {
+                    setDappProposal(undefined);
+                    setSessionToUpdate(undefined);
+                  }
                 }
-              }
-            }}
-          />
-        ) : null}
-      </View>
-    </ScrollView>
+              }}
+            />
+          ) : null}
+        </View>
+      </ScrollView>
+    </WalletConnectConnectionsContainer>
   );
 };
 

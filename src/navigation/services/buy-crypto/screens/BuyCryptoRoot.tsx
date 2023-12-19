@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Platform, ScrollView} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
 import {
   useAppDispatch,
@@ -87,6 +87,10 @@ export type BuyCryptoRootScreenParams =
     }
   | undefined;
 
+const BuyCryptoRootContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
 const CtaContainer = styled.View`
   margin: 20px 15px;
 `;
@@ -98,7 +102,7 @@ const ArrowContainer = styled.View`
 let buyCryptoConfig: BuyCryptoConfig | undefined;
 
 const BuyCryptoRoot: React.VFC<
-  StackScreenProps<BuyCryptoStackParamList, BuyCryptoScreens.ROOT>
+  NativeStackScreenProps<BuyCryptoStackParamList, BuyCryptoScreens.ROOT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -686,7 +690,7 @@ const BuyCryptoRoot: React.VFC<
   }, [selectedWallet]);
 
   return (
-    <>
+    <BuyCryptoRootContainer>
       <ScrollView>
         <BuyCryptoItemCard
           onPress={() => {
@@ -923,7 +927,7 @@ const BuyCryptoRoot: React.VFC<
         currency={fiatCurrency}
         preSetPartner={preSetPartner}
       />
-    </>
+    </BuyCryptoRootContainer>
   );
 };
 

@@ -12,10 +12,10 @@ import {
 } from '../../../components/styled/Text';
 import {Action, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BitpayIdStackParamList} from '../BitpayIdStack';
 
-type ReceivingEnabledProps = StackScreenProps<
+type ReceivingEnabledProps = NativeStackScreenProps<
   BitpayIdStackParamList,
   'ReceivingEnabled'
 >;

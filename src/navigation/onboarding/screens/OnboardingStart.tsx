@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
@@ -31,7 +31,7 @@ import {OnboardingStackParamList} from '../OnboardingStack';
 import PaginationDots from '../../../components/pagination-dots/PaginationDots';
 import {useSharedValue} from 'react-native-reanimated';
 
-type OnboardingStartScreenProps = StackScreenProps<
+type OnboardingStartScreenProps = NativeStackScreenProps<
   OnboardingStackParamList,
   'OnboardingStart'
 >;

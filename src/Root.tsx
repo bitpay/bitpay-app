@@ -4,7 +4,7 @@ import {
   NavigationState,
   NavigatorScreenParams,
 } from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import debounce from 'lodash.debounce';
 import Braze from 'react-native-appboy-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
@@ -16,6 +16,7 @@ import {
   Linking,
   NativeEventEmitter,
   NativeModules,
+  Platform,
   StatusBar,
 } from 'react-native';
 import 'react-native-gesture-handler';
@@ -24,10 +25,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import {DeviceEmitterEvents} from './constants/device-emitter-events';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from './constants/NavigationOptions';
+import {baseNavigatorOptions} from './constants/NavigationOptions';
 import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
 import BiometricModal from './components/modal/biometric/BiometricModal';
 import {AppEffects, AppActions} from './store/app';
@@ -231,7 +229,7 @@ export const navigate = (
   }
 };
 
-const Root = createStackNavigator<RootStackParamList>();
+const Root = createNativeStackNavigator<RootStackParamList>();
 
 export default () => {
   const dispatch = useAppDispatch();
@@ -482,8 +480,9 @@ export default () => {
           onStateChange={debouncedOnStateChange}>
           <Root.Navigator
             screenOptions={{
-              ...baseScreenOptions,
+              ...baseNavigatorOptions,
               headerShown: false,
+              animation: Platform.OS === 'android' ? 'none' : 'default', // Disable screen transition animation when navigating from tabs to a new navigation stack ( Android )
             }}
             initialRouteName={initialRoute}>
             <Root.Screen
@@ -492,7 +491,6 @@ export default () => {
               options={{
                 ...baseNavigatorOptions,
                 gestureEnabled: false,
-                animationEnabled: false,
               }}
             />
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />

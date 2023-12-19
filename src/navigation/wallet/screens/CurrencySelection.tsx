@@ -43,7 +43,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Key, Token} from '../../../store/wallet/wallet.models';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {addTokenChainSuffix, sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
@@ -54,7 +54,7 @@ import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults
 import {orderBy} from 'lodash';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
-type CurrencySelectionScreenProps = StackScreenProps<
+type CurrencySelectionScreenProps = NativeStackScreenProps<
   WalletStackParamList,
   WalletScreens.CURRENCY_SELECTION
 >;
@@ -101,7 +101,7 @@ export interface ContextHandler {
   selectedCurrencies: SelectedCurrencies[];
 }
 
-export const CurrencySelectionContainer = styled.View`
+export const CurrencySelectionContainer = styled.SafeAreaView`
   flex: 1;
 `;
 

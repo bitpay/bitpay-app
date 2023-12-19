@@ -1,8 +1,8 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import Theme from './screens/Theme';
@@ -11,6 +11,7 @@ import AltCurrencySettings from './screens/AltCurrencySettings';
 import LanguageSettings from './screens/LanguageSettings';
 
 import {useTranslation} from 'react-i18next';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type GeneralSettingsStackParamList = {
   LanguageSettings: undefined;
@@ -26,16 +27,24 @@ export enum GeneralSettingsScreens {
   ALT_CURRENCY_SETTTINGS = 'AltCurrencySettings',
 }
 
-const GeneralSettings = createStackNavigator<GeneralSettingsStackParamList>();
+const GeneralSettings =
+  createNativeStackNavigator<GeneralSettingsStackParamList>();
 
 const GeneralSettingsStack = () => {
   const {t} = useTranslation();
   return (
     <GeneralSettings.Navigator
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.THEME}
         component={Theme}

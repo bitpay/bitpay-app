@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import TouchID from 'react-native-touch-id-ng';
@@ -54,7 +54,7 @@ const PinContainer = styled.SafeAreaView`
 `;
 
 const PinScreen: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'Pin'>
+  NativeStackScreenProps<OnboardingStackParamList, 'Pin'>
 > = ({navigation}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();

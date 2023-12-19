@@ -1,5 +1,5 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import i18next from 'i18next';
 import _ from 'lodash';
 import React, {
@@ -135,14 +135,13 @@ export type WalletDetailsScreenParamList = {
   skipInitializeHistory?: boolean;
 };
 
-type WalletDetailsScreenProps = StackScreenProps<
+type WalletDetailsScreenProps = NativeStackScreenProps<
   WalletStackParamList,
   'WalletDetails'
 >;
 
-const WalletDetailsContainer = styled.View`
+const WalletDetailsContainer = styled.SafeAreaView`
   flex: 1;
-  padding-top: 10px;
 `;
 
 const HeaderContainer = styled.View`
@@ -318,7 +317,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <>
+        <View style={{height: 'auto'}}>
           <HeaderSubTitleContainer>
             <KeySvg width={10} height={10} />
             <HeaderKeyName>{key.keyName}</HeaderKeyName>
@@ -326,7 +325,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           <HeaderTitle style={{textAlign: 'center'}}>
             {uiFormattedWallet.walletName}
           </HeaderTitle>
-        </>
+        </View>
       ),
       headerRight: () => (
         <Settings
@@ -379,7 +378,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       description: t(
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
       ),
-      onPress: () => {
+      onPress: async () => {
+        await sleep(500);
         navigation.navigate('Wallet', {
           screen: WalletScreens.AMOUNT,
           params: {
@@ -411,14 +411,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       img: <Icons.Settings />,
       title: t('Wallet Settings'),
       description: t('View all the ways to manage and configure your wallet.'),
-      onPress: () =>
+      onPress: async () => {
+        await sleep(500);
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',
           params: {
             key,
             walletId,
           },
-        }),
+        });
+      },
     },
   ]);
 

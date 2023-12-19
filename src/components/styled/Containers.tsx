@@ -20,7 +20,6 @@ export const ActiveOpacity = 0.75;
 // Nav
 export const HeaderRightContainer = styled.View`
   height: 40px;
-  margin-right: 10px;
 `;
 
 export const ImageContainer = styled.View<{justifyContent?: string}>`

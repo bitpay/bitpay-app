@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {
   useCallback,
   useLayoutEffect,
@@ -77,7 +77,10 @@ const styles = StyleSheet.create({
 const keyExtractor = (item: CurrencySelectionItem) => item.id;
 
 const CurrencyTokenSelectionScreen: React.VFC<
-  StackScreenProps<WalletStackParamList, WalletScreens.CURRENCY_TOKEN_SELECTION>
+  NativeStackScreenProps<
+    WalletStackParamList,
+    WalletScreens.CURRENCY_TOKEN_SELECTION
+  >
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const theme = useTheme();

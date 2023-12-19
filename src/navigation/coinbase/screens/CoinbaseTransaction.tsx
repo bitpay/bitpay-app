@@ -7,7 +7,7 @@ import {BaseText, TextAlign} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 import {Hr} from '../../../components/styled/Containers';
 
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import CoinbaseIcon from '../components/CoinbaseIcon';
 import {View} from 'react-native';
@@ -91,7 +91,7 @@ export type CoinbaseTransactionScreenParamList = {
 
 const CoinbaseTransaction = ({
   route,
-}: StackScreenProps<CoinbaseStackParamList, 'CoinbaseTransaction'>) => {
+}: NativeStackScreenProps<CoinbaseStackParamList, 'CoinbaseTransaction'>) => {
   const {t} = useTranslation();
   const {tx} = route.params;
 

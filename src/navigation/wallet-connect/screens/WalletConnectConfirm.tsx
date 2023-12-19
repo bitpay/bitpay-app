@@ -51,9 +51,7 @@ import {
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {buildTxDetails} from '../../../store/wallet/effects/send/send';
 
-const HeaderRightContainer = styled.View`
-  margin-right: 15px;
-`;
+const HeaderRightContainer = styled.View``;
 
 export interface WalletConnectConfirmParamList {
   wallet: Wallet;

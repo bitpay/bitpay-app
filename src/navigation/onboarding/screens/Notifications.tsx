@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {Platform, ScrollView} from 'react-native';
 import {requestNotifications, RESULTS} from 'react-native-permissions';
@@ -50,7 +50,7 @@ const NotificationImage = {
 const scrollEnabledForSmallScreens = HEIGHT < 600;
 
 const NotificationsScreen: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'Notifications'>
+  NativeStackScreenProps<OnboardingStackParamList, 'Notifications'>
 > = ({navigation}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();

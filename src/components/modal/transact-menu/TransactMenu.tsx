@@ -12,6 +12,7 @@ import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
 import {WalletScreens} from '../../../navigation/wallet/WalletStack';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {sleep} from '../../../utils/helper-methods';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -199,9 +200,10 @@ const TransactModal = () => {
             renderItem={({item}) => (
               <TransactItemContainer
                 activeOpacity={ActiveOpacity}
-                onPress={() => {
-                  item.onPress();
+                onPress={async () => {
                   hideModal();
+                  await sleep(500);
+                  item.onPress();
                 }}>
                 <ItemIconContainer>{item.img()}</ItemIconContainer>
                 <ItemTextContainer>
@@ -213,9 +215,10 @@ const TransactModal = () => {
           />
 
           <ScanButtonContainer
-            onPress={() => {
-              ScanButton.onPress();
+            onPress={async () => {
               hideModal();
+              await sleep(500);
+              ScanButton.onPress();
             }}>
             <View>
               <Icons.Scan />

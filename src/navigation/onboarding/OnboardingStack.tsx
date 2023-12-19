@@ -1,8 +1,8 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import OnboardingStartScreen from './screens/OnboardingStart';
 import NotificationsScreen from './screens/Notifications';
@@ -20,6 +20,7 @@ import VerifyPhrase, {
   VerifyPhraseParamList,
 } from '../wallet/screens/VerifyPhrase';
 import ImportScreen, {ImportParamList} from '../wallet/screens/Import';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
@@ -47,16 +48,22 @@ export enum OnboardingScreens {
   IMPORT = 'Import',
 }
 
-const Onboarding = createStackNavigator<OnboardingStackParamList>();
+const Onboarding = createNativeStackNavigator<OnboardingStackParamList>();
 
 const OnboardingStack = () => {
   return (
     <Onboarding.Navigator
-      defaultScreenOptions={{gestureEnabled: false}}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}
       initialRouteName="OnboardingStart">
       <Onboarding.Screen
         name={OnboardingScreens.ONBOARDING_START}

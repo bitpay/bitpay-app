@@ -1,8 +1,8 @@
 import React from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import Backup, {BackupParamList} from './screens/Backup';
 import RecoveryPhrase, {
@@ -82,6 +82,7 @@ import ClearTransactionHistoryCache from './screens/wallet-settings/ClearTransac
 import BackupOnboarding, {
   BackupOnboardingParamList,
 } from './screens/BackupOnboarding';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -205,22 +206,30 @@ export enum WalletScreens {
   CLEAR_TRANSACTION_HISTORY_CACHE = 'ClearTransactionHistoryCache',
 }
 
-const Wallet = createStackNavigator<WalletStackParamList>();
+const Wallet = createNativeStackNavigator<WalletStackParamList>();
 
 const WalletStack = () => {
   const {t} = useTranslation();
   return (
     <>
       <Wallet.Navigator
-        screenOptions={{...baseNavigatorOptions, ...baseScreenOptions}}
-        initialRouteName={WalletScreens.BACKUP_KEY}>
+        initialRouteName={WalletScreens.BACKUP_KEY}
+        screenOptions={({navigation}) => ({
+          ...baseNavigatorOptions,
+          headerLeft: () => (
+            <HeaderBackButton
+              onPress={() => {
+                navigation.goBack();
+              }}
+              {...baseNativeHeaderBackButtonProps}
+            />
+          ),
+        })}>
         <Wallet.Screen
           options={{
             headerTitle: () => (
               <HeaderTitle>{t('Select Currencies')}</HeaderTitle>
             ),
-            headerTitleAlign: 'center',
-            gestureEnabled: false,
           }}
           name={WalletScreens.CURRENCY_SELECTION}
           component={CurrencySelection}
@@ -229,13 +238,7 @@ const WalletStack = () => {
           name={WalletScreens.CURRENCY_TOKEN_SELECTION}
           component={CurrencyTokenSelectionScreen}
         />
-        <Wallet.Screen
-          options={{
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
-          name={WalletScreens.ADD_WALLET}
-          component={AddWallet}
-        />
+        <Wallet.Screen name={WalletScreens.ADD_WALLET} component={AddWallet} />
         <Wallet.Screen
           options={{
             gestureEnabled: false,
@@ -309,7 +312,6 @@ const WalletStack = () => {
         <Wallet.Screen
           options={{
             headerTitle: () => <HeaderTitle>{t('Add Funds')}</HeaderTitle>,
-            ...TransitionPresets.ModalPresentationIOS,
           }}
           name={WalletScreens.DEBIT_CARD_CONFIRM}
           component={DebitCardConfirm}
@@ -362,16 +364,10 @@ const WalletStack = () => {
           component={AddingOptions}
         />
         <Wallet.Screen
-          options={{
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
           name={WalletScreens.REQUEST_SPECIFIC_AMOUNT_QR}
           component={RequestSpecificAmountQR}
         />
         <Wallet.Screen
-          options={{
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
           name={WalletScreens.TRANSACTION_DETAILS}
           component={TransactionDetails}
         />
@@ -385,16 +381,10 @@ const WalletStack = () => {
           component={ExportTransactionHistory}
         />
         <Wallet.Screen
-          options={{
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
           name={WalletScreens.TRANSACTION_PROPOSAL_DETAILS}
           component={TransactionProposalDetails}
         />
         <Wallet.Screen
-          options={{
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
           name={WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS}
           component={TransactionProposalNotifications}
         />
@@ -424,16 +414,10 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.ADDRESSES} component={Addresses} />
         <Wallet.Screen
-          options={{
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
           name={WalletScreens.ALL_ADDRESSES}
           component={AllAddresses}
         />
         <Wallet.Screen
-          options={{
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
           name={WalletScreens.PRICE_CHARTS}
           component={PriceCharts}
         />

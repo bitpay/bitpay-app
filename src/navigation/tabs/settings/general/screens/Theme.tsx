@@ -1,12 +1,6 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  ColorSchemeName,
-  Pressable,
-  StyleProp,
-  TextStyle,
-  View,
-} from 'react-native';
+import {ColorSchemeName, Pressable, View} from 'react-native';
 import {useTheme} from 'styled-components/native';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
@@ -105,7 +99,7 @@ const ThemeSettings: React.FC = () => {
   };
   const [selected, setSelected] = useState(currentTheme);
   const selectedTheme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: selectedTheme.colors.text};
+  const textStyle = {color: selectedTheme.colors.text};
 
   const SETTINGS: {title: string; theme: ColorSchemeName}[] = [
     {title: t('Light Mode'), theme: 'light'},

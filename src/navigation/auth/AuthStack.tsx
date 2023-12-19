@@ -1,10 +1,10 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React, {useEffect} from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useDispatch, useSelector} from 'react-redux';
 import {HeaderTitle} from '../../components/styled/Text';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import {RootState} from '../../store';
 import {BitPayIdActions} from '../../store/bitpay-id';
@@ -29,6 +29,7 @@ import ForgotPassword, {
   ForgotPasswordParamList,
 } from './screens/ForgotPassword';
 import {useTranslation} from 'react-i18next';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export enum AuthScreens {
   LOGIN = 'Login',
@@ -50,7 +51,7 @@ export type AuthStackParamList = {
   ForgotPassword: ForgotPasswordParamList;
 };
 
-const Auth = createStackNavigator<AuthStackParamList>();
+const Auth = createNativeStackNavigator<AuthStackParamList>();
 const AuthStack: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
@@ -69,10 +70,17 @@ const AuthStack: React.FC = () => {
   return (
     <Auth.Navigator
       initialRouteName={AuthScreens.LOGIN}
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Auth.Screen
         name={AuthScreens.LOGIN}
         component={LoginScreen}

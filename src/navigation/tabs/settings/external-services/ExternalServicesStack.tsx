@@ -1,9 +1,9 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import BanxaDetails from './screens/BanxaDetails';
@@ -34,6 +34,7 @@ import {
   WyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type ExternalServicesSettingsStackParamList = {
   BanxaSettings:
@@ -109,16 +110,23 @@ export enum ExternalServicesSettingsScreens {
 }
 
 const ExternalServicesSettings =
-  createStackNavigator<ExternalServicesSettingsStackParamList>();
+  createNativeStackNavigator<ExternalServicesSettingsStackParamList>();
 
 const ExternalServicesSettingsStack = () => {
   const {t} = useTranslation();
   return (
     <ExternalServicesSettings.Navigator
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.BANXA_SETTINGS}
         component={BanxaSettings}

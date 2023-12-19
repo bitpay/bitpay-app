@@ -14,7 +14,7 @@ import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {updateWalletTxHistory} from '../../../../store/wallet/wallet.actions';
 
 const ClearTransactionHistoryCacheContainer = styled.SafeAreaView`
@@ -35,7 +35,7 @@ const ButtonContainer = styled.View`
   margin-top: 20px;
 `;
 
-type ClearTransactionHistoryCacheProps = StackScreenProps<
+type ClearTransactionHistoryCacheProps = NativeStackScreenProps<
   WalletStackParamList,
   'ClearTransactionHistoryCache'
 >;

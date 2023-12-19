@@ -2,7 +2,7 @@ import {Platform} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 
-export const WalletConnectContainer = styled.View`
+export const WalletConnectContainer = styled.SafeAreaView`
   flex: 1;
 `;
 

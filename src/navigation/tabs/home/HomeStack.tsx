@@ -1,10 +1,7 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {ZeroHeightHeader} from '../../../components/styled/Text';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../../constants/NavigationOptions';
+import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import HomeRoot from './HomeRoot';
 
 export type HomeStackParamList = {
@@ -15,7 +12,7 @@ export enum HomeScreens {
   Root = 'Root',
 }
 
-const Home = createStackNavigator<HomeStackParamList>();
+const Home = createNativeStackNavigator<HomeStackParamList>();
 
 const HomeStack = () => {
   return (
@@ -23,7 +20,6 @@ const HomeStack = () => {
       initialRouteName={HomeScreens.Root}
       screenOptions={{
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
       }}>
       <Home.Screen
         name={HomeScreens.Root}

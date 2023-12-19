@@ -77,7 +77,7 @@ export const ListViewSvg = ({
   );
 };
 
-export const CustomizeHomeContainer = styled.View`
+export const CustomizeHomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
 

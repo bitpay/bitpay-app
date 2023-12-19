@@ -91,6 +91,7 @@ import {
 import {t} from 'i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
+import uniqBy from 'lodash.uniqby';
 
 const BWC = BwcProvider.getInstance();
 
@@ -1292,6 +1293,11 @@ export const serverAssistedImport = async (
           if (wallets.length === 0) {
             return reject(new Error('WALLET_DOES_NOT_EXIST'));
           } else {
+            // remove duplicate wallets
+            wallets = uniqBy(wallets, w => {
+              return (w as any).credentials.walletId;
+            });
+
             const tokens: Wallet[] = wallets.filter(
               (wallet: Wallet) => !!wallet.credentials.token,
             );

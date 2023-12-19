@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
@@ -23,7 +23,10 @@ const IntroWhatsNewContainer = styled.View`
   background: ${({theme}) => theme.colors.background};
 `;
 
-type WhatsNewScreenProps = StackScreenProps<IntroStackParamList, 'WhatsNew'>;
+type WhatsNewScreenProps = NativeStackScreenProps<
+  IntroStackParamList,
+  'WhatsNew'
+>;
 
 const WhatsNew: React.VFC<WhatsNewScreenProps> = ({navigation}) => {
   const {t} = useTranslation();

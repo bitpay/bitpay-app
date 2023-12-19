@@ -11,7 +11,7 @@ import {
 import RNPrint from 'react-native-print';
 import RenderHtml from 'react-native-render-html';
 import TimeAgo from 'react-native-timeago';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled from 'styled-components/native';
 import {useTheme} from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
@@ -74,6 +74,10 @@ import GiftCardTerms from '../../components/GiftCardTerms';
 import GiftCardImage from '../../components/GiftCardImage';
 
 const maxWidth = 320;
+
+const GiftCardDetailsContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const Amount = styled(BaseText)`
   font-size: 38px;
@@ -147,7 +151,7 @@ const ArchiveButtonContainer = styled.View`
 const GiftCardDetails = ({
   route,
   navigation,
-}: StackScreenProps<GiftCardStackParamList, 'GiftCardDetails'>) => {
+}: NativeStackScreenProps<GiftCardStackParamList, 'GiftCardDetails'>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -355,7 +359,7 @@ const GiftCardDetails = ({
   };
 
   return (
-    <>
+    <GiftCardDetailsContainer>
       <OptionsSheet
         isVisible={isOptionsSheetVisible}
         closeModal={() => setIsOptionsSheetVisible(false)}
@@ -547,7 +551,7 @@ const GiftCardDetails = ({
         ) : null}
         <GiftCardTerms terms={cardConfig.terms} />
       </ScrollView>
-    </>
+    </GiftCardDetailsContainer>
   );
 };
 

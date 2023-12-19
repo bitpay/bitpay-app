@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
@@ -12,7 +12,10 @@ const IntroStartContainer = styled.View`
   flex: 1;
 `;
 
-type IntroStartScreenProps = StackScreenProps<IntroStackParamList, 'Start'>;
+type IntroStartScreenProps = NativeStackScreenProps<
+  IntroStackParamList,
+  'Start'
+>;
 
 const Start: React.VFC<IntroStartScreenProps> = ({navigation}) => {
   const {t} = useTranslation();

@@ -19,7 +19,7 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
 const BackupImage = {
@@ -37,7 +37,10 @@ const BackupImage = {
   ),
 };
 
-type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
+type BackupScreenProps = NativeStackScreenProps<
+  WalletStackParamList,
+  'BackupKey'
+>;
 
 export type BackupParamList = {
   context: 'onboarding' | 'createNewKey' | 'createNewMultisigKey';

@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
@@ -24,7 +24,7 @@ const HomeContainer = styled.View`
   flex: 1;
 `;
 
-type CustomizeHomeScreenProps = StackScreenProps<
+type CustomizeHomeScreenProps = NativeStackScreenProps<
   IntroStackParamList,
   'CustomizeHome'
 >;

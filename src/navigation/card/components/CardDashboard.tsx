@@ -50,18 +50,11 @@ interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
 }
 
-const CardsRowContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
+const CardsRowContainer = styled.View``;
 
-const CardOffersContainer = styled.View`
-  margin: -16px;
-  padding: 16px;
-`;
+const CardOffersContainer = styled.View``;
 
-const BelowCarouselSpacer = styled.View`
-  height: 32px;
-`;
+const BelowCarouselSpacer = styled.View``;
 
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();

@@ -1,13 +1,14 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import ShopScreen from './screens/Shop';
 import StartScreen from './screens/Start';
 import WhatsNew from './screens/WhatsNew';
 import CustomizeHome from './screens/CustomizeHome';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type IntroStackParamList = {
   Start: undefined;
@@ -23,17 +24,24 @@ export enum IntroScreens {
   CUSTOMIZE_HOME = 'CustomizeHome',
 }
 
-const Intro = createStackNavigator<IntroStackParamList>();
+const Intro = createNativeStackNavigator<IntroStackParamList>();
 export const IntroAnimeDelay = 300;
 
 const IntroStack = () => {
   return (
     <Intro.Navigator
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
         headerShown: false,
-      }}
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}
       initialRouteName="Start">
       <Intro.Screen name={IntroScreens.START} component={StartScreen} />
       <Intro.Screen name={IntroScreens.WHATS_NEW} component={WhatsNew} />

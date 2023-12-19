@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {BillStackParamList} from '../BillStack';
 import {ScrollView, TouchableOpacity} from 'react-native';
@@ -49,7 +49,7 @@ const UnlinkButton = styled(BaseText)`
 
 const BillSettings = ({
   navigation,
-}: StackScreenProps<BillStackParamList, 'BillSettings'>) => {
+}: NativeStackScreenProps<BillStackParamList, 'BillSettings'>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const user = useAppSelector(

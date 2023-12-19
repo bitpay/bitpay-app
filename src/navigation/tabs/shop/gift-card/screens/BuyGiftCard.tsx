@@ -1,6 +1,6 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {Platform, ScrollView, View, TouchableOpacity} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
 import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
@@ -46,6 +46,10 @@ import {useAppSelector} from '../../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import GiftCardImage from '../../components/GiftCardImage';
+
+const BuyGiftCardContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -113,7 +117,7 @@ const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
 const BuyGiftCard = ({
   route,
   navigation,
-}: StackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
+}: NativeStackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
   const {t} = useTranslation();
   const navigator = useNavigation();
   const dispatch = useDispatch();
@@ -320,7 +324,7 @@ const BuyGiftCard = ({
   };
 
   return (
-    <>
+    <BuyGiftCardContainer>
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -416,7 +420,7 @@ const BuyGiftCard = ({
           {cardConfig.supportedAmounts ? t('Continue') : t('Buy Gift Card')}
         </Button>
       </FooterButton>
-    </>
+    </BuyGiftCardContainer>
   );
 };
 

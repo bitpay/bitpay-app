@@ -25,7 +25,7 @@ import {
   InfoTriangle,
   InfoImageContainer,
 } from '../../../components/styled/Containers';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletStackParamList} from '../WalletStack';
 import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
@@ -101,7 +101,10 @@ import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow'
 import {CommonActions} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
-type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
+type AddWalletScreenProps = NativeStackScreenProps<
+  WalletStackParamList,
+  'AddWallet'
+>;
 
 export type AddWalletParamList = {
   key: Key;

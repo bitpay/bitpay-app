@@ -1,14 +1,15 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
+  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
-  baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 
 import SessionLogsScreen, {SessionLogsParamList} from './screens/SessionLog';
 import SendFeedback, {SendFeedbackParamList} from './screens/SendFeedback';
 import {useTranslation} from 'react-i18next';
 import StorageUsage from './screens/StorageUsage';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 export type AboutStackParamList = {
   StorageUsage: undefined;
@@ -22,16 +23,23 @@ export enum AboutScreens {
   SEND_FEEDBACK = 'SendFeedback',
 }
 
-const About = createStackNavigator<AboutStackParamList>();
+const About = createNativeStackNavigator<AboutStackParamList>();
 
 const AboutStack = () => {
   const {t} = useTranslation();
   return (
     <About.Navigator
-      screenOptions={{
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <About.Screen
         name={AboutScreens.STORAGE_USAGE}
         component={StorageUsage}

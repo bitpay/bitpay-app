@@ -1,5 +1,5 @@
 import {StackActions, useNavigation} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Linking, ScrollView} from 'react-native';
@@ -20,7 +20,7 @@ import {
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
 
-type TermsOfUseScreenProps = StackScreenProps<
+type TermsOfUseScreenProps = NativeStackScreenProps<
   OnboardingStackParamList,
   'TermsOfUse'
 >;

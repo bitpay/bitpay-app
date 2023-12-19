@@ -68,8 +68,7 @@ export enum evmAvgTime {
 const TxSpeedContainer = styled(SheetContainer)`
   flex: 1;
   justify-content: flex-start;
-  margin-top: 0;
-  padding: 0 0 20px 0;
+  padding: 0;
 `;
 
 const TxSpeedScroll = styled(KeyboardAwareScrollView)`
@@ -154,7 +153,7 @@ export const FeeLevelStepTopLabel = styled(H7)<{length: number}>`
 `;
 
 const TxSpeedParagraph = styled(Paragraph)`
-  margin: 0 ${ScreenGutter} ${ScreenGutter};
+  margin: 0 ${ScreenGutter};
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
@@ -464,6 +463,7 @@ const TransactionLevel = ({
           keyboardShouldPersistTaps={'handled'}>
           <SheetHeaderContainer style={{marginTop: insets.top}}>
             <TouchableOpacity
+              style={{marginLeft: 15}}
               activeOpacity={ActiveOpacity}
               onPress={() => onClose()}>
               <Back opacity={1} background={themedBackground} />

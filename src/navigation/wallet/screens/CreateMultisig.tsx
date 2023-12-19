@@ -82,9 +82,8 @@ const schema = yup.object().shape({
   totalCopayers: yup.number().required().positive().integer().min(2).max(6), // n
 });
 
-const Gutter = '10px';
-export const MultisigContainer = styled.View`
-  padding: ${Gutter} 0;
+export const MultisigContainer = styled.SafeAreaView`
+  flex: 1;
 `;
 
 const ScrollViewContainer = styled.ScrollView`
@@ -365,8 +364,8 @@ const CreateMultisig = () => {
   };
 
   return (
-    <ScrollViewContainer>
-      <MultisigContainer>
+    <MultisigContainer>
+      <ScrollViewContainer>
         <Paragraph>
           {t(
             "Multisig wallets require multisig devices to set up. It takes longer to complete but it's the recommended security configuration for long term storage.",
@@ -629,8 +628,8 @@ const CreateMultisig = () => {
             {t('Create Wallet')}
           </Button>
         </CtaContainer>
-      </MultisigContainer>
-    </ScrollViewContainer>
+      </ScrollViewContainer>
+    </MultisigContainer>
   );
 };
 
