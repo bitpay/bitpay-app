@@ -174,14 +174,15 @@ export const BuildKeyWalletRow = (
           chain,
           id,
           network,
-          credentials: {walletName},
+          credentials,
         }) =>
           currencyAbbreviation.toLowerCase() ===
             currentCurrencyAbbreviation.toLowerCase() &&
           chain.toLowerCase() === currentChain.toLowerCase() &&
           id !== currentWalletId &&
           network === currentNetwork &&
-          walletName.toLowerCase().includes(searchInput.toLowerCase()),
+          credentials.walletName.toLowerCase().includes(searchInput.toLowerCase()) &&
+          credentials.isComplete(),
       )
       .map(wallet => {
         const {

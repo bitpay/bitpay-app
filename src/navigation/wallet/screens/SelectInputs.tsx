@@ -164,7 +164,7 @@ const SelectInputs = () => {
         ),
         network,
       }));
-      setInputs(_.sortBy(utxosWithFiatAmount, 'amount'));
+      setInputs(_.orderBy(utxosWithFiatAmount, 'amount', 'desc'));
     } catch (err) {
       logger.error(`An error occurred while getting utxos: ${err}`);
     }
