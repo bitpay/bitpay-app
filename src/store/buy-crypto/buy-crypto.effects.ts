@@ -3,7 +3,7 @@ import {getMoonpayFiatAmountLimits} from '../../navigation/services/buy-crypto/u
 import {getRampFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/ramp-utils';
 import {getSardineFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/sardine-utils';
 import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/simplex-utils';
-import {WalletScreens} from '../../navigation/wallet/WalletStack';
+import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -156,18 +156,12 @@ export const goToBuyCrypto = (): Effect<void> => dispatch => {
       context: 'Shortcuts',
     }),
   );
-  navigationRef.navigate('Wallet', {
-    screen: WalletScreens.AMOUNT,
-    params: {
-      onAmountSelected: async (amount: string, setButtonState: any) => {
-        navigationRef.navigate('BuyCrypto', {
-          screen: 'BuyCryptoRoot',
-          params: {
-            amount: Number(amount),
-          },
-        });
-      },
-      context: 'buyCrypto',
+  navigationRef.navigate(WalletScreens.AMOUNT, {
+    onAmountSelected: async (amount: string, setButtonState: any) => {
+      navigationRef.navigate('BuyCryptoRoot', {
+        amount: Number(amount),
+      });
     },
+    context: 'buyCrypto',
   });
 };

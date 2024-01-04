@@ -88,11 +88,8 @@ const SardineSettings: React.FC = () => {
                     key={pr.external_id}
                     onPress={() => {
                       haptic('impactLight');
-                      navigation.navigate('ExternalServicesSettings', {
-                        screen: 'SardineDetails',
-                        params: {
-                          paymentRequest: pr,
-                        },
+                      navigation.navigate('SardineDetails', {
+                        paymentRequest: pr,
                       });
                     }}>
                     <PrRowLeft>

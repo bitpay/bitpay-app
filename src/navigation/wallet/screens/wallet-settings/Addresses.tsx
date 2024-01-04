@@ -18,7 +18,7 @@ import {
 import {SlateDark, White} from '../../../../styles/colors';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {GetMainAddresses} from '../../../../store/wallet/effects/address/address';
@@ -93,7 +93,7 @@ const Addresses = () => {
   const {t} = useTranslation();
   const {
     params: {wallet},
-  } = useRoute<RouteProp<WalletStackParamList, 'Addresses'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'Addresses'>>();
 
   const {
     credentials: {token, multisigEthInfo},
@@ -304,10 +304,7 @@ const Addresses = () => {
             return;
           }
           setButtonState('success');
-          navigation.navigate('Wallet', {
-            screen: 'WalletDetails',
-            params: {walletId, key},
-          });
+          navigation.navigate('WalletDetails', {walletId, key});
 
           return;
         },
@@ -348,16 +345,13 @@ const Addresses = () => {
               <AllAddressesLink
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  navigation.navigate('Wallet', {
-                    screen: 'AllAddresses',
-                    params: {
-                      currencyAbbreviation,
-                      chain,
-                      walletName: walletName || currencyName,
-                      usedAddresses: usedAddress,
-                      unusedAddresses: unusedAddress,
-                      tokenAddress,
-                    },
+                  navigation.navigate('AllAddresses', {
+                    currencyAbbreviation,
+                    chain,
+                    walletName: walletName || currencyName,
+                    usedAddresses: usedAddress,
+                    unusedAddresses: unusedAddress,
+                    tokenAddress,
                   });
                 }}>
                 <LinkText>{t('View all addresses')}</LinkText>

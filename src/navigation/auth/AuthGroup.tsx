@@ -1,11 +1,6 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {HeaderTitle} from '../../components/styled/Text';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../constants/NavigationOptions';
 import {RootState} from '../../store';
 import {BitPayIdActions} from '../../store/bitpay-id';
 import {LoginStatus} from '../../store/bitpay-id/bitpay-id.reducer';
@@ -29,6 +24,16 @@ import ForgotPassword, {
   ForgotPasswordParamList,
 } from './screens/ForgotPassword';
 import {useTranslation} from 'react-i18next';
+import {Root} from '../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
+
+interface AuthProps {
+  Auth: typeof Root;
+}
 
 export enum AuthScreens {
   LOGIN = 'Login',
@@ -40,7 +45,7 @@ export enum AuthScreens {
   FORGOT_PASSWORD = 'ForgotPassword',
 }
 
-export type AuthStackParamList = {
+export type AuthGroupParamList = {
   Login: LoginScreenParamList;
   CreateAccount: CreateAccountScreenParamList;
   VerifyEmail: VerifyEmailScreenParamList;
@@ -50,8 +55,7 @@ export type AuthStackParamList = {
   ForgotPassword: ForgotPasswordParamList;
 };
 
-const Auth = createStackNavigator<AuthStackParamList>();
-const AuthStack: React.FC = () => {
+const AuthGroup: React.FC<AuthProps> = ({Auth}) => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const loginStatus = useSelector<RootState, LoginStatus>(
@@ -67,12 +71,18 @@ const AuthStack: React.FC = () => {
   }, [dispatch]);
 
   return (
-    <Auth.Navigator
-      initialRouteName={AuthScreens.LOGIN}
-      screenOptions={{
+    <Auth.Group
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Auth.Screen
         name={AuthScreens.LOGIN}
         component={LoginScreen}
@@ -134,8 +144,8 @@ const AuthStack: React.FC = () => {
           headerTitle: () => <HeaderTitle>{t('Reset Password')}</HeaderTitle>,
         }}
       />
-    </Auth.Navigator>
+    </Auth.Group>
   );
 };
 
-export default AuthStack;
+export default AuthGroup;

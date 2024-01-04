@@ -13,11 +13,11 @@ import {
   APP_DEEPLINK_PREFIX,
   APP_UNIVERSAL_LINK_DOMAINS,
 } from '../../constants/config';
-import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
+import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdGroup';
 import {CardScreens} from '../../navigation/card/CardStack';
-import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
-import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
-import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseStack';
+import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoGroup';
+import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
+import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseGroup';
 import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
 import {TabsScreens, TabsStackParamList} from '../../navigation/tabs/TabsStack';
 import {incomingData} from '../../store/scan/scan.effects';
@@ -25,21 +25,18 @@ import {showBlur} from '../../store/app/app.actions';
 import {incomingLink} from '../../store/app/app.effects';
 import useAppDispatch from './useAppDispatch';
 import {useLogger} from './useLogger';
+import {DebugScreens} from '../../navigation/Debug';
+import {GiftCardScreens} from '../../navigation/tabs/shop/gift-card/GiftCardGroup';
 
 const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
   initialRouteName: RootStacks.TABS,
   // configuration for associating screens with paths
   screens: {
-    [RootStacks.DEBUG]: {
+    [DebugScreens.DEBUG]: {
       path: 'debug/:name',
     },
-    [RootStacks.BITPAY_ID]: {
-      path: 'id',
-      screens: {
-        [BitpayIdScreens.PAIRING]: 'pair',
-        [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
-      },
-    },
+    [BitpayIdScreens.PAIRING]: 'pair',
+    [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
     [RootStacks.TABS]: {
       screens: {
         [TabsScreens.CARD]: {
@@ -51,24 +48,10 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
         },
       },
     } as PathConfig<TabsStackParamList>,
-    [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
-    [RootStacks.BUY_CRYPTO]: {
-      screens: {
-        [BuyCryptoScreens.ROOT]: {
-          path: 'buy/:amount?',
-        },
-      },
-    },
-    [RootStacks.SWAP_CRYPTO]: {
-      screens: {
-        [SwapCryptoScreens.ROOT]: 'swap',
-      },
-    },
-    [RootStacks.COINBASE]: {
-      screens: {
-        [CoinbaseScreens.ROOT]: 'coinbase',
-      },
-    },
+    [GiftCardScreens.GIFT_CARD_DEEPLINK]: 'giftcard',
+    [BuyCryptoScreens.ROOT]: {path: 'buy/:amount?'},
+    [SwapCryptoScreens.SWAPCRYPTO_ROOT]: 'swap',
+    [CoinbaseScreens.ROOT]: 'coinbase',
   },
 });
 

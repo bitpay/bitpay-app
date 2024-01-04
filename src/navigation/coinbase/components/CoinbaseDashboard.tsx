@@ -39,6 +39,9 @@ import {
 } from '../../wallet/screens/KeyOverview';
 import KeyDropdownOption from '../../wallet/components/KeyDropdownOption';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
+import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 
 const OverviewContainer = styled.View`
   flex: 1;
@@ -120,9 +123,8 @@ const CoinbaseDashboard = () => {
       headerRight: () => (
         <CoinbaseSettingsOption
           onPress={() => {
-            navigation.navigate('Coinbase', {
-              screen: 'CoinbaseSettings',
-              params: {fromScreen: 'CoinbaseDashboard'},
+            navigation.navigate('CoinbaseSettings', {
+              fromScreen: 'CoinbaseDashboard',
             });
           }}
           theme={theme}
@@ -163,10 +165,7 @@ const CoinbaseDashboard = () => {
           hideBalance={hideAllBalances}
           onPress={() => {
             haptic('impactLight');
-            navigation.navigate('Coinbase', {
-              screen: 'CoinbaseAccount',
-              params: {accountId: item.id},
-            });
+            navigation.navigate('CoinbaseAccount', {accountId: item.id});
             dispatch(coinbaseGetTransactionsByAccount(item.id));
           }}
         />
@@ -314,15 +313,12 @@ const CoinbaseDashboard = () => {
                         index: 1,
                         routes: [
                           {
-                            name: 'Tabs',
-                            params: {screen: 'Home'},
+                            name: RootStacks.TABS,
+                            params: {screen: TabsScreens.HOME},
                           },
                           {
-                            name: 'Wallet',
-                            params: {
-                              screen: 'KeyOverview',
-                              params: {id: keyId},
-                            },
+                            name: WalletScreens.KEY_OVERVIEW,
+                            params: {id: keyId},
                           },
                         ],
                       }),

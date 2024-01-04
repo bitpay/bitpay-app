@@ -1,18 +1,22 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../../../constants/NavigationOptions';
-
-import SessionLogsScreen, {SessionLogsParamList} from './screens/SessionLog';
+import SessionLogs from './screens/SessionLog';
 import SendFeedback, {SendFeedbackParamList} from './screens/SendFeedback';
 import {useTranslation} from 'react-i18next';
 import StorageUsage from './screens/StorageUsage';
+import {Root} from '../../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
-export type AboutStackParamList = {
+interface AboutProps {
+  About: typeof Root;
+}
+
+export type AboutGroupParamList = {
   StorageUsage: undefined;
-  SessionLogs: SessionLogsParamList | undefined;
+  SessionLogs: undefined;
   SendFeedback: SendFeedbackParamList | undefined;
 };
 
@@ -22,16 +26,21 @@ export enum AboutScreens {
   SEND_FEEDBACK = 'SendFeedback',
 }
 
-const About = createStackNavigator<AboutStackParamList>();
-
-const AboutStack = () => {
+const AboutGroup: React.FC<AboutProps> = ({About}) => {
   const {t} = useTranslation();
   return (
-    <About.Navigator
-      screenOptions={{
+    <About.Group
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <About.Screen
         name={AboutScreens.STORAGE_USAGE}
         component={StorageUsage}
@@ -41,7 +50,7 @@ const AboutStack = () => {
       />
       <About.Screen
         name={AboutScreens.SESSION_LOGS}
-        component={SessionLogsScreen}
+        component={SessionLogs}
         options={{
           headerTitle: t('Session Logs'),
         }}
@@ -54,8 +63,8 @@ const AboutStack = () => {
           headerTitle: t('Send Feedback'),
         }}
       />
-    </About.Navigator>
+    </About.Group>
   );
 };
 
-export default AboutStack;
+export default AboutGroup;

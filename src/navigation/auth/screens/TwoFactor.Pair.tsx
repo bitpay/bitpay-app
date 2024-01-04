@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -13,27 +13,31 @@ import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {TwoFactorPairingStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
-import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthFormParagraph,
   AuthRowContainer,
 } from '../components/AuthFormContainer';
+import styled from 'styled-components/native';
 
 export type TwoFactorPairingParamList = {
   prevCode: string;
   onLoginSuccess?: ((...args: any[]) => any) | undefined;
 };
 
-type TwoFactorPairingScreenProps = StackScreenProps<
-  AuthStackParamList,
+type TwoFactorPairingScreenProps = NativeStackScreenProps<
+  AuthGroupParamList,
   AuthScreens.TWO_FACTOR_PAIR
 >;
 
 interface TwoFactorPairingFieldValues {
   code: string;
 }
+const TwoFactorPairContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
   navigation,
@@ -90,9 +94,7 @@ const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
         if (parentNav?.canGoBack()) {
           parentNav.goBack();
         } else {
-          navigationRef.navigate(RootStacks.BITPAY_ID, {
-            screen: BitpayIdScreens.PROFILE,
-          });
+          navigationRef.navigate(BitpayIdScreens.PROFILE);
         }
 
         return;
@@ -143,39 +145,41 @@ const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
   );
 
   return (
-    <AuthFormContainer>
-      <AuthFormParagraph>
-        {t(
-          'This additional verification will allow your device to be marked as a verified device. You will be securely connected to your BitPay ID without having to login. Please go to your authenticator app and enter the new verification code generated.',
-        )}
-      </AuthFormParagraph>
-
-      <AuthRowContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={'eg. 123456'}
-              label={t('Code')}
-              onBlur={onBlur}
-              onChangeText={onChange}
-              error={errors.code?.message}
-              value={value}
-              keyboardType={'numeric'}
-              onSubmitEditing={onSubmit}
-            />
+    <TwoFactorPairContainer>
+      <AuthFormContainer>
+        <AuthFormParagraph>
+          {t(
+            'This additional verification will allow your device to be marked as a verified device. You will be securely connected to your BitPay ID without having to login. Please go to your authenticator app and enter the new verification code generated.',
           )}
-          name="code"
-          defaultValue=""
-        />
-      </AuthRowContainer>
+        </AuthFormParagraph>
 
-      <AuthActionsContainer>
-        <Button onPress={onSubmit} disabled={!isValid}>
-          {t('Submit')}
-        </Button>
-      </AuthActionsContainer>
-    </AuthFormContainer>
+        <AuthRowContainer>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={'eg. 123456'}
+                label={t('Code')}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={errors.code?.message}
+                value={value}
+                keyboardType={'numeric'}
+                onSubmitEditing={onSubmit}
+              />
+            )}
+            name="code"
+            defaultValue=""
+          />
+        </AuthRowContainer>
+
+        <AuthActionsContainer>
+          <Button onPress={onSubmit} disabled={!isValid}>
+            {t('Submit')}
+          </Button>
+        </AuthActionsContainer>
+      </AuthFormContainer>
+    </TwoFactorPairContainer>
   );
 };
 

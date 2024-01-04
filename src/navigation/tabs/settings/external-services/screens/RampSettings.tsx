@@ -84,11 +84,8 @@ const RampSettings: React.FC = () => {
                     key={pr.external_id}
                     onPress={() => {
                       haptic('impactLight');
-                      navigation.navigate('ExternalServicesSettings', {
-                        screen: 'RampDetails',
-                        params: {
-                          paymentRequest: pr,
-                        },
+                      navigation.navigate('RampDetails', {
+                        paymentRequest: pr,
                       });
                     }}>
                     <PrRowLeft>

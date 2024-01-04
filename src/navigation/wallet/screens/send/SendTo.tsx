@@ -23,7 +23,7 @@ import {
   White,
 } from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import {Effect, RootState} from '../../../../store';
 import {
   convertToFiat,
@@ -236,7 +236,7 @@ const SendTo = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
-  const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'SendTo'>>();
 
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -261,14 +261,12 @@ const SendTo = () => {
     img: <Icons.SelectInputs />,
     title: t('Select Inputs for this Transaction'),
     description: t("Choose which inputs you'd like to use to send crypto."),
-    onPress: () => {
-      navigation.navigate('Wallet', {
-        screen: 'SendToOptions',
-        params: {
-          title: t('Select Inputs'),
-          wallet,
-          context: 'selectInputs',
-        },
+    onPress: async () => {
+      await sleep(500);
+      navigation.navigate('SendToOptions', {
+        title: t('Select Inputs'),
+        wallet,
+        context: 'selectInputs',
       });
     },
   };
@@ -277,14 +275,12 @@ const SendTo = () => {
     img: <Icons.Multisend />,
     title: t('Transfer to Multiple Recipients'),
     description: t('Send crypto to multiple contacts or addresses.'),
-    onPress: () => {
-      navigation.navigate('Wallet', {
-        screen: 'SendToOptions',
-        params: {
-          title: t('Multiple Recipients'),
-          wallet,
-          context: 'multisend',
-        },
+    onPress: async () => {
+      await sleep(500);
+      navigation.navigate('SendToOptions', {
+        title: t('Multiple Recipients'),
+        wallet,
+        context: 'multisend',
       });
     },
   };
@@ -559,22 +555,17 @@ const SendTo = () => {
                   context: 'SendTo',
                 }),
               );
-              navigation.navigate('Scan', {
-                screen: 'Root',
-                params: {
-                  onScanComplete: data => {
-                    try {
-                      if (data) {
-                        validateAndNavigateToConfirm(data);
-                      }
-                    } catch (err) {
-                      const e =
-                        err instanceof Error
-                          ? err.message
-                          : JSON.stringify(err);
-                      dispatch(LogActions.error('[OpenScanner SendTo] ', e));
+              navigation.navigate('ScanRoot', {
+                onScanComplete: data => {
+                  try {
+                    if (data) {
+                      validateAndNavigateToConfirm(data);
                     }
-                  },
+                  } catch (err) {
+                    const e =
+                      err instanceof Error ? err.message : JSON.stringify(err);
+                    dispatch(LogActions.error('[OpenScanner SendTo] ', e));
+                  }
                 },
               });
             }}>

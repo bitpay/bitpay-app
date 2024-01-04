@@ -1,10 +1,7 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {createSharedElementStackNavigator} from 'react-navigation-shared-element';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../constants/NavigationOptions';
+import {oldBaseNavigatorOptions} from '../../constants/NavigationOptions';
 import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
 import CardPairingScreen, {
   CardPairingScreenParamList,
@@ -48,8 +45,7 @@ const CardStack = () => {
     <Card.Navigator
       initialRouteName={CardScreens.HOME}
       screenOptions={{
-        ...baseNavigatorOptions,
-        ...baseScreenOptions,
+        ...oldBaseNavigatorOptions,
       }}>
       <Card.Screen
         name={CardScreens.HOME}

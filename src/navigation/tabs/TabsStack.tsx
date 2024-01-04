@@ -3,10 +3,9 @@ import {View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
-import HomeRoot from './home/HomeStack';
+import HomeRoot from './home/HomeRoot';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
-import SettingsRoot from './settings/SettingsStack';
-import {SettingsStackParamList} from './settings/SettingsStack';
+import SettingsRoot, {SettingsHomeParamList} from './settings/SettingsRoot';
 import CardStack, {CardStackParamList} from '../card/CardStack';
 
 import {SvgProps} from 'react-native-svg';
@@ -22,6 +21,10 @@ import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.sv
 
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
+
+import {ZeroHeightHeader} from '../../components/styled/Text';
+import {HeaderTitle} from '../../components/styled/Text';
+import {useTranslation} from 'react-i18next';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
@@ -49,14 +52,15 @@ export type TabsStackParamList = {
   Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
   TransactButton: undefined;
   Card: NavigatorScreenParams<CardStackParamList> | undefined;
-  Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
+  Settings: SettingsHomeParamList | undefined;
   Camera: undefined;
 };
 
-const Tab = createBottomTabNavigator<TabsStackParamList>();
+export const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
   const theme = useTheme();
+  const {t} = useTranslation();
   useAndroidBackHandler(() => true);
   const TransactionButton = () => null;
   return (
@@ -84,7 +88,16 @@ const TabsStack = () => {
           return <Icon />;
         },
       })}>
-      <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />
+      <Tab.Screen
+        name={TabsScreens.HOME}
+        component={HomeRoot}
+        options={{
+          headerTitleAlign: 'center',
+          headerShown: true,
+          headerShadowVisible: false,
+          header: () => <ZeroHeightHeader />,
+        }}
+      />
       <Tab.Screen name={TabsScreens.SHOP} component={ShopRoot} />
       <Tab.Screen
         name={TabsScreens.TRANSACT_BUTTON}
@@ -95,7 +108,17 @@ const TabsStack = () => {
         }}
       />
       <Tab.Screen name={TabsScreens.CARD} component={CardStack} />
-      <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
+      <Tab.Screen
+        name={TabsScreens.SETTINGS}
+        component={SettingsRoot}
+        options={{
+          headerTitleAlign: 'center',
+          headerShown: true,
+          headerShadowVisible: false,
+          headerLeft: () => null,
+          headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
+        }}
+      />
     </Tab.Navigator>
   );
 };

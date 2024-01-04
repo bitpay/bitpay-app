@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Platform, ScrollView} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
 import {
   useAppDispatch,
@@ -8,7 +8,7 @@ import {
   useLogger,
   useMount,
 } from '../../../../utils/hooks';
-import {BuyCryptoScreens, BuyCryptoStackParamList} from '../BuyCryptoStack';
+import {BuyCryptoScreens, BuyCryptoGroupParamList} from '../BuyCryptoGroup';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
 import AmountModal from '../../../../components/amount/AmountModal';
@@ -87,6 +87,10 @@ export type BuyCryptoRootScreenParams =
     }
   | undefined;
 
+const BuyCryptoRootContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
 const CtaContainer = styled.View`
   margin: 20px 15px;
 `;
@@ -97,9 +101,10 @@ const ArrowContainer = styled.View`
 
 let buyCryptoConfig: BuyCryptoConfig | undefined;
 
-const BuyCryptoRoot: React.VFC<
-  StackScreenProps<BuyCryptoStackParamList, BuyCryptoScreens.ROOT>
-> = ({navigation, route}) => {
+const BuyCryptoRoot = ({
+  route,
+  navigation,
+}: NativeStackScreenProps<BuyCryptoGroupParamList, BuyCryptoScreens.ROOT>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -686,7 +691,7 @@ const BuyCryptoRoot: React.VFC<
   }, [selectedWallet]);
 
   return (
-    <>
+    <BuyCryptoRootContainer>
       <ScrollView>
         <BuyCryptoItemCard
           onPress={() => {
@@ -923,7 +928,7 @@ const BuyCryptoRoot: React.VFC<
         currency={fiatCurrency}
         preSetPartner={preSetPartner}
       />
-    </>
+    </BuyCryptoRootContainer>
   );
 };
 

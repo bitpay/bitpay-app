@@ -1,19 +1,23 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
 import ContactsRoot from './screens/ContactsRoot';
 import ContactsDetails from './screens/ContactsDetails';
 import ContactsAdd from './screens/ContactsAdd';
 import {ContactRowProps} from '../../../components/list/ContactRow';
-
 import {useTranslation} from 'react-i18next';
+import {Root} from '../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
-export type ContactsStackParamList = {
-  Root: undefined;
+interface ContactsProps {
+  Contacts: typeof Root;
+}
+
+export type ContactsGroupParamList = {
+  ContactsRoot: undefined;
   ContactsDetails: {contact: ContactRowProps};
   ContactsAdd:
     | {
@@ -25,40 +29,37 @@ export type ContactsStackParamList = {
 };
 
 export enum ContactsScreens {
-  ROOT = 'Root',
+  ROOT = 'ContactsRoot',
   DETAILS = 'ContactsDetails',
   ADD = 'ContactsAdd',
 }
 
-const Contacts = createStackNavigator<ContactsStackParamList>();
-
-const ContactsStack = () => {
+const ContactsGroup: React.FC<ContactsProps> = ({Contacts}) => {
   const {t} = useTranslation();
   return (
-    <Contacts.Navigator
-      initialRouteName={ContactsScreens.ROOT}
-      screenOptions={{
+    <Contacts.Group
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Contacts.Screen name={ContactsScreens.ROOT} component={ContactsRoot} />
       <Contacts.Screen
         name={ContactsScreens.DETAILS}
         component={ContactsDetails}
         options={{
-          headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Details')}</HeaderTitle>,
         }}
       />
-      <Contacts.Screen
-        name={ContactsScreens.ADD}
-        component={ContactsAdd}
-        options={{
-          headerMode: 'screen',
-        }}
-      />
-    </Contacts.Navigator>
+      <Contacts.Screen name={ContactsScreens.ADD} component={ContactsAdd} />
+    </Contacts.Group>
   );
 };
 
-export default ContactsStack;
+export default ContactsGroup;

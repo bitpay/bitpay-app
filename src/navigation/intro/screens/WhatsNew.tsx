@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
@@ -13,7 +13,7 @@ import {
   Overlay,
   BodyContainer,
 } from '../components/styled/Styled';
-import {IntroStackParamList} from '../IntroStack';
+import {IntroGroupParamList, IntroScreens} from '../IntroGroup';
 
 const lightImage = require('../../../../assets/img/intro/light/whats-new.png');
 const darkImage = require('../../../../assets/img/intro/dark/whats-new.png');
@@ -23,9 +23,12 @@ const IntroWhatsNewContainer = styled.View`
   background: ${({theme}) => theme.colors.background};
 `;
 
-type WhatsNewScreenProps = StackScreenProps<IntroStackParamList, 'WhatsNew'>;
+type WhatsNewScreenProps = NativeStackScreenProps<
+  IntroGroupParamList,
+  IntroScreens.WHATS_NEW
+>;
 
-const WhatsNew: React.VFC<WhatsNewScreenProps> = ({navigation}) => {
+const WhatsNew = ({navigation}: WhatsNewScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
 

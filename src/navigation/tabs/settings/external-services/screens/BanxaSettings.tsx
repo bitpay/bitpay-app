@@ -87,11 +87,8 @@ const BanxaSettings: React.FC = () => {
                     key={pr.order_id}
                     onPress={() => {
                       haptic('impactLight');
-                      navigation.navigate('ExternalServicesSettings', {
-                        screen: 'BanxaDetails',
-                        params: {
-                          paymentRequest: pr,
-                        },
+                      navigation.navigate('BanxaDetails', {
+                        paymentRequest: pr,
                       });
                     }}>
                     <PrRowLeft>

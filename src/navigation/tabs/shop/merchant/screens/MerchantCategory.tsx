@@ -1,15 +1,15 @@
 import React, {useLayoutEffect} from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled from 'styled-components/native';
-import {
-  MerchantScreens,
-  MerchantStackParamList,
-} from '../../merchant/MerchantStack';
+import {MerchantScreens, MerchantGroupParamList} from '../MerchantGroup';
 import MerchantItem from './../../components/MerchantItem';
 import {horizontalPadding} from './../../components/styled/ShopTabComponents';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
+
+const MerchantCategoryScreenContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const SearchResults = styled.View`
   display: flex;
@@ -21,9 +21,9 @@ const SearchResults = styled.View`
 const MerchantCategory = ({
   route,
   navigation,
-}: StackScreenProps<MerchantStackParamList, 'MerchantCategory'>) => {
-  const navigator = useNavigation();
+}: NativeStackScreenProps<MerchantGroupParamList, 'MerchantCategory'>) => {
   const {integrations, category} = route.params;
+  console.log('integrations', integrations);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: category.displayName,
@@ -31,29 +31,28 @@ const MerchantCategory = ({
   });
 
   return (
-    <ScrollView>
-      <SearchResults>
-        {integrations.map(integration => (
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            key={integration.displayName}
-            onPress={() =>
-              navigator.navigate('Merchant', {
-                screen: MerchantScreens.MERCHANT_DETAILS,
-                params: {
-                  directIntegration: integration,
-                },
-              })
-            }>
-            <MerchantItem
-              merchant={integration}
-              height={200}
+    <MerchantCategoryScreenContainer>
+      <ScrollView>
+        <SearchResults>
+          {integrations.map(integration => (
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
               key={integration.displayName}
-            />
-          </TouchableOpacity>
-        ))}
-      </SearchResults>
-    </ScrollView>
+              onPress={() =>
+                navigation.navigate(MerchantScreens.MERCHANT_DETAILS, {
+                  directIntegration: integration,
+                })
+              }>
+              <MerchantItem
+                merchant={integration}
+                height={200}
+                key={integration.displayName}
+              />
+            </TouchableOpacity>
+          ))}
+        </SearchResults>
+      </ScrollView>
+    </MerchantCategoryScreenContainer>
   );
 };
 

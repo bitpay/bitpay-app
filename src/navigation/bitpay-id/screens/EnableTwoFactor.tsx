@@ -3,8 +3,8 @@ import styled from 'styled-components/native';
 import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {H3, Paragraph} from '../../../components/styled/Text';
 import {t} from 'i18next';
-import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
-import {StackScreenProps} from '@react-navigation/stack';
+import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BaseText} from '../../wallet/components/KeyDropdownOption';
 import {Action, SlateDark, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
@@ -25,6 +25,11 @@ import {BASE_BITPAY_URLS} from '../../../constants/config';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {useTranslation} from 'react-i18next';
+
+const EnableTwoFactorContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -93,9 +98,9 @@ const QRContainer = styled.View`
       : ''};
 `;
 
-type EnableTwoFactorProps = StackScreenProps<
-  BitpayIdStackParamList,
-  'EnableTwoFactor'
+type EnableTwoFactorProps = NativeStackScreenProps<
+  BitpayIdGroupParamList,
+  BitpayIdScreens.ENABLE_TWO_FACTOR
 >;
 
 export type EnableTwoFactorScreenParamList = undefined;
@@ -109,7 +114,8 @@ const schema = yup.object().shape({
   code: yup.string().required().length(TWO_FACTOR_CODE_LENGTH),
 });
 
-const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
+const EnableTwoFactor = ({route, navigation}: EnableTwoFactorProps) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const network = useAppSelector(({APP}) => APP.network);
   const securitySettings = useAppSelector(
@@ -165,9 +171,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
       navigation.popToTop();
       return;
     }
-    navigator.navigate('BitpayId', {
-      screen: BitpayIdScreens.TWO_FACTOR_ENABLED,
-    });
+    navigator.navigate(BitpayIdScreens.TWO_FACTOR_ENABLED);
   };
 
   const requestTwoFactorChange = async (twoFactorCode: string) => {
@@ -215,7 +219,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
   const twoFactorSetupCode = `otpauth://totp/%5Bbitpay%5D%20${email}?secret=${otpAuthKey}&issuer=${otpIssuer}`;
 
   return (
-    <>
+    <EnableTwoFactorContainer>
       <KeyboardAwareScrollView
         extraScrollHeight={111}
         keyboardShouldPersistTaps={'handled'}>
@@ -234,14 +238,11 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
-                  navigator.navigate('BitpayId', {
-                    screen: BitpayIdScreens.TWO_FACTOR,
-                    params: {
-                      onSubmit: async (twoFactorCode: string) => {
-                        toggleTwoFactor(twoFactorCode);
-                      },
-                      twoFactorCodeLength: 6,
+                  navigator.navigate(BitpayIdScreens.TWO_FACTOR, {
+                    onSubmit: async (twoFactorCode: string) => {
+                      toggleTwoFactor(twoFactorCode);
                     },
+                    twoFactorCodeLength: 6,
                   });
                 }}>
                 {t('Disable')}
@@ -362,7 +363,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
           )}
         </ViewContainer>
       </KeyboardAwareScrollView>
-    </>
+    </EnableTwoFactorContainer>
   );
 };
 

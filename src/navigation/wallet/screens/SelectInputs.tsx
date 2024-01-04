@@ -11,7 +11,7 @@ import {
 } from '../../../store/wallet/wallet.models';
 import {BaseText, H5, H7, HeaderTitle} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {
   Column,
   CtaContainer as _CtaContainer,
@@ -102,7 +102,7 @@ const SelectInputs = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {t} = useTranslation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'SelectInputs'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'SelectInputs'>>();
   const useUnconfirmedFunds = useAppSelector(
     ({WALLET}) => WALLET.useUnconfirmedFunds,
   );
@@ -269,17 +269,14 @@ const SelectInputs = () => {
       )) as any;
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
-      navigation.navigate('Wallet', {
-        screen: 'Confirm',
-        params: {
-          wallet,
-          recipient,
-          txp,
-          txDetails,
-          amount,
-          inputs,
-          selectInputs: true,
-        },
+      navigation.navigate('Confirm', {
+        wallet,
+        recipient,
+        txp,
+        txDetails,
+        amount,
+        inputs,
+        selectInputs: true,
       });
     } catch (err: any) {
       const errorMessageConfig = (

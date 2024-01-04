@@ -89,13 +89,10 @@ const InAppNotification: React.FC = () => {
       return;
     }
 
-    navigation.navigate('WalletConnect', {
-      screen: 'WalletConnectHome',
-      params: {
-        topic: request?.topic,
-        wallet,
-        context: 'notification',
-      },
+    navigation.navigate('WalletConnectHome', {
+      topic: request?.topic,
+      wallet,
+      context: 'notification',
     });
   };
 

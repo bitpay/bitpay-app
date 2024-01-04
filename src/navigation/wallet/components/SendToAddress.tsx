@@ -13,7 +13,7 @@ import {BaseText, H5, SubText} from '../../../components/styled/Text';
 import {Caution, NeutralSlate} from '../../../styles/colors';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {Effect, RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
@@ -95,7 +95,7 @@ const SendToAddress = () => {
     goToSelectInputsView,
   } = useContext(SendToOptionsContext);
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'SendToOptions'>>();
   const {wallet, context} = route.params;
   const {currencyAbbreviation, id, network, chain} = wallet;
 
@@ -267,24 +267,19 @@ const SendToAddress = () => {
                   context: 'SendTo',
                 }),
               );
-              navigation.navigate('Scan', {
-                screen: 'Root',
-                params: {
-                  onScanComplete: data => {
-                    try {
-                      if (data) {
-                        validateData(data);
-                      }
-                    } catch (err) {
-                      const e =
-                        err instanceof Error
-                          ? err.message
-                          : JSON.stringify(err);
-                      dispatch(
-                        LogActions.error('[OpenScanner SendToAddress] ', e),
-                      );
+              navigation.navigate('ScanRoot', {
+                onScanComplete: data => {
+                  try {
+                    if (data) {
+                      validateData(data);
                     }
-                  },
+                  } catch (err) {
+                    const e =
+                      err instanceof Error ? err.message : JSON.stringify(err);
+                    dispatch(
+                      LogActions.error('[OpenScanner SendToAddress] ', e),
+                    );
+                  }
                 },
               });
             }}>

@@ -1,10 +1,5 @@
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import React from 'react';
 import {HeaderTitle} from '../../components/styled/Text';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../constants/NavigationOptions';
 import WalletConnectIntro, {
   WalletConnectIntroParamList,
 } from './screens/WalletConnectIntro';
@@ -25,6 +20,16 @@ import WalletConnectConfirm, {
   WalletConnectConfirmParamList,
 } from './screens/WalletConnectConfirm';
 import {useTranslation} from 'react-i18next';
+import {Root} from '../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
+
+interface WalletConnectProps {
+  WalletConnect: typeof Root;
+}
 
 const WalletConnectHeaderTitle = styled.View`
   align-items: center;
@@ -42,8 +47,8 @@ export const WalletConnectHeader = () => {
   );
 };
 
-export type WalletConnectStackParamList = {
-  Root: WalletConnectIntroParamList;
+export type WalletConnectGroupParamList = {
+  WalletConnectRoot: WalletConnectIntroParamList;
   WalletConnectStart: WalletConnectStartParamList;
   WalletConnectConnections: undefined;
   WalletConnectHome: WalletConnectHomeParamList;
@@ -52,7 +57,7 @@ export type WalletConnectStackParamList = {
 };
 
 export enum WalletConnectScreens {
-  ROOT = 'Root',
+  WC_ROOT = 'WalletConnectRoot',
   WC_START = 'WalletConnectStart',
   WC_CONNECTIONS = 'WalletConnectConnections',
   WC_HOME = 'WalletConnectHome',
@@ -60,19 +65,23 @@ export enum WalletConnectScreens {
   WC_CONFIRM = 'WalletConnectConfirm',
 }
 
-const WalletConnect = createStackNavigator<WalletConnectStackParamList>();
-
-const WalletConnectStack = () => {
+const WalletConnectGroup: React.FC<WalletConnectProps> = ({WalletConnect}) => {
   const {t} = useTranslation();
   return (
-    <WalletConnect.Navigator
-      initialRouteName={WalletConnectScreens.ROOT}
-      screenOptions={{
+    <WalletConnect.Group
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <WalletConnect.Screen
-        name={WalletConnectScreens.ROOT}
+        name={WalletConnectScreens.WC_ROOT}
         component={WalletConnectIntro}
         options={{
           headerTitle: () => WalletConnectHeader(),
@@ -82,7 +91,6 @@ const WalletConnectStack = () => {
         name={WalletConnectScreens.WC_START}
         component={WalletConnectStart}
         options={{
-          ...TransitionPresets.ModalPresentationIOS,
           headerTitle: () => WalletConnectHeader(),
         }}
       />
@@ -109,12 +117,11 @@ const WalletConnectStack = () => {
         component={WalletConnectConfirm}
         options={{
           headerTitle: () => <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>,
-          ...TransitionPresets.ModalPresentationIOS,
           gestureEnabled: false,
         }}
       />
-    </WalletConnect.Navigator>
+    </WalletConnect.Group>
   );
 };
 
-export default WalletConnectStack;
+export default WalletConnectGroup;

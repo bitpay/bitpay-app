@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
@@ -6,7 +6,7 @@ import {Link} from '../../../components/styled/Text';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {AuthStackParamList} from '../AuthStack';
+import {AuthGroupParamList, AuthScreens} from '../AuthGroup';
 import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
@@ -16,9 +16,9 @@ const POLL_TIMEOUT = 1000 * 60 * 5;
 
 export type VerifyEmailScreenParamList = {} | undefined;
 
-type VerifyEmailScreenProps = StackScreenProps<
-  AuthStackParamList,
-  'EmailAuthentication'
+type VerifyEmailScreenProps = NativeStackScreenProps<
+  AuthGroupParamList,
+  AuthScreens.VERIFY_EMAIL
 >;
 
 const VerifyEmailParagraph = styled(AuthFormParagraph)`

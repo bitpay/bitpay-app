@@ -22,7 +22,7 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {getMnemonic, sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import Share, {ShareOptions} from 'react-native-share';
 import {ShareOpenResult} from 'react-native-share/lib/typescript/src/types';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -61,7 +61,7 @@ const BackupOnboarding: React.FC = () => {
   const navigation = useNavigation();
   const logger = useLogger();
 
-  const route = useRoute<RouteProp<WalletStackParamList, 'BackupOnboarding'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'BackupOnboarding'>>();
   const {key, buildEncryptModalConfig} = route.params;
 
   const printBackupTemplate = async () => {
@@ -188,29 +188,23 @@ const BackupOnboarding: React.FC = () => {
             onPress={() => {
               haptic('impactLight');
               if (!key.isPrivKeyEncrypted) {
-                navigation.navigate('Wallet', {
-                  screen: 'RecoveryPhrase',
-                  params: {
-                    keyId: key.id,
-                    words: getMnemonic(key),
-                    walletTermsAccepted: true,
-                    context: 'keySettings',
-                    key,
-                  },
+                navigation.navigate('RecoveryPhrase', {
+                  keyId: key.id,
+                  words: getMnemonic(key),
+                  walletTermsAccepted: true,
+                  context: 'keySettings',
+                  key,
                 });
               } else {
                 dispatch(
                   AppActions.showDecryptPasswordModal(
                     buildEncryptModalConfig(async ({mnemonic}) => {
-                      navigation.navigate('Wallet', {
-                        screen: 'RecoveryPhrase',
-                        params: {
-                          keyId: key.id,
-                          words: mnemonic.trim().split(' '),
-                          walletTermsAccepted: true,
-                          context: 'keySettings',
-                          key,
-                        },
+                      navigation.navigate('RecoveryPhrase', {
+                        keyId: key.id,
+                        words: mnemonic.trim().split(' '),
+                        walletTermsAccepted: true,
+                        context: 'keySettings',
+                        key,
                       });
                     }),
                   ),

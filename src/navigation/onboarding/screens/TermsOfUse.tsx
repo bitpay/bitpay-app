@@ -1,5 +1,5 @@
-import {StackActions, useNavigation} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {CommonActions} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Linking, ScrollView} from 'react-native';
@@ -13,16 +13,22 @@ import {setOnboardingCompleted} from '../../../store/app/app.actions';
 import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import TermsBox from '../components/TermsBox';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList} from '../OnboardingGroup';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {
   useAppDispatch,
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
+import {
+  WalletGroupParamList,
+  WalletScreens,
+} from '../../../navigation/wallet/WalletGroup';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 
-type TermsOfUseScreenProps = StackScreenProps<
-  OnboardingStackParamList,
-  'TermsOfUse'
+type TermsOfUseScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.TERMS_OF_USE
 >;
 
 export interface TermsOfUseParamList {
@@ -68,9 +74,8 @@ const TermsContainer = styled.View`
   padding: 20px 10px 100px;
 `;
 
-const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
+const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {key, context} = route.params || {};
   const [agreed, setAgreed] = useState<number[]>([]);
@@ -173,13 +178,30 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
               }
               if (key) {
                 navigation.dispatch(
-                  StackActions.replace('Wallet', {
-                    screen: 'KeyOverview',
-                    params: {id: key.id},
+                  CommonActions.reset({
+                    routes: [
+                      {
+                        name: RootStacks.TABS,
+                        params: {
+                          screen: TabsScreens.HOME,
+                        },
+                      },
+                    ],
                   }),
                 );
               } else {
-                navigation.navigate('Tabs', {screen: 'Home'});
+                navigation.dispatch(
+                  CommonActions.reset({
+                    routes: [
+                      {
+                        name: RootStacks.TABS,
+                        params: {
+                          screen: TabsScreens.HOME,
+                        },
+                      },
+                    ],
+                  }),
+                );
               }
               dispatch(setOnboardingCompleted());
               DeviceEventEmitter.emit(

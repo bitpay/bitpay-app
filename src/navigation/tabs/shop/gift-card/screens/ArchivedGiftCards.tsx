@@ -1,8 +1,8 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import {useNavigation, useScrollToTop} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {SectionContainer} from '../../components/styled/ShopTabComponents';
-import {GiftCardScreens} from '../GiftCardStack';
+import {GiftCardScreens} from '../GiftCardGroup';
 import {GiftCard} from '../../../../../store/shop/shop.models';
 import GiftCardCreditsItem from '../../components/GiftCardCreditsItem';
 import {FlatList, TouchableOpacity} from 'react-native';
@@ -14,7 +14,7 @@ import {ShopStackParamList} from '../../ShopStack';
 const ArchivedGiftCards = ({
   route,
   navigation,
-}: StackScreenProps<ShopStackParamList, 'ArchivedGiftCards'>) => {
+}: NativeStackScreenProps<ShopStackParamList, 'ArchivedGiftCards'>) => {
   const navigator = useNavigation();
   const {supportedGiftCardMap} = route.params;
   const allGiftCards = useAppSelector(
@@ -41,9 +41,9 @@ const ArchivedGiftCards = ({
           activeOpacity={0.8}
           key={giftCard.invoiceId}
           onPress={() =>
-            navigator.navigate('GiftCard', {
-              screen: GiftCardScreens.GIFT_CARD_DETAILS,
-              params: {cardConfig, giftCard},
+            navigator.navigate(GiftCardScreens.GIFT_CARD_DETAILS, {
+              cardConfig,
+              giftCard,
             })
           }>
           <GiftCardCreditsItem

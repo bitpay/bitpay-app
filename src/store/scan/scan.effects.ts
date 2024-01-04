@@ -1,4 +1,4 @@
-import {WalletScreens} from '../../navigation/wallet/WalletStack';
+import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
 import {GetPayProOptions} from '../wallet/effects/paypro/paypro';
@@ -246,24 +246,18 @@ const goToPayPro =
 
       if (replaceNavigationRoute) {
         navigationRef.dispatch(
-          StackActions.replace('Wallet', {
-            screen: WalletScreens.PAY_PRO_CONFIRM,
-            params: {
-              payProOptions,
-              invoice: _invoice,
-              wallet,
-            },
+          StackActions.replace(WalletScreens.PAY_PRO_CONFIRM, {
+            payProOptions,
+            invoice: _invoice,
+            wallet,
           }),
         );
         return;
       }
-      navigationRef.navigate('Wallet', {
-        screen: WalletScreens.PAY_PRO_CONFIRM,
-        params: {
-          payProOptions,
-          invoice: _invoice,
-          wallet,
-        },
+      navigationRef.navigate(WalletScreens.PAY_PRO_CONFIRM, {
+        payProOptions,
+        invoice: _invoice,
+        wallet,
       });
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
@@ -322,10 +316,7 @@ const handleUnlock =
           if (emailAddress || buyerProvidedEmail || status !== 'new') {
             dispatch(goToPayPro(data, undefined, undefined, wallet));
           } else {
-            navigationRef.navigate('Wallet', {
-              screen: 'EnterBuyerProvidedEmail',
-              params: {data},
-            });
+            navigationRef.navigate('EnterBuyerProvidedEmail', {data});
           }
         } else {
           const _invoice = invoice?.invoice || invoice;
@@ -336,13 +327,10 @@ const handleUnlock =
     } catch {}
     switch (result) {
       case 'pairingRequired':
-        navigationRef.navigate('Auth', {
-          screen: 'Login',
-          params: {
-            onLoginSuccess: () => {
-              navigationRef.navigate('Tabs', {screen: 'Home'});
-              dispatch(incomingData(data));
-            },
+        navigationRef.navigate('Login', {
+          onLoginSuccess: () => {
+            navigationRef.navigate('Tabs', {screen: 'Home'});
+            dispatch(incomingData(data));
           },
         });
         break;
@@ -469,23 +457,20 @@ const goToConfirm =
   async dispatch => {
     try {
       if (!wallet) {
-        navigationRef.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {
-            context: 'scanner',
-            recipient: {
-              ...recipient,
-              ...{
-                opts: {
-                  showEVMWalletsAndTokens:
-                    !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
-                  message: opts?.message || '',
-                  feePerKb: opts?.feePerKb,
-                },
+        navigationRef.navigate('GlobalSelect', {
+          context: 'scanner',
+          recipient: {
+            ...recipient,
+            ...{
+              opts: {
+                showEVMWalletsAndTokens:
+                  !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
+                message: opts?.message || '',
+                feePerKb: opts?.feePerKb,
               },
             },
-            amount,
           },
+          amount,
         });
         return Promise.resolve();
       }
@@ -510,17 +495,14 @@ const goToConfirm =
         dispatch(dismissOnGoingProcessModal());
       }
       await sleep(300);
-      navigationRef.navigate('Wallet', {
-        screen: 'Confirm',
-        params: {
-          wallet,
-          recipient,
-          txp,
-          txDetails,
-          amount,
-          message: opts?.message || '',
-          sendMax: opts?.sendMax,
-        },
+      navigationRef.navigate('Confirm', {
+        wallet,
+        recipient,
+        txp,
+        txDetails,
+        amount,
+        message: opts?.message || '',
+        sendMax: opts?.sendMax,
       });
       sleep(300).then(() => setButtonState?.(null));
     } catch (err: any) {
@@ -579,43 +561,37 @@ export const goToAmount =
   }): Effect<Promise<void>> =>
   async dispatch => {
     if (!wallet) {
-      navigationRef.navigate('Wallet', {
-        screen: 'GlobalSelect',
-        params: {
-          context: 'scanner',
-          recipient: {
-            ...recipient,
-            ...{
-              opts: {
-                showEVMWalletsAndTokens:
-                  !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
-                message: opts?.message || '',
-                feePerKb: opts?.feePerKb,
-              },
+      navigationRef.navigate('GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          ...recipient,
+          ...{
+            opts: {
+              showEVMWalletsAndTokens:
+                !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
+              message: opts?.message || '',
+              feePerKb: opts?.feePerKb,
             },
           },
         },
       });
       return Promise.resolve();
     }
-    navigationRef.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
-      params: {
-        sendMaxEnabled: true,
-        cryptoCurrencyAbbreviation: coin.toUpperCase(),
-        chain,
-        tokenAddress: wallet.tokenAddress,
-        onAmountSelected: async (amount, setButtonState, amountOpts) => {
-          dispatch(
-            goToConfirm({
-              recipient,
-              amount: Number(amount),
-              wallet,
-              setButtonState,
-              opts: {...opts, ...amountOpts},
-            }),
-          );
-        },
+    navigationRef.navigate(WalletScreens.AMOUNT, {
+      sendMaxEnabled: true,
+      cryptoCurrencyAbbreviation: coin.toUpperCase(),
+      chain,
+      tokenAddress: wallet.tokenAddress,
+      onAmountSelected: async (amount, setButtonState, amountOpts) => {
+        dispatch(
+          goToConfirm({
+            recipient,
+            amount: Number(amount),
+            wallet,
+            setButtonState,
+            opts: {...opts, ...amountOpts},
+          }),
+        );
       },
     });
   };
@@ -644,11 +620,8 @@ const handleBitPayUri =
       );
 
       if (fullWalletObj) {
-        navigationRef.navigate('Wallet', {
-          screen: WalletScreens.WALLET_DETAILS,
-          params: {
-            walletId: fullWalletObj.credentials.walletId,
-          },
+        navigationRef.navigate(WalletScreens.WALLET_DETAILS, {
+          walletId: fullWalletObj.credentials.walletId,
         });
       }
     } else {
@@ -1033,15 +1006,12 @@ const handleBuyCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'BuyCrypto',
+          name: 'BuyCryptoRoot',
           params: {
-            screen: 'BuyCryptoRoot',
-            params: {
-              partner,
-              amount: _amount,
-              currencyAbbreviation: coin,
-              chain,
-            },
+            partner,
+            amount: _amount,
+            currencyAbbreviation: coin,
+            chain,
           },
         },
       ],
@@ -1108,11 +1078,8 @@ const handleBanxaUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'BanxaSettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
+          name: 'BanxaSettings',
+          params: {incomingPaymentRequest: stateParams},
         },
       ],
     });
@@ -1166,11 +1133,8 @@ const handleMoonpayUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'MoonpaySettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
+          name: 'MoonpaySettings',
+          params: {incomingPaymentRequest: stateParams},
         },
       ],
     });
@@ -1224,11 +1188,8 @@ const handleRampUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'RampSettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
+          name: 'RampSettings',
+          params: {incomingPaymentRequest: stateParams},
         },
       ],
     });
@@ -1311,11 +1272,8 @@ const handleSardineUri =
             params: {screen: 'Home'},
           },
           {
-            name: 'ExternalServicesSettings',
-            params: {
-              screen: 'SardineSettings',
-              params: {incomingPaymentRequest: stateParams},
-            },
+            name: 'SardineSettings',
+            params: {incomingPaymentRequest: stateParams},
           },
         ],
       });
@@ -1372,11 +1330,8 @@ const handleSimplexUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'SimplexSettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
+          name: 'SimplexSettings',
+          params: {incomingPaymentRequest: stateParams},
         },
       ],
     });
@@ -1395,10 +1350,7 @@ const handleWalletConnectUri =
           throw errMsg;
         } else {
           await dispatch(walletConnectV2OnSessionProposal(data));
-          navigationRef.navigate('WalletConnect', {
-            screen: 'Root',
-            params: {},
-          });
+          navigationRef.navigate('WalletConnectRoot', {});
         }
       } else {
         const errMsg = t('The URI does not correspond to WalletConnect.');
@@ -1412,10 +1364,7 @@ const handleWalletConnectUri =
         e !== null &&
         e.message?.includes('Pairing already exists:')
       ) {
-        navigationRef.navigate('WalletConnect', {
-          screen: 'Root',
-          params: {uri: data},
-        });
+        navigationRef.navigate('WalletConnectRoot', {uri: data});
       } else {
         dispatch(
           showBottomNotificationModal(
@@ -1469,11 +1418,8 @@ const goToImport =
         '[scan] Incoming-data (redirect): QR code export feature',
       ),
     );
-    navigationRef.navigate('Wallet', {
-      screen: WalletScreens.IMPORT,
-      params: {
-        importQrCodeData,
-      },
+    navigationRef.navigate(WalletScreens.IMPORT, {
+      importQrCodeData,
     });
   };
 
@@ -1487,33 +1433,21 @@ const goToJoinWallet =
     );
     const keys = Object.values(getState().WALLET.keys);
     if (!keys.length) {
-      navigationRef.navigate('Wallet', {
-        screen: 'JoinMultisig',
-        params: {
-          invitationCode: data,
-        },
+      navigationRef.navigate('JoinMultisig', {
+        invitationCode: data,
       });
     } else if (keys.length === 1) {
-      navigationRef.navigate('Wallet', {
-        screen: 'JoinMultisig',
-        params: {
-          key: keys[0],
-          invitationCode: data,
-        },
+      navigationRef.navigate('JoinMultisig', {
+        key: keys[0],
+        invitationCode: data,
       });
     } else {
-      navigationRef.navigate('Wallet', {
-        screen: WalletScreens.KEY_GLOBAL_SELECT,
-        params: {
-          onKeySelect: (selectedKey: Key) => {
-            navigationRef.navigate('Wallet', {
-              screen: WalletScreens.JOIN_MULTISIG,
-              params: {
-                key: selectedKey,
-                invitationCode: data,
-              },
-            });
-          },
+      navigationRef.navigate(WalletScreens.KEY_GLOBAL_SELECT, {
+        onKeySelect: (selectedKey: Key) => {
+          navigationRef.navigate(WalletScreens.JOIN_MULTISIG, {
+            key: selectedKey,
+            invitationCode: data,
+          });
         },
       });
     }

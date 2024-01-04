@@ -6,7 +6,7 @@ import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
 import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
-import {WalletScreens} from '../../../../wallet/WalletStack';
+import {WalletScreens} from '../../../../wallet/WalletGroup';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -27,23 +27,17 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   const navigation = useNavigation();
 
   const buyCryptoCta = useRequireKeyAndWalletRedirect(() => {
-    navigation.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
-      params: {
-        onAmountSelected: (amount: string) => {
-          navigation.navigate('BuyCrypto', {
-            screen: 'BuyCryptoRoot',
-            params: {
-              amount: Number(amount),
-            },
-          });
-        },
-        context: 'buyCrypto',
+    navigation.navigate(WalletScreens.AMOUNT, {
+      onAmountSelected: (amount: string) => {
+        navigation.navigate('BuyCryptoRoot', {
+          amount: Number(amount),
+        });
       },
+      context: 'buyCrypto',
     });
   });
   const swapCryptoCta = useRequireKeyAndWalletRedirect(() => {
-    navigation.navigate('SwapCrypto', {screen: 'Root'});
+    navigation.navigate('SwapCryptoRoot');
   });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     dev_card: () =>

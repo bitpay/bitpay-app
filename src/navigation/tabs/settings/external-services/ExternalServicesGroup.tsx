@@ -1,10 +1,5 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import BanxaDetails from './screens/BanxaDetails';
 import BanxaSettings from './screens/BanxaSettings';
@@ -34,8 +29,18 @@ import {
   WyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
+import {Root} from '../../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
-export type ExternalServicesSettingsStackParamList = {
+interface ExternalServicesSettingsProps {
+  ExternalServicesSettings: typeof Root;
+}
+
+export type ExternalServicesSettingsGroupParamList = {
   BanxaSettings:
     | {
         incomingPaymentRequest?: BanxaIncomingData;
@@ -108,17 +113,23 @@ export enum ExternalServicesSettingsScreens {
   CHANGELLY_DETAILS = 'ChangellyDetails',
 }
 
-const ExternalServicesSettings =
-  createStackNavigator<ExternalServicesSettingsStackParamList>();
-
-const ExternalServicesSettingsStack = () => {
+const ExternalServicesSettingsGroup: React.FC<
+  ExternalServicesSettingsProps
+> = ({ExternalServicesSettings}) => {
   const {t} = useTranslation();
   return (
-    <ExternalServicesSettings.Navigator
-      screenOptions={{
+    <ExternalServicesSettings.Group
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.BANXA_SETTINGS}
         component={BanxaSettings}
@@ -219,8 +230,8 @@ const ExternalServicesSettingsStack = () => {
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
         }}
       />
-    </ExternalServicesSettings.Navigator>
+    </ExternalServicesSettings.Group>
   );
 };
 
-export default ExternalServicesSettingsStack;
+export default ExternalServicesSettingsGroup;

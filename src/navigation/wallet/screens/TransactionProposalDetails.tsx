@@ -8,7 +8,7 @@ import {
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useLogger, useAppSelector} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
@@ -207,7 +207,7 @@ const TransactionProposalDetails = () => {
   const navigation = useNavigation();
   const {
     params: {transactionId, walletId, keyId},
-  } = useRoute<RouteProp<WalletStackParamList, 'TransactionProposalDetails'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'TransactionProposalDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]) as Key;
   const wallet = findWalletById(key.wallets, walletId) as Wallet;

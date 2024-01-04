@@ -175,10 +175,7 @@ const HomeRoot = () => {
 
   const onPressTxpBadge = useMemo(
     () => () => {
-      navigation.navigate('Wallet', {
-        screen: 'TransactionProposalNotifications',
-        params: {},
-      });
+      navigation.navigate('TransactionProposalNotifications', {});
     },
     [],
   );

@@ -2,7 +2,7 @@ import {RouteProp, StackActions} from '@react-navigation/core';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../../../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import SecureLockIcon from '../../../../../../assets/img/secure-lock.svg';
 import {
@@ -83,7 +83,7 @@ const PayProConfirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'PayProConfirm'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'PayProConfirm'>>();
   const {
     payProOptions,
     wallet: _wallet,
@@ -282,21 +282,18 @@ const PayProConfirm = () => {
   };
 
   const request2FA = async () => {
-    navigation.navigate('Wallet', {
-      screen: WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR,
-      params: {
-        onSubmit: async twoFactorCode => {
-          try {
-            await sendPayment(twoFactorCode);
-          } catch (error: any) {
-            dispatch(dismissOnGoingProcessModal());
-            const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
-            error?.message?.includes(invalid2faMessage)
-              ? showError({defaultErrorMessage: invalid2faMessage})
-              : handlePaymentFailure(error);
-            throw error;
-          }
-        },
+    navigation.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
+      onSubmit: async twoFactorCode => {
+        try {
+          await sendPayment(twoFactorCode);
+        } catch (error: any) {
+          dispatch(dismissOnGoingProcessModal());
+          const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
+          error?.message?.includes(invalid2faMessage)
+            ? showError({defaultErrorMessage: invalid2faMessage})
+            : handlePaymentFailure(error);
+          throw error;
+        }
       },
     });
     await sleep(400);
@@ -468,19 +465,13 @@ const PayProConfirm = () => {
               navigation.dispatch(StackActions.pop(3));
             }
             coinbaseAccount
-              ? navigation.navigate('Coinbase', {
-                  screen: 'CoinbaseAccount',
-                  params: {
-                    accountId: coinbaseAccount.id,
-                    refresh: true,
-                  },
+              ? navigation.navigate('CoinbaseAccount', {
+                  accountId: coinbaseAccount.id,
+                  refresh: true,
                 })
-              : navigation.navigate('Wallet', {
-                  screen: 'WalletDetails',
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
+              : navigation.navigate('WalletDetails', {
+                  walletId: wallet!.id,
+                  key,
                 });
             await sleep(0);
             setShowPaymentSentModal(false);

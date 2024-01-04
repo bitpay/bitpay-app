@@ -145,9 +145,7 @@ const Pin = gestureHandlerRootHOC(() => {
   );
 
   const gotoCreateKey = async () => {
-    navigation.navigate('Onboarding', {
-      screen: 'CreateKey',
-    });
+    navigation.navigate('CreateKey');
     await sleep(10);
     dispatch(AppActions.dismissPinModal());
   };

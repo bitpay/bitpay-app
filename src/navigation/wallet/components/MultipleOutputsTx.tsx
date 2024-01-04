@@ -200,17 +200,14 @@ const MultipleOutputsTx = ({
     email?: string;
   }) => {
     const {network, coin, chain} = tx;
-    navigation.navigate('Contacts', {
-      screen: 'ContactsAdd',
-      params: {
-        contact: {
-          address,
-          email,
-          network,
-          coin,
-          chain,
-          tokenAddress: tokenAddress?.toLowerCase(),
-        },
+    navigation.navigate('ContactsAdd', {
+      contact: {
+        address,
+        email,
+        network,
+        coin,
+        chain,
+        tokenAddress: tokenAddress?.toLowerCase(),
       },
     });
   };

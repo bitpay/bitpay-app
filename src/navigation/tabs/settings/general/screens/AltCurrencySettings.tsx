@@ -41,7 +41,7 @@ const AltCurrencySettingsContainer = styled.SafeAreaView`
 `;
 
 const Header = styled.View`
-  padding: 0 ${ScreenGutter};
+  padding: 20px ${ScreenGutter};
 `;
 
 const SearchResults = styled.View`

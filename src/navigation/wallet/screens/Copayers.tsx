@@ -1,5 +1,5 @@
 import React, {useState, useLayoutEffect} from 'react';
-import {StackNavigationProp} from '@react-navigation/stack';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
@@ -25,7 +25,7 @@ import {
   ActionContainer,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {White, SlateDark} from '../../../styles/colors';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
@@ -35,8 +35,11 @@ import {Status} from '../../../store/wallet/wallet.models';
 
 const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 interface CopayersProps {
-  navigation: StackNavigationProp<WalletStackParamList, 'Copayers'>;
+  navigation: NativeStackNavigationProp<WalletGroupParamList, 'Copayers'>;
 }
+const ViewContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const Gutter = '10px';
 const JoinCopayersContainer = styled.View`
@@ -71,7 +74,7 @@ const CopayersContainer = styled(RowContainer)`
 const Copayers: React.FC<CopayersProps> = props => {
   const {t} = useTranslation();
   const logger = useLogger();
-  const route = useRoute<RouteProp<WalletStackParamList, 'Copayers'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'Copayers'>>();
   const {wallet, status} = route.params || {};
   const [walletStatus, setWalletStatus] = useState(status);
   const [copied, setCopied] = useState(false);
@@ -137,50 +140,52 @@ const Copayers: React.FC<CopayersProps> = props => {
   };
 
   return (
-    <ScrollView
-      refreshControl={
-        <RefreshControl
-          tintColor={theme.dark ? White : SlateDark}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        />
-      }>
-      <JoinCopayersContainer>
-        <Paragraph>
-          {t(
-            'Share this invitation with the devices joining this account. Each copayer has their own recovery phrase. To recover funds stored in a Shared Wallet you will need the recovery phrase from each copayer.',
-          )}
-        </Paragraph>
-        <TouchableOpacity
-          onPress={copyToClipboard}
-          activeOpacity={ActiveOpacity}>
-          <QRCodeContainer>
-            <QRCodeBackground>
-              <QRCode value={walletStatus.secret} size={200} />
-            </QRCodeBackground>
-          </QRCodeContainer>
-        </TouchableOpacity>
-        <TitleContainer>
-          <TextAlign align={'left'}>
-            <H6>{t('Waiting for authorized copayers to join')}</H6>
-          </TextAlign>
-        </TitleContainer>
-        {walletStatus.copayers.map((item: any, index: any) => {
-          return (
-            <CopayersContainer key={index} activeOpacity={ActiveOpacity}>
-              <Image source={CircleCheckIcon} />
-              <AuthorizedContainer>{item.name}</AuthorizedContainer>
-            </CopayersContainer>
-          );
-        })}
+    <ViewContainer>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            tintColor={theme.dark ? White : SlateDark}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }>
+        <JoinCopayersContainer>
+          <Paragraph>
+            {t(
+              'Share this invitation with the devices joining this account. Each copayer has their own recovery phrase. To recover funds stored in a Shared Wallet you will need the recovery phrase from each copayer.',
+            )}
+          </Paragraph>
+          <TouchableOpacity
+            onPress={copyToClipboard}
+            activeOpacity={ActiveOpacity}>
+            <QRCodeContainer>
+              <QRCodeBackground>
+                <QRCode value={walletStatus.secret} size={200} />
+              </QRCodeBackground>
+            </QRCodeContainer>
+          </TouchableOpacity>
+          <TitleContainer>
+            <TextAlign align={'left'}>
+              <H6>{t('Waiting for authorized copayers to join')}</H6>
+            </TextAlign>
+          </TitleContainer>
+          {walletStatus.copayers.map((item: any, index: any) => {
+            return (
+              <CopayersContainer key={index} activeOpacity={ActiveOpacity}>
+                <Image source={CircleCheckIcon} />
+                <AuthorizedContainer>{item.name}</AuthorizedContainer>
+              </CopayersContainer>
+            );
+          })}
 
-        <ActionContainer>
-          <Button onPress={shareInvitation}>
-            {t('Share this Invitation')}
-          </Button>
-        </ActionContainer>
-      </JoinCopayersContainer>
-    </ScrollView>
+          <ActionContainer>
+            <Button onPress={shareInvitation}>
+              {t('Share this Invitation')}
+            </Button>
+          </ActionContainer>
+        </JoinCopayersContainer>
+      </ScrollView>
+    </ViewContainer>
   );
 };
 

@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import TouchID from 'react-native-touch-id-ng';
@@ -29,7 +29,7 @@ import {
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
 
@@ -53,9 +53,9 @@ const PinContainer = styled.SafeAreaView`
   align-items: stretch;
 `;
 
-const PinScreen: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'Pin'>
-> = ({navigation}) => {
+const PinScreen = ({
+  navigation,
+}: NativeStackScreenProps<OnboardingGroupParamList, OnboardingScreens.PIN>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const themeType = useThemeType();

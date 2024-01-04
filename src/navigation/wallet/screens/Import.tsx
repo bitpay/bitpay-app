@@ -5,12 +5,14 @@ import RecoveryPhrase from '../components/RecoveryPhrase';
 import FileOrText from '../components/FileOrText';
 import {ScreenOptions} from '../../../styles/tabNavigator';
 import {HeaderTitle} from '../../../components/styled/Text';
-import {useNavigation} from '@react-navigation/native';
-import {WalletStackParamList} from '../WalletStack';
-import {StackScreenProps} from '@react-navigation/stack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 
-type ImportScreenProps = StackScreenProps<WalletStackParamList, 'Import'>;
+type ImportScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.IMPORT
+>;
 
 export interface ImportParamList {
   context?: string;
@@ -23,10 +25,9 @@ const ImportContainer = styled.SafeAreaView`
   margin-top: 10px;
 `;
 
-const Import: React.FC<ImportScreenProps> = ({route}) => {
+const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const Tab = createMaterialTopTabNavigator();
-  const navigation = useNavigation();
 
   useLayoutEffect(() => {
     navigation.setOptions({

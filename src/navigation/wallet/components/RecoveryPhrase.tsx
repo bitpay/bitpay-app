@@ -52,7 +52,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
@@ -186,7 +186,7 @@ const RecoveryPhrase = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'Import'>>();
   const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
@@ -582,12 +582,9 @@ const RecoveryPhrase = () => {
                   context: 'RecoveryPhrase',
                 }),
               );
-              navigation.navigate('Scan', {
-                screen: 'Root',
-                params: {
-                  onScanComplete: data => {
-                    processImportQrCode(data);
-                  },
+              navigation.navigate('ScanRoot', {
+                onScanComplete: data => {
+                  processImportQrCode(data);
                 },
               });
             }}>

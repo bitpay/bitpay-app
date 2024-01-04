@@ -2,7 +2,7 @@ import React, {useLayoutEffect} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
@@ -79,7 +79,7 @@ const WalletSettings = () => {
   const {t} = useTranslation();
   const {
     params: {walletId, key},
-  } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'WalletSettings'>>();
   const navigation = useNavigation();
 
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
@@ -131,16 +131,13 @@ const WalletSettings = () => {
           activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
-            navigation.navigate('Wallet', {
-              screen: 'UpdateKeyOrWalletName',
-              params: {
-                key,
-                wallet: {
-                  walletId,
-                  walletName: walletName || credentialsWalletName,
-                },
-                context: 'wallet',
+            navigation.navigate('UpdateKeyOrWalletName', {
+              key,
+              wallet: {
+                walletId,
+                walletName: walletName || credentialsWalletName,
               },
+              context: 'wallet',
             });
           }}>
           <View>
@@ -196,10 +193,7 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'WalletInformation',
-                params: {wallet},
-              });
+              navigation.navigate('WalletInformation', {wallet});
             }}>
             <WalletSettingsTitle>{t('Information')}</WalletSettingsTitle>
           </Setting>
@@ -209,10 +203,7 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'Addresses',
-                params: {wallet},
-              });
+              navigation.navigate('Addresses', {wallet});
             }}>
             <WalletSettingsTitle>{t('Addresses')}</WalletSettingsTitle>
           </Setting>
@@ -222,10 +213,7 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'ExportTransactionHistory',
-                params: {wallet},
-              });
+              navigation.navigate('ExportTransactionHistory', {wallet});
             }}>
             <WalletSettingsTitle>
               {t('Export Transaction History')}
@@ -257,23 +245,17 @@ const WalletSettings = () => {
                     dispatch(
                       showDecryptPasswordModal(
                         buildEncryptModalConfig(async decryptedKey => {
-                          navigation.navigate('Wallet', {
-                            screen: 'ExportWallet',
-                            params: {
-                              wallet,
-                              keyObj: {...decryptedKey, ..._keyObj},
-                            },
+                          navigation.navigate('ExportWallet', {
+                            wallet,
+                            keyObj: {...decryptedKey, ..._keyObj},
                           });
                         }),
                       ),
                     );
                   } else {
-                    navigation.navigate('Wallet', {
-                      screen: 'ExportWallet',
-                      params: {
-                        wallet,
-                        keyObj: {...key.methods!.get(), ..._keyObj},
-                      },
+                    navigation.navigate('ExportWallet', {
+                      wallet,
+                      keyObj: {...key.methods!.get(), ..._keyObj},
                     });
                   }
                 }}>
@@ -287,9 +269,9 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'ClearTransactionHistoryCache',
-                params: {wallet, key},
+              navigation.navigate('ClearTransactionHistoryCache', {
+                wallet,
+                key,
               });
             }}>
             <WalletSettingsTitle>

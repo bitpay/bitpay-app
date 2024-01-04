@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
@@ -11,7 +11,7 @@ import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {AuthStackParamList} from '../AuthStack';
+import {AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
@@ -22,8 +22,8 @@ export type EmailAuthenticationParamList =
     }
   | undefined;
 
-type EmailAuthenticationScreenProps = StackScreenProps<
-  AuthStackParamList,
+type EmailAuthenticationScreenProps = NativeStackScreenProps<
+  AuthGroupParamList,
   'EmailAuthentication'
 >;
 
@@ -102,9 +102,7 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         if (navParent?.canGoBack()) {
           navParent.goBack();
         } else {
-          navigationRef.navigate('BitpayId', {
-            screen: 'Profile',
-          });
+          navigationRef.navigate('BitPayIdProfile');
         }
 
         return;

@@ -36,10 +36,7 @@ const Contacts = () => {
               <ContactRow
                 contact={item}
                 onPress={() => {
-                  navigation.navigate('Contacts', {
-                    screen: 'ContactsDetails',
-                    params: {contact: item},
-                  });
+                  navigation.navigate('ContactsDetails', {contact: item});
                 }}
               />
               <Hr />
@@ -50,9 +47,7 @@ const Contacts = () => {
       <Setting
         activeOpacity={ActiveOpacity}
         onPress={() => {
-          navigation.navigate('Contacts', {
-            screen: 'ContactsAdd',
-          });
+          navigation.navigate('ContactsAdd');
         }}>
         <PlusIconContainer>
           <Icons.Add />
@@ -64,7 +59,7 @@ const Contacts = () => {
       {contacts.length > 2 ? (
         <Setting
           style={{justifyContent: 'center'}}
-          onPress={() => navigation.navigate('Contacts', {screen: 'Root'})}
+          onPress={() => navigation.navigate('ContactsRoot')}
           activeOpacity={ActiveOpacity}>
           <SeeAllLink>
             {t('View All Contacts', {contactsLength: contacts.length})}

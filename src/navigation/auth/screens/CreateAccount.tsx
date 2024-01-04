@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Trans, useTranslation} from 'react-i18next';
@@ -16,7 +16,7 @@ import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -29,8 +29,8 @@ import AuthFormContainer, {
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
 export type CreateAccountScreenParamList = {} | undefined;
-type CreateAccountScreenProps = StackScreenProps<
-  AuthStackParamList,
+type CreateAccountScreenProps = NativeStackScreenProps<
+  AuthGroupParamList,
   AuthScreens.CREATE_ACCOUNT
 >;
 
@@ -103,9 +103,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
       if (navParent?.canGoBack()) {
         navParent.goBack();
       } else {
-        navigationRef.navigate('BitpayId', {
-          screen: 'Profile',
-        });
+        navigationRef.navigate('BitPayIdProfile');
       }
     } else if (createAccountStatus === 'failed') {
       captchaRef.current?.reset();

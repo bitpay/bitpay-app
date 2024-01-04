@@ -1,15 +1,20 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-import {createStackNavigator} from '@react-navigation/stack';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../../../constants/NavigationOptions';
 import EmailNotifications from './screens/EmailNotifications';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import PushNotifications from './screens/PushNotifications';
+import {useTranslation} from 'react-i18next';
+import {Root} from '../../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
-export type NotificationsSettingsStackParamsList = {
+interface NotificationsProps {
+  Notifications: typeof Root;
+}
+
+export type NotificationsSettingsGroupParamsList = {
   EmailNotifications: undefined;
   PushNotifications: undefined;
 };
@@ -18,18 +23,25 @@ export enum NotificationsSettingsScreens {
   EMAIL_NOTIFICATIONS = 'EmailNotifications',
   PUSH_NOTIFICATIONS = 'PushNotifications',
 }
-const Notifications =
-  createStackNavigator<NotificationsSettingsStackParamsList>();
 
-const NotificationsSettingsStack = () => {
+const NotificationsSettingsGroup: React.FC<NotificationsProps> = ({
+  Notifications,
+}) => {
   const {t} = useTranslation();
 
   return (
-    <Notifications.Navigator
-      screenOptions={{
+    <Notifications.Group
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Notifications.Screen
         name={NotificationsSettingsScreens.EMAIL_NOTIFICATIONS}
         component={EmailNotifications}
@@ -48,7 +60,7 @@ const NotificationsSettingsStack = () => {
           ),
         }}
       />
-    </Notifications.Navigator>
+    </Notifications.Group>
   );
 };
-export default NotificationsSettingsStack;
+export default NotificationsSettingsGroup;

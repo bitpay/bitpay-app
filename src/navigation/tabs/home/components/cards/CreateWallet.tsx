@@ -35,7 +35,7 @@ const CreateWallet = () => {
             context: 'ExpandPortfolioCarousel',
           }),
         );
-        navigation.navigate('Wallet', {screen: 'CreationOptions'});
+        navigation.navigate('CreationOptions');
       }}
     />
   );

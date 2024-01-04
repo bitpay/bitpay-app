@@ -80,10 +80,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
     <ToggleSwitch
       onChange={() => {
         if (!passwordToggle) {
-          navigation.navigate('Wallet', {
-            screen: 'CreateEncryptPassword',
-            params: {key},
-          });
+          navigation.navigate('CreateEncryptPassword', {key});
         } else {
           dispatch(
             AppActions.showDecryptPasswordModal({

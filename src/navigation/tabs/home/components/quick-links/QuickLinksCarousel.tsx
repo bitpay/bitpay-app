@@ -24,14 +24,9 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     dev_walletConnect: () => {
       if (Object.keys(sessions).length) {
-        navigation.navigate('WalletConnect', {
-          screen: 'WalletConnectConnections',
-        });
+        navigation.navigate('WalletConnectConnections');
       } else {
-        navigation.navigate('WalletConnect', {
-          screen: 'Root',
-          params: {},
-        });
+        navigation.navigate('WalletConnectRoot', {});
       }
     },
   };

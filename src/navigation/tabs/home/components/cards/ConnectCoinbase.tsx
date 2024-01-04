@@ -16,7 +16,7 @@ const ConnectCoinbase = () => {
         context: 'ExpandPortfolioCarousel',
       }),
     );
-    navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
+    navigation.navigate('CoinbaseRoot');
   };
   return (
     <LinkCard

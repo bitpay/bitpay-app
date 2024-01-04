@@ -10,7 +10,7 @@ import {
   Category,
   DirectIntegrationApiObject,
 } from '../../../../store/shop/shop.models';
-import {MerchantScreens} from '../merchant/MerchantStack';
+import {MerchantScreens} from '../merchant/MerchantGroup';
 import MerchantItem from './MerchantItem';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {
@@ -87,12 +87,9 @@ export const ShopOnline = ({
                 <TouchableOpacity
                   activeOpacity={ActiveOpacity}
                   onPress={() => {
-                    navigation.navigate('Merchant', {
-                      screen: MerchantScreens.MERCHANT_CATEGORY,
-                      params: {
-                        category,
-                        integrations: category.integrations,
-                      },
+                    navigation.navigate(MerchantScreens.MERCHANT_CATEGORY, {
+                      category,
+                      integrations: category.integrations,
                     });
                   }}>
                   <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
@@ -117,11 +114,8 @@ export const ShopOnline = ({
               maxItemsPerColumn={1}
               screenWidth={WIDTH}
               onItemPress={item =>
-                navigation.navigate('Merchant', {
-                  screen: MerchantScreens.MERCHANT_DETAILS,
-                  params: {
-                    directIntegration: item as DirectIntegrationApiObject,
-                  },
+                navigation.navigate(MerchantScreens.MERCHANT_DETAILS, {
+                  directIntegration: item as DirectIntegrationApiObject,
                 })
               }
             />
@@ -196,11 +190,8 @@ export const ShopOnline = ({
                 activeOpacity={ActiveOpacity}
                 key={integration.displayName}
                 onPress={() =>
-                  navigation.navigate('Merchant', {
-                    screen: MerchantScreens.MERCHANT_DETAILS,
-                    params: {
-                      directIntegration: integration,
-                    },
+                  navigation.navigate(MerchantScreens.MERCHANT_DETAILS, {
+                    directIntegration: integration,
                   })
                 }>
                 <MerchantItem

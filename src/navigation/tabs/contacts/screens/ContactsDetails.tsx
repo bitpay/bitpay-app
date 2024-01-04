@@ -2,10 +2,10 @@ import React, {useEffect, useLayoutEffect, useState, ReactElement} from 'react';
 import {useAppSelector} from '../../../../utils/hooks';
 import styled, {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/core';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
-import {ContactsStackParamList} from '../ContactsStack';
+import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
 import {
   formatCurrencyAbbreviation,
   getCurrencyAbbreviation,
@@ -136,7 +136,7 @@ interface ModalOpt {
 
 const ContactsDetails = ({
   route,
-}: StackScreenProps<ContactsStackParamList, 'ContactsDetails'>) => {
+}: NativeStackScreenProps<ContactsGroupParamList, ContactsScreens.DETAILS>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation();
@@ -172,20 +172,18 @@ const ContactsDetails = ({
     contactOptions.push({
       img: theme.dark ? <SendIconWhite /> : <SendIcon />,
       title: t('Send ') + contact.coin.toUpperCase(),
-      onPress: () => {
+      onPress: async () => {
         setShowIconOptions(false);
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {
-            context: 'contact',
-            recipient: {
-              name: contact.name,
-              address: newAddress,
-              currency: contact.coin,
-              chain: contact.chain,
-              network: contact.network,
-              destinationTag: contact.tag || contact.destinationTag,
-            },
+        await sleep(500);
+        navigation.navigate('GlobalSelect', {
+          context: 'contact',
+          recipient: {
+            name: contact.name,
+            address: newAddress,
+            currency: contact.coin,
+            chain: contact.chain,
+            network: contact.network,
+            destinationTag: contact.tag || contact.destinationTag,
           },
         });
       },
@@ -197,14 +195,12 @@ const ContactsDetails = ({
     title: t('Edit Contact'),
     onPress: async () => {
       setShowIconOptions(false);
-      navigation.navigate('Contacts', {
-        screen: 'ContactsAdd',
-        params: {
-          contact,
-          context: 'edit',
-          onEditComplete: (c: ContactRowProps) => {
-            setContact(c);
-          },
+      await sleep(500);
+      navigation.navigate('ContactsAdd', {
+        contact,
+        context: 'edit',
+        onEditComplete: (c: ContactRowProps) => {
+          setContact(c);
         },
       });
     },

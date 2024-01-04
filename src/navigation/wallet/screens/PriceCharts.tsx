@@ -24,7 +24,7 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import RangeDateSelector from '../components/RangeDateSelector';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
@@ -174,7 +174,7 @@ const PriceCharts = () => {
   const theme = useTheme();
   const {
     params: {item},
-  } = useRoute<RouteProp<WalletStackParamList, 'PriceCharts'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const {
@@ -297,21 +297,15 @@ const PriceCharts = () => {
         chain: chain || '',
       }),
     );
-    navigation.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
-      params: {
-        onAmountSelected: async (amount: string) => {
-          navigation.navigate('BuyCrypto', {
-            screen: 'BuyCryptoRoot',
-            params: {
-              amount: Number(amount),
-              currencyAbbreviation,
-              chain,
-            },
-          });
-        },
-        context: 'buyCrypto',
+    navigation.navigate(WalletScreens.AMOUNT, {
+      onAmountSelected: async (amount: string) => {
+        navigation.navigate('BuyCryptoRoot', {
+          amount: Number(amount),
+          currencyAbbreviation,
+          chain,
+        });
       },
+      context: 'buyCrypto',
     });
   });
 

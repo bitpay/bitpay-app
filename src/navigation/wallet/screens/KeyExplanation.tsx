@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
@@ -13,14 +13,14 @@ import {
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import OnboardingSlide from '../../onboarding/components/OnboardingSlide';
 import {OnboardingImage} from '../../onboarding/components/Containers';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {useTranslation} from 'react-i18next';
 import {useSharedValue} from 'react-native-reanimated';
 import PaginationDots from '../../../components/pagination-dots/PaginationDots';
 import throttle from 'lodash.throttle';
 
-type KeyExplanationScreenProps = StackScreenProps<
-  WalletStackParamList,
+type KeyExplanationScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
   'KeyExplanation'
 >;
 

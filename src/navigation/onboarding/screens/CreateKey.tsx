@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -16,7 +16,7 @@ import {
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {useTranslation} from 'react-i18next';
 import {useRequestTrackingPermissionHandler} from '../../../utils/hooks';
 
@@ -39,9 +39,12 @@ const KeyImage = {
   ),
 };
 
-const CreateOrImportKey: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'CreateKey'>
-> = ({navigation}) => {
+const CreateOrImportKey = ({
+  navigation,
+}: NativeStackScreenProps<
+  OnboardingGroupParamList,
+  OnboardingScreens.CREATE_KEY
+>) => {
   const {t} = useTranslation();
   const themeType = useThemeType();
 

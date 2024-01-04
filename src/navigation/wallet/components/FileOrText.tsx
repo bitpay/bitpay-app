@@ -23,7 +23,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
@@ -72,7 +72,7 @@ const FileOrText = () => {
   const logger = useLogger();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'Import'>>();
   const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );

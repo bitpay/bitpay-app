@@ -24,7 +24,7 @@ import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import {BwcProvider} from '../../../../lib/bwc';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {sleep} from '../../../../utils/helper-methods';
@@ -90,7 +90,7 @@ const ExportWallet = () => {
   const {t} = useTranslation();
   const {
     params: {wallet, keyObj},
-  } = useRoute<RouteProp<WalletStackParamList, 'ExportWallet'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'ExportWallet'>>();
 
   const {network} = wallet;
 

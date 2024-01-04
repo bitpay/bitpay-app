@@ -9,7 +9,7 @@ import {
   GetTransactionHistory,
 } from '../../../../store/wallet/effects/transactions/transactions';
 import {useAppDispatch} from '../../../../utils/hooks';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import _ from 'lodash';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
@@ -57,7 +57,7 @@ const ExportTransactionHistory = () => {
   const dispatch = useAppDispatch();
   const {
     params: {wallet},
-  } = useRoute<RouteProp<WalletStackParamList, 'ExportTransactionHistory'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'ExportTransactionHistory'>>();
   const {currencyAbbreviation, chain, walletName, tokenAddress} = wallet;
 
   const formatDate = (date: number): string => {

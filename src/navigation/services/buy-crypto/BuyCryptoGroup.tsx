@@ -1,10 +1,4 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
-import {useNavigation} from '@react-navigation/native';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../components/styled/Text';
 import BuyCryptoRoot, {
   BuyCryptoRootScreenParams,
@@ -13,8 +7,18 @@ import BuyCryptoOffers, {
   BuyCryptoOffersScreenParams,
 } from './screens/BuyCryptoOffers';
 import {useTranslation} from 'react-i18next';
+import {Root} from '../../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
-export type BuyCryptoStackParamList = {
+interface BuyCryptoProps {
+  BuyCrypto: typeof Root;
+}
+
+export type BuyCryptoGroupParamList = {
   BuyCryptoRoot: BuyCryptoRootScreenParams;
   BuyCryptoOffers: BuyCryptoOffersScreenParams;
 };
@@ -24,19 +28,21 @@ export enum BuyCryptoScreens {
   OFFERS = 'BuyCryptoOffers',
 }
 
-const BuyCrypto = createStackNavigator<BuyCryptoStackParamList>();
-
-const BuyCryptoStack = () => {
+const BuyCryptoGroup: React.FC<BuyCryptoProps> = ({BuyCrypto}) => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
-
   return (
-    <BuyCrypto.Navigator
-      initialRouteName={BuyCryptoScreens.ROOT}
-      screenOptions={{
+    <BuyCrypto.Group
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <BuyCrypto.Screen
         name={BuyCryptoScreens.ROOT}
         component={BuyCryptoRoot}
@@ -48,12 +54,11 @@ const BuyCryptoStack = () => {
         name={BuyCryptoScreens.OFFERS}
         component={BuyCryptoOffers}
         options={{
-          ...baseScreenOptions,
           headerTitle: () => <HeaderTitle>{t('Offers')}</HeaderTitle>,
         }}
       />
-    </BuyCrypto.Navigator>
+    </BuyCrypto.Group>
   );
 };
 
-export default BuyCryptoStack;
+export default BuyCryptoGroup;

@@ -12,9 +12,9 @@ import {useAppDispatch} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
 import {Key} from '../../../store/wallet/wallet.models';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {backupRedirect} from './Backup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
@@ -23,9 +23,9 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import SuccessIcon from '../../../../assets/img/success.svg';
 
-type VerifyPhraseScreenProps = StackScreenProps<
-  WalletStackParamList,
-  'VerifyPhrase'
+type VerifyPhraseScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.VERIFY_PHRASE
 >;
 
 export interface VerifyPhraseParamList {
@@ -34,6 +34,11 @@ export interface VerifyPhraseParamList {
   context: string;
   key: Key;
   walletTermsAccepted: boolean;
+}
+
+interface WordItem {
+  word: string;
+  isActive: boolean;
 }
 
 const VerifyPhraseContainer = styled.SafeAreaView`

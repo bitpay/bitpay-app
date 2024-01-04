@@ -12,7 +12,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {Linking, View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import {SlateDark, White} from '../../../../styles/colors';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Button, {ButtonState} from '../../../../components/button/Button';
@@ -77,7 +77,7 @@ const AllAddresses = () => {
       chain,
       tokenAddress,
     },
-  } = useRoute<RouteProp<WalletStackParamList, 'AllAddresses'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'AllAddresses'>>();
 
   const navigation = useNavigation();
   const dispatch = useAppDispatch();

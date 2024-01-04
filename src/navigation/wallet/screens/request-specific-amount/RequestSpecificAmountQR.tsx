@@ -8,7 +8,7 @@ import {
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import CopySvg from '../../../../../assets/img/copy.svg';
@@ -95,16 +95,12 @@ const CopyImgContainer = styled.View`
   justify-content: center;
 `;
 
-const ShareIconContainer = styled.TouchableOpacity`
-  padding-top: 10px;
-  transform: scale(1.1);
-  padding-right: 15px;
-`;
+const ShareIconContainer = styled.TouchableOpacity``;
 
 const RequestSpecificAmountQR = () => {
   const {t} = useTranslation();
   const route =
-    useRoute<RouteProp<WalletStackParamList, 'RequestSpecificAmountQR'>>();
+    useRoute<RouteProp<WalletGroupParamList, 'RequestSpecificAmountQR'>>();
   const {wallet, requestAmount} = route.params;
   const {
     credentials: {walletName},

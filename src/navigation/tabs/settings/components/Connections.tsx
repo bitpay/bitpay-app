@@ -53,14 +53,9 @@ const Connections: React.VFC<ConnectionsProps> = props => {
       }),
     );
     if (Object.keys(sessions).length) {
-      navigation.navigate('WalletConnect', {
-        screen: 'WalletConnectConnections',
-      });
+      navigation.navigate('WalletConnectConnections');
     } else {
-      navigation.navigate('WalletConnect', {
-        screen: 'Root',
-        params: {},
-      });
+      navigation.navigate('WalletConnectRoot', {});
     }
   }, [dispatch, sessions, navigation]);
 
@@ -73,24 +68,16 @@ const Connections: React.VFC<ConnectionsProps> = props => {
       }),
     );
     if (token && token.access_token) {
-      navigation.navigate('Coinbase', {
-        screen: 'CoinbaseSettings',
-        params: {fromScreen: 'Settings'},
-      });
+      navigation.navigate('CoinbaseSettings', {fromScreen: 'Settings'});
     } else {
-      navigation.navigate('Coinbase', {
-        screen: 'CoinbaseRoot',
-      });
+      navigation.navigate('CoinbaseRoot');
     }
   };
 
   const goToMethod = () => {
     haptic('impactLight');
     if (user?.methodEntityId) {
-      navigation.navigate('Bill', {
-        screen: 'BillSettings',
-        params: {},
-      });
+      navigation.navigate('BillSettings', {});
     } else {
       navigation.navigate('Shop', {
         screen: ShopScreens.HOME,
@@ -113,7 +100,7 @@ const Connections: React.VFC<ConnectionsProps> = props => {
       goToWalletConnect();
     } else if (redirectTo === 'zenledger') {
       navigation.setParams({redirectTo: undefined} as any);
-      navigation.navigate('ZenLedger', {screen: 'Root'});
+      navigation.navigate('ZenLedgerRoot');
     }
   }, [redirectTo, goToWalletConnect, navigation]);
 
@@ -161,7 +148,7 @@ const Connections: React.VFC<ConnectionsProps> = props => {
               context: 'Settings Connections',
             }),
           );
-          navigation.navigate('ZenLedger', {screen: 'Root'});
+          navigation.navigate('ZenLedgerRoot');
         }}>
         <ConnectionItemContainer>
           <ConnectionIconContainer>

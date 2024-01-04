@@ -8,5 +8,5 @@ export const goToSwapCrypto = (): Effect<void> => dispatch => {
       context: 'Shortcuts',
     }),
   );
-  navigationRef.navigate('SwapCrypto', {screen: 'Root'});
+  navigationRef.navigate('SwapCryptoRoot');
 };

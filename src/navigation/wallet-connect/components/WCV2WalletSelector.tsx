@@ -237,12 +237,9 @@ export default ({
                     if (proposal) {
                       onBackdropPress();
                       await sleep(500);
-                      navigation.navigate('WalletConnect', {
-                        screen: 'WalletConnectStart',
-                        params: {
-                          proposal,
-                          selectedWallets: selectedWallets,
-                        },
+                      navigation.navigate('WalletConnectStart', {
+                        proposal,
+                        selectedWallets: selectedWallets,
                       });
                     } else if (session) {
                       onBackdropPress(selectedWallets, session);
@@ -276,11 +273,7 @@ export default ({
                   haptic('impactLight');
                   onBackdropPress();
                   await sleep(500);
-                  navigation.dispatch(
-                    StackActions.replace('Wallet', {
-                      screen: 'CreationOptions',
-                    }),
-                  );
+                  navigation.dispatch(StackActions.replace('CreationOptions'));
                 }}>
                 {t('IMPORT WALLET')}
               </BottomNotificationCta>

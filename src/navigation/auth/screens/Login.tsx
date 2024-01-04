@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from 'react-navigation/native-stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -15,8 +15,8 @@ import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -31,7 +31,10 @@ export type LoginScreenParamList =
     }
   | undefined;
 
-type LoginScreenProps = StackScreenProps<AuthStackParamList, AuthScreens.LOGIN>;
+type LoginScreenProps = NativeStackScreenProps<
+  AuthGroupParamList,
+  AuthScreens.LOGIN
+>;
 
 const schema = yup.object().shape({
   email: yup.string().email().required().trim(),
@@ -82,9 +85,7 @@ const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
       if (parentNav?.canGoBack()) {
         parentNav.goBack();
       } else {
-        navigationRef.navigate(RootStacks.BITPAY_ID, {
-          screen: BitpayIdScreens.PROFILE,
-        });
+        navigationRef.navigate(BitpayIdScreens.PROFILE);
       }
 
       dispatch(BitPayIdActions.updateLoginStatus(null));

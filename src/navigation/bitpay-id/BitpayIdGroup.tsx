@@ -1,14 +1,9 @@
 import {useNavigation} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../constants/NavigationOptions';
 import {BitPayIdEffects} from '../../store/bitpay-id';
 import {ShopEffects} from '../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
@@ -28,10 +23,20 @@ import EnableTwoFactor, {
 import TwoFactorEnabled, {
   TwoFactorEnabledScreenParamList,
 } from './screens/TwoFactorEnabled';
+import {Root, navigationRef} from '../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
-export type BitpayIdStackParamList = {
+interface BitpayIdProps {
+  BitpayId: typeof Root;
+}
+
+export type BitpayIdGroupParamList = {
   BitPayIdPairingScreen: BitPayIdPairingScreenParamList;
-  Profile: undefined;
+  BitPayIdProfile: undefined;
   ReceiveSettings: undefined;
   ReceivingEnabled: undefined;
   TwoFactor: PayProConfirmTwoFactorParamList;
@@ -41,7 +46,7 @@ export type BitpayIdStackParamList = {
 
 export enum BitpayIdScreens {
   PAIRING = 'BitPayIdPairingScreen',
-  PROFILE = 'Profile',
+  PROFILE = 'BitPayIdProfile',
   RECEIVE_SETTINGS = 'ReceiveSettings',
   RECEIVING_ENABLED = 'ReceivingEnabled',
   ENABLE_TWO_FACTOR = 'EnableTwoFactor',
@@ -49,25 +54,30 @@ export enum BitpayIdScreens {
   TWO_FACTOR_ENABLED = 'TwoFactorEnabled',
 }
 
-const BitpayId = createStackNavigator<BitpayIdStackParamList>();
-
-const BitpayIdStack = () => {
+const BitpayIdGroup: React.FC<BitpayIdProps> = ({BitpayId}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
 
   return (
-    <BitpayId.Navigator
-      screenOptions={{...baseNavigatorOptions}}
-      initialRouteName={BitpayIdScreens.PROFILE}>
+    <BitpayId.Group
+      screenOptions={({navigation}) => ({
+        ...baseNavigatorOptions,
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <BitpayId.Screen
         name={BitpayIdScreens.PAIRING}
         component={PairingScreen}
         options={{
-          ...baseScreenOptions,
           headerTitle: () => <HeaderTitle>{t('Pairing...')}</HeaderTitle>,
         }}
       />
@@ -75,7 +85,6 @@ const BitpayIdStack = () => {
         name={BitpayIdScreens.PROFILE}
         component={Profile}
         options={{
-          ...baseScreenOptions,
           headerRight: () => {
             return (
               <HeaderRightContainer>
@@ -88,7 +97,7 @@ const BitpayIdStack = () => {
                       await dispatch(BitPayIdEffects.startDisconnectBitPayId());
                       dispatch(ShopEffects.startFetchCatalog());
 
-                      navigation.navigate('Tabs', {
+                      navigationRef.navigate('Tabs', {
                         screen: 'Settings',
                       });
                     }}>
@@ -99,7 +108,7 @@ const BitpayIdStack = () => {
                     buttonType={'pill'}
                     onPress={() => {
                       haptic('impactLight');
-                      navigation.navigate('Auth', {screen: 'Login'});
+                      navigationRef.navigate('Login');
                     }}>
                     {t('Log In')}
                   </Button>
@@ -113,41 +122,26 @@ const BitpayIdStack = () => {
         name={BitpayIdScreens.RECEIVE_SETTINGS}
         component={ReceiveSettings}
         options={{
-          ...baseScreenOptions,
           headerTitle: () => <HeaderTitle>{t('Receive Settings')}</HeaderTitle>,
         }}
       />
       <BitpayId.Screen
         name={BitpayIdScreens.RECEIVING_ENABLED}
         component={ReceivingEnabled}
-        options={{
-          ...baseScreenOptions,
-        }}
-      />
-      <BitpayId.Screen
-        name={BitpayIdScreens.TWO_FACTOR}
-        component={PayProConfirmTwoFactor}
-        options={{
-          ...baseScreenOptions,
-        }}
       />
       <BitpayId.Screen
         name={BitpayIdScreens.ENABLE_TWO_FACTOR}
         component={EnableTwoFactor}
-        options={{
-          ...baseScreenOptions,
-        }}
       />
       <BitpayId.Screen
         name={BitpayIdScreens.TWO_FACTOR_ENABLED}
         component={TwoFactorEnabled}
         options={{
-          ...baseScreenOptions,
           headerLeft: () => null,
         }}
       />
-    </BitpayId.Navigator>
+    </BitpayId.Group>
   );
 };
 
-export default BitpayIdStack;
+export default BitpayIdGroup;

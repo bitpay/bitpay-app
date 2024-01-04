@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {ReactElement, useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View, LayoutAnimation, ScrollView} from 'react-native';
@@ -31,8 +31,8 @@ import Contacts from './components/Contacts';
 import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
-import {SettingsStackParamList} from './SettingsStack';
 import {useScrollToTop} from '@react-navigation/native';
+import {TabsStackParamList} from '../TabsStack';
 
 interface HomeSetting {
   id: SettingsListType;
@@ -98,7 +98,7 @@ export type SettingsHomeParamList =
     }
   | undefined;
 
-type SettingsHomeProps = StackScreenProps<SettingsStackParamList, 'Root'>;
+type SettingsHomeProps = NativeStackScreenProps<TabsStackParamList, 'Settings'>;
 
 export type SettingsListType =
   | 'General'
@@ -217,9 +217,9 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
           style={{paddingHorizontal: 15}}
           onPress={() => {
             if (user) {
-              navigationRef.navigate('BitpayId', {screen: 'Profile'});
+              navigationRef.navigate('BitPayIdProfile');
             } else {
-              navigationRef.navigate('Auth', {screen: 'Login'});
+              navigationRef.navigate('Login');
             }
           }}>
           <BitPayIdAvatarContainer>

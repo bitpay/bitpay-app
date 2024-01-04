@@ -72,7 +72,7 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   const theme = useTheme();
   const navigation = useNavigation();
   const onCTAPress = () => {
-    navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
+    navigation.navigate('CoinbaseRoot');
   };
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;

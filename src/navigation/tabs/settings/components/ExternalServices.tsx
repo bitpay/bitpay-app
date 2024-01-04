@@ -52,9 +52,7 @@ const ExternalServices = () => {
       <Setting
         onPress={() => {
           haptic('impactLight');
-          navigation.navigate('ExternalServicesSettings', {
-            screen: 'BanxaSettings',
-          });
+          navigation.navigate('BanxaSettings');
         }}>
         <ExternalServicesItemContainer>
           <ExternalServicesIconContainer>
@@ -68,9 +66,7 @@ const ExternalServices = () => {
       <Setting
         onPress={() => {
           haptic('impactLight');
-          navigation.navigate('ExternalServicesSettings', {
-            screen: 'ChangellySettings',
-          });
+          navigation.navigate('ChangellySettings');
         }}>
         <ExternalServicesItemContainer>
           <ExternalServicesIconContainer>
@@ -84,9 +80,7 @@ const ExternalServices = () => {
       <Setting
         onPress={() => {
           haptic('impactLight');
-          navigation.navigate('ExternalServicesSettings', {
-            screen: 'MoonpaySettings',
-          });
+          navigation.navigate('MoonpaySettings');
         }}>
         <ExternalServicesItemContainer>
           <ExternalServicesIconContainer>
@@ -100,9 +94,7 @@ const ExternalServices = () => {
       <Setting
         onPress={() => {
           haptic('impactLight');
-          navigation.navigate('ExternalServicesSettings', {
-            screen: 'RampSettings',
-          });
+          navigation.navigate('RampSettings');
         }}>
         <ExternalServicesItemContainer>
           <ExternalServicesIconContainer>
@@ -116,9 +108,7 @@ const ExternalServices = () => {
       <Setting
         onPress={() => {
           haptic('impactLight');
-          navigation.navigate('ExternalServicesSettings', {
-            screen: 'SardineSettings',
-          });
+          navigation.navigate('SardineSettings');
         }}>
         <ExternalServicesItemContainer>
           <ExternalServicesIconContainer>
@@ -132,9 +122,7 @@ const ExternalServices = () => {
       <Setting
         onPress={() => {
           haptic('impactLight');
-          navigation.navigate('ExternalServicesSettings', {
-            screen: 'SimplexSettings',
-          });
+          navigation.navigate('SimplexSettings');
         }}>
         <ExternalServicesItemContainer>
           <ExternalServicesIconContainer>
@@ -150,9 +138,7 @@ const ExternalServices = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('ExternalServicesSettings', {
-                screen: 'WyreSettings',
-              });
+              navigation.navigate('WyreSettings');
             }}>
             <ExternalServicesItemContainer>
               <ExternalServicesIconContainer>

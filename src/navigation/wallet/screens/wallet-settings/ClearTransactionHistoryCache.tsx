@@ -5,7 +5,7 @@ import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../utils/hooks';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList, WalletScreens} from '../../WalletGroup';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {sleep} from '../../../../utils/helper-methods';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
@@ -14,8 +14,9 @@ import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {updateWalletTxHistory} from '../../../../store/wallet/wallet.actions';
+import {RootStacks, getNavigationTabName} from '../../../../Root';
 
 const ClearTransactionHistoryCacheContainer = styled.SafeAreaView`
   flex: 1;
@@ -35,8 +36,8 @@ const ButtonContainer = styled.View`
   margin-top: 20px;
 `;
 
-type ClearTransactionHistoryCacheProps = StackScreenProps<
-  WalletStackParamList,
+type ClearTransactionHistoryCacheProps = NativeStackScreenProps<
+  WalletGroupParamList,
   'ClearTransactionHistoryCache'
 >;
 const BWC = BwcProvider.getInstance();
@@ -82,16 +83,20 @@ const ClearTransactionHistoryCache: React.FC<
         );
         navigation.dispatch(
           CommonActions.reset({
-            index: 1,
+            index: 2,
             routes: [
               {
-                name: 'KeyOverview',
+                name: RootStacks.TABS,
+                params: {screen: getNavigationTabName()},
+              },
+              {
+                name: WalletScreens.KEY_OVERVIEW,
                 params: {
                   id: key.id,
                 },
               },
               {
-                name: 'WalletDetails',
+                name: WalletScreens.WALLET_DETAILS,
                 params: {
                   walletId: wallet.id,
                   key,

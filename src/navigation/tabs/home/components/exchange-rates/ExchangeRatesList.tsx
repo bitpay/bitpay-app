@@ -44,10 +44,7 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
                 coin: item.currencyAbbreviation || '',
               }),
             );
-            navigation.navigate('Wallet', {
-              screen: 'PriceCharts',
-              params: {item},
-            });
+            navigation.navigate('PriceCharts', {item});
           }}
           defaultAltCurrencyIsoCode={defaultAltCurrencyIsoCode}
         />

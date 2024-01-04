@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -13,8 +13,8 @@ import AuthFormContainer, {
   AuthFormParagraph,
   AuthRowContainer,
 } from '../../../../auth/components/AuthFormContainer';
-import {WalletStackParamList} from '../../../WalletStack';
-import {BillStackParamList} from '@/navigation/tabs/shop/bill/BillStack';
+import {BillGroupParamList} from '../../../../../navigation/tabs/shop/bill/BillGroup';
+import {WalletGroupParamList} from '../../../WalletGroup';
 
 const COINBASE_SMS_2FA_CODE_LENGTH = 7;
 
@@ -38,8 +38,8 @@ const schema = yup.object().shape({
 const PayProConfirmTwoFactor = ({
   route,
 }:
-  | StackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>
-  | StackScreenProps<BillStackParamList, 'BillConfirmTwoFactor'>) => {
+  | NativeStackScreenProps<WalletGroupParamList, 'PayProConfirmTwoFactor'>
+  | NativeStackScreenProps<BillGroupParamList, 'BillConfirmTwoFactor'>) => {
   const {t} = useTranslation();
   const {onSubmit, twoFactorCodeLength} = route.params;
   const codeRef = useRef<TextInput>(null);

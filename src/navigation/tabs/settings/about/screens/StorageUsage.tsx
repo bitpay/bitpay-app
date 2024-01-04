@@ -17,6 +17,8 @@ import {Black, Feather, LightBlack, White} from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../../constants/config';
 
+const ScrollContainer = styled.ScrollView``;
+
 const HeaderTitle = styled(Setting)`
   margin-top: 20px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
@@ -76,130 +78,177 @@ const StorageUsage: React.VFC = () => {
   };
 
   useMemo(async () => {
-    try {
-      // App Data Storage
-      const resultStorage = await RNFS.readDir(storagePath);
-      let _appSize: number = 0;
-      forEach(resultStorage, data => {
-        _appSize = _appSize + data.size;
-      });
-      setAppSize(formatBytes(_appSize));
-
-      // Device Storage
-      const resultDeviceStorage = await RNFS.getFSInfo();
-      if (resultDeviceStorage) {
-        setDeviceFreeStorage(formatBytes(resultDeviceStorage.freeSpace));
-        setDeviceTotalStorage(formatBytes(resultDeviceStorage.totalSpace));
+    const _setAppSize = async () => {
+      try {
+        // App Data Storage
+        const resultStorage = await RNFS.readDir(storagePath);
+        let _appSize: number = 0;
+        forEach(resultStorage, data => {
+          _appSize = _appSize + data.size;
+        });
+        setAppSize(formatBytes(_appSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setAppSize] Error ', errStr));
       }
-
-      // Data counter
-      const wallets = Object.values(keys).map(k => {
-        const {wallets} = k;
-        return wallets.length;
-      });
-      const walletsCount = wallets.reduce((a, b) => a + b, 0);
-      setWalletsCount(walletsCount);
-      setGiftCount(giftCards.length);
-      setContactCount(contacts.length);
-      const _customTokenCount = Object.values(customTokens).length;
-      setCustomTokenCount(_customTokenCount);
-
-      // Specific Data Storage
-      const _walletStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/wallets.txt',
-        JSON.stringify(keys),
-      );
-      setWalletStorage(formatBytes(_walletStorageSize));
-
-      const _giftCardStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/gift-cards.txt',
-        JSON.stringify(giftCards),
-      );
-      setGiftCardStorage(formatBytes(_giftCardStorageSize));
-
-      const _customTokenStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/custom-tokens.txt',
-        JSON.stringify(customTokens),
-      );
-      setCustomTokenStorage(formatBytes(_customTokenStorageSize));
-
-      const _contactStorageSize = await getSize(
-        RNFS.TemporaryDirectoryPath + '/contacts.txt',
-        JSON.stringify(contacts),
-      );
-      setContactStorage(formatBytes(_contactStorageSize));
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[StorageUsage] Error ', errStr));
-    }
+    };
+    const _setDeviceStorage = async () => {
+      try {
+        // Device Storage
+        const resultDeviceStorage = await RNFS.getFSInfo();
+        if (resultDeviceStorage) {
+          setDeviceFreeStorage(formatBytes(resultDeviceStorage.freeSpace));
+          setDeviceTotalStorage(formatBytes(resultDeviceStorage.totalSpace));
+        }
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setDeviceStorage] Error ', errStr));
+      }
+    };
+    const _setDataCounterStorage = async () => {
+      try {
+        // Data counter
+        const wallets = Object.values(keys).map(k => {
+          const {wallets} = k;
+          return wallets.length;
+        });
+        const walletsCount = wallets.reduce((a, b) => a + b, 0);
+        setWalletsCount(walletsCount);
+        setGiftCount(giftCards.length);
+        setContactCount(contacts.length);
+        const _customTokenCount = Object.values(customTokens).length;
+        setCustomTokenCount(_customTokenCount);
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setDataCounterStorage] Error ', errStr));
+      }
+    };
+    const _setWalletStorage = async () => {
+      try {
+        // Specific Data Storage
+        const _walletStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/wallets.txt',
+          JSON.stringify(keys),
+        );
+        setWalletStorage(formatBytes(_walletStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setWalletStorage] Error ', errStr));
+      }
+    };
+    const _setGiftCardStorage = async () => {
+      try {
+        const _giftCardStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/gift-cards.txt',
+          JSON.stringify(giftCards),
+        );
+        setGiftCardStorage(formatBytes(_giftCardStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setGiftCardStorage] Error ', errStr));
+      }
+    };
+    const _setCustomTokensStorage = async () => {
+      try {
+        const _customTokenStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/custom-tokens.txt',
+          JSON.stringify(customTokens),
+        );
+        setCustomTokenStorage(formatBytes(_customTokenStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setCustomTokensStorage] Error ', errStr));
+      }
+    };
+    const _setContactStorage = async () => {
+      try {
+        const _contactStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/contacts.txt',
+          JSON.stringify(contacts),
+        );
+        setContactStorage(formatBytes(_contactStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setContactStorage] Error ', errStr));
+      }
+    };
+    _setAppSize();
+    _setDeviceStorage();
+    _setDataCounterStorage();
+    _setWalletStorage();
+    _setGiftCardStorage();
+    _setCustomTokensStorage();
+    _setContactStorage();
   }, [dispatch]);
 
   return (
     <SettingsContainer>
-      <HeaderTitle>
-        <SettingTitle>{t('Total Size')}</SettingTitle>
-      </HeaderTitle>
-      <SettingsComponent>
-        <Setting>
-          <SettingTitle>BitPay</SettingTitle>
+      <ScrollContainer>
+        <HeaderTitle>
+          <SettingTitle>{t('Total Size')}</SettingTitle>
+        </HeaderTitle>
+        <SettingsComponent>
+          <Setting>
+            <SettingTitle>BitPay</SettingTitle>
 
-          <Button buttonType="pill">{appSize}</Button>
-        </Setting>
+            <Button buttonType="pill">{appSize}</Button>
+          </Setting>
 
-        <Hr />
+          <Hr />
 
-        <Setting>
-          <SettingTitle>{t('Free Disk Storage')}</SettingTitle>
+          <Setting>
+            <SettingTitle>{t('Free Disk Storage')}</SettingTitle>
 
-          <Button buttonType="pill">{deviceFreeStorage}</Button>
-        </Setting>
+            <Button buttonType="pill">{deviceFreeStorage}</Button>
+          </Setting>
 
-        <Hr />
-        <Setting>
-          <SettingTitle>{t('Total Disk Storage')}</SettingTitle>
+          <Hr />
+          <Setting>
+            <SettingTitle>{t('Total Disk Storage')}</SettingTitle>
 
-          <Button buttonType="pill">{deviceTotalStorage}</Button>
-        </Setting>
-      </SettingsComponent>
-      <HeaderTitle>
-        <SettingTitle>{t('Details')}</SettingTitle>
-      </HeaderTitle>
-      <SettingsComponent style={{marginBottom: 10}}>
-        <Setting>
-          <SettingTitle>
-            {t('Wallets')} ({walletsCount || '0'})
-          </SettingTitle>
+            <Button buttonType="pill">{deviceTotalStorage}</Button>
+          </Setting>
+        </SettingsComponent>
+        <HeaderTitle>
+          <SettingTitle>{t('Details')}</SettingTitle>
+        </HeaderTitle>
+        <SettingsComponent style={{marginBottom: 10}}>
+          <Setting>
+            <SettingTitle>
+              {t('Wallets')} ({walletsCount || '0'})
+            </SettingTitle>
 
-          <Button buttonType="pill">{walletStorage}</Button>
-        </Setting>
+            <Button buttonType="pill">{walletStorage}</Button>
+          </Setting>
 
-        <Hr />
-        <Setting>
-          <SettingTitle>
-            {t('Gift Cards')} ({giftCount || '0'})
-          </SettingTitle>
+          <Hr />
+          <Setting>
+            <SettingTitle>
+              {t('Gift Cards')} ({giftCount || '0'})
+            </SettingTitle>
 
-          <Button buttonType="pill">{giftCardtStorage}</Button>
-        </Setting>
+            <Button buttonType="pill">{giftCardtStorage}</Button>
+          </Setting>
 
-        <Hr />
-        <Setting>
-          <SettingTitle>
-            {t('Custom Tokens')} ({customTokenCount || '0'})
-          </SettingTitle>
+          <Hr />
+          <Setting>
+            <SettingTitle>
+              {t('Custom Tokens')} ({customTokenCount || '0'})
+            </SettingTitle>
 
-          <Button buttonType="pill">{customTokenStorage}</Button>
-        </Setting>
+            <Button buttonType="pill">{customTokenStorage}</Button>
+          </Setting>
 
-        <Hr />
-        <Setting>
-          <SettingTitle>
-            {t('Contacts')} ({contactCount || '0'})
-          </SettingTitle>
+          <Hr />
+          <Setting>
+            <SettingTitle>
+              {t('Contacts')} ({contactCount || '0'})
+            </SettingTitle>
 
-          <Button buttonType="pill">{contactStorage}</Button>
-        </Setting>
-      </SettingsComponent>
+            <Button buttonType="pill">{contactStorage}</Button>
+          </Setting>
+        </SettingsComponent>
+      </ScrollContainer>
     </SettingsContainer>
   );
 };

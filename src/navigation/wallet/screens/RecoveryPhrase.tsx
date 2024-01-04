@@ -26,17 +26,17 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {backupRedirect} from './Backup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import Back from '../../../components/back/Back';
 import {IS_ANDROID} from '../../../constants';
 
-type RecoveryPhraseScreenProps = StackScreenProps<
-  WalletStackParamList,
-  'RecoveryPhrase'
+type RecoveryPhraseScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.RECOVERY_PHRASE
 >;
 
 export interface RecoveryPhraseParamList {
@@ -81,8 +81,8 @@ const WordText = styled(BaseText)`
 `;
 
 const WordTextIndex = styled(BaseText)`
-  margin-right: 20px;
   font-size: 16px;
+  width: 30px;
   color: ${({theme: {dark}}) => (dark ? SlateDark : Slate)};
 `;
 
@@ -122,9 +122,8 @@ const ParagraphRecovery = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlack)};
 `;
 
-const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
+const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
   const dispatch = useDispatch();
   const {params} = route;
   const walletTermsAccepted = useAppSelector(
@@ -217,10 +216,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   }, [navigation, headerTitle, headerLeft]);
 
   const next = () => {
-    navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
-      screen: 'VerifyPhrase',
-      params: {...params, walletTermsAccepted},
-    });
+    navigation.navigate('VerifyPhrase', {...params, walletTermsAccepted});
   };
 
   return (

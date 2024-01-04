@@ -36,14 +36,14 @@ import {
   SupportedCurrencyOptions,
   SupportedTokenOptions,
 } from '../../../constants/SupportedCurrencyOptions';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Key, Token} from '../../../store/wallet/wallet.models';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {addTokenChainSuffix, sleep} from '../../../utils/helper-methods';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
@@ -54,8 +54,8 @@ import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults
 import {orderBy} from 'lodash';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
-type CurrencySelectionScreenProps = StackScreenProps<
-  WalletStackParamList,
+type CurrencySelectionScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
   WalletScreens.CURRENCY_SELECTION
 >;
 
@@ -101,7 +101,7 @@ export interface ContextHandler {
   selectedCurrencies: SelectedCurrencies[];
 }
 
-export const CurrencySelectionContainer = styled.View`
+export const CurrencySelectionContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -140,9 +140,7 @@ const POPULAR_TOKENS: Record<string, string[]> = {
 
 const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
 
-const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
-  route,
-}) => {
+const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const {context, key} = route.params;
@@ -410,13 +408,7 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
 
               dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
 
-              navigation.navigate(
-                context === 'onboarding' ? 'Onboarding' : 'Wallet',
-                {
-                  screen: 'BackupKey',
-                  params: {context, key: createdKey},
-                },
-              );
+              navigation.navigate('BackupKey', {context, key: createdKey});
               dispatch(
                 Analytics.track('Created Key', {
                   context,
@@ -499,17 +491,13 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               return;
             }
 
-            navigation.navigate('Wallet', {
-              screen: 'AddWallet',
-              params: {
-                key,
-                currencyAbbreviation:
-                  currency.currencyAbbreviation.toLowerCase(),
-                currencyName: currency.currencyName,
-                isToken: !!currency.isToken,
-                chain: currency.chain,
-                tokenAddress: currency.tokenAddress,
-              },
+            navigation.navigate('AddWallet', {
+              key,
+              currencyAbbreviation: currency.currencyAbbreviation.toLowerCase(),
+              currencyName: currency.currencyName,
+              isToken: !!currency.isToken,
+              chain: currency.chain,
+              tokenAddress: currency.tokenAddress,
             });
           },
           selectedCurrencies,
@@ -526,12 +514,9 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               return;
             }
 
-            navigation.navigate('Wallet', {
-              screen: 'CreateMultisig',
-              params: {
-                currency: selectedCurrencies[0].currencyAbbreviation,
-                key,
-              },
+            navigation.navigate('CreateMultisig', {
+              currency: selectedCurrencies[0].currencyAbbreviation,
+              key,
             });
           },
           selectedCurrencies,
@@ -566,11 +551,8 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
               buttonType={'pill'}
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Onboarding', {
-                  screen: 'TermsOfUse',
-                  params: {
-                    context: 'TOUOnly',
-                  },
+                navigation.navigate('TermsOfUse', {
+                  context: 'TOUOnly',
                 });
               }}>
               {t('Skip')}
@@ -759,17 +741,14 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
         'desc',
       );
 
-      navigation.navigate('Wallet', {
-        screen: WalletScreens.CURRENCY_TOKEN_SELECTION,
-        params: {
-          key,
-          currency: {...currency},
-          tokens: sortedTokens,
-          description: item.description,
-          selectionMode,
-          onToggle: memoizedOnToggle,
-          contextHandler: memoizedContextHandler,
-        },
+      navigation.navigate(WalletScreens.CURRENCY_TOKEN_SELECTION, {
+        key,
+        currency: {...currency},
+        tokens: sortedTokens,
+        description: item.description,
+        selectionMode,
+        onToggle: memoizedOnToggle,
+        contextHandler: memoizedContextHandler,
       });
     };
   }, [
@@ -819,9 +798,10 @@ const CurrencySelection: React.VFC<CurrencySelectionScreenProps> = ({
                     accessibilityLabel="add-custom-token-button"
                     onPress={() => {
                       haptic('soft');
-                      navigation.navigate('Wallet', {
-                        screen: 'AddWallet',
-                        params: {key, isCustomToken: true, isToken: true},
+                      navigation.navigate('AddWallet', {
+                        key,
+                        isCustomToken: true,
+                        isToken: true,
                       });
                     }}>
                     {t('Add Custom Token')}

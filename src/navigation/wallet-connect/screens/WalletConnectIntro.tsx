@@ -162,12 +162,9 @@ const WalletConnectIntro = () => {
           <TouchableOpacity
             activeOpacity={0.75}
             onPress={() => {
-              navigation.navigate('Scan', {
-                screen: 'Root',
-                params: {
-                  onScanComplete: (data: string) => {
-                    validateWalletConnectUri(data);
-                  },
+              navigation.navigate('ScanRoot', {
+                onScanComplete: (data: string) => {
+                  validateWalletConnectUri(data);
                 },
               });
             }}>

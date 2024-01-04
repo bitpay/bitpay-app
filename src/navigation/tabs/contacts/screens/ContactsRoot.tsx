@@ -7,6 +7,7 @@ import {TouchableOpacity, FlatList, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {useForm, Controller} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/core';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import AddressBookIcon from '../../../../../assets/img/tab-icons/contacts.svg';
 import AddContactIcon from '../../../../../assets/img/addcontact-icon.svg';
 import AddContactIconWhite from '../../../../../assets/img/addcontact-icon-white.svg';
@@ -20,10 +21,10 @@ import {BaseText, H4, HeaderTitle} from '../../../../components/styled/Text';
 import {SlateDark, White, LightBlack, Cloud} from '../../../../styles/colors';
 import BoxInput from '../../../../components/form/BoxInput';
 import {RootState} from '../../../../store';
-
 import ContactRow, {
   ContactRowProps,
 } from '../../../../components/list/ContactRow';
+import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
 
 const ContactsContainer = styled.SafeAreaView`
   flex: 1;
@@ -126,7 +127,9 @@ const HideableView = styled.View<HideableViewProps>`
   display: ${({show}) => (show ? 'flex' : 'none')};
 `;
 
-const ContactsRoot: React.FC = () => {
+const ContactsRoot = ({
+  route,
+}: NativeStackScreenProps<ContactsGroupParamList, ContactsScreens.ROOT>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -174,10 +177,7 @@ const ContactsRoot: React.FC = () => {
         <ContactRow
           contact={item}
           onPress={() => {
-            navigation.navigate('Contacts', {
-              screen: 'ContactsDetails',
-              params: {contact: item},
-            });
+            navigation.navigate('ContactsDetails', {contact: item});
           }}
         />
       </View>
@@ -186,9 +186,7 @@ const ContactsRoot: React.FC = () => {
   );
 
   const goToCreateContact = () => {
-    navigation.navigate('Contacts', {
-      screen: 'ContactsAdd',
-    });
+    navigation.navigate('ContactsAdd');
   };
 
   return (

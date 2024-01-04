@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from 'react-navigation/native-stack';
 import React, {useEffect, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
@@ -14,7 +14,7 @@ import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch} from '../../../utils/hooks/useAppDispatch';
 import {useAppSelector} from '../../../utils/hooks/useAppSelector';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -33,7 +33,7 @@ interface ResetPasswordFormFieldValues {
 }
 
 const ForgotPasswordScreen: React.VFC<
-  StackScreenProps<AuthStackParamList, AuthScreens.FORGOT_PASSWORD>
+  NativeStackScreenProps<AuthGroupParamList, AuthScreens.FORGOT_PASSWORD>
 > = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();

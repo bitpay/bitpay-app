@@ -1,11 +1,6 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../components/styled/Text';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../constants/NavigationOptions';
 import CoinbaseAccount, {
   CoinbaseAccountScreenParamList,
 } from './screens/CoinbaseAccount';
@@ -20,8 +15,18 @@ import CoinbaseTransaction, {
   CoinbaseTransactionScreenParamList,
 } from './screens/CoinbaseTransaction';
 import {CoinbaseWithdrawConfirmParamList} from './screens/CoinbaseWithdrawConfirm';
+import {Root} from '../../Root';
+import {
+  baseNativeHeaderBackButtonProps,
+  baseNavigatorOptions,
+} from '../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
-export type CoinbaseStackParamList = {
+interface CoinbaseProps {
+  Coinbase: typeof Root;
+}
+
+export type CoinbaseGroupParamList = {
   CoinbaseRoot: CoinbaseRootScreenParamList;
   CoinbaseSettings: CoinbaseSettingsScreenParamList;
   CoinbaseAccount: CoinbaseAccountScreenParamList;
@@ -37,17 +42,22 @@ export enum CoinbaseScreens {
   WITHDRAW = 'CoinbaseWithdraw',
 }
 
-const Coinbase = createStackNavigator<CoinbaseStackParamList>();
-
-const CoinbaseStack = () => {
+const CoinbaseGroup: React.FC<CoinbaseProps> = ({Coinbase}) => {
   const {t} = useTranslation();
   return (
-    <Coinbase.Navigator
-      initialRouteName={CoinbaseScreens.ROOT}
-      screenOptions={{
+    <Coinbase.Group
+      screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        ...baseScreenOptions,
-      }}>
+        headerShown: false,
+        headerLeft: () => (
+          <HeaderBackButton
+            onPress={() => {
+              navigation.goBack();
+            }}
+            {...baseNativeHeaderBackButtonProps}
+          />
+        ),
+      })}>
       <Coinbase.Screen
         name={CoinbaseScreens.ROOT}
         component={CoinbaseRoot}
@@ -59,22 +69,17 @@ const CoinbaseStack = () => {
         name={CoinbaseScreens.SETTINGS}
         component={CoinbaseSettings}
         options={{
-          headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
         }}
       />
       <Coinbase.Screen
         name={CoinbaseScreens.ACCOUNT}
         component={CoinbaseAccount}
-        options={{
-          headerMode: 'screen',
-        }}
       />
       <Coinbase.Screen
         name={CoinbaseScreens.TRANSACTION}
         component={CoinbaseTransaction}
         options={{
-          headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Details')}</HeaderTitle>,
         }}
       />
@@ -82,13 +87,12 @@ const CoinbaseStack = () => {
         name={CoinbaseScreens.WITHDRAW}
         component={CoinbaseWithdrawConfirm}
         options={{
-          headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Confirm Withdraw')}</HeaderTitle>,
           gestureEnabled: false,
         }}
       />
-    </Coinbase.Navigator>
+    </Coinbase.Group>
   );
 };
 
-export default CoinbaseStack;
+export default CoinbaseGroup;

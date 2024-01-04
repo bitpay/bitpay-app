@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {
   useCallback,
   useLayoutEffect,
@@ -30,7 +30,7 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {
   ContextHandler,
   CurrencySelectionContainer,
@@ -77,7 +77,10 @@ const styles = StyleSheet.create({
 const keyExtractor = (item: CurrencySelectionItem) => item.id;
 
 const CurrencyTokenSelectionScreen: React.VFC<
-  StackScreenProps<WalletStackParamList, WalletScreens.CURRENCY_TOKEN_SELECTION>
+  NativeStackScreenProps<
+    WalletGroupParamList,
+    WalletScreens.CURRENCY_TOKEN_SELECTION
+  >
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
