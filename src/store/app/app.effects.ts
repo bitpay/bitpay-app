@@ -82,6 +82,7 @@ import {
 import {
   updatePortfolioBalance,
   setCustomTokensMigrationComplete,
+  setWalletScanning,
 } from '../wallet/wallet.actions';
 import {
   setContactMigrationComplete,
@@ -116,6 +117,8 @@ import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
 import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {Key, Wallet} from '../wallet/wallet.models';
+import {AppDispatch} from '../../utils/hooks';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -901,6 +904,20 @@ const _startUpdateWalletStatus = debounce(
   {leading: true, trailing: false},
 );
 
+const _setScanFinishedForWallet = (
+  dispatch: AppDispatch,
+  key: Key,
+  wallet: Wallet,
+) => {
+  dispatch(
+    setWalletScanning({
+      keyId: key.id,
+      walletId: wallet.credentials.walletId,
+      isScanning: false,
+    }),
+  );
+};
+
 export const handleBwsEvent =
   (response: SilentPushEvent): Effect =>
   async (dispatch, getState) => {
@@ -934,6 +951,9 @@ export const handleBwsEvent =
       const keyObj = await findKeyByKeyId(keyId, keys);
 
       switch (response.notification_type) {
+        case 'ScanFinished':
+          _setScanFinishedForWallet(dispatch, keyObj, wallet);
+          break;
         case 'NewAddress':
           _createWalletAddress(dispatch, wallet);
           break;

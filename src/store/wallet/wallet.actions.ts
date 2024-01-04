@@ -167,6 +167,15 @@ export const setWalletRefreshing = (payload: {
   payload,
 });
 
+export const setWalletScanning = (payload: {
+  keyId: string;
+  walletId: string;
+  isScanning: boolean;
+}): WalletActionType => ({
+  type: WalletActionTypes.SET_WALLET_SCANNING,
+  payload,
+});
+
 export const successGetReceiveAddress = (payload: {
   keyId: string;
   walletId: string;

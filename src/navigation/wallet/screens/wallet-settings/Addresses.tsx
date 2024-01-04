@@ -41,6 +41,7 @@ import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {LogActions} from '../../../../store/log';
+import {setWalletScanning} from '../../../../store/wallet/wallet.actions';
 
 const ADDRESS_LIMIT = 5;
 
@@ -104,7 +105,8 @@ const Addresses = () => {
     tokenAddress,
   } = wallet;
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(true);
+  const [loadingUtxos, setLoadingUtxos] = useState(true);
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
   const dispatch = useAppDispatch();
   const [copiedAddressWithBalance, setCopiedAddressWithBalance] = useState('');
   const [copiedUnusedAddress, setCopiedUnusedAddress] = useState('');
@@ -148,7 +150,7 @@ const Addresses = () => {
   const [minFee, setMinFee] = useState<string>();
   const [minFeePer, setMinFeePer] = useState<string>();
 
-  const init = async () => {
+  const setAddresses = async () => {
     try {
       const allAddresses = await GetMainAddresses(wallet, {
         doNotVerify: true,
@@ -168,11 +170,11 @@ const Addresses = () => {
       );
 
       let _withBalance = resp.byAddress;
-      _withBalance = buildUiFormatList(_withBalance, wallet);
+      _withBalance = buildUiFormatList(_withBalance, wallet, true);
       setUsedAddress(_withBalance);
 
       let _noBalance = allAddresses.filter((a: any) => !idx[a.address]);
-      _noBalance = buildUiFormatList(_noBalance, wallet);
+      _noBalance = buildUiFormatList(_noBalance, wallet, false);
       setUnusedAddress(_noBalance);
 
       setViewAll(
@@ -181,65 +183,9 @@ const Addresses = () => {
       );
       setLatestUsedAddress(_withBalance.slice(0, ADDRESS_LIMIT));
       setLatestUnusedAddress(_noBalance.slice(0, ADDRESS_LIMIT));
-
-      try {
-        const response = await GetLowUtxos(wallet);
-
-        if (response?.allUtxos?.length) {
-          const _allUtxos = response.allUtxos || 0;
-          const allSum = _allUtxos.reduce(
-            (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
-            0,
-          );
-          const per = (response.minFee / allSum) * 100;
-          const _lowUtxos = response.lowUtxos || 0;
-          const _lowUtoxosSum = _lowUtxos.reduce(
-            (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
-            0,
-          );
-
-          setLowUtxosNb(response.lowUtxos.length);
-          setAllUtxosNb(response.allUtxos.length);
-
-          setLowUtxosSum(
-            dispatch(
-              FormatAmountStr(
-                currencyAbbreviation,
-                chain,
-                tokenAddress,
-                _lowUtoxosSum,
-              ),
-            ),
-          );
-          setAllUtxosSum(
-            dispatch(
-              FormatAmountStr(
-                currencyAbbreviation,
-                chain,
-                tokenAddress,
-                allSum,
-              ),
-            ),
-          );
-          setMinFee(
-            dispatch(
-              FormatAmountStr(
-                currencyAbbreviation,
-                chain,
-                tokenAddress,
-                response.minFee || 0,
-              ),
-            ),
-          );
-          setMinFeePer(per.toFixed(2) + '%');
-        }
-      } catch (err) {
-        const e = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[Addresses] ', e));
-      }
-      setLoading(false);
+      setLoadingAddresses(false);
     } catch (e) {
-      setLoading(false);
+      setLoadingAddresses(false);
       dispatch(
         showBottomNotificationModal(
           CustomErrorMessage({
@@ -250,30 +196,94 @@ const Addresses = () => {
     }
   };
 
-  const buildUiFormatList = (list: any, wallet: Wallet) => {
+  const setUtxos = async () => {
+    try {
+      const response = await GetLowUtxos(wallet);
+
+      if (response?.allUtxos?.length) {
+        const _allUtxos = response.allUtxos || 0;
+        const allSum = _allUtxos.reduce(
+          (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+          0,
+        );
+        const per = (response.minFee / allSum) * 100;
+        const _lowUtxos = response.lowUtxos || 0;
+        const _lowUtoxosSum = _lowUtxos.reduce(
+          (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+          0,
+        );
+
+        setLowUtxosNb(response.lowUtxos.length);
+        setAllUtxosNb(response.allUtxos.length);
+
+        setLowUtxosSum(
+          dispatch(
+            FormatAmountStr(
+              currencyAbbreviation,
+              chain,
+              tokenAddress,
+              _lowUtoxosSum,
+            ),
+          ),
+        );
+        setAllUtxosSum(
+          dispatch(
+            FormatAmountStr(currencyAbbreviation, chain, tokenAddress, allSum),
+          ),
+        );
+        setMinFee(
+          dispatch(
+            FormatAmountStr(
+              currencyAbbreviation,
+              chain,
+              tokenAddress,
+              response.minFee || 0,
+            ),
+          ),
+        );
+        setMinFeePer(per.toFixed(2) + '%');
+      }
+      setLoadingUtxos(false);
+    } catch (err) {
+      setLoadingUtxos(false);
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[Addresses] ', e));
+    }
+  };
+
+  const buildUiFormatList = (
+    list: any[],
+    wallet: Wallet,
+    sortByAmount: boolean,
+  ): any[] => {
     const {currencyAbbreviation, network, chain} = wallet;
-    list.forEach((item: any) => {
-      item.path = item.path ? item.path.replace(/^m/g, 'xpub') : null;
+
+    const formattedList = list.map(item => {
+      const {path, address, createdOn} = item;
+      item.path = path ? path.replace(/^m/g, 'xpub') : null;
       item.address = dispatch(
-        GetProtocolPrefixAddress(
-          currencyAbbreviation,
-          network,
-          item.address,
-          chain,
-        ),
+        GetProtocolPrefixAddress(currencyAbbreviation, network, address, chain),
       );
 
-      if (item.createdOn) {
-        item.uiTime = GetAmFormatDate(item.createdOn * 1000);
+      if (createdOn) {
+        item.uiTime = GetAmFormatDate(createdOn * 1000);
       }
       return item;
     });
 
-    return list;
+    return formattedList.sort((a, b) => {
+      if (sortByAmount && a.amount && b.amount) {
+        return b.amount - a.amount;
+      } else if (a.createdOn && b.createdOn) {
+        return b.createdOn - a.createdOn;
+      }
+      return 0;
+    });
   };
 
   useEffect(() => {
-    init();
+    setAddresses();
+    setUtxos();
   }, [wallet]);
 
   const {
@@ -303,6 +313,15 @@ const Addresses = () => {
             setButtonState(null);
             return;
           }
+          // set scanning (for UI scanning label on wallet details )
+          dispatch(
+            setWalletScanning({
+              keyId: key.id,
+              walletId: wallet.id,
+              isScanning: true,
+            }),
+          );
+
           setButtonState('success');
           navigation.navigate('WalletDetails', {walletId, key});
 
@@ -337,27 +356,10 @@ const Addresses = () => {
           </Button>
         </AddressesContainer>
 
-        {loading ? (
+        {loadingUtxos ? (
           <AddressesSkeleton />
         ) : (
           <>
-            {viewAll ? (
-              <AllAddressesLink
-                activeOpacity={ActiveOpacity}
-                onPress={() => {
-                  navigation.navigate('AllAddresses', {
-                    currencyAbbreviation,
-                    chain,
-                    walletName: walletName || currencyName,
-                    usedAddresses: usedAddress,
-                    unusedAddresses: unusedAddress,
-                    tokenAddress,
-                  });
-                }}>
-                <LinkText>{t('View all addresses')}</LinkText>
-              </AllAddressesLink>
-            ) : null}
-
             {allUtxosNb ? (
               <>
                 <VerticalPadding>
@@ -397,6 +399,28 @@ const Addresses = () => {
                 </VerticalPadding>
                 <Hr />
               </>
+            ) : null}
+          </>
+        )}
+        {loadingAddresses ? (
+          <AddressesSkeleton />
+        ) : (
+          <>
+            {viewAll ? (
+              <AllAddressesLink
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  navigation.navigate('AllAddresses', {
+                    currencyAbbreviation,
+                    chain,
+                    walletName: walletName || currencyName,
+                    usedAddresses: usedAddress,
+                    unusedAddresses: unusedAddress,
+                    tokenAddress,
+                  });
+                }}>
+                <LinkText>{t('View all addresses')}</LinkText>
+              </AllAddressesLink>
             ) : null}
 
             {latestUsedAddress?.length ? (

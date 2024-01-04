@@ -29,6 +29,7 @@ import {
   Balance,
   BaseText,
   H2,
+  H3,
   H5,
   HeaderTitle,
   Paragraph,
@@ -42,7 +43,10 @@ import {
 } from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {
+  setWalletScanning,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
 import {
   Key,
   TransactionProposal,
@@ -435,6 +439,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ]);
       dispatch(updatePortfolioBalance());
       setNeedActionTxps(fullWalletObj.pendingTxps);
+      if (fullWalletObj.isScanning) {
+        // cancel scanning if user refreshes in case it's stuck
+        dispatch(
+          setWalletScanning({
+            keyId: key.id,
+            walletId: fullWalletObj.id,
+            isScanning: false,
+          }),
+        );
+      }
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
@@ -503,7 +517,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const loadHistory = useCallback(async (refresh?: boolean) => {
-    if (!loadMore && !refresh) {
+    if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
       return;
     }
     try {
@@ -954,20 +968,33 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     onLongPress={() => {
                       dispatch(toggleHideAllBalances());
                     }}>
+                    {!fullWalletObj.isScanning ? (
+                      <Row>
+                        {!hideAllBalances ? (
+                          <Balance scale={shouldScale(cryptoBalance)}>
+                            {cryptoBalance}{' '}
+                            {formatCurrencyAbbreviation(currencyAbbreviation)}
+                          </Balance>
+                        ) : (
+                          <H2>****</H2>
+                        )}
+                      </Row>
+                    ) : (
+                      <View style={{padding: 12}}>
+                        <Row>
+                          <H5>{t('[Scanning Addresses]')}</H5>
+                        </Row>
+                        <Row>
+                          <H5>{t('Please wait...')}</H5>
+                        </Row>
+                      </View>
+                    )}
                     <Row>
-                      {!hideAllBalances ? (
-                        <Balance scale={shouldScale(cryptoBalance)}>
-                          {cryptoBalance}{' '}
-                          {formatCurrencyAbbreviation(currencyAbbreviation)}
-                        </Balance>
-                      ) : (
-                        <H2>****</H2>
-                      )}
-                    </Row>
-                    <Row>
-                      {showFiatBalance && !hideAllBalances && (
-                        <Paragraph>{fiatBalance}</Paragraph>
-                      )}
+                      {showFiatBalance &&
+                        !hideAllBalances &&
+                        !fullWalletObj.isScanning && (
+                          <Paragraph>{fiatBalance}</Paragraph>
+                        )}
                     </Row>
                   </TouchableOpacity>
                   {!hideAllBalances && showBalanceDetailsButton() && (

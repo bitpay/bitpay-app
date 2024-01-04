@@ -37,6 +37,7 @@ export enum WalletActionTypes {
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
+  SET_WALLET_SCANNING = 'WALLET/SET_WALLET_SCANNING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
   SET_CUSTOMIZE_NONCE = 'WALLET/SET_CUSTOMIZE_NONCE',
@@ -226,6 +227,15 @@ interface setWalletRefreshing {
   };
 }
 
+interface setWalletScanning {
+  type: typeof WalletActionTypes.SET_WALLET_SCANNING;
+  payload: {
+    keyId: string;
+    walletId: string;
+    isScanning: boolean;
+  };
+}
+
 interface setUseUnconfirmedFunds {
   type: typeof WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS;
   payload: boolean;
@@ -308,6 +318,7 @@ export type WalletActionType =
   | updateKeyName
   | updateWalletName
   | setWalletRefreshing
+  | setWalletScanning
   | successGetReceiveAddress
   | setUseUnconfirmedFunds
   | setCustomizeNonce
