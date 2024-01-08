@@ -16,7 +16,6 @@ import {
   Linking,
   NativeEventEmitter,
   NativeModules,
-  Platform,
   StatusBar,
 } from 'react-native';
 import 'react-native-gesture-handler';
@@ -52,6 +51,7 @@ import TabsStack, {
 } from './navigation/tabs/TabsStack';
 import WalletGroup, {
   WalletGroupParamList,
+  WalletScreens,
 } from './navigation/wallet/WalletGroup';
 import ScanGroup, {ScanGroupParamList} from './navigation/scan/ScanGroup';
 import GeneralSettingsGroup, {
@@ -233,7 +233,6 @@ export default () => {
     ({APP}) => APP.onboardingCompleted,
   );
   const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
-  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const checkingBiometricForSending = useAppSelector(
     ({APP}) => APP.checkingBiometricForSending,
   );
@@ -247,6 +246,22 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
+
+  const blurScreenList: string[] = [
+    OnboardingScreens.IMPORT,
+    OnboardingScreens.RECOVERY_PHRASE,
+    OnboardingScreens.VERIFY_PHRASE,
+    TabsScreens.HOME,
+    WalletScreens.ADDRESSES,
+    WalletScreens.ALL_ADDRESSES,
+    WalletScreens.COPAYERS,
+    WalletScreens.EXPORT_KEY,
+    WalletScreens.EXPORT_WALLET,
+    WalletScreens.JOIN_MULTISIG,
+    WalletScreens.KEY_OVERVIEW,
+    WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS,
+    WalletScreens.WALLET_DETAILS,
+  ];
 
   const debouncedOnStateChange = useMemo(
     () =>
@@ -347,7 +362,20 @@ export default () => {
         } else if (failedAppInit) {
           dispatch(AppActions.showBlur(false));
         } else {
-          dispatch(AppActions.showBlur(true));
+          const currentNavState = navigationRef
+            .getState()
+            ?.routes?.slice(-1)[0];
+          const currentScreen: string | undefined =
+            currentNavState?.name ?? navigationRef.getCurrentRoute()?.name;
+          const currentTab: number | undefined = currentNavState?.state?.index;
+          if (
+            (currentScreen && blurScreenList.includes(currentScreen)) ||
+            (currentScreen === 'Tabs' && (!currentTab || currentTab === 0))
+          ) {
+            dispatch(AppActions.showBlur(true));
+          } else {
+            dispatch(AppActions.showBlur(false));
+          }
         }
       }
     }
