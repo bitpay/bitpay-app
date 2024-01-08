@@ -128,6 +128,7 @@ import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 import {BillPayAccount} from '../../../store/shop/shop.models';
+import debounce from 'lodash.debounce';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -429,7 +430,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         await dispatch(
           startUpdateWalletStatus({key, wallet: fullWalletObj, force: true}),
         ),
-        await loadHistory(true),
+        await debouncedLoadHistory(true),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -501,7 +502,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   };
 
-  const loadHistory = async (refresh?: boolean) => {
+  const loadHistory = useCallback(async (refresh?: boolean) => {
     if (!loadMore && !refresh) {
       return;
     }
@@ -541,9 +542,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
       console.log('Transaction Update: ', e);
     }
-  };
-  const loadHistoryRef = useRef(loadHistory);
-  loadHistoryRef.current = loadHistory;
+  }, []);
+
+  const debouncedLoadHistory = useMemo(
+    () => debounce(loadHistory, 300),
+    [loadHistory],
+  );
+
+  const loadHistoryRef = useRef(debouncedLoadHistory);
 
   const updateWalletStatusAndProfileBalance = async () => {
     await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
@@ -557,6 +563,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       }),
     );
     updateWalletStatusAndProfileBalance();
+    if (!skipInitializeHistory) {
+      debouncedLoadHistory();
+    }
+  }, []);
+
+  useEffect(() => {
     setNeedActionTxps(fullWalletObj.pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
@@ -566,13 +578,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       },
     );
     return () => subscription.remove();
-  }, [key]);
-
-  useEffect(() => {
-    if (!skipInitializeHistory) {
-      loadHistoryRef.current();
-    }
-  }, [skipInitializeHistory]);
+  }, [keys]);
 
   const listFooterComponent = () => {
     return (
@@ -612,7 +618,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const goToTransactionDetails = (transaction: any) => {
-    const onMemoChange = () => loadHistory(true);
+    const onMemoChange = () => debouncedLoadHistory(true);
     navigation.navigate('TransactionDetails', {
       wallet: fullWalletObj,
       transaction,
@@ -1177,7 +1183,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         ItemSeparatorComponent={() => <BorderBottom />}
         ListFooterComponent={listFooterComponent}
         onEndReached={() => {
-          loadHistory();
+          debouncedLoadHistory();
         }}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={listEmptyComponent}
