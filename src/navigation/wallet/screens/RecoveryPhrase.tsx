@@ -160,7 +160,7 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const onPressHeaderCancel = () => {
     haptic('impactLight');
 
-    if (context === 'settings') {
+    if (context === 'settings' || key.backupComplete) {
       navigation.goBack();
       return;
     }
@@ -245,8 +245,9 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
           accessibilityLabel="next-button"
           buttonStyle={'primary'}
           debounceTime={Platform.OS === 'android' ? 200 : 0}
+          disabled={key.backupComplete}
           onPress={next}>
-          {t('Verify')}
+          {key.backupComplete ? t('Verified') : t('Verify')}
         </Button>
       </CtaContainerAbsolute>
     </RecoveryPhraseContainer>
