@@ -67,7 +67,11 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import {BchLegacyAddressInfo, Mismatch} from '../../components/ErrorMessages';
+import {
+  BchLegacyAddressInfo,
+  CustomErrorMessage,
+  Mismatch,
+} from '../../components/ErrorMessages';
 import {
   CoinNetwork,
   createWalletAddress,
@@ -380,7 +384,7 @@ const SendTo = () => {
       return false;
     };
 
-  const validateAddress = async (text: string) => {
+  const validateText = async (text: string) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
@@ -394,33 +398,75 @@ const SendTo = () => {
           GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
           chain,
         );
-        const selected = payProOptions.paymentOptions.find(
-          (option: PayProPaymentOption) =>
-            option.selected && invoiceCurrency === option.currency,
+        const OptSelected = payProOptions.paymentOptions.find(
+          (option: PayProPaymentOption) => option.selected,
         );
+
+        let selected: PayProPaymentOption | undefined;
+        if (OptSelected) {
+          if (invoiceCurrency === OptSelected.currency) {
+            selected = OptSelected;
+          } else {
+            logger.warn(
+              'PayPro opt selected (v3) and wallet selected network/coin mismatch',
+            );
+            return Promise.resolve({
+              isValid: false,
+              invalidReason: 'invalidCurrency',
+            });
+          }
+        } else {
+          selected = payProOptions.paymentOptions.find(
+            (option: PayProPaymentOption) =>
+              invoiceCurrency === option.currency,
+          );
+        }
+
         if (selected) {
           const isValid = dispatch(checkCoinAndNetwork(selected, true));
           if (isValid) {
-            return Promise.resolve(true);
+            return Promise.resolve({isValid: true, invalidReason: undefined});
+          } else {
+            logger.warn(
+              'PayPro (v4) and wallet selected network/coin mismatch',
+            );
+            return Promise.resolve({
+              isValid: false,
+              invalidReason: 'invalidCurrency',
+            });
           }
         } else {
-          return Promise.resolve(false);
+          logger.warn('PayPro and wallet selected network/coin mismatch');
+          return Promise.resolve({
+            isValid: false,
+            invalidReason: 'invalidCurrency',
+          });
         }
       } catch (err) {
         const formattedErrMsg = BWCErrorMessage(err);
         await sleep(500);
         dispatch(dismissOnGoingProcessModal());
         logger.warn(formattedErrMsg);
-        return Promise.resolve(false);
+        return Promise.resolve({
+          isValid: false,
+          invalidReason: formattedErrMsg,
+        });
       }
     } else if (ValidDataTypes.includes(data?.type)) {
       if (dispatch(checkCoinAndNetwork(text))) {
-        return Promise.resolve(true);
+        return Promise.resolve({isValid: true, invalidReason: undefined});
       } else {
-        return Promise.resolve(false);
+        logger.warn(
+          `Data type (${data?.type}) and wallet selected network/coin mismatch`,
+        );
+        return Promise.resolve({
+          isValid: false,
+          invalidReason: 'invalidCurrency',
+        });
       }
     } else {
-      return Promise.resolve(false);
+      logger.warn(`Data type (${data?.type}) invalid`);
+      return Promise.resolve({isValid: false, invalidReason: undefined});
     }
   };
 
@@ -440,13 +486,23 @@ const SendTo = () => {
       return;
     }
     setSearchIsEmailAddress(false);
-    const isValid = await validateAddress(text);
-    if (isValid) {
+    const res = await validateText(text);
+    if (res?.isValid) {
       await dispatch(
         incomingData(text, {wallet, context, name, email, destinationTag}),
       );
-    } else if (!searching) {
+    } else if (res?.invalidReason === 'invalidCurrency') {
       dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
+    } else if (res?.invalidReason && typeof res.invalidReason === 'string') {
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            title: t('Error'),
+            errMsg: res.invalidReason,
+            action: () => onErrorMessageDismiss,
+          }),
+        ),
+      );
     }
   };
 

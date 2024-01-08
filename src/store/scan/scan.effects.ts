@@ -111,7 +111,7 @@ export const incomingData =
         data = `${origin}/i/${invoiceId}`;
       }
       if (IsValidBitPayInvoice(data)) {
-        dispatch(handleUnlock(data));
+        dispatch(handleUnlock(data, opts?.wallet));
       }
       // Paypro
       else if (IsValidPayPro(data)) {
