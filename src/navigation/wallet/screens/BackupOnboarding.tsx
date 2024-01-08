@@ -187,7 +187,7 @@ const BackupOnboarding: React.FC = () => {
             buttonStyle={'primary'}
             onPress={() => {
               haptic('impactLight');
-              if (!key.isPrivKeyEncrypted) {
+              if (!key.methods?.isPrivKeyEncrypted()) {
                 navigation.navigate('RecoveryPhrase', {
                   keyId: key.id,
                   words: getMnemonic(key),
