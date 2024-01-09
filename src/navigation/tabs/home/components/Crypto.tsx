@@ -370,7 +370,7 @@ const Crypto = () => {
             vertical={false}
             style={{width: WIDTH}}
             width={190}
-            height={220}
+            height={230}
             autoPlay={false}
             data={cardsList.list}
             scrollAnimationDuration={0}
