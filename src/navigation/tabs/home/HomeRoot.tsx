@@ -219,7 +219,7 @@ const HomeRoot = () => {
           ) : null}
 
           {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-          {hasKeys ? (
+          {hasKeys && showPortfolioValue ? (
             <HomeSection style={{marginBottom: 25}}>
               <LinkingButtons
                 receive={{
