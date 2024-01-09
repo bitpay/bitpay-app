@@ -1,3 +1,11 @@
+import AppBtc from '@ledgerhq/hw-app-btc';
+import {Transaction} from '@ledgerhq/hw-app-btc/lib/types';
+import {CreateTransactionArg} from '@ledgerhq/hw-app-btc/lib/createTransaction';
+import {serializeTransactionOutputs} from '@ledgerhq/hw-app-btc/lib/serializeTransaction';
+import {splitTransaction} from '@ledgerhq/hw-app-btc/lib/splitTransaction';
+import {BufferReader} from '@ledgerhq/hw-app-btc/lib/buffertools';
+import Transport from '@ledgerhq/hw-transport';
+import axios from 'axios';
 import {Effect} from '../../../index';
 import {
   CustomTransactionData,
@@ -10,6 +18,7 @@ import {
   TxDetails,
   Wallet,
   TransactionOptionsContext,
+  BitcoreTransactionLike,
 } from '../../wallet.models';
 import {
   FormatAmount,
@@ -79,7 +88,7 @@ import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 import {Analytics} from '../../../analytics/analytics.effects';
 import {AppActions} from '../../../app';
-import {URL} from '../../../../constants';
+import {Network, URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
 import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
@@ -118,15 +127,14 @@ export const createProposalAndBuildTxDetails =
           ParseAmount(amount, currencyAbbreviation, chain, tokenAddress),
         );
         const {
+          APP: {defaultAltCurrency},
           WALLET: {
+            keys,
             feeLevel: cachedFeeLevel,
             useUnconfirmedFunds,
             queuedTransactions,
             enableReplaceByFee,
           },
-        } = getState();
-        const {
-          APP: {defaultAltCurrency},
         } = getState();
 
         if (
@@ -932,11 +940,17 @@ export const startSendPayment =
     key,
     wallet,
     recipient,
+    transport,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient: Recipient;
+
+    /**
+     * Transport for hardware wallet
+     */
+    transport?: Transport;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -955,6 +969,7 @@ export const startSendPayment =
                   key,
                   wallet,
                   recipient,
+                  transport,
                 }),
               );
               return resolve(broadcastedTx);
@@ -979,6 +994,7 @@ export const publishAndSign =
     key,
     wallet,
     recipient,
+    transport,
     password,
     signingMultipleProposals,
   }: {
@@ -986,22 +1002,22 @@ export const publishAndSign =
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
+    transport?: Transport;
     password?: string;
     signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
-      const {
-        APP: {biometricLockActive},
-      } = getState();
+      const {APP} = getState();
 
-      if (biometricLockActive && !signingMultipleProposals) {
+      if (APP.biometricLockActive && !signingMultipleProposals) {
         try {
           await dispatch(checkBiometricForSending());
         } catch (error) {
           return reject(error);
         }
       }
+
       if (key.isPrivKeyEncrypted && !signingMultipleProposals) {
         try {
           password = await new Promise<string>(async (_resolve, _reject) => {
@@ -1029,7 +1045,8 @@ export const publishAndSign =
       }
 
       try {
-        let publishedTx, broadcastedTx;
+        let publishedTx,
+          broadcastedTx: Partial<TransactionProposal> | null = null;
 
         // Already published?
         if (txp.status !== 'pending') {
@@ -1037,18 +1054,37 @@ export const publishAndSign =
           dispatch(LogActions.debug('success publish [publishAndSign]'));
         }
 
-        if (key.isReadOnly) {
+        if (key.isReadOnly && !key.hardwareSource) {
           // read only wallet
           return resolve(publishedTx);
         }
 
-        const signedTx: any = await signTx(
-          wallet,
-          key,
-          publishedTx || txp,
-          password,
-        );
+        let signedTx: TransactionProposal | null = null;
+
+        if (key.hardwareSource) {
+          if (!transport) {
+            return reject(
+              new Error('No transport provided for hardware signing.'),
+            );
+          }
+
+          signedTx = await signTxWithHardwareWallet(
+            transport,
+            wallet,
+            key,
+            (publishedTx || txp) as TransactionProposal,
+          );
+        } else {
+          signedTx = (await signTx(
+            wallet,
+            key,
+            publishedTx || txp,
+            password,
+          )) as TransactionProposal;
+        }
+
         dispatch(LogActions.debug('success sign [publishAndSign]'));
+
         if (signedTx.status === 'accepted') {
           broadcastedTx = await broadcastTx(wallet, signedTx);
           dispatch(LogActions.debug('success broadcast [publishAndSign]'));
@@ -1076,7 +1112,6 @@ export const publishAndSign =
         );
 
         // Check if ConfirmTx notification is enabled
-        const {APP} = getState();
         if (APP.confirmedTxAccepted) {
           wallet.txConfirmationSubscribe(
             {txid: resultTx?.id, amount: txp.amount},
@@ -1296,6 +1331,303 @@ export const signTx = (
       reject(err);
     }
   });
+};
+
+const _fetchTxMainnetCache: Record<string, string> = {};
+const _fetchTxTestnetCache: Record<string, string> = {};
+const _fetchTxCache = {
+  [Network.mainnet]: _fetchTxMainnetCache,
+  [Network.testnet]: _fetchTxTestnetCache,
+};
+
+/**
+ * Fetch raw data for a BTC transaction by ID.
+ *
+ * @param txId
+ * @param network
+ * @returns transaction data as a hex string
+ */
+const fetchBtcTxById = async (
+  txId: string,
+  network: Network,
+): Promise<string> => {
+  if (_fetchTxCache[network][txId]) {
+    return _fetchTxCache[network][txId];
+  }
+
+  let url = 'https://mempool.space';
+
+  if (network === Network.testnet) {
+    url += '/testnet';
+  }
+
+  url += `/api/tx/${txId}/hex`;
+
+  const apiResponse = await axios.get<string>(url);
+  const txDataHex = apiResponse.data;
+
+  if (txDataHex) {
+    _fetchTxCache[network][txId] = txDataHex;
+  }
+
+  return txDataHex;
+};
+
+const isString = (s: any): s is string => {
+  return typeof s === 'string';
+};
+
+const createLedgerTransactionArgBtc = (
+  wallet: Wallet,
+  txp: TransactionProposal,
+) => {
+  return new Promise<CreateTransactionArg>(async (resolve, reject) => {
+    const BWC = BwcProvider.getInstance();
+    const utils = BWC.getUtils();
+
+    const txpAsTx = utils.buildTx(txp) as BitcoreTransactionLike;
+    const accountPath = wallet.hardwareData?.accountPath;
+    const inputPaths = (txp.inputPaths || []).filter(isString);
+
+    if (!accountPath) {
+      return reject(new Error('No account path found for this wallet.'));
+    }
+
+    // BWS only returns inputPaths for addresses it knows about
+    // We kick off a scan when we import the hardware wallet so it may not be complete yet
+    if (!inputPaths.length) {
+      return reject(
+        new Error(
+          'No input paths found. Start an address scan, if not already started, then try again later.',
+        ),
+      );
+    }
+
+    if (inputPaths.length !== txpAsTx.inputs.length) {
+      return reject(
+        new Error(
+          'Not enough input paths found. Start an address scan, if not already started, then try again later.',
+        ),
+      );
+    }
+
+    // array of BIP 32 paths pointing to the path to the private key used for each UTXO
+    const associatedKeysets: string[] = inputPaths.map(
+      p => `${accountPath}/${p.replace('m/', '')}`,
+    );
+
+    try {
+      // inputs is an array of <inputData> where <inputData> is itself an array of [inputTx, vout, redeemScript, sequence]
+      // so it will end up being an array of arrays
+      const inputs: CreateTransactionArg['inputs'] = await Promise.all(
+        txpAsTx.inputs.map(async input => {
+          // prevTxId is given in BigEndian format, no need to reverse
+          const txId = input.prevTxId.toString('hex');
+          const inputTxHex = await fetchBtcTxById(txId, txp.network);
+
+          // TODO: safe to always set this to true?
+          const isSegwitSupported = false;
+          const hasTimestamp = false;
+          const hasExtraData = false;
+          const additionals: string[] | undefined = undefined;
+          const inputTx = splitTransaction(
+            inputTxHex,
+            isSegwitSupported,
+            hasTimestamp,
+            hasExtraData,
+            additionals,
+          );
+
+          const outputIndex = input.outputIndex;
+          const redeemScript = undefined; // TODO: optional redeem script to use when consuming a segwit input
+          const sequence = input.sequenceNumber;
+
+          const inputData: CreateTransactionArg['inputs'][0] = [
+            inputTx,
+            outputIndex,
+            redeemScript,
+            sequence,
+          ];
+
+          return inputData;
+        }),
+      );
+
+      const hasChange = typeof txpAsTx._changeIndex !== 'undefined';
+
+      // optional BIP 32 path pointing to the path to the public key used to compute the change address
+      const changePath = hasChange
+        ? `${accountPath}/${txp.changeAddress.path.replace('m/', '')}`
+        : undefined;
+
+      // undefined will default to SIGHASH_ALL.
+      // BWC currently uses undefined when signing UTXO tx so we do the same here
+      const sigHashType = undefined;
+
+      // TODO
+      const segwit = false;
+
+      const outputs = txpAsTx.outputs.map(output => {
+        const amountBuf = Buffer.alloc(8);
+        amountBuf.writeUInt32LE(output.satoshis);
+
+        return {
+          amount: amountBuf,
+          script: output.script.toBuffer(),
+        };
+      });
+
+      const outputScriptHex = serializeTransactionOutputs({
+        outputs,
+      } as Transaction).toString('hex');
+
+      /**
+       * TODO: add additionals
+       * 'bech32' for spending native segwit outputs,
+       * 'abc', for bch,
+       * 'gold' for btg,
+       * 'bipxxx' for using BIPxxx,
+       * 'sapling' to indicate a zec transaction is supporting sapling
+       */
+      const additionals: string[] = [];
+
+      const arg: CreateTransactionArg = {
+        inputs,
+        associatedKeysets,
+        changePath,
+        outputScriptHex,
+        sigHashType,
+        segwit,
+        additionals,
+      };
+
+      return resolve(arg);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+const getBtcSignaturesFromLedger = async (
+  wallet: Wallet,
+  txp: TransactionProposal,
+  transport: Transport,
+) => {
+  const isTestnet = txp.network === Network.testnet;
+
+  const btc = new AppBtc({
+    transport,
+    currency: isTestnet ? 'bitcoin_testnet' : 'bitcoin',
+  });
+
+  const arg = await createLedgerTransactionArgBtc(wallet, txp).catch(err => {
+    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+
+    throw new Error(
+      `Unable to create transaction argument for Ledger to sign: ${errMsg}`,
+    );
+  });
+
+  // The Ledger HW BTC app returns the final signed tx
+  // We just need the signatures so we patch the logic to store
+  // the generated signatures in this array
+  const extractedSignatures: Buffer[] = [];
+
+  // @ts-ignore
+  arg.patch_signatureArray = extractedSignatures;
+
+  await btc.createPaymentTransaction(arg);
+
+  // remove the sighashtype (last byte)
+  const signatures = extractedSignatures.map(sigBuf => {
+    const reader = new BufferReader(sigBuf);
+    const signature = reader.readSlice(sigBuf.length - 1);
+
+    return signature.toString('hex');
+  });
+
+  return signatures;
+};
+
+const getSignaturesFromLedger = (
+  transport: Transport,
+  wallet: Wallet,
+  txp: TransactionProposal,
+) => {
+  if (!transport) {
+    throw new Error('Transport is required to get signatures from Ledger');
+  }
+
+  if (txp.coin === 'btc') {
+    return getBtcSignaturesFromLedger(wallet, txp, transport);
+  }
+
+  // TODO: other coins
+
+  throw new Error('Unsupported currency: ' + txp.coin);
+};
+
+const getSignaturesFromHardwareWallet = (
+  transport: Transport,
+  wallet: Wallet,
+  key: Key,
+  txp: TransactionProposal,
+) => {
+  if (!wallet.isHardwareWallet) {
+    return Promise.reject('Wallet is not associated with a hardware wallet');
+  }
+
+  if (key.hardwareSource === 'ledger') {
+    return getSignaturesFromLedger(transport, wallet, txp);
+  }
+
+  return Promise.reject('Unsupported hardware wallet');
+};
+
+export const signTxWithHardwareWallet = async (
+  transport: Transport,
+  wallet: Wallet,
+  key: Key,
+  txp: TransactionProposal,
+) => {
+  let signatures: string[];
+
+  try {
+    signatures = await getSignaturesFromHardwareWallet(
+      transport,
+      wallet,
+      key,
+      txp,
+    );
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    throw new Error(`Error getting signatures from hardware wallet: ${errMsg}`);
+  }
+
+  const signedTxp = await new Promise<TransactionProposal>(
+    (resolve, reject) => {
+      const debugBaseUrl = null;
+
+      try {
+        wallet.pushSignatures(
+          txp,
+          signatures,
+          (err: any, result: TransactionProposal) => {
+            if (err) {
+              return reject(err);
+            }
+
+            resolve(result);
+          },
+          debugBaseUrl,
+        );
+      } catch (err) {
+        reject(err);
+      }
+    },
+  );
+
+  return signedTxp;
 };
 
 export const broadcastTx = (
@@ -1662,14 +1994,14 @@ export const checkBiometricForSending =
       'Authentication Check',
       authOptionalConfigObject,
     )
-      .then(success => {
+      .then((success: any) => {
         if (success) {
           return Promise.resolve();
         } else {
           return Promise.reject('biometric check failed');
         }
       })
-      .catch(error => {
+      .catch((error: any) => {
         if (error.code && TO_HANDLE_ERRORS[error.code]) {
           const err = TO_HANDLE_ERRORS[error.code];
           dispatch(

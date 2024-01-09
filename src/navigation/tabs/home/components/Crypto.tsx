@@ -47,6 +47,8 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
+import {AppActions} from '../../../../store/app';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -161,6 +163,7 @@ export const createHomeCardList = ({
   const hasKeys = keys.length;
   const hasGiftCards = false;
   const hasCoinbase = linkedCoinbase;
+
   if (hasKeys) {
     const walletCards = keys.map(key => {
       let {
@@ -217,6 +220,8 @@ export const createHomeCardList = ({
   }
 
   defaults.push({id: 'createWallet', component: <CreateWallet />});
+
+  defaults.push({id: 'connectLedger', component: <ConnectLedgerNanoXCard />});
 
   if (hasCoinbase) {
     list.push({
@@ -319,6 +324,7 @@ const Crypto = () => {
                 {t('Create, import or join a shared wallet')}
               </Button>
               <Button
+                style={{marginBottom: 15}}
                 buttonStyle={'secondary'}
                 onPress={() => {
                   dispatch(
@@ -331,6 +337,13 @@ const Crypto = () => {
                 {linkedCoinbase
                   ? 'Coinbase'
                   : t('Connect your Coinbase account')}
+              </Button>
+              <Button
+                buttonStyle={'secondary'}
+                onPress={() => {
+                  dispatch(AppActions.importLedgerModalToggled(true));
+                }}>
+                {t('Connect your Ledger Nano X')}
               </Button>
             </ButtonContainer>
           </Column>
@@ -400,7 +413,7 @@ const Crypto = () => {
           height={190 / 2}
           autoPlay={false}
           data={cardsList.defaults}
-          enabled={false}
+          enabled={true}
           renderItem={_renderItem}
         />
       </CarouselContainer>

@@ -3,6 +3,7 @@ import {
   KeyMethods,
   KeyOptions,
   KeyProperties,
+  SupportedHardwareSource,
   Wallet,
 } from '../../wallet.models';
 import {Effect, storage} from '../../../index';
@@ -28,8 +29,10 @@ import {
   setEnableReplaceByFee,
   setUseUnconfirmedFunds,
   setWalletTermsAccepted,
+  successCreateKey,
   successImport,
   updateCacheFeeLevel,
+  updatePortfolioBalance,
 } from '../../wallet.actions';
 import {
   BitpaySupportedEthereumTokenOptsByAddress,
@@ -57,7 +60,10 @@ import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
-import {startUpdateAllKeyAndWalletStatus} from '../status/status';
+import {
+  startUpdateAllKeyAndWalletStatus,
+  startUpdateAllWalletStatusForKey,
+} from '../status/status';
 import {startGetRates} from '../rates/rates';
 import {
   accessTokenSuccess,
@@ -92,8 +98,15 @@ import {t} from 'i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
 import uniqBy from 'lodash.uniqby';
+import {
+  credentialsFromExtendedPublicKey,
+  getNetworkFromExtendedKey,
+} from '../../../../utils/wallet-hardware';
+import {sleep} from '../../../../utils/helper-methods';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
+const BwcConstants = BWC.getConstants();
 
 const cordovaStoragePath =
   Platform.OS === 'ios'
@@ -901,6 +914,197 @@ export const startImportMnemonic =
     });
   };
 
+export const startImportFromHardwareWallet =
+  ({
+    hardwareSource,
+    xPubKey,
+    accountPath,
+    coin,
+    useNativeSegwit,
+    derivationStrategy,
+    accountNumber,
+  }: {
+    hardwareSource: SupportedHardwareSource;
+    xPubKey: string;
+    accountPath: string;
+    coin: 'btc' | 'eth';
+    useNativeSegwit: boolean;
+    derivationStrategy: string;
+    accountNumber: number;
+  }): Effect<Promise<Wallet>> =>
+  async (dispatch, getState) => {
+    if (!hardwareSource) {
+      throw new Error('Invalid hardware wallet source');
+    }
+
+    if (!BitpaySupportedCoins[coin.toLowerCase()]) {
+      throw new Error(`Unsupported currency: ${coin}`);
+    }
+
+    const {WALLET} = getState();
+
+    // distinguishing hardware keys by setting id = `readonly/${hardwareSource}`
+    const hwKeyId = buildKeyObj({
+      key: undefined,
+      wallets: [],
+      hardwareSource,
+    }).id;
+
+    let key = Object.values(WALLET.keys).find(k => k.id === hwKeyId);
+
+    const walletExists = key?.wallets.some(
+      w => w.credentials.xPubKey === xPubKey,
+    );
+
+    if (walletExists) {
+      throw new Error('The wallet is already in the app.');
+    }
+
+    const credentials = credentialsFromExtendedPublicKey(
+      coin,
+      xPubKey,
+      accountNumber,
+      derivationStrategy,
+      useNativeSegwit,
+    );
+    const bwcClient = BWC.getClient(credentials);
+    const walletName = BitpaySupportedCoins[coin.toLowerCase()].name;
+
+    // check if wallet exists in BWS
+    const status = await new Promise<any>((res, rej) => {
+      bwcClient.getStatus({}, async (err: any, result: any) => {
+        err ? rej(err) : res(result);
+      });
+    }).catch(() => null);
+
+    if (status?.wallet?.id) {
+      // wallet exists, update the wallet ID
+      bwcClient.credentials.walletId = status.wallet.id;
+    } else {
+      try {
+        const network = getNetworkFromExtendedKey(xPubKey);
+        const copayerName = 'me';
+        const m = 1;
+        const n = 1;
+        const singleAddress = undefined;
+
+        const createWalletOpts = {
+          network,
+          useNativeSegwit,
+          coin,
+          walletPrivKey: credentials.walletPrivKey,
+          singleAddress,
+        };
+
+        await new Promise((resolve, reject) =>
+          bwcClient.createWallet(
+            walletName,
+            copayerName,
+            m,
+            n,
+            createWalletOpts,
+            (err: any, result: any) => {
+              err ? reject(err) : resolve(result);
+            },
+          ),
+        );
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          err.name === 'bwc.ErrorCOPAYER_REGISTERED'
+        ) {
+          dispatch(
+            LogActions.debug(
+              'Created wallet, but copayer already registered in BWS',
+            ),
+          );
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    await new Promise((resolve, reject) =>
+      bwcClient.openWallet({}, (err: any, result: any) => {
+        err ? reject(err) : resolve(result);
+      }),
+    );
+
+    const {currencyAbbreviation, currencyName} = dispatch(
+      mapAbbreviationAndName(
+        bwcClient.credentials.coin,
+        bwcClient.credentials.chain,
+        bwcClient.credentials.token?.address,
+      ),
+    );
+
+    if (!key) {
+      key = buildKeyObj({
+        key: undefined,
+        wallets: [],
+        backupComplete: true,
+        hardwareSource,
+      });
+    }
+
+    const wallet = merge(
+      bwcClient,
+      buildWalletObj({
+        ...bwcClient.credentials,
+        currencyAbbreviation,
+        currencyName,
+        walletName,
+        keyId: key.id,
+        isHardwareWallet: true,
+        hardwareData: {
+          accountPath,
+        },
+      }),
+    ) as Wallet;
+
+    key.wallets.push(wallet);
+
+    dispatch(
+      successCreateKey({
+        key,
+      }),
+    );
+
+    await dispatch(startGetRates({force: true}));
+    await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+    await sleep(1000);
+    await dispatch(updatePortfolioBalance());
+
+    // since we are importing a wallet that was created outside of BWS,
+    // we need to do an initial scan to find any used addresses
+    bwcClient.startScan(
+      {
+        includeCopayerBranches: true,
+      },
+      (err: any) => {
+        if (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(
+            LogActions.error(
+              'An error occurred while starting an address scan:',
+              errMsg,
+            ),
+          );
+        }
+      },
+    );
+
+    dispatch(
+      setHomeCarouselConfig({
+        id: key.id,
+        show: true,
+      }),
+    );
+
+    return wallet;
+  };
+
 export const startImportFile =
   (decryptBackupText: string, opts: Partial<KeyOptions>): Effect =>
   async (dispatch, getState): Promise<Key> => {
@@ -1285,7 +1489,7 @@ export const serverAssistedImport = async (
     try {
       BwcProvider.API.serverAssistedImport(
         opts,
-        {baseUrl: 'https://bws.bitpay.com/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
+        {baseUrl: 'http://192.168.100.2:3232/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
         // @ts-ignore
         async (err, key, wallets) => {
           if (err) {

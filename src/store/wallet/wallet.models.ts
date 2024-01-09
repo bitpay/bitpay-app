@@ -6,6 +6,11 @@ import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
 import {FeeLevels} from './effects/fee/fee';
 
+/**
+ * Currently supported hardware wallet sources.
+ */
+export type SupportedHardwareSource = 'ledger'; // only ledger supported currently
+
 export interface KeyMethods {
   _checkCoin?: Function;
   _checkNetwork?: Function;
@@ -52,6 +57,9 @@ export interface Key {
   keyName?: string;
   hideKeyBalance: boolean;
   isReadOnly: boolean;
+
+  // CLIENT ONLY
+  hardwareSource?: SupportedHardwareSource;
 }
 
 export interface Wallet extends WalletObj, API {}
@@ -116,6 +124,13 @@ export interface WalletObj {
   hideWallet?: boolean;
   hideBalance?: boolean;
   network: Network;
+  isHardwareWallet?: boolean;
+  hardwareData?: {
+    /**
+     * Each wallet imported from a hardware device maps to a specific account path for the wallet's xPubKey
+     */
+    accountPath?: string;
+  };
 }
 
 export interface KeyOptions {
@@ -329,6 +344,11 @@ export interface TransactionProposal {
   requiredRejections: number;
   raw?: string;
   txid?: string;
+  inputPaths: Array<string | null>;
+  changeAddress: {
+    path: string;
+  };
+  network: Network;
 }
 
 export interface ProposalErrorHandlerProps {
@@ -437,4 +457,42 @@ export interface Utxo {
   txid: string;
   vout: number;
   checked?: boolean;
+}
+
+/**
+ * Partial interface for the bitcore-lib Script type representing a
+ * bitcoin transaction script.
+ */
+interface BitcoreScriptLike {
+  /**
+   * Returns the Script data in a Buffer.
+   * @returns Buffer containing the Script data.
+   */
+  toBuffer: () => Buffer;
+}
+
+/**
+ * Partial interface representing a generic bitcore-lib TransactionInput class.
+ */
+interface BitcoreTransactionInputLike {
+  prevTxId: Buffer;
+  outputIndex: number;
+  sequenceNumber: number;
+}
+
+/**
+ * Partial interface representing a generic bitcore-lib TransactionOutput class.
+ */
+interface BitcoreTransactionOutputLike {
+  satoshis: number;
+  script: BitcoreScriptLike;
+}
+
+/**
+ * Partial interface representing a generic bitcore-lib Transaction class.
+ */
+export interface BitcoreTransactionLike {
+  inputs: Array<BitcoreTransactionInputLike>;
+  outputs: Array<BitcoreTransactionOutputLike>;
+  _changeIndex?: number;
 }

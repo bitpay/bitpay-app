@@ -1,0 +1,86 @@
+diff --git a/node_modules/@ledgerhq/hw-app-btc/lib/Btc.d.ts b/node_modules/@ledgerhq/hw-app-btc/lib/Btc.d.ts
+index c949b15..2b47487 100644
+--- a/node_modules/@ledgerhq/hw-app-btc/lib/Btc.d.ts
++++ b/node_modules/@ledgerhq/hw-app-btc/lib/Btc.d.ts
+@@ -78,6 +78,27 @@ export default class Btc {
+         s: string;
+     }>;
+     /**
++     * NOTE: This method has been patched with 2 changes, assuming that most people are
++     * using the main BTC Ledger app, not the BTC LEGACY Ledger app (see lib/BtcNew.js for details;
++     * lib/BtcOld.js has not been patched):
++     * 1) set tx to v1. The BTC Ledger app always uses v2, but as of now BWS only supports v1.
++     * If the user is using the BTC LEGACY Ledger app, it should work as is.
++     * 
++     * 2) add new arg.patch_signatureArray: string[] parameter. This method returns the signed
++     * tx data hex, but we just need the signatures to pass to BWS. We can collect the sigs into
++     * this array and saves us from having to parse the tx data.
++     * 
++     * @example
++     * btc.createPaymentTransaction({
++     *  inputs: [tx1, 1],
++     *  ...
++     *  patch_signatureArray: []
++     * })
++     * 
++     * See lib/BtcNew.js for the actual changes.
++     * 
++     * /END NOTE
++     * 
+      * To sign a transaction involving standard (P2PKH) inputs, call createTransaction with the following parameters
+      * @param inputs is an array of [ transaction, output_index, optional redeem script, optional sequence ] where
+      *
+@@ -102,6 +123,7 @@ export default class Btc {
+      * - "sapling" to indicate a zec transaction is supporting sapling (to be set over block 419200)
+      * @param expiryHeight is an optional Buffer for zec overwinter / sapling Txs
+      * @param useTrustedInputForSegwit trust inputs for segwit transactions. If app version >= 1.4.0 this should be true.
++     * @param patch_signatureArray patched property to extract and store the signatures
+      * @return the signed transaction ready to be broadcast
+      * @example
+     btc.createTransaction({
+diff --git a/node_modules/@ledgerhq/hw-app-btc/lib/BtcNew.js b/node_modules/@ledgerhq/hw-app-btc/lib/BtcNew.js
+index 5d92437..bdb3124 100644
+--- a/node_modules/@ledgerhq/hw-app-btc/lib/BtcNew.js
++++ b/node_modules/@ledgerhq/hw-app-btc/lib/BtcNew.js
+@@ -156,7 +156,7 @@ class BtcNew {
+             }
+             psbt.setGlobalInputCount(inputCount);
+             psbt.setGlobalPsbtVersion(2);
+-            psbt.setGlobalTxVersion(2);
++            psbt.setGlobalTxVersion(1);
+             let notifyCount = 0;
+             const progress = () => {
+                 if (!arg.onDeviceStreaming)
+@@ -223,7 +223,11 @@ class BtcNew {
+                 }
+                 progress();
+             };
+-            yield this.signPsbt(psbt, p, progressCallback);
++
++            /**
++             * Pass in the patch_signatureArray arg to collect the signatures.
++             */
++            yield this.signPsbt(psbt, p, progressCallback, arg.patch_signatureArray);
+             (0, psbtFinalizer_1.finalize)(psbt);
+             const serializedTx = (0, psbtExtractor_1.extract)(psbt);
+             return serializedTx.toString("hex");
+@@ -321,9 +325,18 @@ class BtcNew {
+      * comment in-line. The signatures returned from the hardware device is added
+      * to the appropriate input fields of the PSBT.
+      */
+-    signPsbt(psbt, walletPolicy, progressCallback) {
++    signPsbt(psbt, walletPolicy, progressCallback, patch_signatureArray) {
+         return __awaiter(this, void 0, void 0, function* () {
+             const sigs = yield this.client.signPsbt(psbt, walletPolicy, Buffer.alloc(32, 0), progressCallback);
++
++            /**
++             * Normally the createPaymentTransaction returns the final signed tx data,
++             * but we just need the signatures to pass to BWS. So add them to this array if provided.
++             */
++            if (patch_signatureArray instanceof Array) {
++              sigs.forEach((sig) => patch_signatureArray.push(sig));
++            }
++
+             sigs.forEach((v, k) => {
+                 // Note: Looking at BIP32 derivation does not work in the generic case,
+                 // since some inputs might not have a BIP32-derived pubkey.

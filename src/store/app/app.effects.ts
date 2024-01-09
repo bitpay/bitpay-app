@@ -521,7 +521,7 @@ export const startOnGoingProcessModal =
   async (dispatch, getState: () => RootState) => {
     const store: RootState = getState();
 
-    const _OnGoingProcessMessages = {
+    const translations: Record<OnGoingProcessMessages, string> = {
       GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
       CREATING_KEY: i18n.t('Creating Key'),
       LOGGING_IN: i18n.t('Logging In'),
@@ -563,7 +563,7 @@ export const startOnGoingProcessModal =
     }
 
     // Translate message before show message
-    const _message = _OnGoingProcessMessages[key];
+    const _message = translations[key];
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
 

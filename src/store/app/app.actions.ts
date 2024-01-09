@@ -17,6 +17,11 @@ import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
+export const importLedgerModalToggled = (show: boolean): AppActionType => ({
+  type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
+  payload: show,
+});
+
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
   payload: network,

@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {StyleSheet} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -16,8 +16,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderRightWidth: 0,
-    borderLeftWidth: 0,
+    borderLeftColor: 'rgba(255,255,255,.01)',
+    borderRightColor: 'rgba(255,255,255,.01)',
   },
   secondary: {
     borderTopColor: NotificationPrimary,

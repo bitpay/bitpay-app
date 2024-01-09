@@ -10,7 +10,9 @@ interface Props extends SheetParams {
   children?: any;
 }
 
-const SheetModal: React.FC<Props> = ({
+type SheetModalProps = React.PropsWithChildren<Props>;
+
+const SheetModal: React.FC<SheetModalProps> = ({
   children,
   isVisible,
   onBackdropPress,
