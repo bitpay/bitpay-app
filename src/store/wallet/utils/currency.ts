@@ -49,6 +49,10 @@ export const GetPrecision =
     );
   };
 
+export const IsSegwitCoin = (currencyAbbreviation: string = ''): boolean => {
+  return ['btc', 'ltc'].includes(currencyAbbreviation.toLowerCase());
+};
+
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
   return Object.keys(BitpaySupportedUtxoCoins).includes(
     currencyAbbreviation.toLowerCase(),

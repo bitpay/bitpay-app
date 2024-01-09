@@ -92,7 +92,7 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
-import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {IsERCToken, IsSegwitCoin} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
@@ -232,10 +232,7 @@ const AddWallet = ({
   const singleAddressCurrency =
     BitpaySupportedCoins[currencyAbbreviation?.toLowerCase() as string]
       ?.properties?.singleAddress;
-  const nativeSegwitCurrency = _currencyAbbreviation
-    ? ['btc', 'ltc'].includes(_currencyAbbreviation.toLowerCase())
-    : false;
-
+  const nativeSegwitCurrency = IsSegwitCoin(_currencyAbbreviation);
   const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
   const [evmWallets, setEvmWallets] = useState<Wallet[] | undefined>();
   const [UIFormattedEvmWallets, setUIFormattedEvmWallets] = useState<

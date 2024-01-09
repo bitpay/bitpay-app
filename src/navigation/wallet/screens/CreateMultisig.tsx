@@ -61,6 +61,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
+import {IsSegwitCoin} from '../../../store/wallet/utils/currency';
 
 export interface CreateMultisigParamsList {
   currency: string;
@@ -184,7 +185,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const logger = useLogger();
   const {currency, key} = route.params;
-  const segwitSupported = ['btc', 'ltc'].includes(currency.toLowerCase());
+  const segwitSupported = IsSegwitCoin(currency);
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
   const [options, setOptions] = useState({
