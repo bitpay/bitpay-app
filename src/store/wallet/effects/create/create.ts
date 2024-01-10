@@ -32,6 +32,7 @@ import {
 import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
+import {IsSegwitCoin} from '../../utils/currency';
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -283,7 +284,7 @@ const createMultipleWallets =
           coin: coin.currencyAbbreviation as SupportedCoins,
           options: {
             ...options,
-            useNativeSegwit: ['btc', 'ltc'].includes(coin.currencyAbbreviation),
+            useNativeSegwit: IsSegwitCoin(coin.currencyAbbreviation),
           },
         }),
       )) as Wallet;

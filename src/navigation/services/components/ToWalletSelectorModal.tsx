@@ -68,7 +68,7 @@ import {
   DescriptionRow,
   TokensHeading,
 } from '../../../components/list/CurrencySelectionRow';
-import {IsUtxoCoin} from '../../../store/wallet/utils/currency';
+import {IsSegwitCoin} from '../../../store/wallet/utils/currency';
 import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 
 const ModalHeader = styled.View`
@@ -329,7 +329,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
       },
       options: {
         network: Network.mainnet,
-        useNativeSegwit: IsUtxoCoin(selectedCurrency.currencyAbbreviation),
+        useNativeSegwit: IsSegwitCoin(selectedCurrency.currencyAbbreviation),
         singleAddress: false,
         walletName: undefined,
       },
