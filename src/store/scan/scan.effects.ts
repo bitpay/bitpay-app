@@ -296,23 +296,22 @@ const handleUnlock =
     }
 
     const {host} = new URL(GetPayProUrl(data));
+    const context = getParameterByName('c', data);
 
     try {
       const {data: invoice} = await axios.get(
         `https://${host}/invoiceData/${invoiceId}`,
       );
       if (invoice) {
-        const context = getParameterByName('c', data);
         if (context === 'u') {
           const {
-            data: {
-              invoice: {
-                buyerProvidedInfo: {emailAddress},
-                buyerProvidedEmail,
-                status,
-              },
+            invoice: {
+              buyerProvidedInfo: {emailAddress},
+              buyerProvidedEmail,
+              status,
             },
           } = invoice;
+
           if (emailAddress || buyerProvidedEmail || status !== 'new') {
             dispatch(goToPayPro(data, undefined, undefined, wallet));
           } else {
@@ -325,6 +324,12 @@ const handleUnlock =
         return;
       }
     } catch {}
+
+    if (context === 'u') {
+      dispatch(goToPayPro(data, undefined, undefined, wallet));
+      return;
+    }
+
     switch (result) {
       case 'pairingRequired':
         navigationRef.navigate('Login', {
