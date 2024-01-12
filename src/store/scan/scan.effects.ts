@@ -296,6 +296,8 @@ const handleUnlock =
     }
 
     const {host} = new URL(GetPayProUrl(data));
+
+    // QueryParam c=u is used in BitPay invoice payment URL when BitPayApp is the selected wallet.
     const context = getParameterByName('c', data);
 
     try {
