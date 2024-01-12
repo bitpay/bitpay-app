@@ -5253,12 +5253,12 @@ bitauth@0.4.1:
     bs58 "^2.0.0"
     secp256k1 "3.7.1"
 
-bitcore-lib-cash@^10.0.21:
-  version "10.0.21"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.0.21.tgz#8dac0b99f0538aa5b11f08ea6ffb63f0a0fda3bf"
-  integrity sha512-9dM/p2Z+tWqU+T8Y+QWbHhJO8pFeyVVauPDbXcYco59ZxUMKryz+zPthIzvazCj12wi3SZM1ZqvpmXDafO+IVw==
+bitcore-lib-cash@^10.0.23:
+  version "10.0.23"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.0.23.tgz#e5b57b1e1cf65cc3c892081b62ff6841803c0c10"
+  integrity sha512-fckplbc3HrWThR66RzxSNfWJ2idH4oQFW7omM3tKIlqzStek3kh1a0ky3/VkCz0xIv/8U46x3RgBjDm6KDJIaA==
   dependencies:
-    bitcore-lib "^10.0.21"
+    bitcore-lib "^10.0.23"
     bn.js "=4.11.8"
     bs58 "^4.0.1"
     buffer-compare "=1.1.1"
@@ -5293,10 +5293,10 @@ bitcore-lib-ltc@^10.0.21:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib@^10.0.21:
-  version "10.0.21"
-  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.0.21.tgz#3afb32dca7e5843836d608958bac0a057d57b304"
-  integrity sha512-oYB1BrHjeRHqdrZ+j/cVm+M0XGxRDDjDiX4wP9QWQGAZkvS6DQGeNIndwS7m7BA18H76PJRhBM+DrSV2medpXg==
+bitcore-lib@^10.0.23:
+  version "10.0.23"
+  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.0.23.tgz#04c25b8e0394b17c61380a5b681b572940e904bf"
+  integrity sha512-HnwdOAXfwNJqia6SW7feAeh7fDwk7p21XXo32uTqhWzYDJ2MkalpTerl8hM5o6xYHWEIaY5rxCSaQMhKvQLXOg==
   dependencies:
     bech32 "=2.0.0"
     bip-schnorr "=0.6.4"
@@ -5307,24 +5307,24 @@ bitcore-lib@^10.0.21:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-mnemonic@^10.0.21:
-  version "10.0.21"
-  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.0.21.tgz#26f3dc8e52a23ea88ee0b63494506051688cc474"
-  integrity sha512-98zbb49nBcQkt0jaK+11zQuHokiy+seVwb7K1CHMq7vA1c5E4knejs8u9qZ8WiB8W1H7MHYBCtvfFr76VhHlHA==
+bitcore-mnemonic@^10.0.23:
+  version "10.0.23"
+  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.0.23.tgz#528b31c0f59de52bd19fd4ef1a01396d1e31bd3f"
+  integrity sha512-d7zyDMB0QlHA0XdhIS6IwGWDcr+K1jTfgyk5xlNcFQ3NpEqCHzXrxLs537Z4Ejm4lFf6EZItkQXFZtYvkJuFhw==
   dependencies:
-    bitcore-lib "^10.0.21"
+    bitcore-lib "^10.0.23"
     unorm "^1.4.1"
 
-bitcore-wallet-client@10.0.21:
-  version "10.0.21"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.0.21.tgz#c1e3ff9fdd403ba71963da7548b68cea76d05dfc"
-  integrity sha512-cLSaF1tdXDS7xtpQ1gubtxkAif2tAOSQbYaEnuNHcjh0YIQmgSgv61sPkRCDyIpeFZpaTam7Vd/0/Bn3oXgNIw==
+bitcore-wallet-client@10.0.26:
+  version "10.0.26"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.0.26.tgz#6ccf7416742ea6c25117b292d6bc91e9dd74da72"
+  integrity sha512-Q8MCOhKBuoNb8c8GsmuW/2veSveKYkVptTy/Sy8tqTvVOgwjVm/n1zuU5msV8FvWz5tDxeR2f+Ea4zg7xUSUsw==
   dependencies:
     ajv "6.12.0"
     async "0.9.2"
     bip38 "1.4.0"
-    bitcore-mnemonic "^10.0.21"
-    crypto-wallet-core "^10.0.21"
+    bitcore-mnemonic "^10.0.23"
+    crypto-wallet-core "^10.0.24"
     json-stable-stringify "1.0.1"
     lodash "4.17.20"
     preconditions "2.2.3"
@@ -6473,13 +6473,13 @@ crypto-js@3.1.9-1:
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
   integrity sha512-W93aKztssqf29OvUlqfikzGyYbD1rpkXvGP9IQ1JchLY3bxaLXZSWYbwrtib2vk8DobrDzX7PIXcDWHp0B6Ymw==
 
-crypto-wallet-core@^10.0.21:
-  version "10.0.21"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.0.21.tgz#4c410f04a1d93fb81f09591bff6b82f8d1aa2bb3"
-  integrity sha512-Ylwv3PQ/3j/v9LHK+boLbbCrtnnLjA1j91JK0o1YKdWLXedFZqg8HewudCd6bNCJRlnY6sswFMk28vFcEkhjfw==
+crypto-wallet-core@^10.0.24:
+  version "10.0.24"
+  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.0.24.tgz#4ed92d133499928251b456e2b61aa5b5f7cde7d0"
+  integrity sha512-8+NIHjwoSHYBrBTj3zZFYIblZWZH2g6nDWCVDeiLuzf+uUg+gFldTNUJz1yVU/UhRjgBppJCJrB/qb8zWilSbw==
   dependencies:
-    bitcore-lib "^10.0.21"
-    bitcore-lib-cash "^10.0.21"
+    bitcore-lib "^10.0.23"
+    bitcore-lib-cash "^10.0.23"
     bitcore-lib-doge "^10.0.21"
     bitcore-lib-ltc "^10.0.21"
     ethers "^5.7.0"
