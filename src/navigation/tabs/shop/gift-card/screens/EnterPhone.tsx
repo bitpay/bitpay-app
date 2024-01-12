@@ -1,9 +1,9 @@
 import yup from '../../../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, View} from 'react-native';
+import {Keyboard, View, TouchableOpacity} from 'react-native';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
@@ -14,10 +14,9 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../../../../auth/components/AuthFormContainer';
 import RemoteImage from '../../components/RemoteImage';
-import {GiftCardStackParamList} from '../GiftCardStack';
+import {GiftCardGroupParamList} from '../GiftCardGroup';
 
 import {BaseText} from '../../../../../components/styled/Text';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {AppActions} from '../../../../../store/app';
 import PhoneCountryModal from '../../components/PhoneCountryModal';
 import {
@@ -25,6 +24,7 @@ import {
   PhoneCountryCode,
 } from '../../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
+import {ActiveOpacity} from '../../../../../components/styled/Containers';
 
 function getPhoneMask(phoneCountryCode: string) {
   const usMask = '([000]) [000]-[0000]';
@@ -80,7 +80,7 @@ interface PhoneFormFieldValues {
 
 const EnterPhone = ({
   route,
-}: StackScreenProps<GiftCardStackParamList, 'EnterPhone'>) => {
+}: NativeStackScreenProps<GiftCardGroupParamList, 'EnterPhone'>) => {
   const basePhoneSchema = yup.string().required();
   const usPhoneSchema = basePhoneSchema.min(10, t('Must be exactly 10 digits'));
   const intlPhoneSchema = basePhoneSchema.max(
@@ -175,7 +175,8 @@ const EnterPhone = ({
                 }
                 prefix={() => (
                   <AreaCodeContainer>
-                    <TouchableWithoutFeedback
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
                       onPress={() => {
                         (cardConfig.allowedPhoneCountries || []).length === 1
                           ? dispatch(
@@ -192,7 +193,7 @@ const EnterPhone = ({
                         />
                         <AreaCode>+{selectedPhoneCountryCode.phone}</AreaCode>
                       </View>
-                    </TouchableWithoutFeedback>
+                    </TouchableOpacity>
                   </AreaCodeContainer>
                 )}
                 error={

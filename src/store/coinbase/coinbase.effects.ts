@@ -38,14 +38,17 @@ import {
   CoinbaseAccountProps,
   CoinbaseErrorsProps,
   CoinbaseExchangeRatesProps,
+  CoinbaseTokenProps,
   CoinbaseTransactionsByAccountProps,
+  CoinbaseTransactionsProps,
 } from '../../api/coinbase/coinbase.types';
 import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
 
 import {SupportedCurrencyOptions} from '../../constants/SupportedCurrencyOptions';
 import {LogActions} from '../log';
 import {setHomeCarouselConfig} from '../app/app.actions';
-import {logSegmentEvent} from '../app/app.effects';
+import {getCurrencyCodeFromCoinAndChain} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
+import {Analytics} from '../analytics/analytics.effects';
 
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   return error?.errors?.some(err => err.id === 'revoked_token');
@@ -90,6 +93,16 @@ export const coinbaseParseErrorToString = (
     return 'Network Error';
   }
 };
+
+export const getTransactionCurrencyForPayInvoice =
+  (currency: string): Effect<string> =>
+  (dispatch, getState) => {
+    const {COINBASE} = getState();
+    return getCurrencyCodeFromCoinAndChain(
+      currency,
+      COINBASE.blockchainNetwork,
+    );
+  };
 
 export const coinbaseInitialize =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
@@ -154,7 +167,7 @@ export const coinbaseLinkAccount =
       dispatch(setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}));
       dispatch(coinbaseGetAccountsAndBalance());
       dispatch(
-        logSegmentEvent('track', 'Connected Wallet', {
+        Analytics.track('Connected Wallet', {
           source: 'coinbase',
         }),
       );
@@ -191,6 +204,7 @@ export const coinbaseRefreshToken =
           'coinbaseRefreshToken: ' + coinbaseParseErrorToString(error),
         ),
       );
+      dispatch(coinbaseDisconnectAccount());
     }
   };
 
@@ -349,12 +363,28 @@ export const coinbaseGetAccountsAndBalance =
   };
 
 export const coinbaseGetTransactionsByAccount =
-  (accountId: string): Effect<Promise<any>> =>
+  (
+    accountId: string,
+    forceUpdate?: boolean,
+    nextStartingAfter?: string,
+  ): Effect<Promise<any>> =>
   async (dispatch, getState) => {
     const {COINBASE} = getState();
+    const token = COINBASE.token[COINBASE_ENV];
+    let transactionsFromStorage =
+      COINBASE.transactions[COINBASE_ENV]?.[accountId];
 
-    if (!COINBASE.token[COINBASE_ENV]) {
+    if (!token) {
       return;
+    }
+
+    // Read from cache
+    if (!forceUpdate && !nextStartingAfter && transactionsFromStorage) {
+      return;
+    }
+
+    if (forceUpdate) {
+      nextStartingAfter = undefined;
     }
 
     try {
@@ -362,11 +392,22 @@ export const coinbaseGetTransactionsByAccount =
         LogActions.debug('coinbaseGetTransactionsByAccount: starting...'),
       );
       dispatch(transactionsPending());
-      const transactions = await CoinbaseAPI.getTransactions(
+      const _transactionsFromApi = await getTransactionsByAccount(
         accountId,
-        COINBASE.token[COINBASE_ENV],
+        token,
+        nextStartingAfter || null,
       );
-      dispatch(transactionsSuccess(COINBASE_ENV, accountId, transactions));
+      if (transactionsFromStorage && nextStartingAfter) {
+        const dataFromStorage = transactionsFromStorage.data;
+        const allData = dataFromStorage.concat(_transactionsFromApi.data);
+        transactionsFromStorage.data = [...new Set(allData.flat())]; // Prevent duplicated values
+        transactionsFromStorage.pagination = _transactionsFromApi.pagination;
+      } else {
+        transactionsFromStorage = _transactionsFromApi;
+      }
+      dispatch(
+        transactionsSuccess(COINBASE_ENV, accountId, transactionsFromStorage),
+      );
       dispatch(LogActions.debug('coinbaseGetTransactionsByAccount: success'));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
@@ -398,6 +439,25 @@ export const coinbaseGetTransactionsByAccount =
       }
     }
   };
+
+const getTransactionsByAccount = (
+  accountId: string,
+  token: CoinbaseTokenProps,
+  nextStartingAfter?: string | null,
+): Promise<CoinbaseTransactionsProps> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const transactions = await CoinbaseAPI.getTransactions(
+        accountId,
+        token,
+        nextStartingAfter,
+      );
+      return resolve(transactions);
+    } catch (error: CoinbaseErrorsProps | any) {
+      return reject(error);
+    }
+  });
+};
 
 export const coinbaseCreateAddress =
   (accountId: string): Effect<Promise<string | undefined>> =>
@@ -465,7 +525,7 @@ export const coinbaseSendTransaction =
       );
       dispatch(sendTransactionSuccess());
       dispatch(
-        logSegmentEvent('track', 'Sent Crypto', {
+        Analytics.track('Sent Crypto', {
           context: 'Coinbase Withdraw Confirm',
           coin: tx?.currency || '',
         }),
@@ -512,12 +572,16 @@ export const coinbasePayInvoice =
       return;
     }
 
+    const transactionCurrency = dispatch(
+      getTransactionCurrencyForPayInvoice(currency),
+    );
+
     try {
       dispatch(LogActions.info('coinbasePayInvoice: starting...'));
       dispatch(payInvoicePending());
       await CoinbaseAPI.payInvoice(
         invoiceId,
-        currency,
+        transactionCurrency,
         COINBASE.token[COINBASE_ENV],
         code,
       );

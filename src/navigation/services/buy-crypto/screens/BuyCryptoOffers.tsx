@@ -1,59 +1,73 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
+import {ActivityIndicator, ScrollView} from 'react-native';
+import uuid from 'react-native-uuid';
 import styled from 'styled-components/native';
-import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
+import {
+  RouteProp,
+  useRoute,
+  useNavigation,
+  StackActions,
+} from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {
-  BaseText,
-  Link,
-  H5,
-  H7,
-  Small,
-} from '../../../../components/styled/Text';
+import {BaseText, H5, H7, Small} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import BanxaLogo from '../../../../components/icons/external-services/banxa/banxa-logo';
+import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
+import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
+import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
-import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
-import {
-  Black,
-  SlateDark,
-  ProgressBlue,
-  White,
-  LuckySevens,
-} from '../../../../styles/colors';
+import {Black, SlateDark, ProgressBlue, White} from '../../../../styles/colors';
 import {
   getPaymentUrl,
-  getSimplexFiatAmountLimits,
   simplexPaymentRequest,
   simplexEnv,
   getSimplexCoinFormat,
 } from '../utils/simplex-utils';
-import {
-  getWyreCoinFormat,
-  getWyreFiatAmountLimits,
-  wyreEnv,
-} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
-import {
-  logSegmentEvent,
-  openUrlWithInAppBrowser,
-} from '../../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
-import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
+import {
+  BanxaCreateOrderData,
+  BanxaCreateOrderRequestData,
+  BanxaGetQuoteRequestData,
+  BanxaOrderData,
+  BanxaPaymentData,
+  BanxaQuoteData,
+  BuyCryptoLimits,
+  MoonpayGetCurrencyLimitsRequestData,
+  MoonpayPaymentData,
+  RampGetAssetsData,
+  RampGetAssetsRequestData,
+  RampPaymentData,
+  RampPaymentUrlConfigParams,
+  RampQuoteRequestData,
+  RampQuoteResultForPaymentMethod,
+  SardineGetAuthTokenRequestData,
+  SardineGetQuoteRequestData,
+  SardinePaymentUrlConfigParams,
+  SimplexGetQuoteRequestData,
+  SimplexPaymentData,
+} from '../../../../store/buy-crypto/buy-crypto.models';
 import {
   calculateAltFiatToUsd,
-  calculateUsdToAltFiat,
+  getBuyCryptoFiatLimits,
 } from '../../../../store/buy-crypto/buy-crypto.effects';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {APP_DEEPLINK_PREFIX} from '../../../../constants/config';
 import {
+  APP_DEEPLINK_PREFIX,
+  APP_NAME_UPPERCASE,
+  APP_NETWORK,
+} from '../../../../constants/config';
+import {
+  BuyCryptoExchangeKey,
+  BuyCryptoSupportedExchanges,
   getAvailableFiatCurrencies,
   isPaymentMethodSupported,
 } from '../utils/buy-crypto-utils';
@@ -65,8 +79,46 @@ import {
 } from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import {useTranslation} from 'react-i18next';
+import {
+  banxaEnv,
+  getBanxaChainFormat,
+  getBanxaCoinFormat,
+  getBanxaFiatAmountLimits,
+  getBanxaSelectedPaymentMethodData,
+} from '../utils/banxa-utils';
+import {
+  getMoonpayFixedCurrencyAbbreviation,
+  moonpayEnv,
+} from '../utils/moonpay-utils';
+import {
+  getRampDefaultOfferData,
+  getRampCoinFormat,
+  rampEnv,
+} from '../utils/ramp-utils';
+import BanxaTerms from '../components/terms/banxaTerms';
+import MoonpayTerms from '../components/terms/MoonpayTerms';
+import RampTerms from '../components/terms/RampTerms';
+import SardineTerms from '../components/terms/SardineTerms';
+import SimplexTerms from '../components/terms/SimplexTerms';
+import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
+import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {AppActions} from '../../../../store/app';
+import {banxaGetPaymentMethods} from '../../../../store/buy-crypto/effects/banxa/banxa';
+import {moonpayGetCurrencyLimits} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
+import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
+import {
+  getSardineChainFormat,
+  getSardineCoinFormat,
+  getSardinePaymentMethodFormat,
+  sardineEnv,
+} from '../utils/sardine-utils';
+import {
+  sardineGetCurrencyLimits,
+  sardineGetSignedPaymentUrl,
+} from '../../../../store/buy-crypto/effects/sardine/sardine';
 
-export interface BuyCryptoOffersProps {
+export type BuyCryptoOffersScreenParams = {
   amount: number;
   fiatCurrency: string;
   coin: string;
@@ -74,23 +126,16 @@ export interface BuyCryptoOffersProps {
   country: string;
   selectedWallet: Wallet;
   paymentMethod: PaymentMethod;
-}
-
-interface SimplexGetQuoteRequestData {
-  digital_currency: string;
-  fiat_currency: string;
-  requested_currency: string;
-  requested_amount: number;
-  end_user_id: string;
-  env: 'sandbox' | 'production';
-  payment_methods?: string[];
-}
+  buyCryptoConfig: BuyCryptoConfig | undefined;
+  preSetPartner?: BuyCryptoExchangeKey | undefined;
+};
 
 export type CryptoOffer = {
-  key: 'simplex' | 'wyre';
+  key: BuyCryptoExchangeKey;
   showOffer: boolean;
   logo: JSX.Element;
   expanded: boolean;
+  buyClicked: boolean;
   fiatCurrency: string;
   fiatAmount: number;
   amountCost?: number;
@@ -98,11 +143,17 @@ export type CryptoOffer = {
   fee?: number;
   fiatMoney?: string; // Rate without fees
   amountReceiving?: string;
-  amountLimits?: any;
+  amountReceivingUnit?: string; // Ramp
+  amountLimits?: BuyCryptoLimits;
   errorMsg?: string;
-  quoteData?: any; // Simplex
+  quoteData?: any; // Banxa | Moonpay | Ramp | Sardine | Simplex
+  paymentMethodId?: number; // Banxa
   outOfLimitMsg?: string;
 };
+
+const BuyCryptoOffersContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const SummaryRow = styled.View`
   display: flex;
@@ -172,19 +223,33 @@ const OfferDataContainer = styled.View`
   flex-direction: column;
 `;
 
-const OfferDataCryptoAmount = styled(H5)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
+const BestOfferTagContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 5px;
+`;
+const BestOfferTag = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? '#2FCFA4' : '#cbf3e8')};
+  border-radius: 50px;
+  height: 25px;
+  padding: 5px 10px;
 `;
 
-const OfferDataRate = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+const BestOfferTagText = styled(Small)`
+  color: ${Black};
+`;
+
+const OfferDataCryptoAmount = styled(H5)`
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
 
 const OfferDataInfoContainer = styled.View`
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 10px;
 `;
 
 const OfferDataInfoLabel = styled(H7)`
@@ -232,31 +297,65 @@ const OfferDataRightContainer = styled.View`
   align-items: flex-end;
 `;
 
-const TermsContainer = styled.View`
-  padding: 0 20px;
-  margin-top: 20px;
-  margin-bottom: 40px;
-`;
-
-const ExchangeTermsContainer = styled.View`
-  padding: 0 0 10px 0;
-`;
-
-const TermsText = styled(Small)`
-  line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-`;
-
-const ExchangeTermsText = styled(BaseText)`
-  font-size: 11px;
-  line-height: 20px;
-  color: ${LuckySevens};
-`;
-
 const offersDefault: {
+  banxa: CryptoOffer;
+  moonpay: CryptoOffer;
+  ramp: CryptoOffer;
+  sardine: CryptoOffer;
   simplex: CryptoOffer;
-  wyre: CryptoOffer;
 } = {
+  banxa: {
+    key: 'banxa',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <BanxaLogo width={70} height={20} />,
+    expanded: false,
+    buyClicked: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  moonpay: {
+    key: 'moonpay',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <MoonpayLogo widthIcon={25} heightIcon={25} />,
+    expanded: false,
+    buyClicked: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  ramp: {
+    key: 'ramp',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <RampLogo width={70} height={20} />,
+    expanded: false,
+    buyClicked: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  sardine: {
+    key: 'sardine',
+    amountReceiving: '0',
+    showOffer: true,
+    logo: <SardineLogo width={70} height={20} />,
+    expanded: false,
+    buyClicked: false,
+    fiatCurrency: 'USD',
+    fiatAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
   simplex: {
     key: 'simplex',
     amountReceiving: '0',
@@ -270,18 +369,7 @@ const offersDefault: {
       />
     ),
     expanded: false,
-    fiatCurrency: 'USD',
-    fiatAmount: 0,
-    fiatMoney: undefined,
-    errorMsg: undefined,
-    outOfLimitMsg: undefined,
-  },
-  wyre: {
-    key: 'wyre',
-    amountReceiving: '0',
-    showOffer: true,
-    logo: <WyreLogo width={70} height={20} />,
-    expanded: false,
+    buyClicked: false,
     fiatCurrency: 'USD',
     fiatAmount: 0,
     fiatMoney: undefined,
@@ -300,68 +388,875 @@ const BuyCryptoOffers: React.FC = () => {
       country,
       selectedWallet,
       paymentMethod,
+      buyCryptoConfig,
+      preSetPartner,
     },
-  } = useRoute<RouteProp<{params: BuyCryptoOffersProps}>>();
+  }: {params: BuyCryptoOffersScreenParams} =
+    useRoute<RouteProp<{params: BuyCryptoOffersScreenParams}>>();
   const {t} = useTranslation();
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
 
-  offersDefault.simplex.fiatCurrency = getAvailableFiatCurrencies(
-    'simplex',
-  ).includes(fiatCurrency)
-    ? fiatCurrency
-    : 'USD';
-  offersDefault.wyre.fiatCurrency = getAvailableFiatCurrencies('wyre').includes(
-    fiatCurrency,
-  )
-    ? fiatCurrency
-    : 'USD';
-  offersDefault.simplex.showOffer = isPaymentMethodSupported(
-    'simplex',
-    paymentMethod,
-    coin,
-    chain,
-    offersDefault.simplex.fiatCurrency,
-  );
-  offersDefault.wyre.showOffer = isPaymentMethodSupported(
-    'wyre',
-    paymentMethod,
-    coin,
-    chain,
-    offersDefault.wyre.fiatCurrency,
-  );
+  BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
+    if (offersDefault[exchange]) {
+      offersDefault[exchange].fiatCurrency = getAvailableFiatCurrencies(
+        exchange,
+      ).includes(fiatCurrency)
+        ? fiatCurrency
+        : 'USD';
+
+      if (
+        preSetPartner &&
+        BuyCryptoSupportedExchanges.includes(preSetPartner)
+      ) {
+        offersDefault[exchange].showOffer =
+          preSetPartner === exchange
+            ? isPaymentMethodSupported(
+                preSetPartner,
+                paymentMethod,
+                coin,
+                chain,
+                offersDefault[preSetPartner].fiatCurrency,
+                country,
+              ) &&
+              (!buyCryptoConfig?.[preSetPartner] ||
+                !buyCryptoConfig?.[preSetPartner]?.removed)
+            : false;
+      } else {
+        offersDefault[exchange].showOffer =
+          isPaymentMethodSupported(
+            exchange,
+            paymentMethod,
+            coin,
+            chain,
+            offersDefault[exchange].fiatCurrency,
+            country,
+          ) &&
+          (!buyCryptoConfig?.[exchange] ||
+            !buyCryptoConfig?.[exchange]?.removed);
+      }
+    }
+  });
+
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
+  const [openingBrowser, setOpeningBrowser] = useState(false);
+  const [finishedBanxa, setFinishedBanxa] = useState(false);
+  const [finishedMoonpay, setFinishedMoonpay] = useState(false);
+  const [finishedRamp, setFinishedRamp] = useState(false);
+  const [finishedSardine, setFinishedSardine] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
-  const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
+
+  const getBanxaQuote = async (): Promise<void> => {
+    logger.debug('Banxa getting quote');
+
+    if (buyCryptoConfig?.banxa?.disabled) {
+      let err = buyCryptoConfig?.banxa?.disabledMessage
+        ? buyCryptoConfig?.banxa?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'banxaGetQuote Error. Exchange disabled from config.';
+      showBanxaError(err, reason);
+      return;
+    }
+
+    offers.banxa.fiatAmount =
+      offers.banxa.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    try {
+      // Banxa getPaymentMethods to validate pairs and get currency limits (banxaGetCurrencyLimits)
+      const banxaPaymentMethods = await banxaGetPaymentMethods({
+        env: banxaEnv,
+        source: offers.banxa.fiatCurrency,
+        target: getBanxaCoinFormat(coin),
+      });
+
+      if (
+        !banxaPaymentMethods?.data?.payment_methods ||
+        banxaPaymentMethods.errors
+      ) {
+        const msg = t(
+          'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
+          {
+            coin: coin.toUpperCase(),
+            fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
+            paymentMethod: paymentMethod.label,
+          },
+        );
+        const reason =
+          'banxaGetPaymentMethods Error: No banxaPaymentMethods data';
+        showBanxaError(msg, reason);
+        setFinishedBanxa(!finishedBanxa);
+        return;
+      }
+
+      const banxaSelectedPaymentMethodData = getBanxaSelectedPaymentMethodData(
+        banxaPaymentMethods.data.payment_methods,
+        paymentMethod,
+      );
+
+      if (!banxaSelectedPaymentMethodData) {
+        const msg = t(
+          'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
+          {
+            coin: coin.toUpperCase(),
+            fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
+            paymentMethod: paymentMethod.label,
+          },
+        );
+        const reason =
+          'banxaGetPaymentMethods Error: No banxaSelectedPaymentMethodData';
+        showBanxaError(msg, reason);
+        setFinishedBanxa(!finishedBanxa);
+        return;
+      }
+
+      offers.banxa.paymentMethodId = banxaSelectedPaymentMethodData.id;
+
+      const banxaCurrencyLimitsData =
+        banxaSelectedPaymentMethodData.transaction_limits.find(
+          tx_limit =>
+            tx_limit.fiat_code.toUpperCase() ===
+            offers.banxa.fiatCurrency.toUpperCase(),
+        );
+
+      offers.banxa.amountLimits = {
+        min: banxaCurrencyLimitsData
+          ? Number(banxaCurrencyLimitsData.min)
+          : getBanxaFiatAmountLimits().min,
+        max: banxaCurrencyLimitsData
+          ? Number(banxaCurrencyLimitsData.max)
+          : getBanxaFiatAmountLimits().max,
+      };
+    } catch (err) {
+      logger.debug(
+        'Error getting Banxa transaction limits. Setting default values.',
+      );
+      offers.banxa.amountLimits = dispatch(
+        getBuyCryptoFiatLimits('banxa', offers.banxa.fiatCurrency),
+      );
+    }
+
+    if (
+      (offers.banxa.amountLimits?.min &&
+        offers.banxa.fiatAmount < offers.banxa.amountLimits.min) ||
+      (offers.banxa.amountLimits?.max &&
+        offers.banxa.fiatAmount > offers.banxa.amountLimits.max)
+    ) {
+      offers.banxa.outOfLimitMsg = t(
+        'There are no Banxa offers available, as the current purchase limits for this exchange must be between and',
+        {
+          min: offers.banxa.amountLimits.min,
+          max: offers.banxa.amountLimits.max,
+          fiatCurrency: offers.banxa.fiatCurrency,
+        },
+      );
+      setFinishedBanxa(!finishedBanxa);
+      return;
+    } else {
+      const requestData: BanxaGetQuoteRequestData = {
+        env: banxaEnv,
+        source: offers.banxa.fiatCurrency,
+        target: getBanxaCoinFormat(coin),
+        source_amount: offers.banxa.fiatAmount,
+        payment_method_id: offers.banxa.paymentMethodId,
+        account_reference: user?.eid ?? selectedWallet.id,
+        blockchain: getBanxaChainFormat(selectedWallet.chain),
+      };
+
+      selectedWallet
+        .banxaGetQuote(requestData)
+        .then((quoteData: BanxaQuoteData) => {
+          if (quoteData?.data?.prices?.[0]?.coin_amount) {
+            const data = quoteData.data.prices[0];
+
+            offers.banxa.outOfLimitMsg = undefined;
+            offers.banxa.errorMsg = undefined;
+            offers.banxa.quoteData = data;
+            offers.banxa.amountCost = Number(data.fiat_amount);
+            offers.banxa.fee =
+              Number(data.fee_amount) + Number(data.network_fee);
+            offers.banxa.buyAmount = offers.banxa.amountCost - offers.banxa.fee;
+
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
+            if (offers.banxa.buyAmount && coin && precision) {
+              offers.banxa.fiatMoney = Number(
+                offers.banxa.buyAmount / Number(data.coin_amount),
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(`Banxa error: Could not get precision for ${coin}`);
+            }
+            offers.banxa.amountReceiving = Number(data.coin_amount).toString();
+            logger.debug('Banxa getting quote: SUCCESS');
+            setFinishedBanxa(!finishedBanxa);
+          } else {
+            if (quoteData.message && typeof quoteData.message === 'string') {
+              logger.error('Banxa error: ' + quoteData.message);
+            }
+            if (quoteData.error && typeof quoteData.error === 'string') {
+              logger.error('Banxa error: ' + quoteData.error);
+            }
+            if (quoteData.errors) {
+              logger.error(JSON.stringify(quoteData.errors));
+            }
+            let err = t(
+              "Can't get rates at this moment. Please try again later",
+            );
+            const reason = 'banxaGetQuote Error. "coin_amount" not included.';
+            showBanxaError(err, reason);
+          }
+        })
+        .catch((err: any) => {
+          const reason = 'banxaGetQuote Error';
+          showBanxaError(err, reason);
+        });
+    }
+  };
+
+  const showBanxaError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Banxa error: ' + msg);
+
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'banxa',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.banxa.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.banxa.fiatCurrency || '',
+      }),
+    );
+
+    offers.banxa.errorMsg = msg;
+    offers.banxa.fiatMoney = undefined;
+    offers.banxa.expanded = false;
+    setUpdateView(!updateView);
+  };
+
+  const getMoonpayQuote = async (): Promise<void> => {
+    logger.debug('Moonpay getting quote');
+
+    if (buyCryptoConfig?.moonpay?.disabled) {
+      let err = buyCryptoConfig?.moonpay?.disabledMessage
+        ? buyCryptoConfig?.moonpay?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'moonpayGetQuote Error. Exchange disabled from config.';
+      showMoonpayError(err, reason);
+      return;
+    }
+
+    let _paymentMethod: string | undefined;
+    switch (paymentMethod.method) {
+      case 'debitCard':
+      case 'creditCard':
+        _paymentMethod = 'credit_debit_card';
+        break;
+      case 'sepaBankTransfer':
+        _paymentMethod = 'sepa_bank_transfer';
+        // Moonpay only accepts EUR as a base currency for SEPA payments
+        offers.moonpay.fiatCurrency = 'EUR';
+        break;
+      case 'applePay':
+        _paymentMethod = 'mobile_wallet';
+        break;
+      default:
+        _paymentMethod = undefined;
+        break;
+    }
+
+    offers.moonpay.fiatAmount =
+      offers.moonpay.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    const currencyLimitsrequestData: MoonpayGetCurrencyLimitsRequestData = {
+      currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
+        coin.toLowerCase(),
+        selectedWallet.chain,
+      ),
+      baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
+      paymentMethod: _paymentMethod,
+      areFeesIncluded: true,
+      env: moonpayEnv,
+    };
+
+    try {
+      const moonpayCurrencyLimitsData = await moonpayGetCurrencyLimits(
+        currencyLimitsrequestData,
+      );
+      offers.moonpay.amountLimits = {
+        min: moonpayCurrencyLimitsData.baseCurrency.minBuyAmount,
+        max: moonpayCurrencyLimitsData.baseCurrency.maxBuyAmount,
+      };
+
+      if (
+        (offers.moonpay.amountLimits.min &&
+          offers.moonpay.fiatAmount < offers.moonpay.amountLimits.min) ||
+        (offers.moonpay.amountLimits.max &&
+          offers.moonpay.fiatAmount > offers.moonpay.amountLimits.max)
+      ) {
+        offers.moonpay.outOfLimitMsg = t(
+          'There are no Moonpay offers available, as the current purchase limits for this exchange must be between and',
+          {
+            min: offers.moonpay.amountLimits.min,
+            max: offers.moonpay.amountLimits.max,
+            fiatCurrency: offers.moonpay.fiatCurrency,
+          },
+        );
+        setFinishedMoonpay(!finishedMoonpay);
+        return;
+      }
+    } catch (err) {
+      logger.warn(
+        `It was not possible to get currency limits for Moonpay with the following values: ${JSON.stringify(
+          currencyLimitsrequestData,
+        )}`,
+      );
+    }
+
+    const requestData = {
+      currencyAbbreviation: getMoonpayFixedCurrencyAbbreviation(
+        coin.toLowerCase(),
+        selectedWallet.chain,
+      ),
+      baseCurrencyAmount: offers.moonpay.fiatAmount,
+      // extraFeePercentage: 0, // min: 0 max: 10. If not provided, will use the default value set to our account.
+      baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
+      paymentMethod: _paymentMethod,
+      areFeesIncluded: true,
+      env: moonpayEnv,
+    };
+
+    selectedWallet
+      .moonpayGetQuote(requestData)
+      .then(data => {
+        if (data?.baseCurrencyAmount) {
+          offers.moonpay.amountLimits = {
+            min: data.baseCurrency.minBuyAmount,
+            max: data.baseCurrency.maxBuyAmount,
+          };
+
+          if (
+            (offers.moonpay.amountLimits.min &&
+              offers.moonpay.fiatAmount < offers.moonpay.amountLimits.min) ||
+            (offers.moonpay.amountLimits.max &&
+              offers.moonpay.fiatAmount > offers.moonpay.amountLimits.max)
+          ) {
+            offers.moonpay.outOfLimitMsg = t(
+              'There are no Moonpay offers available, as the current purchase limits for this exchange must be between and',
+              {
+                min: offers.moonpay.amountLimits.min,
+                max: offers.moonpay.amountLimits.max,
+                fiatCurrency: offers.moonpay.fiatCurrency,
+              },
+            );
+            setFinishedMoonpay(!finishedMoonpay);
+            return;
+          } else {
+            offers.moonpay.outOfLimitMsg = undefined;
+            offers.moonpay.errorMsg = undefined;
+            offers.moonpay.quoteData = data;
+            offers.moonpay.amountCost = data.totalAmount;
+            offers.moonpay.buyAmount = data.baseCurrencyAmount;
+            offers.moonpay.fee =
+              Number(data.totalAmount) - Number(data.baseCurrencyAmount);
+
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
+            if (offers.moonpay.buyAmount && coin && precision) {
+              offers.moonpay.fiatMoney = Number(
+                offers.moonpay.buyAmount / data.quoteCurrencyAmount,
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(
+                `Moonpay error: Could not get precision for ${coin}`,
+              );
+            }
+            offers.moonpay.amountReceiving =
+              data.quoteCurrencyAmount.toString();
+            logger.debug('Moonpay getting quote: SUCCESS');
+            setFinishedMoonpay(!finishedMoonpay);
+          }
+        } else {
+          if (!data) {
+            logger.error('Moonpay error: No data received');
+          }
+          if (data.message && typeof data.message === 'string') {
+            logger.error('Moonpay error: ' + data.message);
+          }
+          if (data.error && typeof data.error === 'string') {
+            logger.error('Moonpay error: ' + data.error);
+          }
+          if (data.errors) {
+            logger.error(data.errors);
+          }
+          let err = t("Can't get rates at this moment. Please try again later");
+          const reason = 'moonpayGetQuote Error. Necessary data not included.';
+          showMoonpayError(err, reason);
+        }
+      })
+      .catch(err => {
+        const reason = 'moonpayGetQuote Error';
+        showMoonpayError(err, reason);
+      });
+  };
+
+  const showMoonpayError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Moonpay error: ' + msg);
+
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'moonpay',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.moonpay.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.moonpay.fiatCurrency || '',
+      }),
+    );
+
+    offers.moonpay.errorMsg = msg;
+    offers.moonpay.fiatMoney = undefined;
+    offers.moonpay.expanded = false;
+    setUpdateView(!updateView);
+  };
+
+  const getRampQuote = async (): Promise<void> => {
+    logger.debug('Ramp getting quote');
+
+    if (buyCryptoConfig?.ramp?.disabled) {
+      let err = buyCryptoConfig?.ramp?.disabledMessage
+        ? buyCryptoConfig?.ramp?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'rampGetQuote Error. Exchange disabled from config.';
+      showRampError(err, reason);
+      return;
+    }
+
+    offers.ramp.fiatAmount =
+      offers.ramp.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    const getAssetsRequestData: RampGetAssetsRequestData = {
+      env: rampEnv,
+      currencyCode: offers.ramp.fiatCurrency.toUpperCase(),
+      withDisabled: false,
+      withHidden: false,
+      useIp: true,
+    };
+
+    let assetsData: RampGetAssetsData | undefined;
+
+    try {
+      assetsData = await rampGetAssets(getAssetsRequestData);
+      if (assetsData && assetsData.assets?.length > 0) {
+        const selectedAssetData = assetsData.assets.filter(asset => {
+          return (
+            getRampCoinFormat(asset.symbol, asset.chain) ===
+            getRampCoinFormat(coin, chain)
+          );
+        });
+
+        if (selectedAssetData.length === 0) {
+          const err = t(
+            'The selected coin is not available in your region for purchases through Ramp at the moment.',
+          );
+          const reason =
+            "rampGetQuote Error. Coin not available in the user's region";
+          showRampError(err, reason);
+          return;
+        }
+      }
+    } catch (err) {
+      logger.warn(
+        'Ramp warning: Could not get assets data from Ramp. Continue anyways',
+      );
+    }
+
+    try {
+      const requestData = {
+        cryptoAssetSymbol: getRampCoinFormat(coin, chain),
+        fiatValue: offers.ramp.fiatAmount,
+        fiatCurrency: offers.ramp.fiatCurrency.toUpperCase(),
+        env: rampEnv,
+      };
+
+      const data: RampQuoteRequestData = await selectedWallet.rampGetQuote(
+        requestData,
+      );
+
+      let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
+      if (data?.asset) {
+        switch (paymentMethod.method) {
+          case 'sepaBankTransfer':
+            if (data.MANUAL_BANK_TRANSFER) {
+              paymentMethodData = data.MANUAL_BANK_TRANSFER;
+            }
+            break;
+          case 'applePay':
+            if (data.APPLE_PAY) {
+              paymentMethodData = data.APPLE_PAY;
+            }
+            break;
+          case 'debitCard':
+          case 'creditCard':
+            if (data.CARD_PAYMENT) {
+              paymentMethodData = data.CARD_PAYMENT;
+            }
+            break;
+          default:
+            paymentMethodData = getRampDefaultOfferData(data);
+        }
+
+        if (!paymentMethodData?.fiatValue) {
+          logger.error('rampGetQuote Error: No fiat value provided from Ramp');
+          const reason = 'rampGetQuote Error. No fiat value provided from Ramp';
+          showRampError(undefined, reason);
+          return;
+        }
+
+        offers.ramp.amountLimits = {
+          min:
+            data.asset.minPurchaseAmount < 0
+              ? dispatch(
+                  getBuyCryptoFiatLimits('ramp', offers.ramp.fiatCurrency),
+                ).min
+              : data.asset.minPurchaseAmount,
+          max:
+            data.asset.maxPurchaseAmount < 0
+              ? assetsData?.maxPurchaseAmount
+                ? assetsData.maxPurchaseAmount
+                : dispatch(
+                    getBuyCryptoFiatLimits('ramp', offers.ramp.fiatCurrency),
+                  ).max
+              : data.asset.maxPurchaseAmount,
+        };
+
+        if (
+          (offers.ramp.amountLimits.min &&
+            offers.ramp.fiatAmount < offers.ramp.amountLimits.min) ||
+          (offers.ramp.amountLimits.max &&
+            offers.ramp.fiatAmount > offers.ramp.amountLimits.max)
+        ) {
+          offers.ramp.outOfLimitMsg = t(
+            'There are no Ramp offers available, as the current purchase limits for this exchange must be between and',
+            {
+              min: offers.ramp.amountLimits.min,
+              max: offers.ramp.amountLimits.max,
+              fiatCurrency: offers.ramp.fiatCurrency,
+            },
+          );
+          setFinishedRamp(!finishedRamp);
+          return;
+        } else {
+          offers.ramp.outOfLimitMsg = undefined;
+          offers.ramp.errorMsg = undefined;
+          offers.ramp.quoteData = data;
+          offers.ramp.amountCost = paymentMethodData.fiatValue;
+          offers.ramp.buyAmount =
+            Number(paymentMethodData.fiatValue) -
+            Number(paymentMethodData.appliedFee);
+          offers.ramp.fee = Number(paymentMethodData.appliedFee);
+
+          const precision = dispatch(
+            GetPrecision(coin, chain, selectedWallet.tokenAddress),
+          );
+          let decimals: number | undefined;
+
+          if (data.asset.decimals && data.asset.decimals > 0) {
+            decimals = data.asset.decimals;
+          } else if (precision?.unitDecimals) {
+            decimals = precision.unitDecimals;
+          } else {
+            logger.error(`Ramp error: Could not get precision for ${coin}`);
+
+            const reason = 'rampGetQuote Error. Could not get decimals';
+            showRampError(undefined, reason);
+            return;
+          }
+
+          offers.ramp.amountReceivingUnit = paymentMethodData.cryptoAmount;
+          const amountReceivingNum =
+            Number(paymentMethodData.cryptoAmount) / 10 ** decimals;
+          offers.ramp.amountReceiving = amountReceivingNum.toFixed(8);
+
+          if (
+            offers.ramp.buyAmount &&
+            Number(paymentMethodData.cryptoAmount) > 0 &&
+            coin &&
+            precision
+          ) {
+            offers.ramp.fiatMoney = Number(
+              offers.ramp.buyAmount / amountReceivingNum,
+            ).toFixed(precision.unitDecimals);
+          } else {
+            logger.error(`Ramp error: Could not get precision for ${coin}`);
+          }
+
+          logger.debug('Ramp getting quote: SUCCESS');
+          setFinishedRamp(!finishedRamp);
+        }
+      } else {
+        if (!data) {
+          logger.error('Ramp error: No data received');
+        }
+
+        let err = t("Can't get rates at this moment. Please try again later");
+        const reason = 'rampGetQuote Error. Necessary data not included.';
+        showRampError(err, reason);
+      }
+    } catch (err) {
+      const reason = 'rampGetQuote Error';
+      showRampError(err, reason);
+    }
+  };
+
+  const showRampError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Ramp error: ' + msg);
+
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'ramp',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.ramp.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.ramp.fiatCurrency || '',
+      }),
+    );
+
+    offers.ramp.errorMsg = msg;
+    offers.ramp.fiatMoney = undefined;
+    offers.ramp.expanded = false;
+    setUpdateView(!updateView);
+  };
+
+  const getSardineQuote = async (): Promise<void> => {
+    logger.debug('Sardine getting quote');
+
+    if (buyCryptoConfig?.sardine?.disabled) {
+      let err = buyCryptoConfig?.sardine?.disabledMessage
+        ? buyCryptoConfig?.sardine?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'sardineGetQuote Error. Exchange disabled from config.';
+      showSardineError(err, reason);
+      return;
+    }
+
+    offers.sardine.fiatAmount =
+      offers.sardine.fiatCurrency === fiatCurrency
+        ? amount
+        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+
+    try {
+      const sardineCurrencyLimitsData = await sardineGetCurrencyLimits(
+        offers.sardine.fiatCurrency,
+        getSardinePaymentMethodFormat(paymentMethod.method, country),
+      );
+
+      offers.sardine.amountLimits = {
+        min: sardineCurrencyLimitsData.minAmount,
+        max: sardineCurrencyLimitsData.maxAmount,
+      };
+    } catch (err) {
+      offers.sardine.amountLimits = dispatch(
+        getBuyCryptoFiatLimits('sardine', offers.sardine.fiatCurrency),
+      );
+    }
+
+    if (
+      (offers.sardine.amountLimits?.min &&
+        offers.sardine.fiatAmount < offers.sardine.amountLimits.min) ||
+      (offers.sardine.amountLimits?.max &&
+        offers.sardine.fiatAmount > offers.sardine.amountLimits.max)
+    ) {
+      offers.sardine.outOfLimitMsg = t(
+        'There are no Sardine offers available, as the current purchase limits for this exchange must be between and',
+        {
+          min: offers.sardine.amountLimits.min,
+          max: offers.sardine.amountLimits.max,
+          fiatCurrency: offers.sardine.fiatCurrency,
+        },
+      );
+      setFinishedSardine(!finishedSardine);
+      return;
+    } else {
+      const requestData: SardineGetQuoteRequestData = {
+        env: sardineEnv,
+        asset_type: getSardineCoinFormat(coin),
+        network: getSardineChainFormat(selectedWallet.chain) ?? '',
+        total: offers.sardine.fiatAmount.toString(),
+        currency: offers.sardine.fiatCurrency.toUpperCase(),
+        paymentType:
+          getSardinePaymentMethodFormat(paymentMethod.method, country) ??
+          'debit',
+        quote_type: 'buy',
+      };
+
+      selectedWallet
+        .sardineGetQuote(requestData)
+        .then((data: any) => {
+          if (data && data.quantity) {
+            offers.sardine.outOfLimitMsg = undefined;
+            offers.sardine.errorMsg = undefined;
+            offers.sardine.quoteData = data;
+            offers.sardine.amountCost = data.total;
+            offers.sardine.buyAmount = data.subtotal;
+            offers.sardine.fee = data.total - data.subtotal;
+
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
+            if (offers.sardine.buyAmount && coin && precision) {
+              offers.sardine.fiatMoney = Number(
+                offers.sardine.buyAmount / data.quantity,
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(
+                `Sardine error: Could not get precision for ${coin}`,
+              );
+            }
+            offers.sardine.amountReceiving = data.quantity.toString();
+            logger.debug('Sardine getting quote: SUCCESS');
+            setFinishedSardine(!finishedSardine);
+          } else {
+            if (data.message && typeof data.message === 'string') {
+              logger.error('Sardine error: ' + data.message);
+            }
+            if (data.error && typeof data.error === 'string') {
+              logger.error('Sardine error: ' + data.error);
+            }
+            if (data.errors) {
+              logger.error(data.errors);
+            }
+            let err = t(
+              "Can't get rates at this moment. Please try again later",
+            );
+            const reason = 'sardineGetQuote Error. "quantity" not included.';
+            showSardineError(err, reason);
+          }
+        })
+        .catch((err: any) => {
+          const reason = 'sardineGetQuote Error';
+          showSardineError(err, reason);
+        });
+    }
+  };
+
+  const showSardineError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Sardine error: ' + msg);
+
+    dispatch(
+      Analytics.track('Failed Buy Crypto', {
+        exchange: 'sardine',
+        context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(offers.sardine.fiatAmount) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.sardine.fiatCurrency || '',
+      }),
+    );
+
+    offers.sardine.errorMsg = msg;
+    offers.sardine.fiatMoney = undefined;
+    offers.sardine.expanded = false;
+    setUpdateView(!updateView);
+  };
 
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
+
+    if (buyCryptoConfig?.simplex?.disabled) {
+      let err = buyCryptoConfig?.simplex?.disabledMessage
+        ? buyCryptoConfig?.simplex?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'simplexGetQuote Error. Exchange disabled from config.';
+      showSimplexError(err, reason);
+      return;
+    }
 
     offers.simplex.fiatAmount =
       offers.simplex.fiatCurrency === fiatCurrency
         ? amount
         : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
 
-    const simplexLimits = getSimplexFiatAmountLimits();
-    offers.simplex.amountLimits = {
-      min: calculateLimitEquivalent(
-        simplexLimits.min,
-        offers.simplex.fiatCurrency,
-        'simplex',
-      ),
-      max: calculateLimitEquivalent(
-        simplexLimits.max,
-        offers.simplex.fiatCurrency,
-        'simplex',
-      ),
-    };
+    offers.simplex.amountLimits = dispatch(
+      getBuyCryptoFiatLimits('simplex', offers.simplex.fiatCurrency),
+    );
 
     if (
-      offers.simplex.fiatAmount < offers.simplex.amountLimits.min ||
-      offers.simplex.fiatAmount > offers.simplex.amountLimits.max
+      (offers.simplex.amountLimits?.min &&
+        offers.simplex.fiatAmount < offers.simplex.amountLimits.min) ||
+      (offers.simplex.amountLimits?.max &&
+        offers.simplex.fiatAmount > offers.simplex.amountLimits.max)
     ) {
       offers.simplex.outOfLimitMsg = t(
         'There are no Simplex offers available, as the current purchase limits for this exchange must be between and',
@@ -374,6 +1269,18 @@ const BuyCryptoOffers: React.FC = () => {
       setFinishedSimplex(!finishedSimplex);
       return;
     } else {
+      let paymentMethodArray: string[] = [];
+      switch (paymentMethod.method) {
+        case 'sepaBankTransfer':
+          paymentMethodArray.push('sepa_open_banking');
+          break;
+        case 'applePay':
+        case 'debitCard':
+        case 'creditCard':
+          paymentMethodArray.push('credit_card');
+          break;
+      }
+
       const requestData: SimplexGetQuoteRequestData = {
         digital_currency: getSimplexCoinFormat(coin, selectedWallet.chain),
         fiat_currency: offers.simplex.fiatCurrency.toUpperCase(),
@@ -383,10 +1290,9 @@ const BuyCryptoOffers: React.FC = () => {
         env: simplexEnv,
       };
 
-      if (paymentMethod.method === 'sepaBankTransfer') {
-        requestData.payment_methods = ['simplex_account'];
+      if (paymentMethodArray.length > 0) {
+        requestData.payment_methods = paymentMethodArray;
       }
-
       selectedWallet
         .simplexGetQuote(requestData)
         .then(data => {
@@ -399,7 +1305,9 @@ const BuyCryptoOffers: React.FC = () => {
             offers.simplex.fee =
               data.fiat_money.total_amount - data.fiat_money.base_amount;
 
-            const precision = dispatch(GetPrecision(coin, chain));
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
             if (offers.simplex.buyAmount && coin && precision) {
               offers.simplex.fiatMoney = Number(
                 offers.simplex.buyAmount / data.digital_money.amount,
@@ -437,31 +1345,6 @@ const BuyCryptoOffers: React.FC = () => {
     }
   };
 
-  const calculateLimitEquivalent = (
-    amount: number,
-    fiatCurrency: string,
-    exchange?: string,
-  ): number | undefined => {
-    let baseFiatArray: string[];
-
-    switch (exchange) {
-      case 'simplex':
-        baseFiatArray = ['USD'];
-        break;
-      case 'wyre':
-        baseFiatArray = ['USD', 'EUR'];
-        break;
-      default:
-        baseFiatArray = ['USD'];
-        break;
-    }
-
-    if (baseFiatArray.includes(fiatCurrency)) {
-      return amount;
-    }
-    return dispatch(calculateUsdToAltFiat(amount, fiatCurrency));
-  };
-
   const showSimplexError = (err?: any, reason?: string) => {
     let msg = t('Could not get crypto offer. Please try again later.');
     if (err) {
@@ -479,13 +1362,14 @@ const BuyCryptoOffers: React.FC = () => {
     logger.error('Simplex error: ' + msg);
 
     dispatch(
-      logSegmentEvent('track', 'Failed Buy Crypto', {
+      Analytics.track('Failed Buy Crypto', {
         exchange: 'simplex',
         context: 'BuyCryptoOffers',
         reason: reason || 'unknown',
         paymentMethod: paymentMethod.method || '',
         amount: Number(offers.simplex.fiatAmount) || '',
-        coin: coin || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
         fiatCurrency: offers.simplex.fiatCurrency || '',
       }),
     );
@@ -496,168 +1380,442 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
-  const showWyreError = (err?: any, reason?: string) => {
-    let msg = t('Could not get crypto offer. Please try again later.');
-    if (err) {
-      if (typeof err === 'string') {
-        msg = err;
-      } else if (err.exceptionId && err.message) {
-        logger.error('Wyre error: ' + err.message);
-        if (err.errorCode) {
-          switch (err.errorCode) {
-            case 'validation.unsupportedCountry':
-              msg = t('Country not supported: ') + country;
-              break;
-            default:
-              msg = err.message;
-              break;
-          }
-        } else {
-          msg = err.message;
-        }
-      }
+  const goTo = (key: string): void => {
+    switch (key) {
+      case 'banxa':
+        goToBanxaBuyPage();
+        break;
+
+      case 'moonpay':
+        goToMoonpayBuyPage();
+        break;
+
+      case 'ramp':
+        goToRampBuyPage();
+        break;
+
+      case 'sardine':
+        goToSardineBuyPage();
+        break;
+
+      case 'simplex':
+        goToSimplexBuyPage();
+        break;
+    }
+  };
+
+  const goToBanxaBuyPage = () => {
+    if (offers.banxa.errorMsg || offers.banxa.outOfLimitMsg) {
+      return;
+    }
+    continueToBanxa();
+  };
+
+  const continueToBanxa = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showBanxaError(err, reason);
     }
 
+    const destinationChain = selectedWallet.chain;
+    const banxaExternalId = uuid.v4().toString();
+
     dispatch(
-      logSegmentEvent('track', 'Failed Buy Crypto', {
-        exchange: 'wyre',
-        context: 'BuyCryptoOffers',
-        reason: reason || 'unknown',
-        paymentMethod: paymentMethod.method || '',
-        amount: Number(offers.wyre.fiatAmount) || '',
-        coin: coin || '',
-        fiatCurrency: offers.wyre.fiatCurrency || '',
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'banxa',
+        fiatAmount: offers.banxa.fiatAmount,
+        fiatCurrency: offers.banxa.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
       }),
     );
 
-    logger.error('Crypto offer error: ' + msg);
-    offers.wyre.errorMsg = msg;
-    offers.wyre.fiatMoney = undefined;
-    offers.wyre.expanded = false;
-    setUpdateView(!updateView);
-  };
-
-  const getWyreQuote = async () => {
-    logger.debug('Wyre getting quote');
-
-    offers.wyre.fiatAmount =
-      offers.wyre.fiatCurrency === fiatCurrency
-        ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
-
-    const wyreLimits = getWyreFiatAmountLimits(country);
-    offers.wyre.amountLimits = {
-      min: calculateLimitEquivalent(
-        wyreLimits.min,
-        offers.wyre.fiatCurrency,
-        'wyre',
-      ),
-      max: calculateLimitEquivalent(
-        wyreLimits.max,
-        offers.wyre.fiatCurrency,
-        'wyre',
-      ),
+    const quoteData: BanxaCreateOrderRequestData = {
+      env: banxaEnv,
+      account_reference: user?.eid ?? selectedWallet.id,
+      payment_method_id: offers.banxa.paymentMethodId,
+      source: offers.banxa.fiatCurrency,
+      source_amount: cloneDeep(offers.banxa.fiatAmount).toString(),
+      target: getBanxaCoinFormat(coin),
+      wallet_address: address,
+      blockchain: getBanxaChainFormat(selectedWallet.chain),
+      return_url_on_success: `${APP_DEEPLINK_PREFIX}banxa?externalId=${banxaExternalId}&status=pending`,
+      return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled?externalId=${banxaExternalId}&status=cancelled`,
+      return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed?externalId=${banxaExternalId}&status=failed`,
     };
 
-    if (
-      offers.wyre.fiatAmount < offers.wyre.amountLimits.min ||
-      offers.wyre.fiatAmount > offers.wyre.amountLimits.max
-    ) {
-      offers.wyre.outOfLimitMsg = t(
-        'There are no Wyre offers available, as the current purchase limits for this exchange must be between and',
-        {
-          min: offers.wyre.amountLimits.min,
-          max: offers.wyre.amountLimits.max,
-          fiatCurrency: offers.wyre.fiatCurrency,
-        },
-      );
-    } else {
-      let address: string = '';
-      try {
-        address = (await dispatch<any>(
-          createWalletAddress({wallet: selectedWallet, newAddress: false}),
-        )) as string;
-      } catch (err) {
-        console.error(err);
-        const reason = 'createWalletAddress Error';
-        showWyreError(err, reason);
-      }
-
-      const dest = setPrefix(
-        address,
-        selectedWallet.chain,
-        selectedWallet.network,
-      );
-
-      let walletType: string;
-      switch (paymentMethod.method) {
-        case 'applePay':
-          walletType = 'APPLE_PAY';
-          break;
-        default:
-          walletType = 'DEBIT_CARD';
-          break;
-      }
-
-      const requestData = {
-        sourceAmount: offers.wyre.fiatAmount.toString(),
-        sourceCurrency: offers.wyre.fiatCurrency.toUpperCase(),
-        destCurrency: getWyreCoinFormat(coin, selectedWallet.chain),
-        dest,
-        country,
-        amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
-        walletType,
-        env: wyreEnv,
-      };
-
-      selectedWallet
-        .wyreWalletOrderQuotation(requestData)
-        .then(data => {
-          if (data && (data.exceptionId || data.error)) {
-            const reason = 'wyreWalletOrderQuotation Error';
-            showWyreError(data, reason);
-            return;
-          }
-
-          offers.wyre.amountCost = data.sourceAmount; // sourceAmount = Total amount (including fees)
-          offers.wyre.buyAmount = data.sourceAmountWithoutFees;
-          offers.wyre.fee = data.sourceAmount - data.sourceAmountWithoutFees;
-
-          if (offers.wyre.fee < 0) {
-            const err =
-              t('Wyre has returned a wrong value for the fee. Fee: ') +
-              offers.wyre.fee;
-            const reason = 'Fee not included';
-            showWyreError(err, reason);
-            return;
-          }
-
-          offers.wyre.fiatMoney =
-            offers.wyre.buyAmount && data.destAmount
-              ? Number(offers.wyre.buyAmount / data.destAmount).toFixed(8)
-              : undefined;
-
-          offers.wyre.amountReceiving = data.destAmount.toFixed(8);
-
-          logger.debug('Wyre getting quote: SUCCESS');
-          setFinishedWyre(!finishedWyre);
-        })
-        .catch((err: any) => {
-          const reason = 'wyreWalletOrderQuotation Error';
-          showWyreError(err, reason);
-        });
+    let data: BanxaCreateOrderData, banxaOrderData: BanxaOrderData;
+    try {
+      data = await selectedWallet.banxaCreateOrder(quoteData);
+    } catch (err) {
+      const reason = 'banxaCreateOrder Error';
+      showBanxaError(err, reason);
+      setOpeningBrowser(false);
+      return;
     }
+
+    if (data?.data?.order?.checkout_url && data?.data?.order?.id) {
+      banxaOrderData = data.data.order;
+    } else {
+      const reason =
+        'banxaCreateOrder Error: No checkout_url or id value provided from Banxa';
+      logger.error(reason);
+      showBanxaError(undefined, reason);
+      setOpeningBrowser(false);
+      return;
+    }
+
+    const newData: BanxaPaymentData = {
+      address,
+      created_on: Date.now(),
+      crypto_amount: Number(offers.banxa.amountReceiving),
+      chain: destinationChain,
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offers.banxa.buyAmount!,
+      fiat_total_amount: offers.banxa.amountCost!,
+      fiat_total_amount_currency: offers.banxa.fiatCurrency,
+      order_id: banxaOrderData.id,
+      external_id: banxaExternalId,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestBanxa({
+        banxaPaymentData: newData,
+      }),
+    );
+
+    dispatch(openUrlWithInAppBrowser(banxaOrderData.checkout_url));
+    await sleep(500);
+    navigation.goBack();
   };
 
-  const setPrefix = (
-    address: string,
-    chain: string,
-    network: 'livenet' | 'testnet',
-  ): string => {
-    const prefix =
-      BitpaySupportedCoins[chain].paymentInfo.protocolPrefix[network];
-    const addr = `${prefix}:${address}`;
-    return addr;
+  const goToMoonpayBuyPage = () => {
+    if (offers.moonpay.errorMsg || offers.moonpay.outOfLimitMsg) {
+      return;
+    }
+    continueToMoonpay();
+  };
+
+  const continueToMoonpay = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showMoonpayError(err, reason);
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const externalTransactionId = `${selectedWallet.id}-${Date.now()}`;
+
+    const newData: MoonpayPaymentData = {
+      address,
+      created_on: Date.now(),
+      crypto_amount: Number(offers.moonpay.amountReceiving),
+      chain: destinationChain,
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offers.moonpay.buyAmount!,
+      fiat_total_amount: offers.moonpay.amountCost!,
+      fiat_total_amount_currency: offers.moonpay.fiatCurrency,
+      external_id: externalTransactionId,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestMoonpay({
+        moonpayPaymentData: newData,
+      }),
+    );
+
+    dispatch(
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'moonpay',
+        fiatAmount: offers.moonpay.fiatAmount,
+        fiatCurrency: offers.moonpay.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const quoteData = {
+      currencyCode: getMoonpayFixedCurrencyAbbreviation(
+        coin.toLowerCase(),
+        destinationChain,
+      ),
+      walletAddress: address,
+      baseCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
+      baseCurrencyAmount: offers.moonpay.fiatAmount,
+      externalTransactionId,
+      redirectURL:
+        APP_DEEPLINK_PREFIX + `moonpay?externalId=${externalTransactionId}`,
+      env: moonpayEnv,
+      lockAmount: true,
+      showWalletAddressForm: true,
+    };
+
+    let data;
+    try {
+      data = await selectedWallet.moonpayGetSignedPaymentUrl(quoteData);
+    } catch (err) {
+      const reason = 'moonpayGetSignedPaymentUrl Error';
+      showMoonpayError(err, reason);
+      setOpeningBrowser(false);
+      return;
+    }
+
+    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    await sleep(500);
+    navigation.goBack();
+  };
+
+  const goToRampBuyPage = () => {
+    if (offers.ramp.errorMsg || offers.ramp.outOfLimitMsg) {
+      return;
+    }
+    continueToRamp();
+  };
+
+  const continueToRamp = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showRampError(err, reason);
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const rampExternalId = uuid.v4().toString();
+
+    const newData: RampPaymentData = {
+      address,
+      chain: destinationChain,
+      created_on: Date.now(),
+      crypto_amount: Number(offers.ramp.amountReceiving),
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offers.ramp.buyAmount!,
+      fiat_total_amount: offers.ramp.amountCost!,
+      fiat_total_amount_currency: offers.ramp.fiatCurrency,
+      external_id: rampExternalId,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestRamp({
+        rampPaymentData: newData,
+      }),
+    );
+
+    dispatch(
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'ramp',
+        fiatAmount: offers.ramp.fiatAmount,
+        fiatCurrency: offers.ramp.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const redirectUrl =
+      APP_DEEPLINK_PREFIX +
+      'ramp?rampExternalId=' +
+      rampExternalId +
+      '&walletId=' +
+      selectedWallet.id +
+      '&status=pending';
+
+    const quoteData: RampPaymentUrlConfigParams = {
+      env: rampEnv,
+      hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
+      hostAppName: APP_NAME_UPPERCASE,
+      swapAsset: getRampCoinFormat(coin, chain),
+      swapAmount: offers.ramp.amountReceivingUnit!,
+      fiatCurrency: offers.ramp.fiatCurrency,
+      enabledFlows: 'ONRAMP',
+      defaultFlow: 'ONRAMP',
+      userAddress: address,
+      selectedCountryCode: country,
+      defaultAsset: getRampCoinFormat(coin, chain),
+      finalUrl: redirectUrl,
+    };
+
+    let data;
+    try {
+      data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
+    } catch (err) {
+      const reason = 'rampGetSignedPaymentUrl Error';
+      showRampError(err, reason);
+      setOpeningBrowser(false);
+      return;
+    }
+
+    if (!data || !data.urlWithSignature) {
+      const err = t(
+        'It was not possible to generate the checkout URL correctly',
+      );
+      const reason =
+        'rampGetSignedPaymentUrl Error. Could not generate urlWithSignature';
+      showRampError(err, reason);
+      setOpeningBrowser(false);
+      return;
+    }
+
+    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    await sleep(500);
+    navigation.goBack();
+  };
+
+  const goToSardineBuyPage = () => {
+    if (offers.sardine.errorMsg || offers.sardine.outOfLimitMsg) {
+      return;
+    }
+    continueToSardine();
+  };
+
+  const continueToSardine = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const reason = 'createWalletAddress Error';
+      showSardineError(err, reason);
+    }
+
+    const destinationChain = selectedWallet.chain;
+    const sardineExternalId = uuid.v4().toString();
+
+    let authTokenData;
+    try {
+      const quoteData: SardineGetAuthTokenRequestData = {
+        env: sardineEnv,
+        referenceId: sardineExternalId,
+        externalUserId: selectedWallet.id,
+        customerId: 'app',
+        paymentMethodTypeConfig: {
+          default:
+            getSardinePaymentMethodFormat(paymentMethod.method, country) ??
+            'debit',
+          enabled: ['ach', 'card'],
+        },
+      };
+      authTokenData = await selectedWallet.sardineGetToken(quoteData);
+    } catch (err) {
+      const reason = 'sardineGetAuthToken Error';
+      showSardineError(err, reason);
+      setOpeningBrowser(false);
+      return;
+    }
+
+    dispatch(
+      Analytics.track('Requested Crypto Purchase', {
+        exchange: 'sardine',
+        fiatAmount: offers.sardine.fiatAmount,
+        fiatCurrency: offers.sardine.fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: destinationChain?.toLowerCase(),
+      }),
+    );
+
+    const redirectUrl =
+      APP_DEEPLINK_PREFIX +
+      'sardine?sardineExternalId=' +
+      sardineExternalId +
+      '&walletId=' +
+      selectedWallet.id +
+      '&status=pending' +
+      '&address=' +
+      address +
+      '&chain=' +
+      destinationChain +
+      '&createdOn=' +
+      Date.now() +
+      '&cryptoAmount=' +
+      Number(offers.sardine.amountReceiving) +
+      '&coin=' +
+      coin.toUpperCase() +
+      '&env=' +
+      (__DEV__ ? 'dev' : 'prod') +
+      '&fiatBaseAmount=' +
+      offers.sardine.buyAmount +
+      '&fiatTotalAmount=' +
+      offers.sardine.amountCost +
+      '&fiatTotalAmountCurrency=' +
+      offers.sardine.fiatCurrency;
+
+    const quoteData: SardinePaymentUrlConfigParams = {
+      env: sardineEnv,
+      client_token: authTokenData.clientToken,
+      address,
+      redirect_url: redirectUrl,
+      fixed_fiat_amount: offers.sardine.fiatAmount,
+      fixed_fiat_currency: offers.sardine.fiatCurrency,
+      fixed_asset_type: getSardineCoinFormat(coin),
+      fixed_network: getSardineChainFormat(chain),
+      supported_tokens: [
+        {
+          token: getSardineCoinFormat(coin),
+          network: getSardineChainFormat(chain) || '',
+        },
+      ],
+    };
+
+    let checkoutUrl: string;
+    try {
+      checkoutUrl = await sardineGetSignedPaymentUrl(quoteData);
+    } catch (err) {
+      const reason = 'sardineGetSignedPaymentUrl Error';
+      showSardineError(err, reason);
+      setOpeningBrowser(false);
+      return;
+    }
+
+    if (!checkoutUrl) {
+      const err = t(
+        'It was not possible to generate the checkout URL correctly',
+      );
+      const reason =
+        'sardineGetSignedPaymentUrl Error. Could not generate urlWithSignature';
+      showSardineError(err, reason);
+      setOpeningBrowser(false);
+      return;
+    }
+
+    dispatch(openUrlWithInAppBrowser(checkoutUrl));
+    await sleep(500);
+    navigation.goBack();
+  };
+
+  const goToSimplexBuyPage = () => {
+    if (offers.simplex.errorMsg || offers.simplex.outOfLimitMsg) {
+      return;
+    }
+    continueToSimplex();
   };
 
   const continueToSimplex = async () => {
@@ -684,6 +1842,7 @@ const BuyCryptoOffers: React.FC = () => {
         if (req && req.error) {
           const reason = 'simplexPaymentRequest Error';
           showSimplexError(req.error, reason);
+          setOpeningBrowser(false);
           return;
         }
 
@@ -699,7 +1858,7 @@ const BuyCryptoOffers: React.FC = () => {
 
         const destinationChain = selectedWallet.chain;
 
-        const newData: simplexPaymentData = {
+        const newData: SimplexPaymentData = {
           address,
           created_on: Date.now(),
           crypto_amount: offers.simplex.quoteData.digital_money.amount,
@@ -722,13 +1881,13 @@ const BuyCryptoOffers: React.FC = () => {
         );
 
         dispatch(
-          logSegmentEvent('track', 'Requested Crypto Purchase', {
+          Analytics.track('Requested Crypto Purchase', {
             exchange: 'simplex',
             fiatAmount: offers.simplex.fiatAmount,
             fiatCurrency: offers.simplex.fiatCurrency,
             paymentMethod: paymentMethod.method,
-            coin: selectedWallet.currencyAbbreviation,
-            chain: destinationChain,
+            coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+            chain: destinationChain?.toLowerCase(),
           }),
         );
 
@@ -746,110 +1905,8 @@ const BuyCryptoOffers: React.FC = () => {
       .catch(err => {
         const reason = 'simplexPaymentRequest Error';
         showSimplexError(err, reason);
+        setOpeningBrowser(false);
       });
-  };
-
-  const goToWyreBuyPage = async () => {
-    let address: string = '';
-    try {
-      address = (await dispatch<any>(
-        createWalletAddress({wallet: selectedWallet, newAddress: false}),
-      )) as string;
-    } catch (err) {
-      console.error(err);
-      const reason = 'createWalletAddress Error';
-      showWyreError(err, reason);
-    }
-    let _paymentMethod: string;
-    switch (paymentMethod.method) {
-      case 'applePay':
-        _paymentMethod = 'apple-pay';
-        break;
-      default:
-        _paymentMethod = 'debit-card';
-        break;
-    }
-    const destinationChain = selectedWallet.chain;
-    const redirectUrl =
-      APP_DEEPLINK_PREFIX +
-      'wyre?walletId=' +
-      selectedWallet.id +
-      '&destAmount=' +
-      offers.wyre.amountReceiving +
-      '&destChain=' +
-      destinationChain;
-    const failureRedirectUrl = APP_DEEPLINK_PREFIX + 'wyreError';
-    const dest = setPrefix(
-      address,
-      selectedWallet.chain,
-      selectedWallet.network,
-    );
-    const requestData = {
-      sourceAmount: offers.wyre.fiatAmount.toString(),
-      dest,
-      destCurrency: getWyreCoinFormat(coin, destinationChain),
-      lockFields: ['dest', 'destCurrency', 'country'],
-      paymentMethod: _paymentMethod,
-      sourceCurrency: offers.wyre.fiatCurrency.toUpperCase(),
-      country,
-      amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
-      redirectUrl,
-      failureRedirectUrl,
-      env: wyreEnv,
-    };
-
-    selectedWallet
-      .wyreWalletOrderReservation(requestData)
-      .then((data: any) => {
-        if (data && (data.exceptionId || data.error)) {
-          const reason = 'wyreWalletOrderReservation Error';
-          showWyreError(data, reason);
-          return;
-        }
-
-        const {url} = data;
-        continueToWyre(url);
-      })
-      .catch((err: any) => {
-        const reason = 'wyreWalletOrderReservation Error';
-        showWyreError(err, reason);
-      });
-  };
-
-  const continueToWyre = async (paymentUrl: string) => {
-    const destinationChain = selectedWallet.chain;
-    dispatch(
-      logSegmentEvent('track', 'Requested Crypto Purchase', {
-        exchange: 'wyre',
-        fiatAmount: offers.wyre.fiatAmount,
-        fiatCurrency: offers.wyre.fiatCurrency,
-        paymentMethod: paymentMethod.method,
-        coin: selectedWallet.currencyAbbreviation,
-        chain: destinationChain,
-      }),
-    );
-    dispatch(openUrlWithInAppBrowser(paymentUrl));
-    await sleep(500);
-    navigation.goBack();
-  };
-
-  const goTo = (key: string): void => {
-    switch (key) {
-      case 'simplex':
-        goToSimplexBuyPage();
-        break;
-
-      case 'wyre':
-        goToWyreBuyPage();
-        break;
-    }
-  };
-
-  const goToSimplexBuyPage = () => {
-    if (offers.simplex.errorMsg || offers.simplex.outOfLimitMsg) {
-      return;
-    }
-    continueToSimplex();
   };
 
   const expandCard = (offer: CryptoOffer) => {
@@ -863,134 +1920,185 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
+  const showError = (title: string, msg: string) => {
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        title: title ?? t('Error'),
+        message: msg,
+        type: 'error',
+        actions: [
+          {
+            text: t('OK'),
+            action: () => {
+              navigation.dispatch(StackActions.popToTop());
+            },
+          },
+        ],
+        enableBackdropDismiss: true,
+        onBackdropDismiss: () => {
+          navigation.dispatch(StackActions.popToTop());
+        },
+      }),
+    );
+  };
+
   useEffect(() => {
-    if (offers.simplex.showOffer) {
-      getSimplexQuote();
-    }
-    if (offers.wyre.showOffer) {
-      getWyreQuote();
+    const showedOffersCount = Object.values(cloneDeep(offers)).filter(
+      offer => offer.showOffer,
+    ).length;
+    if (showedOffersCount === 0) {
+      const title = t('No offers');
+      const msg = t(
+        'There are currently no offers that satisfy your request. Please try again later.',
+      );
+      logger.error(msg);
+      showError(title, msg);
+    } else {
+      if (offers.banxa.showOffer) {
+        getBanxaQuote();
+      }
+      if (offers.moonpay.showOffer) {
+        getMoonpayQuote();
+      }
+      if (offers.ramp.showOffer) {
+        getRampQuote();
+      }
+      if (offers.sardine.showOffer) {
+        getSardineQuote();
+      }
+      if (offers.simplex.showOffer) {
+        getSimplexQuote();
+      }
     }
   }, []);
 
   useEffect(() => {
     setOffers(offers);
-  }, [finishedSimplex, finishedWyre, updateView]);
+  }, [
+    finishedBanxa,
+    finishedMoonpay,
+    finishedRamp,
+    finishedSardine,
+    finishedSimplex,
+    updateView,
+  ]);
 
   return (
-    <ScrollView>
-      <SummaryRow>
-        <SummaryItemContainer>
-          <SummaryTitle>{t('Amount')}</SummaryTitle>
-          <SummaryData>
-            {formatFiatAmount(Number(amount), fiatCurrency, {
-              customPrecision: 'minimal',
-            })}
-          </SummaryData>
-        </SummaryItemContainer>
-        <SummaryItemContainer>
-          <SummaryTitle>{t('Crypto')}</SummaryTitle>
-          <CoinContainer>
-            <CoinIconContainer>
-              <CurrencyImage
-                img={selectedWallet.img}
-                badgeUri={getBadgeImg(
-                  getCurrencyAbbreviation(
-                    selectedWallet.currencyAbbreviation,
+    <BuyCryptoOffersContainer>
+      <ScrollView>
+        <SummaryRow>
+          <SummaryItemContainer>
+            <SummaryTitle>{t('Amount')}</SummaryTitle>
+            <SummaryData>
+              {formatFiatAmount(Number(amount), fiatCurrency, {
+                customPrecision: 'minimal',
+              })}
+            </SummaryData>
+          </SummaryItemContainer>
+          <SummaryItemContainer>
+            <SummaryTitle>{t('Crypto')}</SummaryTitle>
+            <CoinContainer>
+              <CoinIconContainer>
+                <CurrencyImage
+                  img={selectedWallet.img}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      selectedWallet.currencyAbbreviation,
+                      selectedWallet.chain,
+                    ),
                     selectedWallet.chain,
-                  ),
-                  selectedWallet.chain,
-                )}
-                size={20}
-              />
-            </CoinIconContainer>
-            <SummaryData>{coin.toUpperCase()}</SummaryData>
-          </CoinContainer>
-        </SummaryItemContainer>
-        <SummaryItemContainer>
-          <SummaryTitle>{t('Payment Type')}</SummaryTitle>
-          <SummaryData>{paymentMethod.label}</SummaryData>
-        </SummaryItemContainer>
-        <SummaryCtaContainer>
-          <Button
-            buttonStyle={'secondary'}
-            buttonType={'pill'}
-            buttonOutline={true}
-            onPress={() => {
-              navigation.goBack();
-            }}>
-            Edit
-          </Button>
-        </SummaryCtaContainer>
-      </SummaryRow>
+                  )}
+                  size={20}
+                />
+              </CoinIconContainer>
+              <SummaryData>{coin.toUpperCase()}</SummaryData>
+            </CoinContainer>
+          </SummaryItemContainer>
+          <SummaryItemContainer>
+            <SummaryTitle>{t('Payment Type')}</SummaryTitle>
+            <SummaryData>{paymentMethod.label}</SummaryData>
+          </SummaryItemContainer>
+          <SummaryCtaContainer>
+            <Button
+              buttonStyle={'secondary'}
+              buttonType={'pill'}
+              buttonOutline={true}
+              onPress={() => {
+                navigation.goBack();
+              }}>
+              Edit
+            </Button>
+          </SummaryCtaContainer>
+        </SummaryRow>
 
-      {Object.values(offers)
-        .sort(
-          (a, b) =>
-            parseFloat(b.amountReceiving || '0') -
-            parseFloat(a.amountReceiving || '0'),
-        )
-        .map(offer => {
-          return (
-            offer.showOffer && (
+        {Object.values(offers)
+          .sort(
+            (a, b) =>
+              parseFloat(b.amountReceiving || '0') -
+              parseFloat(a.amountReceiving || '0'),
+          )
+          .map((offer: CryptoOffer, index: number) => {
+            return offer.showOffer ? (
               <BuyCryptoExpandibleCard
                 key={offer.key}
                 onPress={() => {
                   expandCard(offer);
                 }}>
-                {!offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg && (
+                {!offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg ? (
                   <SpinnerContainer>
                     <ActivityIndicator color={ProgressBlue} />
                   </SpinnerContainer>
-                )}
-                {!offer.fiatMoney && offer.outOfLimitMsg && (
+                ) : null}
+                {!offer.fiatMoney && offer.outOfLimitMsg ? (
                   <OfferDataContainer>
                     <OfferDataInfoLabel>
                       {offer.outOfLimitMsg}
                     </OfferDataInfoLabel>
                   </OfferDataContainer>
-                )}
-                {!offer.fiatMoney && offer.errorMsg && (
+                ) : null}
+                {!offer.fiatMoney && offer.errorMsg ? (
                   <OfferDataContainer>
                     <OfferDataInfoLabel>
                       {t('Error: ') + offer.errorMsg}
                     </OfferDataInfoLabel>
                   </OfferDataContainer>
-                )}
+                ) : null}
                 <OfferRow>
                   <OfferDataContainer>
                     {offer.fiatMoney &&
-                      !offer.errorMsg &&
-                      !offer.outOfLimitMsg && (
-                        <>
-                          <OfferDataCryptoAmount>
-                            {offer.amountReceiving} {coin.toUpperCase()}
-                          </OfferDataCryptoAmount>
-                          <OfferDataRate>
-                            1 {coin.toUpperCase()} ={' '}
-                            {formatFiatAmount(
-                              Number(offer.fiatMoney),
-                              offer.fiatCurrency,
-                              {
-                                customPrecision: undefined,
-                                currencyAbbreviation: coin,
-                              },
-                            )}
-                          </OfferDataRate>
-                          {offer.fiatCurrency !== fiatCurrency ? (
-                            <OfferDataWarningContainer>
-                              <OfferDataWarningMsg>
-                                {t(
-                                  "This exchange doesn't support purchases with , tap 'Buy' to continue paying in .",
-                                  {
-                                    altFiatCurrency: fiatCurrency,
-                                    availableFiatCurrency: offer.fiatCurrency,
-                                  },
-                                )}
-                              </OfferDataWarningMsg>
-                            </OfferDataWarningContainer>
-                          ) : null}
-                        </>
-                      )}
+                    !offer.errorMsg &&
+                    !offer.outOfLimitMsg ? (
+                      <>
+                        {index === 0 ? (
+                          <BestOfferTagContainer>
+                            <BestOfferTag>
+                              <BestOfferTagText>
+                                {t('Best Offer')}
+                              </BestOfferTagText>
+                            </BestOfferTag>
+                          </BestOfferTagContainer>
+                        ) : null}
+                        <OfferDataCryptoAmount>
+                          {Number(offer.amountReceiving)
+                            .toFixed(8)
+                            .replace(/\.?0+$/, '')}{' '}
+                          {coin.toUpperCase()}
+                        </OfferDataCryptoAmount>
+                        {offer.fiatCurrency !== fiatCurrency ? (
+                          <OfferDataWarningContainer>
+                            <OfferDataWarningMsg>
+                              {t(
+                                "This exchange doesn't support purchases with , tap 'Buy' to continue paying in .",
+                                {
+                                  altFiatCurrency: fiatCurrency,
+                                  availableFiatCurrency: offer.fiatCurrency,
+                                },
+                              )}
+                            </OfferDataWarningMsg>
+                          </OfferDataWarningContainer>
+                        ) : null}
+                      </>
+                    ) : null}
                     <OfferDataInfoContainer>
                       <OfferDataInfoLabel>
                         {t('Provided By')}
@@ -998,22 +2106,32 @@ const BuyCryptoOffers: React.FC = () => {
                       {offer.logo}
                     </OfferDataInfoContainer>
                   </OfferDataContainer>
-                  {offer.fiatMoney && (
+                  {offer.fiatMoney ? (
                     <SummaryCtaContainer>
                       <Button
                         action={true}
                         buttonType={'pill'}
+                        disabled={openingBrowser}
                         onPress={() => {
                           haptic('impactLight');
+                          offer.buyClicked = true;
+                          setOpeningBrowser(true);
                           goTo(offer.key);
                         }}>
-                        Buy
+                        {offer.buyClicked ? (
+                          <ActivityIndicator
+                            style={{marginBottom: -5}}
+                            color={White}
+                          />
+                        ) : (
+                          t('Buy')
+                        )}
                       </Button>
                     </SummaryCtaContainer>
-                  )}
+                  ) : null}
                 </OfferRow>
 
-                {offer.expanded && (
+                {offer.expanded ? (
                   <>
                     <ItemDivisor style={{marginTop: 20}} />
                     <OfferExpandibleItem>
@@ -1052,132 +2170,46 @@ const BuyCryptoOffers: React.FC = () => {
                         )}
                       </OfferDataInfoTotal>
                     </OfferExpandibleItem>
-                    {offer.key == 'simplex' && (
-                      <ExchangeTermsContainer>
-                        <ExchangeTermsText>
-                          {t('What service fees am I paying?')}
-                        </ExchangeTermsText>
-                        {paymentMethod.method == 'sepaBankTransfer' && (
-                          <ExchangeTermsText>
-                            {t('1.5% of the amount.')}
-                          </ExchangeTermsText>
-                        )}
-                        {paymentMethod.method != 'sepaBankTransfer' && (
-                          <ExchangeTermsText>
-                            {t(
-                              'Can range from 3.5% to 5% of the transaction, depending on the volume of traffic (with a minimum of 10 USD or its equivalent in any other fiat currency) + 1% of the transaction.',
-                            )}
-                            <TouchableOpacity
-                              onPress={() => {
-                                haptic('impactLight');
-                                dispatch(
-                                  openUrlWithInAppBrowser(
-                                    'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
-                                  ),
-                                );
-                              }}>
-                              <Link
-                                style={{fontSize: 12, marginLeft: 2, top: 2}}>
-                                {t('Read more')}
-                              </Link>
-                            </TouchableOpacity>
-                          </ExchangeTermsText>
-                        )}
-                        <ExchangeTermsText style={{marginTop: 4}}>
-                          {t(
-                            'This service is provided by a third party, and you are subject to their',
-                          )}
-                          <TouchableOpacity
-                            onPress={() => {
-                              haptic('impactLight');
-                              dispatch(
-                                openUrlWithInAppBrowser(
-                                  'https://www.simplex.com/terms-of-use/',
-                                ),
-                              );
-                            }}>
-                            <Link style={{fontSize: 12, top: 2}}>
-                              {t('Terms of use')}
-                            </Link>
-                          </TouchableOpacity>
-                        </ExchangeTermsText>
-                      </ExchangeTermsContainer>
-                    )}
-                    {offer.key == 'wyre' && (
-                      <ExchangeTermsContainer>
-                        <ExchangeTermsText>
-                          {t('What service fees am I paying?')}
-                        </ExchangeTermsText>
-                        {country == 'US' && (
-                          <ExchangeTermsText>
-                            {t(
-                              '5 USD minimum fee or 2.9% of the amount + 0.30 USD, whichever is greater + Required miners fee.',
-                            )}
-                          </ExchangeTermsText>
-                        )}
-                        {country != 'US' && (
-                          <ExchangeTermsText>
-                            {t(
-                              '5 USD minimum fee or 3.9% of the amount + 0.30 USD, whichever is greater + Required miners fee.',
-                            )}
-                          </ExchangeTermsText>
-                        )}
-                        {offer.fiatCurrency.toUpperCase() != 'USD' && (
-                          <ExchangeTermsText>
-                            {t('Or its equivalent in .', {
-                              fiatCurrency: offer.fiatCurrency.toUpperCase(),
-                            })}
-                          </ExchangeTermsText>
-                        )}
-                        <TouchableOpacity
-                          onPress={() => {
-                            haptic('impactLight');
-                            dispatch(
-                              openUrlWithInAppBrowser(
-                                'https://support.sendwyre.com/hc/en-us/articles/360059565013-Wyre-card-processing-fees',
-                              ),
-                            );
-                          }}>
-                          <Link style={{fontSize: 12, top: 2}}>
-                            {t('Read more')}
-                          </Link>
-                        </TouchableOpacity>
-                        <ExchangeTermsText style={{marginTop: 4}}>
-                          {t(
-                            'This service is provided by a third party, and you are subject to their',
-                          )}
-                          <TouchableOpacity
-                            onPress={() => {
-                              haptic('impactLight');
-                              dispatch(
-                                openUrlWithInAppBrowser(
-                                  'https://www.sendwyre.com/user-agreement/',
-                                ),
-                              );
-                            }}>
-                            <Link style={{fontSize: 12, top: 2}}>
-                              {t('User Agreement')}
-                            </Link>
-                          </TouchableOpacity>
-                        </ExchangeTermsText>
-                      </ExchangeTermsContainer>
-                    )}
+                    {offer.key == 'banxa' ? (
+                      <BanxaTerms
+                        paymentMethod={paymentMethod}
+                        country={country}
+                      />
+                    ) : null}
+                    {offer.key == 'moonpay' ? (
+                      <MoonpayTerms
+                        paymentMethod={paymentMethod}
+                        country={country}
+                      />
+                    ) : null}
+                    {offer.key == 'ramp' ? (
+                      <RampTerms
+                        paymentMethod={paymentMethod}
+                        country={country}
+                      />
+                    ) : null}
+                    {offer.key == 'sardine' ? (
+                      <SardineTerms quoteData={offer.quoteData} />
+                    ) : null}
+                    {offer.key == 'simplex' ? (
+                      <SimplexTerms paymentMethod={paymentMethod} />
+                    ) : null}
                   </>
-                )}
+                ) : null}
               </BuyCryptoExpandibleCard>
-            )
-          );
-        })}
+            ) : null;
+          })}
 
-      <TermsContainer>
-        <TermsText>
-          {t(
-            'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
-          )}
-        </TermsText>
-        <TermsText>{t('Additional third-party fees may apply.')}</TermsText>
-      </TermsContainer>
-    </ScrollView>
+        <TermsContainer>
+          <TermsText>
+            {t(
+              'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
+            )}
+          </TermsText>
+          <TermsText>{t('Additional third-party fees may apply.')}</TermsText>
+        </TermsContainer>
+      </ScrollView>
+    </BuyCryptoOffersContainer>
   );
 };
 

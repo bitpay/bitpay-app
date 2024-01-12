@@ -177,9 +177,9 @@ export const startGetRates =
   };
 
 export const getContractAddresses =
-  (chain: string): Effect<Array<string | undefined>> =>
+  (chain: string): Effect<Array<string>> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('getContractAddresses: starting...'));
+    dispatch(LogActions.info(`getContractAddresses ${chain}: starting...`));
     const {
       WALLET: {keys},
     } = getState();
@@ -229,59 +229,74 @@ export const getTokenRates =
         const altCurrencies = altCurrencyList.map(altCurrency =>
           altCurrency.isoCode.toLowerCase(),
         );
+        const chunkArray = (array: string[], size: number) => {
+          const chunked_arr = [];
+          for (let i = 0; i < array.length; i += size) {
+            chunked_arr.push(array.slice(i, i + size));
+          }
+          return chunked_arr;
+        };
 
         for (const chain of SUPPORTED_EVM_COINS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
-          const url = `https://api.coingecko.com/api/v3/simple/token_price/${
-            // @ts-ignore
-            EVM_BLOCKCHAIN_NETWORK[chain]
-          }?contract_addresses=${contractAddresses.join(
-            ',',
-          )}&vs_currencies=${altCurrencies.join(
-            ',',
-          )}&include_24hr_change=true&include_last_updated_at=true`;
-          dispatch(LogActions.debug(`getTokenRates: get request to: ${url}`));
-          const {data} = await axios.get(url);
-          dispatch(LogActions.debug('getTokenRates: success get request'));
-
-          Object.entries(data).map(([key, value]: [string, any]) => {
-            const formattedTokenAddress = addTokenChainSuffix(key, chain);
-
-            // only save token rates if exist in tokens list
-            if (tokensOptsByAddress[formattedTokenAddress]) {
-              const tokenName = getCurrencyAbbreviation(
-                tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                chain,
+          if (contractAddresses?.length > 0) {
+            const chunks = chunkArray(contractAddresses, 5);
+            for (const chunk of chunks) {
+              const url = `${BASE_BWS_URL}/v1/service/coinGecko/getRates/${chunk.join(
+                ',',
+              )}/${altCurrencies.join(',')}/${chain}`;
+              dispatch(
+                LogActions.debug(`getTokenRates: get request to: ${url}`),
               );
-              tokenRates[tokenName] = [];
-              tokenLastDayRates[tokenName] = [];
+              const {data} = await axios.get(url);
+              dispatch(LogActions.debug('getTokenRates: success get request'));
+              Object.entries(data).map(([key, value]: [string, any]) => {
+                const formattedTokenAddress = addTokenChainSuffix(key, chain);
 
-              altCurrencies.forEach(altCurrency => {
-                tokenRates[tokenName].push({
-                  code: altCurrency.toUpperCase(),
-                  fetchedOn: value.last_updated_at,
-                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                  rate: value[altCurrency],
-                  ts: value.last_updated_at,
-                });
+                // only save token rates if exist in tokens list
+                if (tokensOptsByAddress[formattedTokenAddress]) {
+                  const tokenName = getCurrencyAbbreviation(
+                    tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                    chain,
+                  );
+                  tokenRates[tokenName] = [];
+                  tokenLastDayRates[tokenName] = [];
 
-                const yesterday = moment
-                  .unix(value.last_updated_at)
-                  .subtract(1, 'days')
-                  .unix();
-                tokenLastDayRates[tokenName].push({
-                  code: altCurrency.toUpperCase(),
-                  fetchedOn: yesterday,
-                  name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                  rate:
-                    value[altCurrency] +
-                    (value[altCurrency] * value[`${altCurrency}_24h_change`]) /
-                      100,
-                  ts: yesterday,
-                });
+                  altCurrencies.forEach(altCurrency => {
+                    tokenRates[tokenName].push({
+                      code: altCurrency.toUpperCase(),
+                      fetchedOn: value.last_updated_at,
+                      name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                      rate: value[altCurrency],
+                      ts: value.last_updated_at,
+                    });
+
+                    const yesterday = moment
+                      .unix(value.last_updated_at)
+                      .subtract(1, 'days')
+                      .unix();
+                    tokenLastDayRates[tokenName].push({
+                      code: altCurrency.toUpperCase(),
+                      fetchedOn: yesterday,
+                      name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
+                      rate:
+                        value[altCurrency] +
+                        (value[altCurrency] *
+                          value[`${altCurrency}_24h_change`]) /
+                          100,
+                      ts: yesterday,
+                    });
+                  });
+                }
               });
             }
-          });
+          } else {
+            dispatch(
+              LogActions.info(
+                `No tokens wallets for ${chain} found. Skipping getTokenRates...`,
+              ),
+            );
+          }
         }
 
         dispatch(LogActions.info('getTokenRates: success'));

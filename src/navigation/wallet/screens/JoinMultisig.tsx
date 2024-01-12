@@ -12,7 +12,8 @@ import yup from '../../../lib/yup';
 import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {KeyOptions, Status} from '../../../store/wallet/wallet.models';
-import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {CommonActions} from '@react-navigation/native';
 import {
   ActiveOpacity,
   CtaContainer as _CtaContainer,
@@ -24,15 +25,11 @@ import {
   addWalletJoinMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
@@ -42,15 +39,22 @@ import {
 } from '../components/ErrorMessages';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 
 export type JoinMultisigParamList = {
   key?: Key;
   invitationCode?: string;
 };
 
-const Gutter = '10px';
-export const JoinContainer = styled.View`
-  padding: ${Gutter} 0;
+type JoinScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.JOIN_MULTISIG
+>;
+
+export const JoinContainer = styled.SafeAreaView`
+  flex: 1;
 `;
 
 const ScrollViewContainer = styled.ScrollView`
@@ -62,11 +66,9 @@ const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
 `;
 
-const JoinMultisig = () => {
+const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
-  const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'JoinMultisig'>>();
   const {key, invitationCode} = route.params || {};
 
   const schema = yup.object().shape({
@@ -109,12 +111,7 @@ const JoinMultisig = () => {
           opts.password = await dispatch(getDecryptPassword(key));
         }
 
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Joining Wallet')
-            t(OnGoingProcessMessages.JOIN_WALLET),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('JOIN_WALLET'));
 
         const wallet = (await dispatch<any>(
           addWalletJoinMultisig({
@@ -124,7 +121,7 @@ const JoinMultisig = () => {
         )) as Wallet;
 
         dispatch(
-          logSegmentEvent('track', 'Join Multisig Wallet success', {
+          Analytics.track('Join Multisig Wallet success', {
             addedToExistingKey: true,
           }),
         );
@@ -138,12 +135,12 @@ const JoinMultisig = () => {
                   index: 1,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Wallet',
-                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                      name: WalletScreens.KEY_OVERVIEW,
+                      params: {id: key.id},
                     },
                   ],
                 }),
@@ -155,19 +152,16 @@ const JoinMultisig = () => {
                     index: 2,
                     routes: [
                       {
-                        name: 'Tabs',
-                        params: {screen: 'Home'},
+                        name: RootStacks.TABS,
+                        params: {screen: TabsScreens.HOME},
                       },
                       {
-                        name: 'Wallet',
-                        params: {screen: 'KeyOverview', params: {id: key.id}},
+                        name: WalletScreens.KEY_OVERVIEW,
+                        params: {id: key.id},
                       },
                       {
-                        name: 'Wallet',
-                        params: {
-                          screen: 'WalletDetails',
-                          params: {walletId: wallet.id, key},
-                        },
+                        name: WalletScreens.COPAYERS,
+                        params: {walletId: wallet.id, key},
                       },
                     ],
                   }),
@@ -179,19 +173,16 @@ const JoinMultisig = () => {
                   index: 2,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Wallet',
-                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                      name: WalletScreens.KEY_OVERVIEW,
+                      params: {id: key.id},
                     },
                     {
-                      name: 'Wallet',
-                      params: {
-                        screen: 'Copayers',
-                        params: {wallet: wallet, status: status.wallet},
-                      },
+                      name: WalletScreens.COPAYERS,
+                      params: {wallet: wallet, status: status.wallet},
                     },
                   ],
                 }),
@@ -201,28 +192,23 @@ const JoinMultisig = () => {
           },
         );
       } else {
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Joining Wallet')
-            t(OnGoingProcessMessages.JOIN_WALLET),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('JOIN_WALLET'));
 
         const multisigKey = (await dispatch<any>(
           startJoinMultisig(opts),
         )) as Key;
 
         dispatch(
-          logSegmentEvent('track', 'Join Multisig Wallet success', {
+          Analytics.track('Join Multisig Wallet success', {
             addedToExistingKey: false,
           }),
         );
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
-        navigation.navigate('Wallet', {
-          screen: 'BackupKey',
-          params: {context: 'createNewKey', key: multisigKey},
+        navigation.navigate('BackupKey', {
+          context: 'createNewKey',
+          key: multisigKey,
         });
         dispatch(dismissOnGoingProcessModal());
       }
@@ -244,8 +230,8 @@ const JoinMultisig = () => {
   };
 
   return (
-    <ScrollViewContainer>
-      <JoinContainer>
+    <JoinContainer>
+      <ScrollViewContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -268,18 +254,15 @@ const JoinMultisig = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               dispatch(
-                logSegmentEvent('track', 'Open Scanner', {
+                Analytics.track('Open Scanner', {
                   context: 'JoinMultisig',
                 }),
               );
-              navigation.navigate('Scan', {
-                screen: 'Root',
-                params: {
-                  onScanComplete: data => {
-                    setValue('invitationCode', data, {
-                      shouldValidate: true,
-                    });
-                  },
+              navigation.navigate('ScanRoot', {
+                onScanComplete: data => {
+                  setValue('invitationCode', data, {
+                    shouldValidate: true,
+                  });
                 },
               });
             }}>
@@ -306,8 +289,8 @@ const JoinMultisig = () => {
             {t('Join')}
           </Button>
         </CtaContainer>
-      </JoinContainer>
-    </ScrollViewContainer>
+      </ScrollViewContainer>
+    </JoinContainer>
   );
 };
 

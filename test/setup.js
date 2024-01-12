@@ -21,12 +21,6 @@ jest.mock('react-native-reanimated', () =>
 global.__reanimatedWorkletInit = jest.fn();
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
 
-jest.mock('@segment/analytics-react-native', () => ({
-  setup: () => null,
-  identify: () => null,
-  reset: () => null,
-}));
-
 jest.mock('react-native-permissions', () =>
   require('react-native-permissions/mock'),
 );
@@ -87,6 +81,11 @@ jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');
   return {
     ...actualNav,
+    createNavigationContainerRef: jest.fn(() => ({
+      navigate: jest.fn(),
+      dispatch: jest.fn(),
+      addListener: jest.fn(),
+    })),
     useNavigation: () => ({
       navigate: jest.fn(),
       dispatch: jest.fn(),
@@ -94,3 +93,60 @@ jest.mock('@react-navigation/native', () => {
     }),
   };
 });
+
+jest.mock('mixpanel-react-native', () => ({
+  __esModule: true,
+  default: () => jest.fn(),
+  MixpanelProperties: {},
+  Mixpanel: jest.fn(() => ({
+    init: jest.fn(),
+  })),
+}));
+
+jest.mock('@walletconnect/core', () => ({
+  __esModule: true,
+  default: () => jest.fn(),
+  Core: jest.fn(),
+}));
+
+jest.mock('@walletconnect/web3wallet', () => ({
+  __esModule: true,
+  default: () => jest.fn(),
+  Web3Wallet: jest.fn(() => ({
+    init: jest.fn(),
+  })),
+}));
+
+jest.mock('react-native-share', () => ({
+  default: jest.fn(),
+}));
+
+jest.mock('react-native-localize', () => ({
+  getLocales: () => [
+    {countryCode: 'GB', languageTag: 'en-GB', languageCode: 'en', isRTL: false},
+    {countryCode: 'US', languageTag: 'en-US', languageCode: 'en', isRTL: false},
+    {countryCode: 'FR', languageTag: 'fr-FR', languageCode: 'fr', isRTL: false},
+  ],
+
+  getNumberFormatSettings: () => ({
+    decimalSeparator: '.',
+    groupingSeparator: ',',
+  }),
+
+  getCalendar: () => 'gregorian', // or "japanese", "buddhist"
+  getCountry: () => 'US', // the country code you want
+  getCurrencies: () => ['USD', 'EUR'], // can be empty array
+  getTemperatureUnit: () => 'celsius', // or "fahrenheit"
+  getTimeZone: () => 'Europe/Paris', // the timezone you want
+  uses24HourClock: () => true,
+  usesMetricSystem: () => true,
+
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+}));
+
+jest.mock('axios');
+
+jest.mock('i18next', () => ({
+  t: key => key,
+}));

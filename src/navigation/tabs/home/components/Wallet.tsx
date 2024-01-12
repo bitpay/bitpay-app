@@ -88,13 +88,13 @@ const NeedBackupText = styled(BaseText)`
   border-radius: 3px;
 `;
 
-const BalanceCode = styled(BaseText)`
+export const BalanceCode = styled(BaseText)`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
   font-weight: 500;
 `;
 
-const BalanceCodeContainer = styled.View`
+export const BalanceCodeContainer = styled.View`
   padding-left: 2px;
 `;
 

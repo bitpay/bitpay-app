@@ -1,8 +1,8 @@
-import {StackActions, useNavigation} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {CommonActions} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Linking, ScrollView} from 'react-native';
+import {DeviceEventEmitter, Linking, ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -13,15 +13,22 @@ import {setOnboardingCompleted} from '../../../store/app/app.actions';
 import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import TermsBox from '../components/TermsBox';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList} from '../OnboardingGroup';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {
   useAppDispatch,
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
+import {
+  WalletGroupParamList,
+  WalletScreens,
+} from '../../../navigation/wallet/WalletGroup';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 
-type TermsOfUseScreenProps = StackScreenProps<
-  OnboardingStackParamList,
-  'TermsOfUse'
+type TermsOfUseScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.TERMS_OF_USE
 >;
 
 export interface TermsOfUseParamList {
@@ -32,6 +39,7 @@ export interface TermsOfUseParamList {
 export interface TermsOfUseModel {
   id: number;
   statement: ReactElement;
+  accessibilityLabel: string;
 }
 
 const StatementText = styled(Paragraph)`
@@ -66,14 +74,13 @@ const TermsContainer = styled.View`
   padding: 20px 10px 100px;
 `;
 
-const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
+const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {key, context} = route.params || {};
   const [agreed, setAgreed] = useState<number[]>([]);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const Terms: Array<TermsOfUseModel> = [
     {
@@ -87,6 +94,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
           .
         </StatementText>
       ),
+      accessibilityLabel: 'first-term-checkbox',
     },
     {
       id: 2,
@@ -109,6 +117,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
           .
         </StatementText>
       ),
+      accessibilityLabel: 'second-term-checkbox',
     },
     {
       id: 3,
@@ -120,12 +129,13 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
           </StatementLink>
         </StatementText>
       ),
+      accessibilityLabel: 'third-term-checkbox',
     },
   ];
   const [termsList] = useState(() => {
     if (context === 'TOUOnly') {
       return Terms.filter(term => term.id === 3);
-    } else if (key || context === 'deferredImport') {
+    } else if (key) {
       return Terms.filter(term => term.id !== 3);
     }
 
@@ -148,7 +158,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   };
 
   return (
-    <TermsOfUseContainer>
+    <TermsOfUseContainer accessibilityLabel="terms-of-use-container">
       <ScrollView>
         <TermsContainer>
           <StatementText>{t('I understand that:')}</StatementText>
@@ -158,8 +168,9 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
         </TermsContainer>
       </ScrollView>
 
-      <CtaContainerAbsolute>
+      <CtaContainerAbsolute accessibilityLabel="cta-container">
         <Button
+          accessibilityLabel="agree-and-continue-button"
           onPress={() => {
             askForTrackingThenNavigate(() => {
               if (agreed.length >= 2) {
@@ -167,15 +178,35 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
               }
               if (key) {
                 navigation.dispatch(
-                  StackActions.replace('Wallet', {
-                    screen: 'KeyOverview',
-                    params: {id: key.id},
+                  CommonActions.reset({
+                    routes: [
+                      {
+                        name: RootStacks.TABS,
+                        params: {
+                          screen: TabsScreens.HOME,
+                        },
+                      },
+                    ],
                   }),
                 );
               } else {
-                navigation.navigate('Tabs', {screen: 'Home'});
+                navigation.dispatch(
+                  CommonActions.reset({
+                    routes: [
+                      {
+                        name: RootStacks.TABS,
+                        params: {
+                          screen: TabsScreens.HOME,
+                        },
+                      },
+                    ],
+                  }),
+                );
               }
               dispatch(setOnboardingCompleted());
+              DeviceEventEmitter.emit(
+                DeviceEmitterEvents.APP_ONBOARDING_COMPLETED,
+              );
             });
           }}
           buttonStyle={'primary'}

@@ -1,5 +1,5 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {H7, Smallest} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
@@ -13,12 +13,12 @@ import {
   IconContainer,
   ItemContainer,
   ItemNoteContainer,
+  ItemNoteTouchableContainer,
   ItemTitleContainer,
   ItemTouchableContainer,
-  ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {View} from 'react-native';
+import {FlatList, View} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import {sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -26,36 +26,38 @@ import {
   dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
-import {
-  IWCConnector,
-  IWCRequest,
-} from '../../../store/wallet-connect/wallet-connect.models';
-import WalletConnect from '@walletconnect/client';
-import {
-  FormatAmount,
-  FormatAmountStr,
-} from '../../../store/wallet/effects/amount/amount';
-import {
-  createProposalAndBuildTxDetails,
-  handleCreateTxProposalError,
-} from '../../../store/wallet/effects/send/send';
+import {FormatAmountStr} from '../../../store/wallet/effects/amount/amount';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {convertHexToNumber} from '@walletconnect/utils';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {useTranslation} from 'react-i18next';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  getAddressFrom,
+  walletConnectV2OnUpdateSession,
+} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {
   GetAmFormatDate,
   GetAmTimeAgo,
   WithinPastDay,
 } from '../../../store/wallet/utils/time';
+import {
+  WCV2RequestType,
+  WCV2SessionType,
+} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
+import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../constants/WalletConnectV2';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {WalletConnectHeader} from '../WalletConnectGroup';
+import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
+import {InAppNotificationContextType} from '../../../store/app/app.models';
 
 export type WalletConnectHomeParamList = {
-  peerId: string;
+  topic?: string;
   wallet: Wallet;
+  context?: InAppNotificationContextType;
 };
 
 const SummaryContainer = styled.View`
@@ -77,7 +79,7 @@ const NoteLabel = styled(H7)`
 `;
 
 const PRContainer = styled.View`
-  padding-bottom: 64px;
+  flex: 1;
 `;
 
 const ClipboardContainer = styled.View`
@@ -90,102 +92,140 @@ const WalletConnectHome = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const [accountDisconnected, setAccountDisconnected] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const {
-    params: {peerId, wallet},
+    params: {topic, wallet, context},
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
 
-  const {chain, currencyAbbreviation} = wallet;
-
-  const wcConnector: IWCConnector | undefined = useAppSelector(
-    ({WALLET_CONNECT}) => {
-      return WALLET_CONNECT.connectors.find(c => c.connector.peerId === peerId);
-    },
+  // version 2
+  const sessionV2: WCV2SessionType | undefined = useAppSelector(
+    ({WALLET_CONNECT_V2}) =>
+      WALLET_CONNECT_V2.sessions.find(session => session.topic === topic),
   );
-  const session: WalletConnect | undefined = wcConnector?.connector;
-  const requests: IWCRequest[] = useAppSelector(({WALLET_CONNECT}) => {
-    return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
-  });
+  const requestsV2 = useAppSelector(({WALLET_CONNECT_V2}) =>
+    WALLET_CONNECT_V2.requests
+      .filter(request => {
+        const addressFrom = getAddressFrom(request)?.toLowerCase();
+        const filterWithAddress = addressFrom
+          ? addressFrom === wallet.receiveAddress?.toLowerCase()
+          : true; // if address exist in request check if it matches with connected wallets addresses
+        const walletConnectChain =
+          WALLET_CONNECT_SUPPORTED_CHAINS[request?.params.chainId]?.chain;
+        return (
+          request.topic === topic &&
+          filterWithAddress &&
+          walletConnectChain === wallet.chain
+        );
+      })
+      .reverse(),
+  );
 
-  const goToConfirmView = async (request: IWCRequest) => {
+  const {peer} = sessionV2 || {};
+  const {name: peerName, icons, url: peerUrl} = peer?.metadata || {};
+  const peerIcon = icons && icons[0];
+
+  const {chain, currencyAbbreviation, receiveAddress, tokenAddress} = wallet;
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const disconnectAccount = async () => {
+    haptic('impactLight');
+    dispatch(
+      showBottomNotificationModal({
+        type: 'question',
+        title: t('Confirm delete'),
+        message: t(
+          'Are you sure you want to delete this account from the connection?',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('DELETE'),
+            action: async () => {
+              try {
+                if (sessionV2) {
+                  dispatch(dismissBottomNotificationModal());
+                  await sleep(600);
+                  dispatch(startOnGoingProcessModal('LOADING'));
+                  await sleep(600);
+                  await dispatch(
+                    walletConnectV2OnUpdateSession({
+                      session: sessionV2,
+                      address: receiveAddress,
+                      action: 'disconnect',
+                    }),
+                  );
+                  dispatch(dismissOnGoingProcessModal());
+                  await sleep(600);
+                  setAccountDisconnected(true);
+                }
+              } catch (err) {
+                dispatch(dismissOnGoingProcessModal());
+                await sleep(500);
+                await showErrorMessage(
+                  CustomErrorMessage({
+                    errMsg: BWCErrorMessage(err),
+                    title: t('Uh oh, something went wrong'),
+                  }),
+                );
+              }
+            },
+            primary: true,
+          },
+          {
+            text: t('GO BACK'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => WalletConnectHeader(),
+      headerRight: () => {
+        return (
+          <ItemNoteTouchableContainer
+            onPress={() => {
+              disconnectAccount();
+            }}>
+            <TrashIcon />
+          </ItemNoteTouchableContainer>
+        );
+      },
+    });
+  }, [navigation, disconnectAccount, t]);
+
+  const goToConfirmView = async (request: any) => {
     try {
+      let _wallet;
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
-      dispatch(
-        showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
 
-      const {
-        to: toAddress,
-        from,
-        gasPrice,
-        gas,
-        value = '0x0',
-        nonce,
-        data,
-      } = request.payload.params[0];
+      const {to: toAddress} = request.params.request.params[0];
+
       const recipient = {
         address: toAddress,
       };
-      const amountStr = value
-        ? dispatch(
-            FormatAmount(currencyAbbreviation, chain, parseInt(value, 16)),
-          )
-        : 0;
-      const tx = {
-        wallet,
+
+      navigation.navigate('WalletConnectConfirm', {
+        wallet: _wallet || wallet,
         recipient,
-        toAddress,
-        from,
-        amount: Number(amountStr),
-        gasPrice: gasPrice && convertHexToNumber(gasPrice),
-        nonce: nonce && convertHexToNumber(nonce),
-        gasLimit: gas && convertHexToNumber(gas),
-        data,
-        customData: {
-          service: 'walletConnect',
-        },
-      };
-      const {txDetails, txp} = (await dispatch<any>(
-        createProposalAndBuildTxDetails(tx),
-      )) as any;
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      navigation.navigate('WalletConnect', {
-        screen: 'WalletConnectConfirm',
-        params: {
-          wallet,
-          recipient,
-          txp,
-          txDetails,
-          request,
-          amount: tx.amount,
-          data,
-          peerName: session?.peerMeta?.name,
-        },
+        request,
+        peerName,
       });
-    } catch (err: any) {
-      const errorMessageConfig = (
-        await Promise.all([
-          dispatch(handleCreateTxProposalError(err)),
-          sleep(500),
-        ])
-      )[0];
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      dispatch(
-        showBottomNotificationModal({
-          ...errorMessageConfig,
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
+    } catch (error: any) {
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(error.err ? error.err : error),
+          title: t('Uh oh, something went wrong'),
         }),
       );
     }
@@ -203,6 +243,18 @@ const WalletConnectHome = () => {
     }
   };
 
+  const handleRequestMethod = (request: WCV2RequestType) => {
+    const {method} = request.params.request;
+    method !== 'eth_sendTransaction' && method !== 'eth_signTransaction'
+      ? navigation.navigate('WalletConnectRequestDetails', {
+          request,
+          wallet,
+          peerName,
+          topic,
+        })
+      : goToConfirmView(request);
+  };
+
   useEffect(() => {
     if (!clipboardObj.copied) {
       return;
@@ -215,20 +267,97 @@ const WalletConnectHome = () => {
   }, [clipboardObj]);
 
   useEffect(() => {
-    if (!wcConnector) {
+    if (!sessionV2) {
+      setAccountDisconnected(true);
+    }
+  }, [sessionV2]);
+
+  useEffect(() => {
+    if (accountDisconnected) {
       navigation.goBack();
     }
-  }, [wcConnector, navigation]);
+  }, [accountDisconnected]);
+
+  useEffect(() => {
+    if (context && ['notification'].includes(context) && requestsV2[0]) {
+      handleRequestMethod(requestsV2[0]);
+    }
+  }, [context]);
+
+  const renderItem = useCallback(
+    ({item, index}: {item: WCV2RequestType; index: number}) => {
+      const {createdOn, chain: _chain} = item;
+      const {value = '0x0'} = item.params.request.params[0];
+      const amountStr = dispatch(
+        FormatAmountStr(
+          _chain || currencyAbbreviation,
+          _chain || chain,
+          tokenAddress,
+          parseInt(value, 16),
+        ),
+      );
+
+      return (
+        <View key={index.toString()}>
+          <ItemTouchableContainer
+            onPress={() => {
+              haptic('impactLight');
+              handleRequestMethod(item);
+            }}>
+            <ItemTitleContainer style={{maxWidth: '40%'}}>
+              {peerIcon && peerName ? (
+                <>
+                  <IconContainer>
+                    <FastImage
+                      source={{uri: peerIcon}}
+                      style={{width: 25, height: 25}}
+                    />
+                  </IconContainer>
+                  <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
+                    {peerName}
+                  </IconLabel>
+                </>
+              ) : null}
+            </ItemTitleContainer>
+            <ItemNoteContainer>
+              <View style={{alignItems: 'flex-end'}}>
+                <IconLabel>{amountStr}</IconLabel>
+                {createdOn &&
+                  (WithinPastDay(createdOn) ? (
+                    <Smallest style={{marginRight: 12}}>
+                      {t('Created ', {
+                        date: GetAmTimeAgo(createdOn),
+                      })}
+                    </Smallest>
+                  ) : (
+                    <Smallest style={{marginRight: 12}}>
+                      {t('Created on', {
+                        date: GetAmFormatDate(createdOn),
+                      })}
+                    </Smallest>
+                  ))}
+              </View>
+              <IconContainer>
+                <AngleRight />
+              </IconContainer>
+            </ItemNoteContainer>
+          </ItemTouchableContainer>
+          <Hr />
+        </View>
+      );
+    },
+    [],
+  );
 
   return (
     <WalletConnectContainer>
-      <ScrollView>
+      <View style={{marginTop: 20, padding: 16, flex: 1}}>
         <SummaryContainer>
           <HeaderTitle>{t('Summary')}</HeaderTitle>
           <Hr />
           <ItemContainer>
             <H7>{t('Connected to')}</H7>
-            {session && session.peerMeta ? (
+            {peerUrl && peerIcon ? (
               <ClipboardContainer>
                 {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
                   <CopiedSvg width={17} />
@@ -237,18 +366,16 @@ const WalletConnectHome = () => {
                   isDappUri={true}
                   disabled={clipboardObj.copied}
                   onPress={() =>
-                    session.peerMeta
-                      ? copyToClipboard(session.peerMeta.url, 'dappUri')
-                      : null
+                    peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                   }>
                   <IconContainer>
                     <FastImage
-                      source={{uri: session.peerMeta.icons[0]}}
+                      source={{uri: peerIcon}}
                       style={{width: 18, height: 18}}
                     />
                   </IconContainer>
                   <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
-                    {session.peerMeta.url.replace('https://', '')}
+                    {peerUrl?.replace('https://', '')}
                   </NoteLabel>
                 </NoteContainer>
               </ClipboardContainer>
@@ -257,7 +384,7 @@ const WalletConnectHome = () => {
           <Hr />
           <ItemContainer>
             <H7>{t('Linked Wallet')}</H7>
-            {session && session.accounts && session.accounts[0] ? (
+            {wallet.receiveAddress ? (
               <ClipboardContainer>
                 {clipboardObj.copied && clipboardObj.type === 'address' ? (
                   <CopiedSvg width={17} />
@@ -265,7 +392,7 @@ const WalletConnectHome = () => {
                 <NoteContainer
                   disabled={clipboardObj.copied}
                   onPress={() =>
-                    copyToClipboard(session.accounts[0], 'address')
+                    copyToClipboard(wallet.receiveAddress!, 'address')
                   }>
                   <IconContainer>
                     {chain === 'eth' ? (
@@ -275,7 +402,7 @@ const WalletConnectHome = () => {
                     )}
                   </IconContainer>
                   <NoteLabel numberOfLines={1} ellipsizeMode={'middle'}>
-                    {session.accounts[0]}
+                    {wallet.receiveAddress}
                   </NoteLabel>
                 </NoteContainer>
               </ClipboardContainer>
@@ -286,76 +413,20 @@ const WalletConnectHome = () => {
         <PRContainer>
           <HeaderTitle>{t('Pending Requests')}</HeaderTitle>
           <Hr />
-          {requests && requests.length ? (
-            requests.map((request, id) => {
-              const {value = '0x0'} = request.payload.params[0];
-              const amountStr = dispatch(
-                FormatAmountStr(
-                  currencyAbbreviation,
-                  chain,
-                  parseInt(value, 16),
-                ),
-              );
-              return (
-                <View key={id}>
-                  <ItemTouchableContainer
-                    onPress={() => {
-                      haptic('impactLight');
-                      request.payload.method !== 'eth_sendTransaction' &&
-                      request.payload.method !== 'eth_signTransaction'
-                        ? navigation.navigate('WalletConnect', {
-                            screen: 'WalletConnectRequestDetails',
-                            params: {
-                              peerId,
-                              requestId: request.payload.id,
-                              wallet,
-                              peerName: session?.peerMeta?.name,
-                            },
-                          })
-                        : goToConfirmView(request);
-                    }}>
-                    <ItemTitleContainer>
-                      {session && session.peerMeta ? (
-                        <>
-                          <IconContainer>
-                            <FastImage
-                              source={{uri: session.peerMeta.icons[0]}}
-                              style={{width: 25, height: 25}}
-                            />
-                          </IconContainer>
-                          <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
-                            {session.peerMeta.name}
-                          </IconLabel>
-                        </>
-                      ) : null}
-                    </ItemTitleContainer>
-                    <ItemNoteContainer>
-                      <View style={{alignItems: 'flex-end'}}>
-                        <IconLabel>{amountStr}</IconLabel>
-                        {request.createdOn &&
-                          (WithinPastDay(request.createdOn) ? (
-                            <Smallest style={{marginRight: 12}}>
-                              {t('Created ', {
-                                date: GetAmTimeAgo(request.createdOn),
-                              })}
-                            </Smallest>
-                          ) : (
-                            <Smallest style={{marginRight: 12}}>
-                              {t('Created on', {
-                                date: GetAmFormatDate(request.createdOn),
-                              })}
-                            </Smallest>
-                          ))}
-                      </View>
-                      <IconContainer>
-                        <AngleRight />
-                      </IconContainer>
-                    </ItemNoteContainer>
-                  </ItemTouchableContainer>
-                  <Hr />
-                </View>
-              );
-            })
+          {requestsV2 && requestsV2.length ? (
+            <FlatList
+              data={
+                requestsV2 && requestsV2.length ? requestsV2 : ([] as any[])
+              }
+              keyExtractor={(_item, index) => index.toString()}
+              renderItem={({
+                item,
+                index,
+              }: {
+                item: WCV2RequestType;
+                index: number;
+              }) => renderItem({item, index})}
+            />
           ) : (
             <ItemContainer>
               <ItemTitleContainer>
@@ -364,7 +435,7 @@ const WalletConnectHome = () => {
             </ItemContainer>
           )}
         </PRContainer>
-      </ScrollView>
+      </View>
     </WalletConnectContainer>
   );
 };

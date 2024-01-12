@@ -18,7 +18,7 @@ import {
   isInvalidTokenError,
 } from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
 import CoinbaseSettingsOption from './CoinbaseSettingsOption';
 import {
   formatFiatAmount,
@@ -26,11 +26,22 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
-import {Hr} from '../../../components/styled/Containers';
+import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {coinbaseAccountToWalletRow} from '../../../store/wallet/utils/wallet';
 import {useTranslation} from 'react-i18next';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import {
+  KeyDropdown,
+  KeyDropdownOptionsContainer,
+  KeyToggle,
+} from '../../wallet/screens/KeyOverview';
+import KeyDropdownOption from '../../wallet/components/KeyDropdownOption';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
+import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 
 const OverviewContainer = styled.View`
   flex: 1;
@@ -61,7 +72,6 @@ const SkeletonContainer = styled.View`
 `;
 
 const HeaderTitleContainer = styled.View`
-  flex: 1;
   flex-direction: row;
   justify-content: center;
   padding-top: 13px;
@@ -87,26 +97,34 @@ const CoinbaseDashboard = () => {
   );
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
 
-  const hideTotalBalance = useAppSelector(
-    ({COINBASE}) => COINBASE.hideTotalBalance,
-  );
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const hasKeys = Object.values(keys).filter(k => k.backupComplete).length >= 1;
+
+  const [showKeyDropdown, setShowKeyDropdown] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitleContainer>
-          <CoinbaseSvg style={{marginRight: 8, marginTop: 2}} />
-          <HeaderTitle style={{marginTop: 4}}>{'Coinbase'}</HeaderTitle>
-        </HeaderTitleContainer>
+        <KeyToggle
+          activeOpacity={ActiveOpacity}
+          disabled={!hasKeys}
+          onPress={() => setShowKeyDropdown(true)}>
+          <HeaderTitleContainer>
+            <CoinbaseSvg style={{marginRight: 8, marginTop: 2}} />
+            <HeaderTitle style={{marginTop: 4}}>{'Coinbase'}</HeaderTitle>
+            {hasKeys && (
+              <ChevronDownSvg style={{marginLeft: 10, marginTop: 13}} />
+            )}
+          </HeaderTitleContainer>
+        </KeyToggle>
       ),
       headerRight: () => (
         <CoinbaseSettingsOption
           onPress={() => {
-            navigation.navigate('Coinbase', {
-              screen: 'CoinbaseSettings',
-              params: {fromScreen: 'CoinbaseDashboard'},
+            navigation.navigate('CoinbaseSettings', {
+              fromScreen: 'CoinbaseDashboard',
             });
           }}
           theme={theme}
@@ -144,18 +162,22 @@ const CoinbaseDashboard = () => {
         <WalletRow
           id={walletItem.id}
           wallet={walletItem}
+          hideBalance={hideAllBalances}
           onPress={() => {
             haptic('impactLight');
-            navigation.navigate('Coinbase', {
-              screen: 'CoinbaseAccount',
-              params: {accountId: item.id},
-            });
+            navigation.navigate('CoinbaseAccount', {accountId: item.id});
             dispatch(coinbaseGetTransactionsByAccount(item.id));
           }}
         />
       );
     },
-    [dispatch, navigation, exchangeRates, defaultAltCurrency.isoCode],
+    [
+      dispatch,
+      navigation,
+      exchangeRates,
+      defaultAltCurrency.isoCode,
+      hideAllBalances,
+    ],
   );
 
   const showError = useCallback(
@@ -222,7 +244,7 @@ const CoinbaseDashboard = () => {
       <BalanceContainer>
         {balance !== null ? (
           <>
-            {!hideTotalBalance ? (
+            {!hideAllBalances ? (
               <Balance scale={shouldScale(balance)}>
                 {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
               </Balance>
@@ -268,6 +290,47 @@ const CoinbaseDashboard = () => {
         renderItem={renderItem}
         ListFooterComponent={listFooterComponent}
       />
+      <SheetModal
+        isVisible={showKeyDropdown}
+        placement={'top'}
+        onBackdropPress={() => setShowKeyDropdown(false)}>
+        <KeyDropdown>
+          <HeaderTitle style={{margin: 15}}>{t('Other Keys')}</HeaderTitle>
+          <KeyDropdownOptionsContainer>
+            {Object.values(keys)
+              .filter(_key => _key.backupComplete)
+              .map(_key => (
+                <KeyDropdownOption
+                  key={_key.id}
+                  keyId={_key.id}
+                  keyName={_key.keyName}
+                  wallets={_key.wallets}
+                  totalBalance={_key.totalBalance}
+                  onPress={keyId => {
+                    setShowKeyDropdown(false);
+                    navigation.dispatch(
+                      CommonActions.reset({
+                        index: 1,
+                        routes: [
+                          {
+                            name: RootStacks.TABS,
+                            params: {screen: TabsScreens.HOME},
+                          },
+                          {
+                            name: WalletScreens.KEY_OVERVIEW,
+                            params: {id: keyId},
+                          },
+                        ],
+                      }),
+                    );
+                  }}
+                  defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+                  hideKeyBalance={hideAllBalances}
+                />
+              ))}
+          </KeyDropdownOptionsContainer>
+        </KeyDropdown>
+      </SheetModal>
     </OverviewContainer>
   );
 };

@@ -28,6 +28,7 @@ export const Slate30 = '#E1E4E7';
 export const Caution = '#ef476f';
 export const Caution50 = '#FDAFBB';
 export const Caution25 = '#FFD8DE';
+export const Caution60 = '#ad1313';
 
 export const Success = '#2fcfa4';
 export const Success50 = '#97E7D1';

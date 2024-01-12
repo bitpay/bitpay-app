@@ -1,13 +1,14 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Platform, ScrollView} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
 import {
   useAppDispatch,
   useAppSelector,
   useLogger,
+  useMount,
 } from '../../../../utils/hooks';
-import {BuyCryptoStackParamList} from '../BuyCryptoStack';
+import {BuyCryptoScreens, BuyCryptoGroupParamList} from '../BuyCryptoGroup';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
 import AmountModal from '../../../../components/amount/AmountModal';
@@ -26,15 +27,13 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {RootState} from '../../../../store';
 import {
   showBottomNotificationModal,
-  dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
 } from '../../../../store/app/app.actions';
+import {getBuyCryptoFiatLimits} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import {getSimplexSupportedCurrencies} from '../utils/simplex-utils';
-import {getWyreSupportedCurrencies} from '../utils/wyre-utils';
 import {
   getBadgeImg,
   getCurrencyAbbreviation,
@@ -43,17 +42,17 @@ import {
 import {AppActions} from '../../../../store/app';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {
+  BuyCryptoExchangeKey,
+  BuyCryptoSupportedExchanges,
   getAvailableFiatCurrencies,
+  getBuyCryptoSupportedCoins,
   isPaymentMethodSupported,
 } from '../utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   BitpaySupportedCoins,
-  BitpaySupportedCurrencies,
+  BitpaySupportedTokens,
 } from '../../../../constants/currencies';
 import ToWalletSelectorModal, {
   ToWalletSelectorCustomCurrency,
@@ -63,11 +62,34 @@ import {
   AddWalletData,
   getDecryptPassword,
 } from '../../../../store/wallet/effects/create/create';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {getCoinAndChainFromCurrencyCode} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {orderBy} from 'lodash';
+import {showWalletError} from '../../../../store/wallet/effects/errors/errors';
+import {getExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
+import {
+  BuyCryptoConfig,
+  ExternalServicesConfig,
+  ExternalServicesConfigRequestParams,
+} from '../../../../store/external-services/external-services.types';
+import {StackActions} from '@react-navigation/native';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
+
+export type BuyCryptoRootScreenParams =
+  | {
+      amount: number;
+      fromWallet?: any;
+      buyCryptoOpts?: any;
+      currencyAbbreviation?: string | undefined; // used from charts and deeplinks.
+      chain?: string | undefined; // used from charts and deeplinks.
+      partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
+    }
+  | undefined;
+
+const BuyCryptoRootContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -77,25 +99,34 @@ const ArrowContainer = styled.View`
   margin-left: 10px;
 `;
 
-const BuyCryptoRoot: React.FC<
-  StackScreenProps<BuyCryptoStackParamList, 'BuyCryptoRoot'>
-> = ({navigation, route}) => {
+let buyCryptoConfig: BuyCryptoConfig | undefined;
+
+const BuyCryptoRoot = ({
+  route,
+  navigation,
+}: NativeStackScreenProps<BuyCryptoGroupParamList, BuyCryptoScreens.ROOT>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-  const tokenData = useAppSelector(({WALLET}: RootState) => WALLET.tokenData);
-  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const tokenDataByAddress = useAppSelector(
+    ({WALLET}: RootState) => WALLET.tokenDataByAddress,
+  );
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const network = useAppSelector(({APP}) => APP.network);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const fromWallet = route.params?.fromWallet;
-  const fromAmount = route.params?.amount;
+  const fromAmount = Number(route.params?.amount || 0); // deeplink params are strings, ensure this is number so offers will work
   const fromCurrencyAbbreviation =
     route.params?.currencyAbbreviation?.toLowerCase();
   const fromChain = route.params?.chain?.toLowerCase();
-
-  const [amount, setAmount] = useState<number>(fromAmount ? fromAmount : 0);
+  const preSetPartner = route.params?.partner?.toLowerCase() as
+    | BuyCryptoExchangeKey
+    | undefined;
+  const [amount, setAmount] = useState<number>(fromAmount);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
@@ -107,12 +138,9 @@ const BuyCryptoRoot: React.FC<
       ? PaymentMethodsAvailable.applePay
       : PaymentMethodsAvailable.debitCard,
   );
-  const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
-    ...new Set([
-      ...getSimplexSupportedCurrencies(),
-      ...getWyreSupportedCurrencies(),
-    ]),
-  ]);
+  const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState(
+    getBuyCryptoSupportedCoins(locationData, preSetPartner),
+  );
   const [buyCryptoSupportedCoinsFullObj, setBuyCryptoSupportedCoinsFullObj] =
     useState<ToWalletSelectorCustomCurrency[]>([]);
   const fiatCurrency = getAvailableFiatCurrencies().includes(
@@ -153,11 +181,20 @@ const BuyCryptoRoot: React.FC<
     }
   };
 
-  const selectFirstAvailableWallet = () => {
+  const walletError = async (
+    type?: string,
+    fromCurrencyAbbreviation?: string,
+  ) => {
+    dispatch(dismissOnGoingProcessModal());
+    await sleep(400);
+    dispatch(showWalletError(type, fromCurrencyAbbreviation));
+  };
+
+  const selectFirstAvailableWallet = async () => {
     const keysList = Object.values(allKeys).filter(key => key.backupComplete);
 
     if (!keysList[0]) {
-      showError('emptyKeyList');
+      walletError('emptyKeyList');
       return;
     }
 
@@ -170,11 +207,13 @@ const BuyCryptoRoot: React.FC<
         allWallets = [...allWallets, ...key.wallets];
       });
 
-      fromWalletData = allWallets.find(wallet => wallet.id == fromWallet.id);
+      fromWalletData = allWallets.find(wallet => wallet.id === fromWallet.id);
       if (fromWalletData) {
         setWallet(fromWalletData);
+        await sleep(500);
+        dispatch(dismissOnGoingProcessModal());
       } else {
-        showError('walletNotSupported');
+        walletError('walletNotSupported');
       }
     } else {
       const availableKeys = keysList.filter(key => {
@@ -203,11 +242,15 @@ const BuyCryptoRoot: React.FC<
               (fromChain ? wallet.chain === fromChain : true),
           );
         }
-        allowedWallets[0]
-          ? setSelectedWallet(allowedWallets[0])
-          : showError('noWalletsAbleToBuy', fromCurrencyAbbreviation);
+        if (allowedWallets[0]) {
+          setSelectedWallet(allowedWallets[0]);
+          await sleep(500);
+          dispatch(dismissOnGoingProcessModal());
+        } else {
+          walletError('noWalletsAbleToBuy', fromCurrencyAbbreviation);
+        }
       } else {
-        showError('keysNoSupportedWallet', fromCurrencyAbbreviation);
+        walletError('keysNoSupportedWallet', fromCurrencyAbbreviation);
       }
     }
   };
@@ -222,21 +265,13 @@ const BuyCryptoRoot: React.FC<
   const walletIsSupported = (wallet: Wallet): boolean => {
     return (
       wallet.credentials &&
-      ((wallet.network === 'livenet' &&
-        buyCryptoSupportedCoins.includes(
-          getCurrencyAbbreviation(
-            wallet.currencyAbbreviation.toLowerCase(),
-            wallet.chain,
-          ),
-        )) ||
-        (__DEV__ &&
-          wallet.network === 'testnet' &&
-          getWyreSupportedCurrencies().includes(
-            getCurrencyAbbreviation(
-              wallet.currencyAbbreviation.toLowerCase(),
-              wallet.chain,
-            ),
-          ))) &&
+      wallet.network === 'livenet' &&
+      buyCryptoSupportedCoins.includes(
+        getCurrencyAbbreviation(
+          wallet.currencyAbbreviation.toLowerCase(),
+          wallet.chain,
+        ),
+      ) &&
       wallet.isComplete() &&
       !wallet.hideWallet &&
       (!fromCurrencyAbbreviation ||
@@ -248,33 +283,25 @@ const BuyCryptoRoot: React.FC<
   const setWallet = (wallet: Wallet) => {
     if (
       wallet.credentials &&
-      ((wallet.network === 'livenet' &&
-        buyCryptoSupportedCoins.includes(
-          getCurrencyAbbreviation(
-            wallet.currencyAbbreviation.toLowerCase(),
-            wallet.chain,
-          ),
-        )) ||
-        (__DEV__ &&
-          wallet.network === 'testnet' &&
-          getWyreSupportedCurrencies().includes(
-            getCurrencyAbbreviation(
-              wallet.currencyAbbreviation.toLowerCase(),
-              wallet.chain,
-            ),
-          )))
+      wallet.network === 'livenet' &&
+      buyCryptoSupportedCoins.includes(
+        getCurrencyAbbreviation(
+          wallet.currencyAbbreviation.toLowerCase(),
+          wallet.chain,
+        ),
+      )
     ) {
       if (wallet.isComplete()) {
         if (allKeys[wallet.keyId].backupComplete) {
           setSelectedWallet(wallet);
         } else {
-          showError('needsBackup');
+          walletError('needsBackup');
         }
       } else {
-        showError('walletNotCompleted');
+        walletError('walletNotCompleted');
       }
     } else {
-      showError('walletNotSupported');
+      walletError('walletNotSupported');
     }
   };
 
@@ -342,12 +369,12 @@ const BuyCryptoRoot: React.FC<
 
   const continueToViewOffers = () => {
     dispatch(
-      logSegmentEvent('track', 'Buy Crypto "View Offers"', {
+      Analytics.track('Buy Crypto "View Offers"', {
         fiatAmount: amount,
         fiatCurrency,
         paymentMethod: selectedPaymentMethod.method,
-        coin: selectedWallet!.currencyAbbreviation,
-        chain: selectedWallet!.chain,
+        coin: selectedWallet!.currencyAbbreviation.toLowerCase(),
+        chain: selectedWallet!.chain?.toLowerCase(),
       }),
     );
 
@@ -356,32 +383,76 @@ const BuyCryptoRoot: React.FC<
       fiatCurrency,
       coin: selectedWallet?.currencyAbbreviation || '',
       chain: selectedWallet?.chain || '',
-      country: countryData?.shortCode || 'US',
-      selectedWallet,
+      country: locationData?.countryShortCode || 'US',
+      selectedWallet: selectedWallet!,
       paymentMethod: selectedPaymentMethod,
+      buyCryptoConfig,
+      preSetPartner,
     });
   };
 
   const setDefaultPaymentMethod = () => {
     if (!!selectedWallet && Platform.OS === 'ios') {
-      setSelectedPaymentMethod(
-        isPaymentMethodSupported(
-          'simplex',
-          PaymentMethodsAvailable.applePay,
-          selectedWallet.currencyAbbreviation,
-          selectedWallet.chain,
-          fiatCurrency,
-        ) ||
+      if (
+        preSetPartner &&
+        BuyCryptoSupportedExchanges.includes(preSetPartner)
+      ) {
+        setSelectedPaymentMethod(
           isPaymentMethodSupported(
-            'wyre',
+            preSetPartner,
             PaymentMethodsAvailable.applePay,
             selectedWallet.currencyAbbreviation,
             selectedWallet.chain,
             fiatCurrency,
+            locationData?.countryShortCode || 'US',
           )
-          ? PaymentMethodsAvailable.applePay
-          : PaymentMethodsAvailable.debitCard,
-      );
+            ? PaymentMethodsAvailable.applePay
+            : PaymentMethodsAvailable.debitCard,
+        );
+      } else {
+        setSelectedPaymentMethod(
+          isPaymentMethodSupported(
+            'banxa',
+            PaymentMethodsAvailable.applePay,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
+          ) ||
+            isPaymentMethodSupported(
+              'moonpay',
+              PaymentMethodsAvailable.applePay,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              fiatCurrency,
+              locationData?.countryShortCode || 'US',
+            ) ||
+            isPaymentMethodSupported(
+              'ramp',
+              PaymentMethodsAvailable.applePay,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              fiatCurrency,
+            ) ||
+            isPaymentMethodSupported(
+              'sardine',
+              PaymentMethodsAvailable.applePay,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              fiatCurrency,
+              locationData?.countryShortCode || 'US',
+            ) ||
+            isPaymentMethodSupported(
+              'simplex',
+              PaymentMethodsAvailable.applePay,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              fiatCurrency,
+            )
+            ? PaymentMethodsAvailable.applePay
+            : PaymentMethodsAvailable.debitCard,
+        );
+      }
     } else {
       setSelectedPaymentMethod(PaymentMethodsAvailable.debitCard);
     }
@@ -392,27 +463,62 @@ const BuyCryptoRoot: React.FC<
       return;
     }
     if (
-      selectedPaymentMethod.method == 'sepaBankTransfer' &&
-      !countryData?.isEuCountry
+      selectedPaymentMethod.method === 'sepaBankTransfer' &&
+      !locationData?.isEuCountry
     ) {
       setDefaultPaymentMethod();
       return;
     }
     if (
-      isPaymentMethodSupported(
-        'simplex',
-        selectedPaymentMethod,
-        selectedWallet.currencyAbbreviation,
-        selectedWallet.chain,
-        fiatCurrency,
-      ) ||
-      isPaymentMethodSupported(
-        'wyre',
-        selectedPaymentMethod,
-        selectedWallet.currencyAbbreviation,
-        selectedWallet.chain,
-        fiatCurrency,
-      )
+      (preSetPartner &&
+        BuyCryptoSupportedExchanges.includes(preSetPartner) &&
+        isPaymentMethodSupported(
+          preSetPartner,
+          selectedPaymentMethod,
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.chain,
+          fiatCurrency,
+          locationData?.countryShortCode || 'US',
+        )) ||
+      (!preSetPartner &&
+        (isPaymentMethodSupported(
+          'banxa',
+          PaymentMethodsAvailable.applePay,
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.chain,
+          fiatCurrency,
+          locationData?.countryShortCode || 'US',
+        ) ||
+          isPaymentMethodSupported(
+            'moonpay',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
+          ) ||
+          isPaymentMethodSupported(
+            'ramp',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+          ) ||
+          isPaymentMethodSupported(
+            'sardine',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
+          ) ||
+          isPaymentMethodSupported(
+            'simplex',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+          )))
     ) {
       logger.debug(
         `Selected payment method available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}`,
@@ -425,98 +531,102 @@ const BuyCryptoRoot: React.FC<
       setDefaultPaymentMethod();
     }
   };
+  const checkPaymentMethodRef = useRef(checkPaymentMethod);
+  checkPaymentMethodRef.current = checkPaymentMethod;
 
-  const showError = async (type?: string, coin?: string) => {
-    let title, message: string;
-    switch (type) {
-      case 'walletNotSupported':
-        title = t('Wallet not supported');
-        message = t(
-          'The selected wallet is currently not supported for buying cryptocurrencies',
-        );
-        break;
-      case 'needsBackup':
-        title = t('Needs backup');
-        message = t(
-          'The key of the selected wallet needs backup before being able to receive funds',
-        );
-        break;
-      case 'walletNotCompleted':
-        title = t('Incomplete Wallet');
-        message = t(
-          'The selected wallet needs to be complete before being able to receive funds',
-        );
-        break;
-      case 'noWalletsAbleToBuy':
-        title = t('No wallets');
-        message = coin
-          ? t('No wallets available to receive funds.', {
-              coin: coin.toUpperCase(),
-            })
-          : t('No wallets available to receive funds.');
-        break;
-      case 'keysNoSupportedWallet':
-        title = t('Not supported wallets');
-        message = coin
-          ? t('Your keys do not have wallets able to buy crypto', {
-              coin: coin.toUpperCase(),
-            })
-          : t('Your keys do not have supported wallets able to buy crypto');
-        break;
-      case 'emptyKeyList':
-        title = t('No keys with supported wallets');
-        message = t(
-          'There are no keys with wallets able to receive funds. Remember to backup your keys before using this feature.',
-        );
-        break;
-      default:
-        title = t('Error');
-        message = t('Unknown Error');
-        break;
-    }
-    await sleep(1000);
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title,
-        message,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('OK'),
-            action: () => {
-              dispatch(dismissBottomNotificationModal());
-            },
-            primary: true,
-          },
-        ],
-      }),
+  const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
+    const foundToken = Object.values(tokenDataByAddress).find(
+      token =>
+        token.coin === _currencyAbbreviation.toLowerCase() &&
+        token.chain === _chain,
     );
-  };
-
-  const getLogoUri = (coin: string, _chain: string) => {
     if (
       SupportedCurrencyOptions.find(
         ({currencyAbbreviation, chain}) =>
-          currencyAbbreviation === coin.toLowerCase() &&
+          currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           (!chain || chain === _chain),
       )
     ) {
       return SupportedCurrencyOptions.find(
         ({currencyAbbreviation, chain}) =>
-          currencyAbbreviation === coin.toLowerCase() &&
+          currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           (!chain || chain === _chain),
       )!.img;
-    } else if (tokenData[getCurrencyAbbreviation(coin, _chain)]?.logoURI) {
-      return tokenData[getCurrencyAbbreviation(coin, _chain)].logoURI;
+    } else if (foundToken?.logoURI) {
+      return foundToken.logoURI;
     } else {
       return undefined;
     }
   };
 
-  useEffect(() => {
+  const init = async () => {
+    try {
+      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+      const requestData: ExternalServicesConfigRequestParams = {
+        currentLocationCountry: locationData?.countryShortCode,
+        currentLocationState: locationData?.stateShortCode,
+        bitpayIdLocationCountry: user?.country,
+        bitpayIdLocationState: user?.state,
+      };
+      const config: ExternalServicesConfig = await dispatch(
+        getExternalServicesConfig(requestData),
+      );
+      buyCryptoConfig = config?.buyCrypto;
+      logger.debug('buyCryptoConfig: ' + JSON.stringify(buyCryptoConfig));
+    } catch (err) {
+      logger.error('getBuyCryptoConfig Error: ' + JSON.stringify(err));
+    }
+
+    if (buyCryptoConfig?.disabled) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(600);
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          title: buyCryptoConfig?.disabledTitle
+            ? buyCryptoConfig.disabledTitle
+            : t('Out of service'),
+          message: buyCryptoConfig?.disabledMessage
+            ? buyCryptoConfig.disabledMessage
+            : t(
+                'This feature is temporarily out of service. Please try again later.',
+              ),
+          type: 'warning',
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {
+                navigation.dispatch(StackActions.popToTop());
+              },
+            },
+          ],
+          enableBackdropDismiss: true,
+          onBackdropDismiss: () => {
+            navigation.dispatch(StackActions.popToTop());
+          },
+        }),
+      );
+      return;
+    }
+
+    if (preSetPartner) {
+      logger.debug(
+        `preSetPartner: ${preSetPartner} - fromAmount: ${fromAmount} - fromCurrencyAbbreviation: ${fromCurrencyAbbreviation} - fromChain: ${fromChain}`,
+      );
+    }
+
+    const limits = dispatch(
+      getBuyCryptoFiatLimits(preSetPartner, fiatCurrency),
+    );
+
+    if (limits.min !== undefined && amount < limits.min) {
+      setAmount(limits.min);
+    }
+    if (limits.max !== undefined && amount > limits.max) {
+      setAmount(limits.max);
+    }
+
     const coinsToRemove =
-      !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
+      !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
 
     if (coinsToRemove.length > 0) {
       coinsToRemove.forEach((coin: string) => {
@@ -548,33 +658,40 @@ const BuyCryptoRoot: React.FC<
       ['asc', 'asc'],
     );
 
-    const buyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
+    const initialBuyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
       supportedCoins
         .map((symbol: string) => {
           const {coin, chain} = getCoinAndChainFromCurrencyCode(symbol);
+          const foundToken = Object.values({
+            ...BitpaySupportedTokens,
+            ...tokenDataByAddress,
+          }).find(token => token.coin === coin && token.chain === chain);
           return {
             currencyAbbreviation: coin,
             symbol,
-            name:
-              BitpaySupportedCurrencies[symbol]?.name ||
-              tokenData[symbol]?.name,
+            name: (BitpaySupportedCoins[symbol]?.name || foundToken?.name)!,
             chain,
             logoUri: getLogoUri(coin, chain),
+            tokenAddress: foundToken?.address,
           };
         })
         .filter(currency => !!currency.name);
 
-    setBuyCryptoSupportedCoinsFullObj(buyCryptoSupportedCoinsFullObj);
+    setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
 
     selectFirstAvailableWallet();
-  }, []);
+  };
+
+  useMount(() => {
+    init();
+  });
 
   useEffect(() => {
-    checkPaymentMethod();
+    checkPaymentMethodRef.current();
   }, [selectedWallet]);
 
   return (
-    <>
+    <BuyCryptoRootContainer>
       <ScrollView>
         <BuyCryptoItemCard
           onPress={() => {
@@ -766,11 +883,7 @@ const BuyCryptoRoot: React.FC<
               }
 
               await sleep(500);
-              await dispatch(
-                startOnGoingProcessModal(
-                  t(OnGoingProcessMessages.ADDING_WALLET),
-                ),
-              );
+              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
 
               const createdToWallet = await dispatch(
                 addWallet(createNewWalletData),
@@ -779,7 +892,7 @@ const BuyCryptoRoot: React.FC<
                 `Added ${createdToWallet?.currencyAbbreviation} wallet from Buy Crypto`,
               );
               dispatch(
-                logSegmentEvent('track', 'Created Basic Wallet', {
+                Analytics.track('Created Basic Wallet', {
                   coin: createNewWalletData.currency.currencyAbbreviation,
                   chain: createNewWalletData.currency.chain,
                   isErc20Token: createNewWalletData.currency.isToken,
@@ -795,7 +908,7 @@ const BuyCryptoRoot: React.FC<
               if (err.message === 'invalid password') {
                 dispatch(showBottomNotificationModal(WrongPasswordError()));
               } else {
-                showError(err.message);
+                walletError(err.message);
               }
             }
           }
@@ -813,8 +926,9 @@ const BuyCryptoRoot: React.FC<
         coin={selectedWallet?.currencyAbbreviation}
         chain={selectedWallet?.chain}
         currency={fiatCurrency}
+        preSetPartner={preSetPartner}
       />
-    </>
+    </BuyCryptoRootContainer>
   );
 };
 

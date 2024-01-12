@@ -53,11 +53,8 @@ const ChangellySettings: React.FC = () => {
                   key={swapTx.exchangeTxId}
                   onPress={() => {
                     haptic('impactLight');
-                    navigation.navigate('ExternalServicesSettings', {
-                      screen: 'ChangellyDetails',
-                      params: {
-                        swapTx: swapTx,
-                      },
+                    navigation.navigate('ChangellyDetails', {
+                      swapTx: swapTx,
                     });
                   }}>
                   <PrRowLeft>

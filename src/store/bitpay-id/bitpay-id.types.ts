@@ -55,6 +55,7 @@ export enum BitPayIdActionTypes {
   RESET_FORGOT_PASSWORD_EMAIL_STATUS = 'BitPayId/RESET_FORGOT_PASSWORD_EMAIL_STATUS',
   SUCCESS_FETCH_RECEIVING_ADDRESSES = 'BitPayId/SUCCESS_FETCH_RECEIVING_ADDRESSES',
   SUCCESS_FETCH_SECURITY_SETTINGS = 'BitPayId/SUCCESS_FETCH_SECURITY_SETTINGS',
+  SUCCESS_RESET_METHOD_USER = 'BitPayId/SUCCESS_RESET_METHOD_USER',
 }
 
 interface SuccessFetchSession {
@@ -219,6 +220,10 @@ interface ForgotPasswordEmailStatus {
 interface ResetForgotPasswordEmailStatus {
   type: typeof BitPayIdActionTypes.RESET_FORGOT_PASSWORD_EMAIL_STATUS;
 }
+interface SuccessResetMethodUser {
+  type: typeof BitPayIdActionTypes.SUCCESS_RESET_METHOD_USER;
+  payload: {network: Network};
+}
 
 interface SuccessFetchReceivingAddresses {
   type: typeof BitPayIdActionTypes.SUCCESS_FETCH_RECEIVING_ADDRESSES;
@@ -283,6 +288,7 @@ export type BitPayIdActionType =
   | UpdateFetchDoshTokenStatus
   | SuccessFetchReceivingAddresses
   | SuccessFetchSecuritySettings
+  | SuccessResetMethodUser
   // Reset Password
   | ForgotPasswordEmailStatus
   | ResetForgotPasswordEmailStatus;

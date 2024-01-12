@@ -18,7 +18,7 @@ import {
 import {SlateDark, White} from '../../../../styles/colors';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {GetMainAddresses} from '../../../../store/wallet/effects/address/address';
@@ -35,11 +35,12 @@ import {
 } from '../../../../store/wallet/effects/amount/amount';
 import {View} from 'react-native';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import AddressesSkeleton from './AddressesSkeleton';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
+import {LogActions} from '../../../../store/log';
 
 const ADDRESS_LIMIT = 5;
 
@@ -92,7 +93,7 @@ const Addresses = () => {
   const {t} = useTranslation();
   const {
     params: {wallet},
-  } = useRoute<RouteProp<WalletStackParamList, 'Addresses'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'Addresses'>>();
 
   const {
     credentials: {token, multisigEthInfo},
@@ -100,6 +101,7 @@ const Addresses = () => {
     currencyName,
     currencyAbbreviation,
     chain,
+    tokenAddress,
   } = wallet;
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
@@ -201,25 +203,39 @@ const Addresses = () => {
 
           setLowUtxosSum(
             dispatch(
-              FormatAmountStr(currencyAbbreviation, chain, _lowUtoxosSum),
+              FormatAmountStr(
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+                _lowUtoxosSum,
+              ),
             ),
           );
           setAllUtxosSum(
-            dispatch(FormatAmountStr(currencyAbbreviation, chain, allSum)),
+            dispatch(
+              FormatAmountStr(
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+                allSum,
+              ),
+            ),
           );
           setMinFee(
             dispatch(
               FormatAmountStr(
                 currencyAbbreviation,
                 chain,
+                tokenAddress,
                 response.minFee || 0,
               ),
             ),
           );
           setMinFeePer(per.toFixed(2) + '%');
         }
-      } catch (e) {
-        console.log(e);
+      } catch (err) {
+        const e = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[Addresses] ', e));
       }
       setLoading(false);
     } catch (e) {
@@ -288,10 +304,7 @@ const Addresses = () => {
             return;
           }
           setButtonState('success');
-          navigation.navigate('Wallet', {
-            screen: 'WalletDetails',
-            params: {walletId, key},
-          });
+          navigation.navigate('WalletDetails', {walletId, key});
 
           return;
         },
@@ -332,15 +345,13 @@ const Addresses = () => {
               <AllAddressesLink
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  navigation.navigate('Wallet', {
-                    screen: 'AllAddresses',
-                    params: {
-                      currencyAbbreviation,
-                      chain,
-                      walletName: walletName || currencyName,
-                      usedAddresses: usedAddress,
-                      unusedAddresses: unusedAddress,
-                    },
+                  navigation.navigate('AllAddresses', {
+                    currencyAbbreviation,
+                    chain,
+                    walletName: walletName || currencyName,
+                    usedAddresses: usedAddress,
+                    unusedAddresses: unusedAddress,
+                    tokenAddress,
                   });
                 }}>
                 <LinkText>{t('View all addresses')}</LinkText>
@@ -421,6 +432,7 @@ const Addresses = () => {
                             FormatAmountStr(
                               currencyAbbreviation,
                               chain,
+                              tokenAddress,
                               amount,
                             ),
                           )}

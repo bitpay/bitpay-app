@@ -1,9 +1,9 @@
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import React, {memo, useLayoutEffect, useState} from 'react';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import React, {memo, useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Alert, FlatList} from 'react-native';
+import {Alert, SectionList} from 'react-native';
 import Mailer from 'react-native-mail';
 import styled, {useTheme} from 'styled-components/native';
 import {
@@ -27,17 +27,17 @@ import {
   Black,
 } from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {AboutStackParamList} from '../AboutStack';
+import {AboutGroupParamList, AboutScreens} from '../AboutGroup';
 import Settings from '../../../../../components/settings/Settings';
 import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
 import SendIcon from '../../../../../../assets/img/send-icon.svg';
 import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
+import {ListHeader} from '../../general/screens/customize-home/Shared';
+import {storage} from '../../../../../store';
 
-export interface SessionLogsParamList {}
-
-type SessionLogsScreenProps = StackNavigationProp<
-  AboutStackParamList,
-  'SessionLogs'
+type SessionLogsScreenProps = NativeStackScreenProps<
+  AboutGroupParamList,
+  AboutScreens.SESSION_LOGS
 >;
 
 const LogsContainer = styled.SafeAreaView`
@@ -142,7 +142,7 @@ const renderItem = ({item}: {item: LogEntry}) => (
 
 const keyExtractor = (item: LogEntry, index: number) => item.message + index;
 
-const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
+const SessionLogs = ({}: SessionLogsScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -152,6 +152,10 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
   const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
+  const currentSessionStartTime = new Date(logs[0].timestamp);
+  const [filteredPersistedLogs, setFilteredPersistedLogs] = useState(
+    [] as LogEntry[],
+  );
 
   const onFilterLevelChange = (level: LogLevel) => {
     if (level !== filterLevel) {
@@ -181,11 +185,20 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
     setShowOptions(false);
     let logStr =
       'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
-    logStr += filteredLogs.map(log => {
-      const formattedLevel = LogLevel[log.level].toLowerCase();
+    const printLogs = (logsToPrint: LogEntry[]) =>
+      logsToPrint
+        .map(log => {
+          const formattedLevel = LogLevel[log.level].toLowerCase();
 
-      return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
-    });
+          return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+        })
+        .join('');
+    const persistedLogString = filteredPersistedLogs.length
+      ? 'Previous Sessions\n\n' +
+        printLogs(filteredPersistedLogs) +
+        '\n\nCurrent Session\n\n'
+      : '';
+    logStr += persistedLogString + printLogs(filteredLogs);
 
     Alert.alert(
       t('Warning'),
@@ -204,16 +217,38 @@ const SessionLogs: React.VFC<SessionLogsScreenProps> = () => {
     });
   }, [navigation]);
 
+  useEffect(() => {
+    const value = storage.getString('persist:logs');
+    if (value) {
+      const _filteredPersistedLogs = JSON.parse(value).filter(
+        (log: LogEntry) =>
+          log.level <= filterLevel &&
+          new Date(log.timestamp) < currentSessionStartTime,
+      );
+      setFilteredPersistedLogs(_filteredPersistedLogs);
+    }
+  }, []);
+
   return (
     <LogsContainer>
-      <FlatList
+      <SectionList
         contentContainerStyle={{
-          paddingVertical: 15,
-          paddingHorizontal: 15,
+          paddingBottom: 150,
+          marginTop: 5,
+          marginLeft: 5,
         }}
-        data={filteredLogs}
+        sections={[
+          {title: t('Previous Sessions'), data: filteredPersistedLogs},
+          {title: t('Current Session'), data: filteredLogs},
+        ]}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({section: {title}}) =>
+          filteredPersistedLogs.length > 0 ? (
+            <ListHeader>{title}</ListHeader>
+          ) : null
+        }
       />
 
       <FilterLabels onPress={onFilterLevelChange} />

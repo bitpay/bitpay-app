@@ -4,6 +4,8 @@ import {getGiftCardConfigList} from '../../lib/gift-cards/gift-card';
 import {
   CardConfigMap,
   CategoriesAndCurations,
+  Category,
+  DirectIntegrationApiObject,
   DirectIntegrationMap,
 } from './shop.models';
 
@@ -11,10 +13,12 @@ export const selectAvailableCardMap: AppSelector<CardConfigMap> = ({SHOP}) => {
   return SHOP.availableCardMap;
 };
 
+export const getAvailableGiftCards = (availableCardMap: CardConfigMap) =>
+  getGiftCardConfigList(availableCardMap).filter(config => !config.hidden);
+
 export const selectAvailableGiftCards = createSelector(
   [selectAvailableCardMap],
-  availableCardMap =>
-    getGiftCardConfigList(availableCardMap).filter(config => !config.hidden),
+  availableCardMap => getAvailableGiftCards(availableCardMap),
 );
 
 export const selectCategoriesAndCurations: AppSelector<
@@ -43,16 +47,21 @@ export const selectIntegrations = createSelector(
   },
 );
 
+export const getCategoriesWithIntegrations = (
+  categories: Category[],
+  integrations: DirectIntegrationApiObject[],
+) =>
+  categories
+    .map(category => ({
+      ...category,
+      integrations: integrations.filter(integration =>
+        category.tags?.some((tag: string) => integration.tags.includes(tag)),
+      ),
+    }))
+    .filter(category => category.integrations.length);
+
 export const selectCategoriesWithIntegrations = createSelector(
   [selectCategories, selectIntegrations],
-  (categories, integrations) => {
-    return categories
-      .map(category => ({
-        ...category,
-        integrations: integrations.filter(integration =>
-          category.tags?.some((tag: string) => integration.tags.includes(tag)),
-        ),
-      }))
-      .filter(category => category.integrations.length);
-  },
+  (categories, integrations) =>
+    getCategoriesWithIntegrations(categories, integrations),
 );

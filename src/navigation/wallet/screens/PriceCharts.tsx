@@ -24,7 +24,7 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import RangeDateSelector from '../components/RangeDateSelector';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
@@ -32,9 +32,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -54,7 +52,8 @@ import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -175,7 +174,7 @@ const PriceCharts = () => {
   const theme = useTheme();
   const {
     params: {item},
-  } = useRoute<RouteProp<WalletStackParamList, 'PriceCharts'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const {
@@ -258,24 +257,14 @@ const PriceCharts = () => {
 
   const redrawChart = async (dateRange: DateRanges) => {
     if (cachedRates[dateRange].domain) {
-      dispatch(
-        showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOADING'));
       await sleep(500);
       setDisplayData(cachedRates[dateRange]);
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
     } else {
       try {
-        dispatch(
-          showOnGoingProcessModal(
-            // t('Loading')
-            t(OnGoingProcessMessages.LOADING),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('LOADING'));
         await sleep(500);
         let {data, domain, percentChange}: ChartDataType =
           await getHistoricalFiatRates(dateRange);
@@ -302,27 +291,21 @@ const PriceCharts = () => {
 
   const goToBuyCrypto = useRequireKeyAndWalletRedirect(() => {
     dispatch(
-      logSegmentEvent('track', 'Clicked Buy Crypto', {
+      Analytics.track('Clicked Buy Crypto', {
         context: 'PriceChart',
         coin: currencyAbbreviation || '',
         chain: chain || '',
       }),
     );
-    navigation.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
-      params: {
-        onAmountSelected: async (amount: string) => {
-          navigation.navigate('BuyCrypto', {
-            screen: 'BuyCryptoRoot',
-            params: {
-              amount: Number(amount),
-              currencyAbbreviation,
-              chain,
-            },
-          });
-        },
-        context: 'buyCrypto',
+    navigation.navigate(WalletScreens.AMOUNT, {
+      onAmountSelected: async (amount: string) => {
+        navigation.navigate('BuyCryptoRoot', {
+          amount: Number(amount),
+          currencyAbbreviation,
+          chain,
+        });
       },
+      context: 'buyCrypto',
     });
   });
 
@@ -340,14 +323,14 @@ const PriceCharts = () => {
   return (
     <SafeAreaView>
       <HeaderContainer>
-        {currentPrice && (
+        {currentPrice ? (
           <H2>
             {formatFiatAmount(currentPrice, defaultAltCurrency.isoCode, {
               customPrecision: 'minimal',
               currencyAbbreviation,
             })}
           </H2>
-        )}
+        ) : null}
         <RowContainer>
           {showLossGainOrNeutralArrow(displayData.percentChange)}
           <CurrencyAverageText>

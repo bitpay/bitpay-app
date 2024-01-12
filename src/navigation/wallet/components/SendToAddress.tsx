@@ -13,16 +13,14 @@ import {BaseText, H5, SubText} from '../../../components/styled/Text';
 import {Caution, NeutralSlate} from '../../../styles/colors';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {WalletGroupParamList} from '../WalletGroup';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {Effect, RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
+  ValidDataTypes,
   ValidateURI,
 } from '../../../store/wallet/utils/validations';
 import {FlatList, TouchableOpacity, View} from 'react-native';
@@ -39,7 +37,6 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {BchLegacyAddressInfo, Mismatch} from './ErrorMessages';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {Recipient} from '../../../store/wallet/wallet.models';
 import KeyWalletsRow, {
   KeyWallet,
@@ -57,17 +54,8 @@ import {
   ExtractUriAmount,
 } from '../../../store/wallet/utils/decode-uri';
 import {sleep} from '../../../utils/helper-methods';
-
-const ValidDataTypes: string[] = [
-  'BitcoinAddress',
-  'BitcoinCashAddress',
-  'DogecoinAddress',
-  'LitecoinAddress',
-  'BitcoinUri',
-  'BitcoinCashUri',
-  'DogecoinUri',
-  'LitecoinUri',
-];
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {LogActions} from '../../../store/log';
 
 const SendToAddressContainer = styled.View`
   margin-top: 20px;
@@ -96,7 +84,7 @@ const SendToAddress = () => {
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {
@@ -107,7 +95,7 @@ const SendToAddress = () => {
     goToSelectInputsView,
   } = useContext(SendToOptionsContext);
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'SendToOptions'>>();
   const {wallet, context} = route.params;
   const {currencyAbbreviation, id, network, chain} = wallet;
 
@@ -115,6 +103,7 @@ const SendToAddress = () => {
     keys,
     id,
     currencyAbbreviation,
+    chain,
     network,
     defaultAltCurrency.isoCode,
     searchInput,
@@ -216,12 +205,7 @@ const SendToAddress = () => {
       let address = receiveAddress;
 
       if (!address) {
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Generating Address')
-            t(OnGoingProcessMessages.GENERATING_ADDRESS),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
         address = (await dispatch<any>(
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         )) as string;
@@ -241,7 +225,8 @@ const SendToAddress = () => {
         ? goToSelectInputsView(newRecipient)
         : addRecipient(newRecipient);
     } catch (err) {
-      console.error(err);
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[SendToWallet] ', e));
     }
   };
 
@@ -278,22 +263,23 @@ const SendToAddress = () => {
             onPress={() => {
               haptic('impactLight');
               dispatch(
-                logSegmentEvent('track', 'Open Scanner', {
+                Analytics.track('Open Scanner', {
                   context: 'SendTo',
                 }),
               );
-              navigation.navigate('Scan', {
-                screen: 'Root',
-                params: {
-                  onScanComplete: data => {
-                    try {
-                      if (data) {
-                        validateData(data);
-                      }
-                    } catch (err) {
-                      console.log(err);
+              navigation.navigate('ScanRoot', {
+                onScanComplete: data => {
+                  try {
+                    if (data) {
+                      validateData(data);
                     }
-                  },
+                  } catch (err) {
+                    const e =
+                      err instanceof Error ? err.message : JSON.stringify(err);
+                    dispatch(
+                      LogActions.error('[OpenScanner SendToAddress] ', e),
+                    );
+                  }
                 },
               });
             }}>
@@ -337,6 +323,7 @@ const SendToAddress = () => {
         <View style={{marginTop: 10}}>
           <KeyWalletsRow
             keyWallets={keyWallets}
+            hideBalance={hideAllBalances}
             onPress={(selectedWallet: KeyWallet) => {
               onSendToWallet(selectedWallet);
             }}

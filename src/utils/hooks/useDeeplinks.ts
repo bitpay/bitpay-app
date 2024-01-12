@@ -1,36 +1,59 @@
 import {
+  getActionFromState,
   getStateFromPath,
   LinkingOptions,
-  useNavigation,
+  PathConfig,
 } from '@react-navigation/native';
-import {useEffect, useRef} from 'react';
+import {useMemo, useRef} from 'react';
 import {Linking} from 'react-native';
+import AppsFlyer from 'react-native-appsflyer';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {
   APP_CRYPTO_PREFIX,
   APP_DEEPLINK_PREFIX,
   APP_UNIVERSAL_LINK_DOMAINS,
 } from '../../constants/config';
-import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
+import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdGroup';
 import {CardScreens} from '../../navigation/card/CardStack';
-import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
-import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
-import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseStack';
-import {RootStackParamList, RootStacks} from '../../Root';
-import {useAppSelector} from '.';
-import {TabsScreens} from '../../navigation/tabs/TabsStack';
-import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
+import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoGroup';
+import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
+import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseGroup';
+import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
+import {TabsScreens, TabsStackParamList} from '../../navigation/tabs/TabsStack';
 import {incomingData} from '../../store/scan/scan.effects';
 import {showBlur} from '../../store/app/app.actions';
-import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
-import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
-import {
-  selectAvailableGiftCards,
-  selectIntegrations,
-} from '../../store/shop/shop.selectors';
-import {LogActions} from '../../store/log';
 import {incomingLink} from '../../store/app/app.effects';
 import useAppDispatch from './useAppDispatch';
+import {useLogger} from './useLogger';
+import {DebugScreens} from '../../navigation/Debug';
+import {GiftCardScreens} from '../../navigation/tabs/shop/gift-card/GiftCardGroup';
+
+const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
+  initialRouteName: RootStacks.TABS,
+  // configuration for associating screens with paths
+  screens: {
+    [DebugScreens.DEBUG]: {
+      path: 'debug/:name',
+    },
+    [BitpayIdScreens.PAIRING]: 'pair',
+    [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
+    [RootStacks.TABS]: {
+      screens: {
+        [TabsScreens.CARD]: {
+          path: 'wallet-card',
+          initialRouteName: CardScreens.HOME,
+          screens: {
+            [CardScreens.PAIRING]: 'pairing',
+          },
+        },
+      },
+    } as PathConfig<TabsStackParamList>,
+    [GiftCardScreens.GIFT_CARD_DEEPLINK]: 'giftcard',
+    [BuyCryptoScreens.ROOT]: {path: 'buy/:amount?'},
+    [SwapCryptoScreens.SWAPCRYPTO_ROOT]: 'swap',
+    [CoinbaseScreens.ROOT]: 'coinbase',
+  },
+});
 
 const isUniversalLink = (url: string): boolean => {
   try {
@@ -56,21 +79,44 @@ const isCryptoLink = (url: string): boolean => {
 
 export const useUrlEventHandler = () => {
   const dispatch = useAppDispatch();
-  const urlEventHandler = ({url}: {url: string | null}) => {
-    dispatch(LogActions.debug(`[deeplink] received: ${url}`));
+  const logger = useLogger();
+
+  const urlEventHandler = async ({url}: {url: string | null}) => {
+    logger.debug(`[deeplink] received: ${url}`);
 
     if (url && (isDeepLink(url) || isUniversalLink(url) || isCryptoLink(url))) {
-      dispatch(LogActions.info(`[deeplink] valid: ${url}`));
+      logger.info(`[deeplink] valid: ${url}`);
       dispatch(showBlur(false));
 
       let handled = false;
 
+      // check if the url maps to a navigational link
       if (!handled) {
         handled = dispatch(incomingLink(url));
       }
 
+      // check if the url contains payment data
       if (!handled) {
-        dispatch(incomingData(url));
+        handled = await dispatch(incomingData(url));
+      }
+
+      // check if the url can be handled by the NavigationContainer based on the linking config
+      if (!handled) {
+        // try to translate the path to a navigation state according to our linking config
+        const path = url.replace(APP_DEEPLINK_PREFIX, '/');
+        const state = getStateFromPath(path, getLinkingConfig());
+
+        if (state) {
+          const action = getActionFromState(state);
+
+          if (action !== undefined) {
+            navigationRef.dispatch(action);
+          } else {
+            navigationRef.reset(state);
+          }
+
+          handled = true;
+        }
       }
 
       try {
@@ -82,10 +128,10 @@ export const useUrlEventHandler = () => {
         });
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error('[deeplink] not available from IAB: ' + errStr),
-        );
+        logger.error('[deeplink] not available from IAB: ' + errStr);
       }
+
+      return handled;
     }
   };
   const handlerRef = useRef(urlEventHandler);
@@ -93,138 +139,91 @@ export const useUrlEventHandler = () => {
   return handlerRef.current;
 };
 
-export const useShopDeepLinkHandler = () => {
-  const navigation = useNavigation();
-  const availableGiftCards = useAppSelector(selectAvailableGiftCards);
-  const integrations = useAppSelector(selectIntegrations);
-
-  const shopDeepLinkHandler = (
-    url: string,
-  ): {merchantName: string} | undefined => {
-    const path = url.replace(APP_DEEPLINK_PREFIX, '');
-    const state = getStateFromPath(path);
-    if (!state?.routes.length) {
-      return undefined;
-    }
-    const route = state.routes[0];
-    const merchantName = (
-      ((route.params as any) || {}).merchant || ''
-    ).toLowerCase();
-
-    if (!['giftcard', 'shoponline'].includes(route.name)) {
-      return undefined;
-    }
-
-    if (route.name === 'giftcard') {
-      const cardConfig = availableGiftCards.find(
-        gc => gc.name.toLowerCase() === merchantName,
-      );
-
-      if (cardConfig) {
-        navigation.navigate('GiftCard', {
-          screen: 'BuyGiftCard',
-          params: {
-            cardConfig,
-          },
-        });
-      } else {
-        navigation.navigate('Shop', {
-          screen: ShopScreens.HOME,
-          params: {
-            screen: ShopTabs.GIFT_CARDS,
-          },
-        });
-      }
-    } else if (route.name === 'shoponline') {
-      const directIntegration = integrations.find(
-        i => i.displayName.toLowerCase() === merchantName,
-      );
-
-      if (directIntegration) {
-        navigation.navigate('Merchant', {
-          screen: 'MerchantDetails',
-          params: {
-            directIntegration,
-          },
-        });
-      } else {
-        navigation.navigate('Shop', {
-          screen: ShopScreens.HOME,
-          params: {
-            screen: ShopTabs.SHOP_ONLINE,
-          },
-        });
-      }
-    }
-    return {merchantName};
-  };
-  return shopDeepLinkHandler;
-};
-
 export const useDeeplinks = () => {
-  const dispatch = useAppDispatch();
   const urlEventHandler = useUrlEventHandler();
+  const logger = useLogger();
 
-  useEffect(() => {
-    const subscribeLinkingEvent = Linking.addEventListener(
-      'url',
-      urlEventHandler,
-    );
-    return () => subscribeLinkingEvent.remove();
-  }, [dispatch, urlEventHandler]);
+  const memoizedSubscribe = useMemo<
+    LinkingOptions<RootStackParamList>['subscribe']
+  >(
+    () => listener => {
+      const subscription = Linking.addEventListener('url', async ({url}) => {
+        let handled = false;
+        const urlObj = new URL(url);
+        const urlParams = urlObj.searchParams;
+
+        if (!handled) {
+          const isAppsFlyerDeeplink = urlParams.get('af_deeplink') === 'true';
+          const hasEmbeddedDeepLink = !!urlParams.get('deep_link_value');
+
+          // true if should be handled by AppsFlyer SDK
+          handled = !!(isAppsFlyerDeeplink && hasEmbeddedDeepLink);
+        }
+
+        if (!handled) {
+          handled = !!(await urlEventHandler({url}));
+        }
+
+        if (!handled) {
+          listener(url);
+        }
+      });
+
+      // Configure AppsFlyer to handle wrapped deeplinks.
+      // ie. resolve deeplinks with these hostnames to get the real deeplink
+      AppsFlyer.setResolveDeepLinkURLs(
+        ['clicks.bitpay.com', 'email.bitpay.com'],
+        () => {
+          logger.debug(
+            'Successfully configured AppsFlyer deeplink resolution.',
+          );
+        },
+        e => {
+          const errString = e instanceof Error ? e.message : JSON.stringify(e);
+          logger.debug(
+            `An error occurred trying to configure AppsFlyer deeplink resolution: ${errString}`,
+          );
+        },
+      );
+
+      const appsFlyerUnsubscribe = AppsFlyer.onDeepLink(udlData => {
+        const {data, deepLinkStatus, status} = udlData;
+
+        if (status === 'failure' || deepLinkStatus === 'Error') {
+          logger.info('Failed to handle Universal Deep Link.');
+          return;
+        }
+
+        if (deepLinkStatus === 'NOT_FOUND') {
+          logger.info('Universal Deep Link not recognized.');
+          return;
+        }
+
+        if (deepLinkStatus === 'FOUND') {
+          const {deep_link_value} = data;
+
+          if (deep_link_value) {
+            urlEventHandler({url: deep_link_value});
+          }
+
+          return;
+        }
+
+        logger.info(`Unrecognized deeplink status: ${deepLinkStatus}`);
+      });
+
+      return () => {
+        subscription.remove();
+        appsFlyerUnsubscribe();
+      };
+    },
+    [logger, urlEventHandler],
+  );
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {
     prefixes: [APP_DEEPLINK_PREFIX],
-    config: {
-      initialRouteName: 'Tabs',
-      // configuration for associating screens with paths
-      screens: {
-        [RootStacks.DEBUG]: {
-          path: 'debug/:name',
-        },
-        [RootStacks.BITPAY_ID]: {
-          path: 'id',
-          screens: {
-            [BitpayIdScreens.PAIRING]: 'pair',
-            [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
-          },
-        },
-        [RootStacks.TABS]: {
-          screens: {
-            [TabsScreens.CARD]: {
-              path: 'wallet-card',
-              initialRouteName: CardScreens.HOME,
-              screens: {
-                [CardScreens.PAIRING]: 'pairing',
-              },
-            },
-            [TabsScreens.SETTINGS]: {
-              screens: {
-                [SettingsScreens.Root]: 'connections/:redirectTo',
-              },
-            },
-          },
-        },
-        [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
-        [RootStacks.BUY_CRYPTO]: {
-          screens: {
-            [BuyCryptoScreens.ROOT]: {
-              path: 'buy/:amount?',
-            },
-          },
-        },
-        [RootStacks.SWAP_CRYPTO]: {
-          screens: {
-            [SwapCryptoScreens.ROOT]: 'swap',
-          },
-        },
-        [RootStacks.COINBASE]: {
-          screens: {
-            [CoinbaseScreens.ROOT]: 'coinbase',
-          },
-        },
-      },
-    },
+    subscribe: memoizedSubscribe,
+    config: getLinkingConfig(),
   };
 
   return linkingOptions;

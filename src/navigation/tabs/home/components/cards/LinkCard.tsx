@@ -6,7 +6,7 @@ import {
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import {LightBlack, White} from '../../../../../styles/colors';
-import {BoxShadow, DisabledOpacity} from '../Styled';
+import {BoxShadow} from '../Styled';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 interface LinkCardProps {
   image?: any;
@@ -40,22 +40,16 @@ const LinkCardImageContainer = styled.View`
   margin-right: 10px;
 `;
 
-const LinkCard: React.FC<LinkCardProps> = ({
-  image,
-  description,
-  onPress,
-  disabled = false,
-}) => {
+const LinkCard: React.FC<LinkCardProps> = ({image, description, onPress}) => {
   const theme = useTheme();
   return (
     <LinkCardContainer
-      disabled={disabled}
       activeOpacity={ActiveOpacity}
       onPress={() => {
         haptic('soft');
         onPress();
       }}
-      style={[!theme.dark && BoxShadow, disabled && DisabledOpacity]}>
+      style={[!theme.dark && BoxShadow]}>
       <LinkCardImageContainer>{image && image(theme)}</LinkCardImageContainer>
       <LinkCardText numberOfLines={2} ellipsizeMode={'tail'}>
         {description}

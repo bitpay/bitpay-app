@@ -12,19 +12,18 @@ import {useAppSelector} from '../../../utils/hooks';
 import {HomeCarouselLayoutType} from '../../../store/app/app.models';
 import {Balance, KeyName} from '../../wallet/components/KeyDropdownOption';
 import {BoxShadow} from '../../tabs/home/components/Styled';
-import {BaseText, H3} from '../../../components/styled/Text';
-import {
-  LightBlack,
-  White,
-  NeutralSlate,
-  SlateDark,
-} from '../../../styles/colors';
+import {H3} from '../../../components/styled/Text';
+import {LightBlack, White} from '../../../styles/colors';
 import {
   ActiveOpacity,
   Column,
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
+import {
+  BalanceCode,
+  BalanceCodeContainer,
+} from '../../tabs/home/components/Wallet';
 
 interface CoinbaseCardComponentProps {
   layout: HomeCarouselLayoutType;
@@ -55,16 +54,6 @@ const HeaderImgList = styled.View`
   justify-content: center;
 `;
 
-const BalanceCode = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
-  font-weight: 500;
-`;
-
-const BalanceCodeContainer = styled.View`
-  padding-left: 2px;
-`;
-
 const HeaderComponent = (
   <HeaderImg>
     <CoinbaseSvg width="22" height="22" />
@@ -83,14 +72,11 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   const theme = useTheme();
   const navigation = useNavigation();
   const onCTAPress = () => {
-    navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
+    navigation.navigate('CoinbaseRoot');
   };
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const hideTotalBalance = useAppSelector(
-    ({COINBASE}) => COINBASE.hideTotalBalance,
-  );
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
 
   const {amount, code} = formatFiatAmountObj(
     balance,
@@ -115,7 +101,7 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
             <KeyName>Coinbase</KeyName>
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            {!hideTotalBalance ? (
+            {!hideAllBalances ? (
               <Balance>
                 {amount}
                 {code ? (

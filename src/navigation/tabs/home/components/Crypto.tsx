@@ -1,7 +1,6 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {useDispatch} from 'react-redux';
-import Carousel from 'react-native-snap-carousel';
+import Carousel from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -25,7 +24,7 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import _ from 'lodash';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -47,10 +46,7 @@ import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
-import ListKeySkeleton from './cards/ListKeySkeleton';
-import CarouselKeySkeleton from './cards/CarouselKeySkeleton';
-import {clearDeferredImport} from '../../../../store/wallet/wallet.actions';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -102,14 +98,11 @@ export const keyBackupRequired = (
                     const decryptedKey = key.methods!.get(encryptPassword);
                     await dispatch(dismissDecryptPasswordModal());
                     await sleep(300);
-                    navigation.navigate('Wallet', {
-                      screen: 'RecoveryPhrase',
-                      params: {
-                        keyId: key.id,
-                        words: decryptedKey.mnemonic.trim().split(' '),
-                        key,
-                        context,
-                      },
+                    navigation.navigate('RecoveryPhrase', {
+                      keyId: key.id,
+                      words: decryptedKey.mnemonic.trim().split(' '),
+                      key,
+                      context,
                     });
                   } catch (e) {
                     console.log(`Decrypt Error: ${e}`);
@@ -121,14 +114,11 @@ export const keyBackupRequired = (
               }),
             );
           } else {
-            navigation.navigate('Wallet', {
-              screen: 'RecoveryPhrase',
-              params: {
-                keyId: key.id,
-                words: getMnemonic(key),
-                key,
-                context,
-              },
+            navigation.navigate('RecoveryPhrase', {
+              keyId: key.id,
+              words: getMnemonic(key),
+              key,
+              context,
             });
           }
         },
@@ -150,7 +140,7 @@ export const createHomeCardList = ({
   linkedCoinbase,
   homeCarouselConfig,
   homeCarouselLayoutType,
-  deferredImport,
+  hideKeyBalance,
   context,
   onPress,
   currency,
@@ -161,7 +151,7 @@ export const createHomeCardList = ({
   linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
-  deferredImport?: boolean;
+  hideKeyBalance: boolean;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
   currency?: any;
@@ -193,7 +183,7 @@ export const createHomeCardList = ({
           <WalletCardComponent
             layout={homeCarouselLayoutType}
             keyName={key.keyName}
-            hideKeyBalance={key.hideKeyBalance}
+            hideKeyBalance={hideKeyBalance}
             wallets={wallets}
             totalBalance={totalBalance}
             percentageDifference={percentageDifference}
@@ -208,10 +198,7 @@ export const createHomeCardList = ({
                 : () => {
                     haptic('soft');
                     if (backupComplete) {
-                      navigation.navigate('Wallet', {
-                        screen: 'KeyOverview',
-                        params: {id: key.id},
-                      });
+                      navigation.navigate('KeyOverview', {id: key.id});
                     } else {
                       dispatch(
                         showBottomNotificationModal(
@@ -249,52 +236,7 @@ export const createHomeCardList = ({
       homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
   );
 
-  const onDeferredImportPress = () => {
-    dispatch(
-      showBottomNotificationModal({
-        type: 'warning',
-        title: t('Cancel Import?'),
-        message: t('Would you like to cancel importing this key?'),
-        actions: [
-          {
-            text: t('Cancel Import'),
-            primary: true,
-            action: () => dispatch(clearDeferredImport()),
-          },
-        ],
-        enableBackdropDismiss: true,
-      }),
-    );
-  };
-
-  if (deferredImport) {
-    if (homeCarouselLayoutType === 'listView') {
-      list.push({
-        id: 'deferredImport',
-        component: (
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => onDeferredImportPress()}>
-            <ListKeySkeleton />
-          </TouchableOpacity>
-        ),
-      });
-    } else {
-      list.push({
-        id: 'deferredImport',
-        component: (
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => onDeferredImportPress()}>
-            <CarouselKeySkeleton />
-          </TouchableOpacity>
-        ),
-      });
-    }
-  }
-
   const order = homeCarouselConfig.map(item => item.id);
-  order.push('deferredImport'); // Display placeholder at the end of the list
 
   return {
     list: [..._.sortBy(list, item => _.indexOf(order, item.id))],
@@ -305,7 +247,7 @@ export const createHomeCardList = ({
 const Crypto = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const linkedCoinbase = useAppSelector(
@@ -314,7 +256,7 @@ const Crypto = () => {
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
-  const deferredImport = useAppSelector(({WALLET}) => WALLET.deferredImport);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const hasKeys = Object.values(keys).length;
   const [cardsList, setCardsList] = useState(
     createHomeCardList({
@@ -324,7 +266,7 @@ const Crypto = () => {
       linkedCoinbase: false,
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
-      deferredImport: !!deferredImport,
+      hideKeyBalance: hideAllBalances,
     }),
   );
 
@@ -337,7 +279,7 @@ const Crypto = () => {
         linkedCoinbase,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
-        deferredImport: !!deferredImport,
+        hideKeyBalance: hideAllBalances,
       }),
     );
   }, [
@@ -347,10 +289,10 @@ const Crypto = () => {
     linkedCoinbase,
     homeCarouselConfig,
     homeCarouselLayoutType,
-    deferredImport,
+    hideAllBalances,
   ]);
 
-  if (!hasKeys && !linkedCoinbase && !deferredImport) {
+  if (!hasKeys && !linkedCoinbase) {
     return (
       <CryptoContainer>
         <SectionHeaderContainer style={{marginBottom: 0}}>
@@ -368,11 +310,11 @@ const Crypto = () => {
                 style={{marginBottom: 15}}
                 onPress={() => {
                   dispatch(
-                    logSegmentEvent('track', 'Clicked create, import or join', {
+                    Analytics.track('Clicked create, import or join', {
                       context: 'NoKeysCryptoContainer',
                     }),
                   );
-                  navigation.navigate('Wallet', {screen: 'CreationOptions'});
+                  navigation.navigate('CreationOptions');
                 }}>
                 {t('Create, import or join a shared wallet')}
               </Button>
@@ -380,11 +322,11 @@ const Crypto = () => {
                 buttonStyle={'secondary'}
                 onPress={() => {
                   dispatch(
-                    logSegmentEvent('track', 'Clicked Connect Coinbase', {
+                    Analytics.track('Clicked Connect Coinbase', {
                       context: 'NoKeysCryptoContainer',
                     }),
                   );
-                  navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
+                  navigation.navigate('CoinbaseRoot');
                 }}>
                 {linkedCoinbase
                   ? 'Coinbase'
@@ -412,11 +354,9 @@ const Crypto = () => {
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('soft');
-                navigation.navigate('GeneralSettings', {
-                  screen: 'CustomizeHome',
-                });
+                navigation.navigate('CustomizeHomeSettings');
               }}>
-              <CustomizeSvg width={54} height={54} />
+              <CustomizeSvg width={37} height={37} />
             </TouchableOpacity>
           </Row>
         </Column>
@@ -425,15 +365,17 @@ const Crypto = () => {
       {homeCarouselLayoutType === 'carousel' ? (
         <CarouselContainer style={{marginBottom: 22}}>
           <Carousel
+            loop={false}
+            autoFillData={false}
             vertical={false}
-            layout={'default'}
-            useExperimentalSnap={true}
+            style={{width: WIDTH}}
+            width={190}
+            height={220}
+            autoPlay={false}
             data={cardsList.list}
+            scrollAnimationDuration={0}
             renderItem={_renderItem}
-            sliderWidth={WIDTH}
-            itemWidth={190}
-            inactiveSlideScale={1}
-            inactiveSlideOpacity={1}
+            enabled={true}
           />
         </CarouselContainer>
       ) : (
@@ -451,18 +393,15 @@ const Crypto = () => {
           </HomeSectionSubTitle>
         </SectionHeaderContainer>
         <Carousel
+          loop={false}
           vertical={false}
-          layout={'default'}
-          containerCustomStyle={{
-            marginTop: 20,
-          }}
-          useExperimentalSnap={true}
+          style={{width: WIDTH, marginTop: 20}}
+          width={190}
+          height={190 / 2}
+          autoPlay={false}
           data={cardsList.defaults}
+          enabled={false}
           renderItem={_renderItem}
-          sliderWidth={WIDTH}
-          itemWidth={200}
-          inactiveSlideScale={1}
-          inactiveSlideOpacity={1}
         />
       </CarouselContainer>
     </CryptoContainer>

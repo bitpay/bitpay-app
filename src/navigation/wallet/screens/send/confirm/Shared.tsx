@@ -15,16 +15,20 @@ import {
 } from '../../../../../components/styled/Containers';
 import React, {ReactChild, useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {Pressable, ScrollView, View} from 'react-native';
+import {Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
+import InfoSvg from '../../../../../../assets/img/info.svg';
 import {
   getBadgeImg,
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../../utils/helper-methods';
 import {WalletsAndAccounts} from '../../../../../store/wallet/utils/wallet';
-import {WalletRowProps} from '../../../../../components/list/WalletRow';
+import {
+  buildTestBadge,
+  WalletRowProps,
+} from '../../../../../components/list/WalletRow';
 import KeyWalletsRow, {
   KeyWallet,
 } from '../../../../../components/list/KeyWalletsRow';
@@ -37,9 +41,9 @@ import {
 } from '../../GlobalSelect';
 import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
 import {useNavigation} from '@react-navigation/native';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 
 import {useTranslation} from 'react-i18next';
@@ -97,8 +101,16 @@ export const DetailsList = styled(ScrollView)`
   padding: 0 ${ScreenGutter};
 `;
 
+export const DetailsListNoScroll = styled.View`
+  padding: 0 ${ScreenGutter};
+`;
+
 export const ConfirmSubText = styled(H7)`
   color: ${({theme}) => (theme.dark ? LuckySevens : theme.colors.text)};
+`;
+
+export const SendToPillContainer = styled.View`
+  height: 37px;
 `;
 
 // Row UI
@@ -243,7 +255,8 @@ export const Fee = ({
 }): JSX.Element | null => {
   const {t} = useTranslation();
   if (fee) {
-    const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmount} = fee;
+    const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmountStr} =
+      fee;
     // @ts-ignore
     const viewFee = feeOptions[feeLevel].toUpperCase();
     return (
@@ -256,9 +269,10 @@ export const Fee = ({
                 {feeLevel && !hideFeeOptions ? <H5>{viewFee}</H5> : null}
                 <H6>{cryptoAmount}</H6>
                 <ConfirmSubText>
+                  ~
                   {t(' ( of total amount)', {
                     fiatAmount,
-                    percentageOfTotalAmount,
+                    percentageOfTotalAmountStr,
                   })}
                 </ConfirmSubText>
               </DetailColumn>
@@ -317,12 +331,20 @@ export const Amount = ({
   fiatOnly,
   height,
   hr,
+  chain,
+  network,
+  showInfoIcon,
+  infoIconOnPress,
 }: {
   description: string | undefined;
   amount: TxDetailsAmount | undefined;
   fiatOnly?: boolean;
   height?: number;
   hr?: boolean;
+  chain?: string | undefined;
+  network?: string | undefined;
+  showInfoIcon?: boolean;
+  infoIconOnPress?: () => void;
 }): JSX.Element | null => {
   if (amount && description) {
     const {cryptoAmount, fiatAmount} = amount;
@@ -331,17 +353,41 @@ export const Amount = ({
         <DetailContainer height={height}>
           <DetailRow>
             {fiatOnly ? (
-              <H7>{description}</H7>
+              <>
+                <H7>{description}</H7>
+                {showInfoIcon ? (
+                  <TouchableOpacity
+                    onPress={infoIconOnPress}
+                    style={{marginLeft: 6}}>
+                    <InfoSvg width={22} height={22} />
+                  </TouchableOpacity>
+                ) : null}
+              </>
             ) : (
-              <H6>{description.toUpperCase()}</H6>
+              <>
+                <H6>{description.toUpperCase()}</H6>
+                {showInfoIcon ? (
+                  <TouchableOpacity
+                    onPress={infoIconOnPress}
+                    style={{marginLeft: 8}}>
+                    <InfoSvg width={25} height={25} />
+                  </TouchableOpacity>
+                ) : null}
+              </>
             )}
             <DetailColumn>
               {fiatOnly ? (
                 <H7>{fiatAmount}</H7>
               ) : (
                 <>
-                  <H4>{cryptoAmount}</H4>
-                  <ConfirmSubText>{fiatAmount}</ConfirmSubText>
+                  <H4 style={{textAlign: 'right'}}>{cryptoAmount}</H4>
+                  {network &&
+                  !['livenet', 'mainnet'].includes(network) &&
+                  chain ? (
+                    buildTestBadge(network, chain, false)
+                  ) : (
+                    <ConfirmSubText>{fiatAmount}</ConfirmSubText>
+                  )}
                 </>
               )}
             </DetailColumn>
@@ -466,6 +512,7 @@ export const WalletSelector = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
@@ -523,11 +570,32 @@ export const WalletSelector = ({
     ],
   );
 
+  const hasWallets = (wa: WalletsAndAccounts) => {
+    let hasWallets: boolean = false;
+    let hasCoinbase: boolean = false;
+
+    const {keyWallets, coinbaseWallets} = wa;
+    for (const keyWallet of keyWallets) {
+      if (keyWallet.wallets.length > 0) {
+        hasWallets = true;
+        break;
+      }
+    }
+    if (coinbaseWallets.length > 0 && coinbaseWallets[0].wallets.length > 0) {
+      hasCoinbase = true;
+    }
+
+    return hasWallets || hasCoinbase;
+  };
+
   useEffect(() => {
+    const noWalletsOrCoinbase = !hasWallets(walletsAndAccounts);
     isVisible
-      ? showSelector(autoSelectSingleWallet)
+      ? noWalletsOrCoinbase
+        ? dispatch(showNoWalletsModal({navigation}))
+        : showSelector(autoSelectSingleWallet)
       : setSelectorVisible(false);
-  }, [autoSelectSingleWallet, isVisible, showSelector]);
+  }, [isVisible, walletsAndAccounts, autoSelectSingleWallet]);
 
   return (
     <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>
@@ -535,7 +603,11 @@ export const WalletSelector = ({
         <WalletSelectMenuHeaderContainer currency={currency}>
           {currency ? (
             <WalletSelectMenuHeaderIconContainer>
-              <CurrencyIconAndBadge coin={currency} chain={chain} size={30} />
+              <CurrencyIconAndBadge
+                coin={currency}
+                chain={chain || ''}
+                size={30}
+              />
             </WalletSelectMenuHeaderIconContainer>
           ) : null}
           <H4>{t('Select a Wallet')}</H4>
@@ -544,11 +616,13 @@ export const WalletSelector = ({
           <KeyWalletsRow<KeyWallet>
             currency={currency}
             keyWallets={walletsAndAccounts.keyWallets}
+            hideBalance={hideAllBalances}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
           />
           <KeyWalletsRow<WalletRowProps>
             keyWallets={walletsAndAccounts.coinbaseWallets}
             keySvg={CoinbaseSmall}
+            hideBalance={hideAllBalances}
             onPress={account =>
               selectOption(() => onCoinbaseAccountSelect(account), true)
             }
@@ -588,4 +662,14 @@ export const CurrencyIconAndBadge = ({
       />
     </CurrencyImageAndBadgeContainer>
   );
+};
+
+export const ExchangeRate = ({
+  description,
+  rateStr,
+}: {
+  description: string;
+  rateStr: string;
+}): JSX.Element | null => {
+  return <SharedDetailRow description={description} value={rateStr} hr />;
 };

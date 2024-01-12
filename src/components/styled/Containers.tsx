@@ -20,7 +20,6 @@ export const ActiveOpacity = 0.75;
 // Nav
 export const HeaderRightContainer = styled.View`
   height: 40px;
-  margin-right: 10px;
 `;
 
 export const ImageContainer = styled.View<{justifyContent?: string}>`
@@ -59,7 +58,7 @@ export const CtaContainer = styled.View`
 export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
   padding: 15px;
   position: absolute;
-  bottom: 0;
+  bottom: 10px;
   left: 0;
   right: 0;
   border-top-left-radius: 20px;
@@ -103,7 +102,16 @@ export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
   padding: 10px 4px;
   margin: 0 6px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
-  border-bottom-width: ${({isLast}) => (isLast || true ? 0 : 1)}px;
+  border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
+`;
+
+export const RowContainerWithoutFeedback = styled.View<RowContainerProps>`
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 4px;
+  margin: 0 10px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
 `;
 
 export const CurrencyColumn = styled(Column)`
@@ -130,10 +138,12 @@ export const CardContainer = styled.View`
 
 export interface SheetParams {
   placement?: 'top' | 'bottom';
+  paddingHorizontal?: number;
 }
 
 export const SheetContainer = styled.View<SheetParams>`
-  padding: 30px;
+  padding: 30px ${({paddingHorizontal}) =>
+    paddingHorizontal === 0 ? 0 : 30}px;
   background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
   justify-content: center;
   align-content: center;

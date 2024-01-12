@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {Platform, ScrollView} from 'react-native';
 import {requestNotifications, RESULTS} from 'react-native-permissions';
@@ -22,7 +22,7 @@ import {
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
 
@@ -49,16 +49,19 @@ const NotificationImage = {
 // estimated a number, tweak if neccessary based on the content length
 const scrollEnabledForSmallScreens = HEIGHT < 600;
 
-const NotificationsScreen: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'Notifications'>
-> = ({navigation}) => {
+const NotificationsScreen = ({
+  navigation,
+}: NativeStackScreenProps<
+  OnboardingGroupParamList,
+  OnboardingScreens.NOTIFICATIONS
+>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const themeType = useThemeType();
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
@@ -71,7 +74,10 @@ const NotificationsScreen: React.VFC<
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
+          <Button
+            accessibilityLabel="skip-button"
+            buttonType={'pill'}
+            onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -114,7 +120,7 @@ const NotificationsScreen: React.VFC<
   };
 
   return (
-    <NotificationsContainer>
+    <NotificationsContainer accessibilityLabel="set-notifications-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -138,9 +144,10 @@ const NotificationsScreen: React.VFC<
           </TextAlign>
         </TextContainer>
 
-        <CtaContainer>
+        <CtaContainer accessibilityLabel="set-notifications-cta-container">
           <ActionContainer>
             <Button
+              accessibilityLabel="allow-button"
               buttonStyle={'primary'}
               onPress={() => onSetNotificationsPress(true)}>
               {t('Allow')}
@@ -148,6 +155,7 @@ const NotificationsScreen: React.VFC<
           </ActionContainer>
           <ActionContainer>
             <Button
+              accessibilityLabel="deny-button"
               buttonStyle={'secondary'}
               onPress={() => onSetNotificationsPress(false)}>
               {t('Deny')}

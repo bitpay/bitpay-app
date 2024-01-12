@@ -46,11 +46,11 @@ export const selectSettingsNotificationState = createSelector(
     selectConfirmedTxAccepted,
     selectAnnouncementsAccepted,
   ],
-  (notificationsAccepted, confirmedTxAccepted, selectAnnouncementsAccepted) => {
+  (notificationsAccepted, confirmedTxAccepted, announcementsAccepted) => {
     return {
       pushNotifications: notificationsAccepted,
       confirmedTx: confirmedTxAccepted,
-      announcements: selectAnnouncementsAccepted,
+      announcements: announcementsAccepted,
     };
   },
 );

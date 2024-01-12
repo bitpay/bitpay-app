@@ -47,7 +47,3 @@ export const BoxShadow = {
   shadowRadius: 12,
   elevation: 5,
 };
-
-export const DisabledOpacity = {
-  opacity: 0.5,
-};

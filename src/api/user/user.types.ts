@@ -1,6 +1,7 @@
 import {Card} from '../../store/card/card.models';
 
 export interface BasicUserInfo {
+  country: string;
   eid: string;
   email: string;
   experiments: string[];
@@ -8,8 +9,11 @@ export interface BasicUserInfo {
   givenName: string;
   incentiveLevel?: string;
   incentiveLevelId?: string;
+  methodEntityId?: string;
   name: string;
+  phone?: string;
   referralCode: string;
+  state: string;
   userSettings: {
     agreedCardholderAgreement: boolean;
     acknowledgePrivacyNotice: boolean;

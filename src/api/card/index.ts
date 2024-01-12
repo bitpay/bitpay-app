@@ -1,4 +1,10 @@
+import {
+  AppleWalletProvisioningRequestParams,
+  StartActivateCardParams,
+} from '../../store/card/card.effects';
 import GraphQlApi from '../graphql';
+import CardMutations from './card.mutations';
+import CardQueries from './card.queries';
 import {
   ActivateCardResponse,
   FetchAllCardsResponse,
@@ -12,12 +18,6 @@ import {
   UpdateCardLockResponse,
   UpdateCardNameResponse,
 } from './card.types';
-import CardQueries from './card.queries';
-import CardMutations from './card.mutations';
-import {
-  AppleWalletProvisioningRequestParams,
-  StartActivateCardParams,
-} from '../../store/card/card.effects';
 
 const fetchAll = async (token: string) => {
   const query = CardQueries.FETCH_CARDS(token);

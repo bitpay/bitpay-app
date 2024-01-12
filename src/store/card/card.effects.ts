@@ -3,13 +3,11 @@ import axios from 'axios';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
 import FastImage from 'react-native-fast-image';
-import {batch} from 'react-redux';
 import CardApi from '../../api/card';
 import {InitialUserData} from '../../api/user/user.types';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../utils/helper-methods';
-import {AppActions} from '../app';
-import {Analytics} from '../app/app.effects';
+import {Analytics} from '../analytics/analytics.effects';
+import {startOnGoingProcessModal} from '../app/app.effects';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ProviderConfig} from '../../constants/config.card';
@@ -24,6 +22,11 @@ import {BASE_BITPAY_URLS} from '../../constants/config';
 import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
+import {getAppsFlyerId} from '../../utils/appsFlyer';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../app/app.actions';
 
 const DoshWhitelist: string[] = [];
 
@@ -40,6 +43,7 @@ export interface StartActivateCardParams {
   expirationDate: string;
   lastFourDigits?: string;
   cardNumber?: string;
+  appsFlyerId?: string;
 }
 
 export interface AppleWalletProvisioningRequestParams {
@@ -81,13 +85,11 @@ export const startCardStoreInit =
       try {
         Dosh.initializeDosh(options).then(() => {
           dispatch(LogActions.info('Successfully initialized Dosh.'));
-
           const {doshToken} = initialData;
           if (!doshToken) {
             dispatch(LogActions.debug('No doshToken provided.'));
             return;
           }
-
           return Dosh.setDoshToken(doshToken);
         });
       } catch (err: any) {
@@ -129,12 +131,7 @@ export const startFetchOverview =
   ): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        AppActions.showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOADING'));
       dispatch(CardActions.updateFetchOverviewStatus(id, 'loading'));
 
       const {APP, BITPAY_ID, CARD} = getState();
@@ -181,13 +178,11 @@ export const startFetchOverview =
       );
     } catch (err) {
       console.log(`Failed to fetch overview for card ${id}`);
-      batch(() => {
-        dispatch(LogActions.error(`Failed to fetch overview for card ${id}`));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(CardActions.failedFetchOverview(id));
-      });
+      dispatch(LogActions.error(`Failed to fetch overview for card ${id}`));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(CardActions.failedFetchOverview(id));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -235,12 +230,7 @@ export const startFetchSettledTransactions =
   ): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        AppActions.showOnGoingProcessModal(
-          // t('Loading')
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOADING'));
 
       const {APP, BITPAY_ID, CARD} = getState();
       const token = BITPAY_ID.apiToken[APP.network];
@@ -287,7 +277,7 @@ export const startFetchSettledTransactions =
       dispatch(LogActions.error(errMsg || JSON.stringify(err)));
       dispatch(CardActions.failedFetchSettledTransactions(id));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -315,15 +305,13 @@ export const startFetchVirtualCardImageUrls =
         dispatch(LogActions.error(JSON.stringify(err)));
       }
     } catch (err) {
-      batch(() => {
-        dispatch(
-          LogActions.error(
-            `Failed to fetch virtual card image URLs for ${ids.join(', ')}`,
-          ),
-        );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(CardActions.failedFetchVirtualImageUrls());
-      });
+      dispatch(
+        LogActions.error(
+          `Failed to fetch virtual card image URLs for ${ids.join(', ')}`,
+        ),
+      );
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(CardActions.failedFetchVirtualImageUrls());
     }
   };
 
@@ -340,13 +328,9 @@ export const START_UPDATE_CARD_LOCK =
 
       dispatch(CardActions.successUpdateCardLock(network, id, isLocked));
     } catch (err) {
-      batch(() => {
-        dispatch(
-          LogActions.error(`Failed to update card lock status for ${id}`),
-        );
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(CardActions.failedUpdateCardLock(id));
-      });
+      dispatch(LogActions.error(`Failed to update card lock status for ${id}`));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(CardActions.failedUpdateCardLock(id));
     }
   };
 
@@ -359,6 +343,12 @@ export const startActivateCard =
       const {APP, BITPAY_ID} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
+      const appsFlyerId = await getAppsFlyerId();
+
+      payload = {
+        ...payload,
+        appsFlyerId,
+      };
 
       const {data, errors} = await CardApi.activateCard(token, id, payload);
 
@@ -396,11 +386,9 @@ export const START_UPDATE_CARD_NAME =
 
       dispatch(CardActions.successUpdateCardName(network, id, nickname));
     } catch (err) {
-      batch(() => {
-        dispatch(LogActions.error(`Failed to update card name for ${id}`));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(CardActions.failedUpdateCardName(id));
-      });
+      dispatch(LogActions.error(`Failed to update card name for ${id}`));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(CardActions.failedUpdateCardName(id));
     }
   };
 
@@ -575,7 +563,7 @@ export const completeAddApplePaymentPass =
       dispatch(
         LogActions.error(`appleWallet - completeAddPaymentPassError - ${e}`),
       );
-      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+      dispatch(showBottomNotificationModal(GeneralError()));
     }
   };
 
@@ -598,7 +586,7 @@ export const startAddToGooglePay =
         await CardApi.startCreateGooglePayProvisioningRequest(token, id);
 
       if (provisioningData.errors) {
-        dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+        dispatch(showBottomNotificationModal(GeneralError()));
       } else {
         const {lastFourDigits, name} = data;
         const opc =
@@ -628,7 +616,7 @@ export const startAddToGooglePay =
         }
       }
 
-      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+      dispatch(showBottomNotificationModal(GeneralError()));
     }
   };
 

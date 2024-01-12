@@ -19,6 +19,7 @@ interface RippleProps {
   onPress: () => void;
   backgroundColor?: string;
   onLongPress?: () => void;
+  children: React.ReactNode;
 }
 
 const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({

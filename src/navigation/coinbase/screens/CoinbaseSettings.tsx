@@ -12,7 +12,6 @@ import {sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import Button from '../../../components/button/Button';
@@ -27,14 +26,14 @@ import {
   isInvalidTokenError,
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
-import {CoinbaseStackParamList} from '../CoinbaseStack';
+import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {toggleHideCoinbaseTotalBalance} from '../../../store/coinbase/coinbase.actions';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {AppActions} from '../../../store/app';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -107,7 +106,7 @@ const CoinbaseSettings = () => {
   const navigation = useNavigation();
   const {
     params: {fromScreen},
-  } = useRoute<RouteProp<CoinbaseStackParamList, 'CoinbaseSettings'>>();
+  } = useRoute<RouteProp<CoinbaseGroupParamList, 'CoinbaseSettings'>>();
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -116,10 +115,7 @@ const CoinbaseSettings = () => {
     ({COINBASE}) => COINBASE.isApiLoading,
   );
   const userError = useAppSelector(({COINBASE}) => COINBASE.getUserError);
-
-  const hideTotalBalance = useAppSelector(
-    ({COINBASE}) => COINBASE.hideTotalBalance,
-  );
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
@@ -170,7 +166,7 @@ const CoinbaseSettings = () => {
 
   const deleteAccount = async () => {
     await dispatch(coinbaseDisconnectAccount());
-    dispatch(logSegmentEvent('track', 'Coinbase Disconnected', {}));
+    dispatch(Analytics.track('Coinbase Disconnected', {}));
     if (fromScreen === 'CoinbaseDashboard') {
       navigation.navigate('Tabs', {screen: 'Home'});
     } else {
@@ -215,12 +211,7 @@ const CoinbaseSettings = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    dispatch(
-      showOnGoingProcessModal(
-        // t('Fetching data from Coinbase...')
-        t(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
     await sleep(1000);
 
     try {
@@ -283,13 +274,13 @@ const CoinbaseSettings = () => {
           </Detail>
           <Hr />
           <Detail>
-            <Item>{t('Hide Balance')}</Item>
+            <Item>{t('Hide All Balances')}</Item>
 
             <ToggleSwitch
-              onChange={() => {
-                dispatch(toggleHideCoinbaseTotalBalance(!hideTotalBalance));
-              }}
-              isEnabled={!!hideTotalBalance}
+              onChange={value =>
+                dispatch(AppActions.toggleHideAllBalances(value))
+              }
+              isEnabled={!!hideAllBalances}
             />
           </Detail>
           <Hr />

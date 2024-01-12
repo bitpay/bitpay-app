@@ -2,7 +2,7 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {H5, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -10,7 +10,7 @@ import {
   SettingTitle,
 } from '../../../../components/styled/Containers';
 import {LightBlack, NeutralSlate} from '../../../../styles/colors';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {Key, Wallet, Status} from '../../../../store/wallet/wallet.models';
 import {
@@ -19,7 +19,10 @@ import {
 } from '../../../../store/wallet/utils/currency';
 import {View} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
-import {sleep} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -86,7 +89,7 @@ const WalletInformation = () => {
   const logger = useLogger();
   const {
     params: {wallet},
-  } = useRoute<RouteProp<WalletStackParamList, 'WalletInformation'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'WalletInformation'>>();
 
   const {
     chain,
@@ -105,6 +108,7 @@ const WalletInformation = () => {
       copayerId,
       publicKeyRing,
     },
+    tokenAddress,
   } = wallet;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -162,7 +166,9 @@ const WalletInformation = () => {
     return () => clearTimeout(timer);
   }, [copiedAddress]);
 
-  const {unitToSatoshi} = dispatch(GetPrecision(currencyAbbreviation, chain))!;
+  const {unitToSatoshi} = dispatch(
+    GetPrecision(currencyAbbreviation, chain, tokenAddress),
+  )!;
 
   const [copayers, setCopayers] = useState<any[]>();
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();
@@ -209,7 +215,7 @@ const WalletInformation = () => {
               <SettingTitle>{t('Coin')}</SettingTitle>
 
               <InfoLabel>
-                <H7>{currencyAbbreviation.toUpperCase()}</H7>
+                <H7>{formatCurrencyAbbreviation(currencyAbbreviation)}</H7>
               </InfoLabel>
             </InfoSettingsRow>
             <Hr />
@@ -412,7 +418,7 @@ const WalletInformation = () => {
                       <InfoLabel>
                         <H7>
                           {(a.amount / unitToSatoshi).toFixed(8)}{' '}
-                          {currencyAbbreviation.toUpperCase()}
+                          {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </H7>
                       </InfoLabel>
                     </InfoSettingsRow>

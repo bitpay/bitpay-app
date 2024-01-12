@@ -16,7 +16,6 @@ import {Key} from '../../../../store/wallet/wallet.models';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {keyBackupRequired} from '../../home/components/Crypto';
 import {SettingsComponent} from '../SettingsRoot';
-import {DisabledOpacity} from '../../home/components/Styled';
 
 const CreateOrImportLink = styled(Link)`
   font-weight: 500;
@@ -28,14 +27,10 @@ const WalletsAndKeys = () => {
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const keyList = Object.values(keys);
-  const deferredImport = useAppSelector(({WALLET}) => WALLET.deferredImport);
 
   const onPressKey = (key: Key) => {
     key.backupComplete
-      ? navigation.navigate('Wallet', {
-          screen: 'KeySettings',
-          params: {key},
-        })
+      ? navigation.navigate('KeySettings', {key})
       : dispatch(
           showBottomNotificationModal(
             keyBackupRequired(key, navigation, dispatch, 'settings'),
@@ -66,14 +61,8 @@ const WalletsAndKeys = () => {
           ))
         : null}
       <Setting
-        disabled={!!deferredImport}
-        style={[
-          {justifyContent: 'center'},
-          !!deferredImport && DisabledOpacity,
-        ]}
-        onPress={() =>
-          navigation.navigate('Wallet', {screen: 'CreationOptions'})
-        }
+        style={{justifyContent: 'center'}}
+        onPress={() => navigation.navigate('CreationOptions')}
         activeOpacity={ActiveOpacity}>
         <CreateOrImportLink>{t('Create or Import Key')}</CreateOrImportLink>
       </Setting>

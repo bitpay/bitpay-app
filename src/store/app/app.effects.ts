@@ -1,10 +1,16 @@
-import {JsonMap, UserTraits} from '@segment/analytics-react-native';
 import BitAuth from 'bitauth';
-import i18n from 'i18next';
+import i18n, {t} from 'i18next';
 import {debounce} from 'lodash';
-import {DeviceEventEmitter, Linking, Platform} from 'react-native';
+import {
+  DeviceEventEmitter,
+  EmitterSubscription,
+  Linking,
+  Platform,
+  Share,
+} from 'react-native';
 import Braze from 'react-native-appboy-sdk';
 import RNBootSplash from 'react-native-bootsplash';
+import InAppReview from 'react-native-in-app-review';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
@@ -13,32 +19,33 @@ import {
   requestNotifications,
   RESULTS,
 } from 'react-native-permissions';
-import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import uuid from 'react-native-uuid';
-import {batch} from 'react-redux';
 import {AppActions} from '.';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-import Segment from '../../lib/segment';
+import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoGroup';
 import {CardScreens} from '../../navigation/card/CardStack';
+import {CardActivationScreens} from '../../navigation/card-activation/CardActivationGroup';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
+import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
+import {Analytics} from '../analytics/analytics.effects';
 import {BitPayIdEffects} from '../bitpay-id';
-import {CardEffects} from '../card';
+import {CardActions, CardEffects} from '../card';
+import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
 import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
-import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {
-  deferredImportMnemonic,
   startMigration,
   startWalletStoreInit,
+  getPriceHistory,
 } from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
@@ -49,9 +56,10 @@ import {
   setEmailNotificationsAccepted,
   setMigrationComplete,
   setNotificationsAccepted,
+  setUserFeedback,
   showBlur,
 } from './app.actions';
-import {AppIdentity} from './app.models';
+import {AppIdentity, InAppNotificationContextType} from './app.models';
 import {
   findKeyByKeyId,
   findWalletByIdHashed,
@@ -61,16 +69,53 @@ import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
+  FormatKeyBalances,
 } from '../wallet/effects/status/status';
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
-  APP_ANALYTICS_ENABLED,
   APP_DEEPLINK_PREFIX,
+  APP_NAME,
+  BASE_BITPAY_URLS,
+  DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
-import {updatePortfolioBalance} from '../wallet/wallet.actions';
-import {setContactMigrationComplete} from '../contact/contact.actions';
-import {startContactMigration} from '../contact/contact.effects';
+import {
+  updatePortfolioBalance,
+  setCustomTokensMigrationComplete,
+} from '../wallet/wallet.actions';
+import {
+  setContactMigrationComplete,
+  setContactTokenAddressMigrationComplete,
+  setContactBridgeUsdcMigrationComplete,
+} from '../contact/contact.actions';
+import {
+  startContactBridgeUsdcMigration,
+  startContactMigration,
+  startContactTokenAddressMigration,
+} from '../contact/contact.effects';
+import {getStateFromPath, NavigationProp} from '@react-navigation/native';
+import {
+  getAvailableGiftCards,
+  getCategoriesWithIntegrations,
+} from '../shop/shop.selectors';
+import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantGroup';
+import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
+import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
+import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
+import {ShortcutList} from '../../constants/shortcuts';
+import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
+import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
+import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
+import moment from 'moment';
+import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
+import {moralisInit} from '../moralis/moralis.effects';
+import {walletConnectV2Init} from '../wallet-connect-v2/wallet-connect-v2.effects';
+import {InAppNotificationMessages} from '../../components/modal/in-app-notification/InAppNotification';
+import axios from 'axios';
+import AuthApi from '../../api/auth';
+import {ShopActions} from '../shop';
+import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -83,35 +128,58 @@ const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
-    dispatch(LogActions.info(`Initializing app (${__DEV__ ? 'D' : 'P'})...`));
+    dispatch(
+      LogActions.info(
+        `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
+      ),
+    );
 
-    const {APP, BITPAY_ID, WALLET} = getState();
-    const {network, pinLockActive, biometricLockActive, colorScheme} = APP;
+    dispatch(deferDeeplinksUntilAppIsReady());
+
+    const {APP, CONTACT, WALLET} = getState();
+    const {network, colorScheme} = APP;
+
+    WALLET.initLogs.forEach(log => dispatch(log));
 
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    const {appFirstOpenData, onboardingCompleted, migrationComplete} =
-      getState().APP;
-
-    const {contactMigrationComplete} = getState().CONTACT;
-
-    if (!appFirstOpenData?.firstOpenDate) {
-      dispatch(setAppFirstOpenEventDate(Math.floor(Date.now() / 1000)));
-      dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
-    }
-
+    const {migrationComplete} = APP;
+    const {customTokensMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
-    if (onboardingCompleted) {
-      await dispatch(askForTrackingPermissionAndEnableSdks(true));
-    }
+    dispatch(initAnalytics());
 
-    await dispatch(startWalletStoreInit());
+    dispatch(startWalletStoreInit());
+
+    const {
+      contactMigrationComplete,
+      contactTokenAddressMigrationComplete,
+      contactBridgeUsdcMigrationComplete,
+    } = CONTACT;
 
     if (!contactMigrationComplete) {
       await dispatch(startContactMigration());
       dispatch(setContactMigrationComplete());
       dispatch(LogActions.info('success [setContactMigrationComplete]'));
+    }
+    if (!contactTokenAddressMigrationComplete) {
+      await dispatch(startContactTokenAddressMigration());
+      dispatch(setContactTokenAddressMigrationComplete());
+      dispatch(
+        LogActions.info('success [setContactTokenAddressMigrationComplete]'),
+      );
+    }
+    if (!contactBridgeUsdcMigrationComplete) {
+      await dispatch(startContactBridgeUsdcMigration());
+      dispatch(setContactBridgeUsdcMigrationComplete());
+      dispatch(
+        LogActions.info('success [setContactBridgeUsdcMigrationComplete]'),
+      );
+    }
+    if (!customTokensMigrationComplete) {
+      await dispatch(startCustomTokensMigration());
+      dispatch(setCustomTokensMigrationComplete());
+      dispatch(LogActions.info('success [setCustomTokensMigrationComplete]'));
     }
 
     if (!migrationComplete) {
@@ -120,90 +188,27 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(LogActions.info('success [setMigrationComplete]'));
     }
 
-    const token = BITPAY_ID.apiToken[network];
-    const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
 
-    await dispatch(initializeApi(network, identity));
+    dispatch(initializeApi(network, identity));
 
-    dispatch(LocationEffects.getCountry());
+    dispatch(LocationEffects.getLocationData());
 
-    if (isPaired) {
-      try {
-        dispatch(
-          LogActions.info(
-            'App is paired with BitPayID, refreshing user data...',
-          ),
-        );
-
-        const {errors, data} = await UserApi.fetchInitialUserData(token);
-
-        // handle partial errors
-        if (errors) {
-          const msg = errors
-            .map(e => `${e.path.join('.')}: ${e.message}`)
-            .join(',\n');
-
-          dispatch(
-            LogActions.error(
-              'One or more errors occurred while fetching initial user data:\n' +
-                msg,
-            ),
-          );
-        }
-        await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
-        dispatch(CardEffects.startCardStoreInit(data.user));
-      } catch (err: any) {
-        if (isAxiosError(err)) {
-          dispatch(LogActions.error(`${err.name}: ${err.message}`));
-          dispatch(LogActions.error(err.config.url));
-          dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
-        } else if (err instanceof Error) {
-          dispatch(LogActions.error(`${err.name}: ${err.message}`));
-        } else {
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
-
-        dispatch(
-          LogActions.info(
-            'Failed to refresh user data. Continuing initialization.',
-          ),
-        );
-      }
-    }
+    dispatch(fetchInitialUserData());
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    await dispatch(walletConnectInit());
-    await dispatch(initializeBrazeContent());
+    dispatch(walletConnectV2Init());
+    dispatch(initializeBrazeContent());
+    dispatch(moralisInit());
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
 
-    // Deferred Import
-    if (WALLET.deferredImport) {
-      const {importData, opts} = WALLET.deferredImport;
-      dispatch(deferredImportMnemonic(importData, opts, 'deferredImport'));
-    }
-
-    dispatch(showBlur(pinLockActive || biometricLockActive));
     dispatch(AppActions.successAppInit());
-    await sleep(500);
+    DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
     dispatch(LogActions.info('Initialized app successfully.'));
-    dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
-    dispatch(LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`));
-    RNBootSplash.hide({fade: true}).then(() => {
-      // avoid splash conflicting with modal in iOS
-      // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
-      if (pinLockActive) {
-        dispatch(AppActions.showPinModal({type: 'check'}));
-      }
-      if (biometricLockActive) {
-        dispatch(AppActions.showBiometricModal({}));
-      }
-
-      dispatch(AppActions.appInitCompleted());
-      DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
-    });
+    dispatch(AppActions.appInitCompleted());
+    DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
@@ -223,6 +228,119 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     RNBootSplash.hide();
   }
 };
+
+const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
+  const {APP} = getState();
+  const {appFirstOpenData, onboardingCompleted} = APP;
+
+  if (onboardingCompleted) {
+    await dispatch(Analytics.initialize());
+    QuickActions.clearShortcutItems();
+    QuickActions.setShortcutItems(ShortcutList);
+  }
+
+  if (!appFirstOpenData?.firstOpenDate) {
+    const firstOpen = Math.floor(Date.now() / 1000);
+
+    dispatch(setAppFirstOpenEventDate(firstOpen));
+    dispatch(trackFirstOpenEvent(firstOpen));
+  } else {
+    dispatch(Analytics.track('Last Opened App'));
+
+    if (!appFirstOpenData?.firstOpenEventComplete) {
+      dispatch(trackFirstOpenEvent(appFirstOpenData.firstOpenDate));
+    }
+  }
+};
+
+const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
+  const {APP, BITPAY_ID} = getState();
+  const {network} = APP;
+
+  const token = BITPAY_ID.apiToken[network];
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    dispatch(
+      LogActions.info('App is paired with BitPayID, refreshing user data...'),
+    );
+
+    const {errors, data} = await UserApi.fetchInitialUserData(token);
+
+    // handle partial errors
+    if (errors) {
+      const msg = errors
+        .map(e => `${e.path.join('.')}: ${e.message}`)
+        .join(',\n');
+
+      dispatch(
+        LogActions.error(
+          'One or more errors occurred while fetching initial user data:\n' +
+            msg,
+        ),
+      );
+    }
+    dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
+    dispatch(CardEffects.startCardStoreInit(data.user));
+  } catch (err: any) {
+    if (isAxiosError(err)) {
+      dispatch(LogActions.error(`${err.name}: ${err.message}`));
+      dispatch(LogActions.error(err.config.url));
+      dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
+    } else if (err instanceof Error) {
+      dispatch(LogActions.error(`${err.name}: ${err.message}`));
+    } else {
+      dispatch(LogActions.error(JSON.stringify(err)));
+    }
+
+    dispatch(
+      LogActions.info(
+        'Failed to refresh user data. Continuing initialization.',
+      ),
+    );
+  }
+};
+
+const deferDeeplinksUntilAppIsReady =
+  (): Effect<void> => (dispatch, getState) => {
+    const {APP} = getState();
+    let subscriptions: EmitterSubscription[] = [];
+
+    const emitIfReady = () => {
+      if (!subscriptions.length) {
+        dispatch(AppActions.appIsReadyForDeeplinking());
+        DeviceEventEmitter.emit(DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS);
+      }
+    };
+
+    const waitForEvent = (e: DeviceEmitterEvents) => {
+      const sub = DeviceEventEmitter.addListener(e, () => {
+        sub.remove();
+        subscriptions = subscriptions.filter(s => s !== sub);
+
+        emitIfReady();
+      });
+
+      subscriptions.push(sub);
+    };
+
+    if (!navigationRef.isReady()) {
+      waitForEvent(DeviceEmitterEvents.APP_NAVIGATION_READY);
+    }
+
+    if (APP.appIsLoading) {
+      waitForEvent(DeviceEmitterEvents.APP_DATA_INITIALIZED);
+    }
+
+    if (!APP.onboardingCompleted) {
+      waitForEvent(DeviceEmitterEvents.APP_ONBOARDING_COMPLETED);
+    }
+
+    emitIfReady();
+  };
 
 /**
  * Checks to ensure that the App Identity is defined, else generates a new one.
@@ -277,94 +395,93 @@ const initializeApi =
  * The subscription will fetch latest content when it receives an update event.
  * @returns void
  */
-export const initializeBrazeContent =
-  (): Effect => async (dispatch, getState) => {
-    try {
-      dispatch(LogActions.info('Initializing Braze content...'));
-      const {APP} = getState();
+export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
+  try {
+    dispatch(LogActions.info('Initializing Braze content...'));
+    const {APP} = getState();
 
-      let contentCardSubscription = APP.brazeContentCardSubscription;
+    let contentCardSubscription = APP.brazeContentCardSubscription;
 
-      if (contentCardSubscription) {
-        contentCardSubscription.subscriber?.removeAllSubscriptions();
-        contentCardSubscription = null;
-      }
-
-      // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
-      const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
-      const MAX_RETRIES = 3;
-      let currentRetry = 0;
-
-      contentCardSubscription = Braze.addListener(
-        Braze.Events.CONTENT_CARDS_UPDATED,
-        async () => {
-          const isInitializing = currentRetry < MAX_RETRIES;
-
-          dispatch(
-            isInitializing
-              ? LogActions.debug(
-                  'Braze content cards updated, fetching latest content cards...',
-                )
-              : LogActions.info(
-                  'Braze content cards updated, fetching latest content cards...',
-                ),
-          );
-
-          const contentCards = await Braze.getContentCards();
-
-          if (contentCards.length) {
-            currentRetry = MAX_RETRIES;
-          } else {
-            if (isInitializing) {
-              currentRetry++;
-              await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
-              dispatch(
-                LogActions.debug(
-                  `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
-                ),
-              );
-              Braze.requestContentCardsRefresh();
-              return;
-            }
-          }
-
-          dispatch(
-            LogActions.info(
-              `${contentCards.length} content ${
-                contentCards.length === 1 ? 'card' : 'cards'
-              } fetched from Braze.`,
-            ),
-          );
-          dispatch(AppActions.brazeContentCardsFetched(contentCards));
-        },
-      );
-
-      let eid = APP.brazeEid;
-
-      if (!eid) {
-        dispatch(LogActions.debug('Generating EID for anonymous user...'));
-        eid = uuid.v4().toString();
-        dispatch(setBrazeEid(eid));
-      }
-
-      // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
-      dispatch(Analytics.identify(eid));
-
-      dispatch(LogActions.info('Successfully initialized Braze.'));
-      dispatch(AppActions.brazeInitialized(contentCardSubscription));
-    } catch (err) {
-      const errMsg = 'Something went wrong while initializing Braze.';
-
-      dispatch(LogActions.error(errMsg));
-      dispatch(
-        LogActions.error(
-          err instanceof Error ? err.message : JSON.stringify(err),
-        ),
-      );
-    } finally {
-      dispatch(LogActions.info('Initializing Braze content complete.'));
+    if (contentCardSubscription) {
+      contentCardSubscription.subscriber?.removeAllSubscriptions();
+      contentCardSubscription = null;
     }
-  };
+
+    // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
+    const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
+    const MAX_RETRIES = 3;
+    let currentRetry = 0;
+
+    contentCardSubscription = Braze.addListener(
+      Braze.Events.CONTENT_CARDS_UPDATED,
+      async () => {
+        const isInitializing = currentRetry < MAX_RETRIES;
+
+        dispatch(
+          isInitializing
+            ? LogActions.debug(
+                'Braze content cards updated, fetching latest content cards...',
+              )
+            : LogActions.info(
+                'Braze content cards updated, fetching latest content cards...',
+              ),
+        );
+
+        const contentCards = await Braze.getContentCards();
+
+        if (contentCards.length) {
+          currentRetry = MAX_RETRIES;
+        } else {
+          if (isInitializing) {
+            currentRetry++;
+            await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
+            dispatch(
+              LogActions.debug(
+                `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
+              ),
+            );
+            Braze.requestContentCardsRefresh();
+            return;
+          }
+        }
+
+        dispatch(
+          LogActions.info(
+            `${contentCards.length} content ${
+              contentCards.length === 1 ? 'card' : 'cards'
+            } fetched from Braze.`,
+          ),
+        );
+        dispatch(AppActions.brazeContentCardsFetched(contentCards));
+      },
+    );
+
+    let eid = APP.brazeEid;
+
+    if (!eid) {
+      dispatch(LogActions.debug('Generating EID for anonymous user...'));
+      eid = uuid.v4().toString();
+      dispatch(setBrazeEid(eid));
+    }
+
+    // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
+    dispatch(Analytics.identify(eid));
+
+    dispatch(LogActions.info('Successfully initialized Braze.'));
+    dispatch(AppActions.brazeInitialized(contentCardSubscription));
+  } catch (err) {
+    const errMsg = 'Something went wrong while initializing Braze.';
+
+    dispatch(LogActions.error(errMsg));
+    dispatch(
+      LogActions.error(
+        err instanceof Error ? err.message : JSON.stringify(err),
+      ),
+    );
+  } finally {
+    dispatch(LogActions.info('Initializing Braze content complete.'));
+  }
+};
 
 /**
  * Requests a refresh for Braze content.
@@ -388,9 +505,44 @@ export const requestBrazeContentRefresh = (): Effect => async dispatch => {
 };
 
 export const startOnGoingProcessModal =
-  (message: OnGoingProcessMessages): Effect<Promise<void>> =>
+  (key: OnGoingProcessMessages): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
     const store: RootState = getState();
+
+    const _OnGoingProcessMessages = {
+      GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
+      CREATING_KEY: i18n.t('Creating Key'),
+      LOGGING_IN: i18n.t('Logging In'),
+      LOGGING_OUT: i18n.t('Logging Out'),
+      PAIRING: i18n.t('Pairing'),
+      CREATING_ACCOUNT: i18n.t('Creating Account'),
+      UPDATING_ACCOUNT: i18n.t('Updating Account'),
+      IMPORTING: i18n.t('Importing'),
+      DELETING_KEY: i18n.t('Deleting Key'),
+      ADDING_WALLET: i18n.t('Adding Wallet'),
+      LOADING: i18n.t('Loading'),
+      FETCHING_PAYMENT_OPTIONS: i18n.t('Fetching payment options...'),
+      FETCHING_PAYMENT_INFO: i18n.t('Fetching payment information...'),
+      JOIN_WALLET: i18n.t('Joining Wallet'),
+      SENDING_PAYMENT: i18n.t('Sending Payment'),
+      ACCEPTING_PAYMENT: i18n.t('Accepting Payment'),
+      GENERATING_ADDRESS: i18n.t('Generating Address'),
+      GENERATING_GIFT_CARD: i18n.t('Generating Gift Card'),
+      SYNCING_WALLETS: i18n.t('Syncing Wallets...'),
+      REJECTING_CALL_REQUEST: i18n.t('Rejecting Call Request'),
+      SAVING_LAYOUT: i18n.t('Saving Layout'),
+      SAVING_ADDRESSES: i18n.t('Saving Addresses'),
+      EXCHANGE_GETTING_DATA: i18n.t('Getting data from the exchange...'),
+      CALCULATING_FEE: i18n.t('Calculating Fee'),
+      CONNECTING_COINBASE: i18n.t('Connecting with Coinbase...'),
+      FETCHING_COINBASE_DATA: i18n.t('Fetching data from Coinbase...'),
+      UPDATING_TXP: i18n.t('Updating Transaction'),
+      CREATING_TXP: i18n.t('Creating Transaction'),
+      SENDING_EMAIL: i18n.t('Sending Email'),
+      REDIRECTING: i18n.t('Redirecting'),
+      REMOVING_BILL: i18n.t('Removing Bill'),
+      BROADCASTING_TXP: i18n.t('Broadcasting transaction...'),
+    };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next
     if (store.APP.showOnGoingProcessModal) {
@@ -398,8 +550,49 @@ export const startOnGoingProcessModal =
       await sleep(500);
     }
 
-    dispatch(AppActions.showOnGoingProcessModal(message));
+    // Translate message before show message
+    const _message = _OnGoingProcessMessages[key];
+
+    dispatch(AppActions.showOnGoingProcessModal(_message));
+
+    // After 30 seconds, check if the modal is active. If so, dismiss it.
+    setTimeout(async () => {
+      const currentStore = getState();
+      if (
+        currentStore.APP.showOnGoingProcessModal &&
+        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing')
+      ) {
+        dispatch(AppActions.dismissOnGoingProcessModal());
+        await sleep(500);
+      }
+    }, 30000);
+
     return sleep(100);
+  };
+
+export const startInAppNotification =
+  (
+    key: InAppNotificationMessages,
+    request: Web3WalletTypes.EventArguments['session_request'],
+    context: InAppNotificationContextType,
+  ): Effect<Promise<void>> =>
+  async (dispatch, getState: () => RootState) => {
+    const store: RootState = getState();
+
+    const _InAppNotificationMessages = {
+      NEW_PENDING_REQUEST: i18n.t('New Pending Request'),
+    };
+
+    // if modal currently active dismiss and sleep to allow animation to complete before showing next
+    if (store.APP.showInAppNotification) {
+      dispatch(AppActions.dismissInAppNotification());
+      await sleep(500);
+    }
+
+    // Translate message before show message
+    const _message = _InAppNotificationMessages[key];
+
+    dispatch(AppActions.showInAppNotification(context, _message, request));
   };
 
 /**
@@ -425,24 +618,33 @@ export const openUrlWithInAppBrowser =
       dispatch(LogActions.info(`Opening URL ${url} with ${handler}`));
 
       if (isIabAvailable) {
-        // successfully resolves after IAB is cancelled or dismissed
-        const result = await InAppBrowser.open(url, {
-          // iOS options
-          animated: true,
-          modalEnabled: true,
-          modalPresentationStyle: 'pageSheet',
+        try {
+          // successfully resolves after IAB is cancelled or dismissed
+          const result = await InAppBrowser.open(url, {
+            // iOS options
+            animated: true,
+            modalEnabled: true,
+            modalPresentationStyle: 'pageSheet',
 
-          // android options
-          forceCloseOnRedirection: false,
-          hasBackButton: true,
-          showInRecents: true,
+            // android options
+            forceCloseOnRedirection: false,
+            hasBackButton: true,
+            showInRecents: true,
 
-          ...options,
-        });
+            ...options,
+          });
 
-        dispatch(
-          LogActions.info(`InAppBrowser closed with type: ${result.type}`),
-        );
+          dispatch(
+            LogActions.info(`InAppBrowser closed with type: ${result.type}`),
+          );
+        } catch (err) {
+          const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${JSON.stringify(
+            err,
+          )}`;
+          dispatch(LogActions.error(logMsg));
+          // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
+          await Linking.openURL(url);
+        }
       } else {
         // successfully resolves if an installed app handles the URL,
         // or the user confirms any presented 'open' dialog
@@ -457,117 +659,15 @@ export const openUrlWithInAppBrowser =
     }
   };
 
-export const askForTrackingPermissionAndEnableSdks =
-  (appInit: boolean = false): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+const trackFirstOpenEvent =
+  (date: number): Effect =>
+  dispatch => {
     dispatch(
-      LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
-    );
-    const trackingStatus = await requestTrackingPermission();
-    const isAuthorizedByUser = ['authorized', 'unavailable'].includes(
-      trackingStatus,
-    );
-
-    if (APP_ANALYTICS_ENABLED && isAuthorizedByUser) {
-      dispatch(
-        LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
-      );
-
-      try {
-        const {appFirstOpenData, appOpeningWasTracked, brazeEid} =
-          getState().APP;
-
-        if (!Segment.getClient()) {
-          await Segment.init({eid: brazeEid});
-        }
-
-        if (appInit) {
-          if (!appOpeningWasTracked && appFirstOpenData) {
-            const {firstOpenDate, firstOpenEventComplete} = appFirstOpenData;
-
-            if (firstOpenDate && !firstOpenEventComplete) {
-              dispatch(setAppFirstOpenEventComplete());
-              dispatch(
-                Analytics.track('First Opened App', {
-                  date: firstOpenDate || '',
-                }),
-              );
-            } else {
-              dispatch(Analytics.track('Last Opened App', {}));
-            }
-
-            dispatch(AppActions.appOpeningWasTracked());
-          }
-        }
-      } catch (err) {
-        dispatch(LogActions.error('Segment setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-      }
-    }
-    dispatch(
-      LogActions.info('complete [askForTrackingPermissionAndEnableSdks]'),
+      Analytics.track('First Opened App', {date}, () => {
+        dispatch(setAppFirstOpenEventComplete());
+      }),
     );
   };
-
-/**
- * @deprecated Use `dispatch(Analytics.track(event, properties))` instead.
- */
-export const logSegmentEvent = (
-  _eventType: 'track',
-  event: string,
-  properties: JsonMap = {},
-) => {
-  return Analytics.track(event, properties);
-};
-
-export const Analytics = {
-  /**
-   * Makes a call to identify a user through the analytics SDK.
-   *
-   * @param user database ID (or email address) for this user.
-   * If you don't have a userId but want to record traits, you should pass nil.
-   * For more information on how we generate the UUID and Apple's policies on IDs, see https://segment.io/libraries/ios#ids
-   * @param traits A dictionary of traits you know about the user. Things like: email, name, plan, etc.
-   */
-  identify:
-    (
-      user: string | undefined,
-      traits?: UserTraits | undefined,
-    ): Effect<Promise<void>> =>
-    () => {
-      return Segment.identify(user, traits);
-    },
-
-  /**
-   * Makes a call to record a screen view through the analytics SDK.
-   *
-   * @param name The title of the screen being viewed.
-   * @param properties A dictionary of properties for the screen view event.
-   * If the event was 'Added to Shopping Cart', it might have properties like price, productType, etc.
-   */
-  screen:
-    (name: string, properties: JsonMap = {}): Effect<Promise<void>> =>
-    () => {
-      return Segment.screen(name, properties);
-    },
-
-  /**
-   * Record the actions your users perform through the analytics SDK.
-   *
-   * When a user performs an action in your app, you'll want to track that action for later analysis.
-   * Use the event name to say what the user did, and properties to specify any interesting details of the action.
-   *
-   * @param event The name of the event you're tracking.
-   * The SDK recommend using human-readable names like `Played a Song` or `Updated Status`.
-   * @param properties A dictionary of properties for the event.
-   * If the event was 'Added to Shopping Cart', it might have properties like price, productType, etc.
-   */
-  track:
-    (event: string, properties: JsonMap = {}): Effect<Promise<void>> =>
-    () => {
-      return Segment.track(`BitPay App - ${event}`, properties);
-    },
-};
 
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
@@ -846,9 +946,16 @@ export const handleBwsEvent =
         case 'TxProposalRejectedBy':
         case 'TxProposalRemoved':
         case 'NewOutgoingTx':
-        case 'NewIncomingTx':
         case 'NewTxProposal':
         case 'TxConfirmation':
+          _startUpdateWalletStatus(dispatch, keyObj, wallet);
+          break;
+        case 'NewIncomingTx':
+          Analytics.track('BitPay App - Funded Wallet', {
+            walletType: wallet.credentials.addressType,
+            cryptoType: wallet.credentials.coin,
+            cryptoAmount: true,
+          });
           _startUpdateWalletStatus(dispatch, keyObj, wallet);
           break;
       }
@@ -856,47 +963,193 @@ export const handleBwsEvent =
   };
 
 export const resetAllSettings = (): Effect => dispatch => {
-  batch(() => {
-    dispatch(AppActions.setColorScheme(null));
-    dispatch(AppActions.showPortfolioValue(true));
-    dispatch(
-      AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
-    );
-    dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
-    dispatch(WalletActions.setUseUnconfirmedFunds(false));
-    dispatch(WalletActions.setCustomizeNonce(false));
-    dispatch(WalletActions.setQueuedTransactions(false));
-    dispatch(WalletActions.setEnableReplaceByFee(false));
-    dispatch(LogActions.info('Reset all settings'));
-  });
+  dispatch(AppActions.setColorScheme(null));
+  dispatch(AppActions.showPortfolioValue(true));
+  dispatch(AppActions.toggleHideAllBalances(false));
+  // Reset AltCurrency
+  dispatch(
+    AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
+  );
+  dispatch(FormatKeyBalances());
+  dispatch(updatePortfolioBalance());
+  dispatch(coinbaseInitialize());
+  dispatch(getPriceHistory('USD'));
+  // Reset Default Language
+  i18n.changeLanguage('en');
+  dispatch(AppActions.setDefaultLanguage('en'));
+  dispatch(WalletActions.setUseUnconfirmedFunds(false));
+  dispatch(WalletActions.setCustomizeNonce(false));
+  dispatch(WalletActions.setQueuedTransactions(false));
+  dispatch(WalletActions.setEnableReplaceByFee(false));
+  dispatch(LogActions.info('Reset all settings'));
 };
+
+export const getRouteParam = (url: string, param: string) => {
+  const path = url.replace(APP_DEEPLINK_PREFIX, '');
+  const state = getStateFromPath(path);
+  if (!state?.routes.length) {
+    return undefined;
+  }
+  const route = state.routes[0];
+  const routeParam = (((route.params as any) || {})[param] || '').toLowerCase();
+  return routeParam;
+};
+
+export const incomingShopLink =
+  (url: string): Effect<{merchantName: string} | undefined> =>
+  (_, getState) => {
+    const {SHOP} = getState();
+    const availableGiftCards = getAvailableGiftCards(SHOP.availableCardMap);
+    const integrations = Object.values(SHOP.integrations);
+    const categories = getCategoriesWithIntegrations(
+      Object.values(SHOP.categoriesAndCurations.categories),
+      integrations,
+    );
+
+    const path = url.replace(APP_DEEPLINK_PREFIX, '');
+    const state = getStateFromPath(path);
+    if (!state?.routes.length) {
+      return undefined;
+    }
+    const route = state.routes[0];
+    const merchantName = getRouteParam(url, 'merchant');
+    const categoryName = getRouteParam(url, 'category');
+
+    if (!['giftcard', 'shoponline', 'billpay'].includes(route.name)) {
+      return undefined;
+    }
+
+    if (route.name === 'giftcard') {
+      const cardConfig = availableGiftCards.find(
+        gc => gc.name.toLowerCase() === merchantName,
+      );
+
+      if (cardConfig) {
+        navigationRef.navigate('BuyGiftCard', {
+          cardConfig,
+        });
+      } else {
+        navigationRef.navigate('Shop', {
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.GIFT_CARDS,
+          },
+        });
+      }
+    } else if (route.name === 'shoponline') {
+      const directIntegration = integrations.find(
+        i => i.displayName.toLowerCase() === merchantName,
+      );
+      const category = categories.find(
+        c => c.displayName.toLowerCase() === categoryName,
+      );
+
+      if (category) {
+        navigationRef.navigate(MerchantScreens.MERCHANT_CATEGORY, {
+          category,
+          integrations: category.integrations,
+        });
+      } else if (directIntegration) {
+        navigationRef.navigate(MerchantScreens.MERCHANT_DETAILS, {
+          directIntegration,
+        });
+      } else {
+        navigationRef.navigate('Shop', {
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.SHOP_ONLINE,
+          },
+        });
+      }
+    } else if (route.name === 'billpay') {
+      navigationRef.navigate('Shop', {
+        screen: ShopScreens.HOME,
+        params: {
+          screen: ShopTabs.BILLS,
+        },
+      });
+    }
+    return {merchantName};
+  };
 
 export const incomingLink =
   (url: string): Effect<boolean> =>
   (dispatch, getState) => {
-    let handled = false;
+    const [fullPath, fullParams] = url
+      .replace(APP_DEEPLINK_PREFIX, '')
+      .split('?');
+    const pathSegments = (fullPath || '').split('/');
+    const params = (fullParams || '').split('&').reduce((paramMap, kvp) => {
+      const [k, v] = kvp.split('=');
+      paramMap[k] = v;
+      return paramMap;
+    }, {} as Record<string, string | undefined>) as any;
 
-    const parsed = url.replace(APP_DEEPLINK_PREFIX, '');
+    const pathInfo = dispatch(incomingShopLink(url));
 
-    if (parsed === 'card/offers') {
-      const {APP, CARD} = getState();
-      const cards = CARD.cards[APP.network];
+    if (pathInfo) {
+      return true;
+    }
 
-      if (cards.length) {
-        if (APP.appWasInit) {
+    let handler: (() => void) | null = null;
+
+    if (pathSegments[0] === 'feedback') {
+      if (pathSegments[1] === 'rate') {
+        handler = () => {
           setTimeout(() => {
-            handleDosh();
+            dispatch(requestInAppReview());
           }, 500);
-        } else {
-          DeviceEventEmitter.addListener(
-            DeviceEmitterEvents.APP_INIT_COMPLETED,
-            () => {
-              handleDosh();
-            },
-          );
-        }
+        };
+      }
+    } else if (pathSegments[0] === 'buy-crypto') {
+      handler = () => {
+        navigationRef.navigate(BuyCryptoScreens.ROOT, params);
+      };
+    } else if (pathSegments[0] === 'connections') {
+      const redirectTo = pathSegments[1];
 
-        function handleDosh() {
+      handler = () => {
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.SETTINGS,
+          params: {
+            redirectTo: redirectTo as any,
+          },
+        });
+      };
+    } else if (pathSegments[0] === 'wallet') {
+      if (pathSegments[1] === 'create') {
+        handler = () => {
+          navigationRef.navigate(WalletScreens.CREATION_OPTIONS, params);
+        };
+      }
+    } else if (pathSegments[0] === 'card') {
+      const cardPath = pathSegments[1];
+      const createCardHandler = (cb: (cards: Card[]) => void) => {
+        return () => {
+          const {APP, CARD} = getState();
+          const cards = CARD.cards[APP.network];
+
+          if (cards.length) {
+            cb(cards);
+          } else {
+            navigationRef.navigate(RootStacks.TABS, {
+              screen: TabsScreens.CARD,
+              params: {
+                screen: CardScreens.HOME,
+              },
+            });
+          }
+        };
+      };
+
+      if (cardPath === 'activate') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(CardActivationScreens.ACTIVATE, {
+            card: cards[0],
+          });
+        });
+      } else if (cardPath === 'offers') {
+        handler = createCardHandler(cards => {
           navigationRef.navigate(RootStacks.TABS, {
             screen: TabsScreens.CARD,
             params: {
@@ -906,19 +1159,218 @@ export const incomingLink =
               },
             },
           });
+
           dispatch(CardEffects.startOpenDosh());
-        }
-      } else {
-        navigationRef.navigate(RootStacks.TABS, {
-          screen: TabsScreens.CARD,
-          params: {
-            screen: CardScreens.HOME,
-          },
+        });
+      } else if (cardPath === 'referral') {
+        handler = createCardHandler(cards => {
+          navigationRef.navigate(RootStacks.TABS, {
+            screen: TabsScreens.CARD,
+            params: {
+              screen: CardScreens.REFERRAL,
+              params: {
+                card: cards[0],
+              },
+            },
+          });
         });
       }
-
-      handled = true;
     }
 
-    return handled;
+    if (handler) {
+      const {APP} = getState();
+      const {appIsReadyForDeeplinking} = APP;
+
+      if (appIsReadyForDeeplinking) {
+        handler();
+      } else {
+        const subscription = DeviceEventEmitter.addListener(
+          DeviceEmitterEvents.APP_READY_FOR_DEEPLINKS,
+          () => {
+            subscription.remove();
+            handler?.();
+          },
+        );
+      }
+
+      return true;
+    }
+
+    return false;
+  };
+
+export const shareApp = (): Effect<Promise<void>> => async dispatch => {
+  try {
+    let message = t(
+      'Spend and control your cryptocurrency by downloading the app.',
+      {APP_NAME},
+    );
+
+    if (Platform.OS !== 'ios') {
+      message = `${message} ${DOWNLOAD_BITPAY_URL}`;
+    }
+    await Share.share({message, url: DOWNLOAD_BITPAY_URL});
+  } catch (err) {
+    let errorStr;
+    if (err instanceof Error) {
+      errorStr = err.message;
+    } else {
+      errorStr = JSON.stringify(err);
+    }
+    dispatch(LogActions.error(`failed [shareApp]: ${errorStr}`));
+  }
+};
+
+export const isVersionUpdated =
+  (currentVersion: string, savedVersion: string): Effect<Promise<boolean>> =>
+  async dispatch => {
+    const verifyTagFormat = (tag: string) => {
+      const regex = /^v?\d+\.\d+\.\d+$/i;
+      return regex.exec(tag);
+    };
+
+    const formatTagNumber = (tag: string) => {
+      const formattedNumber = tag.replace(/^v/i, '').split('.');
+      return {
+        major: +formattedNumber[0],
+        minor: +formattedNumber[1],
+        patch: +formattedNumber[2],
+      };
+    };
+
+    if (!verifyTagFormat(currentVersion)) {
+      dispatch(
+        LogActions.error(
+          'Cannot verify the format of version tag: ' + currentVersion,
+        ),
+      );
+    }
+    if (!verifyTagFormat(savedVersion)) {
+      dispatch(
+        LogActions.error(
+          'Cannot verify the format of the saved version tag: ' + savedVersion,
+        ),
+      );
+    }
+
+    const current = formatTagNumber(currentVersion);
+    const saved = formatTagNumber(savedVersion);
+    if (saved.major === current.major && saved.minor === current.minor) {
+      return true;
+    }
+
+    return false;
+  };
+
+export const saveUserFeedback =
+  (rate: FeedbackRateType, version: string, sent: boolean): Effect<any> =>
+  dispatch => {
+    dispatch(
+      setUserFeedback({
+        time: moment().unix(),
+        version,
+        sent,
+        rate,
+      }),
+    );
+  };
+
+export const shortcutListener =
+  (item: ShortcutItem, navigation: NavigationProp<any>): Effect<void> =>
+  dispatch => {
+    const {type} = item || {};
+    switch (type) {
+      case 'buy':
+        dispatch(goToBuyCrypto());
+        return;
+      case 'swap':
+        dispatch(goToSwapCrypto());
+        return;
+      case 'send':
+        dispatch(sendCrypto('Shortcut'));
+        return;
+      case 'receive':
+        dispatch(receiveCrypto(navigation, 'Shortcut'));
+        return;
+      case 'share':
+        dispatch(shareApp());
+        return;
+    }
+  };
+
+/**
+ * Requests an in-app review UI from the device. Due to review quotas set by
+ * Apple/Google, request is not guaranteed to be granted and it is possible
+ * that nothing will be presented to the user.
+ *
+ * @returns
+ */
+export const requestInAppReview =
+  (): Effect<Promise<void>> => async dispatch => {
+    try {
+      // Whether the device supports app ratings
+      const isAvailable = InAppReview.isAvailable();
+
+      if (!isAvailable) {
+        dispatch(LogActions.debug('In-app review not available.'));
+        return;
+      }
+
+      dispatch(LogActions.debug('Requesting in-app review...'));
+
+      // Android - true means the user finished or closed the review flow successfully, but does not indicate if the user left a review
+      // iOS - true means the rating flow was launched successfully, but does not indicate if the user left a review
+      const hasFlowFinishedSuccessfully =
+        await InAppReview.RequestInAppReview();
+
+      dispatch(
+        LogActions.debug(
+          `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
+        ),
+      );
+    } catch (e: any) {
+      dispatch(
+        LogActions.debug(
+          `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
+        ),
+      );
+    }
+  };
+
+export const joinWaitlist =
+  (
+    email: string,
+    attribute: string,
+    context: 'bill-pay' | 'bitpay-card',
+  ): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      const network = APP.network as Network;
+      const session = await AuthApi.fetchSession(network);
+      const baseUrl = BASE_BITPAY_URLS[network];
+
+      const config = {
+        headers: {
+          'x-csrf-token': session.csrfToken,
+        },
+      };
+      const data = {
+        email,
+        attribute,
+      };
+
+      await axios.post(`${baseUrl}/marketing/marketingOptIn`, data, config);
+      switch (context) {
+        case 'bitpay-card':
+          dispatch(CardActions.isJoinedWaitlist(true));
+          break;
+        case 'bill-pay':
+          dispatch(ShopActions.isJoinedWaitlist(true));
+          break;
+      }
+    } catch (err) {
+      dispatch(LogActions.error(`Error joining waitlist: ${err}`));
+      throw err;
+    }
   };

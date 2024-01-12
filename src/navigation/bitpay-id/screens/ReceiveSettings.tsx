@@ -19,12 +19,11 @@ import {
 } from '../../../styles/colors';
 import AddSvg from '../../../../assets/img/add.svg';
 import AddWhiteSvg from '../../../../assets/img/add-white.svg';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from 'react-native';
 import Button from '../../../components/button/Button';
-import {t} from 'i18next';
 import ChevronRight from '../components/ChevronRight';
 import SendToPill from '../../wallet/components/SendToPill';
-import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
+import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BuildKeysAndWalletsList} from '../../../store/wallet/utils/wallet';
 import {Network} from '../../../constants';
@@ -34,7 +33,6 @@ import {
 } from '../../wallet/screens/send/confirm/Shared';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -42,17 +40,25 @@ import {
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {AppActions} from '../../../store/app';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {sleep} from '../../../utils/helper-methods';
+import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {ReceivingAddress} from '../../../store/bitpay-id/bitpay-id.models';
-import {WalletScreens} from '../../wallet/WalletStack';
+import {WalletScreens} from '../../wallet/WalletGroup';
 import AddressModal from '../components/AddressModal';
 import {keyBackupRequired} from '../../tabs/home/components/Crypto';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import TwoFactorRequiredModal from '../components/TwoFactorRequiredModal';
 import {getCurrencyCodeFromCoinAndChain} from '../utils/bitpay-id-utils';
-import {BitpaySupportedCurrencies} from '../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedTokens,
+} from '../../../constants/currencies';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
+import {useTranslation} from 'react-i18next';
+
+const ReceiveSettingsContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -136,12 +142,13 @@ const createAddressMap = (receivingAddresses: ReceivingAddress[]) => {
   );
 };
 
-type ReceiveSettingsProps = StackScreenProps<
-  BitpayIdStackParamList,
-  'ReceiveSettings'
+type ReceiveSettingsProps = NativeStackScreenProps<
+  BitpayIdGroupParamList,
+  BitpayIdScreens.RECEIVE_SETTINGS
 >;
 
-const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
+const ReceiveSettings = ({route}: ReceiveSettingsProps) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const theme = useTheme();
@@ -172,7 +179,10 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
       .filter(
         wallet =>
           wallet.network === Network.mainnet &&
-          Object.values(BitpaySupportedCurrencies).some(
+          Object.values({
+            ...BitpaySupportedCoins,
+            ...BitpaySupportedTokens,
+          }).some(
             ({coin, chain}) =>
               wallet.currencyAbbreviation === coin && wallet.chain === chain,
           ),
@@ -243,9 +253,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   };
 
   const generateAddress = async (wallet: Wallet) => {
-    dispatch(
-      startOnGoingProcessModal(t(OnGoingProcessMessages.GENERATING_ADDRESS)),
-    );
+    dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
     const address = await dispatch(
       createWalletAddress({wallet, newAddress: true}),
     );
@@ -256,7 +264,9 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
         id: '',
         coin: wallet.currencyAbbreviation,
         chain: wallet.chain,
-        label: wallet.walletName || wallet.currencyAbbreviation.toUpperCase(),
+        label:
+          wallet.walletName ||
+          formatCurrencyAbbreviation(wallet.currencyAbbreviation),
         address,
         provider: 'BitPay',
         currency: getCurrencyCodeFromCoinAndChain(
@@ -278,9 +288,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   };
 
   const saveAddresses = async (twoFactorCode: string) => {
-    dispatch(
-      startOnGoingProcessModal(t(OnGoingProcessMessages.SAVING_ADDRESSES)),
-    );
+    dispatch(startOnGoingProcessModal('SAVING_ADDRESSES'));
     const newReceivingAddresses = Object.values(activeAddresses);
     await dispatch(
       BitPayIdEffects.startUpdateReceivingAddresses(
@@ -290,9 +298,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
     );
     await dispatch(dismissOnGoingProcessModal());
     return !receivingAddresses.length && newReceivingAddresses.length
-      ? navigator.navigate('BitpayId', {
-          screen: BitpayIdScreens.RECEIVING_ENABLED,
-        })
+      ? navigator.navigate(BitpayIdScreens.RECEIVING_ENABLED)
       : navigation.popToTop();
   };
 
@@ -311,11 +317,8 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   }, [otpEnabled]);
 
   const addWallet = (key: Key) => {
-    navigator.navigate('Wallet', {
-      screen: 'AddingOptions',
-      params: {
-        key,
-      },
+    navigator.navigate('AddingOptions', {
+      key,
     });
   };
 
@@ -327,7 +330,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
   };
 
   return (
-    <>
+    <ReceiveSettingsContainer>
       <ViewContainer>
         <ViewBody>
           <H3>{t('Choose your Primary Wallet to Receive Payments')}</H3>
@@ -406,18 +409,15 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
                 onPress={() => {
                   const keyList = Object.values(keys);
                   if (!keyList.length) {
-                    navigator.navigate('Wallet', {screen: 'CreationOptions'});
+                    navigator.navigate('CreationOptions');
                     return;
                   }
                   if (keyList.length === 1) {
                     addWallet(keyList[0]);
                     return;
                   }
-                  navigator.navigate('Wallet', {
-                    screen: WalletScreens.KEY_GLOBAL_SELECT,
-                    params: {
-                      onKeySelect: (selectedKey: Key) => addWallet(selectedKey),
-                    },
+                  navigator.navigate(WalletScreens.KEY_GLOBAL_SELECT, {
+                    onKeySelect: (selectedKey: Key) => addWallet(selectedKey),
                   });
                 }}>
                 <AddressItem>
@@ -472,7 +472,7 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
                   walletSelectorCurrency,
                   walletSelectorChain,
                 )
-              ],
+              ] || [],
             coinbaseWallets: [],
           }}
           onWalletSelect={async wallet => {
@@ -515,21 +515,18 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
         }}>
         <Button
           onPress={() =>
-            navigator.navigate('BitpayId', {
-              screen: BitpayIdScreens.TWO_FACTOR,
-              params: {
-                onSubmit: async (twoFactorCode: string) => {
-                  saveAddresses(twoFactorCode).catch(async error => {
-                    dispatch(dismissOnGoingProcessModal());
-                    await sleep(300);
-                    showError({
-                      error,
-                      defaultErrorMessage: t('Could not save addresses'),
-                    });
+            navigator.navigate(BitpayIdScreens.TWO_FACTOR, {
+              onSubmit: async (twoFactorCode: string) => {
+                saveAddresses(twoFactorCode).catch(async error => {
+                  dispatch(dismissOnGoingProcessModal());
+                  await sleep(300);
+                  showError({
+                    error,
+                    defaultErrorMessage: t('Could not save addresses'),
                   });
-                },
-                twoFactorCodeLength: 6,
+                });
               },
+              twoFactorCodeLength: 6,
             })
           }
           buttonStyle={'primary'}>
@@ -552,13 +549,11 @@ const ReceiveSettings: React.FC<ReceiveSettingsProps> = ({navigation}) => {
           setTwoFactorModalRequiredVisible(false);
           navigation.pop();
           if (enable) {
-            navigator.navigate('BitpayId', {
-              screen: BitpayIdScreens.ENABLE_TWO_FACTOR,
-            });
+            navigator.navigate(BitpayIdScreens.ENABLE_TWO_FACTOR);
           }
         }}
       />
-    </>
+    </ReceiveSettingsContainer>
   );
 };
 

@@ -1,35 +1,22 @@
-import {
-  useFocusEffect,
-  useNavigation,
-  useScrollToTop,
-} from '@react-navigation/native';
-import React, {useCallback, useLayoutEffect, useMemo} from 'react';
+import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
+import React, {useCallback, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
-import Carousel from 'react-native-snap-carousel';
+import {FlatList, TouchableOpacity} from 'react-native';
 import {SharedElement} from 'react-navigation-shared-element';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
-import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
-import Button from '../../../components/button/Button';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {
-  ActiveOpacity,
-  Br,
-  HeaderRightContainer,
-  ScreenGutter,
-  WIDTH,
-} from '../../../components/styled/Containers';
+import {Br, ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
 import {AppEffects} from '../../../store/app';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {Analytics} from '../../../store/app/app.effects';
 import {selectBrazeCardOffers} from '../../../store/app/app.selectors';
 import {CardEffects} from '../../../store/card';
 import {Card, UiTransaction} from '../../../store/card/card.models';
@@ -43,17 +30,11 @@ import {
   useAppSelector,
   useBrazeRefreshOnFocus,
 } from '../../../utils/hooks';
-import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
-import {WalletScreens} from '../../wallet/WalletStack';
 import {CardHomeScreenProps} from '../screens/CardHome';
 import {
   EmptyGhostContainer,
   EmptyListContainer,
   EmptyListDescription,
-  FloatingActionButton,
-  FloatingActionButtonContainer,
-  FloatingActionButtonIconContainer,
-  FloatingActionButtonText,
   TransactionListFooter,
   TransactionListHeader,
   TransactionListHeaderIcon,
@@ -63,30 +44,23 @@ import CardOffers from './CardOffers';
 import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
+import {AddFundsButton} from './AddFundsButton';
 
 interface CardDashboardProps extends CardHomeScreenProps {
   id: string;
 }
 
-const CardsRowContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
+const CardsRowContainer = styled.View``;
 
-const CardOffersContainer = styled.View`
-  margin: -16px;
-  padding: 16px;
-`;
+const CardOffersContainer = styled.View``;
 
-const BelowCarouselSpacer = styled.View`
-  height: 32px;
-`;
+const BelowCarouselSpacer = styled.View``;
 
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
-  const navigator = useNavigation();
   const {t} = useTranslation();
   const {id, navigation} = props;
-  const carouselRef = useRef<Carousel<Card[]>>(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
   const cardGroups = useAppSelector(selectCardGroups);
   const fetchOverviewStatus = useAppSelector(
     ({CARD}) => CARD.fetchOverviewStatus[id],
@@ -97,20 +71,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const network = useAppSelector(({APP}) => APP.network);
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
   useBrazeRefreshOnFocus();
-
-  const hasWalletsWithBalance = useMemo(
-    () =>
-      Object.values(keys)
-        .flatMap(key => key.wallets)
-        .filter(wallet => wallet.balance.sat > 0 && wallet.network === network)
-        .length > 0,
-    [keys, network],
-  );
 
   const currentGroupIdx = Math.max(
     0,
@@ -136,91 +99,24 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const goToCardSettingsRef = useRef(goToCardSettings);
   goToCardSettingsRef.current = goToCardSettings;
 
-  const goToReferAndEarn = () => {
-    dispatch(Analytics.track('Clicked Refer and Earn', {}));
-
-    navigation.navigate('Referral', {card: activeCard});
+  const addFundsOnClick = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'info',
+        title: t('UnableToAddFunds'),
+        message: t('CardBalanceReturnWarningJune2023'),
+        enableBackdropDismiss: true,
+        onBackdropDismiss: () => {},
+        actions: [
+          {
+            text: t('GOT IT'),
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
   };
-  const goToReferAndEarnRef = useRef(goToReferAndEarn);
-  goToReferAndEarnRef.current = goToReferAndEarn;
-
-  const goToConfirmScreen = (amount: number) => {
-    navigator.navigate('Wallet', {
-      screen: WalletScreens.DEBIT_CARD_CONFIRM,
-      params: {
-        amount,
-        card: activeCard,
-      },
-    });
-  };
-
-  const goToAmountScreen = () => {
-    dispatch(Analytics.track('Clicked Add Funds', {context: 'CardDashboard'}));
-    if (hasWalletsWithBalance) {
-      navigator.navigate('Wallet', {
-        screen: WalletScreens.AMOUNT,
-        params: {
-          fiatCurrencyAbbreviation: activeCard.currency.code,
-          onAmountSelected: selectedAmount =>
-            goToConfirmScreen(+selectedAmount),
-        },
-      });
-    } else {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: t('No funds available'),
-          message: t('You do not have any funds to send.'),
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: t('Add funds'),
-              action: () => {
-                dispatch(
-                  Analytics.track('Clicked Buy Crypto', {
-                    context: 'CardDashboard - No funds availiable',
-                  }),
-                );
-                navigator.navigate('Wallet', {
-                  screen: WalletScreens.AMOUNT,
-                  params: {
-                    onAmountSelected: (amount: string) => {
-                      navigator.navigate('BuyCrypto', {
-                        screen: BuyCryptoScreens.ROOT,
-                        params: {
-                          amount: Number(amount),
-                        },
-                      });
-                    },
-                  },
-                });
-              },
-              primary: true,
-            },
-            {
-              text: t('Got It'),
-              action: () => null,
-              primary: false,
-            },
-          ],
-        }),
-      );
-    }
-  };
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <HeaderRightContainer>
-          <Button
-            onPress={() => goToReferAndEarnRef.current()}
-            buttonType="pill">
-            {t('Earn $10')}
-          </Button>
-        </HeaderRightContainer>
-      ),
-    });
-  }, [navigation, t]);
 
   // if id does not exist as a key, tx for this card has not been initialized
   const pageData = useAppSelector(
@@ -330,11 +226,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
 
   const onActivatePress = useCallback((card: Card) => {
-    navigationRef.navigate('CardActivation', {
-      screen: 'Activate',
-      params: {
-        card,
-      },
+    navigationRef.navigate('CardActivate', {
+      card,
     });
   }, []);
 
@@ -380,27 +273,34 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         onEndReached={() => fetchNextPage()}
         ListHeaderComponent={
           <>
-            <Carousel<Card[]>
-              ref={carouselRef}
+            <Carousel
+              mode="parallax"
+              modeConfig={{
+                parallaxScrollingScale: 1,
+                parallaxScrollingOffset: 0,
+                parallaxAdjacentItemScale: 0.9,
+              }}
+              style={{
+                width: WIDTH,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              loop={false}
               vertical={false}
-              layout="default"
-              activeSlideAlignment="center"
-              firstItem={currentGroupIdx}
+              width={CARD_WIDTH + 20}
+              height={Math.round(CARD_WIDTH) / 1.5}
+              autoPlay={false}
               data={cardGroups}
-              renderItem={renderSlide}
+              ref={carouselRef}
+              scrollAnimationDuration={1000}
+              enabled={true}
               onSnapToItem={idx => {
                 navigation.setParams({
                   id: cardGroups[idx][0].id,
                 });
               }}
-              itemWidth={CARD_WIDTH + 20}
-              sliderWidth={WIDTH}
-              inactiveSlideScale={1}
-              inactiveSlideOpacity={1}
-              containerCustomStyle={{
-                flexGrow: 0,
-                marginTop: 32,
-              }}
+              renderItem={renderSlide}
             />
 
             {additionalContent.length ? (
@@ -430,16 +330,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         ListEmptyComponent={listEmptyComponent}
         ref={flatListRef}
       />
-      <FloatingActionButtonContainer>
-        <FloatingActionButton
-          onPress={() => goToAmountScreen()}
-          activeOpacity={ActiveOpacity}>
-          <FloatingActionButtonIconContainer>
-            <PlusSvg />
-          </FloatingActionButtonIconContainer>
-          <FloatingActionButtonText>{t('Add Funds')}</FloatingActionButtonText>
-        </FloatingActionButton>
-      </FloatingActionButtonContainer>
+      <AddFundsButton disabled={true} onPress={addFundsOnClick} />
     </>
   );
 };

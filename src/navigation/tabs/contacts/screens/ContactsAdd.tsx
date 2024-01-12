@@ -5,7 +5,7 @@ import React, {
   useLayoutEffect,
   useEffect,
 } from 'react';
-import {FlatList, View} from 'react-native';
+import {FlatList, View, TouchableOpacity} from 'react-native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
 import styled, {useTheme} from 'styled-components/native';
@@ -25,6 +25,7 @@ import {
   SearchContainer,
   SearchInput,
   Column,
+  CurrencyColumn,
 } from '../../../../components/styled/Containers';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
@@ -43,7 +44,8 @@ import {
   keyExtractor,
   findContact,
   getBadgeImg,
-  getCurrencyAbbreviation,
+  getChainUsingSuffix,
+  formatCurrencyAbbreviation,
 } from '../../../../utils/helper-methods';
 import CurrencySelectionRow, {
   TokenSelectionRow,
@@ -54,15 +56,13 @@ import NetworkSelectionRow, {
 import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
-import {SUPPORTED_TOKENS} from '../../../../constants/currencies';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokens} from '../../../../constants/currencies';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import debounce from 'lodash.debounce';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
-import {ContactsStackParamList} from '../ContactsStack';
-import {StackScreenProps} from '@react-navigation/stack';
+import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   SupportedCurrencyOption,
   SupportedEvmCurrencyOptions,
@@ -70,6 +70,7 @@ import {
 } from '../../../../constants/SupportedCurrencyOptions';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -78,10 +79,14 @@ const InputContainer = styled.View<{hideInput?: boolean}>`
 
 const ActionContainer = styled.View`
   margin-top: 30px;
+  margin-bottom: 60px;
 `;
 
-const Container = styled.ScrollView`
+const Container = styled.SafeAreaView`
   flex: 1;
+`;
+
+const ScrollContainer = styled.ScrollView`
   padding: 0 20px;
   margin-top: 20px;
 `;
@@ -89,11 +94,12 @@ const Container = styled.ScrollView`
 const AddressBadge = styled.View`
   background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
   position: absolute;
-  right: 5px;
+  right: 13px;
   top: 50%;
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
+  background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
   position: absolute;
   right: 5px;
   top: 32px;
@@ -148,7 +154,7 @@ const NetworkName = styled(BaseText)`
 const schema = yup.object().shape({
   name: yup.string().required().trim(),
   email: yup.string().email().trim(),
-  destinationTag: yup.number(),
+  destinationTag: yup.string().trim(),
   address: yup.string().required(),
 });
 
@@ -172,9 +178,20 @@ const CheckBoxContainer = styled.View`
   justify-content: center;
 `;
 
+const CurrencyTitleColumn = styled(CurrencyColumn)`
+  flex-direction: column;
+  align-items: flex-start;
+`;
+
+const CurrencySubTitle = styled(BaseText)`
+  color: #9ba3ae;
+  font-size: 12px;
+  margin-left: 10px;
+`;
+
 const ContactsAdd = ({
   route,
-}: StackScreenProps<ContactsStackParamList, 'ContactsAdd'>) => {
+}: NativeStackScreenProps<ContactsGroupParamList, ContactsScreens.ADD>) => {
   const {t} = useTranslation();
   const {
     control,
@@ -200,6 +217,9 @@ const ContactsAdd = ({
 
   const [addressValue, setAddressValue] = useState('');
   const [coinValue, setCoinValue] = useState('');
+  const [tokenAddressValue, setTokenAddressValue] = useState<
+    string | undefined
+  >();
   const [networkValue, setNetworkValue] = useState('');
   const [chainValue, setChainValue] = useState('');
 
@@ -210,30 +230,18 @@ const ContactsAdd = ({
     IsERCToken(contact?.coin || '', contact?.chain || ''),
   );
 
-  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
+  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
   });
 
-  const getChainUsingSuffix = (symbol: string) => {
-    const suffix = symbol.charAt(symbol.length - 1);
-    switch (suffix) {
-      case 'e':
-        return 'eth';
-      case 'm':
-        return 'matic';
-      default:
-        return 'eth';
-    }
-  };
-
   const ALL_CUSTOM_TOKENS = useMemo(() => {
-    return Object.entries(tokenOptions)
-      .filter(([k]) => !SUPPORTED_TOKENS.includes(k))
-      .map(([k, {symbol, name, logoURI}]) => {
+    return Object.entries(tokenOptionsByAddress)
+      .filter(([k]) => !BitpaySupportedTokens[k])
+      .map(([k, {symbol, name, logoURI, address}]) => {
         const chain = getChainUsingSuffix(k);
         return {
           id: Math.random().toString(),
@@ -244,9 +252,10 @@ const ContactsAdd = ({
           isToken: true,
           chain,
           badgeUri: getBadgeImg(symbol.toLowerCase(), chain),
+          tokenAddress: address,
         } as SupportedCurrencyOption;
       });
-  }, [tokenOptions]);
+  }, [tokenOptionsByAddress]);
 
   const ALL_TOKENS = useMemo(
     () => [...SupportedTokenOptions, ...ALL_CUSTOM_TOKENS],
@@ -254,7 +263,6 @@ const ContactsAdd = ({
   );
 
   const [allTokenOptions, setAllTokenOptions] = useState(ALL_TOKENS);
-
   const [selectedToken, setSelectedToken] = useState(ALL_TOKENS[0]);
   const [selectedCurrency, setSelectedCurrency] = useState(
     SupportedEvmCurrencyOptions[0],
@@ -299,12 +307,14 @@ const ContactsAdd = ({
     coin: string,
     network: string,
     chain: string,
+    tokenAddress: string | undefined,
   ) => {
     setValidAddress(true);
     setAddressValue(address);
     setCoinValue(coin);
     setNetworkValue(network);
     setChainValue(chain);
+    setTokenAddressValue(tokenAddress);
 
     _setSelectedCurrency(coin);
 
@@ -326,6 +336,7 @@ const ContactsAdd = ({
     coin?: string,
     network?: string,
     chain?: string,
+    tokenAddress?: string,
   ) => {
     if (address) {
       const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
@@ -341,6 +352,7 @@ const ContactsAdd = ({
             coin || coinAndNetwork.coin,
             network || coinAndNetwork.network,
             chain || coinAndNetwork.coin,
+            tokenAddress,
           );
         } else {
           // try testnet
@@ -355,6 +367,7 @@ const ContactsAdd = ({
               coin || coinAndNetwork.coin,
               network || 'testnet',
               chain || coinAndNetwork.coin,
+              tokenAddress,
             );
           }
         }
@@ -362,6 +375,7 @@ const ContactsAdd = ({
         setCoinValue('');
         setNetworkValue('');
         setAddressValue('');
+        setTokenAddressValue(undefined);
         setValidAddress(false);
         setEvmValidAddress(false);
         setXrpValidAddress(false);
@@ -382,6 +396,7 @@ const ContactsAdd = ({
       contact.coin = coinValue;
       contact.chain = chainValue;
       contact.network = networkValue;
+      contact.tokenAddress = tokenAddressValue;
     } else {
       setError('address', {
         type: 'manual',
@@ -390,10 +405,14 @@ const ContactsAdd = ({
       return;
     }
 
-    if (coinValue === 'xrp' && !contact.destinationTag) {
+    if (
+      coinValue === 'xrp' &&
+      contact.destinationTag &&
+      isNaN(contact.destinationTag)
+    ) {
       setError('destinationTag', {
         type: 'manual',
-        message: t('Tag number is required for XRP address'),
+        message: t('Only numbers are allowed'),
       });
       return;
     }
@@ -406,7 +425,14 @@ const ContactsAdd = ({
     }
 
     if (
-      findContact(contacts, addressValue, coinValue, networkValue, chainValue)
+      findContact(
+        contacts,
+        addressValue,
+        coinValue,
+        networkValue,
+        chainValue,
+        tokenAddressValue,
+      )
     ) {
       setError('address', {
         type: 'manual',
@@ -435,9 +461,14 @@ const ContactsAdd = ({
     setSelectedCurrency(_selectedCurrency[0]);
   };
 
-  const tokenSelected = (currencyAbbreviation: string, chain: string) => {
+  const tokenSelected = (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress: string | undefined,
+  ) => {
     _setSelectedToken(currencyAbbreviation, chain);
     setCoinValue(currencyAbbreviation);
+    setTokenAddressValue(tokenAddress);
     setTokenModalVisible(false);
   };
 
@@ -448,13 +479,17 @@ const ContactsAdd = ({
     _setSelectedCurrency(currencyAbbreviation);
     if (isTokenAddress) {
       setChainValue(currencyAbbreviation);
+      const firstTokenOption = allTokenOptions.find(
+        t => t.chain === currencyAbbreviation,
+      );
       tokenSelected(
-        allTokenOptions.find(t => t.chain === currencyAbbreviation)
-          ?.currencyAbbreviation!,
+        firstTokenOption?.currencyAbbreviation!,
         currencyAbbreviation,
+        firstTokenOption?.tokenAddress,
       );
     } else {
       setCoinValue(currencyAbbreviation);
+      setChainValue(currencyAbbreviation);
     }
     setCurrencyModalVisible(false);
   };
@@ -507,17 +542,14 @@ const ContactsAdd = ({
 
   const goToScan = () => {
     dispatch(
-      logSegmentEvent('track', 'Open Scanner', {
+      Analytics.track('Open Scanner', {
         context: 'contactsAdd',
       }),
     );
-    navigation.navigate('Scan', {
-      screen: 'Root',
-      params: {
-        onScanComplete: address => {
-          setValue('address', address, {shouldDirty: true});
-          processAddress(address);
-        },
+    navigation.navigate('ScanRoot', {
+      onScanComplete: address => {
+        setValue('address', address, {shouldDirty: true});
+        processAddress(address);
       },
     });
   };
@@ -529,6 +561,7 @@ const ContactsAdd = ({
         contact.coin,
         contact.network,
         contact.chain,
+        contact.tokenAddress,
       );
       setValue('address', contact.address!, {shouldDirty: true});
       setValue('name', contact.name || '');
@@ -539,217 +572,228 @@ const ContactsAdd = ({
   }, [contact]);
 
   return (
-    <Container keyboardShouldPersistTaps="handled">
-      <InputContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={'Satoshi Nakamoto'}
-              label={t('NAME')}
-              onBlur={onBlur}
-              onChangeText={onChange}
-              error={errors.name?.message}
-              value={value}
-              autoCorrect={false}
-            />
-          )}
-          name="name"
-          defaultValue=""
-        />
-      </InputContainer>
-      <InputContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={'satoshi@example.com'}
-              label={t('EMAIL (OPTIONAL)')}
-              onBlur={onBlur}
-              onChangeText={onChange}
-              error={errors.email?.message}
-              value={value}
-            />
-          )}
-          name="email"
-          defaultValue=""
-        />
-      </InputContainer>
-      {!contact ? (
+    <Container>
+      <ScrollContainer keyboardShouldPersistTaps="handled">
         <InputContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                placeholder={'Crypto address'}
-                label={t('ADDRESS')}
+                placeholder={'Satoshi Nakamoto'}
+                label={t('NAME')}
                 onBlur={onBlur}
-                onChangeText={(newValue: string) => {
-                  onChange(newValue);
-                  processAddress(newValue);
-                }}
-                error={errors.address?.message}
+                onChangeText={onChange}
+                error={errors.name?.message}
                 value={value}
+                autoCorrect={false}
               />
             )}
-            name="address"
+            name="name"
             defaultValue=""
           />
-          {addressValue && dirtyFields.address ? (
-            <AddressBadge>
-              <SuccessIcon />
-            </AddressBadge>
-          ) : (
-            <ScanButtonContainer onPress={goToScan}>
-              <ScanSvg />
-            </ScanButtonContainer>
-          )}
         </InputContainer>
-      ) : (
         <InputContainer>
           <Controller
             control={control}
-            render={({field: {value}}) => (
-              <BoxInput disabled={true} label={t('ADDRESS')} value={value} />
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={'satoshi@example.com'}
+                label={t('EMAIL (OPTIONAL)')}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={errors.email?.message}
+                value={value}
+              />
             )}
-            name="address"
+            name="email"
             defaultValue=""
           />
         </InputContainer>
-      )}
+        {!contact ? (
+          <InputContainer>
+            <Controller
+              control={control}
+              render={({field: {onChange, onBlur, value}}) => (
+                <BoxInput
+                  placeholder={'Crypto address'}
+                  label={t('ADDRESS')}
+                  onBlur={onBlur}
+                  onChangeText={(newValue: string) => {
+                    onChange(newValue);
+                    processAddress(newValue);
+                  }}
+                  error={errors.address?.message}
+                  value={value}
+                />
+              )}
+              name="address"
+              defaultValue=""
+            />
+            {addressValue && dirtyFields.address ? (
+              <AddressBadge>
+                <SuccessIcon />
+              </AddressBadge>
+            ) : (
+              <ScanButtonContainer onPress={goToScan}>
+                <ScanSvg />
+              </ScanButtonContainer>
+            )}
+          </InputContainer>
+        ) : (
+          <InputContainer>
+            <Controller
+              control={control}
+              render={({field: {value}}) => (
+                <BoxInput disabled={true} label={t('ADDRESS')} value={value} />
+              )}
+              name="address"
+              defaultValue=""
+            />
+          </InputContainer>
+        )}
 
-      {!contact && evmValidAddress ? (
-        <IsTokenAddressContainer
-          onPress={() => {
-            _setIsTokenAddress();
-          }}>
-          <Column>
-            <IsTokenAddressTitle>
-              {t('Is this a token address?')}
-            </IsTokenAddressTitle>
-          </Column>
-          <CheckBoxContainer>
-            <Checkbox
-              checked={isTokenAddress}
+        {!contact && evmValidAddress ? (
+          <IsTokenAddressContainer
+            onPress={() => {
+              _setIsTokenAddress();
+            }}>
+            <Column>
+              <IsTokenAddressTitle>
+                {t('Is this a token address?')}
+              </IsTokenAddressTitle>
+            </Column>
+            <CheckBoxContainer>
+              <Checkbox
+                checked={isTokenAddress}
+                onPress={() => {
+                  _setIsTokenAddress();
+                }}
+              />
+            </CheckBoxContainer>
+          </IsTokenAddressContainer>
+        ) : null}
+
+        <InputContainer hideInput={!xrpValidAddress}>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={'Tag'}
+                label={t('TAG')}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={errors.destinationTag?.message}
+                keyboardType={'number-pad'}
+                type={'number'}
+                maxLength={9}
+                value={value?.toString()}
+              />
+            )}
+            name="destinationTag"
+          />
+        </InputContainer>
+
+        {!contact ? (
+          <CurrencySelectorContainer hideSelector={!evmValidAddress}>
+            <Label>{isTokenAddress ? t('CHAIN') : t('CURRENCY')}</Label>
+            <CurrencyContainer
+              activeOpacity={ActiveOpacity}
               onPress={() => {
-                _setIsTokenAddress();
-              }}
-            />
-          </CheckBoxContainer>
-        </IsTokenAddressContainer>
-      ) : null}
-
-      <InputContainer hideInput={!xrpValidAddress}>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={'Tag'}
-              label={t('TAG')}
-              onBlur={onBlur}
-              onChangeText={onChange}
-              error={errors.destinationTag?.message}
-              keyboardType={'number-pad'}
-              type={'number'}
-              maxLength={9}
-              value={value?.toString()}
-            />
-          )}
-          name="destinationTag"
-        />
-      </InputContainer>
-
-      {!contact ? (
-        <CurrencySelectorContainer hideSelector={!evmValidAddress}>
-          <Label>{isTokenAddress ? t('CHAIN') : t('CURRENCY')}</Label>
-          <CurrencyContainer
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              setCurrencyModalVisible(true);
-            }}>
-            <Row
-              style={{
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                setCurrencyModalVisible(true);
               }}>
-              <Row style={{alignItems: 'center'}}>
-                {selectedCurrency ? (
-                  <View>
-                    <CurrencyImage img={selectedCurrency.img} size={30} />
-                  </View>
-                ) : null}
-                <CurrencyName>
-                  {selectedCurrency?.currencyAbbreviation.toUpperCase()}
-                </CurrencyName>
+              <Row
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Row style={{alignItems: 'center'}}>
+                  {selectedCurrency ? (
+                    <View>
+                      <CurrencyImage img={selectedCurrency.img} size={30} />
+                    </View>
+                  ) : null}
+                  <CurrencyName>
+                    {selectedCurrency?.currencyAbbreviation.toUpperCase()}
+                  </CurrencyName>
+                </Row>
+                <WalletIcons.DownToggle />
               </Row>
-              <WalletIcons.DownToggle />
-            </Row>
-          </CurrencyContainer>
-        </CurrencySelectorContainer>
-      ) : null}
+            </CurrencyContainer>
+          </CurrencySelectorContainer>
+        ) : null}
 
-      {isTokenAddress ? (
-        <CurrencySelectorContainer hideSelector={!evmValidAddress}>
-          <Label>{t('TOKEN')}</Label>
-          <CurrencyContainer
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              setTokenModalVisible(true);
-            }}>
-            <Row
-              style={{
-                alignItems: 'center',
-                justifyContent: 'space-between',
+        {!contact && isTokenAddress ? (
+          <CurrencySelectorContainer hideSelector={!evmValidAddress}>
+            <Label>{t('TOKEN')}</Label>
+            <CurrencyContainer
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                setTokenModalVisible(true);
               }}>
-              <Row style={{alignItems: 'center'}}>
-                {selectedToken ? (
-                  <View>
-                    <CurrencyImage
-                      img={selectedToken?.img}
-                      imgSrc={
-                        typeof selectedToken?.imgSrc === 'number'
-                          ? selectedToken?.imgSrc
-                          : undefined
-                      }
-                      size={30}
-                      badgeUri={selectedToken?.badgeUri}
-                    />
-                  </View>
-                ) : null}
-                <CurrencyName>{selectedToken?.currencyName}</CurrencyName>
+              <Row
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Row style={{alignItems: 'center'}}>
+                  {selectedToken ? (
+                    <View>
+                      <CurrencyImage
+                        img={selectedToken?.img}
+                        imgSrc={
+                          typeof selectedToken?.imgSrc === 'number'
+                            ? selectedToken?.imgSrc
+                            : undefined
+                        }
+                        size={30}
+                        badgeUri={selectedToken?.badgeUri}
+                      />
+                    </View>
+                  ) : null}
+                  <CurrencyTitleColumn>
+                    <CurrencyName>{selectedToken?.currencyName}</CurrencyName>
+                    <CurrencySubTitle>
+                      {formatCurrencyAbbreviation(
+                        selectedToken.currencyAbbreviation,
+                      )}
+                    </CurrencySubTitle>
+                  </CurrencyTitleColumn>
+                </Row>
+                <WalletIcons.DownToggle />
               </Row>
-              <WalletIcons.DownToggle />
-            </Row>
-          </CurrencyContainer>
-        </CurrencySelectorContainer>
-      ) : null}
+            </CurrencyContainer>
+          </CurrencySelectorContainer>
+        ) : null}
 
-      <CurrencySelectorContainer
-        hideSelector={!isDev || !(xrpValidAddress || evmValidAddress)}>
-        <Label>{t('NETWORK')}</Label>
-        <CurrencyContainer
-          activeOpacity={ActiveOpacity}
-          onPress={() => {
-            setNetworkModalVisible(true);
-          }}>
-          <Row
-            style={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-            <Row style={{alignItems: 'center'}}>
-              <NetworkName>{networkValue}</NetworkName>
-            </Row>
-            <WalletIcons.DownToggle />
-          </Row>
-        </CurrencyContainer>
-      </CurrencySelectorContainer>
+        {!contact ? (
+          <CurrencySelectorContainer
+            hideSelector={!isDev || !(xrpValidAddress || evmValidAddress)}>
+            <Label>{t('NETWORK')}</Label>
+            <CurrencyContainer
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                setNetworkModalVisible(true);
+              }}>
+              <Row
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Row style={{alignItems: 'center'}}>
+                  <NetworkName>{networkValue}</NetworkName>
+                </Row>
+                <WalletIcons.DownToggle />
+              </Row>
+            </CurrencyContainer>
+          </CurrencySelectorContainer>
+        ) : null}
 
-      <ActionContainer>
-        <Button onPress={onSubmit}>
-          {contact ? t('Save Contact') : t('Add Contact')}
-        </Button>
-      </ActionContainer>
+        <ActionContainer>
+          <Button onPress={onSubmit}>
+            {contact ? t('Save Contact') : t('Add Contact')}
+          </Button>
+        </ActionContainer>
+      </ScrollContainer>
       <SheetModal
         isVisible={currencyModalVisible}
         onBackdropPress={() => setCurrencyModalVisible(false)}>

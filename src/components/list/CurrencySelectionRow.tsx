@@ -12,7 +12,10 @@ import {
   Slate30,
   SlateDark,
 } from '../../styles/colors';
-import {getBadgeImg} from '../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  getBadgeImg,
+} from '../../utils/helper-methods';
 import Checkbox from '../checkbox/Checkbox';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import haptic from '../haptic-feedback/haptic';
@@ -25,6 +28,7 @@ export type CurrencySelectionItem = Pick<
   'id' | 'currencyAbbreviation' | 'currencyName' | 'img' | 'isToken'
 > & {
   chain: string;
+  tokenAddress?: string;
   imgSrc?: ImageRequireSource | undefined;
   selected?: boolean;
   disabled?: boolean;
@@ -36,7 +40,11 @@ export type CurrencySelectionRowProps = {
   description?: string;
   hideCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
-  onToggle?: (currencyAbbreviation: string, chain: string) => void;
+  onToggle?: (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress?: string,
+  ) => void;
   onViewAllTokensPressed?: (
     currency: CurrencySelectionItem,
     tokens: CurrencySelectionItem[],
@@ -116,8 +124,13 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
       disabled,
     } = currency;
 
+    const _currencyAbbreviation =
+      formatCurrencyAbbreviation(currencyAbbreviation);
+
     return (
-      <FlexRow onPress={() => onToggle?.(currency.id)}>
+      <FlexRow
+        accessibilityLabel="chain-selection-row"
+        onPress={() => onToggle?.(currencyAbbreviation)}>
         <CurrencyColumn>
           <CurrencyImage img={img} imgSrc={imgSrc} />
         </CurrencyColumn>
@@ -125,18 +138,16 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         <CurrencyTitleColumn style={{flexGrow: 1}}>
           <CurrencyTitle>{currencyName}</CurrencyTitle>
 
-          <CurrencySubTitle>
-            {currencyAbbreviation.toUpperCase()}
-          </CurrencySubTitle>
+          <CurrencySubTitle>{_currencyAbbreviation}</CurrencySubTitle>
         </CurrencyTitleColumn>
 
         {!hideCheckbox && (
-          <CurrencyColumn>
+          <CurrencyColumn accessibilityLabel="chain-selection-row-checkbox">
             <Checkbox
               checked={!!selected}
               radio={selectionMode === 'single'}
               disabled={!!disabled}
-              onPress={() => onToggle?.(currency.id)}
+              onPress={() => onToggle?.(currencyAbbreviation)}
             />
           </CurrencyColumn>
         )}
@@ -149,7 +160,11 @@ interface TokenSelectionRowProps {
   token: CurrencySelectionItem;
   hideCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
-  onToggle?: (currencyAbbreviation: string, chain: string) => any;
+  onToggle?: (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress: string,
+  ) => any;
   hideArrow?: boolean;
   badgeUri?: string | ((props?: any) => ReactElement);
 }
@@ -166,11 +181,21 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
     } = props;
     const badgeUri =
       _badgeUri || getBadgeImg(token.currencyAbbreviation, token.chain);
+    const _currencyAbbreviation = formatCurrencyAbbreviation(
+      token.currencyAbbreviation,
+    );
 
     return (
       <FlexRow
+        accessibilityLabel="token-selection-row"
         style={{marginBottom: 24}}
-        onPress={() => onToggle?.(token.currencyAbbreviation, token.chain)}>
+        onPress={() =>
+          onToggle?.(
+            token.currencyAbbreviation,
+            token.chain,
+            token.tokenAddress!,
+          )
+        }>
         {!hideArrow ? (
           <CurrencyColumn style={{marginRight: 16}}>
             <NestedArrowIcon />
@@ -189,18 +214,22 @@ export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
           <CurrencyTitle>{token.currencyName}</CurrencyTitle>
 
           <CurrencySubTitle style={{flexShrink: 1, flexGrow: 1}}>
-            {token.currencyAbbreviation.toUpperCase()}
+            {_currencyAbbreviation}
           </CurrencySubTitle>
         </CurrencyTitleColumn>
 
         {!hideCheckbox ? (
-          <CurrencyColumn>
+          <CurrencyColumn accessibilityLabel="token-selection-row-checkbox">
             <Checkbox
               checked={!!token.selected}
               radio={selectionMode === 'single'}
               disabled={!!token.disabled}
               onPress={() =>
-                onToggle?.(token.currencyAbbreviation, token.chain)
+                onToggle?.(
+                  token.currencyAbbreviation,
+                  token.chain,
+                  token.tokenAddress!,
+                )
               }
             />
           </CurrencyColumn>
@@ -230,15 +259,19 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   const {t} = useTranslation();
   const {currencyName} = currency;
   const onPress = useCallback(
-    (currencyAbbreviation: string, chain: string): void => {
+    (
+      currencyAbbreviation: string,
+      chain: string,
+      tokenAddress?: string,
+    ): void => {
       haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
-      onToggle?.(currencyAbbreviation, chain);
+      onToggle?.(currencyAbbreviation, chain, tokenAddress);
     },
     [onToggle],
   );
 
   return (
-    <CurrencySelectionRowContainer>
+    <CurrencySelectionRowContainer accessibilityLabel="currency-selection-container">
       <ChainSelectionRow
         currency={currency}
         onToggle={() => onPress(currency.currencyAbbreviation, currency.chain)}
@@ -259,7 +292,11 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
               key={token.id}
               token={token}
               onToggle={() => {
-                onPress(token.currencyAbbreviation, token.chain);
+                onPress(
+                  token.currencyAbbreviation,
+                  token.chain,
+                  token.tokenAddress,
+                );
               }}
               hideCheckbox={hideCheckbox}
               selectionMode={selectionMode}
@@ -268,6 +305,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
 
           <TokensFooter>
             <ViewAllLink
+              accessibilityLabel="view-all-tokens-button"
               onPress={() => {
                 onViewAllTokensPressed?.(currency, tokens);
               }}>

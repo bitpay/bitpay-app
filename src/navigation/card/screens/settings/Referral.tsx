@@ -34,7 +34,7 @@ import CopySvg from '../../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {Share, View} from 'react-native';
 import Button from '../../../../components/button/Button';
 import {
@@ -45,7 +45,7 @@ import ReferredUsersSkeleton from '../../components/ReferredUsersSkeleton';
 import ReferralCodeSkeleton from '../../components/ReferralCodeSkeleton';
 import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
-import {Analytics} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 export interface ReferralParamList {
   card: Card;
@@ -171,7 +171,9 @@ const Referral = ({}) => {
         t(
           "Hey, checkout BitPay's new card. You can convert crypto to dollars easily. Just get the app, set up a wallet, and order the card using my code .",
           {code},
-        ) + `${BASE_BITPAY_URLS[network]}/card?code=${code}&ref=${givenName}`;
+        ) +
+        ' ' +
+        `${BASE_BITPAY_URLS[network]}/card?code=${code}&ref=${givenName}`;
 
       await Share.share({
         message,

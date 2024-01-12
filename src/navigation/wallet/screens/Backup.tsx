@@ -14,18 +14,15 @@ import {useDispatch, useSelector} from 'react-redux';
 import {OnboardingImage} from '../../onboarding/components/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {WalletStackParamList} from '../WalletStack';
-import {Key} from '../../../store/wallet/wallet.models';
-import {
-  NavigationContainerRefWithCurrent,
-  NavigationProp,
-  useNavigation,
-} from '@react-navigation/native';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
+
 const BackupImage = {
   light: (
     <OnboardingImage
@@ -41,7 +38,10 @@ const BackupImage = {
   ),
 };
 
-type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
+type BackupScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.BACKUP_KEY
+>;
 
 export type BackupParamList = {
   context: 'onboarding' | 'createNewKey' | 'createNewMultisigKey';
@@ -60,57 +60,36 @@ export const backupRedirect = ({
   key,
 }: {
   context: string | undefined;
-  navigation: NavigationProp<any> | NavigationContainerRefWithCurrent<any>;
+  navigation: NavigationProp<any>;
   walletTermsAccepted: boolean;
   key?: Key;
 }) => {
   if (context === 'onboarding') {
-    navigation.navigate('Onboarding', {
-      screen: 'TermsOfUse',
-    });
+    navigation.navigate('TermsOfUse');
   } else if (context === 'keySettings') {
-    navigation.navigate('Wallet', {screen: 'KeySettings', params: {key}});
+    navigation.navigate('KeySettings', {key});
   } else if (context === 'settings') {
     navigation.navigate('Tabs', {screen: 'Settings', params: {key}});
-  } else if (context === 'deferredImport' && !walletTermsAccepted) {
-    navigation.navigate('Wallet', {
-      screen: 'TermsOfUse',
-      params: {context},
-    });
   } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
-  } else if (context === 'deferredImport') {
-    navigation.navigate('Wallet', {
-      screen: 'KeyOverview',
-      params: {id: key.id},
-    });
   } else if (!walletTermsAccepted) {
-    navigation.navigate('Wallet', {
-      screen: 'TermsOfUse',
-      params: {key},
-    });
+    navigation.navigate('TermsOfUse', {key});
   } else if (context === 'createNewMultisigKey') {
+    navigation.dispatch(StackActions.popToTop());
     navigation.dispatch(
-      StackActions.replace('Wallet', {
-        screen: 'KeyOverview',
-        params: {id: key.id, context},
-      }),
+      StackActions.push('KeyOverview', {id: key.id, context}),
     );
   } else if (context === 'swapCrypto') {
-    navigation.navigate('SwapCrypto', {screen: 'Root'});
+    navigation.navigate('SwapCryptoRoot');
   } else if (context === 'buyCrypto') {
-    navigation.navigate('BuyCrypto', {screen: 'Root'});
+    navigation.navigate('BuyCryptoRoot');
   } else {
-    navigation.dispatch(
-      StackActions.replace('Wallet', {
-        screen: 'KeyOverview',
-        params: {id: key.id},
-      }),
-    );
+    navigation.dispatch(StackActions.popToTop());
+    navigation.dispatch(StackActions.push('KeyOverview', {id: key.id}));
   }
 };
 
-const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
+const BackupScreen = ({route}: BackupScreenProps) => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -124,14 +103,11 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
 
   const gotoBackup = () => {
     const {id, mnemonic} = key.properties!;
-    navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
-      screen: 'RecoveryPhrase',
-      params: {
-        keyId: id,
-        words: mnemonic.trim().split(' '),
-        walletTermsAccepted,
-        ...route.params,
-      },
+    navigation.navigate('RecoveryPhrase', {
+      keyId: id,
+      words: mnemonic.trim().split(' '),
+      walletTermsAccepted,
+      ...route.params,
     });
   };
 
@@ -142,6 +118,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
       headerRight: () => (
         <HeaderRightContainer>
           <Button
+            accessibilityLabel="skip-button"
             buttonType={'pill'}
             onPress={async () => {
               haptic('impactLight');
@@ -183,7 +160,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
   useAndroidBackHandler(() => true);
 
   return (
-    <BackupContainer>
+    <BackupContainer accessibilityLabel="backup-container">
       <ImageContainer>{BackupImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
@@ -200,7 +177,10 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button buttonStyle={'primary'} onPress={gotoBackup}>
+        <Button
+          accessibilityLabel="go-to-backup-button"
+          buttonStyle={'primary'}
+          onPress={gotoBackup}>
           {t('Backup your Recovery Phrase')}
         </Button>
       </CtaContainer>

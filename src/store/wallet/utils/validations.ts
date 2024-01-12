@@ -20,6 +20,29 @@ const SanitizeUri = (data: string): string => {
   return newUri;
 };
 
+export const ValidDataTypes: string[] = [
+  'BitcoinAddress',
+  'BitcoinCashAddress',
+  'EVMAddress',
+  'RippleAddress',
+  'DogecoinAddress',
+  'LitecoinAddress',
+  'RippleUri',
+  'BitcoinUri',
+  'BitcoinCashUri',
+  'EthereumUri',
+  'MaticUri',
+  'DogecoinUri',
+  'LitecoinUri',
+  'BitPayUri',
+];
+
+export const IsBitPayInvoiceWebUrl = (data: string): boolean => {
+  return !!/^https:\/\/(www\.|link\.)?(test\.|staging\.)?bitpay\.com\/(invoice\?)\w+/.exec(
+    data,
+  );
+};
+
 export const IsValidBitPayInvoice = (data: string): boolean => {
   return !!/^https:\/\/(www\.|link\.)?(test\.|staging\.)?bitpay\.com\/i\/\w+/.exec(
     data,
@@ -28,7 +51,7 @@ export const IsValidBitPayInvoice = (data: string): boolean => {
 
 export const IsValidPayPro = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!/^(bitcoin|bitcoincash|bchtest|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=[\w+]/.exec(
+  return !!/^(bitpay|bitcoin|bitcoincash|bchtest|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=[\w+]/.exec(
     data,
   );
 };
@@ -37,14 +60,38 @@ export const isValidWalletConnectUri = (data: string): boolean => {
   return !!/(wallet\/wc|wc:)/g.exec(data);
 };
 
+export const isValidBuyCryptoUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!data?.includes('buyCrypto');
+};
+
+export const isValidBanxaUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!(
+    data?.includes('banxa') ||
+    data?.includes('banxaCancelled') ||
+    data?.includes('banxaFailed')
+  );
+};
+
+export const isValidMoonpayUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!data?.includes('moonpay');
+};
+
+export const isValidRampUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!data?.includes('ramp');
+};
+
+export const isValidSardineUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!data?.includes('sardine');
+};
+
 export const isValidSimplexUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!data?.includes('simplex');
-};
-
-export const isValidWyreUri = (data: string): boolean => {
-  data = SanitizeUri(data);
-  return !!(data?.includes('wyre') || data?.includes('wyreError'));
 };
 
 export const IsValidBitcoinUri = (data: string): boolean => {
@@ -103,6 +150,10 @@ export const IsValidBitcoinCashAddress = (data: string): boolean => {
     BWC.getBitcoreCash().Address.isValid(data, 'livenet') ||
     BWC.getBitcoreCash().Address.isValid(data, 'testnet')
   );
+};
+
+export const IsValidEVMAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('ETH', 'livenet', data); // using ETH for simplicity
 };
 
 export const IsValidEthereumAddress = (data: string): boolean => {
@@ -284,19 +335,11 @@ export const ValidateURI = (data: string): any => {
     };
   }
 
-  if (IsValidEthereumAddress(data)) {
+  if (IsValidEVMAddress(data)) {
     return {
       data,
-      type: 'EthereumAddress',
-      title: 'Ethereum Address',
-    };
-  }
-
-  if (IsValidMaticAddress(data)) {
-    return {
-      data,
-      type: 'MaticAddress',
-      title: 'Matic Address',
+      type: 'EVMAddress',
+      title: 'EVM Address',
     };
   }
 

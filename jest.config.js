@@ -7,17 +7,12 @@ module.exports = {
   ],
   transformIgnorePatterns: [
     '\\.snap$',
-    'node_modules/(?!(@freakycoder|@react-native|react-native|(react-native(-.*))|@react-navigation|(react-navigation(-.*))|victory|(victory(-.*))))',
+    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|@react-navigation|(react-navigation(-.*))|victory|(victory(-.*))))',
   ],
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.spec.json',
-    },
-  },
   transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest',
     '^.+\\.svg$': 'jest-transform-stub',
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
-    '^.+\\.tsx?$': 'ts-jest',
   },
   cacheDirectory: '.jest/cache',
   setupFilesAfterEnv: ['<rootDir>/test/afterEnv.ts'],

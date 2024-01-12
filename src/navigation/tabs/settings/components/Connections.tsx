@@ -1,20 +1,25 @@
-import React, {useCallback, useEffect} from 'react';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect} from 'react';
+import {Image} from 'react-native';
+import styled from 'styled-components/native';
+import AngleRight from '../../../../../assets/img/angle-right.svg';
+import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
+import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
+import ZenLedgerIcon from '../../../../../assets/img/zenledger/zenledger-icon.svg';
+import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {SettingsComponent} from '../SettingsRoot';
 import {
   Hr,
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {WalletConnectIconContainer} from '../../../wallet-connect/styled/WalletConnectContainers';
-import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
-import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
-import AngleRight from '../../../../../assets/img/angle-right.svg';
-import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {SettingsComponent} from '../SettingsRoot';
+import {ShopScreens} from '../../shop/ShopStack';
+import {ShopTabs} from '../../shop/ShopHome';
+
+const MethodIcon = require('../../../../../assets/img/logos/method.png');
 
 interface ConnectionsProps {
   redirectTo?: string;
@@ -27,91 +32,129 @@ const ConnectionItemContainer = styled.View`
   flex: 1;
 `;
 
-const IconCoinbase = styled.View`
-  width: 25px;
-  height: 25px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
+const ConnectionIconContainer = styled.View`
+  margin-right: 5px;
 `;
 
-const CoinbaseIconContainer = (
-  <IconCoinbase>
-    <CoinbaseSvg width="25" height="25" />
-  </IconCoinbase>
-);
-
-const Connections: React.FC<ConnectionsProps> = props => {
+const Connections: React.VFC<ConnectionsProps> = props => {
   const {redirectTo} = props;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
-
+  const sessions = useAppSelector(
+    ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
+  );
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const goToWalletConnect = useCallback(() => {
     dispatch(
-      logSegmentEvent('track', 'Clicked WalletConnect', {
+      Analytics.track('Clicked WalletConnect', {
         context: 'Settings Connections',
       }),
     );
-    if (Object.keys(connectors).length) {
-      navigation.navigate('WalletConnect', {
-        screen: 'WalletConnectConnections',
-      });
+    if (Object.keys(sessions).length) {
+      navigation.navigate('WalletConnectConnections');
     } else {
-      navigation.navigate('WalletConnect', {
-        screen: 'Root',
-        params: {uri: undefined},
-      });
+      navigation.navigate('WalletConnectRoot', {});
     }
-  }, [connectors, navigation]);
+  }, [dispatch, sessions, navigation]);
 
   const token = useAppSelector(({COINBASE}) => COINBASE.token[COINBASE_ENV]);
   const goToCoinbase = () => {
     haptic('impactLight');
     dispatch(
-      logSegmentEvent('track', 'Clicked Connect Coinbase', {
+      Analytics.track('Clicked Connect Coinbase', {
         context: 'Settings Connections',
       }),
     );
     if (token && token.access_token) {
-      navigation.navigate('Coinbase', {
-        screen: 'CoinbaseSettings',
-        params: {fromScreen: 'Settings'},
-      });
+      navigation.navigate('CoinbaseSettings', {fromScreen: 'Settings'});
     } else {
-      navigation.navigate('Coinbase', {
-        screen: 'CoinbaseRoot',
-      });
+      navigation.navigate('CoinbaseRoot');
     }
   };
+
+  const goToMethod = () => {
+    haptic('impactLight');
+    if (user?.methodEntityId) {
+      navigation.navigate('BillSettings', {});
+    } else {
+      navigation.navigate('Shop', {
+        screen: ShopScreens.HOME,
+        params: {
+          screen: ShopTabs.BILLS,
+        },
+      });
+    }
+    dispatch(
+      Analytics.track('Bill Pay — Clicked Bill Pay', {
+        context: 'Settings Connections',
+      }),
+    );
+  };
+
   useEffect(() => {
     if (redirectTo === 'walletconnect') {
       // reset params to prevent re-triggering
       navigation.setParams({redirectTo: undefined} as any);
       goToWalletConnect();
+    } else if (redirectTo === 'zenledger') {
+      navigation.setParams({redirectTo: undefined} as any);
+      navigation.navigate('ZenLedgerRoot');
     }
   }, [redirectTo, goToWalletConnect, navigation]);
 
   return (
     <SettingsComponent>
+      <Setting onPress={() => goToCoinbase()}>
+        <ConnectionItemContainer>
+          <ConnectionIconContainer>
+            <CoinbaseSvg width={30} height={25} />
+          </ConnectionIconContainer>
+          <SettingTitle>Coinbase</SettingTitle>
+        </ConnectionItemContainer>
+        <AngleRight />
+      </Setting>
+      <Hr />
+      <Setting onPress={() => goToMethod()}>
+        <ConnectionItemContainer>
+          <ConnectionIconContainer style={{marginLeft: 6, marginRight: 9}}>
+            <Image source={MethodIcon} />
+          </ConnectionIconContainer>
+          <SettingTitle>Method (Bill Pay)</SettingTitle>
+        </ConnectionItemContainer>
+        <AngleRight />
+      </Setting>
+      <Hr />
       <Setting
         onPress={() => {
           haptic('impactLight');
           goToWalletConnect();
         }}>
         <ConnectionItemContainer>
-          <WalletConnectIconContainer>
-            <WalletConnectIcon />
-          </WalletConnectIconContainer>
+          <ConnectionIconContainer>
+            <WalletConnectIcon width={30} height={25} />
+          </ConnectionIconContainer>
           <SettingTitle>WalletConnect</SettingTitle>
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>
       <Hr />
-      <Setting onPress={() => goToCoinbase()}>
+      <Setting
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(
+            Analytics.track('Clicked ZenLedger', {
+              context: 'Settings Connections',
+            }),
+          );
+          navigation.navigate('ZenLedgerRoot');
+        }}>
         <ConnectionItemContainer>
-          {CoinbaseIconContainer}
-          <SettingTitle>Coinbase</SettingTitle>
+          <ConnectionIconContainer>
+            <ZenLedgerIcon width={30} height={25} />
+          </ConnectionIconContainer>
+          <SettingTitle>ZenLedger Taxes</SettingTitle>
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>

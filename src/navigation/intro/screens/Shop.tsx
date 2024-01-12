@@ -1,10 +1,10 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 import {RootStackParamList} from '../../../Root';
-import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch} from '../../../utils/hooks';
 import IntroButton from '../components/intro-button/IntroButton';
@@ -19,6 +19,7 @@ import {
   TopNavFillOverlay,
   Overlay,
 } from '../components/styled/Styled';
+import {IntroScreens} from '../IntroGroup';
 
 const lightBackground = require('../../../../assets/img/intro/light/shop-background.png');
 const darkBackground = require('../../../../assets/img/intro/dark/shop-background.png');
@@ -33,15 +34,18 @@ const TextContainer = styled.View`
   margin-bottom: 10px;
 `;
 
-type IntroShopScreenProps = StackScreenProps<RootStackParamList, 'Intro'>;
+type IntroShopScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  IntroScreens.SHOP
+>;
 
-const IntroShop: React.VFC<IntroShopScreenProps> = ({navigation}) => {
+const IntroShop = ({navigation}: IntroShopScreenProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
 
   const onFinish = async () => {
-    await dispatch(askForTrackingPermissionAndEnableSdks());
+    await dispatch(Analytics.initialize());
     await sleep(500);
 
     navigation.navigate('Tabs', {screen: 'Home'});

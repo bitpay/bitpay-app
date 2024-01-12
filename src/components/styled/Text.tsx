@@ -8,6 +8,7 @@ import {
   LightBlack,
   LuckySevens,
   Black,
+  Slate30,
 } from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
@@ -173,6 +174,13 @@ export const Link = styled(BaseText)`
   color: ${({theme}) => theme.colors.link};
 `;
 
+export const UnderlineLink = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
+  text-decoration: underline;
+  text-decoration-color: ${({theme}) => theme.colors.text};
+  font-weight: bold;
+`;
+
 // WALLET
 export const Balance = styled(BaseText)<{scale: boolean}>`
   font-size: ${({scale}) => (scale ? 26 : 36)}px;
@@ -183,14 +191,15 @@ export const Balance = styled(BaseText)<{scale: boolean}>`
 `;
 
 export const Badge = styled(BaseText)`
-  font-size: 12px;
+  font-size: 10px;
   font-style: normal;
   font-weight: 400;
   text-align: center;
-  line-height: 19px;
-  padding: 2px 5px;
-  border-radius: 3px;
-  border: 1px solid #e1e4e7;
+  padding: 1px 2px;
+  border-radius: 2.4px;
+  border: 1px solid;
+  border-color: ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 
 export const ProposalBadge = styled(BaseText)`

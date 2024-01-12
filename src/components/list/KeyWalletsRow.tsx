@@ -61,6 +61,7 @@ interface KeyWalletProps<T extends WalletRowType> {
   keySvg?: React.FC<SvgProps>;
   onPress: (wallet: T) => void;
   currency?: string;
+  hideBalance: boolean;
 }
 
 const KeyWalletsRow = <T extends WalletRowType>({
@@ -68,6 +69,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
   keySvg = KeySvg,
   onPress,
   currency,
+  hideBalance,
 }: KeyWalletProps<T>) => {
   return (
     <View>
@@ -88,6 +90,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                 wallet={w}
                 id={w.id}
                 hideIcon={!!currency}
+                hideBalance={hideBalance}
                 isLast={
                   walletIndex === key.wallets.length - 1 &&
                   keyIndex === keyWallets.length - 1

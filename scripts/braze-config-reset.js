@@ -17,7 +17,7 @@ const dotenv = require('dotenv');
 
   // Configure Braze for iOS
   if (process.env.BRAZE_API_KEY_IOS) {
-    const brazeConfigFileIOS = `${__dirname}/../ios/BitPayApp/AppDelegate.m`;
+    const brazeConfigFileIOS = `${__dirname}/../ios/BitPayApp/AppDelegate.mm`;
     let contentiOS = fs.readFileSync(brazeConfigFileIOS, 'utf8');
     contentiOS = contentiOS.replace(
       process.env.BRAZE_API_KEY_IOS,
@@ -34,13 +34,6 @@ const dotenv = require('dotenv');
     contentAndroid = contentAndroid.replace(
       process.env.BRAZE_API_KEY_ANDROID,
       'BRAZE_API_KEY_REPLACE_ME',
-    );
-  }
-
-  if (process.env.BRAZE_API_ENDPOINT) {
-    contentAndroid = contentAndroid.replace(
-      process.env.BRAZE_API_ENDPOINT,
-      'BRAZE_API_ENDPOINT_REPLACE_ME',
     );
   }
 

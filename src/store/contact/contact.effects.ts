@@ -2,6 +2,8 @@ import {Effect} from '..';
 import {
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
+  BitpaySupportedTokens,
+  SUPPORTED_EVM_COINS,
 } from '../../constants/currencies';
 import {LogActions} from '../log';
 import {migrateContacts} from './contact.actions';
@@ -31,5 +33,116 @@ export const startContactMigration =
         ),
       );
       return resolve();
+    });
+  };
+
+export const startContactTokenAddressMigration =
+  (): Effect<Promise<void>> =>
+  async (dispatch, getState): Promise<void> => {
+    return new Promise(async resolve => {
+      try {
+        dispatch(
+          LogActions.info('[startContactTokenAddressMigration] - starting...'),
+        );
+        const contacts = getState().CONTACT.list;
+        dispatch(
+          LogActions.persistLog(
+            LogActions.info(`Migrating: ${JSON.stringify(contacts)}`),
+          ),
+        );
+        const {
+          WALLET: {tokenDataByAddress, customTokenDataByAddress},
+        } = getState();
+        const tokens = {
+          ...tokenDataByAddress,
+          ...customTokenDataByAddress,
+          ...BitpaySupportedTokens,
+        };
+
+        // add new tokenAddress value to old contacts
+        const migratedContacts = contacts.map(contact => {
+          let foundToken;
+          if (SUPPORTED_EVM_COINS.includes(contact.chain)) {
+            foundToken = Object.values(tokens).find(
+              token =>
+                token.coin === contact.coin && token.chain === contact.chain,
+            );
+          }
+          return {
+            ...contact,
+            tokenAddress: foundToken?.address,
+          };
+        });
+        await dispatch(migrateContacts(migratedContacts));
+        dispatch(
+          LogActions.persistLog(
+            LogActions.info(
+              `success [startContactTokenAddressMigration]: ${JSON.stringify(
+                migratedContacts,
+              )}`,
+            ),
+          ),
+        );
+        return resolve();
+      } catch (err: unknown) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.persistLog(
+            LogActions.error(
+              '[startContactTokenAddressMigration] failed - ',
+              errStr,
+            ),
+          ),
+        );
+        return resolve();
+      }
+    });
+  };
+
+export const startContactBridgeUsdcMigration =
+  (): Effect<Promise<void>> =>
+  async (dispatch, getState): Promise<void> => {
+    return new Promise(async resolve => {
+      try {
+        dispatch(
+          LogActions.info('[startContactBridgeUsdcMigration] - starting...'),
+        );
+        const contacts = getState().CONTACT.list;
+        dispatch(
+          LogActions.persistLog(
+            LogActions.info(`Migrating: ${JSON.stringify(contacts)}`),
+          ),
+        );
+        const usdcBridgeTokenAddress =
+          '0x2791bca1f2de4661ed88a30c99a7a9449aa84174';
+
+        const migratedContacts = contacts.map(contact =>
+          contact.tokenAddress === usdcBridgeTokenAddress
+            ? {...contact, coin: 'usdc.e'}
+            : contact,
+        );
+        await dispatch(migrateContacts(migratedContacts));
+        dispatch(
+          LogActions.persistLog(
+            LogActions.info(
+              `success [startContactBridgeUsdcMigration]: ${JSON.stringify(
+                migratedContacts,
+              )}`,
+            ),
+          ),
+        );
+        return resolve();
+      } catch (err: unknown) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.persistLog(
+            LogActions.error(
+              '[startContactBridgeUsdcMigration] failed - ',
+              errStr,
+            ),
+          ),
+        );
+        return resolve();
+      }
     });
   };

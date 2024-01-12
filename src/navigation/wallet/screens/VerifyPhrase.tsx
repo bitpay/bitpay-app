@@ -1,49 +1,31 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components/native';
-import {
-  BaseText,
-  H2,
-  HeaderTitle,
-  Paragraph,
-  TextAlign,
-} from '../../../components/styled/Text';
+import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {
+  CtaContainerAbsolute,
   HeaderRightContainer,
-  WIDTH,
 } from '../../../components/styled/Containers';
-import * as Progress from 'react-native-progress';
-import {
-  Action,
-  Air,
-  LightBlack,
-  NeutralSlate,
-  ProgressBlue,
-} from '../../../styles/colors';
-import Carousel from 'react-native-snap-carousel';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {
-  BodyContainer,
-  CountText,
-  CountTracker,
-  DirectionsContainer,
-  ProgressBarContainer,
-  WordContainer,
-} from './RecoveryPhrase';
-import {sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
-import {useDispatch} from 'react-redux';
+import {useAppDispatch} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
 import {Key} from '../../../store/wallet/wallet.models';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {backupRedirect} from './Backup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
+import {Controller, useForm} from 'react-hook-form';
+import BoxInput from '../../../components/form/BoxInput';
+import {Slate30, SlateDark} from '../../../styles/colors';
+import {yupResolver} from '@hookform/resolvers/yup';
+import yup from '../../../lib/yup';
+import SuccessIcon from '../../../../assets/img/success.svg';
 
-type VerifyPhraseScreenProps = StackScreenProps<
-  WalletStackParamList,
-  'VerifyPhrase'
+type VerifyPhraseScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.VERIFY_PHRASE
 >;
 
 export interface VerifyPhraseParamList {
@@ -54,277 +36,375 @@ export interface VerifyPhraseParamList {
   walletTermsAccepted: boolean;
 }
 
-const VerifyPhraseContainer = styled.View`
+interface WordItem {
+  word: string;
+  isActive: boolean;
+}
+
+const VerifyPhraseContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const BottomContainer = styled.View`
-  margin-top: 25px;
+const VerifyPhraseForm = styled.View`
+  flex: 1;
+  padding: 0 20px;
 `;
 
-const WordSelectorContainer = styled.View`
-  width: 85%;
-  align-self: center;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  position: relative;
+const VerifyPhraseField = styled.View`
+  margin-bottom: 20px;
 `;
 
-const DottedBorder = styled.View`
-  border: 1px dashed ${Action};
-  height: 1px;
-  width: 70%;
-  position: absolute;
-  bottom: 30%;
+const HeaderContainer = styled.View`
+  margin: 25px;
 `;
 
-const WordSelector = styled.TouchableOpacity`
-  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  padding: 8px 12px;
-  margin: 5px;
-  border-radius: 5px;
-  opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
-`;
-
-const WordSelectorText = styled(BaseText)`
-  font-size: 16px;
+const HeaderText = styled(BaseText)`
+  text-align: center;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  font-size: 14px;
   font-style: normal;
   font-weight: 400;
-  line-height: 19px;
-  letter-spacing: 0;
-  text-align: center;
-  color: ${({theme}) => theme.colors.text};
 `;
+
+const ValidationBadge = styled.View`
+  background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
+  position: absolute;
+  right: 13px;
+  top: 50%;
+`;
+
+const schema = yup.object().shape({
+  word1: yup.string().required().trim(),
+  word2: yup.string().required().trim(),
+  word3: yup.string().required().trim(),
+});
 
 const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+
+  const {control, handleSubmit, setValue, setError, reset, formState} = useForm(
+    {
+      mode: 'onChange',
+      resolver: yupResolver(schema),
+      defaultValues: {
+        word1: '',
+        word2: '',
+        word3: '',
+      },
+    },
+  );
+  const {errors} = formState;
+
   const {params} = route;
-  const {keyId, words: _words, context, key, walletTermsAccepted} = params;
+  const {words, keyId, context, key, walletTermsAccepted} = params;
 
-  let words = _words.map(w => {
-    return {word: w, isActive: true};
-  });
+  const [word1Validation, setWord1Validation] = useState(false);
+  const [word2Validation, setWord2Validation] = useState(false);
+  const [word3Validation, setWord3Validation] = useState(false);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>{t('Verify your Phrase')}</HeaderTitle>,
-      headerLeft: () => null,
-      headerRight: () => (
-        <HeaderRightContainer>
-          <Button
-            buttonType={'pill'}
-            onPress={() => {
-              haptic('impactLight');
+  const ordinalNumbers: string[] = [
+    'first',
+    'second',
+    'third',
+    'fourth',
+    'fifth',
+    'sixth',
+    'seventh',
+    'eighth',
+    'ninth',
+    'tenth',
+    'eleventh',
+    'twelfth',
+  ];
 
-              if (context === 'settings') {
+  const getOrdinalSuffixStr = (index: number): string => {
+    const suffixes = ['st', 'nd', 'rd', 'th']; // Handles up to 10th
+    return index > 3 && index < 12
+      ? `${index + 1}th`
+      : `${index + 1}${suffixes[index]}`;
+  };
+
+  const generateRandomWords = (): {
+    word: string;
+    index: number;
+    indexStr: string;
+    ordinalSrt: string;
+  }[] => {
+    const randomIndices: number[] = [];
+    while (randomIndices.length < 3) {
+      const randomIndex = Math.floor(Math.random() * words.length);
+      if (!randomIndices.includes(randomIndex)) {
+        randomIndices.push(randomIndex);
+      }
+    }
+    return randomIndices.map(index => ({
+      word: words[index],
+      index,
+      indexStr: getOrdinalSuffixStr(index),
+      ordinalSrt: ordinalNumbers[index],
+    }));
+  };
+
+  const [randomWords, setRandomWords] = useState(generateRandomWords());
+
+  const checkValidWord = (userInput: string, index: number): boolean => {
+    const word = randomWords[index].word;
+    return userInput.toLowerCase() === word.toLowerCase();
+  };
+
+  const checkAnswer = (data: {word1: string; word2: string; word3: string}) => {
+    const allData = [data.word1, data.word2, data.word3];
+    const areAllCorrect = allData.every(
+      (userInput, index) =>
+        userInput.toLowerCase() === randomWords[index].word.toLowerCase(),
+    );
+
+    if (areAllCorrect) {
+      // user have already been through the backup flow no need to set the flag again
+      if (context !== 'keySettings') {
+        dispatch(WalletActions.setBackupComplete(keyId));
+      }
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'success',
+          title: t('Phrase verified'),
+          message: t(
+            'In order to protect your funds from being accessible to hackers and thieves, store this recovery phrase in a safe and secure place.',
+          ),
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('OK'),
+              action: () =>
                 backupRedirect({
                   context,
                   navigation,
                   walletTermsAccepted,
-                  key,
-                });
-                return;
-              }
-
-              dispatch(
-                AppActions.showBottomNotificationModal({
-                  type: 'warning',
-                  title: t("Don't risk losing your money"),
-                  message: t(
-                    'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in order they appear.',
-                  ),
-                  enableBackdropDismiss: true,
-                  actions: [
-                    {
-                      text: t("I'M SURE"),
-                      action: () =>
-                        backupRedirect({
-                          context,
-                          navigation,
-                          walletTermsAccepted,
-                          key,
-                        }),
-                      primary: true,
-                    },
-                  ],
+                  key: {...key, backupComplete: true},
                 }),
-              );
-            }}>
-            {t('Cancel')}
-          </Button>
-        </HeaderRightContainer>
-      ),
-    });
-  }, [navigation, t]);
-
-  const ref = useRef(null);
-  const shuffledWords = useRef<Array<{word: string; isActive: boolean}>>(
-    [...words].sort(() => Math.random() - 0.5),
-  );
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-  const [attemptWords, setAttemptWords] = useState(['']);
-  const [progress, setProgress] = useState(0.5);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    return navigation.addListener('blur', async () => {
-      await sleep(400);
-      setActiveSlideIndex(0);
-      setAttemptWords(['undefined']);
-      setIsAnimating(false);
-    });
-  }, [navigation]);
-
-  const wordSelected = async (value: {word: string; isActive: boolean}) => {
-    if (isAnimating) {
-      return;
-    }
-    value.isActive = false;
-    haptic('impactLight');
-    // lock UI - (unlocks from onSnap event in carousel props in jsx)
-    setIsAnimating(true);
-    // update words and append empty string for next entry
-    const update = [...attemptWords.filter(w => w), value.word, ''];
-    // store words and update index
-    setAttemptWords(update);
-    setActiveSlideIndex(activeSlideIndex + 1);
-    // sleep for animation time
-    await sleep(0);
-    if (activeSlideIndex !== words.length - 1) {
-      // @ts-ignore
-      ref.current.snapToNext();
+              primary: true,
+            },
+          ],
+        }),
+      );
     } else {
-      // filter out empty string and compare words against real order
-      const compareWords = update.filter(w => w);
-      if (words.every((w, index) => w.word === compareWords[index])) {
-        // user have already been through the backup flow no need to set the flag again
-        if (context !== 'keySettings') {
-          dispatch(WalletActions.setBackupComplete(keyId));
+      allData.forEach((word: string, index) => {
+        if (word.toLowerCase() !== randomWords[index].word.toLowerCase()) {
+          switch (index) {
+            case 0:
+              setError('word1', {type: 'manual', message: 'Incorrect word'});
+              break;
+            case 1:
+              setError('word2', {type: 'manual', message: 'Incorrect word'});
+              break;
+            case 2:
+              setError('word3', {type: 'manual', message: 'Incorrect word'});
+              break;
+          }
         }
-        setProgress(1);
-        dispatch(
-          AppActions.showBottomNotificationModal({
-            type: 'success',
-            title: t('Phrase verified'),
-            message: t(
-              'In order to protect your funds from being accessible to hackers and thieves, store this recovery phrase in a safe and secure place.',
-            ),
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: t('OK'),
-                action: () =>
-                  backupRedirect({
-                    context,
-                    navigation,
-                    walletTermsAccepted,
-                    key: {...key, backupComplete: true},
-                  }),
-                primary: true,
+      });
+
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'warning',
+          title: t('Incorrect recovery phrase'),
+          message: t('The recovery phrase you provided was incorrect.'),
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('TRY AGAIN'),
+              action: async () => {
+                reset();
+                setRandomWords(generateRandomWords());
               },
-            ],
-          }),
-        );
-      } else {
-        dispatch(
-          AppActions.showBottomNotificationModal({
-            type: 'warning',
-            title: t('Incorrect recovery phrase'),
-            message: t('The recovery phrase you provided was incorrect.'),
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: t('TRY AGAIN'),
-                action: async () => {
-                  navigation.navigate(
-                    context === 'onboarding' ? 'Onboarding' : 'Wallet',
-                    {
-                      screen: 'RecoveryPhrase',
-                      params,
-                    },
-                  );
-                },
-                primary: true,
-              },
-            ],
-          }),
-        );
-      }
+              primary: true,
+            },
+          ],
+        }),
+      );
     }
   };
 
-  return (
-    <VerifyPhraseContainer>
-      <ProgressBarContainer>
-        <Progress.Bar
-          progress={progress}
-          width={null}
-          color={ProgressBlue}
-          unfilledColor={Air}
-          borderColor={Air}
-          borderWidth={0}
-          borderRadius={0}
-        />
-      </ProgressBarContainer>
+  const onPressHeaderCancel = () => {
+    haptic('impactLight');
 
-      <BodyContainer>
-        <Carousel
-          vertical={false}
-          layout={'default'}
-          useExperimentalSnap={true}
-          data={attemptWords}
-          renderItem={({item: word, index}: {item: string; index: number}) => {
-            return (
-              <WordContainer key={index}>
-                <H2>{word}</H2>
-                <DottedBorder />
-              </WordContainer>
-            );
-          }}
-          ref={ref}
-          sliderWidth={WIDTH}
-          itemWidth={Math.round(WIDTH)}
-          onSnapToItem={() => setIsAnimating(false)}
-          scrollEnabled={false}
-          // @ts-ignore
-          disableIntervalMomentum={true}
-          animationOptions={{
-            friction: 4,
-            tension: 40,
-            isInteraction: false,
-            useNativeDriver: true,
-          }}
-        />
-        <CountTracker>
-          <CountText>
-            {activeSlideIndex}/{words.length}
-          </CountText>
-        </CountTracker>
-        <BottomContainer>
-          <DirectionsContainer>
-            <TextAlign align={'center'}>
-              <Paragraph>{t('Tap each word in the correct order.')}</Paragraph>
-            </TextAlign>
-          </DirectionsContainer>
-          <WordSelectorContainer>
-            {shuffledWords.current.map((value, index) => (
-              <WordSelector
-                key={index}
-                onPress={() => {
-                  wordSelected(value);
+    if (context === 'settings') {
+      backupRedirect({
+        context,
+        navigation,
+        walletTermsAccepted,
+        key,
+      });
+      return;
+    }
+
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'warning',
+        title: t("Don't risk losing your money"),
+        message: t(
+          'Your recovery key is composed of 12 randomly selected words. ' +
+            'Take a couple of minutes to carefully write down each word in order they appear.',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t("I'M SURE"),
+            action: () =>
+              backupRedirect({
+                context,
+                navigation,
+                walletTermsAccepted,
+                key,
+              }),
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+  const onPressHeaderCancelRef = useRef(onPressHeaderCancel);
+  onPressHeaderCancelRef.current = onPressHeaderCancel;
+
+  const headerTitle = useMemo(() => {
+    return () => <HeaderTitle>{t('Verify your Phrase')}</HeaderTitle>;
+  }, [t]);
+
+  const headerRight = useMemo(() => {
+    return () => (
+      <HeaderRightContainer>
+        <Button
+          accessibilityLabel="cancel-button"
+          buttonType={'pill'}
+          onPress={onPressHeaderCancelRef.current}>
+          {t('Cancel')}
+        </Button>
+      </HeaderRightContainer>
+    );
+  }, [t]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerTitle,
+      headerRight,
+    });
+  }, [navigation, headerTitle, headerRight]);
+
+  return (
+    <VerifyPhraseContainer accessibilityLabel="verify-phrase-container">
+      <HeaderContainer>
+        <HeaderText>
+          {t(
+            'Verify you saved your recovery phrase correctly by writing in ' +
+              'the {{first}} ({{firstNumber}}), {{second}} ({{secondNumber}}) ' +
+              'and {{third}} ({{thirdNumber}}) word in your recovery phrase.',
+            {
+              first: randomWords[0].ordinalSrt,
+              firstNumber: randomWords[0].indexStr,
+              second: randomWords[1].ordinalSrt,
+              secondNumber: randomWords[1].indexStr,
+              third: randomWords[2].ordinalSrt,
+              thirdNumber: randomWords[2].indexStr,
+            },
+          )}
+        </HeaderText>
+      </HeaderContainer>
+      <VerifyPhraseForm>
+        <VerifyPhraseField>
+          <Controller
+            key={'word1'}
+            control={control}
+            render={({field}) => (
+              <BoxInput
+                label={randomWords[0].indexStr + ' Word'}
+                onBlur={field.onBlur}
+                error={errors.word1?.message}
+                disabled={word1Validation}
+                autoCorrect={false}
+                onChangeText={async (newValue: string) => {
+                  field.onChange(newValue);
+                  if (checkValidWord(newValue, 0)) {
+                    setValue('word1', newValue);
+                    setWord1Validation(true);
+                  }
                 }}
-                disabled={!value.isActive}>
-                <WordSelectorText>{value.word}</WordSelectorText>
-              </WordSelector>
-            ))}
-          </WordSelectorContainer>
-        </BottomContainer>
-      </BodyContainer>
+              />
+            )}
+            name={'word1'}
+          />
+          {word1Validation ? (
+            <ValidationBadge>
+              <SuccessIcon />
+            </ValidationBadge>
+          ) : null}
+        </VerifyPhraseField>
+        <VerifyPhraseField>
+          <Controller
+            key={'word2'}
+            control={control}
+            render={({field}) => (
+              <BoxInput
+                label={randomWords[1].indexStr + ' Word'}
+                onBlur={field.onBlur}
+                error={errors.word2?.message}
+                disabled={word2Validation}
+                autoCorrect={false}
+                onChangeText={async (newValue: string) => {
+                  field.onChange(newValue);
+                  if (checkValidWord(newValue, 1)) {
+                    setValue('word2', newValue);
+                    setWord2Validation(true);
+                  }
+                }}
+              />
+            )}
+            name={'word2'}
+          />
+          {word2Validation ? (
+            <ValidationBadge>
+              <SuccessIcon />
+            </ValidationBadge>
+          ) : null}
+        </VerifyPhraseField>
+        <VerifyPhraseField>
+          <Controller
+            key={'word3'}
+            control={control}
+            render={({field}) => (
+              <BoxInput
+                label={randomWords[2].indexStr + ' Word'}
+                onBlur={field.onBlur}
+                error={errors.word3?.message}
+                disabled={word3Validation}
+                autoCorrect={false}
+                onChangeText={async (newValue: string) => {
+                  field.onChange(newValue);
+                  if (checkValidWord(newValue, 2)) {
+                    setValue('word3', newValue);
+                    setWord3Validation(true);
+                  }
+                }}
+              />
+            )}
+            name={'word3'}
+          />
+          {word3Validation ? (
+            <ValidationBadge>
+              <SuccessIcon />
+            </ValidationBadge>
+          ) : null}
+        </VerifyPhraseField>
+      </VerifyPhraseForm>
+      <CtaContainerAbsolute accessibilityLabel="cta-container">
+        <Button
+          disabled={!word1Validation || !word2Validation || !word3Validation}
+          onPress={handleSubmit(checkAnswer)}>
+          Confirm
+        </Button>
+      </CtaContainerAbsolute>
     </VerifyPhraseContainer>
   );
 };

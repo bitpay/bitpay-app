@@ -16,15 +16,13 @@ import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   setHomeCarouselLayoutType,
-  showOnGoingProcessModal,
 } from '../../../../../../store/app/app.actions';
 import {useNavigation} from '@react-navigation/native';
-import {OnGoingProcessMessages} from '../../../../../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../../../../../utils/helper-methods';
 import haptic from '../../../../../../components/haptic-feedback/haptic';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../../../../styles/tabNavigator';
-import {useTheme} from 'styled-components';
+import {useTheme} from 'styled-components/native';
 import {
   CarouselSvg,
   createCustomizeCardList,
@@ -41,17 +39,13 @@ import {
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../../../store/app/app.effects';
-
-enum LayoutTypes {
-  CAROUSEL = 'Carousel',
-  LIST_VIEW = 'List View',
-}
+import {startOnGoingProcessModal} from '../../../../../../store/app/app.effects';
+import {Analytics} from '../../../../../../store/analytics/analytics.effects';
 
 // Layout selector
 const Noop = () => null;
 
-const CustomizeHome = () => {
+const CustomizeHomeSettings = () => {
   const {t} = useTranslation();
   useAndroidBackHandler(() => true);
   const dispatch = useAppDispatch();
@@ -78,15 +72,17 @@ const CustomizeHome = () => {
 
   const toggle = useCallback(
     (item: CustomizeItem) => {
-      const {show, key} = item;
-      item.show = !show;
+      const newItem = {...item};
+      const {show, key} = newItem;
+
+      newItem.show = !show;
       setDirty(true);
       if (show) {
         setVisibleList(visibleList.filter(vi => vi.key !== key));
-        setHiddenList(hiddenList.concat(item));
+        setHiddenList(hiddenList.concat(newItem));
       } else {
         setHiddenList(hiddenList.filter(hi => hi.key !== key));
-        setVisibleList(visibleList.concat(item));
+        setVisibleList(visibleList.concat(newItem));
       }
     },
     [hiddenList, visibleList],
@@ -118,19 +114,14 @@ const CustomizeHome = () => {
         <Button
           disabled={!dirty}
           onPress={async () => {
-            dispatch(
-              showOnGoingProcessModal(
-                // t('Saving Layout')
-                t(OnGoingProcessMessages.SAVING_LAYOUT),
-              ),
-            );
+            dispatch(startOnGoingProcessModal('SAVING_LAYOUT'));
             await sleep(1000);
             const list = [...visibleList, ...hiddenList].map(({key, show}) => ({
               id: key,
               show: !!show,
             }));
             dispatch(
-              logSegmentEvent('track', 'Save Layout', {
+              Analytics.track('Save Layout', {
                 layoutType: layoutType,
               }),
             );
@@ -176,7 +167,7 @@ const CustomizeHome = () => {
           }
           style={{marginTop: 20}}
           screenOptions={{
-            ...ScreenOptions(150),
+            ...ScreenOptions(),
             tabBarItemStyle: {
               flexDirection: 'row',
             },
@@ -196,8 +187,7 @@ const CustomizeHome = () => {
             },
           }}>
           <Tab.Screen
-            /*  t('Carousel')*/
-            name={t(LayoutTypes.CAROUSEL)}
+            name={t('Carousel')}
             component={Noop}
             options={{
               tabBarIcon: ({focused}) => (
@@ -206,8 +196,7 @@ const CustomizeHome = () => {
             }}
           />
           <Tab.Screen
-            /*  t('List View')*/
-            name={t(LayoutTypes.LIST_VIEW)}
+            name={t('List View')}
             component={Noop}
             options={{
               tabBarIcon: ({focused}) => (
@@ -222,7 +211,7 @@ const CustomizeHome = () => {
         ListHeaderComponent={() =>
           visibleList.length ? <ListHeader>{t('Favorites')}</ListHeader> : null
         }
-        ListFooterComponent={memoizedFooterList}
+        ListFooterComponent={() => memoizedFooterList}
         contentContainerStyle={{paddingTop: 20, paddingBottom: 250}}
         onDragEnd={({data}) => {
           if (!dirty && visibleList[0]?.key !== data[0]?.key) {
@@ -249,4 +238,4 @@ const CustomizeHome = () => {
   );
 };
 
-export default CustomizeHome;
+export default CustomizeHomeSettings;

@@ -1,9 +1,9 @@
 import {useNavigation} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
-import Carousel, {Pagination} from 'react-native-snap-carousel';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -27,29 +27,31 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import ScrollHint, {ScrollHintContainer} from '../components/ScrollHint';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
+import PaginationDots from '../../../components/pagination-dots/PaginationDots';
+import {useSharedValue} from 'react-native-reanimated';
 
-type OnboardingStartScreenProps = StackScreenProps<
-  OnboardingStackParamList,
-  'OnboardingStart'
+type OnboardingStartScreenProps = NativeStackScreenProps<
+  OnboardingGroupParamList,
+  OnboardingScreens.START
 >;
 
 // IMAGES
 const OnboardingImages = {
-  card: {
-    light: (
-      <OnboardingImage
-        style={{height: 247, width: 215}}
-        source={require('../../../../assets/img/onboarding/light/card.png')}
-      />
-    ),
-    dark: (
-      <OnboardingImage
-        style={{height: 247, width: 192}}
-        source={require('../../../../assets/img/onboarding/dark/card.png')}
-      />
-    ),
-  },
+  // card: {
+  //   light: (
+  //     <OnboardingImage
+  //       style={{height: 247, width: 215}}
+  //       source={require('../../../../assets/img/onboarding/light/card.png')}
+  //     />
+  //   ),
+  //   dark: (
+  //     <OnboardingImage
+  //       style={{height: 247, width: 192}}
+  //       source={require('../../../../assets/img/onboarding/dark/card.png')}
+  //     />
+  //   ),
+  // },
   spend: {
     light: (
       <OnboardingImage
@@ -119,10 +121,9 @@ const LinkText = styled(Link)`
 // estimated a number, tweak if neccessary based on the content length
 const scrollEnabledForSmallScreens = HEIGHT < 700;
 
-const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
+const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
   const themeType = useThemeType();
   const isPaired = useAppSelector(
     ({APP, BITPAY_ID}) => !!BITPAY_ID.apiToken[APP.network],
@@ -130,20 +131,15 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const onLoginPress = () => {
     haptic('impactLight');
     askForTrackingThenNavigate(() => {
-      navigation.navigate('Auth', {
-        screen: 'Login',
-        params: {
-          onLoginSuccess: async () => {
-            haptic('impactLight');
-            navigation.navigate('Onboarding', {
-              screen: 'Notifications',
-            });
-          },
+      navigation.navigate('Login', {
+        onLoginSuccess: async () => {
+          haptic('impactLight');
+          navigation.navigate('Notifications');
         },
       });
     });
@@ -164,11 +160,17 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
       headerRight: () => (
         <HeaderRightContainer>
           {isPaired ? (
-            <Button buttonType="pill" onPress={onLogoutPressRef.current}>
+            <Button
+              accessibilityLabel="log-out-button"
+              buttonType="pill"
+              onPress={onLogoutPressRef.current}>
               {t('Log Out')}
             </Button>
           ) : (
-            <Button buttonType={'pill'} onPress={onLoginPressRef.current}>
+            <Button
+              accessibilityLabel="log-in-button"
+              buttonType={'pill'}
+              onPress={onLoginPressRef.current}>
               {t('Log In')}
             </Button>
           )}
@@ -177,20 +179,28 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
     });
   }, [navigation, isPaired, t]);
 
-  const carouselRef = useRef(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [scrollHintHeight, setScrollHintHeight] = useState(0);
+  const progressValue = useSharedValue<number>(0);
 
   const onboardingSlides = [
+    // {
+    //   title: t('Turn crypto into dollars with our BitPay Card'),
+    //   text: t(
+    //     'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+    //   ),
+    //   subText: t(
+    //     '*Currently available in the USA. More countries coming soon.',
+    //   ),
+    //   img: () => OnboardingImages.card[themeType],
+    // },
     {
-      title: t('Turn crypto into dollars with our BitPay Card'),
+      title: t('Seamlessly buy & swap'),
       text: t(
-        'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+        'BitPay partners with multiple crypto marketplaces to ensure you get the best possible rates. Buy and swap 60+ top cryptocurrencies without leaving the app.',
       ),
-      subText: t(
-        '*Currently available in the USA. More countries coming soon.',
-      ),
-      img: () => OnboardingImages.card[themeType],
+      img: () => OnboardingImages.swap[themeType],
     },
     {
       title: t('Spend crypto at your favorite places'),
@@ -202,37 +212,33 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
     {
       title: t('Keep your funds safe & secure'),
       text: t(
-        'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
+        "Websites and exchanges get hacked. BitPay's self - custody wallet allows you to privately store, manage and use your crypto funds without a centralized bank or exchange.",
       ),
       img: () => OnboardingImages.wallet[themeType],
-    },
-    {
-      title: t('Seamlessly buy & swap with a decentralized exchange'),
-      text: t(
-        'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
-      ),
-      img: () => OnboardingImages.swap[themeType],
     },
   ];
 
   return (
-    <OnboardingContainer>
+    <OnboardingContainer accessibilityLabel="onboarding-start-view">
       <ScrollView scrollEnabled={scrollEnabledForSmallScreens}>
         <Carousel
+          loop={false}
           vertical={false}
-          layout={'default'}
-          useExperimentalSnap={true}
+          width={WIDTH}
+          height={WIDTH * 2}
+          autoPlay={false}
           data={onboardingSlides}
-          renderItem={({item}) => <OnboardingSlide item={item} />}
+          pagingEnabled={true}
+          snapEnabled={true}
           ref={carouselRef}
-          sliderWidth={WIDTH}
-          itemWidth={Math.round(WIDTH)}
-          onScrollIndexChanged={(index: number) => {
-            haptic('impactLight');
-            setActiveSlideIndex(index);
+          scrollAnimationDuration={1000}
+          onProgressChange={(_, index) => {
+            if (Number.isInteger(index)) {
+              setActiveSlideIndex(index);
+            }
+            progressValue.value = index;
           }}
-          // @ts-ignore
-          disableIntervalMomentum={true}
+          renderItem={({item}) => <OnboardingSlide item={item} />}
         />
         <View style={{height: scrollHintHeight}} />
       </ScrollView>
@@ -242,53 +248,47 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
       </ScrollHintContainer>
 
       <CtaContainerAbsolute
+        accessibilityLabel="cta-container"
         onLayout={e => {
           setScrollHintHeight(e.nativeEvent.layout.height + 20);
         }}>
         <Row>
           <Column>
-            <Pagination
-              dotsLength={onboardingSlides.length}
-              activeDotIndex={activeSlideIndex}
-              tappableDots={true}
-              carouselRef={carouselRef}
-              animatedDuration={100}
-              animatedFriction={100}
-              animatedTension={100}
-              dotStyle={{
-                width: 15,
-                height: 15,
-                borderRadius: 10,
-                marginHorizontal: 1,
-              }}
-              dotColor={Action}
-              inactiveDotColor={LuckySevens}
-              inactiveDotScale={0.5}
-            />
+            <Row>
+              {[...Array(onboardingSlides.length)].map((_, index) => {
+                return (
+                  <PaginationDots
+                    animValue={progressValue}
+                    index={index}
+                    key={index}
+                    isRotate={false}
+                    length={onboardingSlides.length}
+                  />
+                );
+              })}
+            </Row>
           </Column>
           <Column>
             {!isPaired ? (
               <Button
+                accessibilityLabel="get-started-button"
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
                   askForTrackingThenNavigate(() => {
-                    navigation.navigate('Auth', {
-                      screen: 'CreateAccount',
-                    });
+                    navigation.navigate('CreateAccount');
                   });
                 }}>
                 {t('Get Started')}
               </Button>
             ) : (
               <Button
+                accessibilityLabel="continue-button"
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
                   askForTrackingThenNavigate(() => {
-                    navigation.navigate('Onboarding', {
-                      screen: 'Notifications',
-                    });
+                    navigation.navigate('Notifications');
                   });
                 }}>
                 {t('Continue')}
@@ -300,12 +300,11 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
           <Row>
             <ActionContainer>
               <Button
+                accessibilityLabel="continue-without-an-account-button"
                 buttonType={'link'}
                 onPress={() => {
                   askForTrackingThenNavigate(() => {
-                    navigation.navigate('Onboarding', {
-                      screen: 'Notifications',
-                    });
+                    navigation.navigate('Notifications');
                   });
                 }}>
                 <LinkText>{t('Continue without an account')}</LinkText>

@@ -7,23 +7,25 @@ const isEuCountry = (countryShortCode: string) => {
   return EUCountries.includes(countryShortCode);
 };
 
-export const getCountry = (): Effect => async dispatch => {
+export const getLocationData = (): Effect => async dispatch => {
   try {
-    const {data: countryData} = await axios.get(
-      'https://bitpay.com/wallet-card/location',
+    const {data: locationData} = await axios.get(
+      'https://bitpay.com/location/ipAddress',
       {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: 'application/json',
+          'Content-Type': 'application/json',
         },
       },
     );
 
     await dispatch(
-      LocationActions.successGetCountry({
-        countryData: {
-          shortCode: countryData.country,
-          isEuCountry: isEuCountry(countryData.country),
+      LocationActions.successGetLocation({
+        locationData: {
+          countryShortCode: locationData.country,
+          isEuCountry: isEuCountry(locationData.country),
+          stateShortCode: locationData.state ?? undefined,
+          cityFullName: locationData.city ?? undefined,
+          locationFullName: locationData.locationString ?? undefined,
         },
       }),
     );

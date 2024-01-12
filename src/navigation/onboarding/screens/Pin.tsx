@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import TouchID from 'react-native-touch-id-ng';
@@ -29,7 +29,7 @@ import {
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
 
@@ -53,16 +53,16 @@ const PinContainer = styled.SafeAreaView`
   align-items: stretch;
 `;
 
-const PinScreen: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'Pin'>
-> = ({navigation}) => {
+const PinScreen = ({
+  navigation,
+}: NativeStackScreenProps<OnboardingGroupParamList, OnboardingScreens.PIN>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const themeType = useThemeType();
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
@@ -75,7 +75,10 @@ const PinScreen: React.VFC<
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
+          <Button
+            accessibilityLabel="skip-button"
+            buttonType={'pill'}
+            onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -114,7 +117,7 @@ const PinScreen: React.VFC<
   };
 
   return (
-    <PinContainer>
+    <PinContainer accessibilityLabel="security-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -134,14 +137,18 @@ const PinScreen: React.VFC<
             </Paragraph>
           </TextAlign>
         </TextContainer>
-        <CtaContainer>
+        <CtaContainer accessibilityLabel="cta-container">
           <ActionContainer>
-            <Button onPress={() => onSetPinPress()} buttonStyle={'primary'}>
+            <Button
+              accessibilityLabel="pin-button"
+              onPress={() => onSetPinPress()}
+              buttonStyle={'primary'}>
               {t('PIN')}
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button
+              accessibilityLabel="biometric-button"
               onPress={() => onSetBiometricPress()}
               buttonStyle={'secondary'}>
               {t('Biometric')}

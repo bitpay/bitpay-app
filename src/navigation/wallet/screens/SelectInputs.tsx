@@ -11,7 +11,7 @@ import {
 } from '../../../store/wallet/wallet.models';
 import {BaseText, H5, H7, HeaderTitle} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {
   Column,
   CtaContainer as _CtaContainer,
@@ -28,17 +28,21 @@ import {FlatList} from 'react-native';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  convertToFiat,
+  formatFiatAmount,
+  sleep,
+} from '../../../utils/helper-methods';
 import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
 import _ from 'lodash';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {toFiat} from '../../../store/wallet/utils/wallet';
 
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
@@ -57,6 +61,7 @@ const ItemRowContainer = styled.View`
 
 const RecipientContainer = styled.View`
   flex-direction: row;
+  align-items: center;
 `;
 
 const SelectInputsContainer = styled.SafeAreaView`
@@ -88,21 +93,31 @@ export interface SelectInputsParamList {
   recipient: Recipient;
 }
 
+export interface UtxoWithFiatAmount extends Utxo {
+  fiatAmount?: string;
+  network?: string;
+}
+
 const SelectInputs = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {t} = useTranslation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'SelectInputs'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'SelectInputs'>>();
   const useUnconfirmedFunds = useAppSelector(
     ({WALLET}) => WALLET.useUnconfirmedFunds,
   );
-  const [inputs, setInputs] = useState<Utxo[]>([]);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {rates} = useAppSelector(({RATE}) => RATE);
+  const [inputs, setInputs] = useState<UtxoWithFiatAmount[]>([]);
   const {wallet, recipient} = route.params;
-  const {currencyAbbreviation, chain} = wallet;
-  const precision = dispatch(GetPrecision(currencyAbbreviation, chain));
+  const {currencyAbbreviation, chain, network, tokenAddress} = wallet;
+  const precision = dispatch(
+    GetPrecision(currencyAbbreviation, chain, tokenAddress),
+  );
   const [totalAmount, setTotalAmount] = useState(
     Number(0).toFixed(precision?.unitDecimals),
   );
+  const [totalFiatAmount, setTotalFiatAmount] = useState<string>();
 
   const logger = useLogger();
   let recipientData: TxDetailsSendingTo;
@@ -127,7 +142,29 @@ const SelectInputs = () => {
       if (!useUnconfirmedFunds) {
         utxos = utxos.filter(u => u.confirmations !== 0);
       }
-      setInputs(_.sortBy(utxos, 'amount'));
+
+      const utxosWithFiatAmount = utxos.map(utxo => ({
+        ...utxo,
+        fiatAmount: formatFiatAmount(
+          convertToFiat(
+            dispatch(
+              toFiat(
+                utxo.satoshis,
+                defaultAltCurrency.isoCode,
+                currencyAbbreviation,
+                chain,
+                rates,
+                tokenAddress,
+              ),
+            ),
+            false,
+            network,
+          ),
+          defaultAltCurrency.isoCode,
+        ),
+        network,
+      }));
+      setInputs(_.orderBy(utxosWithFiatAmount, 'amount', 'desc'));
     } catch (err) {
       logger.error(`An error occurred while getting utxos: ${err}`);
     }
@@ -140,11 +177,37 @@ const SelectInputs = () => {
   }, [navigation, t]);
 
   useEffect(() => {
+    if (!precision) {
+      return;
+    }
+    const totalSat = Number(totalAmount) * precision.unitToSatoshi;
+    setTotalFiatAmount(
+      formatFiatAmount(
+        convertToFiat(
+          dispatch(
+            toFiat(
+              totalSat,
+              defaultAltCurrency.isoCode,
+              currencyAbbreviation,
+              chain,
+              rates,
+              tokenAddress,
+            ),
+          ),
+          false,
+          network,
+        ),
+        defaultAltCurrency.isoCode,
+      ),
+    );
+  }, [totalAmount]);
+
+  useEffect(() => {
     init();
   }, []);
 
   const inputToggled = useCallback(
-    (item: Utxo, index: number) => {
+    (item: UtxoWithFiatAmount, index: number) => {
       setInputs(prevInputs => {
         prevInputs[index] = item;
         return prevInputs;
@@ -181,7 +244,7 @@ const SelectInputs = () => {
   const goToConfirmView = async () => {
     try {
       haptic('impactLight');
-      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
+      dispatch(startOnGoingProcessModal('LOADING'));
       const selectedInputs = inputs.filter(input => input.checked);
       logger.debug(
         `Estimating fee for: ${selectedInputs.length} selected inputs`,
@@ -189,7 +252,7 @@ const SelectInputs = () => {
       const estimatedFee = await GetMinFee(wallet, 1, selectedInputs.length);
       logger.debug(`Estimated fee: ${estimatedFee}`);
       const formattedestimatedFee = dispatch(
-        SatToUnit(estimatedFee, currencyAbbreviation, chain),
+        SatToUnit(estimatedFee, currencyAbbreviation, chain, tokenAddress),
       );
 
       const amount = Number(totalAmount) - formattedestimatedFee!;
@@ -206,17 +269,14 @@ const SelectInputs = () => {
       )) as any;
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
-      navigation.navigate('Wallet', {
-        screen: 'Confirm',
-        params: {
-          wallet,
-          recipient,
-          txp,
-          txDetails,
-          amount,
-          inputs,
-          selectInputs: true,
-        },
+      navigation.navigate('Confirm', {
+        wallet,
+        recipient,
+        txp,
+        txDetails,
+        amount,
+        inputs,
+        selectInputs: true,
       });
     } catch (err: any) {
       const errorMessageConfig = (
@@ -247,10 +307,9 @@ const SelectInputs = () => {
       <SelectInputsDetailsContainer>
         <SectionContainer>
           <H5>{t('Recipient')}</H5>
-          <Hr />
           <ItemRowContainer>
             <RecipientContainer>
-              <CurrencyImage img={recipientData.img} size={20} />
+              <CurrencyImage img={recipientData.img} size={25} />
               <H7
                 numberOfLines={1}
                 ellipsizeMode={'tail'}
@@ -262,22 +321,25 @@ const SelectInputs = () => {
           <Hr />
         </SectionContainer>
         <SectionContainer>
-          <H5>{t('Total Selected Inputs')}</H5>
-          <Hr />
+          <H5 style={{marginBottom: 10}}>{t('Total Selected Inputs')}</H5>
           <ItemRowContainer
             style={{
               flexDirection: 'column',
               alignItems: 'flex-start',
               justifyContent: 'center',
             }}>
-            <BaseText>
+            <H5>
               {Number(totalAmount)} {precision?.unitCode.toUpperCase()}
+            </H5>
+            <BaseText>
+              {network !== 'testnet'
+                ? totalFiatAmount
+                : t('Test Only - No Value')}
             </BaseText>
           </ItemRowContainer>
           <Hr />
         </SectionContainer>
-        <H5>{t('Wallet Inputs')}</H5>
-        <Hr />
+        <H5 style={{marginBottom: 10}}>{t('Wallet Inputs')}</H5>
       </SelectInputsDetailsContainer>
       {inputs && inputs.length ? (
         <FlatList

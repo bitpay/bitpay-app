@@ -5,12 +5,13 @@ import Button from '../../../components/button/Button';
 import {HEIGHT} from '../../../components/styled/Containers';
 import SuccessSvg from '../../../../assets/img/success.svg';
 import {H3, TextAlign} from '../../../components/styled/Text';
-import {StackScreenProps} from '@react-navigation/stack';
-import {BitpayIdStackParamList} from '../BitpayIdStack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {BitpayIdGroupParamList, BitpayIdScreens} from '../BitpayIdGroup';
+import {useTranslation} from 'react-i18next';
 
-type TwoFactorEnabledProps = StackScreenProps<
-  BitpayIdStackParamList,
-  'TwoFactorEnabled'
+type TwoFactorEnabledProps = NativeStackScreenProps<
+  BitpayIdGroupParamList,
+  BitpayIdScreens.TWO_FACTOR_ENABLED
 >;
 
 export type TwoFactorEnabledScreenParamList = undefined;
@@ -29,7 +30,8 @@ const ViewBody = styled.View`
   padding-bottom: 100px;
 `;
 
-const TwoFactorEnabled: React.FC<TwoFactorEnabledProps> = ({navigation}) => {
+const TwoFactorEnabled = ({route, navigation}: TwoFactorEnabledProps) => {
+  const {t} = useTranslation();
   return (
     <ViewContainer>
       <ViewBody>

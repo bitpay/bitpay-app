@@ -8,13 +8,13 @@ import {
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import CopySvg from '../../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import {LightBlack, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';
@@ -95,22 +95,19 @@ const CopyImgContainer = styled.View`
   justify-content: center;
 `;
 
-const ShareIconContainer = styled.TouchableOpacity`
-  padding-top: 10px;
-  transform: scale(1.1);
-  padding-right: 15px;
-`;
+const ShareIconContainer = styled.TouchableOpacity``;
 
 const RequestSpecificAmountQR = () => {
   const {t} = useTranslation();
   const route =
-    useRoute<RouteProp<WalletStackParamList, 'RequestSpecificAmountQR'>>();
+    useRoute<RouteProp<WalletGroupParamList, 'RequestSpecificAmountQR'>>();
   const {wallet, requestAmount} = route.params;
   const {
     credentials: {walletName},
     currencyAbbreviation,
     network,
     chain,
+    tokenAddress,
   } = wallet;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -146,13 +143,10 @@ const RequestSpecificAmountQR = () => {
       )) as string;
 
       let _qrValue;
-      _qrValue =
-        dispatch(GetProtocolPrefix(currencyAbbreviation, network, chain)) +
-        ':' +
-        address;
+      _qrValue = GetProtocolPrefix(network, chain) + ':' + address;
 
       const _formattedAmountObj = dispatch(
-        ParseAmount(requestAmount, currencyAbbreviation, chain),
+        ParseAmount(requestAmount, currencyAbbreviation, chain, tokenAddress),
       );
 
       if (IsUtxoCoin(currencyAbbreviation) || currencyAbbreviation === 'xrp') {
@@ -221,7 +215,7 @@ const RequestSpecificAmountQR = () => {
           {qrValue ? (
             <>
               <QRHeader>
-                {t('Receive ') + formattedAmountObj?.amountUnitStr}
+                {t('Receive') + ' ' + formattedAmountObj?.amountUnitStr}
               </QRHeader>
               <CopyToClipboard onPress={copyToClipboard} activeOpacity={0.7}>
                 <CopyImgContainer>

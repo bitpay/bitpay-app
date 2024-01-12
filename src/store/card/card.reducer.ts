@@ -95,6 +95,7 @@ export interface CardState {
   pinChangeRequestInfoError: Record<string, string | null>;
   confirmPinChangeStatus: Record<string, ConfirmPinChangeStatus>;
   confirmPinChangeError: Record<string, string | null>;
+  isJoinedWaitlist: boolean;
 }
 
 const initialState: CardState = {
@@ -127,6 +128,7 @@ const initialState: CardState = {
   pinChangeRequestInfoError: {},
   confirmPinChangeStatus: {},
   confirmPinChangeError: {},
+  isJoinedWaitlist: false,
 };
 
 export const cardReducer = (
@@ -545,6 +547,11 @@ export const cardReducer = (
           ...state.confirmPinChangeStatus,
           [action.payload.id]: action.payload.status,
         },
+      };
+    case CardActionTypes.IS_JOINED_WAITLIST:
+      return {
+        ...state,
+        isJoinedWaitlist: action.payload.isJoinedWaitlist,
       };
 
     default:

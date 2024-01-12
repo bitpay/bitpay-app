@@ -1,19 +1,111 @@
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
 import {
-  simplexPaymentData,
-  simplexIncomingData,
-  wyrePaymentData,
+  BanxaPaymentData,
+  BanxaIncomingData,
+  MoonpayPaymentData,
+  MoonpayIncomingData,
+  RampPaymentData,
+  RampIncomingData,
+  SardinePaymentData,
+  SardineIncomingData,
+  SimplexPaymentData,
+  SimplexIncomingData,
+  WyrePaymentData,
 } from './buy-crypto.models';
 
+export const successPaymentRequestBanxa = (payload: {
+  banxaPaymentData: BanxaPaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_BANXA,
+  payload,
+});
+
+export const updatePaymentRequestBanxa = (payload: {
+  banxaIncomingData: BanxaIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_BANXA,
+  payload,
+});
+
+export const removePaymentRequestBanxa = (payload: {
+  banxaExternalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_BANXA,
+  payload,
+});
+
+export const successPaymentRequestMoonpay = (payload: {
+  moonpayPaymentData: MoonpayPaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_MOONPAY,
+  payload,
+});
+
+export const updatePaymentRequestMoonpay = (payload: {
+  moonpayIncomingData: MoonpayIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_MOONPAY,
+  payload,
+});
+
+export const removePaymentRequestMoonpay = (payload: {
+  externalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_MOONPAY,
+  payload,
+});
+
+export const successPaymentRequestRamp = (payload: {
+  rampPaymentData: RampPaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_RAMP,
+  payload,
+});
+
+export const updatePaymentRequestRamp = (payload: {
+  rampIncomingData: RampIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_RAMP,
+  payload,
+});
+
+export const removePaymentRequestRamp = (payload: {
+  rampExternalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_RAMP,
+  payload,
+});
+
+export const successPaymentRequestSardine = (payload: {
+  sardinePaymentData: SardinePaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SARDINE,
+  payload,
+});
+
+export const updatePaymentRequestSardine = (payload: {
+  sardineIncomingData: SardineIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SARDINE,
+  payload,
+});
+
+export const removePaymentRequestSardine = (payload: {
+  sardineExternalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_SARDINE,
+  payload,
+});
+
 export const successPaymentRequestSimplex = (payload: {
-  simplexPaymentData: simplexPaymentData;
+  simplexPaymentData: SimplexPaymentData;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SIMPLEX,
   payload,
 });
 
 export const updatePaymentRequestSimplex = (payload: {
-  simplexIncomingData: simplexIncomingData;
+  simplexIncomingData: SimplexIncomingData;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SIMPLEX,
   payload,
@@ -27,7 +119,7 @@ export const removePaymentRequestSimplex = (payload: {
 });
 
 export const successPaymentRequestWyre = (payload: {
-  wyrePaymentData: wyrePaymentData;
+  wyrePaymentData: WyrePaymentData;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE,
   payload,

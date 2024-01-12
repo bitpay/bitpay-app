@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from 'react-native';
 import * as Svg from 'react-native-svg';
 import {HeaderButtonContainer} from './Styled';
 import {
@@ -10,8 +10,8 @@ import {
   NeutralSlate,
 } from '../../../../styles/colors';
 import {useTheme} from 'styled-components/native';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const ScanIcon = () => {
   const theme = useTheme();
@@ -113,11 +113,11 @@ const ScanButton: React.FC = () => {
       <TouchableOpacity
         onPress={() => {
           dispatch(
-            logSegmentEvent('track', 'Open Scanner', {
+            Analytics.track('Open Scanner', {
               context: 'HeaderScanButton',
             }),
           );
-          navigation.navigate('Scan', {screen: 'Root'});
+          navigation.navigate('ScanRoot');
         }}>
         <ScanIcon />
       </TouchableOpacity>

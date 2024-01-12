@@ -1,6 +1,8 @@
 import ReactNative from 'react-native';
 import {NativeEventEmitter} from 'react-native';
 
+const NO_OP = () => null;
+
 interface AppleWalletModule {
   canAddPaymentPass: () => Promise<boolean>;
   startAddPaymentPass: (last4: string, cardHolderName: string) => Promise<any>;
@@ -12,7 +14,10 @@ interface AppleWalletModule {
   checkPairedDevicesBySuffix: (cardSuffix: string) => Promise<any>;
 }
 
-const module = ReactNative.NativeModules?.PaymentPass || {};
+const module = ReactNative.NativeModules?.PaymentPass || {
+  addListener: NO_OP,
+  removeListeners: NO_OP,
+};
 const AppleWalletModule = module as AppleWalletModule;
 const eventEmitter = new NativeEventEmitter(module);
 

@@ -1,10 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
-import {Carousel} from 'react-native-snap-carousel';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
-import {GiftCardScreens} from '../gift-card/GiftCardStack';
+import {GiftCardScreens} from '../gift-card/GiftCardGroup';
 import GiftCardCreditsItem from './GiftCardCreditsItem';
 import {
   horizontalPadding,
@@ -13,7 +12,7 @@ import {
   SectionHeaderButton,
   SectionHeaderContainer,
 } from './styled/ShopTabComponents';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {BaseText} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useAppSelector} from '../../../../utils/hooks';
@@ -24,6 +23,7 @@ import {
 } from '../../../../lib/gift-cards/gift-card';
 import {ShopScreens} from '../ShopStack';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from 'react-native';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: -10px;
@@ -36,12 +36,14 @@ const NoGiftCards = styled.View`
   align-items: center;
   justify-content: center;
   height: 50px;
-  margin-top: 10px;
+  margin: 10px ${horizontalPadding}px;
 `;
 
 const NoGiftCardsText = styled(BaseText)`
   color: ${({theme}) => (theme.dark ? White : SlateDark)};
 `;
+
+const giftCardHeight = 67;
 
 const MyGiftCards = ({
   supportedGiftCards,
@@ -49,17 +51,22 @@ const MyGiftCards = ({
   supportedGiftCards: CardConfig[];
 }) => {
   const {t} = useTranslation();
-  const carouselRef = useRef<Carousel<GiftCard[]>>(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
   const navigation = useNavigation();
   const [slideIndex, setSlideIndex] = useState(0);
   const allGiftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
+  const supportedGiftCardMap = supportedGiftCards.reduce(
+    (map, cardConfig) => ({...map, ...{[cardConfig.name]: cardConfig}}),
+    {} as {[name: string]: CardConfig},
+  );
   const giftCards = allGiftCards
     .filter(
       giftCard =>
-        giftCard.status === 'SUCCESS' ||
-        redemptionFailuresLessThanADayOld(giftCard),
+        (['PENDING', 'SUCCESS', 'SYNCED'].includes(giftCard.status) ||
+          redemptionFailuresLessThanADayOld(giftCard)) &&
+        supportedGiftCardMap[giftCard.name],
     )
     .sort(sortByDescendingDate);
   const activeGiftCards = giftCards.filter(giftCard => !giftCard.archived);
@@ -78,7 +85,7 @@ const MyGiftCards = ({
           screen: ShopScreens.ARCHIVED_GIFT_CARDS,
           params: {
             giftCards: archivedGiftCards,
-            supportedGiftCards,
+            supportedGiftCardMap,
           },
         });
   };
@@ -90,8 +97,13 @@ const MyGiftCards = ({
   }, [archivedGiftCards.length]);
 
   useEffect(() => {
-    setTimeout(() => carouselRef.current?.snapToItem(slideIndex), 50);
+    setTimeout(
+      () => carouselRef.current?.scrollTo({index: slideIndex, animated: true}),
+      50,
+    );
   }, [slideIndex]);
+
+  const longestSlideLength = Math.max(...slides.map(slide => slide.length));
 
   return (
     <>
@@ -105,14 +117,17 @@ const MyGiftCards = ({
           {archivedGiftCards.length ? (
             <>
               {slideIndex === 0 ? (
-                <TouchableWithoutFeedback
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
                   onPress={() => seeArchivedGiftCards()}>
                   <SectionHeaderButton>{t('See Archived')}</SectionHeaderButton>
-                </TouchableWithoutFeedback>
+                </TouchableOpacity>
               ) : (
-                <TouchableWithoutFeedback onPress={() => setSlideIndex(0)}>
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => setSlideIndex(0)}>
                   <SectionHeaderButton>{t('See Active')}</SectionHeaderButton>
-                </TouchableWithoutFeedback>
+                </TouchableOpacity>
               )}
             </>
           ) : null}
@@ -120,46 +135,40 @@ const MyGiftCards = ({
       </SectionContainer>
       <Carousel
         ref={carouselRef}
+        loop={false}
         vertical={false}
-        layout={'default'}
-        useExperimentalSnap={false}
+        width={WIDTH}
+        height={longestSlideLength * giftCardHeight || 60}
+        autoPlay={false}
         data={slides}
-        inactiveSlideOpacity={1}
-        inactiveSlideScale={1}
-        activeSlideAlignment={'start'}
-        sliderWidth={WIDTH}
-        itemWidth={WIDTH}
-        scrollEnabled={false}
-        slideStyle={{paddingHorizontal: horizontalPadding}}
-        // @ts-ignore
-        disableIntervalMomentum={true}
-        renderItem={(item: {dataIndex: number; item: GiftCard[]}) => (
+        enabled={false}
+        renderItem={({item}: {item: GiftCard[]; index: number}) => (
           <>
-            {item.item.length ? (
+            {item.length ? (
               <>
-                {item.item.sort(sortByDescendingDate).map(giftCard => {
-                  const cardConfig = supportedGiftCards.find(
-                    config => config.name === giftCard.name,
-                  );
+                {item.sort(sortByDescendingDate).map(giftCard => {
+                  const cardConfig = supportedGiftCardMap[giftCard.name];
                   return (
                     cardConfig && (
-                      <TouchableWithoutFeedback
+                      <TouchableOpacity
+                        style={{paddingHorizontal: horizontalPadding}}
+                        activeOpacity={ActiveOpacity}
                         key={giftCard.invoiceId}
                         onPress={() => {
-                          navigation.navigate('GiftCard', {
-                            screen: GiftCardScreens.GIFT_CARD_DETAILS,
-                            params: {
+                          navigation.navigate(
+                            GiftCardScreens.GIFT_CARD_DETAILS,
+                            {
                               cardConfig,
                               giftCard,
                             },
-                          });
+                          );
                         }}>
                         <GiftCardCreditsItem
                           key={giftCard.invoiceId}
                           cardConfig={cardConfig}
                           amount={giftCard.amount}
                         />
-                      </TouchableWithoutFeedback>
+                      </TouchableOpacity>
                     )
                   );
                 })}

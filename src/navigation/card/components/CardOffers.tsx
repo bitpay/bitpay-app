@@ -1,15 +1,17 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
+import {Linking, TouchableOpacity} from 'react-native';
 import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled, {useTheme} from 'styled-components/native';
 import {
   ActiveOpacity,
   CardContainer,
 } from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
-import {Analytics} from '../../../store/app/app.effects';
+import {APP_DEEPLINK_PREFIX} from '../../../constants/config';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {AppEffects} from '../../../store/app';
 import {CardEffects} from '../../../store/card';
 import {
   isCaptionedContentCard,
@@ -88,7 +90,7 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
   }
 
   const onPress = () => {
-    if (!contentCard.id.startsWith('dev_')) {
+    if (!contentCard.id?.startsWith('dev_')) {
       Braze.logContentCardClicked(contentCard.id);
 
       dispatch(
@@ -99,7 +101,23 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
       );
     }
 
-    dispatch(CardEffects.startOpenDosh());
+    if (contentCard.url) {
+      const url = contentCard.url;
+
+      if (url.trim().startsWith(APP_DEEPLINK_PREFIX)) {
+        dispatch(AppEffects.incomingLink(url));
+      } else if (contentCard.openURLInWebView) {
+        dispatch(AppEffects.openUrlWithInAppBrowser(url));
+      } else {
+        Linking.canOpenURL(url).then(canOpenUrl => {
+          if (canOpenUrl) {
+            Linking.openURL(url);
+          }
+        });
+      }
+    } else {
+      dispatch(CardEffects.startOpenDosh());
+    }
   };
 
   useFocusEffect(() => {

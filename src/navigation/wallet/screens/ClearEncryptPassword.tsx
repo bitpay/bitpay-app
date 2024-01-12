@@ -14,7 +14,7 @@ import {useAppDispatch} from '../../../utils/hooks';
 import Button from '../../../components/button/Button';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {useTranslation} from 'react-i18next';
 
 export type ClearEncryptPasswordParamList = {
@@ -46,7 +46,7 @@ const ClearEncryptPassword = () => {
   const navigation = useNavigation();
   const {
     params: {keyId},
-  } = useRoute<RouteProp<WalletStackParamList, 'ClearEncryptPassword'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'ClearEncryptPassword'>>();
 
   return (
     <ClearEncryptPasswordContainer>
@@ -83,10 +83,7 @@ const ClearEncryptPassword = () => {
         <ActionContainer>
           <Button
             onPress={() => {
-              navigation.navigate('Wallet', {
-                screen: 'Import',
-                params: {keyId},
-              });
+              navigation.navigate('Import', {keyId});
             }}>
             {t('Continue')}
           </Button>

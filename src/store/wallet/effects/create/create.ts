@@ -20,7 +20,7 @@ import {
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
-import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {
   subscribeEmailNotifications,
   subscribePushNotifications,
@@ -32,7 +32,7 @@ import {
 import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
-
+import {IsSegwitCoin} from '../../utils/currency';
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -48,9 +48,11 @@ export interface AddWalletData {
     chain: string;
     currencyAbbreviation: string;
     isToken?: boolean;
+    tokenAddress?: string;
   };
   associatedWallet?: Wallet;
   options: CreateOptions;
+  context?: string;
 }
 
 const BWC = BwcProvider.getInstance();
@@ -61,6 +63,7 @@ export const startCreateKey =
       chain: string;
       currencyAbbreviation: string;
       isToken: boolean;
+      tokenAddress?: string;
     }>,
   ): Effect<Promise<Key>> =>
   async (dispatch, getState) => {
@@ -68,6 +71,7 @@ export const startCreateKey =
       try {
         const state = getState();
         const network = state.APP.network;
+        const keys = state.WALLET.keys;
 
         const _key = BWC.createKey({
           seedType: 'new',
@@ -84,7 +88,6 @@ export const startCreateKey =
         );
 
         const key = buildKeyObj({key: _key, wallets});
-
         dispatch(
           successCreateKey({
             key,
@@ -92,7 +95,9 @@ export const startCreateKey =
         );
         resolve(key);
       } catch (err) {
-        console.error(err);
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`Error creating key: ${errstring}`));
         reject();
       }
     });
@@ -106,6 +111,7 @@ export const addWallet =
     currency,
     associatedWallet,
     options,
+    context,
   }: AddWalletData): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
@@ -120,25 +126,28 @@ export const addWallet =
           },
           WALLET,
         } = getState();
-        const tokenOpts = {
-          ...BitpaySupportedTokenOpts,
-          ...WALLET.tokenOptions,
-          ...WALLET.customTokenOptions,
+        const tokenOptsByAddress = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...WALLET.tokenOptionsByAddress,
+          ...WALLET.customTokenOptionsByAddress,
         };
         const {walletName} = options;
 
         if (currency.isToken) {
           if (!associatedWallet) {
-            associatedWallet = (await createWallet({
-              key: key.methods!,
-              coin: currency.chain as SupportedCoins,
-              options,
-            })) as Wallet;
+            associatedWallet = (await dispatch(
+              createWallet({
+                key: key.methods!,
+                coin: currency.chain as SupportedCoins,
+                options,
+              }),
+            )) as Wallet;
 
             const {currencyAbbreviation, currencyName} = dispatch(
               mapAbbreviationAndName(
                 associatedWallet.credentials.coin,
                 associatedWallet.credentials.chain,
+                associatedWallet.credentials?.token.address,
               ),
             );
             key.wallets.push(
@@ -150,7 +159,7 @@ export const addWallet =
                     currencyAbbreviation,
                     currencyName,
                   },
-                  tokenOpts,
+                  tokenOptsByAddress,
                 ),
               ),
             );
@@ -160,15 +169,19 @@ export const addWallet =
             createTokenWallet(
               associatedWallet,
               currency.currencyAbbreviation.toLowerCase(),
-              tokenOpts,
+              currency.tokenAddress!,
+              tokenOptsByAddress,
             ),
           )) as Wallet;
         } else {
-          newWallet = (await createWallet({
-            key: key.methods!,
-            coin: currency.currencyAbbreviation as SupportedCoins,
-            options,
-          })) as Wallet;
+          newWallet = (await dispatch(
+            createWallet({
+              key: key.methods!,
+              coin: currency.currencyAbbreviation as SupportedCoins,
+              options,
+              context,
+            }),
+          )) as Wallet;
         }
 
         if (!newWallet) {
@@ -197,6 +210,7 @@ export const addWallet =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
+            newWallet.credentials?.token?.address,
           ),
         );
 
@@ -210,7 +224,7 @@ export const addWallet =
                 currencyName,
                 walletName,
               },
-              tokenOpts,
+              tokenOptsByAddress,
             ),
           ),
         );
@@ -223,7 +237,7 @@ export const addWallet =
           err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(failedAddWallet());
         dispatch(LogActions.error(`Error adding wallet: ${errstring}`));
-        reject();
+        context === 'WalletConnect' ? reject(err) : reject();
       }
     });
   };
@@ -241,6 +255,7 @@ const createMultipleWallets =
       chain: string;
       currencyAbbreviation: string;
       isToken: boolean;
+      tokenAddress?: string;
     }>;
     options: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
@@ -255,22 +270,24 @@ const createMultipleWallets =
       },
     } = getState();
     const tokenOpts = {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
     const wallets: API[] = [];
     const tokens = currencies.filter(({isToken}) => isToken);
     const coins = currencies.filter(({isToken}) => !isToken);
     for (const coin of coins) {
-      const wallet = (await createWallet({
-        key,
-        coin: coin.currencyAbbreviation as SupportedCoins,
-        options: {
-          ...options,
-          useNativeSegwit: ['btc', 'ltc'].includes(coin.currencyAbbreviation),
-        },
-      })) as Wallet;
+      const wallet = (await dispatch(
+        createWallet({
+          key,
+          coin: coin.currencyAbbreviation as SupportedCoins,
+          options: {
+            ...options,
+            useNativeSegwit: IsSegwitCoin(coin.currencyAbbreviation),
+          },
+        }),
+      )) as Wallet;
       wallets.push(wallet);
       for (const token of tokens) {
         if (token.chain === coin.chain) {
@@ -278,6 +295,7 @@ const createMultipleWallets =
             createTokenWallet(
               wallet,
               token.currencyAbbreviation.toLowerCase(),
+              token.tokenAddress!,
               tokenOpts,
             ),
           );
@@ -309,6 +327,7 @@ const createMultipleWallets =
         mapAbbreviationAndName(
           wallet.credentials.coin,
           wallet.credentials.chain,
+          wallet.credentials?.token?.address,
         ),
       );
       return merge(
@@ -328,78 +347,86 @@ const DEFAULT_CREATION_OPTIONS: CreateOptions = {
   account: 0,
 };
 
-const createWallet = (params: {
-  key: KeyMethods;
-  coin: SupportedCoins;
-  options: CreateOptions;
-}): Promise<API> => {
-  return new Promise((resolve, reject) => {
-    const bwcClient = BWC.getClient();
-    const {key, coin, options} = params;
+const createWallet =
+  (params: {
+    key: KeyMethods;
+    coin: SupportedCoins;
+    options: CreateOptions;
+    context?: string;
+  }): Effect<Promise<API>> =>
+  async (dispatch): Promise<API> => {
+    return new Promise((resolve, reject) => {
+      const bwcClient = BWC.getClient();
+      const {key, coin, options, context} = params;
 
-    // set defaults
-    const {account, network, password, singleAddress, useNativeSegwit} = {
-      ...DEFAULT_CREATION_OPTIONS,
-      ...options,
-    };
+      // set defaults
+      const {account, network, password, singleAddress, useNativeSegwit} = {
+        ...DEFAULT_CREATION_OPTIONS,
+        ...options,
+      };
 
-    bwcClient.fromString(
-      key.createCredentials(password, {
-        coin,
-        chain: coin, // chain === coin for stored clients
-        network,
-        account,
-        n: 1,
-        m: 1,
-      }),
-    );
+      bwcClient.fromString(
+        key.createCredentials(password, {
+          coin,
+          chain: coin, // chain === coin for stored clients
+          network,
+          account,
+          n: 1,
+          m: 1,
+        }),
+      );
 
-    const name = BitpaySupportedCoins[coin.toLowerCase()].name;
-    bwcClient.createWallet(
-      name,
-      'me',
-      1,
-      1,
-      {
-        network,
-        singleAddress,
-        coin,
-        useNativeSegwit,
-      },
-      (err: any) => {
-        if (err) {
-          switch (err.name) {
-            case 'bwc.ErrorCOPAYER_REGISTERED': {
-              // eslint-disable-next-line no-shadow
-              const account = options.account || 0;
-              if (account >= 20) {
-                return reject(
-                  new Error(
-                    t(
-                      '20 Wallet limit from the same coin and network has been reached.',
+      const name = BitpaySupportedCoins[coin.toLowerCase()].name;
+      bwcClient.createWallet(
+        name,
+        'me',
+        1,
+        1,
+        {
+          network,
+          singleAddress,
+          coin,
+          useNativeSegwit,
+        },
+        (err: any) => {
+          if (err) {
+            switch (err.name) {
+              case 'bwc.ErrorCOPAYER_REGISTERED': {
+                if (context === 'WalletConnect') {
+                  return reject(err);
+                }
+
+                const account = options.account || 0;
+                if (account >= 20) {
+                  return reject(
+                    new Error(
+                      t(
+                        '20 Wallet limit from the same coin and network has been reached.',
+                      ),
                     ),
+                  );
+                }
+                return resolve(
+                  dispatch(
+                    createWallet({
+                      key,
+                      coin,
+                      options: {...options, account: account + 1},
+                    }),
                   ),
                 );
               }
-              return resolve(
-                createWallet({
-                  key,
-                  coin,
-                  options: {...options, account: account + 1},
-                }),
-              );
             }
-          }
 
-          reject(err);
-        } else {
-          console.log('added coin', coin);
-          resolve(bwcClient);
-        }
-      },
-    );
-  });
-};
+            reject(err);
+          } else {
+            dispatch(LogActions.info(`Added Coin ${coin}`));
+            resolve(bwcClient);
+          }
+        },
+      );
+    });
+  };
 
 /////////////////////////////////////////////////////////////
 
@@ -407,7 +434,8 @@ const createTokenWallet =
   (
     wallet: Wallet,
     tokenName: string,
-    tokenOpts: {[key in string]: Token},
+    tokenAddress: string,
+    tokenOptsByAddress: {[key in string]: Token},
   ): Effect<Promise<API>> =>
   async (dispatch): Promise<API> => {
     return new Promise((resolve, reject) => {
@@ -415,7 +443,9 @@ const createTokenWallet =
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
           wallet.credentials.getTokenCredentials(
-            tokenOpts[addTokenChainSuffix(tokenName, wallet.credentials.chain)],
+            tokenOptsByAddress[
+              addTokenChainSuffix(tokenAddress, wallet.credentials.chain)
+            ],
             wallet.credentials.chain,
           );
         bwcClient.fromObj(tokenCredentials);
@@ -426,11 +456,23 @@ const createTokenWallet =
 
         wallet.preferences = wallet.preferences || {
           tokenAddresses: [],
+          maticTokenAddresses: [],
         };
-        wallet.preferences.tokenAddresses?.push(
-          // @ts-ignore
-          tokenCredentials.token.address,
-        );
+
+        switch (wallet.credentials.chain) {
+          case 'eth':
+            wallet.preferences.tokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'matic':
+            wallet.preferences.maticTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+        }
 
         wallet.savePreferences(wallet.preferences, (err: any) => {
           if (err) {
@@ -462,6 +504,7 @@ export const startCreateKeyWithOpts =
             brazeEid,
             defaultLanguage,
           },
+          WALLET: {keys},
         } = getState();
         const _key = BWC.createKey({
           seedType: opts.seedType!,
@@ -471,7 +514,7 @@ export const startCreateKeyWithOpts =
           passphrase: opts.passphrase,
         });
 
-        const _wallet = await createWalletWithOpts({key: _key, opts});
+        const _wallet = await dispatch(createWalletWithOpts({key: _key, opts}));
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
@@ -495,6 +538,7 @@ export const startCreateKeyWithOpts =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
+            _wallet.credentials?.token?.address,
           ),
         );
 
@@ -513,16 +557,18 @@ export const startCreateKeyWithOpts =
           wallets: [wallet],
           backupComplete: true,
         });
-
         dispatch(
           successCreateKey({
             key,
           }),
         );
-
         resolve(key);
       } catch (err) {
-        console.error(err);
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error(`Error creating key with opts: ${errstring}`),
+        );
         reject(err);
       }
     });
@@ -530,70 +576,74 @@ export const startCreateKeyWithOpts =
 
 /////////////////////////////////////////////////////////////
 
-export const createWalletWithOpts = (params: {
-  key: KeyMethods;
-  opts: Partial<KeyOptions>;
-}): Promise<API> => {
-  return new Promise((resolve, reject) => {
-    const bwcClient = BWC.getClient();
-    const {key, opts} = params;
-    try {
-      bwcClient.fromString(
-        key.createCredentials(opts.password, {
-          coin: opts.coin || 'btc',
-          chain: opts.coin || 'btc', // chain === coin for stored clients
-          network: opts.networkName || 'livenet',
-          account: opts.account || 0,
-          n: opts.n || 1,
-          m: opts.m || 1,
-        }),
-      );
-      bwcClient.createWallet(
-        opts.name,
-        opts.myName || 'me',
-        opts.m || 1,
-        opts.n || 1,
-        {
-          network: opts.networkName,
-          singleAddress: opts.singleAddress,
-          coin: opts.coin,
-          useNativeSegwit: opts.useNativeSegwit,
-        },
-        (err: Error) => {
-          if (err) {
-            switch (err.name) {
-              case 'bwc.ErrorCOPAYER_REGISTERED': {
-                const account = opts.account || 0;
-                if (account >= 20) {
-                  return reject(
-                    new Error(
-                      t(
-                        '20 Wallet limit from the same coin and network has been reached.',
+export const createWalletWithOpts =
+  (params: {
+    key: KeyMethods;
+    opts: Partial<KeyOptions>;
+  }): Effect<Promise<API>> =>
+  async (dispatch): Promise<API> => {
+    return new Promise((resolve, reject) => {
+      const bwcClient = BWC.getClient();
+      const {key, opts} = params;
+      try {
+        bwcClient.fromString(
+          key.createCredentials(opts.password, {
+            coin: opts.coin || 'btc',
+            chain: opts.coin || 'btc', // chain === coin for stored clients
+            network: opts.networkName || 'livenet',
+            account: opts.account || 0,
+            n: opts.n || 1,
+            m: opts.m || 1,
+          }),
+        );
+        bwcClient.createWallet(
+          opts.name,
+          opts.myName || 'me',
+          opts.m || 1,
+          opts.n || 1,
+          {
+            network: opts.networkName,
+            singleAddress: opts.singleAddress,
+            coin: opts.coin,
+            useNativeSegwit: opts.useNativeSegwit,
+          },
+          (err: Error) => {
+            if (err) {
+              switch (err.name) {
+                case 'bwc.ErrorCOPAYER_REGISTERED': {
+                  const account = opts.account || 0;
+                  if (account >= 20) {
+                    return reject(
+                      new Error(
+                        t(
+                          '20 Wallet limit from the same coin and network has been reached.',
+                        ),
                       ),
+                    );
+                  }
+                  return resolve(
+                    dispatch(
+                      createWalletWithOpts({
+                        key,
+                        opts: {...opts, account: account + 1},
+                      }),
                     ),
                   );
                 }
-                return resolve(
-                  createWalletWithOpts({
-                    key,
-                    opts: {...opts, account: account + 1},
-                  }),
-                );
               }
-            }
 
-            reject(err);
-          } else {
-            console.log('added coin', opts.coin);
-            resolve(bwcClient);
-          }
-        },
-      );
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
+              reject(err);
+            } else {
+              dispatch(LogActions.info(`Added Coin ${opts.coin || 'btc'}`));
+              resolve(bwcClient);
+            }
+          },
+        );
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
 
 export const getDecryptPassword =
   (key: Key): Effect<Promise<string>> =>

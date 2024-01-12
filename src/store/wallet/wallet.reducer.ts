@@ -1,24 +1,28 @@
-import {DeferredImport, Key, Token} from './wallet.models';
+import {Key, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
+import {AddLog} from '../log/log.types';
 
 type WalletReduxPersistBlackList = string[];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
-  'tokenData',
-  'tokenOptions',
   'tokenOptionsByAddress',
+  'tokenDataByAddress',
 ];
+
+export type Keys = {
+  [key in string]: Key;
+};
 
 export interface WalletState {
   createdOn: number;
-  keys: {[key in string]: Key};
-  tokenOptions: {[key in string]: Token};
-  tokenData: {[key in string]: CurrencyOpts};
+  keys: Keys;
   tokenOptionsByAddress: {[key in string]: Token};
-  customTokenOptions: {[key in string]: Token};
-  customTokenData: {[key in string]: CurrencyOpts};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
   customTokenOptionsByAddress: {[key in string]: Token};
+  customTokenOptions: {[key in string]: Token};
+  customTokenDataByAddress: {[key in string]: CurrencyOpts};
+  customTokenData: {[key in string]: CurrencyOpts};
   walletTermsAccepted: boolean;
   portfolioBalance: {
     current: number;
@@ -31,18 +35,19 @@ export interface WalletState {
   customizeNonce: boolean;
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
-  deferredImport: null | DeferredImport;
+  initLogs: AddLog[];
+  customTokensMigrationComplete: boolean;
 }
 
-const initialState: WalletState = {
+export const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
-  tokenOptions: {},
-  tokenData: {},
   tokenOptionsByAddress: {},
-  customTokenOptions: {},
-  customTokenData: {},
+  tokenDataByAddress: {},
   customTokenOptionsByAddress: {},
+  customTokenOptions: {},
+  customTokenDataByAddress: {},
+  customTokenData: {},
   walletTermsAccepted: false,
   portfolioBalance: {
     current: 0,
@@ -52,14 +57,15 @@ const initialState: WalletState = {
   balanceCacheKey: {},
   feeLevel: {
     btc: FeeLevels.NORMAL,
-    eth: FeeLevels.NORMAL,
+    eth: FeeLevels.PRIORITY,
     matic: FeeLevels.NORMAL,
   },
   useUnconfirmedFunds: false,
   customizeNonce: false,
   queuedTransactions: false,
   enableReplaceByFee: false,
-  deferredImport: null,
+  initLogs: [], // keep init logs at the end (order is important)
+  customTokensMigrationComplete: false,
 };
 
 export const walletReducer = (
@@ -67,8 +73,15 @@ export const walletReducer = (
   action: WalletActionType,
 ): WalletState => {
   switch (action.type) {
+    case WalletActionTypes.SUCCESS_CREATE_KEY: {
+      const {key} = action.payload;
+      return {
+        ...state,
+        keys: {...state.keys, [key.id]: key},
+      };
+    }
+
     case WalletActionTypes.SUCCESS_ADD_WALLET:
-    case WalletActionTypes.SUCCESS_CREATE_KEY:
     case WalletActionTypes.SUCCESS_UPDATE_KEY:
     case WalletActionTypes.SUCCESS_IMPORT: {
       const {key} = action.payload;
@@ -79,28 +92,33 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SET_BACKUP_COMPLETE: {
-      const id = action.payload;
-      const updatedKey = {...state.keys[id], backupComplete: true};
+      const keyId = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      const updatedKey = {...keyToUpdate, backupComplete: true};
 
       return {
         ...state,
-        keys: {...state.keys, [id]: updatedKey},
+        keys: {...state.keys, [keyId]: updatedKey},
       };
     }
 
     case WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS: {
       const {keyId, walletId, status} = action.payload;
       const keyToUpdate = state.keys[keyId];
-      if (keyToUpdate) {
-        keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-          if (wallet.id === walletId) {
-            wallet.balance = status.balance;
-            wallet.pendingTxps = status.pendingTxps;
-            wallet.isRefreshing = false;
-          }
-          return wallet;
-        });
+      if (!keyToUpdate) {
+        return state;
       }
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === walletId) {
+          wallet.balance = status.balance;
+          wallet.pendingTxps = status.pendingTxps;
+          wallet.isRefreshing = false;
+        }
+        return wallet;
+      });
       return {
         ...state,
         keys: {
@@ -119,14 +137,15 @@ export const walletReducer = (
     case WalletActionTypes.FAILED_UPDATE_WALLET_STATUS: {
       const {keyId, walletId} = action.payload;
       const keyToUpdate = state.keys[keyId];
-      if (keyToUpdate) {
-        keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-          if (wallet.id === walletId) {
-            wallet.isRefreshing = false;
-          }
-          return wallet;
-        });
+      if (!keyToUpdate) {
+        return state;
       }
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === walletId) {
+          wallet.isRefreshing = false;
+        }
+        return wallet;
+      });
       return {
         ...state,
         keys: {
@@ -146,12 +165,13 @@ export const walletReducer = (
       action.payload.forEach(updates => {
         const {keyId, totalBalance, totalBalanceLastDay} = updates;
         const keyToUpdate = state.keys[keyId];
+        if (keyToUpdate) {
+          keyToUpdate.totalBalance = totalBalance;
+          keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
 
-        keyToUpdate.totalBalance = totalBalance;
-        keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
-
-        updatedKeys[keyId] = {...keyToUpdate};
-        updatedBalanceCacheKeys[keyId] = dateNow;
+          updatedKeys[keyId] = {...keyToUpdate};
+          updatedBalanceCacheKeys[keyId] = dateNow;
+        }
       });
 
       return {
@@ -197,8 +217,10 @@ export const walletReducer = (
     case WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD: {
       const {key} = action.payload;
       const keyToUpdate = state.keys[key.id];
+      if (!keyToUpdate) {
+        return state;
+      }
       keyToUpdate.isPrivKeyEncrypted = !!key.methods!.isPrivKeyEncrypted();
-
       return {
         ...state,
         keys: {
@@ -213,6 +235,10 @@ export const walletReducer = (
 
     case WalletActionTypes.DELETE_KEY: {
       const {keyId} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
       const balanceToRemove = state.keys[keyId].totalBalance;
       delete state.keys[keyId];
 
@@ -230,37 +256,30 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS: {
-      const {tokenOptions, tokenData, tokenOptionsByAddress} = action.payload;
+      const {tokenOptionsByAddress, tokenDataByAddress} = action.payload;
       return {
         ...state,
-        tokenOptions: {
-          ...tokenOptions,
-        },
-        tokenData: {
-          ...tokenData,
-        },
         tokenOptionsByAddress: {
           ...tokenOptionsByAddress,
+        },
+        tokenDataByAddress: {
+          ...tokenDataByAddress,
         },
       };
     }
 
     case WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS: {
-      const {customTokenOptions, customTokenData, customTokenOptionsByAddress} =
+      const {customTokenOptionsByAddress, customTokenDataByAddress} =
         action.payload;
       return {
         ...state,
-        customTokenOptions: {
-          ...state.customTokenOptions,
-          ...customTokenOptions,
-        },
-        customTokenData: {
-          ...state.customTokenData,
-          ...customTokenData,
-        },
         customTokenOptionsByAddress: {
           ...state.customTokenOptionsByAddress,
           ...customTokenOptionsByAddress,
+        },
+        customTokenDataByAddress: {
+          ...state.customTokenDataByAddress,
+          ...customTokenDataByAddress,
         },
       };
     }
@@ -275,13 +294,15 @@ export const walletReducer = (
     case WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS: {
       const {keyId, walletId, receiveAddress} = action.payload;
       const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === walletId) {
           wallet.receiveAddress = receiveAddress;
         }
         return wallet;
       });
-
       return {
         ...state,
         keys: {
@@ -296,6 +317,9 @@ export const walletReducer = (
     case WalletActionTypes.UPDATE_KEY_NAME: {
       const {keyId, name} = action.payload;
       const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
       keyToUpdate.keyName = name;
 
       return {
@@ -312,6 +336,9 @@ export const walletReducer = (
     case WalletActionTypes.UPDATE_WALLET_NAME: {
       const {keyId, walletId, name} = action.payload;
       const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === walletId) {
           wallet.walletName = name;
@@ -333,6 +360,9 @@ export const walletReducer = (
     case WalletActionTypes.SET_WALLET_REFRESHING: {
       const {keyId, walletId, isRefreshing} = action.payload;
       const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === walletId) {
           wallet.isRefreshing = isRefreshing;
@@ -354,6 +384,9 @@ export const walletReducer = (
     case WalletActionTypes.UPDATE_WALLET_TX_HISTORY: {
       const {keyId, walletId, transactionHistory} = action.payload;
       const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === walletId) {
           wallet.transactionHistory = transactionHistory;
@@ -403,6 +436,9 @@ export const walletReducer = (
     case WalletActionTypes.SYNC_WALLETS: {
       const {keyId, wallets} = action.payload;
       const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
       keyToUpdate.wallets = keyToUpdate.wallets.concat(wallets);
 
       return {
@@ -421,6 +457,9 @@ export const walletReducer = (
         wallet: {keyId, id},
       } = action.payload;
       const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === id) {
           wallet.hideWallet = !wallet.hideWallet;
@@ -428,44 +467,6 @@ export const walletReducer = (
         return wallet;
       });
 
-      return {
-        ...state,
-        keys: {
-          ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
-        },
-      };
-    }
-
-    case WalletActionTypes.TOGGLE_HIDE_BALANCE: {
-      const {
-        wallet: {keyId, id},
-      } = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-        if (wallet.id === id) {
-          wallet.hideBalance = !wallet.hideBalance;
-        }
-        return wallet;
-      });
-
-      return {
-        ...state,
-        keys: {
-          ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
-        },
-      };
-    }
-
-    case WalletActionTypes.TOGGLE_HIDE_KEY_BALANCE: {
-      const {keyId} = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      keyToUpdate.hideKeyBalance = !keyToUpdate.hideKeyBalance;
       return {
         ...state,
         keys: {
@@ -487,19 +488,11 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.UPDATE_DEFERRED_IMPORT: {
+    case WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE:
       return {
         ...state,
-        deferredImport: action.payload,
+        customTokensMigrationComplete: true,
       };
-    }
-
-    case WalletActionTypes.CLEAR_DEFERRED_IMPORT: {
-      return {
-        ...state,
-        deferredImport: null,
-      };
-    }
 
     default:
       return state;

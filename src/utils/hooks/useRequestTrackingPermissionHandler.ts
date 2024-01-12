@@ -1,16 +1,15 @@
-import {AppEffects} from '../../store/app';
+import {Analytics} from '../../store/analytics/analytics.effects';
 import useAppDispatch from './useAppDispatch';
 
 /**
  * Returns a function that requests tracking permissions before executing a provided callback.
- * @param appInit Whether this function is being called for the first time since opening the app.
  * @returns Handler function.
  */
-export const useRequestTrackingPermissionHandler = (appInit?: boolean) => {
+export const useRequestTrackingPermissionHandler = () => {
   const dispatch = useAppDispatch();
 
   return async <T>(callback: () => T) => {
-    await dispatch(AppEffects.askForTrackingPermissionAndEnableSdks(appInit));
+    await dispatch(Analytics.initialize());
 
     return callback();
   };

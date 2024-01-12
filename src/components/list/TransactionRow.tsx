@@ -19,6 +19,7 @@ const IconContainer = styled.View`
 `;
 
 const Description = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
   overflow: hidden;
   margin-right: 175px;
   font-size: 16px;
@@ -29,6 +30,7 @@ const TailContainer = styled.View`
 `;
 
 const Value = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
   text-align: right;
   font-weight: 700;
   font-size: 16px;
@@ -79,8 +81,10 @@ const TransactionRow = ({
         </Description>
       )}
       <TailContainer>
-        {value && <Value>{value}</Value>}
-        {time && <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>}
+        {value ? <Value>{value}</Value> : null}
+        {time ? (
+          <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>
+        ) : null}
       </TailContainer>
     </TransactionContainer>
   );

@@ -1,5 +1,5 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Trans, useTranslation} from 'react-i18next';
@@ -16,7 +16,7 @@ import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {AuthScreens, AuthStackParamList} from '../AuthStack';
+import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
@@ -29,8 +29,8 @@ import AuthFormContainer, {
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
 export type CreateAccountScreenParamList = {} | undefined;
-type CreateAccountScreenProps = StackScreenProps<
-  AuthStackParamList,
+type CreateAccountScreenProps = NativeStackScreenProps<
+  AuthGroupParamList,
   AuthScreens.CREATE_ACCOUNT
 >;
 
@@ -40,6 +40,7 @@ interface CreateAccountFieldValues {
   email: string;
   password: string;
   agreedToTOSandPP: boolean;
+  agreedToMarketingCommunications: boolean;
 }
 
 const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
@@ -70,6 +71,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
     email: yup.string().email().required().trim(),
     password: yup.string().required(),
     agreedToTOSandPP: yup.boolean().oneOf([true], t('Required')),
+    agreedToMarketingCommunications: yup.boolean(),
   });
   const {
     control,
@@ -101,9 +103,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
       if (navParent?.canGoBack()) {
         navParent.goBack();
       } else {
-        navigationRef.navigate('BitpayId', {
-          screen: 'Profile',
-        });
+        navigationRef.navigate('BitPayIdProfile');
       }
     } else if (createAccountStatus === 'failed') {
       captchaRef.current?.reset();
@@ -138,8 +138,14 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
     formData => {
       Keyboard.dismiss();
 
-      const {email, givenName, familyName, agreedToTOSandPP, password} =
-        formData;
+      const {
+        email,
+        givenName,
+        familyName,
+        agreedToTOSandPP,
+        password,
+        agreedToMarketingCommunications,
+      } = formData;
 
       if (!session.captchaDisabled) {
         setRecaptchaVisible(true);
@@ -153,6 +159,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
           email,
           password,
           agreedToTOSandPP,
+          agreedToMarketingCommunications,
         }),
       );
     },
@@ -164,8 +171,14 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
   const onCaptchaResponse = (gCaptchaResponse: string) => {
     setRecaptchaVisible(false);
 
-    const {givenName, familyName, email, password, agreedToTOSandPP} =
-      getValues();
+    const {
+      givenName,
+      familyName,
+      email,
+      password,
+      agreedToTOSandPP,
+      agreedToMarketingCommunications,
+    } = getValues();
 
     dispatch(
       BitPayIdEffects.startCreateAccount({
@@ -175,18 +188,20 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
         password,
         agreedToTOSandPP,
         gCaptchaResponse,
+        agreedToMarketingCommunications,
       }),
     );
   };
 
   return (
-    <SafeAreaView>
-      <AuthFormContainer>
+    <SafeAreaView accessibilityLabel="create-account-view">
+      <AuthFormContainer accessibilityLabel="auth-form-container">
         <AuthRowContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="first-name-box-input"
                 placeholder={'Satoshi'}
                 label={t('FIRST NAME')}
                 onBlur={onBlur}
@@ -208,6 +223,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="last-name-box-input"
                 ref={familyNameRef}
                 placeholder={'Nakamoto'}
                 label={t('LAST NAME')}
@@ -230,6 +246,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="email-box-input"
                 ref={emailRef}
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
@@ -252,6 +269,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="password-box-input"
                 ref={passwordRef}
                 type="password"
                 placeholder={'strongPassword123'}
@@ -272,7 +290,7 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
             control={control}
             render={({field}) => (
               <>
-                <CheckboxControl>
+                <CheckboxControl accessibilityLabel="agreed-terms-of-use-checkbox">
                   <Checkbox
                     onPress={() => setValue('agreedToTOSandPP', !field.value)}
                     checked={field.value}
@@ -307,15 +325,46 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
           />
         </AuthRowContainer>
 
-        <AuthActionsContainer>
+        <AuthRowContainer>
+          <Controller
+            control={control}
+            render={({field}) => (
+              <>
+                <CheckboxControl accessibilityLabel="agreed-marketing-checkbox">
+                  <Checkbox
+                    onPress={() =>
+                      setValue('agreedToMarketingCommunications', !field.value)
+                    }
+                    checked={field.value}
+                  />
+
+                  <CheckboxLabel>
+                    {t(
+                      'Yes, I would like to receive promotional emails from BitPay.',
+                    )}
+                  </CheckboxLabel>
+                </CheckboxControl>
+              </>
+            )}
+            name="agreedToMarketingCommunications"
+            defaultValue={false}
+          />
+        </AuthRowContainer>
+
+        <AuthActionsContainer accessibilityLabel="auth-cta-container">
           <AuthActionRow>
-            <Button onPress={onSubmit}>{t('Create Account')}</Button>
+            <Button
+              accessibilityLabel="create-account-button"
+              onPress={onSubmit}>
+              {t('Create Account')}
+            </Button>
           </AuthActionRow>
 
           <AuthActionRow>
             <AuthActionText>
               {t('Already have an account?')}{' '}
               <Link
+                accessibilityLabel="login-button"
                 onPress={() => {
                   navigation.navigate('Login');
                 }}>

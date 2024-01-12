@@ -28,6 +28,7 @@ interface OnboardingFinishModalProps {
 interface ButtonProps {
   onPress: () => void;
   text: string;
+  accessibilityLabel?: string;
 }
 
 const BackgroundGradient = styled(LinearGradient).attrs({
@@ -77,12 +78,14 @@ const OnboardingFinishModal: React.FC = () => {
           onPress: () => {
             dismissModal();
           },
+          accessibilityLabel: 'buy-crypto-button',
         },
         {
           text: t('Receive Crypto'),
           onPress: () => {
             dismissModal();
           },
+          accessibilityLabel: 'receive-crypto-button',
         },
       ],
     },
@@ -98,12 +101,14 @@ const OnboardingFinishModal: React.FC = () => {
           onPress: () => {
             dismissModal();
           },
+          accessibilityLabel: 'create-key-button',
         },
         {
           text: t('Import'),
           onPress: () => {
             dismissModal();
           },
+          accessibilityLabel: 'import-button',
         },
       ],
     },
@@ -113,6 +118,7 @@ const OnboardingFinishModal: React.FC = () => {
 
   return (
     <Modal
+      accessibilityLabel="onboarding-finish-view"
       isVisible={isVisible}
       backdropOpacity={0.4}
       animationIn={'fadeInUp'}
@@ -138,10 +144,11 @@ const OnboardingFinishModal: React.FC = () => {
             </TextAlign>
           </TextContainer>
           <CtaContainer style={{marginTop: 10}}>
-            {buttons.map(({onPress, text}, index) => {
+            {buttons.map(({onPress, text, accessibilityLabel}, index) => {
               return (
                 <ActionContainer key={index}>
                   <Button
+                    accessibilityLabel={accessibilityLabel}
                     buttonStyle={'primary'}
                     buttonType={'pill'}
                     onPress={onPress}>

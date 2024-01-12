@@ -2,7 +2,7 @@ import React, {useLayoutEffect, useRef, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {Caution, SlateDark, White} from '../../../styles/colors';
@@ -65,7 +65,7 @@ const CreateEncryptionPassword = () => {
   const navigation = useNavigation();
   const {
     params: {key},
-  } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptPassword'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'CreateEncryptPassword'>>();
 
   const schema = yup.object().shape({
     password: yup.string().required(),
@@ -94,10 +94,7 @@ const CreateEncryptionPassword = () => {
         key.methods!.encrypt(password);
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));
         key.isPrivKeyEncrypted = key.methods!.isPrivKeyEncrypted();
-        navigation.navigate('Wallet', {
-          screen: 'KeySettings',
-          params: {key},
-        });
+        navigation.goBack();
         dispatch(
           showBottomNotificationModal({
             type: 'success',

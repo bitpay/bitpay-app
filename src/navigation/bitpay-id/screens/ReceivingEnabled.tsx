@@ -12,12 +12,13 @@ import {
 } from '../../../components/styled/Text';
 import {Action, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
-import {StackScreenProps} from '@react-navigation/stack';
-import {BitpayIdStackParamList} from '../BitpayIdStack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {BitpayIdGroupParamList, BitpayIdScreens} from '../BitpayIdGroup';
+import {useTranslation} from 'react-i18next';
 
-type ReceivingEnabledProps = StackScreenProps<
-  BitpayIdStackParamList,
-  'ReceivingEnabled'
+type ReceivingEnabledProps = NativeStackScreenProps<
+  BitpayIdGroupParamList,
+  BitpayIdScreens.RECEIVING_ENABLED
 >;
 
 const ViewContainer = styled.View`
@@ -57,7 +58,8 @@ const EmailText = styled(BaseText)`
   font-weight: 500;
 `;
 
-const ReceivingEnabled: React.FC<ReceivingEnabledProps> = ({navigation}) => {
+const ReceivingEnabled = ({route, navigation}: ReceivingEnabledProps) => {
+  const {t} = useTranslation();
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );

@@ -3,28 +3,35 @@ import {ColorSchemeName, EventSubscription} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
+import {
+  APP_NETWORK,
+  APP_VERSION,
+  BASE_BITPAY_URLS,
+} from '../../constants/config';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
-import {NavScreenParams, RootStackParamList} from '../../Root';
 import {
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
+  InAppNotificationContextType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import uniqBy from 'lodash.uniqby';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
+import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
+import moment from 'moment';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
   'appWasInit',
-  'appOpeningWasTracked',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showInAppNotification',
+  'inAppNotificationData',
   'showDecryptPasswordModal',
   'showPinModal',
   'pinModalConfig',
@@ -36,7 +43,18 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'brazeContentCardSubscription',
 ];
 
-export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
+export type ModalId =
+  | 'sheetModal'
+  | 'ongoingProcess'
+  | 'pin'
+  | 'inAppNotification';
+
+export type FeedbackType = {
+  time: number;
+  version: string;
+  sent: boolean;
+  rate: FeedbackRateType;
+};
 
 export type AppFirstOpenData = {
   firstOpenEventComplete: boolean;
@@ -58,15 +76,26 @@ export interface AppState {
    * Whether the app is done initializing data and animations are complete.
    */
   appWasInit: boolean;
+  /**
+   * Whether app has completed a set of conditions before handling deeplinks/deferred deeplinks.
+   */
+  appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
-  appOpeningWasTracked: boolean;
   introCompleted: boolean;
+  userFeedback: FeedbackType;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
+  showInAppNotification: boolean;
+  inAppNotificationData:
+    | {
+        context: InAppNotificationContextType;
+        message: string;
+        request?: Web3WalletTypes.EventArguments['session_request'];
+      }
+    | undefined;
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
-  currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
   confirmedTxAccepted: boolean;
   announcementsAccepted: boolean;
@@ -86,6 +115,7 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   defaultLanguage: string;
   showPortfolioValue: boolean;
+  hideAllBalances: boolean;
   brazeContentCardSubscription: EventSubscription | null;
   brazeContentCards: ContentCard[];
   brazeEid: string | undefined;
@@ -101,12 +131,14 @@ export interface AppState {
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
+  migrationMMKVStorageComplete: boolean;
+  migrationMMKVStorageFailure: boolean;
   showKeyMigrationFailureModal: boolean;
   keyMigrationFailureModalHasBeenShown: boolean;
   activeModalId: ModalId | null;
   failedAppInit: boolean;
   checkingBiometricForSending: boolean;
-  onCompleteOnboardingList: Array<string>;
+  hasViewedZenLedgerWarning: boolean;
 }
 
 const initialState: AppState = {
@@ -126,15 +158,22 @@ const initialState: AppState = {
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
   appWasInit: false,
+  appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
-  appOpeningWasTracked: false,
   introCompleted: false,
+  userFeedback: {
+    time: moment().unix(),
+    version: APP_VERSION,
+    sent: false,
+    rate: 'default',
+  },
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
-  onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
+  onGoingProcessModalMessage: undefined,
+  showInAppNotification: false,
+  inAppNotificationData: undefined,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
-  currentRoute: undefined,
   notificationsAccepted: false,
   confirmedTxAccepted: false,
   announcementsAccepted: false,
@@ -154,6 +193,7 @@ const initialState: AppState = {
   colorScheme: null,
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
+  hideAllBalances: false,
   brazeContentCardSubscription: null,
   brazeContentCards: [],
   brazeEid: undefined,
@@ -169,12 +209,14 @@ const initialState: AppState = {
   recentDefaultAltCurrency: [],
   migrationComplete: false,
   keyMigrationFailure: false,
+  migrationMMKVStorageComplete: false,
+  migrationMMKVStorageFailure: false,
   showKeyMigrationFailureModal: false,
   keyMigrationFailureModalHasBeenShown: false,
   activeModalId: null,
   failedAppInit: false,
   checkingBiometricForSending: false,
-  onCompleteOnboardingList: [],
+  hasViewedZenLedgerWarning: false,
 };
 
 export const appReducer = (
@@ -200,6 +242,12 @@ export const appReducer = (
         appWasInit: true,
       };
 
+    case AppActionTypes.APP_READY_FOR_DEEPLINKING:
+      return {
+        ...state,
+        appIsReadyForDeeplinking: true,
+      };
+
     case AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE:
       return {
         ...state,
@@ -216,12 +264,6 @@ export const appReducer = (
           ...state.appFirstOpenData,
           firstOpenDate: action.payload,
         },
-      };
-
-    case AppActionTypes.APP_OPENING_WAS_TRACKED:
-      return {
-        ...state,
-        appOpeningWasTracked: true,
       };
 
     case AppActionTypes.SET_ONBOARDING_COMPLETED:
@@ -249,6 +291,20 @@ export const appReducer = (
         showOnGoingProcessModal: false,
       };
 
+    case AppActionTypes.SHOW_IN_APP_NOTIFICATION:
+      return {
+        ...state,
+        showInAppNotification: true,
+        inAppNotificationData: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_IN_APP_NOTIFICATION:
+      return {
+        ...state,
+        showInAppNotification: false,
+        inAppNotificationData: undefined,
+      };
+
     case AppActionTypes.SHOW_BOTTOM_NOTIFICATION_MODAL:
       return {
         ...state,
@@ -272,12 +328,6 @@ export const appReducer = (
       return {
         ...state,
         colorScheme: action.payload,
-      };
-
-    case AppActionTypes.SET_CURRENT_ROUTE:
-      return {
-        ...state,
-        currentRoute: action.payload,
       };
 
     case AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY:
@@ -399,6 +449,12 @@ export const appReducer = (
         showPortfolioValue: action.payload,
       };
 
+    case AppActionTypes.TOGGLE_HIDE_ALL_BALANCES:
+      return {
+        ...state,
+        hideAllBalances: action.payload ?? !state.hideAllBalances,
+      };
+
     case AppActionTypes.BRAZE_INITIALIZED:
       return {
         ...state,
@@ -516,6 +572,18 @@ export const appReducer = (
         keyMigrationFailure: true,
       };
 
+    case AppActionTypes.SET_MIGRATION_MMKV_STORAGE_COMPLETE:
+      return {
+        ...state,
+        migrationMMKVStorageComplete: true,
+      };
+
+    case AppActionTypes.SET_KEY_MIGRATION_MMKV_STORAGE_FAILURE:
+      return {
+        ...state,
+        migrationMMKVStorageFailure: true,
+      };
+
     case AppActionTypes.SET_SHOW_KEY_MIGRATION_FAILURE_MODAL:
       return {
         ...state,
@@ -546,20 +614,16 @@ export const appReducer = (
         checkingBiometricForSending: action.payload,
       };
 
-    case AppActionTypes.UPDATE_ON_COMPLETE_ONBOARDING_LIST:
-      const _onCompleteOnboardingList = state.onCompleteOnboardingList;
-      if (!_onCompleteOnboardingList.includes(action.payload)) {
-        _onCompleteOnboardingList.push(action.payload);
-      }
+    case AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING:
       return {
         ...state,
-        onCompleteOnboardingList: _onCompleteOnboardingList,
+        hasViewedZenLedgerWarning: true,
       };
 
-    case AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST:
+    case AppActionTypes.USER_FEEDBACK:
       return {
         ...state,
-        onCompleteOnboardingList: [],
+        userFeedback: action.payload,
       };
 
     default:

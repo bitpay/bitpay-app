@@ -1,5 +1,7 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import i18next from 'i18next';
+import _ from 'lodash';
 import React, {
   ReactElement,
   useCallback,
@@ -11,14 +13,16 @@ import React, {
 } from 'react';
 import {useTranslation} from 'react-i18next';
 import {
+  DeviceEventEmitter,
+  FlatList,
   Linking,
   RefreshControl,
   SectionList,
   Share,
   Text,
   View,
+  TouchableOpacity,
 } from 'react-native';
-import {batch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -31,14 +35,14 @@ import {
   ProposalBadge,
   Small,
 } from '../../../components/styled/Text';
-import {Network, URL} from '../../../constants';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {Network} from '../../../constants';
+import {
+  showBottomNotificationModal,
+  toggleHideAllBalances,
+} from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
-import {
-  toggleHideBalance,
-  updatePortfolioBalance,
-} from '../../../store/wallet/wallet.actions';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
   Key,
   TransactionProposal,
@@ -53,6 +57,7 @@ import {
   White,
 } from '../../../styles/colors';
 import {
+  formatCurrencyAbbreviation,
   getProtocolName,
   shouldScale,
   sleep,
@@ -72,12 +77,13 @@ import OptionsSheet, {Option} from '../components/OptionsSheet';
 import ReceiveAddress from '../components/ReceiveAddress';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
+  BuildUiFriendlyList,
   CanSpeedupTx,
   GetTransactionHistory,
   GroupTransactionHistory,
@@ -97,11 +103,9 @@ import TransactionProposalRow from '../../../components/list/TransactionProposal
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
-import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
 import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
-import {FlatList} from 'react-native';
 import {
   buildBtcSpeedupTx,
   buildEthERCTokenSpeedupTx,
@@ -111,26 +115,34 @@ import {
 import KeySvg from '../../../../assets/img/key.svg';
 import TimerSvg from '../../../../assets/img/timer.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
 } from '../../../constants/currencies';
-import i18next from 'i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
-import _ from 'lodash';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
-import {TRANSACTION_ICON_SIZE} from '../../../constants/TransactionIcons';
+import {
+  TransactionIcons,
+  TRANSACTION_ICON_SIZE,
+} from '../../../constants/TransactionIcons';
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
+import {BillPayAccount} from '../../../store/shop/shop.models';
+import debounce from 'lodash.debounce';
 
-type WalletDetailsScreenProps = StackScreenProps<
-  WalletStackParamList,
+export type WalletDetailsScreenParamList = {
+  walletId: string;
+  key?: Key;
+  skipInitializeHistory?: boolean;
+};
+
+type WalletDetailsScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
   'WalletDetails'
 >;
 
-const WalletDetailsContainer = styled.View`
+const WalletDetailsContainer = styled.SafeAreaView`
   flex: 1;
-  padding-top: 10px;
 `;
 
 const HeaderContainer = styled.View`
@@ -278,11 +290,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {walletId, skipInitializeHistory} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
+  const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
+
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
@@ -292,6 +307,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     dispatch,
     'symbol',
   );
+  const accounts = useAppSelector(
+    ({SHOP}) => SHOP.billPayAccounts[uiFormattedWallet.network],
+  );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
@@ -300,7 +318,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <>
+        <View style={{height: 'auto'}}>
           <HeaderSubTitleContainer>
             <KeySvg width={10} height={10} />
             <HeaderKeyName>{key.keyName}</HeaderKeyName>
@@ -308,7 +326,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           <HeaderTitle style={{textAlign: 'center'}}>
             {uiFormattedWallet.walletName}
           </HeaderTitle>
-        </>
+        </View>
       ),
       headerRight: () => (
         <Settings
@@ -331,9 +349,26 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         createWalletAddress({wallet: fullWalletObj, newAddress: false}),
       )) as string;
 
-      await Share.share({
-        message: address,
-      });
+      Share.share(
+        {
+          message: address,
+          title: t('Share Address'),
+        },
+        {
+          dialogTitle: t('Share Address'),
+          subject: t('Share Address'),
+          excludedActivityTypes: [
+            'print',
+            'addToReadingList',
+            'markupAsPDF',
+            'openInIbooks',
+            'postToFacebook',
+            'postToTwitter',
+            'saveToCameraRoll',
+            'sharePlay',
+          ],
+        },
+      );
     } catch (e) {}
   };
 
@@ -344,22 +379,20 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       description: t(
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
       ),
-      onPress: () => {
-        navigation.navigate('Wallet', {
-          screen: WalletScreens.AMOUNT,
-          params: {
-            cryptoCurrencyAbbreviation:
-              fullWalletObj.currencyAbbreviation.toUpperCase(),
-            chain: fullWalletObj.chain,
-            onAmountSelected: async (amount, setButtonState) => {
-              setButtonState('success');
-              await sleep(500);
-              navigation.navigate('Wallet', {
-                screen: 'RequestSpecificAmountQR',
-                params: {wallet: fullWalletObj, requestAmount: Number(amount)},
-              });
-              sleep(300).then(() => setButtonState(null));
-            },
+      onPress: async () => {
+        await sleep(500);
+        navigation.navigate(WalletScreens.AMOUNT, {
+          cryptoCurrencyAbbreviation: fullWalletObj.currencyAbbreviation,
+          chain: fullWalletObj.chain,
+          tokenAddress: fullWalletObj.tokenAddress,
+          onAmountSelected: async (amount, setButtonState) => {
+            setButtonState('success');
+            await sleep(500);
+            navigation.navigate('RequestSpecificAmountQR', {
+              wallet: fullWalletObj,
+              requestAmount: Number(amount),
+            });
+            sleep(300).then(() => setButtonState(null));
           },
         });
       },
@@ -376,14 +409,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       img: <Icons.Settings />,
       title: t('Wallet Settings'),
       description: t('View all the ways to manage and configure your wallet.'),
-      onPress: () =>
-        navigation.navigate('Wallet', {
-          screen: 'WalletSettings',
-          params: {
-            key,
-            walletId,
-          },
-        }),
+      onPress: async () => {
+        await sleep(500);
+        navigation.navigate('WalletSettings', {
+          key,
+          walletId,
+        });
+      },
     },
   ]);
 
@@ -398,7 +430,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         await dispatch(
           startUpdateWalletStatus({key, wallet: fullWalletObj, force: true}),
         ),
-        await loadHistory(true),
+        await debouncedLoadHistory(true),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -418,8 +450,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     fiatSpendableBalance,
     currencyAbbreviation,
     chain,
+    tokenAddress,
     network,
-    hideBalance,
     pendingTxps,
   } = uiFormattedWallet;
 
@@ -437,42 +469,48 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
+  const [onEndReachedCalledDuringLoading, setOnEndReachedCalledDuringLoading] =
+    useState<boolean>(true);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
     const txpsPending: TransactionProposal[] = [];
     const txpsUnsent: TransactionProposal[] = [];
-    pendingTxps.forEach((txp: any) => {
+    const formattedPendingTxps = BuildUiFriendlyList(
+      pendingTxps,
+      currencyAbbreviation,
+      chain,
+      [],
+      tokenAddress,
+    );
+    formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
         copayerId: fullWalletObj.credentials.copayerId,
       });
 
-      if (fullWalletObj.credentials.n > 1) {
-        if ((!action || action.type === 'failed') && txp.status === 'pending') {
-          txpsPending.push(txp);
-        }
-
-        if (action && txp.status === 'accepted') {
-          txpsPending.push(txp);
-        }
-
+      const setPendingTx = (_txp: TransactionProposal) => {
+        fullWalletObj.credentials.n > 1
+          ? txpsPending.push(_txp)
+          : txpsUnsent.push(_txp);
         setNeedActionPendingTxps(txpsPending);
-        // For unsent transactions
-      } else if (action && txp.status === 'accepted') {
-        txpsUnsent.push(txp);
         setNeedActionUnsentTxps(txpsUnsent);
+      };
+      if ((!action || action.type === 'failed') && txp.status === 'pending') {
+        setPendingTx(txp);
+      }
+      // unsent transactions
+      if (action && txp.status === 'accepted') {
+        setPendingTx(txp);
       }
     });
   };
 
-  const loadHistory = async (refresh?: boolean) => {
+  const loadHistory = useCallback(async (refresh?: boolean) => {
     if (!loadMore && !refresh) {
       return;
     }
     try {
-      batch(() => {
-        setIsLoading(!refresh);
-        setErrorLoadingTxs(false);
-      });
+      setIsLoading(!refresh);
+      setErrorLoadingTxs(false);
 
       const [transactionHistory] = await Promise.all([
         dispatch(
@@ -486,22 +524,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         ),
       ]);
 
-      batch(() => {
-        if (transactionHistory) {
-          let {transactions: _history, loadMore: _loadMore} =
-            transactionHistory;
+      if (transactionHistory) {
+        let {transactions: _history, loadMore: _loadMore} = transactionHistory;
 
-          if (_history?.length) {
-            setHistory(_history);
-            const grouped = GroupTransactionHistory(_history);
-            setGroupedHistory(grouped);
-          }
-
-          setLoadMore(_loadMore);
+        if (_history?.length) {
+          setHistory(_history);
+          const grouped = GroupTransactionHistory(_history);
+          setGroupedHistory(grouped);
         }
 
-        setIsLoading(false);
-      });
+        setLoadMore(_loadMore);
+      }
+
+      setIsLoading(false);
     } catch (e) {
       setLoadMore(false);
       setIsLoading(false);
@@ -509,9 +544,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
       console.log('Transaction Update: ', e);
     }
-  };
-  const loadHistoryRef = useRef(loadHistory);
-  loadHistoryRef.current = loadHistory;
+  }, []);
+
+  const debouncedLoadHistory = useMemo(
+    () => debounce(loadHistory, 300, {leading: true}),
+    [loadHistory],
+  );
+
+  const loadHistoryRef = useRef(debouncedLoadHistory);
 
   const updateWalletStatusAndProfileBalance = async () => {
     await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
@@ -520,11 +560,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     dispatch(
-      logSegmentEvent('track', 'View Wallet', {
+      Analytics.track('View Wallet', {
         coin: fullWalletObj?.currencyAbbreviation,
       }),
     );
     updateWalletStatusAndProfileBalance();
+    if (!skipInitializeHistory) {
+      debouncedLoadHistory();
+    }
+  }, []);
+
+  useEffect(() => {
     setNeedActionTxps(fullWalletObj.pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
@@ -534,13 +580,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       },
     );
     return () => subscription.remove();
-  }, [key]);
-
-  useEffect(() => {
-    if (!skipInitializeHistory) {
-      loadHistoryRef.current();
-    }
-  }, [skipInitializeHistory]);
+  }, [keys]);
 
   const listFooterComponent = () => {
     return (
@@ -580,10 +620,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const goToTransactionDetails = (transaction: any) => {
-    const onMemoChange = () => loadHistory(true);
-    navigation.navigate('Wallet', {
-      screen: 'TransactionDetails',
-      params: {wallet: fullWalletObj, transaction, onMemoChange},
+    const onMemoChange = () => debouncedLoadHistory(true);
+    navigation.navigate('TransactionDetails', {
+      wallet: fullWalletObj,
+      transaction,
+      onMemoChange,
     });
   };
 
@@ -602,7 +643,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           createWalletAddress({wallet: fullWalletObj, newAddress: false}),
         );
 
-        tx = await buildBtcSpeedupTx(fullWalletObj, transaction, address);
+        tx = await dispatch(
+          buildBtcSpeedupTx(fullWalletObj, transaction, address),
+        );
 
         dispatch(
           showBottomNotificationModal({
@@ -654,16 +697,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         createProposalAndBuildTxDetails(tx),
       );
 
-      navigation.navigate('Wallet', {
-        screen: 'Confirm',
-        params: {
-          wallet: fullWalletObj,
-          recipient,
-          txp: newTxp,
-          txDetails,
-          amount,
-          speedup: true,
-        },
+      navigation.navigate('Confirm', {
+        wallet: fullWalletObj,
+        recipient,
+        txp: newTxp,
+        txDetails,
+        amount,
+        speedup: true,
       });
     } catch (err: any) {
       const [errorMessageConfig] = await Promise.all([
@@ -811,13 +851,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const onPressTxp = useMemo(
     () => (transaction: any) => {
-      navigation.navigate('Wallet', {
-        screen: 'TransactionProposalDetails',
-        params: {
-          walletId: fullWalletObj.id,
-          transactionId: transaction.id,
-          keyId: key.id,
-        },
+      navigation.navigate('TransactionProposalDetails', {
+        walletId: fullWalletObj.id,
+        transactionId: transaction.id,
+        keyId: key.id,
       });
     },
     [],
@@ -825,13 +862,22 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const onPressTxpBadge = useMemo(
     () => () => {
-      navigation.navigate('Wallet', {
-        screen: 'TransactionProposalNotifications',
-        params: {walletId: fullWalletObj.credentials.walletId},
+      navigation.navigate('TransactionProposalNotifications', {
+        walletId: fullWalletObj.credentials.walletId,
       });
     },
     [],
   );
+
+  const getBillPayIcon = (
+    billPayAccounts: BillPayAccount[],
+    merchantId: string,
+  ): string => {
+    const account = (billPayAccounts || []).find(
+      acct => acct[acct.type].merchantId === merchantId,
+    );
+    return account ? account[account.type].merchantIcon : '';
+  };
 
   const renderTransaction = useCallback(({item}) => {
     return (
@@ -844,10 +890,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               badge={<SentBadgeSvg />}
             />
           ) : (
-            item.uiIcon
+            TransactionIcons[item.uiIcon]
           )
         }
-        iconURI={item.uiIconURI}
+        iconURI={
+          getBillPayIcon(accounts, item.uiIconURI) ||
+          getGiftCardIcons(supportedCardMap)[item.uiIconURI]
+        }
         description={item.uiDescription}
         time={item.uiTime}
         value={item.uiValue}
@@ -859,11 +908,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const renderTxp = useCallback(({item}) => {
     return (
       <TransactionProposalRow
-        icon={item.uiIcon}
+        icon={TransactionIcons[item.uiIcon]}
         creator={item.uiCreator}
         time={item.uiTime}
         value={item.uiValue}
+        message={item.message}
         onPressTransaction={() => onPressTxp(item)}
+        recipientCount={item.recipientCount}
+        toAddress={item.toAddress}
+        tokenAddress={item.tokenAddress}
+        chain={item.chain}
+        contactList={contactList}
       />
     );
   }, []);
@@ -899,24 +954,25 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 <BalanceContainer>
                   <TouchableOpacity
                     onLongPress={() => {
-                      dispatch(toggleHideBalance({wallet: fullWalletObj}));
+                      dispatch(toggleHideAllBalances());
                     }}>
                     <Row>
-                      {!hideBalance ? (
+                      {!hideAllBalances ? (
                         <Balance scale={shouldScale(cryptoBalance)}>
-                          {cryptoBalance} {currencyAbbreviation}
+                          {cryptoBalance}{' '}
+                          {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Balance>
                       ) : (
                         <H2>****</H2>
                       )}
                     </Row>
                     <Row>
-                      {showFiatBalance && !hideBalance && (
+                      {showFiatBalance && !hideAllBalances && (
                         <Paragraph>{fiatBalance}</Paragraph>
                       )}
                     </Row>
                   </TouchableOpacity>
-                  {!hideBalance && showBalanceDetailsButton() && (
+                  {!hideAllBalances && showBalanceDetailsButton() && (
                     <TouchableRow
                       onPress={() => setShowBalanceDetailsModal(true)}>
                       <TimerSvg
@@ -926,7 +982,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       />
                       <Small>
                         <Text style={{fontWeight: 'bold'}}>
-                          {cryptoSpendableBalance} {currencyAbbreviation}
+                          {cryptoSpendableBalance}{' '}
+                          {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Text>
                         {showFiatBalance && (
                           <Text> ({fiatSpendableBalance})</Text>
@@ -978,33 +1035,29 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 {fullWalletObj ? (
                   <LinkingButtons
                     buy={{
-                      hide: !isCoinSupportedToBuy(
-                        fullWalletObj.currencyAbbreviation,
-                        fullWalletObj.chain,
-                      ),
+                      hide:
+                        fullWalletObj.network === 'testnet' ||
+                        !isCoinSupportedToBuy(
+                          fullWalletObj.currencyAbbreviation,
+                          fullWalletObj.chain,
+                          locationData?.countryShortCode || 'US',
+                        ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent('track', 'Clicked Buy Crypto', {
+                          Analytics.track('Clicked Buy Crypto', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
                           }),
                         );
-                        navigation.navigate('Wallet', {
-                          screen: WalletScreens.AMOUNT,
-                          params: {
-                            onAmountSelected: async (amount: string) => {
-                              navigation.navigate('BuyCrypto', {
-                                screen: 'BuyCryptoRoot',
-                                params: {
-                                  amount: Number(amount),
-                                  fromWallet: fullWalletObj,
-                                },
-                              });
-                            },
-                            opts: {
-                              context: 'buyCrypto',
-                            },
+                        navigation.navigate(WalletScreens.AMOUNT, {
+                          onAmountSelected: async (amount: string) => {
+                            navigation.navigate('BuyCryptoRoot', {
+                              amount: Number(amount),
+                              fromWallet: fullWalletObj,
+                            });
                           },
+                          context: 'buyCrypto',
                         });
                       },
                     }}
@@ -1017,23 +1070,21 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent('track', 'Clicked Swap Crypto', {
+                          Analytics.track('Clicked Swap Crypto', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
                           }),
                         );
-                        navigation.navigate('SwapCrypto', {
-                          screen: 'Root',
-                          params: {
-                            selectedWallet: fullWalletObj,
-                          },
+                        navigation.navigate('SwapCryptoRoot', {
+                          selectedWallet: fullWalletObj,
                         });
                       },
                     }}
                     receive={{
                       cta: () => {
                         dispatch(
-                          logSegmentEvent('track', 'Clicked Receive', {
+                          Analytics.track('Clicked Receive', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
                           }),
@@ -1045,15 +1096,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       hide: !fullWalletObj.balance.sat,
                       cta: () => {
                         dispatch(
-                          logSegmentEvent('track', 'Clicked Send', {
+                          Analytics.track('Clicked Send', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
                           }),
                         );
-                        navigation.navigate('Wallet', {
-                          screen: 'SendTo',
-                          params: {wallet: fullWalletObj},
-                        });
+                        navigation.navigate('SendTo', {wallet: fullWalletObj});
                       },
                     }}
                   />
@@ -1067,11 +1115,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         ? t('Pending Proposals')
                         : t('Unsent Transactions')}
                     </H5>
-                    {fullWalletObj.credentials.n > 1 ? (
-                      <ProposalBadgeContainer onPress={onPressTxpBadge}>
-                        <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-                      </ProposalBadgeContainer>
-                    ) : null}
+                    <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                      <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                    </ProposalBadgeContainer>
                   </TransactionSectionHeaderContainer>
                   {fullWalletObj.credentials.n > 1 ? (
                     <FlatList
@@ -1098,7 +1144,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               ) : null}
 
               {Number(cryptoLockedBalance) > 0 ? (
-                <LockedBalanceContainer>
+                <LockedBalanceContainer
+                  onPress={() => setShowBalanceDetailsModal(true)}>
                   <HeadContainer>
                     <Description numberOfLines={1} ellipsizeMode={'tail'}>
                       {t('Total Locked Balance')}
@@ -1107,7 +1154,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
                   <TailContainer>
                     <Value>
-                      {cryptoLockedBalance} {currencyAbbreviation}
+                      {cryptoLockedBalance}{' '}
+                      {formatCurrencyAbbreviation(currencyAbbreviation)}
                     </Value>
                     <Fiat>
                       {network === 'testnet'
@@ -1136,8 +1184,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }}
         ItemSeparatorComponent={() => <BorderBottom />}
         ListFooterComponent={listFooterComponent}
-        onEndReached={() => loadHistory()}
+        onEndReached={() => {
+          if (!onEndReachedCalledDuringLoading) {
+            debouncedLoadHistory();
+            setOnEndReachedCalledDuringLoading(true);
+          }
+        }}
         onEndReachedThreshold={0.5}
+        onMomentumScrollBegin={() => {
+          setOnEndReachedCalledDuringLoading(false);
+        }}
         ListEmptyComponent={listEmptyComponent}
         maxToRenderPerBatch={15}
         getItemLayout={getItemLayout}

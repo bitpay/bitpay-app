@@ -3,14 +3,14 @@ import {BaseText, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
 import {useTranslation} from 'react-i18next';
-export const TRANSACTION_PROPOSAL_ROW_HEIGHT = 75;
+import {GetContactName} from '../../store/wallet/effects/transactions/transactions';
+import {ContactRowProps} from './ContactRow';
 
 const TransactionContainer = styled.TouchableOpacity`
   flex-direction: row;
-  padding: ${ScreenGutter};
+  padding: 10px ${ScreenGutter};
   justify-content: center;
   align-items: center;
-  height: ${TRANSACTION_PROPOSAL_ROW_HEIGHT}px;
 `;
 
 const IconContainer = styled.View`
@@ -45,8 +45,14 @@ interface Props {
   creator?: string;
   value?: string;
   time?: string;
+  message?: string;
   onPressTransaction?: () => void;
   hideIcon?: boolean;
+  recipientCount?: number;
+  toAddress?: string;
+  tokenAddress?: string;
+  contactList?: ContactRowProps[];
+  chain?: string;
 }
 
 const TransactionProposalRow = ({
@@ -54,19 +60,52 @@ const TransactionProposalRow = ({
   creator,
   value,
   time,
+  message,
   onPressTransaction,
   hideIcon,
+  recipientCount,
+  toAddress,
+  tokenAddress,
+  contactList,
+  chain,
 }: Props) => {
   const {t} = useTranslation();
+  let label: string = t('Sending');
+  let labelLines: number = 1;
+
+  if (recipientCount && recipientCount > 1) {
+    label = t('Sending to multiple recipients (recipientCount)', {
+      recipientCount,
+    });
+    labelLines = 2;
+  } else if (toAddress && chain && contactList) {
+    const contactName = GetContactName(
+      toAddress,
+      tokenAddress,
+      chain,
+      contactList,
+    );
+    if (contactName) {
+      label = t('Sending to contactName', {contactName});
+      labelLines = 2;
+    }
+  }
+
   return (
     <TransactionContainer onPress={onPressTransaction}>
       {icon && !hideIcon && <IconContainer>{icon}</IconContainer>}
 
       <HeadContainer>
-        <Description numberOfLines={1} ellipsizeMode={'tail'}>
-          {t('Sending')}
+        <Description
+          numberOfLines={message ? 2 : labelLines}
+          ellipsizeMode={'tail'}>
+          {message ? message : label}
         </Description>
-        {creator && <Creator>{t('Created by ', {creator})}</Creator>}
+        {creator && (
+          <Creator numberOfLines={1} ellipsizeMode={'tail'}>
+            {t('Created by ', {creator})}
+          </Creator>
+        )}
       </HeadContainer>
 
       <TailContainer>

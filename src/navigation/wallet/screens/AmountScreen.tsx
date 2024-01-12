@@ -1,18 +1,21 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Amount from '../../../components/amount/Amount';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
+import type {HeaderTitleProps} from '@react-navigation/elements';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
 `;
 
-const WalletScreenContainer = styled.SafeAreaView`
+const WalletScreenContainer = styled.SafeAreaView<{hasHeaderTitle: boolean}>`
   flex: 1;
+  ${hasHeaderTitle => (hasHeaderTitle ? 'margin-top: 30px' : '')}
 `;
 
 export interface AmountScreenParamList {
@@ -29,12 +32,22 @@ export interface AmountScreenParamList {
   sendMaxEnabled?: boolean;
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
+  customAmountSublabel?: any;
   chain?: string;
+  tokenAddress?: string;
   context?: string;
+  headerTitle?:
+    | string
+    | ((props: HeaderTitleProps) => React.ReactNode)
+    | undefined;
 }
 
+const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
+  return <>{props.children}</>;
+});
+
 const AmountScreen: React.VFC<
-  StackScreenProps<WalletStackParamList, WalletScreens.AMOUNT>
+  NativeStackScreenProps<WalletGroupParamList, WalletScreens.AMOUNT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const [buttonState, setButtonState] = useState<ButtonState>();
@@ -44,8 +57,11 @@ const AmountScreen: React.VFC<
     sendMaxEnabled,
     cryptoCurrencyAbbreviation,
     fiatCurrencyAbbreviation,
+    customAmountSublabel,
     chain,
+    tokenAddress,
     context,
+    headerTitle,
   } = route.params || {};
 
   const onSendMaxPressed = () => {
@@ -55,35 +71,40 @@ const AmountScreen: React.VFC<
   onSendMaxPressedRef.current = onSendMaxPressed;
 
   useLayoutEffect(() => {
-    if (sendMaxEnabled) {
-      navigation.setOptions({
-        headerRight: () => (
-          <HeaderContainer>
-            <Button
-              buttonType="pill"
-              buttonStyle="cancel"
-              onPress={() => onSendMaxPressedRef.current()}>
-              {t('Send Max')}
-            </Button>
-          </HeaderContainer>
-        ),
-      });
-    }
-  }, [navigation, t, sendMaxEnabled]);
+    navigation.setOptions({
+      ...(headerTitle && {headerTitle}),
+      headerRight: sendMaxEnabled
+        ? () => (
+            <HeaderContainer>
+              <Button
+                buttonType="pill"
+                buttonStyle="cancel"
+                onPress={() => onSendMaxPressedRef.current()}>
+                {t('Send Max')}
+              </Button>
+            </HeaderContainer>
+          )
+        : undefined,
+    });
+  }, [navigation, t, sendMaxEnabled, headerTitle]);
 
   return (
-    <WalletScreenContainer>
-      <Amount
-        buttonState={buttonState}
-        context={context}
-        cryptoCurrencyAbbreviation={cryptoCurrencyAbbreviation}
-        fiatCurrencyAbbreviation={fiatCurrencyAbbreviation}
-        chain={chain}
-        onSubmit={amt => {
-          onAmountSelected?.(amt.toString(), setButtonState);
-        }}
-      />
-    </WalletScreenContainer>
+    <AmountModalContainerHOC>
+      <WalletScreenContainer hasHeaderTitle={!!headerTitle}>
+        <Amount
+          buttonState={buttonState}
+          context={context}
+          cryptoCurrencyAbbreviation={cryptoCurrencyAbbreviation}
+          customAmountSublabel={customAmountSublabel}
+          fiatCurrencyAbbreviation={fiatCurrencyAbbreviation}
+          chain={chain}
+          tokenAddress={tokenAddress}
+          onSubmit={amt => {
+            onAmountSelected?.(amt.toString(), setButtonState);
+          }}
+        />
+      </WalletScreenContainer>
+    </AmountModalContainerHOC>
   );
 };
 

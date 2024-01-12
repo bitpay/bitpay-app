@@ -5,10 +5,15 @@ export const basicInfoFields = `
   givenName
   familyName
   email
+  verified
   eid
   incentiveLevel
   incentiveLevelId
+  methodEntityId
+  phone
   name
+  country
+  state
   userSettings {
     agreedCardholderAgreement
     acknowledgePrivacyNotice
@@ -16,6 +21,11 @@ export const basicInfoFields = `
   }
   experiments
   referralCode
+`;
+
+export const basicInfoExternalFields = `
+  address
+  dateOfBirth
 `;
 
 /**
@@ -49,13 +59,17 @@ export const FETCH_ALL_USER_DATA = (token: string): GqlQueryParams => {
   };
 };
 
-export const FETCH_BASIC_INFO = (token: string): GqlQueryParams => {
+export const FETCH_BASIC_INFO = (
+  token: string,
+  params: {includeExternalData: boolean},
+): GqlQueryParams => {
   return {
     query: `
       query FETCH_BASIC_INFO ($token:String!) {
         user:bitpayUser(token:$token) {
-          basicInfo:user {
+          basicInfo:user(includeExternalData:${params.includeExternalData}) {
             ${basicInfoFields}
+            ${params.includeExternalData ? basicInfoExternalFields : ''}
           }
         }
       }

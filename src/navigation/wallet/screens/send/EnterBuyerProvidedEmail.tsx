@@ -18,7 +18,7 @@ import yup from '../../../../lib/yup';
 import {setBuyerProvidedEmail} from '../../../../store/scan/scan.effects';
 import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import A from '../../../../components/anchor/Anchor';
 import {AppActions} from '../../../../store/app';
@@ -37,7 +37,7 @@ const EnterBuyerProvidedEmail: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const route =
-    useRoute<RouteProp<WalletStackParamList, 'EnterBuyerProvidedEmail'>>();
+    useRoute<RouteProp<WalletGroupParamList, 'EnterBuyerProvidedEmail'>>();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
   const {

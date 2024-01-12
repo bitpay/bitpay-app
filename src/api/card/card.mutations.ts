@@ -1,3 +1,4 @@
+import {IS_ANDROID, IS_IOS} from '../../constants';
 import {
   AppleWalletProvisioningRequestParams,
   StartActivateCardParams,
@@ -18,6 +19,22 @@ type ActivateCardInputType = {
   expirationDate: string;
   lastFourDigits: string | undefined;
 };
+
+type AnalyticsContextInputType =
+  | {
+      device?: {
+        type?: 'ios' | 'android';
+      };
+    }
+  | undefined;
+
+type AnalyticsIntegrationsInputType =
+  | {
+      AppsFlyer?: {
+        appsFlyerId?: string;
+      };
+    }
+  | undefined;
 
 type GoogleProvisioningInputType = {
   walletProvider: 'google';
@@ -76,14 +93,49 @@ export const LOCK_CARD = (
 export const ACTIVATE_CARD = (
   token: string,
   id: string,
-  {cvv, expirationDate, cardNumber, lastFourDigits}: StartActivateCardParams,
-): GqlQueryParams<ActivateCardInputType> => {
+  {
+    cvv,
+    expirationDate,
+    cardNumber,
+    lastFourDigits,
+    appsFlyerId,
+  }: StartActivateCardParams,
+): GqlQueryParams<
+  | ActivateCardInputType
+  | AnalyticsContextInputType
+  | AnalyticsIntegrationsInputType
+> => {
+  let context: AnalyticsContextInputType;
+  let integrations: AnalyticsIntegrationsInputType;
+
+  if (IS_ANDROID) {
+    context = {
+      device: {
+        type: 'android',
+      },
+    };
+  } else if (IS_IOS) {
+    context = {
+      device: {
+        type: 'ios',
+      },
+    };
+  }
+
+  if (appsFlyerId) {
+    integrations = {
+      AppsFlyer: {
+        appsFlyerId,
+      },
+    };
+  }
+
   return {
     query: `
-      mutation ACTIVATE_CARD($token:String!, $csrf:String, $cardId:String!, $input:ActivateCardInputType!) {
+      mutation ACTIVATE_CARD($token:String!, $csrf:String, $cardId:String!, $input:ActivateCardInputType!, $context:AnalyticsContextInputType, $integrations:AnalyticsIntegrationsInputType) {
         user:bitpayUser(token:$token, csrf:$csrf) {
           card:debitCard(cardId:$cardId) {
-            activationDate:activateCard(input:$input)
+            activationDate:activateCard(input:$input, context:$context, integrations:$integrations)
           }
         }
       }
@@ -97,6 +149,8 @@ export const ACTIVATE_CARD = (
         expirationDate,
         lastFourDigits,
       },
+      context,
+      integrations,
     },
   };
 };

@@ -27,3 +27,5 @@ export interface HomeCarouselConfig {
 }
 
 export type HomeCarouselLayoutType = 'carousel' | 'listView';
+
+export type InAppNotificationContextType = 'notification';

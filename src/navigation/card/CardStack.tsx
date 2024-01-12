@@ -1,10 +1,7 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {createSharedElementStackNavigator} from 'react-navigation-shared-element';
-import {
-  baseNavigatorOptions,
-  baseScreenOptions,
-} from '../../constants/NavigationOptions';
+import {oldBaseNavigatorOptions} from '../../constants/NavigationOptions';
 import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
 import CardPairingScreen, {
   CardPairingScreenParamList,
@@ -16,7 +13,6 @@ import CustomizeVirtualCard, {
 import UpdateCardNameScreen, {
   UpdateCardNameScreenParamList,
 } from './screens/settings/UpdateCardName';
-import Referral, {ReferralParamList} from './screens/settings/Referral';
 import {HeaderTitle} from '../../components/styled/Text';
 import ResetPinScreen, {
   ResetPinScreenParamList,
@@ -28,7 +24,6 @@ export type CardStackParamList = {
   Settings: CardSettingsParamList;
   CustomizeVirtualCard: CustomizeVirtualCardParamList;
   UpdateCardName: UpdateCardNameScreenParamList;
-  Referral: ReferralParamList;
   CardResetPin: ResetPinScreenParamList;
 };
 
@@ -38,7 +33,6 @@ export enum CardScreens {
   SETTINGS = 'Settings',
   CUSTOMIZE_VIRTUAL_CARD = 'CustomizeVirtualCard',
   UPDATE_CARD_NAME = 'UpdateCardName',
-  REFERRAL = 'Referral',
   RESET_PIN = 'CardResetPin',
 }
 
@@ -51,8 +45,7 @@ const CardStack = () => {
     <Card.Navigator
       initialRouteName={CardScreens.HOME}
       screenOptions={{
-        ...baseNavigatorOptions,
-        ...baseScreenOptions,
+        ...oldBaseNavigatorOptions,
       }}>
       <Card.Screen
         name={CardScreens.HOME}
@@ -109,7 +102,6 @@ const CardStack = () => {
           headerTitle: () => <HeaderTitle>{t('Reset PIN')}</HeaderTitle>,
         }}
       />
-      <Card.Screen name={CardScreens.REFERRAL} component={Referral} />
     </Card.Navigator>
   );
 };

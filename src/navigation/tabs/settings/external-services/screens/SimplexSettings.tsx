@@ -14,7 +14,7 @@ import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
-import {simplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {SimplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
   NoPrMsg,
   PrTitle,
@@ -49,7 +49,7 @@ const SimplexSettings: React.FC = () => {
   const isFocused = useIsFocused();
   const logger = useLogger();
   const [paymentRequests, setTransactions] = useState(
-    [] as simplexPaymentData[],
+    [] as SimplexPaymentData[],
   );
 
   const route = useRoute<RouteProp<{params: SimplexSettingsProps}>>();
@@ -89,11 +89,8 @@ const SimplexSettings: React.FC = () => {
                     key={pr.payment_id}
                     onPress={() => {
                       haptic('impactLight');
-                      navigation.navigate('ExternalServicesSettings', {
-                        screen: 'SimplexDetails',
-                        params: {
-                          paymentRequest: pr,
-                        },
+                      navigation.navigate('SimplexDetails', {
+                        paymentRequest: pr,
                       });
                     }}>
                     <PrRowLeft>
@@ -133,7 +130,7 @@ const SimplexSettings: React.FC = () => {
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Simplex?</SupportTxt>
+        <SupportTxt>{t('Having problems with Simplex?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');

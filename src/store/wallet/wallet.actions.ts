@@ -2,7 +2,6 @@ import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
   CacheFeeLevel,
   CryptoBalance,
-  DeferredImport,
   Key,
   Token,
   TransactionProposal,
@@ -72,18 +71,16 @@ export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
 });
 
 export const successGetTokenOptions = (payload: {
-  tokenOptions: {[key in string]: Token};
-  tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
   payload,
 });
 
 export const successGetCustomTokenOptions = (payload: {
-  customTokenOptions: {[key in string]: Token};
-  customTokenData: {[key in string]: CurrencyOpts};
   customTokenOptionsByAddress: {[key in string]: Token};
+  customTokenDataByAddress: {[key in string]: CurrencyOpts};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS,
   payload,
@@ -227,20 +224,6 @@ export const toggleHideWallet = (payload: {
   payload,
 });
 
-export const toggleHideBalance = (payload: {
-  wallet: Wallet;
-}): WalletActionType => ({
-  type: WalletActionTypes.TOGGLE_HIDE_BALANCE,
-  payload,
-});
-
-export const toggleHideKeyBalance = (payload: {
-  keyId: string;
-}): WalletActionType => ({
-  type: WalletActionTypes.TOGGLE_HIDE_KEY_BALANCE,
-  payload,
-});
-
 export const updateCacheFeeLevel = (
   payload: CacheFeeLevel,
 ): WalletActionType => ({
@@ -248,13 +231,6 @@ export const updateCacheFeeLevel = (
   payload,
 });
 
-export const updateDeferredImport = (
-  payload: DeferredImport,
-): WalletActionType => ({
-  type: WalletActionTypes.UPDATE_DEFERRED_IMPORT,
-  payload,
-});
-
-export const clearDeferredImport = (): WalletActionType => ({
-  type: WalletActionTypes.CLEAR_DEFERRED_IMPORT,
+export const setCustomTokensMigrationComplete = (): WalletActionType => ({
+  type: WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE,
 });

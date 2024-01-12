@@ -1,5 +1,4 @@
 import {upperFirst} from 'lodash';
-import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
 import {
   LoginErrorResponse,
@@ -7,24 +6,27 @@ import {
 } from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
 import {InitialUserData} from '../../api/user/user.types';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import Dosh from '../../lib/dosh';
+import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
-import {AppActions, AppEffects} from '../app/';
-import {Analytics, startOnGoingProcessModal} from '../app/app.effects';
-import {CardEffects} from '../card';
+import {AppEffects} from '../app/';
+import {Analytics} from '../analytics/analytics.effects';
+import {startOnGoingProcessModal} from '../app/app.effects';
+import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
-import {ShopEffects} from '../shop';
+import {ShopActions, ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
 import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
+import Braze from 'react-native-appboy-sdk';
+import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
 
 interface StartLoginParams {
   email: string;
@@ -33,26 +35,30 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdStoreInit =
-  (initialData: InitialUserData): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  (initialData: InitialUserData): Effect<void> =>
+  (dispatch, getState) => {
     const {APP} = getState();
     const {basicInfo: user} = initialData;
 
     if (user) {
-      const {eid, email, name, referralCode} = user;
-      let {givenName, familyName} = user;
+      const {eid, name, referralCode} = user;
+      let {email, givenName, familyName} = user;
+
+      if (email) {
+        email = email.trim();
+      }
 
       if (!givenName && !familyName && name) {
         const [first, ...rest] = name.split(' ');
 
-        givenName = first;
+        givenName = first.trim();
 
         if (rest.length) {
-          familyName = rest[rest.length - 1];
+          familyName = rest[rest.length - 1].trim();
         }
       }
 
-      dispatch(AppActions.setBrazeEid(eid));
+      dispatch(setBrazeEid(eid));
       dispatch(
         Analytics.identify(eid, {
           email,
@@ -88,6 +94,7 @@ interface CreateAccountParams {
   email: string;
   password: string;
   agreedToTOSandPP: boolean;
+  agreedToMarketingCommunications: boolean;
   gCaptchaResponse?: string;
 }
 
@@ -95,9 +102,16 @@ export const startCreateAccount =
   (params: CreateAccountParams): Effect =>
   async (dispatch, getState) => {
     try {
+      dispatch(startOnGoingProcessModal('CREATING_ACCOUNT'));
       const {APP, BITPAY_ID} = getState();
       const salt = generateSalt();
       const hashedPassword = hashPassword(params.password);
+
+      if (params.agreedToMarketingCommunications) {
+        Braze.setEmailNotificationSubscriptionType(
+          Braze.NotificationSubscriptionTypes.OPTED_IN,
+        );
+      }
 
       await AuthApi.register(APP.network, BITPAY_ID.session.csrfToken, {
         givenName: params.givenName,
@@ -106,6 +120,10 @@ export const startCreateAccount =
         hashedPassword: hashedPassword,
         salt: salt,
         agreedToTOSandPP: params.agreedToTOSandPP,
+        optInEmailMarketing: params.agreedToMarketingCommunications,
+        attribute: params.agreedToMarketingCommunications
+          ? 'App Signup'
+          : undefined,
         gCaptchaResponse: params.gCaptchaResponse,
       });
 
@@ -139,6 +157,8 @@ export const startCreateAccount =
       dispatch(BitPayIdActions.failedCreateAccount(upperFirst(errMsg)));
       dispatch(LogActions.error('Failed to create account.'));
       dispatch(LogActions.error(JSON.stringify(err)));
+    } finally {
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -160,12 +180,7 @@ export const startLogin =
   ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Logging In')
-          t(OnGoingProcessMessages.LOGGING_IN),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOGGING_IN'));
       dispatch(BitPayIdActions.updateLoginStatus(null));
 
       const {APP, BITPAY_ID} = getState();
@@ -215,28 +230,28 @@ export const startLogin =
           type: 'basicAuth',
         }),
       );
+
+      dispatch(CardActions.isJoinedWaitlist(false));
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
-      batch(() => {
-        let errMsg;
+      let errMsg;
 
-        if (isAxiosError<LoginErrorResponse>(err)) {
-          errMsg = upperFirst(
-            err.response?.data.message ||
-              err.message ||
-              t('An unexpected error occurred.'),
-          );
-          console.error(errMsg);
-        } else {
-          console.error(err);
-        }
+      if (isAxiosError<LoginErrorResponse>(err)) {
+        errMsg = upperFirst(
+          err.response?.data.message ||
+            err.message ||
+            t('An unexpected error occurred.'),
+        );
+        console.error(errMsg);
+      } else {
+        console.error(err);
+      }
 
-        dispatch(LogActions.error('Login failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedLogin(errMsg));
-      });
+      dispatch(LogActions.error('Login failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedLogin(errMsg));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -244,12 +259,7 @@ export const startTwoFactorAuth =
   (code: string): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Logging In')
-          t(OnGoingProcessMessages.LOGGING_IN),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOGGING_IN'));
 
       const {APP, BITPAY_ID} = getState();
 
@@ -272,26 +282,24 @@ export const startTwoFactorAuth =
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
       );
     } catch (err) {
-      batch(() => {
-        let errMsg;
+      let errMsg;
 
-        if (isAxiosError<string>(err)) {
-          errMsg = upperFirst(
-            err.response?.data ||
-              err.message ||
-              t('An unexpected error occurred.'),
-          );
-          console.error(errMsg);
-        } else {
-          console.error(err);
-        }
+      if (isAxiosError<string>(err)) {
+        errMsg = upperFirst(
+          err.response?.data ||
+            err.message ||
+            t('An unexpected error occurred.'),
+        );
+        console.error(errMsg);
+      } else {
+        console.error(err);
+      }
 
-        dispatch(LogActions.error('Two factor authentication failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
-      });
+      dispatch(LogActions.error('Two factor authentication failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -299,12 +307,7 @@ export const startTwoFactorPairing =
   (code: string): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Logging In')
-          t(OnGoingProcessMessages.LOGGING_IN),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOGGING_IN'));
 
       const {APP, BITPAY_ID} = getState();
       const secret = await AuthApi.generatePairingCode(
@@ -316,31 +319,29 @@ export const startTwoFactorPairing =
 
       dispatch(BitPayIdActions.successSubmitTwoFactorPairing());
     } catch (err) {
-      batch(() => {
-        let errMsg;
+      let errMsg;
 
-        if (isAxiosError<any>(err)) {
-          errMsg = upperFirst(
-            err.response?.data ||
-              err.message ||
-              t('An unexpected error occurred.'),
-          );
-          console.error(errMsg);
-        } else if (err instanceof Error) {
-          errMsg = upperFirst(err.message);
-          console.error(errMsg);
-        } else {
-          console.error(err);
-        }
-
-        dispatch(LogActions.error('Pairing with two factor failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(
-          BitPayIdActions.failedSubmitTwoFactorPairing(JSON.stringify(errMsg)),
+      if (isAxiosError<any>(err)) {
+        errMsg = upperFirst(
+          err.response?.data ||
+            err.message ||
+            t('An unexpected error occurred.'),
         );
-      });
+        console.error(errMsg);
+      } else if (err instanceof Error) {
+        errMsg = upperFirst(err.message);
+        console.error(errMsg);
+      } else {
+        console.error(err);
+      }
+
+      dispatch(LogActions.error('Pairing with two factor failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(
+        BitPayIdActions.failedSubmitTwoFactorPairing(JSON.stringify(errMsg)),
+      );
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -349,12 +350,7 @@ export const startEmailPairing =
   async (dispatch, getState) => {
     try {
       const {APP} = getState();
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Logging In')
-          t(OnGoingProcessMessages.LOGGING_IN),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('LOGGING_IN'));
 
       const secret = await AuthApi.generatePairingCode(APP.network, csrfToken);
 
@@ -367,14 +363,12 @@ export const startEmailPairing =
       );
       dispatch(BitPayIdActions.successEmailPairing());
     } catch (err) {
-      batch(() => {
-        console.error(err);
-        dispatch(LogActions.error('Pairing from email authentication failed.'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedEmailPairing());
-      });
+      console.error(err);
+      dispatch(LogActions.error('Pairing from email authentication failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedEmailPairing());
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -385,12 +379,7 @@ export const startDeeplinkPairing =
     const network = state.APP.network;
 
     try {
-      dispatch(
-        AppEffects.startOnGoingProcessModal(
-          // t('Pairing')
-          t(OnGoingProcessMessages.PAIRING),
-        ),
-      );
+      dispatch(AppEffects.startOnGoingProcessModal('PAIRING'));
       await dispatch(startPairAndLoadUser(network, secret, code));
     } catch (err) {
       let errMsg;
@@ -408,7 +397,7 @@ export const startDeeplinkPairing =
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedPairingBitPayId(errMsg));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -450,6 +439,8 @@ const startPairAndLoadUser =
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
+      dispatch(ShopEffects.startSyncGiftCards());
+      dispatch(ShopEffects.startGetBillPayAccounts()).catch(_ => {});
     } catch (err) {
       let errMsg;
 
@@ -465,40 +456,65 @@ const startPairAndLoadUser =
   };
 
 export const startDisconnectBitPayId =
-  (): Effect => async (dispatch, getState) => {
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    dispatch(startOnGoingProcessModal('LOGGING_OUT'));
+
+    const {APP} = getState();
+
     try {
-      const {APP, BITPAY_ID} = getState();
-      const {isAuthenticated, csrfToken} = BITPAY_ID.session;
+      const {isAuthenticated, csrfToken} =
+        (await AuthApi.fetchSession(APP.network)) || {};
 
       if (isAuthenticated && csrfToken) {
         await AuthApi.logout(APP.network, csrfToken);
       }
-
-      dispatch(Analytics.track('Log Out User success', {}));
-      dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     } catch (err) {
       // log but swallow this error
-      dispatch(LogActions.error('An error occurred while logging out.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(LogActions.debug('An error occurred while logging out.'));
+      dispatch(LogActions.debug(JSON.stringify(err)));
+    }
+
+    try {
+      const session = await AuthApi.fetchSession(APP.network);
+
+      dispatch(BitPayIdActions.successFetchSession(session));
+    } catch (err) {
+      // log but swallow this error
+      dispatch(LogActions.debug('An error occurred while refreshing session.'));
+      dispatch(LogActions.debug(JSON.stringify(err)));
+    }
+
+    try {
+      await MixpanelWrapper.reset();
+    } catch (err) {
+      dispatch(
+        LogActions.debug('An error occured while clearing Mixpanel data.'),
+      );
+      dispatch(LogActions.debug(JSON.stringify(err)));
     }
 
     try {
       Dosh.clearUser();
     } catch (err) {
       // log but swallow this error
-      dispatch(LogActions.error('An error occured while clearing Dosh user.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
-      return;
+      dispatch(LogActions.debug('An error occured while clearing Dosh user.'));
+      dispatch(LogActions.debug(JSON.stringify(err)));
     }
+
+    dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+    dispatch(Analytics.track('Log Out User success', {}));
+    dispatch(CardActions.isJoinedWaitlist(false));
+    dispatch(ShopActions.clearedBillPayAccounts());
+    dispatch(ShopActions.clearedBillPayPayments());
+    dispatch(dismissOnGoingProcessModal());
   };
 
 export const startFetchBasicInfo =
-  (token: string): Effect =>
+  (token: string, params?: {includeExternalData: boolean}): Effect =>
   async (dispatch, getState) => {
     try {
       const {APP} = getState();
-      const user = await UserApi.fetchBasicInfo(token);
-
+      const user = await UserApi.fetchBasicInfo(token, params);
       dispatch(BitPayIdActions.successFetchBasicInfo(APP.network, user));
     } catch (err) {
       dispatch(LogActions.error('Failed to fetch basic user info'));
@@ -516,11 +532,9 @@ export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
 
     dispatch(BitPayIdActions.successFetchDoshToken(APP.network, doshToken));
   } catch (err) {
-    batch(() => {
-      dispatch(LogActions.error('Failed to fetch dosh token.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
-      dispatch(BitPayIdActions.failedFetchDoshToken());
-    });
+    dispatch(LogActions.error('Failed to fetch dosh token.'));
+    dispatch(LogActions.error(JSON.stringify(err)));
+    dispatch(BitPayIdActions.failedFetchDoshToken());
   }
 };
 
@@ -541,10 +555,8 @@ export const startFetchSecuritySettings =
         );
         return securitySettings;
       } catch (err) {
-        batch(() => {
-          dispatch(LogActions.error('Failed to fetch security settings.'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        });
+        dispatch(LogActions.error('Failed to fetch security settings.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
         throw err;
       }
     })();
@@ -567,10 +579,8 @@ export const startToggleTwoFactorAuthEnabled =
           ),
         );
       } catch (err) {
-        batch(() => {
-          dispatch(LogActions.error('Failed to toggle two-factor settings.'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        });
+        dispatch(LogActions.error('Failed to toggle two-factor settings.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
         throw err;
       }
     })();
@@ -616,10 +626,8 @@ export const startFetchReceivingAddresses =
         );
         return receivingAddresses;
       } catch (err) {
-        batch(() => {
-          dispatch(LogActions.error('Failed to fetch receiving addresses.'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        });
+        dispatch(LogActions.error('Failed to fetch receiving addresses.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
         throw err;
       }
     })();
@@ -647,10 +655,8 @@ export const startUpdateReceivingAddresses =
         );
         await dispatch(startFetchReceivingAddresses());
       } catch (err) {
-        batch(() => {
-          dispatch(LogActions.error('Failed to update receiving addresses.'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        });
+        dispatch(LogActions.error('Failed to update receiving addresses.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
         throw err;
       }
     })();
@@ -669,12 +675,7 @@ export const startSubmitForgotPasswordEmail =
 
     try {
       dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Sending Email')
-          t(OnGoingProcessMessages.SENDING_EMAIL),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('SENDING_EMAIL'));
       const data = await AuthApi.submitForgotPasswordEmail(
         APP.network,
         BITPAY_ID.session.csrfToken,
@@ -701,6 +702,26 @@ export const startSubmitForgotPasswordEmail =
     } catch (e) {
       dispatch(BitPayIdActions.forgotPasswordEmailStatus('failed', errMsg));
     } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
     }
+  };
+
+export const startResetMethodUser =
+  (): Effect<Promise<any>> => async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    await BitPayIdApi.getInstance()
+      .request('resetMethodUser', BITPAY_ID.apiToken[APP_NETWORK])
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        dispatch(BitPayIdActions.successResetMethodUser(APP_NETWORK));
+        return res.data.data as any;
+      })
+      .catch(err => {
+        dispatch(
+          LogActions.error(`failed [startResetMethodUser]: ${err.message}`),
+        );
+        throw err;
+      });
   };

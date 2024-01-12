@@ -1,8 +1,7 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView, View} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {ScrollView, View, TouchableOpacity} from 'react-native';
 import Animated, {
   Easing,
   FadeOutLeft,
@@ -10,8 +9,8 @@ import Animated, {
   SlideInLeft,
   SlideInRight,
 } from 'react-native-reanimated';
-import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
@@ -22,14 +21,19 @@ import {useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import SettingsList from '../components/CardSettingsList';
 import SettingsSlide from '../components/CardSettingsSlide';
+import {throttle} from 'lodash';
 
 export type CardSettingsParamList = {
   id: string;
 };
 
-type CardSettingsProps = StackScreenProps<CardStackParamList, 'Settings'>;
+type CardSettingsProps = NativeStackScreenProps<CardStackParamList, 'Settings'>;
 
-const CardSettingsContainer = styled.View`
+const CardSettingsContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
+const CardSettingsView = styled.View`
   padding: 0 ${ScreenGutter} ${ScreenGutter};
 `;
 
@@ -55,7 +59,8 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   }, []);
   const {id} = route.params;
   const {t} = useTranslation();
-  const carouselRef = useRef<Carousel<Card>>(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const currentGroup = useAppSelector(selectCardGroups).find(g =>
     g.some(c => c.id === id),
   );
@@ -86,25 +91,36 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   );
   const [activeCard, setActiveCard] = useState(cardsToShow[initialIdx]);
 
-  const onCardChange = (idx: number) => {
-    const nextCard = cardsToShow[idx];
+  const throttleOnActiveSlideChange = useMemo(
+    () =>
+      throttle((index: number) => {
+        const nextCard = cardsToShow[Math.round(index)];
 
-    if (nextCard.cardType) {
-      setActiveCard(nextCard);
+        if (nextCard.cardType) {
+          setActiveCard(nextCard);
+        }
+        setActiveSlideIndex(Math.round(index));
+      }, 300),
+    [],
+  );
+
+  const onCardChange = (_: number, index: number) => {
+    if (Math.round(index) !== activeSlideIndex) {
+      throttleOnActiveSlideChange(index);
     }
   };
 
   const onVirtualPress = useCallback(() => {
     if (virtualCard) {
       setActiveCard(virtualCard);
-      carouselRef.current?.snapToItem(0);
+      carouselRef.current?.scrollTo({index: 0});
     }
   }, [virtualCard]);
 
   const onPhysicalPress = useCallback(() => {
     if (physicalCard) {
       setActiveCard(physicalCard);
-      carouselRef.current?.snapToItem(1);
+      carouselRef.current?.scrollTo({index: 1});
     }
   }, [physicalCard]);
 
@@ -132,85 +148,101 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   );
 
   return (
-    <ScrollView>
-      <CardSettingsContainer>
-        <CardSettingsHeader>
-          {virtualCard && physicalCard ? (
-            <CardTypeButtons>
-              <Button
-                onPress={onVirtualPress}
-                buttonType="pill"
-                buttonStyle={
-                  activeCard.cardType === 'virtual' ? 'primary' : 'secondary'
-                }>
-                {t('Virtual')}
-              </Button>
+    <CardSettingsContainer>
+      <ScrollView>
+        <CardSettingsContainer>
+          <CardSettingsHeader>
+            {virtualCard && physicalCard ? (
+              <CardTypeButtons>
+                <Button
+                  onPress={onVirtualPress}
+                  buttonType="pill"
+                  buttonStyle={
+                    activeCard.cardType === 'virtual' ? 'primary' : 'secondary'
+                  }>
+                  {t('Virtual')}
+                </Button>
 
-              <Button
-                onPress={onPhysicalPress}
-                buttonType="pill"
-                buttonStyle={
-                  activeCard.cardType === 'physical' ? 'primary' : 'secondary'
-                }>
-                {t('Physical')}
-              </Button>
-            </CardTypeButtons>
-          ) : null}
-        </CardSettingsHeader>
-      </CardSettingsContainer>
-      <Carousel<Card>
-        ref={carouselRef}
-        data={cardsToShow}
-        vertical={false}
-        firstItem={initialIdx}
-        itemWidth={CARD_WIDTH}
-        sliderWidth={WIDTH}
-        renderItem={renderSettingsSlide}
-        onScrollIndexChanged={onCardChange}
-        layout="default"
-      />
+                <Button
+                  onPress={onPhysicalPress}
+                  buttonType="pill"
+                  buttonStyle={
+                    activeCard.cardType === 'physical' ? 'primary' : 'secondary'
+                  }>
+                  {t('Physical')}
+                </Button>
+              </CardTypeButtons>
+            ) : null}
+          </CardSettingsHeader>
+        </CardSettingsContainer>
+        <Carousel
+          loop={false}
+          mode="parallax"
+          modeConfig={{
+            parallaxScrollingScale: 1,
+            parallaxScrollingOffset: 0,
+            parallaxAdjacentItemScale: 0.9,
+          }}
+          style={{
+            width: WIDTH,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          autoFillData={false}
+          vertical={false}
+          width={CARD_WIDTH}
+          height={CARD_WIDTH / 1.5}
+          autoPlay={false}
+          data={cardsToShow}
+          ref={carouselRef}
+          enabled={true}
+          scrollAnimationDuration={1000}
+          onProgressChange={onCardChange}
+          renderItem={renderSettingsSlide}
+        />
+        <CardSettingsView>
+          {cardsToShow.map(c => {
+            const isActive = c.id === activeCard.id;
+            const isVirtual = c.cardType === 'virtual';
+            const delay = 0;
+            const duration = 250;
+            const easing = Easing.linear;
 
-      <CardSettingsContainer>
-        {cardsToShow.map(c => {
-          const isActive = c.id === activeCard.id;
-          const isVirtual = c.cardType === 'virtual';
-          const delay = 0;
-          const duration = 250;
-          const easing = Easing.linear;
+            const useTransition = cardsToShow.length > 1;
+            const transitionEnter =
+              useTransition && animationsEnabled
+                ? isVirtual
+                  ? SlideInLeft.duration(duration).delay(delay).easing(easing)
+                  : SlideInRight.duration(duration).delay(delay).easing(easing)
+                : undefined;
 
-          const useTransition = cardsToShow.length > 1;
-          const transitionEnter =
-            useTransition && animationsEnabled
+            const transitionLeave = useTransition
               ? isVirtual
-                ? SlideInLeft.duration(duration).delay(delay).easing(easing)
-                : SlideInRight.duration(duration).delay(delay).easing(easing)
+                ? FadeOutLeft.duration(duration / 2)
+                    .delay(0)
+                    .easing(easing)
+                : FadeOutRight.duration(duration / 2)
+                    .delay(0)
+                    .easing(easing)
               : undefined;
 
-          const transitionLeave = useTransition
-            ? isVirtual
-              ? FadeOutLeft.duration(duration / 2)
-                  .delay(0)
-                  .easing(easing)
-              : FadeOutRight.duration(duration / 2)
-                  .delay(0)
-                  .easing(easing)
-            : undefined;
-
-          return isActive ? (
-            <Animated.View
-              key={c.id}
-              entering={transitionEnter}
-              exiting={transitionLeave}>
-              <SettingsList
-                card={c}
-                orderPhysical={isVirtual && !physicalCard}
-                navigation={navigation}
-              />
-            </Animated.View>
-          ) : null;
-        })}
-      </CardSettingsContainer>
-    </ScrollView>
+            return isActive ? (
+              <Animated.View
+                key={c.id}
+                entering={transitionEnter}
+                exiting={transitionLeave}>
+                <SettingsList
+                  card={c}
+                  orderPhysical={isVirtual && !physicalCard}
+                  navigation={navigation}
+                />
+              </Animated.View>
+            ) : null;
+          })}
+        </CardSettingsView>
+      </ScrollView>
+    </CardSettingsContainer>
   );
 };
 

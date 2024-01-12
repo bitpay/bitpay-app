@@ -73,27 +73,27 @@ export const simplexSupportedCoins = [
 export const simplexSupportedErc20Tokens = [
   '1earth',
   '1inch',
+  'aag', // AAG-ERC20
   'aave',
   'ape',
-  'axs',
+  'axs', // AXS-ERC20
   'bat',
   'busd',
   'cel',
   'chz',
   'comp',
-  'coti',
-  'cro',
+  'coti', // COTI-ERC20
+  'cro', // CRO-ERC20
   'dai',
   'dep',
   'dft',
   'elon',
   'enj',
   'eqx',
-  'fei',
   'ftt',
   'gala',
   'ghx',
-  'gmt',
+  'gmt', // GMT-ERC20
   'govi',
   'grt',
   'hedg',
@@ -106,48 +106,52 @@ export const simplexSupportedErc20Tokens = [
   'link',
   'ltx',
   'mana',
-  'matic',
+  'matic', // MATIC-ERC20
   'mkr',
   'pax', // backward compatibility
+  'paxg',
+  'pkr',
+  'pla', // PLA-ERC20
   'prt',
   'qnt',
   'revv',
   'rfox',
   'rfuel',
-  'rly',
   'sand',
-  'satt',
+  'satt', // SATT-ERC20
   'shib',
   'skl',
   'sushi',
-  'tlos',
+  'tlos', // TLOS-ERC20
   'tru',
   'tusd',
   'uni',
-  'uos',
+  'uos', // UOS-ERC20
   'usdc',
-  'usdk',
   'usdp',
   'usdt',
-  'vndc',
   'wbtc',
-  'xaut',
   'xyo',
-  'yoshi',
+  'yoshi', // YOSHI-ERC20
 ];
 
 export const simplexSupportedMaticTokens = [
+  'eth', // WETH-MATIC
   'gmee',
+  'pla', // PLA-MATIC
   'usdc', // USDC-MATIC
+  'usdt', // USDT-MATIC
+  'weth', // WETH-MATIC
 ];
 
 export const simplexErc20TokensWithSuffix = [
+  'aag',
   'axs',
   'coti',
   'cro',
   'gmt',
   'matic',
-  'rly',
+  'pla',
   'satt',
   'tlos',
   'uos',
@@ -155,7 +159,11 @@ export const simplexErc20TokensWithSuffix = [
 ];
 
 export const simplexMaticTokensWithSuffix = [
+  'eth', // WETH-MATIC
+  'pla', // PLA-MATIC
   'usdc', // USDC-MATIC
+  'usdt', // USDT-MATIC
+  'weth', // WETH-MATIC
 ];
 
 export const getSimplexSupportedCurrencies = (): string[] => {
@@ -183,7 +191,14 @@ export const getSimplexCoinFormat = (coin: string, chain: string): string => {
       break;
     case 'matic':
       if (simplexMaticTokensWithSuffix.includes(coin.toLowerCase())) {
-        formattedCoin = `${coin.toUpperCase()}-MATIC`;
+        switch (coin.toLowerCase()) {
+          case 'eth':
+            formattedCoin = 'WETH-MATIC';
+            break;
+          default:
+            formattedCoin = `${coin.toUpperCase()}-MATIC`;
+            break;
+        }
       }
       break;
     default:

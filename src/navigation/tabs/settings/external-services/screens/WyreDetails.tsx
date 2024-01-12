@@ -1,15 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity} from 'react-native';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import WyreLogo from '../../../../../components/icons/external-services/wyre/wyre-logo';
-import {wyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {WyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
@@ -31,18 +30,13 @@ import {
   CopiedContainer,
   CopyImgContainerRight,
 } from '../styled/ExternalServicesDetails';
-import {sleep} from '../../../../../utils/helper-methods';
 import {useLogger} from '../../../../../utils/hooks/useLogger';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
-import {wyreGetWalletOrderDetails} from '../../../../../store/buy-crypto/effects/wyre/wyre';
-import {handleWyreStatus} from '../../../../services/buy-crypto/utils/wyre-utils';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 
 export interface WyreDetailsProps {
-  paymentRequest: wyrePaymentData;
+  paymentRequest: WyrePaymentData;
 }
 
 const copyText = (text: string) => {
@@ -59,59 +53,12 @@ const WyreDetails: React.FC = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const [paymentData, setPaymentData] =
-    useState<wyrePaymentData>(paymentRequest);
+    useState<WyrePaymentData>(paymentRequest);
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
   const [copiedTransferId, setCopiedTransferId] = useState(false);
   const [copiedOrderId, setCopiedOrderId] = useState(false);
   const [copiedBlockchainNetworkTx, setCopiedBlockchainNetworkTx] =
     useState(false);
-
-  useEffect(() => {
-    const getWalletOrderDetails = async (orderId: string) => {
-      dispatch(
-        startOnGoingProcessModal(
-          // t("Just a second, we're setting a few things up")
-          t(OnGoingProcessMessages.GENERAL_AWAITING),
-        ),
-      );
-      await sleep(400);
-      const orderData = await wyreGetWalletOrderDetails(orderId);
-      if (orderData.status) {
-        paymentRequest.status = handleWyreStatus(orderData.status);
-      }
-      if (orderData.blockchainNetworkTx) {
-        paymentRequest.blockchainNetworkTx = orderData.blockchainNetworkTx;
-      }
-      if (orderData.destAmount) {
-        paymentRequest.destAmount = orderData.destAmount;
-      }
-      setPaymentData(paymentRequest);
-
-      dispatch(
-        BuyCryptoActions.successPaymentRequestWyre({
-          wyrePaymentData: paymentRequest,
-        }),
-      );
-    };
-
-    if (
-      paymentRequest.orderId &&
-      (paymentRequest.status != 'success' ||
-        !paymentRequest.transferId ||
-        (paymentRequest.transferId && !paymentRequest.blockchainNetworkTx))
-    ) {
-      getWalletOrderDetails(paymentRequest.orderId)
-        .then(async () => {
-          dispatch(dismissOnGoingProcessModal());
-          await sleep(400);
-        })
-        .catch(err => {
-          logger.error(
-            'Wyre getWalletOrderDetails Error: ' + JSON.stringify(err),
-          );
-        });
-    }
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {

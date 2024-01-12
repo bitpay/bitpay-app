@@ -2,9 +2,9 @@
 import {version} from '../../package.json'; // TODO: better way to get version
 import {Network} from '.';
 
-export const DEVTOOLS_ENABLED = false;
 export const STATIC_CONTENT_CARDS_ENABLED = true;
 export const APP_ANALYTICS_ENABLED = !__DEV__;
+export const METHOD_ENV = __DEV__ ? 'dev' : 'production';
 
 // GENERAL
 export const APP_NAME = 'bitpay';
@@ -57,7 +57,7 @@ export const EVM_BLOCKCHAIN_ID: {[key in string]: number} = {
 export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'etherscan.io/',
-    [Network.testnet]: 'kovan.etherscan.io/',
+    [Network.testnet]: 'goerli.etherscan.io/',
   },
   matic: {
     [Network.mainnet]: 'polygonscan.com/',
@@ -68,10 +68,10 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
 export const PROTOCOL_NAME: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'Ethereum Mainnet',
-    [Network.testnet]: 'Kovan',
+    [Network.testnet]: 'Goerli',
   },
   matic: {
-    [Network.mainnet]: 'Polygon Network',
+    [Network.mainnet]: 'Polygon',
     [Network.testnet]: 'Mumbai',
   },
   default: {

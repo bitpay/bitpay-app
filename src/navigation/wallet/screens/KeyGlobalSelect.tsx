@@ -4,10 +4,10 @@ import {useAppSelector} from '../../../utils/hooks';
 import {Key} from '../../../store/wallet/wallet.models';
 import KeyGlobalSelectRow from '../../../components/list/KeyGlobalSelectRow';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {RouteProp, useRoute} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {keyExtractor} from '../../../utils/helper-methods';
 import {FlatList} from 'react-native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -22,8 +22,12 @@ export type KeyGlobalSelectParamList = {
   invitationCode?: string;
 };
 
-const KeyGlobalSelect: React.FC<KeyGlobalSelectParamList> = ({}) => {
-  const route = useRoute<RouteProp<WalletStackParamList, 'KeyGlobalSelect'>>();
+type KeyGlobalSelectScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.KEY_GLOBAL_SELECT
+>;
+
+const KeyGlobalSelect: React.FC<KeyGlobalSelectScreenProps> = ({route}) => {
   let {onKeySelect} = route.params || {};
   const _keys = useAppSelector(({WALLET}) => WALLET.keys);
   const keys = Object.values(_keys).filter(key => key.backupComplete);

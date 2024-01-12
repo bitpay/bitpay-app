@@ -1,7 +1,7 @@
 import debounce from 'lodash.debounce';
 import React, {useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {useTheme} from 'styled-components';
+import {useTheme} from 'styled-components/native';
 import SearchIcon from '../../../../assets/img/search.svg';
 import BoxInput, {IconContainer} from '../../../components/form/BoxInput';
 import {ActiveOpacity} from '../../../components/styled/Containers';

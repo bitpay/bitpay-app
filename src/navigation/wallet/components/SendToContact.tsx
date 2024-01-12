@@ -11,7 +11,7 @@ import {H5, SubText} from '../../../components/styled/Text';
 import {NeutralSlate} from '../../../styles/colors';
 import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -47,7 +47,7 @@ const SendToContact = () => {
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
-  const route = useRoute<RouteProp<WalletStackParamList, 'SendToOptions'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'SendToOptions'>>();
   const {wallet, context} = route.params;
   const {
     recipientList,

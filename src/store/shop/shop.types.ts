@@ -1,4 +1,6 @@
 import {
+  BillPayAccount,
+  BillPayPayment,
   CardConfigMap,
   CategoriesAndCurations,
   DirectIntegrationMap,
@@ -20,9 +22,14 @@ export enum ShopActionTypes {
   UPDATED_PHONE = 'SHOP/UPDATED_PHONE',
   REDEEMED_GIFT_CARD = 'SHOP/REDEEMED_GIFT_CARD',
   SET_PURCHASED_GIFT_CARDS = 'SHOP/SET_PURCHASED_GIFT_CARDS',
+  SET_BILL_PAY_ACCOUNTS = 'SHOP/SET_BILL_PAY_ACCOUNTS',
+  CLEARED_BILL_PAY_ACCOUNTS = 'SHOP/CLEARED_BILL_PAY_ACCOUNTS',
+  SET_BILL_PAY_PAYMENTS = 'SHOP/SET_BILL_PAY_PAYMENTS',
+  CLEARED_BILL_PAY_PAYMENTS = 'SHOP/CLEARED_BILL_PAY_PAYMENTS',
   TOGGLED_GIFT_CARD_ARCHIVED_STATUS = 'SHOP/TOGGLED_GIFT_CARD_ARCHIVED_STATUS',
   TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID = 'SHOP/TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID',
   CLEARED_GIFT_CARDS = 'SHOP/CLEARED_GIFT_CARDS',
+  IS_JOINED_WAITLIST = 'SHOP/IS_JOINED_WAITLIST',
 }
 
 interface successFetchCatalog {
@@ -54,6 +61,24 @@ interface setPurchasedGiftCards {
   payload: {
     giftCards: GiftCard[];
   };
+}
+interface setBillPayAccounts {
+  type: typeof ShopActionTypes.SET_BILL_PAY_ACCOUNTS;
+  payload: {
+    accounts: BillPayAccount[];
+  };
+}
+interface clearedBillPayAccounts {
+  type: typeof ShopActionTypes.CLEARED_BILL_PAY_ACCOUNTS;
+}
+interface setBillPayPayments {
+  type: typeof ShopActionTypes.SET_BILL_PAY_PAYMENTS;
+  payload: {
+    billPayPayments: BillPayPayment[];
+  };
+}
+interface clearedBillPayPayments {
+  type: typeof ShopActionTypes.CLEARED_BILL_PAY_PAYMENTS;
 }
 interface deletedUnsoldGiftCard {
   type: typeof ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS;
@@ -97,6 +122,11 @@ interface clearedGiftCards {
   type: typeof ShopActionTypes.CLEARED_GIFT_CARDS;
 }
 
+interface isJoinedWaitlist {
+  type: ShopActionTypes.IS_JOINED_WAITLIST;
+  payload: {isJoinedWaitlist: boolean};
+}
+
 export type ShopActionType =
   | successFetchCatalog
   | failedFetchCatalog
@@ -104,6 +134,10 @@ export type ShopActionType =
   | failedCreateGiftCardInvoice
   | initializedUnsoldGiftCard
   | setPurchasedGiftCards
+  | setBillPayAccounts
+  | clearedBillPayAccounts
+  | setBillPayPayments
+  | clearedBillPayPayments
   | deletedUnsoldGiftCard
   | redeemedGiftCard
   | toggledGiftCardArchivedStatus
@@ -111,4 +145,5 @@ export type ShopActionType =
   | updatedEmailAddress
   | updatedGiftCardStatus
   | updatedPhone
-  | clearedGiftCards;
+  | clearedGiftCards
+  | isJoinedWaitlist;

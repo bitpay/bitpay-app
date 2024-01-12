@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   ImportTextInput,
-  CtaContainer as _CtaContainer,
   HeaderContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';
@@ -16,7 +15,6 @@ import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import {Caution} from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {startGetRates, startImportFile} from '../../../store/wallet/effects';
 import {
@@ -25,12 +23,8 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {WalletGroupParamList} from '../WalletGroup';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {sleep} from '../../../utils/helper-methods';
@@ -39,6 +33,8 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScrollView} from 'react-native';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -74,10 +70,10 @@ const schema = yup.object().shape({
 const FileOrText = () => {
   const {t} = useTranslation();
   const logger = useLogger();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
-  const walletTermsAccepted = useSelector(
+  const route = useRoute<RouteProp<WalletGroupParamList, 'Import'>>();
+  const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
 
@@ -92,17 +88,13 @@ const FileOrText = () => {
     opts: Partial<KeyOptions>,
   ) => {
     try {
-      await dispatch(
-        startOnGoingProcessModal(
-          // t('Importing')
-          t(OnGoingProcessMessages.IMPORTING),
-        ),
-      );
+      await dispatch(startOnGoingProcessModal('IMPORTING'));
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
 
-      await dispatch(startGetRates({}));
+      await dispatch(startGetRates({force: true}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+      await sleep(1000);
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
@@ -113,7 +105,7 @@ const FileOrText = () => {
         key,
       });
       dispatch(
-        logSegmentEvent('track', 'Imported Key', {
+        Analytics.track('Imported Key', {
           context: route.params?.context || '',
           source: 'FileOrText',
         }),
@@ -166,6 +158,7 @@ const FileOrText = () => {
 
   return (
     <ScrollViewContainer
+      accessibilityLabel="file-or-text-view"
       extraScrollHeight={90}
       keyboardShouldPersistTaps={'handled'}>
       <ContentView keyboardShouldPersistTaps={'handled'}>
@@ -177,6 +170,7 @@ const FileOrText = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <ImportTextInput
+                accessibilityLabel="import-text-input"
                 multiline
                 numberOfLines={5}
                 onChangeText={onChange}
@@ -196,6 +190,7 @@ const FileOrText = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                accessibilityLabel="password-box-input"
                 label={t('PASSWORD')}
                 placeholder={'strongPassword123'}
                 type={'password'}
@@ -210,7 +205,10 @@ const FileOrText = () => {
           />
         </FormRow>
 
-        <Button buttonStyle={'primary'} onPress={onSubmit}>
+        <Button
+          accessibilityLabel="import-wallet-button"
+          buttonStyle={'primary'}
+          onPress={onSubmit}>
           {t('Import Wallet')}
         </Button>
       </ContentView>

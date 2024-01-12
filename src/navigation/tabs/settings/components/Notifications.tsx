@@ -11,6 +11,7 @@ import {
 import {AppEffects} from '../../../../store/app';
 import {
   ActiveOpacity,
+  Hr,
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
@@ -124,24 +125,17 @@ const Notifications = () => {
     <SettingsComponent>
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('NotificationsSettings', {
-            screen: 'PushNotifications',
-          })
-        }>
+        onPress={() => navigation.navigate('PushNotifications')}>
         <SettingTitle>{t('Push Notifications')}</SettingTitle>
         <AngleRight />
       </Setting>
+      <Hr />
 
       {/*----------------------------------------------------------------------*/}
 
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('NotificationsSettings', {
-            screen: 'EmailNotifications',
-          })
-        }>
+        onPress={() => navigation.navigate('EmailNotifications')}>
         <SettingTitle>{t('Email Notifications')}</SettingTitle>
         <AngleRight />
       </Setting>

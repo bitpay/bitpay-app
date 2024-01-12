@@ -8,6 +8,15 @@ const DefaultQuickLinks = (): ClassicContentCard[] => {
   return [
     {
       ...DEFAULT_CLASSIC_CONTENT_CARD,
+      id: 'dev_zenLedger',
+      title: 'ZenLedger',
+      cardDescription: t('Get your crypto taxes done in minutes.'),
+      image: require('../../../../../../assets/img/zenledger/zenledger-icon.png'),
+      url: `${APP_DEEPLINK_PREFIX}connections/zenledger`,
+      openURLInWebView: false,
+    },
+    {
+      ...DEFAULT_CLASSIC_CONTENT_CARD,
       id: 'dev_walletConnect',
       title: 'WalletConnect',
       cardDescription: t('Connect with hundreds of Dapps.'),

@@ -14,10 +14,15 @@ import {Network} from '../../constants';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
 import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
-import {getProtocolName} from '../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  getProtocolName,
+} from '../../utils/helper-methods';
+import {Platform} from 'react-native';
 
 const BadgeContainer = styled.View`
-  margin-left: 5px;
+  margin-left: 3px;
+  margin-bottom: -2px;
 `;
 
 const BalanceColumn = styled(Column)`
@@ -33,9 +38,10 @@ const NestedArrowContainer = styled.View`
 export interface WalletRowProps {
   id: string;
   img: string | ((props: any) => ReactElement);
-  badgeImg?: string | ((props: any) => ReactElement);
+  badgeImg?: string | ((props?: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
+  tokenAddress?: string;
   chain: string;
   walletName?: string;
   cryptoBalance: string;
@@ -64,6 +70,7 @@ interface Props {
   hideIcon?: boolean;
   isLast?: boolean;
   onPress: () => void;
+  hideBalance: boolean;
 }
 
 export const buildTestBadge = (
@@ -84,7 +91,7 @@ export const buildTestBadge = (
   );
 };
 
-const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
+const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,
@@ -96,12 +103,13 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
     fiatBalance,
     isToken,
     network,
-    hideBalance,
     multisig,
   } = wallet;
 
   // @ts-ignore
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
+  const _currencyAbbreviation =
+    formatCurrencyAbbreviation(currencyAbbreviation);
 
   return (
     <RowContainer
@@ -123,11 +131,16 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast}: Props) => {
           <H5 ellipsizeMode="tail" numberOfLines={1}>
             {walletName || currencyName}
           </H5>
+        </Row>
+        <Row style={{alignItems: 'center'}}>
+          <ListItemSubText
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+            {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
+          </ListItemSubText>
           {buildTestBadge(network, chain, isToken)}
         </Row>
-        <ListItemSubText>
-          {currencyAbbreviation.toUpperCase()} {multisig ? multisig : null}
-        </ListItemSubText>
       </CurrencyColumn>
       <BalanceColumn>
         {!hideBalance ? (

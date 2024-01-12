@@ -1,6 +1,6 @@
 import React from 'react';
 import {ContentCard} from 'react-native-appboy-sdk';
-import {Carousel} from 'react-native-snap-carousel';
+import Carousel from 'react-native-reanimated-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
 import {CarouselItemContainer} from '../Styled';
@@ -11,33 +11,37 @@ interface QuickLinksCarouselProps {
   contentCards: ContentCard[];
 }
 
+const itemWidth = 225;
+
 const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   contentCards,
 }) => {
   const navigation = useNavigation();
-  const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
+  const sessions = useAppSelector(
+    ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
+  );
 
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     dev_walletConnect: () => {
-      if (Object.keys(connectors).length) {
-        navigation.navigate('WalletConnect', {
-          screen: 'WalletConnectConnections',
-        });
+      if (Object.keys(sessions).length) {
+        navigation.navigate('WalletConnectConnections');
       } else {
-        navigation.navigate('WalletConnect', {
-          screen: 'Root',
-          params: {uri: undefined},
-        });
+        navigation.navigate('WalletConnectRoot', {});
       }
     },
   };
 
   return (
-    <Carousel<ContentCard>
+    <Carousel
+      loop={false}
       vertical={false}
-      layout={'default'}
-      useExperimentalSnap={true}
+      style={{width: WIDTH}}
+      width={itemWidth}
+      height={itemWidth}
+      autoPlay={false}
       data={contentCards}
+      scrollAnimationDuration={1000}
+      enabled={true}
       renderItem={({item}: {item: ContentCard}) => (
         <CarouselItemContainer>
           <QuickLinksCard
@@ -46,10 +50,6 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
           />
         </CarouselItemContainer>
       )}
-      sliderWidth={WIDTH}
-      itemWidth={225}
-      inactiveSlideScale={1}
-      inactiveSlideOpacity={1}
     />
   );
 };

@@ -12,25 +12,13 @@ import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.ReactMethod;
 
-import com.google.android.gms.tapandpay.TapAndPay;
-import com.google.android.gms.tapandpay.TapAndPayClient;
-import com.google.android.gms.tapandpay.issuer.PushTokenizeRequest;
-import com.google.android.gms.tapandpay.issuer.TokenStatus;
-import com.google.android.gms.tapandpay.issuer.UserAddress;
-
-import static com.google.android.gms.tapandpay.TapAndPayStatusCodes.TAP_AND_PAY_ATTESTATION_ERROR;
-import static com.google.android.gms.tapandpay.TapAndPayStatusCodes.TAP_AND_PAY_INVALID_TOKEN_STATE;
-import static com.google.android.gms.tapandpay.TapAndPayStatusCodes.TAP_AND_PAY_NO_ACTIVE_WALLET;
-import static com.google.android.gms.tapandpay.TapAndPayStatusCodes.TAP_AND_PAY_TOKEN_NOT_FOUND;
-import static com.google.android.gms.tapandpay.TapAndPayStatusCodes.TAP_AND_PAY_UNAVAILABLE;
-
 public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
 
   private final ReactApplicationContext reactContext;
   private Promise requestPaymentPromise = null;
   private static final String TAG = "GooglePayIssuer";
   private static final int REQUEST_CODE_PUSH_TOKENIZE = 3;
-  private TapAndPayClient tapAndPayClient;
+  private Object tapAndPayClient;
 
   @NonNull
   @Override
@@ -41,7 +29,17 @@ public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
   @Override
   public void initialize() {
     super.initialize();
-    tapAndPayClient = TapAndPay.getClient(this.getCurrentActivity());
+    tapAndPayClient = new Object();
+  }
+
+  @ReactMethod
+  public void addListener(String eventName) {
+    // no-op
+  }
+
+  @ReactMethod
+  public void removeListeners(Integer count) {
+    // no-op
   }
 
   @ReactMethod
@@ -51,33 +49,7 @@ public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
     Activity activity = this.getCurrentActivity();
 
     try {
-
-      int cardNetwork = TapAndPay.CARD_NETWORK_MASTERCARD;
-      int tokenServiceProvider = TapAndPay.TOKEN_PROVIDER_MASTERCARD;
-
-        UserAddress userAddress =
-          UserAddress.newBuilder()
-            .setName(name)
-            .setAddress1("")
-            .setLocality("")
-            .setAdministrativeArea("")
-            .setCountryCode("USA")
-            .setPostalCode("")
-            .setPhoneNumber("")
-            .build();
-
-        PushTokenizeRequest pushTokenizeRequest =
-          new PushTokenizeRequest.Builder()
-            .setOpaquePaymentCard(opc.getBytes())
-            .setNetwork(cardNetwork)
-            .setTokenServiceProvider(tokenServiceProvider)
-            .setDisplayName(name)
-            .setLastDigits(lastFourDigits)
-            .setUserAddress(userAddress)
-            .build();
-
-        tapAndPayClient.pushTokenize(activity, pushTokenizeRequest, REQUEST_CODE_PUSH_TOKENIZE);
-        self.requestPaymentPromise = promise;
+      self.requestPaymentPromise = promise;
 
     } catch(Exception e) {
       promise.reject("TAP_AND_PAY_START_PUSH_PROVISION_ERROR");
@@ -88,41 +60,8 @@ public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
 
       @Override
       public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-
-        if (requestCode == REQUEST_CODE_PUSH_TOKENIZE) {
-          switch (resultCode) {
-            case TAP_AND_PAY_ATTESTATION_ERROR:
-              requestPaymentPromise.reject("TAP_AND_PAY_ATTESTATION_ERROR");
-              break;
-
-            case Activity.RESULT_OK:
-                requestPaymentPromise.resolve("RESULT OK");
-                break;
-
-            case Activity.RESULT_CANCELED:
-                requestPaymentPromise.reject("CANCELED");
-                break;
-
-            case TAP_AND_PAY_INVALID_TOKEN_STATE:
-                requestPaymentPromise.reject("TAP_AND_PAY_INVALID_TOKEN_STATE");
-                break;
-
-            case TAP_AND_PAY_NO_ACTIVE_WALLET:
-                  requestPaymentPromise.reject("TAP_AND_PAY_NO_ACTIVE_WALLET");
-                  break;
-
-            case TAP_AND_PAY_TOKEN_NOT_FOUND:
-                requestPaymentPromise.reject("TAP_AND_PAY_TOKEN_NOT_FOUND");
-                break;
-
-            case TAP_AND_PAY_UNAVAILABLE:
-              requestPaymentPromise.reject("TAP_AND_PAY_UNAVAILABLE");
-              break;
-
-            default:
-              requestPaymentPromise.resolve("DEFAULT");
-
-          }
+        if (requestPaymentPromise != null) {
+          requestPaymentPromise.resolve("DEFAULT");
         }
       }
     };

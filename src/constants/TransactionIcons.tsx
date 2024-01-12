@@ -37,7 +37,7 @@ export const TxReceivedIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
   );
 };
 
-export const TxGiftCardIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
+export const TxShopIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
   const theme = useTheme() as BitPayTheme;
 
   return (
@@ -307,7 +307,7 @@ export const TxWalletConnectIcon = ({
   );
 };
 
-export const TransactionIcons: {[key in string]: ReactElement} = {
+export const TransactionIcons: {[index in string]: ReactElement} = {
   amazon: (
     <AmazonSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
   ),
@@ -339,7 +339,7 @@ export const TransactionIcons: {[key in string]: ReactElement} = {
   debitcard: (
     <BitPaySvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
   ),
-  giftcards: <TxGiftCardIcon />,
+  shop: <TxShopIcon />,
   sent: <TxSentIcon />,
   received: <TxReceivedIcon />,
   moved: <TxMovedIcon />,

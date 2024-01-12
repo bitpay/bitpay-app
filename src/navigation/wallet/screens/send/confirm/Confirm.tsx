@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {RouteProp, StackActions} from '@react-navigation/core';
-import {WalletStackParamList} from '../../../WalletStack';
+import {WalletGroupParamList} from '../../../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
   Recipient,
@@ -14,16 +14,19 @@ import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
+  showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
-import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {
-  logSegmentEvent,
+  formatCurrencyAbbreviation,
+  formatFiatAmount,
+  sleep,
+} from '../../../../../utils/helper-methods';
+import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -32,7 +35,8 @@ import {
   Amount,
   ConfirmContainer,
   ConfirmScrollView,
-  DetailsList,
+  DetailsListNoScroll,
+  ExchangeRate,
   Fee,
   Header,
   SendingFrom,
@@ -51,6 +55,8 @@ import {
   BaseText,
   HeaderTitle,
   InfoDescription,
+  InfoHeader,
+  InfoTitle,
   Link,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -60,16 +66,31 @@ import {
   ActiveOpacity,
   Hr,
   Info,
+  InfoImageContainer,
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import {Platform, TouchableOpacity} from 'react-native';
-import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
+import {
+  GetFeeOptions,
+  getFeeRatePerKb,
+} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
 import {toFiat} from '../../../../../store/wallet/utils/wallet';
-import {GetPrecision} from '../../../../../store/wallet/utils/currency';
+import {
+  GetFeeUnits,
+  GetPrecision,
+  IsERCToken,
+} from '../../../../../store/wallet/utils/currency';
 import prompt from 'react-native-prompt-android';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
+import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
+import WarningSvg from '../../../../../../assets/img/warning.svg';
+import {CoinbaseScreens} from '../../../../../navigation/coinbase/CoinbaseGroup';
+import {RootStacks} from '../../../../../Root';
+import {TabsScreens} from '../../../../../navigation/tabs/TabsStack';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -111,7 +132,7 @@ const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {t} = useTranslation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'Confirm'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'Confirm'>>();
   const {
     wallet,
     recipient,
@@ -138,7 +159,10 @@ const Confirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
-  const [enableRBF, setEnableRBF] = useState(false);
+  const [enableRBF, setEnableRBF] = useState(enableReplaceByFee);
+  const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
+  const [showHighFeeWarningMessage, setShowHighFeeWarningMessage] =
+    useState(false);
 
   const {
     fee: _fee,
@@ -151,8 +175,8 @@ const Confirm = () => {
     total: _total,
     destinationTag: _destinationTag,
     context,
+    rateStr,
   } = txDetails;
-
   const [fee, setFee] = useState(_fee);
   const [total, setTotal] = useState(_total);
   const [subTotal, setSubTotal] = useState(_subTotal);
@@ -162,10 +186,10 @@ const Confirm = () => {
   const [destinationTag, setDestinationTag] = useState(
     recipient?.destinationTag || _destinationTag,
   );
-  const {currencyAbbreviation, chain} = wallet;
+  const {currencyAbbreviation, chain, tokenAddress} = wallet;
   const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
-    dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+    dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -180,7 +204,7 @@ const Confirm = () => {
     const includedCurrencies = ['btc', 'eth', 'matic'];
     // TODO: exclude paypro, coinbase, usingMerchantFee txs,
     // const {payProUrl} = txDetails;
-    return includedCurrencies.includes(currencyAbbreviation);
+    return includedCurrencies.includes(currencyAbbreviation.toLowerCase());
   };
 
   const onCloseTxLevelModal = async (
@@ -249,12 +273,7 @@ const Confirm = () => {
 
   const updateTxProposal = async (newOpts: any) => {
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          // t('Updating Transaction')
-          t(OnGoingProcessMessages.UPDATING_TXP),
-        ),
-      );
+      dispatch(startOnGoingProcessModal('UPDATING_TXP'));
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,
@@ -319,6 +338,23 @@ const Confirm = () => {
     [dispatch],
   );
 
+  const checkHighFees = async () => {
+    const {feeUnitAmount} = GetFeeUnits(chain);
+    let feePerKb: number;
+    if (txp.feePerKb) {
+      feePerKb = txp.feePerKb;
+    } else {
+      feePerKb = await getFeeRatePerKb({wallet, feeLevel: fee.feeLevel});
+    }
+    setShowHighFeeWarningMessage(
+      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[chain] && txp.amount !== 0,
+    );
+  };
+
+  useEffect(() => {
+    checkHighFees();
+  }, [fee]);
+
   let recipientData, recipientListData;
 
   if (recipientList) {
@@ -328,10 +364,19 @@ const Confirm = () => {
         recipientName: r.name,
         recipientAddress: r.address,
         img: r.type === 'contact' ? r.type : wallet.img,
-        recipientAmountStr: `${r.amount} ${currencyAbbreviation.toUpperCase()}`,
+        recipientAmountStr: `${r.amount} ${formatCurrencyAbbreviation(
+          currencyAbbreviation,
+        )}`,
         recipientAltAmountStr: formatFiatAmount(
           dispatch(
-            toFiat(amountSat, isoCode, currencyAbbreviation, chain, rates),
+            toFiat(
+              amountSat,
+              isoCode,
+              currencyAbbreviation,
+              chain,
+              rates,
+              tokenAddress,
+            ),
           ),
           isoCode,
         ),
@@ -352,6 +397,7 @@ const Confirm = () => {
       img: recipient.type,
       recipientChain: recipient.chain,
       recipientType: recipient.type,
+      recipientTokenAddress: recipient.tokenAddress,
     };
   } else {
     recipientData = sendingTo;
@@ -363,7 +409,7 @@ const Confirm = () => {
         extraScrollHeight={50}
         contentContainerStyle={{paddingBottom: 50}}
         keyboardShouldPersistTaps={'handled'}>
-        <DetailsList keyboardShouldPersistTaps={'handled'}>
+        <DetailsListNoScroll keyboardShouldPersistTaps={'handled'}>
           <Header>Summary</Header>
           <SendingTo
             recipient={recipientData}
@@ -378,11 +424,33 @@ const Confirm = () => {
             }
             fee={fee}
             feeOptions={feeOptions}
-            hr
+            hr={!showHighFeeWarningMessage}
           />
+          {showHighFeeWarningMessage ? (
+            <>
+              <Info>
+                <InfoTriangle />
+                <InfoHeader>
+                  <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                    <WarningSvg />
+                  </InfoImageContainer>
+
+                  <InfoTitle>
+                    {t('Transaction fees are currently high')}
+                  </InfoTitle>
+                </InfoHeader>
+                <InfoDescription>
+                  {t(
+                    'Due to high demand, miner fees are high. Fees are paid to miners who process transactions and are not paid to BitPay.',
+                  )}
+                </InfoDescription>
+              </Info>
+              <Hr />
+            </>
+          ) : null}
           {enableReplaceByFee &&
           !selectInputs &&
-          currencyAbbreviation === 'btc' ? (
+          currencyAbbreviation.toLowerCase() === 'btc' ? (
             <>
               <Setting activeOpacity={1}>
                 <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
@@ -407,7 +475,7 @@ const Confirm = () => {
           {gasLimit !== undefined ? (
             <SharedDetailRow
               description={t('Gas limit')}
-              value={gasLimit}
+              value={gasLimit.toLocaleString()}
               onPress={() => editValue(t('Edit gas limit'), 'gasLimit')}
               hr
             />
@@ -425,6 +493,9 @@ const Confirm = () => {
             />
           ) : null}
           <SendingFrom sender={sendingFrom} hr />
+          {rateStr ? (
+            <ExchangeRate description={t('Exchange Rate')} rateStr={rateStr} />
+          ) : null}
           {currencyAbbreviation === 'xrp' ? (
             <>
               <SharedDetailRow
@@ -463,9 +534,28 @@ const Confirm = () => {
               onChange={message => setTxp({...txp, message})}
             />
           ) : null}
-          <Amount description={t('SubTotal')} amount={subTotal} height={83} />
-          <Amount description={t('Total')} amount={total} height={83} />
-        </DetailsList>
+          <Amount
+            description={t('SubTotal')}
+            amount={subTotal}
+            height={83}
+            chain={chain}
+            network={wallet.credentials.network}
+            hr
+          />
+          <Amount
+            description={t('Total')}
+            amount={total}
+            height={
+              IsERCToken(wallet.currencyAbbreviation, wallet.chain) ? 110 : 83
+            }
+            chain={chain}
+            network={wallet.credentials.network}
+            showInfoIcon={!!subTotal}
+            infoIconOnPress={() => {
+              dispatch(showConfirmAmountInfoSheet('total'));
+            }}
+          />
+        </DetailsListNoScroll>
 
         <PaymentSent
           isVisible={showPaymentSentModal}
@@ -477,31 +567,28 @@ const Confirm = () => {
             if (recipient.type === 'coinbase') {
               navigation.dispatch(
                 CommonActions.reset({
-                  index: 2,
+                  index: 1,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Coinbase',
-                      params: {
-                        screen: 'CoinbaseRoot',
-                      },
+                      name: CoinbaseScreens.ROOT,
+                      params: {},
                     },
                   ],
                 }),
               );
             } else {
+              await sleep(500);
               navigation.dispatch(StackActions.popToTop());
               navigation.dispatch(
-                StackActions.replace('WalletDetails', {
+                StackActions.push('WalletDetails', {
                   walletId: wallet!.id,
                   key,
                 }),
               );
-              await sleep(0);
-              setShowPaymentSentModal(false);
             }
           }}
         />
@@ -525,22 +612,26 @@ const Confirm = () => {
           />
         ) : null}
       </ConfirmScrollView>
+      {wallet && IsERCToken(wallet.currencyAbbreviation, wallet.chain) ? (
+        <SendingToERC20Warning
+          isVisible={showSendingERC20Modal}
+          closeModal={() => {
+            setShowSendingERC20Modal(false);
+          }}
+          wallet={wallet}
+        />
+      ) : null}
       <SwipeButton
         title={speedup ? t('Speed Up') : t('Slide to send')}
         forceReset={resetSwipeButton}
         onSwipeComplete={async () => {
           try {
-            dispatch(
-              startOnGoingProcessModal(
-                // t('Sending Payment')
-                t(OnGoingProcessMessages.SENDING_PAYMENT),
-              ),
-            );
+            dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
             await sleep(500);
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
             dispatch(
-              logSegmentEvent('track', 'Sent Crypto', {
+              Analytics.track('Sent Crypto', {
                 context: 'Confirm',
                 coin: currencyAbbreviation || '',
               }),

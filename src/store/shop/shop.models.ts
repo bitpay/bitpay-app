@@ -62,6 +62,11 @@ export interface CommonCardConfig {
 export interface CardConfig extends CommonCardConfig {
   name: string;
   supportedAmounts?: number[];
+  amountSpecificConfig?: {
+    [amount: number]: {
+      cardImage: string;
+    };
+  };
 }
 
 export interface UnsoldGiftCard {
@@ -75,7 +80,7 @@ export interface UnsoldGiftCard {
   accessKey: string;
   userEid?: string;
   totalDiscount?: number;
-  status: 'SUCCESS' | 'PENDING' | 'FAILURE' | 'UNREDEEMED';
+  status: 'SUCCESS' | 'PENDING' | 'FAILURE' | 'UNREDEEMED' | 'SYNCED';
 }
 
 export interface GiftCardBalanceEntry {
@@ -170,6 +175,15 @@ export interface Invoice {
   transactionCurrency: string;
   status: 'new' | 'paid' | 'confirmed' | 'complete' | 'expired' | 'invalid';
   expirationTime: number;
+  merchantName: string;
+  currency: string;
+  oauth?: {
+    coinbase?: {
+      enabled: boolean;
+      threshold: number;
+    };
+  };
+  usdAmount: number;
 }
 
 export interface PhoneCountryInfo {
@@ -248,4 +262,64 @@ export interface LegacyGiftCard {
   pin?: string;
   status: string;
   uuid: string;
+}
+
+export interface BillPayAccount {
+  id: string;
+  status: string;
+  type: 'liability';
+  isPayable: boolean;
+  isManuallyAdded: boolean;
+  paymentStatus: 'active' | 'activating' | 'unavailable';
+  liability: {
+    merchantId: string;
+    merchantIcon: string;
+    merchantName: string;
+    mask: string;
+    name: string;
+    type: string;
+    balance: number;
+    lastStatementBalance?: number;
+    lastSuccessfulSync?: string;
+    remainingStatementBalance?: number;
+    nextPaymentDueDate?: string;
+    paddedNextPaymentDueDate?: string;
+    nextPaymentMinimumAmount: number;
+    description: string;
+  };
+}
+
+export interface BillPayment {
+  partnerAccountId: string;
+  partnerPaymentId?: string;
+  currency: string;
+  amount: number;
+  createdOn: string;
+  creditedOn: string;
+  convenienceFee: number;
+  status: 'complete' | 'processing' | 'failed';
+  estimatedCompletionDate?: string;
+  icon: string;
+  merchantName: string;
+  mask: string;
+  accountType: string;
+  accountDescription: string;
+}
+
+export interface BillPayPayment {
+  id: string;
+  invoice: string;
+  createdOn: string;
+  payments: BillPayment[];
+}
+
+export interface BillPayInvoiceParams {
+  payments: {accountId: string; amount: number; currency: string}[];
+  transactionCurrency: string;
+}
+
+export interface BillPayOrder {
+  invoiceId: string;
+  invoice: Invoice;
+  payments: BillPayment[];
 }

@@ -1,4 +1,4 @@
-import {WalletScreens} from '../../navigation/wallet/WalletStack';
+import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
 import {GetPayProOptions} from '../wallet/effects/paypro/paypro';
@@ -17,30 +17,38 @@ import {
   IsValidBitPayUri,
   IsValidDogecoinAddress,
   IsValidDogecoinUri,
-  IsValidEthereumAddress,
+  IsValidEVMAddress,
   IsValidEthereumUri,
   IsValidMaticUri,
-  IsValidMaticAddress,
+  isValidBuyCryptoUri,
+  isValidMoonpayUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
   IsValidLitecoinAddress,
   IsValidLitecoinUri,
   IsValidPayPro,
+  isValidRampUri,
   IsValidRippleAddress,
   IsValidRippleUri,
+  isValidSardineUri,
   isValidSimplexUri,
   isValidWalletConnectUri,
-  isValidWyreUri,
+  IsBitPayInvoiceWebUrl,
+  isValidBanxaUri,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
-  simplexIncomingData,
-  wyrePaymentData,
+  BanxaIncomingData,
+  BanxaStatusKey,
+  MoonpayIncomingData,
+  RampIncomingData,
+  SardineIncomingData,
+  SardinePaymentData,
+  SimplexIncomingData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
-import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {startOnGoingProcessModal} from '../app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -54,7 +62,7 @@ import {
 import {Key, Wallet} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
-import {InteractionManager, Linking} from 'react-native';
+import {Linking} from 'react-native';
 import {
   BitcoreLibs,
   bitcoreLibs,
@@ -64,9 +72,19 @@ import {Network} from '../../constants';
 import BitPayIdApi from '../../api/bitpay';
 import axios from 'axios';
 import {t} from 'i18next';
-import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  GeneralError,
+} from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
 import {BitpaySupportedEvmCoins} from '../../constants/currencies';
+import {Analytics} from '../analytics/analytics.effects';
+import {parseUri} from '@walletconnect/utils';
+import {Invoice} from '../shop/shop.models';
+import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
+import {IsUtxoCoin} from '../wallet/utils/currency';
+import {BWCErrorMessage} from '../../constants/BWCError';
+import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 
 export const incomingData =
   (
@@ -78,33 +96,35 @@ export const incomingData =
       email?: string;
       destinationTag?: number;
     },
-  ): Effect<Promise<void>> =>
+  ): Effect<Promise<boolean>> =>
   async dispatch => {
     // wait to close blur
     await sleep(200);
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     const chain = opts?.wallet?.credentials?.chain.toLowerCase();
+    let handled = true;
+
     try {
+      if (IsBitPayInvoiceWebUrl(data)) {
+        const invoiceId = new URLSearchParams(data).get('id');
+        const origin = new URL(data).origin;
+        data = `${origin}/i/${invoiceId}`;
+      }
       if (IsValidBitPayInvoice(data)) {
-        dispatch(handleUnlock(data));
+        dispatch(handleUnlock(data, opts?.wallet));
       }
       // Paypro
       else if (IsValidPayPro(data)) {
-        dispatch(goToPayPro(data));
+        dispatch(goToPayPro(data, undefined, undefined, opts?.wallet));
         // Plain Address (Bitcoin)
       } else if (IsValidBitcoinAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'btc', chain || 'btc', opts));
         // Plain Address (Bitcoin Cash)
       } else if (IsValidBitcoinCashAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'bch', chain || 'bch', opts));
-        // Address (Ethereum)
-      } else if (IsValidEthereumAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts));
-        // Address (Matic)
-      } else if (IsValidMaticAddress(data)) {
-        dispatch(
-          handlePlainAddress(data, coin || 'matic', chain || 'matic', opts),
-        );
+        // EVM Address (Ethereum/Matic)
+      } else if (IsValidEVMAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts)); // using eth for simplicity
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'xrp', chain || 'xrp', opts));
@@ -142,28 +162,44 @@ export const incomingData =
         dispatch(handleLitecoinUri(data, opts?.wallet));
         // Wallet Connect URI
       } else if (isValidWalletConnectUri(data)) {
-        handleWalletConnectUri(data);
+        dispatch(handleWalletConnectUri(data));
+        // Buy Crypto
+      } else if (isValidBuyCryptoUri(data)) {
+        dispatch(handleBuyCryptoUri(data));
+        // Banxa
+      } else if (isValidBanxaUri(data)) {
+        dispatch(handleBanxaUri(data));
+        // Moonpay
+      } else if (isValidMoonpayUri(data)) {
+        dispatch(handleMoonpayUri(data));
+        // Ramp
+      } else if (isValidRampUri(data)) {
+        dispatch(handleRampUri(data));
+        // Sardine
+      } else if (isValidSardineUri(data)) {
+        dispatch(handleSardineUri(data));
         // Simplex
       } else if (isValidSimplexUri(data)) {
         dispatch(handleSimplexUri(data));
-        // Wyre
-      } else if (isValidWyreUri(data)) {
-        dispatch(handleWyreUri(data));
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
         dispatch(handleBitPayUri(data, opts?.wallet));
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
-        goToImport(data);
+        dispatch(goToImport(data));
         // Join multisig wallet
       } else if (IsValidJoinCode(data)) {
         dispatch(goToJoinWallet(data));
+      } else {
+        handled = false;
       }
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(300);
       throw err;
     }
+
+    return handled;
   };
 
 const getParameterByName = (name: string, url: string): string | undefined => {
@@ -183,47 +219,48 @@ const getParameterByName = (name: string, url: string): string | undefined => {
 };
 
 const goToPayPro =
-  (data: string, replaceNavigationRoute?: boolean): Effect =>
+  (
+    data: string,
+    replaceNavigationRoute?: boolean,
+    invoice?: Invoice,
+    wallet?: Wallet,
+  ): Effect =>
   async dispatch => {
     dispatch(dismissOnGoingProcessModal());
-
-    dispatch(
-      startOnGoingProcessModal(
-        //  t('Fetching payment options...')
-        t(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
-      ),
-    );
-
+    const invoiceId = data.split('/i/')[1].split('?')[0];
     const payProUrl = GetPayProUrl(data);
-
+    const {host} = new URL(payProUrl);
+    dispatch(LogActions.info('[scan] Incoming-data: Payment Protocol request'));
     try {
-      const payProOptions = await GetPayProOptions(payProUrl);
+      dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+      const payProOptions = await dispatch(GetPayProOptions(payProUrl));
+      const getInvoiceResponse = await axios.get(
+        `https://${host}/invoices/${invoiceId}`,
+      );
+      const {
+        data: {data: fetchedInvoice},
+      } = getInvoiceResponse as {data: {data: Invoice}};
+      const _invoice: Invoice = invoice || fetchedInvoice;
+
       dispatch(dismissOnGoingProcessModal());
 
       if (replaceNavigationRoute) {
         navigationRef.dispatch(
-          StackActions.replace('Wallet', {
-            screen: WalletScreens.PAY_PRO_CONFIRM,
-            params: {
-              payProOptions,
-            },
+          StackActions.replace(WalletScreens.PAY_PRO_CONFIRM, {
+            payProOptions,
+            invoice: _invoice,
+            wallet,
           }),
         );
         return;
       }
-
-      InteractionManager.runAfterInteractions(() => {
-        navigationRef.navigate('Wallet', {
-          screen: WalletScreens.PAY_PRO_CONFIRM,
-          params: {
-            payProOptions,
-          },
-        });
+      navigationRef.navigate(WalletScreens.PAY_PRO_CONFIRM, {
+        payProOptions,
+        invoice: _invoice,
+        wallet,
       });
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
-
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
@@ -243,8 +280,10 @@ const goToPayPro =
   };
 
 const handleUnlock =
-  (data: string): Effect =>
+  (data: string, wallet?: Wallet): Effect =>
   async dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: BitPay invoice'));
+
     const invoiceId = data.split('/i/')[1].split('?')[0];
     const network = data.includes('test.bitpay.com')
       ? Network.testnet
@@ -252,14 +291,14 @@ const handleUnlock =
     const result = await dispatch(unlockInvoice(invoiceId, network));
 
     if (result === 'unlockSuccess') {
-      dispatch(goToPayPro(data));
+      dispatch(goToPayPro(data, undefined, undefined, wallet));
       return;
     }
 
     const {host} = new URL(GetPayProUrl(data));
 
     try {
-      const invoice = await axios.get(
+      const {data: invoice} = await axios.get(
         `https://${host}/invoiceData/${invoiceId}`,
       );
       if (invoice) {
@@ -275,28 +314,23 @@ const handleUnlock =
             },
           } = invoice;
           if (emailAddress || buyerProvidedEmail || status !== 'new') {
-            dispatch(goToPayPro(data));
+            dispatch(goToPayPro(data, undefined, undefined, wallet));
           } else {
-            navigationRef.navigate('Wallet', {
-              screen: 'EnterBuyerProvidedEmail',
-              params: {data},
-            });
+            navigationRef.navigate('EnterBuyerProvidedEmail', {data});
           }
         } else {
-          dispatch(goToPayPro(data));
+          const _invoice = invoice?.invoice || invoice;
+          dispatch(goToPayPro(data, undefined, _invoice, wallet));
         }
         return;
       }
     } catch {}
     switch (result) {
       case 'pairingRequired':
-        navigationRef.navigate('Auth', {
-          screen: 'Login',
-          params: {
-            onLoginSuccess: () => {
-              navigationRef.navigate('Tabs', {screen: 'Home'});
-              dispatch(incomingData(data));
-            },
+        navigationRef.navigate('Login', {
+          onLoginSuccess: () => {
+            navigationRef.navigate('Tabs', {screen: 'Home'});
+            dispatch(incomingData(data));
           },
         });
         break;
@@ -409,6 +443,7 @@ const goToConfirm =
       currency: string;
       chain: string;
       destinationTag?: number;
+      network?: Network;
     };
     amount: number;
     wallet?: Wallet;
@@ -422,22 +457,20 @@ const goToConfirm =
   async dispatch => {
     try {
       if (!wallet) {
-        navigationRef.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {
-            context: 'scanner',
-            recipient: {
-              ...recipient,
-              ...{
-                opts: {
-                  showERC20Tokens:
-                    !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if ETH address show token wallets in next view
-                  message: opts?.message || '',
-                },
+        navigationRef.navigate('GlobalSelect', {
+          context: 'scanner',
+          recipient: {
+            ...recipient,
+            ...{
+              opts: {
+                showEVMWalletsAndTokens:
+                  !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
+                message: opts?.message || '',
+                feePerKb: opts?.feePerKb,
               },
             },
-            amount,
           },
+          amount,
         });
         return Promise.resolve();
       }
@@ -445,12 +478,7 @@ const goToConfirm =
       if (setButtonState) {
         setButtonState('loading');
       } else {
-        dispatch(
-          startOnGoingProcessModal(
-            // t('Creating Transaction')
-            t(OnGoingProcessMessages.CREATING_TXP),
-          ),
-        );
+        dispatch(startOnGoingProcessModal('CREATING_TXP'));
       }
 
       const {txDetails, txp} = await dispatch(
@@ -467,17 +495,14 @@ const goToConfirm =
         dispatch(dismissOnGoingProcessModal());
       }
       await sleep(300);
-      navigationRef.navigate('Wallet', {
-        screen: 'Confirm',
-        params: {
-          wallet,
-          recipient,
-          txp,
-          txDetails,
-          amount,
-          message: opts?.message || '',
-          sendMax: opts?.sendMax,
-        },
+      navigationRef.navigate('Confirm', {
+        wallet,
+        recipient,
+        txp,
+        txDetails,
+        amount,
+        message: opts?.message || '',
+        sendMax: opts?.sendMax,
       });
       sleep(300).then(() => setButtonState?.(null));
     } catch (err: any) {
@@ -515,7 +540,7 @@ export const goToAmount =
     chain,
     recipient,
     wallet,
-    opts: urlOpts,
+    opts,
   }: {
     coin: string;
     chain: string;
@@ -536,40 +561,37 @@ export const goToAmount =
   }): Effect<Promise<void>> =>
   async dispatch => {
     if (!wallet) {
-      navigationRef.navigate('Wallet', {
-        screen: 'GlobalSelect',
-        params: {
-          context: 'scanner',
-          recipient: {
-            ...recipient,
-            ...{
-              opts: {
-                showERC20Tokens:
-                  !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if ETH address show token wallets in next view
-              },
+      navigationRef.navigate('GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          ...recipient,
+          ...{
+            opts: {
+              showEVMWalletsAndTokens:
+                !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
+              message: opts?.message || '',
+              feePerKb: opts?.feePerKb,
             },
           },
         },
       });
       return Promise.resolve();
     }
-    navigationRef.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
-      params: {
-        sendMaxEnabled: true,
-        cryptoCurrencyAbbreviation: coin.toUpperCase(),
-        chain,
-        onAmountSelected: async (amount, setButtonState, amountOpts) => {
-          dispatch(
-            goToConfirm({
-              recipient,
-              amount: Number(amount),
-              wallet,
-              setButtonState,
-              opts: {...urlOpts, ...amountOpts},
-            }),
-          );
-        },
+    navigationRef.navigate(WalletScreens.AMOUNT, {
+      sendMaxEnabled: true,
+      cryptoCurrencyAbbreviation: coin.toUpperCase(),
+      chain,
+      tokenAddress: wallet.tokenAddress,
+      onAmountSelected: async (amount, setButtonState, amountOpts) => {
+        dispatch(
+          goToConfirm({
+            recipient,
+            amount: Number(amount),
+            wallet,
+            setButtonState,
+            opts: {...opts, ...amountOpts},
+          }),
+        );
       },
     });
   };
@@ -598,11 +620,8 @@ const handleBitPayUri =
       );
 
       if (fullWalletObj) {
-        navigationRef.navigate('Wallet', {
-          screen: WalletScreens.WALLET_DETAILS,
-          params: {
-            walletId: fullWalletObj.credentials.walletId,
-          },
+        navigationRef.navigate(WalletScreens.WALLET_DETAILS, {
+          walletId: fullWalletObj.credentials.walletId,
         });
       }
     } else {
@@ -619,11 +638,16 @@ const handleBitPayUri =
         feePerKb = Number(params.get('gasPrice'));
       }
       const chain = _chain || wallet!.chain;
+      const network = Object.keys(bitcoreLibs).includes(coin)
+        ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
+        : undefined;
+
       let recipient = {
         type: 'address',
         currency: coin,
         chain,
         address,
+        network,
       };
 
       if (!params.get('amount')) {
@@ -664,7 +688,7 @@ const handleBitcoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -698,7 +722,7 @@ const handleBitcoinCashUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -709,7 +733,7 @@ const handleBitcoinCashUriLegacyAddress =
   dispatch => {
     dispatch(
       LogActions.info(
-        '[scan] Incoming-data: Bitcoin Cash URI with legacy address',
+        '[scan] Incoming-data: BitcoinCash URI with legacy address',
       ),
     );
     const coin = 'bch';
@@ -754,7 +778,7 @@ const handleBitcoinCashUriLegacyAddress =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -784,7 +808,9 @@ const handleEthereumUri =
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
       );
       dispatch(
         goToConfirm({
@@ -821,7 +847,9 @@ const handleMaticUri =
     } else {
       const parsedAmount = value.exec(data)![1];
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, Number(parsedAmount), true)),
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
       );
       dispatch(
         goToConfirm({
@@ -853,7 +881,7 @@ const handleRippleUri =
       currency: coin,
       chain,
       address,
-      destinationTag: Number(destinationTag),
+      destinationTag: destinationTag ? Number(destinationTag) : undefined,
     };
     if (!amountParam.exec(data)) {
       dispatch(goToAmount({coin, chain, recipient, wallet}));
@@ -894,7 +922,7 @@ const handleDogecoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
@@ -923,9 +951,332 @@ const handleLitecoinUri =
       dispatch(goToAmount({coin, chain, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(
-        dispatch(FormatAmount(coin, chain, parsed.amount, true)),
+        dispatch(FormatAmount(coin, chain, undefined, parsed.amount, true)),
       );
       dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
+    }
+  };
+
+const handleBuyCryptoUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(
+      LogActions.info('Incoming-data (redirect): Buy crypto pre-set: ' + data),
+    );
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const partner = getParameterByName('partner', res)?.toLowerCase();
+    const amount = getParameterByName('amount', res);
+    let coin = getParameterByName('coin', res)?.toLowerCase();
+    let chain = getParameterByName('chain', res)?.toLowerCase();
+
+    let _amount: number | undefined;
+    if (amount) {
+      const {APP} = getState();
+      const altCurrency = APP.defaultAltCurrency?.isoCode;
+      _amount =
+        altCurrency === 'USD'
+          ? Number(amount)
+          : dispatch(
+              calculateUsdToAltFiat(Number(amount), altCurrency || 'USD'),
+            );
+    }
+
+    if (coin && !chain) {
+      if (IsUtxoCoin(coin)) {
+        chain = coin;
+      } else {
+        coin = undefined;
+      }
+    }
+
+    dispatch(
+      Analytics.track('Clicked Buy Crypto', {
+        context: 'DeepLink',
+        coin: coin || '',
+        chain: chain || '',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'BuyCryptoRoot',
+          params: {
+            partner,
+            amount: _amount,
+            currencyAbbreviation: coin,
+            chain,
+          },
+        },
+      ],
+    });
+  };
+
+const handleBanxaUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Banxa URL: ' + data));
+    if (
+      data.indexOf('banxaCancelled') >= 0 ||
+      data.indexOf('banxaFailed') >= 0
+    ) {
+      return;
+    }
+
+    if (data === 'banxa') {
+      return;
+    }
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+
+    const banxaExternalId = getParameterByName('externalId', res);
+    if (!banxaExternalId) {
+      dispatch(LogActions.warn('No banxaExternalId present. Do not redir'));
+      return;
+    }
+
+    const status =
+      (getParameterByName('orderStatus', res) as BanxaStatusKey) ??
+      (getParameterByName('status', res) as BanxaStatusKey);
+
+    const stateParams: BanxaIncomingData = {
+      banxaExternalId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestBanxa({
+        banxaIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.banxa[banxaExternalId];
+    if (order) {
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'banxa',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin?.toLowerCase() || '',
+          chain: order?.chain?.toLowerCase() || '',
+        }),
+      );
+    }
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'BanxaSettings',
+          params: {incomingPaymentRequest: stateParams},
+        },
+      ],
+    });
+  };
+
+const handleMoonpayUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Moonpay URL: ' + data));
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const externalId = getParameterByName('externalId', res);
+    if (!externalId) {
+      dispatch(LogActions.warn('No externalId present. Do not redir'));
+      return;
+    }
+
+    const transactionId = getParameterByName('transactionId', res);
+    const status = getParameterByName('transactionStatus', res);
+
+    const stateParams: MoonpayIncomingData = {
+      externalId,
+      transactionId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestMoonpay({
+        moonpayIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.moonpay[externalId];
+
+    dispatch(
+      Analytics.track('Purchased Buy Crypto', {
+        exchange: 'moonpay',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin?.toLowerCase() || '',
+        chain: order?.chain?.toLowerCase() || '',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'MoonpaySettings',
+          params: {incomingPaymentRequest: stateParams},
+        },
+      ],
+    });
+  };
+
+const handleRampUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Ramp URL: ' + data));
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const rampExternalId = getParameterByName('rampExternalId', res);
+    if (!rampExternalId) {
+      dispatch(LogActions.warn('No rampExternalId present. Do not redir'));
+      return;
+    }
+
+    const walletId = getParameterByName('walletId', res);
+    const status = getParameterByName('status', res);
+
+    const stateParams: RampIncomingData = {
+      rampExternalId,
+      walletId,
+      status,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestRamp({
+        rampIncomingData: stateParams,
+      }),
+    );
+
+    const {BUY_CRYPTO} = getState();
+    const order = BUY_CRYPTO.ramp[rampExternalId];
+
+    dispatch(
+      Analytics.track('Purchased Buy Crypto', {
+        exchange: 'ramp',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin?.toLowerCase() || '',
+        chain: order?.chain?.toLowerCase() || '',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'RampSettings',
+          params: {incomingPaymentRequest: stateParams},
+        },
+      ],
+    });
+  };
+
+const handleSardineUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Sardine URL: ' + data));
+
+    data = data.replace('?order_id', '&order_id');
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const sardineExternalId = getParameterByName('sardineExternalId', res);
+    if (!sardineExternalId) {
+      dispatch(LogActions.warn('No sardineExternalId present. Do not redir'));
+      return;
+    }
+
+    const order_id = getParameterByName('order_id', res);
+    const walletId = getParameterByName('walletId', res)!;
+    const status = getParameterByName('status', res)!;
+    const chain = getParameterByName('chain', res)!;
+    const address = getParameterByName('address', res)!;
+    const createdOn = getParameterByName('createdOn', res);
+    const cryptoAmount = getParameterByName('cryptoAmount', res);
+    const coin = getParameterByName('coin', res)!;
+    const env = (getParameterByName('env', res) as 'dev' | 'prod')!;
+    const fiatBaseAmount = getParameterByName('fiatBaseAmount', res)!;
+    const fiatTotalAmount = getParameterByName('fiatTotalAmount', res)!;
+    const fiatTotalAmountCurrency = getParameterByName(
+      'fiatTotalAmountCurrency',
+      res,
+    )!;
+
+    const newData: SardinePaymentData = {
+      address,
+      chain,
+      created_on: Number(createdOn),
+      crypto_amount: Number(cryptoAmount),
+      coin,
+      env,
+      external_id: sardineExternalId,
+      fiat_base_amount: Number(fiatBaseAmount),
+      fiat_total_amount: Number(fiatTotalAmount),
+      fiat_total_amount_currency: fiatTotalAmountCurrency,
+      order_id,
+      status,
+      user_id: walletId,
+    };
+
+    dispatch(
+      BuyCryptoActions.successPaymentRequestSardine({
+        sardinePaymentData: newData,
+      }),
+    );
+
+    if (order_id) {
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'sardine',
+          fiatAmount: Number(fiatTotalAmount) || '',
+          fiatCurrency: fiatTotalAmountCurrency || '',
+          coin: coin?.toLowerCase() || '',
+          chain: chain?.toLowerCase() || '',
+        }),
+      );
+
+      const stateParams: SardineIncomingData = {
+        sardineExternalId,
+        walletId,
+        status,
+        order_id,
+      };
+
+      navigationRef.reset({
+        index: 2,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
+          },
+          {
+            name: 'SardineSettings',
+            params: {incomingPaymentRequest: stateParams},
+          },
+        ],
+      });
     }
   };
 
@@ -945,7 +1296,7 @@ const handleSimplexUri =
     const quoteId = getParameterByName('quoteId', res);
     const userId = getParameterByName('userId', res);
 
-    const stateParams: simplexIncomingData = {
+    const stateParams: SimplexIncomingData = {
       success,
       paymentId,
       quoteId,
@@ -962,104 +1313,70 @@ const handleSimplexUri =
     const order = BUY_CRYPTO.simplex[paymentId];
 
     dispatch(
-      logSegmentEvent('track', 'Purchased Buy Crypto', {
+      Analytics.track('Purchased Buy Crypto', {
         exchange: 'simplex',
         fiatAmount: order?.fiat_total_amount || '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin || '',
+        coin: order?.coin?.toLowerCase() || '',
+        chain: order?.chain?.toLowerCase() || '',
       }),
     );
 
-    navigationRef.navigate('ExternalServicesSettings', {
-      screen: 'SimplexSettings',
-      params: {
-        incomingPaymentRequest: stateParams,
-      },
-    });
-  };
-
-const handleWyreUri =
-  (data: string): Effect<void> =>
-  dispatch => {
-    dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
-
-    if (data.indexOf('wyreError') >= 0) {
-      navigationRef.navigate('ExternalServicesSettings', {
-        screen: 'WyreSettings',
-        params: {
-          paymentRequestError: true,
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
         },
-      });
-      return;
-    }
-
-    if (data === 'wyre') {
-      return;
-    }
-    const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const orderId = getParameterByName('id', res);
-    if (!orderId) {
-      dispatch(LogActions.warn('No orderId present. Do not redir'));
-      return;
-    }
-
-    const walletId = getParameterByName('walletId', res);
-    const destCurrency = getParameterByName('destCurrency', res);
-    const sourceCurrency = getParameterByName('sourceCurrency', res);
-    const sourceAmount = getParameterByName('sourceAmount', res);
-
-    const stateParams: wyrePaymentData = {
-      orderId,
-      transferId: getParameterByName('transferId', res),
-      owner: getParameterByName('owner', res),
-      accountId: getParameterByName('accountId', res),
-      walletId,
-      dest: getParameterByName('dest', res),
-      destAmount: getParameterByName('destAmount', res),
-      destChain: getParameterByName('destChain', res),
-      destCurrency,
-      purchaseAmount: getParameterByName('purchaseAmount', res),
-      sourceAmount,
-      sourceCurrency,
-      status: getParameterByName('status', res),
-      createdAt: getParameterByName('createdAt', res),
-      paymentMethodName: getParameterByName('paymentMethodName', res),
-      blockchainNetworkTx: getParameterByName('blockchainNetworkTx', res),
-      env: __DEV__ ? 'dev' : 'prod',
-      created_on: Date.now(),
-    };
-
-    dispatch(
-      BuyCryptoActions.successPaymentRequestWyre({
-        wyrePaymentData: stateParams,
-      }),
-    );
-
-    dispatch(
-      logSegmentEvent('track', 'Purchased Buy Crypto', {
-        exchange: 'wyre',
-        fiatAmount: sourceAmount || '',
-        fiatCurrency: sourceCurrency || '',
-        coin: destCurrency || '',
-      }),
-    );
-
-    navigationRef.navigate('ExternalServicesSettings', {
-      screen: 'WyreSettings',
-      params: {
-        incomingPaymentRequest: stateParams,
-      },
+        {
+          name: 'SimplexSettings',
+          params: {incomingPaymentRequest: stateParams},
+        },
+      ],
     });
   };
 
-const handleWalletConnectUri = (data: string) => {
-  navigationRef.navigate('WalletConnect', {
-    screen: 'Root',
-    params: {
-      uri: data,
-    },
-  });
-};
+const handleWalletConnectUri =
+  (data: string): Effect<void> =>
+  async (dispatch, getState) => {
+    try {
+      if (isValidWalletConnectUri(data)) {
+        const {version} = parseUri(data);
+        if (version === 1) {
+          const errMsg = t(
+            'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+          );
+          throw errMsg;
+        } else {
+          await dispatch(walletConnectV2OnSessionProposal(data));
+          navigationRef.navigate('WalletConnectRoot', {});
+        }
+      } else {
+        const errMsg = t('The URI does not correspond to WalletConnect.');
+        throw errMsg;
+      }
+    } catch (e: any) {
+      const proposal = getState().WALLET_CONNECT_V2.proposal;
+      if (
+        proposal &&
+        typeof e === 'object' &&
+        e !== null &&
+        e.message?.includes('Pairing already exists:')
+      ) {
+        navigationRef.navigate('WalletConnectRoot', {uri: data});
+      } else {
+        dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(e),
+              title: t('Uh oh, something went wrong'),
+            }),
+          ),
+        );
+      }
+    }
+  };
 
 const handlePlainAddress =
   (
@@ -1075,10 +1392,11 @@ const handlePlainAddress =
     },
   ): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info(`[scan] Incoming-data: ${coin} plain address`));
+    let _coin = coin === 'eth' ? 'EVM' : coin;
+    dispatch(LogActions.info(`[scan] Incoming-data: ${_coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
-      : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
+      : undefined; // There is no way to tell if an evm address is goerli or livenet so let's skip the network filter
     const recipient = {
       type: opts?.context || 'address',
       name: opts?.name,
@@ -1092,14 +1410,18 @@ const handlePlainAddress =
     dispatch(goToAmount({coin, chain, recipient, wallet: opts?.wallet}));
   };
 
-const goToImport = (importQrCodeData: string): void => {
-  navigationRef.navigate('Wallet', {
-    screen: WalletScreens.IMPORT,
-    params: {
+const goToImport =
+  (importQrCodeData: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(
+      LogActions.info(
+        '[scan] Incoming-data (redirect): QR code export feature',
+      ),
+    );
+    navigationRef.navigate(WalletScreens.IMPORT, {
       importQrCodeData,
-    },
-  });
-};
+    });
+  };
 
 const goToJoinWallet =
   (data: string): Effect<void> =>
@@ -1111,33 +1433,21 @@ const goToJoinWallet =
     );
     const keys = Object.values(getState().WALLET.keys);
     if (!keys.length) {
-      navigationRef.navigate('Wallet', {
-        screen: 'JoinMultisig',
-        params: {
-          invitationCode: data,
-        },
+      navigationRef.navigate('JoinMultisig', {
+        invitationCode: data,
       });
     } else if (keys.length === 1) {
-      navigationRef.navigate('Wallet', {
-        screen: 'JoinMultisig',
-        params: {
-          key: keys[0],
-          invitationCode: data,
-        },
+      navigationRef.navigate('JoinMultisig', {
+        key: keys[0],
+        invitationCode: data,
       });
     } else {
-      navigationRef.navigate('Wallet', {
-        screen: WalletScreens.KEY_GLOBAL_SELECT,
-        params: {
-          onKeySelect: (selectedKey: Key) => {
-            navigationRef.navigate('Wallet', {
-              screen: WalletScreens.JOIN_MULTISIG,
-              params: {
-                key: selectedKey,
-                invitationCode: data,
-              },
-            });
-          },
+      navigationRef.navigate(WalletScreens.KEY_GLOBAL_SELECT, {
+        onKeySelect: (selectedKey: Key) => {
+          navigationRef.navigate(WalletScreens.JOIN_MULTISIG, {
+            key: selectedKey,
+            invitationCode: data,
+          });
         },
       });
     }

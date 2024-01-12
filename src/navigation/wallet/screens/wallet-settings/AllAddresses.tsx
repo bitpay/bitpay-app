@@ -12,9 +12,9 @@ import {
 } from '../../../../components/styled/Containers';
 import {Linking, View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletGroupParamList} from '../../WalletGroup';
 import {SlateDark, White} from '../../../../styles/colors';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
 import {sleep} from '../../../../utils/helper-methods';
@@ -23,6 +23,7 @@ import {useAppDispatch} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
+import {LogActions} from '../../../../store/log';
 
 export type AllAddressesParamList = {
   walletName: string;
@@ -30,6 +31,7 @@ export type AllAddressesParamList = {
   unusedAddresses?: any[];
   currencyAbbreviation: string;
   chain: string;
+  tokenAddress: string | undefined;
 };
 
 const AddressesContainer = styled.SafeAreaView`
@@ -73,8 +75,9 @@ const AllAddresses = () => {
       usedAddresses,
       unusedAddresses,
       chain,
+      tokenAddress,
     },
-  } = useRoute<RouteProp<WalletStackParamList, 'AllAddresses'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'AllAddresses'>>();
 
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -133,8 +136,9 @@ const AllAddresses = () => {
       setButtonState('success');
       await sleep(200);
       setButtonState(undefined);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[SendAddresses] ', e));
       setButtonState('failed');
       await sleep(500);
       setButtonState(undefined);
@@ -174,7 +178,12 @@ const AllAddresses = () => {
 
                     <H7>
                       {dispatch(
-                        FormatAmountStr(currencyAbbreviation, chain, amount),
+                        FormatAmountStr(
+                          currencyAbbreviation,
+                          chain,
+                          tokenAddress,
+                          amount,
+                        ),
                       )}
                     </H7>
                   </SettingView>

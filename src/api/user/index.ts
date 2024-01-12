@@ -24,8 +24,14 @@ const fetchInitialUserData = async (token: string) => {
   return response.data;
 };
 
-const fetchBasicInfo = async (token: string) => {
-  const query = UserQueries.FETCH_BASIC_INFO(token);
+const fetchBasicInfo = async (
+  token: string,
+  params?: {includeExternalData: boolean},
+) => {
+  const query = UserQueries.FETCH_BASIC_INFO(
+    token,
+    params || {includeExternalData: false},
+  );
   const {data} = await GraphQlApi.getInstance().request<FetchBasicInfoResponse>(
     query,
   );

@@ -13,26 +13,32 @@ import {
   IsDateInCurrentMonth,
   WithinPastDay,
   WithinSameMonth,
+  WithinSameMonthTimestamp,
 } from '../../utils/time';
 import moment from 'moment';
-import {TransactionIcons} from '../../../../constants/TransactionIcons';
+import 'moment/min/locales';
+import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {
+  formatCurrencyAbbreviation,
+  formatFiatAmount,
+} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {partition} from 'lodash';
 import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
 export const TX_HISTORY_LIMIT = 25;
+export const BWS_TX_HISTORY_LIMIT = 1001;
 
 const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
   const {currencyAbbreviation, network} = wallet;
@@ -79,10 +85,10 @@ export const ProcessPendingTxps =
   (txps: TransactionProposal[], wallet: any): Effect<any> =>
   dispatch => {
     const now = Math.floor(Date.now() / 1000);
-    const {currencyAbbreviation, chain} = wallet;
+    const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
-      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx));
+      tx = dispatch(ProcessTx(tx, wallet));
 
       // no future transactions...
       if (tx.createdOn > now) {
@@ -112,18 +118,46 @@ export const ProcessPendingTxps =
         tx.canBeRemoved = true;
       }
     });
-    return BuildUiFriendlyList(txps, currencyAbbreviation, [], {});
+    return BuildUiFriendlyList(
+      txps,
+      currencyAbbreviation,
+      chain,
+      [],
+      tokenAddress,
+    );
   };
 
 const ProcessTx =
-  (
-    currencyAbbreviation: string,
-    chain: string,
-    tx: TransactionProposal,
-  ): Effect<TransactionProposal> =>
-  dispatch => {
+  (tx: TransactionProposal, wallet: Wallet): Effect<TransactionProposal> =>
+  (dispatch, getState) => {
     if (!tx || tx.action === 'invalid') {
       return tx;
+    }
+
+    const {tokenOptionsByAddress, customTokenOptionsByAddress} =
+      getState().WALLET;
+    const tokensOptsByAddress = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...tokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
+    };
+
+    const {chain, coin, tokenAddress: payoutContractAddress} = tx;
+    let {tokenAddress} = wallet;
+    // Only for payouts. For this case chain and coin have the same value.
+    // Therefore, to identify an ERC20 token payout it is necessary to check if exist the tokenAddress field
+    let tokenSymbol: string | undefined;
+
+    if (coin === chain && payoutContractAddress) {
+      tokenSymbol = Object.values(tokensOptsByAddress)
+        .find(
+          ({address}) =>
+            payoutContractAddress?.toLowerCase() === address?.toLowerCase(),
+        )
+        ?.symbol.toLowerCase();
+      if (tokenSymbol) {
+        tokenAddress = payoutContractAddress?.toLowerCase();
+      }
     }
 
     // New transaction output format. Fill tx.amount and tx.toAmount for
@@ -138,22 +172,27 @@ const ProcessTx =
         }
         tx.amount = tx.outputs.reduce((total: number, o: any) => {
           o.amountStr = dispatch(
-            FormatAmountStr(currencyAbbreviation, chain, o.amount),
+            FormatAmountStr(
+              tokenSymbol || coin,
+              chain,
+              tokenAddress,
+              Number(o.amount),
+            ),
           );
-          return total + o.amount;
+          return total + Number(o.amount);
         }, 0);
       }
       tx.toAddress = tx.outputs[0].toAddress!;
 
       // translate legacy addresses
-      if (tx.addressTo && currencyAbbreviation === 'ltc') {
+      if (tx.addressTo && coin === 'ltc') {
         for (let o of tx.outputs) {
           o.address = o.addressToShow = ToLtcAddress(tx.addressTo);
         }
       }
 
       if (tx.toAddress) {
-        tx.toAddress = ToAddress(tx.toAddress, currencyAbbreviation);
+        tx.toAddress = ToAddress(tx.toAddress, coin);
       }
     }
 
@@ -168,13 +207,13 @@ const ProcessTx =
     }
 
     tx.amountStr = dispatch(
-      FormatAmountStr(currencyAbbreviation, chain, tx.amount),
+      FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
     );
 
     tx.feeStr = tx.fee
-      ? dispatch(FormatAmountStr(chain, chain, tx.fee))
+      ? dispatch(FormatAmountStr(chain, chain, undefined, tx.fee))
       : tx.fees
-      ? dispatch(FormatAmountStr(chain, chain, tx.fees))
+      ? dispatch(FormatAmountStr(chain, chain, undefined, tx.fees))
       : 'N/A';
 
     if (tx.amountStr) {
@@ -187,7 +226,7 @@ const ProcessTx =
     }
 
     if (tx.addressTo) {
-      tx.addressTo = ToAddress(tx.addressTo, currencyAbbreviation);
+      tx.addressTo = ToAddress(tx.addressTo, coin);
     }
 
     return tx;
@@ -199,10 +238,14 @@ const ProcessNewTxs =
     const now = Math.floor(Date.now() / 1000);
     const txHistoryUnique: any = {};
     const ret = [];
-    const {currencyAbbreviation, chain} = wallet;
+    const {currencyAbbreviation} = wallet;
 
     for (let tx of txs) {
-      tx = dispatch(ProcessTx(currencyAbbreviation, chain, tx));
+      // workaround for BWS bug / coin is missing and chain is in uppercase
+      tx.coin = wallet.currencyAbbreviation;
+      tx.chain = wallet.chain;
+
+      tx = dispatch(ProcessTx(tx, wallet));
 
       // no future transactions...
       if (tx.time > now) {
@@ -366,6 +409,46 @@ const IsFirstInGroup = (index: number, history: any[]) => {
   return !WithinSameMonth(curTx.time * 1000, prevTx.time * 1000);
 };
 
+const IsFirstInCoinbaseGroup = (index: number, history: any[]) => {
+  if (index === 0) {
+    return true;
+  }
+  const curTx = history[index];
+  const prevTx = history[index - 1];
+  return !WithinSameMonthTimestamp(curTx.created_at, prevTx.created_at);
+};
+
+export const GroupCoinbaseTransactions = (txs: any[]) => {
+  const [_pendingTransactions, _confirmedTransactions] = partition(txs, t => {
+    return t.status === 'pending';
+  });
+  const pendingTransactionsGroup =
+    _pendingTransactions.length > 0
+      ? [
+          {
+            title: t('Pending Transactions'),
+            data: _pendingTransactions,
+          },
+        ]
+      : [];
+  const confirmedTransactionsGroup = _confirmedTransactions
+    .reduce((groups, tx, txInd) => {
+      IsFirstInCoinbaseGroup(txInd, _confirmedTransactions)
+        ? groups.push([tx])
+        : groups[groups.length - 1].push(tx);
+      return groups;
+    }, [])
+    .map((group: any[]) => {
+      const time = Date.parse(group[0].created_at);
+      const month = moment(time)
+        .locale(i18n.language || 'en')
+        .format('MMMM');
+      const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
+      return {title, data: group};
+    });
+  return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
+};
+
 export const GroupTransactionHistory = (history: any[]) => {
   // workaround to show pending transactions first even if it was broadcasted earlier that the confirmed ones
   const [_pendingTransactions, _confirmedTransactions] = partition(
@@ -392,9 +475,10 @@ export const GroupTransactionHistory = (history: any[]) => {
     }, [])
     .map((group: any[]) => {
       const time = group[0].time * 1000;
-      const title = IsDateInCurrentMonth(time)
-        ? t('Recent')
-        : moment(time).format('MMMM');
+      const month = moment(time)
+        .locale(i18n.language || 'en')
+        .format('MMMM');
+      const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
       return {title, data: group};
     });
   return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
@@ -451,13 +535,12 @@ export const GetTransactionHistory =
         );
 
         // To get transaction list details: icon, description, amount and date
-        const {SHOP} = getState();
         transactions = BuildUiFriendlyList(
           transactions,
           wallet.currencyAbbreviation,
           wallet.chain,
           contactList,
-          getGiftCardIcons(SHOP.supportedCardMap),
+          wallet.tokenAddress,
         );
 
         const array = transactions
@@ -546,13 +629,18 @@ export const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
 
 export const GetContactName = (
   address: string | undefined,
+  tokenAddress: string | undefined,
+  chain: string,
   contactList: any[] = [],
 ) => {
   if (!address || !contactList.length) {
     return null;
   }
   const existsContact = contactList.find(
-    contact => contact.address === address,
+    contact =>
+      contact.address === address &&
+      contact.chain === chain?.toLowerCase() &&
+      (!contact.tokenAddress || contact.tokenAddress === tokenAddress),
   );
   if (existsContact) {
     return existsContact.name;
@@ -606,7 +694,7 @@ export const BuildUiFriendlyList = (
   currencyAbbreviation: string,
   chain: string,
   contactList: any[] = [],
-  giftCardIcons: {[cardName: string]: string},
+  tokenAddress: string | undefined,
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -627,28 +715,34 @@ export const BuildUiFriendlyList = (
     const {
       service: customDataService,
       toWalletName,
+      billPayMerchantIds,
       giftCardName,
     } = customData || {};
     const {body: noteBody} = note || {};
 
     const notZeroAmountEVM = NotZeroAmountEVM(amount, currencyAbbreviation);
-    let contactName;
-
-    if (
-      contactList?.length &&
-      outputs?.length &&
-      GetContactName(outputs[0]?.address, contactList)
-    ) {
-      contactName = GetContactName(outputs[0]?.address, contactList);
-    }
-
     const isSent = IsSent(action);
     const isMoved = IsMoved(action);
     const isReceived = IsReceived(action);
     const isInvalid = IsInvalid(action);
+    let contactName;
+    if (
+      (isSent || isMoved) &&
+      contactList?.length &&
+      outputs?.length &&
+      chain &&
+      GetContactName(outputs[0]?.address, tokenAddress, chain, contactList)
+    ) {
+      contactName = GetContactName(
+        outputs[0]?.address,
+        tokenAddress,
+        chain,
+        contactList,
+      );
+    }
 
     if (!confirmations || confirmations <= 0) {
-      transaction.uiIcon = TransactionIcons.confirming;
+      transaction.uiIcon = 'confirming';
 
       if (notZeroAmountEVM) {
         if (contactName || transaction.customData?.recipientEmail) {
@@ -676,14 +770,21 @@ export const BuildUiFriendlyList = (
       if (isSent) {
         if (
           (currencyAbbreviation === 'eth' ||
-            IsCustomERCToken(currencyAbbreviation, chain)) &&
+            IsCustomERCToken(tokenAddress, chain)) &&
           error
         ) {
-          transaction.uiIcon = TransactionIcons.error;
+          transaction.uiIcon = 'error';
         } else {
-          transaction.uiIcon =
-            TransactionIcons[customDataService] || TransactionIcons.sent;
-          transaction.uiIconURI = giftCardIcons[giftCardName];
+          transaction.uiIcon = ['billpay', 'giftcards'].includes(
+            customDataService,
+          )
+            ? 'shop'
+            : customDataService || 'sent';
+          transaction.uiIconURI =
+            (billPayMerchantIds &&
+              billPayMerchantIds.length === 1 &&
+              billPayMerchantIds[0]) ||
+            giftCardName;
         }
         if (notZeroAmountEVM) {
           if (noteBody) {
@@ -705,7 +806,7 @@ export const BuildUiFriendlyList = (
       }
 
       if (isReceived) {
-        transaction.uiIcon = TransactionIcons.received;
+        transaction.uiIcon = 'received';
 
         if (noteBody) {
           transaction.uiDescription = noteBody;
@@ -717,7 +818,7 @@ export const BuildUiFriendlyList = (
       }
 
       if (isMoved) {
-        transaction.uiIcon = TransactionIcons.moved;
+        transaction.uiIcon = 'moved';
 
         if (noteBody) {
           transaction.uiDescription = noteBody;
@@ -730,7 +831,7 @@ export const BuildUiFriendlyList = (
       }
 
       if (isInvalid) {
-        transaction.uiIcon = TransactionIcons.error;
+        transaction.uiIcon = 'error';
 
         transaction.uiDescription = t('Invalid');
       }
@@ -738,7 +839,7 @@ export const BuildUiFriendlyList = (
 
     if (!notZeroAmountEVM) {
       const {uiDescription} = transaction;
-      transaction.uiIcon = TransactionIcons.contractInteraction;
+      transaction.uiIcon = 'contractInteraction';
 
       transaction.uiDescription = uiDescription
         ? t('Interaction with contract') + ` ${uiDescription}`
@@ -829,8 +930,7 @@ export const buildTransactionDetails =
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
-        const {coin, chain} = wallet.credentials;
-        const _transaction = {...transaction, coin, chain};
+        const _transaction = {...transaction};
         const {
           fees,
           fee,
@@ -840,6 +940,8 @@ export const buildTransactionDetails =
           action,
           time,
           hasMultiplesOutputs,
+          coin,
+          chain,
         } = transaction;
         const _fee = fees || fee;
 
@@ -848,7 +950,16 @@ export const buildTransactionDetails =
         const rates = await dispatch(startGetRates({}));
 
         _transaction.feeFiatStr = formatFiatAmount(
-          dispatch(toFiat(_fee, alternativeCurrency, chain, chain, rates)),
+          dispatch(
+            toFiat(
+              _fee,
+              alternativeCurrency,
+              chain,
+              chain,
+              rates,
+              wallet.tokenAddress,
+            ),
+          ),
           alternativeCurrency,
         );
 
@@ -857,7 +968,14 @@ export const buildTransactionDetails =
             _transaction.outputs = _transaction.outputs.map((o: any) => {
               o.alternativeAmountStr = formatFiatAmount(
                 dispatch(
-                  toFiat(o.amount, alternativeCurrency, coin, chain, rates),
+                  toFiat(
+                    o.amount,
+                    alternativeCurrency,
+                    coin,
+                    chain,
+                    rates,
+                    wallet.tokenAddress,
+                  ),
                 ),
                 alternativeCurrency,
               );
@@ -873,7 +991,11 @@ export const buildTransactionDetails =
             const minFee = GetMinFee(wallet);
             _transaction.lowAmount = amount < minFee;
           } catch (minFeeErr) {
-            console.log(minFeeErr);
+            const e =
+              minFeeErr instanceof Error
+                ? minFeeErr.message
+                : JSON.stringify(minFeeErr);
+            dispatch(LogActions.error('[GeMinFee] ', e));
           }
         }
 
@@ -900,6 +1022,7 @@ export const buildTransactionDetails =
             coin,
             alternativeCurrency,
             chain,
+            wallet.tokenAddress,
           ),
         );
 
@@ -918,6 +1041,7 @@ const UpdateFiatRate =
     currency: string,
     alternativeCurrency: string,
     chain: string,
+    tokenAddress: string | undefined,
   ): Effect<string> =>
   dispatch => {
     const {amountValueStr, amount} = transaction;
@@ -935,11 +1059,16 @@ const UpdateFiatRate =
     } else {
       // Get current fiat value when historic rates are unavailable
       fiatRateStr = dispatch(
-        toFiat(amount, alternativeCurrency, currency, chain, rates),
+        toFiat(
+          amount,
+          alternativeCurrency,
+          currency,
+          chain,
+          rates,
+          tokenAddress,
+        ),
       );
-      fiatRateStr =
-        formatFiatAmount(fiatRateStr, alternativeCurrency) +
-        alternativeCurrency;
+      fiatRateStr = formatFiatAmount(fiatRateStr, alternativeCurrency);
     }
     return fiatRateStr;
   };

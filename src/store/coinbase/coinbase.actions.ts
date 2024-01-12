@@ -197,11 +197,3 @@ export const payInvoiceFailed = (
 export const clearErrorStatus = (): CoinbaseActionType => ({
   type: CoinbaseActionTypes.CLEAR_ERROR_STATUS,
 });
-
-// ------- Settings -------- //
-export const toggleHideCoinbaseTotalBalance = (
-  hideTotalBalance: boolean,
-): CoinbaseActionType => ({
-  type: CoinbaseActionTypes.TOGGLE_HIDE_TOTAL_BALANCE,
-  payload: hideTotalBalance,
-});

@@ -22,12 +22,7 @@ import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {KeyOptions, Status} from '../../../store/wallet/wallet.models';
-import {
-  RouteProp,
-  useNavigation,
-  useRoute,
-  CommonActions,
-} from '@react-navigation/native';
+import {CommonActions} from '@react-navigation/native';
 import {
   Info,
   InfoTriangle,
@@ -43,20 +38,16 @@ import {
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
-import {BitpaySupportedCurrencies} from '../../../constants/currencies';
+import {BitpaySupportedCoins} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
-import {WalletStackParamList} from '../WalletStack';
-import {
-  logSegmentEvent,
-  openUrlWithInAppBrowser,
-} from '../../../store/app/app.effects';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
   addWalletMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import InfoSvg from '../../../../assets/img/info.svg';
 import PlusIcon from '../../../components/plus/Plus';
 import MinusIcon from '../../../components/minus/Minus';
@@ -66,8 +57,13 @@ import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
+import {IsSegwitCoin} from '../../../store/wallet/utils/currency';
 
-export interface CreateMultisigProps {
+export interface CreateMultisigParamsList {
   currency: string;
   key: Key;
 }
@@ -85,9 +81,8 @@ const schema = yup.object().shape({
   totalCopayers: yup.number().required().positive().integer().min(2).max(6), // n
 });
 
-const Gutter = '10px';
-export const MultisigContainer = styled.View`
-  padding: ${Gutter} 0;
+export const MultisigContainer = styled.SafeAreaView`
+  flex: 1;
 `;
 
 const ScrollViewContainer = styled.ScrollView`
@@ -150,7 +145,7 @@ const RemoveButton = styled.TouchableOpacity`
   border: 1px solid ${Slate};
 `;
 
-const AddButton = styled.TouchableOpacity`
+export const AddButton = styled.TouchableOpacity`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -180,14 +175,17 @@ const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
 `;
 
-const CreateMultisig = () => {
+type CreateMultisigProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.CREATE_MULTISIG
+>;
+
+const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const logger = useLogger();
-  const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
   const {currency, key} = route.params;
-  const segwitSupported = ['btc', 'ltc'].includes(currency.toLowerCase());
+  const segwitSupported = IsSegwitCoin(currency);
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
   const [options, setOptions] = useState({
@@ -203,7 +201,7 @@ const CreateMultisig = () => {
   } = useForm({resolver: yupResolver(schema)});
 
   const singleAddressCurrency =
-    BitpaySupportedCurrencies[currency?.toLowerCase() as string]?.properties
+    BitpaySupportedCoins[currency?.toLowerCase() as string]?.properties
       ?.singleAddress;
 
   const showErrorModal = (e: string) => {
@@ -254,12 +252,7 @@ const CreateMultisig = () => {
           opts.password = await dispatch(getDecryptPassword(key));
         }
 
-        await dispatch(
-          startOnGoingProcessModal(
-            // t('Adding Wallet')
-            t(OnGoingProcessMessages.ADDING_WALLET),
-          ),
-        );
+        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
         const wallet = (await dispatch<any>(
           addWalletMultisig({
             key,
@@ -268,7 +261,7 @@ const CreateMultisig = () => {
         )) as Wallet;
 
         dispatch(
-          logSegmentEvent('track', 'Created Multisig Wallet', {
+          Analytics.track('Created Multisig Wallet', {
             coin: currency?.toLowerCase(),
             type: `${opts.m}-${opts.n}`,
             addedToExistingKey: true,
@@ -284,12 +277,12 @@ const CreateMultisig = () => {
                   index: 1,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Wallet',
-                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                      name: WalletScreens.KEY_OVERVIEW,
+                      params: {id: key.id},
                     },
                   ],
                 }),
@@ -300,19 +293,16 @@ const CreateMultisig = () => {
                   index: 2,
                   routes: [
                     {
-                      name: 'Tabs',
-                      params: {screen: 'Home'},
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
                     },
                     {
-                      name: 'Wallet',
-                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                      name: WalletScreens.KEY_OVERVIEW,
+                      params: {id: key.id},
                     },
                     {
-                      name: 'Wallet',
-                      params: {
-                        screen: 'Copayers',
-                        params: {wallet: wallet, status: status.wallet},
-                      },
+                      name: WalletScreens.COPAYERS,
+                      params: {wallet: wallet, status: status.wallet},
                     },
                   ],
                 }),
@@ -322,18 +312,13 @@ const CreateMultisig = () => {
           },
         );
       } else {
-        await dispatch(
-          startOnGoingProcessModal(
-            // t('Creating Key')
-            t(OnGoingProcessMessages.CREATING_KEY),
-          ),
-        );
+        await dispatch(startOnGoingProcessModal('CREATING_KEY'));
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
         )) as Key;
 
         dispatch(
-          logSegmentEvent('track', 'Created Multisig Wallet', {
+          Analytics.track('Created Multisig Wallet', {
             coin: currency?.toLowerCase(),
             type: `${opts.m}-${opts.n}`,
             addedToExistingKey: false,
@@ -341,7 +326,7 @@ const CreateMultisig = () => {
         );
 
         dispatch(
-          logSegmentEvent('track', 'Created Key', {
+          Analytics.track('Created Key', {
             context: 'createMultisig',
             coins: [currency?.toLowerCase()],
           }),
@@ -349,9 +334,9 @@ const CreateMultisig = () => {
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
-        navigation.navigate('Wallet', {
-          screen: 'BackupKey',
-          params: {context: 'createNewMultisigKey', key: multisigKey},
+        navigation.navigate('BackupKey', {
+          context: 'createNewMultisigKey',
+          key: multisigKey,
         });
         dispatch(dismissOnGoingProcessModal());
       }
@@ -378,8 +363,8 @@ const CreateMultisig = () => {
   };
 
   return (
-    <ScrollViewContainer>
-      <MultisigContainer>
+    <MultisigContainer>
+      <ScrollViewContainer>
         <Paragraph>
           {t(
             "Multisig wallets require multisig devices to set up. It takes longer to complete but it's the recommended security configuration for long term storage.",
@@ -642,8 +627,8 @@ const CreateMultisig = () => {
             {t('Create Wallet')}
           </Button>
         </CtaContainer>
-      </MultisigContainer>
-    </ScrollViewContainer>
+      </ScrollViewContainer>
+    </MultisigContainer>
   );
 };
 

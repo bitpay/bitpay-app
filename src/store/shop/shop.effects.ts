@@ -1,9 +1,15 @@
 import axios from 'axios';
+import moment from 'moment';
+import {keyBy} from 'lodash';
 import {ShopActions} from '.';
 import {Effect} from '..';
 import BitPayIdApi from '../../api/bitpay';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {
+  BillPayAccount,
+  BillPayInvoiceParams,
+  BillPayOrder,
+  BillPayPayment,
   CardConfig,
   GiftCard,
   GiftCardInvoiceParams,
@@ -14,18 +20,19 @@ import {
 import {
   getCardConfigMapFromApiConfigMap,
   redemptionFailuresLessThanADayOld,
+  sortByDescendingDate,
 } from '../../lib/gift-cards/gift-card';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {LogActions} from '../log';
-
+import {getBillPayAccountDescription} from '../../navigation/tabs/shop/bill/utils';
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
     const {APP, BITPAY_ID, LOCATION, SHOP} = getState();
     const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
     const user = BITPAY_ID.user[APP.network];
     const incentiveLevelId = user?.incentiveLevelId;
-    const country = LOCATION.countryData?.shortCode || 'US';
+    const country = LOCATION.locationData?.countryShortCode || 'US';
     const [catalogResponse, directoryResponse, integrationsResponse] =
       await Promise.all([
         axios.get(
@@ -58,6 +65,92 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
     dispatch(ShopActions.failedFetchCatalog());
   }
 };
+
+export const startSyncGiftCards =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    try {
+      const {BITPAY_ID, SHOP} = getState();
+      const user = BITPAY_ID.user[APP_NETWORK];
+      if (!user) {
+        return;
+      }
+      const savedGiftCards = SHOP.giftCards[APP_NETWORK];
+      const syncedGiftCards = savedGiftCards
+        .filter(giftCard => giftCard.userEid === user.eid)
+        .sort(sortByDescendingDate);
+      const latestSyncDate = syncedGiftCards[0]?.date;
+      const olderThanThreeDays = (dateString: string): boolean => {
+        const threeDaysAgo = moment().subtract(3, 'day').toDate();
+        return new Date(dateString) < threeDaysAgo;
+      };
+      const unsyncedGiftCards = await BitPayIdApi.apiCall(
+        BITPAY_ID.apiToken[APP_NETWORK],
+        'findGiftCards',
+        {dateStart: latestSyncDate},
+      ).then(
+        res =>
+          res.map((resObj: any) => ({
+            ...resObj,
+            brand: undefined,
+            createdOn: undefined,
+            name: resObj.brand,
+            date: resObj.createdOn,
+            userEid: user.eid,
+            archived: olderThanThreeDays(resObj.createdOn),
+            status: 'SYNCED',
+          })) as GiftCard[],
+      );
+      if (!unsyncedGiftCards.length) {
+        return;
+      }
+      const giftCardMap = keyBy(savedGiftCards, giftCard => giftCard.invoiceId);
+      const giftCards = unsyncedGiftCards.reduce(
+        (newSavedGiftCards, unsyncedGiftCard) =>
+          giftCardMap[unsyncedGiftCard.invoiceId]
+            ? newSavedGiftCards
+            : newSavedGiftCards.concat(unsyncedGiftCard),
+        savedGiftCards as GiftCard[],
+      );
+      dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+export const startCreateBillPayInvoice =
+  (params: BillPayInvoiceParams): Effect<Promise<BillPayOrder>> =>
+  async (dispatch, getState) => {
+    try {
+      const {BITPAY_ID} = getState();
+      const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
+      const createInvoiceResponse = await BitPayIdApi.getInstance()
+        .request(
+          'createBillPayInvoice',
+          BITPAY_ID.apiToken[APP_NETWORK],
+          params,
+        )
+        .then(res => {
+          if (res?.data?.error) {
+            throw new Error(res.data.error);
+          }
+          return res.data;
+        });
+      const {data: billPayOrder} = createInvoiceResponse as {
+        data: BillPayOrder;
+      };
+      const getInvoiceResponse = await axios.get(
+        `${baseUrl}/invoices/${billPayOrder.invoiceId}`,
+      );
+      const {
+        data: {data: invoice},
+      } = getInvoiceResponse as {data: {data: Invoice}};
+      return {...billPayOrder, invoice} as BillPayOrder;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
 
 export const startCreateGiftCardInvoice =
   (
@@ -195,4 +288,147 @@ export const waitForConfirmation =
       dispatch(startRedeemGiftCard(unredeemedGiftCard.invoiceId));
       numTries++;
     }, 10000);
+  };
+
+export const startGetMethodToken =
+  (
+    {tokenType}: {tokenType: 'auth' | 'link'} = {tokenType: 'auth'},
+  ): Effect<Promise<string>> =>
+  async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const methodAuthElementToken = await BitPayIdApi.getInstance()
+      .request('getMethodToken', BITPAY_ID.apiToken[APP_NETWORK], {tokenType})
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as string;
+      });
+    return methodAuthElementToken;
+  };
+
+export const exchangeMethodAccountToken =
+  (token: string): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    await BitPayIdApi.getInstance()
+      .request('exchangeAccountToken', BITPAY_ID.apiToken[APP_NETWORK], {token})
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+      });
+  };
+
+export const startGetBillPayAccounts =
+  (): Effect<Promise<BillPayAccount[]>> => async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const user = BITPAY_ID.user[APP_NETWORK];
+    const accounts = user?.methodEntityId
+      ? await BitPayIdApi.getInstance()
+          .request('getBillPayAccounts', BITPAY_ID.apiToken[APP_NETWORK])
+          .then(res => {
+            if (res?.data?.error) {
+              throw new Error(res.data.error);
+            }
+            return res.data.data as BillPayAccount[];
+          })
+      : [];
+    const billPayAccounts = accounts
+      .filter(account => !!account.type && !!account[account.type])
+      .map(account => ({
+        ...account,
+        [account.type]: {
+          ...account[account.type],
+          paddedNextPaymentDueDate:
+            account[account.type].paddedNextPaymentDueDate ||
+            account[account.type].nextPaymentDueDate,
+          description: getBillPayAccountDescription(
+            account[account.type].type,
+            account[account.type].mask,
+          ),
+        },
+      }));
+    dispatch(ShopActions.setBillPayAccounts({accounts: billPayAccounts}));
+    return billPayAccounts;
+  };
+
+export const startFindBillPayments =
+  ({
+    partnerAccountId,
+    endDate,
+  }: {
+    partnerAccountId?: string;
+    endDate?: string;
+  } = {}): Effect<Promise<BillPayPayment[]>> =>
+  async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const billPayPayments = await BitPayIdApi.getInstance()
+      .request('findBillPayments', BITPAY_ID.apiToken[APP_NETWORK], {
+        partnerAccountId,
+        endDate,
+      })
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as BillPayPayment[];
+      });
+    const storedBillPayPayments = billPayPayments.map(billPayPayment => ({
+      ...billPayPayment,
+      payments: billPayPayment.payments.map(payment => ({
+        ...payment,
+        ...(payment.accountType &&
+          payment.mask && {
+            accountDescription: getBillPayAccountDescription(
+              payment.accountType,
+              payment.mask,
+            ),
+          }),
+      })),
+    }));
+    dispatch(
+      ShopActions.setBillPayPayments({
+        billPayPayments: storedBillPayPayments,
+      }),
+    );
+    return storedBillPayPayments;
+  };
+
+export const startHideBillPayAccount =
+  (accountId: string): Effect<Promise<string>> =>
+  async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const status = await BitPayIdApi.getInstance()
+      .request('hideAccount', BITPAY_ID.apiToken[APP_NETWORK], {accountId})
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as string;
+      });
+    return status;
+  };
+
+export const startCheckIfBillPayAvailable =
+  (): Effect<Promise<any>> => async (dispatch, getState) => {
+    const {BITPAY_ID} = getState();
+    const available = await BitPayIdApi.getInstance()
+      .request('isBillPayAvailable', BITPAY_ID.apiToken[APP_NETWORK])
+      .then(res => {
+        if (res?.data?.error) {
+          throw new Error(res.data.error);
+        }
+        return res.data.data as any;
+      })
+      .catch(err => {
+        dispatch(
+          LogActions.error(
+            `failed [startCheckIfBillPayAvailable]: ${err.message}`,
+          ),
+        );
+        throw err;
+      });
+    dispatch(LogActions.info(`isBillPayAvailable: ${available}`));
+    return available;
   };

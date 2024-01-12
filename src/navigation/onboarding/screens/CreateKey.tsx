@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -16,7 +16,7 @@ import {
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {useTranslation} from 'react-i18next';
 import {useRequestTrackingPermissionHandler} from '../../../utils/hooks';
 
@@ -39,15 +39,18 @@ const KeyImage = {
   ),
 };
 
-const CreateOrImportKey: React.VFC<
-  StackScreenProps<OnboardingStackParamList, 'CreateKey'>
-> = ({navigation}) => {
+const CreateOrImportKey = ({
+  navigation,
+}: NativeStackScreenProps<
+  OnboardingGroupParamList,
+  OnboardingScreens.CREATE_KEY
+>) => {
   const {t} = useTranslation();
   const themeType = useThemeType();
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler(true);
+  const askForTrackingThenNavigate = useRequestTrackingPermissionHandler();
 
   const onSkipPressRef = useRef(() => {
     haptic('impactLight');
@@ -62,7 +65,10 @@ const CreateOrImportKey: React.VFC<
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button buttonType={'pill'} onPress={onSkipPressRef.current}>
+          <Button
+            accessibilityLabel="skip-button"
+            buttonType={'pill'}
+            onPress={onSkipPressRef.current}>
             {t('Skip')}
           </Button>
         </HeaderRightContainer>
@@ -71,7 +77,7 @@ const CreateOrImportKey: React.VFC<
   }, [navigation, t]);
 
   return (
-    <CreateKeyContainer>
+    <CreateKeyContainer accessibilityLabel="create-key-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -91,9 +97,10 @@ const CreateOrImportKey: React.VFC<
             </Paragraph>
           </TextAlign>
         </TextContainer>
-        <CtaContainer>
+        <CtaContainer accessibilityLabel="cta-container">
           <ActionContainer>
             <Button
+              accessibilityLabel="create-a-key-button"
               buttonStyle={'primary'}
               onPress={() => {
                 askForTrackingThenNavigate(() =>
@@ -107,6 +114,7 @@ const CreateOrImportKey: React.VFC<
           </ActionContainer>
           <ActionContainer>
             <Button
+              accessibilityLabel="i-already-have-a-key-button"
               buttonStyle={'secondary'}
               onPress={() => {
                 askForTrackingThenNavigate(() =>

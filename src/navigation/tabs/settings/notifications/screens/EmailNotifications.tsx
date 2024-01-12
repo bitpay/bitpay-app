@@ -27,6 +27,7 @@ import {
   ScreenGutter,
   Setting,
   SettingTitle,
+  SettingDescription,
 } from '../../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';
 
@@ -50,6 +51,10 @@ const EmailFormContainer = styled.View`
 
 const VerticalSpace = styled.View`
   margin: 15px 0;
+`;
+
+const EmailFromUser = styled(SettingDescription)`
+  margin: 0 0 10px 10px;
 `;
 
 const schema = yup.object().shape({
@@ -188,11 +193,11 @@ const EmailNotifications = () => {
                           />
 
                           <CheckboxLabel>
-                            {t('I agree to the ')}
+                            {t('I agree to the') + ' '}
                             <A href={URL.TOU_BITPAY_ID}>
                               {t('Terms of Use')}
                             </A>{' '}
-                            {t('and ')}
+                            {t('and') + ' '}
                             <A href={URL.PRIVACY_POLICY}>
                               {t('Privacy Policy')}
                             </A>
@@ -242,6 +247,9 @@ const EmailNotifications = () => {
                 checked={notificationsAccepted}
               />
             </Setting>
+            {user && user.email ? (
+              <EmailFromUser>{user.email}</EmailFromUser>
+            ) : null}
             <Hr />
           </Settings>
         </SettingsContainer>

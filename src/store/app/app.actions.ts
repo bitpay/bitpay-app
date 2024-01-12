@@ -3,7 +3,6 @@ import {ContentCard} from 'react-native-appboy-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
@@ -12,9 +11,11 @@ import {
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
+  InAppNotificationContextType,
 } from './app.models';
-import {ModalId} from './app.reducer';
+import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
@@ -34,6 +35,10 @@ export const failedAppInit = (): AppActionType => ({
   payload: true,
 });
 
+export const appIsReadyForDeeplinking = (): AppActionType => ({
+  type: AppActionTypes.APP_READY_FOR_DEEPLINKING,
+});
+
 export const setAppFirstOpenEventComplete = (): AppActionType => ({
   type: AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE,
 });
@@ -41,10 +46,6 @@ export const setAppFirstOpenEventComplete = (): AppActionType => ({
 export const setAppFirstOpenEventDate = (date: number): AppActionType => ({
   type: AppActionTypes.SET_APP_FIRST_OPEN_DATE,
   payload: date,
-});
-
-export const appOpeningWasTracked = (): AppActionType => ({
-  type: AppActionTypes.APP_OPENING_WAS_TRACKED,
 });
 
 export const setIntroCompleted = (): AppActionType => ({
@@ -55,15 +56,26 @@ export const setOnboardingCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_ONBOARDING_COMPLETED,
 });
 
-export const showOnGoingProcessModal = (
-  message: OnGoingProcessMessages,
-): AppActionType => ({
+export const showOnGoingProcessModal = (message: string): AppActionType => ({
   type: AppActionTypes.SHOW_ONGOING_PROCESS_MODAL,
   payload: message,
 });
 
 export const dismissOnGoingProcessModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL,
+});
+
+export const showInAppNotification = (
+  context: InAppNotificationContextType,
+  message: string,
+  request: Web3WalletTypes.EventArguments['session_request'],
+): AppActionType => ({
+  type: AppActionTypes.SHOW_IN_APP_NOTIFICATION,
+  payload: {context, message, request},
+});
+
+export const dismissInAppNotification = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_IN_APP_NOTIFICATION,
 });
 
 export const showBottomNotificationModal = (
@@ -84,11 +96,6 @@ export const resetBottomNotificationModalConfig = (): AppActionType => ({
 export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
   type: AppActionTypes.SET_COLOR_SCHEME,
   payload: scheme,
-});
-
-export const setCurrentRoute = (route: any): AppActionType => ({
-  type: AppActionTypes.SET_CURRENT_ROUTE,
-  payload: route,
 });
 
 export const successGenerateAppIdentity = (
@@ -196,6 +203,11 @@ export const showPortfolioValue = (value: boolean): AppActionType => ({
   payload: value,
 });
 
+export const toggleHideAllBalances = (value?: boolean): AppActionType => ({
+  type: AppActionTypes.TOGGLE_HIDE_ALL_BALANCES,
+  payload: value,
+});
+
 export const brazeInitialized = (
   contentCardSubscription: EventSubscription | null,
 ): AppActionType => ({
@@ -281,6 +293,14 @@ export const setKeyMigrationFailure = (): AppActionType => ({
   type: AppActionTypes.SET_KEY_MIGRATION_FAILURE,
 });
 
+export const setMigrationMMKVStorageComplete = (): AppActionType => ({
+  type: AppActionTypes.SET_MIGRATION_MMKV_STORAGE_COMPLETE,
+});
+
+export const setKeyMigrationMMKVStorageFailure = (): AppActionType => ({
+  type: AppActionTypes.SET_KEY_MIGRATION_MMKV_STORAGE_FAILURE,
+});
+
 export const setShowKeyMigrationFailureModal = (
   payload: boolean,
 ): AppActionType => ({
@@ -304,11 +324,11 @@ export const checkingBiometricForSending = (
   payload,
 });
 
-export const updateOnCompleteOnboarding = (payload: string): AppActionType => ({
-  type: AppActionTypes.UPDATE_ON_COMPLETE_ONBOARDING_LIST,
-  payload,
+export const setHasViewedZenLedgerWarning = (): AppActionType => ({
+  type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
 });
 
-export const clearOnCompleteOnboardingList = (): AppActionType => ({
-  type: AppActionTypes.CLEAR_ON_COMPLETE_ONBOARDING_LIST,
+export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
+  type: AppActionTypes.USER_FEEDBACK,
+  payload: feedBack,
 });

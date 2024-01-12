@@ -25,6 +25,9 @@ const General = () => {
   const showPortfolioValue = useAppSelector(
     ({APP}: RootState) => APP.showPortfolioValue,
   );
+  const hideAllBalances = useAppSelector(
+    ({APP}: RootState) => APP.hideAllBalances,
+  );
   const selectedAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
   );
@@ -46,15 +49,11 @@ const General = () => {
     <SettingsComponent>
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('GeneralSettings', {screen: 'Theme'})
-        }>
+        onPress={() => navigation.navigate('Theme')}>
         <SettingTitle>{t('Theme')}</SettingTitle>
         <Button
           buttonType={'pill'}
-          onPress={() =>
-            navigation.navigate('GeneralSettings', {screen: 'Theme'})
-          }>
+          onPress={() => navigation.navigate('Theme')}>
           {colorScheme === 'light'
             ? t('Light Mode')
             : colorScheme === 'dark'
@@ -66,9 +65,7 @@ const General = () => {
       {/*----------------------------------------------------------------------*/}
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
-        }>
+        onPress={() => navigation.navigate('CustomizeHomeSettings')}>
         <SettingTitle>{t('Customize Home')}</SettingTitle>
         <AngleRight />
       </Setting>
@@ -83,21 +80,22 @@ const General = () => {
       </Setting>
       <Hr />
       {/*----------------------------------------------------------------------*/}
+      <Setting activeOpacity={1}>
+        <SettingTitle>{t('Hide All Balances')}</SettingTitle>
+        <ToggleSwitch
+          onChange={value => dispatch(AppActions.toggleHideAllBalances(value))}
+          isEnabled={hideAllBalances}
+        />
+      </Setting>
+      <Hr />
+      {/*----------------------------------------------------------------------*/}
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('GeneralSettings', {
-            screen: 'AltCurrencySettings',
-          })
-        }>
+        onPress={() => navigation.navigate('AltCurrencySettings')}>
         <SettingTitle>{t('Display Currency')}</SettingTitle>
         <Button
           buttonType={'pill'}
-          onPress={() =>
-            navigation.navigate('GeneralSettings', {
-              screen: 'AltCurrencySettings',
-            })
-          }>
+          onPress={() => navigation.navigate('AltCurrencySettings')}>
           {selectedAltCurrency.name}
         </Button>
       </Setting>
@@ -105,17 +103,11 @@ const General = () => {
       {/*----------------------------------------------------------------------*/}
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('GeneralSettings', {screen: 'LanguageSettings'})
-        }>
+        onPress={() => navigation.navigate('LanguageSettings')}>
         <SettingTitle>{t('Language')}</SettingTitle>
         <Button
           buttonType={'pill'}
-          onPress={() =>
-            navigation.navigate('GeneralSettings', {
-              screen: 'LanguageSettings',
-            })
-          }>
+          onPress={() => navigation.navigate('LanguageSettings')}>
           {appLanguageName}
         </Button>
       </Setting>

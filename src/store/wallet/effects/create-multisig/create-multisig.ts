@@ -29,13 +29,14 @@ export const startCreateKeyMultisig =
             brazeEid,
             defaultLanguage,
           },
+          WALLET: {keys},
         } = getState();
 
         const _key = BWC.createKey({
           seedType: 'new',
         });
 
-        const _wallet = await createWalletWithOpts({key: _key, opts});
+        const _wallet = await dispatch(createWalletWithOpts({key: _key, opts}));
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
@@ -59,6 +60,7 @@ export const startCreateKeyMultisig =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
+            _wallet.credentials.token?.address,
           ),
         );
 
@@ -73,13 +75,11 @@ export const startCreateKeyMultisig =
         ) as Wallet;
 
         const key = buildKeyObj({key: _key, wallets: [wallet]});
-
         dispatch(
           successCreateKey({
             key,
           }),
         );
-
         resolve(key);
       } catch (err) {
         const errorStr =
@@ -103,10 +103,12 @@ export const addWalletMultisig =
             defaultLanguage,
           },
         } = getState();
-        const newWallet = (await createWalletWithOpts({
-          key: key.methods!,
-          opts,
-        })) as Wallet;
+        const newWallet = (await dispatch(
+          createWalletWithOpts({
+            key: key.methods!,
+            opts,
+          }),
+        )) as Wallet;
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
@@ -130,6 +132,7 @@ export const addWalletMultisig =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
+            newWallet.credentials.token?.address,
           ),
         );
 

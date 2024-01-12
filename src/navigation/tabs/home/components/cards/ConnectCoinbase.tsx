@@ -3,8 +3,8 @@ import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import LinkCard from './LinkCard';
 import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {useAppDispatch} from '../../../../../utils/hooks';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const ConnectCoinbase = () => {
   const navigation = useNavigation();
@@ -12,11 +12,11 @@ const ConnectCoinbase = () => {
   const {t} = useTranslation();
   const goToCoinbase = () => {
     dispatch(
-      logSegmentEvent('track', 'Clicked Connect Coinbase', {
+      Analytics.track('Clicked Connect Coinbase', {
         context: 'ExpandPortfolioCarousel',
       }),
     );
-    navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
+    navigation.navigate('CoinbaseRoot');
   };
   return (
     <LinkCard

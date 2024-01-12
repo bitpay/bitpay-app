@@ -10,6 +10,7 @@ import {
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {
+  BitpaySupportedMaticTokens,
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
   SUPPORTED_CURRENCIES,
@@ -20,6 +21,7 @@ import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
+  addTokenChainSuffix,
   convertToFiat,
   formatFiatAmount,
   getBadgeImg,
@@ -45,23 +47,25 @@ import {
 import {AppDispatch} from '../../../utils/hooks';
 import {find, isEqual} from 'lodash';
 import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
+import {Invoice} from '../../../store/shop/shop.models';
 
 export const mapAbbreviationAndName =
   (
     coin: string,
     chain: string,
+    tokenAddress: string | undefined,
   ): Effect<{currencyAbbreviation: string; currencyName: string}> =>
   dispatch => {
     switch (coin) {
       case 'pax':
         return {
           currencyAbbreviation: 'usdp',
-          currencyName: dispatch(GetName('usdp', chain)),
+          currencyName: dispatch(GetName('usdp', chain, tokenAddress)),
         };
       default:
         return {
           currencyAbbreviation: coin,
-          currencyName: dispatch(GetName(coin, chain)),
+          currencyName: dispatch(GetName(coin, chain, tokenAddress)),
         };
     }
   };
@@ -93,6 +97,7 @@ export const buildWalletObj = (
       satPending: 0,
     },
     tokens,
+    token,
     keyId,
     network,
     n,
@@ -107,6 +112,12 @@ export const buildWalletObj = (
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
+    token?: {
+      address: string;
+      decimals: number;
+      name: string;
+      symbol: string;
+    };
     hideWallet?: boolean; // ionic migration only
     hideBalance?: boolean; // ionic migration only
     network: Network;
@@ -115,16 +126,37 @@ export const buildWalletObj = (
     img: any;
     pendingTxps: TransactionProposal[];
   },
-  tokenOpts?: {[key in string]: Token},
+  tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
+  let updatedCurrencyAbbreviation = currencyAbbreviation;
+  // Only for USDC.e
+  const usdcToken = '0x2791bca1f2de4661ed88a30c99a7a9449aa84174';
+  if (token && token.address.toLowerCase() === usdcToken) {
+    const tokenAddressSuffix = addTokenChainSuffix(
+      token.address.toLowerCase(),
+      chain,
+    );
+    updatedCurrencyAbbreviation =
+      BitpaySupportedMaticTokens[tokenAddressSuffix].coin;
+  }
   const _currencyAbbreviation = getCurrencyAbbreviation(
-    currencyAbbreviation,
+    updatedCurrencyAbbreviation,
     chain,
   );
+
+  let foundToken;
+  if (tokenOptsByAddress && token?.address) {
+    foundToken =
+      tokenOptsByAddress[
+        addTokenChainSuffix(token.address.toLowerCase(), chain)
+      ];
+  }
+
   return {
     id: walletId,
     currencyName,
-    currencyAbbreviation,
+    currencyAbbreviation: updatedCurrencyAbbreviation,
+    tokenAddress: token?.address?.toLowerCase(),
     chain,
     walletName,
     balance,
@@ -133,8 +165,8 @@ export const buildWalletObj = (
     keyId: keyId ? keyId : 'readonly',
     img: SUPPORTED_CURRENCIES.includes(_currencyAbbreviation)
       ? CurrencyListIcons[_currencyAbbreviation]
-      : tokenOpts && tokenOpts[_currencyAbbreviation]?.logoURI
-      ? (tokenOpts[_currencyAbbreviation]?.logoURI as string)
+      : foundToken && foundToken?.logoURI
+      ? (foundToken?.logoURI as string)
       : img || '',
     badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
@@ -225,6 +257,7 @@ export const toFiat =
     currencyAbbreviation: string,
     chain: string,
     rates: Rates = {},
+    tokenAddress: string | undefined,
     customRate?: number,
   ): Effect<number> =>
   dispatch => {
@@ -236,7 +269,9 @@ export const toFiat =
 
     if (!ratesPerCurrency) {
       // Rate not found return 0
-      console.log(`Rate not found for currency: ${currencyAbbreviation}`);
+      console.log(
+        `[toFiat] Rate not found for currency: ${currencyAbbreviation}`,
+      );
       return 0;
     }
 
@@ -249,16 +284,20 @@ export const toFiat =
     if (!fiatRate) {
       // Rate not found for fiat/currency pair
       console.log(
-        `Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
+        `[toFiat] Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
       );
       return 0;
     }
 
-    const precision = dispatch(GetPrecision(currencyAbbreviation, chain));
+    const precision = dispatch(
+      GetPrecision(currencyAbbreviation, chain, tokenAddress),
+    );
 
     if (!precision) {
       // precision not found return 0
-      console.log(`precision not found for currency ${currencyAbbreviation}`);
+      console.log(
+        `[toFiat] precision not found for currency ${currencyAbbreviation}`,
+      );
       return 0;
     } else {
     }
@@ -270,6 +309,26 @@ export const findWalletById = (
   wallets: Wallet[],
   id: string,
 ): Wallet | undefined => wallets.find(wallet => wallet.id === id);
+
+export const findWalletByAddress = (
+  address: string,
+  chain: string,
+  network: string,
+  keys: {[key in string]: Key},
+): Wallet | undefined => {
+  let wallet: Wallet | undefined;
+  for (let key of Object.values(keys)) {
+    wallet = key.wallets.find(
+      w =>
+        w.receiveAddress?.toLowerCase() === address.toLowerCase() &&
+        w.chain === chain &&
+        w.network === network,
+    );
+    if (wallet) {
+      return wallet;
+    }
+  }
+};
 
 export const isCacheKeyStale = (
   timestamp: number | undefined,
@@ -314,11 +373,7 @@ export const GetProtocolPrefixAddress =
     if (currencyAbbreviation !== 'bch') {
       return address;
     }
-    return (
-      dispatch(GetProtocolPrefix(currencyAbbreviation, network, chain)) +
-      ':' +
-      address
-    );
+    return GetProtocolPrefix(network, chain) + ':' + address;
   };
 
 export const getRemainingWalletCount = (
@@ -383,6 +438,8 @@ export const BuildCoinbaseWalletsList = ({
   defaultAltCurrencyIsoCode = 'USD',
   network,
   payProOptions,
+  invoice,
+  skipThreshold = false,
 }: {
   coinbaseAccounts: CoinbaseAccountProps[] | null;
   coinbaseExchangeRates: CoinbaseExchangeRatesProps | null;
@@ -390,8 +447,14 @@ export const BuildCoinbaseWalletsList = ({
   defaultAltCurrencyIsoCode?: string;
   network?: Network;
   payProOptions?: PayProOptions;
+  invoice?: Invoice;
+  skipThreshold?: boolean;
 }) => {
+  const price = invoice?.price || 0;
+  const threshold = invoice?.oauth?.coinbase?.threshold || 0;
+  const enabled = invoice?.oauth?.coinbase?.enabled || !!skipThreshold;
   if (
+    !enabled ||
     !coinbaseAccounts ||
     !coinbaseUser ||
     !coinbaseExchangeRates ||
@@ -406,7 +469,11 @@ export const BuildCoinbaseWalletsList = ({
     ? selectedPaymentOptions
     : payProOptions?.paymentOptions;
   const wallets = coinbaseAccounts
-    .filter(account => account.balance.amount > 0)
+    .filter(
+      account =>
+        account.balance.amount > 0 &&
+        (skipThreshold || (threshold > 0 && threshold >= price)),
+    )
     .filter(
       account =>
         !paymentOptions?.length ||
@@ -490,6 +557,7 @@ export const BuildKeysAndWalletsList = ({
               chain,
               credentials: {walletName: fallbackName},
               walletName,
+              tokenAddress,
             } = walletObj;
             return merge(cloneDeep(walletObj), {
               cryptoBalance: balance.crypto,
@@ -502,6 +570,7 @@ export const BuildKeysAndWalletsList = ({
                       currencyAbbreviation,
                       chain,
                       rates,
+                      tokenAddress,
                     ),
                   ),
                   hideWallet,
@@ -519,6 +588,7 @@ export const BuildKeysAndWalletsList = ({
                       currencyAbbreviation,
                       chain,
                       rates,
+                      tokenAddress,
                     ),
                   ),
                   hideWallet,
@@ -546,20 +616,21 @@ export const BuildPayProWalletSelectorList =
     network,
     payProOptions,
     defaultAltCurrencyIsoCode = 'USD',
+    invoice,
+    skipThreshold = false,
   }: {
     keys: {[key in string]: Key};
     network?: Network;
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
+    invoice?: Invoice;
+    skipThreshold?: boolean;
   }): Effect<WalletsAndAccounts> =>
   (dispatch, getState) => {
     const {COINBASE} = getState();
     const {
       RATE: {rates},
     } = getState();
-    const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
-    const coinbaseUser = COINBASE.user[COINBASE_ENV];
-    const coinbaseExchangeRates = COINBASE.exchangeRates;
     const keyWallets = BuildKeysAndWalletsList({
       keys,
       network,
@@ -571,6 +642,10 @@ export const BuildPayProWalletSelectorList =
       key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
       return key;
     });
+    // Coinbase
+    const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
+    const coinbaseUser = COINBASE.user[COINBASE_ENV];
+    const coinbaseExchangeRates = COINBASE.exchangeRates;
     const coinbaseWallets = BuildCoinbaseWalletsList({
       coinbaseAccounts,
       coinbaseUser,
@@ -578,6 +653,8 @@ export const BuildPayProWalletSelectorList =
       network,
       payProOptions,
       defaultAltCurrencyIsoCode,
+      invoice,
+      skipThreshold,
     });
     return {keyWallets, coinbaseWallets};
   };

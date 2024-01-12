@@ -1,23 +1,22 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
-import {RootStackParamList} from '../../../../Root';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {selectAvailableGiftCards} from '../../../../store/shop/shop.selectors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {GiftCardGroupParamList} from './GiftCardGroup';
 
-export type GiftCardDeeplinkScreenParamList =
-  | {
-      merchant?: string | undefined | null;
-    }
-  | undefined;
+export type GiftCardDeeplinkScreenParamList = {
+  merchant?: string | undefined | null;
+};
 
 /**
  * Creating a dedicated deeplink screen since we rely on the store to get card config.
  * Otherwise we should configure the deeplink directly.
  */
-const GiftCardDeeplinkScreen: React.FC<
-  StackScreenProps<RootStackParamList, 'GiftCardDeeplink'>
-> = ({navigation, route}) => {
+const GiftCardDeeplinkScreen = ({
+  route,
+  navigation,
+}: NativeStackScreenProps<GiftCardGroupParamList, 'GiftCardDeeplink'>) => {
   const merchantName = ((route.params || {}).merchant || '').toLowerCase();
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
   const dispatch = useAppDispatch();
@@ -29,16 +28,13 @@ const GiftCardDeeplinkScreen: React.FC<
 
   useEffect(() => {
     dispatch(
-      logSegmentEvent('track', 'Clicked Shop with Crypto', {
+      Analytics.track('Clicked Shop with Crypto', {
         context: 'GiftCardDeeplink',
       }),
     );
     if (targetedGiftCardRef.current) {
-      navigation.replace('GiftCard', {
-        screen: 'BuyGiftCard',
-        params: {
-          cardConfig: targetedGiftCardRef.current,
-        },
+      navigation.replace('BuyGiftCard', {
+        cardConfig: targetedGiftCardRef.current,
       });
     } else {
       navigation.replace('Tabs', {

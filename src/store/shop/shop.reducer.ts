@@ -1,6 +1,9 @@
+import _ from 'lodash';
 import {Network} from '../../constants';
 import {APP_NETWORK} from '../../constants/config';
 import {
+  BillPayAccount,
+  BillPayPayment,
   CardConfigMap,
   CategoriesAndCurations,
   DirectIntegrationMap,
@@ -21,10 +24,17 @@ export interface ShopState {
   email: string;
   phone: string;
   phoneCountryInfo: PhoneCountryInfo;
+  billPayAccounts: {
+    [key in Network]: BillPayAccount[];
+  };
+  billPayPayments: {
+    [key in Network]: BillPayPayment[];
+  };
   giftCards: {
     [key in Network]: (GiftCard | UnsoldGiftCard)[];
   };
   syncGiftCardPurchasesWithBitPayId: boolean;
+  isJoinedWaitlist: boolean;
 }
 
 export const initialShopState: ShopState = {
@@ -38,11 +48,20 @@ export const initialShopState: ShopState = {
     phoneCountryCode: '',
     countryIsoCode: '',
   },
+  billPayAccounts: {
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
+  },
+  billPayPayments: {
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
+  },
   giftCards: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
   },
   syncGiftCardPurchasesWithBitPayId: true,
+  isJoinedWaitlist: false,
 };
 
 export const shopReducer = (
@@ -80,6 +99,43 @@ export const shopReducer = (
         giftCards: {
           ...state.giftCards,
           [APP_NETWORK]: giftCards,
+        },
+      };
+    case ShopActionTypes.SET_BILL_PAY_ACCOUNTS:
+      const {accounts} = action.payload;
+      return {
+        ...state,
+        billPayAccounts: {
+          ...state.billPayAccounts,
+          [APP_NETWORK]: accounts,
+        },
+      };
+    case ShopActionTypes.CLEARED_BILL_PAY_ACCOUNTS:
+      return {
+        ...state,
+        billPayAccounts: {
+          ...state.billPayAccounts,
+          [APP_NETWORK]: [],
+        },
+      };
+    case ShopActionTypes.SET_BILL_PAY_PAYMENTS:
+      const {billPayPayments} = action.payload;
+      return {
+        ...state,
+        billPayPayments: {
+          ...state.billPayPayments,
+          [APP_NETWORK]: _.uniqBy(
+            [...billPayPayments, ...state.billPayPayments[APP_NETWORK]],
+            billPayPayment => billPayPayment.id,
+          ),
+        },
+      };
+    case ShopActionTypes.CLEARED_BILL_PAY_PAYMENTS:
+      return {
+        ...state,
+        billPayPayments: {
+          ...state.billPayPayments,
+          [APP_NETWORK]: [],
         },
       };
     case ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS:
@@ -155,6 +211,11 @@ export const shopReducer = (
           [Network.mainnet]: [],
           [Network.testnet]: [],
         },
+      };
+    case ShopActionTypes.IS_JOINED_WAITLIST:
+      return {
+        ...state,
+        isJoinedWaitlist: action.payload.isJoinedWaitlist,
       };
 
     default:

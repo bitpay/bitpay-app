@@ -7,8 +7,8 @@ import {Network} from '../../constants';
 import {FeeLevels} from './effects/fee/fee';
 
 export interface KeyMethods {
-  _checkCoin: Function;
-  _checkNetwork: Function;
+  _checkCoin?: Function;
+  _checkNetwork?: Function;
   checkPassword: Function;
   compliantDerivation: boolean;
   createAccess: Function;
@@ -96,10 +96,12 @@ export interface WalletObj {
   n: number;
   balance: CryptoBalance;
   pendingTxps: TransactionProposal[];
+  tokenAddress?: string;
   tokens?: string[];
   walletName?: string;
   preferences?: {
     tokenAddresses?: [];
+    maticTokenAddresses?: [];
   };
   img: string | ((props?: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
@@ -140,6 +142,8 @@ export interface KeyOptions {
   invitationCode?: string;
   seedType?: string;
   password?: string;
+  includeTestnetWallets?: boolean;
+  includeLegacyWallets?: boolean;
 }
 
 export interface Token {
@@ -188,6 +192,7 @@ export interface Recipient {
   amount?: number;
   destinationTag?: number;
   chain?: string;
+  tokenAddress?: string;
 }
 
 export interface CustomTransactionData {
@@ -198,6 +203,7 @@ export interface CustomTransactionData {
   oneInch?: string;
   shapeShift?: string;
   toWalletName?: any;
+  billPayMerchantIds?: string[];
 }
 
 export type TransactionOptionsContext =
@@ -206,7 +212,8 @@ export type TransactionOptionsContext =
   | 'selectInputs'
   | 'fromReplaceByFee'
   | 'speedupBtcReceive'
-  | 'speedupEth';
+  | 'speedupEth'
+  | 'walletConnect';
 
 export interface TransactionOptions {
   wallet: Wallet;
@@ -317,6 +324,10 @@ export interface TransactionProposal {
   canBeRemoved: boolean;
   recipientCount: number;
   hasMultiplesOutputs: boolean;
+  requiredSignatures: number;
+  requiredRejections: number;
+  raw?: string;
+  txid?: string;
 }
 
 export interface ProposalErrorHandlerProps {
@@ -336,7 +347,8 @@ export interface TxDetailsFee {
   feeLevel: string;
   cryptoAmount: string;
   fiatAmount: string;
-  percentageOfTotalAmount: string;
+  percentageOfTotalAmountStr: string;
+  percentageOfTotalAmount: number;
 }
 
 export interface FeeOptions {
@@ -360,6 +372,7 @@ export interface TxDetailsSendingTo {
   recipientAltAmountStr?: string;
   recipientCoin?: string;
   recipientChain?: string;
+  recipientTokenAddress?: string;
 }
 
 export interface TxDetailsSendingFrom {
@@ -371,7 +384,7 @@ export interface TxDetailsSendingFrom {
 export interface TxDetails {
   currency: string;
   sendingTo: TxDetailsSendingTo;
-  fee: TxDetailsFee;
+  fee?: TxDetailsFee;
   networkCost?: TxDetailsAmount;
   context?: TransactionOptionsContext;
   // eth
@@ -382,6 +395,7 @@ export interface TxDetails {
   sendingFrom: TxDetailsSendingFrom;
   subTotal: TxDetailsAmount;
   total: TxDetailsAmount;
+  rateStr?: string;
   // xrp
   destinationTag?: number;
 }
@@ -422,9 +436,4 @@ export interface Utxo {
   txid: string;
   vout: number;
   checked?: boolean;
-}
-
-export interface DeferredImport {
-  importData: {words?: string; xPrivKey?: string};
-  opts: Partial<KeyOptions>;
 }

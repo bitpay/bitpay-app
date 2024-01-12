@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from 'react-native';
 import {useSelector} from 'react-redux';
 import Avatar from '../../../../components/avatar/BitPayIdAvatar';
 import {RootState} from '../../../../store';
@@ -18,8 +18,8 @@ const ProfileButton: React.FC = () => {
       <TouchableOpacity
         onPress={() => {
           user
-            ? navigation.navigate('BitpayId', {screen: 'Profile'})
-            : navigation.navigate('Auth', {screen: 'Login'});
+            ? navigation.navigate('BitPayIdProfile')
+            : navigation.navigate('Login');
         }}>
         <Avatar size={35} />
       </TouchableOpacity>

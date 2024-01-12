@@ -2,16 +2,15 @@ import {useNavigation} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {View} from 'react-native';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
+import {View, TouchableOpacity} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {BaseText, Paragraph} from '../../../../components/styled/Text';
 import {
   Category,
   DirectIntegrationApiObject,
 } from '../../../../store/shop/shop.models';
-import {MerchantScreens} from '../merchant/MerchantStack';
+import {MerchantScreens} from '../merchant/MerchantGroup';
 import MerchantItem from './MerchantItem';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {
@@ -29,7 +28,7 @@ import {
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const SearchResults = styled.View`
   display: flex;
@@ -69,64 +68,60 @@ export const ShopOnline = ({
             .includes(text.toLocaleLowerCase()),
         );
         setSearchResults(newSearchResults);
-        dispatch(
-          logSegmentEvent('track', 'Searched Online Brands', {search: text}),
-        );
+        dispatch(Analytics.track('Searched Online Brands', {search: text}));
       }, 300),
     [dispatch, setSearchVal, integrations],
   );
 
   const FullIntegrationsList = () => (
     <>
-      {categories.map(category => (
-        <View key={category.displayName}>
-          <SectionContainer>
-            <SectionHeaderContainer>
-              <SectionHeader>{category.displayName}</SectionHeader>
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  navigation.navigate('Merchant', {
-                    screen: MerchantScreens.MERCHANT_CATEGORY,
-                    params: {
+      {categories.map(category => {
+        const categoryHasDiscount = category.integrations.some(
+          merchant => !!merchant.discount,
+        );
+        return (
+          <View key={category.displayName}>
+            <SectionContainer>
+              <SectionHeaderContainer>
+                <SectionHeader>{category.displayName}</SectionHeader>
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    navigation.navigate(MerchantScreens.MERCHANT_CATEGORY, {
                       category,
                       integrations: category.integrations,
-                    },
-                  });
-                }}>
-                <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
-              </TouchableWithoutFeedback>
-            </SectionHeaderContainer>
-          </SectionContainer>
-          <ShopCarouselList
-            items={category.integrations.slice(0, 5)}
-            itemComponent={(item: ShopCarouselItem) => {
-              const categoryHasDiscount = category.integrations.some(
-                merchant => !!merchant.discount,
-              );
-              const merchantItem = item as DirectIntegrationApiObject;
-              return (
-                <MerchantItem
-                  merchant={merchantItem}
-                  marginLeft={horizontalPadding}
-                  height={categoryHasDiscount ? 200 : 168}
-                  width={133}
-                />
-              );
-            }}
-            itemWidth={146}
-            maxItemsPerColumn={1}
-            screenWidth={WIDTH}
-            onItemPress={item =>
-              navigation.navigate('Merchant', {
-                screen: MerchantScreens.MERCHANT_DETAILS,
-                params: {
+                    });
+                  }}>
+                  <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
+                </TouchableOpacity>
+              </SectionHeaderContainer>
+            </SectionContainer>
+            <ShopCarouselList
+              itemHeight={categoryHasDiscount ? 205 : 173}
+              items={category.integrations.slice(0, 5)}
+              itemComponent={(item: ShopCarouselItem) => {
+                const merchantItem = item as DirectIntegrationApiObject;
+                return (
+                  <MerchantItem
+                    merchant={merchantItem}
+                    marginLeft={horizontalPadding}
+                    height={categoryHasDiscount ? 200 : 168}
+                    width={133}
+                  />
+                );
+              }}
+              itemWidth={146}
+              maxItemsPerColumn={1}
+              screenWidth={WIDTH}
+              onItemPress={item =>
+                navigation.navigate(MerchantScreens.MERCHANT_DETAILS, {
                   directIntegration: item as DirectIntegrationApiObject,
-                },
-              })
-            }
-          />
-        </View>
-      ))}
+                })
+              }
+            />
+          </View>
+        );
+      })}
     </>
   );
 
@@ -184,19 +179,19 @@ export const ShopOnline = ({
       </HideableView>
       <HideableView show={!!(searchVal && searchResults.length)}>
         <SectionContainer>
-          <SectionHeader>{t('Search Results for ') + searchVal}</SectionHeader>
+          <SectionHeader>
+            {t('Search Results for') + ' ' + searchVal}
+          </SectionHeader>
         </SectionContainer>
         <SearchResults>
           {searchResults.map(integration => {
             return (
-              <TouchableWithoutFeedback
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
                 key={integration.displayName}
                 onPress={() =>
-                  navigation.navigate('Merchant', {
-                    screen: MerchantScreens.MERCHANT_DETAILS,
-                    params: {
-                      directIntegration: integration,
-                    },
+                  navigation.navigate(MerchantScreens.MERCHANT_DETAILS, {
+                    directIntegration: integration,
                   })
                 }>
                 <MerchantItem
@@ -204,7 +199,7 @@ export const ShopOnline = ({
                   height={200}
                   key={integration.displayName}
                 />
-              </TouchableWithoutFeedback>
+              </TouchableOpacity>
             );
           })}
         </SearchResults>

@@ -2,7 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Animated, TouchableOpacity, View} from 'react-native';
+import {Animated, TouchableOpacity, View, NativeModules} from 'react-native';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {useTheme} from 'styled-components/native';
@@ -13,10 +13,10 @@ import {BwcProvider} from '../../../lib/bwc';
 import {AppActions} from '../../../store/app';
 import {BitPay, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity} from '../../styled/Containers';
+import {ActiveOpacity, HEIGHT} from '../../styled/Containers';
 import {H5} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import PinDots from './PinDots';
@@ -67,14 +67,29 @@ export const hashPin = (pin: string[]) => {
   return sjcl.codec.hex.fromBits(bits);
 };
 
+const getHeaderMargin = (
+  type?: 'set' | 'check',
+  onClosePresent?: boolean,
+): string => {
+  if (HEIGHT < 700) {
+    return type === 'set' || onClosePresent ? '1%' : '20%';
+  } else {
+    return type === 'set' || onClosePresent ? '10%' : '40%';
+  }
+};
+
 const Pin = gestureHandlerRootHOC(() => {
   const {t} = useTranslation();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const {type, context, onClose} =
     useAppSelector(({APP}) => APP.pinModalConfig) || {};
-  const [pin, setPin] = useState<Array<string | undefined>>([]);
+  const [pinStatus, setPinStatus] = useState<{
+    pin: Array<string | undefined>;
+    firstPinEntered: Array<string | undefined>;
+  }>({pin: [], firstPinEntered: []});
   const [headerMargin, setHeaderMargin] = useState<string>(
-    type === 'set' || onClose ? '10%' : '40%',
+    getHeaderMargin(type, !!onClose),
   );
   const [message, setMessage] = useState<string>(t('Please enter your PIN'));
   const [shakeDots, setShakeDots] = useState(false);
@@ -93,43 +108,44 @@ const Pin = gestureHandlerRootHOC(() => {
   const pinBannedUntil = useAppSelector(({APP}) => APP.pinBannedUntil);
   const [attempts, setAttempts] = useState<number>(0);
 
-  // setPin
-  const [firstPinEntered, setFirstPinEntered] = useState<
-    Array<string | undefined>
-  >([]);
-
   const reset = useCallback(() => {
     setMessage(t('Please enter your PIN'));
-    setFirstPinEntered([]);
+    setPinStatus({pin: [], firstPinEntered: []});
     setAttempts(0);
-    setPin([]);
-  }, [setMessage, setFirstPinEntered, setAttempts, setPin, t]);
+  }, [setMessage, setAttempts, setPinStatus, t]);
 
   const checkPin = useCallback(
-    (pinToCheck: Array<string>) => {
+    async (pinToCheck: Array<string>) => {
       const pinHash = hashPin(pinToCheck);
 
       if (isEqual(currentPin, pinHash)) {
         dispatch(AppActions.showBlur(false));
-        const authorizedUntil =
-          Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+        const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+        const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
+        reset();
         onClose?.(true);
       } else {
         setShakeDots(true);
         setMessage(t('Incorrect PIN, try again'));
-        setPin([]);
+        setPinStatus({pin: [], firstPinEntered: []});
         setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
       }
     },
-    [dispatch, setShakeDots, setMessage, setPin, setAttempts, currentPin, t],
+    [
+      dispatch,
+      setShakeDots,
+      setMessage,
+      setPinStatus,
+      setAttempts,
+      currentPin,
+      t,
+    ],
   );
 
   const gotoCreateKey = async () => {
-    navigation.navigate('Onboarding', {
-      screen: 'CreateKey',
-    });
+    navigation.navigate('CreateKey');
     await sleep(10);
     dispatch(AppActions.dismissPinModal());
   };
@@ -137,150 +153,168 @@ const Pin = gestureHandlerRootHOC(() => {
   gotoCreateKeyRef.current = gotoCreateKey;
 
   const setCurrentPin = useCallback(
-    (newPin: Array<string>) => {
-      if (isEqual(firstPinEntered, newPin)) {
-        dispatch(AppActions.pinLockActive(true));
-        const pinHash = hashPin(newPin);
-        dispatch(AppActions.currentPin(pinHash));
-        dispatch(AppActions.showBlur(false));
+    async (newPin: {firstPinEntered: Array<string>; pin: Array<string>}) => {
+      try {
+        if (isEqual(newPin.firstPinEntered, newPin.pin)) {
+          dispatch(AppActions.pinLockActive(true));
+          const pinHash = hashPin(newPin.pin);
+          dispatch(AppActions.currentPin(pinHash));
+          dispatch(AppActions.showBlur(false));
+          const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+          const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
+          dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
 
-        const authorizedUntil =
-          Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
-        dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-
-        if (context === 'onboarding') {
-          gotoCreateKeyRef.current();
+          if (context === 'onboarding') {
+            gotoCreateKeyRef.current();
+          } else {
+            dispatch(AppActions.dismissPinModal());
+          }
         } else {
-          dispatch(AppActions.dismissPinModal());
+          setShakeDots(true);
+          reset();
         }
-      } else {
-        setShakeDots(true);
-        reset();
+      } catch (err) {
+        logger.error(`setCurrentPin error: ${err}`);
       }
     },
-    [dispatch, setShakeDots, reset, firstPinEntered, context],
+    [dispatch, setShakeDots, reset, context],
   );
 
   const handleCellPress = useCallback(
     (value: string) => {
-      let newPin = pin.slice();
-      switch (value) {
-        case 'reset':
-          reset();
-          newPin = [];
-          break;
-        case 'backspace':
-          newPin.splice(-1);
-          setPin(newPin);
-          break;
-        default:
-          if (
-            Number(value) >= PIN_MIN_VALUE &&
-            Number(value) <= PIN_MAX_VALUE &&
-            pin.length <= PIN_LENGTH
-          ) {
-            // Adding new PIN
-            newPin[newPin.length] = value;
-            setPin(newPin);
-          }
-          break;
-      }
-      return newPin;
-    },
-    [setPin, reset, pin],
-  );
-
-  const onCellPress = useCallback(
-    async (value: string) => {
       if (pinBannedUntil) {
         // banned wait for entering new pin
         return;
       }
       haptic('soft');
+      switch (value) {
+        case 'reset':
+          reset();
+          break;
+        case 'backspace':
+          setPinStatus(prevValue => {
+            const newPin = prevValue.pin.slice();
+            newPin.splice(-1);
+            return {...prevValue, pin: newPin};
+          });
+          break;
+        default:
+          // Adding new PIN
+          setPinStatus(prevValue => {
+            if (
+              Number(value) >= PIN_MIN_VALUE &&
+              Number(value) <= PIN_MAX_VALUE &&
+              prevValue.pin.length < PIN_LENGTH
+            ) {
+              const newPin = prevValue.pin.slice();
+              newPin[newPin.length] = value;
+              return {...prevValue, pin: newPin};
+            } else {
+              return prevValue;
+            }
+          });
+          break;
+      }
+    },
+    [setPinStatus, reset, pinStatus],
+  );
 
-      const newPin = handleCellPress(value);
-
-      if (newPin.length !== PIN_LENGTH) {
+  useEffect(() => {
+    const onCellPress = async () => {
+      if (pinStatus.pin.length !== PIN_LENGTH) {
         // Waiting for more PIN digits
         return;
       }
-
       // Give some time for dot to fill
       await sleep(0);
-
       if (type === 'set') {
-        if (firstPinEntered.length) {
-          setCurrentPin(newPin as Array<string>);
+        if (pinStatus.firstPinEntered.length) {
+          setCurrentPin(
+            pinStatus as {firstPinEntered: Array<string>; pin: Array<string>},
+          );
         } else {
           setMessage(t('Confirm your PIN'));
-          setFirstPinEntered(newPin);
-          setPin([]);
+          setPinStatus({pin: [], firstPinEntered: pinStatus.pin});
         }
       } else {
-        checkPin(newPin as Array<string>);
+        checkPin(pinStatus.pin as Array<string>);
       }
-    },
-    [
-      setCurrentPin,
-      setMessage,
-      setFirstPinEntered,
-      setPin,
-      handleCellPress,
-      checkPin,
-      firstPinEntered.length,
-      pinBannedUntil,
-      type,
-      t,
-    ],
-  );
+    };
+    onCellPress();
+  }, [pinStatus]);
 
-  const setCountDown = useCallback(
-    (bannedUntil: number) => {
-      return setInterval(() => {
-        const now = Math.floor(Date.now() / 1000);
-        const totalSecs = bannedUntil - now;
+  const setCountDown = (
+    bannedUntil: number,
+    timeSinceBoot: number,
+    count: number = 0,
+  ) => {
+    const intervalId = setInterval(() => {
+      count = count + 1;
+      const totalSecs = bannedUntil - timeSinceBoot - count;
 
-        if (totalSecs < 0) {
-          dispatch(AppActions.pinBannedUntil(undefined));
-          reset();
-          return;
+      if (totalSecs < 0) {
+        dispatch(AppActions.pinBannedUntil(undefined));
+        clearInterval(intervalId);
+        reset();
+        return;
+      }
+
+      const m = Math.floor(totalSecs / 60);
+      const s = totalSecs % 60;
+      setMessage(
+        t('Try again in ', {
+          time: ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2),
+        }),
+      );
+    }, 1000);
+    return intervalId;
+  };
+
+  useEffect(() => {
+    const checkAttempts = async () => {
+      try {
+        if (attempts === ATTEMPT_LIMIT) {
+          setAttempts(0);
+          const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+          const bannedUntil = Number(timeSinceBoot) + ATTEMPT_LOCK_OUT_TIME;
+          dispatch(AppActions.pinBannedUntil(bannedUntil));
+          const timer = setCountDown(bannedUntil, Number(timeSinceBoot));
+          return () => {
+            clearInterval(timer);
+          };
         }
-
-        const m = Math.floor(totalSecs / 60);
-        const s = totalSecs % 60;
-        setMessage(
-          t('Try again in ', {
-            time: ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2),
-          }),
-        );
-      }, 1000);
-    },
-    [dispatch, setMessage, reset, t],
-  );
+      } catch (err) {
+        logger.error(`checkAttempts error: ${err}`);
+      }
+    };
+    checkAttempts();
+  }, [dispatch, attempts]);
 
   useEffect(() => {
-    if (attempts === ATTEMPT_LIMIT) {
-      setAttempts(0);
-      const bannedUntil = Math.floor(Date.now() / 1000) + ATTEMPT_LOCK_OUT_TIME;
-      dispatch(AppActions.pinBannedUntil(bannedUntil));
-      const timer = setCountDown(bannedUntil);
-      return () => {
-        clearInterval(timer);
-      };
-    }
-  }, [dispatch, setCountDown, attempts]);
-
-  useEffect(() => {
-    const now = Math.floor(Date.now() / 1000);
-    if (pinBannedUntil && now < pinBannedUntil) {
-      const timer = setCountDown(pinBannedUntil);
-      return () => {
-        clearInterval(timer);
-      };
-    } else if (pinBannedUntil) {
-      dispatch(AppActions.pinBannedUntil(undefined));
-    }
-  }, [dispatch, setCountDown, pinBannedUntil]);
+    const checkIfBanned = async () => {
+      try {
+        const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+        if (pinBannedUntil && Number(timeSinceBoot) < pinBannedUntil) {
+          const totalSecsToRelease = pinBannedUntil - Number(timeSinceBoot);
+          // workaround for inconsistencies between the stored timeSinceBoot with the timeSinceBoot that results after the system been hibernated or suspended
+          if (totalSecsToRelease > ATTEMPT_LOCK_OUT_TIME) {
+            const bannedUntil = Number(timeSinceBoot) + ATTEMPT_LOCK_OUT_TIME;
+            dispatch(AppActions.pinBannedUntil(bannedUntil));
+            return;
+          }
+          const timer = setCountDown(pinBannedUntil, Number(timeSinceBoot));
+          return () => {
+            clearInterval(timer);
+          };
+        } else if (pinBannedUntil) {
+          dispatch(AppActions.pinBannedUntil(undefined));
+        }
+      } catch (err) {
+        logger.error(`checkIfBanned error: ${err}`);
+      }
+    };
+    checkIfBanned();
+  }, [dispatch, pinBannedUntil]);
 
   return (
     <PinContainer>
@@ -310,12 +344,12 @@ const Pin = gestureHandlerRootHOC(() => {
         shakeDots={shakeDots}
         setShakeDots={setShakeDots}
         pinLength={PIN_LENGTH}
-        pin={pin}
+        pin={pinStatus.pin}
       />
-      <VirtualKeyboardContainer>
+      <VirtualKeyboardContainer accessibilityLabel="virtual-key-container">
         <VirtualKeyboard
           showDot={false}
-          onCellPress={onCellPress}
+          onCellPress={handleCellPress}
           darkModeOnly={true}
         />
       </VirtualKeyboardContainer>
@@ -329,6 +363,7 @@ const PinModal: React.FC = () => {
 
   return (
     <BaseModal
+      accessibilityLabel="pin-view"
       id={'pin'}
       isVisible={isVisible}
       coverScreen={true}

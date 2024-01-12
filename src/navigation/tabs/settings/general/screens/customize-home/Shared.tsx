@@ -77,7 +77,7 @@ export const ListViewSvg = ({
   );
 };
 
-export const CustomizeHomeContainer = styled.View`
+export const CustomizeHomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -106,7 +106,7 @@ export const Toggle = styled(TouchableOpacity)`
   width: 50px;
 `;
 
-export const CustomizeCardContainer = styled(ListCard)`
+export const CustomizeCardContainer = styled(props => <ListCard {...props} />)`
   margin: 0 ${ScreenGutter} ${ScreenGutter} ${ScreenGutter};
   overflow: hidden;
   padding: 15px 20px;

@@ -81,6 +81,8 @@ export interface CoinbaseTransactionsProps {
     order: string;
     previous_uri: string;
     next_uri: string;
+    next_starting_after: string;
+    previous_ending_before: string;
   };
   data: CoinbaseTransactionProps[];
 }
@@ -200,4 +202,9 @@ export enum CoinbaseErrorMessages {
 export enum CoinbaseEnvironment {
   sandbox = 'sandbox',
   production = 'production',
+}
+
+export enum CoinbaseSupportedNetwork {
+  ethereum = 'eth',
+  polygon = 'matic',
 }

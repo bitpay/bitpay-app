@@ -48,6 +48,8 @@ export const URL = {
     'https://support.bitpay.com/hc/en-us/articles/115003004403-I-forgot-my-wallet-s-encrypted-password-What-can-I-do-',
   HELP_SINGLE_ADDRESS:
     'https://support.bitpay.com/hc/en-us/articles/360015920572-Setting-up-the-Single-Address-Feature-for-your-BitPay-Wallet',
+  HELP_PAYPRO_NETWORK_COST:
+    'https://support.bitpay.com/hc/en-us/articles/115002990803-What-is-the-Network-Cost-fee-on-BitPay-invoices-and-why-is-BitPay-charging-it',
 
   /**
    * Quick Links
@@ -60,9 +62,9 @@ export const URL = {
   VISA_FAQ:
     'https://support.bitpay.com/hc/en-us/categories/360004308991-BitPay-Prepaid-Debit-Visa-Card-US-',
   MASTERCARD_CARDHOLDER_AGREEMENT:
-    'https://bitpay.com/assets/pdfs/mcb-mastercard-cha-06-22.pdf',
+    'https://bitpay.com/assets/docs/bitpay-prepaid-debit-cha-022823.pdf',
   MASTERCARD_FEES_DISCLOSURE:
-    'https://bitpay.com/assets/pdfs/gpr-mastercard-short-form.pdf',
+    'https://bitpay.com/assets/docs/gpr-mastercard-short-form-022823.pdf',
   MASTERCARD_FAQ:
     'https://support.bitpay.com/hc/en-us/categories/115000745966-BitPay-Card',
 
@@ -77,4 +79,10 @@ export const URL = {
    * */
   HELP_DESTINATION_TAG:
     'https://support.bitpay.com/hc/en-us/articles/360039839312-What-are-XRP-Destination-Tags-',
+
+  /**
+   * WalletConnect v1
+   * */
+  WALLET_CONNECT_V1_SUNSET_NOTICE:
+    'https://medium.com/walletconnect/walletconnect-v1-0-sunset-notice-and-migration-schedule-8af9d3720d2e',
 };

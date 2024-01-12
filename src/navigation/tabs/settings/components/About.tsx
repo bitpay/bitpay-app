@@ -12,13 +12,14 @@ import {URL} from '../../../../constants';
 import {APP_VERSION} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
-import {useDispatch} from 'react-redux';
 import {
-  logSegmentEvent,
   openUrlWithInAppBrowser,
+  shareApp,
 } from '../../../../store/app/app.effects';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {GIT_COMMIT_HASH} from '@env';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {useAppDispatch} from '../../../../utils/hooks';
 
 interface LinkSetting {
   key: string;
@@ -29,7 +30,7 @@ interface LinkSetting {
 const About = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const LINKS: LinkSetting[] = [
     {
@@ -74,18 +75,29 @@ const About = () => {
         </>
       ) : null}
 
-      <Setting
-        onPress={() => navigation.navigate('About', {screen: 'SessionLogs'})}>
+      <Setting onPress={() => navigation.navigate('StorageUsage')}>
+        <SettingTitle>{t('Storage Usage')}</SettingTitle>
+        <AngleRight />
+      </Setting>
+
+      <Hr />
+
+      <Setting onPress={() => navigation.navigate('SessionLogs')}>
         <SettingTitle>{t('Session Log')}</SettingTitle>
         <AngleRight />
       </Setting>
 
       <Hr />
 
-      <Setting
-        onPress={() => navigation.navigate('About', {screen: 'SendFeedback'})}>
+      <Setting onPress={() => navigation.navigate('SendFeedback')}>
         <SettingTitle>{t('Send Feedback')}</SettingTitle>
         <AngleRight />
+      </Setting>
+
+      <Hr />
+
+      <Setting onPress={() => dispatch(shareApp())}>
+        <SettingTitle>{t('Share with Friends')}</SettingTitle>
       </Setting>
 
       <Hr />
@@ -95,12 +107,12 @@ const About = () => {
             <Setting
               activeOpacity={ActiveOpacity}
               onPress={() => {
-                const segmentEvent =
+                const eventName =
                   key === 'HelpAndSupport'
                     ? 'Clicked Support'
                     : 'Clicked About BitPay Link';
                 dispatch(
-                  logSegmentEvent('track', segmentEvent, {
+                  Analytics.track(eventName, {
                     key,
                   }),
                 );

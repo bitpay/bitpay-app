@@ -9,6 +9,7 @@ import {
 } from '../../../components/styled/Containers';
 import {Platform, Image, ImageSourcePropType} from 'react-native';
 import {Action, Black, Slate, White} from '../../../styles/colors';
+import {sleep} from '../../../utils/helper-methods';
 
 const OptionsTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -52,8 +53,9 @@ export interface Option {
   img?: ReactElement;
   imgSrc?: ImageSourcePropType;
   title?: string;
-  description: string;
+  description?: string;
   onPress: () => void;
+  optionElement?: any;
 }
 
 interface Props extends SheetParams {
@@ -62,6 +64,7 @@ interface Props extends SheetParams {
   title?: string;
   options: Array<Option>;
   placement?: 'top' | 'bottom';
+  paddingHorizontal?: number;
 }
 
 const OptionsSheet = ({
@@ -70,6 +73,7 @@ const OptionsSheet = ({
   title,
   placement,
   options,
+  paddingHorizontal,
 }: Props) => {
   const sheetPlacement = placement || 'bottom';
   const topStyles = {
@@ -80,7 +84,9 @@ const OptionsSheet = ({
       isVisible={isVisible}
       onBackdropPress={closeModal}
       placement={sheetPlacement}>
-      <SheetContainer placement={sheetPlacement}>
+      <SheetContainer
+        placement={sheetPlacement}
+        paddingHorizontal={paddingHorizontal}>
         {title ? (
           <OptionsTitleContainer>
             <TextAlign align={'center'}>
@@ -89,29 +95,48 @@ const OptionsSheet = ({
           </OptionsTitleContainer>
         ) : null}
         {options.map(
-          ({img, imgSrc, title: optionTitle, description, onPress}, index) => {
+          (
+            {
+              img,
+              imgSrc,
+              title: optionTitle,
+              description,
+              onPress,
+              optionElement,
+            },
+            index,
+          ) => {
             return (
               <OptionContainer
                 style={index === 0 && placement === 'top' && topStyles}
                 placement={sheetPlacement}
                 key={index}
                 activeOpacity={ActiveOpacity}
-                onPress={() => {
+                onPress={async () => {
                   closeModal();
+                  await sleep(500);
                   onPress();
                 }}>
-                {img && <OptionIconContainer>{img}</OptionIconContainer>}
-                {imgSrc && (
-                  <OptionIconContainer>
-                    <Image source={imgSrc} />
-                  </OptionIconContainer>
+                {optionElement ? (
+                  <>{optionElement()}</>
+                ) : (
+                  <>
+                    {img && <OptionIconContainer>{img}</OptionIconContainer>}
+                    {imgSrc && (
+                      <OptionIconContainer>
+                        <Image source={imgSrc} />
+                      </OptionIconContainer>
+                    )}
+                    <OptionTextContainer>
+                      {optionTitle ? (
+                        <OptionTitleText>{optionTitle}</OptionTitleText>
+                      ) : null}
+                      <OptionDescriptionText>
+                        {description}
+                      </OptionDescriptionText>
+                    </OptionTextContainer>
+                  </>
                 )}
-                <OptionTextContainer>
-                  {optionTitle ? (
-                    <OptionTitleText>{optionTitle}</OptionTitleText>
-                  ) : null}
-                  <OptionDescriptionText>{description}</OptionDescriptionText>
-                </OptionTextContainer>
               </OptionContainer>
             );
           },

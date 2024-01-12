@@ -10,8 +10,9 @@ import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
-import {logSegmentEvent} from '../../../store/app/app.effects';
-import {WalletScreens} from '../../../navigation/wallet/WalletStack';
+import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {sleep} from '../../../utils/helper-methods';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -94,23 +95,17 @@ const TransactModal = () => {
       description: t('Buy crypto with cash'),
       onPress: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Buy Crypto', {
+          Analytics.track('Clicked Buy Crypto', {
             context: 'TransactMenu',
           }),
         );
-        navigation.navigate('Wallet', {
-          screen: WalletScreens.AMOUNT,
-          params: {
-            onAmountSelected: async (amount: string, setButtonState: any) => {
-              navigation.navigate('BuyCrypto', {
-                screen: 'BuyCryptoRoot',
-                params: {
-                  amount: Number(amount),
-                },
-              });
-            },
-            context: 'buyCrypto',
+        navigation.navigate(WalletScreens.AMOUNT, {
+          onAmountSelected: async (amount: string, setButtonState: any) => {
+            navigation.navigate('BuyCryptoRoot', {
+              amount: Number(amount),
+            });
           },
+          context: 'buyCrypto',
         });
       },
     },
@@ -121,11 +116,11 @@ const TransactModal = () => {
       description: t('Swap crypto for another'),
       onPress: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Swap Crypto', {
+          Analytics.track('Clicked Swap Crypto', {
             context: 'TransactMenu',
           }),
         );
-        navigation.navigate('SwapCrypto', {screen: 'Root'});
+        navigation.navigate('SwapCryptoRoot');
       },
     },
     {
@@ -134,10 +129,7 @@ const TransactModal = () => {
       title: t('Receive'),
       description: t('Get crypto from another wallet'),
       onPress: () => {
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {context: 'receive'},
-        });
+        navigation.navigate('GlobalSelect', {context: 'receive'});
       },
     },
     {
@@ -146,10 +138,7 @@ const TransactModal = () => {
       title: t('Send'),
       description: t('Send crypto to another wallet'),
       onPress: () => {
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {context: 'send'},
-        });
+        navigation.navigate('GlobalSelect', {context: 'send'});
       },
     },
     {
@@ -160,12 +149,9 @@ const TransactModal = () => {
       onPress: () => {
         navigation.navigate('Tabs', {
           screen: 'Shop',
-          params: {
-            screen: 'Home',
-          },
         });
         dispatch(
-          logSegmentEvent('track', 'Clicked Buy Gift Cards', {
+          Analytics.track('Clicked Buy Gift Cards', {
             context: 'TransactMenu',
           }),
         );
@@ -179,11 +165,11 @@ const TransactModal = () => {
     title: t('Scan'),
     onPress: () => {
       dispatch(
-        logSegmentEvent('track', 'Open Scanner', {
+        Analytics.track('Open Scanner', {
           context: 'TransactMenu',
         }),
       );
-      navigation.navigate('Scan', {screen: 'Root'});
+      navigation.navigate('ScanRoot');
     },
   };
 
@@ -202,9 +188,10 @@ const TransactModal = () => {
             renderItem={({item}) => (
               <TransactItemContainer
                 activeOpacity={ActiveOpacity}
-                onPress={() => {
-                  item.onPress();
+                onPress={async () => {
                   hideModal();
+                  await sleep(500);
+                  item.onPress();
                 }}>
                 <ItemIconContainer>{item.img()}</ItemIconContainer>
                 <ItemTextContainer>
@@ -216,9 +203,10 @@ const TransactModal = () => {
           />
 
           <ScanButtonContainer
-            onPress={() => {
-              ScanButton.onPress();
+            onPress={async () => {
               hideModal();
+              await sleep(500);
+              ScanButton.onPress();
             }}>
             <View>
               <Icons.Scan />

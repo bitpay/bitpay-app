@@ -15,7 +15,7 @@ import {useTranslation} from 'react-i18next';
 import {WalletActions} from '../../../../store/wallet';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {useNavigation} from '@react-navigation/native';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const Crypto = () => {
   const dispatch = useAppDispatch();
@@ -40,12 +40,7 @@ const Crypto = () => {
     <SettingsComponent>
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={() =>
-          navigation.navigate('Tabs', {
-            screen: 'Settings',
-            params: {screen: 'NetworkFeePolicy'},
-          })
-        }>
+        onPress={() => navigation.navigate('NetworkFeePolicy')}>
         <SettingTitle>{t('Network Fee Policies')}</SettingTitle>
         <AngleRight />
       </Setting>
@@ -58,7 +53,7 @@ const Crypto = () => {
           onChange={value => {
             dispatch(WalletActions.setUseUnconfirmedFunds(value));
             dispatch(
-              logSegmentEvent('track', 'Set Use Unconfirmed Funds', {
+              Analytics.track('Set Use Unconfirmed Funds', {
                 value,
               }),
             );
@@ -85,7 +80,7 @@ const Crypto = () => {
           onChange={value => {
             dispatch(WalletActions.setCustomizeNonce(value));
             dispatch(
-              logSegmentEvent('track', 'Set Customize EVM Nonce', {
+              Analytics.track('Set Customize EVM Nonce', {
                 value,
               }),
             );
@@ -134,7 +129,7 @@ const Crypto = () => {
           onChange={value => {
             dispatch(WalletActions.setEnableReplaceByFee(value));
             dispatch(
-              logSegmentEvent('track', 'Set Enable BTC Replace-By-Fee', {
+              Analytics.track('Set Enable BTC Replace-By-Fee', {
                 value,
               }),
             );

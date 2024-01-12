@@ -1,5 +1,4 @@
 import styled from 'styled-components/native';
-import {View} from 'react-native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H5} from '../../../components/styled/Text';
 import {
@@ -8,8 +7,6 @@ import {
   NeutralSlate,
   Slate,
   SlateDark,
-  Action,
-  White,
 } from '../../../styles/colors';
 
 export const TransactionListHeader = styled.View`
@@ -51,32 +48,4 @@ export const EmptyListDescription = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   text-align: center;
-`;
-
-export const FloatingActionButtonContainer = styled(View)`
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 20px;
-  justify-content: center;
-  align-items: center;
-  z-index: 1;
-`;
-
-export const FloatingActionButton = styled.TouchableOpacity`
-  border-radius: 50px;
-  min-width: 180px;
-  padding: 18px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${Action};
-  flex-direction: row;
-`;
-
-export const FloatingActionButtonText = styled(H5)`
-  color: ${White};
-`;
-
-export const FloatingActionButtonIconContainer = styled.View`
-  margin-right: 10px;
 `;

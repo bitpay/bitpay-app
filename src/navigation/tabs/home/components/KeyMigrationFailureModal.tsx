@@ -52,7 +52,7 @@ const KeyMigrationFailureModal: React.FC = () => {
 
   const gotoImport = () => {
     dispatch(setShowKeyMigrationFailureModal(false));
-    navigation.navigate('Wallet', {screen: 'Import'});
+    navigation.navigate('Import');
   };
 
   return (

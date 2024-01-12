@@ -1,14 +1,14 @@
-import {CountryData} from './location.models';
+import {LocationData} from './location.models';
 
 export enum LocationActionTypes {
-  SUCCESS_GET_COUNTRY = 'LOCATION/SUCCESS_GET_COUNTRY',
+  SUCCESS_GET_LOCATION = 'LOCATION/SUCCESS_GET_LOCATION',
 }
 
-interface successGetCountry {
-  type: typeof LocationActionTypes.SUCCESS_GET_COUNTRY;
+interface successGetLocation {
+  type: typeof LocationActionTypes.SUCCESS_GET_LOCATION;
   payload: {
-    countryData: CountryData;
+    locationData: LocationData;
   };
 }
 
-export type LocationActionType = successGetCountry;
+export type LocationActionType = successGetLocation;

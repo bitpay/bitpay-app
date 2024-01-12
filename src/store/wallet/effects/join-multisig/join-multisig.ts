@@ -29,6 +29,7 @@ export const startJoinMultisig =
             brazeEid,
             defaultLanguage,
           },
+          WALLET: {keys},
         } = getState();
         const walletData = BWC.parseSecret(opts.invitationCode as string);
         opts.networkName = walletData.network;
@@ -67,6 +68,7 @@ export const startJoinMultisig =
           mapAbbreviationAndName(
             _wallet.credentials.coin,
             _wallet.credentials.chain,
+            _wallet.credentials.token?.address,
           ),
         );
 
@@ -81,13 +83,11 @@ export const startJoinMultisig =
         ) as Wallet;
 
         const key = buildKeyObj({key: _key, wallets: [wallet]});
-
         dispatch(
           successCreateKey({
             key,
           }),
         );
-
         resolve(key);
       } catch (err) {
         reject(err);
@@ -143,6 +143,7 @@ export const addWalletJoinMultisig =
           mapAbbreviationAndName(
             newWallet.credentials.coin,
             newWallet.credentials.chain,
+            newWallet.credentials.token?.address,
           ),
         );
 

@@ -35,6 +35,12 @@ export function getCurrencyCodeFromCoinAndChain(
     chainCode => chainCode === coin.toLowerCase(),
   );
   if (suffix && (coinIsAnotherChain || chain.toLowerCase() !== 'eth')) {
+    // Special handling for usdc.e and usdc
+    if (coin.toLowerCase() === 'usdc.e') {
+      return 'USDC_m';
+    } else if (coin.toLowerCase() === 'usdc') {
+      return 'USDCn_m';
+    }
     return `${coin.toUpperCase()}_${suffix}`;
   }
   return coin.toUpperCase();

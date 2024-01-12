@@ -6,14 +6,20 @@ import {
   RefreshControl,
   Image,
   DeviceEventEmitter,
+  TouchableOpacity,
 } from 'react-native';
+import RNPrint from 'react-native-print';
+import RenderHtml from 'react-native-render-html';
 import TimeAgo from 'react-native-timeago';
-import {StackScreenProps} from '@react-navigation/stack';
-import styled, {useTheme} from 'styled-components/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import styled from 'styled-components/native';
+import {useTheme} from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import {
+  ActiveOpacity,
   CtaContainer,
   HeaderRightContainer,
+  WIDTH,
 } from '../../../../../components/styled/Containers';
 import {
   BaseText,
@@ -21,6 +27,7 @@ import {
   Link,
   Paragraph,
   TextAlign,
+  fontFamily,
 } from '../../../../../components/styled/Text';
 import {
   Grey,
@@ -29,25 +36,23 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import RemoteImage from '../../components/RemoteImage';
-import {GiftCardStackParamList} from '../GiftCardStack';
+import {GiftCardGroupParamList} from '../GiftCardGroup';
 import {
   horizontalPadding,
   NavIconButtonContainer,
   SectionSpacer,
-  Terms,
 } from '../../components/styled/ShopTabComponents';
 import {
   ArchiveSvg,
   ExternalLinkSvg,
   InvoiceSvg,
+  PrintSvg,
 } from '../../components/svg/ShopTabSvgs';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {AppActions} from '../../../../../store/app';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {
   CardConfig,
   ClaimCodeType,
@@ -58,9 +63,21 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
+import {
+  generateGiftCardPrintHtml,
+  getCardImage,
+} from '../../../../../lib/gift-cards/gift-card';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import Markdown from 'react-native-markdown-display';
+import {ScrollableBottomNotificationMessageContainer} from '../../../../../components/modal/bottom-notification/BottomNotification';
+import GiftCardTerms from '../../components/GiftCardTerms';
+import GiftCardImage from '../../components/GiftCardImage';
 
 const maxWidth = 320;
+
+const GiftCardDetailsContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const Amount = styled(BaseText)`
   font-size: 38px;
@@ -134,7 +151,7 @@ const ArchiveButtonContainer = styled.View`
 const GiftCardDetails = ({
   route,
   navigation,
-}: StackScreenProps<GiftCardStackParamList, 'GiftCardDetails'>) => {
+}: NativeStackScreenProps<GiftCardGroupParamList, 'GiftCardDetails'>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -153,6 +170,10 @@ const GiftCardDetails = ({
     giftCards.find(card => card.invoiceId === initialGiftCard.invoiceId) ||
       initialGiftCard,
   );
+  const [defaultClaimCodeType, setDefaultClaimCodeType] = useState(
+    cardConfig.defaultClaimCodeType,
+  );
+  const cardImage = getCardImage(cardConfig, giftCard.amount);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
@@ -163,20 +184,47 @@ const GiftCardDetails = ({
   }, []);
 
   useEffect(() => {
+    const redeem = async () => {
+      const updatedGiftCard = await dispatch(
+        ShopEffects.startRedeemGiftCard(giftCard.invoiceId),
+      );
+      setGiftCard(updatedGiftCard);
+    };
+    if (giftCard.status === 'SYNCED') {
+      redeem();
+    }
+  }, [dispatch, giftCard.invoiceId, giftCard.status]);
+
+  useEffect(() => {
     if (!giftCard.barcodeImage) {
       if (
-        cardConfig.defaultClaimCodeType === ClaimCodeType.barcode &&
+        defaultClaimCodeType === ClaimCodeType.barcode &&
         giftCard.claimLink
       ) {
-        cardConfig.defaultClaimCodeType = ClaimCodeType.link;
+        setDefaultClaimCodeType(ClaimCodeType.link);
       }
       return;
     }
     Image.getSize(giftCard.barcodeImage, (width, height) => {
-      setIsBarcode(width / height > 3);
-      setScannableCodeDimensions({width, height});
+      const resemblesBarcode = width / height > 3;
+      setIsBarcode(resemblesBarcode);
+      const minHeight = 60;
+      const scaleFactor = minHeight / height;
+      const dimensions =
+        height < minHeight && !resemblesBarcode
+          ? {
+              height: height * scaleFactor,
+              width: width * scaleFactor,
+            }
+          : {height: minHeight, width: 200};
+      setScannableCodeDimensions(dimensions);
     });
-  }, [cardConfig, giftCard.barcodeImage, giftCard.claimLink]);
+  }, [
+    cardConfig,
+    defaultClaimCodeType,
+    giftCard.barcodeImage,
+    giftCard.claimLink,
+  ]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -196,17 +244,50 @@ const GiftCardDetails = ({
     copiedValue: string,
     cardConfig: CardConfig,
     customMessage?: string,
-  ) =>
-    AppActions.showBottomNotificationModal({
+  ) => {
+    const redeemInstructions =
+      customMessage ||
+      cardConfig.redeemInstructions ||
+      t(
+        'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
+        {website: cardConfig.website},
+      );
+    const containsHtml =
+      redeemInstructions.includes('</') || redeemInstructions.includes('/>');
+    const redeemHtml = redeemInstructions
+      .replaceAll(': \n', ': <br>')
+      .replaceAll('\n\n', '<br><br>');
+    const redeemTextStyle = {
+      color: theme.colors.text,
+      fontFamily,
+      fontSize: 16,
+      lineHeight: 24,
+    };
+    return AppActions.showBottomNotificationModal({
       type: 'success',
       title: t('Copied: ', {copiedValue}),
-      message:
-        customMessage ||
-        cardConfig.redeemInstructions ||
-        t(
-          'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
-          {website: cardConfig.website},
-        ),
+      message: '',
+      message2: (
+        <ScrollableBottomNotificationMessageContainer
+          contentContainerStyle={{paddingBottom: 10}}>
+          {containsHtml ? (
+            <RenderHtml
+              baseStyle={redeemTextStyle}
+              contentWidth={WIDTH - 2 * horizontalPadding}
+              source={{
+                html: redeemHtml,
+              }}
+            />
+          ) : (
+            <Markdown
+              style={{
+                body: redeemTextStyle,
+              }}>
+              {redeemInstructions}
+            </Markdown>
+          )}
+        </ScrollableBottomNotificationMessageContainer>
+      ),
       enableBackdropDismiss: true,
       actions: [
         {
@@ -216,6 +297,7 @@ const GiftCardDetails = ({
         },
       ],
     });
+  };
 
   const assetOptions: Array<Option> = [
     {
@@ -243,6 +325,24 @@ const GiftCardDetails = ({
         );
       },
     },
+    ...(defaultClaimCodeType !== 'link'
+      ? [
+          {
+            img: <PrintSvg theme={theme} />,
+            description: t('Print'),
+            onPress: async () => {
+              await sleep(600); // Wait for options sheet to close on iOS
+              await RNPrint.print({
+                html: generateGiftCardPrintHtml(
+                  cardConfig,
+                  giftCard,
+                  scannableCodeDimensions,
+                ),
+              });
+            },
+          },
+        ]
+      : []),
   ];
 
   const copyToClipboard = (value: string, customMessage?: string) => {
@@ -259,7 +359,7 @@ const GiftCardDetails = ({
   };
 
   return (
-    <>
+    <GiftCardDetailsContainer>
       <OptionsSheet
         isVisible={isOptionsSheetVisible}
         closeModal={() => setIsOptionsSheetVisible(false)}
@@ -270,6 +370,7 @@ const GiftCardDetails = ({
         contentContainerStyle={{
           alignItems: 'center',
           paddingHorizontal: horizontalPadding,
+          paddingBottom: 50,
         }}
         refreshControl={
           giftCard.status !== 'SUCCESS' ? (
@@ -287,54 +388,47 @@ const GiftCardDetails = ({
             />
           ) : undefined
         }>
-        <TouchableWithoutFeedback
+        <TouchableOpacity
+          activeOpacity={ActiveOpacity}
           onPress={() => copyToClipboard(`${giftCard.amount}`)}>
           <Amount>
             {formatFiatAmount(giftCard.amount, giftCard.currency, {
               currencyDisplay: 'symbol',
             })}
           </Amount>
-        </TouchableWithoutFeedback>
-        <RemoteImage
-          uri={cardConfig.cardImage}
-          height={169}
-          width={270}
-          borderRadius={10}
-        />
+        </TouchableOpacity>
+        <GiftCardImage uri={cardImage} />
         {giftCard.status === 'SUCCESS' ? (
           <>
-            {cardConfig.defaultClaimCodeType !== 'link' ? (
+            {defaultClaimCodeType !== 'link' ? (
               <ClaimCodeBox>
                 <Paragraph>{t('Claim Code')}</Paragraph>
-                {giftCard.barcodeImage &&
-                cardConfig.defaultClaimCodeType === 'barcode' ? (
+                {giftCard.barcodeImage && defaultClaimCodeType === 'barcode' ? (
                   <ScannableCodeContainer
-                    height={scannableCodeDimensions.height}
-                    width={scannableCodeDimensions.width}>
+                    height={scannableCodeDimensions.height + 20}
+                    width={scannableCodeDimensions.width + 20}>
                     <ScannableCode
-                      height={
-                        isBarcode
-                          ? scannableCodeDimensions.height * 0.7
-                          : scannableCodeDimensions.height
-                      }
+                      height={scannableCodeDimensions.height}
                       width={scannableCodeDimensions.width}
                       source={{uri: giftCard.barcodeImage}}
-                      resizeMode={isBarcode ? 'cover' : 'contain'}
+                      resizeMode={isBarcode ? 'stretch' : 'contain'}
                     />
                   </ScannableCodeContainer>
                 ) : null}
-                <TouchableWithoutFeedback
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
                   onPress={() => copyToClipboard(giftCard.claimCode)}>
                   <ClaimCode>{giftCard.claimCode}</ClaimCode>
-                </TouchableWithoutFeedback>
+                </TouchableOpacity>
                 {giftCard.pin ? (
                   <>
                     <Divider />
                     <Paragraph>{t('Pin')}</Paragraph>
-                    <TouchableWithoutFeedback
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
                       onPress={() => copyToClipboard(giftCard.pin as string)}>
                       <ClaimCode>{giftCard.pin}</ClaimCode>
-                    </TouchableWithoutFeedback>
+                    </TouchableOpacity>
                   </>
                 ) : (
                   <Paragraph style={{marginBottom: 30}}>
@@ -343,13 +437,12 @@ const GiftCardDetails = ({
                 )}
               </ClaimCodeBox>
             ) : null}
-            {giftCard.pin || cardConfig.defaultClaimCodeType === 'link' ? (
+            {giftCard.pin || defaultClaimCodeType === 'link' ? (
               <Paragraph style={{marginTop: 15}}>
                 {t('Created')} <TimeAgo time={giftCard.date} />
               </Paragraph>
             ) : null}
-            {!giftCard.archived ||
-            cardConfig.defaultClaimCodeType === 'link' ? (
+            {!giftCard.archived || defaultClaimCodeType === 'link' ? (
               <ActionContainer>
                 {cardConfig.redeemUrl ? (
                   <Button
@@ -360,7 +453,7 @@ const GiftCardDetails = ({
                         }`,
                       );
                       dispatch(
-                        logSegmentEvent('track', 'Redeemed Gift Card', {
+                        Analytics.track('Redeemed Gift Card', {
                           giftCardAmount: giftCard.amount,
                           giftCardBrand: cardConfig.name,
                           giftCardCurrency: cardConfig.currency,
@@ -370,7 +463,7 @@ const GiftCardDetails = ({
                     buttonStyle={'primary'}>
                     {t('Redeem Now')}
                   </Button>
-                ) : cardConfig.defaultClaimCodeType === 'link' ? (
+                ) : defaultClaimCodeType === 'link' ? (
                   <Button
                     onPress={() =>
                       Linking.openURL(giftCard.claimLink as string)
@@ -401,16 +494,20 @@ const GiftCardDetails = ({
           </>
         ) : (
           <ClaimCodeBox>
-            {giftCard.status === 'PENDING' ? (
+            {['PENDING', 'SYNCED'].includes(giftCard.status) ? (
               <TextAlign align="center">
-                <Paragraph>{t('Awaiting payment to confirm')}</Paragraph>
+                <Paragraph>
+                  {giftCard.status === 'PENDING'
+                    ? t('Awaiting payment to confirm')
+                    : t('Fetching claim information...')}
+                </Paragraph>
               </TextAlign>
             ) : (
               <>
                 <TextAlign align="center">
                   <Paragraph>
                     {t(
-                      'Claim code not yet available. Please check back later.',
+                      'Unable to fetch claim information. Please check back later.',
                     )}
                   </Paragraph>
                 </TextAlign>
@@ -429,7 +526,8 @@ const GiftCardDetails = ({
                     </Link>
                     {t(', and provide this invoice ID: ')}
                   </Paragraph>
-                  <TouchableWithoutFeedback
+                  <TouchableOpacity
+                    activeOpacity={ActiveOpacity}
                     onPress={() =>
                       copyToClipboard(
                         giftCard.invoiceId,
@@ -439,7 +537,7 @@ const GiftCardDetails = ({
                       )
                     }>
                     <Paragraph>{giftCard.invoiceId}</Paragraph>
-                  </TouchableWithoutFeedback>
+                  </TouchableOpacity>
                 </TextAlign>
               </>
             )}
@@ -451,9 +549,9 @@ const GiftCardDetails = ({
             {t('Created')} <TimeAgo time={giftCard.date} />
           </Paragraph>
         ) : null}
-        <Terms>{cardConfig.terms}</Terms>
+        <GiftCardTerms terms={cardConfig.terms} />
       </ScrollView>
-    </>
+    </GiftCardDetailsContainer>
   );
 };
 

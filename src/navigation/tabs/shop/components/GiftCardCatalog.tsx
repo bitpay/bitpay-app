@@ -3,10 +3,9 @@ import debounce from 'lodash.debounce';
 import {useTheme} from 'styled-components/native';
 import pickBy from 'lodash.pickby';
 import uniqBy from 'lodash.uniqby';
-import {Platform, View} from 'react-native';
+import {Platform, View, TouchableOpacity} from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {BaseText, Paragraph} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
@@ -31,14 +30,14 @@ import {
   SectionSpacer,
 } from './styled/ShopTabComponents';
 import {useNavigation} from '@react-navigation/native';
-import {GiftCardScreens} from '../gift-card/GiftCardStack';
+import {GiftCardScreens} from '../gift-card/GiftCardGroup';
 import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const Curations = ({
   curations,
@@ -62,12 +61,12 @@ const Curations = ({
             )}
             itemUnderlayColor={underlayColor}
             itemWidthInLastSlide={WIDTH}
+            itemHeight={85}
             maxItemsPerColumn={3}
             screenWidth={WIDTH}
             onItemPress={item => {
-              navigation.navigate('GiftCard', {
-                screen: GiftCardScreens.BUY_GIFT_CARD,
-                params: {cardConfig: item as CardConfig},
+              navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                cardConfig: item as CardConfig,
               });
             }}
           />
@@ -155,9 +154,7 @@ export default ({
           giftCard.displayName.toLowerCase().includes(lowerCaseText),
         );
         setSearchResults(newSearchResults);
-        dispatch(
-          logSegmentEvent('track', 'Searched Gift Cards', {search: text}),
-        );
+        dispatch(Analytics.track('Searched Gift Cards', {search: text}));
       }, 300),
     [availableGiftCards, dispatch],
   );
@@ -182,7 +179,7 @@ export default ({
     () =>
       setPurchasedGiftCards(
         giftCards
-          .filter(c => c.status === 'SUCCESS')
+          .filter(c => ['PENDING', 'SUCCESS', 'SYNCED'].includes(c.status))
           .sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
           ),
@@ -256,9 +253,8 @@ export default ({
                 <ListItemTouchableHighlight
                   key={cardConfig.name}
                   onPress={() => {
-                    navigation.navigate('GiftCard', {
-                      screen: GiftCardScreens.BUY_GIFT_CARD,
-                      params: {cardConfig},
+                    navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                      cardConfig,
                     });
                   }}
                   underlayColor={underlayColor}>
@@ -284,13 +280,14 @@ export default ({
           <SectionContainer>
             <SectionHeaderContainer>
               <SectionHeader>{t('All Gift Cards')}</SectionHeader>
-              <TouchableWithoutFeedback
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
                 onPress={() => setIsFilterSheetShown(!isFilterSheetShown)}>
                 <SectionHeaderButton>
                   {t('Filter')}
                   {numSelectedCategories ? ` (${numSelectedCategories})` : null}
                 </SectionHeaderButton>
-              </TouchableWithoutFeedback>
+              </TouchableOpacity>
             </SectionHeaderContainer>
           </SectionContainer>
           <SearchResults>
@@ -298,9 +295,8 @@ export default ({
               <ListItemTouchableHighlight
                 key={cardConfig.name}
                 onPress={() => {
-                  navigation.navigate('GiftCard', {
-                    screen: GiftCardScreens.BUY_GIFT_CARD,
-                    params: {cardConfig},
+                  navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                    cardConfig,
                   });
                 }}
                 underlayColor={underlayColor}>

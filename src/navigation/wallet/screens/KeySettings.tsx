@@ -9,7 +9,7 @@ import {
 } from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {View, TouchableOpacity, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import {
@@ -42,6 +42,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
+  toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {
   CustomErrorMessage,
@@ -52,25 +53,20 @@ import {
   generateKeyExportCode,
   mapAbbreviationAndName,
 } from '../../../store/wallet/utils/wallet';
-import {Key, KeyMethods} from '../../../store/wallet/wallet.models';
+import {Key} from '../../../store/wallet/wallet.models';
 import {
   normalizeMnemonic,
   serverAssistedImport,
 } from '../../../store/wallet/effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import merge from 'lodash.merge';
-import {
-  syncWallets,
-  toggleHideKeyBalance,
-} from '../../../store/wallet/wallet.actions';
+import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
-import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
-import {Wallet} from '../../../store/wallet/wallet.models';
 
-const WalletSettingsContainer = styled.View`
+const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -117,14 +113,16 @@ const KeySettings = () => {
   const {t} = useTranslation();
   const {
     params: {key, context},
-  } = useRoute<RouteProp<WalletStackParamList, 'KeySettings'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'KeySettings'>>();
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
 
-  const _wallets = key.wallets;
+  const _wallets = key.wallets.filter(wallet =>
+    wallet.credentials.isComplete(),
+  );
   const coins = _wallets.filter(wallet => !wallet.credentials.token);
   const tokens = _wallets.filter(wallet => wallet.credentials.token);
   const wallets = buildNestedWalletList(
@@ -136,17 +134,14 @@ const KeySettings = () => {
   );
 
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const {keyName, hideKeyBalance} = _key || {};
+  const {keyName} = _key || {};
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
-      navigation.navigate('Wallet', {
-        screen: 'CreateEncryptPassword',
-        params: {key},
-      });
+      navigation.navigate('CreateEncryptPassword', {key});
       scrollViewRef?.current?.scrollToEnd({animated: false});
     }
-  }, [context]);
+  }, [context, key, navigation]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -180,11 +175,11 @@ const KeySettings = () => {
     };
   };
 
-  const _tokenOptions = useAppSelector(({WALLET}: RootState) => {
+  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
     };
   });
 
@@ -193,20 +188,15 @@ const KeySettings = () => {
       // To close decrypt modal
       await sleep(500);
     }
-    await dispatch(
-      startOnGoingProcessModal(
-        // t('Syncing Wallets...')
-        t(OnGoingProcessMessages.SYNCING_WALLETS),
-      ),
-    );
+    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
     const opts = {
       words: normalizeMnemonic(mnemonic),
       mnemonic,
     };
     try {
-      let {key: _syncKey, wallets: _syncWallets} = (await dispatch<any>(
-        serverAssistedImport(opts),
-      )) as {key: KeyMethods; wallets: Wallet[]};
+      let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
+        opts,
+      );
 
       if (_syncKey.fingerPrint === key.properties!.fingerPrint) {
         // Filter for new wallets
@@ -223,13 +213,14 @@ const KeySettings = () => {
               mapAbbreviationAndName(
                 syncWallet.credentials.coin,
                 syncWallet.credentials.chain,
+                syncWallet.credentials.token?.address,
               ),
             );
             return merge(
               syncWallet,
               buildWalletObj(
                 {...syncWallet.credentials, currencyAbbreviation, currencyName},
-                _tokenOptions,
+                _tokenOptionsByAddress,
               ),
             );
           });
@@ -296,10 +287,7 @@ const KeySettings = () => {
           activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
-            navigation.navigate('Wallet', {
-              screen: 'UpdateKeyOrWalletName',
-              params: {key, context: 'key'},
-            });
+            navigation.navigate('UpdateKeyOrWalletName', {key, context: 'key'});
           }}>
           <View>
             <Title>{t('Key Name')}</Title>
@@ -311,13 +299,11 @@ const KeySettings = () => {
         <Hr />
 
         <SettingView>
-          <WalletSettingsTitle>{t('Hide Balance')}</WalletSettingsTitle>
+          <WalletSettingsTitle>{t('Hide All Balances')}</WalletSettingsTitle>
 
           <ToggleSwitch
-            onChange={() => {
-              dispatch(toggleHideKeyBalance({keyId: key.id}));
-            }}
-            isEnabled={!!hideKeyBalance}
+            onChange={value => dispatch(toggleHideAllBalances(value))}
+            isEnabled={!!hideAllBalances}
           />
         </SettingView>
 
@@ -329,7 +315,7 @@ const KeySettings = () => {
             <TouchableOpacity
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Wallet', {screen: 'KeyExplanation'});
+                navigation.navigate('KeyExplanation');
               }}>
               <InfoSvg />
             </TouchableOpacity>
@@ -351,10 +337,7 @@ const KeySettings = () => {
             <TouchableOpacity
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Wallet', {
-                  screen: 'WalletSettings',
-                  params: {walletId: id, key},
-                });
+                navigation.navigate('WalletSettings', {walletId: id, key});
               }}
               key={id}
               activeOpacity={ActiveOpacity}>
@@ -379,10 +362,7 @@ const KeySettings = () => {
             <AddWalletText
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Wallet', {
-                  screen: 'AddingOptions',
-                  params: {key},
-                });
+                navigation.navigate('AddingOptions', {key});
               }}>
               {t('Add Wallet')}
             </AddWalletText>
@@ -394,36 +374,10 @@ const KeySettings = () => {
             <Title>{t('Security')}</Title>
             <Setting
               onPress={() => {
-                haptic('impactLight');
-                if (!_key.isPrivKeyEncrypted) {
-                  navigation.navigate('Wallet', {
-                    screen: 'RecoveryPhrase',
-                    params: {
-                      keyId: key.id,
-                      words: getMnemonic(_key),
-                      walletTermsAccepted: true,
-                      context: 'keySettings',
-                      key,
-                    },
-                  });
-                } else {
-                  dispatch(
-                    AppActions.showDecryptPasswordModal(
-                      buildEncryptModalConfig(async ({mnemonic}) => {
-                        navigation.navigate('Wallet', {
-                          screen: 'RecoveryPhrase',
-                          params: {
-                            keyId: key.id,
-                            words: mnemonic.trim().split(' '),
-                            walletTermsAccepted: true,
-                            context: 'keySettings',
-                            key,
-                          },
-                        });
-                      }),
-                    ),
-                  );
-                }
+                navigation.navigate('BackupOnboarding', {
+                  key,
+                  buildEncryptModalConfig,
+                });
               }}>
               <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
             </Setting>
@@ -476,9 +430,8 @@ const KeySettings = () => {
                   <Setting
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
-                      navigation.navigate('Wallet', {
-                        screen: 'ClearEncryptPassword',
-                        params: {keyId: key.id},
+                      navigation.navigate('ClearEncryptPassword', {
+                        keyId: key.id,
                       });
                     }}>
                     <WalletSettingsTitle>
@@ -527,25 +480,19 @@ const KeySettings = () => {
                 onPress={() => {
                   haptic('impactLight');
                   if (!_key.isPrivKeyEncrypted) {
-                    navigation.navigate('Wallet', {
-                      screen: 'ExportKey',
-                      params: {
-                        code: generateKeyExportCode(
-                          _key,
-                          _key.properties!.mnemonic,
-                        ),
-                        keyName,
-                      },
+                    navigation.navigate('ExportKey', {
+                      code: generateKeyExportCode(
+                        _key,
+                        _key.properties!.mnemonic,
+                      ),
+                      keyName,
                     });
                   } else {
                     dispatch(
                       AppActions.showDecryptPasswordModal(
                         buildEncryptModalConfig(async ({mnemonic}) => {
                           const code = generateKeyExportCode(key, mnemonic);
-                          navigation.navigate('Wallet', {
-                            screen: 'ExportKey',
-                            params: {code, keyName},
-                          });
+                          navigation.navigate('ExportKey', {code, keyName});
                         }),
                       ),
                     );
@@ -565,20 +512,14 @@ const KeySettings = () => {
                 onPress={() => {
                   haptic('impactLight');
                   if (!_key.isPrivKeyEncrypted) {
-                    navigation.navigate('Wallet', {
-                      screen: 'ExtendedPrivateKey',
-                      params: {
-                        xPrivKey: _key.properties!.xPrivKey,
-                      },
+                    navigation.navigate('ExtendedPrivateKey', {
+                      xPrivKey: _key.properties!.xPrivKey,
                     });
                   } else {
                     dispatch(
                       AppActions.showDecryptPasswordModal(
                         buildEncryptModalConfig(async ({xPrivKey}) => {
-                          navigation.navigate('Wallet', {
-                            screen: 'ExtendedPrivateKey',
-                            params: {xPrivKey},
-                          });
+                          navigation.navigate('ExtendedPrivateKey', {xPrivKey});
                         }),
                       ),
                     );
@@ -598,10 +539,7 @@ const KeySettings = () => {
             style={{marginBottom: 50}}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'DeleteKey',
-                params: {keyId: key.id},
-              });
+              navigation.navigate('DeleteKey', {keyId: key.id});
             }}>
             <WalletSettingsTitle>{t('Delete')}</WalletSettingsTitle>
           </Setting>

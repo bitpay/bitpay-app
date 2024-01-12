@@ -15,6 +15,7 @@ import {SwapOpts} from '../../navigation/services/swap-crypto/screens/SwapCrypto
 import {ParseAmount} from '../../store/wallet/effects/amount/amount';
 import {Caution, Slate30, SlateDark} from '../../styles/colors';
 import {
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getRateByCurrencyName,
 } from '../../utils/helper-methods';
@@ -22,8 +23,10 @@ import {useAppDispatch} from '../../utils/hooks';
 import useAppSelector from '../../utils/hooks/useAppSelector';
 import CurrencySymbol from '../icons/currency-symbol/CurrencySymbol';
 import {useLogger} from '../../utils/hooks/useLogger';
+import {getBuyCryptoFiatLimits} from '../../store/buy-crypto/buy-crypto.effects';
+import KeyEvent from 'react-native-keyevent';
 
-const AmountContainer = styled.View`
+const AmountContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -99,13 +102,20 @@ const CurrencyText = styled(BaseText)`
   position: absolute;
 `;
 
+export interface Limits {
+  min?: number;
+  max?: number;
+}
+
 export interface AmountProps {
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
+  tokenAddress?: string;
   chain?: string;
   context?: string;
   buttonState?: ButtonState;
   swapOpts?: SwapOpts;
+  customAmountSublabel?: any;
   onSendMaxPressed?: () => any;
 
   /**
@@ -118,9 +128,11 @@ const Amount: React.VFC<AmountProps> = ({
   cryptoCurrencyAbbreviation,
   fiatCurrencyAbbreviation,
   chain,
+  tokenAddress,
   context,
   buttonState,
   swapOpts,
+  customAmountSublabel,
   onSendMaxPressed,
   onSubmit,
 }) => {
@@ -145,6 +157,8 @@ const Amount: React.VFC<AmountProps> = ({
     return defaultAltCurrency.isoCode;
   }, [context, defaultAltCurrency.isoCode, fiatCurrencyAbbreviation]);
 
+  const [continueEnabled, setContinueEnabled] = useState(false);
+
   // flag for primary selector type
   const [rate, setRate] = useState(0);
   const [amountConfig, updateAmountConfig] = useState({
@@ -161,10 +175,19 @@ const Amount: React.VFC<AmountProps> = ({
       cryptoCurrencyAbbreviation === fiatCurrency,
   });
   const [useSendMax, setUseSendMax] = useState(false);
+  const [limits, setLimits] = useState<Limits>({
+    min: undefined,
+    max: undefined,
+  });
 
   const swapList = useMemo(() => {
     return cryptoCurrencyAbbreviation
-      ? [...new Set([cryptoCurrencyAbbreviation, fiatCurrency])]
+      ? [
+          ...new Set([
+            formatCurrencyAbbreviation(cryptoCurrencyAbbreviation),
+            fiatCurrency,
+          ]),
+        ]
       : [fiatCurrency];
   }, [cryptoCurrencyAbbreviation, fiatCurrency]);
 
@@ -197,6 +220,7 @@ const Amount: React.VFC<AmountProps> = ({
               primaryIsFiat ? val / rate : val,
               cryptoCurrencyAbbreviation.toLowerCase(),
               chain,
+              tokenAddress,
             ),
           ).amount;
 
@@ -220,13 +244,15 @@ const Amount: React.VFC<AmountProps> = ({
   const onCellPress = useCallback((val: string) => {
     haptic('soft');
     setUseSendMax(false);
-
     let newValue;
     switch (val) {
       case 'reset':
         newValue = '';
         break;
       case 'backspace':
+        if (curValRef.current.length === 0) {
+          return;
+        }
         newValue = curValRef.current.slice(0, -1);
         break;
       case '.':
@@ -272,29 +298,63 @@ const Amount: React.VFC<AmountProps> = ({
     }
   };
 
-  const continueIsDisabled = () => {
-    if (
-      swapOpts?.swapLimits.minAmount &&
-      +amount > 0 &&
-      +amount < swapOpts.swapLimits.minAmount
-    ) {
-      return true;
+  useEffect(() => {
+    if (limits.min && +amount > 0 && +amount < limits.min) {
+      setContinueEnabled(false);
     } else if (
       swapOpts?.maxWalletAmount &&
       +amount > 0 &&
       +amount > Number(swapOpts.maxWalletAmount)
     ) {
-      return true;
-    } else if (
-      swapOpts?.swapLimits.maxAmount &&
-      +amount > 0 &&
-      +amount > swapOpts.swapLimits.maxAmount
-    ) {
-      return true;
+      setContinueEnabled(false);
+    } else if (limits.max && +amount > 0 && +amount > limits.max) {
+      setContinueEnabled(false);
+    } else if (!+amount && buttonState !== 'loading') {
+      setContinueEnabled(false); // Default case
     } else {
-      return !+amount && buttonState !== 'loading'; // Default case
+      setContinueEnabled(true);
     }
-  };
+  }, [amount, limits.max, limits.min, buttonState, swapOpts?.maxWalletAmount]);
+
+  const getWarnMsg = useMemo<JSX.Element>(() => {
+    let msg: string | undefined;
+    if (+amount > 0) {
+      if (limits.min && +amount < limits.min) {
+        if (context === 'buyCrypto' && fiatCurrency) {
+          msg = t('MinAmountWarnMsg', {
+            min: limits.min,
+            currency: fiatCurrency,
+          });
+        } else if (context !== 'buyCrypto' && cryptoCurrencyAbbreviation) {
+          msg = t('MinAmountWarnMsg', {
+            min: limits.min,
+            currency: cryptoCurrencyAbbreviation,
+          });
+        }
+      } else if (
+        limits.min &&
+        swapOpts?.maxWalletAmount &&
+        +amount > Number(swapOpts.maxWalletAmount) &&
+        +amount >= limits.min
+      ) {
+        msg = t('Not enough funds');
+      } else if (limits.max && +amount > limits.max) {
+        if (context === 'buyCrypto' && fiatCurrency) {
+          msg = t('MaxAmountWarnMsg', {
+            max: limits.max,
+            currency: fiatCurrency,
+          });
+        } else if (context !== 'buyCrypto' && cryptoCurrencyAbbreviation) {
+          msg = t('MaxAmountWarnMsg', {
+            max: limits.max,
+            currency: cryptoCurrencyAbbreviation,
+          });
+        }
+      }
+    }
+
+    return msg ? <WarnMsgText>{msg}</WarnMsgText> : <></>;
+  }, [amount, limits, context]);
 
   const init = () => {
     if (!currency) {
@@ -317,7 +377,40 @@ const Amount: React.VFC<AmountProps> = ({
   const initRef = useRef(init);
   initRef.current = init;
 
-  useEffect(() => initRef.current(), []);
+  const initLimits = (): void => {
+    if (context === 'buyCrypto') {
+      setLimits(dispatch(getBuyCryptoFiatLimits(undefined, fiatCurrency)));
+    } else if (swapOpts?.swapLimits) {
+      setLimits({
+        min: swapOpts.swapLimits.minAmount,
+        max: swapOpts.swapLimits.maxAmount,
+      });
+    }
+  };
+
+  useEffect(() => {
+    initRef.current();
+    initLimits();
+  }, []);
+
+  useEffect(() => {
+    KeyEvent.onKeyUpListener((keyEvent: any) => {
+      if (keyEvent.pressedKey === '\b') {
+        onCellPress('backspace');
+      } else if (keyEvent.pressedKey === '\r' && continueEnabled) {
+        onSubmit?.(+curValRef.current);
+      } else if (keyEvent.pressedKey === 'UIKeyInputEscape') {
+        onCellPress('reset');
+      } else if (keyEvent.pressedKey === '0') {
+        onCellPress('0');
+      } else if (keyEvent.pressedKey === '.') {
+        onCellPress('.');
+      } else if (Number(keyEvent.pressedKey)) {
+        onCellPress(keyEvent.pressedKey);
+      }
+    });
+    return () => KeyEvent.removeKeyUpListener();
+  }, [continueEnabled]);
 
   return (
     <AmountContainer>
@@ -331,37 +424,23 @@ const Amount: React.VFC<AmountProps> = ({
               {displayAmount || 0}
             </AmountText>
             <CurrencySuperScript>
-              <CurrencyText>{currency || 'USD'}</CurrencyText>
+              <CurrencyText>
+                {formatCurrencyAbbreviation(currency) || 'USD'}
+              </CurrencyText>
             </CurrencySuperScript>
           </Row>
-          {cryptoCurrencyAbbreviation ? (
+          {customAmountSublabel ? (
+            <>{customAmountSublabel()}</>
+          ) : cryptoCurrencyAbbreviation ? (
             <Row>
               <AmountEquivText>
                 {displayEquivalentAmount || 0}{' '}
-                {primaryIsFiat && cryptoCurrencyAbbreviation}
+                {primaryIsFiat &&
+                  formatCurrencyAbbreviation(cryptoCurrencyAbbreviation)}
               </AmountEquivText>
             </Row>
           ) : null}
-          <Row>
-            {cryptoCurrencyAbbreviation &&
-            swapOpts?.swapLimits.minAmount &&
-            +amount > 0 &&
-            +amount < swapOpts.swapLimits.minAmount ? (
-              <WarnMsgText>
-                {swapOpts?.swapLimits.minAmount +
-                  ' ' +
-                  cryptoCurrencyAbbreviation +
-                  ' ' +
-                  'minimum'}
-              </WarnMsgText>
-            ) : null}
-            {swapOpts?.swapLimits.minAmount &&
-            +amount > 0 &&
-            +amount > Number(swapOpts?.maxWalletAmount) &&
-            +amount >= swapOpts.swapLimits.minAmount ? (
-              <WarnMsgText>{'Not enough funds'}</WarnMsgText>
-            ) : null}
-          </Row>
+          <Row>{getWarnMsg}</Row>
           <CtaContainer>
             {swapOpts?.swapLimits.maxAmount && swapOpts?.maxWalletAmount ? (
               <SwapButtonContainer onPress={() => swapCryptoSendMax()}>
@@ -376,6 +455,7 @@ const Amount: React.VFC<AmountProps> = ({
                 swapList={swapList}
                 onChange={(toCurrency: string) => {
                   curValRef.current = '';
+                  updateAmountRef.current('0');
                   updateAmountConfig(current => ({
                     ...current,
                     currency: toCurrency,
@@ -403,7 +483,7 @@ const Amount: React.VFC<AmountProps> = ({
           <ButtonContainer>
             <Button
               state={buttonState}
-              disabled={continueIsDisabled()}
+              disabled={!continueEnabled}
               onPress={() =>
                 useSendMax && onSendMaxPressed
                   ? onSendMaxPressed()

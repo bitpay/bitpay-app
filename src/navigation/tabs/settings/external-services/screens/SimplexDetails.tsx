@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import SimplexLogo from '../../../../../components/icons/external-services/simplex/simplex-logo';
-import {simplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {SimplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
@@ -36,7 +36,7 @@ import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 export interface SimplexDetailsProps {
-  paymentRequest: simplexPaymentData;
+  paymentRequest: SimplexPaymentData;
 }
 
 const copyText = (text: string) => {

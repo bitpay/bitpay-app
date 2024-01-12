@@ -20,6 +20,7 @@ import {
   CREDENTIALS,
   API_VERSION,
   COINBASE_CONFIG_API,
+  TRANSACTIONS_LIMIT,
 } from './coinbase.constants';
 
 // Redirect URI
@@ -223,13 +224,21 @@ const getCurrentUser = async (
 const getTransactions = async (
   accountId: string,
   token: CoinbaseTokenProps | null,
+  nextStartingAfter?: string | null | undefined,
 ): Promise<CoinbaseTransactionsProps> => {
   if (!token) {
     const error = getTokenError();
     throw error;
   }
-  const url =
-    CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/transactions';
+  let url =
+    CREDENTIALS.api_url +
+    '/v2/accounts/' +
+    accountId +
+    '/transactions?order=desc&limit=' +
+    TRANSACTIONS_LIMIT;
+  if (nextStartingAfter) {
+    url = url + '&starting_after=' + nextStartingAfter;
+  }
   const headers = {
     'Content-Type': 'application/json',
     Accept: 'application/json',

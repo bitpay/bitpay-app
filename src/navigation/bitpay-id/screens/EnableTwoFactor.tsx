@@ -3,30 +3,33 @@ import styled from 'styled-components/native';
 import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {H3, Paragraph} from '../../../components/styled/Text';
 import {t} from 'i18next';
-import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
-import {StackScreenProps} from '@react-navigation/stack';
+import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BaseText} from '../../wallet/components/KeyDropdownOption';
 import {Action, SlateDark, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
-import {View, Keyboard} from 'react-native';
+import {View, Keyboard, TouchableOpacity} from 'react-native';
 import yup from '../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import haptic from '../../../components/haptic-feedback/haptic';
-import Clipboard from '@react-native-community/clipboard';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {useTranslation} from 'react-i18next';
+
+const EnableTwoFactorContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const ViewContainer = styled.ScrollView`
   padding: 16px;
@@ -95,9 +98,9 @@ const QRContainer = styled.View`
       : ''};
 `;
 
-type EnableTwoFactorProps = StackScreenProps<
-  BitpayIdStackParamList,
-  'EnableTwoFactor'
+type EnableTwoFactorProps = NativeStackScreenProps<
+  BitpayIdGroupParamList,
+  BitpayIdScreens.ENABLE_TWO_FACTOR
 >;
 
 export type EnableTwoFactorScreenParamList = undefined;
@@ -111,7 +114,8 @@ const schema = yup.object().shape({
   code: yup.string().required().length(TWO_FACTOR_CODE_LENGTH),
 });
 
-const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
+const EnableTwoFactor = ({route, navigation}: EnableTwoFactorProps) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const network = useAppSelector(({APP}) => APP.network);
   const securitySettings = useAppSelector(
@@ -160,18 +164,14 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
   };
 
   const toggleTwoFactor = async (twoFactorCode: string) => {
-    dispatch(
-      startOnGoingProcessModal(t(OnGoingProcessMessages.UPDATING_ACCOUNT)),
-    );
+    dispatch(startOnGoingProcessModal('UPDATING_ACCOUNT'));
     await requestTwoFactorChange(twoFactorCode);
     await dispatch(dismissOnGoingProcessModal());
     if (otpEnabled) {
       navigation.popToTop();
       return;
     }
-    navigator.navigate('BitpayId', {
-      screen: BitpayIdScreens.TWO_FACTOR_ENABLED,
-    });
+    navigator.navigate(BitpayIdScreens.TWO_FACTOR_ENABLED);
   };
 
   const requestTwoFactorChange = async (twoFactorCode: string) => {
@@ -219,7 +219,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
   const twoFactorSetupCode = `otpauth://totp/%5Bbitpay%5D%20${email}?secret=${otpAuthKey}&issuer=${otpIssuer}`;
 
   return (
-    <>
+    <EnableTwoFactorContainer>
       <KeyboardAwareScrollView
         extraScrollHeight={111}
         keyboardShouldPersistTaps={'handled'}>
@@ -238,14 +238,11 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
-                  navigator.navigate('BitpayId', {
-                    screen: BitpayIdScreens.TWO_FACTOR,
-                    params: {
-                      onSubmit: async (twoFactorCode: string) => {
-                        toggleTwoFactor(twoFactorCode);
-                      },
-                      twoFactorCodeLength: 6,
+                  navigator.navigate(BitpayIdScreens.TWO_FACTOR, {
+                    onSubmit: async (twoFactorCode: string) => {
+                      toggleTwoFactor(twoFactorCode);
                     },
+                    twoFactorCodeLength: 6,
                   });
                 }}>
                 {t('Disable')}
@@ -366,7 +363,7 @@ const EnableTwoFactor: React.FC<EnableTwoFactorProps> = ({navigation}) => {
           )}
         </ViewContainer>
       </KeyboardAwareScrollView>
-    </>
+    </EnableTwoFactorContainer>
   );
 };
 

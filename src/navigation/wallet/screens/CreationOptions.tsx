@@ -1,4 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   ActiveOpacity,
   OptionContainer,
@@ -6,7 +7,6 @@ import {
   OptionList,
   OptionListContainer,
 } from '../../../components/styled/Containers';
-import {useNavigation} from '@react-navigation/native';
 import {
   HeaderTitle,
   OptionDescription,
@@ -15,9 +15,14 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
 import {useAppDispatch} from '../../../utils/hooks';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 
+type CreationOptionsScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.CREATION_OPTIONS
+>;
 export interface Option {
   id: string;
   title: string;
@@ -25,16 +30,17 @@ export interface Option {
   cta: () => void;
 }
 
-const CreationOptions: React.FC = () => {
+const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
+  navigation,
+}) => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>{t('Select an option')}</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Select an Option')}</HeaderTitle>,
       headerTitleAlign: 'center',
     });
   }, [navigation, t]);
@@ -48,14 +54,11 @@ const CreationOptions: React.FC = () => {
       ),
       cta: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Create New Key', {
+          Analytics.track('Clicked Create New Key', {
             context: 'CreationOptions',
           }),
         );
-        navigation.navigate('Wallet', {
-          screen: 'CurrencySelection',
-          params: {context: 'createNewKey'},
-        });
+        navigation.navigate('CurrencySelection', {context: 'createNewKey'});
       },
     },
     {
@@ -66,13 +69,11 @@ const CreationOptions: React.FC = () => {
       ),
       cta: () => {
         dispatch(
-          logSegmentEvent('track', 'Clicked Import Key', {
+          Analytics.track('Clicked Import Key', {
             context: 'CreationOptions',
           }),
         );
-        navigation.navigate('Wallet', {
-          screen: 'Import',
-        });
+        navigation.navigate('Import');
       },
     },
     {

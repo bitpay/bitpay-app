@@ -2,7 +2,7 @@ import React, {useLayoutEffect} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
@@ -28,11 +28,11 @@ import {sleep} from '../../../utils/helper-methods';
 import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
+  toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {useDispatch} from 'react-redux';
 import {
-  toggleHideBalance,
   toggleHideWallet,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
@@ -79,16 +79,16 @@ const WalletSettings = () => {
   const {t} = useTranslation();
   const {
     params: {walletId, key},
-  } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'WalletSettings'>>();
   const navigation = useNavigation();
 
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const {hideAllBalances} = useAppSelector(({APP}) => APP);
   const wallet = findWalletById(wallets, walletId) as Wallet;
   const {
     walletName,
     credentials: {walletName: credentialsWalletName},
     hideWallet,
-    hideBalance,
   } = wallet;
 
   const dispatch = useDispatch();
@@ -131,16 +131,13 @@ const WalletSettings = () => {
           activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
-            navigation.navigate('Wallet', {
-              screen: 'UpdateKeyOrWalletName',
-              params: {
-                key,
-                wallet: {
-                  walletId,
-                  walletName: walletName || credentialsWalletName,
-                },
-                context: 'wallet',
+            navigation.navigate('UpdateKeyOrWalletName', {
+              key,
+              wallet: {
+                walletId,
+                walletName: walletName || credentialsWalletName,
               },
+              context: 'wallet',
             });
           }}>
           <View>
@@ -159,9 +156,10 @@ const WalletSettings = () => {
           <WalletSettingsTitle>{t('Hide Wallet')}</WalletSettingsTitle>
 
           <ToggleSwitch
-            onChange={() => {
+            onChange={async () => {
               dispatch(toggleHideWallet({wallet}));
-              dispatch(startUpdateWalletStatus({key, wallet}));
+              dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+              await sleep(1000);
               dispatch(updatePortfolioBalance());
             }}
             isEnabled={!!hideWallet}
@@ -179,13 +177,11 @@ const WalletSettings = () => {
         <Hr />
 
         <SettingView>
-          <WalletSettingsTitle>{t('Hide Balance')}</WalletSettingsTitle>
+          <WalletSettingsTitle>{t('Hide All Balances')}</WalletSettingsTitle>
 
           <ToggleSwitch
-            onChange={() => {
-              dispatch(toggleHideBalance({wallet}));
-            }}
-            isEnabled={!!hideBalance}
+            onChange={value => dispatch(toggleHideAllBalances(value))}
+            isEnabled={!!hideAllBalances}
           />
         </SettingView>
 
@@ -197,10 +193,7 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'WalletInformation',
-                params: {wallet},
-              });
+              navigation.navigate('WalletInformation', {wallet});
             }}>
             <WalletSettingsTitle>{t('Information')}</WalletSettingsTitle>
           </Setting>
@@ -210,61 +203,82 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'Addresses',
-                params: {wallet},
-              });
+              navigation.navigate('Addresses', {wallet});
             }}>
             <WalletSettingsTitle>{t('Addresses')}</WalletSettingsTitle>
           </Setting>
           <Hr />
 
+          <Setting
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('ExportTransactionHistory', {wallet});
+            }}>
+            <WalletSettingsTitle>
+              {t('Export Transaction History')}
+            </WalletSettingsTitle>
+          </Setting>
+          <Hr />
+
           {!key.isReadOnly ? (
-            <Setting
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                haptic('impactLight');
-                const {
-                  compliantDerivation,
-                  fingerPrint,
-                  id,
-                  use0forBCH,
-                  use44forMultisig,
-                } = key.methods!;
-                const _keyObj = {
-                  compliantDerivation,
-                  fingerPrint,
-                  id,
-                  use0forBCH,
-                  use44forMultisig,
-                };
-                if (key.methods!.isPrivKeyEncrypted()) {
-                  dispatch(
-                    showDecryptPasswordModal(
-                      buildEncryptModalConfig(async decryptedKey => {
-                        navigation.navigate('Wallet', {
-                          screen: 'ExportWallet',
-                          params: {
+            <>
+              <Setting
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  haptic('impactLight');
+                  const {
+                    compliantDerivation,
+                    fingerPrint,
+                    id,
+                    use0forBCH,
+                    use44forMultisig,
+                  } = key.methods!;
+                  const _keyObj = {
+                    compliantDerivation,
+                    fingerPrint,
+                    id,
+                    use0forBCH,
+                    use44forMultisig,
+                  };
+                  if (key.methods!.isPrivKeyEncrypted()) {
+                    dispatch(
+                      showDecryptPasswordModal(
+                        buildEncryptModalConfig(async decryptedKey => {
+                          navigation.navigate('ExportWallet', {
                             wallet,
                             keyObj: {...decryptedKey, ..._keyObj},
-                          },
-                        });
-                      }),
-                    ),
-                  );
-                } else {
-                  navigation.navigate('Wallet', {
-                    screen: 'ExportWallet',
-                    params: {
+                          });
+                        }),
+                      ),
+                    );
+                  } else {
+                    navigation.navigate('ExportWallet', {
                       wallet,
                       keyObj: {...key.methods!.get(), ..._keyObj},
-                    },
-                  });
-                }
-              }}>
-              <WalletSettingsTitle>{t('Export Wallet')}</WalletSettingsTitle>
-            </Setting>
+                    });
+                  }
+                }}>
+                <WalletSettingsTitle>{t('Export Wallet')}</WalletSettingsTitle>
+              </Setting>
+              <Hr />
+            </>
           ) : null}
+
+          <Setting
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('ClearTransactionHistoryCache', {
+                wallet,
+                key,
+              });
+            }}>
+            <WalletSettingsTitle>
+              {t('Clear Transaction History Cache')}
+            </WalletSettingsTitle>
+          </Setting>
+          <Hr />
         </VerticalPadding>
       </ScrollView>
     </WalletSettingsContainer>

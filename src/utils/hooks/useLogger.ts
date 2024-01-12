@@ -1,3 +1,4 @@
+import {useRef} from 'react';
 import {useDispatch} from 'react-redux';
 import {LogActions} from '../../store/log';
 
@@ -12,7 +13,7 @@ interface Logger {
 export const useLogger: () => Logger = () => {
   const dispatch = useDispatch();
 
-  return {
+  const loggerRef = useRef({
     clear() {
       dispatch(LogActions.clear());
     },
@@ -28,7 +29,9 @@ export const useLogger: () => Logger = () => {
     error(message: string) {
       dispatch(LogActions.error(message));
     },
-  };
+  });
+
+  return loggerRef.current;
 };
 
 export default useLogger;

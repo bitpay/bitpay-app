@@ -16,6 +16,7 @@ import {
   UnsoldGiftCard,
 } from '../../store/shop/shop.models';
 import {formatFiatAmount} from '../../utils/helper-methods';
+import {Grey, SlateDark} from '../../styles/colors';
 
 export function getGiftCardConfigList(
   cardConfigMap: CardConfigMap,
@@ -53,6 +54,41 @@ export function getCardConfigFromApiConfigMap(
     }))
     .sort(sortByDisplayName);
   return availableCards;
+}
+
+export function getAmountSpecificConfig(cards: ApiCard[]) {
+  if (cards.length < 2) {
+    return undefined;
+  }
+  const fieldIsIdentical = (fieldName: keyof ApiCard) => (c: ApiCard) =>
+    c[fieldName] === cards[0][fieldName];
+  const cardImagesAreIdentical = cards.every(fieldIsIdentical('cardImage'));
+  const descriptionsAreIdentical = cards.every(fieldIsIdentical('description'));
+  const termsAreIdentical = cards.every(fieldIsIdentical('terms'));
+  if (cardImagesAreIdentical && descriptionsAreIdentical && termsAreIdentical) {
+    return undefined;
+  }
+  return cards.reduce(
+    (cardSpecificConfig, card) => ({
+      ...cardSpecificConfig,
+      [card.amount as number]: {
+        ...(!cardImagesAreIdentical && {cardImage: card.cardImage}),
+        ...(!descriptionsAreIdentical && {description: card.description}),
+        ...(!termsAreIdentical && {terms: card.terms}),
+      },
+    }),
+    {},
+  );
+}
+
+export function getCardImage(cardConfig: CardConfig, amount?: number): string {
+  return (
+    (amount &&
+      cardConfig.amountSpecificConfig &&
+      cardConfig.amountSpecificConfig[amount] &&
+      cardConfig.amountSpecificConfig[amount].cardImage) ||
+    cardConfig.cardImage
+  );
 }
 
 export function getCardConfigFromApiBrandConfig(
@@ -95,7 +131,11 @@ export function getCardConfigFromApiBrandConfig(
         minAmount: rangeMin < 1 ? 1 : range.minAmount,
         maxAmount: range.maxAmount,
       }
-    : {...baseConfig, supportedAmounts};
+    : {
+        ...baseConfig,
+        supportedAmounts,
+        amountSpecificConfig: getAmountSpecificConfig(apiBrandConfig),
+      };
 }
 
 function getDisplayNameSortValue(displayName: string): string {
@@ -113,7 +153,10 @@ export function sortByDisplayName(
   return aSortValue > bSortValue ? 1 : -1;
 }
 
-export function sortByDescendingDate(a: GiftCard, b: GiftCard) {
+export function sortByDescendingDate(
+  a: GiftCard | UnsoldGiftCard,
+  b: GiftCard | UnsoldGiftCard,
+) {
   return new Date(b.date).getTime() - new Date(a.date).getTime();
 }
 
@@ -122,8 +165,7 @@ export function redemptionFailuresLessThanADayOld(
 ) {
   const dayAgo = moment().subtract(1, 'day').toDate();
   return (
-    ['FAILURE', 'PENDING'].includes(giftCard.status) &&
-    new Date(giftCard.date) > dayAgo
+    ['PENDING'].includes(giftCard.status) && new Date(giftCard.date) > dayAgo
   );
 }
 
@@ -262,4 +304,46 @@ export function getGiftCardIcons(supportedCardMap: CardConfigMap) {
     }),
     {} as {[cardName: string]: string},
   );
+}
+
+export function generateGiftCardPrintHtml(
+  cardConfig: CardConfig,
+  giftCard: GiftCard,
+  scannableCodeDimensions: {height: number; width: number},
+): string {
+  return `<div style="text-align: center; margin-top: 50px; font-family: Arial;">
+ <h1 style="font-size: 30px;">${formatFiatAmount(
+   giftCard.amount,
+   giftCard.currency,
+   {
+     currencyDisplay: 'symbol',
+   },
+ )}</h1>
+ <img src="${
+   cardConfig.cardImage
+ }" style="margin-top: 10px; height: 130px; border-radius: 10px;">
+ </br></br>
+ <h3 style="color: gray;">Claim Code</h3>
+ ${
+   giftCard.barcodeImage
+     ? `<img src="${giftCard.barcodeImage}" style="margin-top: 10px; height: ${scannableCodeDimensions.height}px; width: ${scannableCodeDimensions.width}px; ">`
+     : ''
+ }
+ <h1 style="font-size: 22px;">${giftCard.claimCode}</h1>
+
+ ${
+   giftCard.pin
+     ? ` 
+     <div style="width: 400px; height: 1px; background-color: ${Grey}; display: inline-block; margin: 10px 0;"></div>
+     <h3 style="color: gray;">Pin</h3>
+     <h1 style="font-size: 22px;">${giftCard.pin}</h1>`
+     : ''
+ }
+ </br>
+ ${
+   cardConfig.terms
+     ? `<p style="font-size: 12px; color: ${SlateDark}; padding: 0 30px;">${cardConfig.terms}</p>`
+     : ''
+ }
+</div>`;
 }

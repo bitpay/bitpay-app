@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigation, useRoute, StackActions} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
+import {WalletScreens, WalletGroupParamList} from '../../../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
   Balance,
@@ -21,20 +21,19 @@ import {
   createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
+  showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {
-  Analytics,
-  startOnGoingProcessModal,
-} from '../../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   Amount,
   ConfirmContainer,
   DetailsList,
+  ExchangeRate,
   Header,
   RemainingTime,
   SendingFrom,
@@ -59,6 +58,8 @@ import {
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
+import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
+import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
 
 export interface DebitCardConfirmParamList {
   amount: number;
@@ -91,7 +92,7 @@ const Confirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'DebitCardConfirm'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'DebitCardConfirm'>>();
   const {
     amount,
     card,
@@ -107,6 +108,7 @@ const Confirm = () => {
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [wallet, setWallet] = useState(_wallet);
   const [coinbaseAccount, setCoinbaseAccount] =
     useState<CoinbaseAccountProps>();
@@ -120,8 +122,17 @@ const Confirm = () => {
 
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const memoizedKeysAndWalletsList = useMemo(
-    () => dispatch(BuildPayProWalletSelectorList({keys, network})),
-    [dispatch, keys, network],
+    () =>
+      dispatch(
+        BuildPayProWalletSelectorList({
+          keys,
+          network,
+          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+          invoice,
+          skipThreshold: true,
+        }),
+      ),
+    [defaultAltCurrency.isoCode, dispatch, keys, network, invoice],
   );
 
   const reshowWalletSelector = async () => {
@@ -140,12 +151,7 @@ const Confirm = () => {
     walletId: string;
     transactionCurrency: string;
   }) => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Fetching payment information...')
-        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
     const invoiceCurrency = card.currency.code;
     const {invoiceId, invoice: newInvoice} = await dispatch(
       CardEffects.startCreateDebitCardTopUpInvoice(card, {
@@ -180,13 +186,18 @@ const Confirm = () => {
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
+    const transactionCurrency = dispatch(
+      getTransactionCurrencyForPayInvoice(
+        selectedCoinbaseAccount.currency.code,
+      ),
+    );
     try {
       const {invoice: newInvoice} = await createTopUpInvoice({
         walletId: selectedCoinbaseAccount.id,
-        transactionCurrency: selectedCoinbaseAccount.currency.code,
+        transactionCurrency,
       });
       const rates = await dispatch(startGetRates({}));
-      const newTxDetails = dispatch(
+      const newTxDetails = await dispatch(
         buildTxDetails({
           invoice: newInvoice,
           wallet: walletRowProps,
@@ -206,7 +217,10 @@ const Confirm = () => {
     try {
       const {invoiceId, invoice: newInvoice} = await createTopUpInvoice({
         walletId: selectedWallet.id,
-        transactionCurrency: selectedWallet.currencyAbbreviation.toUpperCase(),
+        transactionCurrency: getCurrencyCodeFromCoinAndChain(
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.chain,
+        ),
       });
       const baseUrl = BASE_BITPAY_URLS[network];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
@@ -240,12 +254,7 @@ const Confirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Sending Payment')
-        t(OnGoingProcessMessages.SENDING_PAYMENT),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
     txp && wallet && recipient
       ? await dispatch(startSendPayment({txp, key, wallet, recipient}))
       : await dispatch(
@@ -301,28 +310,24 @@ const Confirm = () => {
   };
 
   const request2FA = async () => {
-    navigation.navigate('Wallet', {
-      screen: WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR,
-      params: {
-        onSubmit: async twoFactorCode => {
-          try {
-            await sendPayment(twoFactorCode);
-          } catch (error: any) {
-            dispatch(dismissOnGoingProcessModal());
-            const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
-            error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
-              ? showError({defaultErrorMessage: invalid2faMessage})
-              : handlePaymentFailure(error);
-            throw error;
-          }
-        },
+    navigation.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
+      onSubmit: async twoFactorCode => {
+        try {
+          await sendPayment(twoFactorCode);
+        } catch (error: any) {
+          dispatch(dismissOnGoingProcessModal());
+          const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
+          error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
+            ? showError({defaultErrorMessage: invalid2faMessage})
+            : handlePaymentFailure(error);
+          throw error;
+        }
       },
     });
     await sleep(400);
     setResetSwipeButton(true);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => openKeyWalletSelector(), []);
 
   return (
@@ -350,7 +355,7 @@ const Confirm = () => {
                 <RightMargin>
                   <VisaCardSvg height={55} width={55} />
                 </RightMargin>
-                <H6>{t('BitPay Visa&reg; Card ()', {lastFourDigits})}</H6>
+                <H6>{t('BitPay Visa® Card ()', {lastFourDigits})}</H6>
               </CardDetailsContainer>
             )}
 
@@ -363,6 +368,12 @@ const Confirm = () => {
             ) : null}
 
             <Header hr>Summary</Header>
+            {invoice ? (
+              <RemainingTime
+                invoiceExpirationTime={invoice.expirationTime}
+                setDisableSwipeSendButton={setDisableSwipeSendButton}
+              />
+            ) : null}
             {memoizedKeysAndWalletsList.keyWallets.length === 1 &&
             memoizedKeysAndWalletsList.keyWallets[0].wallets.length === 1 ? (
               <SendingFrom sender={sendingFrom!} hr />
@@ -373,10 +384,10 @@ const Confirm = () => {
                 hr
               />
             )}
-            {invoice ? (
-              <RemainingTime
-                invoiceExpirationTime={invoice.expirationTime}
-                setDisableSwipeSendButton={setDisableSwipeSendButton}
+            {txDetails?.rateStr ? (
+              <ExchangeRate
+                description={t('Exchange Rate')}
+                rateStr={txDetails?.rateStr}
               />
             ) : null}
             <Amount
@@ -385,11 +396,26 @@ const Confirm = () => {
               fiatOnly
               hr
             />
+            <Amount
+              description={t('SubTotal')}
+              amount={subTotal}
+              hr
+              showInfoIcon={!!networkCost}
+              infoIconOnPress={() => {
+                dispatch(showConfirmAmountInfoSheet('subtotal'));
+              }}
+            />
+
             <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
 
-            <Amount description={t('SubTotal')} amount={subTotal} />
-
-            <Amount description={t('Total')} amount={total} />
+            <Amount
+              description={t('Total')}
+              amount={total}
+              showInfoIcon={!!subTotal}
+              infoIconOnPress={() => {
+                dispatch(showConfirmAmountInfoSheet('total'));
+              }}
+            />
 
             <CardTermsContainer>
               <Smallest>

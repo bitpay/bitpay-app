@@ -20,10 +20,9 @@ import {
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
 import {
-  logSegmentEvent,
+  openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
@@ -34,6 +33,7 @@ import {
   DetailContainer,
   DetailRow,
   DetailsList,
+  ExchangeRate,
   Header,
   SendingFrom,
   WalletSelector,
@@ -41,7 +41,7 @@ import {
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
-import {Terms} from '../../../../tabs/shop/components/styled/ShopTabComponents';
+import {URL} from '../../../../../constants';
 import {
   CardConfig,
   GiftCardDiscount,
@@ -57,8 +57,12 @@ import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
 import {
   GiftCardScreens,
-  GiftCardStackParamList,
-} from '../../../../tabs/shop/gift-card/GiftCardStack';
+  GiftCardGroupParamList,
+} from '../../../../tabs/shop/gift-card/GiftCardGroup';
+import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
+import GiftCardTerms from '../../../../tabs/shop/components/GiftCardTerms';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -99,7 +103,7 @@ const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route =
-    useRoute<RouteProp<GiftCardStackParamList, 'GiftCardConfirm'>>();
+    useRoute<RouteProp<GiftCardGroupParamList, 'GiftCardConfirm'>>();
   const {
     amount,
     cardConfig,
@@ -121,7 +125,7 @@ const Confirm = () => {
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
   const [txp, updateTxp] = useState(_txp);
-  const {fee, networkCost, sendingFrom, total} = txDetails || {};
+  const {fee, networkCost, sendingFrom, total, rateStr} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
   const unsoldGiftCard = giftCards.find(
@@ -129,8 +133,16 @@ const Confirm = () => {
   );
 
   const memoizedKeysAndWalletsList = useMemo(
-    () => dispatch(BuildPayProWalletSelectorList({keys, network: APP_NETWORK})),
-    [dispatch, keys],
+    () =>
+      dispatch(
+        BuildPayProWalletSelectorList({
+          keys,
+          network: APP_NETWORK,
+          invoice,
+          skipThreshold: true,
+        }),
+      ),
+    [dispatch, keys, invoice],
   );
 
   const getTransactionCurrency = () => {
@@ -160,12 +172,7 @@ const Confirm = () => {
     clientId: string;
     transactionCurrency: string;
   }) => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Fetching payment information...')
-        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
     dispatch(ShopActions.deletedUnsoldGiftCards());
     const invoiceCreationParams = {
       amount,
@@ -206,13 +213,18 @@ const Confirm = () => {
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
+    const transactionCurrency = dispatch(
+      getTransactionCurrencyForPayInvoice(
+        selectedCoinbaseAccount.currency.code,
+      ),
+    );
     try {
       const {invoice: newInvoice} = await createGiftCardInvoice({
         clientId: selectedCoinbaseAccount.id,
-        transactionCurrency: selectedCoinbaseAccount.currency.code,
+        transactionCurrency,
       });
       const rates = await dispatch(startGetRates({}));
-      const newTxDetails = dispatch(
+      const newTxDetails = await dispatch(
         buildTxDetails({
           invoice: newInvoice,
           wallet: walletRowProps,
@@ -233,7 +245,10 @@ const Confirm = () => {
     try {
       const {invoice: newInvoice, invoiceId} = await createGiftCardInvoice({
         clientId: selectedWallet.id,
-        transactionCurrency: selectedWallet.currencyAbbreviation.toUpperCase(),
+        transactionCurrency: getCurrencyCodeFromCoinAndChain(
+          selectedWallet.currencyAbbreviation.toUpperCase(),
+          selectedWallet.chain,
+        ),
       });
       const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
@@ -265,12 +280,7 @@ const Confirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Sending Payment')
-        t(OnGoingProcessMessages.SENDING_PAYMENT),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
     dispatch(
       ShopActions.updatedGiftCardStatus({
         invoiceId: invoice!.id,
@@ -289,36 +299,28 @@ const Confirm = () => {
   };
 
   const redeemGiftCardAndNavigateToGiftCardDetails = async () => {
-    dispatch(
-      startOnGoingProcessModal(
-        // t('Generating Gift Card')
-        t(OnGoingProcessMessages.GENERATING_GIFT_CARD),
-      ),
-    );
+    dispatch(startOnGoingProcessModal('GENERATING_GIFT_CARD'));
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),
     );
-    await sleep(200);
+    await sleep(500);
     dispatch(dismissOnGoingProcessModal());
-    await sleep(200);
+    await sleep(500);
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
     navigation.dispatch(StackActions.popToTop());
     navigation.dispatch(StackActions.pop());
-    navigation.navigate('GiftCard', {
-      screen: 'GiftCardDetails',
-      params: {
-        giftCard,
-        cardConfig,
-      },
+    navigation.navigate('GiftCardDetails', {
+      giftCard,
+      cardConfig,
     });
     const purchaseEventName =
       giftCard.status === 'FAILURE'
         ? 'Failed Gift Card'
         : 'Purchased Gift Card';
     dispatch(
-      logSegmentEvent('track', purchaseEventName, {
+      Analytics.track(purchaseEventName, {
         giftCardAmount: amount,
         giftCardBrand: cardConfig.name,
         giftCardCurrency: cardConfig.currency,
@@ -368,22 +370,19 @@ const Confirm = () => {
   };
 
   const request2FA = async () => {
-    navigation.navigate('GiftCard', {
-      screen: GiftCardScreens.GIFT_CARD_CONFIRM_TWO_FACTOR,
-      params: {
-        onSubmit: async twoFactorCode => {
-          try {
-            await sendPayment(twoFactorCode);
-            await redeemGiftCardAndNavigateToGiftCardDetails();
-          } catch (error: any) {
-            dispatch(dismissOnGoingProcessModal());
-            const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
-            error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
-              ? showError({defaultErrorMessage: invalid2faMessage})
-              : handlePaymentFailure(error);
-            throw error;
-          }
-        },
+    navigation.navigate(GiftCardScreens.GIFT_CARD_CONFIRM_TWO_FACTOR, {
+      onSubmit: async twoFactorCode => {
+        try {
+          await sendPayment(twoFactorCode);
+          await redeemGiftCardAndNavigateToGiftCardDetails();
+        } catch (error: any) {
+          dispatch(dismissOnGoingProcessModal());
+          const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
+          error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
+            ? showError({defaultErrorMessage: invalid2faMessage})
+            : handlePaymentFailure(error);
+          throw error;
+        }
       },
     });
     await sleep(400);
@@ -392,7 +391,6 @@ const Confirm = () => {
 
   useEffect(() => {
     openWalletSelector(100);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -407,6 +405,12 @@ const Confirm = () => {
               onPress={openWalletSelector}
               hr
             />
+            {rateStr ? (
+              <ExchangeRate
+                description={t('Exchange Rate')}
+                rateStr={rateStr}
+              />
+            ) : null}
             {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
               <Amount
                 description={'Discount'}
@@ -426,10 +430,25 @@ const Confirm = () => {
               amount={networkCost}
               fiatOnly
               hr
+              showInfoIcon={true}
+              infoIconOnPress={async () => {
+                await sleep(400);
+                dispatch(openUrlWithInAppBrowser(URL.HELP_PAYPRO_NETWORK_COST));
+              }}
             />
-            <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
+            <Amount
+              description={t('Miner fee')}
+              amount={fee}
+              fiatOnly
+              hr
+              showInfoIcon={true}
+              infoIconOnPress={async () => {
+                await sleep(400);
+                dispatch(openUrlWithInAppBrowser(URL.HELP_MINER_FEES));
+              }}
+            />
             <Amount description={t('Total')} amount={total} />
-            <Terms>{cardConfig.terms}</Terms>
+            <GiftCardTerms terms={cardConfig.terms} />
           </>
         ) : null}
       </DetailsList>

@@ -7,7 +7,12 @@ import React, {
 } from 'react';
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {SUPPORTED_COINS, SUPPORTED_TOKENS} from '../../../constants/currencies';
+import {
+  BitpaySupportedEvmCoins,
+  BitpaySupportedTokens,
+  SUPPORTED_COINS,
+  SUPPORTED_TOKENS,
+} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
@@ -29,8 +34,8 @@ import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {LightBlack, White} from '../../../styles/colors';
 import {H4, TextAlign, BaseText} from '../../../components/styled/Text';
+import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {RouteProp, useRoute} from '@react-navigation/core';
-import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import ReceiveAddress from '../components/ReceiveAddress';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
@@ -44,14 +49,13 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Effect, RootState} from '../../../store';
-import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {ButtonState} from '../../../components/button/Button';
-import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {LogActions} from '../../../store/log';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -146,7 +150,7 @@ export type GlobalSelectParamList = {
       sendMax?: boolean | undefined;
       message?: string;
       feePerKb?: number;
-      showERC20Tokens?: boolean;
+      showEVMWalletsAndTokens?: boolean;
     };
   };
   amount?: number;
@@ -197,16 +201,22 @@ export type GlobalSelectModalContext =
   | 'contact';
 
 interface GlobalSelectProps {
-  useAsModal: any;
-  modalTitle?: string;
-  customSupportedCurrencies?: string[];
+  useAsModal?: boolean;
+  modalTitle?: any;
+  customSupportedCurrencies?: any[];
   onDismiss?: (newWallet?: any) => void;
-  modalContext?: GlobalSelectModalContext;
-  livenetOnly?: boolean;
+  modalContext?: any;
+  livenetOnly?: any;
   onHelpPress?: () => void;
 }
 
-const GlobalSelect: React.FC<GlobalSelectProps> = ({
+type GlobalSelectScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
+  WalletScreens.GLOBAL_SELECT
+> &
+  GlobalSelectProps;
+
+const GlobalSelect: React.FC<GlobalSelectScreenProps> = ({
   useAsModal,
   modalTitle,
   customSupportedCurrencies,
@@ -216,23 +226,22 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   onHelpPress,
 }) => {
   const {t} = useTranslation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'GlobalSelect'>>();
   let {context, recipient, amount} = route.params || {};
   if (useAsModal && modalContext) {
     context = modalContext;
   }
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
+    useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const allTokens = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOpts,
-      ...WALLET.tokenOptions,
-      ...WALLET.customTokenOptions,
-    };
-  });
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const allTokensByAddress = {
+    ...BitpaySupportedTokenOptsByAddress,
+    ...tokenOptionsByAddress,
+    ...customTokenOptionsByAddress,
+  };
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [receiveWallet, setReceiveWallet] = useState<Wallet>();
@@ -243,8 +252,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
 
-  const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(allTokens).filter(
-    token => !SUPPORTED_TOKENS.includes(token),
+  const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(allTokensByAddress).filter(
+    token => !BitpaySupportedTokens[token],
   );
 
   // all wallets
@@ -264,8 +273,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     if (recipient.currency && recipient.chain) {
       wallets = wallets.filter(
         wallet =>
-          wallet.currencyAbbreviation === recipient?.currency &&
-          wallet.chain === recipient?.chain,
+          (wallet.currencyAbbreviation === recipient?.currency &&
+            wallet.chain === recipient?.chain) ||
+          (recipient?.opts?.showEVMWalletsAndTokens &&
+            BitpaySupportedEvmCoins[wallet.currencyAbbreviation]),
       );
     }
     if (recipient?.network) {
@@ -317,6 +328,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                   balance,
                   hideWallet,
                   currencyAbbreviation,
+                  tokenAddress,
                   network,
                   chain,
                   credentials: {walletName: fallbackName},
@@ -334,6 +346,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                           currencyAbbreviation,
                           chain,
                           rates,
+                          tokenAddress,
                         ),
                       ),
                       hideWallet,
@@ -350,6 +363,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                           currencyAbbreviation,
                           chain,
                           rates,
+                          tokenAddress,
                         ),
                       ),
                       hideWallet,
@@ -374,12 +388,13 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     async (wallet: Wallet) => {
       if (useAsModal && onDismiss) {
         setWalletSelectModalVisible(false);
-        await sleep(100);
+        await sleep(500);
         onDismiss(wallet);
         return;
       }
       if (['coinbase', 'contact', 'scanner'].includes(context)) {
         setWalletSelectModalVisible(false);
+        await sleep(500);
         const {name, address, type, destinationTag, opts} = recipient!;
         if (!address) {
           return;
@@ -394,23 +409,21 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
           };
 
           if (!amount) {
-            navigation.navigate('Wallet', {
-              screen: WalletScreens.AMOUNT,
-              params: {
-                cryptoCurrencyAbbreviation:
-                  wallet.currencyAbbreviation.toUpperCase(),
-                chain: wallet.chain,
-                onAmountSelected: async (amount, setButtonState, opts) => {
-                  dispatch(
-                    _createProposalAndBuildTxDetails({
-                      wallet,
-                      amount: Number(amount),
-                      sendTo,
-                      setButtonState,
-                      opts,
-                    }),
-                  );
-                },
+            navigation.navigate(WalletScreens.AMOUNT, {
+              cryptoCurrencyAbbreviation:
+                wallet.currencyAbbreviation.toUpperCase(),
+              chain: wallet.chain,
+              tokenAddress: wallet.tokenAddress,
+              onAmountSelected: async (amount, setButtonState, opts) => {
+                dispatch(
+                  _createProposalAndBuildTxDetails({
+                    wallet,
+                    amount: Number(amount),
+                    sendTo,
+                    setButtonState,
+                    opts,
+                  }),
+                );
               },
             });
           } else {
@@ -430,10 +443,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         }
       } else if (context === 'send') {
         setWalletSelectModalVisible(false);
-        navigation.navigate('Wallet', {
-          screen: 'SendTo',
-          params: {wallet},
-        });
+        await sleep(500);
+        navigation.navigate('SendTo', {wallet});
       } else {
         setReceiveWallet(wallet);
         setShowReceiveAddressBottomModal(true);
@@ -466,12 +477,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         if (setButtonState) {
           setButtonState('loading');
         } else {
-          dispatch(
-            startOnGoingProcessModal(
-              // t('Creating Transaction')
-              t(OnGoingProcessMessages.CREATING_TXP),
-            ),
-          );
+          dispatch(startOnGoingProcessModal('CREATING_TXP'));
         }
         const {txDetails, txp} = await dispatch(
           createProposalAndBuildTxDetails({
@@ -487,16 +493,13 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
           dispatch(dismissOnGoingProcessModal());
         }
         await sleep(300);
-        navigation.navigate('Wallet', {
-          screen: 'Confirm',
-          params: {
-            wallet,
-            recipient: sendTo,
-            txp,
-            txDetails,
-            amount,
-            message: opts?.message,
-          },
+        navigation.navigate('Confirm', {
+          wallet,
+          recipient: sendTo,
+          txp,
+          txDetails,
+          amount,
+          message: opts?.message,
         });
       } catch (err: any) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
@@ -562,7 +565,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
       // TODO: show warning
       if (useAsModal) {
         closeModal();
-      } else {
+      } else if (navigation.canGoBack()) {
         navigation.goBack();
       }
     }
@@ -634,6 +637,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             <WalletSelectMenuBodyContainer>
               <KeyWalletsRow
                 keyWallets={keyWallets!}
+                hideBalance={hideAllBalances}
                 onPress={onWalletSelect}
               />
             </WalletSelectMenuBodyContainer>

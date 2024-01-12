@@ -10,7 +10,7 @@ import Coinbase from '../../../api/coinbase/index';
 import {AppEffects} from '../../../store/app';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const signupUrl: string = 'https://www.coinbase.com/signup';
 
@@ -65,7 +65,7 @@ const CoinbaseIntro = () => {
       url = signupUrl;
     }
     dispatch(
-      logSegmentEvent('track', 'Clicked Coinbase Intro', {
+      Analytics.track('Clicked Coinbase Intro', {
         context,
       }),
     );

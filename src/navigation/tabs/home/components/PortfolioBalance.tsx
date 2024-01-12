@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {BaseText} from '../../../../components/styled/Text';
+import {BaseText, H2} from '../../../../components/styled/Text';
 import {Black, LuckySevens, SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
@@ -11,10 +11,14 @@ import {
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {
+  showBottomNotificationModal,
+  toggleHideAllBalances,
+} from '../../../../store/app/app.actions';
 import Percentage from '../../../../components/percentage/Percentage';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from 'react-native';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -46,6 +50,7 @@ const PercentageText = styled(BaseText)`
 
 const PercentageContainer = styled.View`
   flex-direction: row;
+  justify-content: center;
 `;
 
 const PortfolioBalance = () => {
@@ -57,6 +62,7 @@ const PortfolioBalance = () => {
   );
 
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
 
   const totalBalance: number = portfolioBalance.current + coinbaseBalance;
 
@@ -94,17 +100,28 @@ const PortfolioBalance = () => {
         <PortfolioBalanceTitle>{t('Portfolio Balance')}</PortfolioBalanceTitle>
         <InfoSvg width={12} height={12} />
       </PortfolioBalanceHeader>
-      <PortfolioBalanceText>
-        {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-          currencyDisplay: 'symbol',
-        })}
-      </PortfolioBalanceText>
-      {percentageDifference ? (
-        <PercentageContainer>
-          <Percentage percentageDifference={percentageDifference} />
-          <PercentageText> {t('Last Day')}</PercentageText>
-        </PercentageContainer>
-      ) : null}
+      <TouchableOpacity
+        onLongPress={() => {
+          dispatch(toggleHideAllBalances());
+        }}>
+        {!hideAllBalances ? (
+          <>
+            <PortfolioBalanceText>
+              {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+                currencyDisplay: 'symbol',
+              })}
+            </PortfolioBalanceText>
+            {percentageDifference ? (
+              <PercentageContainer>
+                <Percentage percentageDifference={percentageDifference} />
+                <PercentageText> {t('Last Day')}</PercentageText>
+              </PercentageContainer>
+            ) : null}
+          </>
+        ) : (
+          <H2>****</H2>
+        )}
+      </TouchableOpacity>
     </PortfolioContainer>
   );
 };

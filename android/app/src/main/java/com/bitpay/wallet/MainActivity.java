@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.os.Build;
 import android.app.Activity;
 import android.view.View;
+import com.facebook.react.ReactActivityDelegate;
+import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
+import com.facebook.react.defaults.DefaultReactActivityDelegate;
 import android.graphics.Color;
 import android.view.Window;
 import android.view.WindowManager;
@@ -22,8 +25,24 @@ public class MainActivity extends ReactActivity {
     return "BitPay";
   }
 
+  /**
+   * Returns the instance of the {@link ReactActivityDelegate}. Here we use a util class {@link
+   * DefaultReactActivityDelegate} which allows you to easily enable Fabric and Concurrent React
+   * (aka React 18) with two boolean flags.
+   */
   @Override
-    protected void onCreate(Bundle savedInstanceState) {
+  protected ReactActivityDelegate createReactActivityDelegate() {
+    return new DefaultReactActivityDelegate(
+        this,
+        getMainComponentName(),
+        // If you opted-in for the New Architecture, we enable the Fabric Renderer.
+        DefaultNewArchitectureEntryPoint.getFabricEnabled(), // fabricEnabled
+        // If you opted-in for the New Architecture, we enable Concurrent React (i.e. React 18).
+        DefaultNewArchitectureEntryPoint.getConcurrentReactEnabled() // concurrentRootEnabled
+        );
+  }
+
+  protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(null);
       ((MainApplication) getApplication()).addActivityToStack(this.getClass());
       RNBootSplash.init(R.drawable.bootsplash, MainActivity.this);
@@ -46,21 +65,25 @@ public class MainActivity extends ReactActivity {
       BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(MainActivity.this);
   }
 
-    public static void setWindowFlag(Activity activity, final int bits, boolean on) {
-      Window win = activity.getWindow();
-      WindowManager.LayoutParams winParams = win.getAttributes();
-      if (on) {
-        winParams.flags |= bits;
-      } else {
-        winParams.flags &= ~bits;
-      }
-      win.setAttributes(winParams);
+  public static void setWindowFlag(Activity activity, final int bits, boolean on) {
+    Window win = activity.getWindow();
+    WindowManager.LayoutParams winParams = win.getAttributes();
+    if (on) {
+      winParams.flags |= bits;
+    } else {
+      winParams.flags &= ~bits;
     }
+    win.setAttributes(winParams);
+  }
 
   @Override
   public void onNewIntent(Intent intent) {
     super.onNewIntent(intent);
     setIntent(intent);
+    // Clear the intent data so that the next time the Activity is opened,
+    // it will not be opened with old deeplink
+    Intent clonedIntent = getIntent();
+    clonedIntent.setData(null);
   }
 
   @Override

@@ -15,7 +15,7 @@ import TouchID from 'react-native-touch-id-ng';
 import styled from 'styled-components/native';
 import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
-import {Animated, TouchableOpacity} from 'react-native';
+import {Animated, TouchableOpacity, NativeModules} from 'react-native';
 import {
   TO_HANDLE_ERRORS,
   BiometricError,
@@ -84,6 +84,7 @@ const BiometricModal: React.FC = () => {
   const inputRange = [0, 1];
   const outputRange = [1, 1.2];
   const scale = animation.interpolate({inputRange, outputRange});
+  const [isActive, setIsActive] = useState(false);
 
   const pulse = () => {
     Animated.sequence([
@@ -115,10 +116,11 @@ const BiometricModal: React.FC = () => {
   };
 
   const authenticate = () => {
+    setIsActive(true);
     TouchID.authenticate('Authentication Required', authOptionalConfigObject)
-      .then(() => {
-        const authorizedUntil =
-          Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+      .then(async () => {
+        const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+        const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.dismissBiometricModal());
         dispatch(AppActions.showBlur(false));
@@ -132,11 +134,14 @@ const BiometricModal: React.FC = () => {
           );
         }
         pulse();
+      })
+      .finally(() => {
+        setIsActive(false);
       });
   };
 
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && !isActive) {
       authenticate();
     }
   }, [isVisible]);

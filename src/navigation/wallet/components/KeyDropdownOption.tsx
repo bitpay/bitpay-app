@@ -11,12 +11,14 @@ import {
 import {H3, H5} from '../../../components/styled/Text';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {
+  BalanceCode,
+  BalanceCodeContainer,
   HeaderImg,
   Img,
   RemainingAssetsLabel,
   WALLET_DISPLAY_LIMIT,
 } from '../../tabs/home/components/Wallet';
-import {formatFiatAmount} from '../../../utils/helper-methods';
+import {formatFiatAmountObj} from '../../../utils/helper-methods';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {getRemainingWalletCount} from '../../../store/wallet/utils/wallet';
 
@@ -30,7 +32,7 @@ interface Props {
   hideKeyBalance: boolean;
 }
 
-const OptionContainer = styled.TouchableOpacity`
+export const OptionContainer = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? '#343434' : Feather)};
   border-radius: 12px;
   margin-bottom: ${ScreenGutter};
@@ -64,6 +66,11 @@ const KeyDropdownOption = ({
   const walletInfo = _wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(_wallets);
 
+  const {amount, code} = formatFiatAmountObj(
+    totalBalance,
+    defaultAltCurrencyIsoCode,
+  );
+
   return (
     <OptionContainer
       activeOpacity={ActiveOpacity}
@@ -96,7 +103,12 @@ const KeyDropdownOption = ({
           <>
             <Row style={{alignItems: 'center', justifyContent: 'flex-end'}}>
               <Balance>
-                {formatFiatAmount(totalBalance, defaultAltCurrencyIsoCode)}
+                {amount}
+                {code ? (
+                  <BalanceCodeContainer>
+                    <BalanceCode>{code}</BalanceCode>
+                  </BalanceCodeContainer>
+                ) : null}
               </Balance>
               <AngleRight style={{marginLeft: 10}} />
             </Row>

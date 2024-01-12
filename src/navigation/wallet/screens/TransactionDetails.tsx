@@ -9,7 +9,7 @@ import {
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
@@ -26,21 +26,18 @@ import {
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
-  Column,
   Hr,
-  Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {
   GetBlockExplorerUrl,
   IsCustomERCToken,
-  IsERCToken,
 } from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from 'react-native';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import Clipboard from '@react-native-community/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 import MultipleOutputsTx from '../components/MultipleOutputsTx';
 import {URL} from '../../../constants';
 import {
@@ -55,7 +52,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Banner from '../../../components/banner/Banner';
 import Info from '../../../components/icons/info/Info';
 import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
-import {sleep} from '../../../utils/helper-methods';
+import {getContactObj, sleep} from '../../../utils/helper-methods';
 import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 import {
   createProposalAndBuildTxDetails,
@@ -72,8 +69,11 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {Memo} from './send/confirm/Memo';
 import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
+import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
+import {LogActions} from '../../../store/log';
+import {RootState} from '../../../store';
 
-const TxsDetailsContainer = styled.View`
+const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -87,27 +87,12 @@ const SubTitle = styled(BaseText)`
   font-weight: 300;
 `;
 
-export const DetailContainer = styled.View`
-  min-height: 55px;
-  justify-content: center;
-  margin: 5px 0;
-`;
-
 const VerticalSpace = styled.View`
   margin: 10px 0;
 `;
 
-export const DetailRow = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-`;
-
 const TransactionIdText = styled(H7)`
   max-width: 150px;
-`;
-
-export const DetailColumn = styled(Column)`
-  align-items: flex-end;
 `;
 
 const TimelineContainer = styled.View`
@@ -217,8 +202,9 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 const TransactionDetails = () => {
   const {
     params: {transaction, wallet, onMemoChange},
-  } = useRoute<RouteProp<WalletStackParamList, 'TransactionDetails'>>();
+  } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -230,6 +216,7 @@ const TransactionDetails = () => {
     currencyAbbreviation,
     network,
     chain,
+    tokenAddress,
     credentials: {walletId},
   } = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
@@ -255,10 +242,11 @@ const TransactionDetails = () => {
       setMemo(_transaction.detailsMemo);
       await sleep(500);
       setIsLoading(false);
-    } catch (e) {
+    } catch (err) {
       await sleep(500);
       setIsLoading(false);
-      console.log(e);
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[TransactionDetails] ', e));
     }
   };
 
@@ -270,9 +258,20 @@ const TransactionDetails = () => {
     try {
       const txp = await getTx(wallet, transaction.proposalId); // only way to get actual inputs and ouputs
       const toAddress = transaction.outputs[0].address;
-      const recipient = {
-        address: toAddress,
-      };
+
+      const contact = getContactObj(
+        contacts,
+        toAddress,
+        currencyAbbreviation,
+        network,
+        chain,
+      );
+
+      const recipient = contact
+        ? {...contact, ...{type: 'contact'}}
+        : {
+            address: toAddress,
+          };
 
       let recipientList: Recipient[] | undefined;
       if (transaction.hasMultiplesOutputs) {
@@ -282,7 +281,12 @@ const TransactionDetails = () => {
             address: output.toAddress,
             amount: Number(
               dispatch(
-                FormatAmount(currencyAbbreviation, chain, output.amount),
+                FormatAmount(
+                  currencyAbbreviation,
+                  chain,
+                  tokenAddress,
+                  output.amount,
+                ),
               ),
             ),
           });
@@ -294,7 +298,12 @@ const TransactionDetails = () => {
         context: 'fromReplaceByFee' as TransactionOptionsContext,
         amount: Number(
           dispatch(
-            FormatAmount(currencyAbbreviation, chain, transaction.amount),
+            FormatAmount(
+              currencyAbbreviation,
+              chain,
+              tokenAddress,
+              transaction.amount,
+            ),
           ),
         ),
         toAddress,
@@ -311,17 +320,14 @@ const TransactionDetails = () => {
         createProposalAndBuildTxDetails(tx),
       );
 
-      navigation.navigate('Wallet', {
-        screen: 'Confirm',
-        params: {
-          wallet,
-          recipient,
-          recipientList,
-          txp: newTxp,
-          txDetails,
-          amount: tx.amount,
-          speedup: true,
-        },
+      navigation.navigate('Confirm', {
+        wallet,
+        recipient,
+        recipientList,
+        txp: newTxp,
+        txDetails,
+        amount: tx.amount,
+        speedup: true,
       });
     } catch (err: any) {
       const [errorMessageConfig] = await Promise.all([
@@ -364,9 +370,7 @@ const TransactionDetails = () => {
   }, [copied]);
 
   const goToBlockchain = () => {
-    let url = dispatch(
-      GetBlockExplorerUrl(currencyAbbreviation, network, chain),
-    );
+    let url = GetBlockExplorerUrl(network, chain);
     switch (currencyAbbreviation) {
       case 'doge':
         url =
@@ -390,8 +394,9 @@ const TransactionDetails = () => {
       transaction.uiDescription = newMemo;
       setMemo(newMemo);
       onMemoChange();
-    } catch (e) {
-      console.log('Edit note err: ', e);
+    } catch (err) {
+      const e = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error('[EditTxNote] ', e));
     }
   };
 
@@ -408,7 +413,7 @@ const TransactionDetails = () => {
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
-            {!IsCustomERCToken(currencyAbbreviation, chain) ? (
+            {!IsCustomERCToken(tokenAddress, chain) ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'
@@ -495,7 +500,11 @@ const TransactionDetails = () => {
                       <H7>
                         {txs.feeFiatStr}{' '}
                         {txs.feeRateStr
-                          ? '(' + txs.feeRateStr + ' of total amount)'
+                          ? '(' +
+                            txs.feeRateStr +
+                            ' ' +
+                            t('of total amount') +
+                            ')'
                           : null}
                       </H7>
                     ) : (
@@ -511,7 +520,9 @@ const TransactionDetails = () => {
             </>
           ) : null}
 
-          {IsSent(txs.action) ? <MultipleOutputsTx tx={txs} /> : null}
+          {IsSent(txs.action) ? (
+            <MultipleOutputsTx tx={txs} tokenAddress={wallet.tokenAddress} />
+          ) : null}
 
           {txs.creatorName && IsShared(wallet) ? (
             <>

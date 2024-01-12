@@ -111,6 +111,10 @@ export const BottomNotificationCta = styled(BaseText)`
       : Black};
 `;
 
+export const ScrollableBottomNotificationMessageContainer = styled.ScrollView`
+  padding-top: 15px;
+`;
+
 const BottomNotification = () => {
   const theme = useTheme();
   const dispatch = useDispatch();

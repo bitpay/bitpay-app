@@ -1,10 +1,9 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {Platform, ScrollView, View} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {Platform, ScrollView, View, TouchableOpacity} from 'react-native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
-import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
-import RemoteImage from '../../components/RemoteImage';
+import {GiftCardScreens, GiftCardGroupParamList} from '../GiftCardGroup';
 import TagsSvg from '../../../../../../assets/img/tags-stack.svg';
 import {
   BaseText,
@@ -14,6 +13,7 @@ import {
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {
+  ActiveOpacity,
   CtaContainerAbsolute,
   HEIGHT,
   WIDTH,
@@ -30,6 +30,7 @@ import GiftCardDenoms, {
 } from '../../components/GiftCardDenoms';
 import {
   getActivationFee,
+  getCardImage,
   getVisibleDiscount,
   isSupportedDiscountType,
 } from '../../../../../lib/gift-cards/gift-card';
@@ -42,9 +43,14 @@ import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {ShopActions} from '../../../../../store/shop';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {useAppSelector} from '../../../../../utils/hooks';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import GiftCardImage from '../../components/GiftCardImage';
+import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
+
+const BuyGiftCardContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -112,7 +118,7 @@ const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
 const BuyGiftCard = ({
   route,
   navigation,
-}: StackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
+}: NativeStackScreenProps<GiftCardGroupParamList, 'BuyGiftCard'>) => {
   const {t} = useTranslation();
   const navigator = useNavigation();
   const dispatch = useDispatch();
@@ -122,14 +128,23 @@ const BuyGiftCard = ({
   const syncGiftCardPurchasesWithBitPayId = useAppSelector(
     ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
   );
-  const {
-    email: savedEmail,
-    phone: savedPhone,
-    phoneCountryInfo: savedPhoneCountryInfo,
-  } = useAppSelector(({SHOP}) => SHOP);
+  const savedEmail = useAppSelector(({SHOP}) => SHOP.email);
+  const savedPhone = useAppSelector(({SHOP}) => SHOP.phone);
+  const savedPhoneCountryInfo = useAppSelector(
+    ({SHOP}) => SHOP.phoneCountryInfo,
+  );
   const shouldSync = user && syncGiftCardPurchasesWithBitPayId;
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
+  );
+  const [cardImage, setCardImage] = useState(
+    getCardImage(
+      cardConfig,
+      cardConfig.supportedAmounts &&
+        cardConfig.supportedAmounts[
+          getMiddleIndex(cardConfig.supportedAmounts || [])
+        ],
+    ),
   );
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -144,7 +159,7 @@ const BuyGiftCard = ({
   });
   useEffect(() => {
     dispatch(
-      logSegmentEvent('track', 'Viewed Gift Card', {
+      Analytics.track('Viewed Gift Card', {
         giftCardBrand: cardConfig.name,
       }),
     );
@@ -182,25 +197,19 @@ const BuyGiftCard = ({
 
   const goToConfirmScreen = async (amount: number) => {
     const discount = getVisibleDiscount(cardConfig);
-    navigator.navigate('GiftCard', {
-      screen: GiftCardScreens.GIFT_CARD_CONFIRM,
-      params: {
-        amount,
-        cardConfig,
-        discounts: discount ? [discount] : [],
-      },
+    navigation.navigate(GiftCardScreens.GIFT_CARD_CONFIRM, {
+      amount,
+      cardConfig,
+      discounts: discount ? [discount] : [],
     });
   };
 
   const goToAmountScreen = (phone?: string) => {
-    navigator.navigate('GiftCard', {
-      screen: GiftCardScreens.GIFT_CARD_AMOUNT,
-      params: {
-        fiatCurrencyAbbreviation: cardConfig.currency,
-        opts: {hideSendMax: true},
-        onAmountSelected: selectedAmount =>
-          onAmountScreenSubmit(+selectedAmount, phone),
-      },
+    navigation.navigate(WalletScreens.AMOUNT, {
+      fiatCurrencyAbbreviation: cardConfig.currency,
+      opts: {hideSendMax: true},
+      onAmountSelected: selectedAmount =>
+        onAmountScreenSubmit(+selectedAmount, phone),
     });
   };
 
@@ -253,16 +262,13 @@ const BuyGiftCard = ({
   };
 
   const requestPhone = (amount: number) => {
-    navigator.navigate('GiftCard', {
-      screen: GiftCardScreens.ENTER_PHONE,
-      params: {
-        cardConfig,
-        initialPhone: savedPhone,
-        initialPhoneCountryInfo: savedPhoneCountryInfo,
-        onSubmit: ({phone, phoneCountryInfo}) => {
-          dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
-          requestAmountIfNeeded(amount, phone);
-        },
+    navigation.navigate(GiftCardScreens.ENTER_PHONE, {
+      cardConfig,
+      initialPhone: savedPhone,
+      initialPhoneCountryInfo: savedPhoneCountryInfo,
+      onSubmit: ({phone, phoneCountryInfo}) => {
+        dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
+        requestAmountIfNeeded(amount, phone);
       },
     });
   };
@@ -279,15 +285,12 @@ const BuyGiftCard = ({
 
   const next = (amount: number, phone?: string) => {
     if (cardConfig.emailRequired && !shouldSync) {
-      return navigator.navigate('GiftCard', {
-        screen: GiftCardScreens.ENTER_EMAIL,
-        params: {
-          cardConfig,
-          initialEmail: savedEmail,
-          onSubmit: email => {
-            dispatch(ShopActions.updatedEmailAddress({email}));
-            requestPhoneIfNeeded(amount, phone);
-          },
+      return navigation.navigate(GiftCardScreens.ENTER_EMAIL, {
+        cardConfig,
+        initialEmail: savedEmail,
+        onSubmit: email => {
+          dispatch(ShopActions.updatedEmailAddress({email}));
+          requestPhoneIfNeeded(amount, phone);
         },
       });
     }
@@ -296,7 +299,7 @@ const BuyGiftCard = ({
 
   const buyGiftCard = () => {
     dispatch(
-      logSegmentEvent('track', 'Started Gift Card Purchase', {
+      Analytics.track('Started Gift Card Purchase', {
         giftCardBrand: cardConfig.name,
       }),
     );
@@ -310,7 +313,7 @@ const BuyGiftCard = ({
   };
 
   return (
-    <>
+    <BuyGiftCardContainer>
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -325,12 +328,7 @@ const BuyGiftCard = ({
               shadowRadius: 30,
               elevation: 5,
             }}>
-            <RemoteImage
-              uri={cardConfig.cardImage}
-              height={169}
-              width={270}
-              borderRadius={10}
-            />
+            <GiftCardImage uri={cardImage} />
           </View>
           <AmountContainer>
             {cardConfig.supportedAmounts ? (
@@ -338,27 +336,38 @@ const BuyGiftCard = ({
                 <GiftCardDenomSelector
                   cardConfig={cardConfig}
                   selectedIndex={selectedAmountIndex}
-                  onChange={(newIndex: number) =>
-                    setSelectedAmountIndex(newIndex)
-                  }
+                  onChange={(newIndex: number) => {
+                    setSelectedAmountIndex(newIndex);
+                    setCardImage(
+                      getCardImage(
+                        cardConfig,
+                        cardConfig.supportedAmounts &&
+                          cardConfig.supportedAmounts[newIndex],
+                      ),
+                    );
+                  }}
                 />
-                <SupportedAmounts>
-                  <SupportedAmountsLabel>
-                    {t('Purchase Amounts:')}
-                  </SupportedAmountsLabel>
-                  <TextAlign align="center">
-                    <GiftCardDenoms cardConfig={cardConfig} />
-                  </TextAlign>
-                </SupportedAmounts>
+                {cardConfig.supportedAmounts.length > 1 ? (
+                  <SupportedAmounts>
+                    <SupportedAmountsLabel>
+                      {t('Purchase Amounts:')}
+                    </SupportedAmountsLabel>
+                    <TextAlign align="center">
+                      <GiftCardDenoms cardConfig={cardConfig} />
+                    </TextAlign>
+                  </SupportedAmounts>
+                ) : null}
               </DenomSelectionContainer>
             ) : (
-              <TouchableWithoutFeedback onPress={() => buyGiftCard()}>
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={() => buyGiftCard()}>
                 <Amount>
                   {formatFiatAmount(0, cardConfig.currency, {
                     currencyDisplay: 'symbol',
                   })}
                 </Amount>
-              </TouchableWithoutFeedback>
+              </TouchableOpacity>
             )}
           </AmountContainer>
         </GradientBox>
@@ -400,7 +409,7 @@ const BuyGiftCard = ({
           {cardConfig.supportedAmounts ? t('Continue') : t('Buy Gift Card')}
         </Button>
       </FooterButton>
-    </>
+    </BuyGiftCardContainer>
   );
 };
 

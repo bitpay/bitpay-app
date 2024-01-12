@@ -1,4 +1,4 @@
-import {StackNavigationProp} from '@react-navigation/stack';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Linking, Platform, View} from 'react-native';
@@ -8,7 +8,7 @@ import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {AppActions, AppEffects} from '../../../store/app';
-import {Analytics} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -23,7 +23,6 @@ import DownloadHistoryIcon from '../assets/settings/icon-history.svg';
 import ResetPinIcon from '../assets/settings/icon-info.svg';
 import LockIcon from '../assets/settings/icon-lock.svg';
 import OffersIcon from '../assets/settings/icon-offers.svg';
-import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
 import {CardScreens, CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
@@ -31,7 +30,7 @@ import {ToggleSpinnerState} from './ToggleSpinner';
 interface SettingsListProps {
   card: Card;
   orderPhysical?: boolean;
-  navigation: StackNavigationProp<CardStackParamList, 'Settings'>;
+  navigation: NativeStackNavigationProp<CardStackParamList, 'Settings'>;
 }
 
 const LINKS: {
@@ -164,21 +163,21 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
       {card.provider === CardProvider.galileo ? (
         <>
-          <Styled.CategoryRow>
-            <Styled.CategoryHeading>{t('Security')}</Styled.CategoryHeading>
-          </Styled.CategoryRow>
+          {/*<Styled.CategoryRow>*/}
+          {/*  <Styled.CategoryHeading>{t('Security')}</Styled.CategoryHeading>*/}
+          {/*</Styled.CategoryRow>*/}
 
-          <Hr />
+          {/*<Hr />*/}
 
-          <Styled.SettingsToggle
-            Icon={LockIcon}
-            value={localLockState}
-            onChange={onLockToggled}
-            state={localLockStatus}>
-            {t('Lock Card')}
-          </Styled.SettingsToggle>
+          {/*<Styled.SettingsToggle*/}
+          {/*  Icon={LockIcon}*/}
+          {/*  value={localLockState}*/}
+          {/*  onChange={onLockToggled}*/}
+          {/*  state={localLockStatus}>*/}
+          {/*  {t('Lock Card')}*/}
+          {/*</Styled.SettingsToggle>*/}
 
-          <Hr />
+          {/*<Hr />*/}
 
           <Styled.CategoryRow>
             <Styled.CategoryHeading>{t('Account')}</Styled.CategoryHeading>
@@ -186,122 +185,114 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
-          <Styled.SettingsLink
-            Icon={ReferEarnIcon}
-            onPress={() => navigation.navigate('Referral', {card})}>
-            {t('Refer & Earn')}
-          </Styled.SettingsLink>
+          {/*<Styled.SettingsLink*/}
+          {/*  Icon={OffersIcon}*/}
+          {/*  onPress={() => {*/}
+          {/*    dispatch(*/}
+          {/*      Analytics.track('Clicked Card Offer', {*/}
+          {/*        context: 'Card Settings',*/}
+          {/*      }),*/}
+          {/*    );*/}
+          {/*    dispatch(CardEffects.startOpenDosh());*/}
+          {/*  }}>*/}
+          {/*  {t('Card Offers')}*/}
+          {/*</Styled.SettingsLink>*/}
 
-          <Hr />
+          {/*<Hr />*/}
 
-          <Styled.SettingsLink
-            Icon={OffersIcon}
-            onPress={() => {
-              dispatch(
-                Analytics.track('Clicked Card Offer', {
-                  context: 'Card Settings',
-                }),
-              );
-              dispatch(CardEffects.startOpenDosh());
-            }}>
-            {t('Card Offers')}
-          </Styled.SettingsLink>
+          {/*{orderPhysical ? (*/}
+          {/*  <>*/}
+          {/*    <Styled.SettingsLink*/}
+          {/*      Icon={OrderPhysicalCardIcon}*/}
+          {/*      onPress={async () => {*/}
+          {/*        const baseUrl = BASE_BITPAY_URLS[network];*/}
+          {/*        const url = `${baseUrl}/wallet-card/?order-physical=true`;*/}
+          {/*        const canOpen = await Linking.canOpenURL(url);*/}
 
-          <Hr />
+          {/*        if (!canOpen) {*/}
+          {/*          dispatch(*/}
+          {/*            AppActions.showBottomNotificationModal({*/}
+          {/*              type: 'error',*/}
+          {/*              title: t('Error'),*/}
+          {/*              message: t('Unknown error'),*/}
+          {/*              enableBackdropDismiss: true,*/}
+          {/*              onBackdropDismiss: () => {},*/}
+          {/*              actions: [*/}
+          {/*                {*/}
+          {/*                  text: t('OK'),*/}
+          {/*                  action: () => {},*/}
+          {/*                },*/}
+          {/*              ],*/}
+          {/*            }),*/}
+          {/*          );*/}
 
-          {orderPhysical ? (
-            <>
-              <Styled.SettingsLink
-                Icon={OrderPhysicalCardIcon}
-                onPress={async () => {
-                  const baseUrl = BASE_BITPAY_URLS[network];
-                  const url = `${baseUrl}/wallet-card/?order-physical=true`;
-                  const canOpen = await Linking.canOpenURL(url);
+          {/*          return;*/}
+          {/*        }*/}
 
-                  if (!canOpen) {
-                    dispatch(
-                      AppActions.showBottomNotificationModal({
-                        type: 'error',
-                        title: t('Error'),
-                        message: t('Unknown error'),
-                        enableBackdropDismiss: true,
-                        onBackdropDismiss: () => {},
-                        actions: [
-                          {
-                            text: t('OK'),
-                            action: () => {},
-                          },
-                        ],
-                      }),
-                    );
+          {/*        Linking.openURL(url);*/}
+          {/*      }}>*/}
+          {/*      {t('OrderPhysicalCard')}*/}
+          {/*    </Styled.SettingsLink>*/}
 
-                    return;
-                  }
+          {/*    <Hr />*/}
+          {/*  </>*/}
+          {/*) : null}*/}
 
-                  Linking.openURL(url);
-                }}>
-                {t('OrderPhysicalCard')}
-              </Styled.SettingsLink>
+          {/*{card.cardType === 'virtual' ? (*/}
+          {/*  <>*/}
+          {/*    {Platform.OS === 'ios' ? (*/}
+          {/*      <>*/}
+          {/*        <Styled.SettingsLink*/}
+          {/*          Icon={ApplePayIcon}*/}
+          {/*          onPress={onAddAppleWallet}>*/}
+          {/*          {t('Add to Apple Wallet')}*/}
+          {/*        </Styled.SettingsLink>*/}
 
-              <Hr />
-            </>
-          ) : null}
+          {/*        <Hr />*/}
+          {/*      </>*/}
+          {/*    ) : (*/}
+          {/*      <>*/}
+          {/*        <Styled.SettingsLink*/}
+          {/*          Icon={GooglePayIcon}*/}
+          {/*          onPress={onAddGooglePay}>*/}
+          {/*          {t('Add to Google Pay')}*/}
+          {/*        </Styled.SettingsLink>*/}
+          {/*        <Hr />*/}
+          {/*      </>*/}
+          {/*    )}*/}
+          {/*    <Styled.SettingsLink*/}
+          {/*      Icon={CustomizeCardIcon}*/}
+          {/*      onPress={() =>*/}
+          {/*        navigation.navigate('CustomizeVirtualCard', {card})*/}
+          {/*      }>*/}
+          {/*      {t('Customize Virtual Card')}*/}
+          {/*    </Styled.SettingsLink>*/}
 
-          {card.cardType === 'virtual' ? (
-            <>
-              {Platform.OS === 'ios' ? (
-                <>
-                  <Styled.SettingsLink
-                    Icon={ApplePayIcon}
-                    onPress={onAddAppleWallet}>
-                    {t('Add to Apple Wallet')}
-                  </Styled.SettingsLink>
+          {/*    <Hr />*/}
+          {/*  </>*/}
+          {/*) : (*/}
+          {/*  <>*/}
+          {/*    <Styled.SettingsLink*/}
+          {/*      Icon={ResetPinIcon}*/}
+          {/*      onPress={() => {*/}
+          {/*        navigation.navigate(CardScreens.RESET_PIN, {*/}
+          {/*          id: card.id,*/}
+          {/*        });*/}
+          {/*      }}>*/}
+          {/*      {t('Reset PIN')}*/}
+          {/*    </Styled.SettingsLink>*/}
 
-                  <Hr />
-                </>
-              ) : (
-                <>
-                  <Styled.SettingsLink
-                    Icon={GooglePayIcon}
-                    onPress={onAddGooglePay}>
-                    {t('Add to Google Pay')}
-                  </Styled.SettingsLink>
-                  <Hr />
-                </>
-              )}
-              <Styled.SettingsLink
-                Icon={CustomizeCardIcon}
-                onPress={() =>
-                  navigation.navigate('CustomizeVirtualCard', {card})
-                }>
-                {t('Customize Virtual Card')}
-              </Styled.SettingsLink>
+          {/*    <Hr />*/}
+          {/*  </>*/}
+          {/*)}*/}
 
-              <Hr />
-            </>
-          ) : (
-            <>
-              <Styled.SettingsLink
-                Icon={ResetPinIcon}
-                onPress={() => {
-                  navigation.navigate(CardScreens.RESET_PIN, {
-                    id: card.id,
-                  });
-                }}>
-                {t('Reset PIN')}
-              </Styled.SettingsLink>
+          {/*<Styled.SettingsLink*/}
+          {/*  Icon={EditCardNameIcon}*/}
+          {/*  onPress={() => navigation.navigate('UpdateCardName', {card})}>*/}
+          {/*  {t('Update Card Name')}*/}
+          {/*</Styled.SettingsLink>*/}
 
-              <Hr />
-            </>
-          )}
-
-          <Styled.SettingsLink
-            Icon={EditCardNameIcon}
-            onPress={() => navigation.navigate('UpdateCardName', {card})}>
-            {t('Update Card Name')}
-          </Styled.SettingsLink>
-
-          <Hr />
+          {/*<Hr />*/}
 
           <Styled.SettingsLink
             Icon={DownloadHistoryIcon}
@@ -338,7 +329,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             return (
               <React.Fragment key={link.labelKey}>
                 <Link onPress={() => openUrl(link.url, link.download)}>
-                  {t(link.labelKey)}
+                  {link.labelKey}
                 </Link>
 
                 {idx < links.length - 1 ? <Br /> : null}

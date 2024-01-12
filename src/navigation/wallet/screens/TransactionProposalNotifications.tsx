@@ -19,7 +19,7 @@ import {
   ListItemSubText,
 } from '../../../components/styled/Text';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletGroupParamList} from '../WalletGroup';
 import React, {
   useCallback,
   useEffect,
@@ -36,7 +36,7 @@ import {
 import {RefreshControl, SectionList, View} from 'react-native';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
-import {sleep} from '../../../utils/helper-methods';
+import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
 import {TRANSACTION_ROW_HEIGHT} from '../../../components/list/TransactionRow';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {useTranslation} from 'react-i18next';
@@ -57,15 +57,13 @@ import {
 } from '../components/ErrorMessages';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import PaymentSent from '../components/PaymentSent';
-import {
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {TransactionIcons} from '../../../constants/TransactionIcons';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -104,7 +102,7 @@ const ProposalsInfoContainer = styled.View`
 const CheckBoxContainer = styled.View`
   flex-direction: column;
   justify-content: center;
-  margin-left: 15px;
+  margin-left: 5px;
   margin-right: 15px;
 `;
 
@@ -113,13 +111,14 @@ const TransactionProposalNotifications = () => {
     params: {walletId, keyId},
   } =
     useRoute<
-      RouteProp<WalletStackParamList, 'TransactionProposalNotifications'>
+      RouteProp<WalletGroupParamList, 'TransactionProposalNotifications'>
     >();
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const wallets = keyId
     ? keys[keyId].wallets
     : Object.values(keys).flatMap(k => k.wallets);
@@ -146,7 +145,7 @@ const TransactionProposalNotifications = () => {
 
   let pendingTxps: TransactionProposal[] = [];
   _.each(wallets, x => {
-    if (x.pendingTxps.length > 0 && x.credentials.n > 1) {
+    if (x.pendingTxps.length > 0) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
@@ -164,6 +163,7 @@ const TransactionProposalNotifications = () => {
   }, [navigation, t]);
 
   const setTxpsByStatus = (txps: TransactionProposal[]): void => {
+    let txpsUnsent: TransactionProposal[] = [];
     let txpsPending: TransactionProposal[] = [];
     let txpsAccepted: TransactionProposal[] = [];
     let txpsRejected: TransactionProposal[] = [];
@@ -183,7 +183,9 @@ const TransactionProposalNotifications = () => {
         txp.pendingForUs = true;
       }
 
-      if (action && action.type === 'accept') {
+      if (txp.requiredSignatures === 1) {
+        !txp.payProUrl ? txpsUnsent.push(txp) : txpsRejected.push(txp);
+      } else if (action && action.type === 'accept') {
         txp.statusForUs = 'accepted';
         txpsAccepted.push(txp);
       } else if (action && action.type === 'reject') {
@@ -194,7 +196,7 @@ const TransactionProposalNotifications = () => {
         txpsPending.push(txp);
       }
     });
-    setAllTxpsByWallet({txpsPending, txpsAccepted, txpsRejected});
+    setAllTxpsByWallet({txpsUnsent, txpsPending, txpsAccepted, txpsRejected});
   };
 
   const getTxpToBeSigned = (
@@ -240,15 +242,24 @@ const TransactionProposalNotifications = () => {
   };
 
   const setAllTxpsByWallet = ({
+    txpsUnsent,
     txpsPending,
     txpsAccepted,
     txpsRejected,
   }: {
+    txpsUnsent: TransactionProposal[];
     txpsPending: TransactionProposal[];
     txpsAccepted: TransactionProposal[];
     txpsRejected: TransactionProposal[];
   }): void => {
     let _allTxps = [];
+    if (txpsUnsent.length > 0) {
+      _allTxps.push({
+        title: t('Unsent Transactions'),
+        type: 'pending',
+        data: groupByWallets(txpsUnsent),
+      });
+    }
     if (txpsPending.length > 0) {
       _allTxps.push({
         title: t('Payment Proposal'),
@@ -283,13 +294,10 @@ const TransactionProposalNotifications = () => {
   const onPressTxp = useMemo(
     () => (transaction: TransactionProposal, fullWalletObj: Wallet) => {
       const key = keys[fullWalletObj.keyId];
-      navigation.navigate('Wallet', {
-        screen: 'TransactionProposalDetails',
-        params: {
-          walletId: fullWalletObj.id,
-          transactionId: transaction.id,
-          keyId: key.id,
-        },
+      navigation.navigate('TransactionProposalDetails', {
+        walletId: fullWalletObj.id,
+        transactionId: transaction.id,
+        keyId: key.id,
       });
     },
     [keys, navigation],
@@ -377,6 +385,7 @@ const TransactionProposalNotifications = () => {
         img,
         currencyAbbreviation,
         currencyName,
+        keyId,
         credentials: {walletName, m, n, walletId: _walletId},
       } = fullWalletObj;
       return (
@@ -392,8 +401,9 @@ const TransactionProposalNotifications = () => {
                 </H5>
               </Row>
               <ListItemSubText>
-                {currencyAbbreviation.toUpperCase()}{' '}
+                {formatCurrencyAbbreviation(currencyAbbreviation)}{' '}
                 {n > 1 ? `- Multisig ${m}/${n}` : null}
+                {keyId === 'readonly' ? '- Read Only' : null}
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 ? (
@@ -410,12 +420,18 @@ const TransactionProposalNotifications = () => {
                 <ProposalsContainer key={txp.id}>
                   <ProposalsInfoContainer>
                     <TransactionProposalRow
-                      icon={txp.uiIcon}
+                      icon={TransactionIcons[txp.uiIcon]}
                       creator={txp.uiCreator}
                       time={txp.uiTime}
                       value={txp.uiValue}
+                      message={txp.message}
                       onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
                       hideIcon={true}
+                      recipientCount={txp.recipientCount}
+                      toAddress={txp.toAddress}
+                      tokenAddress={txp.tokenAddress}
+                      chain={txp.chain}
+                      contactList={contactList}
                     />
                   </ProposalsInfoContainer>
                   {item.needSign ? (
@@ -565,11 +581,7 @@ const TransactionProposalNotifications = () => {
           forceReset={resetSwipeButton}
           onSwipeComplete={async () => {
             try {
-              dispatch(
-                startOnGoingProcessModal(
-                  t(OnGoingProcessMessages.SENDING_PAYMENT),
-                ),
-              );
+              dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
               await sleep(400);
               const wallet = findWalletById(
                 wallets,
@@ -598,7 +610,7 @@ const TransactionProposalNotifications = () => {
 
               if (count.success > 0) {
                 dispatch(
-                  logSegmentEvent('track', 'Sent Crypto', {
+                  Analytics.track('Sent Crypto', {
                     context: 'Transaction Proposal Notifications',
                     coin: wallet.currencyAbbreviation || '',
                   }),

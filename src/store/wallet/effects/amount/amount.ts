@@ -1,6 +1,9 @@
 import {Effect} from '../../..';
-import {BwcProvider} from '../../../../lib/bwc';
-import {GetPrecision, IsCustomERCToken} from '../../utils/currency';
+import {GetPrecision} from '../../utils/currency';
+import {
+  formatCurrencyAbbreviation,
+  transformAmount,
+} from '../../../../utils/helper-methods';
 import {SendMaxInfo, Wallet} from '../../wallet.models';
 import {GetMinFee} from '../fee/fee';
 const LOW_AMOUNT_RATIO = 0.15;
@@ -29,12 +32,13 @@ export const ParseAmount =
     amount: number,
     currencyAbbreviation: string,
     chain: string,
+    tokenAddress: string | undefined,
     fullPrecision?: boolean,
   ): Effect<FormattedAmountObj> =>
   dispatch => {
     // @ts-ignore
     const {unitToSatoshi, unitDecimals} = dispatch(
-      GetPrecision(currencyAbbreviation, chain),
+      GetPrecision(currencyAbbreviation, chain, tokenAddress),
     );
     const satToUnit = 1 / unitToSatoshi;
     let amountUnitStr;
@@ -43,7 +47,13 @@ export const ParseAmount =
     amountSat = Number((amount * unitToSatoshi).toFixed(0));
     amountUnitStr =
       dispatch(
-        FormatAmountStr(currencyAbbreviation, chain, amountSat, fullPrecision),
+        FormatAmountStr(
+          currencyAbbreviation,
+          chain,
+          tokenAddress,
+          amountSat,
+          fullPrecision,
+        ),
       ) || '';
 
     // workaround to prevent miscalculations with decimal numbers that javascript can't handle with precision
@@ -52,7 +62,7 @@ export const ParseAmount =
       amountDecimals < unitDecimals ? amountDecimals : unitDecimals,
     );
 
-    const currency = currencyAbbreviation.toUpperCase();
+    const currency = formatCurrencyAbbreviation(currencyAbbreviation);
 
     return {
       amount: _amount,
@@ -84,6 +94,7 @@ export const FormatAmountStr =
   (
     currencyAbbreviation: string,
     chain: string,
+    tokenAddress: string | undefined,
     satoshis: number,
     fullPrecision?: boolean,
   ): Effect<string> =>
@@ -95,10 +106,16 @@ export const FormatAmountStr =
     try {
       return (
         dispatch(
-          FormatAmount(currencyAbbreviation, chain, satoshis, fullPrecision),
+          FormatAmount(
+            currencyAbbreviation,
+            chain,
+            tokenAddress,
+            satoshis,
+            fullPrecision,
+          ),
         ) +
         ' ' +
-        currencyAbbreviation.toUpperCase()
+        formatCurrencyAbbreviation(currencyAbbreviation)
       );
     } catch (e) {
       throw e;
@@ -109,18 +126,19 @@ export const FormatAmount =
   (
     currencyAbbreviation: string,
     chain: string,
+    tokenAddress: string | undefined,
     satoshis: number,
     fullPrecision?: boolean,
   ): Effect<string> =>
   dispatch => {
-    // TODO : now only works for english, specify opts to change thousand separator and decimal separator
-    let opts: any = {
-      fullPrecision: !!fullPrecision,
-    };
+    try {
+      // TODO : now only works for english, specify opts to change thousand separator and decimal separator
+      let opts: any = {
+        fullPrecision: !!fullPrecision,
+      };
 
-    if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation, chain)) {
       const {unitToSatoshi, unitDecimals} =
-        dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+        dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
       if (unitToSatoshi) {
         opts.toSatoshis = unitToSatoshi;
       }
@@ -134,11 +152,11 @@ export const FormatAmount =
           minDecimals: 2,
         },
       };
-    }
 
-    return BwcProvider.getInstance()
-      .getUtils()
-      .formatAmount(satoshis, currencyAbbreviation.toLowerCase(), opts); // This util returns a string
+      return transformAmount(satoshis, opts);
+    } catch (e) {
+      throw e;
+    }
   };
 
 export const SatToUnit =
@@ -146,10 +164,11 @@ export const SatToUnit =
     amount: number,
     currencyAbbreviation: string,
     chain: string,
+    tokenAddress: string | undefined,
   ): Effect<number | undefined> =>
   dispatch => {
     const {unitToSatoshi, unitDecimals} =
-      dispatch(GetPrecision(currencyAbbreviation, chain)) || {};
+      dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
     let spendableAmount: number | undefined;
     if (unitToSatoshi && unitDecimals) {
       const satToUnit = 1 / unitToSatoshi;
@@ -160,12 +179,17 @@ export const SatToUnit =
   };
 
 export const GetExcludedUtxosMessage =
-  (coin: string, chain: string, sendMaxInfo: SendMaxInfo): Effect<string> =>
+  (
+    coin: string,
+    chain: string,
+    tokenAddress: string | undefined,
+    sendMaxInfo: SendMaxInfo,
+  ): Effect<string> =>
   dispatch => {
     const warningMsg = [];
     if (sendMaxInfo.utxosBelowFee > 0) {
       const amountBelowFeeStr = dispatch(
-        SatToUnit(sendMaxInfo.amountBelowFee, coin, chain),
+        SatToUnit(sendMaxInfo.amountBelowFee, coin, chain, tokenAddress),
       );
       const message = `A total of ${amountBelowFeeStr} ${coin.toUpperCase()} were excluded. These funds come from UTXOs smaller than the network fee provided.`;
       warningMsg.push(message);
@@ -173,7 +197,7 @@ export const GetExcludedUtxosMessage =
 
     if (sendMaxInfo.utxosAboveMaxSize > 0) {
       const amountAboveMaxSizeStr = dispatch(
-        SatToUnit(sendMaxInfo.amountAboveMaxSize, coin, chain),
+        SatToUnit(sendMaxInfo.amountAboveMaxSize, coin, chain, tokenAddress),
       );
       const message = `A total of ${amountAboveMaxSizeStr} ${coin.toUpperCase()} were excluded. The maximum size allowed for a transaction was exceeded.`;
       warningMsg.push(message);

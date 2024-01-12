@@ -1,5 +1,5 @@
 import React from 'react';
-import {cleanup, fireEvent, render} from '@test/render';
+import {fireEvent, cleanup, render} from '@test/render';
 import {Provider} from 'react-redux';
 import BottomNotification from './BottomNotification';
 import configureTestStore from '@test/store';

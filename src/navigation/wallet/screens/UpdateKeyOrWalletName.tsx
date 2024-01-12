@@ -2,8 +2,8 @@ import React, {useLayoutEffect} from 'react';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {WalletStackParamList} from '../WalletStack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {WalletGroupParamList} from '../WalletGroup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {Controller, useForm} from 'react-hook-form';
@@ -18,13 +18,17 @@ import {
 } from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 
-type UpdateKeyOrWalletNameScreenProps = StackScreenProps<
-  WalletStackParamList,
+type UpdateKeyOrWalletNameScreenProps = NativeStackScreenProps<
+  WalletGroupParamList,
   'UpdateKeyOrWalletName'
 >;
 
-const UpdateContainer = styled.View`
+const UpdateContainer = styled.SafeAreaView`
   flex: 1;
+`;
+
+const ScrollContainer = styled.ScrollView`
+  margin-top: 20px;
   padding: 0 ${ScreenGutter};
 `;
 
@@ -37,7 +41,7 @@ const ButtonContainer = styled.View`
 `;
 
 const schema = yup.object().shape({
-  name: yup.string().max(15).trim(),
+  name: yup.string().max(15).trim().required(),
 });
 
 const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
@@ -56,7 +60,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
         </HeaderTitle>
       ),
     });
-  }, [navigation, t]);
+  }, [navigation, t, context]);
 
   const {
     control,
@@ -77,29 +81,31 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
 
   return (
     <UpdateContainer>
-      <FormContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={context === 'key' ? t('My Key') : t('My Wallet')}
-              label={context.toUpperCase() + t(' NAME')}
-              onBlur={onBlur}
-              onChangeText={onChange}
-              error={errors.name?.message}
-              value={value}
-              onSubmitEditing={handleSubmit(updateName)}
-            />
-          )}
-          name="name"
-          defaultValue={placeholder}
-        />
-      </FormContainer>
-      <ButtonContainer>
-        <Button onPress={handleSubmit(updateName)} buttonStyle={'primary'}>
-          {t('Update')}
-        </Button>
-      </ButtonContainer>
+      <ScrollContainer>
+        <FormContainer>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={context === 'key' ? t('My Key') : t('My Wallet')}
+                label={context.toUpperCase() + t(' NAME')}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={errors.name?.message}
+                value={value}
+                onSubmitEditing={handleSubmit(updateName)}
+              />
+            )}
+            name="name"
+            defaultValue={placeholder}
+          />
+        </FormContainer>
+        <ButtonContainer>
+          <Button onPress={handleSubmit(updateName)} buttonStyle={'primary'}>
+            {t('Update')}
+          </Button>
+        </ButtonContainer>
+      </ScrollContainer>
     </UpdateContainer>
   );
 };

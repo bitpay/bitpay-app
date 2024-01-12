@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styled, {css, DefaultTheme} from 'styled-components/native';
 import ErrorBoundary from 'react-native-error-boundary';
 import {SvgUri} from 'react-native-svg';
@@ -48,12 +48,12 @@ const GiftCardItem = styled(LinearGradient)<GiftCardCreditsItemProps>`
 const logoHeight = 55;
 
 const LogoContainer = styled.View`
-  flex-grow: 1;
   height: ${logoHeight}px;
 `;
 
 const Logo = styled.Image`
   height: ${logoHeight}px;
+  margin-left: 10px;
 `;
 
 const GiftCardAmount = styled(BaseText)<GiftCardCreditsItemProps>`
@@ -98,6 +98,8 @@ export default (props: {cardConfig: CardConfig; amount: number}) => {
   const logoBackgroundColor = cardConfig?.logoBackgroundColor || 'black';
   const {angle, colors, locations} =
     convertCssGradientToReactNativeGradient(logoBackgroundColor);
+  const [logoWidth, setLogoWidth] = useState(100);
+  const [logoWidthComputed, setLogoWidthComputed] = useState(false);
   return (
     <GiftCardItem
       logoBackgroundColor={colors[0]}
@@ -116,7 +118,21 @@ export default (props: {cardConfig: CardConfig; amount: number}) => {
                 <SvgUri height={`${logoHeight}px`} uri={cardConfig.logo} />
               </ErrorBoundary>
             ) : (
-              <Logo resizeMode={'contain'} source={{uri: cardConfig.logo}} />
+              <Logo
+                style={{width: logoWidth, opacity: logoWidthComputed ? 1 : 0}}
+                onLoad={event => {
+                  const height = event?.nativeEvent?.source?.height;
+                  const width = event?.nativeEvent?.source?.width;
+                  if (!height || !width) {
+                    return;
+                  }
+                  const scaleFactor = logoHeight / height;
+                  setLogoWidth(width * scaleFactor);
+                  setLogoWidthComputed(true);
+                }}
+                resizeMode={'contain'}
+                source={{uri: cardConfig.logo}}
+              />
             )}
           </>
         ) : (

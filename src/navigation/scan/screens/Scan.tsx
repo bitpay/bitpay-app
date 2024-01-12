@@ -2,16 +2,16 @@ import React from 'react';
 import {RNCamera} from 'react-native-camera';
 import styled from 'styled-components/native';
 import ScanGuideSvg from '../../../../assets/img/qr-scan-guides.svg';
-import {useDispatch} from 'react-redux';
 import {incomingData} from '../../../store/scan/scan.effects';
 import debounce from 'lodash.debounce';
 import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {ScanStackParamList} from '../ScanStack';
+import {ScanGroupParamList, ScanScreens} from '../ScanGroup';
 import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
+import {useAppDispatch} from '../../../utils/hooks';
 
 const ScanContainer = styled.SafeAreaView`
   flex: 1;
@@ -29,10 +29,10 @@ interface Props {
   onScanComplete?: (data: string) => void;
 }
 
-const Scan = () => {
+const ScanRoot = () => {
   const {t} = useTranslation();
-  const dispatch = useDispatch();
-  const route = useRoute<RouteProp<ScanStackParamList, 'Root'>>();
+  const dispatch = useAppDispatch();
+  const route = useRoute<RouteProp<ScanGroupParamList, ScanScreens.Root>>();
   const {onScanComplete} = route.params || {};
 
   return (
@@ -85,4 +85,4 @@ const Scan = () => {
   );
 };
 
-export default Scan;
+export default ScanRoot;

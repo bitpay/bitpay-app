@@ -10,8 +10,8 @@ import {useNavigation} from '@react-navigation/native';
 import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
-import {WalletScreens} from '../../../wallet/WalletStack';
+import {WalletScreens} from '../../../wallet/WalletGroup';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -137,23 +137,17 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       ? buy.cta
       : () => {
           dispatch(
-            logSegmentEvent('track', 'Clicked Buy Crypto', {
+            Analytics.track('Clicked Buy Crypto', {
               context: 'LinkingButtons',
             }),
           );
-          navigation.navigate('Wallet', {
-            screen: WalletScreens.AMOUNT,
-            params: {
-              onAmountSelected: async (amount: string) => {
-                navigation.navigate('BuyCrypto', {
-                  screen: 'BuyCryptoRoot',
-                  params: {
-                    amount: Number(amount),
-                  },
-                });
-              },
-              context: 'buyCrypto',
+          navigation.navigate(WalletScreens.AMOUNT, {
+            onAmountSelected: async (amount: string) => {
+              navigation.navigate('BuyCryptoRoot', {
+                amount: Number(amount),
+              });
             },
+            context: 'buyCrypto',
           });
         },
   );
@@ -162,11 +156,11 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       ? swap.cta
       : () => {
           dispatch(
-            logSegmentEvent('track', 'Clicked Swap Crypto', {
+            Analytics.track('Clicked Swap Crypto', {
               context: 'LinkingButtons',
             }),
           );
-          navigation.navigate('SwapCrypto', {screen: 'Root'});
+          navigation.navigate('SwapCryptoRoot');
         },
   );
   const buttonsList: Array<ButtonListProps> = [

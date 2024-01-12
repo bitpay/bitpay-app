@@ -1,4 +1,4 @@
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, TouchableOpacity, View} from 'react-native';
@@ -30,7 +30,7 @@ import CardFront from '../../components/CardFront';
 import CheckIcon from './CheckIcon';
 import * as Styled from './CustomizeVirtualCard.styled';
 import {CardBrand} from '../../../../constants/card';
-import {Analytics} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 
 export interface CustomizeVirtualCardParamList {
   card: Card;
@@ -143,7 +143,7 @@ const Icons: IconMap = {
 };
 
 const CustomizeVirtualCard: React.FC<
-  StackScreenProps<CardStackParamList, 'CustomizeVirtualCard'>
+  NativeStackScreenProps<CardStackParamList, 'CustomizeVirtualCard'>
 > = ({navigation, route}) => {
   const {card} = route.params;
   const dispatch = useDispatch();

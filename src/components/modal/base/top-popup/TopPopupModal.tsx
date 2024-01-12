@@ -4,6 +4,7 @@ import React from 'react';
 interface Props {
   isVisible: boolean;
   onBackdropPress: () => void;
+  children?: any;
 }
 
 const TopPopupModal: React.FC<Props> = ({

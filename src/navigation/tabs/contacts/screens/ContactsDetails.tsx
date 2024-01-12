@@ -2,11 +2,15 @@ import React, {useEffect, useLayoutEffect, useState, ReactElement} from 'react';
 import {useAppSelector} from '../../../../utils/hooks';
 import styled, {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/core';
-import {StackScreenProps} from '@react-navigation/stack';
-import Clipboard from '@react-native-community/clipboard';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
-import {ContactsStackParamList} from '../ContactsStack';
-import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
+import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
+import {
+  formatCurrencyAbbreviation,
+  getCurrencyAbbreviation,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {BaseText, TextAlign} from '../../../../components/styled/Text';
 import {Hr} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -132,7 +136,7 @@ interface ModalOpt {
 
 const ContactsDetails = ({
   route,
-}: StackScreenProps<ContactsStackParamList, 'ContactsDetails'>) => {
+}: NativeStackScreenProps<ContactsGroupParamList, ContactsScreens.DETAILS>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation();
@@ -141,6 +145,7 @@ const ContactsDetails = ({
   const [contact, setContact] = useState(_contact);
 
   const [copied, setCopied] = useState(false);
+  const [copiedContractAddress, setCopiedContractAddress] = useState(false);
   const [showIconOptions, setShowIconOptions] = useState(false);
 
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -167,20 +172,18 @@ const ContactsDetails = ({
     contactOptions.push({
       img: theme.dark ? <SendIconWhite /> : <SendIcon />,
       title: t('Send ') + contact.coin.toUpperCase(),
-      onPress: () => {
+      onPress: async () => {
         setShowIconOptions(false);
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {
-            context: 'contact',
-            recipient: {
-              name: contact.name,
-              address: newAddress,
-              currency: contact.coin,
-              chain: contact.chain,
-              network: contact.network,
-              destinationTag: contact.tag || contact.destinationTag,
-            },
+        await sleep(500);
+        navigation.navigate('GlobalSelect', {
+          context: 'contact',
+          recipient: {
+            name: contact.name,
+            address: newAddress,
+            currency: contact.coin,
+            chain: contact.chain,
+            network: contact.network,
+            destinationTag: contact.tag || contact.destinationTag,
           },
         });
       },
@@ -192,14 +195,12 @@ const ContactsDetails = ({
     title: t('Edit Contact'),
     onPress: async () => {
       setShowIconOptions(false);
-      navigation.navigate('Contacts', {
-        screen: 'ContactsAdd',
-        params: {
-          contact,
-          context: 'edit',
-          onEditComplete: (c: ContactRowProps) => {
-            setContact(c);
-          },
+      await sleep(500);
+      navigation.navigate('ContactsAdd', {
+        contact,
+        context: 'edit',
+        onEditComplete: (c: ContactRowProps) => {
+          setContact(c);
         },
       });
     },
@@ -244,6 +245,23 @@ const ContactsDetails = ({
     setCopied(true);
   };
 
+  useEffect(() => {
+    if (!copiedContractAddress) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopiedContractAddress(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [copiedContractAddress]);
+
+  const copyContractAddressToClipboard = () => {
+    haptic('impactLight');
+    Clipboard.setString(contact.tokenAddress!);
+    setCopiedContractAddress(true);
+  };
+
   const deleteContactView = async () => {
     await sleep(500);
     dispatch(
@@ -252,6 +270,7 @@ const ContactsDetails = ({
         contact.coin,
         contact.network,
         contact.chain,
+        contact.tokenAddress,
       ),
     );
     navigation.goBack();
@@ -293,6 +312,7 @@ const ContactsDetails = ({
             size={100}
             name={contact.name}
             chain={contact.chain}
+            tokenAddress={contact.tokenAddress}
           />
         </ContactImageHeader>
         <Details>
@@ -323,6 +343,28 @@ const ContactsDetails = ({
               </AddressContainer>
             </DetailInfo>
           </Detail>
+
+          {contact.tokenAddress ? (
+            <>
+              <Hr />
+              <Detail>
+                <Title>{t('Contract')}</Title>
+                <DetailInfo align="right">
+                  <AddressContainer
+                    onPress={copyContractAddressToClipboard}
+                    activeOpacity={0.7}>
+                    <CopyImgContainer>
+                      {copiedContractAddress ? <CopiedSvg width={17} /> : null}
+                    </CopyImgContainer>
+                    <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
+                      {contact.tokenAddress}
+                    </AddressText>
+                  </AddressContainer>
+                </DetailInfo>
+              </Detail>
+            </>
+          ) : null}
+
           {contact.network !== 'livenet' ? (
             <>
               <Hr />
@@ -338,7 +380,7 @@ const ContactsDetails = ({
               <Detail>
                 <Title>{t('Coin')}</Title>
                 <DetailInfo align="right">
-                  {contact.coin.toUpperCase()}
+                  {formatCurrencyAbbreviation(contact.coin)}
                 </DetailInfo>
               </Detail>
             </>

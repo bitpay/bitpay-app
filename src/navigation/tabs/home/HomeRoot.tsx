@@ -5,30 +5,22 @@ import {
 } from '@react-navigation/native';
 import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
-  clearOnCompleteOnboardingList,
-  setKeyMigrationFailureModalHasBeenShown,
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {
-  logSegmentEvent,
-  requestBrazeContentRefresh,
-} from '../../../store/app/app.effects';
+import {requestBrazeContentRefresh} from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
   selectBrazeQuickLinks,
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
 import {selectCardGroups} from '../../../store/card/card.selectors';
-import {
-  deferredImportErrorNotification,
-  getPriceHistory,
-  startGetRates,
-} from '../../../store/wallet/effects';
+import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
@@ -41,7 +33,7 @@ import {
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
-import Crypto, {keyBackupRequired} from './components/Crypto';
+import Crypto from './components/Crypto';
 import ExchangeRatesList, {
   ExchangeRateItemProps,
 } from './components/exchange-rates/ExchangeRatesList';
@@ -56,12 +48,14 @@ import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {HeaderContainer, HomeContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
-import {batch} from 'react-redux';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {useTranslation} from 'react-i18next';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
-import {WalletScreens} from '../../wallet/WalletStack';
+import {
+  receiveCrypto,
+  sendCrypto,
+} from '../../../store/wallet/effects/send/send';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -77,24 +71,23 @@ const HomeRoot = () => {
   const wallets = Object.values(keys).flatMap(k => k.wallets);
   let pendingTxps: any = [];
   each(wallets, x => {
-    if (x.pendingTxps && x.credentials.n > 1) {
+    if (x.pendingTxps) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
+  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const keyMigrationFailure = useAppSelector(
     ({APP}) => APP.keyMigrationFailure,
   );
   const keyMigrationFailureModalHasBeenShown = useAppSelector(
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
-  const onCompleteOnboardingList = useAppSelector(
-    ({APP}) => APP.onCompleteOnboardingList,
-  );
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
-  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   useBrazeRefreshOnFocus();
 
   // Shop with Crypto
@@ -155,9 +148,6 @@ const HomeRoot = () => {
     return brazeQuickLinks;
   }, [brazeQuickLinks, defaultLanguage]);
 
-  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
-  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
-
   useEffect(() => {
     return navigation.addListener('focus', () => {
       if (!appIsLoading) {
@@ -185,32 +175,16 @@ const HomeRoot = () => {
 
   const onPressTxpBadge = useMemo(
     () => () => {
-      navigation.navigate('Wallet', {
-        screen: 'TransactionProposalNotifications',
-        params: {},
-      });
+      navigation.navigate('TransactionProposalNotifications', {});
     },
     [],
   );
 
   useEffect(() => {
     if (keyMigrationFailure && !keyMigrationFailureModalHasBeenShown) {
-      batch(() => {
-        dispatch(setShowKeyMigrationFailureModal(true));
-        dispatch(setKeyMigrationFailureModalHasBeenShown());
-      });
+      dispatch(setShowKeyMigrationFailureModal(true));
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
-
-  useEffect(() => {
-    if (
-      onCompleteOnboardingList?.length &&
-      onCompleteOnboardingList.includes('deferredImportErrorNotification')
-    ) {
-      dispatch(deferredImportErrorNotification());
-      dispatch(clearOnCompleteOnboardingList());
-    }
-  }, [dispatch, onCompleteOnboardingList]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
@@ -249,100 +223,10 @@ const HomeRoot = () => {
             <HomeSection style={{marginBottom: 25}}>
               <LinkingButtons
                 receive={{
-                  cta: () => {
-                    const needsBackup = !Object.values(keys).filter(
-                      key => key.backupComplete,
-                    ).length;
-                    if (needsBackup) {
-                      dispatch(
-                        showBottomNotificationModal(
-                          keyBackupRequired(
-                            Object.values(keys)[0],
-                            navigation,
-                            dispatch,
-                          ),
-                        ),
-                      );
-                    } else {
-                      dispatch(
-                        logSegmentEvent('track', 'Clicked Receive', {
-                          context: 'HomeRoot',
-                        }),
-                      );
-                      navigation.navigate('Wallet', {
-                        screen: 'GlobalSelect',
-                        params: {context: 'receive'},
-                      });
-                    }
-                  },
+                  cta: () => dispatch(receiveCrypto(navigation, 'HomeRoot')),
                 }}
                 send={{
-                  cta: () => {
-                    const walletsWithBalance = Object.values(keys)
-                      .filter(key => key.backupComplete)
-                      .flatMap(key => key.wallets)
-                      .filter(
-                        wallet => !wallet.hideWallet && wallet.isComplete(),
-                      )
-                      .filter(wallet => wallet.balance.sat > 0);
-
-                    if (!walletsWithBalance.length) {
-                      dispatch(
-                        showBottomNotificationModal({
-                          type: 'warning',
-                          title: t('No funds available'),
-                          message: t('You do not have any funds to send.'),
-                          enableBackdropDismiss: true,
-                          actions: [
-                            {
-                              text: t('Add funds'),
-                              action: () => {
-                                dispatch(
-                                  logSegmentEvent(
-                                    'track',
-                                    'Clicked Buy Crypto',
-                                    {
-                                      context: 'HomeRoot',
-                                    },
-                                  ),
-                                );
-                                navigation.navigate('Wallet', {
-                                  screen: WalletScreens.AMOUNT,
-                                  params: {
-                                    onAmountSelected: (amount: string) => {
-                                      navigation.navigate('BuyCrypto', {
-                                        screen: 'BuyCryptoRoot',
-                                        params: {
-                                          amount: Number(amount),
-                                        },
-                                      });
-                                    },
-                                    context: 'buyCrypto',
-                                  },
-                                });
-                              },
-                              primary: true,
-                            },
-                            {
-                              text: t('Got It'),
-                              action: () => null,
-                              primary: false,
-                            },
-                          ],
-                        }),
-                      );
-                    } else {
-                      dispatch(
-                        logSegmentEvent('track', 'Clicked Send', {
-                          context: 'HomeRoot',
-                        }),
-                      );
-                      navigation.navigate('Wallet', {
-                        screen: 'GlobalSelect',
-                        params: {context: 'send'},
-                      });
-                    }
-                  },
+                  cta: () => dispatch(sendCrypto('HomeRoot')),
                 }}
               />
             </HomeSection>
@@ -361,7 +245,7 @@ const HomeRoot = () => {
               onActionPress={() => {
                 navigation.navigate('Tabs', {screen: 'Shop'});
                 dispatch(
-                  logSegmentEvent('track', 'Clicked Shop with Crypto', {
+                  Analytics.track('Clicked Shop with Crypto', {
                     context: 'HomeRoot',
                   }),
                 );

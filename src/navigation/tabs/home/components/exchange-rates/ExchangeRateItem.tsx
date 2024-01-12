@@ -9,6 +9,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {H7, Smallest, BaseText} from '../../../../../components/styled/Text';
 import {
+  formatCurrencyAbbreviation,
   formatFiatAmountObj,
   getRateByCurrencyName,
 } from '../../../../../utils/helper-methods';
@@ -125,12 +126,14 @@ const ExchangeRateItem = ({
         <ExchangeRateText ellipsizeMode="tail" numberOfLines={1}>
           {currencyName}
         </ExchangeRateText>
-        <ExchangeRateSubText>
-          {currencyAbbreviation?.toUpperCase()}
-        </ExchangeRateSubText>
+        {currencyAbbreviation ? (
+          <ExchangeRateSubText>
+            {formatCurrencyAbbreviation(currencyAbbreviation)}
+          </ExchangeRateSubText>
+        ) : null}
       </CurrencyColumn>
       <NoteContainer>
-        {currentPrice && (
+        {currentPrice ? (
           <ExchangeRateText>
             {amount}
             {code ? (
@@ -139,7 +142,7 @@ const ExchangeRateItem = ({
               </View>
             ) : null}
           </ExchangeRateText>
-        )}
+        ) : null}
         <SubTextContainer>
           {showLossGainOrNeutralArrow(average)}
           <ExchangeRateSubText>{Math.abs(average || 0)}%</ExchangeRateSubText>
