@@ -168,7 +168,7 @@ export const createProposalAndBuildTxDetails =
           currencyAbbreviation === 'btc' &&
           !(context && ['paypro', 'selectInputs'].includes(context))
         ) {
-          tx.enableRBF = tx.enableRBF || enableReplaceByFee;
+          tx.enableRBF = tx.enableRBF ?? enableReplaceByFee;
         }
 
         const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
