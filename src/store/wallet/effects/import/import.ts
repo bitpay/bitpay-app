@@ -833,7 +833,11 @@ export const startImportMnemonic =
         const data = await serverAssistedImport(opts);
 
         // To Avoid Duplicate wallet import
-        const {key: _key, wallets} = findMatchedKeyAndUpdate(
+        const {
+          key: _key,
+          wallets,
+          keyName,
+        } = findMatchedKeyAndUpdate(
           data.wallets,
           data.key,
           Object.values(WALLET.keys).filter(k => k.id !== 'readonly'), // Avoid checking readonly keys
@@ -847,6 +851,7 @@ export const startImportMnemonic =
 
         const key = buildKeyObj({
           key: _key,
+          keyName,
           wallets: wallets.map(wallet => {
             // subscribe new wallet to push notifications
             if (notificationsAccepted) {
