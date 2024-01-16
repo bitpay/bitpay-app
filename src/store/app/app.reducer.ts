@@ -30,6 +30,8 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appWasInit',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showInAppMessage',
+  'inAppMessageData',
   'showInAppNotification',
   'inAppNotificationData',
   'showDecryptPasswordModal',
@@ -47,7 +49,8 @@ export type ModalId =
   | 'sheetModal'
   | 'ongoingProcess'
   | 'pin'
-  | 'inAppNotification';
+  | 'inAppNotification'
+  | 'inAppMessage';
 
 export type FeedbackType = {
   time: number;
@@ -86,6 +89,8 @@ export interface AppState {
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
+  showInAppMessage: boolean;
+  inAppMessageData: string;
   showInAppNotification: boolean;
   inAppNotificationData:
     | {
@@ -170,6 +175,8 @@ const initialState: AppState = {
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: undefined,
+  showInAppMessage: false,
+  inAppMessageData: '',
   showInAppNotification: false,
   inAppNotificationData: undefined,
   showBottomNotificationModal: false,
@@ -289,6 +296,20 @@ export const appReducer = (
       return {
         ...state,
         showOnGoingProcessModal: false,
+      };
+
+    case AppActionTypes.SHOW_IN_APP_MESSAGE:
+      return {
+        ...state,
+        showInAppMessage: true,
+        inAppMessageData: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_IN_APP_MESSAGE:
+      return {
+        ...state,
+        showInAppMessage: false,
+        inAppMessageData: undefined,
       };
 
     case AppActionTypes.SHOW_IN_APP_NOTIFICATION:

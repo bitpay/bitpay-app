@@ -119,6 +119,7 @@ import BillGroup, {
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
 import {showBlur} from './store/app/app.actions';
+import InAppMessage from './components/modal/in-app-message/InAppMessage';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -544,6 +545,7 @@ export default () => {
           </Root.Navigator>
           <OnGoingProcessModal />
           <InAppNotification />
+          <InAppMessage />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
           <BlurContainer />

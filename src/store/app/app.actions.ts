@@ -65,6 +65,15 @@ export const dismissOnGoingProcessModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL,
 });
 
+export const showInAppMessage = (message: string): AppActionType => ({
+  type: AppActionTypes.SHOW_IN_APP_MESSAGE,
+  payload: message,
+});
+
+export const dismissInAppMessage = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_IN_APP_MESSAGE,
+});
+
 export const showInAppNotification = (
   context: InAppNotificationContextType,
   message: string,

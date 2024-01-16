@@ -77,6 +77,10 @@ const isCryptoLink = (url: string): boolean => {
   }
 };
 
+export const isAcceptedUrl = (url: string): boolean => {
+  return isDeepLink(url) || isUniversalLink(url) || isCryptoLink(url);
+};
+
 export const useUrlEventHandler = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
