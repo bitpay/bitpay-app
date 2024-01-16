@@ -68,7 +68,7 @@
     "axios": "0.21.1",
     "big-integer": "1.6.51",
     "bitauth": "0.4.1",
-    "bitcore-wallet-client": "10.0.21",
+    "bitcore-wallet-client": "10.0.26",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",
     "eth-sig-util": "3.0.1",
