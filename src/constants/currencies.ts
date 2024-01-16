@@ -997,6 +997,7 @@ export const SUPPORTED_ETHEREUM_TOKENS = Object.values(
 export const SUPPORTED_MATIC_TOKENS = Object.values(
   BitpaySupportedMaticTokens,
 ).map(token => `${token.coin}_m`);
+export const SUPPORTED_UTXO_COINS = Object.keys(BitpaySupportedUtxoCoins);
 
 export const SUPPORTED_TOKENS = [
   ...SUPPORTED_ETHEREUM_TOKENS,
