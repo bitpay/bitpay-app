@@ -458,7 +458,6 @@ const TransactionDetails = () => {
           ) : null}
 
           {currencyAbbreviation === 'btc' &&
-          txs.isRBF &&
           (IsSent(txs.action) || IsMoved(txs.action)) ? (
             <Banner
               type={'info'}
