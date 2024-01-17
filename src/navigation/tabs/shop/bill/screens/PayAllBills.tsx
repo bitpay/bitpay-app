@@ -7,9 +7,9 @@ import {
   HeaderTitle,
   Paragraph,
 } from '../../../../../components/styled/Text';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
-import {Linking, Platform, ScrollView, TouchableOpacity} from 'react-native';
+import {Linking, ScrollView, TouchableOpacity} from 'react-native';
 import {
   LightBlack,
   LuckySevens,
@@ -31,7 +31,6 @@ import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
   ActiveOpacity,
   CtaContainerAbsolute,
-  HEIGHT,
   HeaderRightContainer,
 } from '../../../../../components/styled/Containers';
 import Settings from '../../../../../components/settings/Settings';
@@ -158,6 +157,8 @@ const PayAllBills = ({
       selectedAmountField: index === 0 ? 'nextPaymentMinimumAmount' : 'none',
     })),
   );
+
+  const theme = useTheme();
 
   const sheetOptions: Array<Option> = [
     {
@@ -287,7 +288,6 @@ const PayAllBills = ({
     <>
       <ScrollView
         contentContainerStyle={{
-          minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 120),
           paddingTop: 30,
           paddingBottom: 100,
         }}>
@@ -538,6 +538,7 @@ const PayAllBills = ({
           shadowOpacity: 0.1,
           shadowRadius: 12,
           elevation: 5,
+          marginBottom: -10,
         }}>
         <Button
           onPress={() => goToConfirmScreen()}

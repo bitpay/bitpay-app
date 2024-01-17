@@ -503,6 +503,9 @@ export default () => {
             screenOptions={{
               ...baseNavigatorOptions,
               headerShown: false,
+              headerStyle: {
+                backgroundColor: theme.colors.background,
+              },
             }}
             initialRouteName={initialRoute}>
             <Root.Screen

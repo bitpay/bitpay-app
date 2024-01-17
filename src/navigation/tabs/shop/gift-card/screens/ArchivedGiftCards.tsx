@@ -1,7 +1,10 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import {useNavigation, useScrollToTop} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {SectionContainer} from '../../components/styled/ShopTabComponents';
+import {
+  ScreenContainer,
+  SectionContainer,
+} from '../../components/styled/ShopTabComponents';
 import {GiftCardScreens} from '../GiftCardGroup';
 import {GiftCard} from '../../../../../store/shop/shop.models';
 import GiftCardCreditsItem from '../../components/GiftCardCreditsItem';
@@ -60,14 +63,16 @@ const ArchivedGiftCards = ({
   useScrollToTop(flatListRef);
 
   return (
-    <SectionContainer>
-      <FlatList
-        data={giftCards}
-        renderItem={renderItem}
-        keyExtractor={item => item.invoiceId}
-        ref={flatListRef}
-      />
-    </SectionContainer>
+    <ScreenContainer>
+      <SectionContainer>
+        <FlatList
+          data={giftCards}
+          renderItem={renderItem}
+          keyExtractor={item => item.invoiceId}
+          ref={flatListRef}
+        />
+      </SectionContainer>
+    </ScreenContainer>
   );
 };
 

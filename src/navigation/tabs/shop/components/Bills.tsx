@@ -285,10 +285,10 @@ export const Bills = () => {
                   <Button
                     buttonType={'link'}
                     onPress={() => {
-                      navigation.navigate('Bill', {
-                        screen: BillScreens.CONNECT_BILLS_OPTIONS,
-                        params: {},
-                      });
+                      navigation.navigate(
+                        BillScreens.CONNECT_BILLS_OPTIONS,
+                        {},
+                      );
                       dispatch(
                         Analytics.track(
                           'Bill Pay — Clicked Connect More Bills',
