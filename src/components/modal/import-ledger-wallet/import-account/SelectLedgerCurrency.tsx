@@ -1,10 +1,12 @@
 import {getCryptoCurrencyById} from '@ledgerhq/cryptoassets';
 import {StatusCodes} from '@ledgerhq/errors';
 import AppBtc from '@ledgerhq/hw-app-btc';
+import AppEth from '@ledgerhq/hw-app-eth';
 import Transport from '@ledgerhq/hw-transport';
 import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import BtcLogoSvg from '../../../../../assets/img/currencies/btc.svg';
+import EthLogoSvg from '../../../../../assets/img/currencies/eth.svg';
 import Checkbox from '../../../checkbox/Checkbox';
 import {
   AdvancedOptions,
@@ -137,6 +139,12 @@ const CURRENCIES = [
     coin: 'btc',
     label: 'Bitcoin',
     icon: <BtcLogoSvg height={35} width={35} />,
+    isTestnetSupported: true,
+  },
+  {
+    coin: 'eth',
+    label: 'Ethereum',
+    icon: <EthLogoSvg height={35} width={35} />,
     isTestnetSupported: true,
   },
 ];
@@ -276,11 +284,59 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             useNativeSegwit,
             derivationStrategy,
             accountNumber: Number(accountIndex),
+            network,
           }),
         );
 
         props.onImported(newWallet);
       }
+    } catch (err) {
+      const errMsg = getLedgerErrorMessage(err);
+
+      setError(errMsg);
+    } finally {
+      await sleep(1000);
+    }
+  };
+
+  const importEthAccount = async ({
+    network,
+    accountIndex = '0',
+  }: {
+    network: Network;
+    accountIndex: string;
+  }) => {
+    const isMainnet = network === Network.mainnet;
+    const currencyId = isMainnet ? 'ethereum' : 'ethereum_testnet';
+    const appName = isMainnet ? 'Ethereum' : 'Ethereum Goerli';
+    try {
+      const c = getCryptoCurrencyById(currencyId);
+      await prepareLedgerApp(appName);
+
+      const eth = new AppEth(transportRef.current);
+
+      const purpose = "44'";
+      const coin = isMainnet ? "60'" : "1'";
+      const account = `${accountIndex}'`;
+      const path = `m/${purpose}/${coin}/${account}/0/0`;
+      const derivationStrategy = getDerivationStrategy(path);
+
+      const {publicKey} = await eth.getAddress(path);
+
+      const newWallet = await dispatch(
+        startImportFromHardwareWallet({
+          hardwareSource: 'ledger',
+          publicKey,
+          accountPath: path,
+          coin: 'eth',
+          derivationStrategy,
+          useNativeSegwit: false,
+          accountNumber: Number(accountIndex),
+          network,
+        }),
+      );
+
+      props.onImported(newWallet);
     } catch (err) {
       const errMsg = getLedgerErrorMessage(err);
 
@@ -301,8 +357,14 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
         accountIndex: account,
       });
     }
+    if (currency === 'eth') {
+      return importEthAccount({
+        network,
+        accountIndex: account,
+      });
+    }
 
-    setError(`Unsupported currency: ${currency}`);
+    setError(`Unsupported currency: ${currency.toUpperCase()}`);
   };
 
   const onContinue = async () => {
@@ -343,7 +405,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
 
       {error && !isLoading ? (
         <DescriptionRow>
-          <ErrParagraph>Error: {error}</ErrParagraph>
+          <ErrParagraph>{error}</ErrParagraph>
         </DescriptionRow>
       ) : null}
 

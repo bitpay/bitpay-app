@@ -1,8 +1,10 @@
 import AppBtc from '@ledgerhq/hw-app-btc';
+import AppEth from '@ledgerhq/hw-app-eth';
 import {Transaction} from '@ledgerhq/hw-app-btc/lib/types';
 import {CreateTransactionArg} from '@ledgerhq/hw-app-btc/lib/createTransaction';
 import {serializeTransactionOutputs} from '@ledgerhq/hw-app-btc/lib/serializeTransaction';
 import {splitTransaction} from '@ledgerhq/hw-app-btc/lib/splitTransaction';
+import ledgerService from '@ledgerhq/hw-app-eth/lib/services/ledger';
 import {BufferReader} from '@ledgerhq/hw-app-btc/lib/buffertools';
 import Transport from '@ledgerhq/hw-transport';
 import axios from 'axios';
@@ -18,7 +20,8 @@ import {
   TxDetails,
   Wallet,
   TransactionOptionsContext,
-  BitcoreTransactionLike,
+  BitcoreUtxoTransactionLike,
+  BitcoreEvmTransactionLike,
 } from '../../wallet.models';
 import {
   FormatAmount,
@@ -1385,7 +1388,7 @@ const createLedgerTransactionArgBtc = (
     const BWC = BwcProvider.getInstance();
     const utils = BWC.getUtils();
 
-    const txpAsTx = utils.buildTx(txp) as BitcoreTransactionLike;
+    const txpAsTx = utils.buildTx(txp) as BitcoreUtxoTransactionLike;
     const accountPath = wallet.hardwareData?.accountPath;
     const inputPaths = (txp.inputPaths || []).filter(isString);
 
@@ -1549,6 +1552,57 @@ const getBtcSignaturesFromLedger = async (
   return signatures;
 };
 
+const getSignatureString = (signatureObject: {
+  s: string;
+  v: string;
+  r: string;
+}) => {
+  // Assuming signatureObject = { s: string, v: string, r: string }
+  let signature = '0x';
+  // Ensure each part is a hexadecimal string. If they're not, you should convert them to hex.
+  const r = signatureObject.r;
+  const s = signatureObject.s;
+  let v = signatureObject.v;
+
+  // Depending on the implementation, 'v' might be a single character. If so, pad it to two characters.
+  if (v.length < 2) {
+    v = '0' + v;
+  }
+
+  // Concatenate r, s, and v to form the signature string
+  signature += r + s + v;
+
+  return signature;
+};
+
+const getEthSignaturesFromLedger = async (
+  txp: TransactionProposal,
+  transport: Transport,
+) => {
+  try {
+    const BWC = BwcProvider.getInstance();
+    const utils = BWC.getUtils();
+    const txpAsTx = utils.buildTx(txp) as BitcoreEvmTransactionLike;
+    const raw = txpAsTx.uncheckedSerialize()[0];
+    var cleanedHexString = raw.replace(/^0x/, '');
+    const resolution = await ledgerService.resolveTransaction(
+      cleanedHexString,
+      {},
+      {},
+    );
+    const eth = new AppEth(transport);
+    const signature = await eth.signTransaction(
+      "44'/60'/0'/0/0",
+      cleanedHexString,
+      resolution,
+    );
+    const signatureHex = getSignatureString(signature);
+    return [signatureHex];
+  } catch (err) {
+    throw new Error('Something went wrong signing the transaction: ' + err);
+  }
+};
+
 const getSignaturesFromLedger = (
   transport: Transport,
   wallet: Wallet,
@@ -1562,7 +1616,9 @@ const getSignaturesFromLedger = (
     return getBtcSignaturesFromLedger(wallet, txp, transport);
   }
 
-  // TODO: other coins
+  if (txp.coin === 'eth' || IsERCToken(txp.coin, txp.chain)) {
+    return getEthSignaturesFromLedger(txp, transport);
+  }
 
   throw new Error('Unsupported currency: ' + txp.coin);
 };

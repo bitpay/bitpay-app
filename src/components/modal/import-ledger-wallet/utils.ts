@@ -20,7 +20,9 @@ export type SupportedLedgerAppNames =
   | 'Bitcoin'
   | 'Bitcoin Test'
   | 'Bitcoin Legacy'
-  | 'Bitcoin Test Legacy';
+  | 'Bitcoin Test Legacy'
+  | 'Ethereum'
+  | 'Ethereum Goerli';
 
 /**
  * Gets info on the currently running Ledger app. The OS info is returned if no app is running.

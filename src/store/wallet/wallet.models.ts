@@ -489,10 +489,17 @@ interface BitcoreTransactionOutputLike {
 }
 
 /**
- * Partial interface representing a generic bitcore-lib Transaction class.
+ * Partial interface representing a generic bitcore-lib UTXO Transaction class.
  */
-export interface BitcoreTransactionLike {
+export interface BitcoreUtxoTransactionLike {
   inputs: Array<BitcoreTransactionInputLike>;
   outputs: Array<BitcoreTransactionOutputLike>;
-  _changeIndex?: number;
+  _changeIndex: number;
+}
+
+/**
+ * Partial interface representing a generic bitcore-lib EVM Transaction class.
+ */
+export interface BitcoreEvmTransactionLike {
+  uncheckedSerialize: () => string;
 }

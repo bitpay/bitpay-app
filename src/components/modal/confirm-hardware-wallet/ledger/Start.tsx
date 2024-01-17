@@ -19,6 +19,8 @@ import {
   Wrapper,
 } from '../../import-ledger-wallet/import-ledger-wallet.styled';
 import {checkPermissionsBLE} from '../../import-ledger-wallet/utils';
+import {Warning25} from '../../../../styles/colors';
+import {SearchingForDevices} from '../../import-ledger-wallet/pair-device/SearchingForDevices';
 
 interface PairHardwareWalletModalProps {
   onPaired: (transport: Transport) => void;
@@ -26,6 +28,12 @@ interface PairHardwareWalletModalProps {
 
 const IconWrapper = styled.View`
   padding: 28px;
+`;
+
+const ErrParagraph = styled(Paragraph)`
+  background-color: ${Warning25};
+  border-radius: 12px;
+  padding: 20px;
 `;
 
 export const ConfirmLedgerStart: React.FC<
@@ -38,7 +46,9 @@ export const ConfirmLedgerStart: React.FC<
   } | null>(null);
   const [isConnecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
-
+  const [transportType, setTransportType] = useState<'ble' | 'hid' | null>(
+    null,
+  );
   const noSupportedTransportTypes =
     supportedTypes && !supportedTypes.ble && !supportedTypes.hid;
 
@@ -67,6 +77,7 @@ export const ConfirmLedgerStart: React.FC<
   const onPressConnectBle = async () => {
     setError('');
     setConnecting(true);
+    setTransportType('ble');
 
     let transport: Transport | null = null;
     let errorMsg = '';
@@ -101,6 +112,7 @@ export const ConfirmLedgerStart: React.FC<
   const onPressConnectHid = async () => {
     setError('');
     setConnecting(true);
+    setTransportType('hid');
 
     let transport: Transport | null = null;
     let errorMsg = '';
@@ -126,52 +138,58 @@ export const ConfirmLedgerStart: React.FC<
   };
 
   return (
-    <Wrapper>
-      <Header>
-        <IconWrapper>
-          <LedgerLogoIconSvg height={40} width={40} />
-        </IconWrapper>
-
-        <H3>Approve on your Ledger</H3>
-      </Header>
-
-      {error ? (
-        <DescriptionRow>
-          <Paragraph>{error}</Paragraph>
-        </DescriptionRow>
-      ) : null}
-
-      {noSupportedTransportTypes ? (
-        <DescriptionRow>
-          <Paragraph>
-            Connecting via Bluetooth or USB not supported by this device.
-          </Paragraph>
-        </DescriptionRow>
+    <>
+      {isConnecting ? (
+        <SearchingForDevices transportType={transportType} />
       ) : (
-        <>
-          <DescriptionRow>
-            <Paragraph>
-              Approve the transaction from your ledger device. Ensure it's
-              unlocked and on the correct currency.
-            </Paragraph>
-          </DescriptionRow>
+        <Wrapper>
+          <Header>
+            <IconWrapper>
+              <LedgerLogoIconSvg height={40} width={40} />
+            </IconWrapper>
 
-          {supportedTypes ? (
-            <ActionsRow>
-              {supportedTypes.ble ? (
-                <ViaBluetoothButton onPress={onPressConnectBle}>
-                  Approve via Bluetooth
-                </ViaBluetoothButton>
-              ) : null}
-              {supportedTypes.hid ? (
-                <ViaUsbButton secondary onPress={onPressConnectHid}>
-                  Approve via USB
-                </ViaUsbButton>
-              ) : null}
-            </ActionsRow>
+            <H3>Approve on your Ledger</H3>
+          </Header>
+
+          {error ? (
+            <DescriptionRow>
+              <ErrParagraph>{error}</ErrParagraph>
+            </DescriptionRow>
           ) : null}
-        </>
+
+          {noSupportedTransportTypes ? (
+            <DescriptionRow>
+              <Paragraph>
+                Connecting via Bluetooth or USB not supported by this device.
+              </Paragraph>
+            </DescriptionRow>
+          ) : (
+            <>
+              <DescriptionRow>
+                <Paragraph>
+                  Approve the transaction from your ledger device. Ensure it's
+                  unlocked and on the correct currency.
+                </Paragraph>
+              </DescriptionRow>
+
+              {supportedTypes ? (
+                <ActionsRow>
+                  {supportedTypes.ble ? (
+                    <ViaBluetoothButton onPress={onPressConnectBle}>
+                      Approve via Bluetooth
+                    </ViaBluetoothButton>
+                  ) : null}
+                  {supportedTypes.hid ? (
+                    <ViaUsbButton secondary onPress={onPressConnectHid}>
+                      Approve via USB
+                    </ViaUsbButton>
+                  ) : null}
+                </ActionsRow>
+              ) : null}
+            </>
+          )}
+        </Wrapper>
       )}
-    </Wrapper>
+    </>
   );
 };

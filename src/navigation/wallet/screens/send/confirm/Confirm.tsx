@@ -711,31 +711,28 @@ const Confirm = () => {
               if (recipient.type === 'coinbase') {
                 navigation.dispatch(
                   CommonActions.reset({
-                    index: 2,
+                    index: 1,
                     routes: [
                       {
-                        name: 'Tabs',
-                        params: {screen: 'Home'},
+                        name: RootStacks.TABS,
+                        params: {screen: TabsScreens.HOME},
                       },
                       {
-                        name: 'Coinbase',
-                        params: {
-                          screen: 'CoinbaseRoot',
-                        },
+                        name: CoinbaseScreens.ROOT,
+                        params: {},
                       },
                     ],
                   }),
                 );
               } else {
+                await sleep(500);
                 navigation.dispatch(StackActions.popToTop());
                 navigation.dispatch(
-                  StackActions.replace('WalletDetails', {
+                  StackActions.push('WalletDetails', {
                     walletId: wallet!.id,
                     key,
                   }),
                 );
-                await sleep(0);
-                setShowPaymentSentModal(false);
               }
             }}
           />

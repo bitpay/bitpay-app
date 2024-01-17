@@ -8,6 +8,7 @@ import {
   ActionsRow,
   DescriptionRow,
   Header,
+  IconRow,
   Wrapper,
 } from '../../import-ledger-wallet/import-ledger-wallet.styled';
 
@@ -28,16 +29,6 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
           justifyContent: 'flex-end',
           display: 'flex',
         }}>
-        <IconWrapper>
-          {props.connectionMethod === 'ble' ? (
-            <BluetoothIconSvg height={40} width={40} />
-          ) : props.connectionMethod === 'hid' ? (
-            <UsbIconSvg height={40} width={40} />
-          ) : (
-            <LedgerLogoIconSvg height={40} width={40} />
-          )}
-        </IconWrapper>
-
         <H3>Approving...</H3>
       </Header>
 
@@ -53,6 +44,18 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
           and on the correct currency.
         </Paragraph>
       </DescriptionRow>
+
+      <IconRow>
+        <IconWrapper>
+          {props.connectionMethod === 'ble' ? (
+            <BluetoothIconSvg height={40} width={40} />
+          ) : props.connectionMethod === 'hid' ? (
+            <UsbIconSvg height={40} width={40} />
+          ) : (
+            <LedgerLogoIconSvg height={40} width={40} />
+          )}
+        </IconWrapper>
+      </IconRow>
 
       <ActionsRow>
         <Button state={'loading'}>Sending...</Button>

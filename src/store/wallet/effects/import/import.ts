@@ -28,6 +28,7 @@ import {
   setCustomizeNonce,
   setEnableReplaceByFee,
   setUseUnconfirmedFunds,
+  setWalletScanning,
   setWalletTermsAccepted,
   successCreateKey,
   successImport,
@@ -918,19 +919,23 @@ export const startImportFromHardwareWallet =
   ({
     hardwareSource,
     xPubKey,
+    publicKey,
     accountPath,
     coin,
     useNativeSegwit,
     derivationStrategy,
     accountNumber,
+    network,
   }: {
     hardwareSource: SupportedHardwareSource;
-    xPubKey: string;
+    xPubKey?: string;
+    publicKey?: string;
     accountPath: string;
     coin: 'btc' | 'eth';
     useNativeSegwit: boolean;
     derivationStrategy: string;
     accountNumber: number;
+    network: Network;
   }): Effect<Promise<Wallet>> =>
   async (dispatch, getState) => {
     if (!hardwareSource) {
@@ -962,10 +967,13 @@ export const startImportFromHardwareWallet =
 
     const credentials = credentialsFromExtendedPublicKey(
       coin,
-      xPubKey,
       accountNumber,
       derivationStrategy,
       useNativeSegwit,
+      network,
+      hwKeyId,
+      xPubKey,
+      publicKey,
     );
     const bwcClient = BWC.getClient(credentials);
     const walletName = BitpaySupportedCoins[coin.toLowerCase()].name;
@@ -982,7 +990,6 @@ export const startImportFromHardwareWallet =
       bwcClient.credentials.walletId = status.wallet.id;
     } else {
       try {
-        const network = getNetworkFromExtendedKey(xPubKey);
         const copayerName = 'me';
         const m = 1;
         const n = 1;
@@ -1090,6 +1097,16 @@ export const startImportFromHardwareWallet =
               'An error occurred while starting an address scan:',
               errMsg,
             ),
+          );
+        }
+        if (key?.id) {
+          // set scanning (for UI scanning label on wallet details )
+          dispatch(
+            setWalletScanning({
+              keyId: key.id,
+              walletId: wallet.id,
+              isScanning: true,
+            }),
           );
         }
       },

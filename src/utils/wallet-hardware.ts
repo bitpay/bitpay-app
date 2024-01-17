@@ -55,15 +55,17 @@ const hashFromEntropy = (
  */
 export const credentialsFromExtendedPublicKey = (
   coin: string,
-  xPubKey: string,
   account = 0,
   derivationStrategy: string,
   useNativeSegwit: boolean,
+  network: Network,
+  hwKeyId: string,
+  xPubKey?: string,
+  hardwareSourcePublicKey?: string, // address ( evm )
 ) => {
-  const network = getNetworkFromExtendedKey(xPubKey);
-
   // create request keys from entropy (hw wallets)
-  const entropySourceHex = xPubKeyToEntropySource(xPubKey);
+  const entropySourceHex =
+    hardwareSourcePublicKey || (xPubKey && xPubKeyToEntropySource(xPubKey))!;
   const entropyBuffer = Buffer.from(entropySourceHex, 'hex');
   const entropySource =
     Bitcore.crypto.Hash.sha256sha256(entropyBuffer).toString('hex');
@@ -91,6 +93,8 @@ export const credentialsFromExtendedPublicKey = (
 
   const credentials = Credentials.fromObj({
     coin,
+    chain: coin, // chain === coin for stored wallets
+    keyId: hwKeyId,
     xPubKey,
     network,
     requestPrivKey,
@@ -110,6 +114,7 @@ export const credentialsFromExtendedPublicKey = (
     ],
     addressType,
     version: 2,
+    hardwareSourcePublicKey,
   });
 
   const walletPrivKey = privKey.toString();
