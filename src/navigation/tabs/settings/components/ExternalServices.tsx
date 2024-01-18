@@ -137,9 +137,7 @@ const ExternalServices = () => {
       <Setting
         onPress={() => {
           haptic('impactLight');
-          navigation.navigate('ExternalServicesSettings', {
-            screen: 'TransakSettings',
-          });
+          navigation.navigate('TransakSettings');
         }}>
         <ExternalServicesItemContainer>
           <ExternalServicesIconContainer>

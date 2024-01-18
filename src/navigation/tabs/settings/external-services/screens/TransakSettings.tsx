@@ -88,11 +88,8 @@ const TransakSettings: React.FC = () => {
                     key={pr.external_id}
                     onPress={() => {
                       haptic('impactLight');
-                      navigation.navigate('ExternalServicesSettings', {
-                        screen: 'TransakDetails',
-                        params: {
-                          paymentRequest: pr,
-                        },
+                      navigation.navigate('TransakDetails', {
+                        paymentRequest: pr,
                       });
                     }}>
                     <PrRowLeft>

@@ -1396,11 +1396,8 @@ const handleTransakUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'ExternalServicesSettings',
-          params: {
-            screen: 'TransakSettings',
-            params: {incomingPaymentRequest: stateParams},
-          },
+          name: 'TransakSettings',
+          params: {incomingPaymentRequest: stateParams},
         },
       ],
     });
