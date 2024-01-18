@@ -13,21 +13,13 @@ const AddressesSkeleton = () => {
       highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
       <View>
         <SkeletonPlaceholder.Item
-          width="40%"
-          height={25}
-          marginTop={25}
-          marginBottom={10}
-          borderRadius={4}
-        />
-
-        <SkeletonPlaceholder.Item
           flexDirection={'row'}
           alignItems={'center'}
           justifyContent={'space-between'}
           height={55}>
           <SkeletonPlaceholder.Item
             width={100}
-            height={25}
+            height={30}
             marginTop={10}
             marginBottom={10}
             borderRadius={4}
@@ -43,7 +35,7 @@ const AddressesSkeleton = () => {
             height={55}>
             <SkeletonPlaceholder.Item
               width={150}
-              height={20}
+              height={30}
               borderRadius={4}
               marginRight={10}
             />

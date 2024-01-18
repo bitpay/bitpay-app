@@ -381,6 +381,30 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.SET_WALLET_SCANNING: {
+      const {keyId, walletId, isScanning} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === walletId) {
+          wallet.isScanning = isScanning;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.UPDATE_WALLET_TX_HISTORY: {
       const {keyId, walletId, transactionHistory} = action.payload;
       const keyToUpdate = state.keys[keyId];

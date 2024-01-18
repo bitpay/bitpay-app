@@ -172,6 +172,7 @@ export const buildWalletObj = (
     n,
     m,
     isRefreshing: false,
+    isScanning: false,
     hideWallet,
     hideBalance,
     pendingTxps,
