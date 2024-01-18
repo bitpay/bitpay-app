@@ -11,6 +11,7 @@ import {CardConfigMap, GiftCard} from '../../../store/shop/shop.models';
 import ArchivedGiftCards from './gift-card/screens/ArchivedGiftCards';
 import {HeaderBackButton} from '@react-navigation/elements';
 import {useTranslation} from 'react-i18next';
+import {useTheme} from 'styled-components/native';
 
 export type ShopStackParamList = {
   Home: NavigatorScreenParams<ShopHomeParamList>;
@@ -28,12 +29,16 @@ export enum ShopScreens {
 const Shop = createNativeStackNavigator<ShopStackParamList>();
 
 const ShopStack = () => {
+  const theme = useTheme();
   const {t} = useTranslation();
   return (
     <Shop.Navigator
       initialRouteName={ShopScreens.HOME}
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
+        headerStyle: {
+          backgroundColor: theme.colors.background,
+        },
         headerLeft: () => (
           <HeaderBackButton
             onPress={() => {

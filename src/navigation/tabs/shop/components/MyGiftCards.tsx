@@ -81,12 +81,9 @@ const MyGiftCards = ({
   const seeArchivedGiftCards = () => {
     shouldShowArchivedSlide
       ? setSlideIndex(1)
-      : navigation.navigate('Shop', {
-          screen: ShopScreens.ARCHIVED_GIFT_CARDS,
-          params: {
-            giftCards: archivedGiftCards,
-            supportedGiftCardMap,
-          },
+      : navigation.navigate(ShopScreens.ARCHIVED_GIFT_CARDS, {
+          giftCards: archivedGiftCards,
+          supportedGiftCardMap,
         });
   };
 

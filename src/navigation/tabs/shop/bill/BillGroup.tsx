@@ -92,6 +92,7 @@ const BillGroup: React.FC<BillProps> = ({Bill}) => {
         name={BillScreens.CONNECT_BILLS_OPTIONS}
         component={ConnectBillsOptions}
       />
+      <Bill.Screen name={BillScreens.BILL_AMOUNT} component={AmountScreen} />
       <Bill.Screen name={BillScreens.PAY_BILL} component={PayBill} />
       <Bill.Screen name={BillScreens.PAY_ALL_BILLS} component={PayAllBills} />
       <Bill.Screen name={BillScreens.PAYMENTS} component={Payments} />

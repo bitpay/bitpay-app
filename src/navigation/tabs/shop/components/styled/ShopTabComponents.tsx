@@ -39,6 +39,10 @@ export const CategoryItemTouchableHighlight = styled(
   padding-left: ${horizontalPadding}px;
 `;
 
+export const ScreenContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
 export const SectionContainer = styled.View`
   width: 100%;
   padding: 0 ${horizontalPadding}px;

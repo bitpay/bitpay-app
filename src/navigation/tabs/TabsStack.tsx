@@ -115,6 +115,9 @@ const TabsStack = () => {
           headerTitleAlign: 'center',
           headerShown: true,
           headerShadowVisible: false,
+          headerStyle: {
+            backgroundColor: theme.colors.background,
+          },
           headerLeft: () => null,
           headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
         }}
