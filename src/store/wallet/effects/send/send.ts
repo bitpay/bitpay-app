@@ -6,6 +6,9 @@ import {serializeTransactionOutputs} from '@ledgerhq/hw-app-btc/lib/serializeTra
 import {splitTransaction} from '@ledgerhq/hw-app-btc/lib/splitTransaction';
 import ledgerService from '@ledgerhq/hw-app-eth/lib/services/ledger';
 import {BufferReader} from '@ledgerhq/hw-app-btc/lib/buffertools';
+import { encode } from 'ripple-binary-codec';
+import Xrp from "@ledgerhq/hw-app-xrp";
+import { Payment } from 'xrpl/src/models/transactions';
 import Transport from '@ledgerhq/hw-transport';
 import axios from 'axios';
 import {Effect} from '../../../index';
@@ -1603,6 +1606,37 @@ const getEthSignaturesFromLedger = async (
   }
 };
 
+const getXrpSignaturesFromLedger = async (
+  wallet: Wallet,
+  txp: TransactionProposal,
+  transport: Transport,
+) => {
+  try {
+    let transactionJSON: Payment = {
+      TransactionType: "Payment",
+      Account: txp.from,
+      Destination: txp.outputs[0].toAddress!,
+      Amount: txp.amount.toString(),
+      Fee: txp.fee.toString(),
+      Flags: 2147483648,
+      Sequence: txp.nonce,
+      SigningPubKey: wallet.credentials.hardwareSourcePublicKey,
+    };
+    if(txp.destinationTag) {
+      transactionJSON.DestinationTag = txp.destinationTag;
+    }
+    if(txp.invoiceID) {
+      transactionJSON.InvoiceID = txp.invoiceID;
+    }
+    const xrp = new Xrp(transport);
+    const transactionBlob = encode(transactionJSON);
+    const signature = await xrp.signTransaction("44'/144'/0'/0/0", transactionBlob);
+    return [signature];
+  } catch (err) {
+    throw new Error('Something went wrong signing the transaction: ' + err);
+  }
+};
+
 const getSignaturesFromLedger = (
   transport: Transport,
   wallet: Wallet,
@@ -1618,6 +1652,10 @@ const getSignaturesFromLedger = (
 
   if (txp.coin === 'eth' || IsERCToken(txp.coin, txp.chain)) {
     return getEthSignaturesFromLedger(txp, transport);
+  }
+
+  if (txp.coin === 'xrp') {
+    return getXrpSignaturesFromLedger(wallet, txp, transport);
   }
 
   throw new Error('Unsupported currency: ' + txp.coin);

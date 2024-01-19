@@ -931,7 +931,7 @@ export const startImportFromHardwareWallet =
     xPubKey?: string;
     publicKey?: string;
     accountPath: string;
-    coin: 'btc' | 'eth';
+    coin: 'btc' | 'eth' | 'xrp';
     useNativeSegwit: boolean;
     derivationStrategy: string;
     accountNumber: number;
@@ -1506,7 +1506,7 @@ export const serverAssistedImport = async (
     try {
       BwcProvider.API.serverAssistedImport(
         opts,
-        {baseUrl: 'http://192.168.100.2:3232/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
+        {baseUrl: 'https://bws.bitpay.com/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
         // @ts-ignore
         async (err, key, wallets) => {
           if (err) {
