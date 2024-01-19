@@ -2,7 +2,7 @@ import {getCryptoCurrencyById} from '@ledgerhq/cryptoassets';
 import {StatusCodes} from '@ledgerhq/errors';
 import AppBtc from '@ledgerhq/hw-app-btc';
 import AppEth from '@ledgerhq/hw-app-eth';
-import Xrp from "@ledgerhq/hw-app-xrp";
+import Xrp from '@ledgerhq/hw-app-xrp';
 import Transport from '@ledgerhq/hw-transport';
 import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
@@ -45,7 +45,10 @@ import {
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
 import BoxInput from '../../../../components/form/BoxInput';
-import {IsSegwitCoin} from '../../../../store/wallet/utils/currency';
+import {
+  IsSegwitCoin,
+  IsUtxoCoin,
+} from '../../../../store/wallet/utils/currency';
 
 interface Props {
   transport: Transport;
@@ -76,6 +79,107 @@ interface Props {
     accountIndex: string;
   }) => void;
 }
+
+interface BaseAccountParams {
+  appName: SupportedLedgerAppNames;
+  network: Network;
+  accountIndex: string;
+  purpose: string;
+  coin: string;
+}
+
+interface UtxoAccountParams extends BaseAccountParams {
+  currencyId: string;
+  transportCurrency: string;
+  currencySymbol: 'btc' | 'bch' | 'ltc' | 'doge';
+}
+
+interface EthAccountParams extends BaseAccountParams {
+  currencySymbol: 'eth';
+}
+
+interface XrpAccountParams extends BaseAccountParams {
+  currencySymbol: 'xrp';
+}
+
+type CurrencyConfigFn = (
+  network: Network,
+  accountIndex: string,
+  useNativeSegwit?: boolean,
+) => UtxoAccountParams | EthAccountParams | XrpAccountParams;
+
+const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
+  btc: (network, account, useNativeSegwit) => {
+    const isMainnet = network === Network.mainnet;
+    return {
+      currencyId: isMainnet ? 'bitcoin' : 'bitcoin_testnet',
+      transportCurrency: isMainnet ? 'bitcoin' : 'bitcoin_testnet',
+      appName: isMainnet ? 'Bitcoin' : 'Bitcoin Test',
+      network,
+      accountIndex: account,
+      purpose: useNativeSegwit ? "84'" : "44'",
+      coin: network === Network.mainnet ? "0'" : "1'",
+      currencySymbol: 'btc',
+    };
+  },
+  bch: (network, account) => {
+    return {
+      currencyId: 'bitcoin_cash',
+      transportCurrency: 'bitcoin_cash',
+      appName: 'Bitcoin Cash',
+      network,
+      accountIndex: account,
+      purpose: "44'",
+      coin: "145'",
+      currencySymbol: 'bch',
+    };
+  },
+  ltc: (network, account) => {
+    return {
+      currencyId: 'litecoin',
+      transportCurrency: 'litecoin',
+      appName: 'Litecoin',
+      network,
+      accountIndex: account,
+      purpose: "84'",
+      coin: "2'",
+      currencySymbol: 'ltc',
+    };
+  },
+  doge: (network, account) => {
+    return {
+      currencyId: 'dogecoin',
+      transportCurrency: 'dogecoin',
+      appName: 'Dogecoin',
+      network,
+      accountIndex: account,
+      purpose: "44'",
+      coin: "3'",
+      currencySymbol: 'doge',
+    };
+  },
+  eth: (network, account) => {
+    const isMainnet = network === Network.mainnet;
+    return {
+      appName: isMainnet ? 'Ethereum' : 'Ethereum Goerli',
+      network,
+      accountIndex: account,
+      purpose: "44'",
+      coin: isMainnet ? "60'" : "1'",
+      currencySymbol: 'eth',
+    };
+  },
+  xrp: (network, account) => {
+    return {
+      appName: 'XRP',
+      network,
+      accountIndex: account,
+      purpose: "44'",
+      coin: '144',
+      currencySymbol: 'xrp',
+    };
+  },
+};
 
 const List = styled.View``;
 
@@ -241,40 +345,39 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
   };
 
   const importXrpAccount = async ({
+    appName,
     network,
     accountIndex = '0',
+    purpose,
+    coin,
+    currencySymbol,
   }: {
+    appName: SupportedLedgerAppNames;
     network: Network;
     accountIndex: string;
+    purpose: string;
+    coin: string;
+    currencySymbol: 'xrp';
   }) => {
-    const currencyId = 'ripple';
-    const appName ='XRP';
     try {
-      const c = getCryptoCurrencyById(currencyId);
       await prepareLedgerApp(appName);
-
       const xrp = new Xrp(transportRef.current);
-
-      const purpose = "44'";
-      const coin = "144'";
       const account = `${accountIndex}'`;
       const path = `m/${purpose}/${coin}/${account}/0/0`;
       const derivationStrategy = getDerivationStrategy(path);
-
       const {publicKey} = await xrp.getAddress(path);
       const newWallet = await dispatch(
         startImportFromHardwareWallet({
           hardwareSource: 'ledger',
           publicKey,
           accountPath: path,
-          coin: 'xrp',
+          coin: currencySymbol,
           derivationStrategy,
           useNativeSegwit: false,
           accountNumber: Number(accountIndex),
           network,
         }),
       );
-
       props.onImported(newWallet);
     } catch (err) {
       const errMsg = getLedgerErrorMessage(err);
@@ -285,45 +388,40 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     }
   };
 
-  const importBtcAccount = async ({
+  const importUtxoAccount = async ({
+    currencyId,
+    transportCurrency,
+    appName,
     network,
     accountIndex = '0',
+    purpose,
+    coin,
+    currencySymbol,
   }: {
+    currencyId: string;
+    transportCurrency: string;
+    appName: SupportedLedgerAppNames;
     network: Network;
     accountIndex: string;
+    purpose: string;
+    coin: string;
+    currencySymbol: 'btc' | 'bch' | 'ltc' | 'doge';
   }) => {
-    const isMainnet = network === Network.mainnet;
-
-    // this is the ID to lookup the xpubversion
-    const currencyId = isMainnet ? 'bitcoin' : 'bitcoin_testnet';
-
-    // this is the name to pass to initialize the app API
-    // there is also 'bitcoin_legacy' and 'bitcoin_testnet_legacy' if we want to support the Ledger legacy apps
-    const currency = isMainnet ? 'bitcoin' : 'bitcoin_testnet';
-
-    // this is the name of the Ledger app that needs to be open
-    const appName = isMainnet ? 'Bitcoin' : 'Bitcoin Test';
-
     try {
       const c = getCryptoCurrencyById(currencyId);
-
       if (c.bitcoinLikeInfo?.XPUBVersion) {
         await prepareLedgerApp(appName);
-
-        // create API instance
-        const btc = new AppBtc({
+        const app = new AppBtc({
           transport: transportRef.current,
-          currency,
+          currency: transportCurrency,
         });
 
-        const purpose = useNativeSegwit ? "84'" : "44'";
-        const coin = isMainnet ? "0'" : "1'";
         const account = `${accountIndex}'`;
         const path = `m/${purpose}/${coin}/${account}`;
         const derivationStrategy = getDerivationStrategy(path);
         const xpubVersion = c.bitcoinLikeInfo.XPUBVersion;
 
-        const xPubKey = await btc.getWalletXpub({
+        const xPubKey = await app.getWalletXpub({
           path,
           xpubVersion,
         });
@@ -333,7 +431,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             hardwareSource: 'ledger',
             xPubKey,
             accountPath: path,
-            coin: 'btc',
+            coin: currencySymbol,
             useNativeSegwit,
             derivationStrategy,
             accountNumber: Number(accountIndex),
@@ -353,35 +451,33 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
   };
 
   const importEthAccount = async ({
+    appName,
     network,
     accountIndex = '0',
+    purpose,
+    coin,
+    currencySymbol,
   }: {
+    appName: SupportedLedgerAppNames;
     network: Network;
     accountIndex: string;
+    purpose: string;
+    coin: string;
+    currencySymbol: 'eth';
   }) => {
-    const isMainnet = network === Network.mainnet;
-    const currencyId = isMainnet ? 'ethereum' : 'ethereum_testnet';
-    const appName = isMainnet ? 'Ethereum' : 'Ethereum Goerli';
     try {
-      const c = getCryptoCurrencyById(currencyId);
       await prepareLedgerApp(appName);
-
       const eth = new AppEth(transportRef.current);
-
-      const purpose = "44'";
-      const coin = isMainnet ? "60'" : "1'";
       const account = `${accountIndex}'`;
       const path = `m/${purpose}/${coin}/${account}/0/0`;
       const derivationStrategy = getDerivationStrategy(path);
-
       const {publicKey} = await eth.getAddress(path);
-
       const newWallet = await dispatch(
         startImportFromHardwareWallet({
           hardwareSource: 'ledger',
           publicKey,
           accountPath: path,
-          coin: 'eth',
+          coin: currencySymbol,
           derivationStrategy,
           useNativeSegwit: false,
           accountNumber: Number(accountIndex),
@@ -404,26 +500,21 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     network: Network,
     account: string,
   ) => {
-    if (currency === 'btc') {
-      return importBtcAccount({
-        network,
-        accountIndex: account,
-      });
+    const configFn = currencyConfigs[currency];
+    if (!configFn) {
+      setError(`Unsupported currency: ${currency.toUpperCase()}`);
+      return;
+    }
+    const params = configFn(network, account, useNativeSegwit);
+    if (IsUtxoCoin(currency)) {
+      return importUtxoAccount(params as UtxoAccountParams);
     }
     if (currency === 'eth') {
-      return importEthAccount({
-        network,
-        accountIndex: account,
-      });
+      return importEthAccount(params as EthAccountParams);
     }
     if (currency === 'xrp') {
-      return importXrpAccount({
-        network,
-        accountIndex: account,
-      });
+      return importXrpAccount(params as XrpAccountParams);
     }
-
-    setError(`Unsupported currency: ${currency.toUpperCase()}`);
   };
 
   const onContinue = async () => {

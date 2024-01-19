@@ -931,7 +931,7 @@ export const startImportFromHardwareWallet =
     xPubKey?: string;
     publicKey?: string;
     accountPath: string;
-    coin: 'btc' | 'eth' | 'xrp';
+    coin: 'btc' | 'eth' | 'xrp' | 'bch' | 'ltc' | 'doge';
     useNativeSegwit: boolean;
     derivationStrategy: string;
     accountNumber: number;
