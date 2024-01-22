@@ -15,7 +15,12 @@ import TouchID from 'react-native-touch-id-ng';
 import styled from 'styled-components/native';
 import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
-import {Animated, TouchableOpacity, NativeModules} from 'react-native';
+import {
+  Animated,
+  TouchableOpacity,
+  NativeModules,
+  DeviceEventEmitter,
+} from 'react-native';
 import {
   TO_HANDLE_ERRORS,
   BiometricError,
@@ -25,6 +30,7 @@ import {
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 const BiometricContainer = styled.View`
   flex: 1;
@@ -125,6 +131,7 @@ const BiometricModal: React.FC = () => {
         dispatch(AppActions.dismissBiometricModal());
         dispatch(AppActions.showBlur(false));
         onClose?.(true);
+        DeviceEventEmitter.emit(DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED);
       })
       .catch((error: BiometricError) => {
         if (error.code && TO_HANDLE_ERRORS[error.code]) {

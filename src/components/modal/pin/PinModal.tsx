@@ -2,12 +2,19 @@ import {useNavigation} from '@react-navigation/native';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Animated, TouchableOpacity, View, NativeModules} from 'react-native';
+import {
+  Animated,
+  DeviceEventEmitter,
+  TouchableOpacity,
+  View,
+  NativeModules,
+} from 'react-native';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {useTheme} from 'styled-components/native';
 import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {BwcProvider} from '../../../lib/bwc';
 import {AppActions} from '../../../store/app';
@@ -126,6 +133,7 @@ const Pin = gestureHandlerRootHOC(() => {
         dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
         reset();
         onClose?.(true);
+        DeviceEventEmitter.emit(DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED);
       } else {
         setShakeDots(true);
         setMessage(t('Incorrect PIN, try again'));
