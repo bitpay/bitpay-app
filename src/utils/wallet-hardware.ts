@@ -61,7 +61,7 @@ export const credentialsFromExtendedPublicKey = (
   network: Network,
   hwKeyId: string,
   xPubKey?: string,
-  hardwareSourcePublicKey?: string, // address ( evm )
+  hardwareSourcePublicKey?: string,
 ) => {
   // create request keys from entropy (hw wallets)
   const entropySourceHex =

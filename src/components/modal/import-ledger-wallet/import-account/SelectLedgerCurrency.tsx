@@ -9,6 +9,9 @@ import styled from 'styled-components/native';
 import BtcLogoSvg from '../../../../../assets/img/currencies/btc.svg';
 import EthLogoSvg from '../../../../../assets/img/currencies/eth.svg';
 import XrpLogoSvg from '../../../../../assets/img/currencies/xrp.svg';
+import BchLogoSvg from '../../../../../assets/img/currencies/bch.svg';
+import LtcLogoSvg from '../../../../../assets/img/currencies/ltc.svg';
+import DogeLogoSvg from '../../../../../assets/img/currencies/doge.svg';
 import Checkbox from '../../../checkbox/Checkbox';
 import {
   AdvancedOptions,
@@ -80,7 +83,7 @@ interface Props {
   }) => void;
 }
 
-interface BaseAccountParams {
+export interface BaseAccountParams {
   appName: SupportedLedgerAppNames;
   network: Network;
   accountIndex: string;
@@ -88,27 +91,27 @@ interface BaseAccountParams {
   coin: string;
 }
 
-interface UtxoAccountParams extends BaseAccountParams {
+export interface UtxoAccountParams extends BaseAccountParams {
   currencyId: string;
   transportCurrency: string;
   currencySymbol: 'btc' | 'bch' | 'ltc' | 'doge';
 }
 
-interface EthAccountParams extends BaseAccountParams {
+export interface EthAccountParams extends BaseAccountParams {
   currencySymbol: 'eth';
 }
 
-interface XrpAccountParams extends BaseAccountParams {
+export interface XrpAccountParams extends BaseAccountParams {
   currencySymbol: 'xrp';
 }
 
-type CurrencyConfigFn = (
+export type CurrencyConfigFn = (
   network: Network,
   accountIndex: string,
   useNativeSegwit?: boolean,
 ) => UtxoAccountParams | EthAccountParams | XrpAccountParams;
 
-const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
+export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
   btc: (network, account, useNativeSegwit) => {
     const isMainnet = network === Network.mainnet;
     return {
@@ -182,6 +185,8 @@ const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
 };
 
 const List = styled.View``;
+
+const ScrollView = styled.ScrollView``;
 
 const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
   margin-top: 20px;
@@ -257,6 +262,24 @@ const CURRENCIES = [
     coin: 'xrp',
     label: 'XRP',
     icon: <XrpLogoSvg height={35} width={35} />,
+    isTestnetSupported: false,
+  },
+  {
+    coin: 'bch',
+    label: 'BCH',
+    icon: <BchLogoSvg height={35} width={35} />,
+    isTestnetSupported: false,
+  },
+  {
+    coin: 'ltc',
+    label: 'LTC',
+    icon: <LtcLogoSvg height={35} width={35} />,
+    isTestnetSupported: false,
+  },
+  {
+    coin: 'doge',
+    label: 'DOGE',
+    icon: <DogeLogoSvg height={35} width={35} />,
     isTestnetSupported: false,
   },
 ];
@@ -419,7 +442,10 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
         const account = `${accountIndex}'`;
         const path = `m/${purpose}/${coin}/${account}`;
         const derivationStrategy = getDerivationStrategy(path);
-        const xpubVersion = c.bitcoinLikeInfo.XPUBVersion;
+        const xpubVersion =
+          currencySymbol.includes('doge') || currencySymbol.includes('ltc')
+            ? 0x0488b21e // doge and ltc uses the same xpub version as btc
+          : c.bitcoinLikeInfo.XPUBVersion;
 
         const xPubKey = await app.getWalletXpub({
           path,
@@ -548,136 +574,138 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
   }, [isTestnetEnabled]);
 
   return (
-    <Wrapper>
-      <Header>
-        <H3>Choose Currency to Import</H3>
-      </Header>
+    <ScrollView>
+      <Wrapper>
+        <Header>
+          <H3>Choose Currency to Import</H3>
+        </Header>
 
-      {error && !isLoading ? (
-        <DescriptionRow>
-          <ErrParagraph>{error}</ErrParagraph>
-        </DescriptionRow>
-      ) : null}
+        {error && !isLoading ? (
+          <DescriptionRow>
+            <ErrParagraph>{error}</ErrParagraph>
+          </DescriptionRow>
+        ) : null}
 
-      {isLoading ? (
-        <DescriptionRow>
-          {isPromptOpenApp ? (
-            <Paragraph>Approve the app on your Ledger</Paragraph>
-          ) : (
-            <Paragraph>Waiting for Ledger...</Paragraph>
-          )}
-        </DescriptionRow>
-      ) : (
-        <>
-          <List>
-            {CURRENCIES.map(c => (
-              <CurrencyRow key={c.coin}>
-                <ShrinkColumn>{c.icon}</ShrinkColumn>
-                <StretchColumn
-                  style={{
-                    marginLeft: 16,
-                  }}>
-                  <H6>{c.label}</H6>
-                </StretchColumn>
-                <ShrinkColumn>
-                  <Checkbox
-                    disabled={isLoading}
-                    radio={true}
-                    onPress={() => setSelectedCurrency(c.coin)}
-                    checked={selectedCurrency === c.coin}
-                  />
-                </ShrinkColumn>
-              </CurrencyRow>
-            ))}
-          </List>
+        {isLoading ? (
+          <DescriptionRow>
+            {isPromptOpenApp ? (
+              <Paragraph>Approve the app on your Ledger</Paragraph>
+            ) : (
+              <Paragraph>Waiting for Ledger...</Paragraph>
+            )}
+          </DescriptionRow>
+        ) : (
+          <>
+            <List>
+              {CURRENCIES.map(c => (
+                <CurrencyRow key={c.coin}>
+                  <ShrinkColumn>{c.icon}</ShrinkColumn>
+                  <StretchColumn
+                    style={{
+                      marginLeft: 16,
+                    }}>
+                    <H6>{c.label}</H6>
+                  </StretchColumn>
+                  <ShrinkColumn>
+                    <Checkbox
+                      disabled={isLoading}
+                      radio={true}
+                      onPress={() => setSelectedCurrency(c.coin)}
+                      checked={selectedCurrency === c.coin}
+                    />
+                  </ShrinkColumn>
+                </CurrencyRow>
+              ))}
+            </List>
 
-          <WalletAdvancedOptionsContainer>
-            <AdvancedOptionsButton
-              onPress={() => {
-                haptic('impactLight');
-                setShowOptions(!showOptions);
-              }}>
-              {showOptions ? (
-                <>
-                  <AdvancedOptionsButtonText>
-                    {t('Hide Advanced Options')}
-                  </AdvancedOptionsButtonText>
-                  <ChevronUpSvg />
-                </>
-              ) : (
-                <>
-                  <AdvancedOptionsButtonText>
-                    {t('Show Advanced Options')}
-                  </AdvancedOptionsButtonText>
-                  <ChevronDownSvg />
-                </>
+            <WalletAdvancedOptionsContainer>
+              <AdvancedOptionsButton
+                onPress={() => {
+                  haptic('impactLight');
+                  setShowOptions(!showOptions);
+                }}>
+                {showOptions ? (
+                  <>
+                    <AdvancedOptionsButtonText>
+                      {t('Hide Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                    <ChevronUpSvg />
+                  </>
+                ) : (
+                  <>
+                    <AdvancedOptionsButtonText>
+                      {t('Show Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                    <ChevronDownSvg />
+                  </>
+                )}
+              </AdvancedOptionsButton>
+
+              {showOptions && (
+                <AdvancedOptions>
+                  <InputContainer>
+                    <BoxInput
+                      accessibilityLabel="account-box-input"
+                      label={'Account'}
+                      onChangeText={(text: string) => {
+                        setAccountIndex(text);
+                      }}
+                      value={accountIndex}
+                    />
+                  </InputContainer>
+                </AdvancedOptions>
               )}
-            </AdvancedOptionsButton>
 
-            {showOptions && (
-              <AdvancedOptions>
-                <InputContainer>
-                  <BoxInput
-                    accessibilityLabel="account-box-input"
-                    label={'Account'}
-                    onChangeText={(text: string) => {
-                      setAccountIndex(text);
-                    }}
-                    value={accountIndex}
-                  />
-                </InputContainer>
-              </AdvancedOptions>
-            )}
+              {showOptions && nativeSegwitCurrency && (
+                <AdvancedOptions>
+                  <RowContainer
+                    onPress={() => {
+                      setUseNativeSegwit(!useNativeSegwit);
+                    }}>
+                    <Column>
+                      <OptionTitle>Segwit</OptionTitle>
+                    </Column>
+                    <CheckBoxContainer>
+                      <Checkbox
+                        checked={useNativeSegwit}
+                        onPress={() => {
+                          setUseNativeSegwit(!useNativeSegwit);
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
+              )}
 
-            {showOptions && nativeSegwitCurrency && (
-              <AdvancedOptions>
-                <RowContainer
-                  onPress={() => {
-                    setUseNativeSegwit(!useNativeSegwit);
-                  }}>
-                  <Column>
-                    <OptionTitle>Segwit</OptionTitle>
-                  </Column>
-                  <CheckBoxContainer>
-                    <Checkbox
-                      checked={useNativeSegwit}
-                      onPress={() => {
-                        setUseNativeSegwit(!useNativeSegwit);
-                      }}
-                    />
-                  </CheckBoxContainer>
-                </RowContainer>
-              </AdvancedOptions>
-            )}
-
-            {showOptions && (
-              <AdvancedOptions>
-                <RowContainer activeOpacity={1}>
-                  <Column>
-                    <OptionTitle>
-                      {getProtocolName(selectedCurrency || '', 'testnet')}
-                    </OptionTitle>
-                  </Column>
-                  <CheckBoxContainer>
-                    <Checkbox
-                      disabled={isLoading || !isTestnetEnabled}
-                      checked={useTestnet}
-                      onPress={() => {
-                        setUseTestnet(x => !x);
-                      }}
-                    />
-                  </CheckBoxContainer>
-                </RowContainer>
-              </AdvancedOptions>
-            )}
-          </WalletAdvancedOptionsContainer>
-        </>
-      )}
-      <ActionsRow>
-        <Button state={continueButtonState} onPress={onContinue}>
-          Continue
-        </Button>
-      </ActionsRow>
-    </Wrapper>
+              {showOptions && (
+                <AdvancedOptions>
+                  <RowContainer activeOpacity={1}>
+                    <Column>
+                      <OptionTitle>
+                        {getProtocolName(selectedCurrency || '', 'testnet')}
+                      </OptionTitle>
+                    </Column>
+                    <CheckBoxContainer>
+                      <Checkbox
+                        disabled={isLoading || !isTestnetEnabled}
+                        checked={useTestnet}
+                        onPress={() => {
+                          setUseTestnet(x => !x);
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
+              )}
+            </WalletAdvancedOptionsContainer>
+          </>
+        )}
+        <ActionsRow>
+          <Button state={continueButtonState} onPress={onContinue}>
+            Continue
+          </Button>
+        </ActionsRow>
+      </Wrapper>
+    </ScrollView>
   );
 };

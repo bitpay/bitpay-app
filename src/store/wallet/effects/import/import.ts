@@ -854,7 +854,7 @@ export const startImportMnemonic =
         } = findMatchedKeyAndUpdate(
           data.wallets,
           data.key,
-          Object.values(WALLET.keys).filter(k => k.id !== 'readonly'), // Avoid checking readonly keys
+          Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')), // Avoid checking readonly keys
           opts,
         );
 
@@ -1148,7 +1148,12 @@ export const startImportFile =
         let wallets = [wallet];
 
         const matchedKey = _key
-          ? getMatchedKey(_key, Object.values(WALLET.keys))
+          ? getMatchedKey(
+              _key,
+              Object.values(WALLET.keys).filter(
+                k => !k.id.includes('readonly'),
+              ),
+            )
           : getReadOnlyKey(Object.values(WALLET.keys));
 
         if (matchedKey && !opts?.keyId) {
@@ -1297,7 +1302,10 @@ export const startImportWithDerivationPath =
           );
 
           let key;
-          const matchedKey = getMatchedKey(_key, Object.values(WALLET.keys));
+          const matchedKey = getMatchedKey(
+            _key,
+            Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')),
+          );
           if (matchedKey) {
             // To avoid duplicate key creation when importing
             wallet.credentials.keyId = wallet.keyId = matchedKey.id;

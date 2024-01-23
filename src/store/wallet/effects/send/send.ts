@@ -65,7 +65,7 @@ import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {GetPrecision, IsERCToken} from '../../utils/currency';
+import {GetPrecision, IsERCToken, IsUtxoCoin} from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
 import {createWalletAddress, ToCashAddress} from '../address/address';
@@ -99,6 +99,10 @@ import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.mode
 import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {SupportedTokenOptions} from '../../../../constants/SupportedCurrencyOptions';
+import {
+  UtxoAccountParams,
+  currencyConfigs,
+} from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1383,7 +1387,7 @@ const isString = (s: any): s is string => {
   return typeof s === 'string';
 };
 
-const createLedgerTransactionArgBtc = (
+const createLedgerTransactionArgUtxo = (
   wallet: Wallet,
   txp: TransactionProposal,
 ) => {
@@ -1429,10 +1433,14 @@ const createLedgerTransactionArgBtc = (
         txpAsTx.inputs.map(async input => {
           // prevTxId is given in BigEndian format, no need to reverse
           const txId = input.prevTxId.toString('hex');
-          const inputTxHex = await fetchBtcTxById(txId, txp.network);
+          const txp = await getTxByHash(wallet, txId);
+          const inputTxHex = txp.raw;
+          // const inputTxHex = await fetchBtcTxById(txId, txp.network);
 
-          // TODO: safe to always set this to true?
-          const isSegwitSupported = false;
+          const isSegwitSupported = ['btc', 'ltc', 'doge'].includes(txp.coin)
+            ? true
+            : false;
+          // TODO: safe to always set this to false or undefined?
           const hasTimestamp = false;
           const hasExtraData = false;
           const additionals: string[] | undefined = undefined;
@@ -1445,8 +1453,9 @@ const createLedgerTransactionArgBtc = (
           );
 
           const outputIndex = input.outputIndex;
+          // TODO: safe to always set this to undefined ?
           const redeemScript = undefined; // TODO: optional redeem script to use when consuming a segwit input
-          const sequence = input.sequenceNumber;
+          const sequence = undefined; // optional
 
           const inputData: CreateTransactionArg['inputs'][0] = [
             inputTx,
@@ -1469,9 +1478,7 @@ const createLedgerTransactionArgBtc = (
       // undefined will default to SIGHASH_ALL.
       // BWC currently uses undefined when signing UTXO tx so we do the same here
       const sigHashType = undefined;
-
-      // TODO
-      const segwit = false;
+      const segwit = ['btc', 'ltc', 'doge'].includes(txp.coin) ? true : false;
 
       const outputs = txpAsTx.outputs.map(output => {
         const amountBuf = Buffer.alloc(8);
@@ -1495,7 +1502,13 @@ const createLedgerTransactionArgBtc = (
        * 'bipxxx' for using BIPxxx,
        * 'sapling' to indicate a zec transaction is supporting sapling
        */
-      const additionals: string[] = [];
+      let additionals: string[] = [];
+
+      if (txp.coin === 'bch') {
+        additionals = ['abc', 'cashaddr'];
+      } else if (['btc', 'ltc', 'doge'].includes(txp.coin)) {
+        additionals = ['bech32']; // TODO: safe to always set this to 'bech32' ? Potencial issues here
+      }
 
       const arg: CreateTransactionArg = {
         inputs,
@@ -1514,19 +1527,18 @@ const createLedgerTransactionArgBtc = (
   });
 };
 
-const getBtcSignaturesFromLedger = async (
+const getUtxoSignaturesFromLedger = async (
   wallet: Wallet,
   txp: TransactionProposal,
   transport: Transport,
+  params: UtxoAccountParams,
 ) => {
-  const isTestnet = txp.network === Network.testnet;
-
-  const btc = new AppBtc({
+  const app = new AppBtc({
     transport,
-    currency: isTestnet ? 'bitcoin_testnet' : 'bitcoin',
+    currency: params.transportCurrency,
   });
 
-  const arg = await createLedgerTransactionArgBtc(wallet, txp).catch(err => {
+  const arg = await createLedgerTransactionArgUtxo(wallet, txp).catch(err => {
     const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
 
     throw new Error(
@@ -1542,7 +1554,7 @@ const getBtcSignaturesFromLedger = async (
   // @ts-ignore
   arg.patch_signatureArray = extractedSignatures;
 
-  await btc.createPaymentTransaction(arg);
+  await app.createPaymentTransaction(arg);
 
   // remove the sighashtype (last byte)
   const signatures = extractedSignatures.map(sigBuf => {
@@ -1645,23 +1657,25 @@ const getSignaturesFromLedger = (
   wallet: Wallet,
   txp: TransactionProposal,
 ) => {
-  if (!transport) {
-    throw new Error('Transport is required to get signatures from Ledger');
+  const {coin: currency, network, account, chain} = wallet.credentials;
+  if (IsUtxoCoin(currency)) {
+    const configFn = currencyConfigs[currency];
+    const params = configFn(network, account);
+    return getUtxoSignaturesFromLedger(
+      wallet,
+      txp,
+      transport,
+      params as UtxoAccountParams,
+    );
   }
-
-  if (txp.coin === 'btc') {
-    return getBtcSignaturesFromLedger(wallet, txp, transport);
-  }
-
-  if (txp.coin === 'eth' || IsERCToken(txp.coin, txp.chain)) {
+  if (currency === 'eth' || IsERCToken(currency, chain)) {
     return getEthSignaturesFromLedger(txp, transport);
   }
-
-  if (txp.coin === 'xrp') {
+  if (currency === 'xrp') {
     return getXrpSignaturesFromLedger(wallet, txp, transport);
   }
 
-  throw new Error('Unsupported currency: ' + txp.coin);
+  throw new Error(`Unsupported currency: ${currency.toUpperCase()}`);
 };
 
 const getSignaturesFromHardwareWallet = (
@@ -2025,6 +2039,17 @@ export const buildBtcSpeedupTx =
 export const getTx = (wallet: Wallet, txpid: string): Promise<any> => {
   return new Promise((resolve, reject) => {
     wallet.getTx(txpid, (err: any, txp: Partial<TransactionProposal>) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(txp);
+    });
+  });
+};
+
+export const getTxByHash = (wallet: Wallet, hash: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    wallet.getTxByHash(hash, (err: any, txp: Partial<TransactionProposal>) => {
       if (err) {
         return reject(err);
       }

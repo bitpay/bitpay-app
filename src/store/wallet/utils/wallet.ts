@@ -720,7 +720,7 @@ export const getMatchedKey = (key: any, keys: Key[]) => {
 };
 
 export const getReadOnlyKey = (keys: Key[]) => {
-  return keys.find(k => k.id === 'readonly');
+  return keys.find(k => k.id.includes('readonly'));
 };
 
 export const findMatchedKeyAndUpdate = (
