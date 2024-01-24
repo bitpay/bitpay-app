@@ -16,7 +16,6 @@ import {
   Linking,
   NativeEventEmitter,
   NativeModules,
-  Platform,
   StatusBar,
 } from 'react-native';
 import 'react-native-gesture-handler';
@@ -488,10 +487,7 @@ export default () => {
               }
             };
 
-            if (
-              (pinLockActive || biometricLockActive) &&
-              Platform.OS === 'ios'
-            ) {
+            if (pinLockActive || biometricLockActive) {
               const subscriptionToPinModalDismissed =
                 DeviceEventEmitter.addListener(
                   DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,

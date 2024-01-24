@@ -5,12 +5,7 @@ import {
   PathConfig,
 } from '@react-navigation/native';
 import {useMemo, useRef} from 'react';
-import {
-  DeviceEventEmitter,
-  Linking,
-  NativeModules,
-  Platform,
-} from 'react-native';
+import {DeviceEventEmitter, Linking, NativeModules} from 'react-native';
 import AppsFlyer from 'react-native-appsflyer';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {
@@ -179,7 +174,7 @@ export const useDeeplinks = () => {
           }
         };
 
-        if ((pinLockActive || biometricLockActive) && Platform.OS === 'ios') {
+        if (pinLockActive || biometricLockActive) {
           if (lockAuthorizedUntil) {
             const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
             const totalSecs =
