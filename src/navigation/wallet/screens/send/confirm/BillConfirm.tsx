@@ -1,9 +1,5 @@
 import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {HeaderRightContainer} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -113,11 +109,11 @@ const BillConfirm: React.VFC<
       : []),
     amount,
     amountType:
-      billPayments.length === 1 ? billPayments[0].billPayAccount : 'multiple',
+      billPayments.length === 1 ? billPayments[0].amountType : 'multiple',
     numAccounts: billPayments.length,
     ...((wallet || coinbaseAccount) && {
       coin: wallet ? wallet.currencyAbbreviation : coinbaseAccount?.currency,
-      walletType: wallet ? 'BitPay Wallet' : 'Coinbase Account',
+      walletOrExchange: wallet ? 'BitPay Wallet' : 'Coinbase Account',
     }),
   };
 
@@ -161,11 +157,12 @@ const BillConfirm: React.VFC<
     });
   }, [navigation, t]);
 
-  useFocusEffect(() => {
+  useEffect(() => {
     dispatch(
       Analytics.track('Bill Pay — Viewed Confirm Page', baseEventParams),
     );
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openWalletSelector = async (delay?: number) => {
     if (delay) {

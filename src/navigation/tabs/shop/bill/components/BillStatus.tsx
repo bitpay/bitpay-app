@@ -85,7 +85,7 @@ const statusFields = {
   sent: {
     backgroundColor: '#CBF3E8',
     color: '#0B754A',
-    text: 'Completed',
+    text: 'Sent',
     darkTheme: {
       backgroundColor: '#076A46',
       color: '#4FEFC4',

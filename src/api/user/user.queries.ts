@@ -26,6 +26,8 @@ export const basicInfoFields = `
 export const basicInfoExternalFields = `
   address
   dateOfBirth
+  legalFamilyName
+  legalGivenName
 `;
 
 /**

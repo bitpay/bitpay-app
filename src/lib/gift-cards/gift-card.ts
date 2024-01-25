@@ -306,6 +306,17 @@ export function getGiftCardIcons(supportedCardMap: CardConfigMap) {
   );
 }
 
+export function isGiftCardDisplayable(
+  giftCard: GiftCard,
+  supportedGiftCardMap: CardConfigMap = {},
+) {
+  return (
+    supportedGiftCardMap[giftCard.name] &&
+    (['PENDING', 'SUCCESS', 'SYNCED'].includes(giftCard.status) ||
+      redemptionFailuresLessThanADayOld(giftCard))
+  );
+}
+
 export function generateGiftCardPrintHtml(
   cardConfig: CardConfig,
   giftCard: GiftCard,
