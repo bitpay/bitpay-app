@@ -133,6 +133,7 @@ import {
 } from '../../../../store/buy-crypto/effects/sardine/sardine';
 import {transakGetFiatCurrencies} from '../../../../store/buy-crypto/effects/transak/transak';
 import {
+  getPassthroughUri,
   getTransakChainFormat,
   getTransakCoinFormat,
   getTransakPaymentMethodFormat,
@@ -2202,7 +2203,7 @@ const BuyCryptoOffers: React.FC = () => {
       env: transakEnv,
       walletAddress: address,
       disableWalletAddressForm: true,
-      redirectURL: 'https://gamboster.github.io/transak/',
+      redirectURL: getPassthroughUri(),
       exchangeScreenTitle: 'Bitpay - Buy crypto',
       fiatAmount: offers.transak.fiatAmount,
       fiatCurrency: offers.transak.fiatCurrency.toUpperCase(),
@@ -2536,11 +2537,11 @@ const BuyCryptoOffers: React.FC = () => {
                       <SimplexTerms paymentMethod={paymentMethod} />
                     ) : null}
                     {offer.key == 'transak' ? (
-                    <TransakTerms
-                      paymentMethod={paymentMethod}
-                      country={country}
-                    />
-                  ) : null}
+                      <TransakTerms
+                        paymentMethod={paymentMethod}
+                        country={country}
+                      />
+                    ) : null}
                   </>
                 ) : null}
               </BuyCryptoExpandibleCard>

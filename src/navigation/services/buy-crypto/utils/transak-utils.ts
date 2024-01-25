@@ -8,6 +8,9 @@ import {
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {PaymentMethod, PaymentMethodKey} from '../constants/BuyCryptoConstants';
 
+const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/transak/';
+const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/transak/';
+
 export const transakEnv = __DEV__ ? 'sandbox' : 'production';
 
 export const transakSupportedFiatCurrencies = [
@@ -283,6 +286,10 @@ export const getTransakSelectedPaymentMethodData = (
   }
 
   return transakSelectedPaymentMethodData;
+};
+
+export const getPassthroughUri = (): string => {
+  return __DEV__ ? PASSTHROUGH_URI_DEV : PASSTHROUGH_URI_PROD;
 };
 
 export const getTransakCoinFormat = (coin: string): string => {
