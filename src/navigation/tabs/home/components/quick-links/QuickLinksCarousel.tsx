@@ -12,6 +12,7 @@ interface QuickLinksCarouselProps {
 }
 
 const itemWidth = 225;
+const itemHeight = 125;
 
 const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   contentCards,
@@ -37,7 +38,7 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
       vertical={false}
       style={{width: WIDTH}}
       width={itemWidth}
-      height={itemWidth}
+      height={itemHeight}
       autoPlay={false}
       data={contentCards}
       scrollAnimationDuration={1000}
