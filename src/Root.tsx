@@ -472,17 +472,32 @@ export default () => {
               dispatch(AppActions.showBiometricModal({}));
             }
 
-            if (onboardingCompleted) {
-              const getBrazeInitialUrl = async (): Promise<string> =>
-                new Promise(resolve =>
-                  Braze.getInitialURL(deepLink => resolve(deepLink)),
+            const urlHandler = async () => {
+              if (onboardingCompleted) {
+                const getBrazeInitialUrl = async (): Promise<string> =>
+                  new Promise(resolve =>
+                    Braze.getInitialURL(deepLink => resolve(deepLink)),
+                  );
+                const [url, brazeUrl] = await Promise.all([
+                  Linking.getInitialURL(),
+                  getBrazeInitialUrl(),
+                ]);
+                await sleep(10);
+                urlEventHandler({url: url || brazeUrl});
+              }
+            };
+
+            if (pinLockActive || biometricLockActive) {
+              const subscriptionToPinModalDismissed =
+                DeviceEventEmitter.addListener(
+                  DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+                  () => {
+                    subscriptionToPinModalDismissed.remove();
+                    urlHandler();
+                  },
                 );
-              const [url, brazeUrl] = await Promise.all([
-                Linking.getInitialURL(),
-                getBrazeInitialUrl(),
-              ]);
-              await sleep(10);
-              urlEventHandler({url: url || brazeUrl});
+            } else {
+              urlHandler();
             }
 
             dispatch(LogActions.info('QuickActions Initialized'));
