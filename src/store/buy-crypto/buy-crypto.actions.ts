@@ -10,6 +10,8 @@ import {
   SardineIncomingData,
   SimplexPaymentData,
   SimplexIncomingData,
+  TransakPaymentData,
+  TransakIncomingData,
   WyrePaymentData,
 } from './buy-crypto.models';
 
@@ -115,6 +117,27 @@ export const removePaymentRequestSimplex = (payload: {
   paymentId: string;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_SIMPLEX,
+  payload,
+});
+
+export const successPaymentRequestTransak = (payload: {
+  transakPaymentData: TransakPaymentData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_TRANSAK,
+  payload,
+});
+
+export const updatePaymentRequestTransak = (payload: {
+  transakIncomingData: TransakIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_TRANSAK,
+  payload,
+});
+
+export const removePaymentRequestTransak = (payload: {
+  transakExternalId: string;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_TRANSAK,
   payload,
 });
 

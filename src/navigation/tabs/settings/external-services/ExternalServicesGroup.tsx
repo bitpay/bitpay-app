@@ -11,6 +11,8 @@ import SardineSettings from './screens/SardineSettings';
 import SardineDetails from './screens/SardineDetails';
 import SimplexSettings from './screens/SimplexSettings';
 import SimplexDetails from './screens/SimplexDetails';
+import TransakSettings from './screens/TransakSettings';
+import TransakDetails from './screens/TransakDetails';
 import WyreSettings from './screens/WyreSettings';
 import WyreDetails from './screens/WyreDetails';
 import ChangellySettings from './screens/ChangellySettings';
@@ -26,6 +28,8 @@ import {
   SardinePaymentData,
   SimplexIncomingData,
   SimplexPaymentData,
+  TransakIncomingData,
+  TransakPaymentData,
   WyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
@@ -81,6 +85,14 @@ export type ExternalServicesSettingsGroupParamList = {
   SimplexDetails: {
     paymentRequest: SimplexPaymentData;
   };
+  TransakSettings:
+    | {
+        incomingPaymentRequest?: TransakIncomingData;
+      }
+    | undefined;
+  TransakDetails: {
+    paymentRequest: TransakPaymentData;
+  };
   WyreSettings:
     | {
         incomingPaymentRequest?: WyrePaymentData;
@@ -107,6 +119,8 @@ export enum ExternalServicesSettingsScreens {
   SARDINE_DETAILS = 'SardineDetails',
   SIMPLEX_SETTINGS = 'SimplexSettings',
   SIMPLEX_DETAILS = 'SimplexDetails',
+  TRANSAK_SETTINGS = 'TransakSettings',
+  TRANSAK_DETAILS = 'TransakDetails',
   WYRE_SETTINGS = 'WyreSettings',
   WYRE_DETAILS = 'WyreDetails',
   CHANGELLY_SETTINGS = 'ChangellySettings',
@@ -196,6 +210,20 @@ const ExternalServicesSettingsGroup: React.FC<
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.SIMPLEX_DETAILS}
         component={SimplexDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.TRANSAK_SETTINGS}
+        component={TransakSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Transak Settings')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.TRANSAK_DETAILS}
+        component={TransakDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
         }}

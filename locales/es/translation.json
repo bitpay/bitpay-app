@@ -432,6 +432,8 @@
   "It was not possible to generate the checkout URL correctly": "It was not possible to generate the checkout URL correctly",
   "No offers": "No offers",
   "There are currently no offers that satisfy your request. Please try again later.": "There are currently no offers that satisfy your request. Please try again later.",
+  "Transak currently does not support operations with the selected combination fiat(fiatCurrency)-paymentMethod(paymentMethod).": "Transak currently does not support operations with the selected combination fiat({{fiatCurrency}})-paymentMethod({{paymentMethod}}).",
+  "There are no Transak offers available, as the current purchase limits for this exchange must be between and": "There are no Transak offers available, as the current purchase limits for this exchange must be between {{min}} {{fiatCurrency}} and {{max}} {{fiatCurrency}}",
   "Crypto": "Cripto",
   "Payment Type": "Tipo de pago",
   "Error: ": "Error: ",

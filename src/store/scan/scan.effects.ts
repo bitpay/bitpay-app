@@ -31,6 +31,7 @@ import {
   IsValidRippleAddress,
   IsValidRippleUri,
   isValidSardineUri,
+  isValidTransakUri,
   isValidSimplexUri,
   isValidWalletConnectUri,
   IsBitPayInvoiceWebUrl,
@@ -46,6 +47,8 @@ import {
   SardineIncomingData,
   SardinePaymentData,
   SimplexIncomingData,
+  TransakIncomingData,
+  TransakStatusKey,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
 import {startOnGoingProcessModal} from '../app/app.effects';
@@ -181,6 +184,9 @@ export const incomingData =
         // Simplex
       } else if (isValidSimplexUri(data)) {
         dispatch(handleSimplexUri(data));
+        // Transak
+      } else if (isValidTransakUri(data)) {
+        dispatch(handleTransakUri(data));
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
         dispatch(handleBitPayUri(data, opts?.wallet));
@@ -1331,6 +1337,66 @@ const handleSimplexUri =
         },
         {
           name: 'SimplexSettings',
+          params: {incomingPaymentRequest: stateParams},
+        },
+      ],
+    });
+  };
+
+const handleTransakUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('Incoming-data (redirect): Transak URL: ' + data));
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+
+    const transakExternalId = getParameterByName('partnerOrderId', res);
+    if (!transakExternalId) {
+      dispatch(LogActions.warn('No transakExternalId present. Do not redir'));
+      return;
+    }
+
+    const order_id = getParameterByName('orderId', res);
+    const status = getParameterByName('status', res) as
+      | TransakStatusKey
+      | undefined;
+
+    const stateParams: TransakIncomingData = {
+      transakExternalId,
+      status,
+      order_id,
+    };
+
+    dispatch(
+      BuyCryptoActions.updatePaymentRequestTransak({
+        transakIncomingData: stateParams,
+      }),
+    );
+
+    if (order_id) {
+      const {BUY_CRYPTO} = getState();
+      const order = BUY_CRYPTO.transak[transakExternalId];
+
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'transak',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin?.toLowerCase() || '',
+          chain: order?.chain?.toLowerCase() || '',
+        }),
+      );
+    }
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'TransakSettings',
           params: {incomingPaymentRequest: stateParams},
         },
       ],
