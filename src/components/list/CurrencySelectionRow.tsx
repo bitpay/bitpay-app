@@ -39,6 +39,7 @@ export type CurrencySelectionRowProps = {
   tokens?: CurrencySelectionItem[];
   description?: string;
   hideCheckbox?: boolean;
+  disableCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
   onToggle?: (
     currencyAbbreviation: string,
@@ -108,13 +109,15 @@ const ViewAllLink = styled(H6)`
 interface ChainSelectionRowProps {
   currency: CurrencySelectionItem;
   hideCheckbox?: boolean;
+  disableCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
   onToggle?: (id: string) => any;
 }
 
 export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
   props => {
-    const {onToggle, currency, hideCheckbox, selectionMode} = props;
+    const {onToggle, currency, hideCheckbox, selectionMode, disableCheckbox} =
+      props;
     const {
       currencyAbbreviation,
       currencyName,
@@ -130,7 +133,11 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
     return (
       <FlexRow
         accessibilityLabel="chain-selection-row"
-        onPress={() => onToggle?.(currencyAbbreviation)}>
+        onPress={() =>
+          !disabled && !disableCheckbox
+            ? onToggle?.(currencyAbbreviation)
+            : null
+        }>
         <CurrencyColumn>
           <CurrencyImage img={img} imgSrc={imgSrc} />
         </CurrencyColumn>
@@ -141,7 +148,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
           <CurrencySubTitle>{_currencyAbbreviation}</CurrencySubTitle>
         </CurrencyTitleColumn>
 
-        {!hideCheckbox && (
+        {(!hideCheckbox && !disableCheckbox) && (
           <CurrencyColumn accessibilityLabel="chain-selection-row-checkbox">
             <Checkbox
               checked={!!selected}
@@ -252,6 +259,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   description,
   tokens,
   hideCheckbox,
+  disableCheckbox,
   selectionMode,
   onToggle,
   onViewAllTokensPressed,
@@ -277,6 +285,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
         onToggle={() => onPress(currency.currencyAbbreviation, currency.chain)}
         hideCheckbox={hideCheckbox}
         selectionMode={selectionMode}
+        disableCheckbox={disableCheckbox}
       />
 
       {description ? <DescriptionRow>{description}</DescriptionRow> : null}
