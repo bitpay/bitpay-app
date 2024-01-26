@@ -13,6 +13,7 @@ import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getGiftCardConfigList,
   getGiftCardCurations,
+  isGiftCardDisplayable,
 } from '../../../lib/gift-cards/gift-card';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
@@ -73,17 +74,16 @@ const ShopInnerContainer = styled.View`
 const getGiftCardsScrollViewHeight = (
   availableGiftCards: CardConfig[],
   numSelectedGiftCards: number,
-  purchasedCards: GiftCard[],
+  activeGiftCards: GiftCard[],
   curations: any,
 ) => {
-  const activeGiftCards = purchasedCards.filter(giftCard => !giftCard.archived);
-  const purchasedBrandsHeight = activeGiftCards.length * 68 + 260;
+  const activeGiftCardsHeight = activeGiftCards.length * 68 + 260;
   const curationsHeight = curations.length * 320;
   const giftCardItemHeight = 87;
   const giftCardsBottomPadding = 100;
   const searchBarHeight = 150;
   const staticGiftCardScrollViewHeight =
-    purchasedBrandsHeight + curationsHeight + searchBarHeight;
+    activeGiftCardsHeight + curationsHeight + searchBarHeight;
   const giftCardListHeight =
     (numSelectedGiftCards || availableGiftCards.length) * giftCardItemHeight +
     giftCardsBottomPadding;
@@ -106,7 +106,7 @@ const getScrollViewHeight = (
   integrationsCategories: Category[],
   availableGiftCards: CardConfig[],
   numSelectedGiftCards: number,
-  purchasedCards: GiftCard[],
+  activeGiftCards: GiftCard[],
   curations: any,
   billPayAccounts: BillPayAccount[],
 ) => {
@@ -114,7 +114,7 @@ const getScrollViewHeight = (
     ? getGiftCardsScrollViewHeight(
         availableGiftCards,
         numSelectedGiftCards,
-        purchasedCards,
+        activeGiftCards,
         curations,
       )
     : activeTab === ShopTabs.BILLS
@@ -137,8 +137,11 @@ const ShopHome: React.FC<
     ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
   ) as BillPayAccount[];
   const purchasedGiftCards = useMemo(
-    () => giftCards.filter(giftCard => giftCard.status !== 'UNREDEEMED'),
-    [giftCards],
+    () =>
+      giftCards.filter(giftCard =>
+        isGiftCardDisplayable(giftCard, supportedCardMap),
+      ),
+    [giftCards, supportedCardMap],
   );
   const activeGiftCards = useMemo(
     () => purchasedGiftCards.filter(giftCard => !giftCard.archived),
@@ -216,6 +219,7 @@ const ShopHome: React.FC<
         scrollViewRef={scrollViewRef}
         availableGiftCards={availableGiftCards}
         supportedGiftCards={supportedGiftCards}
+        supportedGiftCardMap={supportedCardMap}
         curations={curations}
         categories={categoriesWithGiftCards}
         onSelectedGiftCardsChange={newNumSelectedGiftCards =>
@@ -224,7 +228,9 @@ const ShopHome: React.FC<
       />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [availableGiftCards, categories, curations].map(obj => JSON.stringify(obj)),
+    [availableGiftCards, categories, curations, supportedCardMap].map(obj =>
+      JSON.stringify(obj),
+    ),
   );
 
   const memoizedShopOnline = useCallback(
@@ -285,7 +291,6 @@ const ShopHome: React.FC<
   ]);
 
   useFocusEffect(() => {
-    dispatch(Analytics.track('Viewed Shop Tab', undefined));
     if (!initialSyncComplete) {
       dispatch(ShopEffects.startSyncGiftCards());
       dispatch(ShopEffects.startGetBillPayAccounts()).catch(_ => {});

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
@@ -13,7 +13,6 @@ import {
   ActiveOpacity,
   CtaContainerAbsolute,
 } from '../../../../../components/styled/Containers';
-import {useFocusEffect} from '@react-navigation/native';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {
   H5,
@@ -134,9 +133,9 @@ const ConnectBillsOptions = ({
   const [continueButtonState, setContinueButtonState] = useState(
     undefined as 'loading' | undefined,
   );
-  useFocusEffect(() => {
+  useEffect(() => {
     dispatch(Analytics.track('Bill Pay — Viewed Connect More Bills'));
-  });
+  }, [dispatch]);
 
   const verifyUserInfo = async () => {
     setContinueButtonState('loading');
