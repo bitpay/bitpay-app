@@ -27,6 +27,7 @@ interface InputProps {
   isError?: boolean;
   type?: InputType;
   disabled?: boolean;
+  paddingRight?: number;
 }
 
 const InputContainer = styled.View<InputProps>`
@@ -36,6 +37,11 @@ const InputContainer = styled.View<InputProps>`
   flex-direction: row;
   justify-content: center;
   position: relative;
+  ${({paddingRight}) =>
+    paddingRight &&
+    css`
+      padding-right: ${paddingRight}px;
+    `}
 
   ${({isFocused}) =>
     isFocused &&
@@ -149,6 +155,7 @@ interface BoxInputProps extends TextInputProps {
   error?: any;
   type?: InputType;
   disabled?: boolean;
+  paddingRight?: number;
 }
 
 const BoxInput = React.forwardRef<
@@ -167,6 +174,7 @@ const BoxInput = React.forwardRef<
       type,
       disabled,
       keyboardType,
+      paddingRight,
       ...props
     },
     ref,
@@ -213,7 +221,8 @@ const BoxInput = React.forwardRef<
         <InputContainer
           isFocused={isFocused}
           isError={error}
-          disabled={disabled}>
+          disabled={disabled}
+          paddingRight={paddingRight}>
           {prefix ? <Prefix>{prefix()}</Prefix> : null}
 
           <Input
