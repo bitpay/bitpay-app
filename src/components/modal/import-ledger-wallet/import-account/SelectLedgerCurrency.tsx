@@ -12,6 +12,7 @@ import XrpLogoSvg from '../../../../../assets/img/currencies/xrp.svg';
 import BchLogoSvg from '../../../../../assets/img/currencies/bch.svg';
 import LtcLogoSvg from '../../../../../assets/img/currencies/ltc.svg';
 import DogeLogoSvg from '../../../../../assets/img/currencies/doge.svg';
+import MaticLogoSvg from '../../../../../assets/img/currencies/matic.svg';
 import Checkbox from '../../../checkbox/Checkbox';
 import {
   AdvancedOptions,
@@ -97,8 +98,8 @@ export interface UtxoAccountParams extends BaseAccountParams {
   currencySymbol: 'btc' | 'bch' | 'ltc' | 'doge';
 }
 
-export interface EthAccountParams extends BaseAccountParams {
-  currencySymbol: 'eth';
+export interface EVMAccountParams extends BaseAccountParams {
+  currencySymbol: 'eth' | 'matic';
 }
 
 export interface XrpAccountParams extends BaseAccountParams {
@@ -109,7 +110,7 @@ export type CurrencyConfigFn = (
   network: Network,
   accountIndex: string,
   useNativeSegwit?: boolean,
-) => UtxoAccountParams | EthAccountParams | XrpAccountParams;
+) => UtxoAccountParams | EVMAccountParams | XrpAccountParams;
 
 export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
   btc: (network, account, useNativeSegwit) => {
@@ -170,6 +171,16 @@ export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
       purpose: "44'",
       coin: isMainnet ? "60'" : "1'",
       currencySymbol: 'eth',
+    };
+  },
+  matic: (network, account) => {
+    return {
+      appName: 'Polygon',
+      network,
+      accountIndex: account,
+      purpose: "44'",
+      coin: "60'",
+      currencySymbol: 'matic',
     };
   },
   xrp: (network, account) => {
@@ -257,6 +268,12 @@ const CURRENCIES = [
     label: 'Ethereum',
     icon: <EthLogoSvg height={35} width={35} />,
     isTestnetSupported: true,
+  },
+  {
+    coin: 'matic',
+    label: 'Polygon',
+    icon: <MaticLogoSvg height={35} width={35} />,
+    isTestnetSupported: false,
   },
   {
     coin: 'xrp',
@@ -445,7 +462,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
         const xpubVersion =
           currencySymbol.includes('doge') || currencySymbol.includes('ltc')
             ? 0x0488b21e // doge and ltc uses the same xpub version as btc
-          : c.bitcoinLikeInfo.XPUBVersion;
+            : c.bitcoinLikeInfo.XPUBVersion;
 
         const xPubKey = await app.getWalletXpub({
           path,
@@ -476,7 +493,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     }
   };
 
-  const importEthAccount = async ({
+  const importEVMAccount = async ({
     appName,
     network,
     accountIndex = '0',
@@ -489,7 +506,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     accountIndex: string;
     purpose: string;
     coin: string;
-    currencySymbol: 'eth';
+    currencySymbol: 'eth' | 'matic';
   }) => {
     try {
       await prepareLedgerApp(appName);
@@ -535,8 +552,8 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     if (IsUtxoCoin(currency)) {
       return importUtxoAccount(params as UtxoAccountParams);
     }
-    if (currency === 'eth') {
-      return importEthAccount(params as EthAccountParams);
+    if (['eth', 'matic'].includes(currency)) {
+      return importEVMAccount(params as EVMAccountParams);
     }
     if (currency === 'xrp') {
       return importXrpAccount(params as XrpAccountParams);
@@ -677,7 +694,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
                 </AdvancedOptions>
               )}
 
-              {showOptions && (
+              {showOptions && isTestnetEnabled && (
                 <AdvancedOptions>
                   <RowContainer activeOpacity={1}>
                     <Column>

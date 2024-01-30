@@ -221,7 +221,9 @@ export const buildKeyObj = ({
     totalBalanceLastDay,
     isPrivKeyEncrypted: key?.isPrivKeyEncrypted(),
     backupComplete,
-    keyName: keyName ? keyName : key?.id
+    keyName: keyName
+      ? keyName
+      : key?.id
       ? 'My Key'
       : hardwareSource
       ? `My ${hardwareSource.charAt(0).toUpperCase()}${hardwareSource.slice(1)}`

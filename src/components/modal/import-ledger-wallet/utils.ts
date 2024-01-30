@@ -26,7 +26,8 @@ export type SupportedLedgerAppNames =
   | 'XRP'
   | 'Bitcoin Cash'
   | 'Litecoin'
-  | 'Dogecoin';
+  | 'Dogecoin'
+  | 'Polygon';
 
 /**
  * Gets info on the currently running Ledger app. The OS info is returned if no app is running.

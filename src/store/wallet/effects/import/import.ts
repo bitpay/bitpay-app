@@ -931,7 +931,7 @@ export const startImportFromHardwareWallet =
     xPubKey?: string;
     publicKey?: string;
     accountPath: string;
-    coin: 'btc' | 'eth' | 'xrp' | 'bch' | 'ltc' | 'doge';
+    coin: 'btc' | 'eth' | 'xrp' | 'bch' | 'ltc' | 'doge' | 'matic';
     useNativeSegwit: boolean;
     derivationStrategy: string;
     accountNumber: number;
@@ -958,7 +958,7 @@ export const startImportFromHardwareWallet =
     let key = Object.values(WALLET.keys).find(k => k.id === hwKeyId);
 
     const walletExists = key?.wallets.some(
-      w => w.credentials.xPubKey === xPubKey,
+      w => w.credentials.xPubKey === xPubKey && w.credentials.coin === coin, // EVM coins have the same xPubKey
     );
 
     if (walletExists) {

@@ -1394,7 +1394,6 @@ const createLedgerTransactionArgUtxo = (
   return new Promise<CreateTransactionArg>(async (resolve, reject) => {
     const BWC = BwcProvider.getInstance();
     const utils = BWC.getUtils();
-
     const txpAsTx = utils.buildTx(txp) as BitcoreUtxoTransactionLike;
     const accountPath = wallet.hardwareData?.accountPath;
     const inputPaths = (txp.inputPaths || []).filter(isString);
@@ -1578,23 +1577,30 @@ const getSignatureString = (signatureObject: {
   const r = signatureObject.r;
   const s = signatureObject.s;
   let v = signatureObject.v;
-
-  // Depending on the implementation, 'v' might be a single character. If so, pad it to two characters.
-  if (v.length < 2) {
-    v = '0' + v;
+  // TODO: safe to always set this to 27 or 28 for matic ? Workaround for handling chainID flags (ex 137 for Matic)
+  switch (v) {
+    case '0135':
+      v = '1B';
+      break;
+    case '0136':
+      v = '1C';
+      break;
   }
-
   // Concatenate r, s, and v to form the signature string
   signature += r + s + v;
-
   return signature;
 };
 
-const getEthSignaturesFromLedger = async (
+const getEVMSignaturesFromLedger = async (
+  wallet: Wallet,
   txp: TransactionProposal,
   transport: Transport,
 ) => {
   try {
+    const accountPath = wallet.hardwareData?.accountPath;
+    if (!accountPath) {
+      throw new Error('No account path found for this wallet.');
+    }
     const BWC = BwcProvider.getInstance();
     const utils = BWC.getUtils();
     const txpAsTx = utils.buildTx(txp) as BitcoreEvmTransactionLike;
@@ -1607,7 +1613,7 @@ const getEthSignaturesFromLedger = async (
     );
     const eth = new AppEth(transport);
     const signature = await eth.signTransaction(
-      "44'/60'/0'/0/0",
+      accountPath,
       cleanedHexString,
       resolution,
     );
@@ -1668,8 +1674,8 @@ const getSignaturesFromLedger = (
       params as UtxoAccountParams,
     );
   }
-  if (currency === 'eth' || IsERCToken(currency, chain)) {
-    return getEthSignaturesFromLedger(txp, transport);
+  if (['eth', 'matic'].includes(currency) || IsERCToken(currency, chain)) {
+    return getEVMSignaturesFromLedger(wallet, txp, transport);
   }
   if (currency === 'xrp') {
     return getXrpSignaturesFromLedger(wallet, txp, transport);

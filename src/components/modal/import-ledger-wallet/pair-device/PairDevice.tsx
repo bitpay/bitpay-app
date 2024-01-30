@@ -69,6 +69,7 @@ export const PairDevice: React.FC<Props> = props => {
 
     if (openedTransport) {
       setTransport(openedTransport);
+      props.onPaired(openedTransport);
     } else {
       setError(`Unable to connect via Bluetooth: ${errorMsg}`);
     }
@@ -102,6 +103,7 @@ export const PairDevice: React.FC<Props> = props => {
 
     if (openedTransport) {
       setTransport(openedTransport);
+      props.onPaired(openedTransport);
     } else {
       setError(`Unable to connect via USB: ${errorMsg}`);
     }
@@ -121,7 +123,7 @@ export const PairDevice: React.FC<Props> = props => {
 
   return (
     <>
-      {transport ? (
+      {/* {transport ? (
         <>
           {isLearnHowVisible ? (
             <LearnHow onContinue={onContinue} />
@@ -129,7 +131,8 @@ export const PairDevice: React.FC<Props> = props => {
             <DeviceFound onContinue={onContinue} onLearnHow={onLearnHow} />
           )}
         </>
-      ) : error ? (
+      ) :  */}
+      {error ? (
         <PairingError
           error={error}
           onConnectBle={onConnectBle}

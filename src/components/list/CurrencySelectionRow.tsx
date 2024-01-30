@@ -148,7 +148,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
           <CurrencySubTitle>{_currencyAbbreviation}</CurrencySubTitle>
         </CurrencyTitleColumn>
 
-        {(!hideCheckbox && !disableCheckbox) && (
+        {!hideCheckbox && !disableCheckbox && (
           <CurrencyColumn accessibilityLabel="chain-selection-row-checkbox">
             <Checkbox
               checked={!!selected}
