@@ -1,10 +1,13 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
+import {TouchableHighlight} from 'react-native-gesture-handler';
 import Carousel from 'react-native-reanimated-carousel';
 import {
   CardConfig,
   DirectIntegrationApiObject,
 } from '../../../../store/shop/shop.models';
+import {ActiveOpacity} from '../../../../components/styled/Containers';
+
 interface SlideContainerParams {
   inLastSlide: boolean;
   isSingleSlide: boolean;
@@ -24,7 +27,9 @@ interface TouchableHighlightParams {
   width: number;
 }
 
-const ItemTouchableHighlight = styled.TouchableHighlight<TouchableHighlightParams>`
+const ItemTouchableHighlight = styled(
+  TouchableHighlight,
+)<TouchableHighlightParams>`
   ${({width}) =>
     css`
       width: ${width}px;
@@ -103,6 +108,7 @@ export default ({
                     ? carouselItemWidthInLastSlide
                     : carouselItemWidth
                 }
+                activeOpacity={ActiveOpacity}
                 key={listItem.displayName}
                 onPress={() => {
                   console.log('press', listItem.displayName);
