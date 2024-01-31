@@ -17,7 +17,7 @@ type BasePairingParamList = {
   onComplete?: (...args: any[]) => any;
 };
 
-const PairingContainer = styled.View`
+const PairingContainer = styled.SafeAreaView`
   padding: ${ScreenGutter};
   align-items: center;
 `;

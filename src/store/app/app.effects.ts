@@ -1049,10 +1049,13 @@ export const incomingShopLink =
           cardConfig,
         });
       } else {
-        navigationRef.navigate('Shop', {
-          screen: ShopScreens.HOME,
+        navigationRef.navigate('Tabs', {
+          screen: 'Shop',
           params: {
-            screen: ShopTabs.GIFT_CARDS,
+            screen: ShopScreens.HOME,
+            params: {
+              screen: ShopTabs.GIFT_CARDS,
+            },
           },
         });
       }
@@ -1074,18 +1077,24 @@ export const incomingShopLink =
           directIntegration,
         });
       } else {
-        navigationRef.navigate('Shop', {
-          screen: ShopScreens.HOME,
+        navigationRef.navigate('Tabs', {
+          screen: 'Shop',
           params: {
-            screen: ShopTabs.SHOP_ONLINE,
+            screen: ShopScreens.HOME,
+            params: {
+              screen: ShopTabs.SHOP_ONLINE,
+            },
           },
         });
       }
     } else if (route.name === 'billpay') {
-      navigationRef.navigate('Shop', {
-        screen: ShopScreens.HOME,
+      navigationRef.navigate('Tabs', {
+        screen: 'Shop',
         params: {
-          screen: ShopTabs.BILLS,
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.BILLS,
+          },
         },
       });
     }

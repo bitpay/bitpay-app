@@ -37,7 +37,7 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
     [DebugScreens.DEBUG]: {
       path: 'debug/:name',
     },
-    [BitpayIdScreens.PAIRING]: 'pair',
+    [BitpayIdScreens.PAIRING]: 'id/pair',
     [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
     [RootStacks.TABS]: {
       screens: {

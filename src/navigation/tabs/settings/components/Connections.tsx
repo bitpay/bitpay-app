@@ -79,10 +79,13 @@ const Connections: React.VFC<ConnectionsProps> = props => {
     if (user?.methodEntityId) {
       navigation.navigate('BillSettings', {});
     } else {
-      navigation.navigate('Shop', {
-        screen: ShopScreens.HOME,
+      navigation.navigate('Tabs', {
+        screen: 'Shop',
         params: {
-          screen: ShopTabs.BILLS,
+          screen: ShopScreens.HOME,
+          params: {
+            screen: ShopTabs.BILLS,
+          },
         },
       });
     }
