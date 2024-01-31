@@ -16,7 +16,7 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import {toFiat} from '../../../store/wallet/utils/wallet';
-import {getZenLedgerUrl} from '../../../store/zenledger/zenledger.effects';
+import {zenledgerCreatePortfolio} from '../../../store/zenledger/zenledger.effects';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   openUrlWithInAppBrowser,
@@ -33,13 +33,11 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {useNavigation} from '@react-navigation/native';
 import {Network} from '../../../constants';
 import ZenLedgerWalletSelector from '../components/ZenLedgerWalletSelector';
-import {
-  ZenLedgerRequestWalletsType,
-  ZenLedgerWalletObj,
-} from '../../../store/zenledger/zenledger.models';
+import {ZenLedgerWalletObj} from '../../../store/zenledger/zenledger.models';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {SUPPORTED_UTXO_COINS} from '../../../constants/currencies';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {ZenledgerPortfolioProps} from '../../../api/zenledger/zenledger.types';
 
 const ZenLedgerImportContainer = styled.View`
   flex: 1;
@@ -116,14 +114,19 @@ const ZenLedgerImport: React.FC = () => {
   const [allKeys, setAllkeys] = useState(setFormattedKeys());
 
   const getRequestWallets = async () => {
-    let requestWallets: ZenLedgerRequestWalletsType[] = [];
+    let requestWallets: ZenledgerPortfolioProps[] = [];
     const selectedWallets = Object.values(allKeys)
       .flatMap(key => key.wallets)
       .filter(wallet => wallet.checked);
 
     for await (const selectedWallet of selectedWallets) {
       let {checked, wallet} = selectedWallet;
-      let {receiveAddress, walletName = '', chain} = wallet;
+      let {
+        receiveAddress,
+        walletName = '',
+        chain,
+        currencyAbbreviation,
+      } = wallet;
 
       if (checked && !receiveAddress) {
         receiveAddress = await dispatch(
@@ -135,6 +138,7 @@ const ZenLedgerImport: React.FC = () => {
         requestWallets.push({
           address: receiveAddress,
           blockchain: chain,
+          coin: currencyAbbreviation,
           display_name: walletName,
         });
       }
@@ -150,17 +154,34 @@ const ZenLedgerImport: React.FC = () => {
     [dispatch],
   );
 
-  const goToZenLedger = async (
-    requestWallets: ZenLedgerRequestWalletsType[],
-  ) => {
+  const goToZenLedger = async (requestWallets: ZenledgerPortfolioProps[]) => {
     try {
       dispatch(startOnGoingProcessModal('REDIRECTING'));
-      const {url} = (await dispatch<any>(
-        getZenLedgerUrl(requestWallets),
-      )) as any;
+      const {signup_url} = await dispatch(
+        zenledgerCreatePortfolio(requestWallets),
+      );
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
-      dispatch(openUrlWithInAppBrowser(url));
+      if (!signup_url) {
+        await showErrorMessage({
+          type: 'error',
+          title: t('Uh oh, something went wrong'),
+          message: t('ZenLedger import failed. Please try again.'),
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('Go Back'),
+              action: async () => {
+                dispatch(dismissBottomNotificationModal());
+                await sleep(500);
+                navigation.goBack();
+              },
+            },
+          ],
+        });
+        return;
+      }
+      dispatch(openUrlWithInAppBrowser(signup_url));
       await sleep(500);
       navigation.goBack();
     } catch (e) {
