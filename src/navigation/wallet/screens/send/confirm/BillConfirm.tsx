@@ -15,7 +15,7 @@ import {
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
-import {ShopActions, ShopEffects} from '../../../../../store/shop';
+import {ShopEffects} from '../../../../../store/shop';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   Amount,
@@ -129,13 +129,6 @@ const BillConfirm: React.VFC<
       ),
     [dispatch, invoice, keys],
   );
-
-  useEffect(() => {
-    return () => {
-      dispatch(ShopActions.deletedUnsoldGiftCards());
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -538,11 +531,11 @@ const BillConfirm: React.VFC<
       <PaymentSent
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
+          setShowPaymentSentModal(false);
+          await sleep(500);
           navigation.dispatch(StackActions.popToTop());
           navigation.dispatch(StackActions.pop());
           navigator.navigate(BillScreens.PAYMENTS, {});
-          await sleep(0);
-          setShowPaymentSentModal(false);
         }}
       />
     </ConfirmContainer>

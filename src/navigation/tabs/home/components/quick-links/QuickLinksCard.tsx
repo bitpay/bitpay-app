@@ -1,6 +1,7 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import Braze, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import styled, {useTheme} from 'styled-components/native';
@@ -34,7 +35,7 @@ interface QuickLinksCardProps {
   ctaOverride?: () => void;
 }
 
-const QuickLinkCardContainer = styled.TouchableOpacity`
+const QuickLinkCardContainer = styled(TouchableOpacity)`
   justify-content: flex-start;
   align-items: center;
   flex-direction: row;

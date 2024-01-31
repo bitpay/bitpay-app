@@ -460,6 +460,8 @@ const PayProConfirm = () => {
         <PaymentSent
           isVisible={showPaymentSentModal}
           onCloseModal={async () => {
+            setShowPaymentSentModal(false);
+            await sleep(500);
             navigation.dispatch(StackActions.popToTop());
             if (coinbaseAccount) {
               navigation.dispatch(StackActions.pop(3));
@@ -473,8 +475,7 @@ const PayProConfirm = () => {
                   walletId: wallet!.id,
                   key,
                 });
-            await sleep(0);
-            setShowPaymentSentModal(false);
+
           }}
         />
       </ConfirmScrollView>
