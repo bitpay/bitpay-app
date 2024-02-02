@@ -2208,10 +2208,6 @@ const BuyCryptoOffers: React.FC = () => {
       fiatAmount: offers.transak.fiatAmount,
       fiatCurrency: offers.transak.fiatCurrency.toUpperCase(),
       network: getTransakChainFormat(chain),
-      paymentMethod:
-        offers.transak.paymentMethodKey ??
-        getTransakPaymentMethodFormat(paymentMethod.method) ??
-        'credit_debit_card',
       cryptoCurrencyCode: getTransakCoinFormat(coin),
       cryptoCurrencyList: getTransakCoinFormat(coin),
       hideExchangeScreen: true,
@@ -2220,6 +2216,15 @@ const BuyCryptoOffers: React.FC = () => {
       partnerOrderId: transakExternalId,
       partnerCustomerId: selectedWallet.id,
     };
+
+    quoteData[
+      paymentMethod.method !== 'other'
+        ? 'paymentMethod'
+        : 'defaultPaymentMethod'
+    ] =
+      offers.transak.paymentMethodKey ??
+      getTransakPaymentMethodFormat(paymentMethod.method) ??
+      'credit_debit_card';
 
     let data: TransakSignedUrlData;
     try {
