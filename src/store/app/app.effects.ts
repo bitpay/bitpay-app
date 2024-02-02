@@ -38,6 +38,7 @@ import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
 import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
+import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
@@ -206,6 +207,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
+
+    // Initialize Zenledger
+    dispatch(zenledgerInitialize());
 
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);

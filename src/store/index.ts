@@ -60,6 +60,10 @@ import {
 import {Storage} from 'redux-persist';
 import {MMKV} from 'react-native-mmkv';
 import {AppDispatch} from '../utils/hooks';
+import {
+  ZenledgerReduxPersistBlackList,
+  zenledgerReducer,
+} from './zenledger/zenledger.reducer';
 
 export const storage = new MMKV();
 
@@ -96,6 +100,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   RATE: rateReduxPersistBlackList,
   CONTACT: ContactReduxPersistBlackList,
   COINBASE: CoinbaseReduxPersistBlackList,
+  ZENLEDGER: ZenledgerReduxPersistBlackList,
   WALLET_CONNECT: [],
   WALLET_CONNECT_V2: walletConnectV2ReduxPersistBlackList,
 };
@@ -118,6 +123,7 @@ const reducers = {
   RATE: rateReducer,
   CONTACT: contactReducer,
   COINBASE: coinbaseReducer,
+  ZENLEDGER: zenledgerReducer,
   WALLET_CONNECT: walletConnectReducer,
   WALLET_CONNECT_V2: walletConnectV2Reducer,
 };
