@@ -59,7 +59,11 @@ import {
   GiftCard,
 } from '../../../../../store/shop/shop.models';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
@@ -154,6 +158,7 @@ const GiftCardDetails = ({
 }: NativeStackScreenProps<GiftCardGroupParamList, 'GiftCardDetails'>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
@@ -196,34 +201,53 @@ const GiftCardDetails = ({
   }, [dispatch, giftCard.invoiceId, giftCard.status]);
 
   useEffect(() => {
-    if (!giftCard.barcodeImage) {
-      if (
-        defaultClaimCodeType === ClaimCodeType.barcode &&
-        giftCard.claimLink
-      ) {
+    const fallbackToClaimLink = () => {
+      if (giftCard.claimLink) {
         setDefaultClaimCodeType(ClaimCodeType.link);
+      }
+    };
+    if (!giftCard.barcodeImage) {
+      if (defaultClaimCodeType === ClaimCodeType.barcode) {
+        fallbackToClaimLink();
       }
       return;
     }
-    Image.getSize(giftCard.barcodeImage, (width, height) => {
-      const resemblesBarcode = width / height > 3;
-      setIsBarcode(resemblesBarcode);
-      const minHeight = 60;
-      const scaleFactor = minHeight / height;
-      const dimensions =
-        height < minHeight && !resemblesBarcode
-          ? {
-              height: height * scaleFactor,
-              width: width * scaleFactor,
-            }
-          : {height: minHeight, width: 200};
-      setScannableCodeDimensions(dimensions);
-    });
+    Image.getSize(
+      giftCard.barcodeImage,
+      (width, height) => {
+        if (!width || !height) {
+          logger.error(
+            `Unable to get ${cardConfig.name} barcodeImage height (${height}) or width (${width})`,
+          );
+          fallbackToClaimLink();
+          return;
+        }
+        const resemblesBarcode = width / height > 3;
+        setIsBarcode(resemblesBarcode);
+        const minHeight = 60;
+        const scaleFactor = minHeight / height;
+        const dimensions =
+          height < minHeight && !resemblesBarcode
+            ? {
+                height: height * scaleFactor,
+                width: width * scaleFactor,
+              }
+            : {height: minHeight, width: 200};
+        setScannableCodeDimensions(dimensions);
+      },
+      err => {
+        logger.error(
+          `Unable to get image size for ${cardConfig.name} barcodeImage: ${err.message}`,
+        );
+        fallbackToClaimLink();
+      },
+    );
   }, [
     cardConfig,
     defaultClaimCodeType,
     giftCard.barcodeImage,
     giftCard.claimLink,
+    logger,
   ]);
 
   useLayoutEffect(() => {
