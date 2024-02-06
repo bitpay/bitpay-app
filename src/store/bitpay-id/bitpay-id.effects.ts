@@ -9,11 +9,12 @@ import {InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
 import Dosh from '../../lib/dosh';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
+import {BrazeWrapper} from '../../lib/Braze';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppEffects} from '../app/';
 import {Analytics} from '../analytics/analytics.effects';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {renewSubscription, startOnGoingProcessModal} from '../app/app.effects';
 import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -27,6 +28,7 @@ import axios from 'axios';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import Braze from 'react-native-appboy-sdk';
 import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
+import uuid from 'react-native-uuid';
 
 interface StartLoginParams {
   email: string;
@@ -498,6 +500,17 @@ export const startDisconnectBitPayId =
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.debug('An error occured while clearing Dosh user.'));
+      dispatch(LogActions.debug(JSON.stringify(err)));
+    }
+
+    try {
+      dispatch(LogActions.debug('Generating EID for anonymous user...'));
+      const eid = uuid.v4().toString();
+      dispatch(setBrazeEid(eid));
+      BrazeWrapper.identify(eid);
+      dispatch(renewSubscription());
+    } catch (err) {
+      dispatch(LogActions.debug('An error occured while clearing Braze user.'));
       dispatch(LogActions.debug(JSON.stringify(err)));
     }
 
