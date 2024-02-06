@@ -1783,9 +1783,9 @@ export const showConfirmAmountInfoSheet =
   };
 
 export const handleSendError =
-  (err: any): Effect<boolean> =>
+  ({error, onDismiss}: {error: any; onDismiss?: () => {}}): Effect<boolean> =>
   dispatch => {
-    switch (err) {
+    switch (error) {
       case 'invalid password':
         dispatch(showBottomNotificationModal(WrongPasswordError()));
         return true;
@@ -1793,6 +1793,19 @@ export const handleSendError =
       case 'biometric check failed':
         return true;
       default:
+        const errorMessage = error?.message || error;
+        dispatch(
+          AppActions.showBottomNotificationModal(
+            CustomErrorMessage({
+              title: t('Error'),
+              errMsg:
+                typeof errorMessage === 'string'
+                  ? errorMessage
+                  : t('Could not send transaction'),
+              action: () => onDismiss && onDismiss(),
+            }),
+          ),
+        );
         return false;
     }
   };

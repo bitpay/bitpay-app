@@ -301,7 +301,9 @@ const PayProConfirm = () => {
   };
 
   const handlePaymentFailure = async (error: any) => {
-    const handled = dispatch(handleSendError(error));
+    const handled = dispatch(
+      handleSendError({error, onDismiss: () => reshowWalletSelector()}),
+    );
     if (!handled) {
       if (wallet && txp) {
         await removeTxp(wallet, txp).catch(removeErr =>
@@ -312,11 +314,6 @@ const PayProConfirm = () => {
       updateTxp(undefined);
       setWallet(undefined);
       setCoinbaseAccount(undefined);
-      showError({
-        error,
-        defaultErrorMessage: t('Could not send transaction'),
-        onDismiss: () => reshowWalletSelector(),
-      });
     }
     toggleThenUntoggle(setResetSwipeButton);
     dispatch(
