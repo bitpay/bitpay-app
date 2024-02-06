@@ -37,6 +37,7 @@ import {
   CustomErrorMessage,
   ExcludedUtxosWarning,
   GeneralError,
+  WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
@@ -1779,4 +1780,19 @@ export const showConfirmAmountInfoSheet =
         ],
       }),
     );
+  };
+
+export const handleSendError =
+  (err: any): Effect<boolean> =>
+  dispatch => {
+    switch (err) {
+      case 'invalid password':
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+        return true;
+      case 'password canceled':
+      case 'biometric check failed':
+        return true;
+      default:
+        return false;
+    }
   };

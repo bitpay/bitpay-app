@@ -15,10 +15,15 @@ import {
   buildTxDetails,
   createPayProTxProposal,
   handleCreateTxProposalError,
+  handleSendError,
   removeTxp,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
-import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
+import {
+  sleep,
+  formatFiatAmount,
+  toggleThenUntoggle,
+} from '../../../../../utils/helper-methods';
 import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
@@ -55,14 +60,12 @@ import {
 import {startGetRates} from '../../../../../store/wallet/effects';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
-import {
-  GiftCardScreens,
-  GiftCardGroupParamList,
-} from '../../../../tabs/shop/gift-card/GiftCardGroup';
+import {GiftCardGroupParamList} from '../../../../tabs/shop/gift-card/GiftCardGroup';
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
 import GiftCardTerms from '../../../../tabs/shop/components/GiftCardTerms';
+import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -350,27 +353,29 @@ const Confirm = () => {
   };
 
   const handlePaymentFailure = async (error: any) => {
-    if (wallet && txp) {
-      await removeTxp(wallet, txp).catch(removeErr =>
-        console.error('error deleting txp', removeErr),
-      );
+    const handled = dispatch(handleSendError(error));
+    if (!handled) {
+      if (wallet && txp) {
+        await removeTxp(wallet, txp).catch(removeErr =>
+          console.error('error deleting txp', removeErr),
+        );
+      }
+      updateTxDetails(undefined);
+      updateTxp(undefined);
+      setWallet(undefined);
+      setInvoice(undefined);
+      setCoinbaseAccount(undefined);
+      showError({
+        error,
+        defaultErrorMessage: t('Could not send transaction'),
+        onDismiss: () => openWalletSelector(400),
+      });
     }
-    updateTxDetails(undefined);
-    updateTxp(undefined);
-    setWallet(undefined);
-    setInvoice(undefined);
-    setCoinbaseAccount(undefined);
-    showError({
-      error,
-      defaultErrorMessage: t('Could not send transaction'),
-      onDismiss: () => openWalletSelector(400),
-    });
-    await sleep(400);
-    setResetSwipeButton(true);
+    toggleThenUntoggle(setResetSwipeButton);
   };
 
   const request2FA = async () => {
-    navigation.navigate(GiftCardScreens.GIFT_CARD_CONFIRM_TWO_FACTOR, {
+    navigation.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
       onSubmit: async twoFactorCode => {
         try {
           await sendPayment(twoFactorCode);
@@ -385,8 +390,7 @@ const Confirm = () => {
         }
       },
     });
-    await sleep(400);
-    setResetSwipeButton(true);
+    toggleThenUntoggle(setResetSwipeButton);
   };
 
   useEffect(() => {

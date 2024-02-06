@@ -462,3 +462,11 @@ export const transformAmount = (
     decimals.minDecimals,
   );
 };
+
+export const toggleThenUntoggle = async (
+  booleanSetter: React.Dispatch<React.SetStateAction<boolean>>,
+) => {
+  booleanSetter(true);
+  await sleep(500);
+  booleanSetter(false);
+};
