@@ -24,6 +24,8 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
+import {CommonActions} from '@react-navigation/native';
+import {TabsScreens} from '../../tabs/TabsStack';
 
 export type LoginScreenParamList =
   | {
@@ -85,7 +87,21 @@ const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
       if (parentNav?.canGoBack()) {
         parentNav.goBack();
       } else {
-        navigationRef.navigate(BitpayIdScreens.PROFILE);
+        navigationRef.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [
+              {
+                name: RootStacks.TABS,
+                params: {screen: TabsScreens.HOME},
+              },
+              {
+                name: BitpayIdScreens.PROFILE,
+                params: {},
+              },
+            ],
+          }),
+        );
       }
 
       dispatch(BitPayIdActions.updateLoginStatus(null));
