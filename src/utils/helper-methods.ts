@@ -331,7 +331,7 @@ export const getRateByCurrencyName = (
   chain: string,
 ): Rate[] => {
   const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
-  return rates[currencyName];
+  return rates[currencyName] || rates[currencyAbbreviation];
 };
 
 export const addTokenChainSuffix = (name: string, chain: string) => {

@@ -83,6 +83,7 @@ import {URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
 import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
+import {SupportedTokenOptions} from '../../../../constants/SupportedCurrencyOptions';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -423,7 +424,8 @@ export const buildTxDetails =
     return new Promise(async resolve => {
       let gasPrice, gasLimit, nonce, destinationTag, coin, chain, amount, fee;
 
-      const tokenAddress = wallet.tokenAddress;
+      const tokenAddress =
+        wallet.tokenAddress || getTokenAddressForOffchainWallet(wallet);
 
       if (context === 'walletConnect' && request) {
         const {params} = request.params.request;
@@ -1809,3 +1811,10 @@ export const handleSendError =
         return false;
     }
   };
+
+function getTokenAddressForOffchainWallet(wallet: Wallet | WalletRowProps) {
+  return SupportedTokenOptions.find(
+    ({currencyAbbreviation}) =>
+      currencyAbbreviation === wallet.currencyAbbreviation.toLowerCase(),
+  )?.tokenAddress;
+}
