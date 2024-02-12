@@ -429,8 +429,8 @@ const GiftCardDetails = ({
                 <Paragraph>{t('Claim Code')}</Paragraph>
                 {giftCard.barcodeImage && defaultClaimCodeType === 'barcode' ? (
                   <ScannableCodeContainer
-                    height={scannableCodeDimensions.height + 20}
-                    width={scannableCodeDimensions.width + 20}>
+                    height={scannableCodeDimensions.height + 40}
+                    width={scannableCodeDimensions.width + 40}>
                     <ScannableCode
                       height={scannableCodeDimensions.height}
                       width={scannableCodeDimensions.width}
