@@ -461,7 +461,10 @@ export const buildTxDetails =
 
       const selectedTransactionCurrency =
         invoice?.buyerProvidedInfo!.selectedTransactionCurrency ||
-        wallet.currencyAbbreviation.toUpperCase();
+        getCurrencyCodeFromCoinAndChain(
+          wallet.currencyAbbreviation,
+          wallet.chain,
+        );
 
       const isOffChain = !proposal;
       if (invoice && selectedTransactionCurrency) {
