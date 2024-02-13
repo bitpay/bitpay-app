@@ -13,6 +13,7 @@ import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
+  CanSpeedupTx,
   EditTxNote,
   getDetailsTitle,
   IsMoved,
@@ -211,6 +212,7 @@ const TransactionDetails = () => {
   const [txs, setTxs] = useState<any>();
   const [memo, setMemo] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);
+  const [canSpeedUp, setCanSpeedUp] = useState(false);
   const title = getDetailsTitle(transaction, wallet);
   let {
     currencyAbbreviation,
@@ -240,6 +242,7 @@ const TransactionDetails = () => {
       );
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
+      setCanSpeedUp(CanSpeedupTx(_transaction, currencyAbbreviation, chain));
       await sleep(500);
       setIsLoading(false);
     } catch (err) {
@@ -457,8 +460,7 @@ const TransactionDetails = () => {
             />
           ) : null}
 
-          {currencyAbbreviation === 'btc' &&
-          (IsSent(txs.action) || IsMoved(txs.action)) ? (
+          {canSpeedUp ? (
             <Banner
               type={'info'}
               title={t('RBF transaction')}
