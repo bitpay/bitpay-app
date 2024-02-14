@@ -22,6 +22,7 @@ type AlertType =
 
 interface AlertBoxProps {
   type?: AlertType;
+  children: React.ReactNode;
 }
 
 type AlertPalette = {
