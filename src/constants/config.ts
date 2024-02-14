@@ -77,5 +77,6 @@ export const PROTOCOL_NAME: {[key in string]: any} = {
   default: {
     [Network.mainnet]: 'Mainnet',
     [Network.testnet]: 'Testnet',
+    [Network.regtest]: 'Regtest',
   },
 };
