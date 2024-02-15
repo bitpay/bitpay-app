@@ -189,7 +189,7 @@ export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
       network,
       accountIndex: account,
       purpose: "44'",
-      coin: '144',
+      coin: "144'",
       currencySymbol: 'xrp',
     };
   },
@@ -261,13 +261,13 @@ const CURRENCIES = [
     coin: 'btc',
     label: 'Bitcoin',
     icon: <BtcLogoSvg height={35} width={35} />,
-    isTestnetSupported: true,
+    isTestnetSupported: false,
   },
   {
     coin: 'eth',
     label: 'Ethereum',
     icon: <EthLogoSvg height={35} width={35} />,
-    isTestnetSupported: true,
+    isTestnetSupported: false,
   },
   {
     coin: 'matic',
@@ -281,24 +281,24 @@ const CURRENCIES = [
     icon: <XrpLogoSvg height={35} width={35} />,
     isTestnetSupported: false,
   },
-  {
-    coin: 'bch',
-    label: 'BCH',
-    icon: <BchLogoSvg height={35} width={35} />,
-    isTestnetSupported: false,
-  },
-  {
-    coin: 'ltc',
-    label: 'LTC',
-    icon: <LtcLogoSvg height={35} width={35} />,
-    isTestnetSupported: false,
-  },
-  {
-    coin: 'doge',
-    label: 'DOGE',
-    icon: <DogeLogoSvg height={35} width={35} />,
-    isTestnetSupported: false,
-  },
+  // {
+  //   coin: 'bch',
+  //   label: 'BCH',
+  //   icon: <BchLogoSvg height={35} width={35} />,
+  //   isTestnetSupported: false,
+  // },
+  // {
+  //   coin: 'ltc',
+  //   label: 'LTC',
+  //   icon: <LtcLogoSvg height={35} width={35} />,
+  //   isTestnetSupported: false,
+  // },
+  // {
+  //   coin: 'doge',
+  //   label: 'DOGE',
+  //   icon: <DogeLogoSvg height={35} width={35} />,
+  //   isTestnetSupported: false,
+  // },
 ];
 
 const TESTNET_SUPPORT_MAP = CURRENCIES.reduce<Record<string, boolean>>(

@@ -1,3 +1,4 @@
+import Transport from '@ledgerhq/hw-transport';
 import React, {useEffect, useRef, useState} from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native';
 import {
@@ -28,6 +29,7 @@ import {
   Wallet,
   TransactionProposal,
   SendMaxInfo,
+  Key,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -94,6 +96,11 @@ import {changellyGetTransactions} from '../../../../store/swap-crypto/effects/ch
 import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../../../navigation/tabs/settings/external-services/ExternalServicesGroup';
+import {
+  ConfirmHardwareWalletModal,
+  SimpleConfirmPaymentState,
+} from '../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -153,6 +160,13 @@ const ChangellyCheckout: React.FC = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<any>();
+
+  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
+    useState(false);
+  const [hardwareWalletTransport, setHardwareWalletTransport] =
+    useState<Transport | null>(null);
+  const [confirmHardwareState, setConfirmHardwareState] =
+    useState<SimpleConfirmPaymentState | null>(null);
 
   const alternativeIsoCode = 'USD';
   let addressFrom: string; // Refund address
@@ -550,13 +564,30 @@ const ChangellyCheckout: React.FC = () => {
     }
   };
 
-  const makePayment = async () => {
+  const makePayment = async ({transport}: {transport?: Transport}) => {
+    const isUsingHardwareWallet = !!transport;
     try {
-      dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-      await sleep(400);
-      await dispatch(
-        publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
-      );
+      if (isUsingHardwareWallet) {
+        setConfirmHardwareState('sending');
+        await sleep(500);
+        await dispatch(
+          publishAndSign({
+            txp: ctxp!,
+            key,
+            wallet: fromWalletSelected,
+            transport,
+          }),
+        );
+        setConfirmHardwareState('complete');
+        await sleep(1000);
+        setConfirmHardwareWalletVisible(false);
+      } else {
+        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
+        await sleep(400);
+        await dispatch(
+          publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
+        );
+      }
       saveChangellyTx();
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
@@ -572,7 +603,8 @@ const ChangellyCheckout: React.FC = () => {
         case 'password canceled':
           break;
         case 'biometric check failed':
-          setResetSwipeButton(true);
+          break;
+        case 'user denied transaction':
           break;
         default:
           logger.error(JSON.stringify(err));
@@ -580,6 +612,48 @@ const ChangellyCheckout: React.FC = () => {
           const reason = 'publishAndSign Error';
           showError(msg, reason);
       }
+    }
+  };
+
+  // on hardware wallet disconnect, just clear the cached transport object
+  // errors will be thrown and caught as needed in their respective workflows
+  const disconnectFn = () => setHardwareWalletTransport(null);
+  const disconnectFnRef = useRef(disconnectFn);
+  disconnectFnRef.current = disconnectFn;
+
+  const onHardwareWalletPaired = (args: {transport: Transport}) => {
+    const {transport} = args;
+
+    transport.on('disconnect', disconnectFnRef.current);
+
+    setHardwareWalletTransport(transport);
+    setConfirmHardwareState('sending');
+    makePayment({transport});
+  };
+
+  const onSwipeComplete = async () => {
+    try {
+      logger.debug('Swipe completed. Making payment...');
+      if (key.hardwareSource) {
+        await onSwipeCompleteHardwareWallet(key);
+      } else {
+        await makePayment({});
+      }
+    } catch (err) {}
+  };
+
+  const onSwipeCompleteHardwareWallet = async (key: Key) => {
+    if (key.hardwareSource === 'ledger') {
+      if (hardwareWalletTransport) {
+        setConfirmHardwareState('sending');
+        setConfirmHardwareWalletVisible(true);
+        await makePayment({transport: hardwareWalletTransport});
+      } else {
+        setConfirmHardwareWalletVisible(true);
+      }
+    } else {
+      const msg = t('Uh oh, something went wrong. Please try again later');
+      showError(msg, t('Unsupported hardware wallet'));
     }
   };
 
@@ -893,6 +967,22 @@ const ChangellyCheckout: React.FC = () => {
         )}
       </ScrollView>
 
+      {key.hardwareSource ? (
+        <ConfirmHardwareWalletModal
+          isVisible={isConfirmHardwareWalletModalVisible}
+          state={confirmHardwareState}
+          hardwareSource={key.hardwareSource}
+          transport={hardwareWalletTransport}
+          currencyLabel={BitpaySupportedCoins[fromWalletSelected.chain]?.name}
+          onBackdropPress={() => {
+            setConfirmHardwareWalletVisible(false);
+            setResetSwipeButton(true);
+            setConfirmHardwareState(null);
+          }}
+          onPaired={onHardwareWalletPaired}
+        />
+      ) : null}
+
       {!paymentExpired && !!exchangeTxId ? (
         <TouchableOpacity
           onPress={() => {
@@ -904,12 +994,7 @@ const ChangellyCheckout: React.FC = () => {
           <SwipeButton
             title={'Slide to send'}
             disabled={!termsAccepted}
-            onSwipeComplete={async () => {
-              try {
-                logger.debug('Swipe completed. Making payment...');
-                makePayment();
-              } catch (err) {}
-            }}
+            onSwipeComplete={onSwipeComplete}
             forceReset={resetSwipeButton}
           />
         </TouchableOpacity>

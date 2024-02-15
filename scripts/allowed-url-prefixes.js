@@ -49,8 +49,7 @@ const allowedUrlPrefixes = [
   'https://matic-mumbai.chainstacklabs.com/',
   'https://static.methodfi.com/',
   'https://api.zenledger.io/',
-  'https://mempool.space/api',
-  'https://mempool.space/testnet/api',
+  'https://api.blockcypher.com/v1/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');

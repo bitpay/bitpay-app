@@ -102,11 +102,11 @@ const WalletInformation = () => {
       m,
       n,
       addressType,
-      rootPath,
       keyId,
       account,
       copayerId,
       publicKeyRing,
+      rootPath,
     },
     tokenAddress,
   } = wallet;

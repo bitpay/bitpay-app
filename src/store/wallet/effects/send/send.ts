@@ -65,7 +65,12 @@ import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {GetPrecision, IsERCToken, IsUtxoCoin} from '../../utils/currency';
+import {
+  GetPrecision,
+  IsERCToken,
+  IsSegwitCoin,
+  IsUtxoCoin,
+} from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
 import {createWalletAddress, ToCashAddress} from '../address/address';
@@ -955,7 +960,7 @@ export const startSendPayment =
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
-    recipient: Recipient;
+    recipient?: Recipient;
 
     /**
      * Transport for hardware wallet
@@ -1351,35 +1356,28 @@ const _fetchTxCache = {
 };
 
 /**
- * Fetch raw data for a BTC transaction by ID.
+ * Fetch raw data for a COIN transaction by ID.
  *
  * @param txId
  * @param network
  * @returns transaction data as a hex string
  */
-const fetchBtcTxById = async (
+const fetchUtxoTxById = async (
   txId: string,
+  coin: string,
   network: Network,
 ): Promise<string> => {
   if (_fetchTxCache[network][txId]) {
     return _fetchTxCache[network][txId];
   }
-
-  let url = 'https://mempool.space';
-
-  if (network === Network.testnet) {
-    url += '/testnet';
+  let url = `https://api.blockcypher.com/v1/${coin}/main/txs/${txId}?includeHex=true`;
+  const apiResponse = await axios.get<any>(url);
+  const txDataHex = apiResponse?.data?.hex;
+  if (!txDataHex) {
+    throw new Error('Could not fetch transaction data');
   }
 
-  url += `/api/tx/${txId}/hex`;
-
-  const apiResponse = await axios.get<string>(url);
-  const txDataHex = apiResponse.data;
-
-  if (txDataHex) {
-    _fetchTxCache[network][txId] = txDataHex;
-  }
-
+  _fetchTxCache[network][txId] = txDataHex;
   return txDataHex;
 };
 
@@ -1432,13 +1430,12 @@ const createLedgerTransactionArgUtxo = (
         txpAsTx.inputs.map(async input => {
           // prevTxId is given in BigEndian format, no need to reverse
           const txId = input.prevTxId.toString('hex');
-          const txp = await getTxByHash(wallet, txId);
-          const inputTxHex = txp.raw;
-          // const inputTxHex = await fetchBtcTxById(txId, txp.network);
+          // TODO: use BWS to get the raw transaction hex
+          // const txp = await getTxByHash(wallet, txId);
+          // const inputTxHex = txp.raw;
+          const inputTxHex = await fetchUtxoTxById(txId, txp.coin, txp.network);
 
-          const isSegwitSupported = ['btc', 'ltc', 'doge'].includes(txp.coin)
-            ? true
-            : false;
+          const isSegwitSupported = IsSegwitCoin(txp.coin);
           // TODO: safe to always set this to false or undefined?
           const hasTimestamp = false;
           const hasExtraData = false;
@@ -1454,7 +1451,7 @@ const createLedgerTransactionArgUtxo = (
           const outputIndex = input.outputIndex;
           // TODO: safe to always set this to undefined ?
           const redeemScript = undefined; // TODO: optional redeem script to use when consuming a segwit input
-          const sequence = undefined; // optional
+          const sequence = input.sequenceNumber; // optional
 
           const inputData: CreateTransactionArg['inputs'][0] = [
             inputTx,
@@ -1477,7 +1474,7 @@ const createLedgerTransactionArgUtxo = (
       // undefined will default to SIGHASH_ALL.
       // BWC currently uses undefined when signing UTXO tx so we do the same here
       const sigHashType = undefined;
-      const segwit = ['btc', 'ltc', 'doge'].includes(txp.coin) ? true : false;
+      const segwit = IsSegwitCoin(txp.coin);
 
       const outputs = txpAsTx.outputs.map(output => {
         const amountBuf = Buffer.alloc(8);
@@ -1505,7 +1502,7 @@ const createLedgerTransactionArgUtxo = (
 
       if (txp.coin === 'bch') {
         additionals = ['abc', 'cashaddr'];
-      } else if (['btc', 'ltc', 'doge'].includes(txp.coin)) {
+      } else if (IsSegwitCoin(txp.coin)) {
         additionals = ['bech32']; // TODO: safe to always set this to 'bech32' ? Potencial issues here
       }
 
@@ -1638,7 +1635,7 @@ const getXrpSignaturesFromLedger = async (
       Fee: txp.fee.toString(),
       Flags: 2147483648,
       Sequence: txp.nonce,
-      SigningPubKey: wallet.credentials.hardwareSourcePublicKey,
+      SigningPubKey: wallet.credentials.hardwareSourcePublicKey.toUpperCase(),
     };
     if (txp.destinationTag) {
       transactionJSON.DestinationTag = txp.destinationTag;
@@ -1649,10 +1646,12 @@ const getXrpSignaturesFromLedger = async (
     const xrp = new Xrp(transport);
     const transactionBlob = encode(transactionJSON);
     const signature = await xrp.signTransaction(
-      "44'/144'/0'/0/0",
+      wallet.credentials.rootPath,
       transactionBlob,
     );
-    return [signature];
+    transactionJSON.TxnSignature = signature.toUpperCase();
+    const signatureBlob = encode(transactionJSON);
+    return [signatureBlob];
   } catch (err) {
     throw new Error('Something went wrong signing the transaction: ' + err);
   }
@@ -1716,7 +1715,11 @@ export const signTxWithHardwareWallet = async (
       key,
       txp,
     );
-  } catch (err) {
+  } catch (err: any) {
+    if (err.statusCode === 27013) {
+      // Ledger device: Condition of use not satisfied (denied by the user?) (0x6985)
+      throw 'user denied transaction';
+    }
     const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
     throw new Error(`Error getting signatures from hardware wallet: ${errMsg}`);
   }
@@ -2294,6 +2297,7 @@ export const handleSendError =
         return true;
       case 'password canceled':
       case 'biometric check failed':
+      case 'user denied transaction':
         return true;
       default:
         const errorMessage = error?.message || error;

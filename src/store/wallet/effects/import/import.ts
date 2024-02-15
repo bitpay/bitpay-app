@@ -99,12 +99,10 @@ import {t} from 'i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
 import uniqBy from 'lodash.uniqby';
-import {
-  credentialsFromExtendedPublicKey,
-  getNetworkFromExtendedKey,
-} from '../../../../utils/wallet-hardware';
+import {credentialsFromExtendedPublicKey} from '../../../../utils/wallet-hardware';
 import {sleep} from '../../../../utils/helper-methods';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {GetName, isSingleAddressChain} from '../../utils/currency';
 
 const BWC = BwcProvider.getInstance();
 const BwcConstants = BWC.getConstants();
@@ -958,16 +956,22 @@ export const startImportFromHardwareWallet =
     let key = Object.values(WALLET.keys).find(k => k.id === hwKeyId);
 
     const walletExists = key?.wallets.some(
-      w => w.credentials.xPubKey === xPubKey && w.credentials.coin === coin, // EVM coins have the same xPubKey
+      w =>
+        w.credentials.xPubKey === xPubKey &&
+        w.credentials.coin === coin &&
+        w.credentials.account === accountNumber, // EVM coins have the same xPubKey
     );
 
     if (walletExists) {
       throw new Error('The wallet is already in the app.');
     }
 
+    const name = dispatch(GetName(coin, coin)); // chain === coin for stored wallets
     const credentials = credentialsFromExtendedPublicKey(
       coin,
       accountNumber,
+      accountPath,
+      name,
       derivationStrategy,
       useNativeSegwit,
       network,
@@ -980,7 +984,7 @@ export const startImportFromHardwareWallet =
 
     // check if wallet exists in BWS
     const status = await new Promise<any>((res, rej) => {
-      bwcClient.getStatus({}, async (err: any, result: any) => {
+      bwcClient.getStatus({network}, async (err: any, result: any) => {
         err ? rej(err) : res(result);
       });
     }).catch(() => null);
@@ -1088,7 +1092,7 @@ export const startImportFromHardwareWallet =
       {
         includeCopayerBranches: true,
       },
-      (err: any) => {
+      async (err: any) => {
         if (err) {
           const errMsg =
             err instanceof Error ? err.message : JSON.stringify(err);
@@ -1099,15 +1103,25 @@ export const startImportFromHardwareWallet =
             ),
           );
         }
-        if (key?.id) {
-          // set scanning (for UI scanning label on wallet details )
-          dispatch(
-            setWalletScanning({
-              keyId: key.id,
-              walletId: wallet.id,
-              isScanning: true,
-            }),
-          );
+        if (key?.id && !isSingleAddressChain(wallet.credentials.chain)) {
+          const status = await new Promise<any>((res, rej) => {
+            bwcClient.getStatus(
+              {network: wallet.network},
+              async (err: any, result: any) => {
+                err ? rej(err) : res(result);
+              },
+            );
+          }).catch(() => null);
+          if (!status?.wallet?.singleAddress) {
+            // set scanning (for UI scanning label on wallet details )
+            dispatch(
+              setWalletScanning({
+                keyId: key.id,
+                walletId: wallet.id,
+                isScanning: true,
+              }),
+            );
+          }
         }
       },
     );

@@ -31,9 +31,15 @@ export const ConfirmLedger: React.FC<IConfirmHardwareWalletProps> = props => {
       {props.state === 'complete' ? (
         <ConfirmLedgerComplete />
       ) : props.state === 'sending' && connectionMethod ? (
-        <ConfirmLedgerSending connectionMethod={connectionMethod} />
+        <ConfirmLedgerSending
+          connectionMethod={connectionMethod}
+          currencyLabel={props.currencyLabel}
+        />
       ) : (
-        <ConfirmLedgerStart onPaired={onPaired} />
+        <ConfirmLedgerStart
+          onPaired={onPaired}
+          currencyLabel={props.currencyLabel}
+        />
       )}
     </>
   );

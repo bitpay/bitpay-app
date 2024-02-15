@@ -93,6 +93,7 @@ export interface WalletBalance extends CryptoBalance, FiatBalance {}
 export interface WalletStatus {
   balance: CryptoBalance;
   pendingTxps: TransactionProposal[];
+  singleAddress: boolean;
 }
 export interface WalletObj {
   id: string;
@@ -103,6 +104,7 @@ export interface WalletObj {
   m: number;
   n: number;
   balance: CryptoBalance;
+  singleAddress: boolean;
   pendingTxps: TransactionProposal[];
   tokenAddress?: string;
   tokens?: string[];

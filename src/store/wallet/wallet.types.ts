@@ -155,6 +155,7 @@ interface successUpdateWalletStatus {
     status: {
       balance: CryptoBalance;
       pendingTxps: TransactionProposal[];
+      singleAddress: boolean;
     };
   };
 }

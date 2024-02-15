@@ -418,6 +418,7 @@ const RecoveryPhrase = () => {
           )) as Key);
       await dispatch(startGetRates({force: true}));
       await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+      await sleep(1000);
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       backupRedirect({

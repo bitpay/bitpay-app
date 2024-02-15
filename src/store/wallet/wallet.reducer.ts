@@ -116,6 +116,7 @@ export const walletReducer = (
           wallet.balance = status.balance;
           wallet.pendingTxps = status.pendingTxps;
           wallet.isRefreshing = false;
+          wallet.singleAddress = status.singleAddress;
         }
         return wallet;
       });

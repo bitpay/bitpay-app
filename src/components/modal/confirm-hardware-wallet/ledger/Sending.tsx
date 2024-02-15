@@ -14,6 +14,7 @@ import {
 
 interface Props {
   connectionMethod: 'ble' | 'hid' | null;
+  currencyLabel: string;
 }
 
 const IconWrapper = styled.View`
@@ -41,7 +42,7 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
             textAlign: 'center',
           }}>
           Approve the transaction from your ledger device. Ensure it's unlocked
-          and on the correct currency.
+          and set to the appropriate currency application.
         </Paragraph>
       </DescriptionRow>
 

@@ -56,6 +56,8 @@ const hashFromEntropy = (
 export const credentialsFromExtendedPublicKey = (
   coin: string,
   account = 0,
+  rootPath: string,
+  name: string,
   derivationStrategy: string,
   useNativeSegwit: boolean,
   network: Network,
@@ -91,7 +93,11 @@ export const credentialsFromExtendedPublicKey = (
     ? Constants.SCRIPT_TYPES.P2PKH
     : Constants.SCRIPT_TYPES.P2SH;
 
+  xPubKey = xPubKey ? xPubKey : hardwareSourcePublicKey; // for simplicity, we use the hardwareSourcePublicKey as the xPubKey, it's needed for generating copayerId
+
   const credentials = Credentials.fromObj({
+    name,
+    copayerName: 'me',
     coin,
     chain: coin, // chain === coin for stored wallets
     keyId: hwKeyId,
@@ -115,6 +121,7 @@ export const credentialsFromExtendedPublicKey = (
     addressType,
     version: 2,
     hardwareSourcePublicKey,
+    rootPath,
   });
 
   const walletPrivKey = privKey.toString();

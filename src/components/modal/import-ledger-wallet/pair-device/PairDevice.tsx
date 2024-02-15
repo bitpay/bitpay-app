@@ -13,6 +13,7 @@ import {DeviceFound} from './DeviceFound';
 import {LearnHow} from './LearnHow';
 import {PairingError} from './PairingError';
 import {SearchingForDevices} from './SearchingForDevices';
+import {sleep} from '../../../../utils/helper-methods';
 
 interface Props {
   onPaired: (transport: Transport) => void;
@@ -52,7 +53,11 @@ export const PairDevice: React.FC<Props> = props => {
     }
 
     try {
-      openedTransport = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
+      const result = await Promise.all([
+        TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT),
+        sleep(5000), // Ensure at least 5 seconds delay for a better user experience
+      ]);
+      openedTransport = result[0];
     } catch (err) {
       if (isBleError(err)) {
         errorMsg = `Code (Android): ${err.androidErrorCode}, Code (iOS): ${err.iosErrorCode}, message: ${err.message}, reason: ${err.reason}`;
@@ -71,7 +76,9 @@ export const PairDevice: React.FC<Props> = props => {
       setTransport(openedTransport);
       props.onPaired(openedTransport);
     } else {
-      setError(`Unable to connect via Bluetooth: ${errorMsg}`);
+      setError(
+        `Unable to connect via Bluetooth: ${errorMsg}. If error persist, please attempt to reconnect by enabling the device's Bluetooth option again.`,
+      );
     }
 
     setIsSearching(false);
@@ -86,7 +93,11 @@ export const PairDevice: React.FC<Props> = props => {
     let errorMsg = '';
 
     try {
-      openedTransport = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
+      const result = await Promise.all([
+        TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT),
+        sleep(5000), // Ensure at least 5 seconds delay for a better user experience
+      ]);
+      openedTransport = result[0];
     } catch (err) {
       if (isBleError(err)) {
         errorMsg = `Code (Android): ${err.androidErrorCode}, Code (iOS): ${err.iosErrorCode}, message: ${err.message}, reason: ${err.reason}`;

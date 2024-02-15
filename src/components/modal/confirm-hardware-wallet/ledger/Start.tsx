@@ -21,10 +21,16 @@ import {
 import {checkPermissionsBLE} from '../../import-ledger-wallet/utils';
 import {Warning25} from '../../../../styles/colors';
 import {SearchingForDevices} from '../../import-ledger-wallet/pair-device/SearchingForDevices';
+import {sleep} from '../../../../utils/helper-methods';
 
 interface PairHardwareWalletModalProps {
   onPaired: (transport: Transport) => void;
+  currencyLabel: string;
 }
+
+const Bold = styled.Text`
+  font-weight: 600;
+`;
 
 const IconWrapper = styled.View`
   padding: 28px;
@@ -90,7 +96,11 @@ export const ConfirmLedgerStart: React.FC<
     }
 
     try {
-      transport = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
+      const result = await Promise.all([
+        TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT),
+        sleep(5000), // Ensure at least 5 seconds delay for a better user experience
+      ]);
+      transport = result[0];
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(
@@ -103,7 +113,13 @@ export const ConfirmLedgerStart: React.FC<
     if (transport) {
       props.onPaired(transport);
     } else {
-      setError(`Unable to connect via Bluetooth: ${errorMsg}`);
+      setError(
+        `Unable to connect via Bluetooth: ${errorMsg}. If error persist, please attempt to reconnect by enabling the device's Bluetooth option again. Ensure it's unlocked and set to the appropriate currency application, the screen should display: ${
+          props.currencyLabel === 'Bitcoin'
+            ? props.currencyLabel
+            : 'Application'
+        } is ready.`,
+      );
     }
 
     setConnecting(false);
@@ -118,7 +134,11 @@ export const ConfirmLedgerStart: React.FC<
     let errorMsg = '';
 
     try {
-      transport = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
+      const result = await Promise.all([
+        TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT),
+        sleep(5000), // Ensure at least 5 seconds delay for a better user experience
+      ]);
+      transport = result[0];
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(
@@ -165,12 +185,22 @@ export const ConfirmLedgerStart: React.FC<
             </DescriptionRow>
           ) : (
             <>
-              <DescriptionRow>
-                <Paragraph>
-                  Approve the transaction from your ledger device. Ensure it's
-                  unlocked and on the correct currency.
-                </Paragraph>
-              </DescriptionRow>
+              {!error ? (
+                <DescriptionRow>
+                  <Paragraph>
+                    Approve the transaction from your ledger device. Ensure it's
+                    unlocked and set to the appropriate currency application,
+                    the screen should display:{' '}
+                    <Bold>
+                      {props.currencyLabel === 'Bitcoin'
+                        ? props.currencyLabel
+                        : 'Application'}{' '}
+                      is ready
+                    </Bold>
+                    .
+                  </Paragraph>
+                </DescriptionRow>
+              ) : null}
 
               {supportedTypes ? (
                 <ActionsRow>

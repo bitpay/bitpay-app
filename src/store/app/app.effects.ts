@@ -697,6 +697,13 @@ export const subscribePushNotifications =
             'Push Notifications error subscribing: ' + JSON.stringify(err),
           ),
         );
+      } else {
+        dispatch(
+          LogActions.info(
+            'Push Notifications success subscribing: ' +
+              walletClient.credentials.walletName,
+          ),
+        );
       }
     });
   };

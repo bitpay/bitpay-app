@@ -11,12 +11,14 @@ interface ConfirmHardwareWalletModalProps extends IConfirmHardwareWalletProps {
   onBackdropPress: () => void;
   isVisible: boolean;
   hardwareSource: SupportedHardwareSource;
+  currencyLabel: string;
 }
 
 export interface IConfirmHardwareWalletProps {
   onPaired: (args: {transport: Transport}) => void;
   state?: SimpleConfirmPaymentState | null;
   transport?: Transport | null;
+  currencyLabel: string;
 }
 
 /**
@@ -38,6 +40,7 @@ export const ConfirmHardwareWalletModal: React.FC<
             transport={props.transport}
             state={props.state}
             onPaired={props.onPaired}
+            currencyLabel={props.currencyLabel}
           />
         ) : null}
       </SheetContainer>

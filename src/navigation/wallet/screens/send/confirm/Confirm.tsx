@@ -107,6 +107,7 @@ import {
   ConfirmHardwareWalletModal,
   SimpleConfirmPaymentState,
 } from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
+import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -401,7 +402,8 @@ const Confirm = () => {
         case 'password canceled':
           break;
         case 'biometric check failed':
-          setResetSwipeButton(true);
+          break;
+        case 'user denied transaction':
           break;
         default:
           await showErrorMessage(
@@ -778,6 +780,7 @@ const Confirm = () => {
           state={confirmHardwareState}
           hardwareSource={key.hardwareSource}
           transport={hardwareWalletTransport}
+          currencyLabel={BitpaySupportedCoins[wallet.chain]?.name}
           onBackdropPress={() => {
             setConfirmHardwareWalletVisible(false);
             setResetSwipeButton(true);

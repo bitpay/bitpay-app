@@ -811,7 +811,8 @@ const TransactionProposalDetails = () => {
                 case 'password canceled':
                   break;
                 case 'biometric check failed':
-                  setResetSwipeButton(true);
+                  break;
+                case 'user denied transaction':
                   break;
                 default:
                   await showErrorMessage(

@@ -153,11 +153,11 @@ export const checkPermissionsBLE = async (): Promise<{
     );
 
     isAuthorized = REQUIRED_PERMISSIONS_BLE_ANDROID.every(
-      p => permissions[p] === 'granted',
+      p => permissions[p] === 'granted' || permissions[p] === 'never_ask_again',
     );
 
     missingPermissions = REQUIRED_PERMISSIONS_BLE_ANDROID.filter(
-      p => permissions[p] !== 'granted',
+      p => permissions[p] !== 'granted' && permissions[p] !== 'never_ask_again',
     );
   }
 

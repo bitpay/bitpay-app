@@ -100,6 +100,7 @@ export const successUpdateWalletStatus = (payload: {
   status: {
     balance: CryptoBalance;
     pendingTxps: TransactionProposal[];
+    singleAddress: boolean;
   };
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS,
