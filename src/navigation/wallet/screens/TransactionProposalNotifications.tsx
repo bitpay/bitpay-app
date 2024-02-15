@@ -599,11 +599,15 @@ const TransactionProposalNotifications = () => {
               await sleep(400);
               const count = countSuccessAndFailed(data);
               if (count.failed > 0) {
-                const errMsgs = [`There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`];
+                const errMsgs = [
+                  `There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`,
+                ];
                 data.forEach((element, index) => {
                   if (element instanceof Error) {
-                    errMsgs.push(`[ERROR ${index + 1}] ${BWCErrorMessage(element)}`);
-                    } 
+                    errMsgs.push(
+                      `[ERROR ${index + 1}] ${BWCErrorMessage(element)}`,
+                    );
+                  }
                 });
                 await showErrorMessage(
                   CustomErrorMessage({

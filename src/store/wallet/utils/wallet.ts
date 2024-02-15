@@ -517,12 +517,7 @@ export const BuildKeysAndWalletsList = ({
   rates: Rates;
   dispatch: AppDispatch;
 }) => {
-  const selectedPaymentOptions = payProOptions?.paymentOptions?.filter(
-    option => option.selected,
-  );
-  const paymentOptions = selectedPaymentOptions?.length
-    ? selectedPaymentOptions
-    : payProOptions?.paymentOptions;
+  const paymentOptions = payProOptions?.paymentOptions;
   return Object.keys(keys)
     .map(keyId => {
       const keyObj = keys[keyId];

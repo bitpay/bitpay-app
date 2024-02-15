@@ -462,15 +462,13 @@ export const buildTxDetails =
         fee = proposal.fee || 0; // proposal fee is zero for coinbase
       }
 
-      const selectedTransactionCurrency =
-        invoice?.buyerProvidedInfo!.selectedTransactionCurrency ||
-        getCurrencyCodeFromCoinAndChain(
-          wallet.currencyAbbreviation,
-          wallet.chain,
-        );
+      const selectedTransactionCurrency = getCurrencyCodeFromCoinAndChain(
+        wallet.currencyAbbreviation,
+        wallet.chain,
+      );
 
       const isOffChain = !proposal;
-      if (invoice && selectedTransactionCurrency) {
+      if (invoice) {
         amount = isOffChain
           ? invoice.paymentSubtotals[selectedTransactionCurrency]
           : invoice.paymentTotals[selectedTransactionCurrency];
@@ -490,11 +488,7 @@ export const buildTxDetails =
 
       amount = Number(amount); // Support BN (use number instead string only for view)
       let effectiveRate;
-      if (
-        invoice &&
-        selectedTransactionCurrency &&
-        defaultAltCurrencyIsoCode === invoice.currency
-      ) {
+      if (invoice && defaultAltCurrencyIsoCode === invoice.currency) {
         effectiveRate = dispatch(
           getInvoiceEffectiveRate(
             invoice,
@@ -1165,7 +1159,11 @@ export const publishAndSignMultipleProposals =
           }
         }
         // Process transactions with a nonce sequentially
-        const resultsWithNonce: (Partial<TransactionProposal> | void | Error)[] = [];
+        const resultsWithNonce: (
+          | Partial<TransactionProposal>
+          | void
+          | Error
+        )[] = [];
         const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined);
         evmTxsWithNonce.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
         for (const txp of evmTxsWithNonce) {
@@ -1195,28 +1193,29 @@ export const publishAndSignMultipleProposals =
 
         // Process transactions without a nonce concurrently
         const withoutNonce = txps.filter(txp => txp.nonce === undefined);
-        const promisesWithoutNonce: Promise<Partial<TransactionProposal> | void | Error>[] =
-          withoutNonce.map(txp =>
-            dispatch(
-              publishAndSign({
-                txp,
-                key,
-                wallet,
-                recipient,
-                password,
-                signingMultipleProposals,
-              }),
-            ).catch(err => {
-              const errorStr =
-                err instanceof Error ? err.message : JSON.stringify(err);
-              dispatch(
-                LogActions.error(
-                  `Error signing transaction proposal: ${errorStr}`,
-                ),
-              );
-              return err;
+        const promisesWithoutNonce: Promise<
+          Partial<TransactionProposal> | void | Error
+        >[] = withoutNonce.map(txp =>
+          dispatch(
+            publishAndSign({
+              txp,
+              key,
+              wallet,
+              recipient,
+              password,
+              signingMultipleProposals,
             }),
-          );
+          ).catch(err => {
+            const errorStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(
+              LogActions.error(
+                `Error signing transaction proposal: ${errorStr}`,
+              ),
+            );
+            return err;
+          }),
+        );
         const resultsWithoutNonce = await Promise.all(promisesWithoutNonce);
         return resolve([...resultsWithNonce, ...resultsWithoutNonce]);
       } catch (err) {
