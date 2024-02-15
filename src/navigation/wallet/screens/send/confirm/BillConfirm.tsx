@@ -9,10 +9,15 @@ import {
   buildTxDetails,
   createPayProTxProposal,
   handleCreateTxProposalError,
+  handleSendError,
   removeTxp,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
-import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
+import {
+  sleep,
+  formatFiatAmount,
+  toggleThenUntoggle,
+} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {ShopEffects} from '../../../../../store/shop';
@@ -234,6 +239,7 @@ const BillConfirm: React.VFC<
       updateTxDetails(newTxDetails);
       setInvoice(newInvoice);
       setCoinbaseAccount(selectedCoinbaseAccount);
+      setWallet(undefined);
       setConvenienceFee(serviceFee);
       setSubtotal(totalBillAmount);
       dispatch(dismissOnGoingProcessModal());
@@ -292,6 +298,7 @@ const BillConfirm: React.VFC<
         }),
       );
       setWallet(selectedWallet);
+      setCoinbaseAccount(undefined);
       setKey(keys[selectedWallet.keyId]);
       updateTxDetails(newTxDetails);
       updateTxp(newTxp);
@@ -353,28 +360,27 @@ const BillConfirm: React.VFC<
   };
 
   const handlePaymentFailure = async (error: any) => {
-    if (wallet && txp) {
-      await removeTxp(wallet, txp).catch(removeErr =>
-        console.error('error deleting txp', removeErr),
-      );
+    const handled = dispatch(
+      handleSendError({error, onDismiss: () => openWalletSelector(400)}),
+    );
+    if (!handled) {
+      if (wallet && txp) {
+        await removeTxp(wallet, txp).catch(removeErr =>
+          console.error('error deleting txp', removeErr),
+        );
+      }
+      updateTxDetails(undefined);
+      updateTxp(undefined);
+      setWallet(undefined);
+      setInvoice(undefined);
+      setCoinbaseAccount(undefined);
     }
-    updateTxDetails(undefined);
-    updateTxp(undefined);
-    setWallet(undefined);
-    setInvoice(undefined);
-    setCoinbaseAccount(undefined);
-    showError({
-      error,
-      defaultErrorMessage: t('Could not send transaction'),
-      onDismiss: () => openWalletSelector(400),
-    });
-    await sleep(400);
-    setResetSwipeButton(true);
+    toggleThenUntoggle(setResetSwipeButton);
     dispatch(Analytics.track('Bill Pay — Failed Bill Paid', baseEventParams));
   };
 
   const request2FA = async () => {
-    navigation.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
+    navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
       onSubmit: async twoFactorCode => {
         try {
           await sendPayment(twoFactorCode);
@@ -390,12 +396,12 @@ const BillConfirm: React.VFC<
         }
       },
     });
-    await sleep(400);
-    setResetSwipeButton(true);
+    toggleThenUntoggle(setResetSwipeButton);
   };
 
   useEffect(() => {
     openWalletSelector(100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

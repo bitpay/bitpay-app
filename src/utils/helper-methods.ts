@@ -331,7 +331,7 @@ export const getRateByCurrencyName = (
   chain: string,
 ): Rate[] => {
   const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
-  return rates[currencyName];
+  return rates[currencyName] || rates[currencyAbbreviation];
 };
 
 export const addTokenChainSuffix = (name: string, chain: string) => {
@@ -461,4 +461,12 @@ export const transformAmount = (
     opts.decimalSeparator || '.',
     decimals.minDecimals,
   );
+};
+
+export const toggleThenUntoggle = async (
+  booleanSetter: React.Dispatch<React.SetStateAction<boolean>>,
+) => {
+  booleanSetter(true);
+  await sleep(500);
+  booleanSetter(false);
 };

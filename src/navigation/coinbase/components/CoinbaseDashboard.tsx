@@ -43,7 +43,7 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 
-const OverviewContainer = styled.View`
+const OverviewContainer = styled.SafeAreaView`
   flex: 1;
 `;
 

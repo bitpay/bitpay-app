@@ -90,7 +90,7 @@ import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transacti
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {BitpaySupportedTokens} from '../../../constants/currencies';
 
-const AccountContainer = styled.View`
+const AccountContainer = styled.SafeAreaView`
   flex: 1;
 `;
 

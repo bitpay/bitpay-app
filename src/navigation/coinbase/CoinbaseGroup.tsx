@@ -48,7 +48,6 @@ const CoinbaseGroup: React.FC<CoinbaseProps> = ({Coinbase}) => {
     <Coinbase.Group
       screenOptions={({navigation}) => ({
         ...baseNavigatorOptions,
-        headerShown: false,
         headerLeft: () => (
           <HeaderBackButton
             onPress={() => {
@@ -58,13 +57,7 @@ const CoinbaseGroup: React.FC<CoinbaseProps> = ({Coinbase}) => {
           />
         ),
       })}>
-      <Coinbase.Screen
-        name={CoinbaseScreens.ROOT}
-        component={CoinbaseRoot}
-        options={{
-          headerShown: true,
-        }}
-      />
+      <Coinbase.Screen name={CoinbaseScreens.ROOT} component={CoinbaseRoot} />
       <Coinbase.Screen
         name={CoinbaseScreens.SETTINGS}
         component={CoinbaseSettings}

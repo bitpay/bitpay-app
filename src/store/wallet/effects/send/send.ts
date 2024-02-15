@@ -37,6 +37,7 @@ import {
   CustomErrorMessage,
   ExcludedUtxosWarning,
   GeneralError,
+  WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
@@ -82,6 +83,7 @@ import {URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
 import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
+import {SupportedTokenOptions} from '../../../../constants/SupportedCurrencyOptions';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -422,7 +424,8 @@ export const buildTxDetails =
     return new Promise(async resolve => {
       let gasPrice, gasLimit, nonce, destinationTag, coin, chain, amount, fee;
 
-      const tokenAddress = wallet.tokenAddress;
+      const tokenAddress =
+        wallet.tokenAddress || getTokenAddressForOffchainWallet(wallet);
 
       if (context === 'walletConnect' && request) {
         const {params} = request.params.request;
@@ -1783,3 +1786,38 @@ export const showConfirmAmountInfoSheet =
       }),
     );
   };
+
+export const handleSendError =
+  ({error, onDismiss}: {error: any; onDismiss?: () => {}}): Effect<boolean> =>
+  dispatch => {
+    switch (error) {
+      case 'invalid password':
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+        return true;
+      case 'password canceled':
+      case 'biometric check failed':
+        return true;
+      default:
+        const errorMessage = error?.message || error;
+        dispatch(
+          AppActions.showBottomNotificationModal(
+            CustomErrorMessage({
+              title: t('Error'),
+              errMsg:
+                typeof errorMessage === 'string'
+                  ? errorMessage
+                  : t('Could not send transaction'),
+              action: () => onDismiss && onDismiss(),
+            }),
+          ),
+        );
+        return false;
+    }
+  };
+
+function getTokenAddressForOffchainWallet(wallet: Wallet | WalletRowProps) {
+  return SupportedTokenOptions.find(
+    ({currencyAbbreviation}) =>
+      currencyAbbreviation === wallet.currencyAbbreviation.toLowerCase(),
+  )?.tokenAddress;
+}
