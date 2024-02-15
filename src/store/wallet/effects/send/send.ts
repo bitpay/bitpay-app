@@ -1128,7 +1128,7 @@ export const publishAndSignMultipleProposals =
     return new Promise(async (resolve, reject) => {
       try {
         const signingMultipleProposals = true;
-        let password: string;
+        let password: string | undefined;
         const {
           APP: {biometricLockActive},
         } = getState();
@@ -1164,10 +1164,39 @@ export const publishAndSignMultipleProposals =
             return reject(error);
           }
         }
-        const promises: Promise<Partial<TransactionProposal> | void>[] = [];
+        // Process transactions with a nonce sequentially
+        const resultsWithNonce: (Partial<TransactionProposal> | void | Error)[] = [];
+        const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined);
+        evmTxsWithNonce.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
+        for (const txp of evmTxsWithNonce) {
+          try {
+            const result = await dispatch(
+              publishAndSign({
+                txp,
+                key,
+                wallet,
+                recipient,
+                password,
+                signingMultipleProposals,
+              }),
+            );
+            resultsWithNonce.push(result);
+          } catch (err) {
+            const errorStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(
+              LogActions.error(
+                `Error signing transaction proposal: ${errorStr}`,
+              ),
+            );
+            resultsWithNonce.push(err);
+          }
+        }
 
-        txps.forEach(async txp => {
-          promises.push(
+        // Process transactions without a nonce concurrently
+        const withoutNonce = txps.filter(txp => txp.nonce === undefined);
+        const promisesWithoutNonce: Promise<Partial<TransactionProposal> | void | Error>[] =
+          withoutNonce.map(txp =>
             dispatch(
               publishAndSign({
                 txp,
@@ -1188,8 +1217,8 @@ export const publishAndSignMultipleProposals =
               return err;
             }),
           );
-        });
-        return resolve(await Promise.all(promises));
+        const resultsWithoutNonce = await Promise.all(promisesWithoutNonce);
+        return resolve([...resultsWithNonce, ...resultsWithoutNonce]);
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
