@@ -606,7 +606,6 @@ const TransactionProposalDetails = () => {
           </DetailContainer>
           <Hr />
 
-
           {txp.nonce ? (
             <>
               <DetailContainer>

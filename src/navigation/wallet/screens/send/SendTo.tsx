@@ -396,38 +396,18 @@ const SendTo = () => {
           GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
           chain,
         );
-        const OptSelected = payProOptions.paymentOptions.find(
-          (option: PayProPaymentOption) => option.selected,
-        );
-
-        let selected: PayProPaymentOption | undefined;
-        if (OptSelected) {
-          if (invoiceCurrency === OptSelected.currency) {
-            selected = OptSelected;
-          } else {
-            logger.warn(
-              'PayPro opt selected (v3) and wallet selected network/coin mismatch',
-            );
-            return Promise.resolve({
-              isValid: false,
-              invalidReason: 'invalidCurrency',
-            });
-          }
-        } else {
-          selected = payProOptions.paymentOptions.find(
+        const selected: PayProPaymentOption | undefined =
+          payProOptions.paymentOptions.find(
             (option: PayProPaymentOption) =>
               invoiceCurrency === option.currency,
           );
-        }
 
         if (selected) {
           const isValid = dispatch(checkCoinAndNetwork(selected, true));
           if (isValid) {
             return Promise.resolve({isValid: true, invalidReason: undefined});
           } else {
-            logger.warn(
-              'PayPro (v4) and wallet selected network/coin mismatch',
-            );
+            logger.warn('PayPro and wallet selected network/coin invalid');
             return Promise.resolve({
               isValid: false,
               invalidReason: 'invalidCurrency',
