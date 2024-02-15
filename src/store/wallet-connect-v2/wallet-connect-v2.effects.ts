@@ -48,6 +48,7 @@ import {startInAppNotification} from '../app/app.effects';
 import {navigationRef} from '../../Root';
 import {sessionProposal} from './wallet-connect-v2.actions';
 import {buildApprovedNamespaces} from '@walletconnect/utils';
+import {getFeeLevelsUsingBwcClient} from '../wallet/effects/fee/fee';
 
 const BWC = BwcProvider.getInstance();
 
@@ -598,6 +599,17 @@ const approveEIP155Request =
             }
             if (sendTransaction.chainId) {
               delete sendTransaction.chainId;
+            }
+            // workaround for bad gas price estimation ONLY matic
+            if (chainId.includes('eip155:137')) {
+              const feeLevels = await getFeeLevelsUsingBwcClient(
+                'matic',
+                'livenet',
+              );
+              const urgentFee = feeLevels.find(({level}) => level === 'urgent');
+              if (urgentFee?.feePerKb) {
+                sendTransaction.gasPrice = urgentFee?.feePerKb;
+              }
             }
             const connectedWallet = signer.connect(provider);
             const {hash} = await connectedWallet.sendTransaction(
