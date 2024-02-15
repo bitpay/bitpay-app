@@ -12,6 +12,15 @@ export function getCoinAndChainFromCurrencyCode(currencyCode: string): {
     .split('_')
     .map(item => item.toLowerCase());
   if (suffix) {
+    // Special handling for usdc.e and usdc
+    if (coin.toLowerCase() === 'usdc' && chainSuffixMap[suffix] === 'matic') {
+      return {coin: 'usdc.e', chain: chainSuffixMap[suffix]};
+    } else if (
+      coin.toLowerCase() === 'usdcn' &&
+      chainSuffixMap[suffix] === 'matic'
+    ) {
+      return {coin: 'usdc', chain: chainSuffixMap[suffix]};
+    }
     return {coin, chain: chainSuffixMap[suffix]};
   }
   if (SUPPORTED_COINS.includes(coin)) {
@@ -36,9 +45,12 @@ export function getCurrencyCodeFromCoinAndChain(
   );
   if (suffix && (coinIsAnotherChain || chain.toLowerCase() !== 'eth')) {
     // Special handling for usdc.e and usdc
-    if (coin.toLowerCase() === 'usdc.e') {
+    if (coin.toLowerCase() === 'usdc.e' && chain.toLowerCase() === 'matic') {
       return 'USDC_m';
-    } else if (coin.toLowerCase() === 'usdc') {
+    } else if (
+      coin.toLowerCase() === 'usdc' &&
+      chain.toLowerCase() === 'matic'
+    ) {
       return 'USDCn_m';
     }
     return `${coin.toUpperCase()}_${suffix}`;

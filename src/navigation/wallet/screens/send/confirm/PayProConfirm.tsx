@@ -26,7 +26,10 @@ import {sleep} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
-import {GetFeeUnits} from '../../../../../store/wallet/utils/currency';
+import {
+  GetFeeUnits,
+  IsERCToken,
+} from '../../../../../store/wallet/utils/currency';
 import {
   InfoDescription,
   InfoHeader,
@@ -429,15 +432,21 @@ const PayProConfirm = () => {
                   ) : null}
                 </>
               ) : null}
-              <Amount
-                description={'Total'}
-                amount={total}
-                height={83}
-                showInfoIcon={true}
-                infoIconOnPress={() => {
-                  dispatch(showConfirmAmountInfoSheet('total'));
-                }}
-              />
+              {wallet ? (
+                <Amount
+                  description={'Total'}
+                  amount={total}
+                  height={
+                    IsERCToken(wallet.currencyAbbreviation, wallet.chain)
+                      ? 110
+                      : 83
+                  }
+                  showInfoIcon={true}
+                  infoIconOnPress={() => {
+                    dispatch(showConfirmAmountInfoSheet('total'));
+                  }}
+                />
+              ) : null}
             </>
           ) : null}
         </DetailsList>
@@ -475,7 +484,6 @@ const PayProConfirm = () => {
                   walletId: wallet!.id,
                   key,
                 });
-
           }}
         />
       </ConfirmScrollView>
