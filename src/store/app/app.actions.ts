@@ -328,6 +328,10 @@ export const setHasViewedZenLedgerWarning = (): AppActionType => ({
   type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
 });
 
+export const setHasViewedBillsTab = (): AppActionType => ({
+  type: AppActionTypes.SET_HAS_VIEWED_BILLS_TAB,
+});
+
 export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
   type: AppActionTypes.USER_FEEDBACK,
   payload: feedBack,

@@ -16,6 +16,7 @@ import {
   SectionHeader,
   SectionHeaderButton,
   SectionHeaderContainer,
+  SectionSpacer,
 } from './styled/ShopTabComponents';
 import {LinkBlue, Slate30, SlateDark} from '../../../../styles/colors';
 import CautionIconSvg from '../../../../../assets/img/bills/caution.svg';
@@ -58,6 +59,18 @@ const BillsValueProp = styled.View`
 
 const CautionIcon = styled(CautionIconSvg)`
   margin-bottom: 24px;
+`;
+
+const BillsHeaderContainer = styled(SectionHeaderContainer)`
+  margin-top: 15px;
+`;
+
+const BillsHeader = styled(SectionHeader)`
+  margin-top: 0;
+`;
+
+const BillsHeaderButton = styled(SectionHeaderButton)`
+  margin-top: 0;
 `;
 
 const verificationBaseUrl = `${BASE_BITPAY_URLS[APP_NETWORK]}/wallet-verify?product=billpay`;
@@ -105,6 +118,7 @@ export const Bills = () => {
 
   useFocusEffect(() => {
     dispatch(Analytics.track('Bill Pay — Viewed Bills Page'));
+    dispatch(AppActions.setHasViewedBillsTab());
   });
 
   const onSubmit = async () => {
@@ -174,7 +188,7 @@ export const Bills = () => {
   };
 
   return (
-    <SectionContainer style={{height: HEIGHT - 270}}>
+    <SectionContainer style={{minHeight: HEIGHT - 200}}>
       {!isVerified ? (
         <>
           <BillPitch />
@@ -228,8 +242,8 @@ export const Bills = () => {
                 </>
               ) : (
                 <>
-                  <SectionHeaderContainer>
-                    <SectionHeader>{t('My Bills')}</SectionHeader>
+                  <BillsHeaderContainer>
+                    <BillsHeader>{t('My Bills')}</BillsHeader>
                     <TouchableOpacity
                       activeOpacity={ActiveOpacity}
                       onPress={() => {
@@ -240,11 +254,11 @@ export const Bills = () => {
                           ),
                         );
                       }}>
-                      <SectionHeaderButton>
+                      <BillsHeaderButton>
                         {t('View All Payments')}
-                      </SectionHeaderButton>
+                      </BillsHeaderButton>
                     </TouchableOpacity>
-                  </SectionHeaderContainer>
+                  </BillsHeaderContainer>
                   <BillList
                     accounts={accounts}
                     variation={'pay'}
@@ -299,6 +313,7 @@ export const Bills = () => {
                       ? t('Loading...')
                       : t('Connect More Bills')}
                   </Button>
+                  <SectionSpacer />
                 </>
               )}
             </>

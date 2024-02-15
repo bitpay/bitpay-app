@@ -80,13 +80,7 @@ const Connections: React.VFC<ConnectionsProps> = props => {
       navigation.navigate('BillSettings', {});
     } else {
       navigation.navigate('Tabs', {
-        screen: 'Shop',
-        params: {
-          screen: ShopScreens.HOME,
-          params: {
-            screen: ShopTabs.BILLS,
-          },
-        },
+        screen: 'Bills',
       });
     }
     dispatch(

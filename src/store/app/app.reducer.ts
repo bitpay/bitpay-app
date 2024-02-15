@@ -139,6 +139,7 @@ export interface AppState {
   failedAppInit: boolean;
   checkingBiometricForSending: boolean;
   hasViewedZenLedgerWarning: boolean;
+  hasViewedBillsTab: boolean;
 }
 
 const initialState: AppState = {
@@ -217,6 +218,7 @@ const initialState: AppState = {
   failedAppInit: false,
   checkingBiometricForSending: false,
   hasViewedZenLedgerWarning: false,
+  hasViewedBillsTab: false,
 };
 
 export const appReducer = (
@@ -618,6 +620,12 @@ export const appReducer = (
       return {
         ...state,
         hasViewedZenLedgerWarning: true,
+      };
+
+    case AppActionTypes.SET_HAS_VIEWED_BILLS_TAB:
+      return {
+        ...state,
+        hasViewedBillsTab: true,
       };
 
     case AppActionTypes.USER_FEEDBACK:

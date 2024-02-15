@@ -339,6 +339,18 @@ const ShopHome: React.FC<
             screenListeners={{
               tabPress: tab => {
                 if (tab.target) {
+                  if (tab.target.includes(ShopTabs.BILLS)) {
+                    tab.preventDefault();
+                    dispatch(
+                      Analytics.track('Bill Pay - Clicked Bill Pay', {
+                        context: 'Shop Tab',
+                      }),
+                    );
+                    navigation.navigate('Tabs', {
+                      screen: 'Bills',
+                    });
+                    return;
+                  }
                   setActiveTab(
                     tab.target.includes(ShopTabs.GIFT_CARDS)
                       ? ShopTabs.GIFT_CARDS
@@ -346,13 +358,6 @@ const ShopHome: React.FC<
                       ? ShopTabs.BILLS
                       : ShopTabs.SHOP_ONLINE,
                   );
-                  if (tab.target.includes(ShopTabs.BILLS)) {
-                    dispatch(
-                      Analytics.track('Bill Pay - Clicked Bill Pay', {
-                        context: 'Shop Tab',
-                      }),
-                    );
-                  }
                 }
               },
             }}>
