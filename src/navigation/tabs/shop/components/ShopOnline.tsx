@@ -41,6 +41,74 @@ interface CategoryWithIntegrations extends Category {
   integrations: DirectIntegrationApiObject[];
 }
 
+const getItemComponent = (categoryHasDiscount: boolean) => {
+  return (item: ShopCarouselItem) => {
+    const merchantItem = item as DirectIntegrationApiObject;
+    return (
+      <MerchantItem
+        merchant={merchantItem}
+        height={categoryHasDiscount ? 200 : 168}
+        width={133}
+      />
+    );
+  };
+};
+
+const FullIntegrationsList = ({
+  categories,
+}: {
+  categories: CategoryWithIntegrations[];
+}) => {
+  const {t} = useTranslation();
+  const navigation = useNavigation();
+  const itemWidth = 146;
+  const maxItemsPerRow = 5;
+  const windowSize = Math.min(Math.ceil(WIDTH / itemWidth) + 1, maxItemsPerRow);
+  return (
+    <>
+      {categories.map(category => {
+        const categoryHasDiscount = category.integrations.some(
+          merchant => !!merchant.discount,
+        );
+        return (
+          <View key={category.displayName}>
+            <SectionContainer>
+              <SectionHeaderContainer>
+                <SectionHeader>{category.displayName}</SectionHeader>
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    navigation.navigate(MerchantScreens.MERCHANT_CATEGORY, {
+                      category,
+                      integrations: category.integrations,
+                    });
+                  }}>
+                  <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
+                </TouchableOpacity>
+              </SectionHeaderContainer>
+            </SectionContainer>
+            <ShopCarouselList
+              itemHeight={categoryHasDiscount ? 206 : 174}
+              items={category.integrations.slice(0, maxItemsPerRow)}
+              itemComponent={getItemComponent(categoryHasDiscount)}
+              itemWidth={itemWidth}
+              marginLeft={12}
+              maxItemsPerColumn={1}
+              screenWidth={WIDTH}
+              windowSize={windowSize}
+              onItemPress={item =>
+                navigation.navigate(MerchantScreens.MERCHANT_DETAILS, {
+                  directIntegration: item as DirectIntegrationApiObject,
+                })
+              }
+            />
+          </View>
+        );
+      })}
+    </>
+  );
+};
+
 export const ShopOnline = ({
   scrollViewRef,
   integrations,
@@ -73,63 +141,12 @@ export const ShopOnline = ({
     [dispatch, setSearchVal, integrations],
   );
 
-  const FullIntegrationsList = () => (
-    <>
-      {categories.map(category => {
-        const categoryHasDiscount = category.integrations.some(
-          merchant => !!merchant.discount,
-        );
-        return (
-          <View key={category.displayName}>
-            <SectionContainer>
-              <SectionHeaderContainer>
-                <SectionHeader>{category.displayName}</SectionHeader>
-                <TouchableOpacity
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    navigation.navigate(MerchantScreens.MERCHANT_CATEGORY, {
-                      category,
-                      integrations: category.integrations,
-                    });
-                  }}>
-                  <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
-                </TouchableOpacity>
-              </SectionHeaderContainer>
-            </SectionContainer>
-            <ShopCarouselList
-              itemHeight={categoryHasDiscount ? 205 : 173}
-              items={category.integrations.slice(0, 5)}
-              itemComponent={(item: ShopCarouselItem) => {
-                const merchantItem = item as DirectIntegrationApiObject;
-                return (
-                  <MerchantItem
-                    merchant={merchantItem}
-                    marginLeft={horizontalPadding}
-                    height={categoryHasDiscount ? 200 : 168}
-                    width={133}
-                  />
-                );
-              }}
-              itemWidth={146}
-              maxItemsPerColumn={1}
-              screenWidth={WIDTH}
-              onItemPress={item =>
-                navigation.navigate(MerchantScreens.MERCHANT_DETAILS, {
-                  directIntegration: item as DirectIntegrationApiObject,
-                })
-              }
-            />
-          </View>
-        );
-      })}
-    </>
-  );
-
   const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
 
   const memoizedFullIntegrationsList = useMemo(
-    () => <FullIntegrationsList />,
-    [defaultLanguage],
+    () => <FullIntegrationsList categories={categories} />,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [categories, defaultLanguage],
   );
 
   return (
