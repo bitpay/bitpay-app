@@ -29,6 +29,8 @@ export enum AppActionTypes {
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
+  SHOW_IN_APP_MESSAGE = 'APP/SHOW_IN_APP_MESSAGE',
+  DISMISS_IN_APP_MESSAGE = 'APP/DISMISS_IN_APP_MESSAGE',
   SHOW_IN_APP_NOTIFICATION = 'APP/SHOW_IN_APP_NOTIFICATION',
   DISMISS_IN_APP_NOTIFICATION = 'APP/DISMISS_IN_APP_NOTIFICATION',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
@@ -127,6 +129,15 @@ interface ShowOnGoingProcessModal {
 
 interface DismissOnGoingProcessModal {
   type: typeof AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL;
+}
+
+interface ShowInAppMessage {
+  type: typeof AppActionTypes.SHOW_IN_APP_MESSAGE;
+  payload: string;
+}
+
+interface DismissInAppMessage {
+  type: typeof AppActionTypes.DISMISS_IN_APP_MESSAGE;
 }
 
 interface ShowInAppNotification {
@@ -371,6 +382,8 @@ export type AppActionType =
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal
+  | ShowInAppMessage
+  | DismissInAppMessage
   | ShowInAppNotification
   | DismissInAppNotification
   | ShowBottomNotificationModal

@@ -414,6 +414,11 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       contentCardSubscription = null;
     }
 
+    Braze.subscribeToInAppMessage(false, (event: any) => {
+      LogActions.debug('InAppMessage Event Received');
+      dispatch(AppActions.showInAppMessage(event.inAppMessage));
+    });
+
     // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
     const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
     const MAX_RETRIES = 3;
