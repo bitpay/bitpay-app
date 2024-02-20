@@ -708,7 +708,7 @@ export interface TransakGetSignedUrlRequestData {
   network: string | undefined;
   // Eg: credit_debit_card
   // The payment method you want to show to the customer while buying/selling. If you pass this param, then the payment method will be selected by default and the customer won't be able to select another payment method.	Order Data
-  paymentMethod: string;
+  paymentMethod?: string;
   // Eg: DAI
   // ETH	The code of the cryptocurrency you want the customer to buy/sell. If you pass this param, the crypto currency will be selected by default and the customer won't be able to select another crypto currency. Please ensure that the currency code passed by you is available for the specific product type (BUY/SELL). In case the value is not part of our crypto coverage for BUY/SELL then it will not be honored wherever it is not present and users will see the default widget with all the supported cryptocurrencies. Ex: If cryptoCurrencyCode=DAI and DAI is live for BUY and not for SELL, then users would see only DAI for BUY but all the supported cryptocurrencies for SELL. You can find the list of supported cryptocurrencies here.	Order Data
   cryptoCurrencyCode: string;
