@@ -540,7 +540,6 @@ const BillConfirm: React.VFC<
           setShowPaymentSentModal(false);
           await sleep(500);
           navigation.dispatch(StackActions.popToTop());
-          navigation.dispatch(StackActions.pop());
           navigator.navigate(BillScreens.PAYMENTS, {});
         }}
       />

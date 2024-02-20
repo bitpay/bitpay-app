@@ -119,6 +119,9 @@ import BillGroup, {
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
 import {showBlur} from './store/app/app.actions';
+import SettingsGroup, {
+  SettingsGroupParamList,
+} from './navigation/tabs/settings/SettingsGroup';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -144,7 +147,8 @@ export type RootStackParamList = {
   WalletConnectGroupParamList &
   BillGroupParamList &
   WalletGroupParamList &
-  ZenLedgerGroupParamsList;
+  ZenLedgerGroupParamsList &
+  SettingsGroupParamList;
 
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -173,7 +177,8 @@ export type NavScreenParams = NavigatorScreenParams<
     WalletConnectGroupParamList &
     NotificationsSettingsGroupParamsList &
     ZenLedgerGroupParamsList &
-    NetworkFeePolicySettingsGroupParamsList
+    NetworkFeePolicySettingsGroupParamsList &
+    SettingsGroupParamList
 >;
 
 declare global {
@@ -541,6 +546,7 @@ export default () => {
             {AuthGroup({Auth: Root})}
             {IntroGroup({Intro: Root})}
             {OnboardingGroup({Onboarding: Root})}
+            {SettingsGroup({Settings: Root})}
             {BitpayIdGroup({BitpayId: Root})}
             {WalletGroup({Wallet: Root})}
             {CardActivationGroup({CardActivation: Root})}

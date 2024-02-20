@@ -1093,13 +1093,7 @@ export const incomingShopLink =
       }
     } else if (route.name === 'billpay') {
       navigationRef.navigate('Tabs', {
-        screen: 'Shop',
-        params: {
-          screen: ShopScreens.HOME,
-          params: {
-            screen: ShopTabs.BILLS,
-          },
-        },
+        screen: 'Bills',
       });
     }
     return {merchantName};
