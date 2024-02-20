@@ -66,6 +66,7 @@ const Curations = ({
             itemHeight={85}
             maxItemsPerColumn={3}
             screenWidth={WIDTH}
+            windowSize={3}
             onItemPress={item => {
               navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
                 cardConfig: item as CardConfig,
