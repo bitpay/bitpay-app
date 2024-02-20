@@ -67,7 +67,6 @@ const HeaderText = styled(BaseText)`
 `;
 
 const ValidationBadge = styled.View`
-  background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
   position: absolute;
   right: 13px;
   top: 50%;

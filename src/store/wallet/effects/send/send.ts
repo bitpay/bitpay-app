@@ -37,6 +37,7 @@ import {
   CustomErrorMessage,
   ExcludedUtxosWarning,
   GeneralError,
+  WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
@@ -82,6 +83,7 @@ import {URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
 import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
+import {SupportedTokenOptions} from '../../../../constants/SupportedCurrencyOptions';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -168,7 +170,7 @@ export const createProposalAndBuildTxDetails =
           currencyAbbreviation === 'btc' &&
           !(context && ['paypro', 'selectInputs'].includes(context))
         ) {
-          tx.enableRBF = tx.enableRBF || enableReplaceByFee;
+          tx.enableRBF = tx.enableRBF ?? enableReplaceByFee;
         }
 
         const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
@@ -422,7 +424,8 @@ export const buildTxDetails =
     return new Promise(async resolve => {
       let gasPrice, gasLimit, nonce, destinationTag, coin, chain, amount, fee;
 
-      const tokenAddress = wallet.tokenAddress;
+      const tokenAddress =
+        wallet.tokenAddress || getTokenAddressForOffchainWallet(wallet);
 
       if (context === 'walletConnect' && request) {
         const {params} = request.params.request;
@@ -459,12 +462,13 @@ export const buildTxDetails =
         fee = proposal.fee || 0; // proposal fee is zero for coinbase
       }
 
-      const selectedTransactionCurrency =
-        invoice?.buyerProvidedInfo!.selectedTransactionCurrency ||
-        wallet.currencyAbbreviation.toUpperCase();
+      const selectedTransactionCurrency = getCurrencyCodeFromCoinAndChain(
+        wallet.currencyAbbreviation,
+        wallet.chain,
+      );
 
       const isOffChain = !proposal;
-      if (invoice && selectedTransactionCurrency) {
+      if (invoice) {
         amount = isOffChain
           ? invoice.paymentSubtotals[selectedTransactionCurrency]
           : invoice.paymentTotals[selectedTransactionCurrency];
@@ -484,11 +488,7 @@ export const buildTxDetails =
 
       amount = Number(amount); // Support BN (use number instead string only for view)
       let effectiveRate;
-      if (
-        invoice &&
-        selectedTransactionCurrency &&
-        defaultAltCurrencyIsoCode === invoice.currency
-      ) {
+      if (invoice && defaultAltCurrencyIsoCode === invoice.currency) {
         effectiveRate = dispatch(
           getInvoiceEffectiveRate(
             invoice,
@@ -1122,7 +1122,7 @@ export const publishAndSignMultipleProposals =
     return new Promise(async (resolve, reject) => {
       try {
         const signingMultipleProposals = true;
-        let password: string;
+        let password: string | undefined;
         const {
           APP: {biometricLockActive},
         } = getState();
@@ -1158,11 +1158,17 @@ export const publishAndSignMultipleProposals =
             return reject(error);
           }
         }
-        const promises: Promise<Partial<TransactionProposal> | void>[] = [];
-
-        txps.forEach(async txp => {
-          promises.push(
-            dispatch(
+        // Process transactions with a nonce sequentially
+        const resultsWithNonce: (
+          | Partial<TransactionProposal>
+          | void
+          | Error
+        )[] = [];
+        const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined);
+        evmTxsWithNonce.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
+        for (const txp of evmTxsWithNonce) {
+          try {
+            const result = await dispatch(
               publishAndSign({
                 txp,
                 key,
@@ -1171,19 +1177,47 @@ export const publishAndSignMultipleProposals =
                 password,
                 signingMultipleProposals,
               }),
-            ).catch(err => {
-              const errorStr =
-                err instanceof Error ? err.message : JSON.stringify(err);
-              dispatch(
-                LogActions.error(
-                  `Error signing transaction proposal: ${errorStr}`,
-                ),
-              );
-              return err;
+            );
+            resultsWithNonce.push(result);
+          } catch (err) {
+            const errorStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(
+              LogActions.error(
+                `Error signing transaction proposal: ${errorStr}`,
+              ),
+            );
+            resultsWithNonce.push(err);
+          }
+        }
+
+        // Process transactions without a nonce concurrently
+        const withoutNonce = txps.filter(txp => txp.nonce === undefined);
+        const promisesWithoutNonce: Promise<
+          Partial<TransactionProposal> | void | Error
+        >[] = withoutNonce.map(txp =>
+          dispatch(
+            publishAndSign({
+              txp,
+              key,
+              wallet,
+              recipient,
+              password,
+              signingMultipleProposals,
             }),
-          );
-        });
-        return resolve(await Promise.all(promises));
+          ).catch(err => {
+            const errorStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(
+              LogActions.error(
+                `Error signing transaction proposal: ${errorStr}`,
+              ),
+            );
+            return err;
+          }),
+        );
+        const resultsWithoutNonce = await Promise.all(promisesWithoutNonce);
+        return resolve([...resultsWithNonce, ...resultsWithoutNonce]);
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
@@ -1780,3 +1814,38 @@ export const showConfirmAmountInfoSheet =
       }),
     );
   };
+
+export const handleSendError =
+  ({error, onDismiss}: {error: any; onDismiss?: () => {}}): Effect<boolean> =>
+  dispatch => {
+    switch (error) {
+      case 'invalid password':
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+        return true;
+      case 'password canceled':
+      case 'biometric check failed':
+        return true;
+      default:
+        const errorMessage = error?.message || error;
+        dispatch(
+          AppActions.showBottomNotificationModal(
+            CustomErrorMessage({
+              title: t('Error'),
+              errMsg:
+                typeof errorMessage === 'string'
+                  ? errorMessage
+                  : t('Could not send transaction'),
+              action: () => onDismiss && onDismiss(),
+            }),
+          ),
+        );
+        return false;
+    }
+  };
+
+function getTokenAddressForOffchainWallet(wallet: Wallet | WalletRowProps) {
+  return SupportedTokenOptions.find(
+    ({currencyAbbreviation}) =>
+      currencyAbbreviation === wallet.currencyAbbreviation.toLowerCase(),
+  )?.tokenAddress;
+}

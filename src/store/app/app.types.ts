@@ -79,6 +79,7 @@ export enum AppActionTypes {
   ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
   CHECKING_BIOMETRIC_FOR_SENDING = 'APP/CHECKING_BIOMETRIC_FOR_SENDING',
   SET_HAS_VIEWED_ZENLEDGER_WARNING = 'APP/SET_HAS_VIEWED_ZENLEDGER_WARNING',
+  SET_HAS_VIEWED_BILLS_TAB = 'APP/SET_HAS_VIEWED_BILLS_TAB',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
 }
 
@@ -359,6 +360,10 @@ interface SetHasViewedZenLedgerWarning {
   type: typeof AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING;
 }
 
+interface SetHasViewedBillsTab {
+  type: typeof AppActionTypes.SET_HAS_VIEWED_BILLS_TAB;
+}
+
 interface setUserFeedback {
   type: typeof AppActionTypes.USER_FEEDBACK;
   payload: FeedbackType;
@@ -426,4 +431,4 @@ export type AppActionType =
   | ActiveModalUpdated
   | checkingBiometricForSending
   | SetHasViewedZenLedgerWarning
-  | SetHasViewedZenLedgerWarning;
+  | SetHasViewedBillsTab;

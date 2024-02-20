@@ -404,6 +404,7 @@ const BuyGiftCard = ({
           shadowOpacity: 0.1,
           shadowRadius: 12,
           elevation: 5,
+          marginBottom: -10,
         }}>
         <Button onPress={() => buyGiftCard()} buttonStyle={'primary'}>
           {cardConfig.supportedAmounts ? t('Continue') : t('Buy Gift Card')}

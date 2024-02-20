@@ -172,6 +172,7 @@ export const buildWalletObj = (
     n,
     m,
     isRefreshing: false,
+    isScanning: false,
     hideWallet,
     hideBalance,
     pendingTxps,
@@ -182,6 +183,7 @@ export const buildWalletObj = (
 export const buildKeyObj = ({
   key,
   wallets,
+  keyName,
   totalBalance = 0,
   totalBalanceLastDay = 0,
   backupComplete = false,
@@ -189,6 +191,7 @@ export const buildKeyObj = ({
 }: {
   key: KeyMethods | undefined;
   wallets: Wallet[];
+  keyName?: string | undefined;
   totalBalance?: number;
   totalBalanceLastDay?: number;
   backupComplete?: boolean;
@@ -203,7 +206,7 @@ export const buildKeyObj = ({
     totalBalanceLastDay,
     isPrivKeyEncrypted: key?.isPrivKeyEncrypted(),
     backupComplete,
-    keyName: key?.id ? 'My Key' : 'Read Only',
+    keyName: keyName ? keyName : key?.id ? 'My Key' : 'Read Only',
     hideKeyBalance,
     isReadOnly: !key,
   };
@@ -514,12 +517,7 @@ export const BuildKeysAndWalletsList = ({
   rates: Rates;
   dispatch: AppDispatch;
 }) => {
-  const selectedPaymentOptions = payProOptions?.paymentOptions?.filter(
-    option => option.selected,
-  );
-  const paymentOptions = selectedPaymentOptions?.length
-    ? selectedPaymentOptions
-    : payProOptions?.paymentOptions;
+  const paymentOptions = payProOptions?.paymentOptions;
   return Object.keys(keys)
     .map(keyId => {
       const keyObj = keys[keyId];
@@ -710,19 +708,28 @@ export const findMatchedKeyAndUpdate = (
   key: any,
   keys: Key[],
   opts: any,
-): {key: KeyMethods; wallets: Wallet[]} => {
+): {key: KeyMethods; wallets: Wallet[]; keyName?: string | undefined} => {
+  let _keyName: string | undefined;
   if (!opts.keyId) {
     const matchedKey = getMatchedKey(key, keys);
 
     if (matchedKey) {
       key = matchedKey.methods;
+      _keyName = matchedKey.keyName;
       wallets.forEach(wallet => {
         wallet.credentials.keyId = wallet.keyId = matchedKey.id;
+
+        const walletToKeepName = matchedKey.wallets.find(
+          w => w.id === wallet.credentials.walletId,
+        );
+        wallet.credentials.walletName = walletToKeepName?.walletName
+          ? walletToKeepName.walletName
+          : wallet.credentials.walletName;
       });
     }
   }
 
-  return {key, wallets};
+  return {key, wallets, keyName: _keyName};
 };
 
 export const isMatchedWallet = (newWallet: Wallet, wallets: Wallet[]) => {

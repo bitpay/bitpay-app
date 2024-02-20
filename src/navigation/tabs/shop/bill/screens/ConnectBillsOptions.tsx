@@ -1,17 +1,18 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {Linking, ScrollView, TouchableOpacity} from 'react-native';
-import {horizontalPadding} from '../../components/styled/ShopTabComponents';
+import {
+  ScreenContainer,
+  horizontalPadding,
+} from '../../components/styled/ShopTabComponents';
 import Button from '../../../../../components/button/Button';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
   ActiveOpacity,
   CtaContainerAbsolute,
-  HEIGHT,
 } from '../../../../../components/styled/Containers';
-import {useFocusEffect} from '@react-navigation/native';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {
   H5,
@@ -132,9 +133,9 @@ const ConnectBillsOptions = ({
   const [continueButtonState, setContinueButtonState] = useState(
     undefined as 'loading' | undefined,
   );
-  useFocusEffect(() => {
+  useEffect(() => {
     dispatch(Analytics.track('Bill Pay — Viewed Connect More Bills'));
-  });
+  }, [dispatch]);
 
   const verifyUserInfo = async () => {
     setContinueButtonState('loading');
@@ -184,11 +185,10 @@ const ConnectBillsOptions = ({
   };
 
   return (
-    <>
+    <ScreenContainer>
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: horizontalPadding,
-          height: HEIGHT - 150,
           alignItems: 'center',
         }}>
         <AddSvg theme={theme} />
@@ -249,6 +249,7 @@ const ConnectBillsOptions = ({
           shadowOpacity: 0.1,
           shadowRadius: 12,
           elevation: 5,
+          marginBottom: -10,
         }}>
         <Button
           state={continueButtonState}
@@ -259,7 +260,7 @@ const ConnectBillsOptions = ({
           {continueButtonState === 'loading' ? t('Loading...') : t('Continue')}
         </Button>
       </FooterButton>
-    </>
+    </ScreenContainer>
   );
 };
 

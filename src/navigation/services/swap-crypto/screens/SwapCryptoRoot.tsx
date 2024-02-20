@@ -42,6 +42,7 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import FromWalletSelectorModal from '../components/FromWalletSelectorModal';
 import ToWalletSelectorModal from '../../components/ToWalletSelectorModal';
 import AmountModal from '../../../../components/amount/AmountModal';
+import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {
   changellyGetPairsParams,
   changellyGetFixRateForAmount,
@@ -180,7 +181,7 @@ const SwapCryptoRoot: React.FC = () => {
   const [balanceDetailsModalVisible, setBalanceDetailsModalVisible] =
     useState<boolean>(false);
   const [fromWalletSelected, setFromWalletSelected] = useState<Wallet>();
-  const [uiFormattedWallet, setUiFormattedWallet] = useState<any>();
+  const [uiFormattedWallet, setUiFormattedWallet] = useState<WalletRowProps>();
   const [useDefaultToWallet, setUseDefaultToWallet] = useState<boolean>(false);
   const [toWalletSelected, setToWalletSelected] = useState<Wallet>();
   const [amountFrom, setAmountFrom] = useState<number>(0);

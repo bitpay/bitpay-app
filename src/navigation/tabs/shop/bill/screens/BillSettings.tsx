@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
@@ -6,7 +6,10 @@ import {BillGroupParamList} from '../BillGroup';
 import {ScrollView, TouchableOpacity} from 'react-native';
 import {LightBlack, LinkBlue, Slate10} from '../../../../../styles/colors';
 import {BaseText} from '../../../../../components/styled/Text';
-import {horizontalPadding} from '../../components/styled/ShopTabComponents';
+import {
+  ScreenContainer,
+  horizontalPadding,
+} from '../../components/styled/ShopTabComponents';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {AppActions} from '../../../../../store/app';
 import {
@@ -15,7 +18,6 @@ import {
 } from '../../../../../components/styled/Containers';
 import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 import {ShopEffects} from '../../../../../store/shop';
-import {useFocusEffect} from '@react-navigation/native';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {formatUSPhone} from '../utils';
 
@@ -55,71 +57,74 @@ const BillSettings = ({
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  useFocusEffect(() => {
+  useEffect(() => {
     dispatch(Analytics.track('Bill Pay — Viewed Bill Pay Settings'));
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
-    <ScrollView
-      contentContainerStyle={{
-        paddingHorizontal: horizontalPadding,
-        height: HEIGHT - 150,
-      }}>
-      <AccountBox>
-        <AccountBoxBody>
-          <AccountName>{user?.name}</AccountName>
-          {user?.phone ? (
-            <AccountPhone>{formatUSPhone(user.phone)}</AccountPhone>
-          ) : null}
-        </AccountBoxBody>
-        <TouchableOpacity
-          activeOpacity={ActiveOpacity}
-          onPress={() => {
-            dispatch(
-              AppActions.showBottomNotificationModal({
-                type: 'warning',
-                title: t('Confirm'),
-                message: t(
-                  'Are you sure you would like to unlink your Method account?',
+    <ScreenContainer>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: horizontalPadding,
+          height: HEIGHT - 150,
+        }}>
+        <AccountBox>
+          <AccountBoxBody>
+            <AccountName>{user?.name}</AccountName>
+            {user?.phone ? (
+              <AccountPhone>{formatUSPhone(user.phone)}</AccountPhone>
+            ) : null}
+          </AccountBoxBody>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              dispatch(
+                AppActions.showBottomNotificationModal({
+                  type: 'warning',
+                  title: t('Confirm'),
+                  message: t(
+                    'Are you sure you would like to unlink your Method account?',
+                  ),
+                  enableBackdropDismiss: true,
+                  onBackdropDismiss: () => {},
+                  actions: [
+                    {
+                      text: t("Yes, I'm sure"),
+                      action: () => {
+                        dispatch(BitPayIdEffects.startResetMethodUser());
+                        dispatch(ShopEffects.startGetBillPayAccounts());
+                        dispatch(
+                          Analytics.track('Bill Pay — Unlinked Method Account'),
+                        );
+                        navigation.pop();
+                      },
+                      primary: true,
+                    },
+                    {
+                      text: t('No, cancel'),
+                      action: () => {
+                        dispatch(
+                          Analytics.track(
+                            'Bill Pay — Canceled Confirm Unlink Method Account Modal',
+                          ),
+                        );
+                      },
+                      primary: false,
+                    },
+                  ],
+                }),
+              );
+              dispatch(
+                Analytics.track(
+                  'Bill Pay — Viewed Confirm Unlink Method Account Modal',
                 ),
-                enableBackdropDismiss: true,
-                onBackdropDismiss: () => {},
-                actions: [
-                  {
-                    text: t("Yes, I'm sure"),
-                    action: () => {
-                      dispatch(BitPayIdEffects.startResetMethodUser());
-                      dispatch(ShopEffects.startGetBillPayAccounts());
-                      dispatch(
-                        Analytics.track('Bill Pay — Unlinked Method Account'),
-                      );
-                      navigation.pop();
-                    },
-                    primary: true,
-                  },
-                  {
-                    text: t('No, cancel'),
-                    action: () => {
-                      dispatch(
-                        Analytics.track(
-                          'Bill Pay — Canceled Confirm Unlink Method Account Modal',
-                        ),
-                      );
-                    },
-                    primary: false,
-                  },
-                ],
-              }),
-            );
-            dispatch(
-              Analytics.track(
-                'Bill Pay — Viewed Confirm Unlink Method Account Modal',
-              ),
-            );
-          }}>
-          <UnlinkButton>{t('Unlink Account')}</UnlinkButton>
-        </TouchableOpacity>
-      </AccountBox>
-    </ScrollView>
+              );
+            }}>
+            <UnlinkButton>{t('Unlink Account')}</UnlinkButton>
+          </TouchableOpacity>
+        </AccountBox>
+      </ScrollView>
+    </ScreenContainer>
   );
 };
 

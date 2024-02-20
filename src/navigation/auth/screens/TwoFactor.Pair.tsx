@@ -21,6 +21,8 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../components/AuthFormContainer';
 import styled from 'styled-components/native';
+import {CommonActions} from '@react-navigation/native';
+import {TabsScreens} from '../../tabs/TabsStack';
 
 export type TwoFactorPairingParamList = {
   prevCode: string;
@@ -94,7 +96,21 @@ const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
         if (parentNav?.canGoBack()) {
           parentNav.goBack();
         } else {
-          navigationRef.navigate(BitpayIdScreens.PROFILE);
+          navigationRef.dispatch(
+            CommonActions.reset({
+              index: 1,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+                {
+                  name: BitpayIdScreens.PROFILE,
+                  params: {},
+                },
+              ],
+            }),
+          );
         }
 
         return;

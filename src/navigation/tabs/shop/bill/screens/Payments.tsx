@@ -4,16 +4,16 @@ import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {HeaderTitle} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
-import {View} from 'react-native';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {BillPayAccount} from '../../../../../store/shop/shop.models';
 import {PaymentList} from '../components/PaymentList';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {SendToPillContainer} from '../../../../wallet/screens/send/confirm/Shared';
 import {BillAccountPill} from '../components/BillAccountPill';
+import {ScreenContainer} from '../../components/styled/ShopTabComponents';
 
 const BillListContainer = styled.View`
-  padding: 5px 16px 0;
+  padding: 15px 16px 0;
 `;
 
 const Payments = ({
@@ -28,6 +28,7 @@ const Payments = ({
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerShown: true,
       headerTitle: () => {
         return (
           <HeaderTitle>
@@ -41,7 +42,7 @@ const Payments = ({
   });
 
   return (
-    <View style={{paddingTop: 10}}>
+    <ScreenContainer>
       <BillListContainer>
         {account ? (
           <SendToPillContainer style={{alignItems: 'center', marginBottom: 24}}>
@@ -60,7 +61,7 @@ const Payments = ({
           }}
         />
       </BillListContainer>
-    </View>
+    </ScreenContainer>
   );
 };
 

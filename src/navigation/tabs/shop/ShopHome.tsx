@@ -13,6 +13,7 @@ import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getGiftCardConfigList,
   getGiftCardCurations,
+  isGiftCardDisplayable,
 } from '../../../lib/gift-cards/gift-card';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
@@ -47,6 +48,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {Bills} from './components/Bills';
 import {HEIGHT} from '../../../components/styled/Containers';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -73,17 +75,16 @@ const ShopInnerContainer = styled.View`
 const getGiftCardsScrollViewHeight = (
   availableGiftCards: CardConfig[],
   numSelectedGiftCards: number,
-  purchasedCards: GiftCard[],
+  activeGiftCards: GiftCard[],
   curations: any,
 ) => {
-  const activeGiftCards = purchasedCards.filter(giftCard => !giftCard.archived);
-  const purchasedBrandsHeight = activeGiftCards.length * 68 + 260;
+  const activeGiftCardsHeight = activeGiftCards.length * 68 + 260;
   const curationsHeight = curations.length * 320;
   const giftCardItemHeight = 87;
   const giftCardsBottomPadding = 100;
   const searchBarHeight = 150;
   const staticGiftCardScrollViewHeight =
-    purchasedBrandsHeight + curationsHeight + searchBarHeight;
+    activeGiftCardsHeight + curationsHeight + searchBarHeight;
   const giftCardListHeight =
     (numSelectedGiftCards || availableGiftCards.length) * giftCardItemHeight +
     giftCardsBottomPadding;
@@ -106,7 +107,7 @@ const getScrollViewHeight = (
   integrationsCategories: Category[],
   availableGiftCards: CardConfig[],
   numSelectedGiftCards: number,
-  purchasedCards: GiftCard[],
+  activeGiftCards: GiftCard[],
   curations: any,
   billPayAccounts: BillPayAccount[],
 ) => {
@@ -114,7 +115,7 @@ const getScrollViewHeight = (
     ? getGiftCardsScrollViewHeight(
         availableGiftCards,
         numSelectedGiftCards,
-        purchasedCards,
+        activeGiftCards,
         curations,
       )
     : activeTab === ShopTabs.BILLS
@@ -137,8 +138,11 @@ const ShopHome: React.FC<
     ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
   ) as BillPayAccount[];
   const purchasedGiftCards = useMemo(
-    () => giftCards.filter(giftCard => giftCard.status !== 'UNREDEEMED'),
-    [giftCards],
+    () =>
+      giftCards.filter(giftCard =>
+        isGiftCardDisplayable(giftCard, supportedCardMap),
+      ),
+    [giftCards, supportedCardMap],
   );
   const activeGiftCards = useMemo(
     () => purchasedGiftCards.filter(giftCard => !giftCard.archived),
@@ -216,6 +220,7 @@ const ShopHome: React.FC<
         scrollViewRef={scrollViewRef}
         availableGiftCards={availableGiftCards}
         supportedGiftCards={supportedGiftCards}
+        supportedGiftCardMap={supportedCardMap}
         curations={curations}
         categories={categoriesWithGiftCards}
         onSelectedGiftCardsChange={newNumSelectedGiftCards =>
@@ -224,7 +229,9 @@ const ShopHome: React.FC<
       />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [availableGiftCards, categories, curations].map(obj => JSON.stringify(obj)),
+    [availableGiftCards, categories, curations, supportedCardMap].map(obj =>
+      JSON.stringify(obj),
+    ),
   );
 
   const memoizedShopOnline = useCallback(
@@ -285,7 +292,6 @@ const ShopHome: React.FC<
   ]);
 
   useFocusEffect(() => {
-    dispatch(Analytics.track('Viewed Shop Tab', undefined));
     if (!initialSyncComplete) {
       dispatch(ShopEffects.startSyncGiftCards());
       dispatch(ShopEffects.startGetBillPayAccounts()).catch(_ => {});
@@ -294,76 +300,78 @@ const ShopHome: React.FC<
   });
 
   return (
-    <ShopContainer>
-      <ScrollView
-        ref={scrollViewRef}
-        keyboardDismissMode="on-drag"
-        keyboardShouldPersistTaps="handled"
-        onScrollBeginDrag={Keyboard.dismiss}
-        refreshControl={
-          user ? (
-            <RefreshControl
-              tintColor={theme.dark ? White : SlateDark}
-              refreshing={refreshing}
-              onRefresh={async () => {
-                setRefreshing(true);
-                await Promise.all([
-                  dispatch(ShopEffects.startSyncGiftCards()),
-                  dispatch(ShopEffects.startGetBillPayAccounts()).catch(
-                    _ => {},
-                  ),
-                  sleep(600),
-                ]);
-                setRefreshing(false);
+    <GestureHandlerRootView style={{flex: 1}}>
+      <ShopContainer>
+        <ScrollView
+          ref={scrollViewRef}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={Keyboard.dismiss}
+          refreshControl={
+            user ? (
+              <RefreshControl
+                tintColor={theme.dark ? White : SlateDark}
+                refreshing={refreshing}
+                onRefresh={async () => {
+                  setRefreshing(true);
+                  await Promise.all([
+                    dispatch(ShopEffects.startSyncGiftCards()),
+                    dispatch(ShopEffects.startGetBillPayAccounts()).catch(
+                      _ => {},
+                    ),
+                    sleep(600),
+                  ]);
+                  setRefreshing(false);
+                }}
+              />
+            ) : undefined
+          }>
+          <ShopInnerContainer>
+            <Tab.Navigator
+              style={{
+                height: scrollViewHeight,
               }}
-            />
-          ) : undefined
-        }>
-        <ShopInnerContainer>
-          <Tab.Navigator
-            style={{
-              height: scrollViewHeight,
-            }}
-            screenOptions={ScreenOptions({
-              fontSize: 15,
-              marginHorizontal: 3,
-              numTabs: 3,
-              tabWidth: 111,
-              langAdjustments: true,
-            })}
-            screenListeners={{
-              tabPress: tab => {
-                if (tab.target) {
-                  setActiveTab(
-                    tab.target.includes(ShopTabs.GIFT_CARDS)
-                      ? ShopTabs.GIFT_CARDS
-                      : tab.target.includes(ShopTabs.BILLS)
-                      ? ShopTabs.BILLS
-                      : ShopTabs.SHOP_ONLINE,
-                  );
-                  if (tab.target.includes(ShopTabs.BILLS)) {
-                    dispatch(
-                      Analytics.track('Bill Pay - Clicked Bill Pay', {
-                        context: 'Shop Tab',
-                      }),
+              screenOptions={ScreenOptions({
+                fontSize: 15,
+                marginHorizontal: 3,
+                numTabs: 3,
+                tabWidth: 111,
+                langAdjustments: true,
+              })}
+              screenListeners={{
+                tabPress: tab => {
+                  if (tab.target) {
+                    setActiveTab(
+                      tab.target.includes(ShopTabs.GIFT_CARDS)
+                        ? ShopTabs.GIFT_CARDS
+                        : tab.target.includes(ShopTabs.BILLS)
+                        ? ShopTabs.BILLS
+                        : ShopTabs.SHOP_ONLINE,
                     );
+                    if (tab.target.includes(ShopTabs.BILLS)) {
+                      dispatch(
+                        Analytics.track('Bill Pay - Clicked Bill Pay', {
+                          context: 'Shop Tab',
+                        }),
+                      );
+                    }
                   }
-                }
-              },
-            }}>
-            <Tab.Screen
-              name={t('Gift Cards')}
-              component={memoizedGiftCardCatalog}
-            />
-            <Tab.Screen
-              name={t('Shop Online')}
-              component={memoizedShopOnline}
-            />
-            <Tab.Screen name={t('Pay Bills')} component={memoizedBills} />
-          </Tab.Navigator>
-        </ShopInnerContainer>
-      </ScrollView>
-    </ShopContainer>
+                },
+              }}>
+              <Tab.Screen
+                name={t('Gift Cards')}
+                component={memoizedGiftCardCatalog}
+              />
+              <Tab.Screen
+                name={t('Shop Online')}
+                component={memoizedShopOnline}
+              />
+              <Tab.Screen name={t('Pay Bills')} component={memoizedBills} />
+            </Tab.Navigator>
+          </ShopInnerContainer>
+        </ScrollView>
+      </ShopContainer>
+    </GestureHandlerRootView>
   );
 };
 

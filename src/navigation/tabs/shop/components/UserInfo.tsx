@@ -19,13 +19,13 @@ const UserInfo = () => {
       <FieldGroup>
         <FieldLabel>First Name</FieldLabel>
         <Field disabled>
-          <FieldValue>{user?.givenName}</FieldValue>
+          <FieldValue>{user?.legalGivenName}</FieldValue>
         </Field>
       </FieldGroup>
       <FieldGroup>
         <FieldLabel>Last Name</FieldLabel>
         <Field disabled>
-          <FieldValue>{user?.familyName}</FieldValue>
+          <FieldValue>{user?.legalFamilyName}</FieldValue>
         </Field>
       </FieldGroup>
       <FieldGroup>

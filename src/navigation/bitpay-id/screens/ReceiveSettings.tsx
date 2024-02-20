@@ -147,7 +147,7 @@ type ReceiveSettingsProps = NativeStackScreenProps<
   BitpayIdScreens.RECEIVE_SETTINGS
 >;
 
-const ReceiveSettings = ({route}: ReceiveSettingsProps) => {
+const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
@@ -299,7 +299,7 @@ const ReceiveSettings = ({route}: ReceiveSettingsProps) => {
     await dispatch(dismissOnGoingProcessModal());
     return !receivingAddresses.length && newReceivingAddresses.length
       ? navigator.navigate(BitpayIdScreens.RECEIVING_ENABLED)
-      : navigation.popToTop();
+      : navigation.pop();
   };
 
   useEffect(() => {
@@ -515,7 +515,7 @@ const ReceiveSettings = ({route}: ReceiveSettingsProps) => {
         }}>
         <Button
           onPress={() =>
-            navigator.navigate(BitpayIdScreens.TWO_FACTOR, {
+            navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
               onSubmit: async (twoFactorCode: string) => {
                 saveAddresses(twoFactorCode).catch(async error => {
                   dispatch(dismissOnGoingProcessModal());
@@ -545,8 +545,9 @@ const ReceiveSettings = ({route}: ReceiveSettingsProps) => {
       />
       <TwoFactorRequiredModal
         isVisible={twoFactorModalRequiredVisible}
-        onClose={enable => {
+        onClose={async enable => {
           setTwoFactorModalRequiredVisible(false);
+          await sleep(500);
           navigation.pop();
           if (enable) {
             navigator.navigate(BitpayIdScreens.ENABLE_TWO_FACTOR);

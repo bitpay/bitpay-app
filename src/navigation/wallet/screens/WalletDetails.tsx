@@ -29,6 +29,7 @@ import {
   Balance,
   BaseText,
   H2,
+  H3,
   H5,
   HeaderTitle,
   Paragraph,
@@ -42,7 +43,10 @@ import {
 } from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {
+  setWalletScanning,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
 import {
   Key,
   TransactionProposal,
@@ -372,15 +376,41 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     } catch (e) {}
   };
 
-  const assetOptions: Array<Option> = _.compact([
-    {
-      img: <Icons.RequestAmount />,
-      title: t('Request a specific amount'),
-      description: t(
-        'This will generate an invoice, which the person you send it to can pay using any wallet.',
-      ),
-      onPress: async () => {
-        await sleep(500);
+  const onPressWithDelay = async (cb: () => void) => {
+    await sleep(500);
+    cb();
+  };
+
+  const createViewOnBlockchainOption = () => {
+    if (
+      ['eth', 'matic', 'xrp'].includes(
+        fullWalletObj.currencyAbbreviation.toLowerCase(),
+      ) ||
+      IsERCToken(
+        fullWalletObj.currencyAbbreviation.toLowerCase(),
+        fullWalletObj.chain.toLowerCase(),
+      )
+    ) {
+      return {
+        img: <Icons.Settings />,
+        title: t('View Wallet in Explorer'),
+        description: t(
+          'View your wallet transactions and activities on the blockchain.',
+        ),
+        onPress: () => onPressWithDelay(viewOnBlockchain),
+      };
+    }
+    return null;
+  };
+
+  const createRequestAmountOption = () => ({
+    img: <Icons.RequestAmount />,
+    title: t('Request a specific amount'),
+    description: t(
+      'This will generate an invoice, which the person you send it to can pay using any wallet.',
+    ),
+    onPress: () =>
+      onPressWithDelay(() =>
         navigation.navigate(WalletScreens.AMOUNT, {
           cryptoCurrencyAbbreviation: fullWalletObj.currencyAbbreviation,
           chain: fullWalletObj.chain,
@@ -394,30 +424,41 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             });
             sleep(300).then(() => setButtonState(null));
           },
-        });
-      },
-    },
-    {
-      img: <Icons.ShareAddress />,
-      title: t('Share Address'),
-      description: t(
-        'Share your wallet address to someone in your contacts so they can send you funds.',
+        }),
       ),
-      onPress: ShareAddress,
-    },
-    {
-      img: <Icons.Settings />,
-      title: t('Wallet Settings'),
-      description: t('View all the ways to manage and configure your wallet.'),
-      onPress: async () => {
-        await sleep(500);
+  });
+
+  const createShareAddressOption = () => ({
+    img: <Icons.ShareAddress />,
+    title: t('Share Address'),
+    description: t(
+      'Share your wallet address to someone in your contacts so they can send you funds.',
+    ),
+    onPress: ShareAddress,
+  });
+
+  const createWalletSettingsOption = () => ({
+    img: <Icons.Settings />,
+    title: t('Wallet Settings'),
+    description: t('View all the ways to manage and configure your wallet.'),
+    onPress: () =>
+      onPressWithDelay(() =>
         navigation.navigate('WalletSettings', {
           key,
           walletId,
-        });
-      },
-    },
-  ]);
+        }),
+      ),
+  });
+
+  const getAssetOptions = (): Option[] => {
+    const options = [
+      createViewOnBlockchainOption(),
+      createRequestAmountOption(),
+      createShareAddressOption(),
+      createWalletSettingsOption(),
+    ].filter(Boolean) as Option[];
+    return options;
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -435,6 +476,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ]);
       dispatch(updatePortfolioBalance());
       setNeedActionTxps(fullWalletObj.pendingTxps);
+      if (fullWalletObj.isScanning) {
+        // cancel scanning if user refreshes in case it's stuck
+        dispatch(
+          setWalletScanning({
+            keyId: key.id,
+            walletId: fullWalletObj.id,
+            isScanning: false,
+          }),
+        );
+      }
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
@@ -505,7 +556,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const loadHistory = useCallback(async (refresh?: boolean) => {
-    if (!loadMore && !refresh) {
+    if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
       return;
     }
     try {
@@ -732,7 +783,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return fullWalletObj.balance?.sat !== fullWalletObj.balance?.satSpendable;
   };
 
-  const viewOnBlockchain = async () => {
+  const viewOnBlockchain = async (withConfirmation?: boolean) => {
     const coin = fullWalletObj.currencyAbbreviation.toLowerCase();
     const chain = fullWalletObj.chain.toLowerCase();
 
@@ -767,7 +818,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       }
 
       if (url) {
-        openPopUpConfirmation(coin, url);
+        withConfirmation
+          ? openPopUpConfirmation(coin, url)
+          : Linking.openURL(url);
       }
     }
   };
@@ -956,20 +1009,33 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     onLongPress={() => {
                       dispatch(toggleHideAllBalances());
                     }}>
+                    {!fullWalletObj.isScanning ? (
+                      <Row>
+                        {!hideAllBalances ? (
+                          <Balance scale={shouldScale(cryptoBalance)}>
+                            {cryptoBalance}{' '}
+                            {formatCurrencyAbbreviation(currencyAbbreviation)}
+                          </Balance>
+                        ) : (
+                          <H2>****</H2>
+                        )}
+                      </Row>
+                    ) : (
+                      <View style={{padding: 12}}>
+                        <Row>
+                          <H5>{t('[Scanning Addresses]')}</H5>
+                        </Row>
+                        <Row>
+                          <H5>{t('Please wait...')}</H5>
+                        </Row>
+                      </View>
+                    )}
                     <Row>
-                      {!hideAllBalances ? (
-                        <Balance scale={shouldScale(cryptoBalance)}>
-                          {cryptoBalance}{' '}
-                          {formatCurrencyAbbreviation(currencyAbbreviation)}
-                        </Balance>
-                      ) : (
-                        <H2>****</H2>
-                      )}
-                    </Row>
-                    <Row>
-                      {showFiatBalance && !hideAllBalances && (
-                        <Paragraph>{fiatBalance}</Paragraph>
-                      )}
+                      {showFiatBalance &&
+                        !hideAllBalances &&
+                        !fullWalletObj.isScanning && (
+                          <Paragraph>{fiatBalance}</Paragraph>
+                        )}
                     </Row>
                   </TouchableOpacity>
                   {!hideAllBalances && showBalanceDetailsButton() && (
@@ -1175,7 +1241,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         renderItem={renderTransaction}
         renderSectionHeader={({section: {title}}) => {
           return (
-            <TouchableOpacity onPress={() => viewOnBlockchain()}>
+            <TouchableOpacity onPress={() => viewOnBlockchain(true)}>
               <TransactionSectionHeaderContainer>
                 <H5>{title}</H5>
               </TransactionSectionHeaderContainer>
@@ -1203,7 +1269,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         isVisible={showWalletOptions}
         closeModal={() => setShowWalletOptions(false)}
         title={t('WalletOptions')}
-        options={assetOptions}
+        options={getAssetOptions()}
       />
 
       {fullWalletObj ? (

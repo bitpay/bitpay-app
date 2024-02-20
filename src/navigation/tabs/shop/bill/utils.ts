@@ -5,8 +5,9 @@ export const getBillAccountEventParams = (
   payment?: BillPayment,
 ) => {
   return {
-    merchantBrand: payment?.merchantName || account[account.type].merchantName,
+    merchantName: payment?.merchantName || account[account.type].merchantName,
     merchantType: payment?.accountType || account[account.type].type,
+    ...(account && {customBill: account.isManuallyAdded}),
   };
 };
 

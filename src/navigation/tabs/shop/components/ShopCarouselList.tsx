@@ -1,18 +1,23 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
+import {TouchableHighlight} from 'react-native-gesture-handler';
 import Carousel from 'react-native-reanimated-carousel';
 import {
   CardConfig,
   DirectIntegrationApiObject,
 } from '../../../../store/shop/shop.models';
+import {ActiveOpacity} from '../../../../components/styled/Containers';
+
 interface SlideContainerParams {
   inLastSlide: boolean;
   isSingleSlide: boolean;
+  marginLeft?: number;
   nextColumnVisiblePixels: number;
 }
 
 const SlideContainer = styled.View<SlideContainerParams>`
-  ${({inLastSlide, isSingleSlide, nextColumnVisiblePixels}) => css`
+  ${({inLastSlide, isSingleSlide, marginLeft, nextColumnVisiblePixels}) => css`
+    ${marginLeft && `margin-left: ${marginLeft}px;`};
     padding-right: ${isSingleSlide ? 0 : nextColumnVisiblePixels / 2}px;
     margin-right: ${inLastSlide
       ? -nextColumnVisiblePixels * 2
@@ -24,7 +29,9 @@ interface TouchableHighlightParams {
   width: number;
 }
 
-const ItemTouchableHighlight = styled.TouchableHighlight<TouchableHighlightParams>`
+const ItemTouchableHighlight = styled(
+  TouchableHighlight,
+)<TouchableHighlightParams>`
   ${({width}) =>
     css`
       width: ${width}px;
@@ -40,18 +47,22 @@ export default ({
   itemHeight,
   itemWidthInLastSlide,
   itemUnderlayColor,
+  marginLeft,
   maxItemsPerColumn,
   screenWidth,
+  windowSize,
   onItemPress,
 }: {
   items: ShopCarouselItem[];
-  itemComponent: (item: ShopCarouselItem) => JSX.Element;
+  itemComponent: (item: ShopCarouselItem, index: number) => JSX.Element;
   itemWidth?: number;
   itemHeight: number;
   itemWidthInLastSlide?: number;
   itemUnderlayColor?: string;
+  marginLeft?: number;
   maxItemsPerColumn: number;
   screenWidth: number;
+  windowSize: number;
   onItemPress: (item: ShopCarouselItem) => any;
 }) => {
   const nextColumnVisiblePixels = 100;
@@ -79,6 +90,7 @@ export default ({
       height={numRows * itemHeight}
       autoPlay={false}
       data={slides}
+      windowSize={windowSize}
       scrollAnimationDuration={1000}
       panGestureHandlerProps={{
         activeOffsetX: [-10, 10],
@@ -95,6 +107,7 @@ export default ({
           <SlideContainer
             inLastSlide={index === slides.length - 1}
             isSingleSlide={isSingleSlide}
+            marginLeft={marginLeft}
             nextColumnVisiblePixels={nextColumnVisiblePixels}>
             {item.map((listItem: ShopCarouselItem) => (
               <ItemTouchableHighlight
@@ -103,13 +116,11 @@ export default ({
                     ? carouselItemWidthInLastSlide
                     : carouselItemWidth
                 }
+                activeOpacity={ActiveOpacity}
                 key={listItem.displayName}
-                onPress={() => {
-                  console.log('press', listItem.displayName);
-                  onItemPress(listItem);
-                }}
+                onPress={() => onItemPress(listItem)}
                 underlayColor={itemUnderlayColor || 'transparent'}>
-                {itemComponent(listItem)}
+                {itemComponent(listItem, index)}
               </ItemTouchableHighlight>
             ))}
           </SlideContainer>

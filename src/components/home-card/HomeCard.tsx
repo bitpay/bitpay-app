@@ -128,7 +128,11 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
   const BodyComp = (
     <View>
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
-      {!hideKeyBalance ? (
+      {needsBackup ? (
+        <Row>
+          <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+        </Row>
+      ) : !hideKeyBalance ? (
         <>
           {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
           {percentageDifference ? (
@@ -145,11 +149,6 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
         </>
       ) : (
         <H3>****</H3>
-      )}
-      {needsBackup && (
-        <Row>
-          <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-        </Row>
       )}
       {description && <CardBodyDesc>{description}</CardBodyDesc>}
     </View>

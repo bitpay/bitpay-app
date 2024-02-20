@@ -4,6 +4,7 @@ import {
   RampPaymentData,
   SardinePaymentData,
   SimplexPaymentData,
+  TransakPaymentData,
   WyrePaymentData,
 } from './buy-crypto.models';
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
@@ -19,6 +20,7 @@ export interface BuyCryptoState {
   ramp: {[key in string]: RampPaymentData};
   sardine: {[key in string]: SardinePaymentData};
   simplex: {[key in string]: SimplexPaymentData};
+  transak: {[key in string]: TransakPaymentData};
   wyre: {[key in string]: WyrePaymentData};
 }
 
@@ -28,6 +30,7 @@ const initialState: BuyCryptoState = {
   ramp: {},
   sardine: {},
   simplex: {},
+  transak: {},
   wyre: {},
 };
 
@@ -293,6 +296,61 @@ export const buyCryptoReducer = (
       return {
         ...state,
         simplex: {...simplexPaymentRequestsList},
+      };
+
+    case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_TRANSAK:
+      const {transakPaymentData} = action.payload;
+      return {
+        ...state,
+        transak: {
+          ...state.transak,
+          [transakPaymentData.external_id]: transakPaymentData,
+        },
+      };
+
+    case BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_TRANSAK:
+      const {transakIncomingData} = action.payload;
+
+      if (
+        transakIncomingData.transakExternalId &&
+        state.transak[transakIncomingData.transakExternalId]
+      ) {
+        if (transakIncomingData.status) {
+          state.transak[transakIncomingData.transakExternalId].status =
+            transakIncomingData.status;
+        }
+        if (transakIncomingData.order_id) {
+          state.transak[transakIncomingData.transakExternalId].order_id =
+            transakIncomingData.order_id;
+        }
+        if (transakIncomingData.cryptoAmount) {
+          state.transak[transakIncomingData.transakExternalId].crypto_amount =
+            transakIncomingData.cryptoAmount;
+        }
+        if (transakIncomingData.transactionId) {
+          state.transak[transakIncomingData.transakExternalId].transaction_id =
+            transakIncomingData.transactionId;
+        }
+        return {
+          ...state,
+          transak: {
+            ...state.transak,
+            [transakIncomingData.transakExternalId]:
+              state.transak[transakIncomingData.transakExternalId],
+          },
+        };
+      } else {
+        return state;
+      }
+
+    case BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_TRANSAK:
+      const {transakExternalId} = action.payload;
+      const transakPaymentRequestsList = {...state.transak};
+      delete transakPaymentRequestsList[transakExternalId];
+
+      return {
+        ...state,
+        transak: {...transakPaymentRequestsList},
       };
 
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE:

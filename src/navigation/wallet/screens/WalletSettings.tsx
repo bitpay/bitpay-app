@@ -28,7 +28,6 @@ import {sleep} from '../../../utils/helper-methods';
 import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
-  toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {useDispatch} from 'react-redux';
@@ -83,7 +82,6 @@ const WalletSettings = () => {
   const navigation = useNavigation();
 
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
-  const {hideAllBalances} = useAppSelector(({APP}) => APP);
   const wallet = findWalletById(wallets, walletId) as Wallet;
   const {
     walletName,
@@ -173,17 +171,6 @@ const WalletSettings = () => {
             </InfoDescription>
           </Info>
         ) : null}
-
-        <Hr />
-
-        <SettingView>
-          <WalletSettingsTitle>{t('Hide All Balances')}</WalletSettingsTitle>
-
-          <ToggleSwitch
-            onChange={value => dispatch(toggleHideAllBalances(value))}
-            isEnabled={!!hideAllBalances}
-          />
-        </SettingView>
 
         <Hr />
 

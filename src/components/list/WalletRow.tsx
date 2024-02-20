@@ -57,6 +57,7 @@ export interface WalletRowProps {
   isToken?: boolean;
   network: Network;
   isRefreshing?: boolean;
+  isScanning?: boolean;
   hideWallet?: boolean;
   hideBalance?: boolean;
   pendingTxps: TransactionProposal[];

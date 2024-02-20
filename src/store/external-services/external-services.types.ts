@@ -14,6 +14,7 @@ export type BuyCryptoConfig = {
   ramp?: ExchangeConfig;
   sardine?: ExchangeConfig;
   simplex?: ExchangeConfig;
+  transak?: ExchangeConfig;
   wyre?: ExchangeConfig;
 };
 

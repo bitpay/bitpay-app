@@ -14,6 +14,7 @@ import {
 } from '../../../../../styles/colors';
 import {
   BillOption,
+  ScreenContainer,
   SectionContainer,
   SectionHeader,
 } from '../../components/styled/ShopTabComponents';
@@ -259,7 +260,6 @@ const PayBill = ({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTransparent: false,
       headerTitle,
       headerRight: () => {
         return (
@@ -277,7 +277,7 @@ const PayBill = ({
     });
   });
   return (
-    <>
+    <ScreenContainer>
       <ScrollView>
         <SectionContainer style={{flexGrow: 1}}>
           <SectionHeaderContainer>
@@ -431,7 +431,7 @@ const PayBill = ({
         options={sheetOptions}
         paddingHorizontal={0}
       />
-    </>
+    </ScreenContainer>
   );
 };
 

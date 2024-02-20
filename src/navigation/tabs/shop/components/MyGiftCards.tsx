@@ -18,6 +18,7 @@ import {SlateDark, White} from '../../../../styles/colors';
 import {useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
 import {
+  isGiftCardDisplayable,
   redemptionFailuresLessThanADayOld,
   sortByDescendingDate,
 } from '../../../../lib/gift-cards/gift-card';
@@ -62,12 +63,7 @@ const MyGiftCards = ({
     {} as {[name: string]: CardConfig},
   );
   const giftCards = allGiftCards
-    .filter(
-      giftCard =>
-        (['PENDING', 'SUCCESS', 'SYNCED'].includes(giftCard.status) ||
-          redemptionFailuresLessThanADayOld(giftCard)) &&
-        supportedGiftCardMap[giftCard.name],
-    )
+    .filter(giftCard => isGiftCardDisplayable(giftCard, supportedGiftCardMap))
     .sort(sortByDescendingDate);
   const activeGiftCards = giftCards.filter(giftCard => !giftCard.archived);
   const archivedGiftCards = giftCards.filter(giftCard => giftCard.archived);
@@ -81,12 +77,9 @@ const MyGiftCards = ({
   const seeArchivedGiftCards = () => {
     shouldShowArchivedSlide
       ? setSlideIndex(1)
-      : navigation.navigate('Shop', {
-          screen: ShopScreens.ARCHIVED_GIFT_CARDS,
-          params: {
-            giftCards: archivedGiftCards,
-            supportedGiftCardMap,
-          },
+      : navigation.navigate(ShopScreens.ARCHIVED_GIFT_CARDS, {
+          giftCards: archivedGiftCards,
+          supportedGiftCardMap,
         });
   };
 

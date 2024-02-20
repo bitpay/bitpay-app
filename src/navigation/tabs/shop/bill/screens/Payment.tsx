@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {BillGroupParamList} from '../BillGroup';
@@ -19,7 +19,6 @@ import Settings from '../../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
 import {LightBlack, Slate30} from '../../../../../styles/colors';
 import {BillAccountPill} from '../components/BillAccountPill';
-import {useFocusEffect} from '@react-navigation/native';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
@@ -130,11 +129,11 @@ const Payment = ({
     });
   });
 
-  useFocusEffect(() => {
+  useEffect(() => {
     dispatch(
       Analytics.track('Bill Pay — Viewed Bill Payment Page', baseEventParams),
     );
-  });
+  }, [baseEventParams, dispatch]);
 
   return (
     <ScrollView>
@@ -168,7 +167,7 @@ const Payment = ({
         </LineItem>
         {payment.estimatedCompletionDate ? (
           <LineItem>
-            <LineItemLabel>{t('Estimated Completion Date')}</LineItemLabel>
+            <LineItemLabel>{t('Estimated Posting Date')}</LineItemLabel>
             <Paragraph>
               {moment(payment.estimatedCompletionDate).format('MM/DD/YY')}
             </Paragraph>

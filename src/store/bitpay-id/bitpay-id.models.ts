@@ -49,6 +49,8 @@ export interface User {
   givenName?: string;
   incentiveLevel?: string;
   incentiveLevelId?: string;
+  legalFamilyName?: string;
+  legalGivenName?: string;
   methodEntityId?: string;
   phone?: string;
   address?: string;

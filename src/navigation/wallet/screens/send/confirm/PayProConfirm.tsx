@@ -17,16 +17,20 @@ import {
   buildTxDetails,
   createPayProTxProposal,
   handleCreateTxProposalError,
+  handleSendError,
   removeTxp,
   showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
-import {sleep} from '../../../../../utils/helper-methods';
+import {sleep, toggleThenUntoggle} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
-import {GetFeeUnits} from '../../../../../store/wallet/utils/currency';
+import {
+  GetFeeUnits,
+  IsERCToken,
+} from '../../../../../store/wallet/utils/currency';
 import {
   InfoDescription,
   InfoHeader,
@@ -184,7 +188,7 @@ const PayProConfirm = () => {
   };
 
   useEffect(() => {
-    wallet ? createTxp(wallet) : setTimeout(() => openKeyWalletSelector(), 300);
+    wallet ? createTxp(wallet) : setTimeout(() => openKeyWalletSelector(), 500);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -192,7 +196,7 @@ const PayProConfirm = () => {
     setWalletSelectorVisible(true);
   };
 
-  const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
+  const handleTxpError = async (err: any) => {
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
     const [errorConfig] = await Promise.all([
@@ -234,7 +238,7 @@ const PayProConfirm = () => {
         }),
       );
     } catch (err) {
-      handleCreateGiftCardInvoiceOrTxpError(err);
+      handleTxpError(err);
     }
   };
 
@@ -296,28 +300,25 @@ const PayProConfirm = () => {
         }
       },
     });
-    await sleep(400);
-    setResetSwipeButton(true);
+    toggleThenUntoggle(setResetSwipeButton);
   };
 
   const handlePaymentFailure = async (error: any) => {
-    dispatch(dismissOnGoingProcessModal());
-    if (wallet && txp) {
-      await removeTxp(wallet, txp).catch(removeErr =>
-        console.error('error deleting txp', removeErr),
-      );
+    const handled = dispatch(
+      handleSendError({error, onDismiss: () => reshowWalletSelector()}),
+    );
+    if (!handled) {
+      if (wallet && txp) {
+        await removeTxp(wallet, txp).catch(removeErr =>
+          console.error('error deleting txp', removeErr),
+        );
+      }
+      updateTxDetails(undefined);
+      updateTxp(undefined);
+      setWallet(undefined);
+      setCoinbaseAccount(undefined);
     }
-    updateTxDetails(undefined);
-    updateTxp(undefined);
-    setWallet(undefined);
-    setCoinbaseAccount(undefined);
-    showError({
-      error,
-      defaultErrorMessage: t('Could not send transaction'),
-      onDismiss: () => reshowWalletSelector(),
-    });
-    await sleep(400);
-    setResetSwipeButton(true);
+    toggleThenUntoggle(setResetSwipeButton);
     dispatch(
       Analytics.track('BitPay App - Failed Merchant Purchase', {
         merchantBrand: invoice?.merchantName,
@@ -429,15 +430,21 @@ const PayProConfirm = () => {
                   ) : null}
                 </>
               ) : null}
-              <Amount
-                description={'Total'}
-                amount={total}
-                height={83}
-                showInfoIcon={true}
-                infoIconOnPress={() => {
-                  dispatch(showConfirmAmountInfoSheet('total'));
-                }}
-              />
+              {wallet ? (
+                <Amount
+                  description={'Total'}
+                  amount={total}
+                  height={
+                    IsERCToken(wallet.currencyAbbreviation, wallet.chain)
+                      ? 110
+                      : 83
+                  }
+                  showInfoIcon={true}
+                  infoIconOnPress={() => {
+                    dispatch(showConfirmAmountInfoSheet('total'));
+                  }}
+                />
+              ) : null}
             </>
           ) : null}
         </DetailsList>
@@ -460,6 +467,8 @@ const PayProConfirm = () => {
         <PaymentSent
           isVisible={showPaymentSentModal}
           onCloseModal={async () => {
+            setShowPaymentSentModal(false);
+            await sleep(500);
             navigation.dispatch(StackActions.popToTop());
             if (coinbaseAccount) {
               navigation.dispatch(StackActions.pop(3));
@@ -473,8 +482,6 @@ const PayProConfirm = () => {
                   walletId: wallet!.id,
                   key,
                 });
-            await sleep(0);
-            setShowPaymentSentModal(false);
           }}
         />
       </ConfirmScrollView>

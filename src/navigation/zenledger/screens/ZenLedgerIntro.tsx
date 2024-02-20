@@ -6,13 +6,7 @@ import {
 } from '../../../components/styled/Containers';
 import {Black, LightBlack, SlateDark, White} from '../../../styles/colors';
 import Button from '../../../components/button/Button';
-import {
-  H4,
-  HeaderTitle,
-  Link,
-  Paragraph,
-  TextAlign,
-} from '../../../components/styled/Text';
+import {H4, Link, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {Platform, TouchableOpacity, View} from 'react-native';
 import {useAppDispatch} from '../../../utils/hooks';
@@ -30,20 +24,23 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useTheme} from 'styled-components/native';
 import LinkIcon from '../../../components/icons/link-icon/LinkIcon';
 
+const ZenledgerContainer = styled.SafeAreaView`
+  flex: 1;
+  justify-content: center;
+`;
+
 const ZenLedgerIntroContainer = styled.View`
+  margin-top: 40px;
   border-radius: 10px;
   padding: ${ScreenGutter};
   flex: 1;
-  justify-content: center;
-  align-items: center;
 `;
 
 const ZenLedgerBottomContainer = styled.View`
   background-color: ${({theme}) => (theme?.dark ? LightBlack : White)};
-  bottom: 0px;
-  height: 200px;
+  position: absolute;
+  bottom: 0;
   width: 100%;
-  border-radius: 20px;
   justify-content: center;
   align-items: center;
   padding: ${ScreenGutter};
@@ -123,57 +120,61 @@ const ZenLedgerIntro: React.VFC = () => {
           onPress={() => {
             navigation.goBack();
           }}>
-          <Back color={White} background={LightBlack} opacity={1} />
+          <Back />
         </TouchableOpacity>
       ),
-      headerTitle: () => <HeaderTitle>{t('ZenLedger')}</HeaderTitle>,
     });
-  }, [navigation, t]);
+  }, [navigation, t, theme.dark]);
 
   return (
-    <ZenLedgerBackground>
-      <ZenLedgerIntroContainer>
-        <ZenLedgerLogoContainer>
-          <ZenLedgerLogo />
-        </ZenLedgerLogoContainer>
-
-        <TextAlign align={'center'}>
-          <H4>{t('Be Prepared for Tax Season')}</H4>
-        </TextAlign>
-        <View>
+    <ZenledgerContainer>
+      <ZenLedgerBackground>
+        <ZenLedgerIntroContainer>
+          <ZenLedgerLogoContainer>
+            <ZenLedgerLogo />
+          </ZenLedgerLogoContainer>
+          <View>
+            <TextAlign align={'center'}>
+              <H4>{t('Be Prepared for Tax Season')}</H4>
+            </TextAlign>
+            <ZenLedgerDescription>
+              {t(
+                'ZenLedger makes crypto taxes easy. Log In or Create your ZenLedger Account and BitPay will import your wallets for you.',
+              )}
+            </ZenLedgerDescription>
+            <View style={{marginTop: 16}}>
+              <Button
+                onPress={onContinue}
+                buttonStyle="secondary"
+                children={t('Import Wallet')}
+              />
+            </View>
+          </View>
+        </ZenLedgerIntroContainer>
+        <ZenLedgerBottomContainer>
+          <TextAlign align={'center'}>
+            <H4>{t('Already imported?')}</H4>
+          </TextAlign>
           <ZenLedgerDescription>
             {t(
-              'ZenLedger makes crypto taxes easy. Log In or Create your ZenLedger Account and BitPay will import your wallets for you.',
+              'ZenLedger is best viewed on desktop or you can visit on mobile here.',
             )}
           </ZenLedgerDescription>
-          <View style={{marginTop: 16}}>
-            <Button onPress={onContinue} buttonStyle="secondary">
-              {t('Import Wallet')}
-            </Button>
-          </View>
-        </View>
-      </ZenLedgerIntroContainer>
-      <ZenLedgerBottomContainer>
-        <TextAlign align={'center'}>
-          <H4>{t('Already imported?')}</H4>
-        </TextAlign>
-        <ZenLedgerDescription>
-          {t(
-            'ZenLedger is best viewed on desktop or you can visit on mobile here.',
-          )}
-        </ZenLedgerDescription>
-        <LinkCointainer
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(openUrlWithInAppBrowser('https://app.zenledger.io/login'));
-          }}>
-          <Link style={{fontWeight: 'bold', marginRight: 2}}>
-            {t('Visit ZenLedger')}
-          </Link>
-          <LinkIcon />
-        </LinkCointainer>
-      </ZenLedgerBottomContainer>
-    </ZenLedgerBackground>
+          <LinkCointainer
+            onPress={() => {
+              haptic('impactLight');
+              dispatch(
+                openUrlWithInAppBrowser('https://app.zenledger.io/login'),
+              );
+            }}>
+            <Link style={{fontWeight: 'bold', marginRight: 2}}>
+              {t('Visit ZenLedger')}
+            </Link>
+            <LinkIcon />
+          </LinkCointainer>
+        </ZenLedgerBottomContainer>
+      </ZenLedgerBackground>
+    </ZenledgerContainer>
   );
 };
 

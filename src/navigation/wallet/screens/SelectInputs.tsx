@@ -1,4 +1,10 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import styled from 'styled-components/native';
@@ -9,22 +15,31 @@ import {
   Utxo,
   Wallet,
 } from '../../../store/wallet/wallet.models';
-import {BaseText, H5, H7, HeaderTitle} from '../../../components/styled/Text';
+import {
+  BaseText,
+  H5,
+  H7,
+  HeaderTitle,
+  Link,
+  ListItemSubText,
+} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {WalletGroupParamList} from '../WalletGroup';
 import {
+  ActiveOpacity,
   Column,
   CtaContainer as _CtaContainer,
   Hr,
+  RowContainer,
+  SettingIcon,
 } from '../../../components/styled/Containers';
-import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {GetUtxos} from '../../../store/wallet/effects/transactions/transactions';
 import haptic from '../../../components/haptic-feedback/haptic';
 import InputSelectionRow from '../../../components/list/InputsRow';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Button from '../../../components/button/Button';
-import {FlatList} from 'react-native';
+import {FlatList, LayoutAnimation, TouchableOpacity} from 'react-native';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -43,13 +58,20 @@ import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
 import _ from 'lodash';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {toFiat} from '../../../store/wallet/utils/wallet';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
+import Question from '../../../../assets/img/settings/feedback/question.svg';
+import {ScrollView} from 'react-native-gesture-handler';
+import {buildUIFormattedWallet} from './KeyOverview';
+import {WalletRowProps} from '../../../components/list/WalletRow';
+import BalanceDetailsModal from '../components/BalanceDetailsModal';
 
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
 `;
 
 const SectionContainer = styled.View`
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 `;
 
 const ItemRowContainer = styled.View`
@@ -68,6 +90,10 @@ const SelectInputsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
+const AvailableInputsTitle = styled(H5)`
+  margin-bottom: 10px;
+`;
+
 const SelectInputsDetailsContainer = styled.View`
   margin-top: 20px;
   padding: 0 15px;
@@ -78,7 +104,20 @@ const InputSelectionRowContainer = styled.View`
 `;
 
 const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 16px;
+  padding: 0px 16px 10px 16px;
+`;
+
+const DropdownRow = styled.TouchableOpacity`
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  height: 48px;
+`;
+
+const DropdownTitle = styled.View`
+  flex-direction: row;
+  justify-content: flex-start;
 `;
 
 export const InputTouchableContainer = styled.TouchableOpacity`
@@ -86,6 +125,12 @@ export const InputTouchableContainer = styled.TouchableOpacity`
   align-items: center;
   justify-content: space-between;
   min-height: 71px;
+`;
+
+const AvailableInputsContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 `;
 
 export interface SelectInputsParamList {
@@ -109,6 +154,11 @@ const SelectInputs = () => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const [inputs, setInputs] = useState<UtxoWithFiatAmount[]>([]);
+  const [lockedUtxos, setLockedUtxos] = useState<UtxoWithFiatAmount[]>([]);
+  const [hideLockedUtxos, setHideLockedUtxos] = useState<boolean>(true);
+  const [uiFormattedWallet, setUiFormattedWallet] = useState<WalletRowProps>();
+  const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
+  const [selectAll, setSelectAll] = useState(false);
   const {wallet, recipient} = route.params;
   const {currencyAbbreviation, chain, network, tokenAddress} = wallet;
   const precision = dispatch(
@@ -120,21 +170,6 @@ const SelectInputs = () => {
   const [totalFiatAmount, setTotalFiatAmount] = useState<string>();
 
   const logger = useLogger();
-  let recipientData: TxDetailsSendingTo;
-
-  if (recipient.type === 'contact') {
-    recipientData = {
-      recipientName: recipient?.name,
-      recipientAddress: recipient?.address,
-      img: recipient?.type,
-    };
-  } else {
-    recipientData = {
-      recipientName: recipient.name,
-      recipientAddress: recipient.address,
-      img: wallet?.img || currencyAbbreviation,
-    };
-  }
 
   const init = async () => {
     try {
@@ -164,7 +199,13 @@ const SelectInputs = () => {
         ),
         network,
       }));
-      setInputs(_.orderBy(utxosWithFiatAmount, 'amount', 'desc'));
+
+      const [_lockedUtxos, _availableUtxos] = [
+        utxosWithFiatAmount.filter(u => u.locked),
+        utxosWithFiatAmount.filter(u => !u.locked),
+      ];
+      setLockedUtxos(_.orderBy(_lockedUtxos, 'amount', 'desc'));
+      setInputs(_.orderBy(_availableUtxos, 'amount', 'desc'));
     } catch (err) {
       logger.error(`An error occurred while getting utxos: ${err}`);
     }
@@ -206,6 +247,33 @@ const SelectInputs = () => {
     init();
   }, []);
 
+  useEffect(() => {
+    const _uiFormattedWallet = buildUIFormattedWallet(
+      wallet,
+      defaultAltCurrency.isoCode,
+      rates,
+      dispatch,
+      'symbol',
+    );
+    setUiFormattedWallet(_uiFormattedWallet);
+  }, [lockedUtxos]);
+
+  const inputsSelectAll = (UtxosWithFiatAmount: UtxoWithFiatAmount[]) => {
+    let totalAmount = 0;
+    const updatedUtxos = UtxosWithFiatAmount.map(utxo => {
+      totalAmount += Number(utxo.amount);
+      return {...utxo, checked: !utxo.checked};
+    });
+    setInputs(updatedUtxos);
+    if (selectAll) {
+      setTotalAmount(Number(0).toFixed(precision?.unitDecimals));
+      setSelectAll(false);
+    } else {
+      setTotalAmount(Number(totalAmount).toFixed(precision!.unitDecimals));
+      setSelectAll(true);
+    }
+  };
+
   const inputToggled = useCallback(
     (item: UtxoWithFiatAmount, index: number) => {
       setInputs(prevInputs => {
@@ -226,12 +294,12 @@ const SelectInputs = () => {
   );
 
   const renderItem = useCallback(
-    ({item, index}) => (
+    ({item, index}: {item: UtxoWithFiatAmount; index: number}) => (
       <InputSelectionRowContainer>
         <InputSelectionRow
           item={item}
           emit={inputToggled}
-          key={item}
+          key={index}
           unitCode={precision?.unitCode}
           index={index}
         />
@@ -302,24 +370,76 @@ const SelectInputs = () => {
     }
   };
 
+  const memoizedLockedUtxosList = useMemo(
+    () => (
+      <>
+        <DropdownRow
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            LayoutAnimation.configureNext(
+              LayoutAnimation.Presets.easeInEaseOut,
+            );
+            setHideLockedUtxos(!hideLockedUtxos);
+            // onPress();
+          }}>
+          <DropdownTitle>
+            <H5>{t('Locked Inputs') + ' ' + '(' + lockedUtxos.length + ')'}</H5>
+            <TouchableOpacity
+              style={{marginLeft: 10}}
+              onPress={() => {
+                setShowBalanceDetailsModal(true);
+              }}>
+              <Question width={24} height={24} />
+            </TouchableOpacity>
+          </DropdownTitle>
+          <SettingIcon suffix>
+            {!hideLockedUtxos ? <ChevronDownSvg /> : <ChevronUpSvg />}
+          </SettingIcon>
+        </DropdownRow>
+        <ScrollView style={{marginBottom: 10, maxHeight: 225}}>
+          {!hideLockedUtxos
+            ? lockedUtxos.map(
+                (lockedUtxo: UtxoWithFiatAmount, index: number) => {
+                  return (
+                    <RowContainer
+                      key={index}
+                      activeOpacity={ActiveOpacity}
+                      style={{paddingLeft: 0, paddingRight: 0}}>
+                      <Column>
+                        <H5>
+                          {lockedUtxo.amount}{' '}
+                          {precision?.unitCode?.toUpperCase()}{' '}
+                        </H5>
+                        {/* <Hr /> */}
+                        {lockedUtxo.network !== 'testnet' ? (
+                          <ListItemSubText textAlign={'left'}>
+                            {lockedUtxo.fiatAmount}
+                          </ListItemSubText>
+                        ) : null}
+                        <ListItemSubText
+                          numberOfLines={1}
+                          ellipsizeMode={'middle'}>
+                          {lockedUtxo.address}
+                        </ListItemSubText>
+                      </Column>
+                    </RowContainer>
+                  );
+                },
+              )
+            : null}
+        </ScrollView>
+        {/* workaround to prevent weird behaviour with dropdown animation */}
+        {!hideLockedUtxos ? (
+          <AvailableInputsTitle>{t('Available Inputs')}</AvailableInputsTitle>
+        ) : null}
+      </>
+    ),
+    [lockedUtxos, hideLockedUtxos],
+  );
+
   return (
     <SelectInputsContainer>
       <SelectInputsDetailsContainer>
-        <SectionContainer>
-          <H5>{t('Recipient')}</H5>
-          <ItemRowContainer>
-            <RecipientContainer>
-              <CurrencyImage img={recipientData.img} size={25} />
-              <H7
-                numberOfLines={1}
-                ellipsizeMode={'tail'}
-                style={{marginLeft: 8, width: '60%'}}>
-                {recipientData.recipientName || recipientData.recipientAddress}
-              </H7>
-            </RecipientContainer>
-          </ItemRowContainer>
-          <Hr />
-        </SectionContainer>
         <SectionContainer>
           <H5 style={{marginBottom: 10}}>{t('Total Selected Inputs')}</H5>
           <ItemRowContainer
@@ -339,7 +459,18 @@ const SelectInputs = () => {
           </ItemRowContainer>
           <Hr />
         </SectionContainer>
-        <H5 style={{marginBottom: 10}}>{t('Wallet Inputs')}</H5>
+        {lockedUtxos.length > 0 ? memoizedLockedUtxosList : null}
+        {hideLockedUtxos ? (
+          <AvailableInputsContainer>
+            <AvailableInputsTitle>{t('Available Inputs')}</AvailableInputsTitle>
+            <Link
+              onPress={() => {
+                inputsSelectAll(inputs);
+              }}>
+              {t('Select All')}
+            </Link>
+          </AvailableInputsContainer>
+        ) : null}
       </SelectInputsDetailsContainer>
       {inputs && inputs.length ? (
         <FlatList
@@ -366,6 +497,14 @@ const SelectInputs = () => {
           {t('Continue')}
         </Button>
       </CtaContainer>
+
+      {wallet && uiFormattedWallet ? (
+        <BalanceDetailsModal
+          isVisible={showBalanceDetailsModal}
+          closeModal={() => setShowBalanceDetailsModal(false)}
+          wallet={uiFormattedWallet}
+        />
+      ) : null}
     </SelectInputsContainer>
   );
 };

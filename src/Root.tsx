@@ -120,6 +120,9 @@ import InAppNotification from './components/modal/in-app-notification/InAppNotif
 import RNBootSplash from 'react-native-bootsplash';
 import {showBlur} from './store/app/app.actions';
 import InAppMessage from './components/modal/in-app-message/InAppMessage';
+import SettingsGroup, {
+  SettingsGroupParamList,
+} from './navigation/tabs/settings/SettingsGroup';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -145,7 +148,8 @@ export type RootStackParamList = {
   WalletConnectGroupParamList &
   BillGroupParamList &
   WalletGroupParamList &
-  ZenLedgerGroupParamsList;
+  ZenLedgerGroupParamsList &
+  SettingsGroupParamList;
 
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -174,7 +178,8 @@ export type NavScreenParams = NavigatorScreenParams<
     WalletConnectGroupParamList &
     NotificationsSettingsGroupParamsList &
     ZenLedgerGroupParamsList &
-    NetworkFeePolicySettingsGroupParamsList
+    NetworkFeePolicySettingsGroupParamsList &
+    SettingsGroupParamList
 >;
 
 declare global {
@@ -473,17 +478,32 @@ export default () => {
               dispatch(AppActions.showBiometricModal({}));
             }
 
-            if (onboardingCompleted) {
-              const getBrazeInitialUrl = async (): Promise<string> =>
-                new Promise(resolve =>
-                  Braze.getInitialURL(deepLink => resolve(deepLink)),
+            const urlHandler = async () => {
+              if (onboardingCompleted) {
+                const getBrazeInitialUrl = async (): Promise<string> =>
+                  new Promise(resolve =>
+                    Braze.getInitialURL(deepLink => resolve(deepLink)),
+                  );
+                const [url, brazeUrl] = await Promise.all([
+                  Linking.getInitialURL(),
+                  getBrazeInitialUrl(),
+                ]);
+                await sleep(10);
+                urlEventHandler({url: url || brazeUrl});
+              }
+            };
+
+            if (pinLockActive || biometricLockActive) {
+              const subscriptionToPinModalDismissed =
+                DeviceEventEmitter.addListener(
+                  DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+                  () => {
+                    subscriptionToPinModalDismissed.remove();
+                    urlHandler();
+                  },
                 );
-              const [url, brazeUrl] = await Promise.all([
-                Linking.getInitialURL(),
-                getBrazeInitialUrl(),
-              ]);
-              await sleep(10);
-              urlEventHandler({url: url || brazeUrl});
+            } else {
+              urlHandler();
             }
 
             dispatch(LogActions.info('QuickActions Initialized'));
@@ -504,6 +524,9 @@ export default () => {
             screenOptions={{
               ...baseNavigatorOptions,
               headerShown: false,
+              headerStyle: {
+                backgroundColor: theme.colors.background,
+              },
             }}
             initialRouteName={initialRoute}>
             <Root.Screen
@@ -524,6 +547,7 @@ export default () => {
             {AuthGroup({Auth: Root})}
             {IntroGroup({Intro: Root})}
             {OnboardingGroup({Onboarding: Root})}
+            {SettingsGroup({Settings: Root})}
             {BitpayIdGroup({BitpayId: Root})}
             {WalletGroup({Wallet: Root})}
             {CardActivationGroup({CardActivation: Root})}

@@ -1,4 +1,4 @@
-import React, {memo, useState} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {ActiveOpacity, Column} from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
@@ -25,13 +25,19 @@ const InputColumn = styled(Column)`
 
 const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
   const {amount, address, checked: initialCheckValue, fiatAmount} = item;
-
   const [checked, setChecked] = useState(!!initialCheckValue);
+
   const toggle = (): void => {
-    setChecked(!checked);
+    const newCheckedState = !checked;
+    setChecked(newCheckedState);
     haptic('impactLight');
-    emit({...item, ...{checked: !checked}}, index);
+    emit({...item, checked: newCheckedState}, index);
   };
+
+  // Effect to synchronize internal state with prop changes
+  useEffect(() => {
+    setChecked(!!initialCheckValue);
+  }, [initialCheckValue]);
 
   return (
     <RowContainer

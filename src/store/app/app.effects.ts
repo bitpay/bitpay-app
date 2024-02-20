@@ -38,6 +38,7 @@ import {BitPayIdEffects} from '../bitpay-id';
 import {CardActions, CardEffects} from '../card';
 import {Card} from '../card/card.models';
 import {coinbaseInitialize} from '../coinbase';
+import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
@@ -82,6 +83,7 @@ import {
 import {
   updatePortfolioBalance,
   setCustomTokensMigrationComplete,
+  setWalletScanning,
 } from '../wallet/wallet.actions';
 import {
   setContactMigrationComplete,
@@ -116,6 +118,8 @@ import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
 import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {Key, Wallet} from '../wallet/wallet.models';
+import {AppDispatch} from '../../utils/hooks';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -203,6 +207,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
+
+    // Initialize Zenledger
+    dispatch(zenledgerInitialize());
 
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
@@ -906,6 +913,20 @@ const _startUpdateWalletStatus = debounce(
   {leading: true, trailing: false},
 );
 
+const _setScanFinishedForWallet = (
+  dispatch: AppDispatch,
+  key: Key,
+  wallet: Wallet,
+) => {
+  dispatch(
+    setWalletScanning({
+      keyId: key.id,
+      walletId: wallet.credentials.walletId,
+      isScanning: false,
+    }),
+  );
+};
+
 export const handleBwsEvent =
   (response: SilentPushEvent): Effect =>
   async (dispatch, getState) => {
@@ -939,6 +960,9 @@ export const handleBwsEvent =
       const keyObj = await findKeyByKeyId(keyId, keys);
 
       switch (response.notification_type) {
+        case 'ScanFinished':
+          _setScanFinishedForWallet(dispatch, keyObj, wallet);
+          break;
         case 'NewAddress':
           _createWalletAddress(dispatch, wallet);
           break;
@@ -1034,10 +1058,13 @@ export const incomingShopLink =
           cardConfig,
         });
       } else {
-        navigationRef.navigate('Shop', {
-          screen: ShopScreens.HOME,
+        navigationRef.navigate('Tabs', {
+          screen: 'Shop',
           params: {
-            screen: ShopTabs.GIFT_CARDS,
+            screen: ShopScreens.HOME,
+            params: {
+              screen: ShopTabs.GIFT_CARDS,
+            },
           },
         });
       }
@@ -1059,19 +1086,19 @@ export const incomingShopLink =
           directIntegration,
         });
       } else {
-        navigationRef.navigate('Shop', {
-          screen: ShopScreens.HOME,
+        navigationRef.navigate('Tabs', {
+          screen: 'Shop',
           params: {
-            screen: ShopTabs.SHOP_ONLINE,
+            screen: ShopScreens.HOME,
+            params: {
+              screen: ShopTabs.SHOP_ONLINE,
+            },
           },
         });
       }
     } else if (route.name === 'billpay') {
-      navigationRef.navigate('Shop', {
-        screen: ShopScreens.HOME,
-        params: {
-          screen: ShopTabs.BILLS,
-        },
+      navigationRef.navigate('Tabs', {
+        screen: 'Bills',
       });
     }
     return {merchantName};

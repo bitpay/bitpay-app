@@ -15,6 +15,11 @@ export enum DeviceEmitterEvents {
   APP_INIT_COMPLETED = 'APP_INIT_COMPLETED',
 
   /**
+   * Triggered when the PIN/Biometric modal is dismissed and app is ready to continue with pending tasks.
+   */
+  APP_LOCK_MODAL_DISMISSED = 'APP_LOCK_MODAL_DISMISSED',
+
+  /**
    * Triggered when the user has completed app onboarding.
    */
   APP_ONBOARDING_COMPLETED = 'APP_ONBOARDING_COMPLETED',

@@ -26,6 +26,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {useTranslation} from 'react-i18next';
+import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 
 const EnableTwoFactorContainer = styled.SafeAreaView`
   flex: 1;
@@ -91,7 +92,7 @@ const QRContainer = styled.View`
     dark
       ? `
   background-color: ${White};
-  padding: 10px;
+  padding: 15px;
   margin-left: 15px;
   border-radius: 6px;
   `
@@ -168,7 +169,7 @@ const EnableTwoFactor = ({route, navigation}: EnableTwoFactorProps) => {
     await requestTwoFactorChange(twoFactorCode);
     await dispatch(dismissOnGoingProcessModal());
     if (otpEnabled) {
-      navigation.popToTop();
+      navigation.pop(2);
       return;
     }
     navigator.navigate(BitpayIdScreens.TWO_FACTOR_ENABLED);
@@ -238,7 +239,7 @@ const EnableTwoFactor = ({route, navigation}: EnableTwoFactorProps) => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
-                  navigator.navigate(BitpayIdScreens.TWO_FACTOR, {
+                  navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
                     onSubmit: async (twoFactorCode: string) => {
                       toggleTwoFactor(twoFactorCode);
                     },

@@ -94,6 +94,11 @@ export const isValidSimplexUri = (data: string): boolean => {
   return !!data?.includes('simplex');
 };
 
+export const isValidTransakUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!data?.includes('transak');
+};
+
 export const IsValidBitcoinUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcore().URI.isValid(data);

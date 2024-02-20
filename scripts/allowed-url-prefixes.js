@@ -3,8 +3,7 @@ const fs = require('fs');
 const dotenv = require('dotenv');
 
 if (!['development', 'production'].includes(process.env.NODE_ENV)) {
-  console.log('Please, set NODE_ENV ["development" | "production"]');
-  return;
+  throw 'Please, set NODE_ENV ["development" | "production"]';
 }
 
 const envPath = `${__dirname}/../.env.${process.env.NODE_ENV}`;
@@ -25,7 +24,9 @@ const developmentAssetsPrefix = 'http://localhost:8081';
 
 const developmentOnlyAllowedUrlPrefixes =
   process.env.NODE_ENV === 'development'
-    ? (process.env.ALLOWED_URL_PREFIXES_DEVELOPMENT || '').split(',').concat([developmentAssetsPrefix])
+    ? (process.env.ALLOWED_URL_PREFIXES_DEVELOPMENT || '')
+        .split(',')
+        .concat([developmentAssetsPrefix])
     : [];
 
 const allowedUrlPrefixes = [
@@ -47,6 +48,7 @@ const allowedUrlPrefixes = [
   'https://polygon-rpc.com/',
   'https://matic-mumbai.chainstacklabs.com/',
   'https://static.methodfi.com/',
+  'https://api.zenledger.io/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');

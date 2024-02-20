@@ -23,6 +23,10 @@ import {
   getSimplexSupportedCurrencies,
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
+import {
+  getTransakSupportedCurrencies,
+  transakSupportedFiatCurrencies,
+} from './transak-utils';
 import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
@@ -32,7 +36,8 @@ export type BuyCryptoExchangeKey =
   | 'moonpay'
   | 'ramp'
   | 'sardine'
-  | 'simplex';
+  | 'simplex'
+  | 'transak';
 
 export const BuyCryptoSupportedExchanges: BuyCryptoExchangeKey[] = [
   'banxa',
@@ -40,6 +45,7 @@ export const BuyCryptoSupportedExchanges: BuyCryptoExchangeKey[] = [
   'ramp',
   'sardine',
   'simplex',
+  'transak',
 ];
 
 export const getEnabledPaymentMethods = (
@@ -93,7 +99,21 @@ export const getEnabledPaymentMethods = (
               currency,
               country,
             ) ||
-            isPaymentMethodSupported('simplex', method, coin, chain, currency));
+            isPaymentMethodSupported(
+              'simplex',
+              method,
+              coin,
+              chain,
+              currency,
+            ) ||
+            isPaymentMethodSupported(
+              'transak',
+              method,
+              coin,
+              chain,
+              currency,
+              country,
+            ));
   });
 
   return EnabledPaymentMethods;
@@ -116,6 +136,8 @@ export const getBuyCryptoSupportedCoins = (
       return getSardineSupportedCurrencies();
     case 'simplex':
       return getSimplexSupportedCurrencies();
+    case 'transak':
+      return getTransakSupportedCurrencies();
     default:
       const allSupportedCurrencies = [
         ...new Set([
@@ -126,6 +148,7 @@ export const getBuyCryptoSupportedCoins = (
           ...getRampSupportedCurrencies(),
           ...getSardineSupportedCurrencies(),
           ...getSimplexSupportedCurrencies(),
+          ...getTransakSupportedCurrencies(),
         ]),
       ];
       return allSupportedCurrencies;
@@ -144,6 +167,8 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
       return sardineSupportedFiatCurrencies;
     case 'simplex':
       return simplexSupportedFiatCurrencies;
+    case 'transak':
+      return transakSupportedFiatCurrencies;
     default:
       const allSupportedFiatCurrencies = [
         ...new Set([
@@ -152,6 +177,7 @@ export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
           ...rampSupportedFiatCurrencies,
           ...sardineSupportedFiatCurrencies,
           ...simplexSupportedFiatCurrencies,
+          ...transakSupportedFiatCurrencies,
         ]),
       ];
       return allSupportedFiatCurrencies;
@@ -184,7 +210,8 @@ export const isCoinSupportedToBuy = (
     isCoinSupportedBy('moonpay', coin, chain, country) ||
     isCoinSupportedBy('ramp', coin, chain) ||
     isCoinSupportedBy('sardine', coin, chain) ||
-    isCoinSupportedBy('simplex', coin, chain)
+    isCoinSupportedBy('simplex', coin, chain) ||
+    isCoinSupportedBy('transak', coin, chain)
   );
 };
 
@@ -215,6 +242,10 @@ const isCoinSupportedBy = (
       return getSimplexSupportedCurrencies().includes(
         getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
       );
+    case 'transak':
+      return getTransakSupportedCurrencies().includes(
+        getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
+      );
     default:
       return false;
   }
@@ -235,6 +266,8 @@ const isFiatCurrencySupportedBy = (
       return sardineSupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'simplex':
       return simplexSupportedFiatCurrencies.includes(currency.toUpperCase());
+    case 'transak':
+      return transakSupportedFiatCurrencies.includes(currency.toUpperCase());
     default:
       return false;
   }

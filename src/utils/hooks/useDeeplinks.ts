@@ -5,7 +5,7 @@ import {
   PathConfig,
 } from '@react-navigation/native';
 import {useMemo, useRef} from 'react';
-import {Linking} from 'react-native';
+import {DeviceEventEmitter, Linking, NativeModules} from 'react-native';
 import AppsFlyer from 'react-native-appsflyer';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {
@@ -27,6 +27,8 @@ import useAppDispatch from './useAppDispatch';
 import {useLogger} from './useLogger';
 import {DebugScreens} from '../../navigation/Debug';
 import {GiftCardScreens} from '../../navigation/tabs/shop/gift-card/GiftCardGroup';
+import useAppSelector from './useAppSelector';
+import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 
 const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
   initialRouteName: RootStacks.TABS,
@@ -35,7 +37,7 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
     [DebugScreens.DEBUG]: {
       path: 'debug/:name',
     },
-    [BitpayIdScreens.PAIRING]: 'pair',
+    [BitpayIdScreens.PAIRING]: 'id/pair',
     [BitpayIdScreens.RECEIVE_SETTINGS]: 'receive-settings',
     [RootStacks.TABS]: {
       screens: {
@@ -146,6 +148,8 @@ export const useUrlEventHandler = () => {
 export const useDeeplinks = () => {
   const urlEventHandler = useUrlEventHandler();
   const logger = useLogger();
+  const {biometricLockActive, pinLockActive, lockAuthorizedUntil} =
+    useAppSelector(({APP}) => APP);
 
   const memoizedSubscribe = useMemo<
     LinkingOptions<RootStackParamList>['subscribe']
@@ -153,23 +157,54 @@ export const useDeeplinks = () => {
     () => listener => {
       const subscription = Linking.addEventListener('url', async ({url}) => {
         let handled = false;
-        const urlObj = new URL(url);
-        const urlParams = urlObj.searchParams;
+        const handleUrl = async () => {
+          const urlObj = new URL(url);
+          const urlParams = urlObj.searchParams;
 
-        if (!handled) {
-          const isAppsFlyerDeeplink = urlParams.get('af_deeplink') === 'true';
-          const hasEmbeddedDeepLink = !!urlParams.get('deep_link_value');
+          if (!handled) {
+            const isAppsFlyerDeeplink = urlParams.get('af_deeplink') === 'true';
+            const hasEmbeddedDeepLink = !!urlParams.get('deep_link_value');
 
-          // true if should be handled by AppsFlyer SDK
-          handled = !!(isAppsFlyerDeeplink && hasEmbeddedDeepLink);
-        }
+            // true if should be handled by AppsFlyer SDK
+            handled = !!(isAppsFlyerDeeplink && hasEmbeddedDeepLink);
+          }
 
-        if (!handled) {
-          handled = !!(await urlEventHandler({url}));
-        }
+          if (!handled) {
+            handled = !!(await urlEventHandler({url}));
+          }
 
-        if (!handled) {
-          listener(url);
+          if (!handled) {
+            listener(url);
+          }
+        };
+
+        if (pinLockActive || biometricLockActive) {
+          if (lockAuthorizedUntil) {
+            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+            const totalSecs =
+              Number(lockAuthorizedUntil) - Number(timeSinceBoot);
+            if (totalSecs < 0) {
+              const subscription = DeviceEventEmitter.addListener(
+                DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+                () => {
+                  subscription.remove();
+                  handleUrl();
+                },
+              );
+            } else {
+              handleUrl();
+            }
+          } else {
+            const subscription = DeviceEventEmitter.addListener(
+              DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+              () => {
+                subscription.remove();
+                handleUrl();
+              },
+            );
+          }
+        } else {
+          handleUrl();
         }
       });
 
@@ -221,7 +256,13 @@ export const useDeeplinks = () => {
         appsFlyerUnsubscribe();
       };
     },
-    [logger, urlEventHandler],
+    [
+      logger,
+      urlEventHandler,
+      pinLockActive,
+      biometricLockActive,
+      lockAuthorizedUntil,
+    ],
   );
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {

@@ -11,6 +11,7 @@ import {BaseText, Paragraph} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
 import {
   CardConfig,
+  CardConfigMap,
   Category,
   GiftCard,
   GiftCardCuration,
@@ -38,6 +39,7 @@ import {APP_NETWORK} from '../../../../constants/config';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {isGiftCardDisplayable} from '../../../../lib/gift-cards/gift-card';
 
 const Curations = ({
   curations,
@@ -64,6 +66,7 @@ const Curations = ({
             itemHeight={85}
             maxItemsPerColumn={3}
             screenWidth={WIDTH}
+            windowSize={3}
             onItemPress={item => {
               navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
                 cardConfig: item as CardConfig,
@@ -110,6 +113,7 @@ export default ({
   scrollViewRef,
   availableGiftCards,
   supportedGiftCards,
+  supportedGiftCardMap,
   curations,
   categories,
   onSelectedGiftCardsChange,
@@ -117,6 +121,7 @@ export default ({
   scrollViewRef: any;
   availableGiftCards: CardConfig[];
   supportedGiftCards: CardConfig[];
+  supportedGiftCardMap: CardConfigMap;
   curations: GiftCardCuration[];
   categories: CategoryWithGiftCards[];
   onSelectedGiftCardsChange: (newNumSelectedGiftCards: number) => void;
@@ -179,12 +184,14 @@ export default ({
     () =>
       setPurchasedGiftCards(
         giftCards
-          .filter(c => ['PENDING', 'SUCCESS', 'SYNCED'].includes(c.status))
+          .filter(giftCard =>
+            isGiftCardDisplayable(giftCard, supportedGiftCardMap),
+          )
           .sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
           ),
       ),
-    [giftCards],
+    [giftCards, supportedGiftCardMap],
   );
 
   return (

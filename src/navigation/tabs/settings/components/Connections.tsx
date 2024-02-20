@@ -79,11 +79,8 @@ const Connections: React.VFC<ConnectionsProps> = props => {
     if (user?.methodEntityId) {
       navigation.navigate('BillSettings', {});
     } else {
-      navigation.navigate('Shop', {
-        screen: ShopScreens.HOME,
-        params: {
-          screen: ShopTabs.BILLS,
-        },
+      navigation.navigate('Tabs', {
+        screen: 'Bills',
       });
     }
     dispatch(
