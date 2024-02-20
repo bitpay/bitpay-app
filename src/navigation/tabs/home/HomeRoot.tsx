@@ -82,7 +82,6 @@ const HomeRoot = () => {
   });
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const keyMigrationFailure = useAppSelector(
     ({APP}) => APP.keyMigrationFailure,
   );
@@ -102,7 +101,7 @@ const HomeRoot = () => {
     }
 
     return brazeShopWithCrypto;
-  }, [brazeShopWithCrypto, defaultLanguage]);
+  }, [brazeShopWithCrypto]);
 
   // Do More
   const memoizedDoMoreCards = useMemo(() => {
@@ -113,7 +112,7 @@ const HomeRoot = () => {
     }
 
     return brazeDoMore;
-  }, [brazeDoMore, hasCards, themeType, defaultLanguage]);
+  }, [brazeDoMore, hasCards, themeType]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({RATE}) => RATE.priceHistory);
@@ -151,7 +150,7 @@ const HomeRoot = () => {
     }
 
     return brazeQuickLinks;
-  }, [brazeQuickLinks, defaultLanguage]);
+  }, [brazeQuickLinks]);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -159,7 +158,7 @@ const HomeRoot = () => {
         dispatch(updatePortfolioBalance());
       } // portfolio balance is updated in app init
     });
-  }, [dispatch, navigation]);
+  }, [dispatch, navigation, appIsLoading]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -182,7 +181,7 @@ const HomeRoot = () => {
     () => () => {
       navigation.navigate('TransactionProposalNotifications', {});
     },
-    [],
+    [navigation],
   );
 
   useEffect(() => {
