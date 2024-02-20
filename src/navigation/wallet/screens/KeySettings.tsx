@@ -35,14 +35,12 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
-import {getMnemonic} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {
   CustomErrorMessage,
@@ -117,7 +115,7 @@ const KeySettings = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
 
   const _wallets = key.wallets.filter(wallet =>
@@ -296,17 +294,6 @@ const KeySettings = () => {
 
           <ChevronRightSvg height={16} />
         </WalletNameContainer>
-        <Hr />
-
-        <SettingView>
-          <WalletSettingsTitle>{t('Hide All Balances')}</WalletSettingsTitle>
-
-          <ToggleSwitch
-            onChange={value => dispatch(toggleHideAllBalances(value))}
-            isEnabled={!!hideAllBalances}
-          />
-        </SettingView>
-
         <Hr />
 
         <WalletHeaderContainer>
