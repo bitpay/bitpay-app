@@ -6,14 +6,14 @@ import {useAppDispatch} from '../../../../utils/hooks';
 import {SupportedLedgerAppNames} from '../utils';
 import {NameYourWallet} from './NameYourWallet';
 import {SelectLedgerCurrency} from './SelectLedgerCurrency';
+import {SimpleConfirmPaymentState} from '../../confirm-hardware-wallet/ConfirmHardwareWalletModal';
 
 interface ImportAccountProps {
   transport: Transport;
-  onRequestQuitApp: (transport: Transport) => Promise<any>;
-  onRequestOpenApp: (
-    transport: Transport,
-    name: SupportedLedgerAppNames,
-  ) => Promise<any>;
+  setHardwareWalletTransport: React.Dispatch<
+    React.SetStateAction<Transport | null>
+  >;
+  onDisconnect: () => Promise<void>;
   onComplete: () => void;
 }
 
@@ -46,8 +46,8 @@ export const ImportAccount: React.FC<ImportAccountProps> = props => {
   ) : (
     <SelectLedgerCurrency
       transport={props.transport}
-      onRequestQuitApp={props.onRequestQuitApp}
-      onRequestOpenApp={props.onRequestOpenApp}
+      setHardwareWalletTransport={props.setHardwareWalletTransport}
+      onDisconnect={props.onDisconnect}
       onImported={onImported}
     />
   );

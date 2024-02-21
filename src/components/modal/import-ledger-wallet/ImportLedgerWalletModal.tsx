@@ -87,118 +87,6 @@ export const ImportLedgerWalletModal = () => {
   };
 
   /**
-   * Open the given Ledger app when requested by a child component, and resolve once any reconnects are handled.
-   *
-   * @param transport
-   * @param name
-   * @returns Promise with the Ledger response Buffer.
-   */
-  const onRequestOpenApp = (
-    transport: Transport,
-    name: SupportedLedgerAppNames,
-  ) => {
-    return new Promise<Buffer>(async (resolve, reject) => {
-      let res = Buffer.alloc(0);
-
-      // Opening an app will cause a disconnect so replace the main listener
-      // with a temp listener, then resolve once we handle the reconnect
-      transport.off('disconnect', onDisconnect);
-
-      const tempCb = async () => {
-        let newTp: Transport | null = null;
-
-        if (transport instanceof TransportBLE) {
-          newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
-        } else if (transport instanceof TransportHID) {
-          newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
-        }
-
-        if (newTp) {
-          newTp.on('disconnect', onDisconnect);
-
-          setTransport(newTp);
-          resolve(res);
-        } else {
-          reject();
-        }
-      };
-
-      transport.on('disconnect', tempCb);
-
-      try {
-        res = await openLedgerApp(transport, name);
-
-        const statusCode = res.readUInt16BE(res.length - 2);
-
-        // if not OK, we won't his the disconnect logic so restore the handler and resolve
-        if (statusCode !== StatusCodes.OK) {
-          transport.off('disconnect', tempCb);
-          transport.on('disconnect', onDisconnect);
-          resolve(res);
-        }
-      } catch (err) {
-        transport.off('disconnect', tempCb);
-        transport.on('disconnect', onDisconnect);
-        reject(err);
-      }
-    });
-  };
-
-  /**
-   * Quit the currently running Ledger app (if any) when requested by a child component, and resolve once any reconnects are handled.
-   *
-   * @param transport
-   * @returns Promise void
-   */
-  const onRequestQuitApp = (transport: Transport) => {
-    return new Promise<void>(async (resolve, reject) => {
-      // get info for the currently running Ledger app
-      const info = await getCurrentLedgerAppInfo(transport);
-
-      // BOLOS is the Ledger OS
-      // if we get this back, no apps are open and we can resolve immediately
-      if (info.name === 'BOLOS') {
-        resolve();
-        return;
-      }
-
-      // Quitting an app will cause a disconnect so replace the main listener
-      // with a temp listener, then resolve once we handle the reconnect.
-      transport.off('disconnect', onDisconnect);
-
-      const cb = async () => {
-        let newTp: Transport | null = null;
-
-        if (transport instanceof TransportBLE) {
-          newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
-        } else if (transport instanceof TransportHID) {
-          newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
-        }
-
-        if (newTp) {
-          newTp.on('disconnect', onDisconnect);
-
-          setTransport(newTp);
-          resolve();
-        } else {
-          reject();
-        }
-      };
-
-      transport.on('disconnect', cb);
-
-      try {
-        // this should always succeed
-        await quitLedgerApp(transport);
-      } catch (err) {
-        transport.off('disconnect', cb);
-        transport.on('disconnect', onDisconnect);
-        reject(err);
-      }
-    });
-  };
-
-  /**
    * Resets the transport state, or persists it if a BLE connection is still open.
    */
   const resetTransportIfNeeded = () => {
@@ -241,8 +129,8 @@ export const ImportLedgerWalletModal = () => {
         {transport ? (
           <ImportAccount
             transport={transport}
-            onRequestOpenApp={onRequestOpenApp}
-            onRequestQuitApp={onRequestQuitApp}
+            setHardwareWalletTransport={setTransport}
+            onDisconnect={onDisconnect}
             onComplete={onComplete}
           />
         ) : (

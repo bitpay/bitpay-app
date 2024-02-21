@@ -86,6 +86,11 @@ import {
   SimpleConfirmPaymentState,
 } from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
+import {currencyConfigs} from '../../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
+import {prepareLedgerApp} from '../../../../../components/modal/import-ledger-wallet/utils';
+import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
+import TransportHID from '@ledgerhq/react-native-hid';
+import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
@@ -157,6 +162,50 @@ const PayProConfirm = () => {
     await sleep(400);
     setWalletSelectorVisible(true);
   };
+
+  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
+  const transportRef = useRef(hardwareWalletTransport);
+  transportRef.current = hardwareWalletTransport;
+
+  const setPromptOpenAppState = (state: boolean) =>
+    state && setConfirmHardwareState('selecting');
+
+  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
+  const onDisconnect = useCallback(async () => {
+    let retryAttempts = 2;
+    let newTp: Transport | null = null;
+
+    // avoid closure values
+    const isBle = transportRef.current instanceof TransportBLE;
+    const isHid = transportRef.current instanceof TransportHID;
+    const shouldReconnect =
+      isConfirmHardwareWalletModalVisible && (isBle || isHid);
+
+    if (!shouldReconnect) {
+      setHardwareWalletTransport(null);
+      return;
+    }
+
+    // try to reconnect a few times
+    while (!newTp && retryAttempts > 0) {
+      if (isBle) {
+        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
+          () => null,
+        );
+      } else if (isHid) {
+        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
+          () => null,
+        );
+      }
+
+      retryAttempts--;
+    }
+
+    if (newTp) {
+      newTp.on('disconnect', onDisconnect);
+    }
+    setHardwareWalletTransport(newTp);
+  }, []);
 
   const createTxp = async (selectedWallet: Wallet) => {
     dispatch(startOnGoingProcessModal('CREATING_TXP'));
@@ -278,6 +327,19 @@ const PayProConfirm = () => {
     try {
       if (isUsingHardwareWallet) {
         if (txp && wallet && recipient) {
+          const {coin, network, account, useNativeSegwit} = wallet.credentials;
+          const configFn = currencyConfigs[coin];
+          if (!configFn) {
+            throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
+          }
+          const params = configFn(network, account, useNativeSegwit);
+          await prepareLedgerApp(
+            params.appName,
+            transportRef,
+            setHardwareWalletTransport,
+            onDisconnect,
+            setPromptOpenAppState,
+          );
           setConfirmHardwareState('sending');
           await sleep(500);
           await dispatch(
@@ -437,7 +499,6 @@ const PayProConfirm = () => {
   const onSwipeCompleteHardwareWallet = async (key: Key) => {
     if (key.hardwareSource === 'ledger') {
       if (hardwareWalletTransport) {
-        setConfirmHardwareState('sending');
         setConfirmHardwareWalletVisible(true);
         startSendingPayment({transport: hardwareWalletTransport});
       } else {

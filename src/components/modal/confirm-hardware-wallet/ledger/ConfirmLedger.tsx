@@ -6,6 +6,7 @@ import {IConfirmHardwareWalletProps} from '../ConfirmHardwareWalletModal';
 import {ConfirmLedgerComplete} from './Complete';
 import {ConfirmLedgerSending} from './Sending';
 import {ConfirmLedgerStart} from './Start';
+import {OpenApp} from './OpenApp';
 
 export const ConfirmLedger: React.FC<IConfirmHardwareWalletProps> = props => {
   const [connectionMethod, setConnectionMethod] = useState<
@@ -35,6 +36,8 @@ export const ConfirmLedger: React.FC<IConfirmHardwareWalletProps> = props => {
           connectionMethod={connectionMethod}
           currencyLabel={props.currencyLabel}
         />
+      ) : props.state === 'selecting' ? (
+        <OpenApp connectionMethod={connectionMethod} />
       ) : (
         <ConfirmLedgerStart
           onPaired={onPaired}

@@ -43,8 +43,8 @@ import {
 } from '../import-ledger-wallet.styled';
 import {
   SupportedLedgerAppNames,
-  getCurrentLedgerAppInfo,
   getLedgerErrorMessage,
+  prepareLedgerApp,
 } from '../utils';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
@@ -53,29 +53,14 @@ import {
   IsSegwitCoin,
   IsUtxoCoin,
 } from '../../../../store/wallet/utils/currency';
+import {SimpleConfirmPaymentState} from '../../confirm-hardware-wallet/ConfirmHardwareWalletModal';
 
 interface Props {
   transport: Transport;
-
-  /**
-   * Ask the parent app to quit any running Ledger app and resolve once any reconnects are handled.
-   *
-   * @param transport
-   * @returns
-   */
-  onRequestQuitApp: (transport: Transport) => Promise<any>;
-
-  /**
-   * Ask the parent component to open the specified Ledger app and resolve once any reconnects are handled.
-   *
-   * @param transport
-   * @param name
-   * @returns
-   */
-  onRequestOpenApp: (
-    transport: Transport,
-    name: SupportedLedgerAppNames,
-  ) => Promise<any>;
+  setHardwareWalletTransport: React.Dispatch<
+    React.SetStateAction<Transport | null>
+  >;
+  onDisconnect: () => Promise<void>;
   onImported: (wallet: Wallet) => void;
   onCurrencySelected?: (args: {
     currency: string;
@@ -331,58 +316,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
   const transportRef = useRef(props.transport);
   transportRef.current = props.transport;
 
-  /**
-   * Closes the current Ledger app and prompts the user to open the correct app
-   * if needed.
-   *
-   * Closing and opening apps causes disconnects, so if the requested app is
-   * not open there may be some wait time involved while trying to reconnect.
-   *
-   * @param appName
-   */
-  const prepareLedgerApp = async (appName: SupportedLedgerAppNames) => {
-    const info = await getCurrentLedgerAppInfo(transportRef.current);
-    const anAppIsOpen = info.name !== 'BOLOS'; // BOLOS is the Ledger OS
-    const isCorrectAppOpen = info.name === appName;
-
-    // either another app is open or no apps are open
-    if (!isCorrectAppOpen) {
-      // different app must be running, close it
-      if (anAppIsOpen) {
-        await props.onRequestQuitApp(transportRef.current);
-      }
-
-      // prompt the user to open the corresponding app on the Ledger
-      try {
-        // display a prompt on the Ledger to open the correct app
-        setPromptOpenApp(true);
-        const openAppResult = await props.onRequestOpenApp(
-          transportRef.current,
-          appName,
-        );
-        const statusCode = openAppResult.readUInt16BE(openAppResult.length - 2);
-
-        if (statusCode === StatusCodes.OK) {
-          // app opened successfully!
-        } else if (statusCode === 0x6807) {
-          throw new Error(
-            `The ${appName} app is required on your Ledger to continue`,
-          );
-        } else {
-          throw new Error(
-            `An unknown status code was returned: 0x${statusCode.toString(16)}`,
-          );
-        }
-      } catch (err) {
-        // Something went wrong, did the user reject?
-        throw err;
-      } finally {
-        setPromptOpenApp(false);
-      }
-    } else {
-      // correct app is installed and open on the device
-    }
-  };
+  const setPromptOpenAppState = (state: boolean) => setPromptOpenApp(state);
 
   const importXrpAccount = async ({
     appName,
@@ -400,7 +334,13 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     currencySymbol: 'xrp';
   }) => {
     try {
-      await prepareLedgerApp(appName);
+      await prepareLedgerApp(
+        appName,
+        transportRef,
+        props.setHardwareWalletTransport,
+        props.onDisconnect,
+        setPromptOpenAppState,
+      );
       const xrp = new Xrp(transportRef.current);
       const account = `${accountIndex}'`;
       const path = `m/${purpose}/${coin}/${account}/0/0`;
@@ -450,7 +390,13 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     try {
       const c = getCryptoCurrencyById(currencyId);
       if (c.bitcoinLikeInfo?.XPUBVersion) {
-        await prepareLedgerApp(appName);
+        await prepareLedgerApp(
+          appName,
+          transportRef,
+          props.setHardwareWalletTransport,
+          props.onDisconnect,
+          setPromptOpenAppState,
+        );
         const app = new AppBtc({
           transport: transportRef.current,
           currency: transportCurrency,
@@ -509,7 +455,13 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     currencySymbol: 'eth' | 'matic';
   }) => {
     try {
-      await prepareLedgerApp(appName);
+      await prepareLedgerApp(
+        appName,
+        transportRef,
+        props.setHardwareWalletTransport,
+        props.onDisconnect,
+        setPromptOpenAppState,
+      );
       const eth = new AppEth(transportRef.current);
       const account = `${accountIndex}'`;
       const path = `m/${purpose}/${coin}/${account}/0/0`;

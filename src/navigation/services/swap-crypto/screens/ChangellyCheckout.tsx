@@ -1,5 +1,5 @@
 import Transport from '@ledgerhq/hw-transport';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native';
 import {
   useTheme,
@@ -101,6 +101,11 @@ import {
   SimpleConfirmPaymentState,
 } from '../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {prepareLedgerApp} from '../../../../components/modal/import-ledger-wallet/utils';
+import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
+import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
+import TransportHID from '@ledgerhq/react-native-hid';
+import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -174,6 +179,50 @@ const ChangellyCheckout: React.FC = () => {
   let payinExtraId: string;
   let status: string;
   let payinAddress: string;
+
+  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
+  const transportRef = useRef(hardwareWalletTransport);
+  transportRef.current = hardwareWalletTransport;
+
+  const setPromptOpenAppState = (state: boolean) =>
+    state && setConfirmHardwareState('selecting');
+
+  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
+  const onDisconnect = useCallback(async () => {
+    let retryAttempts = 2;
+    let newTp: Transport | null = null;
+
+    // avoid closure values
+    const isBle = transportRef.current instanceof TransportBLE;
+    const isHid = transportRef.current instanceof TransportHID;
+    const shouldReconnect =
+      isConfirmHardwareWalletModalVisible && (isBle || isHid);
+
+    if (!shouldReconnect) {
+      setHardwareWalletTransport(null);
+      return;
+    }
+
+    // try to reconnect a few times
+    while (!newTp && retryAttempts > 0) {
+      if (isBle) {
+        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
+          () => null,
+        );
+      } else if (isHid) {
+        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
+          () => null,
+        );
+      }
+
+      retryAttempts--;
+    }
+
+    if (newTp) {
+      newTp.on('disconnect', onDisconnect);
+    }
+    setHardwareWalletTransport(newTp);
+  }, []);
 
   const createFixTransaction = async (tries: number) => {
     try {
@@ -568,6 +617,20 @@ const ChangellyCheckout: React.FC = () => {
     const isUsingHardwareWallet = !!transport;
     try {
       if (isUsingHardwareWallet) {
+        const {coin, network, account, useNativeSegwit} =
+          fromWalletSelected.credentials;
+        const configFn = currencyConfigs[coin];
+        if (!configFn) {
+          throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
+        }
+        const params = configFn(network, account, useNativeSegwit);
+        await prepareLedgerApp(
+          params.appName,
+          transportRef,
+          setHardwareWalletTransport,
+          onDisconnect,
+          setPromptOpenAppState,
+        );
         setConfirmHardwareState('sending');
         await sleep(500);
         await dispatch(
@@ -627,7 +690,6 @@ const ChangellyCheckout: React.FC = () => {
     transport.on('disconnect', disconnectFnRef.current);
 
     setHardwareWalletTransport(transport);
-    setConfirmHardwareState('sending');
     makePayment({transport});
   };
 
@@ -645,7 +707,6 @@ const ChangellyCheckout: React.FC = () => {
   const onSwipeCompleteHardwareWallet = async (key: Key) => {
     if (key.hardwareSource === 'ledger') {
       if (hardwareWalletTransport) {
-        setConfirmHardwareState('sending');
         setConfirmHardwareWalletVisible(true);
         await makePayment({transport: hardwareWalletTransport});
       } else {

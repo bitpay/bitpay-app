@@ -121,8 +121,6 @@ export const ConfirmLedgerStart: React.FC<
         } is ready.`,
       );
     }
-
-    setConnecting(false);
   };
 
   const onPressConnectHid = async () => {
@@ -153,8 +151,6 @@ export const ConfirmLedgerStart: React.FC<
     } else {
       setError(`Unable to connect via USB: ${errorMsg}`);
     }
-
-    setConnecting(false);
   };
 
   return (
@@ -189,15 +185,7 @@ export const ConfirmLedgerStart: React.FC<
                 <DescriptionRow>
                   <Paragraph>
                     Approve the transaction from your ledger device. Ensure it's
-                    unlocked and set to the appropriate currency application,
-                    the screen should display:{' '}
-                    <Bold>
-                      {props.currencyLabel === 'Bitcoin'
-                        ? props.currencyLabel
-                        : 'Application'}{' '}
-                      is ready
-                    </Bold>
-                    .
+                    unlocked and set to the appropriate currency application.
                   </Paragraph>
                 </DescriptionRow>
               ) : null}

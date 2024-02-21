@@ -957,9 +957,7 @@ export const startImportFromHardwareWallet =
 
     const walletExists = key?.wallets.some(
       w =>
-        w.credentials.xPubKey === xPubKey &&
-        w.credentials.coin === coin &&
-        w.credentials.account === accountNumber, // EVM coins have the same xPubKey
+        w.credentials.coin === coin && w.credentials.account === accountNumber,
     );
 
     if (walletExists) {

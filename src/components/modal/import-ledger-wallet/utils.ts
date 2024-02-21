@@ -6,6 +6,9 @@ import {
 import Transport from '@ledgerhq/hw-transport';
 import {Permission, PermissionsAndroid} from 'react-native';
 import {IS_ANDROID} from '../../../constants';
+import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
+import TransportHID from '@ledgerhq/react-native-hid';
+import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../constants/config';
 
 const UNKNOWN_ERROR = 0x650f;
 
@@ -110,7 +113,9 @@ export const isDisconnectedDeviceError = (
 };
 
 export const getLedgerErrorMessage = (err: any) => {
-  if (isLockedDeviceError(err)) {
+  if (err === 'user denied transaction') {
+    return '';
+  } else if (isLockedDeviceError(err)) {
     return 'Unlock device to continue.';
   } else if (isTransportStatusError(err)) {
     if (Number(err.statusCode) === UNKNOWN_ERROR) {
@@ -165,4 +170,186 @@ export const checkPermissionsBLE = async (): Promise<{
     isAuthorized,
     missingPermissions,
   };
+};
+
+/**
+ * Closes the current Ledger app and prompts the user to open the correct app
+ * if needed.
+ *
+ * Closing and opening apps causes disconnects, so if the requested app is
+ * not open there may be some wait time involved while trying to reconnect.
+ *
+ * @param appName
+ * @param transportRef
+ * @param setHardwareWalletTransport
+ * @param onDisconnect
+ * @param setPromptOpenAppState
+ */
+export const prepareLedgerApp = async (
+  appName: SupportedLedgerAppNames,
+  transportRef: React.RefObject<Transport | null>,
+  setHardwareWalletTransport: React.Dispatch<
+    React.SetStateAction<Transport | null>
+  >,
+  onDisconnect: () => Promise<void>,
+  setPromptOpenAppState: (state: boolean) => void,
+) => {
+  const info = await getCurrentLedgerAppInfo(transportRef.current!);
+  const anAppIsOpen = info.name !== 'BOLOS'; // BOLOS is the Ledger OS
+  const isCorrectAppOpen = info.name === appName;
+
+  // either another app is open or no apps are open
+  if (!isCorrectAppOpen) {
+    // different app must be running, close it
+    if (anAppIsOpen) {
+      await onRequestQuitApp(
+        transportRef.current!,
+        setHardwareWalletTransport,
+        onDisconnect,
+      );
+    }
+
+    // prompt the user to open the corresponding app on the Ledger
+    try {
+      // display a prompt on the Ledger to open the correct app
+      setPromptOpenAppState(true);
+      const openAppResult = await onRequestOpenApp(
+        transportRef.current!,
+        appName,
+        setHardwareWalletTransport,
+        onDisconnect,
+      );
+      const statusCode = openAppResult.readUInt16BE(openAppResult.length - 2);
+      if (statusCode === StatusCodes.OK) {
+        // app opened successfully!
+      } else if (statusCode === 0x6807) {
+        throw new Error(
+          `The ${appName} app is required on your Ledger to continue`,
+        );
+      } else {
+        throw new Error(
+          `An unknown status code was returned: 0x${statusCode.toString(16)}`,
+        );
+      }
+    } catch (err: any) {
+      if (err.statusCode === 21761) {
+        // Something went wrong, did the user reject? ignore
+        throw 'user denied transaction';
+      }
+      throw err;
+    } finally {
+      setPromptOpenAppState(false);
+    }
+  } else {
+    // correct app is installed and open on the device
+  }
+};
+
+const onRequestOpenApp = (
+  transport: Transport,
+  name: SupportedLedgerAppNames,
+  setHardwareWalletTransport: (transport: Transport | null) => void,
+  onDisconnect: () => Promise<void>,
+) => {
+  return new Promise<Buffer>(async (resolve, reject) => {
+    let res = Buffer.alloc(0);
+
+    // Opening an app will cause a disconnect so replace the main listener
+    // with a temp listener, then resolve once we handle the reconnect
+    transport.off('disconnect', onDisconnect);
+
+    const tempCb = async () => {
+      let newTp: Transport | null = null;
+
+      if (transport instanceof TransportBLE) {
+        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
+      } else if (transport instanceof TransportHID) {
+        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
+      }
+
+      if (newTp) {
+        newTp.on('disconnect', onDisconnect);
+        setHardwareWalletTransport(newTp);
+        resolve(res);
+      } else {
+        reject();
+      }
+    };
+
+    transport.on('disconnect', tempCb);
+
+    try {
+      res = await openLedgerApp(transport, name);
+
+      const statusCode = res.readUInt16BE(res.length - 2);
+
+      // if not OK, we won't his the disconnect logic so restore the handler and resolve
+      if (statusCode !== StatusCodes.OK) {
+        transport.off('disconnect', tempCb);
+        transport.on('disconnect', onDisconnect);
+        resolve(res);
+      }
+    } catch (err) {
+      transport.off('disconnect', tempCb);
+      transport.on('disconnect', onDisconnect);
+      reject(err);
+    }
+  });
+};
+
+/**
+ * Quit the currently running Ledger app (if any) when requested by a child component, and resolve once any reconnects are handled.
+ *
+ * @param transport
+ * @returns Promise void
+ */
+const onRequestQuitApp = (
+  transport: Transport,
+  setHardwareWalletTransport: (transport: Transport | null) => void,
+  onDisconnect: () => Promise<void>,
+) => {
+  return new Promise<void>(async (resolve, reject) => {
+    // get info for the currently running Ledger app
+    const info = await getCurrentLedgerAppInfo(transport);
+
+    // BOLOS is the Ledger OS
+    // if we get this back, no apps are open and we can resolve immediately
+    if (info.name === 'BOLOS') {
+      resolve();
+      return;
+    }
+
+    // Quitting an app will cause a disconnect so replace the main listener
+    // with a temp listener, then resolve once we handle the reconnect.
+    transport.off('disconnect', onDisconnect);
+
+    const cb = async () => {
+      let newTp: Transport | null = null;
+
+      if (transport instanceof TransportBLE) {
+        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
+      } else if (transport instanceof TransportHID) {
+        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT);
+      }
+
+      if (newTp) {
+        newTp.on('disconnect', onDisconnect);
+        setHardwareWalletTransport(newTp);
+        resolve();
+      } else {
+        reject();
+      }
+    };
+
+    transport.on('disconnect', cb);
+
+    try {
+      // this should always succeed
+      await quitLedgerApp(transport);
+    } catch (err) {
+      transport.off('disconnect', cb);
+      transport.on('disconnect', onDisconnect);
+      reject(err);
+    }
+  });
 };

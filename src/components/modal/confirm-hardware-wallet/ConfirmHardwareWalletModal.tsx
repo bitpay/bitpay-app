@@ -5,7 +5,7 @@ import {SheetContainer} from '../../styled/Containers';
 import SheetModal from '../base/sheet/SheetModal';
 import {ConfirmLedger} from './ledger/ConfirmLedger';
 
-export type SimpleConfirmPaymentState = 'sending' | 'complete';
+export type SimpleConfirmPaymentState = 'sending' | 'complete' | 'selecting';
 
 interface ConfirmHardwareWalletModalProps extends IConfirmHardwareWalletProps {
   onBackdropPress: () => void;

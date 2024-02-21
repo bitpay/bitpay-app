@@ -1716,7 +1716,7 @@ export const signTxWithHardwareWallet = async (
       txp,
     );
   } catch (err: any) {
-    if (err.statusCode === 27013) {
+    if (err.message.includes('0x6985')) {
       // Ledger device: Condition of use not satisfied (denied by the user?) (0x6985)
       throw 'user denied transaction';
     }
