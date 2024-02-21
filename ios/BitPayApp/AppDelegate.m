@@ -2,7 +2,7 @@
 #import "../AllowedUrlPrefixProtocol.h"
 #import "../SilentPushEvent.h"
 #import "Appboy-iOS-SDK/AppboyKit.h"
-#import "InAppMessageHandler.h"
+#import "../InAppMessageHandler.h"
 #import <RNAppsFlyer.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTHTTPRequestHandler.h>
