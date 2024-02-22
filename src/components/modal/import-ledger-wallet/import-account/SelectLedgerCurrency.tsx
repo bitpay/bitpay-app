@@ -246,7 +246,7 @@ const CURRENCIES = [
     coin: 'btc',
     label: 'Bitcoin',
     icon: <BtcLogoSvg height={35} width={35} />,
-    isTestnetSupported: false,
+    isTestnetSupported: true,
   },
   {
     coin: 'eth',

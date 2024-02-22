@@ -957,7 +957,9 @@ export const startImportFromHardwareWallet =
 
     const walletExists = key?.wallets.some(
       w =>
-        w.credentials.coin === coin && w.credentials.account === accountNumber,
+        w.credentials.coin === coin &&
+        w.credentials.account === accountNumber &&
+        w.credentials.network === network,
     );
 
     if (walletExists) {

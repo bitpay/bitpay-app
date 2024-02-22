@@ -1359,6 +1359,7 @@ const _fetchTxCache = {
  * Fetch raw data for a COIN transaction by ID.
  *
  * @param txId
+ * @param coin The cryptocurrency symbol (e.g., BTC, ETH).
  * @param network
  * @returns transaction data as a hex string
  */
@@ -1370,7 +1371,8 @@ const fetchUtxoTxById = async (
   if (_fetchTxCache[network][txId]) {
     return _fetchTxCache[network][txId];
   }
-  let url = `https://api.blockcypher.com/v1/${coin}/main/txs/${txId}?includeHex=true`;
+  let networkEndpoint = network === 'livenet' ? 'main' : 'test3';
+  let url = `https://api.blockcypher.com/v1/${coin}/${networkEndpoint}/txs/${txId}?includeHex=true`;
   const apiResponse = await axios.get<any>(url);
   const txDataHex = apiResponse?.data?.hex;
   if (!txDataHex) {
