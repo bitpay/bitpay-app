@@ -422,10 +422,20 @@ export const buildTxDetails =
   }): Effect<Promise<TxDetails>> =>
   async dispatch => {
     return new Promise(async resolve => {
-      let gasPrice, gasLimit, nonce, destinationTag, coin, chain, amount, fee;
+      let gasPrice,
+        gasLimit,
+        nonce,
+        destinationTag,
+        coin,
+        chain,
+        amount,
+        fee,
+        tokenAddress;
 
-      const tokenAddress =
-        wallet.tokenAddress || getTokenAddressForOffchainWallet(wallet);
+      if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+        tokenAddress =
+          wallet.tokenAddress || getTokenAddressForOffchainWallet(wallet);
+      }
 
       if (context === 'walletConnect' && request) {
         const {params} = request.params.request;
