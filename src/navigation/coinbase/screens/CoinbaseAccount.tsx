@@ -643,6 +643,7 @@ const CoinbaseAccount = ({
                     hide: !availableWalletToWithdraw,
                   }}
                   buy={{cta: () => null, hide: true}}
+                  sell={{cta: () => null, hide: true}}
                   swap={{cta: () => null, hide: true}}
                 />
               </BalanceContainer>
