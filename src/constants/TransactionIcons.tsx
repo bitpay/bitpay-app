@@ -2,6 +2,7 @@ import React, {ReactElement} from 'react';
 import AmazonSvg from '../../assets/img/wallet/transactions/amazon.svg';
 import ShapeShiftSvg from '../../assets/img/wallet/transactions/shapeshift.svg';
 import ChangellySvg from '../../assets/img/wallet/transactions/changelly.svg';
+import MoonpaySvg from '../../assets/img/wallet/transactions/moonpay.svg';
 import OneInchSvg from '../../assets/img/wallet/transactions/1inch.svg';
 import MercadolivreSvg from '../../assets/img/wallet/transactions/mercadolivre.svg';
 import CoinbaseSvg from '../../assets/img/wallet/transactions/coinbase.svg';
@@ -10,6 +11,7 @@ import {useTheme} from 'styled-components/native';
 import {BitPayTheme} from '../themes/bitpay';
 import * as Svg from 'react-native-svg';
 import {Success25, Success50} from '../styles/colors';
+import {SellTxIcon, SellTxIconBadge} from '../components/styled/Containers';
 export const TRANSACTION_ICON_SIZE = 40;
 
 export interface TxIconProps {
@@ -323,6 +325,14 @@ export const TransactionIcons: {[index in string]: ReactElement} = {
       width={TRANSACTION_ICON_SIZE}
       height={TRANSACTION_ICON_SIZE}
     />
+  ),
+  moonpay: (
+    <SellTxIcon width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE}>
+      <TxSentIcon />
+      <SellTxIconBadge>
+        <MoonpaySvg width={25} height={25} />
+      </SellTxIconBadge>
+    </SellTxIcon>
   ),
   oneInch: (
     <OneInchSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />

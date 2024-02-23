@@ -109,6 +109,7 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
+import {isCoinSupportedToSell} from '../../services/sell-crypto/utils/sell-crypto-utils';
 import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
 import {
   buildBtcSpeedupTx,
@@ -1127,6 +1128,30 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         });
                       },
                     }}
+                    sell={{
+                      hide:
+                        !fullWalletObj.balance.sat ||
+                        (fullWalletObj.network === 'testnet' &&
+                          fullWalletObj.currencyAbbreviation !== 'eth' &&
+                          fullWalletObj.chain !== 'eth') ||
+                        !isCoinSupportedToSell(
+                          fullWalletObj.currencyAbbreviation,
+                          fullWalletObj.chain,
+                          locationData?.countryShortCode || 'US',
+                        ),
+                      cta: () => {
+                        dispatch(
+                          Analytics.track('Clicked Sell Crypto', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
+                          }),
+                        );
+                        navigation.navigate('SellCryptoRoot', {
+                          fromWallet: fullWalletObj,
+                        });
+                      },
+                    }}
                     swap={{
                       hide:
                         fullWalletObj.network === 'testnet' ||
@@ -1153,6 +1178,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           Analytics.track('Clicked Receive', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
                           }),
                         );
                         setShowReceiveAddressBottomModal(true);
@@ -1165,6 +1191,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           Analytics.track('Clicked Send', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
                           }),
                         );
                         navigation.navigate('SendTo', {wallet: fullWalletObj});

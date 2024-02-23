@@ -395,3 +395,26 @@ export const ProposalBadgeContainer = styled.TouchableOpacity`
   align-items: center;
   justify-content: center;
 `;
+
+interface SellTxIconProps {
+  height?: number;
+  width?: number;
+}
+
+export const SellTxIcon = styled.View<SellTxIconProps>`
+  ${({height}) =>
+    css`
+      height: ${height ?? '44px'};
+    `}
+  ${({width}) =>
+    css`
+      width: ${width ?? '44px'};
+    `}
+  position: relative;
+`;
+
+export const SellTxIconBadge = styled.View`
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+`;
