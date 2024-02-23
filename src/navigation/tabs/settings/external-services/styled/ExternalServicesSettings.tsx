@@ -7,7 +7,6 @@ export const NoPrMsg = styled(BaseText)`
 `;
 
 export const PrTitle = styled(BaseText)`
-  color: #6c6c6c;
   font-size: 18px;
   font-weight: 500;
 `;
