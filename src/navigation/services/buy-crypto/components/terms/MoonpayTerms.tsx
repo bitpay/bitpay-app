@@ -53,7 +53,7 @@ const MoonpayTerms: React.FC<{
             haptic('impactLight');
             dispatch(
               openUrlWithInAppBrowser(
-                'https://support.moonpay.com/hc/en-gb/articles/360011930117-What-fees-do-you-charge-',
+                'https://support.moonpay.com/customers/docs/moonpay-fees',
               ),
             );
           }}>
