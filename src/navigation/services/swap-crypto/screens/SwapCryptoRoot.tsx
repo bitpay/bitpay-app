@@ -108,11 +108,6 @@ export interface RateData {
   rate: number;
 }
 
-export interface SwapOpts {
-  maxWalletAmount?: string;
-  swapLimits: SwapLimits;
-}
-
 export interface SwapLimits {
   minAmount?: number;
   maxAmount?: number;
@@ -172,7 +167,8 @@ const SwapCryptoRoot: React.FC = () => {
   );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const route = useRoute<RouteProp<SwapCryptoGroupParamList, 'Root'>>();
+  const route =
+    useRoute<RouteProp<SwapCryptoGroupParamList, 'SwapCryptoRoot'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
     useState(false);
@@ -1374,7 +1370,7 @@ const SwapCryptoRoot: React.FC = () => {
         isVisible={fromWalletSelectorModalVisible}
         customSupportedCurrencies={swapCryptoSupportedCoinsFrom}
         livenetOnly={true}
-        modalContext={'send'}
+        modalContext={'swap'}
         modalTitle={t('Swap From')}
         onDismiss={(fromWallet: Wallet) => {
           hideModal('fromWalletSelector');
@@ -1453,11 +1449,11 @@ const SwapCryptoRoot: React.FC = () => {
       <AmountModal
         isVisible={amountModalVisible}
         modalTitle={t('Swap Amount')}
-        swapOpts={{
+        limitsOpts={{
           maxWalletAmount:
             // @ts-ignore
             fromWalletSelected?.balance?.cryptoSpendable?.replaceAll(',', ''),
-          swapLimits,
+          limits: swapLimits,
         }}
         cryptoCurrencyAbbreviation={fromWalletSelected?.currencyAbbreviation.toUpperCase()}
         tokenAddress={fromWalletSelected?.tokenAddress}

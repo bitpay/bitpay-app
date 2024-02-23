@@ -48,7 +48,7 @@ export const BuyCryptoSupportedExchanges: BuyCryptoExchangeKey[] = [
   'transak',
 ];
 
-export const getEnabledPaymentMethods = (
+export const getBuyEnabledPaymentMethods = (
   locationData?: LocationData | null,
   currency?: string,
   coin?: string,

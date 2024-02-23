@@ -84,7 +84,6 @@ export type BuyCryptoRootScreenParams =
   | {
       amount: number;
       fromWallet?: any;
-      buyCryptoOpts?: any;
       currencyAbbreviation?: string | undefined; // used from charts and deeplinks.
       chain?: string | undefined; // used from charts and deeplinks.
       partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
@@ -144,7 +143,7 @@ const BuyCryptoRoot = ({
       ? PaymentMethodsAvailable.applePay
       : PaymentMethodsAvailable.debitCard,
   );
-  const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState(
+  const [buyCryptoSupportedCoins, setBuyCryptoSupportedCoins] = useState(
     getBuyCryptoSupportedCoins(locationData, preSetPartner),
   );
   const [buyCryptoSupportedCoinsFullObj, setBuyCryptoSupportedCoinsFullObj] =
@@ -219,7 +218,7 @@ const BuyCryptoRoot = ({
         await sleep(500);
         dispatch(dismissOnGoingProcessModal());
       } else {
-        walletError('walletNotSupported');
+        walletError('walletNotSupportedToBuy');
       }
     } else {
       const availableKeys = keysList.filter(key => {
@@ -307,7 +306,7 @@ const BuyCryptoRoot = ({
         walletError('walletNotCompleted');
       }
     } else {
-      walletError('walletNotSupported');
+      walletError('walletNotSupportedToBuy');
     }
   };
 
@@ -707,7 +706,7 @@ const BuyCryptoRoot = ({
           buyCryptoSupportedCoins.splice(index, 1);
         }
       });
-      setbuyCryptoSupportedCoins(buyCryptoSupportedCoins);
+      setBuyCryptoSupportedCoins(buyCryptoSupportedCoins);
     }
 
     // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
@@ -988,6 +987,7 @@ const BuyCryptoRoot = ({
       />
 
       <PaymentMethodsModal
+        context={'buyCrypto'}
         onPress={paymentMethod => {
           setSelectedPaymentMethod(paymentMethod);
           hideModal('paymentMethod');
