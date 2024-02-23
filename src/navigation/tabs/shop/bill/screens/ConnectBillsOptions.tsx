@@ -32,7 +32,6 @@ import {
 import UserInfo from '../../components/UserInfo';
 import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 import {AppActions} from '../../../../../store/app';
-import {APP_NETWORK} from '../../../../../constants/config';
 
 const TitleText = styled(H5)`
   margin-bottom: 14px;
@@ -124,7 +123,7 @@ const ConnectBillsOptions = ({
   const {t} = useTranslation();
   const theme = useTheme();
   const apiToken = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.apiToken[APP_NETWORK],
+    ({APP, BITPAY_ID}) => BITPAY_ID.apiToken[APP.network],
   );
 
   const [selectedOption, setSelectedOption] = useState(

@@ -25,7 +25,7 @@ import BitPayIdApi from '../../api/bitpay';
 import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS} from '../../constants/config';
 import Braze from 'react-native-appboy-sdk';
 import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
 import uuid from 'react-native-uuid';
@@ -517,8 +517,8 @@ export const startDisconnectBitPayId =
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     dispatch(Analytics.track('Log Out User success', {}));
     dispatch(CardActions.isJoinedWaitlist(false));
-    dispatch(ShopActions.clearedBillPayAccounts());
-    dispatch(ShopActions.clearedBillPayPayments());
+    dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
+    dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));
     dispatch(dismissOnGoingProcessModal());
   };
 
@@ -724,14 +724,14 @@ export const startSubmitForgotPasswordEmail =
 
 export const startResetMethodUser =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
-    const {BITPAY_ID} = getState();
+    const {APP, BITPAY_ID} = getState();
     await BitPayIdApi.getInstance()
-      .request('resetMethodUser', BITPAY_ID.apiToken[APP_NETWORK])
+      .request('resetMethodUser', BITPAY_ID.apiToken[APP.network])
       .then(res => {
         if (res?.data?.error) {
           throw new Error(res.data.error);
         }
-        dispatch(BitPayIdActions.successResetMethodUser(APP_NETWORK));
+        dispatch(BitPayIdActions.successResetMethodUser(APP.network));
         return res.data.data as any;
       })
       .catch(err => {

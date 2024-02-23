@@ -7,7 +7,7 @@ import {ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
-import {APP_NETWORK, METHOD_ENV} from '../../../../../constants/config';
+import {METHOD_ENVS} from '../../../../../constants/config';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
@@ -25,11 +25,10 @@ const ConnectBills = ({
   const insets = useSafeAreaInsets();
   const [isWebViewShown, setIsWebViewShown] = useState(true);
   const [token, setToken] = useState('');
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
+  const appNetwork = useAppSelector(({APP}) => APP.network);
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[appNetwork]);
   const billPayAccounts = useAppSelector(
-    ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
+    ({SHOP}) => SHOP.billPayAccounts[appNetwork],
   ) as BillPayAccount[];
   const [currentBillPayAccountIds] = useState(
     billPayAccounts.map(({id}) => id),
@@ -37,7 +36,7 @@ const ConnectBills = ({
   const [publicAccountToken, setPublicAccountToken] = useState('');
   const [exiting, setExiting] = useState(false);
   const apiToken = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.apiToken[APP_NETWORK],
+    ({BITPAY_ID}) => BITPAY_ID.apiToken[appNetwork],
   );
   const [isInitialApplication] = useState(!user?.methodEntityId);
 
@@ -153,7 +152,7 @@ const ConnectBills = ({
         <WebView
           style={{marginTop: insets.top}}
           source={{
-            uri: `https://elements.${METHOD_ENV}.methodfi.com/?token=${token}`,
+            uri: `https://elements.${METHOD_ENVS[appNetwork]}.methodfi.com/?token=${token}`,
           }}
           originWhitelist={['https://*', 'methodelements://*']}
           onShouldStartLoadWithRequest={handleNavigationStateChange}

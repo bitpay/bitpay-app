@@ -27,7 +27,7 @@ import {
   useLogger,
 } from '../../../../utils/hooks';
 import {BillPayAccount} from '../../../../store/shop/shop.models';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
+import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../../store/shop';
 import {AppActions, AppEffects} from '../../../../store/app';
 import BillPitch from '../bill/components/BillPitch';
@@ -73,23 +73,25 @@ const BillsHeaderButton = styled(SectionHeaderButton)`
   margin-top: 0;
 `;
 
-const verificationBaseUrl = `${BASE_BITPAY_URLS[APP_NETWORK]}/wallet-verify?product=billpay`;
-
 export const Bills = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {t} = useTranslation();
   const logger = useLogger();
 
+  const appNetwork = useAppSelector(({APP}) => APP.network);
+
   const accounts = useAppSelector(
-    ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
+    ({SHOP}) => SHOP.billPayAccounts[appNetwork],
   ) as BillPayAccount[];
 
   const apiToken = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.apiToken[APP_NETWORK],
+    ({BITPAY_ID}) => BITPAY_ID.apiToken[appNetwork],
   );
 
   const isJoinedWaitlist = useAppSelector(({SHOP}) => SHOP.isJoinedWaitlist);
+
+  const verificationBaseUrl = `${BASE_BITPAY_URLS[appNetwork]}/wallet-verify?product=billpay`;
 
   const [connected, setConnected] = useState(!!accounts.length);
 

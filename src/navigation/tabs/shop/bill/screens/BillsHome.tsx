@@ -9,7 +9,6 @@ import {SlateDark, White} from '../../../../../styles/colors';
 import {ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {sleep} from '../../../../../utils/helper-methods';
-import {APP_NETWORK} from '../../../../../constants/config';
 
 const BillsHome = ({}: NativeStackScreenProps<
   BillGroupParamList,
@@ -17,7 +16,9 @@ const BillsHome = ({}: NativeStackScreenProps<
 >) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const [refreshing, setRefreshing] = useState(false);
   return (
     <ScreenContainer>

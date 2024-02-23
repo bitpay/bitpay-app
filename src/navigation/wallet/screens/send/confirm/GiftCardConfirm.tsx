@@ -34,10 +34,7 @@ import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../../store/app/app.actions';
+import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
@@ -53,11 +50,8 @@ import {
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
-import {
-  CustomErrorMessage,
-  WrongPasswordError,
-} from '../../../components/ErrorMessages';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
+import {CustomErrorMessage} from '../../../components/ErrorMessages';
+import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {URL} from '../../../../../constants';
 import {
   CardConfig,
@@ -141,8 +135,9 @@ const Confirm = () => {
     txDetails: _txDetails,
     txp: _txp,
   } = route.params!;
+  const appNetwork = useAppSelector(({APP}) => APP.network);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
+  const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[appNetwork]);
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
@@ -172,12 +167,12 @@ const Confirm = () => {
       dispatch(
         BuildPayProWalletSelectorList({
           keys,
-          network: APP_NETWORK,
+          network: appNetwork,
           invoice,
           skipThreshold: true,
         }),
       ),
-    [dispatch, keys, invoice],
+    [dispatch, keys, appNetwork, invoice],
   );
 
   const getTransactionCurrency = () => {
@@ -188,7 +183,7 @@ const Confirm = () => {
 
   useEffect(() => {
     return () => {
-      dispatch(ShopActions.deletedUnsoldGiftCards());
+      dispatch(ShopActions.deletedUnsoldGiftCards({network: appNetwork}));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -252,7 +247,7 @@ const Confirm = () => {
     transactionCurrency: string;
   }) => {
     dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
-    dispatch(ShopActions.deletedUnsoldGiftCards());
+    dispatch(ShopActions.deletedUnsoldGiftCards({network: appNetwork}));
     const invoiceCreationParams = {
       amount,
       brand: cardConfig.name,
@@ -329,7 +324,7 @@ const Confirm = () => {
           selectedWallet.chain,
         ),
       });
-      const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
+      const baseUrl = BASE_BITPAY_URLS[appNetwork];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
         await createPayProTxProposal({
@@ -399,6 +394,7 @@ const Confirm = () => {
           ShopActions.updatedGiftCardStatus({
             invoiceId: invoice!.id,
             status: 'PENDING',
+            network: appNetwork,
           }),
         );
         txp && wallet && recipient
@@ -422,6 +418,7 @@ const Confirm = () => {
         ShopActions.updatedGiftCardStatus({
           invoiceId: invoice!.id,
           status: 'UNREDEEMED',
+          network: appNetwork,
         }),
       );
       dispatch(dismissOnGoingProcessModal());

@@ -163,7 +163,7 @@ export const startMigrationMMKVStorage =
 
 export const startMigration =
   (): Effect<Promise<void>> =>
-  async (dispatch): Promise<void> => {
+  async (dispatch, getState): Promise<void> => {
     return new Promise(async resolve => {
       dispatch(LogActions.info('[startMigration] - starting...'));
       const goToNewUserOnboarding = () => {
@@ -548,7 +548,10 @@ export const startMigration =
           ...giftCard,
           archived: numActiveGiftCards > 3 ? true : giftCard.archived,
         }));
-        dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
+        const {APP} = getState();
+        dispatch(
+          ShopActions.setPurchasedGiftCards({giftCards, network: APP.network}),
+        );
 
         const giftCardEmail = await RNFS.readFile(
           cordovaStoragePath + 'amazonUserInfo',

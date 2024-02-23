@@ -10,6 +10,7 @@ import {
   PhoneCountryInfo,
   UnsoldGiftCard,
 } from './shop.models';
+import {Network} from '../../constants';
 
 export const successFetchCatalog = (payload: {
   availableCardMap: CardConfigMap;
@@ -37,6 +38,7 @@ export const failedCreateGiftCardInvoice = (): ShopActionType => ({
 
 export const initializedUnsoldGiftCard = (payload: {
   giftCard: UnsoldGiftCard;
+  network: Network;
 }): ShopActionType => ({
   type: ShopActionTypes.INITIALIZED_UNSOLD_GIFT_CARD,
   payload,
@@ -44,6 +46,7 @@ export const initializedUnsoldGiftCard = (payload: {
 
 export const setPurchasedGiftCards = (payload: {
   giftCards: GiftCard[];
+  network: Network;
 }): ShopActionType => ({
   type: ShopActionTypes.SET_PURCHASED_GIFT_CARDS,
   payload,
@@ -51,40 +54,53 @@ export const setPurchasedGiftCards = (payload: {
 
 export const setBillPayAccounts = (payload: {
   accounts: BillPayAccount[];
+  network: Network;
 }): ShopActionType => ({
   type: ShopActionTypes.SET_BILL_PAY_ACCOUNTS,
   payload,
 });
 
-export const clearedBillPayAccounts = (): ShopActionType => ({
+export const clearedBillPayAccounts = (payload: {
+  network: Network;
+}): ShopActionType => ({
   type: ShopActionTypes.CLEARED_BILL_PAY_ACCOUNTS,
+  payload,
 });
 
 export const setBillPayPayments = (payload: {
   billPayPayments: BillPayPayment[];
+  network: Network;
 }): ShopActionType => ({
   type: ShopActionTypes.SET_BILL_PAY_PAYMENTS,
   payload,
 });
 
-export const clearedBillPayPayments = (): ShopActionType => ({
+export const clearedBillPayPayments = (payload: {
+  network: Network;
+}): ShopActionType => ({
   type: ShopActionTypes.CLEARED_BILL_PAY_PAYMENTS,
+  payload,
 });
 
 export const updatedGiftCardStatus = (payload: {
   invoiceId: string;
   status: 'PENDING' | 'UNREDEEMED';
+  network: Network;
 }): ShopActionType => ({
   type: ShopActionTypes.UPDATED_GIFT_CARD_STATUS,
   payload,
 });
 
-export const deletedUnsoldGiftCards = (): ShopActionType => ({
+export const deletedUnsoldGiftCards = (payload: {
+  network: Network;
+}): ShopActionType => ({
   type: ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS,
+  payload,
 });
 
 export const redeemedGiftCard = (payload: {
   giftCard: GiftCard;
+  network: Network;
 }): ShopActionType => ({
   type: ShopActionTypes.REDEEMED_GIFT_CARD,
   payload,
@@ -92,6 +108,7 @@ export const redeemedGiftCard = (payload: {
 
 export const toggledGiftCardArchivedStatus = (payload: {
   giftCard: GiftCard;
+  network: Network;
 }): ShopActionType => ({
   type: ShopActionTypes.TOGGLED_GIFT_CARD_ARCHIVED_STATUS,
   payload,
