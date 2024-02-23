@@ -275,52 +275,62 @@ export const Bills = () => {
                       );
                     }}
                   />
-                  <Button
-                    style={{marginTop: 20, marginBottom: 10}}
-                    height={50}
-                    buttonStyle="secondary"
-                    onPress={() => {
-                      navigation.navigate(BillScreens.PAY_ALL_BILLS, {
-                        accounts,
-                      });
-                      dispatch(
-                        Analytics.track('Bill Pay — Clicked Pay All Bills'),
-                      );
-                    }}>
-                    {t('Pay All Bills')}
-                  </Button>
-                  {/* <Button
-                    style={{marginTop: 20, marginBottom: 10}}
-                    state={connectButtonState}
-                    height={50}
-                    buttonStyle="secondary"
-                    onPress={() => {
-                      verifyUserInfo();
-                      dispatch(
-                        Analytics.track(
-                          'Bill Pay - Clicked Connect More Bills',
-                        ),
-                      );
-                    }}>
-                    {t('Connect More Bills')}
-                  </Button> */}
-                  <Button
-                    buttonType={'link'}
-                    onPress={() => {
-                      navigation.navigate(
-                        BillScreens.CONNECT_BILLS_OPTIONS,
-                        {},
-                      );
-                      dispatch(
-                        Analytics.track(
-                          'Bill Pay - Clicked Connect More Bills',
-                        ),
-                      );
-                    }}>
-                    {connectButtonState
-                      ? t('Loading...')
-                      : t('Connect More Bills')}
-                  </Button>
+                  {accounts.some(account => account.isPayable) ? (
+                    <>
+                      <Button
+                        style={{marginTop: 20, marginBottom: 10}}
+                        height={50}
+                        buttonStyle="secondary"
+                        onPress={() => {
+                          navigation.navigate(BillScreens.PAY_ALL_BILLS, {
+                            accounts,
+                          });
+                          dispatch(
+                            Analytics.track('Bill Pay — Clicked Pay All Bills'),
+                          );
+                        }}>
+                        {t('Pay All Bills')}
+                      </Button>
+                      <Button
+                        buttonType={'link'}
+                        onPress={() => {
+                          navigation.navigate(
+                            BillScreens.CONNECT_BILLS_OPTIONS,
+                            {},
+                          );
+                          dispatch(
+                            Analytics.track(
+                              'Bill Pay - Clicked Connect More Bills',
+                            ),
+                          );
+                        }}>
+                        {connectButtonState
+                          ? t('Loading...')
+                          : t('Connect More Bills')}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        style={{marginTop: 20, marginBottom: 10}}
+                        state={connectButtonState}
+                        height={50}
+                        buttonStyle="secondary"
+                        onPress={() => {
+                          navigation.navigate(
+                            BillScreens.CONNECT_BILLS_OPTIONS,
+                            {},
+                          );
+                          dispatch(
+                            Analytics.track(
+                              'Bill Pay - Clicked Connect More Bills',
+                            ),
+                          );
+                        }}>
+                        {t('Connect More Bills')}
+                      </Button>
+                    </>
+                  )}
                   <SectionSpacer />
                 </>
               )}
