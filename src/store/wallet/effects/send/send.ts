@@ -152,6 +152,10 @@ export const createProposalAndBuildTxDetails =
           },
         } = getState();
 
+        if (wallet.isHardwareWallet && credentials.coin === 'bch') {
+          tx.signingMethod = 'ecdsa';
+        }
+
         if (
           chain === 'eth' &&
           wallet.transactionHistory?.hasConfirmingTxs &&
@@ -745,6 +749,11 @@ const buildTransactionProposal =
 
         // unconfirmed funds
         txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
+
+        // bch related
+        if (tx.signingMethod) {
+          txp.signingMethod = tx.signingMethod;
+        }
 
         const verifyExcludedUtxos = (
           sendMaxInfo: SendMaxInfo,
@@ -1359,7 +1368,7 @@ const _fetchTxCache = {
  * Fetch raw data for a COIN transaction by ID.
  *
  * @param txId
- * @param coin The cryptocurrency symbol (e.g., BTC, ETH).
+ * @param coin The cryptocurrency symbol (e.g., btc, ltc, doge).
  * @param network
  * @returns transaction data as a hex string
  */
@@ -1372,9 +1381,12 @@ const fetchUtxoTxById = async (
     return _fetchTxCache[network][txId];
   }
   let networkEndpoint = network === 'livenet' ? 'main' : 'test3';
-  let url = `https://api.blockcypher.com/v1/${coin}/${networkEndpoint}/txs/${txId}?includeHex=true`;
+  let url =
+    coin === 'bch'
+      ? `https://api.fullstack.cash/v5/rawtransactions/getRawTransaction/${txId}`
+      : `https://api.blockcypher.com/v1/${coin}/${networkEndpoint}/txs/${txId}?includeHex=true`;
   const apiResponse = await axios.get<any>(url);
-  const txDataHex = apiResponse?.data?.hex;
+  const txDataHex = coin === 'bch' ? apiResponse?.data : apiResponse?.data?.hex;
   if (!txDataHex) {
     throw new Error('Could not fetch transaction data');
   }
@@ -1474,8 +1486,8 @@ const createLedgerTransactionArgUtxo = (
         : undefined;
 
       // undefined will default to SIGHASH_ALL.
-      // BWC currently uses undefined when signing UTXO tx so we do the same here
-      const sigHashType = undefined;
+      // SIGHASH_ALL | SIGHASH_FORKID for bch
+      const sigHashType = txp.coin === 'bch' ? 0x41 : 0x01;
       const segwit = IsSegwitCoin(txp.coin);
 
       const outputs = txpAsTx.outputs.map(output => {
@@ -1504,7 +1516,7 @@ const createLedgerTransactionArgUtxo = (
 
       if (txp.coin === 'bch') {
         additionals = ['abc', 'cashaddr'];
-      } else if (IsSegwitCoin(txp.coin)) {
+      } else if (txp.coin === 'btc') {
         additionals = ['bech32']; // TODO: safe to always set this to 'bech32' ? Potencial issues here
       }
 
@@ -1534,6 +1546,7 @@ const getUtxoSignaturesFromLedger = async (
   const app = new AppBtc({
     transport,
     currency: params.transportCurrency,
+    scrambleKey: params.currencySymbol.toUpperCase(),
   });
 
   const arg = await createLedgerTransactionArgUtxo(wallet, txp).catch(err => {

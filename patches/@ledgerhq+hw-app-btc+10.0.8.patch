@@ -84,3 +84,21 @@ index 5d92437..bdb3124 100644
              sigs.forEach((v, k) => {
                  // Note: Looking at BIP32 derivation does not work in the generic case,
                  // since some inputs might not have a BIP32-derived pubkey.
+diff --git a/node_modules/@ledgerhq/hw-app-btc/lib/createTransaction.js b/node_modules/@ledgerhq/hw-app-btc/lib/createTransaction.js
+index 561e8d9..3e13aaf 100644
+--- a/node_modules/@ledgerhq/hw-app-btc/lib/createTransaction.js
++++ b/node_modules/@ledgerhq/hw-app-btc/lib/createTransaction.js
+@@ -215,6 +215,13 @@ function createTransaction(transport, arg) {
+             const signature = yield (0, signTransaction_1.signTransaction)(transport, associatedKeysets[i], lockTime, sigHashType, expiryHeight, additionals);
+             notify(1, i + 1);
+             signatures.push(signature);
++            /**
++             * Normally the createPaymentTransaction returns the final signed tx data,
++             * but we just need the signatures to pass to BWS. So add them to this array if provided.
++             */
++            if (arg.patch_signatureArray instanceof Array) {
++              arg.patch_signatureArray.push(signature);
++            }
+             targetTransaction.inputs[i].script = nullScript;
+             if (firstRun) {
+                 firstRun = false;

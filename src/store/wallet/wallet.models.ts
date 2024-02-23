@@ -255,6 +255,8 @@ export interface TransactionOptions {
   // btc
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
+  // bch
+  signingMethod?: string;
   // eth
   gasPrice?: number;
   from?: string;
@@ -351,6 +353,7 @@ export interface TransactionProposal {
     path: string;
   };
   network: Network;
+  signingMethod?: string;
 }
 
 export interface ProposalErrorHandlerProps {

@@ -50,6 +50,7 @@ const allowedUrlPrefixes = [
   'https://static.methodfi.com/',
   'https://api.zenledger.io/',
   'https://api.blockcypher.com/v1/',
+  'https://api.fullstack.cash/v5/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');

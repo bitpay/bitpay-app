@@ -266,24 +266,24 @@ const CURRENCIES = [
     icon: <XrpLogoSvg height={35} width={35} />,
     isTestnetSupported: false,
   },
-  // {
-  //   coin: 'bch',
-  //   label: 'BCH',
-  //   icon: <BchLogoSvg height={35} width={35} />,
-  //   isTestnetSupported: false,
-  // },
-  // {
-  //   coin: 'ltc',
-  //   label: 'LTC',
-  //   icon: <LtcLogoSvg height={35} width={35} />,
-  //   isTestnetSupported: false,
-  // },
-  // {
-  //   coin: 'doge',
-  //   label: 'DOGE',
-  //   icon: <DogeLogoSvg height={35} width={35} />,
-  //   isTestnetSupported: false,
-  // },
+  {
+    coin: 'bch',
+    label: 'BCH',
+    icon: <BchLogoSvg height={35} width={35} />,
+    isTestnetSupported: false,
+  },
+  {
+    coin: 'ltc',
+    label: 'LTC',
+    icon: <LtcLogoSvg height={35} width={35} />,
+    isTestnetSupported: false,
+  },
+  {
+    coin: 'doge',
+    label: 'DOGE',
+    icon: <DogeLogoSvg height={35} width={35} />,
+    isTestnetSupported: false,
+  },
 ];
 
 const TESTNET_SUPPORT_MAP = CURRENCIES.reduce<Record<string, boolean>>(
