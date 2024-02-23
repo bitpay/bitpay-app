@@ -42,7 +42,7 @@ export const getFeeRatePerKb = ({
   feeLevel,
 }: {
   wallet: Wallet;
-  feeLevel: string;
+  feeLevel: string | undefined;
 }): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     const {network} = wallet;

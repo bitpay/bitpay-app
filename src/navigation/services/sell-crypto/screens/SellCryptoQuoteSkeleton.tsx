@@ -3,7 +3,7 @@ import {useTheme} from 'styled-components/native';
 import {LightBlack} from '../../../../styles/colors';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
-const ChangellyCheckoutSkeleton = () => {
+const SellCryptoLoadingQuoteSkeleton = () => {
   const theme = useTheme();
 
   return (
@@ -11,25 +11,24 @@ const ChangellyCheckoutSkeleton = () => {
       backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
       highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
       {
-        [...Array(5)].map((e, i) => (
+        [...Array(2)].map((e, i) => (
           <SkeletonPlaceholder.Item
             key={i}
             flexDirection={'row'}
             alignItems={'center'}
             justifyContent={'space-between'}
-            height={65}>
+            height={26}>
             <SkeletonPlaceholder.Item
-              width={150}
-              height={20}
+              width={100}
+              height={14}
               borderRadius={4}
               marginRight={10}
             />
-
             <SkeletonPlaceholder.Item
-              width={120}
-              height={20}
+              width={70}
+              height={14}
               borderRadius={4}
-              marginRight={10}
+              marginRight={25}
             />
           </SkeletonPlaceholder.Item>
         )) as any
@@ -38,4 +37,4 @@ const ChangellyCheckoutSkeleton = () => {
   );
 };
 
-export default ChangellyCheckoutSkeleton;
+export default SellCryptoLoadingQuoteSkeleton;

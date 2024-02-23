@@ -15,6 +15,7 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {H4, H5, SubText, TextAlign} from '../../../../components/styled/Text';
 import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
 import {getBadgeImg} from '../../../../utils/helper-methods';
+import {SellCryptoCoin} from '../../sell-crypto/screens/SellCryptoRoot';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -41,7 +42,7 @@ export const CurrencyColumn = styled(Column)`
 `;
 interface FromWalletSelectorModalProps {
   isVisible: boolean;
-  customSupportedCurrencies?: SwapCryptoCoin[];
+  customSupportedCurrencies?: SwapCryptoCoin[] | SellCryptoCoin[];
   livenetOnly?: boolean;
   onDismiss: (toWallet?: any) => void;
   modalContext?: GlobalSelectModalContext;
@@ -72,10 +73,14 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
       <GlobalSelectContainer>
         <GlobalSelect
           useAsModal={true}
-          modalContext={modalContext}
           modalTitle={modalTitle}
           customSupportedCurrencies={_customSupportedCurrencies}
           onDismiss={onDismiss}
+          modalContext={
+            modalContext && ['sell', 'swap'].includes(modalContext)
+              ? 'send'
+              : modalContext
+          }
           livenetOnly={livenetOnly}
           onHelpPress={onHelpPress}
         />
@@ -85,11 +90,23 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
           onBackdropPress={() => setSwapCryptoHelpVisible(false)}>
           <SwapCryptoHelpContainer>
             <TextAlign align={'center'}>
-              <H4>{t('What can I swap?')}</H4>
+              {modalContext === 'swap' ? (
+                <H4>{t('What can I swap?')}</H4>
+              ) : null}
+              {modalContext === 'sell' ? (
+                <H4>{t('What can I sell?')}</H4>
+              ) : null}
             </TextAlign>
             <TextAlign align={'center'}>
-              {modalContext === 'send' ? (
+              {modalContext === 'swap' ? (
                 <SubText>{t('swapFromWalletsConditionMessage')}</SubText>
+              ) : null}
+              {modalContext === 'sell' ? (
+                <SubText>
+                  {t(
+                    'Below are the available coins/tokens that you can sell from. If you are not able to see some of your wallets, remember that your key must be backed up and have funds not locked due to pending transactions.',
+                  )}
+                </SubText>
               ) : null}
             </TextAlign>
             <ScrollView style={{marginTop: 20}}>

@@ -3,7 +3,7 @@ import {useTheme} from 'styled-components/native';
 import {LightBlack} from '../../../../styles/colors';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
-const ChangellyCheckoutSkeleton = () => {
+const MoonpaySellCheckoutSkeleton = () => {
   const theme = useTheme();
 
   return (
@@ -38,4 +38,4 @@ const ChangellyCheckoutSkeleton = () => {
   );
 };
 
-export default ChangellyCheckoutSkeleton;
+export default MoonpaySellCheckoutSkeleton;

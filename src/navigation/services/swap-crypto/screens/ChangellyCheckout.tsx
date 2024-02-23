@@ -638,7 +638,7 @@ const ChangellyCheckout: React.FC = () => {
         await sleep(500);
         await dispatch(
           publishAndSign({
-            txp: ctxp!,
+            txp: ctxp! as TransactionProposal,
             key,
             wallet: fromWalletSelected,
             transport,
@@ -651,7 +651,7 @@ const ChangellyCheckout: React.FC = () => {
         dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         await sleep(400);
         await dispatch(
-          publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
+          publishAndSign({txp: ctxp! as TransactionProposal, key, wallet: fromWalletSelected}),
         );
       }
       saveChangellyTx();

@@ -14,7 +14,19 @@ export const showWalletError =
       case 'walletNotSupported':
         title = t('Wallet not supported');
         message = t(
+          'The selected wallet is currently not supported to use this feature.',
+        );
+        break;
+      case 'walletNotSupportedToBuy':
+        title = t('Wallet not supported');
+        message = t(
           'The selected wallet is currently not supported for buying cryptocurrencies',
+        );
+        break;
+      case 'noSpendableFunds':
+        title = t('No spendable balance');
+        message = t(
+          'The selected wallet does not have enough spendable funds available to use this feature. Make sure you do not have funds locked by pending transaction proposals.',
         );
         break;
       case 'needsBackup':
