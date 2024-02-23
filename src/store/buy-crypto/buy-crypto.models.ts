@@ -248,6 +248,10 @@ export interface BanxaOrderDetailsData {
   message?: any;
 }
 
+export interface MoonpayGetCurrenciesRequestData {
+  env: 'sandbox' | 'production';
+}
+
 export interface MoonpayGetCurrencyLimitsRequestData {
   env: 'sandbox' | 'production';
   currencyAbbreviation: string;
