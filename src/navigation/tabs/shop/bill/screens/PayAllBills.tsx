@@ -7,7 +7,7 @@ import {
   HeaderTitle,
   Paragraph,
 } from '../../../../../components/styled/Text';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import {Linking, ScrollView, TouchableOpacity} from 'react-native';
 import {
@@ -158,8 +158,6 @@ const PayAllBills = ({
     })),
   );
 
-  const theme = useTheme();
-
   const sheetOptions: Array<Option> = [
     {
       onPress: () => Linking.openURL('https://bitpay.com/request-help/wizard'),
@@ -212,7 +210,7 @@ const PayAllBills = ({
       return;
     }
     dispatch(
-      Analytics.track('Bill Pay — Submitted Custom Bill Amount', {
+      Analytics.track('Bill Pay - Submitted Custom Bill Amount', {
         ...getBillAccountEventParams(amountModalAccountAndIndex.account),
         amount,
       }),

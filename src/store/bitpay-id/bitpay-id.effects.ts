@@ -523,7 +523,10 @@ export const startDisconnectBitPayId =
   };
 
 export const startFetchBasicInfo =
-  (token: string, params?: {includeExternalData: boolean}): Effect =>
+  (
+    token: string,
+    params?: {includeExternalData: boolean},
+  ): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       const {APP} = getState();

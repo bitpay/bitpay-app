@@ -34,7 +34,7 @@ import {InfoSvg} from '../../components/svg/ShopTabSvgs';
 import {useTheme} from 'styled-components/native';
 
 export interface BillItemProps {
-  account: BillPayAccount;
+  account?: BillPayAccount;
   payment?: BillPayment;
   variation: 'small' | 'large' | 'header' | 'pay';
   expanded?: boolean;
@@ -161,10 +161,12 @@ export default ({
   const removeBill = async () => {
     await sleep(500);
     dispatch(startOnGoingProcessModal('REMOVING_BILL'));
-    await dispatch(ShopEffects.startHideBillPayAccount(account.id));
+    if (account) {
+      await dispatch(ShopEffects.startHideBillPayAccount(account.id));
+    }
     await dispatch(ShopEffects.startGetBillPayAccounts());
     dispatch(dismissOnGoingProcessModal());
-    dispatch(Analytics.track('Bill Pay — Removed Bill', baseEventParams));
+    dispatch(Analytics.track('Bill Pay - Removed Bill', baseEventParams));
   };
 
   return (
@@ -180,14 +182,20 @@ export default ({
               borderRadius: 30,
             }}
             resizeMode={'contain'}
-            source={{uri: payment?.icon || account[account.type].merchantIcon}}
+            source={{
+              uri:
+                payment?.icon ||
+                (account && account[account.type].merchantIcon),
+            }}
           />
           <View style={{maxWidth: 175}}>
             <H6 numberOfLines={1}>
-              {payment?.merchantName || account[account.type].merchantName}
+              {payment?.merchantName ||
+                (account && account[account.type].merchantName)}
             </H6>
             <AccountType numberOfLines={1}>
-              {payment?.accountDescription || account[account.type].description}
+              {payment?.accountDescription ||
+                (account && account[account.type].description)}
             </AccountType>
           </View>
         </AccountDetailsLeft>
@@ -215,17 +223,17 @@ export default ({
                         {formatFiatAmount(
                           payment
                             ? payment.amount
-                            : account[account.type].balance,
+                            : (account && account[account.type].balance) || 0,
                           'USD',
                         )}
                       </AccountBalance>
-                      {variation === 'small' ? (
+                      {variation === 'small' && account ? (
                         <BillStatus account={account} payment={payment} />
                       ) : null}
                     </>
                   )}
                 </>
-              ) : account.paymentStatus === 'activating' ? (
+              ) : account?.paymentStatus === 'activating' ? (
                 <ConnectingStatusContainer>
                   <InfoSvg theme={theme} />
                   <BillStatus account={account} payment={payment} />
@@ -236,7 +244,7 @@ export default ({
         </AccountDetailsRight>
       </AccountBody>
       {variation === 'large' || variation === 'pay' ? (
-        account.isPayable && variation === 'large' ? (
+        account && account.isPayable && variation === 'large' ? (
           <AccountActions>
             <BillStatus account={account} payment={payment} />
             <PayButton>
@@ -245,7 +253,9 @@ export default ({
           </AccountActions>
         ) : (
           <>
-            {!account.isPayable && account.paymentStatus !== 'activating' ? (
+            {account &&
+            !account.isPayable &&
+            account.paymentStatus !== 'activating' ? (
               <AccountFooter variation={variation}>
                 <AccountFooterText>Unable to pay bill</AccountFooterText>
                 <TouchableOpacity
@@ -290,7 +300,8 @@ export default ({
                     );
                     dispatch(
                       Analytics.track(
-                        'Bill Pay — Clicked Unable To Pay Bill Learn More',
+                        'Bill Pay - Clicked Unable To Pay Bill Learn More',
+                        baseEventParams,
                       ),
                     );
                   }}>

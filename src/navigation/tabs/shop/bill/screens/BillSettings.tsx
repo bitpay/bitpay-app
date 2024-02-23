@@ -57,8 +57,11 @@ const BillSettings = ({
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const apiToken = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.apiToken[APP.network],
+  );
   useEffect(() => {
-    dispatch(Analytics.track('Bill Pay — Viewed Bill Pay Settings'));
+    dispatch(Analytics.track('Bill Pay - Viewed Bill Pay Settings'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
@@ -90,13 +93,16 @@ const BillSettings = ({
                   actions: [
                     {
                       text: t("Yes, I'm sure"),
-                      action: () => {
-                        dispatch(BitPayIdEffects.startResetMethodUser());
-                        dispatch(ShopEffects.startGetBillPayAccounts());
+                      action: async () => {
                         dispatch(
-                          Analytics.track('Bill Pay — Unlinked Method Account'),
+                          Analytics.track('Bill Pay - Unlinked Method Account'),
                         );
                         navigation.pop();
+                        await dispatch(BitPayIdEffects.startResetMethodUser());
+                        await dispatch(
+                          BitPayIdEffects.startFetchBasicInfo(apiToken),
+                        );
+                        await dispatch(ShopEffects.startGetBillPayAccounts());
                       },
                       primary: true,
                     },
@@ -105,7 +111,7 @@ const BillSettings = ({
                       action: () => {
                         dispatch(
                           Analytics.track(
-                            'Bill Pay — Canceled Confirm Unlink Method Account Modal',
+                            'Bill Pay - Canceled Confirm Unlink Method Account Modal',
                           ),
                         );
                       },
@@ -116,7 +122,7 @@ const BillSettings = ({
               );
               dispatch(
                 Analytics.track(
-                  'Bill Pay — Viewed Confirm Unlink Method Account Modal',
+                  'Bill Pay - Viewed Confirm Unlink Method Account Modal',
                 ),
               );
             }}>
