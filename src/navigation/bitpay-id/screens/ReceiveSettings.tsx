@@ -88,7 +88,7 @@ const AddressItem = styled.View`
 
 const AddressItemText = styled(Paragraph)`
   flex-grow: 1;
-  margin-left: 0px;
+  margin-left: 1px;
 `;
 
 const AddressPillContainer = styled.View`

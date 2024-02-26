@@ -24,7 +24,7 @@ const BadgeContainer = styled.View<{size?: number}>`
   height: ${({size = 54}) => size}%;
   width: ${({size = 54}) => size}%;
   position: absolute;
-  right: 0;
+  right: -2px;
   bottom: 0;
 `;
 
