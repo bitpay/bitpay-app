@@ -121,17 +121,28 @@ export const getBanxaSelectedPaymentMethodData = (
     case 'applePay':
     case 'creditCard':
     case 'debitCard':
+      // Prioritize PRIMERCC, if it is not included, look for WORLDPAYCREDIT or CHECKOUTCREDIT
       selectedBanxaPMData = banxaPaymentMethods.find(
         (banxaPaymentMethod: BanxaPaymentMethod) => {
-          if (
-            ['WORLDPAYCREDIT', 'CHECKOUTCREDIT'].includes(
-              banxaPaymentMethod.paymentType,
-            )
-          ) {
+          if (['PRIMERCC'].includes(banxaPaymentMethod.paymentType)) {
             return true;
           }
         },
       );
+
+      if (!selectedBanxaPMData) {
+        selectedBanxaPMData = banxaPaymentMethods.find(
+          (banxaPaymentMethod: BanxaPaymentMethod) => {
+            if (
+              ['WORLDPAYCREDIT', 'CHECKOUTCREDIT'].includes(
+                banxaPaymentMethod.paymentType,
+              )
+            ) {
+              return true;
+            }
+          },
+        );
+      }
       break;
     case 'sepaBankTransfer':
       selectedBanxaPMData = banxaPaymentMethods.find(
