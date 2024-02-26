@@ -41,7 +41,7 @@ import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {setWalletScanning} from '../../../../store/wallet/wallet.actions';
-import { isSingleAddressChain } from '../../../../store/wallet/utils/currency';
+import {isSingleAddressChain} from '../../../../store/wallet/utils/currency';
 
 const ADDRESS_LIMIT = 5;
 
@@ -339,9 +339,9 @@ const Addresses = () => {
   return (
     <AddressesContainer>
       <ScrollView>
-       { !isSingleAddressChain(wallet.credentials.chain) ? 
-        <>
-          <AddressesParagraph>
+        {!isSingleAddressChain(wallet.credentials.chain) ? (
+          <>
+            <AddressesParagraph>
               {t(
                 'Each wallet can generate billions of addresses from your 12-word recovery phrase. A new address is automatically generated and shown each time you receive a payment.',
               )}
@@ -350,8 +350,9 @@ const Addresses = () => {
               {t(
                 "It's a good idea to avoid reusing addresses - this both protects your privacy and keeps your assets secure against hypothetical attacks by quantum computers.",
               )}
-            </AddressesParagraph> 
-        </> : null } 
+            </AddressesParagraph>
+          </>
+        ) : null}
 
         <AddressesContainer>
           <Button onPress={scan} state={buttonState}>
