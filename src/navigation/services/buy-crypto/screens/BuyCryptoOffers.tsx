@@ -45,6 +45,7 @@ import {
   BanxaGetQuoteRequestData,
   BanxaOrderData,
   BanxaPaymentData,
+  BanxaPaymentMethodsData,
   BanxaQuoteData,
   BuyCryptoLimits,
   MoonpayGetCurrencyLimitsRequestData,
@@ -151,6 +152,11 @@ export type BuyCryptoOffersScreenParams = {
   paymentMethod: PaymentMethod;
   buyCryptoConfig: BuyCryptoConfig | undefined;
   preSetPartner?: BuyCryptoExchangeKey | undefined;
+  preLoadPartnersData?: {
+    banxa: {
+      banxaPreloadPaymentMethods: BanxaPaymentMethodsData | undefined;
+    };
+  };
 };
 
 export type CryptoOffer = {
@@ -428,6 +434,7 @@ const BuyCryptoOffers: React.FC = () => {
       paymentMethod,
       buyCryptoConfig,
       preSetPartner,
+      preLoadPartnersData,
     },
   }: {params: BuyCryptoOffersScreenParams} =
     useRoute<RouteProp<{params: BuyCryptoOffersScreenParams}>>();
@@ -506,13 +513,19 @@ const BuyCryptoOffers: React.FC = () => {
         ? amount
         : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
 
+    let banxaPaymentMethods: BanxaPaymentMethodsData;
     try {
       // Banxa getPaymentMethods to validate pairs and get currency limits (banxaGetCurrencyLimits)
-      const banxaPaymentMethods = await banxaGetPaymentMethods({
-        env: banxaEnv,
-        source: offers.banxa.fiatCurrency,
-        target: getBanxaCoinFormat(coin),
-      });
+      if (preLoadPartnersData?.banxa?.banxaPreloadPaymentMethods) {
+        banxaPaymentMethods =
+          preLoadPartnersData.banxa.banxaPreloadPaymentMethods;
+      } else {
+        banxaPaymentMethods = await banxaGetPaymentMethods({
+          env: banxaEnv,
+          source: offers.banxa.fiatCurrency,
+          target: getBanxaCoinFormat(coin),
+        });
+      }
 
       if (
         !banxaPaymentMethods?.data?.payment_methods ||
