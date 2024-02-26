@@ -114,7 +114,7 @@ export const isDisconnectedDeviceError = (
 
 export const getLedgerErrorMessage = (err: any) => {
   if (err === 'user denied transaction') {
-    return '';
+    return err;
   } else if (isLockedDeviceError(err)) {
     return 'Unlock device to continue.';
   } else if (isTransportStatusError(err)) {
@@ -124,6 +124,8 @@ export const getLedgerErrorMessage = (err: any) => {
       return 'Command not supported, make sure the correct app is open and the app and Ledger firmware is up to date.';
     } else if (Number(err.statusCode) === StatusCodes.USER_REFUSED_ON_DEVICE) {
       return 'User refused command on device.';
+    } else if (Number(err.statusCode) === StatusCodes.UNKNOWN_APDU) {
+      return 'Communication failed. This error could indicate a compatibility issue, a firmware bug, or a problem with the software sending the command.';
     }
 
     return err.message;

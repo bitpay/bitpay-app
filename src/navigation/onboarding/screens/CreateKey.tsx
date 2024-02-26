@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
@@ -18,7 +18,12 @@ import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {useTranslation} from 'react-i18next';
-import {useRequestTrackingPermissionHandler} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useRequestTrackingPermissionHandler,
+} from '../../../utils/hooks';
+import {AppActions} from '../../../store/app';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -47,6 +52,11 @@ const CreateOrImportKey = ({
 >) => {
   const {t} = useTranslation();
   const themeType = useThemeType();
+  const dispatch = useAppDispatch();
+  const isImportLedgerModalVisible = useAppSelector(
+    ({APP}) => APP.isImportLedgerModalVisible,
+  );
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
 
   useAndroidBackHandler(() => true);
 
@@ -76,6 +86,11 @@ const CreateOrImportKey = ({
     });
   }, [navigation, t]);
 
+  useEffect(() => {
+    if (!isImportLedgerModalVisible && Object.values(keys).length > 0) {
+      navigation.navigate('TermsOfUse');
+    }
+  }, [isImportLedgerModalVisible]);
   return (
     <CreateKeyContainer accessibilityLabel="create-key-view">
       <ScrollView
@@ -124,6 +139,15 @@ const CreateOrImportKey = ({
                 );
               }}>
               {t('I already have a Key')}
+            </Button>
+          </ActionContainer>
+          <ActionContainer>
+            <Button
+              buttonStyle={'secondary'}
+              onPress={() => {
+                dispatch(AppActions.importLedgerModalToggled(true));
+              }}>
+              {t('Connect your Ledger Nano X')}
             </Button>
           </ActionContainer>
         </CtaContainer>

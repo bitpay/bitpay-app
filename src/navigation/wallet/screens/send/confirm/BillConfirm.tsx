@@ -70,7 +70,10 @@ import {
   SimpleConfirmPaymentState,
 } from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
 import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
-import {prepareLedgerApp} from '../../../../../components/modal/import-ledger-wallet/utils';
+import {
+  getLedgerErrorMessage,
+  prepareLedgerApp,
+} from '../../../../../components/modal/import-ledger-wallet/utils';
 import {currencyConfigs} from '../../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
@@ -503,7 +506,7 @@ const BillConfirm: React.VFC<
   }: {transport?: Transport} = {}) => {
     const isUsingHardwareWallet = !!transport;
     dispatch(
-      Analytics.track('Bill Pay — Clicked Slide to Confirm', baseEventParams),
+      Analytics.track('Bill Pay - Clicked Slide to Confirm', baseEventParams),
     );
     try {
       if (isUsingHardwareWallet) {
@@ -536,6 +539,7 @@ const BillConfirm: React.VFC<
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
+        err = getLedgerErrorMessage(err);
       }
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);

@@ -114,11 +114,7 @@ export const ConfirmLedgerStart: React.FC<
       props.onPaired(transport);
     } else {
       setError(
-        `Unable to connect via Bluetooth: ${errorMsg}. If error persist, please attempt to reconnect by enabling the device's Bluetooth option again. Ensure it's unlocked and set to the appropriate currency application, the screen should display: ${
-          props.currencyLabel === 'Bitcoin'
-            ? props.currencyLabel
-            : 'Application'
-        } is ready.`,
+        `Unable to connect via Bluetooth: ${errorMsg}. If error persist, please attempt to reconnect by enabling the device's Bluetooth option again.`,
       );
     }
   };
@@ -155,7 +151,7 @@ export const ConfirmLedgerStart: React.FC<
 
   return (
     <>
-      {isConnecting ? (
+      {isConnecting && !error ? (
         <SearchingForDevices transportType={transportType} />
       ) : (
         <Wrapper>

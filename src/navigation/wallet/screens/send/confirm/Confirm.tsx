@@ -108,7 +108,10 @@ import {
   SimpleConfirmPaymentState,
 } from '../../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {prepareLedgerApp} from '../../../../../components/modal/import-ledger-wallet/utils';
+import {
+  getLedgerErrorMessage,
+  prepareLedgerApp,
+} from '../../../../../components/modal/import-ledger-wallet/utils';
 import {currencyConfigs} from '../../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
@@ -453,6 +456,7 @@ const Confirm = () => {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
+        err = getLedgerErrorMessage(err);
       }
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);

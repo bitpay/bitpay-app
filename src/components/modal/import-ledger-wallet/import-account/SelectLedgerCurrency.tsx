@@ -549,7 +549,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
           <H3>Choose Currency to Import</H3>
         </Header>
 
-        {error && !isLoading ? (
+        {error && error !== 'user denied transaction' && !isLoading ? (
           <DescriptionRow>
             <ErrParagraph>{error}</ErrParagraph>
           </DescriptionRow>

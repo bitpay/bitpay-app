@@ -1735,8 +1735,7 @@ export const signTxWithHardwareWallet = async (
       // Ledger device: Condition of use not satisfied (denied by the user?) (0x6985)
       throw 'user denied transaction';
     }
-    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-    throw new Error(`Error getting signatures from hardware wallet: ${errMsg}`);
+    throw err;
   }
 
   const signedTxp = await new Promise<TransactionProposal>(
