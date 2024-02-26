@@ -125,7 +125,7 @@ const PayBill = ({
     await dispatch(ShopEffects.startGetBillPayAccounts());
     dispatch(dismissOnGoingProcessModal());
     navigation.pop();
-    dispatch(Analytics.track('Bill Pay — Removed Bill', baseEventParams));
+    dispatch(Analytics.track('Bill Pay - Removed Bill', baseEventParams));
   };
 
   const sheetOptions: Array<Option> = [
@@ -136,7 +136,7 @@ const PayBill = ({
         });
         dispatch(
           Analytics.track(
-            'Bill Pay — Viewed Bill Payment History',
+            'Bill Pay - Viewed Bill Payment History',
             baseEventParams,
           ),
         );
@@ -177,7 +177,7 @@ const PayBill = ({
       onPress: () => {
         Linking.openURL('https://bitpay.com/request-help/wizard');
         dispatch(
-          Analytics.track('Bill Pay — Clicked Contact Support', {
+          Analytics.track('Bill Pay - Clicked Contact Support', {
             ...baseEventParams,
             context: 'Pay Bill',
           }),
@@ -214,7 +214,7 @@ const PayBill = ({
       return;
     }
     dispatch(
-      Analytics.track('Bill Pay — Submitted Custom Bill Amount', {
+      Analytics.track('Bill Pay - Submitted Custom Bill Amount', {
         ...baseEventParams,
         amount,
       }),
@@ -251,7 +251,7 @@ const PayBill = ({
   const selectPaymentOption = (option: string) => {
     setSelectedAmount(option);
     dispatch(
-      Analytics.track('Bill Pay — Selected Amount Type', {
+      Analytics.track('Bill Pay - Selected Amount Type', {
         ...baseEventParams,
         amountType: option,
       }),
@@ -415,7 +415,7 @@ const PayBill = ({
                   account[account.type][selectedAmount] as number,
                 );
             dispatch(
-              Analytics.track('Bill Pay — Submitted Amount Type', {
+              Analytics.track('Bill Pay - Submitted Amount Type', {
                 ...baseEventParams,
                 paymentOption: selectedAmount,
               }),

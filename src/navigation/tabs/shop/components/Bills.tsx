@@ -117,7 +117,6 @@ export const Bills = () => {
   }, [accounts.length, connected, dispatch, user]);
 
   useFocusEffect(() => {
-    dispatch(Analytics.track('Bill Pay — Viewed Bills Page'));
     dispatch(AppActions.setHasViewedBillsTab());
   });
 
@@ -170,7 +169,10 @@ export const Bills = () => {
               navigation.navigate(BillScreens.CONNECT_BILLS, {
                 tokenType: 'auth',
               });
-              dispatch(Analytics.track('Bill Pay — Confirmed User Info'));
+              dispatch(Analytics.track('Bill Pay - Confirmed User Info'));
+              if (!user?.methodEntityId) {
+                dispatch(Analytics.track('Bill Pay - Started Application'));
+              }
             },
             primary: true,
           },
@@ -178,13 +180,12 @@ export const Bills = () => {
             text: t('UPDATE INFO'),
             action: () => {
               Linking.openURL('https://bitpay.com/request-help/wizard');
-              dispatch(Analytics.track('Bill Pay — Clicked Update User Info'));
+              dispatch(Analytics.track('Bill Pay - Clicked Update User Info'));
             },
           },
         ],
       }),
     );
-    dispatch(Analytics.track('Bill Pay — Clicked Connect My Bills'));
   };
 
   return (
@@ -200,7 +201,7 @@ export const Bills = () => {
                   `${verificationBaseUrl}&context=createAccount`,
                 ),
               );
-              dispatch(Analytics.track('Bill Pay — Clicked Sign Up'));
+              dispatch(Analytics.track('Bill Pay - Clicked Sign Up'));
             }}>
             {t('Sign Up')}
           </Button>
@@ -215,7 +216,7 @@ export const Bills = () => {
                 ),
               );
               dispatch(
-                Analytics.track('Bill Pay — Clicked I Already Have an Account'),
+                Analytics.track('Bill Pay - Clicked I Already Have an Account'),
               );
             }}>
             {t('I already have an account')}
@@ -234,7 +235,7 @@ export const Bills = () => {
                     onPress={async () => {
                       verifyUserInfo();
                       dispatch(
-                        Analytics.track('Bill Pay — Clicked Connect My Bills'),
+                        Analytics.track('Bill Pay - Clicked Connect My Bills'),
                       );
                     }}>
                     {t('Connect My Bills')}
@@ -250,7 +251,7 @@ export const Bills = () => {
                         navigation.navigate(BillScreens.PAYMENTS, {});
                         dispatch(
                           Analytics.track(
-                            'Bill Pay — Clicked View All Payments',
+                            'Bill Pay - Clicked View All Payments',
                           ),
                         );
                       }}>
@@ -266,7 +267,7 @@ export const Bills = () => {
                       navigation.navigate(BillScreens.PAY_BILL, {account});
                       dispatch(
                         Analytics.track(
-                          'Bill Pay — Clicked Pay Bill',
+                          'Bill Pay - Clicked Pay Bill',
                           getBillAccountEventParams(account),
                         ),
                       );
@@ -276,9 +277,14 @@ export const Bills = () => {
                     style={{marginTop: 20, marginBottom: 10}}
                     height={50}
                     buttonStyle="secondary"
-                    onPress={() =>
-                      navigation.navigate(BillScreens.PAY_ALL_BILLS, {accounts})
-                    }>
+                    onPress={() => {
+                      navigation.navigate(BillScreens.PAY_ALL_BILLS, {
+                        accounts,
+                      });
+                      dispatch(
+                        Analytics.track('Bill Pay — Clicked Pay All Bills'),
+                      );
+                    }}>
                     {t('Pay All Bills')}
                   </Button>
                   {/* <Button
@@ -290,7 +296,7 @@ export const Bills = () => {
                       verifyUserInfo();
                       dispatch(
                         Analytics.track(
-                          'Bill Pay — Clicked Connect More Bills',
+                          'Bill Pay - Clicked Connect More Bills',
                         ),
                       );
                     }}>
@@ -305,7 +311,7 @@ export const Bills = () => {
                       );
                       dispatch(
                         Analytics.track(
-                          'Bill Pay — Clicked Connect More Bills',
+                          'Bill Pay - Clicked Connect More Bills',
                         ),
                       );
                     }}>

@@ -134,7 +134,7 @@ const ConnectBillsOptions = ({
     undefined as 'loading' | undefined,
   );
   useEffect(() => {
-    dispatch(Analytics.track('Bill Pay — Viewed Connect More Bills'));
+    dispatch(Analytics.track('Bill Pay - Viewed Connect More Bills'));
   }, [dispatch]);
 
   const verifyUserInfo = async () => {
@@ -160,7 +160,7 @@ const ConnectBillsOptions = ({
               navigation.navigate(BillScreens.CONNECT_BILLS, {
                 tokenType: 'auth',
               });
-              dispatch(Analytics.track('Bill Pay — Confirmed User Info'));
+              dispatch(Analytics.track('Bill Pay - Confirmed User Info'));
             },
             primary: true,
           },
@@ -168,20 +168,20 @@ const ConnectBillsOptions = ({
             text: t('UPDATE INFO'),
             action: () => {
               Linking.openURL('https://bitpay.com/request-help/wizard');
-              dispatch(Analytics.track('Bill Pay — Clicked Update User Info'));
+              dispatch(Analytics.track('Bill Pay - Clicked Update User Info'));
             },
           },
         ],
       }),
     );
-    dispatch(Analytics.track('Bill Pay — Clicked Connect My Bills'));
+    dispatch(Analytics.track('Bill Pay - Clicked Connect My Bills'));
   };
 
   const searchBills = () => {
     navigation.navigate(BillScreens.CONNECT_BILLS, {
       tokenType: 'link',
     });
-    dispatch(Analytics.track('Bill Pay — Clicked Search Bills'));
+    dispatch(Analytics.track('Bill Pay - Clicked Search Bills'));
   };
 
   return (

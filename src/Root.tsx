@@ -293,10 +293,6 @@ export default () => {
                   parentRoute.state.routes[parentRoute.state.index || 0];
 
                 stackName = tabStack.name + ' Tab';
-
-                if (tabStack.name === TabsScreens.SHOP) {
-                  dispatch(Analytics.track('Clicked Shop tab', {}));
-                }
               } else {
                 stackName = parentRoute.name;
                 screenName = childRoute.name;

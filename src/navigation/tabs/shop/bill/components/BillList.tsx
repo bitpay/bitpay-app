@@ -14,6 +14,11 @@ import {AppActions} from '../../../../../store/app';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {getBillAccountEventParams} from '../utils';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {sleep} from '../../../../../utils/helper-methods';
+import {ShopEffects} from '../../../../../store/shop';
+import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
+import {CustomErrorMessage} from '../../../../../navigation/wallet/components/ErrorMessages';
 
 const sortByAscendingDate = (a: BillPayAccount, b: BillPayAccount) => {
   const farIntoTheFuture = moment().add(1, 'year').toDate();
@@ -93,6 +98,23 @@ export const BillList = ({
       },
     };
   });
+
+  const removeBill = async (account: BillPayAccount) => {
+    await sleep(500);
+    dispatch(startOnGoingProcessModal('REMOVING_BILL'));
+    if (account) {
+      await dispatch(ShopEffects.startHideBillPayAccount(account.id));
+    }
+    await dispatch(ShopEffects.startGetBillPayAccounts());
+    dispatch(dismissOnGoingProcessModal());
+    dispatch(
+      Analytics.track(
+        'Bill Pay - Removed Bill',
+        getBillAccountEventParams(account),
+      ),
+    );
+  };
+
   return (
     <>
       {accountsWithPayments.sort(sortByAscendingDate).map((account, index) => {
@@ -118,12 +140,31 @@ export const BillList = ({
                           action: () => {},
                           primary: true,
                         },
+                        {
+                          text: t('REMOVE BILL'),
+                          action: () => {
+                            removeBill(account).catch(async err => {
+                              dispatch(dismissOnGoingProcessModal());
+                              await sleep(500);
+                              dispatch(
+                                AppActions.showBottomNotificationModal(
+                                  CustomErrorMessage({
+                                    title: t('Could not remove bill'),
+                                    errMsg:
+                                      err?.message ||
+                                      t('Please try again later.'),
+                                  }),
+                                ),
+                              );
+                            });
+                          },
+                        },
                       ],
                     }),
                   );
                   dispatch(
                     Analytics.track(
-                      'Bill Pay — Viewed Why Is My Bill Connecting',
+                      'Bill Pay - Viewed Why Is My Bill Connecting',
                       getBillAccountEventParams(account),
                     ),
                   );

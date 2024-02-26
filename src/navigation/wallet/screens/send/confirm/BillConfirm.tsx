@@ -55,7 +55,7 @@ import haptic from '../../../../../components/haptic-feedback/haptic';
 import BillAlert from '../../../../tabs/shop/bill/components/BillAlert';
 import PaymentSent from '../../../components/PaymentSent';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
-import {getBillAccountEventParams} from '../../../../tabs/shop/bill/utils';
+import {getBillAccountEventParamsForMultipleBills} from '../../../../tabs/shop/bill/utils';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
 import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
 
@@ -85,10 +85,6 @@ const BillConfirm: React.VFC<
     txp: _txp,
   } = route.params!;
 
-  const amount = billPayments.reduce(
-    (sum, billPayment) => sum + billPayment.amount,
-    0,
-  );
   const billPayAccount = billPayments[0].billPayAccount;
 
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -109,13 +105,17 @@ const BillConfirm: React.VFC<
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
   const baseEventParams = {
-    ...(billPayments.length === 1
-      ? getBillAccountEventParams(billPayAccount)
-      : []),
-    amount,
+    ...getBillAccountEventParamsForMultipleBills(
+      billPayments.map(({billPayAccount: account}) => account),
+    ),
+    amount:
+      billPayments.length === 1
+        ? billPayments[0].amount
+        : billPayments.map(({amount: billAmount}) => billAmount),
     amountType:
-      billPayments.length === 1 ? billPayments[0].amountType : 'multiple',
-    numAccounts: billPayments.length,
+      billPayments.length === 1
+        ? billPayments[0].amountType
+        : billPayments.map(({amountType}) => amountType),
     ...((wallet || coinbaseAccount) && {
       coin: wallet ? wallet.currencyAbbreviation : coinbaseAccount?.currency,
       walletOrExchange: wallet ? 'BitPay Wallet' : 'Coinbase Account',
@@ -157,7 +157,7 @@ const BillConfirm: React.VFC<
 
   useEffect(() => {
     dispatch(
-      Analytics.track('Bill Pay — Viewed Confirm Page', baseEventParams),
+      Analytics.track('Bill Pay - Viewed Confirm Page', baseEventParams),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -244,7 +244,7 @@ const BillConfirm: React.VFC<
       setSubtotal(totalBillAmount);
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
-      dispatch(Analytics.track('Bill Pay — Selected Wallet', baseEventParams));
+      dispatch(Analytics.track('Bill Pay - Selected Wallet', baseEventParams));
     } catch (err) {
       handleBillPayInvoiceOrTxpError(err);
     }
@@ -309,7 +309,7 @@ const BillConfirm: React.VFC<
       setSubtotal(totalBillAmount);
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
-      dispatch(Analytics.track('Bill Pay — Selected Wallet', baseEventParams));
+      dispatch(Analytics.track('Bill Pay - Selected Wallet', baseEventParams));
     } catch (err: any) {
       handleBillPayInvoiceOrTxpError(err);
     }
@@ -335,7 +335,10 @@ const BillConfirm: React.VFC<
     setShowPaymentSentModal(true);
     dispatch(ShopEffects.startFindBillPayments()).catch(_ => {});
     dispatch(
-      Analytics.track('Bill Pay — Successful Bill Paid', baseEventParams),
+      Analytics.track('Bill Pay - Successful Bill Paid', {
+        ...baseEventParams,
+        network: APP_NETWORK,
+      }),
     );
   };
 
@@ -376,7 +379,7 @@ const BillConfirm: React.VFC<
       setCoinbaseAccount(undefined);
     }
     toggleThenUntoggle(setResetSwipeButton);
-    dispatch(Analytics.track('Bill Pay — Failed Bill Paid', baseEventParams));
+    dispatch(Analytics.track('Bill Pay - Failed Bill Paid', baseEventParams));
   };
 
   const request2FA = async () => {
@@ -495,7 +498,7 @@ const BillConfirm: React.VFC<
             onSwipeComplete={async () => {
               dispatch(
                 Analytics.track(
-                  'Bill Pay — Clicked Slide to Confirm',
+                  'Bill Pay - Clicked Slide to Confirm',
                   baseEventParams,
                 ),
               );

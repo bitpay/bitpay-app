@@ -27,7 +27,8 @@ import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 import {ZeroHeightHeader} from '../../components/styled/Text';
 import BillStack from './shop/bill/BillStack';
 import styled from 'styled-components/native';
-import {useAppSelector} from '../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../utils/hooks';
+import {Analytics} from '../../store/analytics/analytics.effects';
 
 const Icons: Record<string, React.FC<SvgProps>> = {
   Home: HomeIcon,
@@ -79,6 +80,7 @@ export type TabsStackParamList = {
 export const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const hasViewedBillsTab = useAppSelector(({APP}) => APP.hasViewedBillsTab);
   useAndroidBackHandler(() => true);
@@ -124,7 +126,13 @@ const TabsStack = () => {
           header: () => <ZeroHeightHeader />,
         }}
       />
-      <Tab.Screen name={TabsScreens.SHOP} component={ShopRoot} />
+      <Tab.Screen
+        name={TabsScreens.SHOP}
+        component={ShopRoot}
+        listeners={() => ({
+          tabPress: () => dispatch(Analytics.track('Shop - Clicked Shop Tab')),
+        })}
+      />
       <Tab.Screen
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
@@ -133,7 +141,14 @@ const TabsStack = () => {
           tabBarButton: props => <View {...props} />,
         }}
       />
-      <Tab.Screen name={TabsScreens.BILLS} component={BillStack} />
+      <Tab.Screen
+        name={TabsScreens.BILLS}
+        component={BillStack}
+        listeners={() => ({
+          tabPress: () =>
+            dispatch(Analytics.track('Bill Pay - Clicked Bill Pay')),
+        })}
+      />
       <Tab.Screen name={TabsScreens.CARD} component={CardStack} />
     </Tab.Navigator>
   );

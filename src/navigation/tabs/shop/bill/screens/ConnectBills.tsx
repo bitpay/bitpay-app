@@ -12,6 +12,9 @@ import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {BitPayIdEffects} from '../../../../../store/bitpay-id';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {BillPayAccount} from '../../../../../store/shop/shop.models';
+import {getBillAccountEventParamsForMultipleBills} from '../utils';
 
 const ConnectBills = ({
   navigation,
@@ -22,11 +25,21 @@ const ConnectBills = ({
   const insets = useSafeAreaInsets();
   const [isWebViewShown, setIsWebViewShown] = useState(true);
   const [token, setToken] = useState('');
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
+  const billPayAccounts = useAppSelector(
+    ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
+  ) as BillPayAccount[];
+  const [currentBillPayAccountIds] = useState(
+    billPayAccounts.map(({id}) => id),
+  );
   const [publicAccountToken, setPublicAccountToken] = useState('');
   const [exiting, setExiting] = useState(false);
   const apiToken = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.apiToken[APP_NETWORK],
   );
+  const [isInitialApplication] = useState(!user?.methodEntityId);
 
   useLayoutEffect(() => {
     dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
@@ -39,6 +52,14 @@ const ConnectBills = ({
         ShopEffects.startGetMethodToken({tokenType: route.params.tokenType}),
       );
       setToken(authElementToken);
+      if (isInitialApplication) {
+        return fetchMethodEntityIdIfNeeded();
+      }
+      dispatch(
+        Analytics.track('Bill Pay - Launched Method Modal', {
+          methodModalType: route.params.tokenType,
+        }),
+      );
     };
     getToken().catch(err => {
       dispatch(dismissOnGoingProcessModal());
@@ -57,6 +78,9 @@ const ConnectBills = ({
 
   const refreshAccountsAndExit = async () => {
     if (exiting) {
+      if (isInitialApplication) {
+        dispatch(Analytics.track('Bill Pay - Exited Application'));
+      }
       return;
     }
     setExiting(true);
@@ -66,14 +90,38 @@ const ConnectBills = ({
         ShopEffects.exchangeMethodAccountToken(publicAccountToken),
       );
     }
-    await Promise.all([
-      dispatch(ShopEffects.startGetBillPayAccounts()),
-      dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken)),
-    ]);
+    if (isInitialApplication) {
+      dispatch(Analytics.track('Bill Pay - Successful Application'));
+      dispatch(Analytics.track('Bill Pay - Exited Application'));
+      await fetchMethodEntityIdIfNeeded();
+    }
+    const latestAccounts = await dispatch(
+      ShopEffects.startGetBillPayAccounts(),
+    );
+    const newAccounts = latestAccounts.filter(
+      ({id}) => !currentBillPayAccountIds.includes(id),
+    );
+    if (newAccounts.length > 0) {
+      dispatch(
+        Analytics.track(
+          'Bill Pay - Connected Bill',
+          getBillAccountEventParamsForMultipleBills(newAccounts),
+        ),
+      );
+    }
     navigation.popToTop();
     if (navigation.canGoBack()) {
       navigation.goBack();
     }
+  };
+
+  const fetchMethodEntityIdIfNeeded = async () => {
+    if (user?.methodEntityId) {
+      return;
+    }
+    return dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken))
+      .then(() => {})
+      .catch(() => {});
   };
 
   const handleNavigationStateChange = (event: any) => {
