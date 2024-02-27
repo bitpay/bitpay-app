@@ -92,6 +92,7 @@ public class MainActivity extends ReactActivity {
 
   @Override
   public void onResume() {
+    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
     super.onResume();
     // Registers the BrazeInAppMessageManager for the current Activity. This Activity will now listen for
     // in-app messages from Braze.
@@ -100,6 +101,8 @@ public class MainActivity extends ReactActivity {
 
   @Override
   public void onPause() {
+    // Disallowing screen capture
+    getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
     super.onPause();
     // Unregisters the BrazeInAppMessageManager for the current Activity.
     BrazeInAppMessageManager.getInstance().unregisterInAppMessageManager(MainActivity.this);
