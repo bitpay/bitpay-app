@@ -430,6 +430,7 @@ const updateKeyStatus =
             wallet.balance = cryptoBalance;
             wallet.pendingTxps = newPendingTxps;
             wallet.isRefreshing = false;
+            wallet.singleAddress = status.wallet?.singleAddress;
 
             dispatch(
               LogActions.info(

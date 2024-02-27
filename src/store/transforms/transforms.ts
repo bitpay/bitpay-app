@@ -63,6 +63,8 @@ export const bootstrapKey = (
 ) => {
   if (id === 'readonly') {
     return key;
+  } else if (key.hardwareSource) {
+    return key;
   } else {
     try {
       const _key = merge(key, {

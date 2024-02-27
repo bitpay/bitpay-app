@@ -3,6 +3,7 @@ import {
   KeyMethods,
   KeyOptions,
   KeyProperties,
+  SupportedHardwareSource,
   Wallet,
 } from '../../wallet.models';
 import {Effect, storage} from '../../../index';
@@ -27,9 +28,12 @@ import {
   setCustomizeNonce,
   setEnableReplaceByFee,
   setUseUnconfirmedFunds,
+  setWalletScanning,
   setWalletTermsAccepted,
+  successCreateKey,
   successImport,
   updateCacheFeeLevel,
+  updatePortfolioBalance,
 } from '../../wallet.actions';
 import {
   BitpaySupportedEthereumTokenOptsByAddress,
@@ -57,7 +61,10 @@ import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
-import {startUpdateAllKeyAndWalletStatus} from '../status/status';
+import {
+  startUpdateAllKeyAndWalletStatus,
+  startUpdateAllWalletStatusForKey,
+} from '../status/status';
 import {startGetRates} from '../rates/rates';
 import {
   accessTokenSuccess,
@@ -92,8 +99,13 @@ import {t} from 'i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
 import uniqBy from 'lodash.uniqby';
+import {credentialsFromExtendedPublicKey} from '../../../../utils/wallet-hardware';
+import {sleep} from '../../../../utils/helper-methods';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {GetName, isSingleAddressChain} from '../../utils/currency';
 
 const BWC = BwcProvider.getInstance();
+const BwcConstants = BWC.getConstants();
 
 const cordovaStoragePath =
   Platform.OS === 'ios'
@@ -840,7 +852,7 @@ export const startImportMnemonic =
         } = findMatchedKeyAndUpdate(
           data.wallets,
           data.key,
-          Object.values(WALLET.keys).filter(k => k.id !== 'readonly'), // Avoid checking readonly keys
+          Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')), // Avoid checking readonly keys
           opts,
         );
 
@@ -901,6 +913,229 @@ export const startImportMnemonic =
     });
   };
 
+export const startImportFromHardwareWallet =
+  ({
+    hardwareSource,
+    xPubKey,
+    publicKey,
+    accountPath,
+    coin,
+    useNativeSegwit,
+    derivationStrategy,
+    accountNumber,
+    network,
+  }: {
+    hardwareSource: SupportedHardwareSource;
+    xPubKey?: string;
+    publicKey?: string;
+    accountPath: string;
+    coin: 'btc' | 'eth' | 'xrp' | 'bch' | 'ltc' | 'doge' | 'matic';
+    useNativeSegwit: boolean;
+    derivationStrategy: string;
+    accountNumber: number;
+    network: Network;
+  }): Effect<Promise<Wallet>> =>
+  async (dispatch, getState) => {
+    if (!hardwareSource) {
+      throw new Error('Invalid hardware wallet source');
+    }
+
+    if (!BitpaySupportedCoins[coin.toLowerCase()]) {
+      throw new Error(`Unsupported currency: ${coin}`);
+    }
+
+    const {WALLET} = getState();
+
+    // distinguishing hardware keys by setting id = `readonly/${hardwareSource}`
+    const hwKeyId = buildKeyObj({
+      key: undefined,
+      wallets: [],
+      hardwareSource,
+    }).id;
+
+    let key = Object.values(WALLET.keys).find(k => k.id === hwKeyId);
+
+    const walletExists = key?.wallets.some(
+      w =>
+        w.credentials.coin === coin &&
+        w.credentials.account === accountNumber &&
+        w.credentials.network === network,
+    );
+
+    if (walletExists) {
+      throw new Error('The wallet is already in the app.');
+    }
+
+    const name = dispatch(GetName(coin, coin)); // chain === coin for stored wallets
+    const credentials = credentialsFromExtendedPublicKey(
+      coin,
+      accountNumber,
+      accountPath,
+      name,
+      derivationStrategy,
+      useNativeSegwit,
+      network,
+      hwKeyId,
+      xPubKey,
+      publicKey,
+    );
+    const bwcClient = BWC.getClient(credentials);
+    const walletName = BitpaySupportedCoins[coin.toLowerCase()].name;
+
+    // check if wallet exists in BWS
+    const status = await new Promise<any>((res, rej) => {
+      bwcClient.getStatus({network}, async (err: any, result: any) => {
+        err ? rej(err) : res(result);
+      });
+    }).catch(() => null);
+
+    if (status?.wallet?.id) {
+      // wallet exists, update the wallet ID
+      bwcClient.credentials.walletId = status.wallet.id;
+    } else {
+      try {
+        const copayerName = 'me';
+        const m = 1;
+        const n = 1;
+        const singleAddress = undefined;
+
+        const createWalletOpts = {
+          network,
+          useNativeSegwit,
+          coin,
+          walletPrivKey: credentials.walletPrivKey,
+          singleAddress,
+        };
+
+        await new Promise((resolve, reject) =>
+          bwcClient.createWallet(
+            walletName,
+            copayerName,
+            m,
+            n,
+            createWalletOpts,
+            (err: any, result: any) => {
+              err ? reject(err) : resolve(result);
+            },
+          ),
+        );
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          err.name === 'bwc.ErrorCOPAYER_REGISTERED'
+        ) {
+          dispatch(
+            LogActions.debug(
+              'Created wallet, but copayer already registered in BWS',
+            ),
+          );
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    await new Promise((resolve, reject) =>
+      bwcClient.openWallet({}, (err: any, result: any) => {
+        err ? reject(err) : resolve(result);
+      }),
+    );
+
+    const {currencyAbbreviation, currencyName} = dispatch(
+      mapAbbreviationAndName(
+        bwcClient.credentials.coin,
+        bwcClient.credentials.chain,
+        bwcClient.credentials.token?.address,
+      ),
+    );
+
+    if (!key) {
+      key = buildKeyObj({
+        key: undefined,
+        wallets: [],
+        backupComplete: true,
+        hardwareSource,
+      });
+    }
+
+    const wallet = merge(
+      bwcClient,
+      buildWalletObj({
+        ...bwcClient.credentials,
+        currencyAbbreviation,
+        currencyName,
+        walletName,
+        keyId: key.id,
+        isHardwareWallet: true,
+        hardwareData: {
+          accountPath,
+        },
+      }),
+    ) as Wallet;
+
+    key.wallets.push(wallet);
+
+    dispatch(
+      successCreateKey({
+        key,
+      }),
+    );
+
+    await dispatch(startGetRates({force: true}));
+    await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+    await sleep(1000);
+    await dispatch(updatePortfolioBalance());
+
+    // since we are importing a wallet that was created outside of BWS,
+    // we need to do an initial scan to find any used addresses
+    bwcClient.startScan(
+      {
+        includeCopayerBranches: true,
+      },
+      async (err: any) => {
+        if (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(
+            LogActions.error(
+              'An error occurred while starting an address scan:',
+              errMsg,
+            ),
+          );
+        }
+        if (key?.id && !isSingleAddressChain(wallet.credentials.chain)) {
+          const status = await new Promise<any>((res, rej) => {
+            bwcClient.getStatus(
+              {network: wallet.network},
+              async (err: any, result: any) => {
+                err ? rej(err) : res(result);
+              },
+            );
+          }).catch(() => null);
+          if (!status?.wallet?.singleAddress) {
+            // set scanning (for UI scanning label on wallet details )
+            dispatch(
+              setWalletScanning({
+                keyId: key.id,
+                walletId: wallet.id,
+                isScanning: true,
+              }),
+            );
+          }
+        }
+      },
+    );
+
+    dispatch(
+      setHomeCarouselConfig({
+        id: key.id,
+        show: true,
+      }),
+    );
+
+    return wallet;
+  };
+
 export const startImportFile =
   (decryptBackupText: string, opts: Partial<KeyOptions>): Effect =>
   async (dispatch, getState): Promise<Key> => {
@@ -927,7 +1162,12 @@ export const startImportFile =
         let wallets = [wallet];
 
         const matchedKey = _key
-          ? getMatchedKey(_key, Object.values(WALLET.keys))
+          ? getMatchedKey(
+              _key,
+              Object.values(WALLET.keys).filter(
+                k => !k.id.includes('readonly'),
+              ),
+            )
           : getReadOnlyKey(Object.values(WALLET.keys));
 
         if (matchedKey && !opts?.keyId) {
@@ -1076,7 +1316,10 @@ export const startImportWithDerivationPath =
           );
 
           let key;
-          const matchedKey = getMatchedKey(_key, Object.values(WALLET.keys));
+          const matchedKey = getMatchedKey(
+            _key,
+            Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')),
+          );
           if (matchedKey) {
             // To avoid duplicate key creation when importing
             wallet.credentials.keyId = wallet.keyId = matchedKey.id;

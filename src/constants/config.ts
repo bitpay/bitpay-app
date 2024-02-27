@@ -79,3 +79,15 @@ export const PROTOCOL_NAME: {[key in string]: any} = {
     [Network.testnet]: 'Testnet',
   },
 };
+
+// hardware wallet config
+
+/**
+ * How long to wait to connect to a discovered device.
+ */
+export const OPEN_TIMEOUT = 3000;
+
+/**
+ * How long to wait to find a device.
+ */
+export const LISTEN_TIMEOUT = 10000;

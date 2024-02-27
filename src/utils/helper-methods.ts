@@ -40,6 +40,9 @@ export const getDerivationStrategy = (path: string): string => {
     case "48'":
       derivationStrategy = 'BIP48';
       break;
+    case "84'":
+      derivationStrategy = 'BIP84';
+      break;
   }
   return derivationStrategy;
 };

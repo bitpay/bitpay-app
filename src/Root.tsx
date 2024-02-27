@@ -123,6 +123,7 @@ import InAppMessage from './components/modal/in-app-message/InAppMessage';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
+import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -571,6 +572,7 @@ export default () => {
           <BlurContainer />
           <PinModal />
           <BiometricModal />
+          <ImportLedgerWalletModal />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

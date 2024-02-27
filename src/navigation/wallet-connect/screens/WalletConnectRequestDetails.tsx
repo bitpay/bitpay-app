@@ -250,6 +250,7 @@ const WalletConnectRequestDetails = () => {
         case 'invalid password':
         case 'password canceled':
         case 'biometric check failed':
+        case 'user denied transaction':
           setApproveButtonState('failed');
           await sleep(800);
           setApproveButtonState('loading');

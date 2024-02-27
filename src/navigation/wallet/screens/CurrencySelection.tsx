@@ -770,6 +770,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
           selectionMode={selectionMode}
           onToggle={memoizedOnToggle}
           onViewAllTokensPressed={memoizedOnViewAllPressed}
+          disableCheckbox={!!key?.hardwareSource}
         />
       );
     },

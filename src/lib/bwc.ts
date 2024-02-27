@@ -1,5 +1,11 @@
 import BWC from 'bitcore-wallet-client';
-import {APP_NAME, APP_VERSION} from '../constants/config';
+import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
+import {
+  APP_NAME,
+  APP_VERSION,
+  BASE_BWS_URL,
+  BWC_TIMEOUT,
+} from '../constants/config';
 
 interface KeyOpts {
   seedType: string;
@@ -29,9 +35,9 @@ export class BwcProvider {
 
   public getClient(credentials?: string) {
     const bwc = new BWC({
-      baseUrl: 'https://bws.bitpay.com/bws/api', // 'http://localhost:3232/bws/api', uncomment for local testing
+      baseUrl: BASE_BWS_URL,
       verbose: true,
-      timeout: 100000,
+      timeout: BWC_TIMEOUT,
       transports: ['polling'],
       bp_partner: APP_NAME,
       bp_partner_version: APP_VERSION,
@@ -89,6 +95,10 @@ export class BwcProvider {
 
   public getUtils() {
     return BWC.Utils;
+  }
+
+  public getConstants() {
+    return Constants;
   }
 
   public getPayProV2() {

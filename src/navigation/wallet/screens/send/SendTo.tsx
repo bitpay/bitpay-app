@@ -180,8 +180,8 @@ export const BuildKeyWalletRow = (
           (IsUtxoCoin(currencyAbbreviation) ||
             (!IsUtxoCoin(currencyAbbreviation) && id !== currentWalletId)) &&
           network === currentNetwork &&
-          credentials.walletName
-            .toLowerCase()
+          credentials?.walletName
+            ?.toLowerCase()
             .includes(searchInput.toLowerCase()) &&
           credentials.isComplete(),
       )
