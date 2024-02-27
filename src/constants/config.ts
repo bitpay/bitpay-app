@@ -4,7 +4,6 @@ import {Network} from '.';
 
 export const STATIC_CONTENT_CARDS_ENABLED = true;
 export const APP_ANALYTICS_ENABLED = !__DEV__;
-export const METHOD_ENV = __DEV__ ? 'dev' : 'production';
 
 // GENERAL
 export const APP_NAME = 'bitpay';
@@ -63,6 +62,11 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
     [Network.mainnet]: 'polygonscan.com/',
     [Network.testnet]: 'mumbai.polygonscan.com/',
   },
+};
+
+export const METHOD_ENVS = {
+  [Network.mainnet]: 'production',
+  [Network.testnet]: 'dev',
 };
 
 export const PROTOCOL_NAME: {[key in string]: any} = {
