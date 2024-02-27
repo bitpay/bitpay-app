@@ -217,7 +217,6 @@ const AddWallet = ({
   const [singleAddress, setSingleAddress] = useState(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
-  const network = useAppSelector(({APP}) => APP.network);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const [tokenAddress, setTokenAddress] = useState<string | undefined>(
     _tokenAddress,
@@ -416,7 +415,7 @@ const AddWallet = ({
             },
             options: {
               password,
-              network: isTestnet ? Network.testnet : network,
+              network: isTestnet ? Network.testnet : Network.mainnet,
               useNativeSegwit,
               singleAddress,
               walletName: walletName === currencyName ? undefined : walletName,

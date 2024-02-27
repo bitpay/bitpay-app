@@ -69,10 +69,6 @@ export const startCreateKey =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const state = getState();
-        const network = state.APP.network;
-        const keys = state.WALLET.keys;
-
         const _key = BWC.createKey({
           seedType: 'new',
         });
@@ -81,9 +77,6 @@ export const startCreateKey =
           createMultipleWallets({
             key: _key,
             currencies,
-            options: {
-              network,
-            },
           }),
         );
 
@@ -259,7 +252,7 @@ const createMultipleWallets =
       isToken: boolean;
       tokenAddress?: string;
     }>;
-    options: CreateOptions;
+    options?: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
     const {
