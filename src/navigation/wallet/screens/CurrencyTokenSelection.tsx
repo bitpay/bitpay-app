@@ -32,7 +32,6 @@ import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults
 import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {
-  ContextHandler,
   CurrencySelectionContainer,
   CurrencySelectionMode,
   SearchContainer,
@@ -46,7 +45,6 @@ export type CurrencyTokenSelectionScreenParamList = {
   hideCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
   onToggle: (id: string, chain: string, tokenAddress?: string) => any;
-  contextHandler: () => ContextHandler;
 };
 
 const SearchContainerLinkRow = styled.View`
@@ -85,8 +83,6 @@ const CurrencyTokenSelectionScreen: React.VFC<
   const {t} = useTranslation();
   const theme = useTheme();
   const {params} = route;
-  const {onCtaPress, ctaTitle, selectedCurrencies} =
-    params.contextHandler() || {};
   const [chain, setChain] = useState(params.currency);
   const [tokens, setTokens] = useState(params.tokens);
   const [searchFilter, setSearchFilter] = useState('');
@@ -360,21 +356,19 @@ const CurrencyTokenSelectionScreen: React.VFC<
         <CurrencySelectionNoResults query={searchFilter} />
       )}
 
-      {onCtaPress && selectedCurrencies?.length > 0 ? (
-        <CtaContainer
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 4},
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 5,
-            marginTop: 16,
-          }}>
-          <Button onPress={onCtaPress} buttonStyle={'primary'}>
-            {ctaTitle || t('Continue')}
-          </Button>
-        </CtaContainer>
-      ) : null}
+      <CtaContainer
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 5,
+          marginTop: 16,
+        }}>
+        <Button onPress={() => navigation.goBack()} buttonStyle={'primary'}>
+          {t('Accept')}
+        </Button>
+      </CtaContainer>
     </CurrencySelectionContainer>
   );
 };

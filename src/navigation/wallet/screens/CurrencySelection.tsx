@@ -525,14 +525,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
     }
   };
 
-  const contextHandlerRef = useRef(contextHandler);
-  contextHandlerRef.current = contextHandler;
-
-  const memoizedContextHandler = useCallback(
-    (): ContextHandler => contextHandlerRef.current(),
-    [],
-  );
-
   const {onCtaPress, ctaTitle, headerTitle, selectionMode} =
     contextHandler() || {};
 
@@ -748,16 +740,9 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         description: item.description,
         selectionMode,
         onToggle: memoizedOnToggle,
-        contextHandler: memoizedContextHandler,
       });
     };
-  }, [
-    memoizedOnToggle,
-    memoizedContextHandler,
-    navigation,
-    key,
-    selectionMode,
-  ]);
+  }, [memoizedOnToggle, navigation, key, selectionMode]);
 
   const renderItem: ListRenderItem<CurrencySelectionListItem> = useCallback(
     ({item}) => {
