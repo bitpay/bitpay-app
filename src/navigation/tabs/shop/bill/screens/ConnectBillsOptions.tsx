@@ -142,7 +142,7 @@ const ConnectBillsOptions = ({
       BitPayIdEffects.startFetchBasicInfo(apiToken, {
         includeExternalData: true,
       }),
-    );
+    ).catch(() => {});
     setContinueButtonState(undefined);
     dispatch(
       AppActions.showBottomNotificationModal({

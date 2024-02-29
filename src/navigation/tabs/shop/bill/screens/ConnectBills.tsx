@@ -38,7 +38,7 @@ const ConnectBills = ({
   const apiToken = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.apiToken[appNetwork],
   );
-  const [isInitialApplication] = useState(!user?.methodEntityId);
+  const [isInitialApplication] = useState(!user?.methodVerified);
 
   useLayoutEffect(() => {
     dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
@@ -90,10 +90,14 @@ const ConnectBills = ({
       );
     }
     if (isInitialApplication) {
-      dispatch(Analytics.track('Bill Pay - Successful Application'));
-      dispatch(Analytics.track('Bill Pay - Exited Application'));
-      await fetchMethodEntityIdIfNeeded();
+      fetchMethodEntityIdIfNeeded().then(updatedUser => {
+        if (updatedUser?.methodVerified) {
+          dispatch(Analytics.track('Bill Pay - Successful Application'));
+        }
+        dispatch(Analytics.track('Bill Pay - Exited Application'));
+      });
     }
+
     const latestAccounts = await dispatch(
       ShopEffects.startGetBillPayAccounts(),
     );
@@ -115,12 +119,12 @@ const ConnectBills = ({
   };
 
   const fetchMethodEntityIdIfNeeded = async () => {
-    if (user?.methodEntityId) {
-      return;
+    if (user?.methodEntityId && user?.methodVerified) {
+      return user;
     }
     return dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken))
-      .then(() => {})
-      .catch(() => {});
+      .then(updatedUser => updatedUser)
+      .catch(() => user);
   };
 
   const handleNavigationStateChange = (event: any) => {

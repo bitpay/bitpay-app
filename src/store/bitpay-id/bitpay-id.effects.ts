@@ -5,7 +5,7 @@ import {
   RegisterErrorResponse,
 } from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
-import {InitialUserData} from '../../api/user/user.types';
+import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
 import Dosh from '../../lib/dosh';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
@@ -525,17 +525,24 @@ export const startDisconnectBitPayId =
 export const startFetchBasicInfo =
   (
     token: string,
-    params?: {includeExternalData: boolean},
-  ): Effect<Promise<void>> =>
+    params: {includeExternalData?: boolean} = {
+      includeExternalData: false,
+    },
+  ): Effect<Promise<BasicUserInfo>> =>
   async (dispatch, getState) => {
     try {
       const {APP} = getState();
-      const user = await UserApi.fetchBasicInfo(token, params);
+      const user = await UserApi.fetchBasicInfo(token, {
+        ...params,
+        includeMethodData: true,
+      });
       dispatch(BitPayIdActions.successFetchBasicInfo(APP.network, user));
+      return user;
     } catch (err) {
       dispatch(LogActions.error('Failed to fetch basic user info'));
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedFetchBasicInfo());
+      throw err;
     }
   };
 

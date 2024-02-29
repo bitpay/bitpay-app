@@ -52,6 +52,7 @@ export interface User {
   legalFamilyName?: string;
   legalGivenName?: string;
   methodEntityId?: string;
+  methodVerified?: boolean;
   phone?: string;
   address?: string;
   dateOfBirth?: string;

@@ -148,14 +148,30 @@ export const Bills = () => {
     }
   };
 
-  const verifyUserInfo = async () => {
+  const connectBills = async () => {
+    if (user?.methodVerified) {
+      navigation.navigate(BillScreens.CONNECT_BILLS_OPTIONS, {});
+      return;
+    }
     setConnectButtonState('loading');
-    await dispatch(
-      BitPayIdEffects.startFetchBasicInfo(apiToken, {
-        includeExternalData: true,
-      }),
-    );
-    setConnectButtonState(undefined);
+    try {
+      const userInfo = await dispatch(
+        BitPayIdEffects.startFetchBasicInfo(apiToken, {
+          includeExternalData: true,
+        }),
+      );
+      setConnectButtonState(undefined);
+      if (userInfo.methodVerified) {
+        navigation.navigate(BillScreens.CONNECT_BILLS_OPTIONS, {});
+        return;
+      }
+    } catch (err) {
+      setConnectButtonState(undefined);
+    }
+    verifyUserInfo();
+  };
+
+  const verifyUserInfo = async () => {
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
@@ -172,7 +188,7 @@ export const Bills = () => {
                 tokenType: 'auth',
               });
               dispatch(Analytics.track('Bill Pay - Confirmed User Info'));
-              if (!user?.methodEntityId) {
+              if (!user?.methodVerified) {
                 dispatch(Analytics.track('Bill Pay - Started Application'));
               }
             },
@@ -235,7 +251,7 @@ export const Bills = () => {
                     state={connectButtonState}
                     height={50}
                     onPress={async () => {
-                      verifyUserInfo();
+                      connectBills();
                       dispatch(
                         Analytics.track('Bill Pay - Clicked Connect My Bills'),
                       );
@@ -294,10 +310,7 @@ export const Bills = () => {
                       <Button
                         buttonType={'link'}
                         onPress={() => {
-                          navigation.navigate(
-                            BillScreens.CONNECT_BILLS_OPTIONS,
-                            {},
-                          );
+                          connectBills();
                           dispatch(
                             Analytics.track(
                               'Bill Pay - Clicked Connect More Bills',
@@ -317,10 +330,7 @@ export const Bills = () => {
                         height={50}
                         buttonStyle="secondary"
                         onPress={() => {
-                          navigation.navigate(
-                            BillScreens.CONNECT_BILLS_OPTIONS,
-                            {},
-                          );
+                          connectBills();
                           dispatch(
                             Analytics.track(
                               'Bill Pay - Clicked Connect More Bills',
