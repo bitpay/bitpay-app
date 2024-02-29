@@ -117,7 +117,7 @@ export const HamburgerContainer = styled.View`
 `;
 
 export const LayoutToggleContainer = styled.View`
-  min-height: 120px;
+  min-height: 100px;
   margin-top: 30px;
   padding: 0 ${ScreenGutter};
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ebecee')};

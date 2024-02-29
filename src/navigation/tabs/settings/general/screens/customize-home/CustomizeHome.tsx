@@ -20,8 +20,6 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {sleep} from '../../../../../../utils/helper-methods';
 import haptic from '../../../../../../components/haptic-feedback/haptic';
-import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import {ScreenOptions} from '../../../../../../styles/tabNavigator';
 import {useTheme} from 'styled-components/native';
 import {
   CarouselSvg,
@@ -41,9 +39,39 @@ import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../../../../store/app/app.effects';
 import {Analytics} from '../../../../../../store/analytics/analytics.effects';
+import styled from 'styled-components/native';
+import {
+  Action,
+  LightBlack,
+  Slate,
+  White,
+} from '../../../../../../styles/colors';
 
-// Layout selector
-const Noop = () => null;
+const LayoutButtonsContainer = styled.View`
+  background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
+  margin: 15px 20px 20px 0;
+  border-radius: 25px;
+  padding: 5px 0;
+  flex-direction: row;
+  justify-content: space-around;
+`;
+
+const ButtonContainer = styled.TouchableOpacity<{selected: boolean}>`
+  background-color: ${({selected}) => (selected ? Action : 'transparent')};
+  padding: 15px 25px 13px 25px;
+  flex-direction: row;
+  align-content: space-around;
+  border-radius: 20px;
+`;
+
+const ButtonText = styled.Text<{selected: boolean}>`
+  color: ${({theme, selected}) =>
+    selected ? White : theme.dark ? theme.colors.text : Slate};
+  font-weight: 600;
+  font-size: 16px;
+  margin-top: -5px;
+  margin-left: 15px;
+`;
 
 const CustomizeHomeSettings = () => {
   const {t} = useTranslation();
@@ -68,7 +96,6 @@ const CustomizeHomeSettings = () => {
   const [visibleList, setVisibleList] = useState(_visible);
   const [dirty, setDirty] = useState(false);
   const [hiddenList, setHiddenList] = useState(_hidden);
-  const Tab = createMaterialTopTabNavigator();
 
   const toggle = useCallback(
     (item: CustomizeItem) => {
@@ -162,52 +189,30 @@ const CustomizeHomeSettings = () => {
     <CustomizeHomeContainer>
       <LayoutToggleContainer>
         <H7>{t('Home Layout')}</H7>
-        <Tab.Navigator
-          initialRouteName={layoutType}
-          style={{marginTop: 20}}
-          screenOptions={{
-            ...ScreenOptions(),
-            tabBarShowLabel: true,
-            tabBarItemStyle: {
-              flexDirection: 'row',
-            },
-            tabBarIconStyle: {
-              justifyContent: 'center',
-            },
-          }}
-          screenListeners={{
-            tabPress: tab => {
-              haptic('soft');
-              if (tab.target) {
-                setDirty(true);
-                const _layoutType = tab.target.split('-')[0] as
-                  | 'carousel'
-                  | 'listView';
-                setLayoutType(_layoutType);
-              }
-            },
-          }}>
-          <Tab.Screen
-            name={'carousel'}
-            component={Noop}
-            options={{
-              tabBarLabel: t('Carousel'),
-              tabBarIcon: ({focused}) => (
-                <CarouselSvg focused={focused} theme={theme} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name={'listView'}
-            component={Noop}
-            options={{
-              tabBarLabel: t('List View'),
-              tabBarIcon: ({focused}) => (
-                <ListViewSvg focused={focused} theme={theme} />
-              ),
-            }}
-          />
-        </Tab.Navigator>
+        <LayoutButtonsContainer>
+          <ButtonContainer
+            selected={layoutType === 'listView'}
+            onPress={() => {
+              setDirty(true);
+              setLayoutType('listView');
+            }}>
+            <ListViewSvg focused={layoutType === 'listView'} theme={theme} />
+            <ButtonText selected={layoutType === 'listView'}>
+              {t('List View')}
+            </ButtonText>
+          </ButtonContainer>
+          <ButtonContainer
+            selected={layoutType === 'carousel'}
+            onPress={() => {
+              setDirty(true);
+              setLayoutType('carousel');
+            }}>
+            <CarouselSvg focused={layoutType === 'carousel'} theme={theme} />
+            <ButtonText selected={layoutType === 'carousel'}>
+              {t('Carousel')}
+            </ButtonText>
+          </ButtonContainer>
+        </LayoutButtonsContainer>
       </LayoutToggleContainer>
 
       <DraggableFlatList
