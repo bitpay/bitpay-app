@@ -27,7 +27,13 @@ import RampLogo from '../../../../components/icons/external-services/ramp/ramp-l
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
 import TransakLogo from '../../../../components/icons/external-services/transak/transak-logo';
-import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
+import {
+  Action,
+  LightBlack,
+  LinkBlue,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
@@ -72,7 +78,7 @@ const PaymentMethodCheckboxTexts = styled.View`
 
 const PaymentMethodLabel = styled(BaseText)`
   font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
   margin-bottom: 5px;
 `;
 
@@ -110,7 +116,6 @@ const PaymentMethodsModal = ({
     switch (context) {
       case 'buyCrypto':
         return getBuyEnabledPaymentMethods(
-          locationData,
           currency,
           coin,
           chain,
@@ -120,7 +125,6 @@ const PaymentMethodsModal = ({
 
       case 'sellCrypto':
         return getSellEnabledPaymentMethods(
-          locationData,
           currency,
           coin,
           chain,
@@ -232,7 +236,7 @@ const PaymentMethodsModal = ({
           <ModalHeader>
             <ModalHeaderText>
               {context === 'sellCrypto'
-                ? t('Payout Method')
+                ? t('Withdrawal Method')
                 : t('Payment Method')}
             </ModalHeaderText>
             <ModalHeaderRight>

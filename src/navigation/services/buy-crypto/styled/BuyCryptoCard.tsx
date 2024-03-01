@@ -10,7 +10,7 @@ import {BaseText} from '../../../../components/styled/Text';
 export const BuyCryptoItemCard = styled.TouchableOpacity`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
   border-radius: 9px;
-  margin: 20px 15px;
+  margin: 8px 16px;
   padding: 14px;
 `;
 

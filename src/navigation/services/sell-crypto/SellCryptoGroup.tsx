@@ -47,7 +47,7 @@ const SellCryptoGroup: React.FC<SellCryptoProps> = ({SellCrypto}) => {
         name={SellCryptoScreens.ROOT}
         component={SellCryptoRoot}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Order Summary')}</HeaderTitle>,
         }}
       />
       <SellCrypto.Screen
