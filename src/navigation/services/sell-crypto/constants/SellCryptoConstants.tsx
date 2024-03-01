@@ -4,6 +4,11 @@ import React from 'react';
 import BankIcon from '../../../../../assets/img/services/payment-methods/icon-bank.svg';
 import CreditCardIcon from '../../../../../assets/img/services/payment-methods/icon-creditcard.svg';
 import DebitCardIcon from '../../../../../assets/img/services/payment-methods/icon-debitcard.svg';
+import {
+  countriesWithACH,
+  countriesWithGBPTransfer,
+  countriesWithSEPA,
+} from '../../constants/PaymentMethodsConstants';
 import {SellCryptoExchangeKey} from '../utils/sell-crypto-utils';
 
 // ach_bank_transfer, credit_debit_card, sepa_bank_transfer and gbp_bank_transfer
@@ -26,6 +31,7 @@ export interface PaymentMethod {
     [key in SellCryptoExchangeKey]: boolean;
   };
   enabled: boolean;
+  supportedCountries?: string[];
 }
 
 export const PaymentMethodsAvailable: PaymentMethods = {
@@ -36,6 +42,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
     },
+    supportedCountries: countriesWithACH,
     enabled: true,
   },
   creditCard: {
@@ -63,6 +70,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
     },
+    supportedCountries: countriesWithSEPA,
     enabled: true,
   },
   gbpBankTransfer: {
@@ -72,6 +80,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     supportedExchanges: {
       moonpay: true,
     },
+    supportedCountries: countriesWithGBPTransfer,
     enabled: true,
   },
 };

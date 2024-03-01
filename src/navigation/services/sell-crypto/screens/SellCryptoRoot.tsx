@@ -58,6 +58,7 @@ import {
   getAvailableSellCryptoFiatCurrencies,
   isPaymentMethodSupported,
   SellCryptoExchangeKey,
+  getDefaultPaymentMethod,
 } from '../utils/sell-crypto-utils';
 import {useTranslation} from 'react-i18next';
 import {
@@ -128,6 +129,7 @@ import SellCryptoBalanceSkeleton from './SellCryptoBalanceSkeleton';
 import cloneDeep from 'lodash.clonedeep';
 import SellCryptoLoadingQuoteSkeleton from './SellCryptoQuoteSkeleton';
 import haptic from '../../../../components/haptic-feedback/haptic';
+import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -489,15 +491,35 @@ const SellCryptoRoot = ({
   };
 
   const continueToViewOffers = async () => {
+    if (!selectedWallet) {
+      return;
+    }
+
     let address: string = '';
     try {
       address = (await dispatch<any>(
-        createWalletAddress({wallet: selectedWallet!, newAddress: false}),
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
       console.error(err);
+      const msg = 'Error when trying to generate wallet address.';
       const reason = 'createWalletAddress Error';
-      // showMoonpayError(err, reason); TODO: handle errors
+      showError(msg, undefined, reason, undefined, true);
+      return;
+    }
+
+    if (
+      selectedWallet.currencyAbbreviation.toLowerCase() === 'bch' &&
+      selectedWallet.chain.toLowerCase() === 'bch'
+    ) {
+      address = dispatch(
+        GetProtocolPrefixAddress(
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.network,
+          address,
+          selectedWallet.chain,
+        ),
+      );
     }
 
     dispatch(
@@ -505,19 +527,19 @@ const SellCryptoRoot = ({
         fiatAmount: amount,
         fiatCurrency,
         paymentMethod: selectedPaymentMethod!.method,
-        coin: selectedWallet!.currencyAbbreviation.toLowerCase(),
-        chain: selectedWallet!.chain?.toLowerCase(),
+        coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+        chain: selectedWallet.chain?.toLowerCase(),
       }),
     );
 
     const newId = uuid.v4().toString();
-    const externalTransactionId = `${selectedWallet!.id}-${newId}`;
+    const externalTransactionId = `${selectedWallet.id}-${newId}`;
 
     const requestData: MoonpayGetSellSignedPaymentUrlRequestData = {
       env: moonpayEnv,
       baseCurrencyCode: getMoonpaySellFixedCurrencyAbbreviation(
-        selectedWallet!.currencyAbbreviation,
-        selectedWallet!.chain,
+        selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
       ),
       baseCurrencyAmount: amount,
       externalTransactionId: externalTransactionId,
@@ -548,9 +570,9 @@ const SellCryptoRoot = ({
 
     const newData: MoonpaySellOrderData = {
       env: __DEV__ ? 'dev' : 'prod',
-      wallet_id: selectedWallet!.id,
-      coin: cloneDeep(selectedWallet!.currencyAbbreviation).toUpperCase(),
-      chain: cloneDeep(selectedWallet!.chain).toLowerCase(),
+      wallet_id: selectedWallet.id,
+      coin: cloneDeep(selectedWallet.currencyAbbreviation).toUpperCase(),
+      chain: cloneDeep(selectedWallet.chain).toLowerCase(),
       external_id: externalTransactionId,
       created_on: Date.now(),
       crypto_amount: amount,
@@ -558,6 +580,7 @@ const SellCryptoRoot = ({
       fiat_currency: sellQuoteData?.quoteCurrency?.code
         ? cloneDeep(sellQuoteData.quoteCurrency.code).toUpperCase()
         : fiatCurrency,
+      payment_method: selectedPaymentMethod!.method,
       fiat_fee_amount: Number(sellQuoteData!.totalFee),
       fiat_receiving_amount: Number(sellQuoteData!.quoteCurrencyAmount),
       status: 'createdOrder',
@@ -567,7 +590,7 @@ const SellCryptoRoot = ({
     dispatch(
       SellCryptoActions.successSellOrderMoonpay({
         moonpaySellOrderData: newData,
-      })
+      }),
     );
 
     dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
@@ -588,8 +611,11 @@ const SellCryptoRoot = ({
   };
 
   const setDefaultPaymentMethod = () => {
-    setSelectedPaymentMethod(PaymentMethodsAvailable.debitCard);
-    checkAndSetFiatCurrency(PaymentMethodsAvailable.debitCard.method);
+    const defaultPaymentMethod: PaymentMethod = getDefaultPaymentMethod(
+      locationData?.countryShortCode,
+    );
+    setSelectedPaymentMethod(defaultPaymentMethod);
+    checkAndSetFiatCurrency(defaultPaymentMethod.method);
   };
 
   const checkAndSetFiatCurrency = (paymentMethodKey: PaymentMethodKey) => {
@@ -606,13 +632,6 @@ const SellCryptoRoot = ({
     if (!selectedWallet || !selectedPaymentMethod) {
       return;
     }
-    // if (
-    //   selectedPaymentMethod.method === 'sepaBankTransfer' &&
-    //   !locationData?.isEuCountry
-    // ) {
-    //   setDefaultPaymentMethod();
-    //   return;
-    // }
     if (
       (preSetPartner &&
         SellCryptoSupportedExchanges.includes(preSetPartner) &&
@@ -635,12 +654,12 @@ const SellCryptoRoot = ({
         ))
     ) {
       logger.debug(
-        `Selected payment method available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}`,
+        `Selected withdrawal method available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}`,
       );
       return;
     } else {
       logger.debug(
-        `Selected payment method not available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}. Set to default.`,
+        `Selected withdrawal method not available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}. Set to default.`,
       );
       setDefaultPaymentMethod();
     }
@@ -731,8 +750,7 @@ const SellCryptoRoot = ({
     try {
       const requestData: MoonpayGetCurrenciesRequestData = {
         env: moonpaySellEnv,
-      }
-      // "isSellSupported":true && "supportsTestMode":true && "isSuspended":false && "type":"crypto"
+      };
       const moonpayAllCurrencies: MoonpayCurrency[] =
         await moonpayGetCurrencies(requestData);
       const moonpayAllSellCurrencies = moonpayAllCurrencies.filter(currency => {
@@ -786,12 +804,14 @@ const SellCryptoRoot = ({
             metadata,
             minSellAmount,
             maxSellAmount,
+            supportsTestMode,
           }: {
             code: string;
             name: string;
             metadata?: MoonpayCurrencyMetadata;
             minSellAmount?: number;
             maxSellAmount?: number;
+            supportsTestMode?: boolean;
           }) => {
             const chain = getChainFromMoonpayNetworkCode(
               code,
@@ -809,6 +829,7 @@ const SellCryptoRoot = ({
                 min: minSellAmount,
                 max: maxSellAmount,
               },
+              supportsTestMode,
             };
           },
         );
@@ -946,7 +967,6 @@ const SellCryptoRoot = ({
 
   useEffect(() => {
     if (sellCryptoSupportedCoins && sellCryptoSupportedCoins.length > 0) {
-
       const awaitSleep = async (sleepTime: number) => {
         await sleep(sleepTime);
       };
@@ -992,7 +1012,9 @@ const SellCryptoRoot = ({
 
   useEffect(() => {
     // get sell quote
-    if (!selectedWallet || !selectedPaymentMethod || amount === 0) {return;}
+    if (!selectedWallet || !selectedPaymentMethod || amount === 0) {
+      return;
+    }
 
     const _moonpayGetSellQuote = async (
       requestData: MoonpayGetSellQuoteRequestData,
@@ -1001,7 +1023,8 @@ const SellCryptoRoot = ({
         setLoadingQuote(true);
         const sellQuote = await moonpayGetSellQuote(requestData);
         if (sellQuote?.quoteCurrencyAmount) {
-          sellQuote.totalFee = sellQuote.extraFeeAmount + sellQuote.feeAmount;
+          sellQuote.totalFee =
+            Number(sellQuote.extraFeeAmount) + Number(sellQuote.feeAmount);
           setSellQuoteData(sellQuote);
           setLoadingQuote(false);
         } else {
@@ -1162,7 +1185,7 @@ const SellCryptoRoot = ({
             onPress={() => {
               showModal('paymentMethod');
             }}>
-            <BuyCryptoItemTitle>{t('Payout Method')}</BuyCryptoItemTitle>
+            <BuyCryptoItemTitle>{t('Withdrawal Method')}</BuyCryptoItemTitle>
             {!selectedPaymentMethod && (
               <ActionsContainer>
                 <SelectedOptionContainer style={{backgroundColor: Action}}>
@@ -1170,7 +1193,7 @@ const SellCryptoRoot = ({
                     style={{color: White}}
                     numberOfLines={1}
                     ellipsizeMode={'tail'}>
-                    t{'Select Payment Method'}
+                    t{'Select Withdrawal Method'}
                   </SelectedOptionText>
                   <ArrowContainer>
                     <SelectorArrowDown
@@ -1205,7 +1228,7 @@ const SellCryptoRoot = ({
             onPress={() => {
               showModal('amount');
             }}>
-            <BuyCryptoItemTitle>{t('Amount to Sell')}</BuyCryptoItemTitle>
+            <BuyCryptoItemTitle>{t('Sell Amount')}</BuyCryptoItemTitle>
             <ActionsContainer>
               <SelectedOptionContainer>
                 <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
@@ -1215,7 +1238,7 @@ const SellCryptoRoot = ({
               <SelectedOptionCol>
                 {amount && amount > 0 ? (
                   <>
-                    <DataText>{amount}</DataText>
+                    <DataText>{Number(amount.toFixed(8))}</DataText>
                     <ArrowContainer>
                       <SelectorArrowRight
                         {...{
@@ -1303,7 +1326,7 @@ const SellCryptoRoot = ({
                 <SellTermsContainer>
                   <TermsText>
                     {t(
-                      'This is an estimated price quote. The final amount will vary depending on when the Exchange receive your crypto and the fiat currency enabled for the selected payout method.',
+                      'This is an estimated price quote. The final amount will vary depending on when the Exchange receive your crypto and the fiat currency enabled for the selected withdrawal method.',
                     )}
                   </TermsText>
                   <TermsText>
@@ -1327,7 +1350,7 @@ const SellCryptoRoot = ({
             onPress={() => {
               checkIfErc20Token();
             }}>
-            {t('Go to Checkout')}
+            {t('Continue')}
           </Button>
         </CtaContainer>
       </ScrollView>
@@ -1350,7 +1373,6 @@ const SellCryptoRoot = ({
           hideModal('walletSelector');
           if (selectedWallet) {
             setSelectedWallet(selectedWallet);
-            // updateWalletStatus(selectedWallet);
           }
         }}
       />

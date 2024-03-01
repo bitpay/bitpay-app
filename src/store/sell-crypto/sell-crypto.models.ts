@@ -1,3 +1,5 @@
+import {PaymentMethodKey} from '../../navigation/services/sell-crypto/constants/SellCryptoConstants';
+
 export type MoonpaySellOrderStatus =
   | 'createdOrder'
   | 'bitpayPending'
@@ -19,6 +21,7 @@ export interface MoonpaySellOrderData {
   fiat_receiving_amount: number;
   fiat_fee_amount: number;
   fiat_currency: string;
+  payment_method: PaymentMethodKey; // bitpay-app payment method id
   external_id: string; // bitpay-app custom id
   status: MoonpaySellOrderStatus;
   transaction_id?: string; // id form moonpay
@@ -37,6 +40,7 @@ export interface MoonpaySellIncomingData {
   baseCurrencyAmount?: string | number;
   fiatAmount?: number;
   fiatCurrencyCode?: string;
+  paymentMethod?: PaymentMethodKey;
   totalFee?: number;
   depositWalletAddress?: string;
   txSentOn?: number;

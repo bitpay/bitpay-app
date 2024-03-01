@@ -52,6 +52,9 @@ export const sellCryptoReducer = (
           fiat_currency:
             moonpaySellIncomingData.fiatCurrencyCode ??
             state.moonpay[moonpaySellIncomingData.externalId].fiat_currency,
+          payment_method:
+            moonpaySellIncomingData.paymentMethod ??
+            state.moonpay[moonpaySellIncomingData.externalId].payment_method,
           tx_sent_on: moonpaySellIncomingData.txSentOn
             ? Number(moonpaySellIncomingData.txSentOn)
             : state.moonpay[moonpaySellIncomingData.externalId].tx_sent_on,

@@ -7,6 +7,7 @@ import {
   useNavigation,
   CommonActions,
 } from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import styled from 'styled-components/native';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -46,7 +47,6 @@ import {
   getCWCChain,
   sleep,
 } from '../../../../utils/helper-methods';
-import MoonpaySellPoliciesModal from '../components/MoonpaySellPoliciesModal';
 import {
   ItemDivisor,
   RowDataContainer,
@@ -60,9 +60,12 @@ import {
   CheckboxText,
   PoliciesContainer,
   PoliciesText,
-  ArrowContainer,
+  CheckBoxCol,
 } from '../../swap-crypto/styled/SwapCryptoCheckout.styled';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -72,7 +75,6 @@ import {
   createTxProposal,
   publishAndSign,
 } from '../../../../store/wallet/effects/send/send';
-import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../../store';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
@@ -80,15 +82,26 @@ import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../../tabs/settings/external-services/ExternalServicesGroup';
 import {
+  MoonpayGetSellQuoteRequestData,
   MoonpaySellIncomingData,
   MoonpaySellOrderData,
   MoonpaySellTransactionDetails,
 } from '../../../../store/sell-crypto/sell-crypto.models';
-import {moonpaySellEnv} from '../utils/moonpay-sell-utils';
-import {moonpayGetSellTransactionDetails} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
+import {
+  getMoonpaySellFixedCurrencyAbbreviation,
+  getMoonpaySellPayoutMethodFormat,
+  getPayoutMethodKeyFromMoonpayType,
+  moonpaySellEnv,
+} from '../utils/moonpay-sell-utils';
+import {
+  moonpayGetSellQuote,
+  moonpayGetSellTransactionDetails,
+} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {MoonpaySettingsProps} from '../../../../navigation/tabs/settings/external-services/screens/MoonpaySettings';
 import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
+import haptic from '../../../../components/haptic-feedback/haptic';
+import {PaymentMethodsAvailable} from '../constants/SellCryptoConstants';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -132,14 +145,13 @@ const MoonpaySellCheckout: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showCheckTermsMsg, setShowCheckTermsMsg] = useState(false);
+  const [showNewQuoteTermsMsg, setShowNewQuoteTermsMsg] = useState(false);
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [amountExpected, setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
 
   const [totalExchangeFee, setTotalExchangeFee] = useState<number>();
-  const [moonpaySellPoliciesModalVisible, setMoonpaySellPoliciesModalVisible] =
-    useState(false);
   const [paymentExpired, setPaymentExpired] = useState(false);
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[wallet.keyId],
@@ -152,6 +164,11 @@ const MoonpaySellCheckout: React.FC = () => {
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
   let status: string;
   let payinAddress: string;
+
+  const copyText = (text: string) => {
+    haptic('impactLight');
+    Clipboard.setString(text);
+  };
 
   const paymentTimeControl = (expires: string | number): void => {
     const expirationTime = Math.floor(new Date(expires).getTime() / 1000);
@@ -197,46 +214,109 @@ const MoonpaySellCheckout: React.FC = () => {
     setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
   };
 
-  // TODO : Review if this is neccessary payinAddress => toAddress
-  // if (wallet.currencyAbbreviation.toLowerCase() === 'bch') {
-  //   payinAddress = BWC.getBitcoreCash()
-  //     .Address(data.result.payinAddress)
-  //     .toString(true);
-  // } else {
-  //   payinAddress = data.result.payinAddress;
-  // }
-
   // TODO: destinationTag ????
 
   const init = async () => {
-    // const requestData: any = {
-    //   env: moonpaySellEnv === 'sandbox' ? 'dev' : 'prod',
-    // }
-    // if (sellOrder.transaction_id) {
-    //   requestData.transactionId = sellOrder.transaction_id
-    // } else if (sellOrder.external_id) {
-    //   requestData.externalId = sellOrder.external_id
-    // }
-
     let sellTxDetails: MoonpaySellTransactionDetails;
     try {
       sellTxDetails = await moonpayGetSellTransactionDetails(
         sellOrder.transaction_id,
         sellOrder.external_id,
       );
-      setTxData(sellTxDetails);
     } catch (err) {
-      // TODO: handle this
+      logger.debug(
+        `Error trying to get the Sell Transaction Details from MoonPay for id: ${sellOrder.transaction_id}`,
+      );
+      showError(
+        err,
+        'moonpayGetSellTransactionDetails Error. Could not get order details from MoonPay',
+      );
       return;
     }
+
+    if (sellTxDetails.flow === 'floating') {
+      // The floating flow is for non-US users. Means the fiat price that MoonPay sends could have slight differences due to the fluctuating price of crypto.
+      // For that reason we get an updated quote and set a custom payTill
+
+      if (
+        sellTxDetails.payoutMethod !==
+        getMoonpaySellPayoutMethodFormat(sellOrder.payment_method)
+      ) {
+        logger.debug(
+          `Selected withdrawal method mismatch. Updated from ${sellOrder.payment_method} to ${sellTxDetails.payoutMethod}`,
+        );
+      }
+
+      const payoutMethod =
+        sellTxDetails.payoutMethod ??
+        getMoonpaySellPayoutMethodFormat(sellOrder.payment_method);
+
+      const requestData: MoonpayGetSellQuoteRequestData = {
+        env: moonpaySellEnv,
+        currencyAbbreviation: getMoonpaySellFixedCurrencyAbbreviation(
+          wallet.currencyAbbreviation,
+          wallet.chain,
+        ),
+        quoteCurrencyCode: sellOrder.fiat_currency ?? 'USD',
+        baseCurrencyAmount:
+          sellTxDetails.baseCurrencyAmount ?? sellOrder.crypto_amount,
+        payoutMethod: payoutMethod,
+      };
+
+      logger.debug(
+        `Sell order type: floating. Getting new quote with: ${JSON.stringify(
+          requestData,
+        )}`,
+      );
+      try {
+        const sellQuote = await moonpayGetSellQuote(requestData);
+        if (sellQuote?.quoteCurrencyAmount) {
+          sellQuote.totalFee = sellQuote.extraFeeAmount + sellQuote.feeAmount;
+
+          if (!sellTxDetails.quoteCurrencyAmount) {
+            sellTxDetails.quoteCurrencyAmount =
+              sellQuote.quoteCurrencyAmount ?? sellOrder.fiat_receiving_amount;
+            sellTxDetails.quoteCurrency.code =
+              sellQuote.quoteCurrency?.code ?? sellOrder.fiat_currency;
+
+            sellTxDetails.feeAmount = Number(sellQuote.feeAmount);
+            sellTxDetails.extraFeeAmount = Number(sellQuote.extraFeeAmount);
+          }
+        } else {
+          logger.debug(
+            'The floating transaction quote could not be updated (quoteCurrencyAmount not present). Previously saved values will be displayed.',
+          );
+        }
+      } catch (err: any) {
+        logger.debug(
+          'The floating transaction quote could not be updated. Previously saved values will be displayed.',
+        );
+        const log = getErrorMsgFromError(err);
+        logger.debug(`moonpayGetSellQuote Error: ${log}`);
+      }
+    }
+
+    setTxData(sellTxDetails);
+
+    if (sellOrder.address_to !== sellTxDetails.depositWallet.walletAddress) {
+      const msg = `The destination address of the original Sell Order does not match the address expected by Moonpay for the id: ${sellOrder.transaction_id}`;
+      showError(
+        msg,
+        'moonpayGetSellTransactionDetails Error. Destination address mismatch',
+      );
+      return;
+    }
+
+    // TODO?: set payTill with a couple of minutes less than quoteExpiresAt, to be safe
+    let payTill: string | number | null = sellTxDetails.quoteExpiresAt;
 
     if (sellTxDetails.quoteExpiredEmailSentAt) {
-      // TODO: handle expired quote
-      return;
+      logger.debug(
+        `The original quote has expired at ${sellTxDetails.quoteExpiredEmailSentAt}. The user should have received an email from Moonpay with a new quote proposal at ${sellTxDetails.quoteExpiredEmailSentAt}.`,
+      );
+      payTill = null;
+      setShowNewQuoteTermsMsg(true);
     }
-
-    // TODO: set payTill with a couple of minutes less than quoteExpiresAt, to be safe
-    let payTill: string | number | null = sellTxDetails.quoteExpiresAt;
 
     if (!payTill) {
       logger.debug(
@@ -264,20 +344,26 @@ const MoonpaySellCheckout: React.FC = () => {
       (amountExpected * presicion!.unitToSatoshi).toFixed(0),
     );
 
+    if (
+      wallet.currencyAbbreviation.toLowerCase() === 'bch' &&
+      wallet.chain.toLowerCase() === 'bch'
+    ) {
+      // use cashaddr wo prefix for BCH
+      const toAddressCashaddr = BWC.getBitcoreCash()
+        .Address(toAddress)
+        .toString(true);
+
+      logger.debug(
+        `BCH wallet, transform toAddress: ${toAddress} to cashaddr: ${toAddressCashaddr}`,
+      );
+      toAddress = toAddressCashaddr;
+    }
+
     createTx(wallet, toAddress, depositSat, destinationTag)
       .then(async ctxp => {
         setCtxp(ctxp);
+        console.log(ctxp);
         setFee(ctxp.fee);
-
-        // const _txData = {
-        //   addressFrom,
-        //   addressTo,
-        //   destinationTag,
-        //   status,
-        //   payinAddress,
-        // };
-        // setTxData(_txData);
-
         setIsLoading(false);
         dispatch(dismissOnGoingProcessModal());
         await sleep(400);
@@ -484,10 +570,32 @@ const MoonpaySellCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, reason?: string) => {
+  const getErrorMsgFromError = (err: any): string => {
+    let msg = t('Something went wrong. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.message && typeof err.message === 'string') {
+          msg = err.message;
+        } else if (err.error && typeof err.error === 'string') {
+          msg = err.error;
+        } else if (err.error?.error && typeof err.error.error === 'string') {
+          msg = err.error.error;
+        }
+      }
+    }
+    return msg;
+  };
+
+  const showError = async (err?: any, reason?: string) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
-    await sleep(1000);
+
+    let msg = getErrorMsgFromError(err);
+
+    logger.error('Moonpay error: ' + msg);
+
     dispatch(
       Analytics.track('Failed Crypto Sell', {
         exchange: 'moonpay',
@@ -497,6 +605,8 @@ const MoonpaySellCheckout: React.FC = () => {
         fromCoin: wallet.currencyAbbreviation || '',
       }),
     );
+
+    await sleep(700);
     dispatch(
       showBottomNotificationModal({
         type: 'error',
@@ -546,9 +656,18 @@ const MoonpaySellCheckout: React.FC = () => {
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
+        <RowDataContainer>
+          <RowLabel>{t('Selling')}</RowLabel>
+          {amountExpected ? (
+            <RowData>
+              {Number(amountExpected.toFixed(6))}{' '}
+              {wallet.currencyAbbreviation.toUpperCase()}
+            </RowData>
+          ) : null}
+        </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>{t('Selling From')}</RowLabel>
+          <RowLabel>{t('From')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
               <CoinIconContainer>
@@ -573,7 +692,6 @@ const MoonpaySellCheckout: React.FC = () => {
         <ItemDivisor />
         <RowDataContainer>
           <RowLabel>{t('Deposit Address')}</RowLabel>
-          {/* <SelectedOptionContainer> */}
           <SendToPill
             icon={
               <CurrencyImage
@@ -590,7 +708,7 @@ const MoonpaySellCheckout: React.FC = () => {
             }
             description={formatCryptoAddress(toAddress)}
             onPress={() => {
-              // copyText(toAddress) // TODO: add copy function ?
+              copyText(toAddress);
             }}
           />
         </RowDataContainer>
@@ -599,16 +717,50 @@ const MoonpaySellCheckout: React.FC = () => {
           <MoonpaySellCheckoutSkeleton />
         ) : (
           <>
-            <RowDataContainer>
-              <RowLabel>{t('Paying')}</RowLabel>
-              {amountExpected ? (
-                <RowData>
-                  {Number(amountExpected.toFixed(6))}{' '}
-                  {wallet.currencyAbbreviation.toUpperCase()}
-                </RowData>
-              ) : null}
-            </RowDataContainer>
-            <ItemDivisor />
+            {getPayoutMethodKeyFromMoonpayType(txData?.payoutMethod) &&
+            PaymentMethodsAvailable[
+              getPayoutMethodKeyFromMoonpayType(txData?.payoutMethod)!
+            ] ? (
+              <>
+                <RowDataContainer>
+                  <RowLabel>{t('Withdrawing Method')}</RowLabel>
+                  <SelectedOptionContainer>
+                    {/* <SelectedOptionCol> */}
+                    <SelectedOptionText
+                      numberOfLines={1}
+                      ellipsizeMode={'tail'}>
+                      {
+                        PaymentMethodsAvailable[
+                          getPayoutMethodKeyFromMoonpayType(
+                            txData?.payoutMethod,
+                          )!
+                        ].label
+                      }
+                    </SelectedOptionText>
+                    {/* </SelectedOptionCol> */}
+                  </SelectedOptionContainer>
+                </RowDataContainer>
+                <ItemDivisor />
+              </>
+            ) : PaymentMethodsAvailable &&
+              sellOrder.payment_method &&
+              PaymentMethodsAvailable[sellOrder.payment_method] ? (
+              <>
+                <RowDataContainer>
+                  <RowLabel>{t('Withdrawing Method')}</RowLabel>
+                  <SelectedOptionContainer>
+                    {/* <SelectedOptionCol> */}
+                    <SelectedOptionText
+                      numberOfLines={1}
+                      ellipsizeMode={'tail'}>
+                      {PaymentMethodsAvailable[sellOrder.payment_method].label}
+                    </SelectedOptionText>
+                    {/* </SelectedOptionCol> */}
+                  </SelectedOptionContainer>
+                </RowDataContainer>
+                <ItemDivisor />
+              </>
+            ) : null}
             <RowDataContainer>
               <RowLabel>{t('Miner Fee')}</RowLabel>
               {fee ? (
@@ -632,7 +784,7 @@ const MoonpaySellCheckout: React.FC = () => {
                 <RowDataContainer>
                   <RowLabel>{t('Exchange Fee')}</RowLabel>
                   <RowData>
-                    {Number(totalExchangeFee).toFixed(6)}{' '}
+                    {Number(totalExchangeFee).toFixed(2)}{' '}
                     {/* // TODO: review if using fiatCurrency from moonpayTxDetails is better */}
                     {txData.quoteCurrency?.code?.toUpperCase()}
                   </RowData>
@@ -662,26 +814,24 @@ const MoonpaySellCheckout: React.FC = () => {
                 {!!txData.quoteCurrencyAmount && (
                   <H5>
                     {/* TODO: use formatFiatAmount() for quoteCurrencyAmount */}
-                    {txData.quoteCurrencyAmount}{' '}
+                    {txData.quoteCurrencyAmount.toFixed(2)}{' '}
                     {txData.quoteCurrency?.code?.toUpperCase()}
                   </H5>
                 )}
                 {!txData.quoteCurrencyAmount && (
                   <H5>
-                    {sellOrder.fiat_receiving_amount}{' '}
+                    {sellOrder.fiat_receiving_amount.toFixed(2)}{' '}
                     {sellOrder.fiat_currency?.toUpperCase()}
                   </H5>
                 )}
               </RowDataContainer>
             ) : null}
             {!termsAccepted && showCheckTermsMsg ? (
-              <RowDataContainer>
-                <RowLabel style={{color: Caution}}>
-                  {t('Tap the checkbox to accept and continue.')}
-                </RowLabel>
-              </RowDataContainer>
+              <RowLabel style={{color: Caution, marginTop: 10}}>
+                {t('Tap the checkbox to accept and continue.')}
+              </RowLabel>
             ) : null}
-            <CheckBoxContainer>
+            <CheckBoxContainer style={{marginBottom: 50}}>
               <Checkbox
                 radio={false}
                 onPress={() => {
@@ -690,27 +840,31 @@ const MoonpaySellCheckout: React.FC = () => {
                 }}
                 checked={termsAccepted}
               />
-              <CheckboxText>
-                {t(
-                  'Sell Crypto services provided by Moonpay. By clicking “Accept”, I acknowledge and understand that my transaction may trigger AML/KYC verification according to Moonpay AML/KYC',
-                )}
-              </CheckboxText>
+              <CheckBoxCol>
+                <CheckboxText>
+                  {showNewQuoteTermsMsg
+                    ? t(
+                        'The original quote has expired. You should have received an email from MoonPay with a new quote proposal. By checking this, you will accept the new offer.',
+                      ) + '\n'
+                    : ''}
+                  {t(
+                    "Sell Crypto services provided by MoonPay. By checking this, I acknowledge and accept MoonPay's terms of use.",
+                  )}
+                </CheckboxText>
+                <PoliciesContainer
+                  onPress={() => {
+                    dispatch(
+                      openUrlWithInAppBrowser(
+                        'https://www.moonpay.com/legal/terms_of_use',
+                      ),
+                    );
+                  }}>
+                  <PoliciesText>
+                    {t('Review MoonPay Terms of use')}
+                  </PoliciesText>
+                </PoliciesContainer>
+              </CheckBoxCol>
             </CheckBoxContainer>
-            <PoliciesContainer
-              onPress={() => {
-                setMoonpaySellPoliciesModalVisible(true);
-              }}>
-              <PoliciesText>{t('Review Moonpay policies')}</PoliciesText>
-              <ArrowContainer>
-                <SelectorArrowRight
-                  {...{
-                    width: 13,
-                    height: 13,
-                    color: theme.dark ? White : Slate,
-                  }}
-                />
-              </ArrowContainer>
-            </PoliciesContainer>
           </>
         )}
       </ScrollView>
@@ -724,25 +878,21 @@ const MoonpaySellCheckout: React.FC = () => {
             setShowCheckTermsMsg(!termsAccepted);
           }}>
           <SwipeButton
-            title={'Slide to send'}
+            title={'Slide to sell'}
             disabled={!termsAccepted}
             onSwipeComplete={async () => {
               try {
                 logger.debug('Swipe completed. Making payment...');
                 makePayment();
-              } catch (err) {}
+              } catch (err) {
+                let msg = getErrorMsgFromError(err);
+                logger.error('makePayment error: ' + msg);
+              }
             }}
             forceReset={resetSwipeButton}
           />
         </TouchableOpacity>
       ) : null}
-
-      <MoonpaySellPoliciesModal
-        isVisible={moonpaySellPoliciesModalVisible}
-        onDismiss={() => {
-          setMoonpaySellPoliciesModalVisible(false);
-        }}
-      />
 
       <PaymentSent
         isVisible={showPaymentSentModal}

@@ -18,7 +18,6 @@ export const SellCryptoSupportedExchanges: SellCryptoExchangeKey[] = [
 ];
 
 export const getSellEnabledPaymentMethods = (
-  locationData?: LocationData | null,
   currency?: string,
   coin?: string,
   chain?: string,
@@ -28,9 +27,21 @@ export const getSellEnabledPaymentMethods = (
   if (!currency || !coin || !chain) {
     return {};
   }
-  // PaymentMethodsAvailable.sepaBankTransfer.enabled =
-  //   !!locationData?.isEuCountry;
-  // PaymentMethodsAvailable.ach.enabled = country === 'US';
+  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!(
+    country &&
+    PaymentMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
+      country,
+    )
+  );
+  PaymentMethodsAvailable.ach.enabled = !!(
+    country && PaymentMethodsAvailable.ach.supportedCountries?.includes(country)
+  );
+  PaymentMethodsAvailable.gbpBankTransfer.enabled = !!(
+    country &&
+    PaymentMethodsAvailable.gbpBankTransfer.supportedCountries?.includes(
+      country,
+    )
+  );
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
     return exchange && SellCryptoSupportedExchanges.includes(exchange)
       ? method.enabled &&
@@ -54,6 +65,29 @@ export const getSellEnabledPaymentMethods = (
   });
 
   return EnabledPaymentMethods;
+};
+
+export const getDefaultPaymentMethod = (country?: string): PaymentMethod => {
+  if (!country) {
+    return PaymentMethodsAvailable.debitCard;
+  } else if (
+    PaymentMethodsAvailable.ach.supportedCountries?.includes(country)
+  ) {
+    return PaymentMethodsAvailable.ach;
+  } else if (
+    PaymentMethodsAvailable.gbpBankTransfer.supportedCountries?.includes(
+      country,
+    )
+  ) {
+    return PaymentMethodsAvailable.gbpBankTransfer;
+  } else if (
+    PaymentMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
+      country,
+    )
+  ) {
+    return PaymentMethodsAvailable.sepaBankTransfer;
+  }
+  return PaymentMethodsAvailable.debitCard;
 };
 
 export const getSellCryptoSupportedCoins = (

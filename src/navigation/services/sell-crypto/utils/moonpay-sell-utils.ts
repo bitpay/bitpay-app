@@ -48,7 +48,7 @@ export const moonpaySellSupportedErc20Tokens = ['axs', 'usdc', 'usdt'];
 export const nonUSMoonpaySellSupportedErc20Tokens = [];
 
 export const moonpaySellSupportedMaticTokens = [
-  'eth', // eth_polygon in MoonpaySell
+  'weth', // eth_polygon in MoonpaySell
   'usdc', // usdc_polygon in MoonpaySell
 ];
 
@@ -126,7 +126,8 @@ export const getMoonpaySellCurrenciesFixedProps = (
       currency.metadata?.contractAddress ===
         '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619'
     ) {
-      currency.code = 'eth';
+      currency.code = 'weth';
+      currency.name = 'Wrapped Ether';
     } else if (
       currency.code.toLowerCase() === 'usdc_polygon' &&
       currency.metadata?.networkCode?.toLowerCase() === 'polygon' &&
@@ -134,6 +135,21 @@ export const getMoonpaySellCurrenciesFixedProps = (
         '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359'
     ) {
       currency.code = 'usdc';
+      currency.name = 'USDC';
+    } else if (
+      currency.code.toLowerCase() === 'usdc' &&
+      currency.metadata?.networkCode?.toLowerCase() === 'ethereum' &&
+      currency.metadata?.contractAddress ===
+        '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+    ) {
+      currency.name = 'USD Coin';
+    } else if (
+      currency.code.toLowerCase() === 'usdt' &&
+      currency.metadata?.networkCode?.toLowerCase() === 'ethereum' &&
+      currency.metadata?.contractAddress ===
+        '0xdac17f958d2ee523a2206206994597c13d831ec7'
+    ) {
+      currency.name = 'Tether USD';
     }
   });
   return moonpayCurrenciesData;
@@ -159,6 +175,33 @@ export const getMoonpaySellPayoutMethodFormat = (
       break;
     case 'gbpBankTransfer':
       formattedPaymentMethod = 'gbp_bank_transfer';
+      break;
+    default:
+      formattedPaymentMethod = undefined;
+      break;
+  }
+  return formattedPaymentMethod;
+};
+
+export const getPayoutMethodKeyFromMoonpayType = (
+  method: MoonpayPayoutMethodType | undefined,
+): PaymentMethodKey | undefined => {
+  if (!method) {
+    return undefined;
+  }
+  let formattedPaymentMethod: PaymentMethodKey | undefined;
+  switch (method) {
+    case 'ach_bank_transfer':
+      formattedPaymentMethod = 'ach';
+      break;
+    case 'credit_debit_card':
+      formattedPaymentMethod = 'debitCard';
+      break;
+    case 'sepa_bank_transfer':
+      formattedPaymentMethod = 'sepaBankTransfer';
+      break;
+    case 'gbp_bank_transfer':
+      formattedPaymentMethod = 'gbpBankTransfer';
       break;
     default:
       formattedPaymentMethod = undefined;

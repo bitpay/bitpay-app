@@ -481,8 +481,14 @@ const BuyCryptoRoot = ({
       return;
     }
     if (
-      selectedPaymentMethod.method === 'sepaBankTransfer' &&
-      !locationData?.isEuCountry
+      selectedPaymentMethod.method ===
+        PaymentMethodsAvailable.sepaBankTransfer.method &&
+      !(
+        locationData?.countryShortCode &&
+        PaymentMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
+          locationData.countryShortCode,
+        )
+      )
     ) {
       setDefaultPaymentMethod();
       return;
