@@ -1106,7 +1106,7 @@ const handleBanxaUri =
 
 const handleMoonpayUri =
   (data: string): Effect<void> =>
-  (dispatch, getState) => {
+  async (dispatch, getState) => {
     dispatch(LogActions.info('Incoming-data (redirect): Moonpay URL: ' + data));
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
@@ -1132,7 +1132,24 @@ const handleMoonpayUri =
         dispatch(
           LogActions.warn('No depositWalletAddress present. Do not redir'),
         );
-        // TODO: show a bottom notification modal with a handled error
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              "The MoonPay deposit address is not present. Can't continue.",
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
         return;
       }
 
@@ -1140,7 +1157,80 @@ const handleMoonpayUri =
       const order = SELL_CRYPTO.moonpay[externalId];
 
       if (!order) {
-        // TODO: show a bottom notification modal with a handled error
+        dispatch(
+          LogActions.warn(
+            `No sell order found for externalId: ${externalId}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              `It seems that the order id: ${externalId} was not created from this wallet or has been deleted. Please try creating a new order from our Sell Crypto feature.`,
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      if (
+        ['bitpayTxSent', 'pending', 'completed', 'failed'].includes(
+          order.status,
+        )
+      ) {
+        let title: string, message: string;
+        switch (order.status) {
+          case 'bitpayTxSent':
+          case 'pending':
+            title = t('Crypto funds already sent');
+            message = t(
+              `The crypto funds from this order id: ${order.transaction_id} have already been sent to MoonPay.`,
+            );
+            break;
+          case 'completed':
+            title = t('Order already completed');
+            message = t(
+              `The sell order for the id: ${order.transaction_id} has already been completed.`,
+            );
+            break;
+          case 'failed':
+            title = t('Failed Order');
+            message = t(
+              `Cannot continue because sell order with id: ${order.transaction_id} has failed for some reason or has been canceled. Please try creating a new order from our Sell Crypto feature.`,
+            );
+            break;
+        }
+        dispatch(
+          LogActions.warn(
+            `Sell order status: ${order.status} for externalId: ${externalId}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: title!,
+            message: message!,
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
         return;
       }
 
@@ -1157,14 +1247,34 @@ const handleMoonpayUri =
             )}. Do not redir`,
           ),
         );
-        // TODO: show a bottom notification modal with a handled error
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              `baseCurrencyCode mismatch: ${baseCurrencyCode} / ${getMoonpaySellFixedCurrencyAbbreviation(
+                order.coin,
+                order.chain,
+              )} from the order id: ${externalId}. Can\'t continue.`,
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
         return;
       }
 
       const stateParams: MoonpaySellIncomingData = {
         externalId,
         transactionId,
-        status: 'bitpayPending', // TODO: set a bitpay custom status for a pending order
+        status: 'bitpayPending',
         baseCurrencyAmount: Number(baseCurrencyAmount),
         depositWalletAddress,
       };
@@ -1198,7 +1308,22 @@ const handleMoonpayUri =
             `No Wallet id (${order?.wallet_id}) present. Do not redir`,
           ),
         );
-        // TODO: show a bottom notification modal with a handled error
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t("The origin wallet is not found. Can't continue."),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
         return;
       }
 
@@ -1211,8 +1336,6 @@ const handleMoonpayUri =
         // sendMaxInfo?: SendMaxInfo;
       };
 
-      // navigationRef.navigate('MoonpaySellCheckout', sellCheckoutParams);
-
       navigationRef.reset({
         index: 1,
         routes: [
@@ -1221,7 +1344,7 @@ const handleMoonpayUri =
             params: {screen: 'Home'},
           },
           {
-            name: 'MoonpaySellCheckout', // TODO: go to Moonpay checkout page and complete the order there.
+            name: 'MoonpaySellCheckout',
             params: sellCheckoutParams,
           },
         ],
