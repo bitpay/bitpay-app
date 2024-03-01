@@ -415,6 +415,6 @@ export const SellTxIcon = styled.View<SellTxIconProps>`
 
 export const SellTxIconBadge = styled.View`
   position: absolute;
-  right: -5px;
-  bottom: -5px;
+  right: 0px;
+  bottom: 0px;
 `;
