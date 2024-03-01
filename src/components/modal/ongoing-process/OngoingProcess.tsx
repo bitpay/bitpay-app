@@ -39,7 +39,9 @@ export type OnGoingProcessMessages =
   | 'SENDING_EMAIL'
   | 'REDIRECTING'
   | 'REMOVING_BILL'
-  | 'BROADCASTING_TXP';
+  | 'BROADCASTING_TXP'
+  | 'SWEEPING_WALLET'
+  | 'SCANNING_FUNDS';
 
 const OnGoingProcessContainer = styled.View`
   max-width: 60%;

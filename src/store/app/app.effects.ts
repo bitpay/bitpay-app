@@ -568,6 +568,8 @@ export const startOnGoingProcessModal =
       REDIRECTING: i18n.t('Redirecting'),
       REMOVING_BILL: i18n.t('Removing Bill'),
       BROADCASTING_TXP: i18n.t('Broadcasting transaction...'),
+      SWEEPING_WALLET: i18n.t('Sweeping Wallet...'),
+      SCANNING_FUNDS: i18n.t('Scanning Funds...'),
     };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next

@@ -43,11 +43,8 @@ describe('incomingData', () => {
       '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
     );
     expect(promiseResult).toBe(true);
-    expect(navigationSpy).toHaveBeenCalledWith('Wallet', {
-      params: {
-        invitationCode: data,
-      },
-      screen: 'JoinMultisig',
+    expect(navigationSpy).toHaveBeenCalledWith('JoinMultisig', {
+      invitationCode: data,
     });
   });
 
@@ -67,12 +64,9 @@ describe('incomingData', () => {
       '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
     );
     expect(promiseResult).toBe(true);
-    expect(navigationSpy).toHaveBeenCalledWith('Wallet', {
-      params: {
-        key,
-        invitationCode: data,
-      },
-      screen: 'JoinMultisig',
+    expect(navigationSpy).toHaveBeenCalledWith('JoinMultisig', {
+      key,
+      invitationCode: data,
     });
   });
 
@@ -97,11 +91,8 @@ describe('incomingData', () => {
       '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
     );
     expect(promiseResult).toBe(true);
-    expect(navigationSpy).toHaveBeenNthCalledWith(1, 'Wallet', {
-      params: {
-        onKeySelect: expect.any(Function),
-      },
-      screen: 'KeyGlobalSelect',
+    expect(navigationSpy).toHaveBeenNthCalledWith(1, 'KeyGlobalSelect', {
+      onKeySelect: expect.any(Function),
     });
   }, 20000);
 
@@ -138,11 +129,8 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data (redirect): QR code export feature',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          importQrCodeData: data[i],
-        },
-        screen: 'Import',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Import', {
+        importQrCodeData: data[i],
       });
     }
   });
@@ -243,11 +231,8 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: Payment Protocol request',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          payProOptions: mockPayProOptions,
-        },
-        screen: 'PayProConfirm',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'PayProConfirm', {
+        payProOptions: mockPayProOptions,
       });
     }
   });
@@ -327,14 +312,12 @@ describe('incomingData', () => {
     const store = configureTestStore({});
     const mockData = {
       data: {
-        data: {
-          invoice: {
-            buyerProvidedInfo: {
-              emailAddress: 'email.com',
-            },
-            buyerProvidedEmail: 'email.com2',
-            status: 'new',
+        invoice: {
+          buyerProvidedInfo: {
+            emailAddress: 'email.com',
           },
+          buyerProvidedEmail: 'email.com2',
+          status: 'new',
         },
       },
     }; // Your mock response
@@ -387,14 +370,12 @@ describe('incomingData', () => {
     const store = configureTestStore({});
     const mockData = {
       data: {
-        data: {
-          invoice: {
-            buyerProvidedInfo: {
-              emailAddress: undefined,
-            },
-            buyerProvidedEmail: undefined,
-            status: 'new',
+        invoice: {
+          buyerProvidedInfo: {
+            emailAddress: undefined,
           },
+          buyerProvidedEmail: undefined,
+          status: 'new',
         },
       },
     }; // Your mock response
@@ -416,12 +397,13 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: BitPay invoice',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
+      expect(navigationSpy).toHaveBeenNthCalledWith(
+        i + 1,
+        'EnterBuyerProvidedEmail',
+        {
           data: data[i],
         },
-        screen: 'EnterBuyerProvidedEmail',
-      });
+      );
     }
   });
 
@@ -452,14 +434,12 @@ describe('incomingData', () => {
     const store = configureTestStore({});
     const mockData = {
       data: {
-        data: {
-          invoice: {
-            buyerProvidedInfo: {
-              emailAddress: 'email.com',
-            },
-            buyerProvidedEmail: 'email.com2',
-            status: 'new',
+        invoice: {
+          buyerProvidedInfo: {
+            emailAddress: 'email.com',
           },
+          buyerProvidedEmail: 'email.com2',
+          status: 'new',
         },
       },
     }; // Your mock response
@@ -546,26 +526,23 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: bch plain address',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i],
-            chain: 'bch',
-            currency: 'bch',
-            destinationTag: undefined,
-            email: undefined,
-            name: undefined,
-            network: 'livenet',
-            opts: {
-              feePerKb: undefined,
-              message: '',
-              showEVMWalletsAndTokens: false,
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i],
+          chain: 'bch',
+          currency: 'bch',
+          destinationTag: undefined,
+          email: undefined,
+          name: undefined,
+          network: 'livenet',
+          opts: {
+            feePerKb: undefined,
+            message: '',
+            showEVMWalletsAndTokens: false,
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -586,26 +563,23 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: EVM plain address',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i],
-            chain: 'eth',
-            currency: 'eth',
-            destinationTag: undefined,
-            email: undefined,
-            name: undefined,
-            network: undefined, // for showing testnet and livenet wallets
-            opts: {
-              showEVMWalletsAndTokens: true,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i],
+          chain: 'eth',
+          currency: 'eth',
+          destinationTag: undefined,
+          email: undefined,
+          name: undefined,
+          network: undefined, // for showing testnet and livenet wallets
+          opts: {
+            showEVMWalletsAndTokens: true,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -626,26 +600,23 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: EVM plain address',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i],
-            chain: 'eth', // yes eth for simplicity
-            currency: 'eth', // yes eth for simplicity
-            destinationTag: undefined,
-            email: undefined,
-            name: undefined,
-            network: undefined, // for showing testnet and livenet wallets
-            opts: {
-              showEVMWalletsAndTokens: true,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i],
+          chain: 'eth', // yes eth for simplicity
+          currency: 'eth', // yes eth for simplicity
+          destinationTag: undefined,
+          email: undefined,
+          name: undefined,
+          network: undefined, // for showing testnet and livenet wallets
+          opts: {
+            showEVMWalletsAndTokens: true,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -666,26 +637,23 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: xrp plain address',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i],
-            chain: 'xrp',
-            currency: 'xrp',
-            destinationTag: undefined,
-            email: undefined,
-            name: undefined,
-            network: undefined, // for showing testnet and livenet wallets
-            opts: {
-              showEVMWalletsAndTokens: false,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i],
+          chain: 'xrp',
+          currency: 'xrp',
+          destinationTag: undefined,
+          email: undefined,
+          name: undefined,
+          network: undefined, // for showing testnet and livenet wallets
+          opts: {
+            showEVMWalletsAndTokens: false,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -706,26 +674,23 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: doge plain address',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i],
-            chain: 'doge',
-            currency: 'doge',
-            destinationTag: undefined,
-            email: undefined,
-            name: undefined,
-            network: 'livenet',
-            opts: {
-              showEVMWalletsAndTokens: false,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i],
+          chain: 'doge',
+          currency: 'doge',
+          destinationTag: undefined,
+          email: undefined,
+          name: undefined,
+          network: 'livenet',
+          opts: {
+            showEVMWalletsAndTokens: false,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -749,26 +714,23 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: ltc plain address',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i],
-            chain: 'ltc',
-            currency: 'ltc',
-            destinationTag: undefined,
-            email: undefined,
-            name: undefined,
-            network: 'livenet',
-            opts: {
-              showEVMWalletsAndTokens: false,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i],
+          chain: 'ltc',
+          currency: 'ltc',
+          destinationTag: undefined,
+          email: undefined,
+          name: undefined,
+          network: 'livenet',
+          opts: {
+            showEVMWalletsAndTokens: false,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -813,23 +775,20 @@ describe('incomingData', () => {
         addr = parsed.address.toCashAddress();
       }
       expect(loggerSpy).toHaveBeenNthCalledWith(i + 1, expected[i].log);
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: addr,
-            chain: 'bch',
-            currency: 'bch',
-            network: expected[i].network, // for showing testnet and livenet wallets
-            opts: {
-              showEVMWalletsAndTokens: false,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: addr,
+          chain: 'bch',
+          currency: 'bch',
+          network: expected[i].network, // for showing testnet and livenet wallets
+          opts: {
+            showEVMWalletsAndTokens: false,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -850,26 +809,23 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: Ethereum URI',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
-            chain: 'eth',
-            currency: 'eth',
-            destinationTag: undefined,
-            email: undefined,
-            name: undefined,
-            network: undefined, // for showing testnet and livenet wallets
-            opts: {
-              feePerKb: undefined,
-              message: '',
-              showEVMWalletsAndTokens: true,
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
+          chain: 'eth',
+          currency: 'eth',
+          destinationTag: undefined,
+          email: undefined,
+          name: undefined,
+          network: undefined, // for showing testnet and livenet wallets
+          opts: {
+            feePerKb: undefined,
+            message: '',
+            showEVMWalletsAndTokens: true,
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -890,23 +846,20 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: Ripple URI',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: 'rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR',
-            chain: 'xrp',
-            currency: 'xrp',
-            destinationTag: undefined,
-            opts: {
-              showEVMWalletsAndTokens: false,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: 'rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR',
+          chain: 'xrp',
+          currency: 'xrp',
+          destinationTag: undefined,
+          opts: {
+            showEVMWalletsAndTokens: false,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -930,23 +883,20 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: Dogecoin URI',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i].replace('dogecoin:', ''),
-            chain: 'doge',
-            currency: 'doge',
-            network: i === 0 ? 'livenet' : 'testnet',
-            opts: {
-              showEVMWalletsAndTokens: false,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i].replace('dogecoin:', ''),
+          chain: 'doge',
+          currency: 'doge',
+          network: i === 0 ? 'livenet' : 'testnet',
+          opts: {
+            showEVMWalletsAndTokens: false,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -970,23 +920,20 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: Litecoin URI',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i].replace('litecoin:', ''),
-            chain: 'ltc',
-            currency: 'ltc',
-            network: i === 0 ? 'livenet' : 'testnet',
-            opts: {
-              showEVMWalletsAndTokens: false,
-              feePerKb: undefined,
-              message: '',
-            },
-            type: 'address',
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i].replace('litecoin:', ''),
+          chain: 'ltc',
+          currency: 'ltc',
+          network: i === 0 ? 'livenet' : 'testnet',
+          opts: {
+            showEVMWalletsAndTokens: false,
+            feePerKb: undefined,
+            message: '',
           },
+          type: 'address',
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -996,42 +943,37 @@ describe('incomingData', () => {
       {
         uri: 'ethereum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000',
         stateParams: {
-          params: {
-            amount: 1.543,
-            context: 'scanner',
-            recipient: {
-              address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
-              chain: 'eth',
-              currency: 'eth',
-              opts: {
-                message: '',
-                showEVMWalletsAndTokens: true,
-              },
-              type: 'address',
+          amount: 1.543,
+          context: 'scanner',
+          recipient: {
+            address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
+            chain: 'eth',
+            currency: 'eth',
+            opts: {
+              message: '',
+              feePerKb: undefined,
+              showEVMWalletsAndTokens: true,
             },
+            type: 'address',
           },
-          screen: 'GlobalSelect',
         },
       },
       {
         uri: 'ethereum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000?gasPrice=0000400000000000000',
         stateParams: {
-          params: {
-            amount: 1.543,
-            context: 'scanner',
-            recipient: {
-              address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
-              chain: 'eth',
-              currency: 'eth',
-              opts: {
-                feePerKb: 400000000000000,
-                message: '',
-                showEVMWalletsAndTokens: true,
-              },
-              type: 'address',
+          amount: 1.543,
+          context: 'scanner',
+          recipient: {
+            address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
+            chain: 'eth',
+            currency: 'eth',
+            opts: {
+              feePerKb: 400000000000000,
+              message: '',
+              showEVMWalletsAndTokens: true,
             },
+            type: 'address',
           },
-          screen: 'GlobalSelect',
         },
       },
     ];
@@ -1052,7 +994,7 @@ describe('incomingData', () => {
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(
         i + 1,
-        'Wallet',
+        'GlobalSelect',
         data[i].stateParams,
       );
     }
@@ -1063,42 +1005,36 @@ describe('incomingData', () => {
       {
         uri: 'matic:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000',
         stateParams: {
-          params: {
-            amount: 1.543,
-            context: 'scanner',
-            recipient: {
-              address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
-              chain: 'matic',
-              currency: 'matic',
-              opts: {
-                message: '',
-                showEVMWalletsAndTokens: true,
-              },
-              type: 'address',
+          amount: 1.543,
+          context: 'scanner',
+          recipient: {
+            address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
+            chain: 'matic',
+            currency: 'matic',
+            opts: {
+              message: '',
+              showEVMWalletsAndTokens: true,
             },
+            type: 'address',
           },
-          screen: 'GlobalSelect',
         },
       },
       {
         uri: 'matic:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd?value=1543000000000000000?gasPrice=0000400000000000000',
         stateParams: {
-          params: {
-            amount: 1.543,
-            context: 'scanner',
-            recipient: {
-              address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
-              chain: 'matic',
-              currency: 'matic',
-              opts: {
-                feePerKb: 400000000000000,
-                message: '',
-                showEVMWalletsAndTokens: true,
-              },
-              type: 'address',
+          amount: 1.543,
+          context: 'scanner',
+          recipient: {
+            address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
+            chain: 'matic',
+            currency: 'matic',
+            opts: {
+              feePerKb: 400000000000000,
+              message: '',
+              showEVMWalletsAndTokens: true,
             },
+            type: 'address',
           },
-          screen: 'GlobalSelect',
         },
       },
     ];
@@ -1119,7 +1055,7 @@ describe('incomingData', () => {
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(
         i + 1,
-        'Wallet',
+        'GlobalSelect',
         data[i].stateParams,
       );
     }
@@ -1130,43 +1066,37 @@ describe('incomingData', () => {
       {
         uri: 'ripple:rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR?amount=15',
         stateParams: {
-          params: {
-            amount: 15,
-            context: 'scanner',
-            recipient: {
-              address: 'rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR',
-              chain: 'xrp',
-              currency: 'xrp',
-              opts: {
-                message: '',
-                showEVMWalletsAndTokens: false,
-              },
-              type: 'address',
-              destinationTag: undefined,
+          amount: 15,
+          context: 'scanner',
+          recipient: {
+            address: 'rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR',
+            chain: 'xrp',
+            currency: 'xrp',
+            opts: {
+              message: '',
+              showEVMWalletsAndTokens: false,
             },
+            type: 'address',
+            destinationTag: undefined,
           },
-          screen: 'GlobalSelect',
         },
       },
       {
         uri: 'ripple:rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR?amount=15&dt=123456',
         stateParams: {
-          params: {
-            amount: 15,
-            context: 'scanner',
-            recipient: {
-              address: 'rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR',
-              chain: 'xrp',
-              currency: 'xrp',
-              opts: {
-                message: '',
-                showEVMWalletsAndTokens: false,
-              },
-              type: 'address',
-              destinationTag: 123456,
+          amount: 15,
+          context: 'scanner',
+          recipient: {
+            address: 'rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR',
+            chain: 'xrp',
+            currency: 'xrp',
+            opts: {
+              message: '',
+              showEVMWalletsAndTokens: false,
             },
+            type: 'address',
+            destinationTag: 123456,
           },
-          screen: 'GlobalSelect',
         },
       },
     ];
@@ -1186,7 +1116,7 @@ describe('incomingData', () => {
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(
         i + 1,
-        'Wallet',
+        'GlobalSelect',
         data[i].stateParams,
       );
     }
@@ -1229,24 +1159,21 @@ describe('incomingData', () => {
         addr = parsed.address.toCashAddress();
       }
       expect(loggerSpy).toHaveBeenNthCalledWith(i + 1, expected[i].log);
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          amount: expected[i].amount,
-          context: 'scanner',
-          recipient: {
-            address: addr,
-            chain: 'bch',
-            currency: 'bch',
-            network: expected[i].network,
-            type: 'address',
-            opts: {
-              feePerKb: undefined,
-              message: '',
-              showEVMWalletsAndTokens: false,
-            },
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        amount: expected[i].amount,
+        context: 'scanner',
+        recipient: {
+          address: addr,
+          chain: 'bch',
+          currency: 'bch',
+          network: expected[i].network,
+          type: 'address',
+          opts: {
+            feePerKb: undefined,
+            message: '',
+            showEVMWalletsAndTokens: false,
           },
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -1281,23 +1208,20 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: Bitcoin URI',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          amount: expected[i].amount,
-          context: 'scanner',
-          recipient: {
-            address: addr,
-            chain: 'btc',
-            currency: 'btc',
-            network: 'livenet',
-            type: 'address',
-            opts: {
-              showEVMWalletsAndTokens: false,
-              message,
-            },
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        amount: expected[i].amount,
+        context: 'scanner',
+        recipient: {
+          address: addr,
+          chain: 'btc',
+          currency: 'btc',
+          network: 'livenet',
+          type: 'address',
+          opts: {
+            showEVMWalletsAndTokens: false,
+            message,
           },
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -1330,23 +1254,20 @@ describe('incomingData', () => {
       .Address.fromObject(a)
       .toString();
 
-    expect(navigationSpy).toHaveBeenCalledWith('Wallet', {
-      params: {
-        context: 'scanner',
-        recipient: {
-          address: addr,
-          chain: 'bch',
-          currency: 'bch',
-          network: 'livenet',
-          type: 'address',
-          opts: {
-            feePerKb: undefined,
-            message: '',
-            showEVMWalletsAndTokens: false,
-          },
+    expect(navigationSpy).toHaveBeenCalledWith('GlobalSelect', {
+      context: 'scanner',
+      recipient: {
+        address: addr,
+        chain: 'bch',
+        currency: 'bch',
+        network: 'livenet',
+        type: 'address',
+        opts: {
+          feePerKb: undefined,
+          message: '',
+          showEVMWalletsAndTokens: false,
         },
       },
-      screen: 'GlobalSelect',
     });
   });
 
@@ -1374,23 +1295,20 @@ describe('incomingData', () => {
       .Address.fromObject(a)
       .toString();
 
-    expect(navigationSpy).toHaveBeenCalledWith('Wallet', {
-      params: {
-        context: 'scanner',
-        recipient: {
-          address: addr,
-          chain: 'bch',
-          currency: 'bch',
-          network: 'testnet',
-          type: 'address',
-          opts: {
-            feePerKb: undefined,
-            message: '',
-            showEVMWalletsAndTokens: false,
-          },
+    expect(navigationSpy).toHaveBeenCalledWith('GlobalSelect', {
+      context: 'scanner',
+      recipient: {
+        address: addr,
+        chain: 'bch',
+        currency: 'bch',
+        network: 'testnet',
+        type: 'address',
+        opts: {
+          feePerKb: undefined,
+          message: '',
+          showEVMWalletsAndTokens: false,
         },
       },
-      screen: 'GlobalSelect',
     });
   });
 
@@ -1453,24 +1371,21 @@ describe('incomingData', () => {
         '[scan] Incoming-data: BitPay URI',
         data[i],
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          amount: 0.0002,
-          context: 'scanner',
-          recipient: {
-            address,
-            chain: chain,
-            currency: coin,
-            network,
-            type: 'address',
-            opts: {
-              showEVMWalletsAndTokens,
-              message,
-              feePerKb,
-            },
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        amount: 0.0002,
+        context: 'scanner',
+        recipient: {
+          address,
+          chain: chain,
+          currency: coin,
+          network,
+          type: 'address',
+          opts: {
+            showEVMWalletsAndTokens,
+            message,
+            feePerKb,
           },
         },
-        screen: 'GlobalSelect',
       });
     }
   });
@@ -1536,24 +1451,47 @@ describe('incomingData', () => {
         i + 1,
         '[scan] Incoming-data: btc plain address',
       );
-      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'Wallet', {
-        params: {
-          context: 'scanner',
-          recipient: {
-            address: data[i],
-            chain: 'btc',
-            currency: 'btc',
-            network: expected[i],
-            type: 'address',
-            opts: {
-              feePerKb: undefined,
-              message: '',
-              showEVMWalletsAndTokens: false,
-            },
+      expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
+        context: 'scanner',
+        recipient: {
+          address: data[i],
+          chain: 'btc',
+          currency: 'btc',
+          network: expected[i],
+          type: 'address',
+          opts: {
+            feePerKb: undefined,
+            message: '',
+            showEVMWalletsAndTokens: false,
           },
         },
-        screen: 'GlobalSelect',
       });
     }
+  });
+
+  it('Should handle private keys and redir to PaperWallet page [testnet]', async () => {
+    const data = 'cQ8jwsnoGCwfgpbaqUnPy5eC11SCgEbK8GybFjn7R81zdUJCMbh3';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logActions, 'info');
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(loggerSpy).toHaveBeenCalledWith('[scan] Incoming-data: private key');
+    expect(promiseResult).toBe(true);
+    expect(navigationSpy).toHaveBeenNthCalledWith(1, 'PaperWallet', {
+      scannedPrivateKey: 'cQ8jwsnoGCwfgpbaqUnPy5eC11SCgEbK8GybFjn7R81zdUJCMbh3',
+    });
+  });
+
+  it('Should handle private keys and redir to PaperWallet page [livenet]', async () => {
+    const data = 'KxF1dRg147vdwM5v9k74Jz4Qv6Wi1uxQwkWXZ5TwdzspUWz7jA7F';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logActions, 'info');
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(loggerSpy).toHaveBeenCalledWith('[scan] Incoming-data: private key');
+    expect(promiseResult).toBe(true);
+    expect(navigationSpy).toHaveBeenNthCalledWith(1, 'PaperWallet', {
+      scannedPrivateKey: 'KxF1dRg147vdwM5v9k74Jz4Qv6Wi1uxQwkWXZ5TwdzspUWz7jA7F',
+    });
   });
 });

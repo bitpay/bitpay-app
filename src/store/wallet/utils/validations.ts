@@ -411,6 +411,31 @@ export const ValidateCoinAddress = (
   }
 };
 
+export const IsValidPrivateKey = (data: string): boolean => {
+  const checkPrivateKey = (privateKey: string): boolean => {
+    try {
+      const PKregex = new RegExp(/^[c|5KL][1-9A-HJ-NP-Za-km-z]{50,51}$/);
+      // Check if it is a Transaction ID to prevent errors
+      const isPK: boolean = !!PKregex.exec(privateKey);
+      if (!isPK) {
+        return false;
+      }
+      BwcProvider.getInstance().getBitcore().PrivateKey(privateKey, 'livenet');
+    } catch (err) {
+      try {
+        BwcProvider.getInstance()
+          .getBitcore()
+          .PrivateKey(privateKey, 'testnet');
+      } catch (err) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  return !!(data && (data.substring(0, 2) == '6P' || checkPrivateKey(data)));
+};
+
 export const IsValidImportPrivateKey = (data: string): boolean => {
   return !!(
     data &&
