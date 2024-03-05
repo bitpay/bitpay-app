@@ -13,6 +13,18 @@ import {LogActions} from '../../../store/log';
 import {incomingData} from '../../../store/scan/scan.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {navigationRef} from '../../../Root';
+import {HEIGHT, WIDTH} from '../../styled/Containers';
+import {Linking, StyleSheet} from 'react-native';
+
+const styles = StyleSheet.create({
+  modal: {
+    margin: 0,
+    padding: 0,
+  },
+  webview: {
+    backgroundColor: 'transparent',
+  },
+});
 
 const InAppMessage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -45,6 +57,9 @@ const InAppMessage: React.FC = () => {
     if (isAcceptedUrl(req.url)) {
       goToUrl(req.url);
       return false;
+    } else if (req.url.includes('http')) {
+      Linking.openURL(req.url);
+      return false;
     } else {
       return true;
     }
@@ -57,9 +72,7 @@ const InAppMessage: React.FC = () => {
       if (inAppMessageData) {
         Braze.logInAppMessageButtonClicked(JSON.parse(inAppMessageData), index);
       }
-      if (buttonId === 'close') {
-        onBackdropPress();
-      }
+      onBackdropPress();
     } catch (err) {
       LogActions.error(`onInAppMessage Error: ${err}`);
     }
@@ -77,14 +90,18 @@ const InAppMessage: React.FC = () => {
   return (
     <BaseModal
       id={'inAppMessage'}
+      deviceHeight={HEIGHT}
+      deviceWidth={WIDTH}
       isVisible={appWasInit && isVisible}
-      backdropOpacity={0}
+      backdropOpacity={0.5}
       hideModalContentWhileAnimating={true}
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}
+      style={styles.modal}
       onBackdropPress={onBackdropPress}>
       <WebView
         ref={webviewRef}
+        style={styles.webview}
         onMessage={onMessage}
         onShouldStartLoadWithRequest={openExternalLink}
         injectedJavaScript={injectedJavaScript}
@@ -93,6 +110,7 @@ const InAppMessage: React.FC = () => {
         mixedContentMode={'always'}
         javaScriptEnabled={true}
         source={{html: inAppHtml || ''}}
+        allowsBackForwardNavigationGestures
       />
     </BaseModal>
   );
