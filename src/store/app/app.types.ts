@@ -29,6 +29,8 @@ export enum AppActionTypes {
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
+  SHOW_IN_APP_MESSAGE = 'APP/SHOW_IN_APP_MESSAGE',
+  DISMISS_IN_APP_MESSAGE = 'APP/DISMISS_IN_APP_MESSAGE',
   SHOW_IN_APP_NOTIFICATION = 'APP/SHOW_IN_APP_NOTIFICATION',
   DISMISS_IN_APP_NOTIFICATION = 'APP/DISMISS_IN_APP_NOTIFICATION',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
@@ -77,7 +79,14 @@ export enum AppActionTypes {
   ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
   CHECKING_BIOMETRIC_FOR_SENDING = 'APP/CHECKING_BIOMETRIC_FOR_SENDING',
   SET_HAS_VIEWED_ZENLEDGER_WARNING = 'APP/SET_HAS_VIEWED_ZENLEDGER_WARNING',
+  SET_HAS_VIEWED_BILLS_TAB = 'APP/SET_HAS_VIEWED_BILLS_TAB',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
+  IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
+}
+
+interface ImportLedgerModalToggled {
+  type: typeof AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED;
+  payload: boolean;
 }
 
 interface NetworkChanged {
@@ -126,6 +135,15 @@ interface ShowOnGoingProcessModal {
 
 interface DismissOnGoingProcessModal {
   type: typeof AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL;
+}
+
+interface ShowInAppMessage {
+  type: typeof AppActionTypes.SHOW_IN_APP_MESSAGE;
+  payload: string;
+}
+
+interface DismissInAppMessage {
+  type: typeof AppActionTypes.DISMISS_IN_APP_MESSAGE;
 }
 
 interface ShowInAppNotification {
@@ -348,6 +366,10 @@ interface SetHasViewedZenLedgerWarning {
   type: typeof AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING;
 }
 
+interface SetHasViewedBillsTab {
+  type: typeof AppActionTypes.SET_HAS_VIEWED_BILLS_TAB;
+}
+
 interface setUserFeedback {
   type: typeof AppActionTypes.USER_FEEDBACK;
   payload: FeedbackType;
@@ -366,6 +388,8 @@ export type AppActionType =
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal
+  | ShowInAppMessage
+  | DismissInAppMessage
   | ShowInAppNotification
   | DismissInAppNotification
   | ShowBottomNotificationModal
@@ -413,4 +437,5 @@ export type AppActionType =
   | ActiveModalUpdated
   | checkingBiometricForSending
   | SetHasViewedZenLedgerWarning
-  | SetHasViewedZenLedgerWarning;
+  | SetHasViewedBillsTab
+  | ImportLedgerModalToggled;

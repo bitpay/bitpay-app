@@ -30,6 +30,8 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appWasInit',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showInAppMessage',
+  'inAppMessageData',
   'showInAppNotification',
   'inAppNotificationData',
   'showDecryptPasswordModal',
@@ -47,7 +49,8 @@ export type ModalId =
   | 'sheetModal'
   | 'ongoingProcess'
   | 'pin'
-  | 'inAppNotification';
+  | 'inAppNotification'
+  | 'inAppMessage';
 
 export type FeedbackType = {
   time: number;
@@ -86,6 +89,8 @@ export interface AppState {
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
+  showInAppMessage: boolean;
+  inAppMessageData: string;
   showInAppNotification: boolean;
   inAppNotificationData:
     | {
@@ -139,6 +144,8 @@ export interface AppState {
   failedAppInit: boolean;
   checkingBiometricForSending: boolean;
   hasViewedZenLedgerWarning: boolean;
+  hasViewedBillsTab: boolean;
+  isImportLedgerModalVisible: boolean;
 }
 
 const initialState: AppState = {
@@ -170,6 +177,8 @@ const initialState: AppState = {
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: undefined,
+  showInAppMessage: false,
+  inAppMessageData: '',
   showInAppNotification: false,
   inAppNotificationData: undefined,
   showBottomNotificationModal: false,
@@ -217,6 +226,8 @@ const initialState: AppState = {
   failedAppInit: false,
   checkingBiometricForSending: false,
   hasViewedZenLedgerWarning: false,
+  hasViewedBillsTab: false,
+  isImportLedgerModalVisible: false,
 };
 
 export const appReducer = (
@@ -224,6 +235,12 @@ export const appReducer = (
   action: AppActionType,
 ): AppState => {
   switch (action.type) {
+    case AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED:
+      return {
+        ...state,
+        isImportLedgerModalVisible: action.payload,
+      };
+
     case AppActionTypes.NETWORK_CHANGED:
       return {
         ...state,
@@ -289,6 +306,20 @@ export const appReducer = (
       return {
         ...state,
         showOnGoingProcessModal: false,
+      };
+
+    case AppActionTypes.SHOW_IN_APP_MESSAGE:
+      return {
+        ...state,
+        showInAppMessage: true,
+        inAppMessageData: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_IN_APP_MESSAGE:
+      return {
+        ...state,
+        showInAppMessage: false,
+        inAppMessageData: undefined,
       };
 
     case AppActionTypes.SHOW_IN_APP_NOTIFICATION:
@@ -618,6 +649,12 @@ export const appReducer = (
       return {
         ...state,
         hasViewedZenLedgerWarning: true,
+      };
+
+    case AppActionTypes.SET_HAS_VIEWED_BILLS_TAB:
+      return {
+        ...state,
+        hasViewedBillsTab: true,
       };
 
     case AppActionTypes.USER_FEEDBACK:

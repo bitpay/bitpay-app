@@ -48,6 +48,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {Bills} from './components/Bills';
 import {HEIGHT} from '../../../components/styled/Containers';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -299,76 +300,83 @@ const ShopHome: React.FC<
   });
 
   return (
-    <ShopContainer>
-      <ScrollView
-        ref={scrollViewRef}
-        keyboardDismissMode="on-drag"
-        keyboardShouldPersistTaps="handled"
-        onScrollBeginDrag={Keyboard.dismiss}
-        refreshControl={
-          user ? (
-            <RefreshControl
-              tintColor={theme.dark ? White : SlateDark}
-              refreshing={refreshing}
-              onRefresh={async () => {
-                setRefreshing(true);
-                await Promise.all([
-                  dispatch(ShopEffects.startSyncGiftCards()),
-                  dispatch(ShopEffects.startGetBillPayAccounts()).catch(
-                    _ => {},
-                  ),
-                  sleep(600),
-                ]);
-                setRefreshing(false);
+    <GestureHandlerRootView style={{flex: 1}}>
+      <ShopContainer>
+        <ScrollView
+          ref={scrollViewRef}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={Keyboard.dismiss}
+          refreshControl={
+            user ? (
+              <RefreshControl
+                tintColor={theme.dark ? White : SlateDark}
+                refreshing={refreshing}
+                onRefresh={async () => {
+                  setRefreshing(true);
+                  await Promise.all([
+                    dispatch(ShopEffects.startSyncGiftCards()),
+                    dispatch(ShopEffects.startGetBillPayAccounts()).catch(
+                      _ => {},
+                    ),
+                    sleep(600),
+                  ]);
+                  setRefreshing(false);
+                }}
+              />
+            ) : undefined
+          }>
+          <ShopInnerContainer>
+            <Tab.Navigator
+              style={{
+                height: scrollViewHeight,
               }}
-            />
-          ) : undefined
-        }>
-        <ShopInnerContainer>
-          <Tab.Navigator
-            style={{
-              height: scrollViewHeight,
-            }}
-            screenOptions={ScreenOptions({
-              fontSize: 15,
-              marginHorizontal: 3,
-              numTabs: 3,
-              tabWidth: 111,
-              langAdjustments: true,
-            })}
-            screenListeners={{
-              tabPress: tab => {
-                if (tab.target) {
-                  setActiveTab(
-                    tab.target.includes(ShopTabs.GIFT_CARDS)
-                      ? ShopTabs.GIFT_CARDS
-                      : tab.target.includes(ShopTabs.BILLS)
-                      ? ShopTabs.BILLS
-                      : ShopTabs.SHOP_ONLINE,
-                  );
-                  if (tab.target.includes(ShopTabs.BILLS)) {
-                    dispatch(
-                      Analytics.track('Bill Pay - Clicked Bill Pay', {
-                        context: 'Shop Tab',
-                      }),
+              screenOptions={ScreenOptions({
+                fontSize: 15,
+                marginHorizontal: 3,
+                numTabs: 3,
+                tabWidth: 111,
+                langAdjustments: true,
+              })}
+              screenListeners={{
+                tabPress: tab => {
+                  if (tab.target) {
+                    if (tab.target.includes(ShopTabs.BILLS)) {
+                      tab.preventDefault();
+                      navigation.navigate('Tabs', {
+                        screen: 'Bills',
+                      });
+                      dispatch(
+                        Analytics.track('Bill Pay - Clicked Bill Pay', {
+                          context: 'Shop Tab',
+                        }),
+                      );
+                      return;
+                    }
+                    setActiveTab(
+                      tab.target.includes(ShopTabs.GIFT_CARDS)
+                        ? ShopTabs.GIFT_CARDS
+                        : tab.target.includes(ShopTabs.BILLS)
+                        ? ShopTabs.BILLS
+                        : ShopTabs.SHOP_ONLINE,
                     );
                   }
-                }
-              },
-            }}>
-            <Tab.Screen
-              name={t('Gift Cards')}
-              component={memoizedGiftCardCatalog}
-            />
-            <Tab.Screen
-              name={t('Shop Online')}
-              component={memoizedShopOnline}
-            />
-            <Tab.Screen name={t('Pay Bills')} component={memoizedBills} />
-          </Tab.Navigator>
-        </ShopInnerContainer>
-      </ScrollView>
-    </ShopContainer>
+                },
+              }}>
+              <Tab.Screen
+                name={t('Gift Cards')}
+                component={memoizedGiftCardCatalog}
+              />
+              <Tab.Screen
+                name={t('Shop Online')}
+                component={memoizedShopOnline}
+              />
+              <Tab.Screen name={t('Pay Bills')} component={memoizedBills} />
+            </Tab.Navigator>
+          </ShopInnerContainer>
+        </ScrollView>
+      </ShopContainer>
+    </GestureHandlerRootView>
   );
 };
 

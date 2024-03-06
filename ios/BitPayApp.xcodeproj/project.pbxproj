@@ -10,7 +10,7 @@
 		00E356F31AD99517003FC87E /* BitPayAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* BitPayAppTests.m */; };
 		03632D4B8959429DA3B141C2 /* Heebo-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EF767449FFE9477D8B33CD84 /* Heebo-Medium.ttf */; };
 		0F819B33648D4741AAFCAD09 /* Heebo-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4BD0D9E39B2B473191E700CE /* Heebo-ExtraBold.ttf */; };
-		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
+		13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		256B92C82AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 256B92C72AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf */; };
@@ -30,6 +30,7 @@
 		D9739196BA804EA29143DA96 /* Heebo-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */; };
 		E05E8CCE8C744337E0474386 /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C2A940F24537EFB4641623B /* libPods-BitPayApp.a */; };
 		E6807D9059A643129784A5C3 /* Heebo-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4DCF32F2D2364E70AD2F1E68 /* Heebo-Thin.ttf */; };
+		ECB46AE72B86201D00AF943D /* InAppMessageHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB46AE52B86201D00AF943D /* InAppMessageHandler.m */; };
 		ECCB92782860B25D00F9CF8B /* SilentPushEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = ECCB92762860B25D00F9CF8B /* SilentPushEvent.m */; };
 		F64C0BF216CE4402A51A5ACC /* Heebo-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */; };
 /* End PBXBuildFile section */
@@ -50,7 +51,7 @@
 		00E356F21AD99517003FC87E /* BitPayAppTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BitPayAppTests.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* BitPayApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BitPayApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = BitPayApp/AppDelegate.h; sourceTree = "<group>"; };
-		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = BitPayApp/AppDelegate.mm; sourceTree = "<group>"; };
+		13B07FB01A68108700A75B9A /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = BitPayApp/AppDelegate.m; sourceTree = "<group>"; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = BitPayApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BitPayApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = BitPayApp/main.m; sourceTree = "<group>"; };
@@ -80,6 +81,8 @@
 		780EA24A31E2DB5EB6F58453 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		BAE975BCDFD0F5C27CFCB9C7 /* libPods-BitPayApp-BitPayAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp-BitPayAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Regular.ttf"; path = "../assets/fonts/Heebo-Regular.ttf"; sourceTree = "<group>"; };
+		ECB46AE52B86201D00AF943D /* InAppMessageHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InAppMessageHandler.m; sourceTree = "<group>"; };
+		ECB46AE62B86201D00AF943D /* InAppMessageHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InAppMessageHandler.h; sourceTree = "<group>"; };
 		ECCB92762860B25D00F9CF8B /* SilentPushEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SilentPushEvent.m; sourceTree = "<group>"; };
 		ECCB92772860B25D00F9CF8B /* SilentPushEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SilentPushEvent.h; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -128,11 +131,13 @@
 		13B07FAE1A68108700A75B9A /* BitPayApp */ = {
 			isa = PBXGroup;
 			children = (
+				ECB46AE62B86201D00AF943D /* InAppMessageHandler.h */,
+				ECB46AE52B86201D00AF943D /* InAppMessageHandler.m */,
 				ECCB92772860B25D00F9CF8B /* SilentPushEvent.h */,
 				ECCB92762860B25D00F9CF8B /* SilentPushEvent.m */,
 				5BC9567927AF3C6A00ACED07 /* BitPayAppDebug.entitlements */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
-				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
+				13B07FB01A68108700A75B9A /* AppDelegate.m */,
 				5BCF1C342740B8B2006D872E /* BootSplash.storyboard */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
@@ -497,10 +502,11 @@
 			files = (
 				4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.m in Sources */,
 				5B31AAFE2786387B002765E1 /* RCTDosh.m in Sources */,
-				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */,
 				5BEA4BF02838402700AB2121 /* RCTPaymentPass.m in Sources */,
 				6D615C4929725FD70063DB8E /* RCTTimer.m in Sources */,
 				ECCB92782860B25D00F9CF8B /* SilentPushEvent.m in Sources */,
+				ECB46AE72B86201D00AF943D /* InAppMessageHandler.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */,
 			);

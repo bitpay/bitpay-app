@@ -223,6 +223,8 @@ export const addWallet =
                 currencyAbbreviation,
                 currencyName,
                 walletName,
+                isHardwareWallet: associatedWallet?.isHardwareWallet,
+                hardwareData: associatedWallet?.hardwareData,
               },
               tokenOptsByAddress,
             ),

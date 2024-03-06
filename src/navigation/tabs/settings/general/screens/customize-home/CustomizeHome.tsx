@@ -127,8 +127,9 @@ const CustomizeHomeSettings = () => {
             );
             dispatch(setHomeCarouselConfig(list));
             dispatch(setHomeCarouselLayoutType(layoutType));
-            navigation.goBack();
             dispatch(dismissOnGoingProcessModal());
+            await sleep(200);
+            navigation.goBack();
           }}
           buttonStyle={'primary'}>
           {t('Save Layout')}
@@ -162,12 +163,11 @@ const CustomizeHomeSettings = () => {
       <LayoutToggleContainer>
         <H7>{t('Home Layout')}</H7>
         <Tab.Navigator
-          initialRouteName={
-            layoutType === 'carousel' ? t('Carousel') : t('List View')
-          }
+          initialRouteName={layoutType}
           style={{marginTop: 20}}
           screenOptions={{
             ...ScreenOptions(),
+            tabBarShowLabel: true,
             tabBarItemStyle: {
               flexDirection: 'row',
             },
@@ -180,25 +180,28 @@ const CustomizeHomeSettings = () => {
               haptic('soft');
               if (tab.target) {
                 setDirty(true);
-                setLayoutType(
-                  tab.target.includes('Carousel') ? 'carousel' : 'listView',
-                );
+                const _layoutType = tab.target.split('-')[0] as
+                  | 'carousel'
+                  | 'listView';
+                setLayoutType(_layoutType);
               }
             },
           }}>
           <Tab.Screen
-            name={t('Carousel')}
+            name={'carousel'}
             component={Noop}
             options={{
+              tabBarLabel: t('Carousel'),
               tabBarIcon: ({focused}) => (
                 <CarouselSvg focused={focused} theme={theme} />
               ),
             }}
           />
           <Tab.Screen
-            name={t('List View')}
+            name={'listView'}
             component={Noop}
             options={{
+              tabBarLabel: t('List View'),
               tabBarIcon: ({focused}) => (
                 <ListViewSvg focused={focused} theme={theme} />
               ),

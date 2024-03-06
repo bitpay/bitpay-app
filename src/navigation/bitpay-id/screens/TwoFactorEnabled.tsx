@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {t} from 'i18next';
 import Button from '../../../components/button/Button';
 import {HEIGHT} from '../../../components/styled/Containers';
 import SuccessSvg from '../../../../assets/img/success.svg';
@@ -30,7 +29,7 @@ const ViewBody = styled.View`
   padding-bottom: 100px;
 `;
 
-const TwoFactorEnabled = ({route, navigation}: TwoFactorEnabledProps) => {
+const TwoFactorEnabled = ({navigation}: TwoFactorEnabledProps) => {
   const {t} = useTranslation();
   return (
     <ViewContainer>
@@ -40,7 +39,7 @@ const TwoFactorEnabled = ({route, navigation}: TwoFactorEnabledProps) => {
           <H3>{t('Two-Factor Authentication is now enabled')}</H3>
         </TextAlign>
       </ViewBody>
-      <Button buttonStyle={'primary'} onPress={() => navigation.popToTop()}>
+      <Button buttonStyle={'primary'} onPress={() => navigation.pop(2)}>
         {t('Go back to settings')}
       </Button>
     </ViewContainer>

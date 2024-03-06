@@ -403,7 +403,7 @@ const TransactionProposalNotifications = () => {
               <ListItemSubText>
                 {formatCurrencyAbbreviation(currencyAbbreviation)}{' '}
                 {n > 1 ? `- Multisig ${m}/${n}` : null}
-                {keyId === 'readonly' ? '- Read Only' : null}
+                {keyId.includes('readonly') ? '- Read Only' : null}
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 ? (
@@ -599,10 +599,19 @@ const TransactionProposalNotifications = () => {
               await sleep(400);
               const count = countSuccessAndFailed(data);
               if (count.failed > 0) {
-                const errMsg = `There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`;
+                const errMsgs = [
+                  `There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`,
+                ];
+                data.forEach((element, index) => {
+                  if (element instanceof Error) {
+                    errMsgs.push(
+                      `[ERROR ${index + 1}] ${BWCErrorMessage(element)}`,
+                    );
+                  }
+                });
                 await showErrorMessage(
                   CustomErrorMessage({
-                    errMsg,
+                    errMsg: errMsgs.join('\n\n'),
                     title: t('Uh oh, something went wrong'),
                   }),
                 );

@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {t} from 'i18next';
 import Button from '../../../components/button/Button';
 import {Br, HEIGHT} from '../../../components/styled/Containers';
 import SuccessSvg from '../../../../assets/img/success.svg';
@@ -58,7 +57,7 @@ const EmailText = styled(BaseText)`
   font-weight: 500;
 `;
 
-const ReceivingEnabled = ({route, navigation}: ReceivingEnabledProps) => {
+const ReceivingEnabled = ({navigation}: ReceivingEnabledProps) => {
   const {t} = useTranslation();
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -83,7 +82,7 @@ const ReceivingEnabled = ({route, navigation}: ReceivingEnabledProps) => {
           <SuccessSvg height={20} width={20} />
         </EmailContainer>
       </ViewBody>
-      <Button buttonStyle={'primary'} onPress={() => navigation.popToTop()}>
+      <Button buttonStyle={'primary'} onPress={() => navigation.pop(3)}>
         {t('Go back to settings')}
       </Button>
     </ViewContainer>

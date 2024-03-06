@@ -16,8 +16,6 @@ import {
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
-import {ShopScreens} from '../../shop/ShopStack';
-import {ShopTabs} from '../../shop/ShopHome';
 
 const MethodIcon = require('../../../../../assets/img/logos/method.png');
 
@@ -80,17 +78,11 @@ const Connections: React.VFC<ConnectionsProps> = props => {
       navigation.navigate('BillSettings', {});
     } else {
       navigation.navigate('Tabs', {
-        screen: 'Shop',
-        params: {
-          screen: ShopScreens.HOME,
-          params: {
-            screen: ShopTabs.BILLS,
-          },
-        },
+        screen: 'Bills',
       });
     }
     dispatch(
-      Analytics.track('Bill Pay — Clicked Bill Pay', {
+      Analytics.track('Bill Pay - Clicked Bill Pay', {
         context: 'Settings Connections',
       }),
     );

@@ -20,6 +20,7 @@ import {
   H5,
   H7,
   HeaderTitle,
+  Link,
   ListItemSubText,
 } from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
@@ -126,6 +127,12 @@ export const InputTouchableContainer = styled.TouchableOpacity`
   min-height: 71px;
 `;
 
+const AvailableInputsContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
 export interface SelectInputsParamList {
   wallet: Wallet;
   recipient: Recipient;
@@ -151,6 +158,7 @@ const SelectInputs = () => {
   const [hideLockedUtxos, setHideLockedUtxos] = useState<boolean>(true);
   const [uiFormattedWallet, setUiFormattedWallet] = useState<WalletRowProps>();
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
+  const [selectAll, setSelectAll] = useState(false);
   const {wallet, recipient} = route.params;
   const {currencyAbbreviation, chain, network, tokenAddress} = wallet;
   const precision = dispatch(
@@ -249,6 +257,22 @@ const SelectInputs = () => {
     );
     setUiFormattedWallet(_uiFormattedWallet);
   }, [lockedUtxos]);
+
+  const inputsSelectAll = (UtxosWithFiatAmount: UtxoWithFiatAmount[]) => {
+    let totalAmount = 0;
+    const updatedUtxos = UtxosWithFiatAmount.map(utxo => {
+      totalAmount += Number(utxo.amount);
+      return {...utxo, checked: !utxo.checked};
+    });
+    setInputs(updatedUtxos);
+    if (selectAll) {
+      setTotalAmount(Number(0).toFixed(precision?.unitDecimals));
+      setSelectAll(false);
+    } else {
+      setTotalAmount(Number(totalAmount).toFixed(precision!.unitDecimals));
+      setSelectAll(true);
+    }
+  };
 
   const inputToggled = useCallback(
     (item: UtxoWithFiatAmount, index: number) => {
@@ -437,7 +461,15 @@ const SelectInputs = () => {
         </SectionContainer>
         {lockedUtxos.length > 0 ? memoizedLockedUtxosList : null}
         {hideLockedUtxos ? (
-          <AvailableInputsTitle>{t('Available Inputs')}</AvailableInputsTitle>
+          <AvailableInputsContainer>
+            <AvailableInputsTitle>{t('Available Inputs')}</AvailableInputsTitle>
+            <Link
+              onPress={() => {
+                inputsSelectAll(inputs);
+              }}>
+              {t('Select All')}
+            </Link>
+          </AvailableInputsContainer>
         ) : null}
       </SelectInputsDetailsContainer>
       {inputs && inputs.length ? (

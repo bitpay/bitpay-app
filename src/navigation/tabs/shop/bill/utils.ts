@@ -1,14 +1,42 @@
 import {BillPayAccount, BillPayment} from '../../../../store/shop/shop.models';
 
+export const getBillAccountEventParamsForMultipleBills = (
+  accounts: BillPayAccount[] = [],
+  payments?: BillPayment[],
+) => {
+  const eventParams: {[x: string]: (string | boolean | number)[]} = {
+    merchantName:
+      payments?.map(({merchantName}) => merchantName) ||
+      accounts.map(account => account[account.type].merchantName),
+    merchantType:
+      payments?.map(({accountType}) => accountType) ||
+      accounts.map(account => account[account.type].type),
+    customBill: accounts.map(account => account.isManuallyAdded),
+    ...(payments && {amount: payments?.map(({amount}) => amount)}),
+  };
+  const finalParams = Object.keys(eventParams).reduce(
+    (newParams, param) => ({
+      ...newParams,
+      ...{
+        [param]:
+          eventParams[param].length === 1
+            ? eventParams[param][0]
+            : eventParams[param],
+      },
+    }),
+    {},
+  );
+  return finalParams;
+};
+
 export const getBillAccountEventParams = (
-  account: BillPayAccount,
+  account?: BillPayAccount,
   payment?: BillPayment,
 ) => {
-  return {
-    merchantName: payment?.merchantName || account[account.type].merchantName,
-    merchantType: payment?.accountType || account[account.type].type,
-    ...(account && {customBill: account.isManuallyAdded}),
-  };
+  return getBillAccountEventParamsForMultipleBills(
+    account && [account],
+    payment && [payment],
+  );
 };
 
 export const formatUSPhone = (unformattedPhone: string) => {

@@ -606,6 +606,19 @@ const TransactionProposalDetails = () => {
           </DetailContainer>
           <Hr />
 
+          {txp.nonce ? (
+            <>
+              <DetailContainer>
+                <DetailRow>
+                  <H7>{t('Nonce')}</H7>
+
+                  <H7>{txp.nonce}</H7>
+                </DetailRow>
+              </DetailContainer>
+              <Hr />
+            </>
+          ) : null}
+
           {txp.feeStr && !IsReceived(txp.action) ? (
             <>
               <DetailContainer>
@@ -798,7 +811,8 @@ const TransactionProposalDetails = () => {
                 case 'password canceled':
                   break;
                 case 'biometric check failed':
-                  setResetSwipeButton(true);
+                  break;
+                case 'user denied transaction':
                   break;
                 default:
                   await showErrorMessage(

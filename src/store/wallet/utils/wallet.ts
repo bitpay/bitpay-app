@@ -1,6 +1,7 @@
 import {
   Key,
   KeyMethods,
+  SupportedHardwareSource,
   Token,
   TransactionProposal,
   Wallet,
@@ -109,6 +110,8 @@ export const buildWalletObj = (
     img,
     walletName,
     pendingTxps = [],
+    isHardwareWallet = false,
+    hardwareData = {},
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -125,6 +128,10 @@ export const buildWalletObj = (
     currencyName: string;
     img: any;
     pendingTxps: TransactionProposal[];
+    isHardwareWallet?: boolean;
+    hardwareData?: {
+      accountPath?: string;
+    };
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -176,6 +183,8 @@ export const buildWalletObj = (
     hideWallet,
     hideBalance,
     pendingTxps,
+    isHardwareWallet,
+    hardwareData,
   };
 };
 
@@ -188,6 +197,7 @@ export const buildKeyObj = ({
   totalBalanceLastDay = 0,
   backupComplete = false,
   hideKeyBalance = false,
+  hardwareSource,
 }: {
   key: KeyMethods | undefined;
   wallets: Wallet[];
@@ -196,9 +206,14 @@ export const buildKeyObj = ({
   totalBalanceLastDay?: number;
   backupComplete?: boolean;
   hideKeyBalance?: boolean;
+  hardwareSource?: SupportedHardwareSource;
 }): Key => {
   return {
-    id: key?.id ? key.id : 'readonly',
+    id: key?.id
+      ? key.id
+      : hardwareSource
+      ? `readonly/${hardwareSource}`
+      : 'readonly',
     wallets,
     properties: key?.toObj(),
     methods: key,
@@ -206,9 +221,16 @@ export const buildKeyObj = ({
     totalBalanceLastDay,
     isPrivKeyEncrypted: key?.isPrivKeyEncrypted(),
     backupComplete,
-    keyName: keyName ? keyName : key?.id ? 'My Key' : 'Read Only',
+    keyName: keyName
+      ? keyName
+      : key?.id
+      ? 'My Key'
+      : hardwareSource
+      ? `My ${hardwareSource.charAt(0).toUpperCase()}${hardwareSource.slice(1)}`
+      : 'Read Only',
     hideKeyBalance,
     isReadOnly: !key,
+    hardwareSource,
   };
 };
 
@@ -517,12 +539,7 @@ export const BuildKeysAndWalletsList = ({
   rates: Rates;
   dispatch: AppDispatch;
 }) => {
-  const selectedPaymentOptions = payProOptions?.paymentOptions?.filter(
-    option => option.selected,
-  );
-  const paymentOptions = selectedPaymentOptions?.length
-    ? selectedPaymentOptions
-    : payProOptions?.paymentOptions;
+  const paymentOptions = payProOptions?.paymentOptions;
   return Object.keys(keys)
     .map(keyId => {
       const keyObj = keys[keyId];
@@ -705,7 +722,7 @@ export const getMatchedKey = (key: any, keys: Key[]) => {
 };
 
 export const getReadOnlyKey = (keys: Key[]) => {
-  return keys.find(k => k.id === 'readonly');
+  return keys.find(k => k.id.includes('readonly'));
 };
 
 export const findMatchedKeyAndUpdate = (

@@ -2,6 +2,7 @@
 #import "../AllowedUrlPrefixProtocol.h"
 #import "../SilentPushEvent.h"
 #import "Appboy-iOS-SDK/AppboyKit.h"
+#import "../InAppMessageHandler.h"
 #import <RNAppsFlyer.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTHTTPRequestHandler.h>
@@ -29,6 +30,11 @@
   [Appboy startWithApiKey:@"BRAZE_API_KEY_REPLACE_ME"
        inApplication:application
        withLaunchOptions:launchOptions];
+  
+  // Set the in-app message delegate
+  InAppMessageHandler *inAppMessageHandler = [[InAppMessageHandler alloc] init];
+  [Appboy sharedInstance].inAppMessageController.delegate = inAppMessageHandler;
+
 
   [[AppboyReactUtils sharedInstance] populateInitialUrlFromLaunchOptions:launchOptions];
 

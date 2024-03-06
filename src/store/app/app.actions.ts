@@ -17,6 +17,11 @@ import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
+export const importLedgerModalToggled = (show: boolean): AppActionType => ({
+  type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
+  payload: show,
+});
+
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
   payload: network,
@@ -63,6 +68,15 @@ export const showOnGoingProcessModal = (message: string): AppActionType => ({
 
 export const dismissOnGoingProcessModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL,
+});
+
+export const showInAppMessage = (message: string): AppActionType => ({
+  type: AppActionTypes.SHOW_IN_APP_MESSAGE,
+  payload: message,
+});
+
+export const dismissInAppMessage = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_IN_APP_MESSAGE,
 });
 
 export const showInAppNotification = (
@@ -326,6 +340,10 @@ export const checkingBiometricForSending = (
 
 export const setHasViewedZenLedgerWarning = (): AppActionType => ({
   type: AppActionTypes.SET_HAS_VIEWED_ZENLEDGER_WARNING,
+});
+
+export const setHasViewedBillsTab = (): AppActionType => ({
+  type: AppActionTypes.SET_HAS_VIEWED_BILLS_TAB,
 });
 
 export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({

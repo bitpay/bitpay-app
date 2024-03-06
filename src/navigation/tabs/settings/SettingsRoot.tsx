@@ -53,7 +53,7 @@ export const SettingsComponent = styled.View`
   padding: 0 ${ScreenGutter};
 `;
 
-export const SettingsHome = styled.ScrollView`
+export const SettingsHomeContainer = styled.ScrollView`
   padding: 10px 0;
 `;
 
@@ -98,7 +98,10 @@ export type SettingsHomeParamList =
     }
   | undefined;
 
-type SettingsHomeProps = NativeStackScreenProps<TabsStackParamList, 'Settings'>;
+export type SettingsHomeProps = NativeStackScreenProps<
+  TabsStackParamList,
+  'Settings'
+>;
 
 export type SettingsListType =
   | 'General'
@@ -111,7 +114,7 @@ export type SettingsListType =
   | 'Connections'
   | 'About BitPay';
 
-const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
+const SettingsHome: React.VFC<SettingsHomeProps> = ({route}) => {
   const {redirectTo} = route.params || {};
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -212,7 +215,7 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
 
   return (
     <SettingsContainer>
-      <SettingsHome ref={scrollViewRef}>
+      <SettingsHomeContainer ref={scrollViewRef}>
         <BitPayIdSettingsLink
           style={{paddingHorizontal: 15}}
           onPress={() => {
@@ -245,9 +248,9 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
         </BitPayIdSettingsLink>
 
         {memoizedSettingsList}
-      </SettingsHome>
+      </SettingsHomeContainer>
     </SettingsContainer>
   );
 };
 
-export default SettingsHomeScreen;
+export default SettingsHome;

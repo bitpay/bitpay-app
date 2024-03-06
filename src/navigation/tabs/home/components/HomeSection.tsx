@@ -22,6 +22,7 @@ interface HomeRowProps {
   style?: StyleProp<ViewStyle>;
   slimContainer?: boolean;
   label?: string;
+  children: React.ReactNode;
 }
 
 const HomeRowContainer = styled.View<{slim?: boolean}>`

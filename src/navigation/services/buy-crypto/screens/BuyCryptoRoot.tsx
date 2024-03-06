@@ -75,6 +75,10 @@ import {
 } from '../../../../store/external-services/external-services.types';
 import {StackActions} from '@react-navigation/native';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {banxaGetPaymentMethods} from '../../../../store/buy-crypto/effects/banxa/banxa';
+import {banxaEnv, getBanxaCoinFormat} from '../utils/banxa-utils';
+import {BanxaPaymentMethodsData} from '../../../../store/buy-crypto/buy-crypto.models';
+import cloneDeep from 'lodash.clonedeep';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -126,6 +130,8 @@ const BuyCryptoRoot = ({
   const preSetPartner = route.params?.partner?.toLowerCase() as
     | BuyCryptoExchangeKey
     | undefined;
+  const [banxaPreloadPaymentMethods, setBanxaPreloadPaymentMethods] =
+    useState<BanxaPaymentMethodsData>();
   const [amount, setAmount] = useState<number>(fromAmount);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
@@ -388,6 +394,11 @@ const BuyCryptoRoot = ({
       paymentMethod: selectedPaymentMethod,
       buyCryptoConfig,
       preSetPartner,
+      preLoadPartnersData: {
+        banxa: {
+          banxaPreloadPaymentMethods,
+        },
+      },
     });
   };
 
@@ -550,6 +561,50 @@ const BuyCryptoRoot = ({
   const checkPaymentMethodRef = useRef(checkPaymentMethod);
   checkPaymentMethodRef.current = checkPaymentMethod;
 
+  const getPreloadPartnersData = () => {
+    if (
+      !selectedWallet ||
+      buyCryptoConfig?.banxa?.disabled ||
+      !getBuyCryptoSupportedCoins(undefined, 'banxa').includes(
+        selectedWallet.currencyAbbreviation.toLowerCase(),
+      )
+    ) {
+      return;
+    }
+    const banxaCoinFormat = getBanxaCoinFormat(
+      cloneDeep(selectedWallet.currencyAbbreviation),
+    );
+    if (
+      banxaPreloadPaymentMethods?.data?.payment_methods?.find(pm =>
+        pm.supported_coin.includes(banxaCoinFormat),
+      )
+    ) {
+      return;
+    } else {
+      setBanxaPreloadPaymentMethods(undefined);
+    }
+
+    const banxaFiatCurrency = getAvailableFiatCurrencies('banxa').includes(
+      fiatCurrency,
+    )
+      ? fiatCurrency
+      : 'USD';
+
+    banxaGetPaymentMethods({
+      env: banxaEnv,
+      source: banxaFiatCurrency,
+      target: banxaCoinFormat,
+    })
+      .then(banxaPaymentMethods => {
+        setBanxaPreloadPaymentMethods(banxaPaymentMethods);
+      })
+      .catch(_err => {
+        logger.debug(
+          'Error pre-loading Banxa payment methods. Continue anyways.',
+        );
+      });
+  };
+
   const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
     const foundToken = Object.values(tokenDataByAddress).find(
       token =>
@@ -703,6 +758,7 @@ const BuyCryptoRoot = ({
   });
 
   useEffect(() => {
+    getPreloadPartnersData();
     checkPaymentMethodRef.current();
   }, [selectedWallet]);
 

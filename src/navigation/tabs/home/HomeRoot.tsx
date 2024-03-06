@@ -6,7 +6,7 @@ import {
 import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, ScrollView} from 'react-native';
+import {RefreshControl, ScrollView, TouchableOpacity} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
@@ -46,7 +46,11 @@ import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
-import {HeaderContainer, HomeContainer} from './components/Styled';
+import {
+  HeaderContainer,
+  HeaderLeftContainer,
+  HomeContainer,
+} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
@@ -56,6 +60,7 @@ import {
   sendCrypto,
 } from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import Icons from '../../wallet/components/WalletIcons';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -77,7 +82,6 @@ const HomeRoot = () => {
   });
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const keyMigrationFailure = useAppSelector(
     ({APP}) => APP.keyMigrationFailure,
   );
@@ -97,7 +101,7 @@ const HomeRoot = () => {
     }
 
     return brazeShopWithCrypto;
-  }, [brazeShopWithCrypto, defaultLanguage]);
+  }, [brazeShopWithCrypto]);
 
   // Do More
   const memoizedDoMoreCards = useMemo(() => {
@@ -108,7 +112,7 @@ const HomeRoot = () => {
     }
 
     return brazeDoMore;
-  }, [brazeDoMore, hasCards, themeType, defaultLanguage]);
+  }, [brazeDoMore, hasCards, themeType]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({RATE}) => RATE.priceHistory);
@@ -146,7 +150,7 @@ const HomeRoot = () => {
     }
 
     return brazeQuickLinks;
-  }, [brazeQuickLinks, defaultLanguage]);
+  }, [brazeQuickLinks]);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -154,7 +158,7 @@ const HomeRoot = () => {
         dispatch(updatePortfolioBalance());
       } // portfolio balance is updated in app init
     });
-  }, [dispatch, navigation]);
+  }, [dispatch, navigation, appIsLoading]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -177,7 +181,7 @@ const HomeRoot = () => {
     () => () => {
       navigation.navigate('TransactionProposalNotifications', {});
     },
-    [],
+    [navigation],
   );
 
   useEffect(() => {
@@ -202,6 +206,12 @@ const HomeRoot = () => {
             />
           }>
           <HeaderContainer>
+            <HeaderLeftContainer>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsHome')}>
+                <Icons.HomeSettings />
+              </TouchableOpacity>
+            </HeaderLeftContainer>
             {pendingTxps.length ? (
               <ProposalBadgeContainer onPress={onPressTxpBadge}>
                 <ProposalBadge>{pendingTxps.length}</ProposalBadge>

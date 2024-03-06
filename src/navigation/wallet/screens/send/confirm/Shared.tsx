@@ -635,6 +635,8 @@ export const WalletSelector = ({
 
 const CurrencyImageAndBadgeContainer = styled.View<{height: number}>`
   height: ${({height}) => height}px;
+  margin-left: 13px;
+  margin-right: 12px;
 `;
 
 export const CurrencyIconAndBadge = ({
@@ -656,7 +658,7 @@ export const CurrencyIconAndBadge = ({
   return (
     <CurrencyImageAndBadgeContainer height={size}>
       <CurrencyImage
-        img={() => <CurrencyIcon height={size} />}
+        img={() => <CurrencyIcon height={size} width={size} />}
         badgeUri={badgeImg}
         size={size}
       />

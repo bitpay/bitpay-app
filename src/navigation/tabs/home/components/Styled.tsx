@@ -10,6 +10,10 @@ export const HeaderContainer = styled.View`
   margin: 10px ${ScreenGutter};
 `;
 
+export const HeaderLeftContainer = styled.View`
+  flex-grow: 1;
+`;
+
 export const HeaderButtonContainer = styled.View`
   margin-left: ${ScreenGutter};
 `;

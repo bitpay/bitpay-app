@@ -74,18 +74,16 @@ const Payment = ({
   const dispatch = useAppDispatch();
   const {account, payment} = route.params;
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
-
-  const baseEventParams = {
-    ...getBillAccountEventParams(account, payment),
-    amount: payment.amount,
-  };
+  const [baseEventParams] = useState(
+    getBillAccountEventParams(account, payment),
+  );
 
   const sheetOptions: Array<Option> = [
     {
       onPress: () => {
         Linking.openURL('https://bitpay.com/request-help/wizard');
         dispatch(
-          Analytics.track('Bill Pay — Clicked Contact Support', {
+          Analytics.track('Bill Pay - Clicked Contact Support', {
             ...baseEventParams,
             context: 'Bill Payment',
           }),
@@ -116,7 +114,7 @@ const Payment = ({
                   setIsOptionsSheetVisible(true);
                   dispatch(
                     Analytics.track(
-                      'Bill Pay — Viewed Bill Payment Menu Modal',
+                      'Bill Pay - Viewed Bill Payment Menu Modal',
                       baseEventParams,
                     ),
                   );
@@ -131,7 +129,7 @@ const Payment = ({
 
   useEffect(() => {
     dispatch(
-      Analytics.track('Bill Pay — Viewed Bill Payment Page', baseEventParams),
+      Analytics.track('Bill Pay - Viewed Bill Payment Page', baseEventParams),
     );
   }, [baseEventParams, dispatch]);
 

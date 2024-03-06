@@ -119,6 +119,11 @@ import BillGroup, {
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
 import {showBlur} from './store/app/app.actions';
+import InAppMessage from './components/modal/in-app-message/InAppMessage';
+import SettingsGroup, {
+  SettingsGroupParamList,
+} from './navigation/tabs/settings/SettingsGroup';
+import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -144,7 +149,8 @@ export type RootStackParamList = {
   WalletConnectGroupParamList &
   BillGroupParamList &
   WalletGroupParamList &
-  ZenLedgerGroupParamsList;
+  ZenLedgerGroupParamsList &
+  SettingsGroupParamList;
 
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -173,7 +179,8 @@ export type NavScreenParams = NavigatorScreenParams<
     WalletConnectGroupParamList &
     NotificationsSettingsGroupParamsList &
     ZenLedgerGroupParamsList &
-    NetworkFeePolicySettingsGroupParamsList
+    NetworkFeePolicySettingsGroupParamsList &
+    SettingsGroupParamList
 >;
 
 declare global {
@@ -287,10 +294,6 @@ export default () => {
                   parentRoute.state.routes[parentRoute.state.index || 0];
 
                 stackName = tabStack.name + ' Tab';
-
-                if (tabStack.name === TabsScreens.SHOP) {
-                  dispatch(Analytics.track('Clicked Shop tab', {}));
-                }
               } else {
                 stackName = parentRoute.name;
                 screenName = childRoute.name;
@@ -541,6 +544,7 @@ export default () => {
             {AuthGroup({Auth: Root})}
             {IntroGroup({Intro: Root})}
             {OnboardingGroup({Onboarding: Root})}
+            {SettingsGroup({Settings: Root})}
             {BitpayIdGroup({BitpayId: Root})}
             {WalletGroup({Wallet: Root})}
             {CardActivationGroup({CardActivation: Root})}
@@ -562,11 +566,13 @@ export default () => {
           </Root.Navigator>
           <OnGoingProcessModal />
           <InAppNotification />
+          <InAppMessage />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
           <BlurContainer />
           <PinModal />
           <BiometricModal />
+          <ImportLedgerWalletModal />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -1,4 +1,3 @@
-import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
@@ -14,9 +13,6 @@ import Profile from './screens/ProfileSettings';
 import ReceiveSettings from './screens/ReceiveSettings';
 import {useTranslation} from 'react-i18next';
 import ReceivingEnabled from './screens/ReceivingEnabled';
-import PayProConfirmTwoFactor, {
-  PayProConfirmTwoFactorParamList,
-} from '../wallet/screens/send/confirm/PayProConfirmTwoFactor';
 import EnableTwoFactor, {
   EnableTwoFactorScreenParamList,
 } from './screens/EnableTwoFactor';
@@ -39,7 +35,6 @@ export type BitpayIdGroupParamList = {
   BitPayIdProfile: undefined;
   ReceiveSettings: undefined;
   ReceivingEnabled: undefined;
-  TwoFactor: PayProConfirmTwoFactorParamList;
   EnableTwoFactor: EnableTwoFactorScreenParamList;
   TwoFactorEnabled: TwoFactorEnabledScreenParamList;
 };

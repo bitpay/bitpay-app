@@ -414,6 +414,11 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       contentCardSubscription = null;
     }
 
+    Braze.subscribeToInAppMessage(false, (event: any) => {
+      LogActions.debug('InAppMessage Event Received');
+      dispatch(AppActions.showInAppMessage(event.inAppMessage));
+    });
+
     // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
     const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
     const MAX_RETRIES = 3;
@@ -516,7 +521,7 @@ export const startOnGoingProcessModal =
   async (dispatch, getState: () => RootState) => {
     const store: RootState = getState();
 
-    const _OnGoingProcessMessages = {
+    const translations: Record<OnGoingProcessMessages, string> = {
       GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
       CREATING_KEY: i18n.t('Creating Key'),
       LOGGING_IN: i18n.t('Logging In'),
@@ -558,7 +563,7 @@ export const startOnGoingProcessModal =
     }
 
     // Translate message before show message
-    const _message = _OnGoingProcessMessages[key];
+    const _message = translations[key];
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
 
@@ -690,6 +695,13 @@ export const subscribePushNotifications =
         dispatch(
           LogActions.error(
             'Push Notifications error subscribing: ' + JSON.stringify(err),
+          ),
+        );
+      } else {
+        dispatch(
+          LogActions.info(
+            'Push Notifications success subscribing: ' +
+              walletClient.credentials.walletName,
           ),
         );
       }
@@ -1093,13 +1105,7 @@ export const incomingShopLink =
       }
     } else if (route.name === 'billpay') {
       navigationRef.navigate('Tabs', {
-        screen: 'Shop',
-        params: {
-          screen: ShopScreens.HOME,
-          params: {
-            screen: ShopTabs.BILLS,
-          },
-        },
+        screen: 'Bills',
       });
     }
     return {merchantName};

@@ -22,13 +22,13 @@ import {WalletGroupParamList} from '../../WalletGroup';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {GetMainAddresses} from '../../../../store/wallet/effects/address/address';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {GetWalletBalance} from '../../../../store/wallet/effects/status/status';
 import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
-import {Wallet} from '../../../../store/wallet/wallet.models';
+import {Status, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   FormatAmountStr,
   GetLowUtxos,
@@ -40,8 +40,8 @@ import AddressesSkeleton from './AddressesSkeleton';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import {LogActions} from '../../../../store/log';
 import {setWalletScanning} from '../../../../store/wallet/wallet.actions';
+import {isSingleAddressChain} from '../../../../store/wallet/utils/currency';
 
 const ADDRESS_LIMIT = 5;
 
@@ -103,8 +103,10 @@ const Addresses = () => {
     currencyAbbreviation,
     chain,
     tokenAddress,
+    singleAddress,
   } = wallet;
   const navigation = useNavigation();
+  const logger = useLogger();
   const [loadingUtxos, setLoadingUtxos] = useState(true);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const dispatch = useAppDispatch();
@@ -244,10 +246,13 @@ const Addresses = () => {
         setMinFeePer(per.toFixed(2) + '%');
       }
       setLoadingUtxos(false);
-    } catch (err) {
+    } catch (err: any) {
       setLoadingUtxos(false);
+      if (err.includes('No UTXOs')) {
+        return;
+      }
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[Addresses] ', e));
+      logger.error(`error [getStatus]: ${e}`);
     }
   };
 
@@ -339,22 +344,28 @@ const Addresses = () => {
   return (
     <AddressesContainer>
       <ScrollView>
-        <AddressesParagraph>
-          {t(
-            'Each wallet (except for ETH/ERC20) can generate billions of addresses from your 12-word recovery phrase. A new address is automatically generated and shown each time you receive a payment.',
-          )}
-        </AddressesParagraph>
-        <AddressesParagraph>
-          {t(
-            "It's a good idea to avoid reusing addresses - this both protects your privacy and keeps your bitcoins secure against hypothetical attacks by quantum computers.",
-          )}
-        </AddressesParagraph>
+        {!isSingleAddressChain(wallet.credentials.chain) ? (
+          <>
+            <AddressesParagraph>
+              {t(
+                'Each wallet can generate billions of addresses from your 12-word recovery phrase. A new address is automatically generated and shown each time you receive a payment.',
+              )}
+            </AddressesParagraph>
+            <AddressesParagraph>
+              {t(
+                "It's a good idea to avoid reusing addresses - this both protects your privacy and keeps your assets secure against hypothetical attacks by quantum computers.",
+              )}
+            </AddressesParagraph>
+          </>
+        ) : null}
 
-        <AddressesContainer>
-          <Button onPress={scan} state={buttonState}>
-            {t('Scan Addresses for Funds')}
-          </Button>
-        </AddressesContainer>
+        {!singleAddress ? (
+          <AddressesContainer>
+            <Button onPress={scan} state={buttonState}>
+              {t('Scan Addresses for Funds')}
+            </Button>
+          </AddressesContainer>
+        ) : null}
 
         {loadingUtxos ? (
           <AddressesSkeleton />
