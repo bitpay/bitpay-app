@@ -448,6 +448,7 @@
   "Additional third-party fees may apply.": "Pueden aplicarse comisiones adicionales de terceros.",
   "Reminder": "Recordatorio",
   "linkedWalletWarnMsg": "Ten en cuenta que una vez recibidos los fondos en tu billetera {{selectedWallet}}, para moverlos necesitarás tener los fondos suficientes en {{chain}} vinculados a la billetera {{linkedWalletName}} para pagar la comisión de la red {{chainCoin}}.",
+  "linkedWalletSellWarnMsg": "Please note that to move funds from your {{selectedWallet}} wallet, you will need to have sufficient funds in your linked wallet {{chain}} {{linkedWalletName}} to pay the {{chainCoin}} mining fees.",
   "Out of service": "Out of service",
   "This feature is temporarily out of service. Please try again later.": "This feature is temporarily out of service. Please try again later.",
   "Deposit to": "Depositar en",

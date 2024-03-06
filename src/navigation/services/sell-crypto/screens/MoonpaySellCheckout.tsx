@@ -31,6 +31,7 @@ import {
   SendMaxInfo,
 } from '../../../../store/wallet/wallet.models';
 import {
+  GetName,
   GetPrecision,
   IsERCToken,
 } from '../../../../store/wallet/utils/currency';
@@ -102,6 +103,7 @@ import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {PaymentMethodsAvailable} from '../constants/SellCryptoConstants';
+import {getSendMaxData} from '../../utils/external-services-utils';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -142,6 +144,9 @@ const MoonpaySellCheckout: React.FC = () => {
   const sellOrder: MoonpaySellOrderData = useAppSelector(
     ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.moonpay[sellCrpytoExternalId],
   );
+  const [isToken, setIsToken] = useState(
+    IsERCToken(wallet.currencyAbbreviation, wallet.chain),
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showCheckTermsMsg, setShowCheckTermsMsg] = useState(false);
@@ -160,10 +165,8 @@ const MoonpaySellCheckout: React.FC = () => {
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<MoonpaySellTransactionDetails>();
 
-  const alternativeIsoCode = 'USD';
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
   let status: string;
-  let payinAddress: string;
 
   const copyText = (text: string) => {
     haptic('impactLight');
@@ -191,7 +194,6 @@ const MoonpaySellCheckout: React.FC = () => {
       setPaymentExpired(true);
       setRemainingTimeStr('Expired');
       if (countDown) {
-        /* later */
         clearInterval(countDown);
       }
       dispatch(
@@ -213,8 +215,6 @@ const MoonpaySellCheckout: React.FC = () => {
     const s = totalSecs % 60;
     setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
   };
-
-  // TODO: destinationTag ????
 
   const init = async () => {
     let sellTxDetails: MoonpaySellTransactionDetails;
@@ -298,7 +298,11 @@ const MoonpaySellCheckout: React.FC = () => {
 
     setTxData(sellTxDetails);
 
-    if (sellOrder.address_to !== sellTxDetails.depositWallet.walletAddress) {
+    if (
+      sellOrder.address_to !== sellTxDetails.depositWallet.walletAddress &&
+      (wallet.currencyAbbreviation.toLowerCase() !== 'btc' ||
+        sellOrder.address_to !== sellTxDetails.depositWallet.btcLegacyAddress)
+    ) {
       const msg = `The destination address of the original Sell Order does not match the address expected by Moonpay for the id: ${sellOrder.transaction_id}`;
       showError(
         msg,
@@ -307,7 +311,6 @@ const MoonpaySellCheckout: React.FC = () => {
       return;
     }
 
-    // TODO?: set payTill with a couple of minutes less than quoteExpiresAt, to be safe
     let payTill: string | number | null = sellTxDetails.quoteExpiresAt;
 
     if (sellTxDetails.quoteExpiredEmailSentAt) {
@@ -323,7 +326,7 @@ const MoonpaySellCheckout: React.FC = () => {
         'No quoteExpiresAt parameter present. Setting custom expiration time.',
       );
       const now = Date.now();
-      payTill = now + 3 * 60 * 1000;
+      payTill = now + 5 * 60 * 1000;
     }
 
     paymentTimeControl(payTill);
@@ -348,7 +351,7 @@ const MoonpaySellCheckout: React.FC = () => {
       wallet.currencyAbbreviation.toLowerCase() === 'bch' &&
       wallet.chain.toLowerCase() === 'bch'
     ) {
-      // use cashaddr wo prefix for BCH
+      // use cashaddr for BCH
       const toAddressCashaddr = BWC.getBitcoreCash()
         .Address(toAddress)
         .toString(true);
@@ -391,7 +394,7 @@ const MoonpaySellCheckout: React.FC = () => {
     destTag?: string,
   ) => {
     try {
-      const message = `${wallet.currencyAbbreviation.toUpperCase()} sold on Moonpay`;
+      const message = `Sold ${wallet.currencyAbbreviation.toUpperCase()}`;
       let outputs = [];
 
       outputs.push({
@@ -413,7 +416,7 @@ const MoonpaySellCheckout: React.FC = () => {
         },
       };
 
-      if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+      if (isToken) {
         if (wallet.tokenAddress) {
           txp.tokenAddress = wallet.tokenAddress;
           if (txp.outputs) {
@@ -435,14 +438,10 @@ const MoonpaySellCheckout: React.FC = () => {
           }
         }
       }
-      if (useSendMax && sendMaxInfo) {
-        txp.inputs = sendMaxInfo.inputs;
-        txp.fee = sendMaxInfo.fee;
-      } else {
-        if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
-          txp.feeLevel = 'priority';
-        } // Avoid expired order due to slow TX confirmation
-      }
+
+      if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
+        txp.feeLevel = 'priority';
+      } // Avoid expired order due to slow TX confirmation
 
       if (destTag) {
         txp.destinationTag = Number(destTag);
@@ -500,12 +499,12 @@ const MoonpaySellCheckout: React.FC = () => {
 
   const updateMoonpayTx = (
     moonpayTxData: MoonpaySellTransactionDetails,
-    broadcastedTx: Partial<TransactionProposal>,
+    broadcastedTx?: Partial<TransactionProposal>,
   ) => {
     const dataToUpdate: MoonpaySellIncomingData = {
       externalId: sellCrpytoExternalId!,
       txSentOn: Date.now(),
-      txSentId: broadcastedTx.txid,
+      txSentId: broadcastedTx?.txid,
       status: 'bitpayTxSent',
       fiatAmount: moonpayTxData.quoteCurrencyAmount,
       baseCurrencyCode: cloneDeep(
@@ -541,13 +540,42 @@ const MoonpaySellCheckout: React.FC = () => {
       return;
     }
 
-    const warningMsg = dispatch(
+    let warningMsg = dispatch(
       GetExcludedUtxosMessage(coin, chain, tokenAddress, sendMaxInfo),
     );
     const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
 
+    const realMaxAmount = dispatch(
+      SatToUnit(
+        cloneDeep(sendMaxInfo.amount),
+        wallet.currencyAbbreviation,
+        wallet.chain,
+        wallet.tokenAddress,
+      ),
+    );
+    if (realMaxAmount && realMaxAmount > amountExpected) {
+      try {
+        const presicion = dispatch(
+          GetPrecision(
+            wallet.currencyAbbreviation,
+            wallet.chain,
+            wallet.tokenAddress,
+          ),
+        );
+        const amountBelowMoonpayMinUnit = Number(
+          (realMaxAmount - amountExpected).toFixed(presicion?.unitDecimals),
+        );
+        const message = `A total of ${amountBelowMoonpayMinUnit} ${coin.toUpperCase()} were excluded. These funds are not enough to cover the minimum Moonpay purchase unit.`;
+        warningMsg = warningMsg + `\n${message}`;
+      } catch (err) {
+        // continue without message
+      }
+    }
+
     const msg =
-      `Because you are sending the maximum amount contained in this wallet, the ${chain} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
+      `Because you are sending the maximum amount contained in this wallet, the ${
+        dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase()
+      } miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
       `\n${warningMsg}`;
 
     await sleep(400);
@@ -629,8 +657,24 @@ const MoonpaySellCheckout: React.FC = () => {
   };
 
   useEffect(() => {
+    const _getSendMaxData = async (wallet: Wallet) => {
+      // We obtain the sendMaxData, but we do not send the maximum amount, since Moonpay misinterprets it
+      // (It rounds the last digit of the decimal up, based on a variable precision number from its side. Therefore, it causes a failure in the execution of the order)
+      // As a workaround we continue to use the previously agreed amount
+      const sendMaxData = await getSendMaxData(wallet);
+      sendMaxInfo = cloneDeep(sendMaxData);
+      init();
+    };
+
     dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
-    init();
+    if (isToken) {
+      useSendMax = false;
+    }
+    if (sellOrder?.send_max && !isToken) {
+      _getSendMaxData(wallet);
+    } else {
+      init();
+    }
 
     return () => {
       if (countDown) {
@@ -785,7 +829,6 @@ const MoonpaySellCheckout: React.FC = () => {
                   <RowLabel>{t('Exchange Fee')}</RowLabel>
                   <RowData>
                     {Number(totalExchangeFee).toFixed(2)}{' '}
-                    {/* // TODO: review if using fiatCurrency from moonpayTxDetails is better */}
                     {txData.quoteCurrency?.code?.toUpperCase()}
                   </RowData>
                 </RowDataContainer>
@@ -813,7 +856,6 @@ const MoonpaySellCheckout: React.FC = () => {
                 <H7>{t('TOTAL TO RECEIVE')}</H7>
                 {!!txData.quoteCurrencyAmount && (
                   <H5>
-                    {/* TODO: use formatFiatAmount() for quoteCurrencyAmount */}
                     {txData.quoteCurrencyAmount.toFixed(2)}{' '}
                     {txData.quoteCurrency?.code?.toUpperCase()}
                   </H5>

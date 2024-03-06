@@ -37,6 +37,7 @@ import {
   GetProtocolPrefixAddress,
 } from '../../../../store/wallet/utils/wallet';
 import {
+  GetName,
   GetPrecision,
   IsERCToken,
 } from '../../../../store/wallet/utils/currency';
@@ -598,6 +599,7 @@ const ChangellyCheckout: React.FC = () => {
       if (useSendMax && sendMaxInfo) {
         txp.inputs = sendMaxInfo.inputs;
         txp.fee = sendMaxInfo.fee;
+        txp.feePerKb = undefined;
       } else {
         if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
           txp.feeLevel = 'priority';
@@ -656,7 +658,11 @@ const ChangellyCheckout: React.FC = () => {
         dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         await sleep(400);
         await dispatch(
-          publishAndSign({txp: ctxp! as TransactionProposal, key, wallet: fromWalletSelected}),
+          publishAndSign({
+            txp: ctxp! as TransactionProposal,
+            key,
+            wallet: fromWalletSelected,
+          }),
         );
       }
       saveChangellyTx();
@@ -783,7 +789,9 @@ const ChangellyCheckout: React.FC = () => {
     const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
 
     const msg =
-      `Because you are sending the maximum amount contained in this wallet, the ${chain} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
+      `Because you are sending the maximum amount contained in this wallet, the ${
+        dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase()
+      } miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
       `\n${warningMsg}`;
 
     await sleep(400);

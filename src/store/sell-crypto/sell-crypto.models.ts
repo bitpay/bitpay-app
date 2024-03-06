@@ -4,6 +4,7 @@ export type MoonpaySellOrderStatus =
   | 'createdOrder'
   | 'bitpayPending'
   | 'bitpayTxSent'
+  | 'bitpayCanceled'
   | 'waitingForDeposit'
   | 'pending'
   | 'failed'
@@ -32,12 +33,11 @@ export interface MoonpaySellOrderData {
 }
 
 export interface MoonpaySellIncomingData {
-  // TODO: review this
   externalId: string;
   transactionId?: string;
   status?: MoonpaySellOrderStatus;
   baseCurrencyCode?: string;
-  baseCurrencyAmount?: string | number;
+  baseCurrencyAmount?: string | number; // cryptoAmount
   fiatAmount?: number;
   fiatCurrencyCode?: string;
   paymentMethod?: PaymentMethodKey;

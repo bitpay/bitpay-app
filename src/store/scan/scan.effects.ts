@@ -1168,7 +1168,7 @@ const handleMoonpayUri =
             type: 'warning',
             title: t('Something went wrong'),
             message: t(
-              `It seems that the order id: ${externalId} was not created from this wallet or has been deleted. Please try creating a new order from our Sell Crypto feature.`,
+              `It seems that the order id: ${transactionId} was not created from this wallet or has been deleted. Please try creating a new order from our Sell Crypto feature.`,
             ),
             enableBackdropDismiss: true,
             actions: [
@@ -1184,9 +1184,13 @@ const handleMoonpayUri =
       }
 
       if (
-        ['bitpayTxSent', 'pending', 'completed', 'failed'].includes(
-          order.status,
-        )
+        [
+          'bitpayTxSent',
+          'bitpayCanceled',
+          'pending',
+          'completed',
+          'failed',
+        ].includes(order.status)
       ) {
         let title: string, message: string;
         switch (order.status) {
@@ -1204,6 +1208,7 @@ const handleMoonpayUri =
             );
             break;
           case 'failed':
+          case 'bitpayCanceled':
             title = t('Failed Order');
             message = t(
               `Cannot continue because sell order with id: ${order.transaction_id} has failed for some reason or has been canceled. Please try creating a new order from our Sell Crypto feature.`,
@@ -1253,10 +1258,44 @@ const handleMoonpayUri =
             type: 'warning',
             title: t('Something went wrong'),
             message: t(
-              `baseCurrencyCode mismatch: ${baseCurrencyCode} / ${getMoonpaySellFixedCurrencyAbbreviation(
+              `Crypto currency mismatch: ${baseCurrencyCode} / ${getMoonpaySellFixedCurrencyAbbreviation(
                 order.coin,
                 order.chain,
               )} from the order id: ${externalId}. Can\'t continue.`,
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      if (
+        baseCurrencyAmount &&
+        Number(baseCurrencyAmount) !== Number(order?.crypto_amount)
+      ) {
+        dispatch(
+          LogActions.warn(
+            `baseCurrencyAmount mismatch: ${Number(
+              baseCurrencyAmount,
+            )} !== ${Number(order?.crypto_amount)}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              `Crypto amount mismatch: ${Number(baseCurrencyAmount)} / ${Number(
+                order?.crypto_amount,
+              )} from the order id: ${transactionId}. Can\'t continue.`,
             ),
             enableBackdropDismiss: true,
             actions: [
@@ -1275,7 +1314,8 @@ const handleMoonpayUri =
         externalId,
         transactionId,
         status: 'bitpayPending',
-        baseCurrencyAmount: Number(baseCurrencyAmount),
+        baseCurrencyAmount:
+          Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),
         depositWalletAddress,
       };
 
@@ -1289,7 +1329,8 @@ const handleMoonpayUri =
         Analytics.track('Sell Crypto Order Created', {
           // TODO: review this event
           exchange: 'moonpay',
-          cryptoAmount: Number(baseCurrencyAmount) || '',
+          cryptoAmount:
+            Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),
           fiatAmount: order?.fiat_receiving_amount || '',
           fiatCurrency: order?.fiat_currency || '',
           coin: order?.coin?.toLowerCase() || '',
@@ -1331,9 +1372,8 @@ const handleMoonpayUri =
         sellCrpytoExternalId: externalId,
         wallet: fullWalletObj,
         toAddress: depositWalletAddress,
-        amount: Number(baseCurrencyAmount),
-        useSendMax: order?.send_max, // TODO ??
-        // sendMaxInfo?: SendMaxInfo;
+        amount: Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),
+        useSendMax: order?.send_max,
       };
 
       navigationRef.reset({

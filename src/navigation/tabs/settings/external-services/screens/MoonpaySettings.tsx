@@ -166,6 +166,11 @@ const MoonpaySettings: React.FC = () => {
                         {t('Sell order failed')}
                       </PrTxtStatus>
                     )}
+                    {so.status === 'bitpayCanceled' && (
+                      <PrTxtStatus style={{color: '#df5264'}}>
+                        {t('Sell order canceled')}
+                      </PrTxtStatus>
+                    )}
                     {so.status &&
                       ['waitingForDeposit', 'bitpayPending'].includes(
                         so.status,

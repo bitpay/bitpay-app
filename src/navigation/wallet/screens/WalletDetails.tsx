@@ -933,6 +933,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return account ? account[account.type].merchantIcon : '';
   };
 
+  const getTxDescriptionDetails = (key: string | undefined) => {
+    if (!key) {
+      return undefined;
+    }
+    switch (key) {
+      case 'moonpay':
+        return 'MoonPay';
+      default:
+        return undefined;
+    }
+  };
+
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
@@ -952,6 +964,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           getGiftCardIcons(supportedCardMap)[item.uiIconURI]
         }
         description={item.uiDescription}
+        details={getTxDescriptionDetails(item.customData?.service)}
         time={item.uiTime}
         value={item.uiValue}
         onPressTransaction={() => onPressTransaction(item)}

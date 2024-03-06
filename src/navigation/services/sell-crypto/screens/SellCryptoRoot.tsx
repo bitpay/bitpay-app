@@ -13,7 +13,6 @@ import {SellCryptoScreens, SellCryptoGroupParamList} from '../SellCryptoGroup';
 import {
   PaymentMethod,
   PaymentMethodKey,
-  PaymentMethodsAvailable,
 } from '../../sell-crypto/constants/SellCryptoConstants';
 import PaymentMethodsModal from '../../buy-crypto/components/PaymentMethodModal';
 import AmountModal from '../../../../components/amount/AmountModal';
@@ -130,6 +129,8 @@ import cloneDeep from 'lodash.clonedeep';
 import SellCryptoLoadingQuoteSkeleton from './SellCryptoQuoteSkeleton';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
+import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
+import {getSendMaxData} from '../../utils/external-services-utils';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -152,7 +153,9 @@ export interface SellCryptoCoin {
   limits?: {
     min: number | undefined;
     max: number | undefined;
-  }; // TODO: add limits interface
+  };
+  supportsTestMode?: boolean;
+  precision?: number;
 }
 
 export interface SellLimits {
@@ -233,6 +236,8 @@ const SellCryptoRoot = ({
     useState<PaymentMethod>();
   const [sellCryptoSupportedCoins, setSellCryptoSupportedCoins] =
     useState<SellCryptoCoin[]>();
+  const [moonpaySelectedCoin, setMoonpaySelectedCoin] =
+    useState<SellCryptoCoin>();
   const [fiatCurrency, setFiatCurrency] = useState<string>(
     getAvailableSellCryptoFiatCurrencies().includes(defaultAltCurrency.isoCode)
       ? defaultAltCurrency.isoCode
@@ -245,6 +250,7 @@ const SellCryptoRoot = ({
   let minAmount: number, maxAmount: number;
   const [sellQuoteData, setSellQuoteData] = useState<MoonpayGetSellQuoteData>();
   const [uiFormattedWallet, setUiFormattedWallet] = useState<WalletRowProps>();
+  const [useSendMax, setUseSendMax] = useState<boolean>(false);
 
   const showModal = (id: string) => {
     switch (id) {
@@ -453,7 +459,7 @@ const SellCryptoRoot = ({
       AppActions.showBottomNotificationModal({
         type: 'info',
         title: t('Reminder'),
-        message: t('linkedWalletWarnMsg', {
+        message: t('linkedWalletSellWarnMsg', {
           chain: BitpaySupportedCoins[linkedWallet.chain.toLowerCase()].name,
           chainCoin: linkedWallet.currencyAbbreviation.toUpperCase(),
           selectedWallet: selectedWallet?.currencyAbbreviation.toUpperCase(),
@@ -545,16 +551,14 @@ const SellCryptoRoot = ({
       externalTransactionId: externalTransactionId,
       redirectURL:
         APP_DEEPLINK_PREFIX +
-        `moonpay?flow=sell&externalId=${externalTransactionId}`,
+        `moonpay?flow=sell&externalId=${externalTransactionId}` +
+        `${useSendMax ? '&sendMax=true' : ''}`,
       refundWalletAddress: address,
       lockAmount: true,
       colorCode: BitPay,
       theme: theme.dark ? 'dark' : 'light',
-      // language: reqData.language, TODO: send language?
       quoteCurrencyCode: cloneDeep(fiatCurrency).toLowerCase(),
-      showWalletAddressForm: true, // TODO: change this to false
-      // unsupportedRegionRedirectUrl: , // TODO: add this parameter
-      // skipUnsupportedRegionScreen: // TODO: add this parameter
+      showWalletAddressForm: true,
     };
 
     let data: MoonpayGetSellSignedPaymentUrlData;
@@ -584,7 +588,7 @@ const SellCryptoRoot = ({
       fiat_fee_amount: Number(sellQuoteData!.totalFee),
       fiat_receiving_amount: Number(sellQuoteData!.quoteCurrencyAmount),
       status: 'createdOrder',
-      // send_max: // TODO
+      send_max: useSendMax,
     };
 
     dispatch(
@@ -593,21 +597,10 @@ const SellCryptoRoot = ({
       }),
     );
 
+    await sleep(300);
     dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
     await sleep(500);
     navigation.goBack();
-
-    // TODO: In the future we will have an offers page similar to "Buy Crypto"
-    // navigation.navigate('SellCryptoOffers', {
-    //   amount,
-    //   fiatCurrency,
-    //   coin: selectedWallet?.currencyAbbreviation || '',
-    //   chain: selectedWallet?.chain || '',
-    //   country: locationData?.countryShortCode || 'US',
-    //   selectedWallet: selectedWallet!,
-    //   paymentMethod: selectedPaymentMethod,
-    //   // sellCryptoConfig,
-    // });
   };
 
   const setDefaultPaymentMethod = () => {
@@ -692,6 +685,14 @@ const SellCryptoRoot = ({
     }
   };
 
+  const adjustMoonpayAmount = (amount: number, precision?: number) => {
+    if (!precision) {
+      return amount;
+    }
+    const factor = Math.pow(10, precision);
+    return Math.trunc(amount * factor) / factor;
+  };
+
   const init = async () => {
     try {
       dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
@@ -758,7 +759,7 @@ const SellCryptoRoot = ({
           !currency.isSuspended &&
           currency.isSellSupported &&
           currency.type === 'crypto'
-        ); // TODO: add this: && (moonpaySellEnv === 'production' || moonpaySellEnv === 'sandbox' && currency.supportsTestMode)
+        );
       });
 
       const moonpayAllSellSupportedCurrenciesFixedProps: MoonpayCurrency[] =
@@ -805,6 +806,7 @@ const SellCryptoRoot = ({
             minSellAmount,
             maxSellAmount,
             supportsTestMode,
+            precision,
           }: {
             code: string;
             name: string;
@@ -812,6 +814,7 @@ const SellCryptoRoot = ({
             minSellAmount?: number;
             maxSellAmount?: number;
             supportsTestMode?: boolean;
+            precision?: number;
           }) => {
             const chain = getChainFromMoonpayNetworkCode(
               code,
@@ -830,19 +833,10 @@ const SellCryptoRoot = ({
                 max: maxSellAmount,
               },
               supportsTestMode,
+              precision,
             };
           },
         );
-
-      const moonpaySellSupportedFiatCurrencies = moonpayAllCurrencies.filter(
-        currency => {
-          return (
-            !currency.isSuspended &&
-            currency.isSellSupported &&
-            currency.type === 'fiat'
-          ); // TODO: add this: && (moonpaySellEnv === 'production' || moonpaySellEnv === 'sandbox' && currency.supportsTestMode)
-        },
-      );
 
       // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
       const orderedArray = SupportedCurrencyOptions.map(currency =>
@@ -998,6 +992,7 @@ const SellCryptoRoot = ({
             selectedWallet.chain,
           ),
       );
+      setMoonpaySelectedCoin(selectedCoin);
       setSellLimits({
         minAmount: selectedCoin?.limits?.min,
         maxAmount: selectedCoin?.limits?.max,
@@ -1006,6 +1001,7 @@ const SellCryptoRoot = ({
 
     setSellQuoteData(undefined);
     setAmount(0);
+    setUseSendMax(false);
 
     checkPaymentMethodRef.current();
   }, [selectedWallet]);
@@ -1081,7 +1077,7 @@ const SellCryptoRoot = ({
       <ScrollView>
         <BuyCryptoItemCard
           onPress={() => {
-            showModal('walletSelector'); // TODO: change the wallet selector for the correct one
+            showModal('walletSelector');
           }}>
           <BuyCryptoItemTitle>{t('Sell from')}</BuyCryptoItemTitle>
           {!selectedWallet && (
@@ -1238,7 +1234,11 @@ const SellCryptoRoot = ({
               <SelectedOptionCol>
                 {amount && amount > 0 ? (
                   <>
-                    <DataText>{Number(amount.toFixed(8))}</DataText>
+                    {useSendMax ? (
+                      <DataText>{t('Maximum Amount')}</DataText>
+                    ) : (
+                      <DataText>{Number(amount.toFixed(8))}</DataText>
+                    )}
                     <ArrowContainer>
                       <SelectorArrowRight
                         {...{
@@ -1250,13 +1250,7 @@ const SellCryptoRoot = ({
                     </ArrowContainer>
                   </>
                 ) : (
-                  <SelectedOptionContainer
-                    style={{backgroundColor: Action}}
-                    // disabled={false}
-                    // onPress={() => {
-                    //   showModal('amount');
-                    // }}
-                  >
+                  <SelectedOptionContainer style={{backgroundColor: Action}}>
                     <SelectedOptionCol>
                       <SelectedOptionText
                         style={{color: White}}
@@ -1392,8 +1386,58 @@ const SellCryptoRoot = ({
         context={'sellCrypto'}
         onClose={() => hideModal('amount')}
         onSubmit={newAmount => {
-          setAmount(newAmount);
+          if (newAmount) {
+            const adjustedNewAmount = adjustMoonpayAmount(
+              newAmount,
+              moonpaySelectedCoin?.precision,
+            );
+            setAmount(adjustedNewAmount);
+            setUseSendMax(false);
+          }
           hideModal('amount');
+        }}
+        onSendMaxPressed={async () => {
+          hideModal('amount');
+
+          if (!selectedWallet) {
+            return;
+          }
+
+          let maxAmount: number | undefined;
+
+          if (
+            IsERCToken(
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+            )
+          ) {
+            setUseSendMax(true);
+            maxAmount = Number(
+              // @ts-ignore
+              selectedWallet.balance.cryptoSpendable.replaceAll(',', ''),
+            );
+          } else {
+            setUseSendMax(true);
+            const data = await getSendMaxData(selectedWallet);
+            if (data?.amount) {
+              maxAmount = dispatch(
+                SatToUnit(
+                  data.amount,
+                  selectedWallet.currencyAbbreviation,
+                  selectedWallet.chain,
+                  selectedWallet.tokenAddress,
+                ),
+              );
+            }
+          }
+
+          if (maxAmount) {
+            const adjustedMaxAmount = adjustMoonpayAmount(
+              maxAmount,
+              moonpaySelectedCoin?.precision,
+            );
+            setAmount(adjustedMaxAmount);
+          }
         }}
       />
 
@@ -1403,6 +1447,7 @@ const SellCryptoRoot = ({
           setSelectedPaymentMethod(paymentMethod);
           hideModal('paymentMethod');
           setAmount(0);
+          setUseSendMax(false);
           setLoadingQuote(false);
           setSellQuoteData(undefined);
           checkAndSetFiatCurrency(paymentMethod.method);

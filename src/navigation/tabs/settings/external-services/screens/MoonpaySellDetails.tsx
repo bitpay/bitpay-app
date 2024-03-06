@@ -53,6 +53,7 @@ import {sleep} from '../../../../../utils/helper-methods';
 import {SlateDark, White} from '../../../../../styles/colors';
 import {
   MoonpaySellOrderData,
+  MoonpaySellOrderStatus,
   MoonpaySellTransactionDetails,
 } from '../../../../../store/sell-crypto/sell-crypto.models';
 
@@ -90,7 +91,10 @@ const MoonpaySellDetails: React.FC = () => {
   };
 
   const getSellTransactionDetails = (force?: boolean) => {
-    if (['completed', 'failed'].includes(sellOrder.status) && !force) {
+    if (
+      ['bitpayCanceled'].includes(sellOrder.status) ||
+      (['completed', 'failed'].includes(sellOrder.status) && !force)
+    ) {
       return;
     }
 
@@ -205,6 +209,7 @@ const MoonpaySellDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getSellTransactionDetails();
+    logger.debug('Sell order details: ' + JSON.stringify(sellOrder));
   }, []);
 
   useEffect(() => {
@@ -390,7 +395,7 @@ const MoonpaySellDetails: React.FC = () => {
           </ColumnDataContainer>
         )}
 
-        {!!sellOrder.refund_address && (
+        {!!sellOrder.refund_address && ['failed'].includes(sellOrder.status) ? (
           <ColumnDataContainer>
             <TouchableOpacity
               onPress={() => {
@@ -408,7 +413,7 @@ const MoonpaySellDetails: React.FC = () => {
               </CopiedContainer>
             </TouchableOpacity>
           </ColumnDataContainer>
-        )}
+        ) : null}
 
         {!!sellOrder.tx_sent_id && (
           <ColumnDataContainer>
@@ -450,23 +455,25 @@ const MoonpaySellDetails: React.FC = () => {
           </ColumnDataContainer>
         )}
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(sellOrder.external_id);
-              setCopiedExternalId(true);
-            }}>
-            <RowLabel>{t('External Sell Order ID')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {sellOrder.external_id}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedExternalId ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
+        {sellOrder.external_id && (__DEV__ || !sellOrder.transaction_id) ? (
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(sellOrder.external_id);
+                setCopiedExternalId(true);
+              }}>
+              <RowLabel>{t('External Sell Order ID')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {sellOrder.external_id}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedExternalId ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+        ) : null}
 
         {['bitpayPending', 'waitingForDeposit'].includes(sellOrder.status) ? (
           <RemoveCta
@@ -490,15 +497,41 @@ const MoonpaySellDetails: React.FC = () => {
                             sellOrder.transaction_id,
                             sellOrder.external_id,
                           );
-                          console.log('------------- res: ', res);
                           if (res?.statusCode == 204) {
-                            // DELETE successfully
-                            // TODO: if order was successfully canceled:
-                            // set custom bitpayCancelled status
-                            // getSellTransactionDetails(true);
+                            // Canceled successfully
+                            sellOrder.status = 'bitpayCanceled';
+                            const stateParams = {
+                              externalId: sellOrder.external_id,
+                              status:
+                                'bitpayCanceled' as MoonpaySellOrderStatus,
+                            };
+
+                            dispatch(
+                              SellCryptoActions.updateSellOrderMoonpay({
+                                moonpaySellIncomingData: stateParams,
+                              }),
+                            );
+                            updateStatusDescription();
                           }
                         } catch (err) {
-                          // TODO: show error saying that the Tx couldn't be cancelled
+                          await sleep(500);
+                          dispatch(
+                            showBottomNotificationModal({
+                              type: 'warning',
+                              title: t('Something went wrong'),
+                              message: t(
+                                'There was an error trying to cancel the order.',
+                              ),
+                              enableBackdropDismiss: true,
+                              actions: [
+                                {
+                                  text: t('OK'),
+                                  action: () => {},
+                                  primary: true,
+                                },
+                              ],
+                            }),
+                          );
                         }
                       },
                       primary: true,
@@ -517,9 +550,13 @@ const MoonpaySellDetails: React.FC = () => {
           </RemoveCta>
         ) : null}
 
-        {['createdOrder', 'bitpayPending', 'failed', 'completed'].includes(
-          sellOrder.status,
-        ) ? (
+        {[
+          'createdOrder',
+          'bitpayPending',
+          'bitpayCanceled',
+          'failed',
+          'completed',
+        ].includes(sellOrder.status) ? (
           <RemoveCta
             onPress={async () => {
               haptic('impactLight');

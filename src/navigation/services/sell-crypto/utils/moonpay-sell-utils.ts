@@ -273,6 +273,10 @@ export const moonpaySellGetStatusDetails = (
       statusTitle = t('Crypto payment sent');
       statusDescription = t('Payment sent, waiting for Moonpay to receive it.');
       break;
+    case 'bitpayCanceled':
+      statusTitle = t('Canceled');
+      statusDescription = t('Sell order canceled by user.');
+      break;
     case 'waitingForDeposit':
       statusTitle = t('Waiting For Desposit');
       statusDescription = t(
@@ -315,6 +319,7 @@ export const moonpaySellGetStatusColor = (
     case 'completed':
       return '#01d1a2';
     case 'failed':
+    case 'bitpayCanceled':
       return '#df5264';
     case 'waitingForDeposit':
     case 'pending':

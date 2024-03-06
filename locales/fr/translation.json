@@ -446,6 +446,7 @@
   "Additional third-party fees may apply.": "Des frais supplémentaires de tiers peuvent s'appliquer.",
   "Reminder": "Rappel",
   "linkedWalletWarnMsg": "Keep in mind that once the funds are received in your {{selectedWallet}} wallet, to move them you will need to have enough funds in your {{chain}} linked wallet {{linkedWalletName}} to pay the {{chainCoin}} miner fees.",
+  "linkedWalletSellWarnMsg": "Please note that to move funds from your {{selectedWallet}} wallet, you will need to have sufficient funds in your linked wallet {{chain}} {{linkedWalletName}} to pay the {{chainCoin}} mining fees.",
   "Out of service": "Out of service",
   "This feature is temporarily out of service. Please try again later.": "This feature is temporarily out of service. Please try again later.",
   "Deposit to": "Déposer sur",
