@@ -44,6 +44,7 @@ import GlobalSelect from './GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {StackActions} from '@react-navigation/native';
+import {SUPPORTED_COINS} from '../../../constants/currencies';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -148,9 +149,6 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     .flatMap(key => key.wallets)
     .filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
-  const coinsAvailable: string[] = [
-    ...new Set(_walletsAvailable.map(wallet => wallet.credentials.coin)),
-  ];
   const [walletsAvailable, setWalletsAvailable] = useState<Wallet[]>([]);
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
 
@@ -315,17 +313,21 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     BWC.getBitcore().decryptBIP38PrivateKey(scannedKey, passphrase, null, cb);
   };
 
-  const checkPrivateKey = (privateKey: string): boolean => {
-    try {
-      BWC.getBitcore().PrivateKey(privateKey, 'livenet');
-    } catch (err) {
+  const checkPrivateKeyAndReturnCorrectNetwork = (
+    privateKey: string,
+  ): string => {
+    const networks = ['livenet', 'testnet'];
+
+    for (const network of networks) {
       try {
-        BWC.getBitcore().PrivateKey(privateKey, 'testnet');
+        BWC.getBitcore().PrivateKey(privateKey, network);
+        return network;
       } catch (err) {
-        return false;
+        // Continue to the next iteration if an error occurs
       }
     }
-    return true;
+
+    return 'invalid';
   };
 
   const _scanFunds = ({
@@ -334,35 +336,43 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
   }: {
     coin: string;
     passphrase: string;
-  }): Promise<{privateKey: string; coin: string; balance: number}> => {
+  }): Promise<{privateKey: string; coin: string; balance: number} | Error> => {
     return new Promise((resolve, reject) => {
-      logger.debug(`getting private key for ${coin}...`);
-      getPrivateKey(
-        scannedPrivateKey,
-        isPkEncrypted,
-        passphrase,
-        coin,
-        (err, privateKey: string) => {
-          if (err) {
-            return reject(err);
-          }
-          if (!checkPrivateKey(privateKey)) {
-            return reject(new Error('Invalid private key'));
-          }
-          // this is used just for scanning funds
-          const wallet = _walletsAvailable.filter(
-            w => w.credentials.coin == coin,
-          )[0];
-          // const bwcClient = BWC.getClient(); // unfortunately, we need to create a new client for each coin with credentials. Check getBalanceFromPrivateKey implementation in bwc
-          logger.debug(`getting balance for ${coin}...`);
-          getBalance(privateKey, coin, wallet, (err, balance: number) => {
+      try {
+        logger.debug(`getting private key for ${coin}...`);
+        getPrivateKey(
+          scannedPrivateKey,
+          isPkEncrypted,
+          passphrase,
+          coin,
+          (err, privateKey: string) => {
             if (err) {
               return reject(err);
             }
-            return resolve({privateKey, coin, balance});
-          });
-        },
-      );
+            const network = checkPrivateKeyAndReturnCorrectNetwork(privateKey);
+            if (network === 'invalid') {
+              return reject(new Error('Invalid private key'));
+            }
+            // this is used just for scanning funds
+            const wallet = _walletsAvailable.filter(
+              w =>
+                w.credentials.coin === coin &&
+                w.credentials.network === network,
+            )[0];
+            // const bwcClient = BWC.getClient(); // unfortunately, we need to create a new client for each coin with credentials. Check getBalanceFromPrivateKey implementation in bwc
+            logger.debug(`getting balance for ${coin}...`);
+
+            getBalance(privateKey, coin, wallet, (err, balance: number) => {
+              if (err) {
+                return reject(err);
+              }
+              return resolve({privateKey, coin, balance});
+            });
+          },
+        );
+      } catch (err: any) {
+        return reject(err);
+      }
     });
   };
 
@@ -374,11 +384,17 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     try {
       dispatch(startOnGoingProcessModal('SCANNING_FUNDS'));
 
-      const promises = coinsAvailable.map((coin: string) =>
-        _scanFunds({coin, passphrase}),
+      const scanResults = await Promise.all(
+        SUPPORTED_COINS.map((coin: string) =>
+          _scanFunds({coin, passphrase}).catch(error => error),
+        ),
       );
 
-      const data = await Promise.all(promises);
+      const data = scanResults.filter(data => !(data instanceof Error)) as {
+        privateKey: string;
+        coin: string;
+        balance: number;
+      }[];
 
       const _balances: {
         privateKey: string;
