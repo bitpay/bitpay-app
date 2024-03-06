@@ -94,10 +94,7 @@ import {
   getPayoutMethodKeyFromMoonpayType,
   moonpaySellEnv,
 } from '../utils/moonpay-sell-utils';
-import {
-  moonpayGetSellQuote,
-  moonpayGetSellTransactionDetails,
-} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
+import {moonpayGetSellTransactionDetails} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {MoonpaySettingsProps} from '../../../../navigation/tabs/settings/external-services/screens/MoonpaySettings';
 import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
@@ -202,9 +199,9 @@ const MoonpaySellCheckout: React.FC = () => {
           context: 'MoonpaySellCheckout',
           reasonForFailure: 'Time to make the payment expired',
           amountFrom: amountExpected || '',
-          fromCoin: wallet.currencyAbbreviation || '',
+          fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
           fiatAmount: sellOrder?.fiat_receiving_amount || '',
-          fiatCurrency: sellOrder?.fiat_currency || '',
+          fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
         }),
       );
       return;
@@ -269,7 +266,7 @@ const MoonpaySellCheckout: React.FC = () => {
         )}`,
       );
       try {
-        const sellQuote = await moonpayGetSellQuote(requestData);
+        const sellQuote = await wallet.moonpayGetSellQuote(requestData);
         if (sellQuote?.quoteCurrencyAmount) {
           sellQuote.totalFee = sellQuote.extraFeeAmount + sellQuote.feeAmount;
 
@@ -523,9 +520,15 @@ const MoonpaySellCheckout: React.FC = () => {
 
     dispatch(
       Analytics.track('Successful Crypto Sell', {
-        coin: wallet.currencyAbbreviation,
-        chain: wallet.chain,
+        coin: wallet.currencyAbbreviation.toLowerCase(),
+        chain: wallet.chain.toLowerCase(),
         amount: amountExpected,
+        fiatAmount:
+          moonpayTxData?.quoteCurrencyAmount ||
+          sellOrder?.fiat_receiving_amount,
+        fiatCurrency:
+          moonpayTxData?.quoteCurrency?.code?.toLowerCase() ||
+          sellOrder?.fiat_currency?.toLowerCase(),
         exchange: 'moonpay',
       }),
     );
@@ -630,7 +633,9 @@ const MoonpaySellCheckout: React.FC = () => {
         context: 'MoonpaySellCheckout',
         reasonForFailure: reason || 'unknown',
         amountFrom: amountExpected || '',
-        fromCoin: wallet.currencyAbbreviation || '',
+        fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
+        fiatAmount: sellOrder?.fiat_receiving_amount || '',
+        fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
       }),
     );
 

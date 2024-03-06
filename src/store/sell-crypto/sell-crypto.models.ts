@@ -219,3 +219,9 @@ export interface MoonpaySellTransactionDetails {
   type?: string;
   message?: string;
 }
+
+export interface MoonpayCancelSellTransactionRequestData {
+  env: 'sandbox' | 'production';
+  transactionId?: string;
+  externalId?: string;
+}

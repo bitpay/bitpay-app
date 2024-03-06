@@ -767,7 +767,9 @@ const ChangellyCheckout: React.FC = () => {
     dispatch(
       Analytics.track('Successful Crypto Swap', {
         fromCoin: fromWalletSelected.currencyAbbreviation,
+        fromChain: fromWalletSelected.chain || '',
         toCoin: toWalletSelected.currencyAbbreviation,
+        toChain: toWalletSelected.chain || '',
         amountFrom: amountFrom,
         exchange: 'changelly',
       }),

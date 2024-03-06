@@ -1327,7 +1327,6 @@ const handleMoonpayUri =
 
       dispatch(
         Analytics.track('Sell Crypto Order Created', {
-          // TODO: review this event
           exchange: 'moonpay',
           cryptoAmount:
             Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),

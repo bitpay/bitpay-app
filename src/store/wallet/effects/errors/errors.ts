@@ -63,6 +63,10 @@ export const showWalletError =
           'There are no keys with wallets able to receive funds. Remember to backup your keys before using this feature.',
         );
         break;
+      case 'emptyKeyListToSend':
+        title = t('No keys with supported wallets');
+        message = t('There are no keys with wallets able to send funds.');
+        break;
       default:
         title = t('Error');
         message = t('Unknown Error');

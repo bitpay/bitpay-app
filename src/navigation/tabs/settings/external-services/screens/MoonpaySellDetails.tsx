@@ -12,7 +12,11 @@ import {Link} from '../../../../../components/styled/Text';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import MoonpayLogo from '../../../../../components/icons/external-services/moonpay/moonpay-logo';
-import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -39,11 +43,9 @@ import {
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
+import {moonpayGetSellTransactionDetails} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
-  moonpayCancelSellTransaction,
-  moonpayGetSellTransactionDetails,
-} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
-import {
+  moonpaySellEnv,
   moonpaySellGetStatusColor,
   moonpaySellGetStatusDetails,
   MoonpaySellStatus,
@@ -52,10 +54,13 @@ import {Br} from '../../../../../components/styled/Containers';
 import {sleep} from '../../../../../utils/helper-methods';
 import {SlateDark, White} from '../../../../../styles/colors';
 import {
+  MoonpayCancelSellTransactionRequestData,
   MoonpaySellOrderData,
   MoonpaySellOrderStatus,
   MoonpaySellTransactionDetails,
 } from '../../../../../store/sell-crypto/sell-crypto.models';
+import {RootState} from '../../../../../store';
+import {Wallet} from '../../../../../store/wallet/wallet.models';
 
 export interface MoonpaySellDetailsProps {
   sellOrder: MoonpaySellOrderData;
@@ -75,10 +80,12 @@ const MoonpaySellDetails: React.FC = () => {
   const logger = useLogger();
   const theme = useTheme();
   const dispatch = useAppDispatch();
+  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const [status, setStatus] = useState<MoonpaySellStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
   });
+  const [sourceWallet, setSourceWallet] = useState<Wallet>();
   const [refreshing, setRefreshing] = useState(false);
   const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
   const [copiedRefundAddress, setCopiedRefundAddress] = useState(false);
@@ -206,9 +213,23 @@ const MoonpaySellDetails: React.FC = () => {
     setRefreshing(false);
   };
 
+  const getWallet = () => {
+    let wallet: Wallet | undefined;
+    let allWallets: Wallet[] = [];
+
+    const keysList = Object.values(allKeys);
+    keysList.forEach(key => {
+      allWallets = [...allWallets, ...key.wallets];
+    });
+
+    wallet = allWallets.find(wallet => wallet.id === sellOrder.wallet_id);
+    setSourceWallet(wallet);
+  };
+
   useEffect(() => {
     updateStatusDescription();
     getSellTransactionDetails();
+    getWallet();
     logger.debug('Sell order details: ' + JSON.stringify(sellOrder));
   }, []);
 
@@ -327,7 +348,7 @@ const MoonpaySellDetails: React.FC = () => {
                 haptic('impactLight');
                 dispatch(
                   openUrlWithInAppBrowser(
-                    'https://sell.moonpay.com/trade_history', // TODO: review this url
+                    'https://sell.moonpay.com/trade_history',
                   ),
                 );
               }}>
@@ -475,7 +496,8 @@ const MoonpaySellDetails: React.FC = () => {
           </ColumnDataContainer>
         ) : null}
 
-        {['bitpayPending', 'waitingForDeposit'].includes(sellOrder.status) ? (
+        {['bitpayPending', 'waitingForDeposit'].includes(sellOrder.status) &&
+        sourceWallet ? (
           <RemoveCta
             onPress={async () => {
               haptic('impactLight');
@@ -493,10 +515,16 @@ const MoonpaySellDetails: React.FC = () => {
                       action: async () => {
                         dispatch(dismissBottomNotificationModal());
                         try {
-                          const res = await moonpayCancelSellTransaction(
-                            sellOrder.transaction_id,
-                            sellOrder.external_id,
-                          );
+                          const reqData: MoonpayCancelSellTransactionRequestData =
+                            {
+                              env: moonpaySellEnv,
+                              transactionId: sellOrder.transaction_id,
+                              externalId: sellOrder.external_id,
+                            };
+                          const res =
+                            await sourceWallet.moonpayCancelSellTransaction(
+                              reqData,
+                            );
                           if (res?.statusCode == 204) {
                             // Canceled successfully
                             sellOrder.status = 'bitpayCanceled';
@@ -556,7 +584,9 @@ const MoonpaySellDetails: React.FC = () => {
           'bitpayCanceled',
           'failed',
           'completed',
-        ].includes(sellOrder.status) ? (
+        ].includes(sellOrder.status) ||
+        (['bitpayPending', 'waitingForDeposit'].includes(sellOrder.status) &&
+          !sourceWallet) ? (
           <RemoveCta
             onPress={async () => {
               haptic('impactLight');

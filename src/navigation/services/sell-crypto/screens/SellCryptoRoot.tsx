@@ -81,14 +81,9 @@ import {
 } from '../../../../store/external-services/external-services.types';
 import {StackActions} from '@react-navigation/native';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {
-  moonpayGetCurrencies,
-  moonpayGetSellQuote,
-  moonpayGetSellSignedPaymentUrl,
-} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
+import {moonpayGetCurrencies} from '../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {APP_DEEPLINK_PREFIX} from '../../../../constants/config';
-import {moonpayEnv} from '../../buy-crypto/utils/moonpay-utils';
 import FromWalletSelectorModal from '../../swap-crypto/components/FromWalletSelectorModal';
 import {MoonpayGetCurrenciesRequestData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {
@@ -135,7 +130,7 @@ import {getSendMaxData} from '../../utils/external-services-utils';
 export type SellCryptoRootScreenParams =
   | {
       amount?: number;
-      fromWallet?: any;
+      fromWallet?: Wallet;
       currencyAbbreviation?: string | undefined; // used from charts and deeplinks.
       chain?: string | undefined; // used from charts and deeplinks.
       partner?: SellCryptoExchangeKey | undefined; // used from deeplinks.
@@ -211,7 +206,6 @@ const SellCryptoRoot = ({
   const SupportedMaticTokens: string[] = SUPPORTED_MATIC_TOKENS;
   const SupportedChains: string[] = SUPPORTED_COINS;
 
-  // const context = route.params?.context;
   const fromWallet = route.params?.fromWallet;
   const fromAmount = Number(route.params?.amount || 0); // deeplink params are strings, ensure this is number so offers will work
   const fromCurrencyAbbreviation =
@@ -307,21 +301,9 @@ const SellCryptoRoot = ({
 
     if (fromWallet?.id) {
       // Selected wallet from Wallet Details
-      let fromWalletData;
-      let allWallets: Wallet[] = [];
-
-      keysList.forEach(key => {
-        allWallets = [...allWallets, ...key.wallets];
-      });
-
-      fromWalletData = allWallets.find(wallet => wallet.id === fromWallet.id);
-      if (fromWalletData) {
-        setWallet(fromWalletData);
-        await sleep(500);
-        dispatch(dismissOnGoingProcessModal());
-      } else {
-        walletError('walletNotSupported');
-      }
+      setWallet(fromWallet);
+      await sleep(500);
+      dispatch(dismissOnGoingProcessModal());
     } else {
       const availableKeys = keysList.filter(key => {
         return key.wallets && keyHasSupportedWallets(key.wallets);
@@ -355,10 +337,10 @@ const SellCryptoRoot = ({
           await sleep(500);
           dispatch(dismissOnGoingProcessModal());
         } else {
-          walletError('noWalletsAbleToBuy', fromCurrencyAbbreviation);
+          walletError('walletNotSupported', fromCurrencyAbbreviation);
         }
       } else {
-        walletError('keysNoSupportedWallet', fromCurrencyAbbreviation);
+        walletError('emptyKeyListToSend', fromCurrencyAbbreviation);
       }
     }
   };
@@ -530,11 +512,11 @@ const SellCryptoRoot = ({
 
     dispatch(
       Analytics.track('Sell Crypto "View Offers"', {
-        fiatAmount: amount,
-        fiatCurrency,
-        paymentMethod: selectedPaymentMethod!.method,
         coin: selectedWallet.currencyAbbreviation.toLowerCase(),
         chain: selectedWallet.chain?.toLowerCase(),
+        cryptoAmount: amount,
+        fiatCurrency,
+        paymentMethod: selectedPaymentMethod!.method,
       }),
     );
 
@@ -542,7 +524,7 @@ const SellCryptoRoot = ({
     const externalTransactionId = `${selectedWallet.id}-${newId}`;
 
     const requestData: MoonpayGetSellSignedPaymentUrlRequestData = {
-      env: moonpayEnv,
+      env: moonpaySellEnv,
       baseCurrencyCode: getMoonpaySellFixedCurrencyAbbreviation(
         selectedWallet.currencyAbbreviation,
         selectedWallet.chain,
@@ -563,12 +545,22 @@ const SellCryptoRoot = ({
 
     let data: MoonpayGetSellSignedPaymentUrlData;
     try {
-      data = await moonpayGetSellSignedPaymentUrl(requestData);
+      data = await selectedWallet.moonpayGetSellSignedPaymentUrl(requestData);
+      if (!data?.urlWithSignature) {
+        const msg = t(
+          'Our partner Moonpay is not currently available. Please try again later.',
+        );
+        const reason =
+          'moonpayGetSignedPaymentUrl Error. urlWithSignature not present.';
+        showError(msg, undefined, reason, undefined, true);
+        return;
+      }
     } catch (err) {
-      const reason = 'moonpayGetSignedPaymentUrl Error';
-      console.log(err, reason);
-      // showMoonpayError(err, reason);
-      // setOpeningBrowser(false);
+      const msg = t(
+        'Our partner Moonpay is not currently available. Please try again later.',
+      );
+      const reason = 'moonpayGetSignedPaymentUrl Error.';
+      showError(msg, undefined, reason, undefined, true);
       return;
     }
 
@@ -860,6 +852,45 @@ const SellCryptoRoot = ({
         ['asc', 'asc'],
       );
 
+      if (supportedCoins.length === 0) {
+        const msg = t(
+          'Our partner Moonpay is not currently available. Please try again later.',
+        );
+        const reason = 'No supportedCoins present';
+        showError(msg, undefined, reason, undefined, true);
+        return;
+      }
+
+      if (fromWallet?.chain && fromWallet?.currencyAbbreviation) {
+        const fromWalletSymbol = getCurrencyAbbreviation(
+          fromWallet!.currencyAbbreviation,
+          fromWallet!.chain,
+        );
+        const isFromWalletSymbolEnabled = supportedCoins.find(
+          supportedCoin => supportedCoin.symbol === fromWalletSymbol,
+        );
+        if (!isFromWalletSymbolEnabled) {
+          logger.error(
+            `Moonpay has temporarily disabled ${fromWalletSymbol} sales`,
+          );
+          const actions = [
+            {
+              text: t('OK'),
+              action: () => {
+                navigation.goBack();
+              },
+              primary: true,
+            },
+          ];
+          const title = t('Moonpay Error');
+          const msg = t(
+            'Our partner Moonpay has temporarily disabled sales for the selected wallet.',
+          );
+          showError(msg, title, undefined, actions, true);
+          return;
+        }
+      }
+
       const coinsToRemove =
         !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
       coinsToRemove.push('busd');
@@ -877,8 +908,12 @@ const SellCryptoRoot = ({
 
       setSellCryptoSupportedCoins(supportedCoins);
     } catch (err) {
-      // TODO: handle error
-      console.log('============= moonpayGetCurrencies err: ', err);
+      logger.error('Moonpay getCurrencies Error: ' + JSON.stringify(err));
+      const msg = t(
+        'Our partner Moonpay is not currently available. Please try again later.',
+      );
+      const reason = 'getCurrencies Error';
+      showError(msg, undefined, reason, undefined, true);
     }
   };
 
@@ -927,6 +962,7 @@ const SellCryptoRoot = ({
     actions?: any,
     goBack?: boolean,
   ) => {
+    logger.debug('Sell crypto Root Error. Reason: ' + reason);
     dispatch(dismissOnGoingProcessModal());
     await sleep(400);
     setLoadingQuote(false);
@@ -961,15 +997,7 @@ const SellCryptoRoot = ({
 
   useEffect(() => {
     if (sellCryptoSupportedCoins && sellCryptoSupportedCoins.length > 0) {
-      const awaitSleep = async (sleepTime: number) => {
-        await sleep(sleepTime);
-      };
-
       selectFirstAvailableWallet();
-
-      // dispatch(dismissOnGoingProcessModal());
-      // awaitSleep(600);
-      // showModal('walletSelector');
     }
   }, [sellCryptoSupportedCoins]);
 
@@ -1017,7 +1045,7 @@ const SellCryptoRoot = ({
     ) => {
       try {
         setLoadingQuote(true);
-        const sellQuote = await moonpayGetSellQuote(requestData);
+        const sellQuote = await selectedWallet.moonpayGetSellQuote(requestData);
         if (sellQuote?.quoteCurrencyAmount) {
           sellQuote.totalFee =
             Number(sellQuote.extraFeeAmount) + Number(sellQuote.feeAmount);
@@ -1045,12 +1073,12 @@ const SellCryptoRoot = ({
           "Can't get rates at this moment. Please try again later",
         );
         if (typeof err === 'string') {
-          msg = msg + `: ${err}`;
+          msg = msg + ` - Error: ${err}`;
         } else if (typeof err?.message === 'string') {
-          msg = msg + `: ${err.message}`;
+          msg = msg + ` - Error: ${err.message}`;
         }
         const reason = 'moonpayGetQuote Error.';
-        showError(err, undefined, reason, undefined, false);
+        showError(msg, undefined, reason, undefined, false);
       }
     };
 
@@ -1451,7 +1479,6 @@ const SellCryptoRoot = ({
           setLoadingQuote(false);
           setSellQuoteData(undefined);
           checkAndSetFiatCurrency(paymentMethod.method);
-          // TODO: setFiatForSelectedPayoutMethod();
         }}
         isVisible={paymentMethodModalVisible}
         onBackdropPress={() => hideModal('paymentMethod')}
