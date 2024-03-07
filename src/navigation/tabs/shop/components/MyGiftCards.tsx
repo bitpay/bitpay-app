@@ -16,13 +16,10 @@ import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {BaseText} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useAppSelector} from '../../../../utils/hooks';
-import {APP_NETWORK} from '../../../../constants/config';
 import {
   isGiftCardDisplayable,
-  redemptionFailuresLessThanADayOld,
   sortByDescendingDate,
 } from '../../../../lib/gift-cards/gift-card';
-import {ShopScreens} from '../ShopStack';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from 'react-native';
 
@@ -56,7 +53,7 @@ const MyGiftCards = ({
   const navigation = useNavigation();
   const [slideIndex, setSlideIndex] = useState(0);
   const allGiftCards = useAppSelector(
-    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+    ({APP, SHOP}) => SHOP.giftCards[APP.network],
   ) as GiftCard[];
   const supportedGiftCardMap = supportedGiftCards.reduce(
     (map, cardConfig) => ({...map, ...{[cardConfig.name]: cardConfig}}),
@@ -77,7 +74,7 @@ const MyGiftCards = ({
   const seeArchivedGiftCards = () => {
     shouldShowArchivedSlide
       ? setSlideIndex(1)
-      : navigation.navigate(ShopScreens.ARCHIVED_GIFT_CARDS, {
+      : navigation.navigate(GiftCardScreens.ARCHIVED_GIFT_CARDS, {
           giftCards: archivedGiftCards,
           supportedGiftCardMap,
         });

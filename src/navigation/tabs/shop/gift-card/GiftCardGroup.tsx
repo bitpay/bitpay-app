@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   CardConfig,
+  CardConfigMap,
   GiftCard,
   PhoneCountryInfo,
 } from '../../../../store/shop/shop.models';
@@ -22,12 +23,17 @@ import {HeaderBackButton} from '@react-navigation/elements';
 import GiftCardDeeplinkScreen, {
   GiftCardDeeplinkScreenParamList,
 } from './GiftCardDeeplink';
+import ArchivedGiftCards from './screens/ArchivedGiftCards';
 
 interface GiftCardProps {
   GiftCard: typeof Root;
 }
 
 export type GiftCardGroupParamList = {
+  ArchivedGiftCards: {
+    giftCards: GiftCard[];
+    supportedGiftCardMap: CardConfigMap;
+  };
   BuyGiftCard: {cardConfig: CardConfig};
   EnterEmail: {
     cardConfig: CardConfig;
@@ -52,6 +58,7 @@ export type GiftCardGroupParamList = {
 };
 
 export enum GiftCardScreens {
+  ARCHIVED_GIFT_CARDS = 'ArchivedGiftCards',
   BUY_GIFT_CARD = 'BuyGiftCard',
   ENTER_EMAIL = 'EnterEmail',
   ENTER_PHONE = 'EnterPhone',
@@ -111,6 +118,15 @@ const GiftCardGroup: React.FC<GiftCardProps> = ({GiftCard}) => {
       <GiftCard.Screen
         name={GiftCardScreens.GIFT_CARD_DEEPLINK}
         component={GiftCardDeeplinkScreen}
+      />
+      <GiftCard.Screen
+        name={GiftCardScreens.ARCHIVED_GIFT_CARDS}
+        component={ArchivedGiftCards}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Archived Gift Cards')}</HeaderTitle>
+          ),
+        }}
       />
     </GiftCard.Group>
   );

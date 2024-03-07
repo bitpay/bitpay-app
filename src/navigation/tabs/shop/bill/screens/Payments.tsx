@@ -7,7 +7,6 @@ import styled from 'styled-components/native';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {BillPayAccount} from '../../../../../store/shop/shop.models';
 import {PaymentList} from '../components/PaymentList';
-import {APP_NETWORK} from '../../../../../constants/config';
 import {SendToPillContainer} from '../../../../wallet/screens/send/confirm/Shared';
 import {BillAccountPill} from '../components/BillAccountPill';
 import {ScreenContainer} from '../../components/styled/ShopTabComponents';
@@ -23,7 +22,7 @@ const Payments = ({
   const {t} = useTranslation();
   const {account} = route.params;
   const accounts = useAppSelector(
-    ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
+    ({APP, SHOP}) => SHOP.billPayAccounts[APP.network],
   ) as BillPayAccount[];
 
   useLayoutEffect(() => {

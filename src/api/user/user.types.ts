@@ -10,6 +10,7 @@ export interface BasicUserInfo {
   incentiveLevel?: string;
   incentiveLevelId?: string;
   methodEntityId?: string;
+  methodVerified?: boolean;
   name: string;
   phone?: string;
   referralCode: string;

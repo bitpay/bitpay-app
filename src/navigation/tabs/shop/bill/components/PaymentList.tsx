@@ -24,7 +24,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {APP_NETWORK} from '../../../../../constants/config';
 import {ShopEffects} from '../../../../../store/shop';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
@@ -61,7 +60,7 @@ export const PaymentList = ({
   const theme = useTheme();
   const {t} = useTranslation();
   const persistedBillPayPayments = useAppSelector(
-    ({SHOP}) => SHOP.billPayPayments[APP_NETWORK],
+    ({APP, SHOP}) => SHOP.billPayPayments[APP.network],
   ) as BillPayPayment[];
   const billPayPayments = persistedBillPayPayments.sort(sortByDescendingDate);
   const [payments, setPayments] = useState(billPayPayments);

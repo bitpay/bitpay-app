@@ -49,7 +49,7 @@ import {
   PrintSvg,
 } from '../../components/svg/ShopTabSvgs';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
+import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {AppActions} from '../../../../../store/app';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -168,8 +168,9 @@ const GiftCardDetails = ({
     width: 0,
   });
   const {cardConfig, giftCard: initialGiftCard} = route.params;
+  const appNetwork = useAppSelector(({APP}) => APP.network);
   const giftCards = useAppSelector(
-    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+    ({SHOP}) => SHOP.giftCards[appNetwork],
   ) as GiftCard[];
   const [giftCard, setGiftCard] = useState(
     giftCards.find(card => card.invoiceId === initialGiftCard.invoiceId) ||
@@ -334,7 +335,7 @@ const GiftCardDetails = ({
       description: t('View Invoice'),
       onPress: () =>
         Linking.openURL(
-          `${BASE_BITPAY_URLS[APP_NETWORK]}/invoice?id=${giftCard.invoiceId}`,
+          `${BASE_BITPAY_URLS[appNetwork]}/invoice?id=${giftCard.invoiceId}`,
         ),
     },
     {
@@ -375,7 +376,12 @@ const GiftCardDetails = ({
   };
 
   const toggleArchiveStatus = () => {
-    dispatch(ShopActions.toggledGiftCardArchivedStatus({giftCard}));
+    dispatch(
+      ShopActions.toggledGiftCardArchivedStatus({
+        giftCard,
+        network: appNetwork,
+      }),
+    );
     giftCard.archived = !giftCard.archived;
     if (giftCard.archived) {
       navigation.pop();

@@ -1,3 +1,4 @@
+import {Network} from '../../constants';
 import {
   BillPayAccount,
   BillPayPayment,
@@ -54,45 +55,60 @@ interface initializedUnsoldGiftCard {
   type: typeof ShopActionTypes.INITIALIZED_UNSOLD_GIFT_CARD;
   payload: {
     giftCard: UnsoldGiftCard;
+    network: Network;
   };
 }
 interface setPurchasedGiftCards {
   type: typeof ShopActionTypes.SET_PURCHASED_GIFT_CARDS;
   payload: {
     giftCards: GiftCard[];
+    network: Network;
   };
 }
 interface setBillPayAccounts {
   type: typeof ShopActionTypes.SET_BILL_PAY_ACCOUNTS;
   payload: {
     accounts: BillPayAccount[];
+    network: Network;
   };
 }
 interface clearedBillPayAccounts {
   type: typeof ShopActionTypes.CLEARED_BILL_PAY_ACCOUNTS;
+  payload: {
+    network: Network;
+  };
 }
 interface setBillPayPayments {
   type: typeof ShopActionTypes.SET_BILL_PAY_PAYMENTS;
   payload: {
     billPayPayments: BillPayPayment[];
+    network: Network;
   };
 }
 interface clearedBillPayPayments {
   type: typeof ShopActionTypes.CLEARED_BILL_PAY_PAYMENTS;
+  payload: {
+    network: Network;
+  };
 }
 interface deletedUnsoldGiftCard {
   type: typeof ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS;
+  payload: {
+    network: Network;
+  };
 }
 interface redeemedGiftCard {
   type: typeof ShopActionTypes.REDEEMED_GIFT_CARD;
   payload: {
     giftCard: GiftCard;
+    network: Network;
   };
 }
 interface toggledGiftCardArchivedStatus {
   type: typeof ShopActionTypes.TOGGLED_GIFT_CARD_ARCHIVED_STATUS;
   payload: {
     giftCard: GiftCard;
+    network: Network;
   };
 }
 interface toggledSyncGiftCardPurchasesWithBitPayId {
@@ -109,6 +125,7 @@ interface updatedGiftCardStatus {
   payload: {
     invoiceId: string;
     status: 'PENDING' | 'UNREDEEMED';
+    network: Network;
   };
 }
 interface updatedPhone {

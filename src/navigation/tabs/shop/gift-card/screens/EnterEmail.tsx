@@ -14,6 +14,7 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../../../../auth/components/AuthFormContainer';
 import {GiftCardGroupParamList} from '../GiftCardGroup';
+import {ScreenContainer} from '../../components/styled/ShopTabComponents';
 
 const PrimaryActionContainer = styled.View`
   margin-bottom: 20px;
@@ -47,39 +48,41 @@ const EnterEmail = ({
   });
 
   return (
-    <AuthFormContainer>
-      <AuthFormParagraph>
-        {t(
-          'Your email address will be used for payment notifications and receipts.',
-        )}
-      </AuthFormParagraph>
-      <AuthRowContainer>
-        <Controller
-          control={control}
-          defaultValue={initialEmail}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={'satoshi@bitpay.com'}
-              label={t('EMAIL ADDRESS')}
-              onBlur={onBlur}
-              onChangeText={(text: string) => onChange(text)}
-              error={errors.email?.message}
-              keyboardType={'email-address'}
-              value={value}
-              returnKeyType="next"
-              blurOnSubmit={false}
-            />
+    <ScreenContainer>
+      <AuthFormContainer>
+        <AuthFormParagraph>
+          {t(
+            'Your email address will be used for payment notifications and receipts.',
           )}
-          name="email"
-        />
-      </AuthRowContainer>
+        </AuthFormParagraph>
+        <AuthRowContainer>
+          <Controller
+            control={control}
+            defaultValue={initialEmail}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={'satoshi@bitpay.com'}
+                label={t('EMAIL ADDRESS')}
+                onBlur={onBlur}
+                onChangeText={(text: string) => onChange(text)}
+                error={errors.email?.message}
+                keyboardType={'email-address'}
+                value={value}
+                returnKeyType="next"
+                blurOnSubmit={false}
+              />
+            )}
+            name="email"
+          />
+        </AuthRowContainer>
 
-      <AuthActionsContainer>
-        <PrimaryActionContainer>
-          <Button onPress={onFormSubmit}>{t('Continue')}</Button>
-        </PrimaryActionContainer>
-      </AuthActionsContainer>
-    </AuthFormContainer>
+        <AuthActionsContainer>
+          <PrimaryActionContainer>
+            <Button onPress={onFormSubmit}>{t('Continue')}</Button>
+          </PrimaryActionContainer>
+        </AuthActionsContainer>
+      </AuthFormContainer>
+    </ScreenContainer>
   );
 };
 

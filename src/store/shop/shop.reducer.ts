@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import {Network} from '../../constants';
-import {APP_NETWORK} from '../../constants/config';
 import {
   BillPayAccount,
   BillPayPayment,
@@ -89,7 +88,8 @@ export const shopReducer = (
         ...state,
         giftCards: {
           ...state.giftCards,
-          [APP_NETWORK]: state.giftCards[APP_NETWORK].concat(giftCard),
+          [action.payload.network]:
+            state.giftCards[action.payload.network].concat(giftCard),
         },
       };
     case ShopActionTypes.SET_PURCHASED_GIFT_CARDS:
@@ -98,7 +98,7 @@ export const shopReducer = (
         ...state,
         giftCards: {
           ...state.giftCards,
-          [APP_NETWORK]: giftCards,
+          [action.payload.network]: giftCards,
         },
       };
     case ShopActionTypes.SET_BILL_PAY_ACCOUNTS:
@@ -107,7 +107,7 @@ export const shopReducer = (
         ...state,
         billPayAccounts: {
           ...state.billPayAccounts,
-          [APP_NETWORK]: accounts,
+          [action.payload.network]: accounts,
         },
       };
     case ShopActionTypes.CLEARED_BILL_PAY_ACCOUNTS:
@@ -115,7 +115,7 @@ export const shopReducer = (
         ...state,
         billPayAccounts: {
           ...state.billPayAccounts,
-          [APP_NETWORK]: [],
+          [action.payload.network]: [],
         },
       };
     case ShopActionTypes.SET_BILL_PAY_PAYMENTS:
@@ -124,8 +124,11 @@ export const shopReducer = (
         ...state,
         billPayPayments: {
           ...state.billPayPayments,
-          [APP_NETWORK]: _.uniqBy(
-            [...billPayPayments, ...state.billPayPayments[APP_NETWORK]],
+          [action.payload.network]: _.uniqBy(
+            [
+              ...billPayPayments,
+              ...state.billPayPayments[action.payload.network],
+            ],
             billPayPayment => billPayPayment.id,
           ),
         },
@@ -135,7 +138,7 @@ export const shopReducer = (
         ...state,
         billPayPayments: {
           ...state.billPayPayments,
-          [APP_NETWORK]: [],
+          [action.payload.network]: [],
         },
       };
     case ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS:
@@ -143,9 +146,9 @@ export const shopReducer = (
         ...state,
         giftCards: {
           ...state.giftCards,
-          [APP_NETWORK]: state.giftCards[APP_NETWORK].filter(
-            card => card.status !== 'UNREDEEMED',
-          ),
+          [action.payload.network]: state.giftCards[
+            action.payload.network
+          ].filter(card => card.status !== 'UNREDEEMED'),
         },
       };
     case ShopActionTypes.REDEEMED_GIFT_CARD:
@@ -154,10 +157,11 @@ export const shopReducer = (
         ...state,
         giftCards: {
           ...state.giftCards,
-          [APP_NETWORK]: state.giftCards[APP_NETWORK].map(card =>
-            card.invoiceId === redeemedGiftCard.invoiceId
-              ? {...card, ...redeemedGiftCard}
-              : card,
+          [action.payload.network]: state.giftCards[action.payload.network].map(
+            card =>
+              card.invoiceId === redeemedGiftCard.invoiceId
+                ? {...card, ...redeemedGiftCard}
+                : card,
           ),
         },
       };
@@ -167,10 +171,11 @@ export const shopReducer = (
         ...state,
         giftCards: {
           ...state.giftCards,
-          [APP_NETWORK]: state.giftCards[APP_NETWORK].map(card =>
-            card.invoiceId === archivableGiftCard.invoiceId
-              ? {...card, archived: !archivableGiftCard.archived}
-              : card,
+          [action.payload.network]: state.giftCards[action.payload.network].map(
+            card =>
+              card.invoiceId === archivableGiftCard.invoiceId
+                ? {...card, archived: !archivableGiftCard.archived}
+                : card,
           ),
         },
       };
@@ -192,8 +197,9 @@ export const shopReducer = (
         ...state,
         giftCards: {
           ...state.giftCards,
-          [APP_NETWORK]: state.giftCards[APP_NETWORK].map(card =>
-            card.invoiceId === invoiceIdToUpdate ? {...card, status} : card,
+          [action.payload.network]: state.giftCards[action.payload.network].map(
+            card =>
+              card.invoiceId === invoiceIdToUpdate ? {...card, status} : card,
           ),
         },
       };

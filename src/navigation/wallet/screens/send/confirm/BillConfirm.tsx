@@ -11,7 +11,12 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {HeaderRightContainer} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {Wallet, Key} from '../../../../../store/wallet/wallet.models';
+import {
+  TransactionProposal,
+  TxDetails,
+  Wallet,
+  Key,
+} from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
   buildTxDetails,
@@ -41,7 +46,7 @@ import {
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
+import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {BillPayAccount, Invoice} from '../../../../../store/shop/shop.models';
 import {WalletRowProps} from '../../../../../components/list/WalletRow';
 import {
@@ -88,6 +93,10 @@ export interface BillPaymentRequest {
 
 export interface BillConfirmParamList {
   billPayments: BillPaymentRequest[];
+  wallet?: Wallet;
+  recipient: {address: string};
+  txDetails?: TxDetails;
+  txp?: TransactionProposal;
 }
 
 const BillConfirm: React.VFC<
@@ -108,6 +117,7 @@ const BillConfirm: React.VFC<
 
   const billPayAccount = billPayments[0].billPayAccount;
 
+  const appNetwork = useAppSelector(({APP}) => APP.network);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
@@ -154,12 +164,12 @@ const BillConfirm: React.VFC<
       dispatch(
         BuildPayProWalletSelectorList({
           keys,
-          network: APP_NETWORK,
+          network: appNetwork,
           invoice,
           skipThreshold: true,
         }),
       ),
-    [dispatch, invoice, keys],
+    [appNetwork, dispatch, invoice, keys],
   );
 
   useLayoutEffect(() => {
@@ -343,7 +353,7 @@ const BillConfirm: React.VFC<
         },
         {totalBillAmount: 0, serviceFee: 0},
       );
-      const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
+      const baseUrl = BASE_BITPAY_URLS[appNetwork];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
         await createPayProTxProposal({
@@ -408,7 +418,7 @@ const BillConfirm: React.VFC<
     dispatch(
       Analytics.track('Bill Pay - Successful Bill Paid', {
         ...baseEventParams,
-        network: APP_NETWORK,
+        network: appNetwork,
       }),
     );
   };

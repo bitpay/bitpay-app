@@ -8,7 +8,6 @@ import TagsSvg from '../../../../../../assets/img/tags-stack.svg';
 import {
   BaseText,
   fontFamily,
-  HeaderTitle,
   TextAlign,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -35,14 +34,12 @@ import {
   isSupportedDiscountType,
 } from '../../../../../lib/gift-cards/gift-card';
 import {useNavigation, useTheme} from '@react-navigation/native';
-import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {ShopActions} from '../../../../../store/shop';
-import {APP_NETWORK} from '../../../../../constants/config';
-import {useAppSelector} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import GiftCardImage from '../../components/GiftCardImage';
@@ -120,11 +117,13 @@ const BuyGiftCard = ({
   navigation,
 }: NativeStackScreenProps<GiftCardGroupParamList, 'BuyGiftCard'>) => {
   const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const navigator = useNavigation();
-  const dispatch = useDispatch();
   const theme = useTheme();
   const {cardConfig} = route.params;
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const syncGiftCardPurchasesWithBitPayId = useAppSelector(
     ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
   );
@@ -148,13 +147,7 @@ const BuyGiftCard = ({
   );
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => {
-        return (
-          <HeaderTitle>
-            {t('BuyGiftCard', {displayName: cardConfig.displayName})}
-          </HeaderTitle>
-        );
-      },
+      headerTitle: t('BuyGiftCard', {displayName: cardConfig.displayName}),
     });
   });
   useEffect(() => {
@@ -205,9 +198,8 @@ const BuyGiftCard = ({
   };
 
   const goToAmountScreen = (phone?: string) => {
-    navigation.navigate(WalletScreens.AMOUNT, {
+    navigator.navigate(WalletScreens.AMOUNT, {
       fiatCurrencyAbbreviation: cardConfig.currency,
-      opts: {hideSendMax: true},
       onAmountSelected: selectedAmount =>
         onAmountScreenSubmit(+selectedAmount, phone),
     });
