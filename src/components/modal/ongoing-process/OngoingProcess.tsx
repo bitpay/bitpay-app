@@ -41,7 +41,8 @@ export type OnGoingProcessMessages =
   | 'REMOVING_BILL'
   | 'BROADCASTING_TXP'
   | 'SWEEPING_WALLET'
-  | 'SCANNING_FUNDS';
+  | 'SCANNING_FUNDS'
+  | 'SCANNING_FUNDS_WITH_PASSPHRASE';
 
 const OnGoingProcessContainer = styled.View`
   max-width: 60%;

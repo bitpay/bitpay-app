@@ -304,13 +304,12 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     scannedKey: string,
     privateKeyIsEncrypted: boolean,
     passphrase: string,
-    coin: string,
     cb: (err: any, scannedKey: any) => any,
   ) => {
     if (!privateKeyIsEncrypted) {
       return cb(null, scannedKey);
     }
-    BWC.getBitcore().decryptBIP38PrivateKey(scannedKey, passphrase, null, cb);
+    BWC.getClient().decryptBIP38PrivateKey(scannedKey, passphrase, null, cb);
   };
 
   const checkPrivateKeyAndReturnCorrectNetwork = (
@@ -344,7 +343,6 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
           scannedPrivateKey,
           isPkEncrypted,
           passphrase,
-          coin,
           (err, privateKey: string) => {
             if (err) {
               return reject(err);
@@ -382,8 +380,14 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     passphrase: string;
   }): Promise<void> => {
     try {
-      dispatch(startOnGoingProcessModal('SCANNING_FUNDS'));
-
+      dispatch(
+        startOnGoingProcessModal(
+          passphrase === ''
+            ? 'SCANNING_FUNDS'
+            : 'SCANNING_FUNDS_WITH_PASSPHRASE',
+        ),
+      );
+      await sleep(500);
       const scanResults = await Promise.all(
         PAPER_WALLET_SUPPORTED_COINS.map((coin: string) =>
           _scanFunds({coin, passphrase}).catch(error => error),

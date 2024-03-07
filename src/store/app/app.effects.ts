@@ -570,6 +570,9 @@ export const startOnGoingProcessModal =
       BROADCASTING_TXP: i18n.t('Broadcasting transaction...'),
       SWEEPING_WALLET: i18n.t('Sweeping Wallet...'),
       SCANNING_FUNDS: i18n.t('Scanning Funds...'),
+      SCANNING_FUNDS_WITH_PASSPHRASE: i18n.t(
+        'Scanning Funds... This process may take a few minutes',
+      ),
     };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next
@@ -588,7 +591,9 @@ export const startOnGoingProcessModal =
       const currentStore = getState();
       if (
         currentStore.APP.showOnGoingProcessModal &&
-        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing')
+        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing') &&
+        currentStore.APP.onGoingProcessModalMessage !==
+          i18n.t('Scanning Funds... This process may take a few minutes')
       ) {
         dispatch(AppActions.dismissOnGoingProcessModal());
         await sleep(500);
