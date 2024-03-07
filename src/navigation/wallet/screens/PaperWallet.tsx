@@ -43,7 +43,8 @@ import GlobalSelect from './GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {StackActions} from '@react-navigation/native';
-import {SUPPORTED_COINS} from '../../../constants/currencies';
+
+const PAPER_WALLET_SUPPORTED_COINS = ['btc', 'bch'];
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -384,7 +385,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       dispatch(startOnGoingProcessModal('SCANNING_FUNDS'));
 
       const scanResults = await Promise.all(
-        SUPPORTED_COINS.map((coin: string) =>
+        PAPER_WALLET_SUPPORTED_COINS.map((coin: string) =>
           _scanFunds({coin, passphrase}).catch(error => error),
         ),
       );
@@ -410,8 +411,11 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
         .filter(d => d.balance > 0);
 
       if (_balances.length === 0) {
+        const supportedCoinsText = PAPER_WALLET_SUPPORTED_COINS.join(', ')
+          .toUpperCase()
+          .replace(/, ([^,]*)$/, ' and $1');
         throw new Error(
-          'No funds detected. Please ensure that you have a compatible wallet from the same network and currency as the paper wallet you expected to find funds in. Additionally, verify the address on a block explorer to confirm that it contains the expected funds.',
+          `No funds detected. Only ${supportedCoinsText} supported. Please ensure that you have a compatible wallet from the same network and currency as the paper wallet you expected to find funds in. Additionally, verify the address on a block explorer to confirm that it contains the expected funds.`,
         );
       }
       // Coin balances can be found for different cryptocurrencies.
