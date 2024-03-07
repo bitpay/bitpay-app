@@ -18,6 +18,13 @@ export type BuyCryptoConfig = {
   wyre?: ExchangeConfig;
 };
 
+export type SellCryptoConfig = {
+  disabled?: boolean;
+  disabledTitle?: string;
+  disabledMessage?: string;
+  moonpay?: ExchangeConfig;
+};
+
 export type SwapCryptoConfig = {
   disabled?: boolean;
   disabledTitle?: string;
@@ -27,6 +34,7 @@ export type SwapCryptoConfig = {
 
 export type ExternalServicesConfig = {
   buyCrypto?: BuyCryptoConfig;
+  sellCrypto?: SellCryptoConfig;
   swapCrypto?: SwapCryptoConfig;
 };
 

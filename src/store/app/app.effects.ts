@@ -106,6 +106,7 @@ import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
 import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
+import {goToSellCrypto} from '../sell-crypto/sell-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
@@ -1329,6 +1330,9 @@ export const shortcutListener =
     switch (type) {
       case 'buy':
         dispatch(goToBuyCrypto());
+        return;
+      case 'sell':
+        dispatch(goToSellCrypto());
         return;
       case 'swap':
         dispatch(goToSwapCrypto());

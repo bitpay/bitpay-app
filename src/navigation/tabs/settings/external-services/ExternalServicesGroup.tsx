@@ -5,6 +5,7 @@ import BanxaDetails from './screens/BanxaDetails';
 import BanxaSettings from './screens/BanxaSettings';
 import MoonpaySettings from './screens/MoonpaySettings';
 import MoonpayDetails from './screens/MoonpayDetails';
+import MoonpaySellDetails from './screens/MoonpaySellDetails';
 import RampSettings from './screens/RampSettings';
 import RampDetails from './screens/RampDetails';
 import SardineSettings from './screens/SardineSettings';
@@ -32,6 +33,7 @@ import {
   TransakPaymentData,
   WyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
+import {MoonpaySellOrderData} from '../../../../store/sell-crypto/sell-crypto.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {Root} from '../../../../Root';
 import {
@@ -60,6 +62,9 @@ export type ExternalServicesSettingsGroupParamList = {
     | undefined;
   MoonpayDetails: {
     paymentRequest: MoonpayPaymentData;
+  };
+  MoonpaySellDetails: {
+    sellOrder: MoonpaySellOrderData;
   };
   RampSettings:
     | {
@@ -113,6 +118,7 @@ export enum ExternalServicesSettingsScreens {
   BANXA_DETAILS = 'BanxaDetails',
   MOONPAY_SETTINGS = 'MoonpaySettings',
   MOONPAY_DETAILS = 'MoonpayDetails',
+  MOONPAY_SELL_DETAILS = 'MoonpaySellDetails',
   RAMP_SETTINGS = 'RampSettings',
   RAMP_DETAILS = 'RampDetails',
   SARDINE_SETTINGS = 'SardineSettings',
@@ -170,6 +176,15 @@ const ExternalServicesSettingsGroup: React.FC<
         component={MoonpayDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.MOONPAY_SELL_DETAILS}
+        component={MoonpaySellDetails}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Sell Order Details')}</HeaderTitle>
+          ),
         }}
       />
       <ExternalServicesSettings.Screen

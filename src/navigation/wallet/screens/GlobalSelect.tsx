@@ -136,8 +136,17 @@ const NoWalletsMsg = styled(BaseText)`
   margin-top: 20px;
 `;
 
+export type GlobalSelectModalContext =
+  | 'send'
+  | 'receive'
+  | 'coinbase'
+  | 'contact'
+  | 'scanner'
+  | 'sell'
+  | 'swap';
+
 export type GlobalSelectParamList = {
-  context: 'send' | 'receive' | 'coinbase' | 'contact' | 'scanner';
+  context: GlobalSelectModalContext;
   recipient?: {
     address: string;
     currency: string;
@@ -194,12 +203,6 @@ const buildList = (category: string[], wallets: Wallet[]) => {
   return coins;
 };
 
-export type GlobalSelectModalContext =
-  | 'send'
-  | 'receive'
-  | 'coinbase'
-  | 'contact';
-
 interface GlobalSelectProps {
   useAsModal?: boolean;
   modalTitle?: any;
@@ -216,7 +219,7 @@ type GlobalSelectScreenProps = NativeStackScreenProps<
 > &
   GlobalSelectProps;
 
-const GlobalSelect: React.FC<GlobalSelectScreenProps> = ({
+const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useAsModal,
   modalTitle,
   customSupportedCurrencies,

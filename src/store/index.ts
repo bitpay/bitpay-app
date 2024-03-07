@@ -26,6 +26,10 @@ import {
   buyCryptoReducer,
   buyCryptoReduxPersistBlackList,
 } from './buy-crypto/buy-crypto.reducer';
+import {
+  sellCryptoReducer,
+  sellCryptoReduxPersistBlackList,
+} from './sell-crypto/sell-crypto.reducer';
 import {cardReducer, cardReduxPersistBlacklist} from './card/card.reducer';
 import {
   locationReducer,
@@ -94,6 +98,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   CARD: cardReduxPersistBlacklist,
   LOCATION: locationReduxPersistBlackList,
   LOG: logReduxPersistBlackList,
+  SELL_CRYPTO: sellCryptoReduxPersistBlackList,
   SHOP: shopReduxPersistBlackList,
   SWAP_CRYPTO: swapCryptoReduxPersistBlackList,
   WALLET: walletReduxPersistBlackList,
@@ -117,6 +122,7 @@ const reducers = {
   CARD: cardReducer,
   LOCATION: locationReducer,
   LOG: logReducer,
+  SELL_CRYPTO: sellCryptoReducer,
   SHOP: shopReducer,
   SWAP_CRYPTO: swapCryptoReducer,
   WALLET: walletReducer,

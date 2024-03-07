@@ -136,6 +136,20 @@ const TransactModal = () => {
       },
     },
     {
+      id: 'sellCrypto',
+      img: () => <Icons.SellCrypto />,
+      title: t('Sell Crypto'),
+      description: t('Sell crypto and receive cash'),
+      onPress: () => {
+        dispatch(
+          Analytics.track('Clicked Sell Crypto', {
+            context: 'TransactMenu',
+          }),
+        );
+        navigation.navigate('SellCryptoRoot');
+      },
+    },
+    {
       id: 'exchange',
       img: ({disabled}) => <Icons.Exchange disabled={disabled} />,
       title: t('Exchange'),

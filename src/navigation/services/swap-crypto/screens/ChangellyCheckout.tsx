@@ -17,7 +17,7 @@ import {
 } from '../../../../utils/hooks';
 import ChangellyCheckoutSkeleton from './ChangellyCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {Black, White, Slate, Caution} from '../../../../styles/colors';
+import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
 import PaymentSent from '../../../wallet/components/PaymentSent';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
@@ -37,6 +37,7 @@ import {
   GetProtocolPrefixAddress,
 } from '../../../../store/wallet/utils/wallet';
 import {
+  GetName,
   GetPrecision,
   IsERCToken,
 } from '../../../../store/wallet/utils/currency';
@@ -73,7 +74,7 @@ import {
   CheckboxText,
   PoliciesContainer,
   PoliciesText,
-  ArrowContainer,
+  CheckBoxCol,
 } from '../styled/SwapCryptoCheckout.styled';
 import {startGetRates} from '../../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
@@ -88,7 +89,6 @@ import {
 } from '../../../../store/wallet/effects/send/send';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
-import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../../store';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
@@ -242,7 +242,10 @@ const ChangellyCheckout: React.FC = () => {
       return;
     }
 
-    if (fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch') {
+    if (
+      fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch' &&
+      fromWalletSelected.chain.toLowerCase() === 'bch'
+    ) {
       addressFrom = dispatch(
         GetProtocolPrefixAddress(
           fromWalletSelected.currencyAbbreviation,
@@ -349,7 +352,10 @@ const ChangellyCheckout: React.FC = () => {
           );
         }
 
-        if (fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch') {
+        if (
+          fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch' &&
+          fromWalletSelected.chain.toLowerCase() === 'bch'
+        ) {
           payinAddress = BWC.getBitcoreCash()
             .Address(data.result.payinAddress)
             .toString(true);
@@ -593,6 +599,7 @@ const ChangellyCheckout: React.FC = () => {
       if (useSendMax && sendMaxInfo) {
         txp.inputs = sendMaxInfo.inputs;
         txp.fee = sendMaxInfo.fee;
+        txp.feePerKb = undefined;
       } else {
         if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
           txp.feeLevel = 'priority';
@@ -638,7 +645,7 @@ const ChangellyCheckout: React.FC = () => {
         await sleep(500);
         await dispatch(
           publishAndSign({
-            txp: ctxp!,
+            txp: ctxp! as TransactionProposal,
             key,
             wallet: fromWalletSelected,
             transport,
@@ -651,7 +658,11 @@ const ChangellyCheckout: React.FC = () => {
         dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         await sleep(400);
         await dispatch(
-          publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
+          publishAndSign({
+            txp: ctxp! as TransactionProposal,
+            key,
+            wallet: fromWalletSelected,
+          }),
         );
       }
       saveChangellyTx();
@@ -756,7 +767,9 @@ const ChangellyCheckout: React.FC = () => {
     dispatch(
       Analytics.track('Successful Crypto Swap', {
         fromCoin: fromWalletSelected.currencyAbbreviation,
+        fromChain: fromWalletSelected.chain || '',
         toCoin: toWalletSelected.currencyAbbreviation,
+        toChain: toWalletSelected.chain || '',
         amountFrom: amountFrom,
         exchange: 'changelly',
       }),
@@ -778,7 +791,9 @@ const ChangellyCheckout: React.FC = () => {
     const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
 
     const msg =
-      `Because you are sending the maximum amount contained in this wallet, the ${chain} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
+      `Because you are sending the maximum amount contained in this wallet, the ${
+        dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase()
+      } miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
       `\n${warningMsg}`;
 
     await sleep(400);
@@ -996,11 +1011,9 @@ const ChangellyCheckout: React.FC = () => {
               </>
             )}
             {!termsAccepted && showCheckTermsMsg ? (
-              <RowDataContainer>
-                <RowLabel style={{color: Caution}}>
-                  {t('Tap the checkbox to accept and continue.')}
-                </RowLabel>
-              </RowDataContainer>
+              <RowLabel style={{color: Caution, marginTop: 10}}>
+                {t('Tap the checkbox to accept and continue.')}
+              </RowLabel>
             ) : null}
             <CheckBoxContainer>
               <Checkbox
@@ -1011,27 +1024,20 @@ const ChangellyCheckout: React.FC = () => {
                 }}
                 checked={termsAccepted}
               />
-              <CheckboxText>
-                {t(
-                  'Exchange services provided by Changelly. By clicking “Accept”, I acknowledge and understand that my transaction may trigger AML/KYC verification according to Changelly AML/KYC',
-                )}
-              </CheckboxText>
+              <CheckBoxCol>
+                <CheckboxText>
+                  {t(
+                    'Exchange services provided by Changelly. By clicking “Accept”, I acknowledge and understand that my transaction may trigger AML/KYC verification according to Changelly AML/KYC',
+                  )}
+                </CheckboxText>
+                <PoliciesContainer
+                  onPress={() => {
+                    setChangellyPoliciesModalVisible(true);
+                  }}>
+                  <PoliciesText>{t('Review Changelly policies')}</PoliciesText>
+                </PoliciesContainer>
+              </CheckBoxCol>
             </CheckBoxContainer>
-            <PoliciesContainer
-              onPress={() => {
-                setChangellyPoliciesModalVisible(true);
-              }}>
-              <PoliciesText>{t('Review Changelly policies')}</PoliciesText>
-              <ArrowContainer>
-                <SelectorArrowRight
-                  {...{
-                    width: 13,
-                    height: 13,
-                    color: theme.dark ? White : Slate,
-                  }}
-                />
-              </ArrowContainer>
-            </PoliciesContainer>
           </>
         )}
       </ScrollView>
