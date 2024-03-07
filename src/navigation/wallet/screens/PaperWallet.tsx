@@ -496,25 +496,21 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
   return (
     <PaperWalletContainer>
       <ScrollView>
-        {balances && balances.length > 0
-          ? balances.map(b => (
-              <PaperWalletItemCard>
-                <PaperWalletItemTitle>{t('Funds found')}</PaperWalletItemTitle>
-                <ActionsContainer>
-                  <SelectedOptionContainer>
-                    <SelectedOptionText
-                      numberOfLines={1}
-                      ellipsizeMode={'tail'}>
-                      {b.coin?.toUpperCase()}
-                    </SelectedOptionText>
-                  </SelectedOptionContainer>
-                  <SelectedOptionCol>
-                    <DataText>{b.crypto}</DataText>
-                  </SelectedOptionCol>
-                </ActionsContainer>
-              </PaperWalletItemCard>
-            ))
-          : null}
+        {balances.map((b, index) => (
+          <PaperWalletItemCard key={index}>
+            <PaperWalletItemTitle>{t('Funds found')}</PaperWalletItemTitle>
+            <ActionsContainer>
+              <SelectedOptionContainer>
+                <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
+                  {b.coin?.toUpperCase()}
+                </SelectedOptionText>
+              </SelectedOptionContainer>
+              <SelectedOptionCol>
+                <DataText>{b.crypto}</DataText>
+              </SelectedOptionCol>
+            </ActionsContainer>
+          </PaperWalletItemCard>
+        ))}
 
         <PaperWalletItemCard
           onPress={() => {
