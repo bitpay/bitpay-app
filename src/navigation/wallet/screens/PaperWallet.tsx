@@ -32,7 +32,6 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {getFeeRatePerKb} from '../../../store/wallet/effects/fee/fee';
 import prompt from 'react-native-prompt-android';
-import {Platform} from 'react-native';
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
@@ -434,29 +433,40 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
 
   const askForPassphrase = () => {
     prompt(
-      t('Private key encrypted. Enter password'),
-      '',
+      t('Private key encrypted'),
+      t('Enter password'),
       [
         {
           text: t('Cancel'),
-          onPress: () => {},
+          onPress: () => {
+            navigation.goBack();
+          },
           style: 'cancel',
         },
         {
           text: t('OK'),
           onPress: async (value: string) => {
-            await sleep(500);
-            scanFunds({passphrase: value});
-            logger.debug('Scan paper wallet with passphrase: SUCCESS.');
+            try {
+              await sleep(500);
+              await scanFunds({passphrase: value});
+              logger.debug('Scan paper wallet with passphrase: SUCCESS.');
+            } catch (err) {
+              showErrorMessage(
+                CustomErrorMessage({
+                  errMsg: BWCErrorMessage(err),
+                  title: t('Error scanning funds'),
+                }),
+              );
+            }
           },
         },
       ],
       {
-        type: Platform.OS === 'ios' ? 'plain-text' : 'numeric',
+        type: 'secure-text',
         cancelable: true,
         defaultValue: '',
         // @ts-ignore
-        keyboardType: 'numeric',
+        keyboardType: 'default',
       },
     );
   };
