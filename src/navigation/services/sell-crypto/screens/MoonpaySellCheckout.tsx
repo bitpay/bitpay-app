@@ -17,7 +17,7 @@ import {
 } from '../../../../utils/hooks';
 import MoonpaySellCheckoutSkeleton from './MoonpaySellCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {Black, White, Slate, Caution} from '../../../../styles/colors';
+import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
 import PaymentSent from '../../../wallet/components/PaymentSent';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
@@ -774,7 +774,6 @@ const MoonpaySellCheckout: React.FC = () => {
                 <RowDataContainer>
                   <RowLabel>{t('Withdrawing Method')}</RowLabel>
                   <SelectedOptionContainer>
-                    {/* <SelectedOptionCol> */}
                     <SelectedOptionText
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
@@ -786,7 +785,6 @@ const MoonpaySellCheckout: React.FC = () => {
                         ].label
                       }
                     </SelectedOptionText>
-                    {/* </SelectedOptionCol> */}
                   </SelectedOptionContainer>
                 </RowDataContainer>
                 <ItemDivisor />
@@ -798,13 +796,11 @@ const MoonpaySellCheckout: React.FC = () => {
                 <RowDataContainer>
                   <RowLabel>{t('Withdrawing Method')}</RowLabel>
                   <SelectedOptionContainer>
-                    {/* <SelectedOptionCol> */}
                     <SelectedOptionText
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
                       {PaymentMethodsAvailable[sellOrder.payment_method].label}
                     </SelectedOptionText>
-                    {/* </SelectedOptionCol> */}
                   </SelectedOptionContainer>
                 </RowDataContainer>
                 <ItemDivisor />

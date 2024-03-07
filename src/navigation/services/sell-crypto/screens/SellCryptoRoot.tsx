@@ -241,7 +241,6 @@ const SellCryptoRoot = ({
     minAmount: undefined,
     maxAmount: undefined,
   });
-  let minAmount: number, maxAmount: number;
   const [sellQuoteData, setSellQuoteData] = useState<MoonpayGetSellQuoteData>();
   const [uiFormattedWallet, setUiFormattedWallet] = useState<WalletRowProps>();
   const [useSendMax, setUseSendMax] = useState<boolean>(false);
@@ -490,7 +489,7 @@ const SellCryptoRoot = ({
       )) as string;
     } catch (err) {
       console.error(err);
-      const msg = 'Error when trying to generate wallet address.';
+      const msg = t('Error when trying to generate wallet address.');
       const reason = 'createWalletAddress Error';
       showError(msg, undefined, reason, undefined, true);
       return;
