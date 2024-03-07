@@ -410,6 +410,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps> = ({
 
           if (!amount) {
             navigation.navigate(WalletScreens.AMOUNT, {
+              sendMaxEnabled: ['contact', 'scanner'].includes(context),
               cryptoCurrencyAbbreviation:
                 wallet.currencyAbbreviation.toUpperCase(),
               chain: wallet.chain,
