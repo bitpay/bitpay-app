@@ -1141,12 +1141,7 @@ export const incomingLink =
       const redirectTo = pathSegments[1];
 
       handler = () => {
-        navigationRef.navigate(RootStacks.TABS, {
-          screen: TabsScreens.SETTINGS,
-          params: {
-            redirectTo: redirectTo as any,
-          },
-        });
+        navigationRef.navigate('SettingsHome', {redirectTo: redirectTo as any});
       };
     } else if (pathSegments[0] === 'wallet') {
       if (pathSegments[1] === 'create') {
