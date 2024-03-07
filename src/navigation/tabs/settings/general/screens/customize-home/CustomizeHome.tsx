@@ -57,6 +57,7 @@ const CustomizeHomeSettings = () => {
   const hasCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
+  const [initialLayoutType] = useState(defaultLayoutType);
   const [layoutType, setLayoutType] = useState(defaultLayoutType);
   const navigation = useNavigation();
   const theme = useTheme();
@@ -187,26 +188,53 @@ const CustomizeHomeSettings = () => {
               }
             },
           }}>
-          <Tab.Screen
-            name={'carousel'}
-            component={Noop}
-            options={{
-              tabBarLabel: t('Carousel'),
-              tabBarIcon: ({focused}) => (
-                <CarouselSvg focused={focused} theme={theme} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name={'listView'}
-            component={Noop}
-            options={{
-              tabBarLabel: t('List View'),
-              tabBarIcon: ({focused}) => (
-                <ListViewSvg focused={focused} theme={theme} />
-              ),
-            }}
-          />
+          {initialLayoutType === 'carousel' ? (
+            <>
+              <Tab.Screen
+                name={'carousel'}
+                component={Noop}
+                options={{
+                  tabBarLabel: t('Carousel'),
+                  tabBarIcon: ({focused}) => (
+                    <CarouselSvg focused={focused} theme={theme} />
+                  ),
+                }}
+              />
+              <Tab.Screen
+                name={'listView'}
+                component={Noop}
+                options={{
+                  tabBarLabel: t('List View'),
+                  tabBarIcon: ({focused}) => (
+                    <ListViewSvg focused={focused} theme={theme} />
+                  ),
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <Tab.Screen
+                name={'listView'}
+                component={Noop}
+                options={{
+                  tabBarLabel: t('List View'),
+                  tabBarIcon: ({focused}) => (
+                    <ListViewSvg focused={focused} theme={theme} />
+                  ),
+                }}
+              />
+              <Tab.Screen
+                name={'carousel'}
+                component={Noop}
+                options={{
+                  tabBarLabel: t('Carousel'),
+                  tabBarIcon: ({focused}) => (
+                    <CarouselSvg focused={focused} theme={theme} />
+                  ),
+                }}
+              />
+            </>
+          )}
         </Tab.Navigator>
       </LayoutToggleContainer>
 
