@@ -3,16 +3,23 @@ import React, {ReactElement, useState} from 'react';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
-import {Action, Midnight, White} from '../../../styles/colors';
+import {
+  Action,
+  Midnight,
+  White,
+  Disabled,
+  DisabledDark,
+} from '../../../styles/colors';
 import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
+import {css} from 'styled-components';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -30,16 +37,26 @@ const TransactItemContainer = styled.TouchableOpacity`
   align-items: stretch;
 `;
 
-const ItemIconContainer = styled.View`
+const ItemIconContainer = styled.View<{disabled: boolean}>`
   background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
+  ${({disabled}) =>
+    disabled &&
+    css`
+      background: ${({theme}) => (theme.dark ? DisabledDark : Disabled)};
+    `};
   border-radius: 11px;
 `;
 
-const ItemTextContainer = styled.View`
+const ItemTextContainer = styled.View<{disabled: boolean}>`
   align-items: flex-start;
   justify-content: space-around;
   flex-direction: column;
   padding-left: 19px;
+  ${({disabled}) =>
+    disabled &&
+    css`
+      opacity: 0.3;
+    `};
 `;
 
 const ItemDescriptionText = styled(BaseText)`
@@ -73,7 +90,7 @@ const CloseButtonContainer = styled.TouchableOpacity`
 
 interface TransactMenuItemProps {
   id: string;
-  img: () => ReactElement;
+  img: ({disabled}: {disabled?: boolean}) => ReactElement;
   title?: string;
   description?: string;
   onPress: () => void;
@@ -85,6 +102,15 @@ const TransactModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const availableWallets = Object.values(keys)
+    .filter(key => key.backupComplete)
+    .flatMap(key => key.wallets)
+    .filter(
+      wallet =>
+        !wallet.hideWallet && wallet.isComplete() && wallet.balance.sat > 0,
+    );
+  const disabledSendingOptions = availableWallets.length === 0;
   const dispatch = useAppDispatch();
 
   const TransactMenuList: Array<TransactMenuItemProps> = [
@@ -111,7 +137,7 @@ const TransactModal = () => {
     },
     {
       id: 'exchange',
-      img: () => <Icons.Exchange />,
+      img: ({disabled}) => <Icons.Exchange disabled={disabled} />,
       title: t('Exchange'),
       description: t('Swap crypto for another'),
       onPress: () => {
@@ -134,7 +160,7 @@ const TransactModal = () => {
     },
     {
       id: 'send',
-      img: () => <Icons.Send />,
+      img: ({disabled}) => <Icons.Send disabled={disabled} />,
       title: t('Send'),
       description: t('Send crypto to another wallet'),
       onPress: () => {
@@ -143,7 +169,7 @@ const TransactModal = () => {
     },
     {
       id: 'buyGiftCard',
-      img: () => <Icons.BuyGiftCard />,
+      img: ({disabled}) => <Icons.BuyGiftCard disabled={disabled} />,
       title: t('Buy Gift Cards'),
       description: t('Buy gift cards with crypto'),
       onPress: () => {
@@ -173,6 +199,35 @@ const TransactModal = () => {
     },
   };
 
+  const renderItem = ({item}: {item: TransactMenuItemProps}) => {
+    const disabled =
+      disabledSendingOptions &&
+      ['send', 'exchange', 'buyGiftCard'].includes(item.id);
+
+    const handlePress = async () => {
+      if (disabled) {
+        return;
+      }
+      hideModal();
+      await sleep(500);
+      item.onPress();
+    };
+
+    return (
+      <TransactItemContainer
+        activeOpacity={ActiveOpacity}
+        onPress={handlePress}>
+        <ItemIconContainer disabled={disabled}>
+          {item.img({disabled})}
+        </ItemIconContainer>
+        <ItemTextContainer disabled={disabled}>
+          <H6>{item.title}</H6>
+          <ItemDescriptionText>{item.description}</ItemDescriptionText>
+        </ItemTextContainer>
+      </TransactItemContainer>
+    );
+  };
+
   return (
     <>
       <TransactButton>
@@ -185,21 +240,7 @@ const TransactModal = () => {
           <FlatList
             data={TransactMenuList}
             scrollEnabled={false}
-            renderItem={({item}) => (
-              <TransactItemContainer
-                activeOpacity={ActiveOpacity}
-                onPress={async () => {
-                  hideModal();
-                  await sleep(500);
-                  item.onPress();
-                }}>
-                <ItemIconContainer>{item.img()}</ItemIconContainer>
-                <ItemTextContainer>
-                  <H6>{item.title}</H6>
-                  <ItemDescriptionText>{item.description}</ItemDescriptionText>
-                </ItemTextContainer>
-              </TransactItemContainer>
-            )}
+            renderItem={renderItem}
           />
 
           <ScanButtonContainer
