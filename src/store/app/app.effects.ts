@@ -120,6 +120,7 @@ import {startCustomTokensMigration} from '../wallet/effects/currencies/currencie
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
+import {initAppsFlyer} from '../../utils/appsFlyer';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -138,6 +139,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       ),
     );
 
+    // Start Unified Deep Link
+    startAppsFlyer();
     dispatch(deferDeeplinksUntilAppIsReady());
 
     const {APP, CONTACT, WALLET} = getState();
@@ -234,6 +237,16 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(showBlur(false));
     RNBootSplash.hide();
   }
+};
+
+const startAppsFlyer = () => {
+  initAppsFlyer()
+    .then(() => {
+      LogActions.info('AppsFlyer initialized');
+    })
+    .catch(err => {
+      LogActions.error('AppsFlyer failed to initialize: ' + err);
+    });
 };
 
 const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
