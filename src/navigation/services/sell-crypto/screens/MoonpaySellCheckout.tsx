@@ -1,4 +1,5 @@
-import React, {useEffect, useRef, useState} from 'react';
+import Transport from '@ledgerhq/hw-transport';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native';
 import {
   useTheme,
@@ -29,6 +30,7 @@ import {
   Wallet,
   TransactionProposal,
   SendMaxInfo,
+  Key,
 } from '../../../../store/wallet/wallet.models';
 import {
   GetName,
@@ -101,6 +103,19 @@ import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {PaymentMethodsAvailable} from '../constants/SellCryptoConstants';
 import {getSendMaxData} from '../../utils/external-services-utils';
+import {
+  ConfirmHardwareWalletModal,
+  SimpleConfirmPaymentState,
+} from '../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {
+  getLedgerErrorMessage,
+  prepareLedgerApp,
+} from '../../../../components/modal/import-ledger-wallet/utils';
+import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
+import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
+import TransportHID from '@ledgerhq/react-native-hid';
+import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -162,8 +177,59 @@ const MoonpaySellCheckout: React.FC = () => {
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<MoonpaySellTransactionDetails>();
 
+  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
+    useState(false);
+  const [hardwareWalletTransport, setHardwareWalletTransport] =
+    useState<Transport | null>(null);
+  const [confirmHardwareState, setConfirmHardwareState] =
+    useState<SimpleConfirmPaymentState | null>(null);
+
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
   let status: string;
+
+  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
+  const transportRef = useRef(hardwareWalletTransport);
+  transportRef.current = hardwareWalletTransport;
+
+  const setPromptOpenAppState = (state: boolean) =>
+    state && setConfirmHardwareState('selecting');
+
+  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
+  const onDisconnect = useCallback(async () => {
+    let retryAttempts = 2;
+    let newTp: Transport | null = null;
+
+    // avoid closure values
+    const isBle = transportRef.current instanceof TransportBLE;
+    const isHid = transportRef.current instanceof TransportHID;
+    const shouldReconnect =
+      isConfirmHardwareWalletModalVisible && (isBle || isHid);
+
+    if (!shouldReconnect) {
+      setHardwareWalletTransport(null);
+      return;
+    }
+
+    // try to reconnect a few times
+    while (!newTp && retryAttempts > 0) {
+      if (isBle) {
+        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
+          () => null,
+        );
+      } else if (isHid) {
+        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
+          () => null,
+        );
+      }
+
+      retryAttempts--;
+    }
+
+    if (newTp) {
+      newTp.on('disconnect', onDisconnect);
+    }
+    setHardwareWalletTransport(newTp);
+  }, []);
 
   const copyText = (text: string) => {
     haptic('impactLight');
@@ -457,22 +523,58 @@ const MoonpaySellCheckout: React.FC = () => {
     }
   };
 
-  const makePayment = async () => {
+  const makePayment = async ({transport}: {transport?: Transport}) => {
+    const isUsingHardwareWallet = !!transport;
+    let broadcastedTx;
     try {
-      dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-      await sleep(400);
-      const broadcastedTx = await dispatch(
-        publishAndSign({
-          txp: ctxp! as TransactionProposal,
-          key,
-          wallet: wallet,
-        }),
-      );
+      if (isUsingHardwareWallet) {
+        const {coin, network, account, useNativeSegwit} = wallet.credentials;
+        const configFn = currencyConfigs[coin];
+        if (!configFn) {
+          throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
+        }
+        const params = configFn(network, account, useNativeSegwit);
+        await prepareLedgerApp(
+          params.appName,
+          transportRef,
+          setHardwareWalletTransport,
+          onDisconnect,
+          setPromptOpenAppState,
+        );
+        setConfirmHardwareState('sending');
+        await sleep(500);
+        broadcastedTx = await dispatch(
+          publishAndSign({
+            txp: ctxp! as TransactionProposal,
+            key,
+            wallet,
+            transport,
+          }),
+        );
+        setConfirmHardwareState('complete');
+        await sleep(1000);
+        setConfirmHardwareWalletVisible(false);
+      } else {
+        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
+        await sleep(400);
+        broadcastedTx = await dispatch(
+          publishAndSign({
+            txp: ctxp! as TransactionProposal,
+            key,
+            wallet,
+          }),
+        );
+      }
       updateMoonpayTx(txData!, broadcastedTx as Partial<TransactionProposal>);
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
       setShowPaymentSentModal(true);
     } catch (err) {
+      if (isUsingHardwareWallet) {
+        setConfirmHardwareWalletVisible(false);
+        setConfirmHardwareState(null);
+        err = getLedgerErrorMessage(err);
+      }
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
@@ -483,7 +585,8 @@ const MoonpaySellCheckout: React.FC = () => {
         case 'password canceled':
           break;
         case 'biometric check failed':
-          setResetSwipeButton(true);
+          break;
+        case 'user denied transaction':
           break;
         default:
           logger.error(JSON.stringify(err));
@@ -491,6 +594,49 @@ const MoonpaySellCheckout: React.FC = () => {
           const reason = 'publishAndSign Error';
           showError(msg, reason);
       }
+    }
+  };
+
+  // on hardware wallet disconnect, just clear the cached transport object
+  // errors will be thrown and caught as needed in their respective workflows
+  const disconnectFn = () => setHardwareWalletTransport(null);
+  const disconnectFnRef = useRef(disconnectFn);
+  disconnectFnRef.current = disconnectFn;
+
+  const onHardwareWalletPaired = (args: {transport: Transport}) => {
+    const {transport} = args;
+
+    transport.on('disconnect', disconnectFnRef.current);
+
+    setHardwareWalletTransport(transport);
+    makePayment({transport});
+  };
+
+  const onSwipeComplete = async () => {
+    try {
+      logger.debug('Swipe completed. Making payment...');
+      if (key.hardwareSource) {
+        await onSwipeCompleteHardwareWallet(key);
+      } else {
+        await makePayment({});
+      }
+    } catch (err) {
+      let msg = getErrorMsgFromError(err);
+      logger.error('makePayment error: ' + msg);
+    }
+  };
+
+  const onSwipeCompleteHardwareWallet = async (key: Key) => {
+    if (key.hardwareSource === 'ledger') {
+      if (hardwareWalletTransport) {
+        setConfirmHardwareWalletVisible(true);
+        await makePayment({transport: hardwareWalletTransport});
+      } else {
+        setConfirmHardwareWalletVisible(true);
+      }
+    } else {
+      const msg = t('Uh oh, something went wrong. Please try again later');
+      showError(msg, t('Unsupported hardware wallet'));
     }
   };
 
@@ -912,6 +1058,22 @@ const MoonpaySellCheckout: React.FC = () => {
         )}
       </ScrollView>
 
+      {key?.hardwareSource && wallet ? (
+        <ConfirmHardwareWalletModal
+          isVisible={isConfirmHardwareWalletModalVisible}
+          state={confirmHardwareState}
+          hardwareSource={key.hardwareSource}
+          transport={hardwareWalletTransport}
+          currencyLabel={BitpaySupportedCoins[wallet.chain]?.name}
+          onBackdropPress={() => {
+            setConfirmHardwareWalletVisible(false);
+            setResetSwipeButton(true);
+            setConfirmHardwareState(null);
+          }}
+          onPaired={onHardwareWalletPaired}
+        />
+      ) : null}
+
       {!paymentExpired ? (
         <TouchableOpacity
           onPress={() => {
@@ -923,15 +1085,7 @@ const MoonpaySellCheckout: React.FC = () => {
           <SwipeButton
             title={'Slide to sell'}
             disabled={!termsAccepted}
-            onSwipeComplete={async () => {
-              try {
-                logger.debug('Swipe completed. Making payment...');
-                makePayment();
-              } catch (err) {
-                let msg = getErrorMsgFromError(err);
-                logger.error('makePayment error: ' + msg);
-              }
-            }}
+            onSwipeComplete={onSwipeComplete}
             forceReset={resetSwipeButton}
           />
         </TouchableOpacity>
