@@ -600,6 +600,7 @@
 				DEVELOPMENT_TEAM = 884JRH5R93;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = BitPayApp/Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app requires permanent access to Bluetooth for establishing secure connections with Ledger Nano devices.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "This app requires access to Bluetooth for establishing secure connections with Ledger Nano devices, enabling seamless interaction and management of cryptocurrency transactions.";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (

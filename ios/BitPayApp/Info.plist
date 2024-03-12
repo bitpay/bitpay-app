@@ -61,6 +61,10 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>This app requires permanent access to Bluetooth for establishing secure connections with Ledger Nano devices.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>This app requires access to Bluetooth for establishing secure connections with Ledger Nano devices, enabling seamless interaction and management of cryptocurrency transactions.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need permission to access your camera to scan QR codes.</string>
 	<key>NSFaceIDUsageDescription</key>
