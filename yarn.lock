@@ -2352,14 +2352,14 @@
   dependencies:
     invariant "2"
 
-"@ledgerhq/devices@^7.0.2":
-  version "7.0.7"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/devices/-/devices-7.0.7.tgz#3499304a1c9d3aa7399de2ad390719bef5d1e89c"
-  integrity sha512-PZ9TtaTGBYUm/g0qNKPbECZt7DDNvqM3ILS5wAtOMna2cBR+mrywUGXrkjuOWlHpuqZ8wenaAKveQBbzF2ba8w==
+"@ledgerhq/devices@^8.0.3", "@ledgerhq/devices@^8.2.1":
+  version "8.2.1"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/devices/-/devices-8.2.1.tgz#c59eec50bacd2f962e22c723a74600160d41fbd0"
+  integrity sha512-l/2I/Xzt7Z32OmGzoc/mUvaZivdn7Id/SO7hBTGpk7PtJTpBRxVAabP4GWEKCayGyOAcvTwoVxM0HMkNVfIzOQ==
   dependencies:
-    "@ledgerhq/errors" "^6.12.3"
-    "@ledgerhq/logs" "^6.10.1"
-    rxjs "6"
+    "@ledgerhq/errors" "^6.16.2"
+    "@ledgerhq/logs" "^6.12.0"
+    rxjs "^7.8.1"
     semver "^7.3.5"
 
 "@ledgerhq/devices@^8.0.7":
@@ -2382,10 +2382,15 @@
     rxjs "^7.8.1"
     semver "^7.3.5"
 
-"@ledgerhq/errors@^6.11.0", "@ledgerhq/errors@^6.11.1", "@ledgerhq/errors@^6.12.3", "@ledgerhq/errors@^6.14.0":
+"@ledgerhq/errors@^6.11.1", "@ledgerhq/errors@^6.14.0":
   version "6.14.0"
   resolved "https://registry.yarnpkg.com/@ledgerhq/errors/-/errors-6.14.0.tgz#0bf253983773ef12eebce2091f463bc719223b37"
   integrity sha512-ZWJw2Ti6Dq1Ott/+qYqJdDWeZm16qI3VNG5rFlb0TQ3UcAyLIQZbnnzzdcVVwVeZiEp66WIpINd/pBdqsHVyOA==
+
+"@ledgerhq/errors@^6.12.6", "@ledgerhq/errors@^6.16.2":
+  version "6.16.2"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/errors/-/errors-6.16.2.tgz#cf3939dc92ed0871aa7fdd45e6d13446a1eaeccd"
+  integrity sha512-jFpohaSW+p1Obp3NDT9QSByEtT3gtBZIjVNu8m25gnrH5zdtfPVlPwH6UiuS50s+2dHQyehV8hF+IfreKDWAZA==
 
 "@ledgerhq/errors@^6.16.1":
   version "6.16.1"
@@ -2441,13 +2446,23 @@
     "@ledgerhq/hw-transport" "^6.28.8"
     "@ledgerhq/logs" "^6.10.1"
 
-"@ledgerhq/hw-transport@^6.27.5", "@ledgerhq/hw-transport@^6.27.6", "@ledgerhq/hw-transport@^6.28.8":
+"@ledgerhq/hw-transport@^6.27.6", "@ledgerhq/hw-transport@^6.28.8":
   version "6.28.8"
   resolved "https://registry.yarnpkg.com/@ledgerhq/hw-transport/-/hw-transport-6.28.8.tgz#f99a5c71c5c09591e9bfb1b970c42aafbe81351f"
   integrity sha512-XxQVl4htd018u/M66r0iu5nlHi+J6QfdPsORzDF6N39jaz+tMqItb7tUlXM/isggcuS5lc7GJo7NOuJ8rvHZaQ==
   dependencies:
     "@ledgerhq/devices" "^8.0.7"
     "@ledgerhq/errors" "^6.14.0"
+    events "^3.3.0"
+
+"@ledgerhq/hw-transport@^6.28.4":
+  version "6.30.4"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/hw-transport/-/hw-transport-6.30.4.tgz#05dee1e9cdec0e430594ecf7f5cf90c13721ad70"
+  integrity sha512-VBcVd7UG8HDrjWMoZI5rqBDz+PBxLHTIPZOGY/fdMoEUwaBbss0Z3MxuJanMyerlfaLqnBSVuL0blz7rOyagkw==
+  dependencies:
+    "@ledgerhq/devices" "^8.2.1"
+    "@ledgerhq/errors" "^6.16.2"
+    "@ledgerhq/logs" "^6.12.0"
     events "^3.3.0"
 
 "@ledgerhq/hw-transport@^6.30.1":
@@ -2469,7 +2484,7 @@
     rxjs "^6.6.7"
     utility-types "^3.10.0"
 
-"@ledgerhq/logs@^6.10.0", "@ledgerhq/logs@^6.10.1":
+"@ledgerhq/logs@^6.10.1":
   version "6.10.1"
   resolved "https://registry.yarnpkg.com/@ledgerhq/logs/-/logs-6.10.1.tgz#5bd16082261d7364eabb511c788f00937dac588d"
   integrity sha512-z+ILK8Q3y+nfUl43ctCPuR4Y2bIxk/ooCQFwZxhtci1EhAtMDzMAx2W25qx8G1PPL9UUOdnUax19+F0OjXoj4w==
@@ -2490,15 +2505,15 @@
     "@ledgerhq/logs" "^6.10.1"
     rxjs "6"
 
-"@ledgerhq/react-native-hw-transport-ble@6.27.7":
-  version "6.27.7"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/react-native-hw-transport-ble/-/react-native-hw-transport-ble-6.27.7.tgz#a936a6cd52f5b393eb0a3c3b4e7c5aa67e79295b"
-  integrity sha512-8reR850vdmwp0iqsayWO7RZYDTCMN6njomFe0Uk4jNJxiWLfcCWuKtIJb/2arh6ZmVH/V5ELXqjHR66CSwrZwQ==
+"@ledgerhq/react-native-hw-transport-ble@6.28.8":
+  version "6.28.8"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/react-native-hw-transport-ble/-/react-native-hw-transport-ble-6.28.8.tgz#ef83825e037f1b6f7ca65f01485e658aaf492153"
+  integrity sha512-mzRg2fomDFPQz5owLLJ+gBf7Z7NCa8YpyTA2L55cfNQM5IUqIxVJCqcllRWkghiEk5C/3E205tbar2a/7vLCzw==
   dependencies:
-    "@ledgerhq/devices" "^7.0.2"
-    "@ledgerhq/errors" "^6.11.0"
-    "@ledgerhq/hw-transport" "^6.27.5"
-    "@ledgerhq/logs" "^6.10.0"
+    "@ledgerhq/devices" "^8.0.3"
+    "@ledgerhq/errors" "^6.12.6"
+    "@ledgerhq/hw-transport" "^6.28.4"
+    "@ledgerhq/logs" "^6.10.1"
     invariant "^2.2.4"
     react-native-ble-plx "2.0.3"
     rxjs "6"
