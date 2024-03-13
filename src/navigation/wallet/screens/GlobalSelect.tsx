@@ -143,7 +143,8 @@ export type GlobalSelectModalContext =
   | 'contact'
   | 'scanner'
   | 'sell'
-  | 'swap';
+  | 'swap'
+  | 'paperwallet';
 
 export type GlobalSelectParamList = {
   context: GlobalSelectModalContext;
@@ -207,7 +208,7 @@ interface GlobalSelectProps {
   useAsModal?: boolean;
   modalTitle?: any;
   customSupportedCurrencies?: any[];
-  onDismiss?: (newWallet?: any) => void;
+  onDismiss?: (newWallet?: any, keepSelected?: boolean) => void;
   modalContext?: any;
   livenetOnly?: any;
   onHelpPress?: () => void;
@@ -583,7 +584,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             <CloseModalButton
               onPress={() => {
                 if (onDismiss) {
-                  onDismiss();
+                  const keepSelected = context === 'paperwallet';
+                  onDismiss(undefined, keepSelected);
                 }
               }}>
               <CloseModal

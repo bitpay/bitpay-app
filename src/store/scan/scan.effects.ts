@@ -36,6 +36,7 @@ import {
   isValidWalletConnectUri,
   IsBitPayInvoiceWebUrl,
   isValidBanxaUri,
+  IsValidPrivateKey,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -196,6 +197,10 @@ export const incomingData =
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
         dispatch(handleBitPayUri(data, opts?.wallet));
+        // Check Private Key
+      } else if (IsValidPrivateKey(data)) {
+        dispatch(handlePrivateKey(data));
+        return true;
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
         dispatch(goToImport(data));
@@ -612,6 +617,15 @@ export const goToAmount =
           }),
         );
       },
+    });
+  };
+
+const handlePrivateKey =
+  (scannedPrivateKey: string, wallet?: Wallet): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('[scan] Incoming-data: private key'));
+    navigationRef.navigate(WalletScreens.PAPER_WALLET, {
+      scannedPrivateKey,
     });
   };
 
