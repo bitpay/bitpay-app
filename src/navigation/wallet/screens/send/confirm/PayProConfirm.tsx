@@ -668,7 +668,7 @@ const PayProConfirm = () => {
                 });
           }}
         />
-        {key.hardwareSource && wallet ? (
+        {key?.hardwareSource && wallet ? (
           <ConfirmHardwareWalletModal
             isVisible={isConfirmHardwareWalletModalVisible}
             state={confirmHardwareState}

@@ -1042,7 +1042,7 @@ const ChangellyCheckout: React.FC = () => {
         )}
       </ScrollView>
 
-      {key.hardwareSource ? (
+      {key?.hardwareSource && fromWalletSelected ? (
         <ConfirmHardwareWalletModal
           isVisible={isConfirmHardwareWalletModalVisible}
           state={confirmHardwareState}
