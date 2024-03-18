@@ -39,7 +39,14 @@ export const moonpaySellSupportedFiatCurrencies = [
   'ZAR',
 ];
 
-export const moonpaySellSupportedCoins = ['btc', 'bch', 'eth', 'ltc'];
+export const moonpaySellSupportedCoins = [
+  'btc',
+  'bch',
+  'eth',
+  'ltc',
+  'doge',
+  'matic', // matic_polygon in Moonpay
+];
 
 export const nonUSMoonpaySellSupportedCoins = [];
 
@@ -150,6 +157,12 @@ export const getMoonpaySellCurrenciesFixedProps = (
         '0xdac17f958d2ee523a2206206994597c13d831ec7'
     ) {
       currency.name = 'Tether USD';
+    } else if (
+      currency.code.toLowerCase() === 'matic_polygon' &&
+      currency.metadata?.networkCode?.toLowerCase() === 'polygon'
+    ) {
+      currency.code = 'matic';
+      currency.name = 'Polygon';
     }
   });
   return moonpayCurrenciesData;

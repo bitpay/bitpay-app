@@ -890,9 +890,7 @@ const SellCryptoRoot = ({
         }
       }
 
-      const coinsToRemove =
-        !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
-      coinsToRemove.push('busd');
+      const coinsToRemove = ['xrp', 'busd'];
       if (coinsToRemove.length > 0) {
         logger.debug(
           `Removing ${JSON.stringify(
