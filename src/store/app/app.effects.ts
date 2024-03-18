@@ -652,6 +652,7 @@ export const openUrlWithInAppBrowser =
 
       if (isIabAvailable) {
         try {
+          dispatch(AppActions.setInAppBrowserOpen(true));
           // successfully resolves after IAB is cancelled or dismissed
           const result = await InAppBrowser.open(url, {
             // iOS options
@@ -667,6 +668,7 @@ export const openUrlWithInAppBrowser =
             ...options,
           });
 
+          dispatch(AppActions.setInAppBrowserOpen(false));
           dispatch(
             LogActions.info(`InAppBrowser closed with type: ${result.type}`),
           );
@@ -674,6 +676,7 @@ export const openUrlWithInAppBrowser =
           const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${JSON.stringify(
             err,
           )}`;
+          dispatch(AppActions.setInAppBrowserOpen(false));
           dispatch(LogActions.error(logMsg));
           // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
           await Linking.openURL(url);
@@ -681,6 +684,7 @@ export const openUrlWithInAppBrowser =
       } else {
         // successfully resolves if an installed app handles the URL,
         // or the user confirms any presented 'open' dialog
+        dispatch(AppActions.setInAppBrowserOpen(false));
         await Linking.openURL(url);
       }
     } catch (err) {
@@ -688,6 +692,7 @@ export const openUrlWithInAppBrowser =
         err,
       )}`;
 
+      dispatch(AppActions.setInAppBrowserOpen(false));
       dispatch(LogActions.error(logMsg));
     }
   };

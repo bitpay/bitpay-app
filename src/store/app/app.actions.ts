@@ -350,3 +350,8 @@ export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
   type: AppActionTypes.USER_FEEDBACK,
   payload: feedBack,
 });
+
+export const setInAppBrowserOpen = (payload: boolean): AppActionType => ({
+  type: AppActionTypes.IN_APP_BROWSER_OPEN,
+  payload,
+});

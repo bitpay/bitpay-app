@@ -43,6 +43,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
   'failedAppInit',
   'brazeContentCardSubscription',
+  'inAppBrowserOpen',
 ];
 
 export type ModalId =
@@ -146,6 +147,7 @@ export interface AppState {
   hasViewedZenLedgerWarning: boolean;
   hasViewedBillsTab: boolean;
   isImportLedgerModalVisible: boolean;
+  inAppBrowserOpen: boolean;
 }
 
 const initialState: AppState = {
@@ -228,6 +230,7 @@ const initialState: AppState = {
   hasViewedZenLedgerWarning: false,
   hasViewedBillsTab: false,
   isImportLedgerModalVisible: false,
+  inAppBrowserOpen: false,
 };
 
 export const appReducer = (
@@ -661,6 +664,12 @@ export const appReducer = (
       return {
         ...state,
         userFeedback: action.payload,
+      };
+
+    case AppActionTypes.IN_APP_BROWSER_OPEN:
+      return {
+        ...state,
+        inAppBrowserOpen: action.payload,
       };
 
     default:
