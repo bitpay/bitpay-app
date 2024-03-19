@@ -82,6 +82,7 @@ export enum AppActionTypes {
   SET_HAS_VIEWED_BILLS_TAB = 'APP/SET_HAS_VIEWED_BILLS_TAB',
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
   IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
+  IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
 }
 
 interface ImportLedgerModalToggled {
@@ -375,6 +376,11 @@ interface setUserFeedback {
   payload: FeedbackType;
 }
 
+interface InAppBrowserOpen {
+  type: typeof AppActionTypes.IN_APP_BROWSER_OPEN;
+  payload: boolean;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -438,4 +444,5 @@ export type AppActionType =
   | checkingBiometricForSending
   | SetHasViewedZenLedgerWarning
   | SetHasViewedBillsTab
+  | InAppBrowserOpen
   | ImportLedgerModalToggled;

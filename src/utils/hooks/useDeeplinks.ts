@@ -22,6 +22,7 @@ import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
 import {TabsScreens, TabsStackParamList} from '../../navigation/tabs/TabsStack';
 import {incomingData} from '../../store/scan/scan.effects';
 import {showBlur} from '../../store/app/app.actions';
+import {AppActions} from '../../store/app';
 import {incomingLink} from '../../store/app/app.effects';
 import useAppDispatch from './useAppDispatch';
 import {useLogger} from './useLogger';
@@ -130,6 +131,7 @@ export const useUrlEventHandler = () => {
         InAppBrowser.isAvailable().then(isAvailable => {
           if (isAvailable) {
             InAppBrowser.close();
+            dispatch(AppActions.setInAppBrowserOpen(false));
           }
         });
       } catch (err) {
@@ -148,8 +150,12 @@ export const useUrlEventHandler = () => {
 export const useDeeplinks = () => {
   const urlEventHandler = useUrlEventHandler();
   const logger = useLogger();
-  const {biometricLockActive, pinLockActive, lockAuthorizedUntil} =
-    useAppSelector(({APP}) => APP);
+  const {
+    biometricLockActive,
+    pinLockActive,
+    lockAuthorizedUntil,
+    inAppBrowserOpen,
+  } = useAppSelector(({APP}) => APP);
 
   const memoizedSubscribe = useMemo<
     LinkingOptions<RootStackParamList>['subscribe']
@@ -183,7 +189,7 @@ export const useDeeplinks = () => {
             const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
             const totalSecs =
               Number(lockAuthorizedUntil) - Number(timeSinceBoot);
-            if (totalSecs < 0) {
+            if (totalSecs < 0 && !inAppBrowserOpen) {
               const subscription = DeviceEventEmitter.addListener(
                 DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
                 () => {
@@ -262,6 +268,7 @@ export const useDeeplinks = () => {
       pinLockActive,
       biometricLockActive,
       lockAuthorizedUntil,
+      inAppBrowserOpen,
     ],
   );
 
