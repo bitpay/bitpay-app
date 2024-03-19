@@ -50,7 +50,7 @@
     "@ledgerhq/hw-app-eth": "6.29.9",
     "@ledgerhq/hw-app-xrp": "^6.28.1",
     "@ledgerhq/react-native-hid": "6.30.0",
-    "@ledgerhq/react-native-hw-transport-ble": "6.27.7",
+    "@ledgerhq/react-native-hw-transport-ble": "6.28.8",
     "@react-native-async-storage/async-storage": "1.17.10",
     "@react-native-clipboard/clipboard": "1.11.2",
     "@react-native-community/blur": "3.6.0",
