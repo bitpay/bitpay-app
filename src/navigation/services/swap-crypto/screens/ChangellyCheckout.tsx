@@ -1086,7 +1086,7 @@ const ChangellyCheckout: React.FC = () => {
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
-          await sleep(300);
+          await sleep(600);
           navigation.dispatch(
             CommonActions.reset({
               index: 1,
