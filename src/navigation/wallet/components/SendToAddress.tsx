@@ -21,6 +21,7 @@ import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
   ValidDataTypes,
+  ValidateCoinAddress,
   ValidateURI,
 } from '../../../store/wallet/utils/validations';
 import {FlatList, TouchableOpacity, View} from 'react-native';
@@ -130,15 +131,10 @@ const SendToAddress = () => {
   const checkCoinAndNetwork =
     (data: any): Effect<boolean> =>
     dispatch => {
-      const addrData = GetCoinAndNetwork(data, network, chain);
-      const isValid =
-        chain === addrData?.coin.toLowerCase() && addrData?.network === network;
+      const isValid = ValidateCoinAddress(data, chain, network);
 
       if (isValid) {
-        return true;
-      } else {
-        // @ts-ignore
-        if (currencyAbbreviation === 'bch' && network === addrData?.network) {
+        if (currencyAbbreviation === 'bch') {
           const isLegacy = CheckIfLegacyBCH(data);
           if (isLegacy) {
             const appName = APP_NAME_UPPERCASE;
@@ -146,20 +142,17 @@ const SendToAddress = () => {
             dispatch(
               showBottomNotificationModal(
                 BchLegacyAddressInfo(appName, () => {
+                  // TODO: This doesn't seem to work
                   BchLegacyAddressInfoDismiss(data);
+                  return false;
                 }),
               ),
             );
-          } else {
-            dispatch(
-              showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
-            );
           }
-        } else {
-          dispatch(
-            showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
-          );
         }
+        return true;
+      } else {
+        dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
       }
       return false;
     };

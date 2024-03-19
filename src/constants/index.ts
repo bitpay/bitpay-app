@@ -3,6 +3,7 @@ import {Platform} from 'react-native';
 export enum Network {
   mainnet = 'livenet',
   testnet = 'testnet',
+  regtest = 'regtest',
 }
 
 export const IS_ANDROID = Platform.OS === 'android';
