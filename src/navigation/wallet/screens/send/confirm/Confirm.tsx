@@ -836,7 +836,7 @@ const Confirm = () => {
         />
       </ConfirmContainer>
 
-      {key.hardwareSource ? (
+      {key?.hardwareSource && wallet ? (
         <ConfirmHardwareWalletModal
           isVisible={isConfirmHardwareWalletModalVisible}
           state={confirmHardwareState}
