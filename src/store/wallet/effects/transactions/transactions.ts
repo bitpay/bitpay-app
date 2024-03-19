@@ -463,6 +463,7 @@ export const GroupTransactionHistory = (history: any[]) => {
           {
             title: t('Pending Transactions'),
             data: _pendingTransactions,
+            time: Date.now(),
           },
         ]
       : [];
@@ -479,7 +480,7 @@ export const GroupTransactionHistory = (history: any[]) => {
         .locale(i18n.language || 'en')
         .format('MMMM');
       const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
-      return {title, data: group};
+      return {title, data: group, time};
     });
   return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
 };

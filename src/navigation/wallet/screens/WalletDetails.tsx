@@ -514,7 +514,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const [history, setHistory] = useState<any[]>([]);
   const [groupedHistory, setGroupedHistory] = useState<
-    {title: string; data: any[]}[]
+    {title: string; data: any[]; time: number}[]
   >([]);
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
@@ -556,47 +556,51 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   };
 
-  const loadHistory = useCallback(async (refresh?: boolean) => {
-    if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
-      return;
-    }
-    try {
-      setIsLoading(!refresh);
-      setErrorLoadingTxs(false);
+  const loadHistory = useCallback(
+    async (refresh?: boolean) => {
+      if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
+        return;
+      }
+      try {
+        setIsLoading(!refresh);
+        setErrorLoadingTxs(false);
 
-      const [transactionHistory] = await Promise.all([
-        dispatch(
-          GetTransactionHistory({
-            wallet: fullWalletObj,
-            transactionsHistory: history,
-            limit: TX_HISTORY_LIMIT,
-            contactList,
-            refresh,
-          }),
-        ),
-      ]);
+        const [transactionHistory] = await Promise.all([
+          dispatch(
+            GetTransactionHistory({
+              wallet: fullWalletObj,
+              transactionsHistory: history,
+              limit: TX_HISTORY_LIMIT,
+              contactList,
+              refresh,
+            }),
+          ),
+        ]);
 
-      if (transactionHistory) {
-        let {transactions: _history, loadMore: _loadMore} = transactionHistory;
+        if (transactionHistory) {
+          let {transactions: _history, loadMore: _loadMore} =
+            transactionHistory;
 
-        if (_history?.length) {
-          setHistory(_history);
-          const grouped = GroupTransactionHistory(_history);
-          setGroupedHistory(grouped);
+          if (_history?.length) {
+            setHistory(_history);
+            const grouped = GroupTransactionHistory(_history);
+            setGroupedHistory(grouped);
+          }
+
+          setLoadMore(_loadMore);
         }
 
-        setLoadMore(_loadMore);
+        setIsLoading(false);
+      } catch (e) {
+        setLoadMore(false);
+        setIsLoading(false);
+        setErrorLoadingTxs(true);
+
+        console.log('Transaction Update: ', e);
       }
-
-      setIsLoading(false);
-    } catch (e) {
-      setLoadMore(false);
-      setIsLoading(false);
-      setErrorLoadingTxs(true);
-
-      console.log('Transaction Update: ', e);
-    }
-  }, []);
+    },
+    [history],
+  );
 
   const debouncedLoadHistory = useMemo(
     () => debounce(loadHistory, 300, {leading: true}),
@@ -633,6 +637,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
     return () => subscription.remove();
   }, [keys]);
+
+  const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
   const listFooterComponent = () => {
     return (
@@ -945,9 +951,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }
   };
 
+  const renderSectionHeader = useCallback(({section: {title, time}}) => {
+    return (
+      <TransactionSectionHeaderContainer key={time}>
+        <H5>{title}</H5>
+      </TransactionSectionHeaderContainer>
+    );
+  }, []);
+
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
+        key={item.id}
         icon={
           item.customData?.recipientEmail ? (
             <ContactIcon
@@ -975,6 +990,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const renderTxp = useCallback(({item}) => {
     return (
       <TransactionProposalRow
+        key={item.id}
         icon={TransactionIcons[item.uiIcon]}
         creator={item.uiCreator}
         time={item.uiTime}
@@ -1279,16 +1295,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         stickySectionHeadersEnabled={true}
         keyExtractor={keyExtractor}
         renderItem={renderTransaction}
-        renderSectionHeader={({section: {title}}) => {
-          return (
-            <TouchableOpacity onPress={() => viewOnBlockchain(true)}>
-              <TransactionSectionHeaderContainer>
-                <H5>{title}</H5>
-              </TransactionSectionHeaderContainer>
-            </TouchableOpacity>
-          );
-        }}
-        ItemSeparatorComponent={() => <BorderBottom />}
+        renderSectionHeader={renderSectionHeader}
+        ItemSeparatorComponent={itemSeparatorComponent}
         ListFooterComponent={listFooterComponent}
         onEndReached={() => {
           if (!onEndReachedCalledDuringLoading) {
