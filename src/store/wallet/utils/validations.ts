@@ -62,7 +62,11 @@ export const isValidWalletConnectUri = (data: string): boolean => {
 
 export const isValidBuyCryptoUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!data?.includes('buyCrypto');
+  return (
+    !!data?.includes('buyCrypto') ||
+    !!data?.includes('buy-crypto') ||
+    !!data?.includes('buy')
+  );
 };
 
 export const isValidBanxaUri = (data: string): boolean => {
