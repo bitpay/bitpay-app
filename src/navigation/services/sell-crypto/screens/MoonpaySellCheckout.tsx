@@ -164,6 +164,8 @@ const MoonpaySellCheckout: React.FC = () => {
   const [showCheckTermsMsg, setShowCheckTermsMsg] = useState(false);
   const [showNewQuoteTermsMsg, setShowNewQuoteTermsMsg] = useState(false);
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
+  const [expiredAnalyticSent, setExpiredAnalyticSent] =
+    useState<boolean>(false);
   const [amountExpected, setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
@@ -255,21 +257,10 @@ const MoonpaySellCheckout: React.FC = () => {
 
     if (now > expirationTime) {
       setPaymentExpired(true);
-      setRemainingTimeStr('Expired');
+      setRemainingTimeStr('expired');
       if (countDown) {
         clearInterval(countDown);
       }
-      dispatch(
-        Analytics.track('Failed Crypto Sell', {
-          exchange: 'moonpay',
-          context: 'MoonpaySellCheckout',
-          reasonForFailure: 'Time to make the payment expired',
-          amountFrom: amountExpected || '',
-          fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
-          fiatAmount: sellOrder?.fiat_receiving_amount || '',
-          fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
-        }),
-      );
       return;
     }
 
@@ -835,6 +826,23 @@ const MoonpaySellCheckout: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (remainingTimeStr === 'expired' && !expiredAnalyticSent) {
+      dispatch(
+        Analytics.track('Failed Crypto Sell', {
+          exchange: 'moonpay',
+          context: 'MoonpaySellCheckout',
+          reasonForFailure: 'Time to make the payment expired',
+          amountFrom: amountExpected || '',
+          fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
+          fiatAmount: sellOrder?.fiat_receiving_amount || '',
+          fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
+        }),
+      );
+      setExpiredAnalyticSent(true);
+    }
+  }, [remainingTimeStr, expiredAnalyticSent]);
+
+  useEffect(() => {
     if (!resetSwipeButton) {
       return;
     }
@@ -993,7 +1001,9 @@ const MoonpaySellCheckout: React.FC = () => {
                       ? White
                       : Black,
                   }}>
-                  {remainingTimeStr}
+                  {remainingTimeStr === 'expired'
+                    ? t('Expired')
+                    : remainingTimeStr}
                 </RowData>
               )}
             </RowDataContainer>
