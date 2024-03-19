@@ -21,6 +21,7 @@ import {
   IsValidEthereumUri,
   IsValidMaticUri,
   isValidBuyCryptoUri,
+  isValidSellCryptoUri,
   isValidMoonpayUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
@@ -95,6 +96,7 @@ import {findWalletById} from '../wallet/utils/wallet';
 import {MoonpaySellCheckoutProps} from '../../navigation/services/sell-crypto/screens/MoonpaySellCheckout';
 import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-services/screens/MoonpaySettings';
 import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
+import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
 
 export const incomingData =
   (
@@ -176,6 +178,9 @@ export const incomingData =
         // Buy Crypto
       } else if (isValidBuyCryptoUri(data)) {
         dispatch(handleBuyCryptoUri(data));
+        // Sell Crypto
+      } else if (isValidSellCryptoUri(data)) {
+        dispatch(handleSellCryptoUri(data));
         // Banxa
       } else if (isValidBanxaUri(data)) {
         dispatch(handleBanxaUri(data));
@@ -1040,6 +1045,67 @@ const handleBuyCryptoUri =
         },
         {
           name: 'BuyCryptoRoot',
+          params: {
+            partner,
+            amount: _amount,
+            currencyAbbreviation: coin,
+            chain,
+          },
+        },
+      ],
+    });
+  };
+
+const handleSellCryptoUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(
+      LogActions.info('Incoming-data (redirect): Sell crypto pre-set: ' + data),
+    );
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const partner = getParameterByName('partner', res)?.toLowerCase();
+    const amount = getParameterByName('amount', res);
+    let coin = getParameterByName('coin', res)?.toLowerCase();
+    let chain = getParameterByName('chain', res)?.toLowerCase();
+
+    let _amount: number | undefined;
+    if (amount) {
+      const {APP} = getState();
+      const altCurrency = APP.defaultAltCurrency?.isoCode;
+      _amount =
+        altCurrency === 'USD'
+          ? Number(amount)
+          : dispatch(
+              calculateUsdToAltFiat(Number(amount), altCurrency || 'USD'),
+            );
+    }
+
+    if (coin && !chain) {
+      if (IsUtxoCoin(coin)) {
+        chain = coin;
+      } else {
+        coin = undefined;
+      }
+    }
+
+    dispatch(
+      Analytics.track('Clicked Sell Crypto', {
+        context: 'DeepLink',
+        coin: coin || '',
+        chain: chain || '',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: SellCryptoScreens.ROOT,
           params: {
             partner,
             amount: _amount,

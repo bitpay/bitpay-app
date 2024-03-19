@@ -29,6 +29,7 @@ import {DebugScreens} from '../../navigation/Debug';
 import {GiftCardScreens} from '../../navigation/tabs/shop/gift-card/GiftCardGroup';
 import useAppSelector from './useAppSelector';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
+import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
 
 const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
   initialRouteName: RootStacks.TABS,
@@ -53,6 +54,7 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
     [GiftCardScreens.GIFT_CARD_DEEPLINK]: 'giftcard',
     [BuyCryptoScreens.ROOT]: {path: 'buy/:amount?'},
     [SwapCryptoScreens.SWAPCRYPTO_ROOT]: 'swap',
+    [SellCryptoScreens.ROOT]: 'sell',
     [CoinbaseScreens.ROOT]: 'coinbase',
   },
 });
