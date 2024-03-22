@@ -26,24 +26,25 @@ import moment from 'moment';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
+  'activeModalId',
   'appIsLoading',
   'appWasInit',
-  'showOnGoingProcessModal',
-  'onGoingProcessModalMessage',
-  'showInAppMessage',
-  'inAppMessageData',
-  'showInAppNotification',
-  'inAppNotificationData',
-  'showDecryptPasswordModal',
-  'showPinModal',
-  'pinModalConfig',
-  'showBottomNotificationModal',
-  'showBiometricModal',
   'biometricModalConfig',
-  'activeModalId',
-  'failedAppInit',
   'brazeContentCardSubscription',
+  'failedAppInit',
   'inAppBrowserOpen',
+  'inAppMessageData',
+  'inAppNotificationData',
+  'lockAuthorizedUntil',
+  'onGoingProcessModalMessage',
+  'pinModalConfig',
+  'showBiometricModal',
+  'showBottomNotificationModal',
+  'showDecryptPasswordModal',
+  'showInAppMessage',
+  'showInAppNotification',
+  'showOnGoingProcessModal',
+  'showPinModal',
 ];
 
 export type ModalId =

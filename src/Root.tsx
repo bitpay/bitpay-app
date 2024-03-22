@@ -467,15 +467,15 @@ export default () => {
             await RNBootSplash.hide({fade: true});
             // avoid splash conflicting with modal in iOS
             // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
-            dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
             dispatch(
-              LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`),
+              LogActions.debug(
+                `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
+              ),
             );
             if (pinLockActive) {
               await sleep(500);
               dispatch(AppActions.showPinModal({type: 'check'}));
-            }
-            if (biometricLockActive) {
+            } else if (biometricLockActive) {
               await sleep(500);
               dispatch(AppActions.showBiometricModal({}));
             }
