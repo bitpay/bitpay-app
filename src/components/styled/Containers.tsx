@@ -105,6 +105,12 @@ export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
 `;
 
+export const RowContainerWithoutBorders = styled.TouchableOpacity<RowContainerProps>`
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 0px;
+`;
+
 export const RowContainerWithoutFeedback = styled.View<RowContainerProps>`
   flex-direction: row;
   align-items: center;

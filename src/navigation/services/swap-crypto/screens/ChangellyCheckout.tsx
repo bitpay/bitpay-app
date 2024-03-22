@@ -627,13 +627,12 @@ const ChangellyCheckout: React.FC = () => {
     const isUsingHardwareWallet = !!transport;
     try {
       if (isUsingHardwareWallet) {
-        const {coin, network, account, useNativeSegwit} =
-          fromWalletSelected.credentials;
+        const {coin, network} = fromWalletSelected.credentials;
         const configFn = currencyConfigs[coin];
         if (!configFn) {
           throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
         }
-        const params = configFn(network, account, useNativeSegwit);
+        const params = configFn(network);
         await prepareLedgerApp(
           params.appName,
           transportRef,

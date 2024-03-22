@@ -47,6 +47,7 @@ import {
   startMigration,
   startWalletStoreInit,
   getPriceHistory,
+  startGetRates,
 } from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
@@ -946,7 +947,7 @@ const _startUpdateWalletStatus = debounce(
   {leading: true, trailing: false},
 );
 
-const _setScanFinishedForWallet = (
+const _setScanFinishedForWallet = async (
   dispatch: AppDispatch,
   key: Key,
   wallet: Wallet,
@@ -958,6 +959,10 @@ const _setScanFinishedForWallet = (
       isScanning: false,
     }),
   );
+  await dispatch(startGetRates({force: true}));
+  await dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+  await sleep(1000);
+  await dispatch(updatePortfolioBalance());
 };
 
 export const handleBwsEvent =

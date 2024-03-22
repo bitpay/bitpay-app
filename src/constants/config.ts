@@ -14,6 +14,17 @@ export const BASE_BITPAY_URLS = {
   [Network.mainnet]: 'https://bitpay.com',
   [Network.testnet]: 'https://test.bitpay.com',
 };
+// BITCORE
+export const BASE_BITCORE_URL = {
+  btc: 'https://api.bitcore.io/api',
+  ltc: 'https://api.bitcore.io/api',
+  bch: 'https://api.bitcore.io/api',
+  doge: 'https://api.bitcore.io/api',
+  eth: 'https://api-eth.bitcore.io/api',
+  matic: 'https://api-matic.bitcore.io/api',
+  xrp: 'https://api-xrp.bitcore.io/api',
+};
+
 export const APP_DEEPLINK_PREFIX = 'bitpay://';
 export const APP_UNIVERSAL_LINK_DOMAINS = [
   'link.bitpay.com',
