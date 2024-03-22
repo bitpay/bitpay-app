@@ -1413,6 +1413,8 @@ const createLedgerTransactionArgUtxo = (
     if (!accountPath) {
       return reject(new Error('No account path found for this wallet.'));
     }
+    const hasSegwitPath =
+      accountPath.includes("84'") || accountPath.includes("49'");
 
     // BWS only returns inputPaths for addresses it knows about
     // We kick off a scan when we import the hardware wallet so it may not be complete yet
@@ -1488,7 +1490,7 @@ const createLedgerTransactionArgUtxo = (
       // undefined will default to SIGHASH_ALL.
       // SIGHASH_ALL | SIGHASH_FORKID for bch
       const sigHashType = txp.coin === 'bch' ? 0x41 : 0x01;
-      const segwit = IsSegwitCoin(txp.coin);
+      const segwit = IsSegwitCoin(txp.coin) && hasSegwitPath;
 
       const outputs = txpAsTx.outputs.map(output => {
         const amountBuf = Buffer.alloc(8);
@@ -1516,7 +1518,7 @@ const createLedgerTransactionArgUtxo = (
 
       if (txp.coin === 'bch') {
         additionals = ['abc', 'cashaddr'];
-      } else if (txp.coin === 'btc') {
+      } else if (txp.coin === 'btc' && hasSegwitPath) {
         additionals = ['bech32']; // TODO: safe to always set this to 'bech32' ? Potencial issues here
       }
 
@@ -1677,10 +1679,10 @@ const getSignaturesFromLedger = (
   wallet: Wallet,
   txp: TransactionProposal,
 ) => {
-  const {coin: currency, network, account, chain} = wallet.credentials;
+  const {coin: currency, network, chain} = wallet.credentials;
   if (IsUtxoCoin(currency)) {
     const configFn = currencyConfigs[currency];
-    const params = configFn(network, account);
+    const params = configFn(network);
     return getUtxoSignaturesFromLedger(
       wallet,
       txp,
