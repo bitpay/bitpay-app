@@ -78,6 +78,15 @@ export const isValidSellCryptoUri = (data: string): boolean => {
   );
 };
 
+export const isValidSwapCryptoUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return (
+    !!data?.includes('swapCrypto') ||
+    !!data?.includes('swap-crypto') ||
+    !!data?.includes('swap')
+  );
+};
+
 export const isValidBanxaUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!(
