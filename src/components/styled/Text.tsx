@@ -101,6 +101,7 @@ export const Paragraph = styled(BaseText)`
   font-style: normal;
   line-height: 25px;
   letter-spacing: 0;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 
 export const Disclaimer = styled(BaseText)`

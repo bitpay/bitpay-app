@@ -1,6 +1,7 @@
 import {Effect} from '../..';
 import {
   BitpaySupportedCoins,
+  BitpaySupportedEvmCoins,
   BitpaySupportedTokens,
   BitpaySupportedUtxoCoins,
 } from '../../../constants/currencies';
@@ -55,6 +56,12 @@ export const IsSegwitCoin = (currencyAbbreviation: string = ''): boolean => {
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
   return Object.keys(BitpaySupportedUtxoCoins).includes(
+    currencyAbbreviation.toLowerCase(),
+  );
+};
+
+export const IsEVMCoin = (currencyAbbreviation: string): boolean => {
+  return Object.keys(BitpaySupportedEvmCoins).includes(
     currencyAbbreviation.toLowerCase(),
   );
 };

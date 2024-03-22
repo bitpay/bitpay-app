@@ -18,7 +18,16 @@ import {
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
-import {Platform} from 'react-native';
+import {ActivityIndicator, Platform} from 'react-native';
+import {ProgressBlue} from '../../styles/colors';
+
+const SpinnerContainer = styled.View`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-right: 10px;
+`;
 
 const BadgeContainer = styled.View`
   margin-left: 3px;
@@ -105,6 +114,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
     isToken,
     network,
     multisig,
+    isScanning,
   } = wallet;
 
   // @ts-ignore
@@ -143,22 +153,28 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
           {buildTestBadge(network, chain, isToken)}
         </Row>
       </CurrencyColumn>
-      <BalanceColumn>
-        {!hideBalance ? (
-          <>
-            <H5 numberOfLines={1} ellipsizeMode="tail">
-              {cryptoBalance}
-            </H5>
-            {showFiatBalance && (
-              <ListItemSubText textAlign={'right'}>
-                {network === 'testnet' ? 'Test - No Value' : fiatBalance}
-              </ListItemSubText>
-            )}
-          </>
-        ) : (
-          <H5>****</H5>
-        )}
-      </BalanceColumn>
+      {!isScanning ? (
+        <BalanceColumn>
+          {!hideBalance ? (
+            <>
+              <H5 numberOfLines={1} ellipsizeMode="tail">
+                {cryptoBalance}
+              </H5>
+              {showFiatBalance && (
+                <ListItemSubText textAlign={'right'}>
+                  {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+                </ListItemSubText>
+              )}
+            </>
+          ) : (
+            <H5>****</H5>
+          )}
+        </BalanceColumn>
+      ) : (
+        <SpinnerContainer>
+          <ActivityIndicator color={ProgressBlue} />
+        </SpinnerContainer>
+      )}
     </RowContainer>
   );
 };

@@ -1,5 +1,5 @@
 import styled from 'styled-components/native';
-import {Warning25} from '../../../../styles/colors';
+import {Warning75, White} from '../../../../styles/colors';
 import {H3, Paragraph as _Paragraph} from '../../../styled/Text';
 import {
   ViaBluetoothButton,
@@ -19,7 +19,8 @@ interface Props {
 }
 
 const Paragraph = styled(_Paragraph)`
-  background-color: ${Warning25};
+  background-color: ${Warning75};
+  color: ${White};
   border-radius: 12px;
   padding: 20px;
 `;

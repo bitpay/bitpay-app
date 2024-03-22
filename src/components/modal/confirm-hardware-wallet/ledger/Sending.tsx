@@ -49,11 +49,11 @@ export const ConfirmLedgerSending: React.FC<Props> = props => {
       <IconRow>
         <IconWrapper>
           {props.connectionMethod === 'ble' ? (
-            <BluetoothIconSvg height={40} width={40} />
+            <BluetoothIconSvg height={60} width={60} />
           ) : props.connectionMethod === 'hid' ? (
-            <UsbIconSvg height={40} width={40} />
+            <UsbIconSvg height={60} width={60} />
           ) : (
-            <LedgerLogoIconSvg height={40} width={40} />
+            <LedgerLogoIconSvg height={60} width={60} />
           )}
         </IconWrapper>
       </IconRow>

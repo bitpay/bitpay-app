@@ -19,7 +19,7 @@ import {
   Wrapper,
 } from '../../import-ledger-wallet/import-ledger-wallet.styled';
 import {checkPermissionsBLE} from '../../import-ledger-wallet/utils';
-import {Warning25} from '../../../../styles/colors';
+import {Warning75, White} from '../../../../styles/colors';
 import {SearchingForDevices} from '../../import-ledger-wallet/pair-device/SearchingForDevices';
 import {sleep} from '../../../../utils/helper-methods';
 
@@ -37,7 +37,8 @@ const IconWrapper = styled.View`
 `;
 
 const ErrParagraph = styled(Paragraph)`
-  background-color: ${Warning25};
+  background-color: ${Warning75};
+  color: ${White};
   border-radius: 12px;
   padding: 20px;
 `;
@@ -157,7 +158,7 @@ export const ConfirmLedgerStart: React.FC<
         <Wrapper>
           <Header>
             <IconWrapper>
-              <LedgerLogoIconSvg height={40} width={40} />
+              <LedgerLogoIconSvg height={60} width={60} />
             </IconWrapper>
 
             <H3>Approve on your Ledger</H3>
