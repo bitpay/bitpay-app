@@ -29,7 +29,6 @@ import {
   Balance,
   BaseText,
   H2,
-  H3,
   H5,
   HeaderTitle,
   Paragraph,
