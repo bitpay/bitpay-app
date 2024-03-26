@@ -506,7 +506,7 @@ const TransactionProposalNotifications = () => {
     setRefreshing(true);
     await sleep(1000);
     try {
-      await dispatch(startGetRates({force: true}));
+      await dispatch(startGetRates({}));
       await updateWalletsWithProposals();
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));

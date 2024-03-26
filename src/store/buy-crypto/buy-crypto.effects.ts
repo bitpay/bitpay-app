@@ -49,7 +49,12 @@ export const calculateAltFiatToUsd =
   };
 
 export const calculateUsdToAltFiat =
-  (usdAmount: number, altFiatCurrency: string): Effect<number | undefined> =>
+  (
+    usdAmount: number,
+    altFiatCurrency: string,
+    decimalPrecision: number = 2,
+    shouldSkipLogging?: boolean,
+  ): Effect<number | undefined> =>
   (dispatch, getState) => {
     const state = getState();
     const allRates = state.RATE.rates;
@@ -63,12 +68,16 @@ export const calculateUsdToAltFiat =
 
     if (rateBtcAlt && rateBtcUsd?.rate && rateBtcUsd?.rate > 0) {
       const rateAltUsd = rateBtcAlt.rate / rateBtcUsd.rate;
-      const equivalentAmount = +(usdAmount * rateAltUsd).toFixed(2);
-      dispatch(
-        LogActions.debug(
-          `${usdAmount} USD => ${equivalentAmount} ${altFiatCurrency}`,
-        ),
+      const equivalentAmount = +(usdAmount * rateAltUsd).toFixed(
+        decimalPrecision,
       );
+      if (!shouldSkipLogging) {
+        dispatch(
+          LogActions.debug(
+            `${usdAmount} USD => ${equivalentAmount} ${altFiatCurrency}`,
+          ),
+        );
+      }
       return equivalentAmount;
     } else {
       dispatch(

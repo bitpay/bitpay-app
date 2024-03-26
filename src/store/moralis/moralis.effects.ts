@@ -1,5 +1,10 @@
 import Moralis from 'moralis';
-import {EvmChain} from '@moralisweb3/common-evm-utils';
+import {
+  EvmChain,
+  EvmTokenPriceItemInput,
+  GetMultipleTokenPricesOperationResponseJSON,
+  GetMultipleTokenPricesOperationRequest,
+} from '@moralisweb3/common-evm-utils';
 import {LogActions} from '../log';
 import {Effect} from '..';
 import axios from 'axios';
@@ -389,6 +394,48 @@ export const getERC20TokenPrice =
       dispatch(
         LogActions.error(
           `[moralis/getERC20TokenPrice]: an error occurred while getting ERC20 token price: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
+export const getMultipleTokenPrices =
+  ({
+    addresses,
+    chain,
+  }: {
+    addresses: EvmTokenPriceItemInput[];
+    chain: string;
+  }): Effect<Promise<GetMultipleTokenPricesOperationResponseJSON>> =>
+  async dispatch => {
+    try {
+      const query = {
+        chain: MORALIS_EVM_CHAIN[chain],
+        include: 'percent_change',
+      } as GetMultipleTokenPricesOperationRequest;
+      const body = {tokens: addresses};
+      const {raw} = await Moralis.EvmApi.token.getMultipleTokenPrices(
+        query,
+        body,
+      );
+
+      dispatch(
+        LogActions.info(
+          '[moralis/getMultipleTokenPrices]: get ERC20 token price successfully',
+        ),
+      );
+      return raw;
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getMultipleTokenPrices]: an error occurred while getting ERC20 token price: ${errorStr}`,
         ),
       );
       throw e;
