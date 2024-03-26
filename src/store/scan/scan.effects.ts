@@ -38,6 +38,7 @@ import {
   IsBitPayInvoiceWebUrl,
   isValidBanxaUri,
   IsValidPrivateKey,
+  isValidSwapCryptoUri,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -97,6 +98,7 @@ import {MoonpaySellCheckoutProps} from '../../navigation/services/sell-crypto/sc
 import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-services/screens/MoonpaySettings';
 import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
+import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
 
 export const incomingData =
   (
@@ -181,6 +183,9 @@ export const incomingData =
         // Sell Crypto
       } else if (isValidSellCryptoUri(data)) {
         dispatch(handleSellCryptoUri(data));
+        // Swap Crypto
+      } else if (isValidSwapCryptoUri(data)) {
+        dispatch(handleSwapCryptoUri(data));
         // Banxa
       } else if (isValidBanxaUri(data)) {
         dispatch(handleBanxaUri(data));
@@ -1111,6 +1116,39 @@ const handleSellCryptoUri =
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
+          },
+        },
+      ],
+    });
+  };
+
+const handleSwapCryptoUri =
+  (data: string): Effect<void> =>
+  dispatch => {
+    dispatch(
+      LogActions.info('Incoming-data (redirect): Swap crypto pre-set: ' + data),
+    );
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const partner = getParameterByName('partner', res)?.toLowerCase();
+
+    dispatch(
+      Analytics.track('Clicked Swap Crypto', {
+        context: 'DeepLink',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: SwapCryptoScreens.SWAPCRYPTO_ROOT,
+          params: {
+            partner,
           },
         },
       ],
