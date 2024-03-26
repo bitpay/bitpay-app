@@ -1050,10 +1050,12 @@ const UpdateFiatRate =
     if (historicFiatRate?.rate) {
       const {rate} = historicFiatRate;
       fiatRateStr =
-        formatFiatAmount(
-          parseFloat((rate * amountValueStr).toFixed(2)),
-          alternativeCurrency,
-        ) +
+        (rate !== 1
+          ? formatFiatAmount(
+              parseFloat((rate * amountValueStr).toFixed(2)),
+              alternativeCurrency,
+            )
+          : '') +
         ` @ ${formatFiatAmount(rate, alternativeCurrency)} ` +
         t('per') +
         ` ${currency.toUpperCase()}`;
