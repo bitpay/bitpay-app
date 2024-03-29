@@ -66,8 +66,8 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
   const captchaRef = useRef<CaptchaRef>(null);
 
   const schema = yup.object().shape({
-    givenName: yup.string().required(),
-    familyName: yup.string().required(),
+    givenName: yup.string().required().trim(),
+    familyName: yup.string().required().trim(),
     email: yup.string().email().required().trim(),
     password: yup.string().required(),
     agreedToTOSandPP: yup.boolean().oneOf([true], t('Required')),

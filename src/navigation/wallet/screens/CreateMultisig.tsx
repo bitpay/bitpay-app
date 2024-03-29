@@ -69,8 +69,8 @@ export interface CreateMultisigParamsList {
 }
 
 const schema = yup.object().shape({
-  name: yup.string().required(),
-  myName: yup.string().required(),
+  name: yup.string().required().trim(),
+  myName: yup.string().required().trim(),
   requiredSignatures: yup
     .number()
     .required()

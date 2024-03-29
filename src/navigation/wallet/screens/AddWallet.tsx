@@ -161,7 +161,7 @@ const AssociatedWalletSelectionModalContainer = styled(SheetContainer)`
 `;
 
 const schema = yup.object().shape({
-  walletName: yup.string(),
+  walletName: yup.string().required('Wallet name is required').trim(),
 });
 
 const CheckBoxContainer = styled.View`
@@ -269,12 +269,12 @@ const AddWallet = ({
             {isCustomToken
               ? t('Add Custom Token')
               : isToken
-              ? t('Add Token', {
-                  currencyAbbreviation: currencyAbbreviation?.toUpperCase(),
-                })
-              : t('AddWallet', {
-                  currencyAbbreviation: currencyAbbreviation?.toUpperCase(),
-                })}
+                ? t('Add Token', {
+                    currencyAbbreviation: currencyAbbreviation?.toUpperCase(),
+                  })
+                : t('AddWallet', {
+                    currencyAbbreviation: currencyAbbreviation?.toUpperCase(),
+                  })}
           </HeaderTitle>
         );
       },
@@ -891,8 +891,8 @@ const AddWallet = ({
               (isCustomToken
                 ? t('Custom Token')
                 : isToken
-                ? t('Token')
-                : t('Wallet'))}
+                  ? t('Token')
+                  : t('Wallet'))}
           </Button>
         </ButtonContainer>
       </ScrollView>
