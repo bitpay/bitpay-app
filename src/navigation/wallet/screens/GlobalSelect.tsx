@@ -261,12 +261,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   );
 
   // all wallets
-  let wallets = Object.values(keys)
-    .filter(key => key.backupComplete)
-    .flatMap(key => key.wallets);
+  let wallets = Object.values(keys).flatMap(key => key.wallets);
 
-  // Filter hidden and incomplete wallets
-  wallets = wallets.filter(wallet => !wallet.hideWallet && wallet.isComplete());
+  // Filter hidden wallets
+  wallets = wallets.filter(wallet => !wallet.hideWallet);
 
   // only show wallets with funds
   if (['send', 'coinbase', 'contact', 'scanner'].includes(context)) {
@@ -325,6 +323,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           return {
             key: keyId,
             keyName: key.keyName || 'My Key',
+            backupComplete: key.backupComplete,
             wallets: selectObj.availableWalletsByKey[keyId]
               .filter(wallet => !wallet.hideWallet)
               .map(wallet => {
