@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.facebook.react.modules.network.NetworkingModule;
+import com.facebook.react.modules.network.OkHttpClientProvider;
 import okhttp3.OkHttpClient;
 import java.lang.reflect.Field;
 import android.database.CursorWindow;
@@ -81,7 +82,9 @@ public class MainApplication extends Application implements ReactApplication {
     }
     ReactNativeFlipper.initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
 
-     NetworkingModule.setCustomClientBuilder(
+    OkHttpClientProvider.setOkHttpClientFactory(new UserAgentClientFactory(context));
+
+    NetworkingModule.setCustomClientBuilder(
       new NetworkingModule.CustomClientBuilder() {
         @Override
         public void apply(OkHttpClient.Builder builder) {
