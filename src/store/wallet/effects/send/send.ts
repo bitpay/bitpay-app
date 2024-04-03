@@ -82,12 +82,8 @@ import {
 } from '../../../app/app.effects';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
-import TouchID from 'react-native-touch-id-ng';
-import {
-  authOptionalConfigObject,
-  BiometricErrorNotification,
-  TO_HANDLE_ERRORS,
-} from '../../../../constants/BiometricError';
+import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
 import {
@@ -2135,26 +2131,21 @@ export const checkBiometricForSending =
     if (Platform.OS === 'ios') {
       dispatch(checkingBiometricForSending(true));
     }
-    return TouchID.authenticate(
-      'Authentication Check',
-      authOptionalConfigObject,
-    )
-      .then((success: any) => {
-        if (success) {
-          return Promise.resolve();
-        } else {
-          return Promise.reject('biometric check failed');
-        }
-      })
-      .catch((error: any) => {
-        if (error.code && TO_HANDLE_ERRORS[error.code]) {
-          const err = TO_HANDLE_ERRORS[error.code];
-          dispatch(
-            showBottomNotificationModal(BiometricErrorNotification(err)),
-          );
-        }
-        return Promise.reject('biometric check failed');
+    try {
+      const rnBiometrics = new ReactNativeBiometrics({
+        allowDeviceCredentials: true,
       });
+      const {success} = await rnBiometrics.simplePrompt({
+        promptMessage: t('Verify your identity'),
+      });
+      return success
+        ? Promise.resolve()
+        : Promise.reject('biometric check failed');
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(showBottomNotificationModal(BiometricErrorNotification(errMsg)));
+      return Promise.reject('biometric check failed');
+    }
   };
 
 export const sendCrypto =

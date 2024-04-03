@@ -1,7 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
 import {ScrollView} from 'react-native';
-import TouchID from 'react-native-touch-id-ng';
+import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -15,17 +15,12 @@ import {
   TitleContainer,
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
-import {
-  TO_HANDLE_ERRORS,
-  BiometricError,
-  BiometricErrorNotification,
-  isSupportedOptionalConfigObject,
-  authOptionalConfigObject,
-} from '../../../constants/BiometricError';
+import {BiometricErrorNotification} from '../../../constants/BiometricError';
 import {AppActions} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   useAppDispatch,
+  useLogger,
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
@@ -58,6 +53,7 @@ const PinScreen = ({
 }: NativeStackScreenProps<OnboardingGroupParamList, OnboardingScreens.PIN>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const themeType = useThemeType();
 
   useAndroidBackHandler(() => true);
@@ -93,27 +89,29 @@ const PinScreen = ({
     });
   };
 
-  const onSetBiometricPress = () => {
-    haptic('impactLight');
-    TouchID.isSupported(isSupportedOptionalConfigObject)
-      .then(biometryType => {
-        return TouchID.authenticate(
-          'Authentication Check',
-          authOptionalConfigObject,
-        );
-      })
-      .then(() => {
+  const onSetBiometricPress = async () => {
+    try {
+      haptic('impactLight');
+      const rnBiometrics = new ReactNativeBiometrics({
+        allowDeviceCredentials: true,
+      });
+      const {available, biometryType} = await rnBiometrics.isSensorAvailable();
+      if (available) {
+        logger.debug(`${biometryType} is supported`);
         dispatch(AppActions.biometricLockActive(true));
         askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
-      })
-      .catch((error: BiometricError) => {
-        if (error.code && TO_HANDLE_ERRORS[error.code]) {
-          const err = TO_HANDLE_ERRORS[error.code];
-          dispatch(
-            showBottomNotificationModal(BiometricErrorNotification(err)),
-          );
-        }
-      });
+      } else {
+        logger.debug('Biometrics not supported');
+        dispatch(
+          showBottomNotificationModal(
+            BiometricErrorNotification('Biometrics not supported'),
+          ),
+        );
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(showBottomNotificationModal(BiometricErrorNotification(errMsg)));
+    }
   };
 
   return (

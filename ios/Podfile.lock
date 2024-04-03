@@ -379,6 +379,8 @@ PODS:
   - react-native-appsflyer (6.5.20):
     - AppsFlyerFramework (= 6.5.2)
     - React
+  - react-native-biometrics (3.0.1):
+    - React-Core
   - react-native-ble-plx (2.0.3):
     - MultiplatformBleAdapter (= 0.1.9)
     - React-Core
@@ -515,6 +517,8 @@ PODS:
     - React-jsi (= 0.71.14)
     - React-logger (= 0.71.14)
     - React-perflogger (= 0.71.14)
+  - ReactNativeExceptionHandler (2.10.10):
+    - React-Core
   - RNBootSplash (3.2.6):
     - React-Core
   - RNCAsyncStorage (1.17.10):
@@ -590,8 +594,6 @@ PODS:
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.10)
   - SocketRocket (0.6.1)
-  - TouchID (5.0.1):
-    - React
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
     - Yoga (~> 1.14)
@@ -647,6 +649,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - react-native-appboy-sdk (from `../node_modules/react-native-appboy-sdk`)
   - react-native-appsflyer (from `../node_modules/react-native-appsflyer`)
+  - react-native-biometrics (from `../node_modules/react-native-biometrics`)
   - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-camera (from `../node_modules/react-native-camera`)
@@ -680,6 +683,7 @@ DEPENDENCIES:
   - React-RCTVibration (from `../node_modules/react-native/Libraries/Vibration`)
   - React-runtimeexecutor (from `../node_modules/react-native/ReactCommon/runtimeexecutor`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - ReactNativeExceptionHandler (from `../node_modules/react-native-exception-handler`)
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
@@ -700,7 +704,6 @@ DEPENDENCIES:
   - RNShare (from `../node_modules/react-native-share`)
   - RNSharedElement (from `../node_modules/react-native-shared-element`)
   - RNSVG (from `../node_modules/react-native-svg`)
-  - TouchID (from `../node_modules/react-native-touch-id-ng`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -782,6 +785,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-appboy-sdk"
   react-native-appsflyer:
     :path: "../node_modules/react-native-appsflyer"
+  react-native-biometrics:
+    :path: "../node_modules/react-native-biometrics"
   react-native-ble-plx:
     :path: "../node_modules/react-native-ble-plx"
   react-native-blur:
@@ -848,6 +853,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/runtimeexecutor"
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  ReactNativeExceptionHandler:
+    :path: "../node_modules/react-native-exception-handler"
   RNBootSplash:
     :path: "../node_modules/react-native-bootsplash"
   RNCAsyncStorage:
@@ -888,8 +895,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-shared-element"
   RNSVG:
     :path: "../node_modules/react-native-svg"
-  TouchID:
-    :path: "../node_modules/react-native-touch-id-ng"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -940,6 +945,7 @@ SPEC CHECKSUMS:
   React-logger: 655ff5db8bd922acfbe76a4983ffab048916343e
   react-native-appboy-sdk: 7fc3141f4843a1de05e22d530ac3cc87c24b9bee
   react-native-appsflyer: fac6d94b40ce52dc69a07c242317b83c7b9e0cc2
+  react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
   react-native-ble-plx: f10240444452dfb2d2a13a0e4f58d7783e92d76e
   react-native-blur: cad4d93b364f91e7b7931b3fa935455487e5c33c
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
@@ -973,6 +979,7 @@ SPEC CHECKSUMS:
   React-RCTVibration: 64e412b9ac684c4edc938fa1187135ada9af7faf
   React-runtimeexecutor: ffe826b7b1cfbc32a35ed5b64d5886c0ff75f501
   ReactCommon: 7f3dd5e98a9ec627c6b03d26c062bf37ea9fc888
+  ReactNativeExceptionHandler: b11ff67c78802b2f62eed0e10e75cb1ef7947c60
   RNBootSplash: 51eef7e143faeab63f81ddbb7c1de38b8fba66ed
   RNCAsyncStorage: 0c357f3156fcb16c8589ede67cc036330b6698ca
   RNCClipboard: 3f0451a8100393908bea5c5c5b16f96d45f30bfc
@@ -996,10 +1003,9 @@ SPEC CHECKSUMS:
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
-  TouchID: 175fa9c0b2b2651f25aaef4aa6bb42ce4d580c6e
   Yoga: e71803b4c1fff832ccf9b92541e00f9b873119b9
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
 PODFILE CHECKSUM: 4753a8f5b8b7c09fe271998b3db2a29d87ba5506
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.13.0

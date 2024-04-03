@@ -13690,6 +13690,11 @@ react-native-appsflyer@6.5.20:
   resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.5.20.tgz#56af47ae77b39d8425bdbe84832a8db3fd773404"
   integrity sha512-+gfsOmDev1BhhBFLE6P/eCcT0GLKDFZgQqaKcUPnTgyC8bgIWSv+igB9ziIzgBRZKSEf3YdlZ4TCfrg2w69cow==
 
+react-native-biometrics@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-biometrics/-/react-native-biometrics-3.0.1.tgz#23c5a0bdbae1fcb1e08b22936223fe0fc4af846e"
+  integrity sha512-Ru80gXRa9KG04sl5AB9HyjLjVbduhqZVjA+AiOSGqr+fNqCDmCu9y5WEksnjbnniNLmq1yGcw+qcLXmR1ddLDQ==
+
 react-native-ble-plx@2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/react-native-ble-plx/-/react-native-ble-plx-2.0.3.tgz#b0a746f33389dbf7fd7b158513330d487d5d0fbb"
@@ -13778,6 +13783,11 @@ react-native-error-boundary@1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/react-native-error-boundary/-/react-native-error-boundary-1.2.1.tgz#795ca556fcc077794c8c77f2d449226b41dde822"
   integrity sha512-Ae2mjXyCI84mwSKkgVSYPv1ZDlRVTZg9DwyxCHFtEfFkjNcBS8RlEcW7Fihns13lRdpmmQx/Gr2OFf5tfkih9g==
+
+react-native-exception-handler@2.10.10:
+  version "2.10.10"
+  resolved "https://registry.yarnpkg.com/react-native-exception-handler/-/react-native-exception-handler-2.10.10.tgz#b6bfe2b7e6ea4a4deb1f518f48ce2ee1d4843497"
+  integrity sha512-otAXGoZDl1689OoUJWN/rXxVbdoZ3xcmyF1uq/CsizdLwwyZqVGd6d+p/vbYvnF996FfEyAEBnHrdFxulTn51w==
 
 react-native-fast-image@8.6.3:
   version "8.6.3"
@@ -14096,11 +14106,6 @@ react-native-timeago@0.5.0:
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/react-native-timeago/-/react-native-timeago-0.5.0.tgz#1b08057e3473dbb5b6720ee5cde4e544a7c250f0"
   integrity sha512-GYrV36FK8ttkl7BIAdh77OlYLYGIKLGNviJqzPUtKaO8ANEtI8ph7UkSTRv9oMKfvDnA5VKV9hVX7GtYoAztRg==
-
-react-native-touch-id-ng@5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/react-native-touch-id-ng/-/react-native-touch-id-ng-5.0.1.tgz#acb229e3f3d70a7fee75153296e07778763b8032"
-  integrity sha512-J8V10YnIfRvNNJ0hVUX889qqmu6lgs5O1baFars3q1qUgVqj0l4MAsrBF5tpyo5K89LFyLGWAt5XH7/0zNOPvA==
 
 react-native-tracking-transparency@0.1.2:
   version "0.1.2"
