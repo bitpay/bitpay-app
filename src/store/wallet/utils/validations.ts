@@ -62,28 +62,28 @@ export const isValidWalletConnectUri = (data: string): boolean => {
 
 export const isValidBuyCryptoUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return (
-    !!data?.includes('buyCrypto') ||
-    !!data?.includes('buy-crypto') ||
-    !!data?.includes('buy')
+  return !!(
+    data?.includes('buyCrypto') ||
+    data?.includes('buy-crypto') ||
+    data?.includes('bitpay://buy')
   );
 };
 
 export const isValidSellCryptoUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return (
-    !!data?.includes('sellCrypto') ||
-    !!data?.includes('sell-crypto') ||
-    !!data?.includes('sell')
+  return !!(
+    data?.includes('sellCrypto') ||
+    data?.includes('sell-crypto') ||
+    data?.includes('bitpay://sell')
   );
 };
 
 export const isValidSwapCryptoUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return (
-    !!data?.includes('swapCrypto') ||
-    !!data?.includes('swap-crypto') ||
-    !!data?.includes('swap')
+  return !!(
+    data?.includes('swapCrypto') ||
+    data?.includes('swap-crypto') ||
+    data?.includes('bitpay://swap')
   );
 };
 
