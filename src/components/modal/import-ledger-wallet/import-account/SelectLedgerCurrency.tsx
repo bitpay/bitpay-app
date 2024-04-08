@@ -327,7 +327,9 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     const url = `${
       // @ts-ignore
       BASE_BITCORE_URL[coin.toLowerCase()]
-    }/${coin.toUpperCase()}/mainnet/address/${address}/txs`;
+    }/${coin.toUpperCase()}/mainnet/address/${address}${
+      coin.toLowerCase() === 'xrp' ? '' : '/txs'
+    }`;
     const apiResponse = await axios.get<any>(url);
     const finalTxCount = apiResponse?.data?.length;
 
