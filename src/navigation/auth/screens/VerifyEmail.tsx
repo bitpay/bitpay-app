@@ -10,6 +10,7 @@ import {AuthGroupParamList, AuthScreens} from '../AuthGroup';
 import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
+import {SafeAreaView} from 'react-native';
 
 const POLL_INTERVAL = 1000 * 3;
 const POLL_TIMEOUT = 1000 * 60 * 5;
@@ -93,33 +94,35 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   };
 
   return (
-    <AuthFormContainer accessibilityLabel="verify-email-view">
-      {isTimedOut && (
-        <VerifyEmailParagraph>
-          {t("Didn't get an email? Try logging in again later.")}
-        </VerifyEmailParagraph>
-      )}
-
-      {!isTimedOut && (
-        <>
+    <SafeAreaView accessibilityLabel="verify-email-view">
+      <AuthFormContainer accessibilityLabel="verify-email-view">
+        {isTimedOut && (
           <VerifyEmailParagraph>
-            {t(
-              'We sent a verification email to. Open the link inside to continue.',
-              {email: email || t('your email address')},
-            )}
+            {t("Didn't get an email? Try logging in again later.")}
           </VerifyEmailParagraph>
+        )}
 
-          <VerifyEmailParagraph>
-            {t("Email didn't arrive?")}{' '}
-            <Link
-              accessibilityLabel="resend-link-button"
-              onPress={() => resendVerificationEmail()}>
-              {t('Resend link')}
-            </Link>
-          </VerifyEmailParagraph>
-        </>
-      )}
-    </AuthFormContainer>
+        {!isTimedOut && (
+          <>
+            <VerifyEmailParagraph>
+              {t(
+                'We sent a verification email to. Open the link inside to continue.',
+                {email: email || t('your email address')},
+              )}
+            </VerifyEmailParagraph>
+
+            <VerifyEmailParagraph>
+              {t("Email didn't arrive?")}{' '}
+              <Link
+                accessibilityLabel="resend-link-button"
+                onPress={() => resendVerificationEmail()}>
+                {t('Resend link')}
+              </Link>
+            </VerifyEmailParagraph>
+          </>
+        )}
+      </AuthFormContainer>
+    </SafeAreaView>
   );
 };
 
