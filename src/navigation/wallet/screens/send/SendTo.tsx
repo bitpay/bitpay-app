@@ -226,8 +226,8 @@ export const BuildKeyWalletRow = (
         wallets.push(_wallet);
       });
     if (wallets.length) {
-      const {keyName = 'My Key'} = value;
-      filteredKeys.push({key, keyName, wallets});
+      const {keyName = 'My Key', backupComplete} = value;
+      filteredKeys.push({key, keyName, backupComplete, wallets});
     }
   });
   return filteredKeys;

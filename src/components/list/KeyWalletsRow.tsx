@@ -3,11 +3,12 @@ import styled from 'styled-components/native';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
 import KeySvg from '../../../assets/img/key.svg';
-import {LightBlack, SlateDark, White} from '../../styles/colors';
+import {LightBlack, Slate30, SlateDark, White} from '../../styles/colors';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {WalletRowProps} from './WalletRow';
 import WalletRow from './WalletRow';
 import {SvgProps} from 'react-native-svg';
+import {useTranslation} from 'react-i18next';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -39,9 +40,20 @@ const KeyName = styled(BaseText)`
   margin-left: 10px;
 `;
 
-const NoGutter = styled(View)`
+const NeedBackupText = styled(BaseText)`
+  font-size: 12px;
+  text-align: center;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  padding: 2px 4px;
+  border: 1px solid ${({theme: {dark}}) => (dark ? White : Slate30)};
+  border-radius: 3px;
+  margin-left: auto;
+`;
+
+const NoGutter = styled.View<{isDisabled: boolean}>`
   margin: 0 -10px;
   padding-right: 5px;
+  opacity: ${({isDisabled}) => (isDisabled ? 0.5 : 1)};
 `;
 
 type WalletRowType = KeyWallet | WalletRowProps;
@@ -52,6 +64,7 @@ export interface KeyWallet extends Wallet, WalletRowProps {
 
 export interface KeyWalletsRowProps<T> {
   key: string;
+  backupComplete?: boolean;
   keyName: string;
   wallets: T[];
 }
@@ -71,6 +84,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
   currency,
   hideBalance,
 }: KeyWalletProps<T>) => {
+  const {t} = useTranslation();
   return (
     <View>
       {keyWallets.map((key, keyIndex) => (
@@ -81,11 +95,14 @@ const KeyWalletsRow = <T extends WalletRowType>({
             <KeyNameContainer noBorder={!!currency}>
               {keySvg({})}
               <KeyName>{key.keyName || 'My Key'}</KeyName>
+              {key.backupComplete ? null : (
+                <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+              )}
             </KeyNameContainer>
           ) : null}
 
           {key.wallets.map((w, walletIndex) => (
-            <NoGutter key={w.id}>
+            <NoGutter isDisabled={!key.backupComplete} key={w.id}>
               <WalletRow
                 wallet={w}
                 id={w.id}
@@ -96,7 +113,9 @@ const KeyWalletsRow = <T extends WalletRowType>({
                   keyIndex === keyWallets.length - 1
                 }
                 onPress={() => {
-                  onPress(w);
+                  if (key.backupComplete) {
+                    onPress(w);
+                  }
                 }}
               />
             </NoGutter>
