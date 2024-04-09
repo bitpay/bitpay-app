@@ -61,6 +61,16 @@ target 'BitPayApp' do
           config.build_settings['OTHER_SWIFT_FLAGS'] << '-no-verify-emitted-module-interface'
         end
       end
+      if target.name == 'Flipper'
+        file_path = 'Pods/Flipper/xplat/Flipper/FlipperTransportTypes.h'
+        contents = File.read(file_path)
+        unless contents.include?('#include <functional>')
+          File.open(file_path, 'w') do |file|
+            file.puts('#include <functional>')
+            file.puts(contents)
+          end
+        end
+      end
     end
     react_native_post_install(
       installer,
