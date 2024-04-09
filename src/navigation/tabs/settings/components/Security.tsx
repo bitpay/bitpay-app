@@ -12,15 +12,8 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useThemeType} from '../../../../utils/hooks/useThemeType';
 import {RootState} from '../../../../store';
 import {AppActions} from '../../../../store/app';
-import TouchID from 'react-native-touch-id-ng';
-import {
-  authOptionalConfigObject,
-  BiometricErrorCodes,
-  BiometricErrorNotification,
-  isSupportedOptionalConfigObject,
-  isTouchIDError,
-  TO_HANDLE_ERRORS,
-} from '../../../../constants/BiometricError';
+import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {LOCK_AUTHORIZED_TIME} from '../../../../constants/Lock';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import FingerprintImg from '../../../../../assets/img/fingerprint.svg';
@@ -35,6 +28,8 @@ import {H4, Paragraph} from '../../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {sleep} from '../../../../utils/helper-methods';
 import {LogActions} from '../../../../store/log';
+import {useLogger} from '../../../../utils/hooks';
+
 const FingerprintSvg = {
   light: <FingerprintImg />,
   dark: <FingerprintDarkModeImg />,
@@ -85,6 +80,7 @@ const Security = () => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const themeType = useThemeType();
+  const logger = useLogger();
   const [modalVisible, setModalVisible] = useState(false);
 
   const pinLockActive = useSelector(({APP}: RootState) => APP.pinLockActive);
@@ -104,51 +100,38 @@ const Security = () => {
     dispatch(AppActions.pinLockActive(false));
   };
 
-  const setBiometric = () => {
-    TouchID.isSupported(isSupportedOptionalConfigObject)
-      .then(biometryType => {
-        if (biometryType === 'FaceID') {
-          console.log('FaceID is supported.');
-        } else {
-          console.log('TouchID is supported.');
-        }
-        return TouchID.authenticate(
-          'Authentication Check',
-          authOptionalConfigObject,
-        );
-      })
-      .then(async () => {
+  const setBiometric = async () => {
+    try {
+      const rnBiometrics = new ReactNativeBiometrics({
+        allowDeviceCredentials: true,
+      });
+      const {available, biometryType} = await rnBiometrics.isSensorAvailable();
+      if (available) {
+        logger.debug(`${biometryType} is supported`);
         const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
         const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.biometricLockActive(true));
-      })
-      .catch(error => {
-        let uiErrMsg: string;
-        let debugMsg: string;
-
-        if (isTouchIDError(error)) {
-          uiErrMsg =
-            TO_HANDLE_ERRORS[error.code] ||
-            TO_HANDLE_ERRORS[BiometricErrorCodes.UNKNOWN_ERROR];
-          debugMsg = `${error.code} - ${error.message}`;
-        } else {
-          uiErrMsg = TO_HANDLE_ERRORS[BiometricErrorCodes.UNKNOWN_ERROR];
-          debugMsg = JSON.stringify(error);
-        }
-
-        dispatch(
-          LogActions.error(`setBiometric failed with error: ${debugMsg}`),
-        );
+      } else {
+        logger.debug('Biometrics not supported');
         dispatch(
           showBottomNotificationModal(
-            BiometricErrorNotification(uiErrMsg, async () => {
-              await sleep(500); // wait for error modal to close before reopening this modal
-              setModalVisible(true);
-            }),
+            BiometricErrorNotification('Biometrics not supported'),
           ),
         );
-      });
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(LogActions.error(`setBiometric failed with error: ${errMsg}`));
+      dispatch(
+        showBottomNotificationModal(
+          BiometricErrorNotification(errMsg, async () => {
+            await sleep(500); // wait for error modal to close before reopening this modal
+            setModalVisible(true);
+          }),
+        ),
+      );
+    }
   };
 
   const removeBiometric = () => {
