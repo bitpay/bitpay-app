@@ -324,9 +324,10 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                 disabled={word1Validation}
                 autoCorrect={false}
                 onChangeText={async (newValue: string) => {
-                  field.onChange(newValue);
-                  if (checkValidWord(newValue, 0)) {
-                    setValue('word1', newValue);
+                  const trimmedValue = newValue.trim();
+                  field.onChange(trimmedValue);
+                  if (checkValidWord(trimmedValue, 0)) {
+                    setValue('word1', trimmedValue);
                     setWord1Validation(true);
                   }
                 }}
@@ -352,9 +353,10 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                 disabled={word2Validation}
                 autoCorrect={false}
                 onChangeText={async (newValue: string) => {
-                  field.onChange(newValue);
-                  if (checkValidWord(newValue, 1)) {
-                    setValue('word2', newValue);
+                  const trimmedValue = newValue.trim();
+                  field.onChange(trimmedValue);
+                  if (checkValidWord(trimmedValue, 1)) {
+                    setValue('word2', trimmedValue);
                     setWord2Validation(true);
                   }
                 }}
@@ -380,9 +382,10 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                 disabled={word3Validation}
                 autoCorrect={false}
                 onChangeText={async (newValue: string) => {
-                  field.onChange(newValue);
-                  if (checkValidWord(newValue, 2)) {
-                    setValue('word3', newValue);
+                  const trimmedValue = newValue.trim();
+                  field.onChange(trimmedValue);
+                  if (checkValidWord(trimmedValue, 2)) {
+                    setValue('word3', trimmedValue);
                     setWord3Validation(true);
                   }
                 }}
