@@ -28,7 +28,6 @@ import GhostSvg from '../../../../../../assets/img/ghost-cheeky.svg';
 import SearchSvg from '../../../../../../assets/img/search.svg';
 import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
-import {getPriceHistory} from '../../../../../store/wallet/effects';
 import {useTranslation} from 'react-i18next';
 import {coinbaseInitialize} from '../../../../../store/coinbase';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
@@ -171,7 +170,6 @@ const AltCurrencySettings = () => {
               dispatch(FormatKeyBalances());
               dispatch(updatePortfolioBalance());
               await dispatch(coinbaseInitialize());
-              dispatch(getPriceHistory(item.isoCode));
               await sleep(500);
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);

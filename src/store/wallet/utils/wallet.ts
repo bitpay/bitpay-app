@@ -173,8 +173,8 @@ export const buildWalletObj = (
     img: SUPPORTED_CURRENCIES.includes(_currencyAbbreviation)
       ? CurrencyListIcons[_currencyAbbreviation]
       : foundToken && foundToken?.logoURI
-        ? (foundToken?.logoURI as string)
-        : img || '',
+      ? (foundToken?.logoURI as string)
+      : img || '',
     badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
     m,
@@ -212,8 +212,8 @@ export const buildKeyObj = ({
     id: key?.id
       ? key.id
       : hardwareSource
-        ? `readonly/${hardwareSource}`
-        : 'readonly',
+      ? `readonly/${hardwareSource}`
+      : 'readonly',
     wallets,
     properties: key?.toObj(),
     methods: key,
@@ -224,10 +224,10 @@ export const buildKeyObj = ({
     keyName: keyName
       ? keyName
       : key?.id
-        ? 'My Key'
-        : hardwareSource
-          ? `My ${hardwareSource.charAt(0).toUpperCase()}${hardwareSource.slice(1)}`
-          : 'Read Only',
+      ? 'My Key'
+      : hardwareSource
+      ? `My ${hardwareSource.charAt(0).toUpperCase()}${hardwareSource.slice(1)}`
+      : 'Read Only',
     hideKeyBalance,
     isReadOnly: !key,
     hardwareSource,

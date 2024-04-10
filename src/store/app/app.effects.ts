@@ -46,7 +46,6 @@ import {WalletActions} from '../wallet';
 import {
   startMigration,
   startWalletStoreInit,
-  getPriceHistory,
   startGetRates,
 } from '../wallet/effects';
 import {
@@ -1040,7 +1039,6 @@ export const resetAllSettings = (): Effect => dispatch => {
   dispatch(FormatKeyBalances());
   dispatch(updatePortfolioBalance());
   dispatch(coinbaseInitialize());
-  dispatch(getPriceHistory('USD'));
   // Reset Default Language
   i18n.changeLanguage('en');
   dispatch(AppActions.setDefaultLanguage('en'));

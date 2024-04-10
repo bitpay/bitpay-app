@@ -356,7 +356,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: false,
+      isStableCoin: true,
       singleAddress: true,
       isCustom: false,
     },

@@ -191,8 +191,9 @@ const KeySettings = () => {
       mnemonic,
     };
     try {
-      let {key: _syncKey, wallets: _syncWallets} =
-        await serverAssistedImport(opts);
+      let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
+        opts,
+      );
 
       if (_syncKey.fingerPrint === _key.properties!.fingerPrint) {
         // Filter for new wallets

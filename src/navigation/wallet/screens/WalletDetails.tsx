@@ -83,7 +83,7 @@ import Icons from '../components/WalletIcons';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
+import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
   BuildUiFriendlyList,
@@ -465,7 +465,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
-      dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({}));
       await Promise.all([
         await dispatch(
