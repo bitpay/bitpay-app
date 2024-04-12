@@ -507,7 +507,7 @@ export const startDisconnectBitPayId =
       dispatch(LogActions.debug('Generating EID for anonymous user...'));
       const eid = uuid.v4().toString();
       dispatch(setBrazeEid(eid));
-      BrazeWrapper.identify(eid);
+      dispatch(Analytics.identify(eid));
       dispatch(renewSubscription());
     } catch (err) {
       dispatch(LogActions.debug('An error occured while clearing Braze user.'));
