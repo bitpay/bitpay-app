@@ -110,20 +110,15 @@ export const Analytics = (() => {
       (
         userEid: string | undefined,
         traits?: Record<string, any> | undefined,
-        onComplete?: () => void,
       ): Effect<void> =>
       () => {
-        guard(async () => {
-          if (_isTrackingAuthorized) {
-            BrazeWrapper.identify(userEid, traits);
-            MixpanelWrapper.identify(userEid);
-          } else {
-            // require EID for functionality
-            BrazeWrapper.identify(userEid);
-          }
-
-          onComplete?.();
-        });
+        if (_isTrackingAuthorized) {
+          BrazeWrapper.identify(userEid, traits);
+          MixpanelWrapper.identify(userEid);
+        } else {
+          // require EID for functionality
+          BrazeWrapper.identify(userEid);
+        }
       },
 
     /**
