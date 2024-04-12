@@ -27,7 +27,7 @@ const Border = styled.View<BorderProps>`
         return 'transparent';
       }
 
-      return checked ? Action : theme?.dark ? '#E1E4E7' : SlateDark;
+      return checked ? Action : theme?.dark ? SlateDark : '#E5E5F2';
     }};
   position: absolute;
   top: 0;
@@ -67,7 +67,9 @@ const Checkbox: React.FC<Props> = ({
       key={Math.floor(Math.random() * 500)}
       onPress={() => !disabled && onPress()}
       active={checked}
-      uncheckedColor={!disabled ? (theme.dark ? LightBlack : White) : undefined}
+      uncheckedColor={
+        !disabled ? (theme.dark ? SlateDark : '#E5E5F2') : undefined
+      }
       checkedColor={Action}
       innerStyle={{
         ...baseStyles,

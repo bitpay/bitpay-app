@@ -18,4 +18,6 @@ declare module '@env' {
   export const WALLET_CONNECT_V2_PROJECT_ID: string;
   export const ZENLEDGER_CLIENT_ID: string;
   export const ZENLEDGER_CLIENT_SECRET: string;
+  export const APPSFLYER_API_KEY: string;
+  export const APPSFLYER_APP_ID: string;
 }

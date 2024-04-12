@@ -31,7 +31,6 @@ import {
   selectCategoriesWithIntegrations,
   selectIntegrations,
 } from '../../../store/shop/shop.selectors';
-import {APP_NETWORK} from '../../../constants/config';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
@@ -130,12 +129,14 @@ const ShopHome: React.FC<
   const theme = useTheme();
   const availableCardMap = useAppSelector(({SHOP}) => SHOP.availableCardMap);
   const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const giftCards = useAppSelector(
-    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+    ({APP, SHOP}) => SHOP.giftCards[APP.network],
   ) as GiftCard[];
   const billPayAccounts = useAppSelector(
-    ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
+    ({APP, SHOP}) => SHOP.billPayAccounts[APP.network],
   ) as BillPayAccount[];
   const purchasedGiftCards = useMemo(
     () =>

@@ -5,7 +5,7 @@ import {
   RegisterErrorResponse,
 } from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
-import {InitialUserData} from '../../api/user/user.types';
+import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
 import Dosh from '../../lib/dosh';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
@@ -25,7 +25,7 @@ import BitPayIdApi from '../../api/bitpay';
 import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS} from '../../constants/config';
 import Braze from 'react-native-appboy-sdk';
 import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
 import uuid from 'react-native-uuid';
@@ -517,25 +517,32 @@ export const startDisconnectBitPayId =
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     dispatch(Analytics.track('Log Out User success', {}));
     dispatch(CardActions.isJoinedWaitlist(false));
-    dispatch(ShopActions.clearedBillPayAccounts());
-    dispatch(ShopActions.clearedBillPayPayments());
+    dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
+    dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));
     dispatch(dismissOnGoingProcessModal());
   };
 
 export const startFetchBasicInfo =
   (
     token: string,
-    params?: {includeExternalData: boolean},
-  ): Effect<Promise<void>> =>
+    params: {includeExternalData?: boolean} = {
+      includeExternalData: false,
+    },
+  ): Effect<Promise<BasicUserInfo>> =>
   async (dispatch, getState) => {
     try {
       const {APP} = getState();
-      const user = await UserApi.fetchBasicInfo(token, params);
+      const user = await UserApi.fetchBasicInfo(token, {
+        ...params,
+        includeMethodData: true,
+      });
       dispatch(BitPayIdActions.successFetchBasicInfo(APP.network, user));
+      return user;
     } catch (err) {
       dispatch(LogActions.error('Failed to fetch basic user info'));
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedFetchBasicInfo());
+      throw err;
     }
   };
 
@@ -724,14 +731,14 @@ export const startSubmitForgotPasswordEmail =
 
 export const startResetMethodUser =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
-    const {BITPAY_ID} = getState();
+    const {APP, BITPAY_ID} = getState();
     await BitPayIdApi.getInstance()
-      .request('resetMethodUser', BITPAY_ID.apiToken[APP_NETWORK])
+      .request('resetMethodUser', BITPAY_ID.apiToken[APP.network])
       .then(res => {
         if (res?.data?.error) {
           throw new Error(res.data.error);
         }
-        dispatch(BitPayIdActions.successResetMethodUser(APP_NETWORK));
+        dispatch(BitPayIdActions.successResetMethodUser(APP.network));
         return res.data.data as any;
       })
       .catch(err => {

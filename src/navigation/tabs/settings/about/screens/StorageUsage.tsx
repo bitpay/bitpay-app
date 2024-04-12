@@ -15,7 +15,6 @@ import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../../store/log';
 import {Black, Feather, LightBlack, White} from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {APP_NETWORK} from '../../../../../constants/config';
 
 const ScrollContainer = styled.ScrollView``;
 
@@ -47,7 +46,9 @@ const StorageUsage: React.VFC = () => {
   const [customTokenStorage, setCustomTokenStorage] = useState<string>('');
   const [contactStorage, setContactStorage] = useState<string>('');
 
-  const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
+  const giftCards = useAppSelector(
+    ({APP, SHOP}) => SHOP.giftCards[APP.network],
+  );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const customTokens = useAppSelector(({WALLET}) => WALLET.customTokenData);
   const contacts = useAppSelector(({CONTACT}) => CONTACT.list);

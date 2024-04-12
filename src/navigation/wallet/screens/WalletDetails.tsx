@@ -29,7 +29,6 @@ import {
   Balance,
   BaseText,
   H2,
-  H3,
   H5,
   HeaderTitle,
   Paragraph,
@@ -109,6 +108,7 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
+import {isCoinSupportedToSell} from '../../services/sell-crypto/utils/sell-crypto-utils';
 import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
 import {
   buildBtcSpeedupTx,
@@ -466,7 +466,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
     try {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
-      await dispatch(startGetRates({force: true}));
+      await dispatch(startGetRates({}));
       await Promise.all([
         await dispatch(
           startUpdateWalletStatus({key, wallet: fullWalletObj, force: true}),
@@ -513,7 +513,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const [history, setHistory] = useState<any[]>([]);
   const [groupedHistory, setGroupedHistory] = useState<
-    {title: string; data: any[]}[]
+    {title: string; data: any[]; time: number}[]
   >([]);
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
@@ -555,47 +555,51 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   };
 
-  const loadHistory = useCallback(async (refresh?: boolean) => {
-    if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
-      return;
-    }
-    try {
-      setIsLoading(!refresh);
-      setErrorLoadingTxs(false);
+  const loadHistory = useCallback(
+    async (refresh?: boolean) => {
+      if ((!loadMore && !refresh) || fullWalletObj.isScanning) {
+        return;
+      }
+      try {
+        setIsLoading(!refresh);
+        setErrorLoadingTxs(false);
 
-      const [transactionHistory] = await Promise.all([
-        dispatch(
-          GetTransactionHistory({
-            wallet: fullWalletObj,
-            transactionsHistory: history,
-            limit: TX_HISTORY_LIMIT,
-            contactList,
-            refresh,
-          }),
-        ),
-      ]);
+        const [transactionHistory] = await Promise.all([
+          dispatch(
+            GetTransactionHistory({
+              wallet: fullWalletObj,
+              transactionsHistory: history,
+              limit: TX_HISTORY_LIMIT,
+              contactList,
+              refresh,
+            }),
+          ),
+        ]);
 
-      if (transactionHistory) {
-        let {transactions: _history, loadMore: _loadMore} = transactionHistory;
+        if (transactionHistory) {
+          let {transactions: _history, loadMore: _loadMore} =
+            transactionHistory;
 
-        if (_history?.length) {
-          setHistory(_history);
-          const grouped = GroupTransactionHistory(_history);
-          setGroupedHistory(grouped);
+          if (_history?.length) {
+            setHistory(_history);
+            const grouped = GroupTransactionHistory(_history);
+            setGroupedHistory(grouped);
+          }
+
+          setLoadMore(_loadMore);
         }
 
-        setLoadMore(_loadMore);
+        setIsLoading(false);
+      } catch (e) {
+        setLoadMore(false);
+        setIsLoading(false);
+        setErrorLoadingTxs(true);
+
+        console.log('Transaction Update: ', e);
       }
-
-      setIsLoading(false);
-    } catch (e) {
-      setLoadMore(false);
-      setIsLoading(false);
-      setErrorLoadingTxs(true);
-
-      console.log('Transaction Update: ', e);
-    }
-  }, []);
+    },
+    [history],
+  );
 
   const debouncedLoadHistory = useMemo(
     () => debounce(loadHistory, 300, {leading: true}),
@@ -632,6 +636,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
     return () => subscription.remove();
   }, [keys]);
+
+  const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
   const listFooterComponent = () => {
     return (
@@ -932,9 +938,30 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return account ? account[account.type].merchantIcon : '';
   };
 
+  const getTxDescriptionDetails = (key: string | undefined) => {
+    if (!key) {
+      return undefined;
+    }
+    switch (key) {
+      case 'moonpay':
+        return 'MoonPay';
+      default:
+        return undefined;
+    }
+  };
+
+  const renderSectionHeader = useCallback(({section: {title, time}}) => {
+    return (
+      <TransactionSectionHeaderContainer key={time}>
+        <H5>{title}</H5>
+      </TransactionSectionHeaderContainer>
+    );
+  }, []);
+
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
+        key={item.id}
         icon={
           item.customData?.recipientEmail ? (
             <ContactIcon
@@ -951,6 +978,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           getGiftCardIcons(supportedCardMap)[item.uiIconURI]
         }
         description={item.uiDescription}
+        details={getTxDescriptionDetails(item.customData?.service)}
         time={item.uiTime}
         value={item.uiValue}
         onPressTransaction={() => onPressTransaction(item)}
@@ -961,6 +989,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const renderTxp = useCallback(({item}) => {
     return (
       <TransactionProposalRow
+        key={item.id}
         icon={TransactionIcons[item.uiIcon]}
         creator={item.uiCreator}
         time={item.uiTime}
@@ -1127,6 +1156,30 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         });
                       },
                     }}
+                    sell={{
+                      hide:
+                        !fullWalletObj.balance.sat ||
+                        (fullWalletObj.network === 'testnet' &&
+                          fullWalletObj.currencyAbbreviation !== 'eth' &&
+                          fullWalletObj.chain !== 'eth') ||
+                        !isCoinSupportedToSell(
+                          fullWalletObj.currencyAbbreviation,
+                          fullWalletObj.chain,
+                          locationData?.countryShortCode || 'US',
+                        ),
+                      cta: () => {
+                        dispatch(
+                          Analytics.track('Clicked Sell Crypto', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
+                          }),
+                        );
+                        navigation.navigate('SellCryptoRoot', {
+                          fromWallet: fullWalletObj,
+                        });
+                      },
+                    }}
                     swap={{
                       hide:
                         fullWalletObj.network === 'testnet' ||
@@ -1153,6 +1206,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           Analytics.track('Clicked Receive', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
                           }),
                         );
                         setShowReceiveAddressBottomModal(true);
@@ -1165,6 +1219,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           Analytics.track('Clicked Send', {
                             context: 'WalletDetails',
                             coin: fullWalletObj.currencyAbbreviation,
+                            chain: fullWalletObj.chain || '',
                           }),
                         );
                         navigation.navigate('SendTo', {wallet: fullWalletObj});
@@ -1239,16 +1294,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         stickySectionHeadersEnabled={true}
         keyExtractor={keyExtractor}
         renderItem={renderTransaction}
-        renderSectionHeader={({section: {title}}) => {
-          return (
-            <TouchableOpacity onPress={() => viewOnBlockchain(true)}>
-              <TransactionSectionHeaderContainer>
-                <H5>{title}</H5>
-              </TransactionSectionHeaderContainer>
-            </TouchableOpacity>
-          );
-        }}
-        ItemSeparatorComponent={() => <BorderBottom />}
+        renderSectionHeader={renderSectionHeader}
+        ItemSeparatorComponent={itemSeparatorComponent}
         ListFooterComponent={listFooterComponent}
         onEndReached={() => {
           if (!onEndReachedCalledDuringLoading) {

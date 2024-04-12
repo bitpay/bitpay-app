@@ -27,7 +27,7 @@ import {
   useLogger,
 } from '../../../../utils/hooks';
 import {BillPayAccount} from '../../../../store/shop/shop.models';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
+import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../../store/shop';
 import {AppActions, AppEffects} from '../../../../store/app';
 import BillPitch from '../bill/components/BillPitch';
@@ -73,23 +73,25 @@ const BillsHeaderButton = styled(SectionHeaderButton)`
   margin-top: 0;
 `;
 
-const verificationBaseUrl = `${BASE_BITPAY_URLS[APP_NETWORK]}/wallet-verify?product=billpay`;
-
 export const Bills = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {t} = useTranslation();
   const logger = useLogger();
 
+  const appNetwork = useAppSelector(({APP}) => APP.network);
+
   const accounts = useAppSelector(
-    ({SHOP}) => SHOP.billPayAccounts[APP_NETWORK],
+    ({SHOP}) => SHOP.billPayAccounts[appNetwork],
   ) as BillPayAccount[];
 
   const apiToken = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.apiToken[APP_NETWORK],
+    ({BITPAY_ID}) => BITPAY_ID.apiToken[appNetwork],
   );
 
   const isJoinedWaitlist = useAppSelector(({SHOP}) => SHOP.isJoinedWaitlist);
+
+  const verificationBaseUrl = `${BASE_BITPAY_URLS[appNetwork]}/wallet-verify?product=billpay`;
 
   const [connected, setConnected] = useState(!!accounts.length);
 
@@ -146,14 +148,30 @@ export const Bills = () => {
     }
   };
 
-  const verifyUserInfo = async () => {
+  const connectBills = async () => {
+    if (user?.methodVerified) {
+      navigation.navigate(BillScreens.CONNECT_BILLS_OPTIONS, {});
+      return;
+    }
     setConnectButtonState('loading');
-    await dispatch(
-      BitPayIdEffects.startFetchBasicInfo(apiToken, {
-        includeExternalData: true,
-      }),
-    );
-    setConnectButtonState(undefined);
+    try {
+      const userInfo = await dispatch(
+        BitPayIdEffects.startFetchBasicInfo(apiToken, {
+          includeExternalData: true,
+        }),
+      );
+      setConnectButtonState(undefined);
+      if (userInfo.methodVerified) {
+        navigation.navigate(BillScreens.CONNECT_BILLS_OPTIONS, {});
+        return;
+      }
+    } catch (err) {
+      setConnectButtonState(undefined);
+    }
+    verifyUserInfo();
+  };
+
+  const verifyUserInfo = async () => {
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
@@ -170,7 +188,7 @@ export const Bills = () => {
                 tokenType: 'auth',
               });
               dispatch(Analytics.track('Bill Pay - Confirmed User Info'));
-              if (!user?.methodEntityId) {
+              if (!user?.methodVerified) {
                 dispatch(Analytics.track('Bill Pay - Started Application'));
               }
             },
@@ -233,7 +251,7 @@ export const Bills = () => {
                     state={connectButtonState}
                     height={50}
                     onPress={async () => {
-                      verifyUserInfo();
+                      connectBills();
                       dispatch(
                         Analytics.track('Bill Pay - Clicked Connect My Bills'),
                       );
@@ -273,52 +291,56 @@ export const Bills = () => {
                       );
                     }}
                   />
-                  <Button
-                    style={{marginTop: 20, marginBottom: 10}}
-                    height={50}
-                    buttonStyle="secondary"
-                    onPress={() => {
-                      navigation.navigate(BillScreens.PAY_ALL_BILLS, {
-                        accounts,
-                      });
-                      dispatch(
-                        Analytics.track('Bill Pay — Clicked Pay All Bills'),
-                      );
-                    }}>
-                    {t('Pay All Bills')}
-                  </Button>
-                  {/* <Button
-                    style={{marginTop: 20, marginBottom: 10}}
-                    state={connectButtonState}
-                    height={50}
-                    buttonStyle="secondary"
-                    onPress={() => {
-                      verifyUserInfo();
-                      dispatch(
-                        Analytics.track(
-                          'Bill Pay - Clicked Connect More Bills',
-                        ),
-                      );
-                    }}>
-                    {t('Connect More Bills')}
-                  </Button> */}
-                  <Button
-                    buttonType={'link'}
-                    onPress={() => {
-                      navigation.navigate(
-                        BillScreens.CONNECT_BILLS_OPTIONS,
-                        {},
-                      );
-                      dispatch(
-                        Analytics.track(
-                          'Bill Pay - Clicked Connect More Bills',
-                        ),
-                      );
-                    }}>
-                    {connectButtonState
-                      ? t('Loading...')
-                      : t('Connect More Bills')}
-                  </Button>
+                  {accounts.some(account => account.isPayable) ? (
+                    <>
+                      <Button
+                        style={{marginTop: 20, marginBottom: 10}}
+                        height={50}
+                        buttonStyle="secondary"
+                        onPress={() => {
+                          navigation.navigate(BillScreens.PAY_ALL_BILLS, {
+                            accounts,
+                          });
+                          dispatch(
+                            Analytics.track('Bill Pay — Clicked Pay All Bills'),
+                          );
+                        }}>
+                        {t('Pay All Bills')}
+                      </Button>
+                      <Button
+                        buttonType={'link'}
+                        onPress={() => {
+                          connectBills();
+                          dispatch(
+                            Analytics.track(
+                              'Bill Pay - Clicked Connect More Bills',
+                            ),
+                          );
+                        }}>
+                        {connectButtonState
+                          ? t('Loading...')
+                          : t('Connect More Bills')}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        style={{marginTop: 20, marginBottom: 10}}
+                        state={connectButtonState}
+                        height={50}
+                        buttonStyle="secondary"
+                        onPress={() => {
+                          connectBills();
+                          dispatch(
+                            Analytics.track(
+                              'Bill Pay - Clicked Connect More Bills',
+                            ),
+                          );
+                        }}>
+                        {t('Connect More Bills')}
+                      </Button>
+                    </>
+                  )}
                   <SectionSpacer />
                 </>
               )}

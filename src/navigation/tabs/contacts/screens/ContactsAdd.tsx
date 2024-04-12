@@ -153,7 +153,7 @@ const schema = yup.object().shape({
   name: yup.string().required().trim(),
   email: yup.string().email().trim(),
   destinationTag: yup.string().trim(),
-  address: yup.string().required(),
+  address: yup.string().trim().required(),
 });
 
 const SearchImageContainer = styled.View`
@@ -617,8 +617,9 @@ const ContactsAdd = ({
                   label={t('ADDRESS')}
                   onBlur={onBlur}
                   onChangeText={(newValue: string) => {
-                    onChange(newValue);
-                    processAddress(newValue);
+                    const trimmedValue = newValue.trim();
+                    onChange(trimmedValue);
+                    processAddress(trimmedValue);
                   }}
                   error={errors.address?.message}
                   value={value}

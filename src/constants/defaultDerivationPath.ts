@@ -11,4 +11,5 @@ export enum DefaultDerivationPath {
   defaultMultisigDOGE = "m/48'/3'/0'",
   defaultMultisigLTC = "m/48'/2'/0'",
   defaultTestnet = "m/44'/1'/0'",
+  defaultLedgerBTC = "m/84'/0'/0'",
 }

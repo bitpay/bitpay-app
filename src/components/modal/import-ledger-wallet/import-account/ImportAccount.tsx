@@ -1,12 +1,8 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useState} from 'react';
-import {WalletActions} from '../../../../store/wallet';
-import {Wallet} from '../../../../store/wallet/wallet.models';
-import {useAppDispatch} from '../../../../utils/hooks';
-import {SupportedLedgerAppNames} from '../utils';
-import {NameYourWallet} from './NameYourWallet';
+import {SelectWalletsToImport} from './SelectWalletsToImport';
+import {AddByDerivationPath} from './AddByDerivationPath';
 import {SelectLedgerCurrency} from './SelectLedgerCurrency';
-import {SimpleConfirmPaymentState} from '../../confirm-hardware-wallet/ConfirmHardwareWalletModal';
 
 interface ImportAccountProps {
   transport: Transport;
@@ -18,37 +14,50 @@ interface ImportAccountProps {
 }
 
 export const ImportAccount: React.FC<ImportAccountProps> = props => {
-  const dispatch = useAppDispatch();
-  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [showSelectWalletsToImport, setShowSelectWalletsToImport] =
+    useState<boolean>(false);
+  const [addByDerivationPath, setAddByDerivationPath] =
+    useState<boolean>(false);
+  const [scannedWalletsIds, setScannedWalletsIds] = useState<string[]>();
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('btc');
 
-  const onImported = (wallet: Wallet) => {
-    setWallet(wallet);
+  const onScannedCompleted = (
+    selectedCurrency: string,
+    scannedWalletsIds?: string[],
+  ) => {
+    setShowSelectWalletsToImport(true);
+    setSelectedCurrency(selectedCurrency);
+    setScannedWalletsIds(scannedWalletsIds);
   };
 
-  const onSubmitName = async (name: string) => {
-    if (!wallet) {
-      return;
-    }
-
-    await dispatch(
-      WalletActions.updateWalletName({
-        keyId: wallet.keyId,
-        walletId: wallet.id,
-        name,
-      }),
-    );
-
-    props.onComplete();
+  const onAddByDerivationPathSelected = () => {
+    setAddByDerivationPath(!addByDerivationPath);
   };
 
-  return wallet ? (
-    <NameYourWallet wallet={wallet} onSubmitName={onSubmitName} />
+  return showSelectWalletsToImport ? (
+    !addByDerivationPath ? (
+      <SelectWalletsToImport
+        onComplete={props.onComplete}
+        onAddByDerivationPathSelected={onAddByDerivationPathSelected}
+        scannedWalletsIds={scannedWalletsIds}
+      />
+    ) : (
+      <AddByDerivationPath
+        transport={props.transport}
+        setHardwareWalletTransport={props.setHardwareWalletTransport}
+        onDisconnect={props.onDisconnect}
+        onComplete={props.onComplete}
+        onAddByDerivationPathSelected={onAddByDerivationPathSelected}
+        selectedCurrency={selectedCurrency}
+        scannedWalletsIds={scannedWalletsIds}
+      />
+    )
   ) : (
     <SelectLedgerCurrency
       transport={props.transport}
       setHardwareWalletTransport={props.setHardwareWalletTransport}
       onDisconnect={props.onDisconnect}
-      onImported={onImported}
+      onScannedCompleted={onScannedCompleted}
     />
   );
 };

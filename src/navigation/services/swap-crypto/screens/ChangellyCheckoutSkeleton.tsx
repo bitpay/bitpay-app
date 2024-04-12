@@ -10,28 +10,30 @@ const ChangellyCheckoutSkeleton = () => {
     <SkeletonPlaceholder
       backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
       highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
-      {[...Array(5)].map((e, i) => (
-        <SkeletonPlaceholder.Item
-          key={i}
-          flexDirection={'row'}
-          alignItems={'center'}
-          justifyContent={'space-between'}
-          height={65}>
+      {
+        [...Array(5)].map((e, i) => (
           <SkeletonPlaceholder.Item
-            width={150}
-            height={20}
-            borderRadius={4}
-            marginRight={10}
-          />
+            key={i}
+            flexDirection={'row'}
+            alignItems={'center'}
+            justifyContent={'space-between'}
+            height={65}>
+            <SkeletonPlaceholder.Item
+              width={150}
+              height={20}
+              borderRadius={4}
+              marginRight={10}
+            />
 
-          <SkeletonPlaceholder.Item
-            width={120}
-            height={20}
-            borderRadius={4}
-            marginRight={10}
-          />
-        </SkeletonPlaceholder.Item>
-      ))}
+            <SkeletonPlaceholder.Item
+              width={120}
+              height={20}
+              borderRadius={4}
+              marginRight={10}
+            />
+          </SkeletonPlaceholder.Item>
+        )) as any
+      }
     </SkeletonPlaceholder>
   );
 };

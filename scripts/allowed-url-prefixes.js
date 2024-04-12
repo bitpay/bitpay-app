@@ -51,6 +51,11 @@ const allowedUrlPrefixes = [
   'https://api.zenledger.io/',
   'https://api.blockcypher.com/v1/',
   'https://api.fullstack.cash/v5/',
+  'https://deep-index.moralis.io/api/v2.2/',
+  'https://api.bitcore.io/api',
+  'https://api-eth.bitcore.io/api',
+  'https://api-matic.bitcore.io/api',
+  'https://api-xrp.bitcore.io/api',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');

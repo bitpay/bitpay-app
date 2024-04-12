@@ -1,7 +1,6 @@
 import React from 'react';
 import moment from 'moment';
 import {useAppSelector} from '../../../../utils/hooks';
-import {APP_NETWORK} from '../../../../constants/config';
 import {formatUSPhone} from '../bill/utils';
 import {
   Field,
@@ -12,7 +11,9 @@ import {
 import {ScrollableBottomNotificationMessageContainer} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 const UserInfo = () => {
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   return (
     <ScrollableBottomNotificationMessageContainer
       contentContainerStyle={{paddingBottom: 10}}>

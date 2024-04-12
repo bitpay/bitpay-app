@@ -47,6 +47,7 @@ import {
   startMigration,
   startWalletStoreInit,
   getPriceHistory,
+  startGetRates,
 } from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
@@ -106,6 +107,7 @@ import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
 import QuickActions, {ShortcutItem} from 'react-native-quick-actions';
 import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
+import {goToSellCrypto} from '../sell-crypto/sell-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
@@ -120,6 +122,7 @@ import {startCustomTokensMigration} from '../wallet/effects/currencies/currencie
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
+import {initAppsFlyer} from '../../utils/appsFlyer';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -138,6 +141,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       ),
     );
 
+    // Start Unified Deep Link
+    startAppsFlyer();
     dispatch(deferDeeplinksUntilAppIsReady());
 
     const {APP, CONTACT, WALLET} = getState();
@@ -234,6 +239,16 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(showBlur(false));
     RNBootSplash.hide();
   }
+};
+
+const startAppsFlyer = () => {
+  initAppsFlyer()
+    .then(() => {
+      LogActions.info('AppsFlyer initialized');
+    })
+    .catch(err => {
+      LogActions.error('AppsFlyer failed to initialize: ' + err);
+    });
 };
 
 const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
@@ -554,6 +569,11 @@ export const startOnGoingProcessModal =
       REDIRECTING: i18n.t('Redirecting'),
       REMOVING_BILL: i18n.t('Removing Bill'),
       BROADCASTING_TXP: i18n.t('Broadcasting transaction...'),
+      SWEEPING_WALLET: i18n.t('Sweeping Wallet...'),
+      SCANNING_FUNDS: i18n.t('Scanning Funds...'),
+      SCANNING_FUNDS_WITH_PASSPHRASE: i18n.t(
+        'Scanning Funds... This process may take a few minutes',
+      ),
     };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next
@@ -572,7 +592,9 @@ export const startOnGoingProcessModal =
       const currentStore = getState();
       if (
         currentStore.APP.showOnGoingProcessModal &&
-        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing')
+        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing') &&
+        currentStore.APP.onGoingProcessModalMessage !==
+          i18n.t('Scanning Funds... This process may take a few minutes')
       ) {
         dispatch(AppActions.dismissOnGoingProcessModal());
         await sleep(500);
@@ -631,6 +653,7 @@ export const openUrlWithInAppBrowser =
 
       if (isIabAvailable) {
         try {
+          dispatch(AppActions.setInAppBrowserOpen(true));
           // successfully resolves after IAB is cancelled or dismissed
           const result = await InAppBrowser.open(url, {
             // iOS options
@@ -646,6 +669,7 @@ export const openUrlWithInAppBrowser =
             ...options,
           });
 
+          dispatch(AppActions.setInAppBrowserOpen(false));
           dispatch(
             LogActions.info(`InAppBrowser closed with type: ${result.type}`),
           );
@@ -653,6 +677,7 @@ export const openUrlWithInAppBrowser =
           const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${JSON.stringify(
             err,
           )}`;
+          dispatch(AppActions.setInAppBrowserOpen(false));
           dispatch(LogActions.error(logMsg));
           // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
           await Linking.openURL(url);
@@ -660,6 +685,7 @@ export const openUrlWithInAppBrowser =
       } else {
         // successfully resolves if an installed app handles the URL,
         // or the user confirms any presented 'open' dialog
+        dispatch(AppActions.setInAppBrowserOpen(false));
         await Linking.openURL(url);
       }
     } catch (err) {
@@ -667,6 +693,7 @@ export const openUrlWithInAppBrowser =
         err,
       )}`;
 
+      dispatch(AppActions.setInAppBrowserOpen(false));
       dispatch(LogActions.error(logMsg));
     }
   };
@@ -920,7 +947,7 @@ const _startUpdateWalletStatus = debounce(
   {leading: true, trailing: false},
 );
 
-const _setScanFinishedForWallet = (
+const _setScanFinishedForWallet = async (
   dispatch: AppDispatch,
   key: Key,
   wallet: Wallet,
@@ -932,6 +959,10 @@ const _setScanFinishedForWallet = (
       isScanning: false,
     }),
   );
+  await dispatch(startGetRates({force: true}));
+  await dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+  await sleep(1000);
+  await dispatch(updatePortfolioBalance());
 };
 
 export const handleBwsEvent =
@@ -1148,12 +1179,7 @@ export const incomingLink =
       const redirectTo = pathSegments[1];
 
       handler = () => {
-        navigationRef.navigate(RootStacks.TABS, {
-          screen: TabsScreens.SETTINGS,
-          params: {
-            redirectTo: redirectTo as any,
-          },
-        });
+        navigationRef.navigate('SettingsHome', {redirectTo: redirectTo as any});
       };
     } else if (pathSegments[0] === 'wallet') {
       if (pathSegments[1] === 'create') {
@@ -1321,6 +1347,9 @@ export const shortcutListener =
     switch (type) {
       case 'buy':
         dispatch(goToBuyCrypto());
+        return;
+      case 'sell':
+        dispatch(goToSellCrypto());
         return;
       case 'swap':
         dispatch(goToSwapCrypto());

@@ -239,7 +239,7 @@ export const addWallet =
           err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(failedAddWallet());
         dispatch(LogActions.error(`Error adding wallet: ${errstring}`));
-        context === 'WalletConnect' ? reject(err) : reject();
+        reject(err);
       }
     });
   };

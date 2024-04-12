@@ -101,7 +101,7 @@ const BillSettings = ({
                         await dispatch(BitPayIdEffects.startResetMethodUser());
                         await dispatch(
                           BitPayIdEffects.startFetchBasicInfo(apiToken),
-                        );
+                        ).catch(() => {});
                         await dispatch(ShopEffects.startGetBillPayAccounts());
                       },
                       primary: true,

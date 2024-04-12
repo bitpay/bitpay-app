@@ -21,32 +21,28 @@ const LanguageSettingsScreen: React.VFC = () => {
   const theme = useTheme();
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const [selected, setSelected] = useState(appLanguage);
-  const [loading, setLoading] = useState(null);
-
-  const setLng = (isoCode: string, index: any) => {
-    setSelected(isoCode);
-    setLoading(index);
-  };
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (selected !== appLanguage) {
+      setLoading(true);
       i18n.changeLanguage(selected);
       Braze.setLanguage(selected);
       dispatch(AppActions.setDefaultLanguage(selected));
       dispatch(Analytics.track('Saved Language', {language: selected}));
-      setLoading(null);
+      setLoading(false);
     }
   }, [dispatch, selected, appLanguage]);
 
   return (
     <SettingsContainer>
       <Settings>
-        {LanguageList.map(({name, isoCode}, index) => {
+        {LanguageList.map(({name, isoCode}) => {
           return (
             <View key={isoCode}>
-              <Setting onPress={() => setLng(isoCode, index)}>
+              <Setting onPress={() => setSelected(isoCode)}>
                 <SettingTitle>{name}</SettingTitle>
-                {loading == index ? (
+                {loading && selected === isoCode ? (
                   <ActivityIndicator
                     size="small"
                     color={theme.dark ? '#E1E4E7' : SlateDark}
@@ -55,7 +51,7 @@ const LanguageSettingsScreen: React.VFC = () => {
                 ) : (
                   <Checkbox
                     radio={true}
-                    onPress={() => setLng(isoCode, index)}
+                    onPress={() => setSelected(isoCode)}
                     checked={selected === isoCode}
                   />
                 )}

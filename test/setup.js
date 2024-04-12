@@ -150,3 +150,9 @@ jest.mock('axios');
 jest.mock('i18next', () => ({
   t: key => key,
 }));
+
+jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({
+  default: {
+    open: jest.fn(() => Promise.resolve('mocked transport instance')),
+  },
+}));

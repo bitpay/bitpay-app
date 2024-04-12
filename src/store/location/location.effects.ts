@@ -3,7 +3,7 @@ import {LocationActions} from '.';
 import {Effect} from '..';
 import {EUCountries} from './location.constants';
 
-const isEuCountry = (countryShortCode: string) => {
+export const isEuCountry = (countryShortCode: string) => {
   return EUCountries.includes(countryShortCode);
 };
 

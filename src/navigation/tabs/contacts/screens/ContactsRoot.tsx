@@ -155,6 +155,7 @@ const ContactsRoot = ({
         b = y.name.toUpperCase();
       return a === b ? 0 : a > b ? 1 : -1;
     });
+    updateSearchResults(searchVal); // if contacts list change, update search results
   }, [contacts]);
 
   const contactList = contacts as Array<ContactRowProps>;

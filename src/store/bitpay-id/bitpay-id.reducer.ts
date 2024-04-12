@@ -387,6 +387,7 @@ export const bitPayIdReducer = (
           [action.payload.network]: {
             ...state.user[action.payload.network],
             methodEntityId: undefined,
+            methodVerified: undefined,
           },
         },
       };

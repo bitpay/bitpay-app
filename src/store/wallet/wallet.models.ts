@@ -218,6 +218,7 @@ export interface CustomTransactionData {
   recipientEmail?: string;
   giftCardName?: string;
   changelly?: string;
+  moonpay?: string;
   oneInch?: string;
   shapeShift?: string;
   toWalletName?: any;

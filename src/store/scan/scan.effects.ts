@@ -21,6 +21,7 @@ import {
   IsValidEthereumUri,
   IsValidMaticUri,
   isValidBuyCryptoUri,
+  isValidSellCryptoUri,
   isValidMoonpayUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
@@ -36,9 +37,12 @@ import {
   isValidWalletConnectUri,
   IsBitPayInvoiceWebUrl,
   isValidBanxaUri,
+  IsValidPrivateKey,
+  isValidSwapCryptoUri,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
+import {SellCryptoActions} from '../sell-crypto';
 import {
   BanxaIncomingData,
   BanxaStatusKey,
@@ -88,6 +92,13 @@ import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
 import {IsUtxoCoin} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
+import {MoonpaySellIncomingData} from '../sell-crypto/sell-crypto.models';
+import {findWalletById} from '../wallet/utils/wallet';
+import {MoonpaySellCheckoutProps} from '../../navigation/services/sell-crypto/screens/MoonpaySellCheckout';
+import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-services/screens/MoonpaySettings';
+import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
+import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
+import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
 
 export const incomingData =
   (
@@ -169,6 +180,12 @@ export const incomingData =
         // Buy Crypto
       } else if (isValidBuyCryptoUri(data)) {
         dispatch(handleBuyCryptoUri(data));
+        // Sell Crypto
+      } else if (isValidSellCryptoUri(data)) {
+        dispatch(handleSellCryptoUri(data));
+        // Swap Crypto
+      } else if (isValidSwapCryptoUri(data)) {
+        dispatch(handleSwapCryptoUri(data));
         // Banxa
       } else if (isValidBanxaUri(data)) {
         dispatch(handleBanxaUri(data));
@@ -190,6 +207,10 @@ export const incomingData =
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
         dispatch(handleBitPayUri(data, opts?.wallet));
+        // Check Private Key
+      } else if (IsValidPrivateKey(data)) {
+        dispatch(handlePrivateKey(data));
+        return true;
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
         dispatch(goToImport(data));
@@ -606,6 +627,15 @@ export const goToAmount =
           }),
         );
       },
+    });
+  };
+
+const handlePrivateKey =
+  (scannedPrivateKey: string, wallet?: Wallet): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(LogActions.info('[scan] Incoming-data: private key'));
+    navigationRef.navigate(WalletScreens.PAPER_WALLET, {
+      scannedPrivateKey,
     });
   };
 
@@ -1031,6 +1061,100 @@ const handleBuyCryptoUri =
     });
   };
 
+const handleSellCryptoUri =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    dispatch(
+      LogActions.info('Incoming-data (redirect): Sell crypto pre-set: ' + data),
+    );
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const partner = getParameterByName('partner', res)?.toLowerCase();
+    const amount = getParameterByName('amount', res);
+    let coin = getParameterByName('coin', res)?.toLowerCase();
+    let chain = getParameterByName('chain', res)?.toLowerCase();
+
+    let _amount: number | undefined;
+    if (amount) {
+      const {APP} = getState();
+      const altCurrency = APP.defaultAltCurrency?.isoCode;
+      _amount =
+        altCurrency === 'USD'
+          ? Number(amount)
+          : dispatch(
+              calculateUsdToAltFiat(Number(amount), altCurrency || 'USD'),
+            );
+    }
+
+    if (coin && !chain) {
+      if (IsUtxoCoin(coin)) {
+        chain = coin;
+      } else {
+        coin = undefined;
+      }
+    }
+
+    dispatch(
+      Analytics.track('Clicked Sell Crypto', {
+        context: 'DeepLink',
+        coin: coin || '',
+        chain: chain || '',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: SellCryptoScreens.ROOT,
+          params: {
+            partner,
+            amount: _amount,
+            currencyAbbreviation: coin,
+            chain,
+          },
+        },
+      ],
+    });
+  };
+
+const handleSwapCryptoUri =
+  (data: string): Effect<void> =>
+  dispatch => {
+    dispatch(
+      LogActions.info('Incoming-data (redirect): Swap crypto pre-set: ' + data),
+    );
+
+    const res = data.replace(new RegExp('&amp;', 'g'), '&');
+    const partner = getParameterByName('partner', res)?.toLowerCase();
+
+    dispatch(
+      Analytics.track('Clicked Swap Crypto', {
+        context: 'DeepLink',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 2,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: SwapCryptoScreens.SWAPCRYPTO_ROOT,
+          params: {
+            partner,
+          },
+        },
+      ],
+    });
+  };
+
 const handleBanxaUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
@@ -1100,7 +1224,7 @@ const handleBanxaUri =
 
 const handleMoonpayUri =
   (data: string): Effect<void> =>
-  (dispatch, getState) => {
+  async (dispatch, getState) => {
     dispatch(LogActions.info('Incoming-data (redirect): Moonpay URL: ' + data));
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
@@ -1110,47 +1234,331 @@ const handleMoonpayUri =
       return;
     }
 
-    const transactionId = getParameterByName('transactionId', res);
-    const status = getParameterByName('transactionStatus', res);
+    const moonpayFlow = getParameterByName('flow', res);
 
-    const stateParams: MoonpayIncomingData = {
-      externalId,
-      transactionId,
-      status,
-    };
+    if (moonpayFlow === 'sell') {
+      // Moonpay Sell Crypto Flow
+      const transactionId = getParameterByName('transactionId', res);
+      const baseCurrencyCode = getParameterByName('baseCurrencyCode', res);
+      const baseCurrencyAmount = getParameterByName('baseCurrencyAmount', res);
+      const depositWalletAddress = getParameterByName(
+        'depositWalletAddress',
+        res,
+      );
 
-    dispatch(
-      BuyCryptoActions.updatePaymentRequestMoonpay({
-        moonpayIncomingData: stateParams,
-      }),
-    );
+      if (!depositWalletAddress) {
+        dispatch(
+          LogActions.warn('No depositWalletAddress present. Do not redir'),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              "The MoonPay deposit address is not present. Can't continue.",
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
 
-    const {BUY_CRYPTO} = getState();
-    const order = BUY_CRYPTO.moonpay[externalId];
+      const {SELL_CRYPTO} = getState();
+      const order = SELL_CRYPTO.moonpay[externalId];
 
-    dispatch(
-      Analytics.track('Purchased Buy Crypto', {
-        exchange: 'moonpay',
-        fiatAmount: order?.fiat_total_amount || '',
-        fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin?.toLowerCase() || '',
-        chain: order?.chain?.toLowerCase() || '',
-      }),
-    );
+      if (!order) {
+        dispatch(
+          LogActions.warn(
+            `No sell order found for externalId: ${externalId}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              `It seems that the order id: ${transactionId} was not created from this wallet or has been deleted. Please try creating a new order from our Sell Crypto feature.`,
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
 
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
+      if (
+        [
+          'bitpayTxSent',
+          'bitpayCanceled',
+          'pending',
+          'completed',
+          'failed',
+        ].includes(order.status)
+      ) {
+        let title: string, message: string;
+        switch (order.status) {
+          case 'bitpayTxSent':
+          case 'pending':
+            title = t('Crypto funds already sent');
+            message = t(
+              `The crypto funds from this order id: ${order.transaction_id} have already been sent to MoonPay.`,
+            );
+            break;
+          case 'completed':
+            title = t('Order already completed');
+            message = t(
+              `The sell order for the id: ${order.transaction_id} has already been completed.`,
+            );
+            break;
+          case 'failed':
+          case 'bitpayCanceled':
+            title = t('Failed Order');
+            message = t(
+              `Cannot continue because sell order with id: ${order.transaction_id} has failed for some reason or has been canceled. Please try creating a new order from our Sell Crypto feature.`,
+            );
+            break;
+        }
+        dispatch(
+          LogActions.warn(
+            `Sell order status: ${order.status} for externalId: ${externalId}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: title!,
+            message: message!,
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      if (
+        !baseCurrencyCode ||
+        baseCurrencyCode !==
+          getMoonpaySellFixedCurrencyAbbreviation(order.coin, order.chain)
+      ) {
+        dispatch(
+          LogActions.warn(
+            `baseCurrencyCode mismatch: ${baseCurrencyCode} !== ${getMoonpaySellFixedCurrencyAbbreviation(
+              order.coin,
+              order.chain,
+            )}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              `Crypto currency mismatch: ${baseCurrencyCode} / ${getMoonpaySellFixedCurrencyAbbreviation(
+                order.coin,
+                order.chain,
+              )} from the order id: ${externalId}. Can\'t continue.`,
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      if (
+        baseCurrencyAmount &&
+        Number(baseCurrencyAmount) !== Number(order?.crypto_amount)
+      ) {
+        dispatch(
+          LogActions.warn(
+            `baseCurrencyAmount mismatch: ${Number(
+              baseCurrencyAmount,
+            )} !== ${Number(order?.crypto_amount)}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              `Crypto amount mismatch: ${Number(baseCurrencyAmount)} / ${Number(
+                order?.crypto_amount,
+              )} from the order id: ${transactionId}. Can\'t continue.`,
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      const stateParams: MoonpaySellIncomingData = {
+        externalId,
+        transactionId,
+        status: 'bitpayPending',
+        baseCurrencyAmount:
+          Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),
+        depositWalletAddress,
+      };
+
+      dispatch(
+        SellCryptoActions.updateSellOrderMoonpay({
+          moonpaySellIncomingData: stateParams,
+        }),
+      );
+
+      dispatch(
+        Analytics.track('Sell Crypto Order Created', {
+          exchange: 'moonpay',
+          cryptoAmount:
+            Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),
+          fiatAmount: order?.fiat_receiving_amount || '',
+          fiatCurrency: order?.fiat_currency || '',
+          coin: order?.coin?.toLowerCase() || '',
+          chain: order?.chain?.toLowerCase() || '',
+        }),
+      );
+
+      const keys = Object.values(getState().WALLET.keys);
+      const wallets = Object.values(keys).flatMap(k => k.wallets);
+
+      const fullWalletObj = findWalletById(wallets, order?.wallet_id);
+
+      if (!fullWalletObj) {
+        dispatch(
+          LogActions.warn(
+            `No Wallet id (${order?.wallet_id}) present. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t("The origin wallet is not found. Can't continue."),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      const sellCheckoutParams: MoonpaySellCheckoutProps = {
+        sellCrpytoExternalId: externalId,
+        wallet: fullWalletObj,
+        toAddress: depositWalletAddress,
+        amount: Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),
+        useSendMax: order?.send_max,
+      };
+
+      navigationRef.reset({
+        index: 1,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
+          },
+          {
+            name: 'MoonpaySellCheckout',
+            params: sellCheckoutParams,
+          },
+        ],
+      });
+    } else {
+      // Moonpay Buy Crypto Flow
+      const transactionId = getParameterByName('transactionId', res);
+      const status = getParameterByName('transactionStatus', res);
+
+      const stateParams: MoonpayIncomingData = {
+        externalId,
+        transactionId,
+        status,
+      };
+
+      dispatch(
+        BuyCryptoActions.updatePaymentRequestMoonpay({
+          moonpayIncomingData: stateParams,
+        }),
+      );
+
+      const {BUY_CRYPTO} = getState();
+      const order = BUY_CRYPTO.moonpay[externalId];
+
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'moonpay',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin?.toLowerCase() || '',
+          chain: order?.chain?.toLowerCase() || '',
+        }),
+      );
+
+      const moonpaySettingsParams: MoonpaySettingsProps = {
+        incomingPaymentRequest: {
+          externalId,
+          transactionId,
+          status,
+          flow: 'buy',
         },
-        {
-          name: 'MoonpaySettings',
-          params: {incomingPaymentRequest: stateParams},
-        },
-      ],
-    });
+      };
+
+      navigationRef.reset({
+        index: 2,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
+          },
+          {
+            name: 'MoonpaySettings',
+            params: {moonpaySettingsParams},
+          },
+        ],
+      });
+    }
   };
 
 const handleRampUri =

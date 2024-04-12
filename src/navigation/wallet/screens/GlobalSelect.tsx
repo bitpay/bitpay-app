@@ -136,8 +136,18 @@ const NoWalletsMsg = styled(BaseText)`
   margin-top: 20px;
 `;
 
+export type GlobalSelectModalContext =
+  | 'send'
+  | 'receive'
+  | 'coinbase'
+  | 'contact'
+  | 'scanner'
+  | 'sell'
+  | 'swap'
+  | 'paperwallet';
+
 export type GlobalSelectParamList = {
-  context: 'send' | 'receive' | 'coinbase' | 'contact' | 'scanner';
+  context: GlobalSelectModalContext;
   recipient?: {
     address: string;
     currency: string;
@@ -194,17 +204,11 @@ const buildList = (category: string[], wallets: Wallet[]) => {
   return coins;
 };
 
-export type GlobalSelectModalContext =
-  | 'send'
-  | 'receive'
-  | 'coinbase'
-  | 'contact';
-
 interface GlobalSelectProps {
   useAsModal?: boolean;
   modalTitle?: any;
   customSupportedCurrencies?: any[];
-  onDismiss?: (newWallet?: any) => void;
+  onDismiss?: (newWallet?: any, keepSelected?: boolean) => void;
   modalContext?: any;
   livenetOnly?: any;
   onHelpPress?: () => void;
@@ -216,7 +220,7 @@ type GlobalSelectScreenProps = NativeStackScreenProps<
 > &
   GlobalSelectProps;
 
-const GlobalSelect: React.FC<GlobalSelectScreenProps> = ({
+const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useAsModal,
   modalTitle,
   customSupportedCurrencies,
@@ -257,12 +261,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps> = ({
   );
 
   // all wallets
-  let wallets = Object.values(keys)
-    .filter(key => key.backupComplete)
-    .flatMap(key => key.wallets);
+  let wallets = Object.values(keys).flatMap(key => key.wallets);
 
-  // Filter hidden and incomplete wallets
-  wallets = wallets.filter(wallet => !wallet.hideWallet && wallet.isComplete());
+  // Filter hidden wallets
+  wallets = wallets.filter(wallet => !wallet.hideWallet);
 
   // only show wallets with funds
   if (['send', 'coinbase', 'contact', 'scanner'].includes(context)) {
@@ -321,6 +323,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps> = ({
           return {
             key: keyId,
             keyName: key.keyName || 'My Key',
+            backupComplete: key.backupComplete,
             wallets: selectObj.availableWalletsByKey[keyId]
               .filter(wallet => !wallet.hideWallet)
               .map(wallet => {
@@ -410,6 +413,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps> = ({
 
           if (!amount) {
             navigation.navigate(WalletScreens.AMOUNT, {
+              sendMaxEnabled: ['contact', 'scanner'].includes(context),
               cryptoCurrencyAbbreviation:
                 wallet.currencyAbbreviation.toUpperCase(),
               chain: wallet.chain,
@@ -579,7 +583,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps> = ({
             <CloseModalButton
               onPress={() => {
                 if (onDismiss) {
-                  onDismiss();
+                  const keepSelected = context === 'paperwallet';
+                  onDismiss(undefined, keepSelected);
                 }
               }}>
               <CloseModal

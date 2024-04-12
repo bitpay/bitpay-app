@@ -7,8 +7,7 @@ import Button from '../../components/button/Button';
 import {BaseText} from '../../components/styled/Text';
 import {Black, White} from '../../styles/colors';
 import SheetModal from '../modal/base/sheet/SheetModal';
-import Amount, {AmountProps} from './Amount';
-import {SwapOpts} from '../../navigation/services/swap-crypto/screens/SwapCryptoRoot';
+import Amount, {AmountProps, LimitsOpts} from './Amount';
 
 const ModalHeaderText = styled(BaseText)`
   font-size: 18px;
@@ -51,7 +50,7 @@ type AmountModalProps = AmountProps & {
   isVisible: boolean;
   onClose: () => void;
   modalTitle?: string;
-  swapOpts?: SwapOpts;
+  limitsOpts?: LimitsOpts;
   onSendMaxPressed?: () => any;
 };
 
@@ -67,7 +66,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
     onSendMaxPressed,
     isVisible,
     modalTitle,
-    swapOpts,
+    limitsOpts,
     ...amountProps
   } = props;
   const theme = useTheme();
@@ -89,7 +88,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
             />
           </CloseModalButton>
           {modalTitle ? <ModalHeaderText>{modalTitle}</ModalHeaderText> : null}
-          {onSendMaxPressed && !swapOpts?.swapLimits.maxAmount ? (
+          {onSendMaxPressed && !limitsOpts?.limits.maxAmount ? (
             <ModalHeaderRight>
               <Button
                 buttonType="pill"
@@ -103,7 +102,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
 
         <Amount
           {...amountProps}
-          swapOpts={swapOpts}
+          limitsOpts={limitsOpts}
           onSendMaxPressed={onSendMaxPressed}
         />
       </AmountModalContainerHOC>

@@ -46,8 +46,8 @@ const LabelTip = styled.View<{type?: string}>`
         return dark ? 'rgba(56, 56, 56, 0.8)' : '#eff1f8';
     }
   }};
-  border-radius: 15px;
-  padding: 20px;
+  border-radius: 8px;
+  padding: 16px;
   margin: 10px 0 20px 0;
 `;
 

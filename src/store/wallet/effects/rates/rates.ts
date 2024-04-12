@@ -38,6 +38,12 @@ import {
   getCurrencyAbbreviation,
   addTokenChainSuffix,
 } from '../../../../utils/helper-methods';
+import {getMultipleTokenPrices} from '../../../../store/moralis/moralis.effects';
+import {
+  EvmTokenPriceItemInput,
+  EvmErc20PriceJSON,
+} from '@moralisweb3/common-evm-utils';
+import {calculateUsdToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
 
 export const getPriceHistory =
   (defaultAltCurrencyIsoCode: string): Effect =>
@@ -210,6 +216,8 @@ export const getTokenRates =
 
       let tokenRates: {[key in string]: any} = {};
       let tokenLastDayRates: {[key in string]: any} = {};
+      const shouldSkipLogging = true;
+      const decimalPrecision = 6;
 
       try {
         const {
@@ -229,7 +237,7 @@ export const getTokenRates =
         const altCurrencies = altCurrencyList.map(altCurrency =>
           altCurrency.isoCode.toLowerCase(),
         );
-        const chunkArray = (array: string[], size: number) => {
+        const chunkArray = (array: EvmTokenPriceItemInput[], size: number) => {
           const chunked_arr = [];
           for (let i = 0; i < array.length; i += size) {
             chunked_arr.push(array.slice(i, i + size));
@@ -240,19 +248,29 @@ export const getTokenRates =
         for (const chain of SUPPORTED_EVM_COINS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
           if (contractAddresses?.length > 0) {
-            const chunks = chunkArray(contractAddresses, 5);
+            const formattedAddresses = contractAddresses.map(address => ({
+              tokenAddress: address,
+            })) as EvmTokenPriceItemInput[]; // format addresses for Moralis
+            const chunks = chunkArray(formattedAddresses, 25);
             for (const chunk of chunks) {
-              const url = `${BASE_BWS_URL}/v1/service/coinGecko/getRates/${chunk.join(
-                ',',
-              )}/${altCurrencies.join(',')}/${chain}`;
-              dispatch(
-                LogActions.debug(`getTokenRates: get request to: ${url}`),
+              const data = await dispatch(
+                getMultipleTokenPrices({addresses: chunk, chain}),
               );
-              const {data} = await axios.get(url);
-              dispatch(LogActions.debug('getTokenRates: success get request'));
-              Object.entries(data).map(([key, value]: [string, any]) => {
-                const formattedTokenAddress = addTokenChainSuffix(key, chain);
+              data.forEach((tokenInfo: EvmErc20PriceJSON) => {
+                const {
+                  usdPrice,
+                  tokenAddress,
+                  '24hrPercentChange': percentChange,
+                } = tokenInfo;
+                const lastUpdate = Date.now();
 
+                if (!usdPrice || !tokenAddress || !percentChange) {
+                  return;
+                }
+                const formattedTokenAddress = addTokenChainSuffix(
+                  tokenAddress.toLowerCase(),
+                  chain,
+                );
                 // only save token rates if exist in tokens list
                 if (tokensOptsByAddress[formattedTokenAddress]) {
                   const tokenName = getCurrencyAbbreviation(
@@ -263,27 +281,35 @@ export const getTokenRates =
                   tokenLastDayRates[tokenName] = [];
 
                   altCurrencies.forEach(altCurrency => {
+                    const rate =
+                      dispatch(
+                        calculateUsdToAltFiat(
+                          usdPrice,
+                          altCurrency,
+                          decimalPrecision,
+                          shouldSkipLogging,
+                        ),
+                      ) || 0;
                     tokenRates[tokenName].push({
                       code: altCurrency.toUpperCase(),
-                      fetchedOn: value.last_updated_at,
+                      fetchedOn: lastUpdate,
                       name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                      rate: value[altCurrency],
-                      ts: value.last_updated_at,
+                      rate,
+                      ts: lastUpdate,
                     });
-
+                    const sign = Number(percentChange) >= 0 ? 1 : -1;
+                    const lastDayRate =
+                      rate /
+                      (1 + (sign * Math.abs(Number(percentChange))) / 100);
                     const yesterday = moment
-                      .unix(value.last_updated_at)
+                      .unix(lastUpdate)
                       .subtract(1, 'days')
                       .unix();
                     tokenLastDayRates[tokenName].push({
                       code: altCurrency.toUpperCase(),
                       fetchedOn: yesterday,
                       name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                      rate:
-                        value[altCurrency] +
-                        (value[altCurrency] *
-                          value[`${altCurrency}_24h_change`]) /
-                          100,
+                      rate: lastDayRate,
                       ts: yesterday,
                     });
                   });

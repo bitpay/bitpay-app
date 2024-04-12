@@ -105,6 +105,12 @@ export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
 `;
 
+export const RowContainerWithoutBorders = styled.TouchableOpacity<RowContainerProps>`
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 0px;
+`;
+
 export const RowContainerWithoutFeedback = styled.View<RowContainerProps>`
   flex-direction: row;
   align-items: center;
@@ -394,4 +400,27 @@ export const ProposalBadgeContainer = styled.TouchableOpacity`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+interface SellTxIconProps {
+  height?: number;
+  width?: number;
+}
+
+export const SellTxIcon = styled.View<SellTxIconProps>`
+  ${({height}) =>
+    css`
+      height: ${height ?? '44px'};
+    `}
+  ${({width}) =>
+    css`
+      width: ${width ?? '44px'};
+    `}
+  position: relative;
+`;
+
+export const SellTxIconBadge = styled.View`
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
 `;

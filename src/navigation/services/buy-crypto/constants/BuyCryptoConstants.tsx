@@ -6,6 +6,10 @@ import ApplePayIcon from '../../../../../assets/img/services/payment-methods/app
 import BankIcon from '../../../../../assets/img/services/payment-methods/icon-bank.svg';
 import CreditCardIcon from '../../../../../assets/img/services/payment-methods/icon-creditcard.svg';
 import DebitCardIcon from '../../../../../assets/img/services/payment-methods/icon-debitcard.svg';
+import {
+  countriesWithACH,
+  countriesWithSEPA,
+} from '../../constants/PaymentMethodsConstants';
 import {BuyCryptoExchangeKey} from '../utils/buy-crypto-utils';
 
 export type PaymentMethodKey =
@@ -28,6 +32,7 @@ export interface PaymentMethod {
     [key in BuyCryptoExchangeKey]: boolean;
   };
   enabled: boolean;
+  supportedCountries?: string[];
 }
 
 export const PaymentMethodsAvailable: PaymentMethods = {
@@ -43,6 +48,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       simplex: false,
       transak: false,
     },
+    supportedCountries: countriesWithACH,
     enabled: true,
   },
   applePay: {
@@ -99,6 +105,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       simplex: true, // EU Only
       transak: true,
     },
+    supportedCountries: countriesWithSEPA,
     enabled: true,
   },
   other: {

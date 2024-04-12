@@ -164,7 +164,7 @@ const HomeRoot = () => {
     setRefreshing(true);
     try {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
-      await dispatch(startGetRates({force: true}));
+      await dispatch(startGetRates({}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus({force: true})),
         dispatch(requestBrazeContentRefresh()),

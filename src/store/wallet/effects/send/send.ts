@@ -82,12 +82,8 @@ import {
 } from '../../../app/app.effects';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
-import TouchID from 'react-native-touch-id-ng';
-import {
-  authOptionalConfigObject,
-  BiometricErrorNotification,
-  TO_HANDLE_ERRORS,
-} from '../../../../constants/BiometricError';
+import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
 import {
@@ -1413,6 +1409,8 @@ const createLedgerTransactionArgUtxo = (
     if (!accountPath) {
       return reject(new Error('No account path found for this wallet.'));
     }
+    const hasSegwitPath =
+      accountPath.includes("84'") || accountPath.includes("49'");
 
     // BWS only returns inputPaths for addresses it knows about
     // We kick off a scan when we import the hardware wallet so it may not be complete yet
@@ -1488,7 +1486,7 @@ const createLedgerTransactionArgUtxo = (
       // undefined will default to SIGHASH_ALL.
       // SIGHASH_ALL | SIGHASH_FORKID for bch
       const sigHashType = txp.coin === 'bch' ? 0x41 : 0x01;
-      const segwit = IsSegwitCoin(txp.coin);
+      const segwit = IsSegwitCoin(txp.coin) && hasSegwitPath;
 
       const outputs = txpAsTx.outputs.map(output => {
         const amountBuf = Buffer.alloc(8);
@@ -1516,7 +1514,7 @@ const createLedgerTransactionArgUtxo = (
 
       if (txp.coin === 'bch') {
         additionals = ['abc', 'cashaddr'];
-      } else if (txp.coin === 'btc') {
+      } else if (txp.coin === 'btc' && hasSegwitPath) {
         additionals = ['bech32']; // TODO: safe to always set this to 'bech32' ? Potencial issues here
       }
 
@@ -1677,10 +1675,10 @@ const getSignaturesFromLedger = (
   wallet: Wallet,
   txp: TransactionProposal,
 ) => {
-  const {coin: currency, network, account, chain} = wallet.credentials;
+  const {coin: currency, network, chain} = wallet.credentials;
   if (IsUtxoCoin(currency)) {
     const configFn = currencyConfigs[currency];
-    const params = configFn(network, account);
+    const params = configFn(network);
     return getUtxoSignaturesFromLedger(
       wallet,
       txp,
@@ -2135,26 +2133,21 @@ export const checkBiometricForSending =
     if (Platform.OS === 'ios') {
       dispatch(checkingBiometricForSending(true));
     }
-    return TouchID.authenticate(
-      'Authentication Check',
-      authOptionalConfigObject,
-    )
-      .then((success: any) => {
-        if (success) {
-          return Promise.resolve();
-        } else {
-          return Promise.reject('biometric check failed');
-        }
-      })
-      .catch((error: any) => {
-        if (error.code && TO_HANDLE_ERRORS[error.code]) {
-          const err = TO_HANDLE_ERRORS[error.code];
-          dispatch(
-            showBottomNotificationModal(BiometricErrorNotification(err)),
-          );
-        }
-        return Promise.reject('biometric check failed');
+    try {
+      const rnBiometrics = new ReactNativeBiometrics({
+        allowDeviceCredentials: true,
       });
+      const {success} = await rnBiometrics.simplePrompt({
+        promptMessage: t('Verify your identity'),
+      });
+      return success
+        ? Promise.resolve()
+        : Promise.reject('biometric check failed');
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(showBottomNotificationModal(BiometricErrorNotification(errMsg)));
+      return Promise.reject('biometric check failed');
+    }
   };
 
 export const sendCrypto =

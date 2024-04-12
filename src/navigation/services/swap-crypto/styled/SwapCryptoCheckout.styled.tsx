@@ -1,13 +1,12 @@
 import styled from 'styled-components/native';
-import {BaseText} from '../../../../components/styled/Text';
+import {BaseText, H7} from '../../../../components/styled/Text';
 import {
   SlateDark,
-  Action,
   White,
   LightBlack,
   NeutralSlate,
   LinkBlue,
-  LuckySevens,
+  Slate,
 } from '../../../../styles/colors';
 
 export const ItemDivisor = styled.View`
@@ -55,14 +54,12 @@ export const SelectedOptionContainer = styled.TouchableOpacity`
   height: 40px;
   padding: 0px 14px;
   background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 12px;
+  border-radius: 19.5px;
   opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
 `;
 
-export const SelectedOptionText = styled(BaseText)`
+export const SelectedOptionText = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 16px;
-  font-weight: 500;
 `;
 
 export const SelectedOptionCol = styled.View`
@@ -83,24 +80,32 @@ export const CheckBoxContainer = styled.View`
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 10px 20px 0 0;
+  border-radius: 8px;
+  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  padding: 16px;
+  margin: 20px 0 0 0;
+`;
+
+export const CheckBoxCol = styled.View`
+  display: flex;
+  flex-direction: column;
 `;
 
 export const CheckboxText = styled(BaseText)`
-  color: ${LuckySevens};
-  font-size: 11px;
-  font-weight: 300;
-  margin-left: 20px;
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  margin: 0 20px;
 `;
 
 export const PoliciesContainer = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: space-between;
-  margin: 20px 0;
+  margin: 16px 0 0 20px;
 `;
 
 export const PoliciesText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
+  color: ${LinkBlue};
+  font-size: 13px;
 `;
 
 export const ArrowContainer = styled.View`

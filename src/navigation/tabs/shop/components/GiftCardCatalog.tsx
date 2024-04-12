@@ -35,7 +35,6 @@ import {GiftCardScreens} from '../gift-card/GiftCardGroup';
 import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {APP_NETWORK} from '../../../../constants/config';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
@@ -131,7 +130,7 @@ export default ({
   const navigation = useNavigation();
   const theme = useTheme();
   const giftCards = useAppSelector(
-    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+    ({APP, SHOP}) => SHOP.giftCards[APP.network],
   ) as GiftCard[];
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);

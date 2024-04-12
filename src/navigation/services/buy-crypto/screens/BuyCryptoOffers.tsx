@@ -77,7 +77,6 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME_UPPERCASE,
-  APP_NETWORK,
 } from '../../../../constants/config';
 import {
   BuyCryptoExchangeKey,
@@ -443,7 +442,9 @@ const BuyCryptoOffers: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
-  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
     if (offersDefault[exchange]) {

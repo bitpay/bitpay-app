@@ -48,8 +48,7 @@ export const BuyCryptoSupportedExchanges: BuyCryptoExchangeKey[] = [
   'transak',
 ];
 
-export const getEnabledPaymentMethods = (
-  locationData?: LocationData | null,
+export const getBuyEnabledPaymentMethods = (
   currency?: string,
   coin?: string,
   chain?: string,
@@ -59,9 +58,15 @@ export const getEnabledPaymentMethods = (
   if (!currency || !coin || !chain) {
     return {};
   }
-  PaymentMethodsAvailable.sepaBankTransfer.enabled =
-    !!locationData?.isEuCountry;
-  PaymentMethodsAvailable.ach.enabled = country === 'US';
+  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!(
+    country &&
+    PaymentMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
+      country,
+    )
+  );
+  PaymentMethodsAvailable.ach.enabled = !!(
+    country && PaymentMethodsAvailable.ach.supportedCountries?.includes(country)
+  );
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
     return exchange && BuyCryptoSupportedExchanges.includes(exchange)
       ? method.enabled &&

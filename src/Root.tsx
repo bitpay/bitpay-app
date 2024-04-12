@@ -70,6 +70,9 @@ import AuthGroup, {AuthGroupParamList} from './navigation/auth/AuthGroup';
 import BuyCryptoGroup, {
   BuyCryptoGroupParamList,
 } from './navigation/services/buy-crypto/BuyCryptoGroup';
+import SellCryptoGroup, {
+  SellCryptoGroupParamList,
+} from './navigation/services/sell-crypto/SellCryptoGroup';
 import SwapCryptoGroup, {
   SwapCryptoGroupParamList,
 } from './navigation/services/swap-crypto/SwapCryptoGroup';
@@ -123,7 +126,7 @@ import InAppMessage from './components/modal/in-app-message/InAppMessage';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
-import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
+// import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -134,6 +137,7 @@ export type RootStackParamList = {
   ScanGroupParamList &
   CoinbaseGroupParamList &
   BuyCryptoGroupParamList &
+  SellCryptoGroupParamList &
   SwapCryptoGroupParamList &
   CardActivationGroupParamList &
   OnboardingGroupParamList &
@@ -174,6 +178,7 @@ export type NavScreenParams = NavigatorScreenParams<
     AboutGroupParamList &
     CoinbaseGroupParamList &
     BuyCryptoGroupParamList &
+    SellCryptoGroupParamList &
     SwapCryptoGroupParamList &
     ScanGroupParamList &
     WalletConnectGroupParamList &
@@ -462,15 +467,15 @@ export default () => {
             await RNBootSplash.hide({fade: true});
             // avoid splash conflicting with modal in iOS
             // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
-            dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
             dispatch(
-              LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`),
+              LogActions.debug(
+                `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
+              ),
             );
             if (pinLockActive) {
               await sleep(500);
               dispatch(AppActions.showPinModal({type: 'check'}));
-            }
-            if (biometricLockActive) {
+            } else if (biometricLockActive) {
               await sleep(500);
               dispatch(AppActions.showBiometricModal({}));
             }
@@ -560,6 +565,7 @@ export default () => {
             {AboutGroup({About: Root})}
             {CoinbaseGroup({Coinbase: Root})}
             {BuyCryptoGroup({BuyCrypto: Root})}
+            {SellCryptoGroup({SellCrypto: Root})}
             {SwapCryptoGroup({SwapCrypto: Root})}
             {WalletConnectGroup({WalletConnect: Root})}
             {ZenLedgerGroup({ZenLedger: Root})}
@@ -572,7 +578,7 @@ export default () => {
           <BlurContainer />
           <PinModal />
           <BiometricModal />
-          <ImportLedgerWalletModal />
+          {/* <ImportLedgerWalletModal /> */}
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

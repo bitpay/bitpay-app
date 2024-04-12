@@ -4,7 +4,6 @@ import {Network} from '.';
 
 export const STATIC_CONTENT_CARDS_ENABLED = true;
 export const APP_ANALYTICS_ENABLED = !__DEV__;
-export const METHOD_ENV = __DEV__ ? 'dev' : 'production';
 
 // GENERAL
 export const APP_NAME = 'bitpay';
@@ -15,6 +14,17 @@ export const BASE_BITPAY_URLS = {
   [Network.mainnet]: 'https://bitpay.com',
   [Network.testnet]: 'https://test.bitpay.com',
 };
+// BITCORE
+export const BASE_BITCORE_URL = {
+  btc: 'https://api.bitcore.io/api',
+  ltc: 'https://api.bitcore.io/api',
+  bch: 'https://api.bitcore.io/api',
+  doge: 'https://api.bitcore.io/api',
+  eth: 'https://api-eth.bitcore.io/api',
+  matic: 'https://api-matic.bitcore.io/api',
+  xrp: 'https://api-xrp.bitcore.io/api',
+};
+
 export const APP_DEEPLINK_PREFIX = 'bitpay://';
 export const APP_UNIVERSAL_LINK_DOMAINS = [
   'link.bitpay.com',
@@ -63,6 +73,11 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
     [Network.mainnet]: 'polygonscan.com/',
     [Network.testnet]: 'mumbai.polygonscan.com/',
   },
+};
+
+export const METHOD_ENVS = {
+  [Network.mainnet]: 'production',
+  [Network.testnet]: 'dev',
 };
 
 export const PROTOCOL_NAME: {[key in string]: any} = {

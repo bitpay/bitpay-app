@@ -53,6 +53,25 @@ target 'BitPayApp' do
   end
 
   post_install do |installer|
+    installer.pods_project.targets.each do |target|
+      if target.name == 'InputMask' || target.name == 'YogaKit' || target.name == 'Yoga' || target.name == 'Mixpanel-swift' || target.name == 'MultiplarformBleAdapter' || target.name == 'MultiplatformBleAdapter' || target.name == 'react-native-in-app-review' || target.name == 'MixpanelReactNative' || target.name == 'react-native-text-input-mask'
+        puts "Found #{target.name}. Adding Swift Flag..."
+        target.build_configurations.each do |config|
+          config.build_settings['OTHER_SWIFT_FLAGS'] ||= ['$(inherited)']
+          config.build_settings['OTHER_SWIFT_FLAGS'] << '-no-verify-emitted-module-interface'
+        end
+      end
+      if target.name == 'Flipper'
+        file_path = 'Pods/Flipper/xplat/Flipper/FlipperTransportTypes.h'
+        contents = File.read(file_path)
+        unless contents.include?('#include <functional>')
+          File.open(file_path, 'w') do |file|
+            file.puts('#include <functional>')
+            file.puts(contents)
+          end
+        end
+      end
+    end
     react_native_post_install(
       installer,
       # Set `mac_catalyst_enabled` to `true` in order to apply patches

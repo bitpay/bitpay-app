@@ -2352,14 +2352,14 @@
   dependencies:
     invariant "2"
 
-"@ledgerhq/devices@^7.0.2":
-  version "7.0.7"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/devices/-/devices-7.0.7.tgz#3499304a1c9d3aa7399de2ad390719bef5d1e89c"
-  integrity sha512-PZ9TtaTGBYUm/g0qNKPbECZt7DDNvqM3ILS5wAtOMna2cBR+mrywUGXrkjuOWlHpuqZ8wenaAKveQBbzF2ba8w==
+"@ledgerhq/devices@^8.0.3", "@ledgerhq/devices@^8.2.1":
+  version "8.2.1"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/devices/-/devices-8.2.1.tgz#c59eec50bacd2f962e22c723a74600160d41fbd0"
+  integrity sha512-l/2I/Xzt7Z32OmGzoc/mUvaZivdn7Id/SO7hBTGpk7PtJTpBRxVAabP4GWEKCayGyOAcvTwoVxM0HMkNVfIzOQ==
   dependencies:
-    "@ledgerhq/errors" "^6.12.3"
-    "@ledgerhq/logs" "^6.10.1"
-    rxjs "6"
+    "@ledgerhq/errors" "^6.16.2"
+    "@ledgerhq/logs" "^6.12.0"
+    rxjs "^7.8.1"
     semver "^7.3.5"
 
 "@ledgerhq/devices@^8.0.7":
@@ -2382,10 +2382,15 @@
     rxjs "^7.8.1"
     semver "^7.3.5"
 
-"@ledgerhq/errors@^6.11.0", "@ledgerhq/errors@^6.11.1", "@ledgerhq/errors@^6.12.3", "@ledgerhq/errors@^6.14.0":
+"@ledgerhq/errors@^6.11.1", "@ledgerhq/errors@^6.14.0":
   version "6.14.0"
   resolved "https://registry.yarnpkg.com/@ledgerhq/errors/-/errors-6.14.0.tgz#0bf253983773ef12eebce2091f463bc719223b37"
   integrity sha512-ZWJw2Ti6Dq1Ott/+qYqJdDWeZm16qI3VNG5rFlb0TQ3UcAyLIQZbnnzzdcVVwVeZiEp66WIpINd/pBdqsHVyOA==
+
+"@ledgerhq/errors@^6.12.6", "@ledgerhq/errors@^6.16.2":
+  version "6.16.2"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/errors/-/errors-6.16.2.tgz#cf3939dc92ed0871aa7fdd45e6d13446a1eaeccd"
+  integrity sha512-jFpohaSW+p1Obp3NDT9QSByEtT3gtBZIjVNu8m25gnrH5zdtfPVlPwH6UiuS50s+2dHQyehV8hF+IfreKDWAZA==
 
 "@ledgerhq/errors@^6.16.1":
   version "6.16.1"
@@ -2441,13 +2446,23 @@
     "@ledgerhq/hw-transport" "^6.28.8"
     "@ledgerhq/logs" "^6.10.1"
 
-"@ledgerhq/hw-transport@^6.27.5", "@ledgerhq/hw-transport@^6.27.6", "@ledgerhq/hw-transport@^6.28.8":
+"@ledgerhq/hw-transport@^6.27.6", "@ledgerhq/hw-transport@^6.28.8":
   version "6.28.8"
   resolved "https://registry.yarnpkg.com/@ledgerhq/hw-transport/-/hw-transport-6.28.8.tgz#f99a5c71c5c09591e9bfb1b970c42aafbe81351f"
   integrity sha512-XxQVl4htd018u/M66r0iu5nlHi+J6QfdPsORzDF6N39jaz+tMqItb7tUlXM/isggcuS5lc7GJo7NOuJ8rvHZaQ==
   dependencies:
     "@ledgerhq/devices" "^8.0.7"
     "@ledgerhq/errors" "^6.14.0"
+    events "^3.3.0"
+
+"@ledgerhq/hw-transport@^6.28.4":
+  version "6.30.4"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/hw-transport/-/hw-transport-6.30.4.tgz#05dee1e9cdec0e430594ecf7f5cf90c13721ad70"
+  integrity sha512-VBcVd7UG8HDrjWMoZI5rqBDz+PBxLHTIPZOGY/fdMoEUwaBbss0Z3MxuJanMyerlfaLqnBSVuL0blz7rOyagkw==
+  dependencies:
+    "@ledgerhq/devices" "^8.2.1"
+    "@ledgerhq/errors" "^6.16.2"
+    "@ledgerhq/logs" "^6.12.0"
     events "^3.3.0"
 
 "@ledgerhq/hw-transport@^6.30.1":
@@ -2469,7 +2484,7 @@
     rxjs "^6.6.7"
     utility-types "^3.10.0"
 
-"@ledgerhq/logs@^6.10.0", "@ledgerhq/logs@^6.10.1":
+"@ledgerhq/logs@^6.10.1":
   version "6.10.1"
   resolved "https://registry.yarnpkg.com/@ledgerhq/logs/-/logs-6.10.1.tgz#5bd16082261d7364eabb511c788f00937dac588d"
   integrity sha512-z+ILK8Q3y+nfUl43ctCPuR4Y2bIxk/ooCQFwZxhtci1EhAtMDzMAx2W25qx8G1PPL9UUOdnUax19+F0OjXoj4w==
@@ -2490,15 +2505,15 @@
     "@ledgerhq/logs" "^6.10.1"
     rxjs "6"
 
-"@ledgerhq/react-native-hw-transport-ble@6.27.7":
-  version "6.27.7"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/react-native-hw-transport-ble/-/react-native-hw-transport-ble-6.27.7.tgz#a936a6cd52f5b393eb0a3c3b4e7c5aa67e79295b"
-  integrity sha512-8reR850vdmwp0iqsayWO7RZYDTCMN6njomFe0Uk4jNJxiWLfcCWuKtIJb/2arh6ZmVH/V5ELXqjHR66CSwrZwQ==
+"@ledgerhq/react-native-hw-transport-ble@6.28.8":
+  version "6.28.8"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/react-native-hw-transport-ble/-/react-native-hw-transport-ble-6.28.8.tgz#ef83825e037f1b6f7ca65f01485e658aaf492153"
+  integrity sha512-mzRg2fomDFPQz5owLLJ+gBf7Z7NCa8YpyTA2L55cfNQM5IUqIxVJCqcllRWkghiEk5C/3E205tbar2a/7vLCzw==
   dependencies:
-    "@ledgerhq/devices" "^7.0.2"
-    "@ledgerhq/errors" "^6.11.0"
-    "@ledgerhq/hw-transport" "^6.27.5"
-    "@ledgerhq/logs" "^6.10.0"
+    "@ledgerhq/devices" "^8.0.3"
+    "@ledgerhq/errors" "^6.12.6"
+    "@ledgerhq/hw-transport" "^6.28.4"
+    "@ledgerhq/logs" "^6.10.1"
     invariant "^2.2.4"
     react-native-ble-plx "2.0.3"
     rxjs "6"
@@ -2517,121 +2532,130 @@
     bignumber.js "^9.1.1"
     rxjs "6"
 
-"@moralisweb3/api-utils@^2.14.3", "@moralisweb3/api-utils@^2.18.4":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/api-utils/-/api-utils-2.18.4.tgz#ca873324c414d86a6aacd8508b21f3d7b75f8ab7"
-  integrity sha512-lUc5DOOlDdibSfRBhxxZFCHR1yTZhMEkj7Iw234PUh6ZLfnO4JV5XmTFKHUSZ8Nkxf6KBJZpdYqBjvSLq66ncA==
+"@moralisweb3/api-utils@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/api-utils/-/api-utils-2.25.2.tgz#586775f142ce3f8376b077ba092937bffe855dcb"
+  integrity sha512-qeynKo7WN/vZEPV7suE5UKoJpNyJ/qPzhH7/AQ+9s5A/rKROdskN37FxtKRudVy1ebWvZsE8v7CvpPcIVgfIYQ==
   dependencies:
-    "@moralisweb3/common-core" "^2.18.4"
-    "@moralisweb3/common-evm-utils" "^2.18.4"
+    "@moralisweb3/common-core" "^2.25.2"
+    "@moralisweb3/common-evm-utils" "^2.25.2"
     axios "^1.2.1"
 
-"@moralisweb3/auth@^2.14.3":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/auth/-/auth-2.18.4.tgz#2409a8da53a3c6f2f471a1802e11a176de56bf25"
-  integrity sha512-Gs9k1Gkuwx985NFu+9Nu9XJMER8b7MQw2IuUlbBk5IpNKqzYs5qeoryUc0H1YGReM77lSrDlIvEtltgSjziYpg==
+"@moralisweb3/aptos-api@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/aptos-api/-/aptos-api-2.25.2.tgz#e85a0d3f2499e617892b19938cca03374239cffe"
+  integrity sha512-KDcyA8iGUShKDgzap+IYOlEfnxXg85JRpTyi2p1pfzXl5IVwgOQDYxxsmC0YWQFWCzKyUH7DCphAL5k1JXAVXw==
   dependencies:
-    "@moralisweb3/api-utils" "^2.18.4"
-    "@moralisweb3/common-aptos-utils" "^2.18.4"
-    "@moralisweb3/common-auth-utils" "^2.18.4"
-    "@moralisweb3/common-core" "^2.18.4"
-    "@moralisweb3/common-evm-utils" "^2.18.4"
-    "@moralisweb3/common-sol-utils" "^2.18.4"
+    "@moralisweb3/api-utils" "^2.25.2"
+    "@moralisweb3/common-aptos-utils" "^2.25.2"
+    "@moralisweb3/common-core" "^2.25.2"
 
-"@moralisweb3/common-aptos-utils@^2.18.4":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-aptos-utils/-/common-aptos-utils-2.18.4.tgz#78e3c44e8d677ee2ea6ff4c0bc348ee9cf0b157e"
-  integrity sha512-lM+5zB3momePSGtMHm107GRJHWabQCSD0YHz2B6pywEuolimHu5Or6t5xIPs8iwa8xQwx8b2IKQJNd+7CSi9Tw==
+"@moralisweb3/auth@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/auth/-/auth-2.25.2.tgz#45afa98d98cf58a05d7b907d9f5d05cc8a97b2e4"
+  integrity sha512-cfYKptZXsbVXLn2Zdyg2X03EeQAKXdRJBWQK0+ovOCpIGW23XjKzG2HTqhaXVULE1HqxoSZKXHSUkwXBFCHWhQ==
   dependencies:
-    "@moralisweb3/common-core" "^2.18.4"
+    "@moralisweb3/api-utils" "^2.25.2"
+    "@moralisweb3/common-aptos-utils" "^2.25.2"
+    "@moralisweb3/common-auth-utils" "^2.25.2"
+    "@moralisweb3/common-core" "^2.25.2"
+    "@moralisweb3/common-evm-utils" "^2.25.2"
+    "@moralisweb3/common-sol-utils" "^2.25.2"
+
+"@moralisweb3/common-aptos-utils@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-aptos-utils/-/common-aptos-utils-2.25.2.tgz#de7dcc921dda76fd85b7ede0541cc520d8352f42"
+  integrity sha512-qUNPVM4G7Fmr1ICVFCKigjd0OmzwzoniZKK7RRTJt6/I3egyboCrWdeTmSHb2ngLNwvUWhPVgdRqDpq3HtlYeA==
+  dependencies:
+    "@moralisweb3/common-core" "^2.25.2"
     "@noble/hashes" "^1.2.0"
 
-"@moralisweb3/common-auth-utils@^2.14.3", "@moralisweb3/common-auth-utils@^2.18.4":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-auth-utils/-/common-auth-utils-2.18.4.tgz#54804c6fc02e12ecf017e9c6ace0c29d80979dc5"
-  integrity sha512-SRxh6NNxDjYdgxOPUswwr6PV9Z+GTQHNeyewJHq9cVyFJQAQOwE3YGmeUB8otVgyyd0TTdrJcUSUMnJbNsg+UA==
+"@moralisweb3/common-auth-utils@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-auth-utils/-/common-auth-utils-2.25.2.tgz#678bd8e06aa109bbbbdb6ab1a36ec4e1b1658857"
+  integrity sha512-wHxB71/aj9uAHaf+Tj+imtaVi061JvZJbd4RV68Buo19brCPNJ+pLE5lXXLeiCHKpJikHdFEW7Mf7rD+dh2/eQ==
   dependencies:
     "@ethersproject/abi" "^5.7.0"
-    "@moralisweb3/common-aptos-utils" "^2.18.4"
-    "@moralisweb3/common-core" "^2.18.4"
-    "@moralisweb3/common-evm-utils" "^2.18.4"
-    "@moralisweb3/common-sol-utils" "^2.18.4"
+    "@moralisweb3/common-aptos-utils" "^2.25.2"
+    "@moralisweb3/common-core" "^2.25.2"
+    "@moralisweb3/common-evm-utils" "^2.25.2"
+    "@moralisweb3/common-sol-utils" "^2.25.2"
     "@moralisweb3/streams-typings" "^1.0.6"
 
-"@moralisweb3/common-core@^2.14.3", "@moralisweb3/common-core@^2.18.4":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-core/-/common-core-2.18.4.tgz#bfeb2e5095e62f653a2bc6c414415caf80de4926"
-  integrity sha512-O4dhaUnAt6xsK0MeFu/SMXGi/VHjyXqSahpR06aKQoaFBQTD7TGyY0EHYTMkKUYjlgULWBYu8S4XUzI7o2aLMA==
+"@moralisweb3/common-core@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-core/-/common-core-2.25.2.tgz#5f5a590dfbaef0373828c21dd689ddf3470e3048"
+  integrity sha512-qfrTRl/Nv2lX74fmEg/it9vYjahf/yFRctqwZKeI9AibOmWOKAfYe+nVVJw3kkxl/cxQtRWmhWJA3cllL/kDDA==
   dependencies:
     axios "^1.2.1"
 
-"@moralisweb3/common-evm-utils@^2.14.3", "@moralisweb3/common-evm-utils@^2.18.4":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-evm-utils/-/common-evm-utils-2.18.4.tgz#8cdcf560ec194234cc5ac95b2191ddb515205344"
-  integrity sha512-FVgR2VkZL93oM+kJU9zBJo7RQRavf48xQKsIwVsgr/ERUEkuDnM0J36QjtCXzdtUD1NfcmiCt8VbOUwqnLH5oA==
+"@moralisweb3/common-evm-utils@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-evm-utils/-/common-evm-utils-2.25.2.tgz#1b493efeb3214c70636120520ae5ffd1fda118b3"
+  integrity sha512-poWO6FymAFdInw+PUIDiGz839bLJqStCiIYoBl/HjK2G2gOC2nYjGh6S4dHCc1i3oXC/CpdaJyM/p5gl+i59Mg==
   dependencies:
     "@ethersproject/address" "^5.7.0"
     "@ethersproject/bytes" "^5.7.0"
     "@ethersproject/transactions" "^5.7.0"
-    "@moralisweb3/common-core" "^2.18.4"
+    "@moralisweb3/common-core" "^2.25.2"
 
-"@moralisweb3/common-sol-utils@^2.14.3", "@moralisweb3/common-sol-utils@^2.18.4":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-sol-utils/-/common-sol-utils-2.18.4.tgz#a10227f7ffe408278011777ffd29bc98b2cef647"
-  integrity sha512-RiBQF7FfX5TMw2U0CwryR6N/KBRe+6NwonwB1uYmCRGhn3KEi7zYy1QIjIyN1qHqExledWGcKOFiqiooosjUEA==
+"@moralisweb3/common-sol-utils@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-sol-utils/-/common-sol-utils-2.25.2.tgz#42a0400d500ad979c7de902c972a6f2c4986c12c"
+  integrity sha512-SacSZFJiZsAJECnuRV4GXV2Zh+DlTWE+tczCe+OWsmc+EOL2VD46fUPCLHGAkkmSAd+O8k7CNU1jsUTVT36mfw==
   dependencies:
-    "@moralisweb3/common-core" "^2.18.4"
+    "@moralisweb3/common-core" "^2.25.2"
     bn.js "^5.2.1"
     bs58 "^5.0.0"
     buffer "^6.0.3"
 
-"@moralisweb3/common-streams-utils@^2.14.3", "@moralisweb3/common-streams-utils@^2.18.4":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-streams-utils/-/common-streams-utils-2.18.4.tgz#a8e7c6472c35eff269bb8e0970f250af46637121"
-  integrity sha512-RlLRspgMhbQsP5N/jmoTPKmUi+GkorDO8IhnDDzgT9/EvThANjCBJNNb3+JIq40TbpF4JPsvAG0J101JtJwy6w==
+"@moralisweb3/common-streams-utils@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-streams-utils/-/common-streams-utils-2.25.2.tgz#75c7fc9b05241467370b18e5308bda6614251d55"
+  integrity sha512-1WDvN9VkgzYC0dtSDEe2o2yD4vBo6VBDew6h8qhCaHHIZKRLjFNGWOauU4FWuayDj5h6IMSkqMcwgyTMC4nLaw==
   dependencies:
     "@ethersproject/abi" "^5.7.0"
-    "@moralisweb3/common-aptos-utils" "^2.18.4"
-    "@moralisweb3/common-core" "^2.18.4"
-    "@moralisweb3/common-evm-utils" "^2.18.4"
+    "@moralisweb3/common-aptos-utils" "^2.25.2"
+    "@moralisweb3/common-core" "^2.25.2"
+    "@moralisweb3/common-evm-utils" "^2.25.2"
     "@moralisweb3/streams-typings" "^1.0.7"
 
-"@moralisweb3/evm-api@^2.14.3":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/evm-api/-/evm-api-2.18.4.tgz#df145c1b4c387ec4edf70065c6ec0bfa3aeef66c"
-  integrity sha512-rpoHJfVhDnTzDDJDxuk18qFu5mWkAO6987pwbyRnuzt5r8Sg+7T8vIfMPMXcovDKAyyRhh7ZUbf94A9T9DS/0g==
+"@moralisweb3/evm-api@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/evm-api/-/evm-api-2.25.2.tgz#8b3e97916e2fc9cb9abbce307a8dae589bf1659d"
+  integrity sha512-/pD+8FLQjKpMNBQQrdMzxmPtOxYawyF6PKm5kJF0vrC+0wHH6JngZo0boC6FnJERLmz5c4eOffADUGc7Ri37Aw==
   dependencies:
-    "@moralisweb3/api-utils" "^2.18.4"
-    "@moralisweb3/common-core" "^2.18.4"
-    "@moralisweb3/common-evm-utils" "^2.18.4"
+    "@moralisweb3/api-utils" "^2.25.2"
+    "@moralisweb3/common-core" "^2.25.2"
+    "@moralisweb3/common-evm-utils" "^2.25.2"
 
-"@moralisweb3/sol-api@^2.14.3":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/sol-api/-/sol-api-2.18.4.tgz#118a5f8214f920b093d3a742c60bb201c38cefd5"
-  integrity sha512-BUhfErEllot+zKzpABEDn+GhfVJWKc4DQO2XFXXnP28ki4V0WuU+YCoihgfxYQ+dvkt7fev9u4zhv4M2XO5xPA==
+"@moralisweb3/sol-api@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/sol-api/-/sol-api-2.25.2.tgz#54a614fac950223b49fcd6414c1cd17bc53fea25"
+  integrity sha512-/4NMUC2DxQy59D6Z0RlvabAkPHTL2UsOZyCfa/lInW8gxFrJ0EByQdyWTlvl6ydRvolWN1nmJkl3Lnq9Misucw==
   dependencies:
-    "@moralisweb3/api-utils" "^2.18.4"
-    "@moralisweb3/common-core" "^2.18.4"
-    "@moralisweb3/common-sol-utils" "^2.18.4"
+    "@moralisweb3/api-utils" "^2.25.2"
+    "@moralisweb3/common-core" "^2.25.2"
+    "@moralisweb3/common-sol-utils" "^2.25.2"
 
 "@moralisweb3/streams-typings@^1.0.6", "@moralisweb3/streams-typings@^1.0.7":
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/@moralisweb3/streams-typings/-/streams-typings-1.0.7.tgz#d8bec1f874f4a1db2f628bd389cd89a4d5736c09"
   integrity sha512-ShbVqil0KLOTyTjO6z9JewPcVVE3S6kzkQFnW2flGBRsGdKucpkUdOx1HijOLoaikz/9gH92n+lzTvRFIj0AoA==
 
-"@moralisweb3/streams@^2.14.3":
-  version "2.18.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/streams/-/streams-2.18.4.tgz#7764c4e71caacd372335c0b2f4769a6f910c3e6b"
-  integrity sha512-pQZuLFr5w8c/3yr0IRQib5hc3ldo54ht8eGh1JikA/wLXBMgG5NDPvTzCHlMC5f/HXbh5goNGLNxlp4NphrlQA==
+"@moralisweb3/streams@^2.25.2":
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/streams/-/streams-2.25.2.tgz#b3072bbdf9ea5b95c731e924a07acbf180090367"
+  integrity sha512-aVZ1RnHyPlCJCy7t8y4Y7+Ggjl+ZRWAgFFFvVPPs2q3AF+RM905Ij2BxwfWavfNKXkPIki8pJU4me2xl3ZrH3w==
   dependencies:
     "@ethersproject/abi" "^5.7.0"
     "@ethersproject/bignumber" "^5.7.0"
     "@ethersproject/sha2" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
-    "@moralisweb3/api-utils" "^2.18.4"
-    "@moralisweb3/common-core" "^2.18.4"
-    "@moralisweb3/common-evm-utils" "^2.18.4"
-    "@moralisweb3/common-streams-utils" "^2.18.4"
+    "@moralisweb3/api-utils" "^2.25.2"
+    "@moralisweb3/common-core" "^2.25.2"
+    "@moralisweb3/common-evm-utils" "^2.25.2"
+    "@moralisweb3/common-streams-utils" "^2.25.2"
     "@moralisweb3/streams-typings" "^1.0.7"
     ethereumjs-util "^7.1.0"
     web3-eth-abi "^1.8.0"
@@ -5584,12 +5608,11 @@ bitcoinjs-lib@^5.2.0:
     varuint-bitcoin "^1.0.4"
     wif "^2.0.1"
 
-bitcore-lib-cash@^10.0.23:
-  version "10.0.23"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.0.23.tgz#e5b57b1e1cf65cc3c892081b62ff6841803c0c10"
-  integrity sha512-fckplbc3HrWThR66RzxSNfWJ2idH4oQFW7omM3tKIlqzStek3kh1a0ky3/VkCz0xIv/8U46x3RgBjDm6KDJIaA==
+bitcore-lib-cash@^10.0.28:
+  version "10.0.28"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.0.28.tgz#a4edd1c7325d6cf1e8c0c1906b5a9ce84b40b7a9"
+  integrity sha512-hz4I8N4oqDY2eaCYZIX7uDe7safS+hj+AJjThrY2mBbN4RTrl2eDwuokHqd4iny9tbBzUq5ochiQ+4q4YQUwlg==
   dependencies:
-    bitcore-lib "^10.0.23"
     bn.js "=4.11.8"
     bs58 "^4.0.1"
     buffer-compare "=1.1.1"
@@ -5597,10 +5620,10 @@ bitcore-lib-cash@^10.0.23:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-lib-doge@^10.0.21:
-  version "10.0.21"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.0.21.tgz#99c7a048d8017cf271883955328e8aabf765dfcf"
-  integrity sha512-P8GXrIC0aWFvZi7iqOYYnAKHCpML71y2zMndw/xReZVkN/J1mHImTJCfoS8QXnrCAtrwJf39oLDNOAOFYZKc2Q==
+bitcore-lib-doge@^10.0.28:
+  version "10.0.28"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.0.28.tgz#e9dcadd9a9fa5e6529800dd2e01241c8fd33398b"
+  integrity sha512-ceqxoTGiquX4IEk4kBvHG/i4RFopDjbZDIZWC6maOS+Pcd/+YNzt8qFuspOtADPk+s2kEQ+edAD7+/04cURBSA==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -5610,10 +5633,10 @@ bitcore-lib-doge@^10.0.21:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib-ltc@^10.0.21:
-  version "10.0.21"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-10.0.21.tgz#a0dcb4914fcc72d6b87979dfa693b1a942e8a008"
-  integrity sha512-cdfb/rXGfK+S+BjzrdUtybXYFgxsvR32wnosVMsde2zmuMg2SCqpsNNTWs3x9sMsg57Y4LL5QpED0QKInVY1DQ==
+bitcore-lib-ltc@^10.0.28:
+  version "10.0.28"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-10.0.28.tgz#99bc1657594708e1e1c4a178ede4ae1ceb6bd5f6"
+  integrity sha512-kTAPxGClL0BigT69lxs5BvE8TcBkX6WT/KNijITiRGPeRv+qZKSqX59FvjGlcwCAI5l5CD/wTh61p2PZKfXmYw==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -5624,10 +5647,10 @@ bitcore-lib-ltc@^10.0.21:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib@^10.0.23:
-  version "10.0.23"
-  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.0.23.tgz#04c25b8e0394b17c61380a5b681b572940e904bf"
-  integrity sha512-HnwdOAXfwNJqia6SW7feAeh7fDwk7p21XXo32uTqhWzYDJ2MkalpTerl8hM5o6xYHWEIaY5rxCSaQMhKvQLXOg==
+bitcore-lib@^10.0.28:
+  version "10.0.28"
+  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.0.28.tgz#f46810324df1021f194dcdc1411c2d1a83b9be10"
+  integrity sha512-uOWHpWbUxEj411p+tp6DCb9NfZdsCAHl6Z/rs96mquQMsef29fOqWUyk4Bl7yLf+KwzU5ZKy0HIPnjGFlmpXpg==
   dependencies:
     bech32 "=2.0.0"
     bip-schnorr "=0.6.4"
@@ -5638,24 +5661,24 @@ bitcore-lib@^10.0.23:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-mnemonic@^10.0.23:
-  version "10.0.23"
-  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.0.23.tgz#528b31c0f59de52bd19fd4ef1a01396d1e31bd3f"
-  integrity sha512-d7zyDMB0QlHA0XdhIS6IwGWDcr+K1jTfgyk5xlNcFQ3NpEqCHzXrxLs537Z4Ejm4lFf6EZItkQXFZtYvkJuFhw==
+bitcore-mnemonic@^10.0.28:
+  version "10.0.28"
+  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.0.28.tgz#574310ba080cfc2fb29761f3580700deae7a15e0"
+  integrity sha512-Tu/RVcoRJyOeuafrXW6BD/3kkZLMwjxMGUcfNL2C9yKFAyXl6m5eNdy3VWDycbyRsHc+JnX/HRVVlhBuj1OSOw==
   dependencies:
-    bitcore-lib "^10.0.23"
+    bitcore-lib "^10.0.28"
     unorm "^1.4.1"
 
-bitcore-wallet-client@10.0.27:
-  version "10.0.27"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.0.27.tgz#56a05b63d661259ef69265f14bca37f393d4b516"
-  integrity sha512-W69nx1wttPPISJMiEaXEpYIYEvYOE8UZ3POhThEX1HP0pQkE+XlQdL3rQcp3RE+n+XL2CvZgl7y/aGGbn9croQ==
+bitcore-wallet-client@10.0.28:
+  version "10.0.28"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.0.28.tgz#d661c658a7805910c1cf7d4dbde330726c58b6d4"
+  integrity sha512-KNWf94XLocbKuSfwmvd2s0yPWqA0cz7JArr+3A6RQQwLJBhV5PA1zKIvLFnFDZWyfpA+4Az8L6NgsZmPEHOthQ==
   dependencies:
     ajv "6.12.0"
     async "0.9.2"
     bip38 "1.4.0"
-    bitcore-mnemonic "^10.0.23"
-    crypto-wallet-core "^10.0.27"
+    bitcore-mnemonic "^10.0.28"
+    crypto-wallet-core "^10.0.28"
     json-stable-stringify "1.0.1"
     lodash "4.17.20"
     preconditions "2.2.3"
@@ -6804,15 +6827,15 @@ crypto-js@3.1.9-1:
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
   integrity sha512-W93aKztssqf29OvUlqfikzGyYbD1rpkXvGP9IQ1JchLY3bxaLXZSWYbwrtib2vk8DobrDzX7PIXcDWHp0B6Ymw==
 
-crypto-wallet-core@^10.0.27:
-  version "10.0.27"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.0.27.tgz#5072bd8c88f1764a93a327fa066b51d8b73e73bf"
-  integrity sha512-GdPE8qwfdQbtbQlPQ6gGYmTKDUFLUqATguw+j1HGfLOhUVy7iGGUehHzmRD4tPW0MjA+rewreiJBFIpMxp2YFw==
+crypto-wallet-core@^10.0.28:
+  version "10.0.28"
+  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.0.28.tgz#00f0d53bbd67de9bbefde1f8df22ddf83b4bafe7"
+  integrity sha512-c7JdWK2a+hRfTQa7NAD8HtsAaOynz2T4+RESRxE4I7C3ptSS+eQEfvJJgEEQX9xdHrBL6duSwV2iwDOWRJIRpQ==
   dependencies:
-    bitcore-lib "^10.0.23"
-    bitcore-lib-cash "^10.0.23"
-    bitcore-lib-doge "^10.0.21"
-    bitcore-lib-ltc "^10.0.21"
+    bitcore-lib "^10.0.28"
+    bitcore-lib-cash "^10.0.28"
+    bitcore-lib-doge "^10.0.28"
+    bitcore-lib-ltc "^10.0.28"
     ethers "^5.7.0"
     info "0.0.6-beta.0"
     web3 "1.4.0"
@@ -12196,22 +12219,24 @@ moment@2.29.1:
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.1.tgz#b2be769fa31940be9eeea6469c075e35006fa3d3"
   integrity sha512-kHmoybcPV8Sqy59DwNDY3Jefr64lK/by/da0ViFcuA4DH0vQg5Q6Ze5VimxkfQNSC+Mls/Kx53s7TjP1RhFEDQ==
 
-moralis@2.14.3:
-  version "2.14.3"
-  resolved "https://registry.yarnpkg.com/moralis/-/moralis-2.14.3.tgz#17efd199cd8c6b497314a4ad343581978f632f0d"
-  integrity sha512-NyM/bcHBM0zay1f+YFzVkjkSVMleBI3xxgjpwQTNohNTHGaiiPRyJcE10GCAZANaBgvYsgljbUwpm2DaJvsxzg==
+moralis@2.25.2:
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/moralis/-/moralis-2.25.2.tgz#b47d29674b75c0cd5772264730579d5d561d541e"
+  integrity sha512-S/94zl2Z8cILJ7oWMlj9RiRPXpFRaoyLDVdR0n/QhU6KIFT8sBacWvDq5ovkqCbap+C1QZek0C74D22WP7vdaw==
   dependencies:
-    "@moralisweb3/api-utils" "^2.14.3"
-    "@moralisweb3/auth" "^2.14.3"
-    "@moralisweb3/common-auth-utils" "^2.14.3"
-    "@moralisweb3/common-core" "^2.14.3"
-    "@moralisweb3/common-evm-utils" "^2.14.3"
-    "@moralisweb3/common-sol-utils" "^2.14.3"
-    "@moralisweb3/common-streams-utils" "^2.14.3"
-    "@moralisweb3/evm-api" "^2.14.3"
-    "@moralisweb3/sol-api" "^2.14.3"
-    "@moralisweb3/streams" "^2.14.3"
-    "@moralisweb3/streams-typings" "^1.0.6"
+    "@moralisweb3/api-utils" "^2.25.2"
+    "@moralisweb3/aptos-api" "^2.25.2"
+    "@moralisweb3/auth" "^2.25.2"
+    "@moralisweb3/common-aptos-utils" "^2.25.2"
+    "@moralisweb3/common-auth-utils" "^2.25.2"
+    "@moralisweb3/common-core" "^2.25.2"
+    "@moralisweb3/common-evm-utils" "^2.25.2"
+    "@moralisweb3/common-sol-utils" "^2.25.2"
+    "@moralisweb3/common-streams-utils" "^2.25.2"
+    "@moralisweb3/evm-api" "^2.25.2"
+    "@moralisweb3/sol-api" "^2.25.2"
+    "@moralisweb3/streams" "^2.25.2"
+    "@moralisweb3/streams-typings" "^1.0.7"
 
 ms@2.0.0:
   version "2.0.0"
@@ -13665,6 +13690,11 @@ react-native-appsflyer@6.5.20:
   resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.5.20.tgz#56af47ae77b39d8425bdbe84832a8db3fd773404"
   integrity sha512-+gfsOmDev1BhhBFLE6P/eCcT0GLKDFZgQqaKcUPnTgyC8bgIWSv+igB9ziIzgBRZKSEf3YdlZ4TCfrg2w69cow==
 
+react-native-biometrics@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-biometrics/-/react-native-biometrics-3.0.1.tgz#23c5a0bdbae1fcb1e08b22936223fe0fc4af846e"
+  integrity sha512-Ru80gXRa9KG04sl5AB9HyjLjVbduhqZVjA+AiOSGqr+fNqCDmCu9y5WEksnjbnniNLmq1yGcw+qcLXmR1ddLDQ==
+
 react-native-ble-plx@2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/react-native-ble-plx/-/react-native-ble-plx-2.0.3.tgz#b0a746f33389dbf7fd7b158513330d487d5d0fbb"
@@ -13753,6 +13783,11 @@ react-native-error-boundary@1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/react-native-error-boundary/-/react-native-error-boundary-1.2.1.tgz#795ca556fcc077794c8c77f2d449226b41dde822"
   integrity sha512-Ae2mjXyCI84mwSKkgVSYPv1ZDlRVTZg9DwyxCHFtEfFkjNcBS8RlEcW7Fihns13lRdpmmQx/Gr2OFf5tfkih9g==
+
+react-native-exception-handler@2.10.10:
+  version "2.10.10"
+  resolved "https://registry.yarnpkg.com/react-native-exception-handler/-/react-native-exception-handler-2.10.10.tgz#b6bfe2b7e6ea4a4deb1f518f48ce2ee1d4843497"
+  integrity sha512-otAXGoZDl1689OoUJWN/rXxVbdoZ3xcmyF1uq/CsizdLwwyZqVGd6d+p/vbYvnF996FfEyAEBnHrdFxulTn51w==
 
 react-native-fast-image@8.6.3:
   version "8.6.3"
@@ -14071,11 +14106,6 @@ react-native-timeago@0.5.0:
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/react-native-timeago/-/react-native-timeago-0.5.0.tgz#1b08057e3473dbb5b6720ee5cde4e544a7c250f0"
   integrity sha512-GYrV36FK8ttkl7BIAdh77OlYLYGIKLGNviJqzPUtKaO8ANEtI8ph7UkSTRv9oMKfvDnA5VKV9hVX7GtYoAztRg==
-
-react-native-touch-id-ng@5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/react-native-touch-id-ng/-/react-native-touch-id-ng-5.0.1.tgz#acb229e3f3d70a7fee75153296e07778763b8032"
-  integrity sha512-J8V10YnIfRvNNJ0hVUX889qqmu6lgs5O1baFars3q1qUgVqj0l4MAsrBF5tpyo5K89LFyLGWAt5XH7/0zNOPvA==
 
 react-native-tracking-transparency@0.1.2:
   version "0.1.2"

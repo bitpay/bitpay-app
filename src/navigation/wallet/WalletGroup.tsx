@@ -76,6 +76,7 @@ import CurrencyTokenSelectionScreen, {
 import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
 import ExportTransactionHistory from './screens/wallet-settings/ExportTransactionHistory';
 import ClearTransactionHistoryCache from './screens/wallet-settings/ClearTransactionHistoryCache';
+import PaperWallet from './screens/PaperWallet';
 import BackupOnboarding, {
   BackupOnboardingParamList,
 } from './screens/BackupOnboarding';
@@ -159,6 +160,7 @@ export type WalletGroupParamList = {
   EnterBuyerProvidedEmail: {data: string};
   ExportTransactionHistory: {wallet: WalletModel};
   ClearTransactionHistoryCache: {wallet: WalletModel; key: Key};
+  PaperWallet: {scannedPrivateKey: string};
 };
 
 export enum WalletScreens {
@@ -210,6 +212,7 @@ export enum WalletScreens {
   SELECT_INPUTS = 'SelectInputs',
   ENTER_BUYER_PROVIDED_EMAIL = 'EnterBuyerProvidedEmail',
   CLEAR_TRANSACTION_HISTORY_CACHE = 'ClearTransactionHistoryCache',
+  PAPER_WALLET = 'PaperWallet',
 }
 
 const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
@@ -450,6 +453,15 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
         }}
         name={WalletScreens.CLEAR_TRANSACTION_HISTORY_CACHE}
         component={ClearTransactionHistoryCache}
+      />
+      <Wallet.Screen
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Sweep Paper Wallet')}</HeaderTitle>
+          ),
+        }}
+        name={WalletScreens.PAPER_WALLET}
+        component={PaperWallet}
       />
     </Wallet.Group>
   );

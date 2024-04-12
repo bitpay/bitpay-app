@@ -463,6 +463,7 @@ export const GroupTransactionHistory = (history: any[]) => {
           {
             title: t('Pending Transactions'),
             data: _pendingTransactions,
+            time: Date.now(),
           },
         ]
       : [];
@@ -479,7 +480,7 @@ export const GroupTransactionHistory = (history: any[]) => {
         .locale(i18n.language || 'en')
         .format('MMMM');
       const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
-      return {title, data: group};
+      return {title, data: group, time};
     });
   return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
 };
@@ -1049,10 +1050,12 @@ const UpdateFiatRate =
     if (historicFiatRate?.rate) {
       const {rate} = historicFiatRate;
       fiatRateStr =
-        formatFiatAmount(
-          parseFloat((rate * amountValueStr).toFixed(2)),
-          alternativeCurrency,
-        ) +
+        (rate !== 1
+          ? formatFiatAmount(
+              parseFloat((rate * amountValueStr).toFixed(2)),
+              alternativeCurrency,
+            )
+          : '') +
         ` @ ${formatFiatAmount(rate, alternativeCurrency)} ` +
         t('per') +
         ` ${currency.toUpperCase()}`;

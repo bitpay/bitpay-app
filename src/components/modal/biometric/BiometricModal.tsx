@@ -11,7 +11,7 @@ import {
   NeutralSlate,
   White,
 } from '../../../styles/colors';
-import TouchID from 'react-native-touch-id-ng';
+import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import styled from 'styled-components/native';
 import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
@@ -21,16 +21,10 @@ import {
   NativeModules,
   DeviceEventEmitter,
 } from 'react-native';
-import {
-  TO_HANDLE_ERRORS,
-  BiometricError,
-  BiometricErrorNotification,
-  authOptionalConfigObject,
-} from '../../../constants/BiometricError';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {useLogger} from '../../../utils/hooks';
 
 const BiometricContainer = styled.View`
   flex: 1;
@@ -83,6 +77,7 @@ export interface BiometricModalConfig {
 const BiometricModal: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
+  const logger = useLogger();
   const isVisible = useSelector(({APP}: RootState) => APP.showBiometricModal);
   const {onClose} =
     useSelector(({APP}: RootState) => APP.biometricModalConfig) || {};
@@ -121,10 +116,17 @@ const BiometricModal: React.FC = () => {
     });
   };
 
-  const authenticate = () => {
-    setIsActive(true);
-    TouchID.authenticate('Authentication Required', authOptionalConfigObject)
-      .then(async () => {
+  const authenticate = async () => {
+    try {
+      setIsActive(true);
+      const rnBiometrics = new ReactNativeBiometrics({
+        allowDeviceCredentials: true,
+      });
+      const {success, error} = await rnBiometrics.simplePrompt({
+        promptMessage: t('Verify your identity'),
+      });
+      if (success) {
+        logger.debug('successful biometrics provided');
         const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
         const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
@@ -132,19 +134,15 @@ const BiometricModal: React.FC = () => {
         dispatch(AppActions.showBlur(false));
         onClose?.(true);
         DeviceEventEmitter.emit(DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED);
-      })
-      .catch((error: BiometricError) => {
-        if (error.code && TO_HANDLE_ERRORS[error.code]) {
-          const err = TO_HANDLE_ERRORS[error.code];
-          dispatch(
-            showBottomNotificationModal(BiometricErrorNotification(err)),
-          );
-        }
-        pulse();
-      })
-      .finally(() => {
         setIsActive(false);
-      });
+      } else {
+        logger.warn(`Error providing biometrics: ${error}`);
+        pulse();
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.warn(`Error providing biometrics: ${errMsg}`);
+    }
   };
 
   useEffect(() => {

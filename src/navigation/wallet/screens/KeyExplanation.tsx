@@ -74,9 +74,7 @@ const KeyExplanationContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const CarouselContainer = styled.SafeAreaView`
-  margin-top: 30px;
-`;
+const CarouselContainer = styled.SafeAreaView``;
 
 const Row = styled.View`
   flex-direction: row;

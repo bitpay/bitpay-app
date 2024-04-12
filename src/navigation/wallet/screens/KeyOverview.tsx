@@ -553,7 +553,7 @@ const KeyOverview = () => {
     setRefreshing(true);
     try {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
-      await dispatch(startGetRates({force: true}));
+      await dispatch(startGetRates({}));
       await Promise.all([
         dispatch(startUpdateAllWalletStatusForKey({key, force: true})),
         sleep(1000),
