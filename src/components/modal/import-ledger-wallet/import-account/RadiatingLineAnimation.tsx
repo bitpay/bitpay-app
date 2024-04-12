@@ -1,16 +1,17 @@
 import React, {useEffect} from 'react';
-import {StyleSheet, Dimensions, View} from 'react-native';
 import Animated, {
-  Easing,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import {IconRow} from '../../import-ledger-wallet/import-ledger-wallet.styled';
 import {SvgProps} from 'react-native-svg';
+import {useTheme} from 'styled-components/native';
+import RadiatingCircleWhite from '../../../../../assets/img/radiating-circle-white.svg';
+import RadiatingCircleBlack from '../../../../../assets/img/radiating-circle-black.svg';
 
 interface RadiatingLineAnimationProps {
   icon: React.FC<SvgProps>;
@@ -18,67 +19,55 @@ interface RadiatingLineAnimationProps {
   width: number;
 }
 
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+const Ring = ({delay, delaysLength}: {delay: number; delaysLength: number}) => {
+  const ring = useSharedValue(0);
+  const theme = useTheme();
+  const ringstyle = useAnimatedStyle(() => ({
+    opacity: 1 - ring.value,
+    transform: [
+      // @ts-ignore
+      {
+        scale: interpolate(ring.value, [0, 1], [0, 3]),
+      },
+    ],
+  }));
+  useEffect(() => {
+    ring.value = withDelay(
+      delay,
+      withRepeat(withTiming(1, {duration: delaysLength * 1000}), -1),
+    );
+  }, []);
+  return (
+    <Animated.View
+      style={[
+        {
+          zIndex: -1,
+          position: 'absolute',
+          top: -20,
+        },
+        ringstyle,
+      ]}>
+      {theme.dark ? (
+        <RadiatingCircleBlack width={100} height={100} />
+      ) : (
+        <RadiatingCircleWhite width={100} height={100} />
+      )}
+    </Animated.View>
+  );
+};
 
 const RadiatingLineAnimation: React.FC<RadiatingLineAnimationProps> = ({
   icon,
   height,
   width,
 }) => {
-  const scale = useSharedValue(0);
-
-  useEffect(() => {
-    const repeatAnimation = () => {
-      scale.value = withSequence(
-        withTiming(1, {duration: 0}),
-        withRepeat(
-          withTiming(Math.sqrt(screenWidth ** 2 + screenHeight ** 2) / 200, {
-            duration: 2000,
-            easing: Easing.linear,
-          }),
-          -1,
-          false,
-        ),
-        withTiming(0, {duration: 10}),
-      );
-    };
-
-    repeatAnimation();
-  }, [scale]);
-
-  const circles = Array.from({length: 3}).map((_, index) => {
-    const circleStyle = useAnimatedStyle(() => ({
-      position: 'absolute',
-      top: 30,
-      left: 30,
-      width: 20 + index * 10,
-      height: 20 + index * 10,
-      borderRadius: 10 + index * 5,
-      borderWidth: 1,
-      borderColor: '#CDE1F4',
-      backgroundColor: 'transparent',
-      transform: [
-        {translateX: -(10 + index * 5)},
-        {translateY: -(10 + index * 5)},
-        {scale: scale.value},
-      ],
-      opacity: scale.value === 0 ? 0 : 0.1,
-    }));
-
-    return (
-      <Animated.View
-        key={index}
-        style={[StyleSheet.absoluteFillObject, circleStyle]}
-      />
-    );
-  });
-
+  const delays = [0, 1000, 2000, 3000];
   return (
     <IconRow>
-      <View>
-        {circles}
-        {icon({height, width})}
-      </View>
+      {icon({height, width})}
+      {delays.map((delay, idx) => (
+        <Ring key={idx} delay={delay} delaysLength={delays.length} />
+      ))}
     </IconRow>
   );
 };
