@@ -8,15 +8,19 @@ import {
   ActiveOpacity,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {BaseText, H3, H5, Paragraph} from '../../../components/styled/Text';
+import {
+  BaseText,
+  H3,
+  H5,
+  Link,
+  Paragraph,
+} from '../../../components/styled/Text';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {Network} from '../../../constants';
 import {RootState} from '../../../store';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {ShopActions, ShopEffects} from '../../../store/shop';
 import {
-  Caution,
-  Caution50,
   LightBlack,
   NeutralSlate,
   Slate,
@@ -27,7 +31,7 @@ import {TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import ChevronRight from '../components/ChevronRight';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {SectionSpacer} from '../../tabs/shop/components/styled/ShopTabComponents';
 
 type ProfileProps = NativeStackScreenProps<
@@ -65,7 +69,6 @@ const EmailAddress = styled(Paragraph)`
 
 const EmailAddressNotVerified = styled(Paragraph)`
   font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? Caution50 : Caution)};
 `;
 
 const SettingsSection = styled.View`
@@ -114,8 +117,18 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
   const user = useSelector<RootState, User | null>(
     ({BITPAY_ID}) => BITPAY_ID.user[network],
   );
+  const email = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network]?.email,
+  );
+  const isVerified = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.session.verified,
+  );
+  const csrfToken = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.session.csrfToken,
+  );
 
   useEffect(() => {
+    dispatch(BitPayIdEffects.startFetchSession());
     dispatch(BitPayIdEffects.startFetchSecuritySettings());
   }, [dispatch]);
 
@@ -140,8 +153,14 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
           ) : null}
 
           <EmailAddress>{user.email}</EmailAddress>
-          {!user.verified ? (
-            <EmailAddressNotVerified>Not Verified</EmailAddressNotVerified>
+          {!isVerified && email && csrfToken ? (
+            <EmailAddressNotVerified>
+              <Link
+                accessibilityLabel="resend-link-button"
+                onPress={() => navigation.navigate('VerifyEmail')}>
+                {t('Verify email address')}
+              </Link>
+            </EmailAddressNotVerified>
           ) : null}
         </ProfileInfoContainer>
 

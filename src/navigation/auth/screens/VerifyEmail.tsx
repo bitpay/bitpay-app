@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {Link} from '../../../components/styled/Text';
@@ -11,8 +11,14 @@ import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
 import {SafeAreaView} from 'react-native';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
+import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
+import {CommonActions} from '@react-navigation/native';
+import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
-const POLL_INTERVAL = 1000 * 3;
+const POLL_INTERVAL = 1000 * 5;
 const POLL_TIMEOUT = 1000 * 60 * 5;
 
 export type VerifyEmailScreenParamList = {} | undefined;
@@ -41,6 +47,12 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
     ({BITPAY_ID}) => BITPAY_ID.session.csrfToken,
   );
   const isTimedOut = pollCountdown.current <= 0;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => null,
+    });
+  }, [navigation]);
 
   useEffect(() => {
     if (!email || !csrfToken) {
@@ -89,16 +101,37 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
     }
   }, [dispatch, navigation, isVerified, csrfToken, email]);
 
-  const resendVerificationEmail = () => {
-    dispatch(BitPayIdEffects.startSendVerificationEmail());
+  const resendVerificationEmail = async () => {
+    dispatch(startOnGoingProcessModal('LOADING'));
+    await dispatch(BitPayIdEffects.startSendVerificationEmail());
+    dispatch(dismissOnGoingProcessModal());
   };
+
+  const GoBackLink = () => (
+    <Link
+      accessibilityLabel="go-back-link-button"
+      onPress={() =>
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [
+              {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
+              {name: BitpayIdScreens.PROFILE, params: {}},
+            ],
+          }),
+        )
+      }>
+      {t('Go Back')}
+    </Link>
+  );
 
   return (
     <SafeAreaView accessibilityLabel="verify-email-view">
       <AuthFormContainer accessibilityLabel="verify-email-view">
         {isTimedOut && (
           <VerifyEmailParagraph>
-            {t("Didn't get an email? Try logging in again later.")}
+            {t("Didn't get an email? Try logging in again later.")}{' '}
+            <GoBackLink />
           </VerifyEmailParagraph>
         )}
 
@@ -118,6 +151,10 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
                 onPress={() => resendVerificationEmail()}>
                 {t('Resend link')}
               </Link>
+            </VerifyEmailParagraph>
+
+            <VerifyEmailParagraph>
+              {t("I'll do it later.")} <GoBackLink />
             </VerifyEmailParagraph>
           </>
         )}
