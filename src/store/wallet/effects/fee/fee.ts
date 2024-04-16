@@ -104,10 +104,14 @@ export const GetMinFee = (
   wallet: Wallet,
   nbOutputs?: number,
   nbInputs?: number,
+  feeLevel?: string,
 ): Promise<any> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
+      const feePerKb = await getFeeRatePerKb({
+        wallet,
+        feeLevel: feeLevel ?? 'normal',
+      });
       const lowLevelRate: string = (feePerKb / 1000).toFixed(0);
       const size = GetEstimatedTxSize(wallet, nbOutputs, nbInputs);
       return resolve(size * parseInt(lowLevelRate, 10));
