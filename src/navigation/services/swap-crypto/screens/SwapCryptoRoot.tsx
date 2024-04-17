@@ -10,6 +10,7 @@ import {
   SUPPORTED_ETHEREUM_TOKENS,
   SUPPORTED_EVM_COINS,
   SUPPORTED_MATIC_TOKENS,
+  SUPPORTED_UTXO_COINS,
 } from '../../../../constants/currencies';
 import {
   Action,
@@ -199,6 +200,7 @@ const SwapCryptoRoot: React.FC = () => {
   const SupportedEthereumTokens: string[] = SUPPORTED_ETHEREUM_TOKENS;
   const SupportedMaticTokens: string[] = SUPPORTED_MATIC_TOKENS;
   const SupportedChains: string[] = SUPPORTED_COINS;
+  const SupportedUtxoChains: string[] = SUPPORTED_UTXO_COINS;
   const [swapLimits, setSwapLimits] = useState<SwapLimits>({
     minAmount: undefined,
     maxAmount: undefined,
@@ -813,6 +815,13 @@ const SwapCryptoRoot: React.FC = () => {
       [...SupportedChains, 'erc20', 'matic'].includes(
         currency.protocol.toLowerCase(),
       ) &&
+      // Prevents UTXO coins tokens from being displayed. Ex: LUSDT, L-BTC
+      (![...SupportedUtxoChains].includes(currency.protocol.toLowerCase()) ||
+        [...SupportedUtxoChains].includes(
+          currency.ticker
+            ? currency.ticker.toLowerCase()
+            : currency.name.toLowerCase(),
+        )) &&
       (currency.ticker === 'maticpolygon' ||
         (['erc20', 'matic'].includes(currency.protocol.toLowerCase())
           ? allSupportedTokens.includes(
