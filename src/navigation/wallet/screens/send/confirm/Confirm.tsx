@@ -184,7 +184,6 @@ const Confirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
-  const [enableRBF, setEnableRBF] = useState(enableReplaceByFee);
   const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
   const [showHighFeeWarningMessage, setShowHighFeeWarningMessage] =
     useState(false);
@@ -351,12 +350,6 @@ const Confirm = () => {
         keyboardType: 'numeric',
       },
     );
-  };
-
-  const onChangeEnableReplaceByFee = async (enableRBF?: boolean) => {
-    updateTxProposal({
-      enableRBF,
-    });
   };
 
   const updateTxProposal = async (newOpts: any) => {
@@ -648,23 +641,6 @@ const Confirm = () => {
                     )}
                   </InfoDescription>
                 </Info>
-                <Hr />
-              </>
-            ) : null}
-            {enableReplaceByFee &&
-            !selectInputs &&
-            currencyAbbreviation.toLowerCase() === 'btc' ? (
-              <>
-                <Setting activeOpacity={1}>
-                  <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
-                  <ToggleSwitch
-                    onChange={value => {
-                      setEnableRBF(value);
-                      onChangeEnableReplaceByFee(value);
-                    }}
-                    isEnabled={enableRBF}
-                  />
-                </Setting>
                 <Hr />
               </>
             ) : null}

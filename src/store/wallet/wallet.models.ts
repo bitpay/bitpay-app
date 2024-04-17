@@ -254,7 +254,7 @@ export interface TransactionOptions {
   sendMax?: boolean;
   payProDetails?: any;
   // btc
-  enableRBF?: boolean;
+  enableRBF?: boolean; // not needed (FULLRBF)
   replaceTxByFee?: boolean;
   // bch
   signingMethod?: string;
@@ -305,7 +305,7 @@ export interface TransactionProposal {
   copayerId: string;
   walletId: string;
   nonce?: number;
-  enableRBF?: boolean;
+  enableRBF?: boolean; // not needed (FULLRBF)
   replaceTxByFee?: boolean;
   toAddress: string;
   outputs: Array<{

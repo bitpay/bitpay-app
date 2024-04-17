@@ -343,14 +343,12 @@ export const startMigration =
         if (wallet) {
           const {
             showCustomizeNonce,
-            showEnableRBF,
             spendUnconfirmed,
             settings: {alternativeIsoCode: isoCode, alternativeName: name},
           } = wallet;
           dispatch(setDefaultAltCurrency({isoCode, name}));
           dispatch(setCustomizeNonce(showCustomizeNonce));
           dispatch(setUseUnconfirmedFunds(spendUnconfirmed));
-          dispatch(setEnableReplaceByFee(showEnableRBF));
         }
         // portfolio balance hide/show
         if (totalBalance) {

@@ -189,13 +189,6 @@ export const createProposalAndBuildTxDetails =
           }
         }
 
-        if (
-          currencyAbbreviation === 'btc' &&
-          !(context && ['paypro', 'selectInputs'].includes(context))
-        ) {
-          tx.enableRBF = tx.enableRBF ?? enableReplaceByFee;
-        }
-
         const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
         const feeLevel =
           customFeeLevel ||
@@ -721,10 +714,6 @@ const buildTransactionProposal =
         };
         // currency specific
         switch (chain) {
-          case 'btc':
-            txp.enableRBF = tx.enableRBF;
-            txp.replaceTxByFee = tx.replaceTxByFee;
-            break;
           case 'eth':
           case 'matic':
             txp.from = tx.from;
