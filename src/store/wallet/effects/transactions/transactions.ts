@@ -3,10 +3,7 @@ import {HistoricRate, Rates} from '../../../rate/rate.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
-import {
-  DEFAULT_RBF_SEQ_NUMBER,
-  SAFE_CONFIRMATIONS,
-} from '../../../../constants/wallet';
+import {SAFE_CONFIRMATIONS} from '../../../../constants/wallet';
 import {IsCustomERCToken, IsERCToken, IsUtxoCoin} from '../../utils/currency';
 import {ToAddress, ToLtcAddress} from '../address/address';
 import {
@@ -21,10 +18,7 @@ import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
-import {
-  formatCurrencyAbbreviation,
-  formatFiatAmount,
-} from '../../../../utils/helper-methods';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
@@ -254,11 +248,6 @@ const ProcessNewTxs =
 
       if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
         const {inputs} = await GetCoinsForTx(wallet, tx.txid);
-        tx.isRBF = inputs.some(
-          (input: any) =>
-            input.sequenceNumber &&
-            input.sequenceNumber < DEFAULT_RBF_SEQ_NUMBER - 1,
-        );
         tx.hasUnconfirmedInputs = inputs.some(
           (input: any) => input.mintHeight < 0,
         );
