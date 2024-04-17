@@ -1,4 +1,4 @@
-import {DateRanges, PriceHistory, Rates} from './rate.models';
+import {DateRanges, Rates} from './rate.models';
 import {RateActionType, RateActionTypes} from './rate.types';
 import {DEFAULT_DATE_RANGE} from '../../constants/rate';
 
@@ -9,9 +9,9 @@ export interface RateState {
   lastDayRates: Rates;
   rates: Rates;
   ratesByDateRange: {[key in DateRanges]: Rates};
-  priceHistory: Array<PriceHistory>;
   balanceCacheKey: {[key in string]: number | undefined};
   ratesCacheKey: {[key in number]: DateRanges | undefined};
+  ratesHistoricalCacheKey: {[key in number]: DateRanges | undefined};
 }
 
 const initialState: RateState = {
@@ -22,9 +22,9 @@ const initialState: RateState = {
     30: {},
   },
   lastDayRates: {},
-  priceHistory: [],
   balanceCacheKey: {},
   ratesCacheKey: {},
+  ratesHistoricalCacheKey: {},
 };
 
 export const rateReducer = (
@@ -33,22 +33,32 @@ export const rateReducer = (
 ): RateState => {
   switch (action.type) {
     case RateActionTypes.SUCCESS_GET_RATES: {
-      const {
-        rates,
-        ratesByDateRange,
-        lastDayRates,
-        dateRange = DEFAULT_DATE_RANGE,
-      } = action.payload;
+      const {rates, lastDayRates} = action.payload;
 
       return {
         ...state,
         rates: {...state.rates, ...rates},
+        ratesCacheKey: {
+          ...state.ratesCacheKey,
+          [DEFAULT_DATE_RANGE]: Date.now(),
+        },
+        lastDayRates: {...state.lastDayRates, ...lastDayRates},
+      };
+    }
+
+    case RateActionTypes.SUCCESS_GET_HISTORICAL_RATES: {
+      const {ratesByDateRange, dateRange = DEFAULT_DATE_RANGE} = action.payload;
+
+      return {
+        ...state,
         ratesByDateRange: {
           ...state.ratesByDateRange,
           [dateRange]: {...ratesByDateRange},
         },
-        ratesCacheKey: {...state.ratesCacheKey, [dateRange]: Date.now()},
-        lastDayRates: {...state.lastDayRates, ...lastDayRates},
+        ratesHistoricalCacheKey: {
+          ...state.ratesHistoricalCacheKey,
+          [dateRange]: Date.now(),
+        },
       };
     }
 
@@ -60,10 +70,11 @@ export const rateReducer = (
       };
     }
 
-    case RateActionTypes.SUCCESS_GET_PRICE_HISTORY: {
+    case RateActionTypes.UPDATE_HISTORICAL_CACHE_KEY: {
+      const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
       return {
         ...state,
-        priceHistory: action.payload,
+        [cacheKey]: {...state.ratesHistoricalCacheKey, [dateRange]: Date.now()},
       };
     }
 

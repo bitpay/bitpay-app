@@ -91,8 +91,6 @@ const ExchangeRateItem = ({
   } = item;
 
   // Avoid displaying rounded values for low amounts
-  // TODO: https://bitpay.com/currencies/prices?currencyPairs["DOGE:USD"]
-  // This endpoint should return more exact values for currentPrice and rates of the last 24 hours
   if (
     currencyAbbreviation &&
     allRates &&

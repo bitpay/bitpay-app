@@ -65,7 +65,7 @@ import {
 } from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
-import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
+import {startGetRates} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
@@ -552,7 +552,6 @@ const KeyOverview = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({}));
       await Promise.all([
         dispatch(startUpdateAllWalletStatusForKey({key, force: true})),

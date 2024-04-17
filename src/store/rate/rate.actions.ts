@@ -1,24 +1,28 @@
-import {
-  CacheKeys,
-  DateRanges,
-  PriceHistory,
-  Rates,
-  RatesByDateRange,
-} from './rate.models';
+import {CacheKeys, DateRanges, Rates, RatesByDateRange} from './rate.models';
 import {RateActionType, RateActionTypes} from './rate.types';
 
 export const successGetRates = (payload: {
-  rates?: Rates;
-  ratesByDateRange?: RatesByDateRange;
-  lastDayRates?: Rates;
-  dateRange?: number;
+  rates: Rates;
+  lastDayRates: Rates;
 }): RateActionType => ({
   type: RateActionTypes.SUCCESS_GET_RATES,
   payload,
 });
 
+export const successGetHistoricalRates = (payload: {
+  ratesByDateRange: RatesByDateRange;
+  dateRange: number;
+}): RateActionType => ({
+  type: RateActionTypes.SUCCESS_GET_HISTORICAL_RATES,
+  payload,
+});
+
 export const failedGetRates = (): RateActionType => ({
   type: RateActionTypes.FAILED_GET_RATES,
+});
+
+export const failedGetHistoricalRates = (): RateActionType => ({
+  type: RateActionTypes.FAILED_GET_HISTORICAL_RATES,
 });
 
 export const updateCacheKey = (payload: {
@@ -29,13 +33,10 @@ export const updateCacheKey = (payload: {
   payload,
 });
 
-export const successGetPriceHistory = (
-  payload: Array<PriceHistory>,
-): RateActionType => ({
-  type: RateActionTypes.SUCCESS_GET_PRICE_HISTORY,
+export const updateHistoricalCacheKey = (payload: {
+  cacheKey: CacheKeys;
+  dateRange?: DateRanges;
+}): RateActionType => ({
+  type: RateActionTypes.UPDATE_HISTORICAL_CACHE_KEY,
   payload,
-});
-
-export const failedGetPriceHistory = (): RateActionType => ({
-  type: RateActionTypes.FAILED_GET_PRICE_HISTORY,
 });

@@ -8,7 +8,7 @@ import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, ScrollView, TouchableOpacity} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
-import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
@@ -20,11 +20,14 @@ import {
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
 import {selectCardGroups} from '../../../store/card/card.selectors';
-import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
+import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  calculatePercentageDifference,
+  sleep,
+} from '../../../utils/helper-methods';
 import {
   useAppDispatch,
   useAppSelector,
@@ -115,32 +118,55 @@ const HomeRoot = () => {
   }, [brazeDoMore, hasCards, themeType]);
 
   // Exchange Rates
-  const priceHistory = useAppSelector(({RATE}) => RATE.priceHistory);
+  const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const memoizedExchangeRates: Array<ExchangeRateItemProps> = useMemo(
     () =>
-      priceHistory.reduce((ratesList, history) => {
-        const option = SupportedCoinsOptions.find(
-          ({currencyAbbreviation}) => currencyAbbreviation === history.coin,
+      Object.entries(lastDayRates).reduce((ratesList, [key, lastDayRate]) => {
+        const lastDayRateForDefaultCurrency = lastDayRate.find(
+          ({code}) => code === defaultAltCurrency.isoCode,
+        );
+        const rateForDefaultCurrency = rates[key].find(
+          ({code}) => code === defaultAltCurrency.isoCode,
+        );
+        const option = SupportedCurrencyOptions.find(
+          ({currencyAbbreviation}) => currencyAbbreviation === key,
         );
 
-        if (option) {
-          const {id, img, currencyName, currencyAbbreviation} = option;
+        if (
+          option &&
+          lastDayRateForDefaultCurrency?.rate &&
+          rateForDefaultCurrency?.rate &&
+          rateForDefaultCurrency.rate !== 1
+        ) {
+          const {
+            id,
+            img,
+            currencyName,
+            currencyAbbreviation,
+            chain,
+            tokenAddress,
+          } = option;
+
+          const percentChange = calculatePercentageDifference(
+            rateForDefaultCurrency.rate,
+            lastDayRateForDefaultCurrency.rate,
+          );
 
           ratesList.push({
             id,
             img,
             currencyName,
             currencyAbbreviation,
-            chain: currencyAbbreviation.toLowerCase(), // currencyAbbreviation same as chain for rates coins
-            average: +history.percentChange,
-            currentPrice: +history.prices[history.prices.length - 1].price,
-            priceDisplay: history.priceDisplay,
+            chain: chain ? chain : currencyAbbreviation,
+            tokenAddress: tokenAddress,
+            average: percentChange,
+            currentPrice: rateForDefaultCurrency.rate,
           });
         }
-
         return ratesList;
       }, [] as ExchangeRateItemProps[]),
-    [priceHistory],
+    [lastDayRates, rates, defaultAltCurrency],
   );
 
   // Quick Links
@@ -163,7 +189,6 @@ const HomeRoot = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus({force: true})),

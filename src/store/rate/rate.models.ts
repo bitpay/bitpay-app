@@ -26,14 +26,7 @@ export enum DateRanges {
   Month = 30,
 }
 
-export interface PriceHistory {
-  coin: string;
-  priceDisplay: Array<number>;
-  percentChange: string;
-  currencyPair: string;
-  prices: Array<{price: number; time: string}>;
-}
-
 export enum CacheKeys {
   RATES = 'ratesCacheKey',
+  HISTORICAL_RATES = 'ratesHistoricalCacheKey',
 }
