@@ -16,6 +16,7 @@ export const DEFAULT_CONTENT_CARD_BASE: ContentCardBase = {
   dismissed: false,
   dismissible: false,
   openURLInWebView: false,
+  isControl: false,
   extras: {},
 };
 
