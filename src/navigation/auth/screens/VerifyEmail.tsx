@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useEffect, useLayoutEffect, useRef} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {Link} from '../../../components/styled/Text';
@@ -48,6 +48,18 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   );
   const isTimedOut = pollCountdown.current <= 0;
 
+  const goToProfile = useCallback(() => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 1,
+        routes: [
+          {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
+          {name: BitpayIdScreens.PROFILE, params: {}},
+        ],
+      }),
+    );
+  }, [navigation]);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
@@ -58,7 +70,10 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
     if (!email || !csrfToken) {
       navigation.navigate('Login');
     } else {
-      dispatch(BitPayIdEffects.startSendVerificationEmail());
+      dispatch(BitPayIdEffects.startSendVerificationEmail()).catch(() => {
+        // If session is unauthenticated (expired), request another login
+        navigation.navigate('Login');
+      });
     }
   }, [email, csrfToken, navigation, dispatch]);
 
@@ -97,9 +112,9 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
         }),
       );
 
-      navigation.navigate('CreateAccount');
+      goToProfile();
     }
-  }, [dispatch, navigation, isVerified, csrfToken, email]);
+  }, [dispatch, navigation, isVerified, csrfToken, email, goToProfile]);
 
   const resendVerificationEmail = async () => {
     dispatch(startOnGoingProcessModal('LOADING'));
@@ -110,17 +125,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   const GoBackLink = () => (
     <Link
       accessibilityLabel="go-back-link-button"
-      onPress={() =>
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 1,
-            routes: [
-              {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
-              {name: BitpayIdScreens.PROFILE, params: {}},
-            ],
-          }),
-        )
-      }>
+      onPress={() => goToProfile()}>
       {t('Go Back')}
     </Link>
   );
