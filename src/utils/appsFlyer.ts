@@ -1,25 +1,42 @@
 import AppsFlyer from 'react-native-appsflyer';
 import {APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
 
-/**
- * Promisifies the AppsFlyer SDK getAppsFlyerUID method.
- *
- * @returns AppsFlyer ID
- */
-export const getAppsFlyerId = () => {
-  return new Promise<string | undefined>(resolve =>
-    AppsFlyer.getAppsFlyerUID((err, id) => {
-      resolve(err ? undefined : id);
-    }),
-  );
-};
+export const AppsFlyerWrapper = (() => {
+  const devKey = APPSFLYER_API_KEY;
+  const appId = APPSFLYER_APP_ID;
 
-export const initAppsFlyer = () => {
-  return AppsFlyer.initSdk({
-    devKey: APPSFLYER_API_KEY,
-    isDebug: false,
-    appId: APPSFLYER_APP_ID,
-    onInstallConversionDataListener: true,
-    onDeepLinkListener: true, // -->  you must set the onDeepLinkListener to true to get onDeepLink callbacks
-  });
-};
+  return {
+    /**
+     * Initialize the AppsFlyer SDK.
+     */
+    init() {
+      return AppsFlyer.initSdk({
+        devKey: devKey,
+        isDebug: !!__DEV__,
+        appId: appId,
+        onInstallConversionDataListener: true,
+        onDeepLinkListener: true, // -->  you must set the onDeepLinkListener to true to get onDeepLink callbacks
+      });
+    },
+
+    /**
+     * Get AppsFlyer ID.
+     */
+    getId() {
+      return new Promise<string | undefined>(resolve =>
+        AppsFlyer.getAppsFlyerUID((err, id) => {
+          resolve(err ? undefined : id);
+        }),
+      );
+    },
+
+    /**
+     * Track an event.
+     */
+    track(eventName: string, eventValues?: any) {
+      return AppsFlyer.logEvent(eventName, eventValues);
+    },
+  };
+})();
+
+export default AppsFlyerWrapper;

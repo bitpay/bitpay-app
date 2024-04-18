@@ -3,6 +3,7 @@ import {Effect} from '..';
 import {APP_ANALYTICS_ENABLED, APP_VERSION} from '../../constants/config';
 import {BrazeWrapper} from '../../lib/Braze';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
+import {AppsFlyerWrapper} from '../../utils/appsFlyer';
 import {LogActions} from '../log';
 
 const getTrackingAuthorizedByUser =
@@ -90,6 +91,20 @@ export const Analytics = (() => {
               LogActions.debug('Failed to initialize Mixpanel SDK.', errMsg),
             );
           });
+
+        await AppsFlyerWrapper.init()
+          .then(() => {
+            dispatch(
+              LogActions.debug('Successfully initialized AppsFlyer SDK'),
+            );
+          })
+          .catch(err => {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(
+              LogActions.error('AppsFlyer SDK failed to initialize: ' + errMsg),
+            );
+          });
       }
 
       _isInitialized = true;
@@ -144,6 +159,7 @@ export const Analytics = (() => {
           if (_isTrackingAuthorized) {
             BrazeWrapper.screen(name, properties);
             MixpanelWrapper.screen(name, properties);
+            AppsFlyerWrapper.track(name, properties);
           }
 
           onComplete?.();
@@ -170,6 +186,7 @@ export const Analytics = (() => {
           if (_isTrackingAuthorized) {
             BrazeWrapper.track(eventName, properties);
             MixpanelWrapper.track(eventName, properties);
+            AppsFlyerWrapper.track(eventName, properties);
           }
 
           onComplete?.();
