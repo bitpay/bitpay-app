@@ -358,6 +358,11 @@ export const getCurrencyAbbreviation = (name: string, chain: string) => {
     : name.toLowerCase();
 };
 
+export const getChainFromTokenByAddressKey = (key: string) => {
+  const match = key.match(/_([a-zA-Z]+)$/);
+  return getChainUsingSuffix(match![1]);
+};
+
 export const getProtocolName = (
   chain: string,
   network: string,
