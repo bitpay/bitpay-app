@@ -323,7 +323,9 @@ export const getBadgeImg = (
   currencyAbbreviation: string,
   chain: string,
 ): string | ((props?: any) => ReactElement) => {
-  return !SUPPORTED_COINS.includes(currencyAbbreviation)
+  return !SUPPORTED_COINS.includes(
+    getCurrencyAbbreviation(currencyAbbreviation, chain),
+  )
     ? CurrencyListIcons[chain]
     : '';
 };
