@@ -76,11 +76,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
           modalTitle={modalTitle}
           customSupportedCurrencies={_customSupportedCurrencies}
           onDismiss={onDismiss}
-          modalContext={
-            modalContext && ['sell', 'swap'].includes(modalContext)
-              ? 'send'
-              : modalContext
-          }
+          modalContext={modalContext}
           livenetOnly={livenetOnly}
           onHelpPress={onHelpPress}
         />

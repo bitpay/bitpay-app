@@ -51,11 +51,12 @@ import {
 import {Effect, RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {ButtonState} from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {LogActions} from '../../../store/log';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -267,7 +268,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   wallets = wallets.filter(wallet => !wallet.hideWallet);
 
   // only show wallets with funds
-  if (['send', 'coinbase', 'contact', 'scanner'].includes(context)) {
+  if (
+    ['send', 'sell', 'swap', 'coinbase', 'contact', 'scanner'].includes(context)
+  ) {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
   }
 
@@ -314,6 +317,36 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   );
 
   const data = [...supportedCoins, ...supportedTokens, ...otherTokens];
+
+  const goToBuyCrypto = async () => {
+    if (onDismiss) {
+      onDismiss(undefined);
+      await sleep(600);
+      dispatch(
+        LogActions.debug('[GlobalSelect] No wallets. Buy Crypto clicked.'),
+      );
+      dispatch(
+        Analytics.track('Clicked Buy Crypto', {
+          context: `GlobalSelect-${context}`,
+        }),
+      );
+      navigation.reset({
+        index: 1,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
+          },
+          {
+            name: 'BuyCryptoRoot',
+            params: {
+              amount: 200,
+            },
+          },
+        ],
+      });
+    }
+  };
 
   const openKeyWalletSelector = useCallback(
     (selectObj: GlobalSelectObj) => {
@@ -623,13 +656,43 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             renderItem={renderItem}
           />
         )}
-        {data.length === 0 && context === 'send' && (
-          <NoWalletsMsg>
-            {t(
-              'There are no wallets with funds available to use this feature.',
-            )}
-          </NoWalletsMsg>
-        )}
+        {data.length === 0 ? (
+          <>
+            {context === 'send' ? (
+              <NoWalletsMsg>
+                {t(
+                  'There are no wallets with funds available to use this feature.',
+                )}
+              </NoWalletsMsg>
+            ) : null}
+
+            {context === 'sell' ? (
+              <NoWalletsMsg>
+                {t(
+                  'Your wallet balance is too low to sell crypto. Add funds now and start selling.',
+                )}
+              </NoWalletsMsg>
+            ) : null}
+
+            {context === 'swap' ? (
+              <NoWalletsMsg>
+                {t(
+                  'Your wallet balance is too low to swap crypto. Add funds now and start swapping.',
+                )}
+              </NoWalletsMsg>
+            ) : null}
+
+            {['sell', 'swap'].includes(context) ? (
+              <Button
+                style={{marginTop: 20}}
+                onPress={goToBuyCrypto}
+                buttonStyle={'primary'}>
+                {'Buy Crypto'}
+              </Button>
+            ) : null}
+          </>
+        ) : null}
+
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => setWalletSelectModalVisible(false)}>

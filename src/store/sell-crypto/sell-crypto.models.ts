@@ -141,6 +141,8 @@ export interface MoonpayGetSellSignedPaymentUrlRequestData {
   quoteCurrencyCode: string;
   refundWalletAddress: string;
   lockAmount: boolean;
+  paymentMethod?: string | undefined;
+  externalCustomerId?: string;
   colorCode?: string;
   theme?: 'dark' | 'light';
   language?: string;
