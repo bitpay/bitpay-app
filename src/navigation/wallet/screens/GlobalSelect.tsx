@@ -172,38 +172,65 @@ export type GlobalSelectParamList = {
 export interface GlobalSelectObj {
   id: string;
   currencyName: string;
-  img: string | ((props?: any) => ReactElement);
-  badgeImg?: string | ((props?: any) => ReactElement);
+  currencyAbbreviation: string;
+  img: string | ((props?: any) => React.ReactElement);
   total: number;
+  availableWallets: Wallet[];
   availableWalletsByKey: {
-    [key in string]: Wallet[];
+    [key: string]: Wallet[];
+  };
+  availableWalletsByChain: {
+    [key: string]: Wallet[];
   };
 }
 
-const buildList = (category: string[], wallets: Wallet[]) => {
-  const coins: GlobalSelectObj[] = [];
+export interface GlobalSelectObjByKey {
+  [key: string]: GlobalSelectObj;
+}
 
-  category.forEach(coin => {
-    const availableWallets = wallets.filter(
+const buildList = (
+  categories: string[],
+  wallets: Wallet[],
+): GlobalSelectObjByKey => {
+  const coins: GlobalSelectObjByKey = {};
+
+  categories.forEach(category => {
+    const filteredWallets = wallets.filter(
       wallet =>
         getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
-        coin,
+        category,
     );
-    if (availableWallets.length) {
-      const {currencyName, img, badgeImg} = availableWallets[0];
-      coins.push({
-        id: Math.random().toString(),
+
+    if (filteredWallets.length > 0) {
+      const {currencyAbbreviation, currencyName, img} = filteredWallets[0];
+      const coinEntry = coins[currencyAbbreviation] || {
+        id: _.uniqueId('coin_'),
         currencyName,
+        currencyAbbreviation,
         img,
-        badgeImg,
-        total: availableWallets.length,
-        availableWalletsByKey: _.groupBy(
-          availableWallets,
-          wallet => wallet.keyId,
-        ),
-      });
+        availableWallets: [],
+        availableWalletsByKey: {},
+        availableWalletsByChain: {},
+      };
+
+      coinEntry.availableWallets = [
+        ...coinEntry.availableWallets,
+        ...filteredWallets,
+      ];
+      coinEntry.total = coinEntry.availableWallets.length;
+      coinEntry.availableWalletsByKey = _.groupBy(
+        coinEntry.availableWallets,
+        'keyId',
+      );
+      coinEntry.availableWalletsByChain = _.groupBy(
+        coinEntry.availableWallets,
+        'chain',
+      );
+
+      coins[currencyAbbreviation] = coinEntry;
     }
   });
+
   return coins;
 };
 
@@ -276,7 +303,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   );
   // all wallets
   let wallets = Object.values(keys).flatMap(key => key.wallets);
-
   // Filter hidden wallets
   wallets = wallets.filter(wallet => !wallet.hideWallet);
 
@@ -329,7 +355,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     [wallets, customSupportedCurrencies, NON_BITPAY_SUPPORTED_TOKENS],
   );
 
-  const data = [...supportedCoins, ...supportedTokens, ...otherTokens];
+  const data = Object.values({
+    ...supportedCoins,
+    ...supportedTokens,
+    ...otherTokens,
+  });
 
   const goToBuyCrypto = async () => {
     if (onDismiss) {
