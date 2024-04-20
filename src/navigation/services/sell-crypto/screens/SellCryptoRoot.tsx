@@ -1428,7 +1428,7 @@ const SellCryptoRoot = ({
         modalTitle={t('Sell From')}
         onDismiss={(selectedWallet: Wallet) => {
           hideModal('walletSelector');
-          if (selectedWallet) {
+          if (selectedWallet?.currencyAbbreviation) {
             setSelectedWallet(selectedWallet);
           }
         }}

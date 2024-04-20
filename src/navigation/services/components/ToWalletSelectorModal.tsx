@@ -733,7 +733,9 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   }, [isVisible]);
 
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
+    <SheetModal
+      isVisible={isVisible}
+      onBackdropPress={() => onDismiss(undefined)}>
       <GlobalSelectContainer>
         <SafeAreaView>
           <ModalHeader>

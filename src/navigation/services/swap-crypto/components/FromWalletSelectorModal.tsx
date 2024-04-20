@@ -69,7 +69,9 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
   };
 
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
+    <SheetModal
+      isVisible={isVisible}
+      onBackdropPress={() => onDismiss(undefined)}>
       <GlobalSelectContainer>
         <GlobalSelect
           useAsModal={true}
