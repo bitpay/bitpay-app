@@ -158,10 +158,6 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
                         name: WalletScreens.KEY_OVERVIEW,
                         params: {id: key.id},
                       },
-                      {
-                        name: WalletScreens.COPAYERS,
-                        params: {walletId: wallet.id, key},
-                      },
                     ],
                   }),
                 );
