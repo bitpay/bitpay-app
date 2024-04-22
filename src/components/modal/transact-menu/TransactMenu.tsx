@@ -137,7 +137,7 @@ const TransactModal = () => {
     },
     {
       id: 'sellCrypto',
-      img: () => <Icons.SellCrypto />,
+      img: ({disabled}) => <Icons.SellCrypto disabled={disabled} />,
       title: t('Sell Crypto'),
       description: t('Sell crypto and receive cash'),
       onPress: () => {
@@ -216,7 +216,7 @@ const TransactModal = () => {
   const renderItem = ({item}: {item: TransactMenuItemProps}) => {
     const disabled =
       disabledSendingOptions &&
-      ['send', 'exchange', 'buyGiftCard'].includes(item.id);
+      ['send', 'sellCrypto', 'exchange', 'buyGiftCard'].includes(item.id);
 
     const handlePress = async () => {
       if (disabled) {

@@ -40,6 +40,8 @@ export const Warning25 = '#FEECD4';
 
 export const Disabled = '#edeef0';
 export const DisabledDark = '#3c3c3c';
+export const DisabledText = '#bebec0';
+export const DisabledTextDark = '#656565';
 
 export const NotificationPrimary = '#1F3AB3';
 export const ProgressBlue = '#4F6EF7';
