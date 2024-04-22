@@ -22,7 +22,7 @@ import {BASE_BITPAY_URLS} from '../../constants/config';
 import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
-import {getAppsFlyerId} from '../../utils/appsFlyer';
+import {AppsFlyerWrapper} from '../../utils/appsFlyer';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -343,7 +343,7 @@ export const startActivateCard =
       const {APP, BITPAY_ID} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
-      const appsFlyerId = await getAppsFlyerId();
+      const appsFlyerId = await AppsFlyerWrapper.getId();
 
       payload = {
         ...payload,
