@@ -130,7 +130,6 @@ export interface ConfirmParamList {
   speedup?: boolean;
   sendMax?: boolean;
   inputs?: Utxo[];
-  selectInputs?: boolean;
   message?: string | undefined;
 }
 
@@ -168,7 +167,6 @@ const Confirm = () => {
     speedup,
     sendMax,
     inputs,
-    selectInputs,
     message,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
@@ -302,7 +300,7 @@ const Confirm = () => {
     if (newLevel) {
       updateTxProposal({
         feeLevel: newLevel,
-        feePerKb: customFeePerKB,
+        feePerKb: customFeePerKB, // this will be ignore in select input context
       });
     }
   };
@@ -614,7 +612,7 @@ const Confirm = () => {
             />
             <Fee
               onPress={
-                isTxLevelAvailable() && !selectInputs
+                isTxLevelAvailable()
                   ? () => setShowTransactionLevel(true)
                   : undefined
               }

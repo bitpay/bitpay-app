@@ -30,9 +30,15 @@ import {
   FormatAmount,
   FormatAmountStr,
   ParseAmount,
+  SatToUnit,
   parseAmountToStringIfBN,
 } from '../amount/amount';
-import {FeeLevels, GetBitcoinSpeedUpTxFee, getFeeRatePerKb} from '../fee/fee';
+import {
+  FeeLevels,
+  GetBitcoinSpeedUpTxFee,
+  GetMinFee,
+  getFeeRatePerKb,
+} from '../fee/fee';
 import {GetInput} from '../transactions/transactions';
 import {
   formatCryptoAddress,
@@ -855,15 +861,47 @@ const buildTransactionProposal =
             }
             break;
           case 'selectInputs':
+            // new amount and fee calculation
+            const {currencyAbbreviation, chain, tokenAddress} =
+              wallet as Wallet;
+            const totalAmount = inputs!.reduce(
+              (total, utxo) => total + Number(utxo.amount),
+              0,
+            );
+            const precision = dispatch(
+              GetPrecision(currencyAbbreviation, chain, tokenAddress),
+            )!.unitDecimals;
+            const formattedTotalAmount = Number(totalAmount).toFixed(precision);
+            const estimatedFee = await GetMinFee(
+              wallet!,
+              1,
+              inputs?.length,
+              feeLevel,
+            );
+            const formattedEstimatedFee = dispatch(
+              SatToUnit(
+                estimatedFee,
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+              ),
+            );
+            const amount =
+              Number(formattedTotalAmount) - formattedEstimatedFee!;
+            const formattedAmount = dispatch(
+              ParseAmount(amount, currencyAbbreviation, chain, tokenAddress),
+            );
+
             txp.inputs = inputs;
-            txp.fee = tx.fee;
+            txp.amount = tx.amount = formattedAmount.amountSat;
+            txp.fee = estimatedFee;
             txp.feeLevel = undefined;
             if (tx.replaceTxByFee) {
               txp.replaceTxByFee = true;
             }
             txp.outputs.push({
               toAddress: tx.toAddress,
-              amount: tx.amount!,
+              amount: tx.amount,
               message: tx.description,
               data: tx.data,
             });

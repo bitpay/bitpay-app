@@ -152,6 +152,7 @@ const SelectInputs = () => {
     ({WALLET}) => WALLET.useUnconfirmedFunds,
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const feeLevel = useAppSelector(({WALLET}) => WALLET.feeLevel);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const [inputs, setInputs] = useState<UtxoWithFiatAmount[]>([]);
   const [lockedUtxos, setLockedUtxos] = useState<UtxoWithFiatAmount[]>([]);
@@ -315,15 +316,20 @@ const SelectInputs = () => {
       dispatch(startOnGoingProcessModal('LOADING'));
       const selectedInputs = inputs.filter(input => input.checked);
       logger.debug(
-        `Estimating fee for: ${selectedInputs.length} selected inputs`,
+        `Estimating fee for: ${selectedInputs.length} selected inputs - feeLevel: ${feeLevel[currencyAbbreviation]}`,
       );
-      const estimatedFee = await GetMinFee(wallet, 1, selectedInputs.length);
+      const estimatedFee = await GetMinFee(
+        wallet,
+        1,
+        selectedInputs.length,
+        feeLevel[currencyAbbreviation],
+      );
       logger.debug(`Estimated fee: ${estimatedFee}`);
-      const formattedestimatedFee = dispatch(
+      const formattedEstimatedFee = dispatch(
         SatToUnit(estimatedFee, currencyAbbreviation, chain, tokenAddress),
       );
 
-      const amount = Number(totalAmount) - formattedestimatedFee!;
+      const amount = Number(totalAmount) - formattedEstimatedFee!;
       const tx = {
         wallet,
         recipient,
@@ -344,7 +350,6 @@ const SelectInputs = () => {
         txDetails,
         amount,
         inputs,
-        selectInputs: true,
       });
     } catch (err: any) {
       const errorMessageConfig = (
