@@ -323,7 +323,9 @@ export const getBadgeImg = (
   currencyAbbreviation: string,
   chain: string,
 ): string | ((props?: any) => ReactElement) => {
-  return !SUPPORTED_COINS.includes(currencyAbbreviation)
+  return !SUPPORTED_COINS.includes(
+    getCurrencyAbbreviation(currencyAbbreviation, chain),
+  )
     ? CurrencyListIcons[chain]
     : '';
 };
@@ -356,6 +358,11 @@ export const getCurrencyAbbreviation = (name: string, chain: string) => {
   return IsERCToken(name.toLowerCase(), chain.toLowerCase())
     ? addTokenChainSuffix(name, chain)
     : name.toLowerCase();
+};
+
+export const getChainFromTokenByAddressKey = (key: string) => {
+  const match = key.match(/_([a-zA-Z]+)$/);
+  return getChainUsingSuffix(match![1]);
 };
 
 export const getProtocolName = (

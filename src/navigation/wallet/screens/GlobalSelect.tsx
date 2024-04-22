@@ -8,6 +8,7 @@ import React, {
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
+  BitpaySupportedCoins,
   BitpaySupportedEvmCoins,
   BitpaySupportedTokens,
   SUPPORTED_COINS,
@@ -17,6 +18,7 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
   formatFiatAmount,
+  getChainFromTokenByAddressKey,
   getCurrencyAbbreviation,
   keyExtractor,
   sleep,
@@ -256,10 +258,21 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
 
-  const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(allTokensByAddress).filter(
-    token => !BitpaySupportedTokens[token],
+  const NON_BITPAY_SUPPORTED_TOKENS = Array.from(
+    new Set(
+      Object.entries(allTokensByAddress)
+        .flatMap(([address, tokenData]) => {
+          const symbol = tokenData?.symbol?.toLowerCase();
+          const chain = getChainFromTokenByAddressKey(address);
+          const currency = getCurrencyAbbreviation(symbol, chain);
+          return !BitpaySupportedTokens[address] &&
+            !BitpaySupportedCoins[currency]
+            ? currency
+            : undefined;
+        })
+        .filter((currency): currency is string => currency !== undefined),
+    ),
   );
-
   // all wallets
   let wallets = Object.values(keys).flatMap(key => key.wallets);
 
