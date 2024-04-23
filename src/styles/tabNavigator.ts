@@ -36,21 +36,20 @@ export const ScreenOptions = (
   } => {
     switch (lang) {
       case 'fr':
-      case 'ja':
       case 'ru':
         return {
-          tabBarIndicatorHeight: 64,
-          tabBarHeight: 74,
+          tabBarIndicatorHeight: 76,
+          tabBarHeight: 86,
           paddingVerticalIos: 0,
           paddingVerticalAndroid: 0,
         };
       case 'de':
-      case 'es':
+      case 'ja':
       case 'nl':
       case 'pt':
         return {
-          tabBarIndicatorHeight: 54,
-          tabBarHeight: 64,
+          tabBarIndicatorHeight: 58,
+          tabBarHeight: 68,
           paddingVerticalIos: 1,
           paddingVerticalAndroid: 0,
         };
