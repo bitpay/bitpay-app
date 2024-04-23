@@ -165,11 +165,14 @@ export const startCreateAccount =
   };
 
 export const startSendVerificationEmail =
-  (): Effect => async (dispatch, getState) => {
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
     try {
       const {APP, BITPAY_ID} = getState();
 
-      AuthApi.sendVerificationEmail(APP.network, BITPAY_ID.session.csrfToken);
+      return AuthApi.sendVerificationEmail(
+        APP.network,
+        BITPAY_ID.session.csrfToken,
+      );
     } catch (err) {
       dispatch(
         LogActions.error('An error occurred sending verification email.'),
