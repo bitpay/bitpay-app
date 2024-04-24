@@ -15,6 +15,8 @@ import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {FeedbackType, ModalId} from './app.reducer';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {SupportedCoins} from '../../constants/currencies';
+import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -36,6 +38,8 @@ export enum AppActionTypes {
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
   DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
   RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG = 'APP/RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG',
+  SHOW_CHAIN_SELECTOR_MODAL = 'APP/SHOW_CHAIN_SELECTOR_MODAL',
+  DISMISS_CHAIN_SELECTOR_MODAL = 'APP/DISMISS_CHAIN_SELECTOR_MODAL',
   SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME',
   SET_CURRENT_ROUTE = 'APP/SET_CURRENT_ROUTE',
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
@@ -70,6 +74,7 @@ export enum AppActionTypes {
   UPDATE_SETTINGS_LIST_CONFIG = 'APP/UPDATE_SETTINGS_LIST_CONFIG',
   ADD_ALT_CURRENCIES_LIST = 'APP/ADD_ALT_CURRENCIES_LIST',
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
+  SET_DEFAULT_CHAIN_FILTER_OPTION = 'APP/SET_DEFAULT_CHAIN_FILTER_OPTION',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
@@ -171,6 +176,15 @@ interface DismissBottomNotificationModal {
 
 interface ResetBottomNotificationModalConfig {
   type: typeof AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG;
+}
+
+interface ShowChainSelectorModal {
+  type: typeof AppActionTypes.SHOW_CHAIN_SELECTOR_MODAL;
+  payload: ChainSelectorConfig;
+}
+
+interface DismissChainSelectorModal {
+  type: typeof AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL;
 }
 
 interface SetColorScheme {
@@ -328,6 +342,11 @@ interface SetDefaultAltCurrency {
   defaultAltCurrency: AltCurrenciesRowProps;
 }
 
+interface SetDefaultChainFilterOption {
+  type: typeof AppActionTypes.SET_DEFAULT_CHAIN_FILTER_OPTION;
+  selectedChainFilterOption: SupportedCoins | undefined;
+}
+
 interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
@@ -445,4 +464,7 @@ export type AppActionType =
   | SetHasViewedZenLedgerWarning
   | SetHasViewedBillsTab
   | InAppBrowserOpen
-  | ImportLedgerModalToggled;
+  | ImportLedgerModalToggled
+  | SetDefaultChainFilterOption
+  | ShowChainSelectorModal
+  | DismissChainSelectorModal;

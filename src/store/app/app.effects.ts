@@ -1134,14 +1134,11 @@ export const incomingLink =
       .replace(APP_DEEPLINK_PREFIX, '')
       .split('?');
     const pathSegments = (fullPath || '').split('/');
-    const params = (fullParams || '').split('&').reduce(
-      (paramMap, kvp) => {
-        const [k, v] = kvp.split('=');
-        paramMap[k] = v;
-        return paramMap;
-      },
-      {} as Record<string, string | undefined>,
-    ) as any;
+    const params = (fullParams || '').split('&').reduce((paramMap, kvp) => {
+      const [k, v] = kvp.split('=');
+      paramMap[k] = v;
+      return paramMap;
+    }, {} as Record<string, string | undefined>) as any;
 
     const pathInfo = dispatch(incomingShopLink(url));
 

@@ -9,7 +9,7 @@ import {H5, H7} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {GlobalSelectObj} from '../../navigation/wallet/screens/GlobalSelect';
 import styled from 'styled-components/native';
-import {LightBlack, Slate30, SlateDark} from '../../styles/colors';
+import {LightBlack, Slate, Slate30, SlateDark} from '../../styles/colors';
 import AngleRightSvg from '../../../assets/img/angle-right.svg';
 import {Img} from '../../navigation/tabs/home/components/Wallet';
 import {Wallet} from '../../store/wallet/wallet.models';
@@ -22,7 +22,7 @@ interface Props {
 }
 
 export const AvailableWalletsPill = styled.View`
-  border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  border-color: ${({theme: {dark}}) => (dark ? Slate : Slate30)};
   border-width: 1px;
   flex-direction: row;
   border-radius: 40px;
@@ -77,7 +77,7 @@ const GlobalSelectRow = ({item, emit}: Props) => {
             style={{
               marginLeft: 5,
               marginRight: 5,
-              color: theme.dark ? LightBlack : SlateDark,
+              color: theme.dark ? Slate : SlateDark,
             }}
             medium={true}>
             +{total}

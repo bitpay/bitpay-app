@@ -1,10 +1,4 @@
-import React, {
-  ReactElement,
-  useCallback,
-  useMemo,
-  useState,
-  useEffect,
-} from 'react';
+import React, {useCallback, useMemo, useState, useEffect} from 'react';
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
@@ -23,7 +17,7 @@ import {
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import {FlatList, TouchableOpacity} from 'react-native';
+import {FlatList, TouchableOpacity, View} from 'react-native';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -50,7 +44,7 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {Effect, RootState} from '../../../store';
+import {Effect} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Button, {ButtonState} from '../../../components/button/Button';
@@ -59,6 +53,9 @@ import {toFiat} from '../../../store/wallet/utils/wallet';
 import {LogActions} from '../../../store/log';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import SearchComponent, {
+  SearchableItem,
+} from '../../../components/chain-search/ChainSearch';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -115,12 +112,9 @@ export interface WalletSelectMenuHeaderContainerParams {
 }
 
 export const WalletSelectMenuHeaderContainer = styled.View<WalletSelectMenuHeaderContainerParams>`
-  padding: 20px;
-  padding-left: 12px;
+  padding: 16px;
   padding-bottom: ${({currency}) => (currency ? 14 : 0)}px;
-  flex-direction: row;
   justify-content: ${({currency}) => (currency ? 'flex-start' : 'center')};
-  align-items: center;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
   border-bottom-width: ${({currency}) => (currency ? 1 : 0)}px;
 `;
@@ -169,7 +163,7 @@ export type GlobalSelectParamList = {
   amount?: number;
 };
 
-export interface GlobalSelectObj {
+export interface GlobalSelectObj extends SearchableItem {
   id: string;
   currencyName: string;
   currencyAbbreviation: string;
@@ -202,11 +196,13 @@ const buildList = (
     );
 
     if (filteredWallets.length > 0) {
-      const {currencyAbbreviation, currencyName, img} = filteredWallets[0];
+      const {currencyAbbreviation, chain, currencyName, img} =
+        filteredWallets[0];
       const coinEntry = coins[currencyAbbreviation] || {
         id: _.uniqueId('coin_'),
         currencyName,
         currencyAbbreviation,
+        chain,
         img,
         availableWallets: [],
         availableWalletsByKey: {},
@@ -282,6 +278,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const navigation = useNavigation();
   const [walletSelectModalVisible, setWalletSelectModalVisible] =
     useState(false);
+  const [searchVal, setSearchVal] = useState('');
+  const [searchResults, setSearchResults] = useState([] as GlobalSelectObj[]);
+  const selectedChainFilterOption = useAppSelector(
+    ({APP}) => APP.selectedChainFilterOption,
+  );
+
   // object to pass to select modal
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
@@ -332,34 +334,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     wallets = wallets.filter(wallet => wallet.network === 'livenet');
   }
 
-  const supportedCoins = useMemo(
-    () =>
-      buildList(
-        customSupportedCurrencies ? customSupportedCurrencies : SUPPORTED_COINS,
-        wallets,
-      ),
-    [wallets, customSupportedCurrencies],
-  );
-
-  const supportedTokens = useMemo(
-    () => buildList(customSupportedCurrencies ? [] : SUPPORTED_TOKENS, wallets),
-    [wallets, customSupportedCurrencies],
-  );
-
-  const otherTokens = useMemo(
-    () =>
-      buildList(
-        customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_TOKENS,
-        wallets,
-      ),
-    [wallets, customSupportedCurrencies, NON_BITPAY_SUPPORTED_TOKENS],
-  );
-
-  const data = Object.values({
-    ...supportedCoins,
-    ...supportedTokens,
-    ...otherTokens,
-  });
+  const data = useMemo(() => {
+    const coins = customSupportedCurrencies
+      ? customSupportedCurrencies
+      : SUPPORTED_COINS;
+    const tokens = customSupportedCurrencies ? [] : SUPPORTED_TOKENS;
+    const nonBitpayTokens = customSupportedCurrencies
+      ? []
+      : NON_BITPAY_SUPPORTED_TOKENS;
+    const allCurrencies = [...coins, ...tokens, ...nonBitpayTokens];
+    const allCurrencyData = buildList(allCurrencies, wallets);
+    return Object.values(allCurrencyData);
+  }, [wallets, customSupportedCurrencies]);
 
   const goToBuyCrypto = async () => {
     if (onDismiss) {
@@ -692,9 +678,20 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       )}
       <GlobalSelectContainer>
         {data.length > 0 && (
+          <SearchComponent<GlobalSelectObj>
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={searchResults}
+            setSearchResults={setSearchResults}
+            searchFullList={data}
+          />
+        )}
+        {data.length > 0 && (
           <FlatList
             contentContainerStyle={{paddingBottom: 100}}
-            data={data}
+            data={
+              !searchVal && !selectedChainFilterOption ? data : searchResults
+            }
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />

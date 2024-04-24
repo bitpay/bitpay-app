@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {
   BaseText,
   HeaderTitle,
@@ -62,6 +62,8 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
+import SearchComponent from '../../../components/chain-search/ChainSearch';
+import {WalletRowProps} from '../../../components/list/WalletRow';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -116,7 +118,11 @@ const KeySettings = () => {
   const navigation = useNavigation();
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
-
+  const [searchVal, setSearchVal] = useState('');
+  const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
+  const selectedChainFilterOption = useAppSelector(
+    ({APP}) => APP.selectedChainFilterOption,
+  );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const _wallets = _key.wallets.filter(wallet =>
     wallet.credentials.isComplete(),
@@ -277,6 +283,50 @@ const KeySettings = () => {
     }
   };
 
+  const WalletList = ({wallets}: {wallets: WalletRowProps[]}) => {
+    return (
+      <>
+        {wallets.map(
+          ({
+            id,
+            currencyName,
+            chain,
+            img,
+            badgeImg,
+            isToken,
+            network,
+            hideWallet,
+            walletName,
+          }) => (
+            <TouchableOpacity
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('WalletSettings', {
+                  key: _key,
+                  walletId: id,
+                });
+              }}
+              key={id}
+              activeOpacity={ActiveOpacity}>
+              <WalletSettingsRow
+                id={id}
+                img={img}
+                badgeImg={badgeImg}
+                currencyName={currencyName}
+                chain={chain}
+                key={id}
+                isToken={isToken}
+                network={network}
+                hideWallet={hideWallet}
+                walletName={walletName}
+              />
+            </TouchableOpacity>
+          ),
+        )}
+      </>
+    );
+  };
+
   return (
     <WalletSettingsContainer>
       <ScrollContainer ref={scrollViewRef}>
@@ -298,6 +348,14 @@ const KeySettings = () => {
         </WalletNameContainer>
         <Hr />
 
+        <SearchComponent<WalletRowProps>
+          searchVal={searchVal}
+          setSearchVal={setSearchVal}
+          searchResults={searchResults}
+          setSearchResults={setSearchResults}
+          searchFullList={wallets}
+        />
+
         <WalletHeaderContainer>
           <Title>{t('Wallets')}</Title>
           <InfoImageContainer infoMargin={'0 0 0 8px'}>
@@ -311,43 +369,11 @@ const KeySettings = () => {
           </InfoImageContainer>
         </WalletHeaderContainer>
 
-        {wallets.map(
-          ({
-            id,
-            currencyName,
-            chain,
-            img,
-            badgeImg,
-            isToken,
-            network,
-            hideWallet,
-            walletName,
-          }) => (
-            <TouchableOpacity
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('WalletSettings', {
-                  walletId: id,
-                  key: _key,
-                });
-              }}
-              key={id}
-              activeOpacity={ActiveOpacity}>
-              <WalletSettingsRow
-                id={id}
-                img={img}
-                badgeImg={badgeImg}
-                currencyName={currencyName}
-                chain={chain}
-                key={id}
-                isToken={isToken}
-                network={network}
-                hideWallet={hideWallet}
-                walletName={walletName}
-              />
-            </TouchableOpacity>
-          ),
-        )}
+        <WalletList
+          wallets={
+            !searchVal && !selectedChainFilterOption ? wallets : searchResults
+          }
+        />
 
         {_key && !_key.isReadOnly ? (
           <VerticalPadding style={{alignItems: 'center'}}>
