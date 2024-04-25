@@ -1383,7 +1383,7 @@ const SellCryptoRoot = ({
                 <SellTermsContainer>
                   <TermsText>
                     {t(
-                      'This is an estimated price quote. The final amount will vary depending on when the Exchange receive your crypto and the fiat currency enabled for the selected withdrawal method.',
+                      'This quote provides an estimated price only. The final cost may vary based on the exact timing when your crypto is exchanged and the type of fiat currency used for withdrawal. Be aware that additional fees from third parties may also apply.',
                     )}
                   </TermsText>
                   <TermsText>
