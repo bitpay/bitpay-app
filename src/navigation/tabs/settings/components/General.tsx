@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useLayoutEffect} from 'react';
 import Button from '../../../../components/button/Button';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
@@ -6,7 +6,7 @@ import {AppActions} from '../../../../store/app';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {resetAllSettings} from '../../../../store/app/app.effects';
 import {sleep} from '../../../../utils/helper-methods';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {RootState} from '../../../../store';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
@@ -18,10 +18,27 @@ import {
   Hr,
   Setting,
   SettingTitle,
+  HeaderRightContainer,
 } from '../../../../components/styled/Containers';
+import styled from 'styled-components/native';
+import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
+import {White, SlateDark} from '../../../../styles/colors';
+
+const CloseModalButton = styled.TouchableOpacity`
+  padding: 5px;
+  height: 41px;
+  width: 41px;
+  border-radius: 50px;
+  background-color: #9ba3ae33;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
 const General = () => {
   const navigation = useNavigation();
   const colorScheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
+  const theme = useTheme();
   const showPortfolioValue = useAppSelector(
     ({APP}: RootState) => APP.showPortfolioValue,
   );
@@ -44,6 +61,24 @@ const General = () => {
       }
     });
   }, [appLanguage]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <HeaderRightContainer>
+          <CloseModalButton onPress={() => navigation.goBack()}>
+            <CloseModal
+              {...{
+                width: 20,
+                height: 20,
+                color: theme.dark ? White : SlateDark,
+              }}
+            />
+          </CloseModalButton>
+        </HeaderRightContainer>
+      ),
+    });
+  }, [navigation, t]);
 
   return (
     <SettingsComponent>
