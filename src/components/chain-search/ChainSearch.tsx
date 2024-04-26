@@ -77,7 +77,8 @@ export const SearchFilterIconContainer = styled.View`
 export interface SearchableItem {
   currencyName?: string;
   currencyAbbreviation?: string;
-  chain?: string;
+  chains?: string[]; // (Global Select view)
+  chain?: string; // (Key Overview view)
   availableWallets?: Wallet[];
   availableWalletsByKey?: {
     [key: string]: Wallet[];
@@ -148,6 +149,10 @@ const SearchComponent = <T extends SearchableItem>({
         );
       } else {
         results = results.reduce((acc: T[], data) => {
+          if (data.chain) {
+            data.chains = [data.chain];  // Workaround for Key Overview view
+          }
+
           const normalizedCurrencyAbbreviation = normalizeText(
             data.currencyAbbreviation!,
           );
@@ -156,15 +161,18 @@ const SearchComponent = <T extends SearchableItem>({
             normalizedCurrencyAbbreviation.includes(normalizedText);
           const hasMatchingCurrencyName =
             normalizedCurrencyName.includes(normalizedText);
+
           if (
-            (hasMatchingAbbreviation ||
+            ((hasMatchingAbbreviation ||
               hasMatchingCurrencyName ||
               !normalizedText) &&
-            (selectedChainFilterOption === data.chain! ||
-              !selectedChainFilterOption)
+              !selectedChainFilterOption) ||
+            (selectedChainFilterOption &&
+              data.chains!.includes(selectedChainFilterOption))
           ) {
             if (
-              selectedChainFilterOption === data.chain! &&
+              selectedChainFilterOption &&
+              data.chains!.includes(selectedChainFilterOption) &&
               data.availableWallets
             ) {
               data.availableWallets = data.availableWallets!.filter(

@@ -170,6 +170,7 @@ export interface GlobalSelectObj extends SearchableItem {
   img: string | ((props?: any) => React.ReactElement);
   total: number;
   availableWallets: Wallet[];
+  chains: string[];
   availableWalletsByKey: {
     [key: string]: Wallet[];
   };
@@ -202,7 +203,7 @@ const buildList = (
         id: _.uniqueId('coin_'),
         currencyName,
         currencyAbbreviation,
-        chain,
+        chains: [],
         img,
         availableWallets: [],
         availableWalletsByKey: {},
@@ -222,7 +223,7 @@ const buildList = (
         coinEntry.availableWallets,
         'chain',
       );
-
+      coinEntry.chains = [...coinEntry.chains, chain];
       coins[currencyAbbreviation] = coinEntry;
     }
   });
