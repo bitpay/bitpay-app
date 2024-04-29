@@ -68,7 +68,6 @@ import PayProConfirmTwoFactor, {
   PayProConfirmTwoFactorParamList,
 } from './screens/send/confirm/PayProConfirmTwoFactor';
 import {useTranslation} from 'react-i18next';
-import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
 import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
 import CurrencyTokenSelectionScreen, {
   CurrencyTokenSelectionScreenParamList,
@@ -155,7 +154,6 @@ export type WalletGroupParamList = {
   AllAddresses: AllAddressesParamList;
   PriceCharts: PriceChartsParamList;
   ClearEncryptPassword: ClearEncryptPasswordParamList;
-  SendToOptions: SendToOptionsParamList;
   SelectInputs: SelectInputsParamList;
   EnterBuyerProvidedEmail: {data: string};
   ExportTransactionHistory: {wallet: WalletModel};
@@ -208,7 +206,6 @@ export enum WalletScreens {
   ALL_ADDRESSES = 'AllAddresses',
   PRICE_CHARTS = 'PriceCharts',
   CLEAR_ENCRYPT_PASSWORD = 'ClearEncryptPassword',
-  SEND_TO_OPTIONS = 'SendToOptions',
   SELECT_INPUTS = 'SelectInputs',
   ENTER_BUYER_PROVIDED_EMAIL = 'EnterBuyerProvidedEmail',
   CLEAR_TRANSACTION_HISTORY_CACHE = 'ClearTransactionHistoryCache',
@@ -429,10 +426,6 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
         }}
         name={WalletScreens.CLEAR_ENCRYPT_PASSWORD}
         component={ClearEncryptPassword}
-      />
-      <Wallet.Screen
-        name={WalletScreens.SEND_TO_OPTIONS}
-        component={SendToOptions}
       />
       <Wallet.Screen
         name={WalletScreens.SELECT_INPUTS}

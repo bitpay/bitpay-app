@@ -1,7 +1,7 @@
 import React from 'react';
 import Checkbox from './Checkbox';
 import {fireEvent, render} from '@test/render';
-import {SlateDark, Action} from '../../styles/colors';
+import {Action} from '../../styles/colors';
 
 it('renders correctly', async () => {
   const mockFn = jest.fn();
@@ -9,7 +9,7 @@ it('renders correctly', async () => {
     <Checkbox onPress={mockFn} checked={false} />,
   );
   const checkbox = await getByTestId('checkbox');
-  expect(getByTestId('checkboxBorder')).toHaveStyle({borderColor: SlateDark});
+  expect(getByTestId('checkboxBorder')).toHaveStyle({borderColor: '#E5E5F2'});
   fireEvent(checkbox, 'press');
   expect(mockFn).toHaveBeenCalled();
 

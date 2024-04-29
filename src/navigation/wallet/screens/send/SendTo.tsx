@@ -1,13 +1,25 @@
-import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   BaseText,
+  H5,
+  H7,
   HeaderTitle,
   Paragraph,
+  SubText,
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
+  Column,
+  HeaderRightContainer,
+  Hr,
   ScreenGutter,
   SearchContainer,
   SearchInput,
@@ -18,6 +30,8 @@ import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
 import {
   LightBlack,
   Midnight,
+  NotificationPrimary,
+  Slate,
   Slate30,
   SlateDark,
   White,
@@ -32,7 +46,13 @@ import {
   getErrorString,
   sleep,
 } from '../../../../utils/helper-methods';
-import {Key} from '../../../../store/wallet/wallet.models';
+import {
+  Key,
+  Recipient,
+  TransactionOptionsContext,
+  TxDetailsSendingTo,
+  Wallet,
+} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
 import debounce from 'lodash.debounce';
 import {
@@ -40,11 +60,15 @@ import {
   ValidDataTypes,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {TouchableOpacity, View} from 'react-native';
+import {FlatList, TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
+import {
+  ExtractBitPayUriAddress,
+  ExtractUriAmount,
+  GetPayProUrl,
+} from '../../../../store/wallet/utils/decode-uri';
 import KeyWalletsRow, {
   KeyWallet,
   KeyWalletsRowProps,
@@ -83,21 +107,164 @@ import {IsUtxoCoin} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
-import Settings from '../../../../components/settings/Settings';
-import OptionsSheet, {Option} from '../../components/OptionsSheet';
-import Icons from '../../components/WalletIcons';
-import ContactRow from '../../../../components/list/ContactRow';
+import ContactRow, {
+  ContactRowProps,
+} from '../../../../components/list/ContactRow';
 import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
+import Checkbox from '../../../../components/checkbox/Checkbox';
+import _ from 'lodash';
+import AmountModal from '../../../../components/amount/AmountModal';
+import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
+import WalletIcons from '../../components/WalletIcons';
+import Button from '../../../../components/button/Button';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+} from '../../../../store/wallet/effects/send/send';
+import ContactIcon from '../../../../navigation/tabs/contacts/components/ContactIcon';
+
+const AdvancedOptionsButton = styled.TouchableOpacity`
+  height: 40px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const AdvancedOptionsButtonText = styled(BaseText)`
+  font-size: 14px;
+  color: ${({theme: {dark}}) => (dark ? White : NotificationPrimary)};
+  margin-bottom: 5px;
+`;
+
+const CheckBoxContainer = styled.View`
+  padding-left: 10px;
+`;
+
+const CheckBoxWrapper = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 5px;
+`;
+
+const CheckBoxCol = styled.View`
+  display: flex;
+  flex-direction: column;
+`;
+
+const CheckboxText = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+`;
+
+const RecipientContainer = styled.View`
+  align-items: center;
+  flex-direction: row;
+  padding: 15px 0px;
+`;
+
+const RecipientOptionsContainer = styled.View`
+  justify-content: flex-end;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+`;
+const ContactImageContainer = styled.View`
+  height: 35px;
+  width: 35px;
+  display: flex;
+  justify-content: center;
+`;
+
+const RecipientNameColumn = styled(Column)`
+  margin-left: 20px;
+  margin-right: 24px;
+`;
+
+export const RecipientList: React.FC<RecipientListProps> = ({
+  recipient,
+  wallet,
+  deleteRecipient,
+  setAmount,
+}) => {
+  let recipientData: TxDetailsSendingTo;
+
+  if (recipient?.type === 'contact') {
+    recipientData = {
+      recipientName: recipient?.name,
+      recipientAddress: recipient?.address,
+      img: recipient?.type,
+    };
+  } else {
+    recipientData = {
+      recipientName: recipient.name,
+      recipientAddress: recipient.address,
+      img: wallet?.img || wallet?.currencyAbbreviation,
+    };
+  }
+
+  return (
+    <RecipientContainer>
+      <ContactImageContainer>
+        {recipient?.type === 'contact' ? (
+          <ContactIcon
+            name={recipient.name}
+            coin={recipient.chain}
+            size={45}
+            chain={recipient.chain}
+            tokenAddress={recipient.tokenAddress}
+          />
+        ) : (
+          <CurrencyImage img={recipientData.img} size={45} />
+        )}
+      </ContactImageContainer>
+      <RecipientNameColumn>
+        {recipientData.recipientName ? (
+          <H5 bold={false} numberOfLines={1} ellipsizeMode={'tail'}>
+            {recipientData.recipientName}
+          </H5>
+        ) : (
+          <H7 medium={true} numberOfLines={1} ellipsizeMode={'tail'}>
+            {recipientData.recipientAddress}
+          </H7>
+        )}
+      </RecipientNameColumn>
+      <RecipientOptionsContainer>
+        <TouchableOpacity
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            setAmount();
+          }}>
+          <H5>{recipient.amount}</H5>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{marginLeft: 8}}
+          activeOpacity={ActiveOpacity}
+          onPress={() => deleteRecipient()}>
+          <WalletIcons.Delete />
+        </TouchableOpacity>
+      </RecipientOptionsContainer>
+    </RecipientContainer>
+  );
+};
+
+interface RecipientListProps {
+  recipient: Recipient;
+  wallet: Wallet;
+  deleteRecipient: () => void;
+  setAmount: () => void;
+}
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
 `;
 
-const ScrollView = styled.ScrollView`
+const SendToContainer = styled.FlatList`
   flex: 1;
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
@@ -146,6 +313,15 @@ const EmailText = styled(Paragraph)`
 
 const InfoSheetMessage = styled.View`
   padding: 20px 0;
+`;
+
+const SelectInputContainer = styled.TouchableOpacity`
+  margin: 0 0 0 20px;
+`;
+
+const SelectOptionText = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : NotificationPrimary)};
+  font-size: 13px;
 `;
 
 const isEmailAddress = (text: string) => {
@@ -239,6 +415,9 @@ const SendTo = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const route = useRoute<RouteProp<WalletGroupParamList, 'SendTo'>>();
+  const [selectInputOption, setSelectInputOption] = useState(false);
+  const [multiSendOption, setMultiSendOption] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(true);
 
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -248,62 +427,58 @@ const SendTo = () => {
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? LightBlack : Slate30;
   const [searchInput, setSearchInput] = useState('');
-  const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const [recipientList, setRecipientList] = useState<Recipient[]>([]);
   const [searchIsEmailAddress, setSearchIsEmailAddress] = useState(false);
   const [emailAddressSearchPromise, setEmailAddressSearchPromise] = useState<
     Promise<ReceivingAddress[]>
   >(Promise.resolve([]));
+  const [recipientAmount, setRecipientAmount] = useState<{
+    showModal: boolean;
+    recipient?: Recipient;
+    index?: number;
+    updateRecipient?: boolean;
+  }>({showModal: false});
 
   const {wallet} = route.params;
   const {currencyAbbreviation, id, chain, network} = wallet;
 
   const isUtxo = IsUtxoCoin(wallet?.currencyAbbreviation);
 
-  const selectInputOption: Option = {
-    img: <Icons.SelectInputs />,
-    title: t('Select Inputs for this Transaction'),
-    description: t("Choose which inputs you'd like to use to send crypto."),
-    onPress: async () => {
-      await sleep(500);
-      navigation.navigate('SendToOptions', {
-        title: t('Select Inputs'),
-        wallet,
-        context: 'selectInputs',
-      });
-    },
-  };
-
-  const multisendOption: Option = {
-    img: <Icons.Multisend />,
-    title: t('Transfer to Multiple Recipients'),
-    description: t('Send crypto to multiple contacts or addresses.'),
-    onPress: async () => {
-      await sleep(500);
-      navigation.navigate('SendToOptions', {
-        title: t('Multiple Recipients'),
-        wallet,
-        context: 'multisend',
-      });
-    },
-  };
-
-  const assetOptions: Array<Option> = isUtxo
-    ? [multisendOption, selectInputOption]
-    : [];
-
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
-      headerRight: () =>
-        assetOptions.length ? (
-          <Settings
-            onPress={() => {
-              setShowWalletOptions(true);
-            }}
-          />
-        ) : null,
     });
   });
+
+  const setMultiSendRecipientList = (
+    recipient: Recipient,
+    index?: number,
+    removeRecipient?: boolean,
+    updateRecipient?: boolean,
+  ) => {
+    let newRecipientList: Recipient[] = _.cloneDeep(recipientList);
+    if (removeRecipient) {
+      newRecipientList.splice(index!, 1);
+    } else if (updateRecipient) {
+      newRecipientList[index!] = recipient;
+    } else {
+      newRecipientList = [...newRecipientList, recipient];
+    }
+
+    setRecipientList(newRecipientList);
+  };
+
+  const setMultiSendRecipientAmount = (
+    recipient: Recipient,
+    index?: number,
+    updateRecipient?: boolean,
+  ) => {
+    if (recipient.amount && !updateRecipient) {
+      setMultiSendRecipientList(recipient);
+    } else {
+      setRecipientAmount({showModal: true, recipient, index, updateRecipient});
+    }
+  };
 
   const keyWallets: KeyWalletsRowProps<KeyWallet>[] = BuildKeyWalletRow(
     keys,
@@ -466,9 +641,24 @@ const SendTo = () => {
     setSearchIsEmailAddress(false);
     const res = await validateText(text);
     if (res?.isValid) {
-      await dispatch(
-        incomingData(text, {wallet, context, name, email, destinationTag}),
-      );
+      selectInputOption
+        ? navigation.navigate('SelectInputs', {
+            recipient: {address: text},
+            wallet,
+          })
+        : multiSendOption
+        ? (() => {
+            const extractedAmount = ExtractUriAmount(text);
+            const addr = ExtractBitPayUriAddress(text);
+            addRecipient({
+              address: addr,
+              amount: extractedAmount ? Number(extractedAmount[1]) : undefined,
+            });
+          })()
+        : await dispatch(
+            incomingData(text, {wallet, context, name, email, destinationTag}),
+          );
+      setSearchInput('');
     } else if (res?.invalidReason === 'invalidCurrency') {
       dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
     } else if (res?.invalidReason && typeof res.invalidReason === 'string') {
@@ -519,17 +709,114 @@ const SendTo = () => {
         chain,
       };
 
-      dispatch(
-        goToAmount({
-          coin: wallet.currencyAbbreviation,
-          chain: wallet.chain,
-          recipient,
-          wallet,
-        }),
-      );
+      selectInputOption
+        ? navigation.navigate('SelectInputs', {
+            recipient,
+            wallet,
+          })
+        : multiSendOption
+        ? addRecipient(recipient)
+        : dispatch(
+            goToAmount({
+              coin: wallet.currencyAbbreviation,
+              chain: wallet.chain,
+              recipient,
+              wallet,
+            }),
+          );
     } catch (err: any) {
       logger.error(`Send To: ${getErrorString(err)}`);
       dispatch(dismissOnGoingProcessModal());
+    }
+  };
+
+  const onSendToContact = async (contact: ContactRowProps) => {
+    try {
+      if (contact) {
+        selectInputOption
+          ? navigation.navigate('SelectInputs', {
+              recipient: {type: 'contact', ...contact},
+              wallet,
+            })
+          : multiSendOption
+          ? setMultiSendRecipientAmount({
+              type: 'contact',
+              ...contact,
+            })
+          : validateAndNavigateToConfirm(contact.address, {
+              context: 'contact',
+              name: contact.name,
+              destinationTag: contact.tag || contact.destinationTag,
+            });
+      }
+    } catch (err) {
+      logger.error(`Send To [Contacts]: ${getErrorString(err)}`);
+    }
+  };
+
+  const renderRecipientList = useCallback(
+    ({item, index}) => {
+      return (
+        <RecipientList
+          recipient={item}
+          wallet={wallet}
+          deleteRecipient={() => setMultiSendRecipientList(item, index, true)}
+          setAmount={() => setMultiSendRecipientAmount(item, index, true)}
+        />
+      );
+    },
+    [wallet, setMultiSendRecipientList, setMultiSendRecipientAmount],
+  );
+
+  const addRecipient = (newRecipient: Recipient) => {
+    setMultiSendRecipientAmount(newRecipient);
+  };
+
+  const goToConfirmView = async () => {
+    try {
+      dispatch(startOnGoingProcessModal('LOADING'));
+      const amount = _.sumBy(recipientList, 'amount');
+      const tx = {
+        wallet,
+        recipient: recipientList[0],
+        recipientList,
+        amount,
+        context: 'multisend' as TransactionOptionsContext,
+      };
+      const {txDetails, txp} = (await dispatch<any>(
+        createProposalAndBuildTxDetails(tx),
+      )) as any;
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      navigation.navigate('Confirm', {
+        wallet,
+        recipient: recipientList[0],
+        recipientList,
+        txp,
+        txDetails,
+        amount,
+      });
+    } catch (err: any) {
+      const errorMessageConfig = (
+        await Promise.all([
+          dispatch(handleCreateTxProposalError(err)),
+          sleep(500),
+        ])
+      )[0];
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {},
+            },
+          ],
+        }),
+      );
     }
   };
 
@@ -567,150 +854,278 @@ const SendTo = () => {
     );
   }, [navigation]);
 
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => {
+        return multiSendOption ? (
+          <HeaderRightContainer>
+            <Button
+              disabled={!recipientList[0]}
+              buttonType="pill"
+              onPress={() => goToConfirmView()}>
+              {t('Continue')}
+            </Button>
+          </HeaderRightContainer>
+        ) : null;
+      },
+    });
+  }, [multiSendOption, recipientList]);
+
   return (
     <SafeAreaView>
-      <ScrollView keyboardShouldPersistTaps={'handled'}>
-        <SearchContainer>
-          <SearchInput
-            placeholder={t('Search contact or enter address')}
-            placeholderTextColor={placeHolderTextColor}
-            value={searchInput}
-            onChangeText={(text: string) => {
-              setSearchInput(text);
-              onSearchInputChange(text);
-            }}
-          />
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={() => {
-              haptic('impactLight');
-              dispatch(
-                Analytics.track('Open Scanner', {
-                  context: 'SendTo',
-                }),
-              );
-              navigation.navigate('ScanRoot', {
-                onScanComplete: data => {
-                  try {
-                    if (data) {
-                      validateAndNavigateToConfirm(data);
-                    }
-                  } catch (err) {
-                    const e =
-                      err instanceof Error ? err.message : JSON.stringify(err);
-                    dispatch(LogActions.error('[OpenScanner SendTo] ', e));
-                  }
-                },
-              });
-            }}>
-            <ScanSvg />
-          </TouchableOpacity>
-        </SearchContainer>
-
-        {searchIsEmailAddress ? (
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={async () => {
-              const email = searchInput.toLowerCase();
-              const emailReceivingAddresses = await emailAddressSearchPromise;
-              const addressMatchingCurrency = emailReceivingAddresses.find(
-                ({coin, chain: addressChain}) =>
-                  currencyAbbreviation.toLowerCase() === coin.toLowerCase() &&
-                  chain.toLowerCase() === addressChain.toLowerCase(),
-              );
-              addressMatchingCurrency
-                ? validateAndNavigateToConfirm(
-                    addressMatchingCurrency.address,
-                    {email},
-                  )
-                : dispatch(
-                    showBottomNotificationModal({
-                      type: 'warning',
-                      title: 'Unable to Send to Contact',
-                      message: '',
-                      message2: (
-                        <InfoSheetMessage>
-                          <Paragraph>
-                            <EmailText>{email}</EmailText> is not yet able to
-                            receive crypto to their email.
-                          </Paragraph>
-                        </InfoSheetMessage>
-                      ),
-                      enableBackdropDismiss: true,
-                      actions: [
-                        {
-                          text: 'OK',
-                          action: async () => {
-                            dispatch(dismissBottomNotificationModal());
-                          },
-                          primary: true,
-                        },
-                      ],
+      <SendToContainer
+        contentContainerStyle={{
+          paddingBottom: 50,
+        }}
+        ListHeaderComponent={
+          <>
+            <SearchContainer>
+              <SearchInput
+                placeholder={t('Search contact or enter address')}
+                placeholderTextColor={placeHolderTextColor}
+                value={searchInput}
+                onChangeText={(text: string) => {
+                  setSearchInput(text);
+                  onSearchInputChange(text);
+                }}
+              />
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={() => {
+                  haptic('impactLight');
+                  dispatch(
+                    Analytics.track('Open Scanner', {
+                      context: 'SendTo',
                     }),
                   );
-            }}>
-            <EmailContainer>
-              <EmailIconContainer>
-                <SendLightSvg />
-              </EmailIconContainer>
-              <EmailTextContainer>
-                <Paragraph>
-                  Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
-                </Paragraph>
-              </EmailTextContainer>
-            </EmailContainer>
-          </TouchableOpacity>
-        ) : null}
-
-        {contacts.length > 0 && !searchIsEmailAddress ? (
-          <ContactContainer>
-            <ContactTitleContainer>
-              {ContactsSvg({})}
-              <ContactTitle>{t('Contacts')}</ContactTitle>
-            </ContactTitleContainer>
-
-            {contacts.map((item, index) => {
-              return (
-                <ContactRow
-                  key={index}
-                  contact={item}
-                  onPress={() => {
-                    try {
-                      if (item) {
-                        validateAndNavigateToConfirm(item.address, {
-                          context: 'contact',
-                          name: item.name,
-                          destinationTag: item.tag || item.destinationTag,
-                        });
+                  navigation.navigate('ScanRoot', {
+                    onScanComplete: data => {
+                      try {
+                        if (data) {
+                          validateAndNavigateToConfirm(data);
+                        }
+                      } catch (err) {
+                        const e =
+                          err instanceof Error
+                            ? err.message
+                            : JSON.stringify(err);
+                        dispatch(LogActions.error('[OpenScanner SendTo] ', e));
                       }
-                    } catch (err) {
-                      logger.error(
-                        `Send To [Contacts]: ${getErrorString(err)}`,
+                    },
+                  });
+                }}>
+                <ScanSvg />
+              </TouchableOpacity>
+            </SearchContainer>
+
+            {isUtxo ? (
+              <CheckBoxContainer>
+                <AdvancedOptionsButton
+                  accessibilityLabel="show-advanced-options"
+                  onPress={() => {
+                    setShowAdvancedOptions(!showAdvancedOptions);
+                  }}>
+                  {showAdvancedOptions ? (
+                    <AdvancedOptionsButtonText>
+                      {t('Hide Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                  ) : (
+                    <AdvancedOptionsButtonText>
+                      {t('Show Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                  )}
+                </AdvancedOptionsButton>
+                {showAdvancedOptions ? (
+                  <>
+                    <CheckBoxWrapper>
+                      <Checkbox
+                        radio={true}
+                        onPress={() => {
+                          setSelectInputOption(!selectInputOption);
+                          setMultiSendOption(false);
+                        }}
+                        checked={selectInputOption}
+                      />
+                      <CheckBoxCol>
+                        <SelectInputContainer
+                          onPress={() => {
+                            setSelectInputOption(!selectInputOption);
+                            setMultiSendOption(false);
+                          }}>
+                          <SelectOptionText>
+                            {t('Select Inputs for this Transaction')}
+                          </SelectOptionText>
+                          <CheckboxText>
+                            {t("Choose which inputs you'd like to use")}
+                          </CheckboxText>
+                        </SelectInputContainer>
+                      </CheckBoxCol>
+                    </CheckBoxWrapper>
+                    <CheckBoxWrapper>
+                      <Checkbox
+                        radio={true}
+                        onPress={() => {
+                          setMultiSendOption(!multiSendOption);
+                          setSelectInputOption(false);
+                        }}
+                        checked={multiSendOption}
+                      />
+                      <CheckBoxCol>
+                        <SelectInputContainer
+                          onPress={() => {
+                            setMultiSendOption(!multiSendOption);
+                            setSelectInputOption(false);
+                          }}>
+                          <SelectOptionText>
+                            {t('Transfer to Multiple Recipients')}
+                          </SelectOptionText>
+                          <CheckboxText>
+                            {t('Send crypto to multiple contacts or addresses')}
+                          </CheckboxText>
+                        </SelectInputContainer>
+                      </CheckBoxCol>
+                    </CheckBoxWrapper>
+                  </>
+                ) : null}
+              </CheckBoxContainer>
+            ) : null}
+
+            {multiSendOption && recipientList?.length > 0 ? (
+              <View style={{marginTop: 20}}>
+                <View style={{marginBottom: 10}}>
+                  <H5>
+                    {recipientList?.length > 1
+                      ? t('Recipients') + ` (${recipientList?.length})`
+                      : t('Recipient')}
+                  </H5>
+                  <Hr />
+                </View>
+                {recipientList && recipientList.length ? (
+                  <FlatList
+                    data={recipientList}
+                    keyExtractor={(_item, index) => index.toString()}
+                    renderItem={renderRecipientList}
+                  />
+                ) : null}
+              </View>
+            ) : multiSendOption ? (
+              <SubText style={{textAlign: 'center', marginTop: 10}}>
+                {t(
+                  'To get started, you’ll need to enter a valid address or select an existing contact or wallet.',
+                )}
+              </SubText>
+            ) : null}
+
+            {searchIsEmailAddress ? (
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={async () => {
+                  const email = searchInput.toLowerCase();
+                  const emailReceivingAddresses =
+                    await emailAddressSearchPromise;
+                  const addressMatchingCurrency = emailReceivingAddresses.find(
+                    ({coin, chain: addressChain}) =>
+                      currencyAbbreviation.toLowerCase() ===
+                        coin.toLowerCase() &&
+                      chain.toLowerCase() === addressChain.toLowerCase(),
+                  );
+                  addressMatchingCurrency
+                    ? validateAndNavigateToConfirm(
+                        addressMatchingCurrency.address,
+                        {email},
+                      )
+                    : dispatch(
+                        showBottomNotificationModal({
+                          type: 'warning',
+                          title: 'Unable to Send to Contact',
+                          message: '',
+                          message2: (
+                            <InfoSheetMessage>
+                              <Paragraph>
+                                <EmailText>{email}</EmailText> is not yet able
+                                to receive crypto to their email.
+                              </Paragraph>
+                            </InfoSheetMessage>
+                          ),
+                          enableBackdropDismiss: true,
+                          actions: [
+                            {
+                              text: 'OK',
+                              action: async () => {
+                                dispatch(dismissBottomNotificationModal());
+                              },
+                              primary: true,
+                            },
+                          ],
+                        }),
                       );
-                    }
-                  }}
-                />
-              );
-            })}
-          </ContactContainer>
-        ) : null}
+                }}>
+                <EmailContainer>
+                  <EmailIconContainer>
+                    <SendLightSvg />
+                  </EmailIconContainer>
+                  <EmailTextContainer>
+                    <Paragraph>
+                      Send to <EmailText>{searchInput.toLowerCase()}</EmailText>
+                    </Paragraph>
+                  </EmailTextContainer>
+                </EmailContainer>
+              </TouchableOpacity>
+            ) : null}
 
-        <OptionsSheet
-          isVisible={showWalletOptions}
-          closeModal={() => setShowWalletOptions(false)}
-          options={assetOptions}
-        />
+            {contacts.length > 0 && !searchIsEmailAddress ? (
+              <ContactContainer>
+                <ContactTitleContainer>
+                  {ContactsSvg({})}
+                  <ContactTitle>{t('Contacts')}</ContactTitle>
+                </ContactTitleContainer>
 
-        <View style={{marginTop: 10}}>
-          <KeyWalletsRow
-            keyWallets={keyWallets}
-            hideBalance={hideAllBalances}
-            onPress={(selectedWallet: KeyWallet) => {
-              onSendToWallet(selectedWallet);
-            }}
-          />
-        </View>
-      </ScrollView>
+                {contacts.map((item, index) => {
+                  return (
+                    <ContactRow
+                      key={index}
+                      contact={item}
+                      onPress={() => onSendToContact(item)}
+                    />
+                  );
+                })}
+              </ContactContainer>
+            ) : null}
+
+            <View style={{marginTop: 10}}>
+              <KeyWalletsRow
+                keyWallets={keyWallets}
+                hideBalance={hideAllBalances}
+                onPress={(selectedWallet: KeyWallet) => {
+                  onSendToWallet(selectedWallet);
+                }}
+              />
+            </View>
+          </>
+        }
+        data={[]}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({item, index}) => <></>}
+        keyboardShouldPersistTaps={'handled'}
+      />
+
+      <AmountModal
+        isVisible={recipientAmount.showModal}
+        cryptoCurrencyAbbreviation={currencyAbbreviation}
+        chain={chain}
+        onClose={() => {
+          setRecipientAmount({showModal: false});
+        }}
+        onSubmit={amount => {
+          setRecipientAmount({showModal: false});
+          setMultiSendRecipientList(
+            {...recipientAmount.recipient!, amount},
+            recipientAmount.index,
+            false,
+            recipientAmount.updateRecipient,
+          );
+        }}
+      />
     </SafeAreaView>
   );
 };
