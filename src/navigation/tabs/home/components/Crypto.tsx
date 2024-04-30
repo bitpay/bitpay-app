@@ -47,7 +47,7 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-// import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
+import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 import {AppActions} from '../../../../store/app';
 
 const CryptoContainer = styled.View`
@@ -221,7 +221,7 @@ export const createHomeCardList = ({
 
   defaults.push({id: 'createWallet', component: <CreateWallet />});
 
-  // defaults.push({id: 'connectLedger', component: <ConnectLedgerNanoXCard />});
+  defaults.push({id: 'connectLedger', component: <ConnectLedgerNanoXCard />});
 
   if (hasCoinbase) {
     list.push({
@@ -338,13 +338,13 @@ const Crypto = () => {
                   ? 'Coinbase'
                   : t('Connect your Coinbase account')}
               </Button>
-              {/* <Button
+              <Button
                 buttonStyle={'secondary'}
                 onPress={() => {
                   dispatch(AppActions.importLedgerModalToggled(true));
                 }}>
                 {t('Connect your Ledger Nano X')}
-              </Button> */}
+              </Button>
             </ButtonContainer>
           </Column>
         </SectionHeaderContainer>

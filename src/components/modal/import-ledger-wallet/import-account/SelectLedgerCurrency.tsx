@@ -899,7 +899,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             </DescriptionRow>
             {isPromptOpenApp ? (
               <IconRow>
-                <BitpaySvg />
+                <BitpaySvg width={60} height={60} />
               </IconRow>
             ) : (
               <RadiatingLineAnimation icon={BitpaySvg} height={60} width={60} />
