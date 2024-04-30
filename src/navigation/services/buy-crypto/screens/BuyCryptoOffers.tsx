@@ -1816,7 +1816,7 @@ const BuyCryptoOffers: React.FC = () => {
         APP_DEEPLINK_PREFIX + `moonpay?externalId=${externalTransactionId}`,
       env: moonpayEnv,
       lockAmount: true,
-      showWalletAddressForm: true,
+      showWalletAddressForm: false,
     };
 
     let data;

@@ -553,7 +553,7 @@ const SellCryptoRoot = ({
       colorCode: BitPay,
       theme: theme.dark ? 'dark' : 'light',
       quoteCurrencyCode: cloneDeep(fiatCurrency).toLowerCase(),
-      showWalletAddressForm: true,
+      showWalletAddressForm: false,
     };
 
     let data: MoonpayGetSellSignedPaymentUrlData;
