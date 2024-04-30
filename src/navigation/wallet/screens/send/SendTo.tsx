@@ -38,6 +38,7 @@ import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
   ValidDataTypes,
+  ValidateCoinAddress,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
 import {TouchableOpacity, View} from 'react-native';
@@ -73,9 +74,7 @@ import {
   Mismatch,
 } from '../../components/ErrorMessages';
 import {
-  CoinNetwork,
   createWalletAddress,
-  GetCoinAndNetwork,
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
@@ -335,7 +334,7 @@ const SendTo = () => {
   const BchLegacyAddressInfoDismiss = (searchText: string) => {
     try {
       const cashAddr = TranslateToBchCashAddress(
-        searchText.replace(/^(bitcoincash:|bchtest:)/, ''),
+        searchText.replace(/^(bitcoincash:|bchtest:|bchreg:)/, ''),
       );
       setSearchInput(cashAddr);
       validateAndNavigateToConfirm(cashAddr);
@@ -347,39 +346,33 @@ const SendTo = () => {
   const checkCoinAndNetwork =
     (data: any, isPayPro?: boolean): Effect<boolean> =>
     dispatch => {
-      let isValid, addrData: CoinNetwork | null;
+      let isValid = false;
       if (isPayPro) {
         isValid =
           data?.chain?.toLowerCase() === chain.toLowerCase() &&
           data?.network.toLowerCase() === network.toLowerCase();
       } else {
-        addrData = GetCoinAndNetwork(data, network, chain);
-        isValid =
-          chain === addrData?.coin.toLowerCase() &&
-          network === addrData?.network;
+        isValid = ValidateCoinAddress(data, chain, network);
       }
 
-      if (isValid) {
-        return true;
-      } else {
-        // @ts-ignore
-        let addrNetwork = isPayPro ? data.network : addrData?.network;
-        if (currencyAbbreviation === 'bch' && network === addrNetwork) {
-          const isLegacy = CheckIfLegacyBCH(data);
-          if (isLegacy) {
-            const appName = APP_NAME_UPPERCASE;
+      if (currencyAbbreviation === 'bch' && isValid) {
+        const isLegacy = CheckIfLegacyBCH(data);
+        if (isLegacy) {
+          const appName = APP_NAME_UPPERCASE;
 
-            dispatch(
-              showBottomNotificationModal(
-                BchLegacyAddressInfo(appName, () => {
-                  BchLegacyAddressInfoDismiss(data);
-                }),
-              ),
-            );
-          }
+          dispatch(
+            showBottomNotificationModal(
+              BchLegacyAddressInfo(appName, () => {
+                // TODO: This doesn't seem to work
+                BchLegacyAddressInfoDismiss(data);
+                return false;
+              }),
+            ),
+          );
         }
       }
-      return false;
+
+      return isValid;
     };
 
   const validateText = async (text: string) => {

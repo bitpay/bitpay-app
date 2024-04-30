@@ -214,6 +214,7 @@ const AddWallet = ({
   // temporary until advanced settings is finished
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
+  const [isRegtest, setIsRegtest] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
@@ -416,7 +417,11 @@ const AddWallet = ({
             },
             options: {
               password,
-              network: isTestnet ? Network.testnet : network,
+              network: isTestnet
+                ? Network.testnet
+                : isRegtest
+                ? Network.regtest
+                : network,
               useNativeSegwit,
               singleAddress,
               walletName: walletName === currencyName ? undefined : walletName,
@@ -772,17 +777,26 @@ const AddWallet = ({
                   activeOpacity={1}
                   onPress={() => {
                     setIsTestnet(!isTestnet);
+                    setIsRegtest(false);
+                  }}
+                  onLongPress={() => {
+                    setIsTestnet(false);
+                    setIsRegtest(!isRegtest);
                   }}>
                   <Column>
                     <OptionTitle>
-                      {getProtocolName(chain || '', 'testnet')}
+                      {getProtocolName(
+                        chain || '',
+                        isRegtest ? 'regtest' : 'testnet',
+                      )}
                     </OptionTitle>
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
-                      checked={isTestnet}
+                      checked={isTestnet || isRegtest}
                       onPress={() => {
                         setIsTestnet(!isTestnet);
+                        setIsRegtest(false);
                       }}
                     />
                   </CheckBoxContainer>

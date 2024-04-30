@@ -373,9 +373,7 @@ export const getProtocolName = (
   const _network = network.toLowerCase();
   return PROTOCOL_NAME[_chain]?.[_network]
     ? PROTOCOL_NAME[_chain][_network]
-    : _network === 'testnet'
-    ? PROTOCOL_NAME.default[_network]
-    : undefined;
+    : PROTOCOL_NAME.default[_network];
 };
 
 export const getCWCChain = (chain: string): string => {

@@ -783,7 +783,7 @@ const handleBitcoinCashUriLegacyAddress =
     const chain = 'bch';
     const parsed = BwcProvider.getInstance()
       .getBitcore()
-      .URI(data.replace(/^(bitcoincash:|bchtest:)/, 'bitcoin:'));
+      .URI(data.replace(/^(bitcoincash:|bchtest:|bchreg:)/, 'bitcoin:'));
 
     const oldAddr = parsed.address ? parsed.address.toString() : '';
     if (!oldAddr) {

@@ -51,7 +51,7 @@ export const IsValidBitPayInvoice = (data: string): boolean => {
 
 export const IsValidPayPro = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!/^(bitpay|bitcoin|bitcoincash|bchtest|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=[\w+]/.exec(
+  return !!/^(bitpay|bitcoin|bitcoincash|bchtest|bchreg|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=[\w+]/.exec(
     data,
   );
 };
@@ -161,7 +161,7 @@ export const IsValidBitcoinCashUriWithLegacyAddress = (
 ): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcore().URI.isValid(
-    data.replace(/^(bitcoincash:|bchtest:)/, 'bitcoin:'),
+    data.replace(/^(bitcoincash:|bchtest:|bchreg:)/, 'bitcoin:'),
   );
 };
 
@@ -175,7 +175,8 @@ export const IsValidBitcoinAddress = (data: string): boolean => {
 export const IsValidBitcoinCashAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcoreCash().Address.isValid(data, 'livenet') ||
-    BWC.getBitcoreCash().Address.isValid(data, 'testnet')
+    BWC.getBitcoreCash().Address.isValid(data, 'testnet') ||
+    BWC.getBitcoreCash().Address.isValid(data, 'regtest')
   );
 };
 
@@ -250,7 +251,8 @@ export const IsValidBitPayUri = (data: string): boolean => {
 export const IsValidBitcoinCashLegacyAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcore().Address.isValid(data, 'livenet') ||
-    BWC.getBitcore().Address.isValid(data, 'testnet')
+    BWC.getBitcore().Address.isValid(data, 'testnet') ||
+    BWC.getBitcore().Address.isValid(data, 'regtest')
   );
 };
 

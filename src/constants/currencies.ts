@@ -51,7 +51,7 @@ export interface CurrencyOpts {
   };
   paymentInfo: {
     paymentCode: string;
-    protocolPrefix: {livenet: string; testnet: string};
+    protocolPrefix: {livenet: string; testnet: string; regtest: string};
     // Urls
     ratesApi: string;
     blockExplorerUrls: string;
@@ -95,7 +95,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -128,7 +132,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdp',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -161,7 +169,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -194,7 +206,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -227,7 +243,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -260,7 +280,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -294,7 +318,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -328,7 +356,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -362,7 +394,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/euroc',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -396,7 +432,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/matic_e',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -429,7 +469,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/pyusd_e',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -465,7 +509,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -498,7 +542,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -531,7 +575,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -564,7 +608,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/dai_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -597,7 +641,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/wbtc_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -630,7 +674,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/weth_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -664,7 +708,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -698,7 +742,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ape_m',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -733,7 +777,11 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'bitcoin', testnet: 'bitcoin'},
+      protocolPrefix: {
+        livenet: 'bitcoin',
+        testnet: 'bitcoin',
+        regtest: 'bitcoin',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
       blockExplorerUrls: 'bitpay.com/insight/#/BTC/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BTC/testnet/',
@@ -770,7 +818,11 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'bitcoincash', testnet: 'bchtest'},
+      protocolPrefix: {
+        livenet: 'bitcoincash',
+        testnet: 'bchtest',
+        regtest: 'bchreg',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/bch',
       blockExplorerUrls: 'bitpay.com/insight/#/BCH/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BCH/testnet/',
@@ -807,7 +859,11 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'dogecoin', testnet: 'dogecoin'},
+      protocolPrefix: {
+        livenet: 'dogecoin',
+        testnet: 'dogecoin',
+        regtest: 'dogecoin',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/doge',
       blockExplorerUrls: 'blockchair.com/',
       blockExplorerUrlsTestnet: 'sochain.com/',
@@ -844,7 +900,11 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'litecoin', testnet: 'litecoin'},
+      protocolPrefix: {
+        livenet: 'litecoin',
+        testnet: 'litecoin',
+        regtest: 'litecoin',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ltc',
       blockExplorerUrls: 'bitpay.com/insight/#/LTC/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/LTC/testnet/',
@@ -884,7 +944,7 @@ export const OtherBitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'ripple', testnet: 'ripple'},
+      protocolPrefix: {livenet: 'ripple', testnet: 'ripple', regtest: 'ripple'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/xrp',
       blockExplorerUrls: 'xrpscan.com/',
       blockExplorerUrlsTestnet: 'test.bithomp.com/explorer/',
@@ -923,7 +983,11 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {
+        livenet: 'ethereum',
+        testnet: 'ethereum',
+        regtest: 'ethereum',
+      },
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.eth.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.eth.testnet,
@@ -960,7 +1024,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681',
-      protocolPrefix: {livenet: 'matic', testnet: 'matic'},
+      protocolPrefix: {livenet: 'matic', testnet: 'matic', regtest: 'matic'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/matic',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
