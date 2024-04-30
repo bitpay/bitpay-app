@@ -111,8 +111,8 @@ const SearchComponent = <T extends SearchableItem>({
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
-  const normalizeText = (text: string) =>
-    text.replace(/\s+/g, '').toLowerCase();
+  const normalizeText = (text: string | undefined) =>
+    text?.replace(/\s+/g, '')?.toLowerCase() || '';
 
   const filterAccounts = (
     accounts: string[],
@@ -150,13 +150,14 @@ const SearchComponent = <T extends SearchableItem>({
       } else {
         results = results.reduce((acc: T[], data) => {
           if (data.chain) {
-            data.chains = [data.chain];  // Workaround for Key Overview view
+            data.chains = [data.chain]; // Workaround for Key Overview view
           }
 
           const normalizedCurrencyAbbreviation = normalizeText(
-            data.currencyAbbreviation!,
+            data?.currencyAbbreviation,
           );
-          const normalizedCurrencyName = normalizeText(data.currencyName!);
+
+          const normalizedCurrencyName = normalizeText(data.currencyName);
           const hasMatchingAbbreviation =
             normalizedCurrencyAbbreviation.includes(normalizedText);
           const hasMatchingCurrencyName =
@@ -168,17 +169,17 @@ const SearchComponent = <T extends SearchableItem>({
               !normalizedText) &&
               !selectedChainFilterOption) ||
             (selectedChainFilterOption &&
-              data.chains!.includes(selectedChainFilterOption))
+              data?.chains?.includes(selectedChainFilterOption))
           ) {
             if (
               selectedChainFilterOption &&
-              data.chains!.includes(selectedChainFilterOption) &&
+              data?.chains?.includes(selectedChainFilterOption) &&
               data.availableWallets
             ) {
-              data.availableWallets = data.availableWallets!.filter(
+              data.availableWallets = data.availableWallets.filter(
                 wallet => wallet.chain === selectedChainFilterOption,
               );
-              data.total = data.availableWallets!.length;
+              data.total = data.availableWallets.length;
               data.availableWalletsByKey = _.groupBy(
                 data.availableWallets,
                 'keyId',
@@ -211,7 +212,7 @@ const SearchComponent = <T extends SearchableItem>({
       </SearchIconContainer>
       <SearchRoundInput
         placeholderTextColor={Slate}
-        placeholder="Search"
+        placeholder={t('Search')}
         onChangeText={updateSearchResults}
       />
       {selectedChainFilterOption ? (

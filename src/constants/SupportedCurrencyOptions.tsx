@@ -28,7 +28,7 @@ export interface SupportedCurrencyOption {
   currencyAbbreviation: string;
   chain: string;
   isToken?: boolean;
-  imgSrc: ImageSourcePropType;
+  imgSrc?: ImageSourcePropType;
   badgeUri?: string | ((props?: any) => ReactElement);
   badgeSrc?: ImageSourcePropType;
   priority?: number;
