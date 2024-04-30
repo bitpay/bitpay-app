@@ -114,23 +114,16 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
   const syncGiftCardPurchasesWithBitPayId = useSelector<RootState, boolean>(
     ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
   );
-  const user = useSelector<RootState, User | null>(
-    ({BITPAY_ID}) => BITPAY_ID.user[network],
-  );
-  const email = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network]?.email,
-  );
-  const isVerified = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.session.verified,
-  );
-  const csrfToken = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.session.csrfToken,
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const apiToken = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.apiToken[APP.network],
   );
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
     dispatch(BitPayIdEffects.startFetchSecuritySettings());
-  }, [dispatch]);
+    dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken));
+  }, [apiToken, dispatch]);
 
   const hasName = user?.givenName || user?.familyName;
 
@@ -153,7 +146,7 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
           ) : null}
 
           <EmailAddress>{user.email}</EmailAddress>
-          {!isVerified && email && csrfToken ? (
+          {!user.verified ? (
             <EmailAddressNotVerified>
               <Link
                 accessibilityLabel="resend-link-button"
