@@ -16,7 +16,7 @@ import {
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
-import {SupportedCoins} from '../../constants/currencies';
+import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 
 export const importLedgerModalToggled = (show: boolean): AppActionType => ({
@@ -313,14 +313,14 @@ export const setDefaultAltCurrency = (
 });
 
 export const setDefaultChainFilterOption = (
-  selectedChainFilterOption: SupportedCoins | undefined,
+  selectedChainFilterOption: SupportedChains | undefined,
 ): AppActionType => ({
   type: AppActionTypes.SET_DEFAULT_CHAIN_FILTER_OPTION,
   selectedChainFilterOption,
 });
 
 export const setLocalDefaultChainFilterOption = (
-  selectedLocalChainFilterOption: SupportedCoins | undefined,
+  selectedLocalChainFilterOption: SupportedChains | undefined,
 ): AppActionType => ({
   type: AppActionTypes.SET_LOCAL_CHAIN_FILTER_OPTION,
   selectedLocalChainFilterOption,

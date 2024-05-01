@@ -110,6 +110,7 @@ import {
   UtxoAccountParams,
   currencyConfigs,
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -586,7 +587,12 @@ export const buildTxDetails =
           fee: {
             feeLevel,
             cryptoAmount: dispatch(
-              FormatAmountStr(chain, chain, undefined, fee),
+              FormatAmountStr(
+                BitpaySupportedCoins[chain]?.feeCurrency,
+                chain,
+                undefined,
+                fee,
+              ),
             ),
             fiatAmount: formatFiatAmount(feeToFiat, defaultAltCurrencyIsoCode),
             percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(
@@ -598,7 +604,13 @@ export const buildTxDetails =
         ...(networkCost && {
           networkCost: {
             cryptoAmount: dispatch(
-              FormatAmountStr(chain, chain, undefined, networkCost),
+              // @ts-ignore
+              FormatAmountStr(
+                BitpaySupportedCoins[chain]?.feeCurrency,
+                chain,
+                undefined,
+                networkCost,
+              ),
             ),
             fiatAmount: formatFiatAmount(
               dispatch(
@@ -623,7 +635,13 @@ export const buildTxDetails =
         },
         subTotal: {
           cryptoAmount: dispatch(
-            FormatAmountStr(coin, chain, tokenAddress, amount),
+            // @ts-ignore
+            FormatAmountStr(
+              BitpaySupportedCoins[chain]?.feeCurrency,
+              chain,
+              tokenAddress,
+              amount,
+            ),
           ),
           fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
         },
@@ -631,7 +649,15 @@ export const buildTxDetails =
           cryptoAmount: isERC20
             ? `${dispatch(
                 FormatAmountStr(coin, chain, tokenAddress, amount),
-              )}\n + ${dispatch(FormatAmountStr(chain, chain, undefined, fee))}`
+                // @ts-ignore
+              )}\n + ${dispatch(
+                FormatAmountStr(
+                  BitpaySupportedCoins[chain]?.feeCurrency,
+                  chain,
+                  undefined,
+                  fee,
+                ),
+              )}`
             : dispatch(
                 FormatAmountStr(coin, chain, tokenAddress, amount + fee),
               ),

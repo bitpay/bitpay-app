@@ -24,7 +24,7 @@ import {BiometricModalConfig} from '../../components/modal/biometric/BiometricMo
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import moment from 'moment';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
-import {SupportedCoins} from '../../constants/currencies';
+import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
@@ -141,8 +141,8 @@ export interface AppState {
   altCurrencyList: Array<AltCurrenciesRowProps>;
   defaultAltCurrency: AltCurrenciesRowProps;
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
-  selectedChainFilterOption: SupportedCoins | undefined;
-  selectedLocalChainFilterOption: SupportedCoins | undefined;
+  selectedChainFilterOption: SupportedChains | undefined;
+  selectedLocalChainFilterOption: SupportedChains | undefined;
   recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
   keyMigrationFailure: boolean;

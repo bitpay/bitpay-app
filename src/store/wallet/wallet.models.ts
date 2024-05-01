@@ -144,6 +144,7 @@ export interface KeyOptions {
   networkName: string;
   singleAddress: any;
   coin: string;
+  chain: string;
   extendedPrivateKey: any;
   mnemonic: any;
   derivationStrategy: any;
@@ -439,7 +440,7 @@ export interface SendMaxInfo {
 }
 
 export interface CacheFeeLevel {
-  currency: 'eth' | 'btc' | 'matic';
+  currency: 'eth' | 'btc' | 'matic' | 'arb' | 'base' | 'op';
   feeLevel: FeeLevels;
 }
 

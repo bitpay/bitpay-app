@@ -18,10 +18,9 @@ import {EIP155_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
-import {setDefaultChainFilterOption} from '../../store/app/app.actions';
 import {setLocalDefaultChainFilterOption} from '../../store/app/app.actions';
 import ChainSelectorModal from '../../components/modal/chain-selector/ChainSelector';
-import {BitpaySupportedCoins} from '../../constants/currencies';
+import {SupportedChainsOptions} from '../../constants/SupportedCurrencyOptions';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -102,6 +101,10 @@ const SearchComponent = <T extends SearchableItem>({
     ['sell', 'swap', 'buy'].includes(context)
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
+  );
+
+  const supportedChainOption = SupportedChainsOptions.find(
+    ({chain}) => chain === selectedChainFilterOption,
   );
 
   const normalizeText = (text: string | undefined) =>
@@ -222,7 +225,7 @@ const SearchComponent = <T extends SearchableItem>({
           <SearchFilterLabelContainer>
             <SearchFilterLabel>
               {selectedChainFilterOption
-                ? BitpaySupportedCoins[selectedChainFilterOption]?.name
+                ? supportedChainOption?.chainName
                 : t('All Networks')}
             </SearchFilterLabel>
           </SearchFilterLabelContainer>

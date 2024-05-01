@@ -341,6 +341,7 @@ const RecoveryPhrase = () => {
         : 1;
 
       keyOpts.coin = advancedOpts.coin.toLowerCase();
+      keyOpts.chain = advancedOpts.chain.toLowerCase();
       keyOpts.singleAddress = isSingleAddressChain(advancedOpts.chain);
 
       // set opts.useLegacyPurpose

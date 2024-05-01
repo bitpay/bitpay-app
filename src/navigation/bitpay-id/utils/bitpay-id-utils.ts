@@ -1,8 +1,11 @@
 import {SUPPORTED_COINS} from '../../../constants/currencies';
 
-const chainSuffixMap: {[suffix: string]: string} = {
+export const chainSuffixMap: {[suffix: string]: string} = {
   e: 'eth',
   m: 'matic',
+  arb: 'arb',
+  base: 'base',
+  op: 'op',
 };
 export function getCoinAndChainFromCurrencyCode(currencyCode: string): {
   coin: string;

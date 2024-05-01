@@ -41,7 +41,7 @@ import {
   ValidateCoinAddress,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {TouchableOpacity, View} from 'react-native';
+import {Linking, TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
@@ -91,6 +91,7 @@ import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
+import {URL} from '../../../../constants';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -286,9 +287,50 @@ const SendTo = () => {
     },
   };
 
+  const BridgeToPolygon: Option = {
+    img: <Icons.BridgeToPolygon />,
+    title: t('Bridge to Polygon'),
+    description: t('Transfer your assets to Polygon network'),
+    onPress: () => {
+      Linking.openURL(URL.POLYGON_BRIDGE);
+    },
+  };
+
+  const BridgeToArbitrum: Option = {
+    img: <Icons.BridgeToPolygon />,
+    title: t('Bridge to Arbitrum'),
+    description: t('Transfer your assets to Arbitrum network'),
+    onPress: () => {
+      Linking.openURL(URL.ARBITRUM_BRIDGE);
+    },
+  };
+
+  const BridgeToBase: Option = {
+    img: <Icons.BridgeToPolygon />,
+    title: t('Bridge to Base'),
+    description: t('Transfer your assets to Base network'),
+    onPress: () => {
+      Linking.openURL(URL.BASE_BRIDGE);
+    },
+  };
+
+  const BridgeToOptimism: Option = {
+    img: <Icons.BridgeToPolygon />,
+    title: t('Bridge to Optimism'),
+    description: t('Transfer your assets to Optimism network'),
+    onPress: () => {
+      Linking.openURL(URL.OPTIMISM_BRIDGE);
+    },
+  };
+
   const assetOptions: Array<Option> = isUtxo
     ? [multisendOption, selectInputOption]
-    : [];
+    : [
+        ...(chain === 'matic' ? [BridgeToPolygon] : []),
+        ...(chain === 'arb' ? [BridgeToArbitrum] : []),
+        ...(chain === 'base' ? [BridgeToBase] : []),
+        ...(chain === 'op' ? [BridgeToOptimism] : []),
+      ];
 
   useLayoutEffect(() => {
     navigation.setOptions({

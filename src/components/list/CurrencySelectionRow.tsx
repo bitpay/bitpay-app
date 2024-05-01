@@ -25,7 +25,12 @@ import {BaseText, H6, H7} from '../styled/Text';
 
 export type CurrencySelectionItem = Pick<
   SupportedCurrencyOption,
-  'id' | 'currencyAbbreviation' | 'currencyName' | 'img' | 'isToken'
+  | 'id'
+  | 'currencyAbbreviation'
+  | 'currencyName'
+  | 'img'
+  | 'isToken'
+  | 'badgeUri'
 > & {
   chain: string;
   tokenAddress?: string;
@@ -123,6 +128,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
       currencyName,
       img,
       imgSrc,
+      badgeUri,
       selected,
       disabled,
     } = currency;
@@ -139,7 +145,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
             : null
         }>
         <CurrencyColumn>
-          <CurrencyImage img={img} imgSrc={imgSrc} />
+          <CurrencyImage img={img} imgSrc={imgSrc} badgeUri={badgeUri} />
         </CurrencyColumn>
 
         <CurrencyTitleColumn style={{flexGrow: 1}}>

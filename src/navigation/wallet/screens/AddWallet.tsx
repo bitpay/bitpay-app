@@ -342,7 +342,7 @@ const AddWallet = ({
       wallet =>
         SUPPORTED_EVM_COINS.includes(chain) &&
         wallet.chain === chain &&
-        !IsERCToken(wallet.currencyAbbreviation, wallet.chain),
+        !wallet.tokenAddress,
     );
     setEvmWallets(_evmWallets);
 

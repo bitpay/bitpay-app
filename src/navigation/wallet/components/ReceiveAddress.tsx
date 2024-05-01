@@ -362,7 +362,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
                 {t(
                   'Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.',
                   {
-                    coin: wallet.currencyAbbreviation,
+                    coin: wallet?.currencyAbbreviation?.toUpperCase(),
                     protocolName: titleCasing(
                       getProtocolName(wallet.chain, wallet.network)!,
                     ),
@@ -370,19 +370,23 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
                 )}
               </WarningDescription>
             </WarningHeader>
-            <ContractHeaderContainer>
-              <TitleContainer>{t('Contract Address')}</TitleContainer>
-              <LinkContainer>
-                <LinkIcon />
-                <ContractLink
-                  onPress={() => dispatch(viewOnBlockchain(wallet))}>
-                  {t('View Contract')}
-                </ContractLink>
-              </LinkContainer>
-            </ContractHeaderContainer>
-            <ContractAddressText>
-              {wallet.credentials.token?.address}
-            </ContractAddressText>
+            {wallet.credentials.token?.address ? (
+              <>
+                <ContractHeaderContainer>
+                  <TitleContainer>{t('Contract Address')}</TitleContainer>
+                  <LinkContainer>
+                    <LinkIcon />
+                    <ContractLink
+                      onPress={() => dispatch(viewOnBlockchain(wallet))}>
+                      {t('View Contract')}
+                    </ContractLink>
+                  </LinkContainer>
+                </ContractHeaderContainer>
+                <ContractAddressText>
+                  {wallet.credentials.token?.address}
+                </ContractAddressText>
+              </>
+            ) : null}
           </WarningContainer>
         ) : null}
         <CloseButton onPress={_closeModal}>
