@@ -18,6 +18,7 @@ import {FlatList, SectionList, View} from 'react-native';
 import {useTheme} from '@react-navigation/native';
 import {setDefaultChainFilterOption} from '../../../store/app/app.actions';
 import {
+  ActiveOpacity,
   Hr,
   NoResultsContainer,
   NoResultsDescription,
@@ -137,7 +138,6 @@ const ChainSelector = () => {
       );
       const badgeLabel = BitpaySupportedCoins[item]?.name || item;
       const selected = selectedChainFilterOption === item;
-      const underlayColor = theme.colors.background;
       let isLastItem = false;
       if (section?.data?.length) {
         isLastItem = index === section.data.length - 1;
@@ -145,7 +145,7 @@ const ChainSelector = () => {
       return (
         <>
           <NetworkChainContainer
-            underlayColor={underlayColor}
+            activeOpacity={ActiveOpacity}
             selected={selected}
             onPress={() => {
               dispatch(
