@@ -162,14 +162,14 @@ const SearchComponent = <T extends SearchableItem>({
             normalizedCurrencyAbbreviation.includes(normalizedText);
           const hasMatchingCurrencyName =
             normalizedCurrencyName.includes(normalizedText);
+          const hasMatching =
+            hasMatchingAbbreviation || hasMatchingCurrencyName;
 
           if (
-            ((hasMatchingAbbreviation ||
-              hasMatchingCurrencyName ||
-              !normalizedText) &&
-              !selectedChainFilterOption) ||
-            (selectedChainFilterOption &&
-              data?.chains?.includes(selectedChainFilterOption))
+            (normalizedText.length > 0 ? hasMatching : true) &&
+            (selectedChainFilterOption
+              ? data?.chains?.includes(selectedChainFilterOption)
+              : true)
           ) {
             if (
               selectedChainFilterOption &&

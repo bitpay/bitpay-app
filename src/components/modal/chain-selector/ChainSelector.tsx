@@ -155,6 +155,7 @@ const ChainSelector = () => {
                     | undefined,
                 ),
               );
+              setSearchVal('');
               dispatch(AppActions.dismissChainSelectorModal());
             }}
             key={index.toString()}>
@@ -239,6 +240,7 @@ const ChainSelector = () => {
     <SheetModal
       isVisible={isVisible}
       onBackdropPress={() => {
+        setSearchVal('');
         dispatch(AppActions.dismissChainSelectorModal());
         haptic('impactLight');
         if (onBackdropDismiss) {
