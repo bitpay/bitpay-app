@@ -68,7 +68,7 @@ const ListHeader = styled(BaseText)`
   padding: 8px 16px;
 `;
 
-const NetworkChainContainer = styled.TouchableHighlight<{selected?: boolean}>`
+const NetworkChainContainer = styled.TouchableOpacity<{selected?: boolean}>`
   margin-left: 16px;
   margin-right: 16px;
   ${({selected}) =>
