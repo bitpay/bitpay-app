@@ -16,6 +16,8 @@ import {
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {SupportedCoins} from '../../constants/currencies';
+import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 
 export const importLedgerModalToggled = (show: boolean): AppActionType => ({
   type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
@@ -105,6 +107,17 @@ export const dismissBottomNotificationModal = (): AppActionType => ({
 
 export const resetBottomNotificationModalConfig = (): AppActionType => ({
   type: AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG,
+});
+
+export const dismissChainSelectorModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL,
+});
+
+export const showChainSelectorModal = (
+  config: ChainSelectorConfig,
+): AppActionType => ({
+  type: AppActionTypes.SHOW_CHAIN_SELECTOR_MODAL,
+  payload: config,
 });
 
 export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
@@ -297,6 +310,13 @@ export const setDefaultAltCurrency = (
 ): AppActionType => ({
   type: AppActionTypes.SET_DEFAULT_ALT_CURRENCY,
   defaultAltCurrency,
+});
+
+export const setDefaultChainFilterOption = (
+  selectedChainFilterOption: SupportedCoins | undefined,
+): AppActionType => ({
+  type: AppActionTypes.SET_DEFAULT_CHAIN_FILTER_OPTION,
+  selectedChainFilterOption,
 });
 
 export const setMigrationComplete = (): AppActionType => ({

@@ -78,7 +78,7 @@ const General = () => {
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, t]);
+  }, [navigation, theme, t]);
 
   return (
     <SettingsComponent>

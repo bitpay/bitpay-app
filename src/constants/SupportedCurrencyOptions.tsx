@@ -26,7 +26,7 @@ export interface SupportedCurrencyOption {
   currencyName: string;
   hasMultisig?: boolean;
   currencyAbbreviation: string;
-  chain?: string;
+  chain: string;
   isToken?: boolean;
   imgSrc?: ImageSourcePropType;
   badgeUri?: string | ((props?: any) => ReactElement);
@@ -74,6 +74,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
     priority: 1,
     currencyName: 'Bitcoin',
     currencyAbbreviation: 'btc',
+    chain: 'btc',
     hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/BTC.png'),
   },
@@ -83,6 +84,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
     priority: 2,
     currencyName: 'Bitcoin Cash',
     currencyAbbreviation: 'bch',
+    chain: 'bch',
     hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/BCH.png'),
   },
@@ -92,6 +94,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
     priority: 4,
     currencyName: 'Dogecoin',
     currencyAbbreviation: 'doge',
+    chain: 'doge',
     hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/DOGE.png'),
   },
@@ -101,6 +104,7 @@ export const SupportedUtxoCurrencyOptions: Array<SupportedCurrencyOption> = [
     currencyName: 'Litecoin',
     priority: 6,
     currencyAbbreviation: 'ltc',
+    chain: 'ltc',
     hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/LTC.png'),
   },
@@ -113,6 +117,7 @@ export const OtherSupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     priority: 7,
     currencyName: 'XRP',
     currencyAbbreviation: 'xrp',
+    chain: 'xrp',
     imgSrc: require('../../assets/img/currencies/png/XRP.png'),
   },
 ];
@@ -124,6 +129,7 @@ export const SupportedEvmCurrencyOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.eth,
     currencyName: 'Ethereum',
     currencyAbbreviation: 'eth',
+    chain: 'eth',
     hasMultisig: false,
     imgSrc: require('../../assets/img/currencies/png/ETH.png'),
   },
@@ -133,6 +139,7 @@ export const SupportedEvmCurrencyOptions: Array<SupportedCurrencyOption> = [
     priority: 5,
     currencyName: 'Polygon',
     currencyAbbreviation: 'matic',
+    chain: 'matic',
     hasMultisig: false,
     imgSrc: require('../../assets/img/currencies/png/MATIC.png'),
   },

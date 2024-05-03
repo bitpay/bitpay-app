@@ -695,7 +695,7 @@ const ContactsAdd = ({
 
         {!contact ? (
           <CurrencySelectorContainer hideSelector={!evmValidAddress}>
-            <Label>{isTokenAddress ? t('CHAIN') : t('CURRENCY')}</Label>
+            <Label>{isTokenAddress ? t('NETWORK') : t('CURRENCY')}</Label>
             <CurrencyContainer
               activeOpacity={ActiveOpacity}
               onPress={() => {
@@ -799,7 +799,9 @@ const ContactsAdd = ({
         onBackdropPress={() => setCurrencyModalVisible(false)}>
         <CurrencySelectionModalContainer>
           <TextAlign align={'center'} style={{paddingBottom: 20}}>
-            <H4>{isTokenAddress ? t('Select a Chain') : t('Select a Coin')}</H4>
+            <H4>
+              {isTokenAddress ? t('Select a Network') : t('Select a Coin')}
+            </H4>
           </TextAlign>
           <FlatList
             contentContainerStyle={{minHeight: '100%'}}

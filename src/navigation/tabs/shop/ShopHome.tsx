@@ -306,7 +306,7 @@ const ShopHome: React.FC<
                 marginHorizontal: 5,
                 numTabs: 2,
                 tabWidth: 120,
-                langAdjustments: true, 
+                langAdjustments: true,
               })}
               screenListeners={{
                 tabPress: tab => {

@@ -102,6 +102,7 @@ import {
   IsSegwitCoin,
   isSingleAddressChain,
 } from '../../utils/currency';
+import {BASE_BWS_URL} from '../../../../constants/config';
 
 const BWC = BwcProvider.getInstance();
 const BwcConstants = BWC.getConstants();
@@ -1495,7 +1496,7 @@ export const serverAssistedImport = async (
     try {
       BwcProvider.API.serverAssistedImport(
         opts,
-        {baseUrl: 'https://bws.bitpay.com/bws/api'}, // 'http://localhost:3232/bws/api', uncomment for local testing
+        {baseUrl: BASE_BWS_URL},
         // @ts-ignore
         async (err, key, wallets) => {
           if (err) {

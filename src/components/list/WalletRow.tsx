@@ -20,6 +20,7 @@ import {
 } from '../../utils/helper-methods';
 import {ActivityIndicator, Platform} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
+import {SearchableItem} from '../chain-search/ChainSearch';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -44,7 +45,7 @@ const NestedArrowContainer = styled.View`
   margin-right: 15px;
 `;
 
-export interface WalletRowProps {
+export interface WalletRowProps extends SearchableItem {
   id: string;
   img: string | ((props: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);

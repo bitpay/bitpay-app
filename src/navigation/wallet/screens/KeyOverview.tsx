@@ -12,7 +12,13 @@ import {
   useRoute,
   useTheme,
 } from '@react-navigation/native';
-import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
+import {
+  FlatList,
+  LogBox,
+  RefreshControl,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
@@ -77,6 +83,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
+import SearchComponent from '../../../components/chain-search/ChainSearch';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -160,6 +167,11 @@ const HeaderTitleContainer = styled.View`
 const HeaderRightContainer = styled(_HeaderRightContainer)`
   flex-direction: row;
   align-items: center;
+`;
+
+const SearchComponentContainer = styled.View`
+  padding-right: 15px;
+  padding-left: 15px;
 `;
 
 export const buildUIFormattedWallet: (
@@ -381,6 +393,11 @@ const KeyOverview = () => {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
+  const [searchVal, setSearchVal] = useState('');
+  const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
+  const selectedChainFilterOption = useAppSelector(
+    ({APP}) => APP.selectedChainFilterOption,
+  );
   useLayoutEffect(() => {
     if (!key) {
       return;
@@ -635,6 +652,16 @@ const KeyOverview = () => {
 
       <Hr />
 
+      <SearchComponentContainer>
+        <SearchComponent<WalletRowProps>
+          searchVal={searchVal}
+          setSearchVal={setSearchVal}
+          searchResults={searchResults}
+          setSearchResults={setSearchResults}
+          searchFullList={memorizedWalletList}
+        />
+      </SearchComponentContainer>
+
       <FlatList<WalletRowProps>
         refreshControl={
           <RefreshControl
@@ -665,7 +692,11 @@ const KeyOverview = () => {
             </WalletListFooter>
           );
         }}
-        data={memorizedWalletList}
+        data={
+          !searchVal && !selectedChainFilterOption
+            ? memorizedWalletList
+            : searchResults
+        }
         renderItem={memoizedRenderItem}
       />
 
