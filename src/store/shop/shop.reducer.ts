@@ -50,14 +50,17 @@ export const initialShopState: ShopState = {
   billPayAccounts: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
+    [Network.regtest]: [],
   },
   billPayPayments: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
+    [Network.regtest]: [],
   },
   giftCards: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
+    [Network.regtest]: [],
   },
   syncGiftCardPurchasesWithBitPayId: true,
   isJoinedWaitlist: false,
@@ -216,6 +219,7 @@ export const shopReducer = (
         giftCards: {
           [Network.mainnet]: [],
           [Network.testnet]: [],
+          [Network.regtest]: [],
         },
       };
     case ShopActionTypes.IS_JOINED_WAITLIST:

@@ -2,6 +2,7 @@ import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ColorSchemeName, Pressable, View} from 'react-native';
 import {useTheme} from 'styled-components/native';
+import {TEST_MODE_NETWORK} from '@env';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
   Hr,
@@ -31,19 +32,20 @@ const ThemeSettings: React.FC = () => {
   const navigation = useNavigation();
   const [clickCount, setClickCount] = useState(0);
   const network = useAppSelector(({APP}) => APP.network);
+  const testModeNetwork = TEST_MODE_NETWORK || Network.testnet;
 
   const onPressTitle = () => {
     const _clickCount = clickCount + 1;
     setClickCount(_clickCount);
     if (_clickCount >= 10) {
       const changeNetwork =
-        network === Network.mainnet ? Network.testnet : Network.mainnet;
+        network === Network.mainnet ? testModeNetwork : Network.mainnet;
 
       dispatch(
         showBottomNotificationModal({
           type: 'info',
           title: `${
-            network === Network.testnet ? 'Disable' : 'Enable'
+            network === testModeNetwork ? 'Disable' : 'Enable'
           } Test Mode`,
           message:
             'Tap continue to switch networks. Your app will restart to enable the new network.',
