@@ -34,7 +34,7 @@ export default () => {
         <AlertHeader>No late fees</AlertHeader>
         <AlertText>
           Your bank will give you credit for making this payment within one
-          business day, but it may take 1-2 business days for it to show up on
+          business day, but it may take 3-7 business days for it to show up on
           your bank statement.
         </AlertText>
       </AlertBody>
