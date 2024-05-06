@@ -170,6 +170,11 @@ const initialState: AppState = {
       pub: '',
       sin: '',
     },
+    [Network.regtest]: {
+      priv: '',
+      pub: '',
+      sin: '',
+    },
   },
   network: APP_NETWORK,
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],

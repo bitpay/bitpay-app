@@ -1,4 +1,5 @@
 // @ts-ignore
+import {REGTEST_BASE_BITPAY_URL} from '@env';
 import {version} from '../../package.json'; // TODO: better way to get version
 import {Network} from '.';
 
@@ -13,6 +14,7 @@ export const APP_VERSION = version;
 export const BASE_BITPAY_URLS = {
   [Network.mainnet]: 'https://bitpay.com',
   [Network.testnet]: 'https://test.bitpay.com',
+  [Network.regtest]: REGTEST_BASE_BITPAY_URL || '',
 };
 // BITCORE
 export const BASE_BITCORE_URL = {
@@ -78,6 +80,7 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
 export const METHOD_ENVS = {
   [Network.mainnet]: 'production',
   [Network.testnet]: 'dev',
+  [Network.regtest]: 'dev',
 };
 
 export const PROTOCOL_NAME: {[key in string]: any} = {

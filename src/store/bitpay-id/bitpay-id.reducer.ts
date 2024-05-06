@@ -93,22 +93,27 @@ const initialState: BitPayIdState = {
   apiToken: {
     [Network.mainnet]: '',
     [Network.testnet]: '',
+    [Network.regtest]: '',
   },
   doshToken: {
     [Network.mainnet]: '',
     [Network.testnet]: '',
+    [Network.regtest]: '',
   },
   user: {
     [Network.mainnet]: null,
     [Network.testnet]: null,
+    [Network.regtest]: null,
   },
   receivingAddresses: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
+    [Network.regtest]: [],
   },
   securitySettings: {
     [Network.mainnet]: null,
     [Network.testnet]: null,
+    [Network.regtest]: null,
   },
   fetchSessionStatus: null,
   createAccountStatus: null,
