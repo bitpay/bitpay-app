@@ -6,7 +6,14 @@ import {
 import {each} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, ScrollView, TouchableOpacity} from 'react-native';
+import {
+  Platform,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import styled from 'styled-components/native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
@@ -49,14 +56,13 @@ import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
-import {
-  HeaderContainer,
-  HeaderLeftContainer,
-  HomeContainer,
-} from './components/Styled';
+import {HeaderContainer, HeaderLeftContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {ProposalBadgeContainer} from '../../../components/styled/Containers';
+import {
+  ProposalBadgeContainer,
+  ScreenContainer,
+} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
 import {
   receiveCrypto,
@@ -68,6 +74,7 @@ import Icons from '../../wallet/components/WalletIcons';
 const HomeRoot = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const theme = useTheme();
   const themeType = useThemeType();
@@ -218,8 +225,19 @@ const HomeRoot = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
 
+  const HomeRootContainerFactory = Platform.select({
+    ios: () => styled.View`
+      flex: 1;
+      margin-top: ${insets.top}px;
+    `,
+  });
+
+  const HomeRootContainer = HomeRootContainerFactory
+    ? HomeRootContainerFactory()
+    : ScreenContainer;
+
   return (
-    <HomeContainer>
+    <HomeRootContainer>
       {appIsLoading ? null : (
         <ScrollView
           ref={scrollViewRef}
@@ -315,7 +333,7 @@ const HomeRoot = () => {
         </ScrollView>
       )}
       <KeyMigrationFailureModal />
-    </HomeContainer>
+    </HomeRootContainer>
   );
 };
 

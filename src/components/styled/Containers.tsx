@@ -33,6 +33,10 @@ export const HeaderTitleContainer = styled.View`
   padding: 10px;
 `;
 
+export const ScreenContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
 export const TitleContainer = styled.View`
   width: ${WIDTH * 0.75}px;
 `;
