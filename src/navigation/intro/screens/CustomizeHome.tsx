@@ -1,7 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from 'styled-components/native';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 import {TextContainer} from '../../../components/styled/Containers';
 import IntroButton from '../components/intro-button/IntroButton';
@@ -16,13 +16,10 @@ import {
   TopNavFillOverlay,
 } from '../components/styled/Styled';
 import {IntroGroupParamList, IntroScreens} from '../IntroGroup';
+import {HomeContainer} from '../../tabs/home/components/Styled';
 
 const lightBackground = require('../../../../assets/img/intro/light/home-customize.png');
 const darkBackground = require('../../../../assets/img/intro/dark/home-customize.png');
-
-const HomeContainer = styled.View`
-  flex: 1;
-`;
 
 type CustomizeHomeScreenProps = NativeStackScreenProps<
   IntroGroupParamList,
