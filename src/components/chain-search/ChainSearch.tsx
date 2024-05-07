@@ -32,8 +32,8 @@ export const SearchFilterContainer = styled.TouchableOpacity`
   justify-content: center;
   align-items: center;
   border-radius: 20px;
-  height: 40px;
-  margin: 8px 8px 8px 15px;
+  height: 32px;
+  margin: 15px 8px 12px 15px;
   border: 1px solid ${({theme: {dark}}) => (dark ? Action : 'transparent')};
   background: ${({theme: {dark}}) => (dark ? '#2240C440' : '#ECEFFD')};
 `;
@@ -71,7 +71,7 @@ export const SearchFilterLabel = styled(BaseText)`
 `;
 
 export const SearchFilterIconContainer = styled.View`
-  margin-right: 15px;
+  margin-right: 12px;
 `;
 
 export interface SearchableItem {
