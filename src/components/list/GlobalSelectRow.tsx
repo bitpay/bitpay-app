@@ -9,11 +9,10 @@ import {H5, H7} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {GlobalSelectObj} from '../../navigation/wallet/screens/GlobalSelect';
 import styled from 'styled-components/native';
-import {LightBlack, Slate, Slate30, SlateDark} from '../../styles/colors';
+import {Slate, Slate30, SlateDark} from '../../styles/colors';
 import AngleRightSvg from '../../../assets/img/angle-right.svg';
 import {Img} from '../../navigation/tabs/home/components/Wallet';
 import {Wallet} from '../../store/wallet/wallet.models';
-import {IsERCToken} from '../../store/wallet/utils/currency';
 import {useTheme} from 'styled-components/native';
 
 interface Props {
@@ -49,7 +48,7 @@ const WalletBadgeList: React.FC<WalletBadgeListProps> = ({walletsByChain}) => {
       {Object.values(walletsByChain).map(
         (wallets, index) =>
           wallets[0]?.badgeImg && (
-            <Img key={wallets[0].id} isFirst={index === 0}>
+            <Img key={wallets[0].id} isFirst={false} style={{marginLeft: 1}}>
               <CurrencyImage img={wallets[0].badgeImg} size={25} />
             </Img>
           ),
