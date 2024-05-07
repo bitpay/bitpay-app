@@ -56,14 +56,13 @@ import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
-import {
-  HeaderContainer,
-  HeaderLeftContainer,
-  HomeContainer,
-} from './components/Styled';
+import {HeaderContainer, HeaderLeftContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
-import {ProposalBadgeContainer} from '../../../components/styled/Containers';
+import {
+  ProposalBadgeContainer,
+  ScreenContainer,
+} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
 import {
   receiveCrypto,
@@ -235,7 +234,7 @@ const HomeRoot = () => {
 
   const HomeRootContainer = HomeRootContainerFactory
     ? HomeRootContainerFactory()
-    : HomeContainer;
+    : ScreenContainer;
 
   return (
     <HomeRootContainer>
