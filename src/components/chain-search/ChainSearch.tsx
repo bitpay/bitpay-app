@@ -21,6 +21,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
 import {setDefaultChainFilterOption} from '../../store/app/app.actions';
+import {setLocalDefaultChainFilterOption} from '../../store/app/app.actions';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -96,6 +97,7 @@ interface SearchComponentProps<T extends SearchableItem> {
   searchResults: T[];
   setSearchResults: (val: T[]) => void;
   searchFullList: T[];
+  context: string;
 }
 
 const SearchComponent = <T extends SearchableItem>({
@@ -104,13 +106,17 @@ const SearchComponent = <T extends SearchableItem>({
   searchResults,
   setSearchResults,
   searchFullList,
+  context,
 }: SearchComponentProps<T>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
-  const selectedChainFilterOption = useAppSelector(
-    ({APP}) => APP.selectedChainFilterOption,
+  const selectedChainFilterOption = useAppSelector(({APP}) =>
+    ['sell', 'swap', 'buy'].includes(context)
+      ? APP.selectedLocalChainFilterOption
+      : APP.selectedChainFilterOption,
   );
+
   const normalizeText = (text: string | undefined) =>
     text?.replace(/\s+/g, '')?.toLowerCase() || '';
 
@@ -205,6 +211,12 @@ const SearchComponent = <T extends SearchableItem>({
     updateSearchResults(searchVal);
   }, [selectedChainFilterOption]);
 
+  useEffect(() => {
+    return () => {
+      dispatch(setLocalDefaultChainFilterOption(undefined));
+    };
+  }, []);
+
   return (
     <SearchRoundContainer>
       <SearchIconContainer>
@@ -238,7 +250,7 @@ const SearchComponent = <T extends SearchableItem>({
       ) : null}
       <SearchFilterContainer
         onPress={() => {
-          dispatch(AppActions.showChainSelectorModal({}));
+          dispatch(AppActions.showChainSelectorModal({context}));
         }}>
         <RowFilterContainer>
           <SearchFilterLabelContainer>

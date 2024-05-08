@@ -659,6 +659,7 @@ const KeyOverview = () => {
           searchResults={searchResults}
           setSearchResults={setSearchResults}
           searchFullList={memorizedWalletList}
+          context={'keyoverview'}
         />
       </SearchComponentContainer>
 

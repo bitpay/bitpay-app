@@ -281,8 +281,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     useState(false);
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as GlobalSelectObj[]);
-  const selectedChainFilterOption = useAppSelector(
-    ({APP}) => APP.selectedChainFilterOption,
+  const selectedChainFilterOption = useAppSelector(({APP}) =>
+    ['sell', 'swap', 'buy'].includes(context)
+      ? APP.selectedLocalChainFilterOption
+      : APP.selectedChainFilterOption,
   );
 
   // object to pass to select modal
@@ -685,6 +687,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             searchResults={searchResults}
             setSearchResults={setSearchResults}
             searchFullList={data}
+            context={context}
           />
         )}
         {data.length > 0 && (

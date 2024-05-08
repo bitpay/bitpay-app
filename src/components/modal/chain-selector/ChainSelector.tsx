@@ -5,18 +5,14 @@ import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
-import {
-  Black,
-  LightBlack,
-  Action,
-  SlateDark,
-  White,
-  Slate,
-} from '../../../styles/colors';
+import {Black, Action, SlateDark, White, Slate} from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
 import {FlatList, SectionList, View} from 'react-native';
 import {useTheme} from '@react-navigation/native';
-import {setDefaultChainFilterOption} from '../../../store/app/app.actions';
+import {
+  setDefaultChainFilterOption,
+  setLocalDefaultChainFilterOption,
+} from '../../../store/app/app.actions';
 import {
   ActiveOpacity,
   Hr,
@@ -47,6 +43,7 @@ import {SearchIconContainer} from '../../chain-search/ChainSearch';
 
 export interface ChainSelectorConfig {
   onBackdropDismiss?: () => void;
+  context?: string;
 }
 
 const Header = styled.View`
@@ -127,8 +124,10 @@ const ChainSelector = () => {
   const recentSelectedChainFilterOption = useAppSelector(
     ({APP}) => APP.recentSelectedChainFilterOption,
   );
-  const selectedChainFilterOption = useAppSelector(
-    ({APP}: RootState) => APP.selectedChainFilterOption,
+  const selectedChainFilterOption = useAppSelector(({APP}) =>
+    config?.context && ['sell', 'swap', 'buy'].includes(config?.context)
+      ? APP.selectedLocalChainFilterOption
+      : APP.selectedChainFilterOption,
   );
 
   const renderChainItem = useCallback(
@@ -148,13 +147,16 @@ const ChainSelector = () => {
             activeOpacity={ActiveOpacity}
             selected={selected}
             onPress={() => {
-              dispatch(
-                setDefaultChainFilterOption(
-                  BitpaySupportedCoins[item]?.chain as
-                    | SupportedCoins
-                    | undefined,
-                ),
-              );
+              const option = BitpaySupportedCoins[item]?.chain as
+                | SupportedCoins
+                | undefined;
+
+              // Check if the context is one of 'sell', 'swap', 'buy'
+              if (['sell', 'swap', 'buy'].includes(config?.context as string)) {
+                dispatch(setLocalDefaultChainFilterOption(option));
+              } else {
+                dispatch(setDefaultChainFilterOption(option));
+              }
               setSearchVal('');
               dispatch(AppActions.dismissChainSelectorModal());
             }}
@@ -179,7 +181,7 @@ const ChainSelector = () => {
         </>
       );
     },
-    [dispatch, selectedChainFilterOption],
+    [dispatch, config, selectedChainFilterOption],
   );
 
   const chainList = useMemo(() => {
