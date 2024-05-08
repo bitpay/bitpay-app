@@ -22,7 +22,6 @@ import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
-import ChainSelectorModal from './components/modal/chain-selector/ChainSelector';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {baseNavigatorOptions} from './constants/NavigationOptions';
@@ -575,7 +574,6 @@ export default () => {
           <InAppNotification />
           <InAppMessage />
           <BottomNotificationModal />
-          <ChainSelectorModal />
           <DecryptEnterPasswordModal />
           <BlurContainer />
           <PinModal />

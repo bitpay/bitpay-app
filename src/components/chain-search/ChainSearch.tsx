@@ -21,6 +21,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
 import {setDefaultChainFilterOption} from '../../store/app/app.actions';
+import ChainSelectorModal from '../../components/modal/chain-selector/ChainSelector';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -253,6 +254,7 @@ const SearchComponent = <T extends SearchableItem>({
           </SearchFilterIconContainer>
         </RowFilterContainer>
       </SearchFilterContainer>
+      <ChainSelectorModal />
     </SearchRoundContainer>
   );
 };
