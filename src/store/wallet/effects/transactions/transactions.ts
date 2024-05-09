@@ -947,7 +947,7 @@ export const buildTransactionDetails =
               chain,
               chain,
               rates,
-              wallet.tokenAddress,
+              undefined,
             ),
           ),
           alternativeCurrency,

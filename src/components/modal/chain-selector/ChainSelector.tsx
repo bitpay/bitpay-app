@@ -7,7 +7,7 @@ import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
 import {Black, Action, SlateDark, White, Slate} from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
-import {FlatList, SectionList, View} from 'react-native';
+import {FlatList, Platform, SectionList, View} from 'react-native';
 import {useTheme} from '@react-navigation/native';
 import {
   setDefaultChainFilterOption,
@@ -107,6 +107,12 @@ const RowContainer = styled.View`
 
 const ImageContainer = styled.View`
   margin-right: 3px;
+`;
+
+const KeyBoardAvoidingViewWrapper = styled.KeyboardAvoidingView`
+  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 `;
 
 const ChainSelector = () => {
@@ -249,61 +255,65 @@ const ChainSelector = () => {
           onBackdropDismiss();
         }
       }}>
-      <WalletSelectMenuContainer>
-        <WalletSelectMenuHeaderContainer>
-          <TextAlign align={'left'}>
-            <H4>{t('Select Network')}</H4>
-          </TextAlign>
-        </WalletSelectMenuHeaderContainer>
-        <Header>
-          <SearchRoundContainer>
-            <SearchIconContainer>
-              <SearchSvg height={16} width={16} />
-            </SearchIconContainer>
-            <SearchRoundInput
-              placeholder={'Search Networks'}
-              placeholderTextColor={theme.dark ? Slate : Slate}
-              onChangeText={(text: string) => {
-                updateSearchResults(text);
-              }}
-            />
-          </SearchRoundContainer>
-        </Header>
-        <HideableView show={!!searchVal}>
-          {searchResults.length ? (
-            <FlatList
-              data={searchResults}
-              // @ts-ignore
+      <KeyBoardAvoidingViewWrapper
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View style={{height: '75%'}}>
+          <WalletSelectMenuHeaderContainer>
+            <TextAlign align={'left'}>
+              <H4>{t('Select Network')}</H4>
+            </TextAlign>
+          </WalletSelectMenuHeaderContainer>
+          <Header>
+            <SearchRoundContainer>
+              <SearchIconContainer>
+                <SearchSvg height={16} width={16} />
+              </SearchIconContainer>
+              <SearchRoundInput
+                placeholder={'Search Networks'}
+                placeholderTextColor={theme.dark ? Slate : Slate}
+                onChangeText={(text: string) => {
+                  updateSearchResults(text);
+                }}
+              />
+            </SearchRoundContainer>
+          </Header>
+          <HideableView show={!!searchVal}>
+            {searchResults.length ? (
+              <FlatList
+                contentContainerStyle={{paddingBottom: 50}}
+                data={searchResults}
+                // @ts-ignore
+                renderItem={renderChainItem}
+                keyExtractor={(item, index) => index.toString()}
+              />
+            ) : (
+              <NoResultsContainer>
+                <NoResultsImgContainer>
+                  <GhostSvg style={{marginTop: 20}} />
+                </NoResultsImgContainer>
+                <NoResultsDescription>
+                  {t("We couldn't find a match for ")}
+                  <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
+                </NoResultsDescription>
+              </NoResultsContainer>
+            )}
+          </HideableView>
+
+          <HideableView show={!searchVal}>
+            <SectionList
+              contentContainerStyle={{paddingBottom: 50}}
+              sections={chainList}
               renderItem={renderChainItem}
               keyExtractor={(item, index) => index.toString()}
+              stickySectionHeadersEnabled={false}
+              renderSectionHeader={({section: {title}}) => (
+                <ListHeader>{title}</ListHeader>
+              )}
+              renderSectionFooter={() => <View style={{marginBottom: 30}} />}
             />
-          ) : (
-            <NoResultsContainer>
-              <NoResultsImgContainer>
-                <GhostSvg style={{marginTop: 20}} />
-              </NoResultsImgContainer>
-              <NoResultsDescription>
-                {t("We couldn't find a match for ")}
-                <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
-              </NoResultsDescription>
-            </NoResultsContainer>
-          )}
-        </HideableView>
-
-        <HideableView show={!searchVal}>
-          <SectionList
-            contentContainerStyle={{paddingBottom: 150}}
-            sections={chainList}
-            renderItem={renderChainItem}
-            keyExtractor={(item, index) => index.toString()}
-            stickySectionHeadersEnabled={false}
-            renderSectionHeader={({section: {title}}) => (
-              <ListHeader>{title}</ListHeader>
-            )}
-            renderSectionFooter={() => <View style={{marginBottom: 30}} />}
-          />
-        </HideableView>
-      </WalletSelectMenuContainer>
+          </HideableView>
+        </View>
+      </KeyBoardAvoidingViewWrapper>
     </SheetModal>
   );
 };
