@@ -249,6 +249,7 @@ const WalletConnectConnections = () => {
             searchResults={searchResults}
             setSearchResults={setSearchResults}
             searchFullList={sessions}
+            context={'walletconnect'}
           />
           {sessions.length ? (
             <SessionList

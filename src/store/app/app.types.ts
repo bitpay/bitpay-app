@@ -75,6 +75,7 @@ export enum AppActionTypes {
   ADD_ALT_CURRENCIES_LIST = 'APP/ADD_ALT_CURRENCIES_LIST',
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
   SET_DEFAULT_CHAIN_FILTER_OPTION = 'APP/SET_DEFAULT_CHAIN_FILTER_OPTION',
+  SET_LOCAL_CHAIN_FILTER_OPTION = 'APP/SET_LOCAL_CHAIN_FILTER_OPTION',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
@@ -347,6 +348,10 @@ interface SetDefaultChainFilterOption {
   selectedChainFilterOption: SupportedCoins | undefined;
 }
 
+interface SetLocalDefaultChainFilterOption {
+  type: typeof AppActionTypes.SET_LOCAL_CHAIN_FILTER_OPTION;
+  selectedLocalChainFilterOption: SupportedCoins | undefined;
+}
 interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
@@ -466,5 +471,6 @@ export type AppActionType =
   | InAppBrowserOpen
   | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
+  | SetLocalDefaultChainFilterOption
   | ShowChainSelectorModal
   | DismissChainSelectorModal;

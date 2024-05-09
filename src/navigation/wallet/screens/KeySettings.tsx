@@ -354,6 +354,7 @@ const KeySettings = () => {
           searchResults={searchResults}
           setSearchResults={setSearchResults}
           searchFullList={wallets}
+          context={'keysettings'}
         />
 
         <WalletHeaderContainer>

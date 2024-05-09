@@ -319,6 +319,13 @@ export const setDefaultChainFilterOption = (
   selectedChainFilterOption,
 });
 
+export const setLocalDefaultChainFilterOption = (
+  selectedLocalChainFilterOption: SupportedCoins | undefined,
+): AppActionType => ({
+  type: AppActionTypes.SET_LOCAL_CHAIN_FILTER_OPTION,
+  selectedLocalChainFilterOption,
+});
+
 export const setMigrationComplete = (): AppActionType => ({
   type: AppActionTypes.SET_MIGRATION_COMPLETE,
 });

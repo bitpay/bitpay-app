@@ -142,6 +142,7 @@ export interface AppState {
   defaultAltCurrency: AltCurrenciesRowProps;
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   selectedChainFilterOption: SupportedCoins | undefined;
+  selectedLocalChainFilterOption: SupportedCoins | undefined;
   recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
@@ -232,6 +233,7 @@ const initialState: AppState = {
   defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
   recentDefaultAltCurrency: [],
   selectedChainFilterOption: undefined,
+  selectedLocalChainFilterOption: undefined,
   recentSelectedChainFilterOption: [],
   migrationComplete: false,
   keyMigrationFailure: false,
@@ -623,22 +625,41 @@ export const appReducer = (
       };
 
     case AppActionTypes.SET_DEFAULT_CHAIN_FILTER_OPTION:
-      let recentSelectedChainFilterOption = [
+      let recentSelectedDefaultChainFilterOption = [
         ...state.recentSelectedChainFilterOption,
       ];
       if (action.selectedChainFilterOption) {
-        recentSelectedChainFilterOption.unshift(
+        recentSelectedDefaultChainFilterOption.unshift(
           action.selectedChainFilterOption,
         );
-        recentSelectedChainFilterOption = uniqBy(
-          recentSelectedChainFilterOption,
+        recentSelectedDefaultChainFilterOption = uniqBy(
+          recentSelectedDefaultChainFilterOption,
           o => o.toLowerCase(),
         ).slice(0, 2);
       }
       return {
         ...state,
         selectedChainFilterOption: action.selectedChainFilterOption,
-        recentSelectedChainFilterOption,
+        recentSelectedChainFilterOption: recentSelectedDefaultChainFilterOption,
+      };
+
+    case AppActionTypes.SET_LOCAL_CHAIN_FILTER_OPTION:
+      let recentSelectedLocalChainFilterOption = [
+        ...state.recentSelectedChainFilterOption,
+      ];
+      if (action.selectedLocalChainFilterOption) {
+        recentSelectedLocalChainFilterOption.unshift(
+          action.selectedLocalChainFilterOption,
+        );
+        recentSelectedLocalChainFilterOption = uniqBy(
+          recentSelectedLocalChainFilterOption,
+          o => o.toLowerCase(),
+        ).slice(0, 2);
+      }
+      return {
+        ...state,
+        selectedLocalChainFilterOption: action.selectedLocalChainFilterOption,
+        recentSelectedChainFilterOption: recentSelectedLocalChainFilterOption,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:
