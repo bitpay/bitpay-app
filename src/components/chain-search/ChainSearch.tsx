@@ -6,13 +6,11 @@ import {
   SearchRoundInput,
 } from '../../components/styled/Containers';
 import _ from 'lodash';
-import {Action, Slate, SlateDark, White} from '../../styles/colors';
+import {Action, Slate, White} from '../../styles/colors';
 import {BaseText} from '../../components/styled/Text';
 import SearchSvg from '../../../assets/img/search.svg';
 import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
-import CloseSvgDark from '../../../assets/img/close-darkmode.svg';
-import CloseSvgLight from '../../../assets/img/close-lightmode.svg';
 import debounce from 'lodash.debounce';
 import {AppActions} from '../../store/app';
 import {useTranslation} from 'react-i18next';
@@ -20,7 +18,7 @@ import {EIP155_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
-import {setDefaultChainFilterOption} from '../../store/app/app.actions';
+import {BitpaySupportedCoins} from '../../constants/currencies';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -38,13 +36,6 @@ export const SearchFilterContainer = styled.TouchableOpacity`
   background: ${({theme: {dark}}) => (dark ? '#2240C440' : '#ECEFFD')};
 `;
 
-export const SelectedChainFilterContainer = styled(SearchFilterContainer)`
-  right: 140px;
-  margin: 8px 8px 8px 8px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Action)};
-  background-color: transparent;
-`;
-
 export const RowFilterContainer = styled.View`
   flex-direction: row;
   display: flex;
@@ -56,12 +47,6 @@ export const RowFilterContainer = styled.View`
 export const SearchFilterLabelContainer = styled.View`
   margin-left: 15px;
   margin-right: 15px;
-`;
-
-export const SelectedChainFilterLabelContainer = styled(
-  SearchFilterLabelContainer,
-)`
-  margin-right: 10px;
 `;
 
 export const SearchFilterLabel = styled(BaseText)`
@@ -215,34 +200,17 @@ const SearchComponent = <T extends SearchableItem>({
         placeholder={t('Search')}
         onChangeText={updateSearchResults}
       />
-      {selectedChainFilterOption ? (
-        <SelectedChainFilterContainer
-          onPress={() => {
-            dispatch(setDefaultChainFilterOption(undefined));
-          }}>
-          <RowFilterContainer>
-            <SelectedChainFilterLabelContainer>
-              <SearchFilterLabel>
-                {selectedChainFilterOption.toUpperCase()}
-              </SearchFilterLabel>
-            </SelectedChainFilterLabelContainer>
-            <SearchFilterIconContainer>
-              {!theme.dark ? (
-                <CloseSvgLight width={10} height={10} />
-              ) : (
-                <CloseSvgDark width={10} height={10} />
-              )}
-            </SearchFilterIconContainer>
-          </RowFilterContainer>
-        </SelectedChainFilterContainer>
-      ) : null}
       <SearchFilterContainer
         onPress={() => {
           dispatch(AppActions.showChainSelectorModal({}));
         }}>
         <RowFilterContainer>
           <SearchFilterLabelContainer>
-            <SearchFilterLabel>{t('All Networks')}</SearchFilterLabel>
+            <SearchFilterLabel>
+              {selectedChainFilterOption
+                ? BitpaySupportedCoins[selectedChainFilterOption]?.name
+                : t('All Networks')}
+            </SearchFilterLabel>
           </SearchFilterLabelContainer>
           <SearchFilterIconContainer>
             {!theme.dark ? (
