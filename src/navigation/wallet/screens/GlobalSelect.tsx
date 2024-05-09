@@ -56,6 +56,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import SearchComponent, {
   SearchableItem,
 } from '../../../components/chain-search/ChainSearch';
+import uniqBy from 'lodash.uniqby';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -345,7 +346,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     const nonBitpayTokens = customSupportedCurrencies
       ? []
       : NON_BITPAY_SUPPORTED_TOKENS;
-    const allCurrencies = [...coins, ...tokens, ...nonBitpayTokens];
+    const allCurrencies = uniqBy(
+      [...coins, ...tokens, ...nonBitpayTokens],
+      c => c,
+    );
     const allCurrencyData = buildList(allCurrencies, wallets);
     return Object.values(allCurrencyData);
   }, [wallets, customSupportedCurrencies]);
