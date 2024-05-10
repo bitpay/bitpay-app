@@ -606,6 +606,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       return (
         <GlobalSelectRow
           item={item}
+          hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={selectObj => {
             // if only one wallet - skip wallet selector
             const wallets = Object.values(
@@ -621,7 +622,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         />
       );
     },
-    [onWalletSelect, openKeyWalletSelector],
+    [onWalletSelect, selectedChainFilterOption, openKeyWalletSelector],
   );
 
   const closeModal = () => {

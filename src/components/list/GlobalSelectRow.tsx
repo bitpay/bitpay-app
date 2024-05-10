@@ -17,6 +17,7 @@ import {useTheme} from 'styled-components/native';
 
 interface Props {
   item: GlobalSelectObj;
+  hasSelectedChainFilterOption: boolean;
   emit: (item: GlobalSelectObj) => void;
 }
 
@@ -57,7 +58,7 @@ const WalletBadgeList: React.FC<WalletBadgeListProps> = ({walletsByChain}) => {
   );
 };
 
-const GlobalSelectRow = ({item, emit}: Props) => {
+const GlobalSelectRow = ({item, hasSelectedChainFilterOption, emit}: Props) => {
   const theme = useTheme();
   const {currencyName, total, img, availableWalletsByChain} = item;
   const shouldShowPill = total > 1;
@@ -71,7 +72,9 @@ const GlobalSelectRow = ({item, emit}: Props) => {
       </CurrencyColumn>
       {shouldShowPill ? (
         <AvailableWalletsPill>
-          <WalletBadgeList walletsByChain={availableWalletsByChain} />
+          {!hasSelectedChainFilterOption ? (
+            <WalletBadgeList walletsByChain={availableWalletsByChain} />
+          ) : null}
           <H7
             style={{
               marginLeft: 5,
@@ -82,11 +85,11 @@ const GlobalSelectRow = ({item, emit}: Props) => {
             +{total}
           </H7>
         </AvailableWalletsPill>
-      ) : (
+      ) : !hasSelectedChainFilterOption ? (
         <AvailableChainContainer>
           <WalletBadgeList walletsByChain={availableWalletsByChain} />
         </AvailableChainContainer>
-      )}
+      ) : null}
       <AngleRightSvg />
     </RowContainer>
   );
