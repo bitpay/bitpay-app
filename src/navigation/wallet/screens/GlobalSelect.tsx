@@ -56,6 +56,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import SearchComponent, {
   SearchableItem,
 } from '../../../components/chain-search/ChainSearch';
+import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -282,7 +283,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as GlobalSelectObj[]);
   const selectedChainFilterOption = useAppSelector(({APP}) =>
-    ['sell', 'swap', 'buy'].includes(context)
+    ignoreGlobalListContextList.includes(context)
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );

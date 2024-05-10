@@ -19,7 +19,9 @@ import cloneDeep from 'lodash.clonedeep';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
 import {setLocalDefaultChainFilterOption} from '../../store/app/app.actions';
-import ChainSelectorModal from '../../components/modal/chain-selector/ChainSelector';
+import ChainSelectorModal, {
+  ignoreGlobalListContextList,
+} from '../../components/modal/chain-selector/ChainSelector';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {
   SupportedCoinsOptions,
@@ -107,7 +109,7 @@ const SearchComponent = <T extends SearchableItem>({
   >();
 
   const selectedChainFilterOption = useAppSelector(({APP}) =>
-    ['sell', 'swap', 'buy'].includes(context)
+    ignoreGlobalListContextList.includes(context)
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );

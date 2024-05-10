@@ -48,6 +48,12 @@ import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
 
+export const ignoreGlobalListContextList = [
+  'sell',
+  'swap',
+  'buy',
+  'walletconnect',
+];
 export interface ChainSelectorConfig {
   onBackdropDismiss?: () => void;
   context?: string;
@@ -138,7 +144,7 @@ const ChainSelector = () => {
     ({APP}) => APP.recentSelectedChainFilterOption,
   );
   const selectedChainFilterOption = useAppSelector(({APP}) =>
-    config?.context && ['sell', 'swap', 'buy'].includes(config?.context)
+    config?.context && ignoreGlobalListContextList.includes(config?.context)
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
@@ -164,8 +170,10 @@ const ChainSelector = () => {
                 | SupportedChains
                 | undefined;
 
-              // Check if the context is one of 'sell', 'swap', 'buy'
-              if (['sell', 'swap', 'buy'].includes(config?.context as string)) {
+              // Check if the context is one of 'sell', 'swap', 'buy', 'walletconnect'
+              if (
+                ignoreGlobalListContextList.includes(config?.context as string)
+              ) {
                 dispatch(setLocalDefaultChainFilterOption(option));
               } else {
                 dispatch(setDefaultChainFilterOption(option));
