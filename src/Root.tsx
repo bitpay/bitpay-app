@@ -224,7 +224,6 @@ export const getNavigationTabName = () => {
     TabsScreens.SHOP,
     TabsScreens.TRANSACT_BUTTON,
     TabsScreens.CARD,
-    TabsScreens.SETTINGS,
   ];
   const navigationState = navigationRef.getState();
   const navigationTabIndex = navigationState?.routes?.[0]?.state?.index;

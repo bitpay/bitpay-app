@@ -11,6 +11,7 @@ import {IsERCToken} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
+import {NavigationProp, StackActions} from '@react-navigation/native';
 
 export const sleep = (duration: number) =>
   new Promise<void>(resolve => setTimeout(resolve, duration));
@@ -477,4 +478,25 @@ export const toggleThenUntoggle = async (
   booleanSetter(true);
   await sleep(500);
   booleanSetter(false);
+};
+
+export const popToScreen = (
+  navigation: NavigationProp<ReactNavigation.RootParamList>,
+  targetScreenName: string,
+) => {
+  // @ts-ignore
+  navigation.dispatch(state => {
+    const routes = state.routes;
+    const targetIndex = routes.findIndex(r => r.name === targetScreenName);
+    if (targetIndex === -1) {
+      // Target screen "${targetScreenName}" not found in the navigation stack.
+      return;
+    }
+    const popCount = routes.length - 1 - targetIndex;
+    if (popCount > 0) {
+      return StackActions.pop(popCount);
+    } else {
+      // Already at the target screen "${targetScreenName}". No need to pop.
+    }
+  });
 };
