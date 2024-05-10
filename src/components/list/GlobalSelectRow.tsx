@@ -44,16 +44,30 @@ interface WalletBadgeListProps {
 }
 
 const WalletBadgeList: React.FC<WalletBadgeListProps> = ({walletsByChain}) => {
+  const walletValues = Object.values(walletsByChain);
   return (
     <>
-      {Object.values(walletsByChain).map(
-        (wallets, index) =>
-          wallets[0]?.badgeImg && (
-            <Img key={wallets[0].id} isFirst={false} style={{marginLeft: 1}}>
-              <CurrencyImage img={wallets[0].badgeImg} size={25} />
-            </Img>
-          ),
-      )}
+      {walletValues.map((wallets, index) => {
+        const [firstWallet] = wallets;
+        if (!firstWallet) {
+          return null;
+        }
+
+        const img =
+          firstWallet.badgeImg ||
+          (walletValues.length > 1 ? firstWallet.img : null);
+        if (!img) {
+          return null;
+        }
+
+        const marginLeft = index === 0 ? 1 : -6;
+
+        return (
+          <Img key={firstWallet.id} isFirst={false} style={{marginLeft}}>
+            <CurrencyImage img={img} size={25} />
+          </Img>
+        );
+      })}
     </>
   );
 };
