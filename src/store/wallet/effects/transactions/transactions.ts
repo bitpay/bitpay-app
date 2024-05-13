@@ -941,14 +941,7 @@ export const buildTransactionDetails =
 
         _transaction.feeFiatStr = formatFiatAmount(
           dispatch(
-            toFiat(
-              _fee,
-              alternativeCurrency,
-              chain,
-              chain,
-              rates,
-              undefined,
-            ),
+            toFiat(_fee, alternativeCurrency, chain, chain, rates, undefined),
           ),
           alternativeCurrency,
         );

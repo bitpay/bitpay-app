@@ -19,9 +19,9 @@ import {
   Wrapper,
 } from '../../import-ledger-wallet/import-ledger-wallet.styled';
 import {checkPermissionsBLE} from '../../import-ledger-wallet/utils';
-import {Warning75, White} from '../../../../styles/colors';
 import {SearchingForDevices} from '../../import-ledger-wallet/pair-device/SearchingForDevices';
 import {sleep} from '../../../../utils/helper-methods';
+import { ErrorDescriptionColumn } from '../../import-ledger-wallet/components/ErrorDescriptionColumn';
 
 interface PairHardwareWalletModalProps {
   onPaired: (transport: Transport) => void;
@@ -34,13 +34,6 @@ const Bold = styled.Text`
 
 const IconWrapper = styled.View`
   padding: 28px;
-`;
-
-const ErrParagraph = styled(Paragraph)`
-  background-color: ${Warning75};
-  color: ${White};
-  border-radius: 12px;
-  padding: 20px;
 `;
 
 export const ConfirmLedgerStart: React.FC<
@@ -164,11 +157,7 @@ export const ConfirmLedgerStart: React.FC<
             <H3>Approve on your Ledger</H3>
           </Header>
 
-          {error ? (
-            <DescriptionRow>
-              <ErrParagraph>{error}</ErrParagraph>
-            </DescriptionRow>
-          ) : null}
+          {error ? <ErrorDescriptionColumn error={error} /> : null}
 
           {noSupportedTransportTypes ? (
             <DescriptionRow>

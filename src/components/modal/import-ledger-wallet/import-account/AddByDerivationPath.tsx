@@ -35,7 +35,6 @@ import {
   useLogger,
 } from '../../../../utils/hooks';
 import styled from 'styled-components/native';
-import {Warning75, White} from '../../../../styles/colors';
 import {
   EVMAccountParams,
   UtxoAccountParams,
@@ -50,6 +49,7 @@ import {
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {DefaultDerivationPath} from '../../../../constants/defaultDerivationPath';
 import {startUpdateWalletStatus} from '../../../../store/wallet/effects/status/status';
+import {ErrorDescriptionColumn} from '../components/ErrorDescriptionColumn';
 
 interface Props {
   onComplete: () => void;
@@ -62,13 +62,6 @@ interface Props {
   selectedCurrency: string;
   scannedWalletsIds?: string[];
 }
-
-const ErrParagraph = styled(Paragraph)`
-  background-color: ${Warning75};
-  color: ${White};
-  border-radius: 12px;
-  padding: 20px;
-`;
 
 export const AddByDerivationPath: React.FC<Props> = props => {
   const defaultCoin =
@@ -364,9 +357,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       </Header>
 
       {error && error !== 'user denied transaction' && !isLoading ? (
-        <DescriptionRow>
-          <ErrParagraph>{error}</ErrParagraph>
-        </DescriptionRow>
+        <ErrorDescriptionColumn error={error} />
       ) : null}
 
       <DescriptionRow>

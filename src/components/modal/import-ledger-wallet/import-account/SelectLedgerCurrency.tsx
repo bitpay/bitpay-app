@@ -18,7 +18,6 @@ import {
   startImportFromHardwareWallet,
 } from '../../../../store/wallet/effects';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {Warning75, White} from '../../../../styles/colors';
 import {getDerivationStrategy, sleep} from '../../../../utils/helper-methods';
 import {
   useAppDispatch,
@@ -54,6 +53,7 @@ import BitpaySvg from '../../../../../assets/img/wallet/transactions/bitpay.svg'
 import {BASE_BITCORE_URL} from '../../../../constants/config';
 import {startUpdateAllWalletStatusForKey} from '../../../../store/wallet/effects/status/status';
 import RadiatingLineAnimation from './RadiatingLineAnimation';
+import {ErrorDescriptionColumn} from '../components/ErrorDescriptionColumn';
 
 interface Props {
   transport: Transport;
@@ -223,13 +223,6 @@ const CurrencyListContainer = styled.View`
 
 const ScrollView = styled.ScrollView``;
 
-const ErrParagraph = styled(Paragraph)`
-  background-color: ${Warning75};
-  color: ${White};
-  border-radius: 12px;
-  padding: 20px;
-`;
-
 const CURRENCIES = [
   {
     coin: 'btc',
@@ -321,7 +314,9 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     coin: string,
     network: Network,
   ): Promise<boolean> => {
+    // @ts-ignore
     if (_fetchTxCache[network][address]) {
+      // @ts-ignore
       return _fetchTxCache[network][address];
     }
     const url = `${
@@ -337,6 +332,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
       throw new Error(`No activity found for address: ${address}`);
     }
     const hasActivity = finalTxCount > 0;
+    // @ts-ignore
     _fetchTxCache[network][address] = hasActivity;
     return hasActivity;
   };
@@ -879,9 +875,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
         </Header>
 
         {error && error !== 'user denied transaction' && !isLoading ? (
-          <DescriptionRow>
-            <ErrParagraph>{error}</ErrParagraph>
-          </DescriptionRow>
+          <ErrorDescriptionColumn error={error} />
         ) : null}
 
         {isLoading ? (
