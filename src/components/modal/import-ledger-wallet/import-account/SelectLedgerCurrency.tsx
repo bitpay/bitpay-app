@@ -893,7 +893,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
                 </Paragraph>
               ) : (
                 <Paragraph style={{textAlign: 'center'}}>
-                  Looking for activity... Please wait...
+                  Please wait...
                 </Paragraph>
               )}
             </DescriptionRow>
