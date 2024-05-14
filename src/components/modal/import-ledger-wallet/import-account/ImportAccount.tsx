@@ -56,12 +56,23 @@ export const ImportAccount: React.FC<ImportAccountProps> = props => {
         scannedWalletsIds={props.scannedWalletsIds}
       />
     )
+  ) : addByDerivationPath ? (
+    <AddByDerivationPath
+      transport={props.transport}
+      setHardwareWalletTransport={props.setHardwareWalletTransport}
+      onDisconnect={props.onDisconnect}
+      onComplete={props.onComplete}
+      onAddByDerivationPathSelected={onAddByDerivationPathSelected}
+      selectedCurrency={selectedCurrency}
+      scannedWalletsIds={props.scannedWalletsIds}
+    />
   ) : (
     <SelectLedgerCurrency
       transport={props.transport}
       setHardwareWalletTransport={props.setHardwareWalletTransport}
       onDisconnect={props.onDisconnect}
       onScannedCompleted={onScannedCompleted}
+      onAddByDerivationPathSelected={onAddByDerivationPathSelected}
     />
   );
 };

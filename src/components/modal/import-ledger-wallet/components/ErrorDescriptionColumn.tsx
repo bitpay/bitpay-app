@@ -4,17 +4,19 @@ import {Paragraph as _Paragraph} from '../../../styled/Text';
 import WarningBrownSvg from '../../../../../assets/img/warning-brown.svg';
 
 const Paragraph = styled(_Paragraph)`
-  color: ${Black};
   flex: 1;
+  color: ${Black};
 `;
 
 const DescriptionColumn = styled.View`
   display: flex;
   flex-direction: row;
   align-items: center;
+  text-align: center;
+  justify-content: center;
   background-color: ${Warning25};
   border-radius: 12px;
-  padding: 8px 12px 8px 12px;
+  padding: 12px;
   margin-top: 32px;
 `;
 

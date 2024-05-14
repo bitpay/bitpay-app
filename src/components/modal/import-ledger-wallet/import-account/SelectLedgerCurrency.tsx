@@ -24,7 +24,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import {ButtonState} from '../../../button/Button';
+import Button, {ButtonState} from '../../../button/Button';
 import {H4, H5, ListItemSubText, Paragraph} from '../../../styled/Text';
 import {
   DescriptionRow,
@@ -65,6 +65,7 @@ interface Props {
     selectedCurrency: string,
     scannedWalletsIds?: string[],
   ) => void;
+  onAddByDerivationPathSelected: () => void;
 }
 
 export interface BaseAccountParams {
@@ -870,7 +871,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
               )}
             </>
           ) : (
-            <H4>Choose Currency to Import</H4>
+            <H4>Choose Crypto to Import</H4>
           )}
         </Header>
 
@@ -900,35 +901,42 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             )}
           </>
         ) : (
-          <CurrencyListContainer>
-            {CURRENCIES.map((c, index) => (
-              <RowContainerWithoutBorders
-                onPress={() => onContinue(c.coin)}
-                key={index}>
-                <CurrencyImageContainer>
-                  <CurrencyImage img={c.img} />
-                </CurrencyImageContainer>
+          <>
+            <CurrencyListContainer>
+              {CURRENCIES.map((c, index) => (
+                <RowContainerWithoutBorders
+                  onPress={() => onContinue(c.coin)}
+                  key={index}>
+                  <CurrencyImageContainer>
+                    <CurrencyImage img={c.img} />
+                  </CurrencyImageContainer>
 
-                <CurrencyColumn>
-                  <Row>
-                    <H5 ellipsizeMode="tail" numberOfLines={1}>
-                      {c.label}
-                    </H5>
-                  </Row>
-                  <Row style={{alignItems: 'center'}}>
-                    <ListItemSubText
-                      ellipsizeMode="tail"
-                      numberOfLines={1}
-                      style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-                      {c.coin.toUpperCase()}
-                    </ListItemSubText>
-                  </Row>
-                </CurrencyColumn>
-                <AngleRightSvg />
-                <Hr />
-              </RowContainerWithoutBorders>
-            ))}
-          </CurrencyListContainer>
+                  <CurrencyColumn>
+                    <Row>
+                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                        {c.label}
+                      </H5>
+                    </Row>
+                    <Row style={{alignItems: 'center'}}>
+                      <ListItemSubText
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                        {c.coin.toUpperCase()}
+                      </ListItemSubText>
+                    </Row>
+                  </CurrencyColumn>
+                  <AngleRightSvg />
+                  <Hr />
+                </RowContainerWithoutBorders>
+              ))}
+            </CurrencyListContainer>
+            <Button
+              buttonType={'link'}
+              onPress={props.onAddByDerivationPathSelected}>
+              Add by Derivation Path
+            </Button>
+          </>
         )}
       </Wrapper>
     </ScrollView>
