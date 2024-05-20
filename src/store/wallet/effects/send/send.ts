@@ -708,6 +708,10 @@ const buildTransactionProposal =
           }
         }
 
+        if (!chain) {
+          throw new Error('Chain is required');
+        }
+
         // base tx
         const txp: Partial<TransactionProposal> = {
           coin: currency?.toLowerCase(),
@@ -750,38 +754,39 @@ const buildTransactionProposal =
           sendMaxInfo: SendMaxInfo,
           currencyAbbreviation: string,
           tokenAddress: string | undefined,
+          _chain: string,
         ) => {
           const warningMsg = [];
           if (sendMaxInfo.utxosBelowFee > 0) {
             const amountBelowFeeStr =
               sendMaxInfo.amountBelowFee /
               dispatch(
-                GetPrecision(currencyAbbreviation, chain!, tokenAddress),
+                GetPrecision(currencyAbbreviation, _chain, tokenAddress),
               )!.unitToSatoshi!;
-            const message = t(
+            const message_a = t(
               'A total of were excluded. These funds come from UTXOs smaller than the network fee provided',
               {
                 amountBelowFeeStr,
                 currencyAbbreviation: currencyAbbreviation.toUpperCase(),
               },
             );
-            warningMsg.push(message);
+            warningMsg.push(message_a);
           }
 
           if (sendMaxInfo.utxosAboveMaxSize > 0) {
             const amountAboveMaxSizeStr =
               sendMaxInfo.amountAboveMaxSize /
               dispatch(
-                GetPrecision(currencyAbbreviation, chain!, tokenAddress),
+                GetPrecision(currencyAbbreviation, _chain, tokenAddress),
               )!.unitToSatoshi;
-            const message = t(
+            const message_b = t(
               'A total of were excluded. The maximum size allowed for a transaction was exceeded.',
               {
                 amountAboveMaxSizeStr,
                 currencyAbbreviation: currencyAbbreviation.toUpperCase(),
               },
             );
-            warningMsg.push(message);
+            warningMsg.push(message_b);
           }
           return warningMsg.join('\n');
         };
@@ -799,10 +804,10 @@ const buildTransactionProposal =
                 returnInputs: true,
               },
             });
-            const {amount, inputs, fee} = sendMaxInfo;
+            const {amount, inputs: _inputs, fee} = sendMaxInfo;
 
             txp.amount = tx.amount = amount;
-            txp.inputs = inputs;
+            txp.inputs = _inputs;
             // Either fee or feePerKb can be available
             txp.fee = fee;
             txp.feePerKb = undefined;
@@ -811,6 +816,7 @@ const buildTransactionProposal =
               sendMaxInfo,
               wallet.currencyAbbreviation,
               wallet.tokenAddress,
+              wallet.chain,
             );
 
             if (!_.isEmpty(warningMsg)) {
@@ -833,7 +839,7 @@ const buildTransactionProposal =
             if (recipientList) {
               recipientList.forEach(r => {
                 const formattedAmount = dispatch(
-                  ParseAmount(r.amount || 0, chain!, chain!, undefined),
+                  ParseAmount(r.amount || 0, chain, chain, undefined),
                 );
                 txp.outputs?.push({
                   toAddress:
@@ -862,8 +868,7 @@ const buildTransactionProposal =
             break;
           case 'selectInputs':
             // new amount and fee calculation
-            const {currencyAbbreviation, chain, tokenAddress} =
-              wallet as Wallet;
+            const {currencyAbbreviation, tokenAddress} = wallet as Wallet;
             const totalAmount = inputs!.reduce(
               (total, utxo) => total + Number(utxo.amount),
               0,
@@ -911,12 +916,12 @@ const buildTransactionProposal =
             txp.replaceTxByFee = true;
             if (recipientList) {
               recipientList.forEach(r => {
-                const formattedAmount = dispatch(
-                  ParseAmount(r.amount || 0, chain!, chain!, undefined),
+                const formattedAmount_rbf = dispatch(
+                  ParseAmount(r.amount || 0, chain, chain, undefined),
                 );
                 txp.outputs?.push({
                   toAddress: r.address,
-                  amount: formattedAmount.amountSat,
+                  amount: formattedAmount_rbf.amountSat,
                   message: tx.description,
                 });
               });
