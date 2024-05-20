@@ -71,6 +71,18 @@ import {
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import Icons from '../../wallet/components/WalletIcons';
 
+const HomeRootContainerFactory = (insetsTop: number) => {
+  const platformSpecificContainer = Platform.select({
+    ios: () => styled.View`
+      flex: 1;
+      margin-top: ${insetsTop}px;
+    `,
+  });
+  return platformSpecificContainer
+    ? platformSpecificContainer()
+    : ScreenContainer;
+};
+
 const HomeRoot = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -225,16 +237,10 @@ const HomeRoot = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
 
-  const HomeRootContainerFactory = Platform.select({
-    ios: () => styled.View`
-      flex: 1;
-      margin-top: ${insets.top}px;
-    `,
-  });
-
-  const HomeRootContainer = HomeRootContainerFactory
-    ? HomeRootContainerFactory()
-    : ScreenContainer;
+  const HomeRootContainer = useMemo(
+    () => HomeRootContainerFactory(insets.top),
+    [insets.top],
+  );
 
   return (
     <HomeRootContainer>
