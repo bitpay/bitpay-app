@@ -106,11 +106,12 @@ import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import { ChangellyCurrency, ChangellyCurrencyBlockchain } from '../../../../store/swap-crypto/models/changelly.models';
 
-export interface RateData {
-  fixedRateId: string;
-  amountTo: number;
-  rate: number;
-}
+export type SwapCryptoRootScreenParams =
+  | {
+      selectedWallet?: Wallet;
+      partner?: SwapCryptoExchangeKey;
+    }
+  | undefined;
 
 export interface SwapLimits {
   minAmount?: number;
