@@ -112,11 +112,12 @@ import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { ChangellyCurrency, ChangellyCurrencyBlockchain } from '../../../../store/swap-crypto/models/changelly.models';
 
-export interface RateData {
-  fixedRateId: string;
-  amountTo: number;
-  rate: number;
-}
+export type SwapCryptoRootScreenParams =
+  | {
+      selectedWallet?: Wallet;
+      partner?: SwapCryptoExchangeKey;
+    }
+  | undefined;
 
 export interface SwapLimits {
   minAmount?: number;

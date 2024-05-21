@@ -2,8 +2,16 @@ import React from 'react';
 import {TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
-import SwapCryptoRoot from './screens/SwapCryptoRoot';
+import SwapCryptoRoot, {
+  SwapCryptoRootScreenParams,
+} from './screens/SwapCryptoRoot';
+import SwapCryptoOffers, {
+  SwapCryptoOffersScreenParams,
+} from './screens/SwapCryptoOffers';
 import ChangellyCheckout from './screens/ChangellyCheckout';
+import ThorswapCheckout, {
+  ThorswapCheckoutProps,
+} from './screens/ThorswapCheckout';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import HistoryIcon from '../../../../assets/img/services/swap-crypto/icon-history.svg';
@@ -21,11 +29,8 @@ interface SwapCryptoProps {
 }
 
 export type SwapCryptoGroupParamList = {
-  SwapCryptoRoot:
-    | {
-        selectedWallet?: Wallet;
-      }
-    | undefined;
+  SwapCryptoRoot: SwapCryptoRootScreenParams;
+  SwapCryptoOffers: SwapCryptoOffersScreenParams;
   ChangellyCheckout:
     | {
         fromWalletSelected: Wallet;
@@ -36,11 +41,14 @@ export type SwapCryptoGroupParamList = {
         sendMaxInfo?: any;
       }
     | undefined;
+  ThorswapCheckout: ThorswapCheckoutProps | undefined;
 };
 
 export enum SwapCryptoScreens {
   SWAP_CRYPTO_ROOT = 'SwapCryptoRoot',
+  SWAP_CRYPTO_OFFERS = 'SwapCryptoOffers',
   CHANGELLY_CHECKOUT = 'ChangellyCheckout',
+  THORSWAP_CHECKOUT = 'ThorswapCheckout',
 }
 
 const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
@@ -83,8 +91,23 @@ const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
         }}
       />
       <SwapCrypto.Screen
+        name={SwapCryptoScreens.SWAP_CRYPTO_OFFERS}
+        component={SwapCryptoOffers}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Offers')}</HeaderTitle>,
+        }}
+      />
+      <SwapCrypto.Screen
         name={SwapCryptoScreens.CHANGELLY_CHECKOUT}
         component={ChangellyCheckout}
+        options={{
+          gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>{t('Swap Checkout')}</HeaderTitle>,
+        }}
+      />
+      <SwapCrypto.Screen
+        name={SwapCryptoScreens.THORSWAP_CHECKOUT}
+        component={ThorswapCheckout}
         options={{
           gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Swap Checkout')}</HeaderTitle>,
