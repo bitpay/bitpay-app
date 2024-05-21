@@ -39,7 +39,7 @@ export type SwapCryptoGroupParamList = {
 };
 
 export enum SwapCryptoScreens {
-  SWAPCRYPTO_ROOT = 'SwapCryptoRoot',
+  SWAP_CRYPTO_ROOT = 'SwapCryptoRoot',
   CHANGELLY_CHECKOUT = 'ChangellyCheckout',
 }
 
@@ -64,7 +64,7 @@ const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
         ),
       })}>
       <SwapCrypto.Screen
-        name={SwapCryptoScreens.SWAPCRYPTO_ROOT}
+        name={SwapCryptoScreens.SWAP_CRYPTO_ROOT}
         component={SwapCryptoRoot}
         options={{
           headerTitle: () => <HeaderTitle>{t('Swap Crypto')}</HeaderTitle>,
