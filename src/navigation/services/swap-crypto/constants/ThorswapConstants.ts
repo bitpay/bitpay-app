@@ -1,0 +1,1 @@
+export const THORSWAP_DEFAULT_GAS_LIMIT = 500000;

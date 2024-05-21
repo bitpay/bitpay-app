@@ -1274,7 +1274,7 @@ const handleSwapCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: SwapCryptoScreens.SWAPCRYPTO_ROOT,
+          name: SwapCryptoScreens.SWAP_CRYPTO_ROOT,
           params: {
             partner,
           },
