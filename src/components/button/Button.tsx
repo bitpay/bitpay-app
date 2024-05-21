@@ -46,6 +46,7 @@ interface ButtonProps extends BaseButtonProps {
   buttonType?: ButtonType;
   buttonOutline?: boolean;
   onPress?: () => any;
+  onPressDisabled?: () => any;
   disabled?: boolean;
   debounceTime?: number;
   height?: number;
@@ -147,7 +148,7 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 `;
 
 const PillContent = styled.View<ButtonOptionProps>`
-  background: ${({secondary, cancel, theme, action}) => {
+  background: ${({secondary, cancel, theme, action, disabled}) => {
     if (secondary) {
       return 'transparent';
     }
@@ -157,7 +158,11 @@ const PillContent = styled.View<ButtonOptionProps>`
     }
 
     if (action) {
-      return Action;
+      if (disabled) {
+        return theme.dark ? DisabledDark : Disabled;
+      } else {
+        return Action;
+      }
     }
 
     return theme?.dark ? Midnight : Air;
@@ -191,7 +196,7 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
 
   color: ${({disabled, cancel, theme, action}) => {
     if (disabled) {
-      return DisabledDark;
+      return theme.dark ? DisabledTextDark : DisabledText;
     }
 
     if (cancel) {
@@ -233,6 +238,7 @@ const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   const {
     onPress,
+    onPressDisabled,
     buttonStyle = 'primary',
     buttonType = 'button',
     buttonOutline,
@@ -288,8 +294,16 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     Haptic('impactLight');
     onPress();
   };
-  const onPressRef = useRef(_onPress);
-  onPressRef.current = _onPress;
+  const _onPressDisabled = () => {
+    if (!onPressDisabled) {
+      return;
+    }
+
+    Haptic('impactLight');
+    onPressDisabled();
+  };
+  const onPressRef = useRef(disabled ? _onPressDisabled : _onPress);
+  onPressRef.current = disabled ? _onPressDisabled : _onPress;
 
   const debouncedOnPress = useMemo(
     () =>
