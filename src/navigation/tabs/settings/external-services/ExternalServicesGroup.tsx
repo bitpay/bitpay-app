@@ -18,6 +18,8 @@ import WyreSettings from './screens/WyreSettings';
 import WyreDetails from './screens/WyreDetails';
 import ChangellySettings from './screens/ChangellySettings';
 import ChangellyDetails from './screens/ChangellyDetails';
+import ThorswapSettings from './screens/ThorswapSettings';
+import ThorswapDetails from './screens/ThorswapDetails';
 import {
   BanxaIncomingData,
   BanxaPaymentData,
@@ -35,6 +37,7 @@ import {
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {MoonpaySellOrderData} from '../../../../store/sell-crypto/sell-crypto.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
+import {thorswapTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {Root} from '../../../../Root';
 import {
   baseNativeHeaderBackButtonProps,
@@ -111,6 +114,10 @@ export type ExternalServicesSettingsGroupParamList = {
   ChangellyDetails: {
     swapTx: changellyTxData;
   };
+  ThorswapSettings: undefined;
+  ThorswapDetails: {
+    swapTx: thorswapTxData;
+  };
 };
 
 export enum ExternalServicesSettingsScreens {
@@ -131,6 +138,8 @@ export enum ExternalServicesSettingsScreens {
   WYRE_DETAILS = 'WyreDetails',
   CHANGELLY_SETTINGS = 'ChangellySettings',
   CHANGELLY_DETAILS = 'ChangellyDetails',
+  THORSWAP_SETTINGS = 'ThorswapSettings',
+  THORSWAP_DETAILS = 'ThorswapDetails',
 }
 
 const ExternalServicesSettingsGroup: React.FC<
@@ -269,6 +278,22 @@ const ExternalServicesSettingsGroup: React.FC<
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.CHANGELLY_DETAILS}
         component={ChangellyDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.THORSWAP_SETTINGS}
+        component={ThorswapSettings}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('THORSwap Settings')}</HeaderTitle>
+          ),
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.THORSWAP_DETAILS}
+        component={ThorswapDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
         }}
