@@ -206,4 +206,3 @@ interface ThorswapRouteWrapperSwapCalldata {
   router: string;
   tokenOut: string;
 }
-
