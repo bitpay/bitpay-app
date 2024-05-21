@@ -222,6 +222,7 @@ export interface CustomTransactionData {
   recipientEmail?: string;
   giftCardName?: string;
   changelly?: string;
+  thorswap?: string;
   moonpay?: string;
   oneInch?: string;
   shapeShift?: string;
@@ -291,6 +292,18 @@ export interface Action {
   createdOn: number;
   type: number;
 }
+
+export interface TransactionProposalOutputs {
+  amount: number | string; // Support BN
+  address?: string;
+  addressToShow?: string;
+  toAddress?: string;
+  message?: string;
+  data?: string;
+  gasLimit?: number;
+  script?: string;
+}
+
 export interface TransactionProposal {
   action: string;
   actions: Action[];
@@ -312,15 +325,7 @@ export interface TransactionProposal {
   enableRBF?: boolean; // not needed (FULLRBF)
   replaceTxByFee?: boolean;
   toAddress: string;
-  outputs: Array<{
-    amount: number | string; // Support BN
-    address?: string;
-    addressToShow?: string;
-    toAddress?: string;
-    message?: string;
-    data?: string;
-    gasLimit?: number;
-  }>;
+  outputs: TransactionProposalOutputs[];
   effects?: Array<{
     amount: number | string; // Support BN
     contractAddress?: string;

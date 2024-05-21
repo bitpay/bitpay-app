@@ -389,7 +389,7 @@ const MoonpaySellCheckout: React.FC = () => {
       Number(sellTxDetails.feeAmount) + Number(sellTxDetails.extraFeeAmount);
     setTotalExchangeFee(_totalExchangeFee);
 
-    const presicion = dispatch(
+    const precision = dispatch(
       GetPrecision(
         wallet.currencyAbbreviation,
         wallet.chain,
@@ -398,7 +398,7 @@ const MoonpaySellCheckout: React.FC = () => {
     );
     // To Sat
     const depositSat = Number(
-      (amountExpected * presicion!.unitToSatoshi).toFixed(0),
+      (amountExpected * precision!.unitToSatoshi).toFixed(0),
     );
 
     if (
@@ -698,7 +698,7 @@ const MoonpaySellCheckout: React.FC = () => {
     );
     if (realMaxAmount && realMaxAmount > amountExpected) {
       try {
-        const presicion = dispatch(
+        const precision = dispatch(
           GetPrecision(
             wallet.currencyAbbreviation,
             wallet.chain,
@@ -706,7 +706,7 @@ const MoonpaySellCheckout: React.FC = () => {
           ),
         );
         const amountBelowMoonpayMinUnit = Number(
-          (realMaxAmount - amountExpected).toFixed(presicion?.unitDecimals),
+          (realMaxAmount - amountExpected).toFixed(precision?.unitDecimals),
         );
         const message = `A total of ${amountBelowMoonpayMinUnit} ${coin.toUpperCase()} were excluded. These funds are not enough to cover the minimum Moonpay purchase unit.`;
         warningMsg = warningMsg + `\n${message}`;
