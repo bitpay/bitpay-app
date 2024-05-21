@@ -15,6 +15,7 @@ import MoonpayLogo from '../../../../components/icons/external-services/moonpay/
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
+import ThorswapLogo from '../../../../components/icons/external-services/thorswap/thorswap-logo';
 import TransakLogo from '../../../../components/icons/external-services/transak/transak-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {useAppSelector} from '../../../../utils/hooks';
@@ -130,6 +131,20 @@ const ExternalServices = () => {
             <SimplexLogo iconOnly={true} widthIcon={30} heightIcon={25} />
           </ExternalServicesIconContainer>
           <SettingTitle>Simplex</SettingTitle>
+        </ExternalServicesItemContainer>
+        <AngleRight />
+      </Setting>
+      <Hr />
+      <Setting
+        onPress={() => {
+          haptic('impactLight');
+          navigation.navigate('ThorswapSettings');
+        }}>
+        <ExternalServicesItemContainer>
+          <ExternalServicesIconContainer>
+            <ThorswapLogo iconOnly={true} widthIcon={30} heightIcon={22} />
+          </ExternalServicesIconContainer>
+          <SettingTitle>THORSwap</SettingTitle>
         </ExternalServicesItemContainer>
         <AngleRight />
       </Setting>
