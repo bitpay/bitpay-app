@@ -45,11 +45,9 @@ import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {
   changellyGetPairsParams,
   changellyGetFixRateForAmount,
-  ChangellyCurrency,
   getChangellyCurrenciesFixedProps,
   getChangellyFixedCurrencyAbbreviation,
   getChangellySupportedChains,
-  ChangellyCurrencyBlockchain,
   getChainFromChangellyBlockchain,
 } from '../utils/changelly-utils';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
@@ -106,6 +104,7 @@ import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
+import { ChangellyCurrency, ChangellyCurrencyBlockchain } from '../../../../store/swap-crypto/models/changelly.models';
 
 export interface RateData {
   fixedRateId: string;
