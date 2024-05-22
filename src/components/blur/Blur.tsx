@@ -17,7 +17,7 @@ export const Blur = () => {
       }}
       blurType={theme.dark ? 'dark' : 'light'}
       blurAmount={10}
-      reducedTransparencyFallbackColor="white"
+      reducedTransparencyFallbackColor={theme.colors.background}
     />
   );
 };
