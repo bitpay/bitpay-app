@@ -741,7 +741,9 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const memoizedOnViewAllPressed = useMemo(() => {
     return (currency: CurrencySelectionItem) => {
       const item = allListItemsRef.current.find(
-        i => i.currency.currencyAbbreviation === currency.currencyAbbreviation,
+        i =>
+          i.currency.currencyAbbreviation === currency.currencyAbbreviation &&
+          i.currency.chain === currency.chain,
       );
 
       if (!item) {

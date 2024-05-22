@@ -262,7 +262,7 @@ export const SupportedEvmCurrencyOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.eth,
     priority: 5,
-    currencyName: 'Ethreum Arbitrum',
+    currencyName: 'Ethereum Arbitrum',
     currencyAbbreviation: 'eth',
     chain: 'arb',
     hasMultisig: false,

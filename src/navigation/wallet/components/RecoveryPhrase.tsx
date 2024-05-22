@@ -200,7 +200,7 @@ const RecoveryPhrase = () => {
   const [advancedOptions, setAdvancedOptions] = useState({
     derivationPath: DefaultDerivationPath.defaultBTC as string,
     coin: CurrencyOptions[0].currencyAbbreviation,
-    chain: CurrencyOptions[0].currencyAbbreviation, // chain = currency for all currencies if tokens not included
+    chain: CurrencyOptions[0].chain, // chain = currency for all currencies if tokens not included. NOT TRUE ANYMORE
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
@@ -510,11 +510,12 @@ const RecoveryPhrase = () => {
 
   const renderItem = useCallback(
     ({item}) => {
-      const currencySelected = (id: string) => {
+      const currencySelected = (_currencyAbbreviation: string, _chain: string) => {
         const _selectedCurrency = CurrencyOptions.filter(
-          currency => currency.currencyAbbreviation === id,
+          currency => currency.currencyAbbreviation === _currencyAbbreviation && currency.chain === _chain,
         );
         const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
+        const chain = _selectedCurrency[0].chain;
         const defaultCoin = `default${currencyAbbreviation.toUpperCase()}`;
         // @ts-ignore
         const derivationPath = DefaultDerivationPath[defaultCoin];
@@ -523,7 +524,7 @@ const RecoveryPhrase = () => {
         const advancedOpts = {
           ...advancedOptions,
           coin: currencyAbbreviation,
-          chain: currencyAbbreviation, // chain = currency for all currencies if tokens not included
+          chain, // chain = currency for all currencies if tokens not included. NOT TRUE ANYMORE
           derivationPath,
         };
         setAdvancedOptions(advancedOpts);
@@ -727,8 +728,8 @@ const RecoveryPhrase = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}>
-                      <Row style={{alignItems: 'center'}}>
-                        <CurrencyImage img={selectedCurrency.img} size={30} />
+                      <Row>
+                        <CurrencyImage img={selectedCurrency.img} badgeUri={selectedCurrency.badgeUri} size={30} />
                         <CurrencyName>
                           {selectedCurrency?.currencyAbbreviation?.toUpperCase()}
                         </CurrencyName>

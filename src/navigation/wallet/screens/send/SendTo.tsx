@@ -323,14 +323,24 @@ const SendTo = () => {
     },
   };
 
+  const bridgeOptions: Array<{chain: string; option: Option}> = [
+    {chain: 'matic', option: BridgeToPolygon},
+    {chain: 'arb', option: BridgeToArbitrum},
+    {chain: 'base', option: BridgeToBase},
+    {chain: 'op', option: BridgeToOptimism},
+  ];
+
   const assetOptions: Array<Option> = isUtxo
     ? [multisendOption, selectInputOption]
-    : [
-        ...(chain === 'matic' ? [BridgeToPolygon] : []),
-        ...(chain === 'arb' ? [BridgeToArbitrum] : []),
-        ...(chain === 'base' ? [BridgeToBase] : []),
-        ...(chain === 'op' ? [BridgeToOptimism] : []),
-      ];
+    : bridgeOptions.reduce(
+        (acc: Array<Option>, {chain: bridgeChain, option}) => {
+          if (chain === bridgeChain || chain === 'eth') {
+            acc.push(option);
+          }
+          return acc;
+        },
+        [],
+      );
 
   useLayoutEffect(() => {
     navigation.setOptions({
