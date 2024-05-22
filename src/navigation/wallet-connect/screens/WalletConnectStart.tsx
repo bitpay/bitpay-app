@@ -12,10 +12,10 @@ import {
 } from '@react-navigation/native';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WalletConnectContainer} from '../styled/WalletConnectContainers';
 import {StyleSheet, View} from 'react-native';
-import {sleep} from '../../../utils/helper-methods';
+import {popToScreen, sleep} from '../../../utils/helper-methods';
 import {
   dismissBottomNotificationModal,
   showBottomNotificationModal,
@@ -42,6 +42,8 @@ import {
 } from '../../../constants/WalletConnectV2';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import FastImage from 'react-native-fast-image';
+import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
+import {WalletConnectScreens} from '../WalletConnectGroup';
 
 export type WalletConnectStartParamList = {
   // version 2
@@ -106,6 +108,9 @@ const WalletConnectStart = () => {
   const {
     params: {proposal, selectedWallets},
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
+  const sessions: WCV2SessionType[] = useAppSelector(
+    ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
+  );
   // version 2
   const {id, params} = proposal || {};
   const {proposer, relays, pairingTopic} = params || {};
@@ -122,7 +127,14 @@ const WalletConnectStart = () => {
           <Button
             onPress={() => {
               haptic('impactLight');
-              rejectSessionProposal();
+              dispatch(walletConnectV2RejectSessionProposal(id!));
+              popToScreen(navigation, 'SettingsHome');
+              const hasSession = sessions[0]?.accounts?.length > 0;
+              if (!hasSession) {
+                navigation.navigate(WalletConnectScreens.WC_ROOT, {});
+              } else {
+                navigation.navigate(WalletConnectScreens.WC_CONNECTIONS);
+              }
             }}
             buttonType="pill">
             {t('Reject')}
@@ -160,10 +172,6 @@ const WalletConnectStart = () => {
     }
   };
 
-  const rejectSessionProposal = () => {
-    dispatch(walletConnectV2RejectSessionProposal(id!));
-    navigation.dispatch(StackActions.popToTop());
-  };
   const approveSessionProposal = async () => {
     try {
       setButtonState('loading');
@@ -215,9 +223,8 @@ const WalletConnectStart = () => {
             {
               text: t('GOT IT'),
               action: () => {
-                navigation.dispatch(
-                  StackActions.replace('WalletConnectConnections'),
-                );
+                popToScreen(navigation, 'SettingsHome');
+                navigation.navigate(WalletConnectScreens.WC_CONNECTIONS);
                 dispatch(dismissBottomNotificationModal());
               },
               primary: true,
@@ -236,14 +243,6 @@ const WalletConnectStart = () => {
       );
     }
   };
-
-  useEffect(() => {
-    return navigation.addListener('beforeRemove', e => {
-      if (e.data.action.type === 'POP') {
-        rejectSessionProposal();
-      }
-    });
-  }, [navigation]);
 
   return (
     <WalletConnectContainer>
