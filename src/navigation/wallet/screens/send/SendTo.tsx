@@ -397,7 +397,7 @@ const SendTo = () => {
         isValid = ValidateCoinAddress(data, chain, network);
       }
 
-      if (currencyAbbreviation === 'bch' && isValid) {
+      if (currencyAbbreviation === 'bch' && isValid && !isPayPro) {
         const isLegacy = CheckIfLegacyBCH(data);
         if (isLegacy) {
           const appName = APP_NAME_UPPERCASE;
