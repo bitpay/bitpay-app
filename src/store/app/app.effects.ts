@@ -688,7 +688,7 @@ const trackFirstOpenEvent =
   (date: number): Effect =>
   dispatch => {
     dispatch(
-      Analytics.firstOpenApp({date}, () => {
+      Analytics.track('First Opened App', {date}, () => {
         dispatch(setAppFirstOpenEventComplete());
       }),
     );
