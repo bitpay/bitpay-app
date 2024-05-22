@@ -1,8 +1,6 @@
 import React, {useEffect, useCallback} from 'react';
 import {
   Alert,
-  AppState,
-  AppStateStatus,
   Linking,
   LogBox,
   DeviceEventEmitter,
@@ -79,20 +77,6 @@ const Notifications = () => {
     },
     [dispatch, openSettings],
   );
-
-  useEffect(() => {
-    function onAppStateChange(status: AppStateStatus) {
-      // status === 'active' when the app goes from background to foreground,
-      if (status === 'active') {
-        setNotificationValue(notificationsState.pushNotifications);
-      }
-    }
-    const subscriptionAppStateChange = AppState.addEventListener(
-      'change',
-      onAppStateChange,
-    );
-    return () => subscriptionAppStateChange.remove();
-  }, [dispatch, setNotificationValue, notificationsState]);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
