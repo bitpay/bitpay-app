@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {StatusCodes} from '@ledgerhq/errors';
 import Transport from '@ledgerhq/hw-transport';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
@@ -10,17 +9,22 @@ import {SheetContainer} from '../../styled/Containers';
 import SheetModal from '../base/sheet/SheetModal';
 import {ImportAccount} from './import-account/ImportAccount';
 import {PairDevice} from './pair-device/PairDevice';
+import {Wallet} from '../../../store/wallet/wallet.models';
 import {
-  SupportedLedgerAppNames,
-  getCurrentLedgerAppInfo,
-  openLedgerApp,
-  quitLedgerApp,
-} from './utils';
+  deleteKey,
+  successCreateKey,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
+import {setHomeCarouselConfig} from '../../../store/app/app.actions';
+import {sleep} from '../../../utils/helper-methods';
 
 export const ImportLedgerWalletModal = () => {
   const dispatch = useAppDispatch();
   const isVisible = useAppSelector(({APP}) => APP.isImportLedgerModalVisible);
   const [transport, setTransport] = useState<Transport | null>(null);
+  const [scannedWalletsIds, setScannedWalletsIds] = useState<string[]>();
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   // provide ref for disconnect function to avoid closure'd value
   const isVisibleRef = useRef(isVisible);
@@ -67,7 +71,31 @@ export const ImportLedgerWalletModal = () => {
     setTransport(newTp);
   }, []);
 
-  const onBackdropPress = () => {
+  const onBackdropPress = async () => {
+    if (scannedWalletsIds) {
+      const key = keys['readonly/ledger'];
+      const walletsToRemove = scannedWalletsIds;
+      const walletsToPersist = key.wallets.filter(
+        (wallet: Wallet) => !walletsToRemove?.includes(wallet.id),
+      );
+      key.wallets = [...walletsToPersist];
+      if (key.wallets.length === 0) {
+        dispatch(deleteKey({keyId: key.id}));
+        dispatch(
+          setHomeCarouselConfig(
+            homeCarouselConfig.filter(item => item.id !== key.id),
+          ),
+        );
+        await sleep(1000);
+        dispatch(updatePortfolioBalance());
+      } else {
+        dispatch(
+          successCreateKey({
+            key,
+          }),
+        );
+      }
+    }
     dispatch(AppActions.importLedgerModalToggled(false));
   };
 
@@ -130,6 +158,8 @@ export const ImportLedgerWalletModal = () => {
           <ImportAccount
             transport={transport}
             setHardwareWalletTransport={setTransport}
+            setScannedWalletsIds={setScannedWalletsIds}
+            scannedWalletsIds={scannedWalletsIds}
             onDisconnect={onDisconnect}
             onComplete={onComplete}
           />

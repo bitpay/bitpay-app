@@ -18,14 +18,13 @@ import {
   startImportFromHardwareWallet,
 } from '../../../../store/wallet/effects';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {Warning75, White} from '../../../../styles/colors';
 import {getDerivationStrategy, sleep} from '../../../../utils/helper-methods';
 import {
   useAppDispatch,
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import {ButtonState} from '../../../button/Button';
+import Button, {ButtonState} from '../../../button/Button';
 import {H4, H5, ListItemSubText, Paragraph} from '../../../styled/Text';
 import {
   DescriptionRow,
@@ -54,6 +53,7 @@ import BitpaySvg from '../../../../../assets/img/wallet/transactions/bitpay.svg'
 import {BASE_BITCORE_URL} from '../../../../constants/config';
 import {startUpdateAllWalletStatusForKey} from '../../../../store/wallet/effects/status/status';
 import RadiatingLineAnimation from './RadiatingLineAnimation';
+import {ErrorDescriptionColumn} from '../components/ErrorDescriptionColumn';
 
 interface Props {
   transport: Transport;
@@ -65,6 +65,7 @@ interface Props {
     selectedCurrency: string,
     scannedWalletsIds?: string[],
   ) => void;
+  onAddByDerivationPathSelected: () => void;
 }
 
 export interface BaseAccountParams {
@@ -223,13 +224,6 @@ const CurrencyListContainer = styled.View`
 
 const ScrollView = styled.ScrollView``;
 
-const ErrParagraph = styled(Paragraph)`
-  background-color: ${Warning75};
-  color: ${White};
-  border-radius: 12px;
-  padding: 20px;
-`;
-
 const CURRENCIES = [
   {
     coin: 'btc',
@@ -321,7 +315,9 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     coin: string,
     network: Network,
   ): Promise<boolean> => {
+    // @ts-ignore
     if (_fetchTxCache[network][address]) {
+      // @ts-ignore
       return _fetchTxCache[network][address];
     }
     const url = `${
@@ -337,6 +333,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
       throw new Error(`No activity found for address: ${address}`);
     }
     const hasActivity = finalTxCount > 0;
+    // @ts-ignore
     _fetchTxCache[network][address] = hasActivity;
     return hasActivity;
   };
@@ -874,14 +871,12 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
               )}
             </>
           ) : (
-            <H4>Choose Currency to Import</H4>
+            <H4>Choose Crypto to Import</H4>
           )}
         </Header>
 
         {error && error !== 'user denied transaction' && !isLoading ? (
-          <DescriptionRow>
-            <ErrParagraph>{error}</ErrParagraph>
-          </DescriptionRow>
+          <ErrorDescriptionColumn error={error} />
         ) : null}
 
         {isLoading ? (
@@ -893,7 +888,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
                 </Paragraph>
               ) : (
                 <Paragraph style={{textAlign: 'center'}}>
-                  Looking for activity... Please wait...
+                  Please wait...
                 </Paragraph>
               )}
             </DescriptionRow>
@@ -906,35 +901,42 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             )}
           </>
         ) : (
-          <CurrencyListContainer>
-            {CURRENCIES.map((c, index) => (
-              <RowContainerWithoutBorders
-                onPress={() => onContinue(c.coin)}
-                key={index}>
-                <CurrencyImageContainer>
-                  <CurrencyImage img={c.img} />
-                </CurrencyImageContainer>
+          <>
+            <CurrencyListContainer>
+              {CURRENCIES.map((c, index) => (
+                <RowContainerWithoutBorders
+                  onPress={() => onContinue(c.coin)}
+                  key={index}>
+                  <CurrencyImageContainer>
+                    <CurrencyImage img={c.img} />
+                  </CurrencyImageContainer>
 
-                <CurrencyColumn>
-                  <Row>
-                    <H5 ellipsizeMode="tail" numberOfLines={1}>
-                      {c.label}
-                    </H5>
-                  </Row>
-                  <Row style={{alignItems: 'center'}}>
-                    <ListItemSubText
-                      ellipsizeMode="tail"
-                      numberOfLines={1}
-                      style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-                      {c.coin.toUpperCase()}
-                    </ListItemSubText>
-                  </Row>
-                </CurrencyColumn>
-                <AngleRightSvg />
-                <Hr />
-              </RowContainerWithoutBorders>
-            ))}
-          </CurrencyListContainer>
+                  <CurrencyColumn>
+                    <Row>
+                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                        {c.label}
+                      </H5>
+                    </Row>
+                    <Row style={{alignItems: 'center'}}>
+                      <ListItemSubText
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                        {c.coin.toUpperCase()}
+                      </ListItemSubText>
+                    </Row>
+                  </CurrencyColumn>
+                  <AngleRightSvg />
+                  <Hr />
+                </RowContainerWithoutBorders>
+              ))}
+            </CurrencyListContainer>
+            <Button
+              buttonType={'link'}
+              onPress={props.onAddByDerivationPathSelected}>
+              Add by Derivation Path
+            </Button>
+          </>
         )}
       </Wrapper>
     </ScrollView>

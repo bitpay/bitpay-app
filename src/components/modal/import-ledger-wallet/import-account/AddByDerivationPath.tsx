@@ -35,7 +35,6 @@ import {
   useLogger,
 } from '../../../../utils/hooks';
 import styled from 'styled-components/native';
-import {Warning75, White} from '../../../../styles/colors';
 import {
   EVMAccountParams,
   UtxoAccountParams,
@@ -50,6 +49,9 @@ import {
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {DefaultDerivationPath} from '../../../../constants/defaultDerivationPath';
 import {startUpdateWalletStatus} from '../../../../store/wallet/effects/status/status';
+import {ErrorDescriptionColumn} from '../components/ErrorDescriptionColumn';
+import {buildKeyObj} from '../../../../store/wallet/utils/wallet';
+import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
 
 interface Props {
   onComplete: () => void;
@@ -62,13 +64,6 @@ interface Props {
   selectedCurrency: string;
   scannedWalletsIds?: string[];
 }
-
-const ErrParagraph = styled(Paragraph)`
-  background-color: ${Warning75};
-  color: ${White};
-  border-radius: 12px;
-  padding: 20px;
-`;
 
 export const AddByDerivationPath: React.FC<Props> = props => {
   const defaultCoin =
@@ -115,7 +110,18 @@ export const AddByDerivationPath: React.FC<Props> = props => {
   }) => {
     try {
       logger.debug('Preparing app... approve should be requested soon');
-      const key = keys['readonly/ledger'];
+      const hardwareSource = 'ledger';
+      let key = Object.values(keys).find(
+        k => k.id === `readonly/${hardwareSource}`,
+      );
+      if (!key) {
+        key = buildKeyObj({
+          key: undefined,
+          wallets: [],
+          hardwareSource,
+          backupComplete: true,
+        });
+      }
       const c = getCryptoCurrencyById(currencyId);
       if (c.bitcoinLikeInfo?.XPUBVersion) {
         await prepareLedgerApp(
@@ -141,7 +147,6 @@ export const AddByDerivationPath: React.FC<Props> = props => {
           path: derivationPath,
           xpubVersion,
         });
-
         const newWallet = await dispatch(
           startImportFromHardwareWallet({
             key,
@@ -156,7 +161,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
         );
         const walletsToRemove = props?.scannedWalletsIds;
         const walletsToPersist = key.wallets.filter(
-          (wallet: Wallet) => !walletsToRemove?.includes(wallet.id),
+          (wallet: Wallet) => !walletsToRemove?.includes(wallet?.id),
         );
         key.wallets = [...walletsToPersist, newWallet];
         await dispatch(
@@ -173,6 +178,12 @@ export const AddByDerivationPath: React.FC<Props> = props => {
           await sleep(1000);
           await dispatch(updatePortfolioBalance());
         }
+        dispatch(
+          setHomeCarouselConfig({
+            id: key.id,
+            show: true,
+          }),
+        );
         logger.debug('Success adding wallet');
 
         props.onComplete();
@@ -201,7 +212,18 @@ export const AddByDerivationPath: React.FC<Props> = props => {
   }) => {
     try {
       logger.debug('Preparing app... approve should be requested soon');
-      const key = keys['readonly/ledger'];
+      const hardwareSource = 'ledger';
+      let key = Object.values(keys).find(
+        k => k.id === `readonly/${hardwareSource}`,
+      );
+      if (!key) {
+        key = buildKeyObj({
+          key: undefined,
+          wallets: [],
+          hardwareSource,
+          backupComplete: true,
+        });
+      }
       await prepareLedgerApp(
         appName,
         transportRef,
@@ -228,7 +250,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       );
       const walletsToRemove = props?.scannedWalletsIds;
       const walletsToPersist = key.wallets.filter(
-        (wallet: Wallet) => !walletsToRemove?.includes(wallet.id),
+        (wallet: Wallet) => !walletsToRemove?.includes(wallet?.id),
       );
       key.wallets = [...walletsToPersist, newWallet];
 
@@ -246,6 +268,12 @@ export const AddByDerivationPath: React.FC<Props> = props => {
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
       }
+      dispatch(
+        setHomeCarouselConfig({
+          id: key.id,
+          show: true,
+        }),
+      );
       logger.debug('Success adding wallet');
       props.onComplete();
     } catch (err) {
@@ -272,7 +300,18 @@ export const AddByDerivationPath: React.FC<Props> = props => {
   }) => {
     try {
       logger.debug('Preparing app... approve should be requested soon');
-      const key = keys['readonly/ledger'];
+      const hardwareSource = 'ledger';
+      let key = Object.values(keys).find(
+        k => k.id === `readonly/${hardwareSource}`,
+      );
+      if (!key) {
+        key = buildKeyObj({
+          key: undefined,
+          wallets: [],
+          hardwareSource,
+          backupComplete: true,
+        });
+      }
       await prepareLedgerApp(
         appName,
         transportRef,
@@ -299,7 +338,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       );
       const walletsToRemove = props?.scannedWalletsIds;
       const walletsToPersist = key.wallets.filter(
-        (wallet: Wallet) => !walletsToRemove?.includes(wallet.id),
+        (wallet: Wallet) => !walletsToRemove?.includes(wallet?.id),
       );
       key.wallets = [...walletsToPersist, newWallet];
       await dispatch(
@@ -316,6 +355,12 @@ export const AddByDerivationPath: React.FC<Props> = props => {
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
       }
+      dispatch(
+        setHomeCarouselConfig({
+          id: key.id,
+          show: true,
+        }),
+      );
       logger.debug('Success adding wallet');
       props.onComplete();
     } catch (err) {
@@ -364,12 +409,10 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       </Header>
 
       {error && error !== 'user denied transaction' && !isLoading ? (
-        <DescriptionRow>
-          <ErrParagraph>{error}</ErrParagraph>
-        </DescriptionRow>
+        <ErrorDescriptionColumn error={error} />
       ) : null}
 
-      <DescriptionRow>
+      <DescriptionRow style={{marginTop: 12}}>
         {isPromptOpenApp ? (
           <Paragraph style={{textAlign: 'center'}}>
             Approve the app BitPay so wallets can be added to your device.

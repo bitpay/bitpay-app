@@ -60,8 +60,8 @@ export const LedgerIntro: React.FC<Props> = props => {
           </Paragraph>
         ) : (
           <Paragraph style={{textAlign: 'center'}}>
-            Manage your bluetooth-enabled hardware wallet, check balances,
-            deposit, and withdraw funds between wallets.
+            Manage your Ledger with BitPay. To continue, ensure your Ledger
+            device is unlocked.
           </Paragraph>
         )}
       </DescriptionRow>
