@@ -116,7 +116,7 @@ interface ChainSelectionRowProps {
   hideCheckbox?: boolean;
   disableCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
-  onToggle?: (id: string) => any;
+  onToggle?: (currencyAbbreviation: string, chain: string) => any;
 }
 
 export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
@@ -131,6 +131,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
       badgeUri,
       selected,
       disabled,
+      chain,
     } = currency;
 
     const _currencyAbbreviation =
@@ -141,7 +142,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         accessibilityLabel="chain-selection-row"
         onPress={() =>
           !disabled && !disableCheckbox
-            ? onToggle?.(currencyAbbreviation)
+            ? onToggle?.(currencyAbbreviation, chain)
             : null
         }>
         <CurrencyColumn>
@@ -160,7 +161,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
               checked={!!selected}
               radio={selectionMode === 'single'}
               disabled={!!disabled}
-              onPress={() => onToggle?.(currencyAbbreviation)}
+              onPress={() => onToggle?.(currencyAbbreviation, chain)}
             />
           </CurrencyColumn>
         )}
@@ -299,7 +300,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
       {tokens?.length ? (
         <>
           <TokensHeading>
-            {t('PopularArgTokens', {currency: t(currencyName)})}
+            {t('PopularArgTokens', {currency: t(currencyName.includes('Ethereum') ? 'Ethereum' : currencyName)})}
           </TokensHeading>
 
           {tokens.map(token => (
