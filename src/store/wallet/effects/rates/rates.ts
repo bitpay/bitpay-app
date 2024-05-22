@@ -1,13 +1,7 @@
 import {Effect} from '../../../index';
 import axios from 'axios';
-import {
-  BASE_BWS_URL,
-  EVM_BLOCKCHAIN_NETWORK,
-} from '../../../../constants/config';
-import {
-  SUPPORTED_COINS,
-  SUPPORTED_EVM_COINS,
-} from '../../../../constants/currencies';
+import {BASE_BWS_URL} from '../../../../constants/config';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 import {DateRanges, HistoricRate, Rate, Rates} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
 import {

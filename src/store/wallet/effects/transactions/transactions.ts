@@ -25,7 +25,10 @@ import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {partition} from 'lodash';
-import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  SUPPORTED_EVM_COINS,
+} from '../../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 const BWC = BwcProvider.getInstance();
@@ -205,9 +208,25 @@ const ProcessTx =
     );
 
     tx.feeStr = tx.fee
-      ? dispatch(FormatAmountStr(chain, chain, undefined, tx.fee))
+      ? // @ts-ignore
+        dispatch(
+          FormatAmountStr(
+            BitpaySupportedCoins[chain]?.feeCurrency,
+            chain,
+            undefined,
+            tx.fee,
+          ),
+        )
       : tx.fees
-      ? dispatch(FormatAmountStr(chain, chain, undefined, tx.fees))
+      ? // @ts-ignore
+        dispatch(
+          FormatAmountStr(
+            BitpaySupportedCoins[chain]?.feeCurrency,
+            chain,
+            undefined,
+            tx.fees,
+          ),
+        )
       : 'N/A';
 
     if (tx.amountStr) {
@@ -941,14 +960,7 @@ export const buildTransactionDetails =
 
         _transaction.feeFiatStr = formatFiatAmount(
           dispatch(
-            toFiat(
-              _fee,
-              alternativeCurrency,
-              chain,
-              chain,
-              rates,
-              undefined,
-            ),
+            toFiat(_fee, alternativeCurrency, chain, chain, rates, undefined),
           ),
           alternativeCurrency,
         );

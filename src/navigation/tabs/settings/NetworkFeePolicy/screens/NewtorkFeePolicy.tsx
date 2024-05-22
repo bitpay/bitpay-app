@@ -82,7 +82,7 @@ const FeeOptions = ({
   chainName,
 }: {
   feeOptions: any[];
-  chain: 'btc' | 'eth' | 'matic';
+  chain: 'btc' | 'eth' | 'matic' | 'arb' | 'base' | 'op';
   chainName: string;
 }) => {
   const dispatch = useAppDispatch();
@@ -202,6 +202,9 @@ const NetworkFeePolicy = () => {
   const network = 'livenet';
   const [ethFeeOptions, setEthFeeOptions] = useState<any[]>();
   const [maticFeeOptions, setMaticFeeOptions] = useState<any[]>();
+  const [arbFeeOptions, setArbFeeOptions] = useState<any[]>();
+  const [baseFeeOptions, setBaseFeeOptions] = useState<any[]>();
+  const [opFeeOptions, setOpFeeOptions] = useState<any[]>();
   const [btcFeeOptions, setBtcFeeOptions] = useState<any[]>();
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useAppDispatch();
@@ -257,13 +260,21 @@ const NetworkFeePolicy = () => {
         setEthFeeOptions(feeOptions);
       } else if (currencyAbbreviation === 'matic') {
         setMaticFeeOptions(feeOptions);
+      } else if (currencyAbbreviation === 'arb') {
+        setArbFeeOptions(feeOptions);
+      } else if (currencyAbbreviation === 'base') {
+        setBaseFeeOptions(feeOptions);
+      } else if (currencyAbbreviation === 'op') {
+        setOpFeeOptions(feeOptions);
       }
     } catch (e) {
       return;
     }
   };
   const init = async () => {
-    ['btc', 'eth', 'matic'].forEach((ca: string) => initFeeLevel(ca, ca));
+    ['btc', 'eth', 'matic', 'arb', 'base', 'op'].forEach((ca: string) =>
+      initFeeLevel(ca, ca),
+    );
     await sleep(500);
     setIsLoading(false);
   };
@@ -311,6 +322,36 @@ const NetworkFeePolicy = () => {
                   feeOptions={maticFeeOptions}
                   chain={'matic'}
                   chainName={'Polygon'}
+                />
+              ) : null}
+            </View>
+
+            <View>
+              {arbFeeOptions && arbFeeOptions.length > 0 ? (
+                <FeeOptions
+                  feeOptions={arbFeeOptions}
+                  chain={'arb'}
+                  chainName={'Arbitrum'}
+                />
+              ) : null}
+            </View>
+
+            <View>
+              {baseFeeOptions && baseFeeOptions.length > 0 ? (
+                <FeeOptions
+                  feeOptions={baseFeeOptions}
+                  chain={'base'}
+                  chainName={'Base'}
+                />
+              ) : null}
+            </View>
+
+            <View>
+              {opFeeOptions && opFeeOptions.length > 0 ? (
+                <FeeOptions
+                  feeOptions={opFeeOptions}
+                  chain={'op'}
+                  chainName={'Optimism'}
                 />
               ) : null}
             </View>

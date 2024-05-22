@@ -31,7 +31,10 @@ export const URL = {
   MERCHANT_DASHBOARD: 'https://bitpay.com/dashboard',
   PERSONAL_DASHBOARD: 'https://bitpay.com/id',
   PERSONAL_DASHBOARD_CARD: 'https://bitpay.com/id/card',
-  POLYGON_BRIDGE: 'https://wallet.polygon.technology/bridge',
+  POLYGON_BRIDGE: 'https://portal.polygon.technology/bridge',
+  ARBITRUM_BRIDGE: 'https://bridge.arbitrum.io/',
+  BASE_BRIDGE: 'https://bridge.base.org/',
+  OPTIMISM_BRIDGE: 'https://app.optimism.io/bridge/',
 
   /**
    * Help articles

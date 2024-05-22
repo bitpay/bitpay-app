@@ -5,7 +5,14 @@ import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
-import {Black, Action, SlateDark, White, Slate} from '../../../styles/colors';
+import {
+  Black,
+  Action,
+  SlateDark,
+  White,
+  Slate,
+  LightBlack,
+} from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
 import {FlatList, Platform, SectionList, View} from 'react-native';
 import {useTheme} from '@react-navigation/native';
@@ -31,10 +38,10 @@ import SearchSvg from '../../../../assets/img/search.svg';
 import {
   BitpaySupportedCoins,
   SUPPORTED_CURRENCIES_CHAINS,
-  SupportedCoins,
+  SupportedChains,
 } from '../../../constants/currencies';
 import {useAppSelector} from '../../../utils/hooks';
-import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
+import {SupportedChainsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../currency-image/CurrencyImage';
 import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
@@ -138,10 +145,10 @@ const ChainSelector = () => {
 
   const renderChainItem = useCallback(
     ({item, index, section}: {item: string; index: number; section: any}) => {
-      const supportedCoin = SupportedCoinsOptions.find(
-        ({chain}) => chain === BitpaySupportedCoins[item]?.chain,
+      const supportedChain = SupportedChainsOptions.find(
+        ({chain}) => chain === item,
       );
-      const badgeLabel = BitpaySupportedCoins[item]?.name || item;
+      const badgeLabel = supportedChain?.chainName || item;
       const selected = selectedChainFilterOption === item;
       let isLastItem = false;
       if (section?.data?.length) {
@@ -153,8 +160,8 @@ const ChainSelector = () => {
             activeOpacity={ActiveOpacity}
             selected={selected}
             onPress={() => {
-              const option = BitpaySupportedCoins[item]?.chain as
-                | SupportedCoins
+              const option = supportedChain?.chain as
+                | SupportedChains
                 | undefined;
 
               // Check if the context is one of 'sell', 'swap', 'buy'
@@ -169,14 +176,14 @@ const ChainSelector = () => {
             key={index.toString()}>
             <RowContainer>
               <ImageContainer>
-                {BitpaySupportedCoins[item] && supportedCoin?.img ? (
-                  <CurrencyImage img={supportedCoin?.img} size={32} />
+                {supportedChain?.img ? (
+                  <CurrencyImage img={supportedChain?.img} size={32} />
                 ) : (
                   <AllNetworkSvg style={{width: 20, height: 20}} />
                 )}
               </ImageContainer>
               <NetworkName selected={selected}>{badgeLabel}</NetworkName>
-              {BitpaySupportedCoins[item] ? (
+              {supportedChain ? (
                 <NetworkChainLabelContainer selected={selected}>
                   <NetworkChainLabel>{item.toUpperCase()}</NetworkChainLabel>
                 </NetworkChainLabelContainer>

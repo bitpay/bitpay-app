@@ -127,7 +127,79 @@ export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
   },
 };
 
+export const BitpaySupportedArbTokenOptsByAddress: TokenOptsType = {
+  '0xaf88d065e77c8cc2239327c5edb3a432268e5831_arb': {
+    name: 'USDC',
+    symbol: 'usdc',
+    decimals: 6,
+    address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+  },
+  '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f_arb': {
+    name: 'Wrapped Bitcoin',
+    symbol: 'wbtc',
+    decimals: 8,
+    address: '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f',
+  },
+  '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9_arb': {
+    name: 'USDT',
+    symbol: 'usdt',
+    decimals: 6,
+    address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+  },
+  '0x82af49447d8a07e3bd95bd0d56f35241523fbab1_arb': {
+    name: 'Wrapped Ether',
+    symbol: 'weth',
+    decimals: 18,
+    address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
+  },
+};
+
+export const BitpaySupportedBaseTokenOptsByAddress: TokenOptsType = {
+  '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913_base': {
+    name: 'USDC',
+    symbol: 'usdc',
+    decimals: 6,
+    address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+  },
+  '0x4200000000000000000000000000000000000006_base': {
+    name: 'Wrapped Ether',
+    symbol: 'weth',
+    decimals: 18,
+    address: '0x4200000000000000000000000000000000000006',
+  },
+};
+
+export const BitpaySupportedOpTokenOptsByAddress: TokenOptsType = {
+  '0x0b2c639c533813f4aa9d7837caf62653d097ff85_op': {
+    name: 'USDC',
+    symbol: 'usdc',
+    decimals: 6,
+    address: '0x0b2c639c533813f4aa9d7837caf62653d097ff85',
+  },
+  '0x68f180fcce6836688e9084f035309e29bf0a2095_op': {
+    name: 'Wrapped Bitcoin',
+    symbol: 'wbtc',
+    decimals: 8,
+    address: '0x68f180fcce6836688e9084f035309e29bf0a2095',
+  },
+  '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58_op': {
+    name: 'USDT',
+    symbol: 'usdt',
+    decimals: 6,
+    address: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58',
+  },
+  '0x4200000000000000000000000000000000000006_op': {
+    name: 'Wrapped Ether',
+    symbol: 'weth',
+    decimals: 18,
+    address: '0x4200000000000000000000000000000000000006',
+  },
+};
+
 export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
   ...BitpaySupportedEthereumTokenOptsByAddress,
   ...BitpaySupportedMaticTokenOptsByAddress,
+  ...BitpaySupportedBaseTokenOptsByAddress,
+  ...BitpaySupportedOpTokenOptsByAddress,
+  ...BitpaySupportedArbTokenOptsByAddress,
 };

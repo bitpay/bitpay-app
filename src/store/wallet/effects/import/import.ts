@@ -963,7 +963,7 @@ export const startImportFromHardwareWallet =
       }
 
       const hwKeyId = key.id;
-      const name = dispatch(GetName(coin, coin)); // chain === coin for stored wallets
+      const name = dispatch(GetName(coin, coin)); // TODO chain === coin for stored wallets
       const credentials = credentialsFromExtendedPublicKey(
         coin,
         accountNumber,
@@ -1339,6 +1339,7 @@ const createKeyAndCredentials = async (
 ): Promise<any> => {
   let key: any;
   const coin = opts.coin as string;
+  const chain = opts.chain as string;
   const network = opts.networkName || 'livenet';
   const account = opts.account || 0;
   const n = opts.n || 1;
@@ -1360,7 +1361,7 @@ const createKeyAndCredentials = async (
       bwcClient.fromString(
         key.createCredentials(undefined, {
           coin,
-          chain: coin, // chain === coin for stored clients
+          chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
           network,
           account,
           n,
@@ -1381,7 +1382,7 @@ const createKeyAndCredentials = async (
       bwcClient.fromString(
         key.createCredentials(undefined, {
           coin,
-          chain: coin, // chain === coin for stored clients
+          chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
           network,
           account,
           n,

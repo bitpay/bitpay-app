@@ -38,6 +38,9 @@ export const APP_CRYPTO_PREFIX = [
   'bitcoincash',
   'ethereum',
   'matic',
+  'arb',
+  'base',
+  'op',
   'dogecoin',
   'litecoin',
 ];
@@ -56,14 +59,12 @@ export const DOWNLOAD_BITPAY_URL = 'https://bitpay.com/wallet';
 export const TWO_FACTOR_EMAIL_POLL_INTERVAL = 1000 * 3;
 export const TWO_FACTOR_EMAIL_POLL_TIMEOUT = 1000 * 60 * 5;
 
-export const EVM_BLOCKCHAIN_NETWORK = {
-  eth: 'ethereum',
-  matic: 'polygon-pos',
-};
-
 export const EVM_BLOCKCHAIN_ID: {[key in string]: number} = {
   eth: 1,
   matic: 137,
+  arb: 42161,
+  base: 8453,
+  op: 10,
 };
 
 export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
@@ -74,6 +75,18 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   matic: {
     [Network.mainnet]: 'polygonscan.com/',
     [Network.testnet]: 'mumbai.polygonscan.com/',
+  },
+  arb: {
+    [Network.mainnet]: 'arbiscan.io/',
+    [Network.testnet]: 'sepolia.arbiscan.io/',
+  },
+  base: {
+    [Network.mainnet]: 'basescan.org/',
+    [Network.testnet]: 'sepolia.basescan.org/',
+  },
+  op: {
+    [Network.mainnet]: 'optimistic.etherscan.io/',
+    [Network.testnet]: 'sepolia-optimism.etherscan.io/',
   },
 };
 
@@ -91,6 +104,18 @@ export const PROTOCOL_NAME: {[key in string]: any} = {
   matic: {
     [Network.mainnet]: 'Polygon',
     [Network.testnet]: 'Mumbai',
+  },
+  arb: {
+    [Network.mainnet]: 'Arbitrum',
+    [Network.testnet]: 'Sepolia',
+  },
+  base: {
+    [Network.mainnet]: 'Base',
+    [Network.testnet]: 'Sepolia',
+  },
+  op: {
+    [Network.mainnet]: 'Optimism',
+    [Network.testnet]: 'Sepolia',
   },
   default: {
     [Network.mainnet]: 'Mainnet',

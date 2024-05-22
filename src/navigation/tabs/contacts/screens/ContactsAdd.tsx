@@ -319,6 +319,9 @@ const ContactsAdd = ({
     switch (chain) {
       case 'eth':
       case 'matic':
+      case 'arb':
+      case 'base':
+      case 'op':
         setEvmValidAddress(true);
         return;
       case 'xrp':
