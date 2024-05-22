@@ -83,7 +83,7 @@ export const IsERCToken = (
 ): boolean => {
   return (
     currencyAbbreviation.toLowerCase() !== chain.toLowerCase() &&
-    currencyAbbreviation.toLowerCase() !== 'eth'  // workaround for L2 eth
+    currencyAbbreviation.toLowerCase() !== 'eth' // workaround for L2 eth
   );
 };
 
