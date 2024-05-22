@@ -173,6 +173,7 @@ export const HandlePayPro =
         errorStr = JSON.stringify(err);
       }
       dispatch(LogActions.error(`HandlePayPro ERR: ${errorStr}`));
+      throw err;
     }
   };
 
