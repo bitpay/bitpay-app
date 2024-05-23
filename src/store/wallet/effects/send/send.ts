@@ -552,7 +552,7 @@ export const buildTxDetails =
         toFiat(
           fee,
           defaultAltCurrencyIsoCode,
-          chain,
+          BitpaySupportedCoins[chain]?.feeCurrency,
           chain,
           rates,
           undefined,
@@ -618,7 +618,7 @@ export const buildTxDetails =
                 toFiat(
                   networkCost,
                   defaultAltCurrencyIsoCode,
-                  chain,
+                  BitpaySupportedCoins[chain]?.feeCurrency,
                   chain,
                   rates,
                   undefined,

@@ -953,7 +953,7 @@ const ChangellyCheckout: React.FC = () => {
                     FormatAmountStr(
                       // @ts-ignore
                       BitpaySupportedCoins[fromWalletSelected.chain]
-                        ?.feeCurrency, // use chain for miner fee. NO TRUE ANYMORE
+                        ?.feeCurrency,
                       fromWalletSelected.chain,
                       undefined,
                       fee,

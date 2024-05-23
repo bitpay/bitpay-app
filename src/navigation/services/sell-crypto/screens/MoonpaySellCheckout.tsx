@@ -967,7 +967,7 @@ const MoonpaySellCheckout: React.FC = () => {
                   {dispatch(
                     FormatAmountStr(
                       // @ts-ignore
-                      BitpaySupportedCoins[wallet.chain]?.feeCurrency, // use chain for miner fee. NO TRUE ANYMORE
+                      BitpaySupportedCoins[wallet.chain]?.feeCurrency,
                       wallet.chain,
                       undefined,
                       fee,
