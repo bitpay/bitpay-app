@@ -275,7 +275,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   onViewAllTokensPressed,
 }) => {
   const {t} = useTranslation();
-  const {currencyName} = currency;
+  const {currencyName, chainName} = currency;
   const onPress = useCallback(
     (
       currencyAbbreviation: string,
@@ -303,7 +303,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
       {tokens?.length ? (
         <>
           <TokensHeading>
-            {t('PopularArgTokens', {
+            {t('Popular {{currency}} Tokens', {
               currency: t(
                 currencyName.includes('Ethereum') ? 'Ethereum' : currencyName,
               ),
@@ -332,7 +332,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
               onPress={() => {
                 onViewAllTokensPressed?.(currency, tokens);
               }}>
-              {t('ViewAllArgTokens', {currency: t(currencyName)})}
+              {t('View all {{currency}} tokens', {currency: t(chainName)})}
             </ViewAllLink>
           </TokensFooter>
         </>

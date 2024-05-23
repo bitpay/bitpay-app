@@ -176,8 +176,21 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
     ({WALLET}) => WALLET.customTokenDataByAddress,
   );
   const DESCRIPTIONS: Record<string, string> = {
-    eth: t('TokensOnEthereumNetworkDescription'),
-    matic: t('TokensOnPolygonNetworkDescription'),
+    eth: t(
+      'Tokens on the Ethereum network need an Ethereum wallet to pay for fees.',
+    ),
+    matic: t(
+      'Tokens on the Polygon network need a Polygon wallet to pay for fees.',
+    ),
+    base: t(
+      'Tokens on the Base network need a Ethereum wallet to pay for fees.',
+    ),
+    op: t(
+      'Tokens on the Optimism network need a Ethereum wallet to pay for fees.',
+    ),
+    arb: t(
+      'Tokens on the Arbitrum network need a Ethereum wallet to pay for fees.',
+    ),
   };
   /**
    * Source of truth for which currencies are selected.
@@ -250,7 +263,15 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
 
     // Add all chain currencies to list
     const list: CurrencySelectionListItem[] = SupportedCoinsOptions.map(
-      ({id, chain, currencyAbbreviation, currencyName, img, badgeUri}) => {
+      ({
+        id,
+        chain,
+        currencyAbbreviation,
+        currencyName,
+        chainName,
+        img,
+        badgeUri,
+      }) => {
         const _chain = chain.toLowerCase();
         const item: CurrencySelectionListItem = {
           currency: {
@@ -262,6 +283,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
             selected: false,
             disabled: false,
             chain: _chain,
+            chainName,
             tokenAddress: undefined,
           },
           tokens: [],
