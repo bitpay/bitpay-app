@@ -465,6 +465,9 @@ const createTokenWallet =
         wallet.preferences = wallet.preferences || {
           tokenAddresses: [],
           maticTokenAddresses: [],
+          opTokenAddresses: [],
+          arbTokenAddresses: [],
+          baseTokenAddresses: [],
         };
 
         switch (wallet.credentials.chain) {
@@ -476,6 +479,24 @@ const createTokenWallet =
             break;
           case 'matic':
             wallet.preferences.maticTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'op':
+            wallet.preferences.opTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'base':
+            wallet.preferences.baseTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'arb':
+            wallet.preferences.arbTokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );

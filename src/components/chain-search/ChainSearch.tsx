@@ -240,7 +240,7 @@ const SearchComponent = <T extends SearchableItem>({
           dispatch(AppActions.showChainSelectorModal({context}));
         }}>
         <RowFilterContainer>
-        {selectedChainFilterOption && currencyInfo ? (
+          {selectedChainFilterOption && currencyInfo ? (
             <View style={{marginLeft: 5}}>
               <CurrencyImage img={currencyInfo?.img} size={25} />
             </View>
