@@ -33,6 +33,7 @@ export type CurrencySelectionItem = Pick<
   | 'badgeUri'
 > & {
   chain: string;
+  chainName?: string;
   tokenAddress?: string;
   imgSrc?: ImageRequireSource | undefined;
   selected?: boolean;
@@ -132,10 +133,12 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
       selected,
       disabled,
       chain,
+      chainName,
     } = currency;
 
-    const _currencyAbbreviation =
-      formatCurrencyAbbreviation(currencyAbbreviation);
+    const subtitle = chain
+      ? chain.toUpperCase()
+      : formatCurrencyAbbreviation(currencyAbbreviation);
 
     return (
       <FlexRow
@@ -150,9 +153,9 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         </CurrencyColumn>
 
         <CurrencyTitleColumn style={{flexGrow: 1}}>
-          <CurrencyTitle>{currencyName}</CurrencyTitle>
+          <CurrencyTitle>{chainName ? chainName : currencyName}</CurrencyTitle>
 
-          <CurrencySubTitle>{_currencyAbbreviation}</CurrencySubTitle>
+          <CurrencySubTitle>{subtitle}</CurrencySubTitle>
         </CurrencyTitleColumn>
 
         {!hideCheckbox && !disableCheckbox && (
@@ -300,7 +303,11 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
       {tokens?.length ? (
         <>
           <TokensHeading>
-            {t('PopularArgTokens', {currency: t(currencyName.includes('Ethereum') ? 'Ethereum' : currencyName)})}
+            {t('PopularArgTokens', {
+              currency: t(
+                currencyName.includes('Ethereum') ? 'Ethereum' : currencyName,
+              ),
+            })}
           </TokensHeading>
 
           {tokens.map(token => (

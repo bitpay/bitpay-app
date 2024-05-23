@@ -510,9 +510,14 @@ const RecoveryPhrase = () => {
 
   const renderItem = useCallback(
     ({item}) => {
-      const currencySelected = (_currencyAbbreviation: string, _chain: string) => {
+      const currencySelected = (
+        _currencyAbbreviation: string,
+        _chain: string,
+      ) => {
         const _selectedCurrency = CurrencyOptions.filter(
-          currency => currency.currencyAbbreviation === _currencyAbbreviation && currency.chain === _chain,
+          currency =>
+            currency.currencyAbbreviation === _currencyAbbreviation &&
+            currency.chain === _chain,
         );
         const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
         const chain = _selectedCurrency[0].chain;
@@ -729,7 +734,11 @@ const RecoveryPhrase = () => {
                         justifyContent: 'space-between',
                       }}>
                       <Row>
-                        <CurrencyImage img={selectedCurrency.img} badgeUri={selectedCurrency.badgeUri} size={30} />
+                        <CurrencyImage
+                          img={selectedCurrency.img}
+                          badgeUri={selectedCurrency.badgeUri}
+                          size={30}
+                        />
                         <CurrencyName>
                           {selectedCurrency?.currencyAbbreviation?.toUpperCase()}
                         </CurrencyName>

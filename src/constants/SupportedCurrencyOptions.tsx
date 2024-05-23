@@ -28,16 +28,25 @@ export interface SupportedCurrencyOption {
   id: string;
   img: string | ((props?: any) => ReactElement);
   currencyName: string;
-  hasMultisig?: boolean;
   currencyAbbreviation: string;
   chain: string;
-  chainName?: string;
+  hasMultisig?: boolean;
   isToken?: boolean;
-  imgSrc?: ImageSourcePropType;
+  imgSrc: ImageSourcePropType;
   badgeUri?: string | ((props?: any) => ReactElement);
   badgeSrc?: ImageSourcePropType;
   priority?: number;
   tokenAddress?: string;
+}
+
+export interface SupportedChainOption {
+  id: string;
+  img: string | ((props?: any) => ReactElement);
+  hasMultisig: boolean;
+  chain: string;
+  chainName: string;
+  imgSrc: ImageSourcePropType;
+  priority: number;
 }
 
 export const CurrencyListIcons: {
@@ -90,7 +99,7 @@ export const CurrencyListIcons: {
   usdt_op: props => <UsdtIcon {...props} />,
 };
 
-export const SupportedChainsOptions: Array<Partial<SupportedCurrencyOption>> = [
+export const SupportedChainsOptions: Array<SupportedChainOption> = [
   {
     id: Math.random().toString(),
     img: CurrencyListIcons.btc,
@@ -138,10 +147,11 @@ export const SupportedChainsOptions: Array<Partial<SupportedCurrencyOption>> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.xrp,
     priority: 7,
+    img: CurrencyListIcons.xrp,
     chainName: 'XRP',
     chain: 'xrp',
+    hasMultisig: false,
     imgSrc: require('../../assets/img/currencies/png/XRP.png'),
   },
   {
@@ -526,7 +536,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.usdc_arb,
     currencyName: 'USD Coin',
-    currencyAbbreviation: 'USDC',
+    currencyAbbreviation: 'usdc',
     chain: 'arb',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDC.png'),
@@ -550,7 +560,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.usdt_arb,
     currencyName: 'Tether USD',
-    currencyAbbreviation: 'USDT',
+    currencyAbbreviation: 'usdt',
     chain: 'arb',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDT.png'),
@@ -562,7 +572,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.weth_arb,
     currencyName: 'Wrapped Ether',
-    currencyAbbreviation: 'WETH',
+    currencyAbbreviation: 'weth',
     chain: 'arb',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/WETH.png'),
@@ -574,7 +584,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.usdc_base,
     currencyName: 'USD Coin',
-    currencyAbbreviation: 'USDC',
+    currencyAbbreviation: 'usdc',
     chain: 'base',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDC.png'),
@@ -586,7 +596,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.weth_base,
     currencyName: 'Wrapped Ether',
-    currencyAbbreviation: 'WETH',
+    currencyAbbreviation: 'weth',
     chain: 'base',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/WETH.png'),
@@ -598,7 +608,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.usdc_op,
     currencyName: 'USD Coin',
-    currencyAbbreviation: 'USDC',
+    currencyAbbreviation: 'usdc',
     chain: 'op',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDC.png'),
@@ -622,7 +632,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.usdt_op,
     currencyName: 'Tether USD',
-    currencyAbbreviation: 'USDT',
+    currencyAbbreviation: 'usdt',
     chain: 'op',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDT.png'),
@@ -634,7 +644,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     id: Math.random().toString(),
     img: CurrencyListIcons.weth_op,
     currencyName: 'Wrapped Ether',
-    currencyAbbreviation: 'WETH',
+    currencyAbbreviation: 'weth',
     chain: 'op',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/WETH.png'),
