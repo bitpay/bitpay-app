@@ -393,7 +393,9 @@ const AddWallet = ({
           }
         } else {
           _currencyAbbreviation = SupportedCurrencyOptions.find(
-            currencyOpts => currencyOpts.currencyAbbreviation === chain,
+            currencyOpts =>
+              currencyOpts.chain === chain &&
+              currencyOpts.currencyAbbreviation === currencyAbbreviation,
           )?.currencyAbbreviation!;
         }
 
@@ -647,7 +649,7 @@ const AddWallet = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={`${currencyAbbreviation} Wallet`}
-                label={isToken ? 'TOKEN NAME' : 'WALLET NAME'}
+                label={'WALLET NAME'}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.walletName?.message}

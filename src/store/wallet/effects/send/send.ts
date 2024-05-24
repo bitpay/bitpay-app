@@ -2386,7 +2386,6 @@ export const handleSendError =
   };
 
 function getTokenAddressForOffchainWallet(wallet: Wallet | WalletRowProps) {
-  console.log('$$$$$$$$$$$$$$$$$4');
   return SupportedTokenOptions.find(
     ({currencyAbbreviation}) =>
       currencyAbbreviation === wallet.currencyAbbreviation.toLowerCase(),
