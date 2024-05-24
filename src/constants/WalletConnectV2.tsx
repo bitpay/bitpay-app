@@ -46,6 +46,27 @@ export const EIP155_MAINNET_CHAINS: {[key in string]: any} = {
     rpc: 'https://polygon-rpc.com/',
     network: Network.mainnet,
   },
+  'eip155:10': {
+    chainId: 10,
+    name: 'Optimism',
+    chainName: 'op',
+    rpc: 'https://mainnet.optimism.io/',
+    network: Network.mainnet,
+  },
+  'eip155:42161': {
+    chainId: 42161,
+    name: 'Arbitrum One',
+    chainName: 'arb',
+    rpc: 'https://arb1.arbitrum.io/rpc',
+    network: Network.mainnet,
+  },
+  'eip155:8453': {
+    chainId: 8453,
+    name: 'Base',
+    chainName: 'base',
+    rpc: 'https://mainnet.base.org/',
+    network: Network.mainnet,
+  },
 };
 
 export const EIP155_TEST_CHAINS = {
@@ -61,6 +82,27 @@ export const EIP155_TEST_CHAINS = {
     name: 'Polygon Amoy',
     chainName: 'matic',
     rpc: 'https://polygon-amoy.core.chainstack.com',
+    network: Network.testnet,
+  },
+  'eip155:420': {
+    chainId: 420,
+    name: 'Optimism Goerli',
+    chainName: 'op',
+    rpc: 'https://goerli.optimism.io',
+    network: Network.testnet,
+  },
+  'eip155:421613': {
+    chainId: 421613,
+    name: 'Arbitrum Goerli',
+    chainName: 'arb',
+    rpc: 'https://goerli-rollup.arbitrum.io/rpc',
+    network: Network.testnet,
+  },
+  'eip155:84531': {
+    chainId: 84531,
+    name: 'Base Goerli',
+    chainName: 'base',
+    rpc: 'https://goerli.base.org',
     network: Network.testnet,
   },
 };
@@ -82,13 +124,64 @@ export const EIP155_METHODS_NOT_INTERACTION_NEEDED = [
 ];
 
 export const WALLET_CONNECT_SUPPORTED_CHAINS: {
-  [key in string]: {chain: string; network: string};
+  [key in string]: {
+    chain: string;
+    currencyAbbreviation: string;
+    network: string;
+  };
 } = {
-  'eip155:1': {chain: 'eth', network: Network.mainnet},
-  'eip155:137': {chain: 'matic', network: Network.mainnet},
-  'eip155:11155111': {chain: 'eth', network: Network.testnet},
-  'eip155:80002': {chain: 'matic', network: Network.testnet},
+  'eip155:1': {
+    chain: 'eth',
+    currencyAbbreviation: 'eth',
+    network: Network.mainnet,
+  },
+  'eip155:137': {
+    chain: 'matic',
+    currencyAbbreviation: 'matic',
+    network: Network.mainnet,
+  },
+  'eip155:11155111': {
+    chain: 'eth',
+    currencyAbbreviation: 'eth',
+    network: Network.testnet,
+  },
+  'eip155:80002': {
+    chain: 'matic',
+    currencyAbbreviation: 'matic',
+    network: Network.testnet,
+  },
+  'eip155:10': {
+    chain: 'op',
+    currencyAbbreviation: 'eth',
+    network: Network.mainnet,
+  },
+  'eip155:42161': {
+    chain: 'arb',
+    currencyAbbreviation: 'eth',
+    network: Network.mainnet,
+  },
+  'eip155:8453': {
+    chain: 'base',
+    currencyAbbreviation: 'eth',
+    network: Network.mainnet,
+  },
+  'eip155:420': {
+    chain: 'op',
+    currencyAbbreviation: 'eth',
+    network: Network.testnet,
+  },
+  'eip155:421613': {
+    chain: 'arb',
+    currencyAbbreviation: 'eth',
+    network: Network.testnet,
+  },
+  'eip155:84531': {
+    chain: 'base',
+    currencyAbbreviation: 'eth',
+    network: Network.testnet,
+  },
 };
+
 export type TEIP155Chain = keyof typeof EIP155_CHAINS;
 
 export const EIP155_CHAINS: {[key in string]: any} = {

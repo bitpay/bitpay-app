@@ -467,8 +467,10 @@ export const buildTxDetails =
           ? parseInt(params[0]?.gasPrice, 16)
           : feePerKb!;
         nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
-        coin = chain =
-          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
+        chain = WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
+        coin =
+          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]
+            ?.currencyAbbreviation;
         amount = parseInt(params[0]?.value, 16) || 0;
         gasLimit =
           (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
@@ -2384,6 +2386,7 @@ export const handleSendError =
   };
 
 function getTokenAddressForOffchainWallet(wallet: Wallet | WalletRowProps) {
+  console.log('$$$$$$$$$$$$$$$$$4');
   return SupportedTokenOptions.find(
     ({currencyAbbreviation}) =>
       currencyAbbreviation === wallet.currencyAbbreviation.toLowerCase(),

@@ -53,7 +53,9 @@ export default ({
   const navigation = useNavigation();
 
   const [chainsSelected, setChainsSelected] =
-    useState<{chain: string; network: string}[]>();
+    useState<
+      {chain: string; network: string; currencyAbbreviation: string}[]
+    >();
   const {
     requiredNamespaces,
     optionalNamespaces,
@@ -62,9 +64,9 @@ export default ({
 
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [allKeys, setAllkeys] = useState<WCV2Key[]>();
-  const _allKeys = Object.values(keys).filter(
-    key => key.backupComplete && !key.hardwareSource,
-  );
+  const _allKeys = Object.values(keys).filter(key => {
+    return key.backupComplete;
+  });
 
   const getSelectedWallets = (): {
     chain: string;
@@ -129,20 +131,21 @@ export default ({
       Object.values(namespaces).forEach((n: any) => {
         allAccounts = [...allAccounts, ...n.accounts];
       });
+
     const formattedKeys = _allKeys
       .map(key => {
         const wallets = key.wallets
-          .filter(({chain, network, currencyAbbreviation, receiveAddress}) =>
-            chainsSelected?.some(
+          .filter(({chain, network, currencyAbbreviation, receiveAddress}) => {
+            return chainsSelected?.some(
               c =>
                 chain === c.chain &&
                 network === c.network &&
-                currencyAbbreviation === c.chain &&
+                currencyAbbreviation === c.currencyAbbreviation &&
                 !allAccounts.some(account =>
                   account.endsWith(receiveAddress || ''),
                 ),
-            ),
-          )
+            );
+          })
           .map(wallet => {
             return {
               wallet,
