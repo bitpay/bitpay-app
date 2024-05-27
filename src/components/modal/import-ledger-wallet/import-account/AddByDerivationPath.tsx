@@ -244,7 +244,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       const eth = new AppEth(transportRef.current);
       const derivationStrategy = getDerivationStrategy(derivationPath);
       logger.debug(`Get wallet public key with path: ${derivationPath}`);
-      const {publicKey} = await eth.getAddress(derivationPath);
+      const {publicKey} = await eth.getAddress(`${derivationPath}/0/0`);
       const newWallet = await dispatch(
         startImportFromHardwareWallet({
           key,
@@ -339,7 +339,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       const xrp = new Xrp(transportRef.current);
       const derivationStrategy = getDerivationStrategy(derivationPath);
       logger.debug(`Get wallet public key with path: ${derivationPath}`);
-      const {publicKey} = await xrp.getAddress(derivationPath);
+      const {publicKey} = await xrp.getAddress(`${derivationPath}/0/0`);
       const newWallet = await dispatch(
         startImportFromHardwareWallet({
           key,
@@ -415,7 +415,6 @@ export const AddByDerivationPath: React.FC<Props> = props => {
     setError('');
     setContinueButtonState('loading');
     const network = Network.mainnet;
-    console.log('$$$$$$$$$$$$$$$$$$$$$$$', props, network);
     await importLedgerAccount(props.selectedChain, network);
     setContinueButtonState(null);
   };

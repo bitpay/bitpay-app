@@ -65,7 +65,7 @@ export default ({
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [allKeys, setAllkeys] = useState<WCV2Key[]>();
   const _allKeys = Object.values(keys).filter(key => {
-    return key.backupComplete;
+    return key.backupComplete && !key.hardwareSource;
   });
 
   const getSelectedWallets = (): {

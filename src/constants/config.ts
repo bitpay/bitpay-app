@@ -25,6 +25,9 @@ export const BASE_BITCORE_URL = {
   eth: 'https://api-eth.bitcore.io/api',
   matic: 'https://api-matic.bitcore.io/api',
   xrp: 'https://api-xrp.bitcore.io/api',
+  arb: 'https://api-eth.bitcore.io/api',
+  base: 'https://api-eth.bitcore.io/api',
+  op: 'https://api-eth.bitcore.io/api',
 };
 
 export const APP_DEEPLINK_PREFIX = 'bitpay://';
@@ -46,7 +49,7 @@ export const APP_CRYPTO_PREFIX = [
 ];
 
 // BWC
-export const BASE_BWS_URL = 'https://bws.bitpay.com/bws/api';
+export const BASE_BWS_URL = 'http://192.168.1.6:3232/bws/api';
 export const BWC_TIMEOUT = 100000;
 
 // Storybook

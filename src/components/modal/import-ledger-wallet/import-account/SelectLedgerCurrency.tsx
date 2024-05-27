@@ -210,7 +210,7 @@ export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
       network,
       purpose: "44'",
       coin: "60'",
-      currencySymbol: 'eth',
+      currencySymbol: 'matic',
       chain: 'matic',
     };
   },
@@ -441,6 +441,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
         const {publicKey, address} = await xrp.getAddress(
           `${purpose}/${coin}/${account}/0/0`,
         ); // we only check if the first address has activity
+        logger.debug(`publicKey: ${publicKey} - address: ${address}`);
         logger.debug(
           `Fetching address activity for: ${address} - ${currencySymbol} - ${chain} - ${network} - ${derivationStrategy}`,
         );
@@ -628,6 +629,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
               path,
               xpubVersion,
             });
+            logger.debug(`publicKey: ${xPubKey} - address: ${address}`);
             logger.debug(
               `Fetching address activity for: ${address} - ${currencySymbol} - ${chain} - ${network} - ${derivationStrategy}`,
             );
@@ -794,6 +796,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
         const {publicKey, address} = await eth.getAddress(
           `${purpose}/${coin}/${account}/0/0`,
         ); // we only check if the first address has activity
+        logger.debug(`publicKey: ${publicKey} - address: ${address}`);
         logger.debug(
           `Fetching address activity for: ${address} - ${currencySymbol} - ${chain} - ${network} - ${derivationStrategy}`,
         );

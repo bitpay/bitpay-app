@@ -112,7 +112,7 @@ export const credentialsFromExtendedPublicKey = (
     compliantDerivation: true,
     n,
     m,
-    copayerId: Utils.xPubToCopayerId(coin, xPubKey),
+    copayerId: Utils.xPubToCopayerId(chain, xPubKey),
     publicKeyRing: [
       {
         xPubKey,
