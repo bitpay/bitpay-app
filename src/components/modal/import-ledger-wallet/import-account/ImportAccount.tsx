@@ -23,14 +23,14 @@ export const ImportAccount: React.FC<ImportAccountProps> = props => {
     useState<boolean>(false);
   const [addByDerivationPath, setAddByDerivationPath] =
     useState<boolean>(false);
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('btc');
+  const [selectedChain, setSelectedChain] = useState<string>('btc');
 
   const onScannedCompleted = (
-    selectedCurrency: string,
+    selectedChain: string,
     scannedWalletsIds?: string[],
   ) => {
     setShowSelectWalletsToImport(true);
-    setSelectedCurrency(selectedCurrency);
+    setSelectedChain(selectedChain);
     props.setScannedWalletsIds(scannedWalletsIds);
   };
 
@@ -52,7 +52,7 @@ export const ImportAccount: React.FC<ImportAccountProps> = props => {
         onDisconnect={props.onDisconnect}
         onComplete={props.onComplete}
         onAddByDerivationPathSelected={onAddByDerivationPathSelected}
-        selectedCurrency={selectedCurrency}
+        selectedChain={selectedChain}
         scannedWalletsIds={props.scannedWalletsIds}
       />
     )
@@ -63,7 +63,7 @@ export const ImportAccount: React.FC<ImportAccountProps> = props => {
       onDisconnect={props.onDisconnect}
       onComplete={props.onComplete}
       onAddByDerivationPathSelected={onAddByDerivationPathSelected}
-      selectedCurrency={selectedCurrency}
+      selectedChain={selectedChain}
       scannedWalletsIds={props.scannedWalletsIds}
     />
   ) : (

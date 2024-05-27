@@ -1,4 +1,5 @@
 import {Effect} from '../..';
+import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   BitpaySupportedCoins,
   BitpaySupportedEvmCoins,
@@ -138,6 +139,18 @@ export const GetName =
       tokenAddress ? tokenAddress : currencyAbbreviation,
       chain,
     );
+
+    if (currencyAbbreviation.toLowerCase() === 'eth') {
+      // workaround for L2 eth
+      const found = SupportedCoinsOptions.find(
+        ({currencyAbbreviation: _currencyAbbreviation, chain: _chain}) => {
+          return (
+            currencyAbbreviation === _currencyAbbreviation && chain === _chain
+          );
+        },
+      )!;
+      return found.currencyName;
+    }
     return (
       BitpaySupportedCoins[currencyName]?.name || tokens[currencyName]?.name
     );

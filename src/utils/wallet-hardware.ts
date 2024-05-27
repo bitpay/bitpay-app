@@ -55,6 +55,7 @@ const hashFromEntropy = (
  */
 export const credentialsFromExtendedPublicKey = (
   coin: string,
+  chain: string,
   account = 0,
   rootPath: string,
   name: string,
@@ -99,7 +100,7 @@ export const credentialsFromExtendedPublicKey = (
     name,
     copayerName: 'me',
     coin,
-    chain: coin, // chain === coin for stored wallets
+    chain, // chain === coin for stored wallets. NOT TRUE ANYMORE
     keyId: hwKeyId,
     xPubKey,
     network,

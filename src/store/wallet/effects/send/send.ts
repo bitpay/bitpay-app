@@ -1736,9 +1736,9 @@ const getSignaturesFromLedger = (
   wallet: Wallet,
   txp: TransactionProposal,
 ) => {
-  const {coin: currency, network, chain} = wallet.credentials;
+  const {chain: currency, network, chain} = wallet.credentials;
   if (IsUtxoCoin(currency)) {
-    const configFn = currencyConfigs[currency];
+    const configFn = currencyConfigs[chain];
     const params = configFn(network);
     return getUtxoSignaturesFromLedger(
       wallet,
@@ -1747,14 +1747,17 @@ const getSignaturesFromLedger = (
       params as UtxoAccountParams,
     );
   }
-  if (['eth', 'matic'].includes(currency) || IsERCToken(currency, chain)) {
+  if (
+    ['eth', 'matic', 'base', 'op', 'arb'].includes(chain) ||
+    IsERCToken(currency, chain)
+  ) {
     return getEVMSignaturesFromLedger(wallet, txp, transport);
   }
-  if (currency === 'xrp') {
+  if (chain === 'xrp') {
     return getXrpSignaturesFromLedger(wallet, txp, transport);
   }
 
-  throw new Error(`Unsupported currency: ${currency.toUpperCase()}`);
+  throw new Error(`Unsupported chain: ${chain.toUpperCase()}`);
 };
 
 const getSignaturesFromHardwareWallet = (
