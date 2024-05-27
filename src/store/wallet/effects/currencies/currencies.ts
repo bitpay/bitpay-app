@@ -19,6 +19,7 @@ import {
 import {
   addTokenChainSuffix,
   getCurrencyAbbreviation,
+  getEVMFeeCurrency,
 } from '../../../../utils/helper-methods';
 
 export const startGetTokenOptions =
@@ -110,6 +111,7 @@ const populateTokenInfo = ({
     name: token.name.replace('(PoS)', '').trim(),
     chain,
     coin: token.symbol.toLowerCase(),
+    feeCurrency: getEVMFeeCurrency(chain),
     logoURI: token.logoURI,
     address: token.address,
     unitInfo: {
@@ -129,7 +131,7 @@ const populateTokenInfo = ({
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: chain, testnet: chain},
+      protocolPrefix: {livenet: chain, testnet: chain, regtest: chain},
       ratesApi: '',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS[chain].livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS[chain].testnet,

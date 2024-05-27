@@ -383,20 +383,20 @@ export const getProtocolName = (
     : PROTOCOL_NAME.default[_network];
 };
 
-export const getCWCChain = (chain: string): string => {
+export const getEVMFeeCurrency = (chain: string): string => {
   switch (chain.toLowerCase()) {
     case 'eth':
-      return 'ETHERC20';
+      return 'eth';
     case 'matic':
-      return 'MATICERC20';
+      return 'matic';
     case 'arb':
-      return 'ARBERC20';
+      return 'eth';
     case 'base':
-      return 'BASEERC20';
+      return 'eth';
     case 'op':
-      return 'OPERC20';
+      return 'eth';
     default:
-      return 'ETHERC20';
+      return 'eth';
   }
 };
 
