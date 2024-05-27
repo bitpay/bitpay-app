@@ -648,7 +648,7 @@ const updateWalletStatus =
     lastDayRates: Rates;
   }): Effect<Promise<WalletStatus>> =>
   async dispatch => {
-    return new Promise(async resolve => {
+    return new Promise(async (resolve, reject) => {
       const {
         balance: cachedBalance,
         credentials: {token, multisigEthInfo},
@@ -658,14 +658,18 @@ const updateWalletStatus =
       } = wallet;
 
       if (!receiveAddress) {
-        const walletAddress = (await dispatch<any>(
-          createWalletAddress({wallet, newAddress: true}),
-        )) as string;
-        dispatch(
-          LogActions.info(
-            `new address generated [updateWalletStatus]: ${walletAddress}`,
-          ),
-        );
+        try {
+          const walletAddress = (await dispatch<any>(
+            createWalletAddress({wallet, newAddress: true}),
+          )) as string;
+          dispatch(
+            LogActions.info(
+              `new address generated [updateWalletStatus]: ${walletAddress}`,
+            ),
+          );
+        } catch (error) {
+          return reject(error);
+        }
       }
       wallet.getStatus(
         {

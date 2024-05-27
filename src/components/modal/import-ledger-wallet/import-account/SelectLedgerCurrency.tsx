@@ -718,7 +718,9 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
         if (!newWallets[0]?.isScanning) {
           try {
             await dispatch(startGetRates({force: true}));
-            await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+            await dispatch(
+              startUpdateAllWalletStatusForKey({key, force: true}),
+            );
             await sleep(1000);
             await dispatch(updatePortfolioBalance());
           } catch (error) {
