@@ -178,12 +178,13 @@ export const createProposalAndBuildTxDetails =
         }
 
         if (currencyAbbreviation === 'xrp') {
+          tx.destinationTag = destinationTag || recipient.destinationTag;
           if (payProDetails) {
             const instructions = payProDetails.instructions[0];
             const {outputs} = instructions;
             tx.invoiceID = outputs[0].invoiceID;
+            tx.destinationTag = outputs[0].destinationTag;
           }
-          tx.destinationTag = destinationTag || recipient.destinationTag;
 
           if (wallet.receiveAddress === recipient.address) {
             return reject({
