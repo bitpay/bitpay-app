@@ -234,7 +234,7 @@ export const addWallet =
         );
 
         dispatch(successAddWallet({key}));
-        dispatch(LogActions.info(`Added Wallet ${currency}`));
+        dispatch(LogActions.info(`Added Wallet ${currencyName}`));
         resolve(newWallet);
       } catch (err) {
         const errstring =

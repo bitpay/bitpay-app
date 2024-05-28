@@ -615,8 +615,7 @@ const AddWallet = ({
       };
       const addrData = GetCoinAndNetwork(tokenAddress, network, chain);
       const isValid =
-        currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
-        network === addrData?.network;
+        addrData?.coin.toLowerCase() && network === addrData?.network;
 
       if (!isValid) {
         return;
