@@ -84,25 +84,25 @@ export const EIP155_TEST_CHAINS = {
     rpc: 'https://polygon-amoy.core.chainstack.com',
     network: Network.testnet,
   },
-  'eip155:420': {
-    chainId: 420,
-    name: 'Optimism Goerli',
+  'eip155:11155420': {
+    chainId: 11155420,
+    name: 'Optimism Sepolia',
     chainName: 'op',
-    rpc: 'https://goerli.optimism.io',
+    rpc: 'https://sepolia.optimism.io',
     network: Network.testnet,
   },
-  'eip155:421613': {
-    chainId: 421613,
-    name: 'Arbitrum Goerli',
+  'eip155:421614': {
+    chainId: 421614,
+    name: 'Arbitrum Sepolia',
     chainName: 'arb',
-    rpc: 'https://goerli-rollup.arbitrum.io/rpc',
+    rpc: 'https://sepolia-rollup.arbitrum.io/rpc',
     network: Network.testnet,
   },
-  'eip155:84531': {
-    chainId: 84531,
-    name: 'Base Goerli',
+  'eip155:84532': {
+    chainId: 84532,
+    name: 'Base Sepolia',
     chainName: 'base',
-    rpc: 'https://goerli.base.org',
+    rpc: 'https://sepolia.base.org',
     network: Network.testnet,
   },
 };
@@ -165,17 +165,17 @@ export const WALLET_CONNECT_SUPPORTED_CHAINS: {
     currencyAbbreviation: 'eth',
     network: Network.mainnet,
   },
-  'eip155:420': {
+  'eip155:11155420': {
     chain: 'op',
     currencyAbbreviation: 'eth',
     network: Network.testnet,
   },
-  'eip155:421613': {
+  'eip155:421614': {
     chain: 'arb',
     currencyAbbreviation: 'eth',
     network: Network.testnet,
   },
-  'eip155:84531': {
+  'eip155:84532': {
     chain: 'base',
     currencyAbbreviation: 'eth',
     network: Network.testnet,
