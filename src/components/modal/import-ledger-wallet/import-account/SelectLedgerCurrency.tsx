@@ -535,7 +535,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
           await sleep(1000);
           await dispatch(updatePortfolioBalance());
         } catch (error) {
-          // absorb this type of errors
+          // ignore error
         }
       }
       dispatch(
@@ -726,7 +726,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
             await sleep(1000);
             await dispatch(updatePortfolioBalance());
           } catch (error) {
-            // absorb this type of errors
+            // ignore error
           }
         }
         dispatch(
@@ -891,7 +891,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
           await sleep(1000);
           await dispatch(updatePortfolioBalance());
         } catch (error) {
-          // absorb this type of errors
+          // ignore error
         }
       }
       dispatch(

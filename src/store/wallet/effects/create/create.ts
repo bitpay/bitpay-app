@@ -634,6 +634,7 @@ export const createWalletWithOpts =
             network: opts.networkName,
             singleAddress: opts.singleAddress,
             coin: opts.coin,
+            chain: opts.chain,
             useNativeSegwit: opts.useNativeSegwit,
           },
           (err: Error) => {

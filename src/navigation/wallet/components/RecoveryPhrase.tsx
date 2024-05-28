@@ -417,10 +417,14 @@ const RecoveryPhrase = () => {
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
-      await dispatch(startGetRates({force: true}));
-      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      await sleep(1000);
-      await dispatch(updatePortfolioBalance());
+      try {
+        await dispatch(startGetRates({force: true}));
+        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await sleep(1000);
+        await dispatch(updatePortfolioBalance());
+      } catch (error) {
+        // ignore error
+      }
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       backupRedirect({
         context: route.params?.context,
@@ -483,11 +487,14 @@ const RecoveryPhrase = () => {
       await dispatch(startOnGoingProcessModal('CREATING_KEY'));
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
-      await dispatch(startGetRates({force: true}));
-      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      await sleep(1000);
-      await dispatch(updatePortfolioBalance());
-
+      try {
+        await dispatch(startGetRates({force: true}));
+        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await sleep(1000);
+        await dispatch(updatePortfolioBalance());
+      } catch (error) {
+        // ignore error
+      }
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
       backupRedirect({

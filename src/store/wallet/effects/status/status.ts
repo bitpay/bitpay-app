@@ -481,7 +481,7 @@ const updateKeyStatus =
             ),
           );
         }
-        return;
+        return reject(err);
       }
     });
   };

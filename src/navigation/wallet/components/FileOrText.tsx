@@ -92,10 +92,14 @@ const FileOrText = () => {
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
 
-      await dispatch(startGetRates({force: true}));
-      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      await sleep(1000);
-      await dispatch(updatePortfolioBalance());
+      try {
+        await dispatch(startGetRates({force: true}));
+        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await sleep(1000);
+        await dispatch(updatePortfolioBalance());
+      } catch (error) {
+        // ignore error
+      }
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
       backupRedirect({

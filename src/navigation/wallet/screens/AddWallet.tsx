@@ -438,11 +438,15 @@ const AddWallet = ({
           dispatch(LogActions.info(`new address generated: ${walletAddress}`));
         }
 
-        // new wallet might have funds
-        await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-        await sleep(1000);
-        dispatch(updatePortfolioBalance());
+        try {
+          // new wallet might have funds
+          await dispatch(startGetRates({force: true}));
+          await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+          await sleep(1000);
+          dispatch(updatePortfolioBalance());
+        } catch (error) {
+          // ignore error
+        }
 
         dispatch(dismissOnGoingProcessModal());
         resolve(wallet);
