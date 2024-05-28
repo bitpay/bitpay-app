@@ -1877,7 +1877,7 @@ const handlePlainAddress =
     dispatch(LogActions.info(`[scan] Incoming-data: ${_coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
-      : undefined; // There is no way to tell if an evm address is goerli or livenet so let's skip the network filter
+      : undefined; // There is no way to tell if an evm address is testnet or livenet so let's skip the network filter
     const recipient = {
       type: opts?.context || 'address',
       name: opts?.name,

@@ -25,7 +25,7 @@ export type SupportedLedgerAppNames =
   | 'Bitcoin Legacy'
   | 'Bitcoin Test Legacy'
   | 'Ethereum'
-  | 'Ethereum Goerli'
+  | 'Ethereum Amoy'
   | 'XRP'
   | 'Bitcoin Cash'
   | 'Litecoin'
