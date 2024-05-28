@@ -56,6 +56,8 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import SearchComponent, {
   SearchableItem,
 } from '../../../components/chain-search/ChainSearch';
+import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
+import uniqBy from 'lodash.uniqby';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -282,7 +284,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as GlobalSelectObj[]);
   const selectedChainFilterOption = useAppSelector(({APP}) =>
-    ['sell', 'swap', 'buy'].includes(context)
+    ignoreGlobalListContextList.includes(context)
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
@@ -345,7 +347,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     const nonBitpayTokens = customSupportedCurrencies
       ? []
       : NON_BITPAY_SUPPORTED_TOKENS;
-    const allCurrencies = [...coins, ...tokens, ...nonBitpayTokens];
+    const allCurrencies = uniqBy(
+      [...coins, ...tokens, ...nonBitpayTokens],
+      c => c,
+    );
     const allCurrencyData = buildList(allCurrencies, wallets);
     return Object.values(allCurrencyData);
   }, [wallets, customSupportedCurrencies]);
@@ -606,6 +611,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       return (
         <GlobalSelectRow
           item={item}
+          hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={selectObj => {
             // if only one wallet - skip wallet selector
             const wallets = Object.values(
@@ -621,7 +627,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         />
       );
     },
-    [onWalletSelect, openKeyWalletSelector],
+    [onWalletSelect, selectedChainFilterOption, openKeyWalletSelector],
   );
 
   const closeModal = () => {

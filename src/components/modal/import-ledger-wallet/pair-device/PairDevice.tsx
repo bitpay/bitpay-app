@@ -9,9 +9,6 @@ import {BleError} from 'react-native-ble-plx';
 import {LedgerIntro} from './LedgerIntro';
 import {LogActions} from '../../../../store/log';
 import {checkPermissionsBLE} from '../utils';
-import {DeviceFound} from './DeviceFound';
-import {LearnHow} from './LearnHow';
-import {PairingError} from './PairingError';
 import {SearchingForDevices} from './SearchingForDevices';
 import {sleep} from '../../../../utils/helper-methods';
 
@@ -33,14 +30,21 @@ export const PairDevice: React.FC<Props> = props => {
   const [transportType, setTransportType] = useState<'ble' | 'hid' | null>(
     null,
   );
-  const [isLearnHowVisible, setLearnHowVisible] = useState(false);
-  const [error, setError] = useState('');
-  const [transport, setTransport] = useState<Transport | null>(null);
+  const [status, setStatus] = useState({
+    status: 'searching',
+    message: '',
+    title: '',
+  });
 
   const onConnectBle = async () => {
     setTransportType('ble');
     setIsSearching(true);
-    setError('');
+    setStatus({
+      status: 'searching',
+      message:
+        'Double-check that Bluetooth is enabled and your hardware wallet is unlocked to proceed.',
+      title: 'Searching for Devices',
+    });
 
     let openedTransport: Transport | null = null;
     let errorMsg = '';
@@ -48,7 +52,12 @@ export const PairDevice: React.FC<Props> = props => {
     const {isAuthorized} = await checkPermissionsBLE();
 
     if (!isAuthorized) {
-      setError('App is not authorized to use Bluetooth.');
+      setStatus({
+        status: 'failed',
+        message: 'App is not authorized to use Bluetooth.',
+        title: 'Connection Failed',
+      });
+      await sleep(7000);
       return;
     }
 
@@ -73,12 +82,21 @@ export const PairDevice: React.FC<Props> = props => {
     }
 
     if (openedTransport) {
-      setTransport(openedTransport);
+      setStatus({
+        status: 'success',
+        message: 'Your Ledger device was successfully connected.',
+        title: 'Successful Connection',
+      });
+      await sleep(7000);
       props.onPaired(openedTransport);
     } else {
-      setError(
-        `Unable to connect via Bluetooth: ${errorMsg}. If error persist, please attempt to reconnect by enabling the device's Bluetooth option again.`,
-      );
+      setStatus({
+        status: 'failed',
+        message:
+          'Ledger device not found. Please restart your Bluetooth and check the device is in range.',
+        title: 'Connection Failed',
+      });
+      await sleep(7000);
     }
 
     setIsSearching(false);
@@ -87,7 +105,12 @@ export const PairDevice: React.FC<Props> = props => {
   const onConnectHid = async () => {
     setTransportType('hid');
     setIsSearching(true);
-    setError('');
+    setStatus({
+      status: 'searching',
+      message:
+        'Double-check that the USB cable is securely connected and your hardware wallet is unlocked to proceed.',
+      title: 'Searching for Devices',
+    });
 
     let openedTransport: Transport | null = null;
     let errorMsg = '';
@@ -113,44 +136,29 @@ export const PairDevice: React.FC<Props> = props => {
     }
 
     if (openedTransport) {
-      setTransport(openedTransport);
+      setStatus({
+        status: 'success',
+        message: 'Your Ledger device was successfully connected.',
+        title: 'Successful Connection',
+      });
+      await sleep(7000);
       props.onPaired(openedTransport);
     } else {
-      setError(`Unable to connect via USB: ${errorMsg}`);
+      setStatus({
+        status: 'failed',
+        message: `Unable to connect via USB: ${errorMsg}`,
+        title: 'Connection Failed',
+      });
+      await sleep(7000);
     }
 
     setIsSearching(false);
   };
 
-  const onContinue = () => {
-    if (transport) {
-      props.onPaired(transport);
-    }
-  };
-
-  const onLearnHow = () => {
-    setLearnHowVisible(true);
-  };
-
   return (
     <>
-      {/* {transport ? (
-        <>
-          {isLearnHowVisible ? (
-            <LearnHow onContinue={onContinue} />
-          ) : (
-            <DeviceFound onContinue={onContinue} onLearnHow={onLearnHow} />
-          )}
-        </>
-      ) :  */}
-      {error ? (
-        <PairingError
-          error={error}
-          onConnectBle={onConnectBle}
-          onConnectHid={onConnectHid}
-        />
-      ) : isSearching ? (
-        <SearchingForDevices transportType={transportType} />
+      {isSearching ? (
+        <SearchingForDevices transportType={transportType} status={status} />
       ) : (
         <LedgerIntro onConnectBle={onConnectBle} onConnectHid={onConnectHid} />
       )}

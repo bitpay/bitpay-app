@@ -34,6 +34,7 @@ export const startJoinMultisig =
         const walletData = BWC.parseSecret(opts.invitationCode as string);
         opts.networkName = walletData.network;
         opts.coin = walletData.coin;
+        opts.chain = walletData.coin; // Workaround for BWC
         /* TODO: opts.n is just used to determinate if the wallet is multisig (m/48'/xx) or single sig (m/44')
         we should change the name to 'isMultisig'
        */
@@ -112,6 +113,7 @@ export const addWalletJoinMultisig =
         const walletData = BWC.parseSecret(opts.invitationCode as string);
         opts.networkName = walletData.network;
         opts.coin = walletData.coin;
+        opts.chain = walletData.coin; // Workaround for BWC
         /* TODO: opts.n is just used to determinate if the wallet is multisig (m/48'/xx) or single sig (m/44')
         we should change the name to 'isMultisig'
        */
@@ -179,7 +181,7 @@ const joinMultisigWallet = (params: {
       bwcClient.fromString(
         key.createCredentials(opts.password, {
           coin: opts.coin,
-          chain: opts.coin, // chain === coin for stored clients
+          chain: opts.chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
           network: opts.networkName,
           account: opts.account || 0,
           n: opts.n,

@@ -81,7 +81,10 @@ export const IsERCToken = (
   currencyAbbreviation: string,
   chain: string,
 ): boolean => {
-  return currencyAbbreviation.toLowerCase() !== chain.toLowerCase();
+  return (
+    currencyAbbreviation.toLowerCase() !== chain.toLowerCase() &&
+    currencyAbbreviation.toLowerCase() !== 'eth' // workaround for L2 eth
+  );
 };
 
 export const GetBlockExplorerUrl = (

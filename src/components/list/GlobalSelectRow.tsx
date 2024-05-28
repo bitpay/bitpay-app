@@ -17,6 +17,7 @@ import {useTheme} from 'styled-components/native';
 
 interface Props {
   item: GlobalSelectObj;
+  hasSelectedChainFilterOption: boolean;
   emit: (item: GlobalSelectObj) => void;
 }
 
@@ -43,21 +44,35 @@ interface WalletBadgeListProps {
 }
 
 const WalletBadgeList: React.FC<WalletBadgeListProps> = ({walletsByChain}) => {
+  const walletValues = Object.values(walletsByChain);
   return (
     <>
-      {Object.values(walletsByChain).map(
-        (wallets, index) =>
-          wallets[0]?.badgeImg && (
-            <Img key={wallets[0].id} isFirst={false} style={{marginLeft: 1}}>
-              <CurrencyImage img={wallets[0].badgeImg} size={25} />
-            </Img>
-          ),
-      )}
+      {walletValues.map((wallets, index) => {
+        const [firstWallet] = wallets;
+        if (!firstWallet) {
+          return null;
+        }
+
+        const img =
+          firstWallet.badgeImg ||
+          (walletValues.length > 1 ? firstWallet.img : null);
+        if (!img) {
+          return null;
+        }
+
+        const marginLeft = index === 0 ? 1 : -6;
+
+        return (
+          <Img key={firstWallet.id} isFirst={false} style={{marginLeft}}>
+            <CurrencyImage img={img} size={25} />
+          </Img>
+        );
+      })}
     </>
   );
 };
 
-const GlobalSelectRow = ({item, emit}: Props) => {
+const GlobalSelectRow = ({item, hasSelectedChainFilterOption, emit}: Props) => {
   const theme = useTheme();
   const {currencyName, total, img, availableWalletsByChain} = item;
   const shouldShowPill = total > 1;
@@ -67,11 +82,13 @@ const GlobalSelectRow = ({item, emit}: Props) => {
         <CurrencyImage img={img} />
       </CurrencyImageContainer>
       <CurrencyColumn>
-        <H5>{currencyName}</H5>
+        <H5>{currencyName.includes('Ethereum') ? 'Ethereum' : currencyName}</H5>
       </CurrencyColumn>
       {shouldShowPill ? (
         <AvailableWalletsPill>
-          <WalletBadgeList walletsByChain={availableWalletsByChain} />
+          {!hasSelectedChainFilterOption ? (
+            <WalletBadgeList walletsByChain={availableWalletsByChain} />
+          ) : null}
           <H7
             style={{
               marginLeft: 5,
@@ -82,11 +99,11 @@ const GlobalSelectRow = ({item, emit}: Props) => {
             +{total}
           </H7>
         </AvailableWalletsPill>
-      ) : (
+      ) : !hasSelectedChainFilterOption ? (
         <AvailableChainContainer>
           <WalletBadgeList walletsByChain={availableWalletsByChain} />
         </AvailableChainContainer>
-      )}
+      ) : null}
       <AngleRightSvg />
     </RowContainer>
   );

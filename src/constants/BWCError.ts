@@ -98,6 +98,18 @@ const _getErrorMessage = (err: Error) => {
       return t(
         'Insufficient funds in your linked MATIC wallet to cover the transaction fee.',
       );
+    case 'INSUFFICIENT_ARB_FEE':
+      return t(
+        'Insufficient funds in your linked ARB wallet to cover the transaction fee.',
+      );
+    case 'INSUFFICIENT_BASE_FEE':
+      return t(
+        'Insufficient funds in your linked BASE wallet to cover the transaction fee.',
+      );
+    case 'INSUFFICIENT_OP_FEE':
+      return t(
+        'Insufficient funds in your linked OP wallet to cover the transaction fee.',
+      );
     case 'LOCKED_FUNDS':
       return t('Funds are locked by pending spend proposals');
     case 'LOCKED_ETH_FEE':
@@ -107,6 +119,18 @@ const _getErrorMessage = (err: Error) => {
     case 'LOCKED_MATIC_FEE':
       return t(
         'Your POLYGON linked wallet funds are locked by pending spend proposals',
+      );
+    case 'LOCKED_ARB_FEE':
+      return t(
+        'Your ARB linked wallet funds are locked by pending spend proposals',
+      );
+    case 'LOCKED_BASE_FEE':
+      return t(
+        'Your BASE linked wallet funds are locked by pending spend proposals',
+      );
+    case 'LOCKED_OP_FEE':
+      return t(
+        'Your OP linked wallet funds are locked by pending spend proposals',
       );
     case 'COPAYER_VOTED':
       return t('Copayer already voted on this spend proposal');

@@ -93,7 +93,7 @@ const BitpayIdGroup: React.FC<BitpayIdProps> = ({BitpayId}) => {
                       dispatch(ShopEffects.startFetchCatalog());
 
                       navigationRef.navigate('Tabs', {
-                        screen: 'Settings',
+                        screen: 'Home',
                       });
                     }}>
                     {t('Log Out')}

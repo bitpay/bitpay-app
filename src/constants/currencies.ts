@@ -1,6 +1,15 @@
 import {EVM_BLOCKCHAIN_EXPLORERS, BASE_BWS_URL} from './config';
 
-export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth' | 'matic';
+export type SupportedChains =
+  | 'btc'
+  | 'bch'
+  | 'ltc'
+  | 'doge'
+  | 'eth'
+  | 'matic'
+  | 'op'
+  | 'base'
+  | 'arb';
 export type SupportedEthereumTokens =
   | '0x4fabb145d64652a948d72533023f6e7a623c7c53_e' // 'busd_e'
   | '0x8e870d67f660d95d5be530380d0ec0bd388289e1_e' // 'usdp_e'
@@ -23,6 +32,22 @@ export type SupportedMaticTokens =
   | '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec_m' // 'shib_m'
   | '0xb7b31a6bc18e48888545ce79e83e06003be70930_m'; // 'ape_m'
 
+export type SupportedArbTokens =
+  | '0xaf88d065e77c8cc2239327c5edb3a432268e5831_arb' // 'usdc_arb'
+  | '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f_arb' // 'wbtc_arb'
+  | '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9_arb' // 'usdt_arb'
+  | '0x82af49447d8a07e3bd95bd0d56f35241523fbab1_arb'; // 'weth_arb'
+
+export type SupportedBaseTokens =
+  | '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913_base' // 'usdc_base'
+  | '0x4200000000000000000000000000000000000006_base'; // 'weth_base'
+
+export type SupportedOpTokens =
+  | '0x0b2c639c533813f4aa9d7837caf62653d097ff85_op' // 'usdc_op'
+  | '0x68f180fcce6836688e9084f035309e29bf0a2095_op' // 'wbtc_op'
+  | '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58_op' // 'usdt_op'
+  | '0x4200000000000000000000000000000000000006_op'; // 'weth_op'
+
 export type EVM_CHAINS = 'eth' | 'matic';
 export type UTXO_CHAINS = 'btc' | 'bch' | 'doge' | 'ltc';
 
@@ -31,6 +56,7 @@ export interface CurrencyOpts {
   name: string;
   chain: string;
   coin: string;
+  feeCurrency: string;
   logoURI?: string;
   unitInfo?: {
     // Config/Precision
@@ -78,6 +104,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'Binance USD',
     chain: 'eth',
     coin: 'busd',
+    feeCurrency: 'eth',
     address: '0x4fabb145d64652a948d72533023f6e7a623c7c53',
     unitInfo: {
       unitName: 'BUSD',
@@ -115,6 +142,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'Paxos Dollar',
     chain: 'eth',
     coin: 'usdp',
+    feeCurrency: 'eth',
     address: '0x8e870d67f660d95d5be530380d0ec0bd388289e1',
     unitInfo: {
       unitName: 'USDP',
@@ -152,6 +180,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'USD Coin',
     chain: 'eth',
     coin: 'usdc',
+    feeCurrency: 'eth',
     address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
     unitInfo: {
       unitName: 'USDC',
@@ -189,6 +218,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'Gemini Dollar',
     chain: 'eth',
     coin: 'gusd',
+    feeCurrency: 'eth',
     address: '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd',
     unitInfo: {
       unitName: 'GUSD',
@@ -226,6 +256,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'DAI',
     chain: 'eth',
     coin: 'dai',
+    feeCurrency: 'eth',
     address: '0x6b175474e89094c44da98b954eedeac495271d0f',
     unitInfo: {
       unitName: 'DAI',
@@ -263,6 +294,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'Wrapped Bitcoin',
     chain: 'eth',
     coin: 'wbtc',
+    feeCurrency: 'eth',
     address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     unitInfo: {
       unitName: 'WBTC',
@@ -300,6 +332,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'Shiba Inu',
     chain: 'eth',
     coin: 'shib',
+    feeCurrency: 'eth',
     address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce',
     unitInfo: {
       unitName: 'SHIB',
@@ -338,6 +371,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'ApeCoin',
     chain: 'eth',
     coin: 'ape',
+    feeCurrency: 'eth',
     address: '0x4d224452801aced8b2f0aebe155379bb5d594381',
     unitInfo: {
       unitName: 'APE',
@@ -376,6 +410,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'Euro Coin',
     chain: 'eth',
     coin: 'euroc',
+    feeCurrency: 'eth',
     address: '0x1abaea1f7c830bd89acc67ec4af516284b1bc33c',
     unitInfo: {
       unitName: 'EUROC',
@@ -414,6 +449,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'Matic Token',
     chain: 'eth',
     coin: 'matic',
+    feeCurrency: 'eth',
     address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
     unitInfo: {
       unitName: 'MATIC',
@@ -452,6 +488,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
     name: 'PayPal USD',
     chain: 'eth',
     coin: 'pyusd',
+    feeCurrency: 'eth',
     address: '0x6c3ea9036406852006290770bedfcaba0e23a0e8',
     unitInfo: {
       unitName: 'PYUSD',
@@ -492,6 +529,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     name: 'Binance USD',
     chain: 'matic',
     coin: 'busd',
+    feeCurrency: 'matic',
     address: '0xdab529f40e671a1d4bf91361c21bf9f0c9712ab7',
     unitInfo: {
       unitName: 'BUSD',
@@ -525,6 +563,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     name: 'USDC.e',
     chain: 'matic',
     coin: 'usdc.e',
+    feeCurrency: 'matic',
     address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
     unitInfo: {
       unitName: 'USDC.e',
@@ -558,6 +597,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     name: 'USDC',
     chain: 'matic',
     coin: 'usdc',
+    feeCurrency: 'matic',
     address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
     unitInfo: {
       unitName: 'USDC',
@@ -591,6 +631,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     name: 'DAI',
     chain: 'matic',
     coin: 'dai',
+    feeCurrency: 'matic',
     address: '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063',
     unitInfo: {
       unitName: 'DAI',
@@ -624,6 +665,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     name: 'Wrapped Bitcoin',
     chain: 'matic',
     coin: 'wbtc',
+    feeCurrency: 'matic',
     address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
     unitInfo: {
       unitName: 'WBTC',
@@ -657,6 +699,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     name: 'Wrapped Ether',
     chain: 'matic',
     coin: 'weth',
+    feeCurrency: 'matic',
     address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
     unitInfo: {
       unitName: 'WETH',
@@ -690,6 +733,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     name: 'Shiba Inu',
     chain: 'matic',
     coin: 'shib',
+    feeCurrency: 'matic',
     address: '0x6f8a06447ff6fcf75d803135a7de15ce88c1d4ec',
     unitInfo: {
       unitName: 'SHIB',
@@ -724,6 +768,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     name: 'ApeCoin',
     chain: 'matic',
     coin: 'ape',
+    feeCurrency: 'matic',
     address: '0xb7b31a6bc18e48888545ce79e83e06003be70930',
     unitInfo: {
       unitName: 'APE',
@@ -756,11 +801,361 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
   },
 };
 
+export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
+  '0xaf88d065e77c8cc2239327c5edb3a432268e5831_arb': {
+    name: 'USD Coin',
+    chain: 'arb',
+    coin: 'usdc',
+    feeCurrency: 'eth',
+    address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+    unitInfo: {
+      unitName: 'USDC',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_arb`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f_arb': {
+    name: 'Wrapped Bitcoin',
+    chain: 'arb',
+    coin: 'wbtc',
+    feeCurrency: 'eth',
+    address: '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f',
+    unitInfo: {
+      unitName: 'WBTC',
+      unitToSatoshi: 1e8,
+      unitDecimals: 8,
+      unitCode: 'wbtc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/wbtc_m`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9_arb': {
+    name: 'Tether USD',
+    chain: 'arb',
+    coin: 'usdt',
+    feeCurrency: 'eth',
+    address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+    unitInfo: {
+      unitName: 'USDT',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdt',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_arb`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  '0x82af49447d8a07e3bd95bd0d56f35241523fbab1_arb': {
+    name: 'Wrapped Ether',
+    chain: 'arb',
+    coin: 'weth',
+    feeCurrency: 'eth',
+    address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
+    unitInfo: {
+      unitName: 'WETH',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'weth',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/weth_m`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+};
+
+export const BitpaySupportedBaseTokens: {[key in string]: CurrencyOpts} = {
+  '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913_base': {
+    name: 'USD Coin',
+    chain: 'base',
+    coin: 'usdc',
+    feeCurrency: 'eth',
+    address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+    unitInfo: {
+      unitName: 'USDC',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'base', testnet: 'base', regtest: 'base'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_base`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.base.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.base.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  '0x4200000000000000000000000000000000000006_base': {
+    name: 'Wrapped Ether',
+    chain: 'base',
+    coin: 'weth',
+    feeCurrency: 'eth',
+    address: '0x4200000000000000000000000000000000000006',
+    unitInfo: {
+      unitName: 'WETH',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'weth',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'base', testnet: 'base', regtest: 'base'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/weth_m`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.base.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.base.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+};
+
+export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
+  '0x0b2c639c533813f4aa9d7837caf62653d097ff85_op': {
+    name: 'USD Coin',
+    chain: 'op',
+    coin: 'usdc',
+    feeCurrency: 'eth',
+    address: '0x0b2c639c533813f4aa9d7837caf62653d097ff85',
+    unitInfo: {
+      unitName: 'USDC',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_op`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  '0x68f180fcce6836688e9084f035309e29bf0a2095_op': {
+    name: 'Wrapped Bitcoin',
+    chain: 'op',
+    coin: 'wbtc',
+    feeCurrency: 'eth',
+    address: '0x68f180fcce6836688e9084f035309e29bf0a2095',
+    unitInfo: {
+      unitName: 'WBTC',
+      unitToSatoshi: 1e8,
+      unitDecimals: 8,
+      unitCode: 'wbtc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/wbtc_m`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58_op': {
+    name: 'Tether USD',
+    chain: 'op',
+    coin: 'usdt',
+    feeCurrency: 'eth',
+    address: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58',
+    unitInfo: {
+      unitName: 'USDT',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdt',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_op`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  '0x4200000000000000000000000000000000000006_op': {
+    name: 'Wrapped Ether',
+    chain: 'op',
+    coin: 'weth',
+    feeCurrency: 'eth',
+    address: '0x4200000000000000000000000000000000000006',
+    unitInfo: {
+      unitName: 'WETH',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'weth',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/weth_m`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+};
+
 export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
   btc: {
     name: 'Bitcoin',
     chain: 'btc',
     coin: 'btc',
+    feeCurrency: 'btc',
     unitInfo: {
       unitName: 'BTC',
       unitToSatoshi: 100000000,
@@ -802,6 +1197,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     name: 'Bitcoin Cash',
     chain: 'bch',
     coin: 'bch',
+    feeCurrency: 'bch',
     unitInfo: {
       unitName: 'BCH',
       unitToSatoshi: 100000000,
@@ -843,6 +1239,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     name: 'Dogecoin',
     chain: 'doge',
     coin: 'doge',
+    feeCurrency: 'doge',
     unitInfo: {
       unitName: 'DOGE',
       unitToSatoshi: 1e8,
@@ -884,6 +1281,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     name: 'Litecoin',
     chain: 'ltc',
     coin: 'ltc',
+    feeCurrency: 'ltc',
     unitInfo: {
       unitName: 'LTC',
       unitToSatoshi: 100000000,
@@ -928,6 +1326,7 @@ export const OtherBitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
     name: 'XRP',
     chain: 'xrp',
     coin: 'xrp',
+    feeCurrency: 'xrp',
     unitInfo: {
       unitName: 'XRP',
       unitToSatoshi: 1e6,
@@ -962,11 +1361,13 @@ export const OtherBitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
     },
   },
 };
+
 export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
   eth: {
     name: 'Ethereum',
     chain: 'eth',
     coin: 'eth',
+    feeCurrency: 'eth',
     unitInfo: {
       unitName: 'ETH',
       unitToSatoshi: 1e18,
@@ -1008,6 +1409,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     name: 'Polygon',
     chain: 'matic',
     coin: 'matic',
+    feeCurrency: 'matic',
     unitInfo: {
       unitName: 'Matic',
       unitToSatoshi: 1e18,
@@ -1041,11 +1443,128 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#8247e5',
     },
   },
+  arb: {
+    name: 'Arbitrum',
+    chain: 'arb',
+    coin: 'arb',
+    feeCurrency: 'eth',
+    unitInfo: {
+      unitName: 'Arbitrum',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'arb',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/arb`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#12AAFF',
+      backgroundColor: '#12AAFF',
+      gradientBackgroundColor: '#12AAFF',
+    },
+  },
+  base: {
+    name: 'Base',
+    chain: 'base',
+    coin: 'base',
+    feeCurrency: 'eth',
+    unitInfo: {
+      unitName: 'Base',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'base',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: {livenet: 'base', testnet: 'base', regtest: 'base'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/base`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.base.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.base.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#1B4ADD',
+      backgroundColor: '#1B4ADD',
+      gradientBackgroundColor: '#1B4ADD',
+    },
+  },
+  op: {
+    name: 'Optimism',
+    chain: 'op',
+    coin: 'eth',
+    feeCurrency: 'eth',
+    unitInfo: {
+      unitName: 'Optimism',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'op',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/op`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#FF0420',
+      backgroundColor: '#FF0420',
+      gradientBackgroundColor: '#FF0420',
+    },
+  },
 };
 
 export const BitpaySupportedTokens: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedEthereumTokens,
   ...BitpaySupportedMaticTokens,
+  ...BitpaySupportedArbTokens,
+  ...BitpaySupportedBaseTokens,
+  ...BitpaySupportedOpTokens,
 };
 
 export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
@@ -1061,19 +1580,34 @@ export const SUPPORTED_ETHEREUM_TOKENS = Object.values(
 export const SUPPORTED_MATIC_TOKENS = Object.values(
   BitpaySupportedMaticTokens,
 ).map(token => `${token.coin}_m`);
+export const SUPPORTED_ARB_TOKENS = Object.values(BitpaySupportedArbTokens).map(
+  token => `${token.coin}_arb`,
+);
+export const SUPPORTED_BASE_TOKENS = Object.values(
+  BitpaySupportedBaseTokens,
+).map(token => `${token.coin}_base`);
+export const SUPPORTED_OP_TOKENS = Object.values(BitpaySupportedOpTokens).map(
+  token => `${token.coin}_op`,
+);
 export const SUPPORTED_UTXO_COINS = Object.keys(BitpaySupportedUtxoCoins);
 
 export const SUPPORTED_TOKENS = [
   ...SUPPORTED_ETHEREUM_TOKENS,
   ...SUPPORTED_MATIC_TOKENS,
+  ...SUPPORTED_ARB_TOKENS,
+  ...SUPPORTED_BASE_TOKENS,
+  ...SUPPORTED_OP_TOKENS,
 ];
 
 export const SUPPORTED_COINS = Object.keys(BitpaySupportedCoins);
 export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];
-export const SUPPORTED_CURRENCIES_CHAINS = Object.values(
-  BitpaySupportedCoins,
-).map(({chain}) => chain);
+export const SUPPORTED_CURRENCIES_CHAINS = Array.from(
+  new Set(Object.values(BitpaySupportedCoins).map(({chain}) => chain)),
+);
 export const EVM_SUPPORTED_TOKENS_LENGTH = {
   eth: SUPPORTED_ETHEREUM_TOKENS.length,
   matic: SUPPORTED_MATIC_TOKENS.length,
+  arb: SUPPORTED_ARB_TOKENS.length,
+  base: SUPPORTED_BASE_TOKENS.length,
+  op: SUPPORTED_OP_TOKENS.length,
 };

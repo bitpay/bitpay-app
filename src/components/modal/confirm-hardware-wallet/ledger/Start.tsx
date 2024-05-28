@@ -19,9 +19,9 @@ import {
   Wrapper,
 } from '../../import-ledger-wallet/import-ledger-wallet.styled';
 import {checkPermissionsBLE} from '../../import-ledger-wallet/utils';
-import {Warning75, White} from '../../../../styles/colors';
 import {SearchingForDevices} from '../../import-ledger-wallet/pair-device/SearchingForDevices';
 import {sleep} from '../../../../utils/helper-methods';
+import {ErrorDescriptionColumn} from '../../import-ledger-wallet/components/ErrorDescriptionColumn';
 
 interface PairHardwareWalletModalProps {
   onPaired: (transport: Transport) => void;
@@ -36,13 +36,6 @@ const IconWrapper = styled.View`
   padding: 28px;
 `;
 
-const ErrParagraph = styled(Paragraph)`
-  background-color: ${Warning75};
-  color: ${White};
-  border-radius: 12px;
-  padding: 20px;
-`;
-
 export const ConfirmLedgerStart: React.FC<
   PairHardwareWalletModalProps
 > = props => {
@@ -52,10 +45,14 @@ export const ConfirmLedgerStart: React.FC<
     hid: boolean;
   } | null>(null);
   const [isConnecting, setConnecting] = useState(false);
-  const [error, setError] = useState('');
   const [transportType, setTransportType] = useState<'ble' | 'hid' | null>(
     null,
   );
+  const [status, setStatus] = useState({
+    status: 'searching',
+    message: '',
+    title: '',
+  });
   const noSupportedTransportTypes =
     supportedTypes && !supportedTypes.ble && !supportedTypes.hid;
 
@@ -69,10 +66,11 @@ export const ConfirmLedgerStart: React.FC<
       })
       .catch(err => {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-
-        setError(
-          `An error occurred while checking hardware wallet connection support: ${errMsg}`,
-        );
+        setStatus({
+          status: 'failed',
+          message: `An error occurred while checking hardware wallet connection support: ${errMsg}`,
+          title: 'Connection Failed',
+        });
         dispatch(
           LogActions.error(
             `An error occurred while checking hardware wallet transport support: ${errMsg}`,
@@ -82,7 +80,12 @@ export const ConfirmLedgerStart: React.FC<
   });
 
   const onPressConnectBle = async () => {
-    setError('');
+    setStatus({
+      status: 'searching',
+      message:
+        'Double-check that Bluetooth is enabled and your hardware wallet is unlocked to proceed.',
+      title: 'Searching for Devices',
+    });
     setConnecting(true);
     setTransportType('ble');
 
@@ -92,7 +95,12 @@ export const ConfirmLedgerStart: React.FC<
     const {isAuthorized} = await checkPermissionsBLE();
 
     if (!isAuthorized) {
-      setError('App is not authorized to use Bluetooth.');
+      setStatus({
+        status: 'failed',
+        message: 'App is not authorized to use Bluetooth.',
+        title: 'Connection Failed',
+      });
+      await sleep(7000);
       return;
     }
 
@@ -112,16 +120,32 @@ export const ConfirmLedgerStart: React.FC<
     }
 
     if (transport) {
+      setStatus({
+        status: 'success',
+        message: 'Your Ledger device was successfully connected.',
+        title: 'Successful Connection',
+      });
+      await sleep(7000);
       props.onPaired(transport);
     } else {
-      setError(
-        `Unable to connect via Bluetooth: ${errorMsg}. If error persist, please attempt to reconnect by enabling the device's Bluetooth option again.`,
-      );
+      setStatus({
+        status: 'failed',
+        message:
+          'Ledger device not found. Please restart your Bluetooth and check the device is in range.',
+        title: 'Connection Failed',
+      });
+      await sleep(7000);
     }
+    setConnecting(false);
   };
 
   const onPressConnectHid = async () => {
-    setError('');
+    setStatus({
+      status: 'searching',
+      message:
+        'Double-check that the USB cable is securely connected and your hardware wallet is unlocked to proceed.',
+      title: 'Searching for Devices',
+    });
     setConnecting(true);
     setTransportType('hid');
 
@@ -144,16 +168,28 @@ export const ConfirmLedgerStart: React.FC<
     }
 
     if (transport) {
+      setStatus({
+        status: 'success',
+        message: 'Your Ledger device was successfully connected.',
+        title: 'Successful Connection',
+      });
+      await sleep(7000);
       props.onPaired(transport);
     } else {
-      setError(`Unable to connect via USB: ${errorMsg}`);
+      setStatus({
+        status: 'failed',
+        message: `Unable to connect via USB: ${errorMsg}`,
+        title: 'Connection Failed',
+      });
+      await sleep(7000);
     }
+    setConnecting(false);
   };
 
   return (
     <>
-      {isConnecting && !error ? (
-        <SearchingForDevices transportType={transportType} />
+      {isConnecting ? (
+        <SearchingForDevices transportType={transportType} status={status} />
       ) : (
         <Wrapper>
           <Header>
@@ -164,12 +200,6 @@ export const ConfirmLedgerStart: React.FC<
             <H3>Approve on your Ledger</H3>
           </Header>
 
-          {error ? (
-            <DescriptionRow>
-              <ErrParagraph>{error}</ErrParagraph>
-            </DescriptionRow>
-          ) : null}
-
           {noSupportedTransportTypes ? (
             <DescriptionRow>
               <Paragraph>
@@ -178,14 +208,15 @@ export const ConfirmLedgerStart: React.FC<
             </DescriptionRow>
           ) : (
             <>
-              {!error ? (
-                <DescriptionRow>
-                  <Paragraph>
-                    Approve the transaction from your ledger device. Ensure it's
-                    unlocked and set to the appropriate currency application.
-                  </Paragraph>
-                </DescriptionRow>
-              ) : null}
+              <DescriptionRow>
+                <Paragraph
+                  style={{
+                    textAlign: 'center',
+                  }}>
+                  Approve the transaction from your ledger device. Ensure it's
+                  unlocked and set to the appropriate currency application.
+                </Paragraph>
+              </DescriptionRow>
 
               {supportedTypes ? (
                 <ActionsRow>

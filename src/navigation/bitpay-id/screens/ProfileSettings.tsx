@@ -121,8 +121,10 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
-    dispatch(BitPayIdEffects.startFetchSecuritySettings());
-    dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken));
+    if (apiToken) {
+      dispatch(BitPayIdEffects.startFetchSecuritySettings());
+      dispatch(BitPayIdEffects.startFetchBasicInfo(apiToken));
+    }
   }, [apiToken, dispatch]);
 
   const hasName = user?.givenName || user?.familyName;

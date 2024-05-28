@@ -41,6 +41,9 @@
 				<string>bitcoincash</string>
 				<string>ethereum</string>
 				<string>matic</string>
+				<string>arb</string>
+				<string>base</string>
+				<string>op</string>
 				<string>dogecoin</string>
 				<string>litecoin</string>
 			</array>

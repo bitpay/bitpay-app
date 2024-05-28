@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {
@@ -18,10 +18,16 @@ import {EIP155_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
-import {setDefaultChainFilterOption} from '../../store/app/app.actions';
 import {setLocalDefaultChainFilterOption} from '../../store/app/app.actions';
-import ChainSelectorModal from '../../components/modal/chain-selector/ChainSelector';
-import {BitpaySupportedCoins} from '../../constants/currencies';
+import ChainSelectorModal, {
+  ignoreGlobalListContextList,
+} from '../../components/modal/chain-selector/ChainSelector';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
+import {
+  SupportedCoinsOptions,
+  SupportedCurrencyOption,
+} from '../../constants/SupportedCurrencyOptions';
+import {View} from 'react-native';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -98,8 +104,12 @@ const SearchComponent = <T extends SearchableItem>({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
+  const [currencyInfo, setCurrencyInfo] = useState<
+    SupportedCurrencyOption | undefined
+  >();
+
   const selectedChainFilterOption = useAppSelector(({APP}) =>
-    ['sell', 'swap', 'buy'].includes(context)
+    ignoreGlobalListContextList.includes(context)
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
@@ -194,8 +204,19 @@ const SearchComponent = <T extends SearchableItem>({
     [selectedChainFilterOption],
   );
 
+  const updateSelectedChainInfo = () => {
+    if (selectedChainFilterOption) {
+      const currencyInfo = SupportedCoinsOptions.find(
+        ({currencyAbbreviation}) =>
+          currencyAbbreviation === selectedChainFilterOption,
+      );
+      setCurrencyInfo(currencyInfo);
+    }
+  };
+
   useEffect(() => {
     updateSearchResults(searchVal);
+    updateSelectedChainInfo();
   }, [selectedChainFilterOption]);
 
   useEffect(() => {
@@ -219,10 +240,18 @@ const SearchComponent = <T extends SearchableItem>({
           dispatch(AppActions.showChainSelectorModal({context}));
         }}>
         <RowFilterContainer>
-          <SearchFilterLabelContainer>
+        {selectedChainFilterOption && currencyInfo ? (
+            <View style={{marginLeft: 5}}>
+              <CurrencyImage img={currencyInfo?.img} size={25} />
+            </View>
+          ) : null}
+          <SearchFilterLabelContainer
+            style={
+              selectedChainFilterOption && currencyInfo ? {marginLeft: 5} : null
+            }>
             <SearchFilterLabel>
-              {selectedChainFilterOption
-                ? BitpaySupportedCoins[selectedChainFilterOption]?.name
+              {selectedChainFilterOption && currencyInfo
+                ? currencyInfo?.currencyName
                 : t('All Networks')}
             </SearchFilterLabel>
           </SearchFilterLabelContainer>
