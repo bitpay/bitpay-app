@@ -25,7 +25,12 @@ import {BaseText, H6, H7} from '../styled/Text';
 
 export type CurrencySelectionItem = Pick<
   SupportedCurrencyOption,
-  'id' | 'currencyAbbreviation' | 'currencyName' | 'img' | 'isToken'
+  | 'id'
+  | 'currencyAbbreviation'
+  | 'currencyName'
+  | 'img'
+  | 'isToken'
+  | 'badgeUri'
 > & {
   chain: string;
   tokenAddress?: string;
@@ -111,7 +116,7 @@ interface ChainSelectionRowProps {
   hideCheckbox?: boolean;
   disableCheckbox?: boolean;
   selectionMode?: CurrencySelectionMode;
-  onToggle?: (id: string) => any;
+  onToggle?: (currencyAbbreviation: string, chain: string) => any;
 }
 
 export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
@@ -123,8 +128,10 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
       currencyName,
       img,
       imgSrc,
+      badgeUri,
       selected,
       disabled,
+      chain,
     } = currency;
 
     const _currencyAbbreviation =
@@ -135,11 +142,11 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         accessibilityLabel="chain-selection-row"
         onPress={() =>
           !disabled && !disableCheckbox
-            ? onToggle?.(currencyAbbreviation)
+            ? onToggle?.(currencyAbbreviation, chain)
             : null
         }>
         <CurrencyColumn>
-          <CurrencyImage img={img} imgSrc={imgSrc} />
+          <CurrencyImage img={img} imgSrc={imgSrc} badgeUri={badgeUri} />
         </CurrencyColumn>
 
         <CurrencyTitleColumn style={{flexGrow: 1}}>
@@ -154,7 +161,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
               checked={!!selected}
               radio={selectionMode === 'single'}
               disabled={!!disabled}
-              onPress={() => onToggle?.(currencyAbbreviation)}
+              onPress={() => onToggle?.(currencyAbbreviation, chain)}
             />
           </CurrencyColumn>
         )}
@@ -293,7 +300,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
       {tokens?.length ? (
         <>
           <TokensHeading>
-            {t('PopularArgTokens', {currency: t(currencyName)})}
+            {t('PopularArgTokens', {currency: t(currencyName.includes('Ethereum') ? 'Ethereum' : currencyName)})}
           </TokensHeading>
 
           {tokens.map(token => (

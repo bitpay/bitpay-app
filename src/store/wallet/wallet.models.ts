@@ -144,6 +144,7 @@ export interface KeyOptions {
   networkName: string;
   singleAddress: any;
   coin: string;
+  chain: string;
   extendedPrivateKey: any;
   mnemonic: any;
   derivationStrategy: any;
@@ -254,7 +255,7 @@ export interface TransactionOptions {
   sendMax?: boolean;
   payProDetails?: any;
   // btc
-  enableRBF?: boolean;
+  enableRBF?: boolean; // not needed (FULLRBF)
   replaceTxByFee?: boolean;
   // bch
   signingMethod?: string;
@@ -305,7 +306,7 @@ export interface TransactionProposal {
   copayerId: string;
   walletId: string;
   nonce?: number;
-  enableRBF?: boolean;
+  enableRBF?: boolean; // not needed (FULLRBF)
   replaceTxByFee?: boolean;
   toAddress: string;
   outputs: Array<{
@@ -439,7 +440,7 @@ export interface SendMaxInfo {
 }
 
 export interface CacheFeeLevel {
-  currency: 'eth' | 'btc' | 'matic';
+  currency: 'eth' | 'btc' | 'matic' | 'arb' | 'base' | 'op';
   feeLevel: FeeLevels;
 }
 

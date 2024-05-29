@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useEffect, useRef} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {Link} from '../../../components/styled/Text';
@@ -10,8 +10,15 @@ import {AuthGroupParamList, AuthScreens} from '../AuthGroup';
 import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
+import {SafeAreaView} from 'react-native';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
+import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
+import {CommonActions} from '@react-navigation/native';
+import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
-const POLL_INTERVAL = 1000 * 3;
+const POLL_INTERVAL = 1000 * 5;
 const POLL_TIMEOUT = 1000 * 60 * 5;
 
 export type VerifyEmailScreenParamList = {} | undefined;
@@ -41,11 +48,32 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   );
   const isTimedOut = pollCountdown.current <= 0;
 
+  const goToProfile = useCallback(() => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 1,
+        routes: [
+          {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
+          {name: BitpayIdScreens.PROFILE, params: {}},
+        ],
+      }),
+    );
+  }, [navigation]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => null,
+    });
+  }, [navigation]);
+
   useEffect(() => {
     if (!email || !csrfToken) {
       navigation.navigate('Login');
     } else {
-      dispatch(BitPayIdEffects.startSendVerificationEmail());
+      dispatch(BitPayIdEffects.startSendVerificationEmail()).catch(() => {
+        // If session is unauthenticated (expired), request another login
+        navigation.navigate('Login');
+      });
     }
   }, [email, csrfToken, navigation, dispatch]);
 
@@ -84,42 +112,59 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
         }),
       );
 
-      navigation.navigate('CreateAccount');
+      goToProfile();
     }
-  }, [dispatch, navigation, isVerified, csrfToken, email]);
+  }, [dispatch, navigation, isVerified, csrfToken, email, goToProfile]);
 
-  const resendVerificationEmail = () => {
-    dispatch(BitPayIdEffects.startSendVerificationEmail());
+  const resendVerificationEmail = async () => {
+    dispatch(startOnGoingProcessModal('LOADING'));
+    await dispatch(BitPayIdEffects.startSendVerificationEmail());
+    dispatch(dismissOnGoingProcessModal());
   };
 
+  const GoBackLink = () => (
+    <Link
+      accessibilityLabel="go-back-link-button"
+      onPress={() => goToProfile()}>
+      {t('Go Back')}
+    </Link>
+  );
+
   return (
-    <AuthFormContainer accessibilityLabel="verify-email-view">
-      {isTimedOut && (
-        <VerifyEmailParagraph>
-          {t("Didn't get an email? Try logging in again later.")}
-        </VerifyEmailParagraph>
-      )}
-
-      {!isTimedOut && (
-        <>
+    <SafeAreaView accessibilityLabel="verify-email-view">
+      <AuthFormContainer accessibilityLabel="verify-email-view">
+        {isTimedOut && (
           <VerifyEmailParagraph>
-            {t(
-              'We sent a verification email to. Open the link inside to continue.',
-              {email: email || t('your email address')},
-            )}
+            {t("Didn't get an email? Try logging in again later.")}{' '}
+            <GoBackLink />
           </VerifyEmailParagraph>
+        )}
 
-          <VerifyEmailParagraph>
-            {t("Email didn't arrive?")}{' '}
-            <Link
-              accessibilityLabel="resend-link-button"
-              onPress={() => resendVerificationEmail()}>
-              {t('Resend link')}
-            </Link>
-          </VerifyEmailParagraph>
-        </>
-      )}
-    </AuthFormContainer>
+        {!isTimedOut && (
+          <>
+            <VerifyEmailParagraph>
+              {t(
+                'We sent a verification email to. Open the link inside to continue.',
+                {email: email || t('your email address')},
+              )}
+            </VerifyEmailParagraph>
+
+            <VerifyEmailParagraph>
+              {t("Email didn't arrive?")}{' '}
+              <Link
+                accessibilityLabel="resend-link-button"
+                onPress={() => resendVerificationEmail()}>
+                {t('Resend link')}
+              </Link>
+            </VerifyEmailParagraph>
+
+            <VerifyEmailParagraph>
+              {t("I'll do it later.")} <GoBackLink />
+            </VerifyEmailParagraph>
+          </>
+        )}
+      </AuthFormContainer>
+    </SafeAreaView>
   );
 };
 

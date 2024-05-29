@@ -32,6 +32,9 @@ export const ValidDataTypes: string[] = [
   'BitcoinCashUri',
   'EthereumUri',
   'MaticUri',
+  'ArbUri',
+  'BaseUri',
+  'OpUri',
   'DogecoinUri',
   'LitecoinUri',
   'BitPayUri',
@@ -51,7 +54,7 @@ export const IsValidBitPayInvoice = (data: string): boolean => {
 
 export const IsValidPayPro = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!/^(bitpay|bitcoin|bitcoincash|bchtest|ethereum|ripple|matic|dogecoin|litecoin)?:\?r=[\w+]/.exec(
+  return !!/^(bitpay|bitcoin|bitcoincash|bchtest|bchreg|ethereum|ripple|matic|arb|base|op|dogecoin|litecoin)?:\?r=[\w+]/.exec(
     data,
   );
 };
@@ -62,28 +65,28 @@ export const isValidWalletConnectUri = (data: string): boolean => {
 
 export const isValidBuyCryptoUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return (
-    !!data?.includes('buyCrypto') ||
-    !!data?.includes('buy-crypto') ||
-    !!data?.includes('buy')
+  return !!(
+    data?.includes('buyCrypto') ||
+    data?.includes('buy-crypto') ||
+    data?.includes('bitpay://buy')
   );
 };
 
 export const isValidSellCryptoUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return (
-    !!data?.includes('sellCrypto') ||
-    !!data?.includes('sell-crypto') ||
-    !!data?.includes('sell')
+  return !!(
+    data?.includes('sellCrypto') ||
+    data?.includes('sell-crypto') ||
+    data?.includes('bitpay://sell')
   );
 };
 
 export const isValidSwapCryptoUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return (
-    !!data?.includes('swapCrypto') ||
-    !!data?.includes('swap-crypto') ||
-    !!data?.includes('swap')
+  return !!(
+    data?.includes('swapCrypto') ||
+    data?.includes('swap-crypto') ||
+    data?.includes('bitpay://swap')
   );
 };
 
@@ -141,6 +144,21 @@ export const IsValidMaticUri = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateUri('MATIC', data);
 };
 
+export const IsValidArbUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!BWC.getCore().Validation.validateUri('ARB', data);
+};
+
+export const IsValidBaseUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!BWC.getCore().Validation.validateUri('BASE', data);
+};
+
+export const IsValidOpUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!BWC.getCore().Validation.validateUri('OP', data);
+};
+
 export const IsValidRippleUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getCore().Validation.validateUri('XRP', data);
@@ -161,7 +179,7 @@ export const IsValidBitcoinCashUriWithLegacyAddress = (
 ): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcore().URI.isValid(
-    data.replace(/^(bitcoincash:|bchtest:)/, 'bitcoin:'),
+    data.replace(/^(bitcoincash:|bchtest:|bchreg:)/, 'bitcoin:'),
   );
 };
 
@@ -175,7 +193,8 @@ export const IsValidBitcoinAddress = (data: string): boolean => {
 export const IsValidBitcoinCashAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcoreCash().Address.isValid(data, 'livenet') ||
-    BWC.getBitcoreCash().Address.isValid(data, 'testnet')
+    BWC.getBitcoreCash().Address.isValid(data, 'testnet') ||
+    BWC.getBitcoreCash().Address.isValid(data, 'regtest')
   );
 };
 
@@ -189,6 +208,18 @@ export const IsValidEthereumAddress = (data: string): boolean => {
 
 export const IsValidMaticAddress = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateAddress('MATIC', 'livenet', data);
+};
+
+export const IsValidArbAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('ARB', 'livenet', data);
+};
+
+export const IsValidBaseAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('BASE', 'livenet', data);
+};
+
+export const IsValidOpAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('OP', 'livenet', data);
 };
 
 export const IsValidRippleAddress = (data: string): boolean => {
@@ -250,7 +281,8 @@ export const IsValidBitPayUri = (data: string): boolean => {
 export const IsValidBitcoinCashLegacyAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcore().Address.isValid(data, 'livenet') ||
-    BWC.getBitcore().Address.isValid(data, 'testnet')
+    BWC.getBitcore().Address.isValid(data, 'testnet') ||
+    BWC.getBitcore().Address.isValid(data, 'regtest')
   );
 };
 
@@ -311,6 +343,30 @@ export const ValidateURI = (data: string): any => {
       data,
       type: 'MaticUri',
       title: 'Matic URI',
+    };
+  }
+
+  if (IsValidArbUri(data)) {
+    return {
+      data,
+      type: 'ArbUri',
+      title: 'Arb URI',
+    };
+  }
+
+  if (IsValidBaseUri(data)) {
+    return {
+      data,
+      type: 'BaseUri',
+      title: 'Base URI',
+    };
+  }
+
+  if (IsValidOpUri(data)) {
+    return {
+      data,
+      type: 'OpUri',
+      title: 'Op URI',
     };
   }
 
@@ -426,6 +482,9 @@ export const ValidateCoinAddress = (
     case 'eth':
     case 'xrp':
     case 'matic':
+    case 'arb':
+    case 'base':
+    case 'op':
       const {Validation} = BWC.getCore();
       return !!Validation.validateAddress(coin.toUpperCase(), network, str);
     default:

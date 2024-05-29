@@ -1,6 +1,6 @@
 import {
   BitpaySupportedCoins,
-  SupportedCoins,
+  SupportedChains,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
@@ -138,7 +138,8 @@ export const addWallet =
             associatedWallet = (await dispatch(
               createWallet({
                 key: key.methods!,
-                coin: currency.chain as SupportedCoins,
+                coin: currency.currencyAbbreviation,
+                chain: currency.chain as SupportedChains,
                 options,
               }),
             )) as Wallet;
@@ -177,7 +178,8 @@ export const addWallet =
           newWallet = (await dispatch(
             createWallet({
               key: key.methods!,
-              coin: currency.currencyAbbreviation as SupportedCoins,
+              coin: currency.currencyAbbreviation,
+              chain: currency.chain as SupportedChains,
               options,
               context,
             }),
@@ -283,7 +285,8 @@ const createMultipleWallets =
       const wallet = (await dispatch(
         createWallet({
           key,
-          coin: coin.currencyAbbreviation as SupportedCoins,
+          coin: coin.currencyAbbreviation,
+          chain: coin.chain as SupportedChains,
           options: {
             ...options,
             useNativeSegwit: IsSegwitCoin(coin.currencyAbbreviation),
@@ -352,14 +355,15 @@ const DEFAULT_CREATION_OPTIONS: CreateOptions = {
 const createWallet =
   (params: {
     key: KeyMethods;
-    coin: SupportedCoins;
+    coin: string;
+    chain: SupportedChains;
     options: CreateOptions;
     context?: string;
   }): Effect<Promise<API>> =>
   async (dispatch): Promise<API> => {
     return new Promise((resolve, reject) => {
       const bwcClient = BWC.getClient();
-      const {key, coin, options, context} = params;
+      const {key, coin, chain, options, context} = params;
 
       // set defaults
       const {account, network, password, singleAddress, useNativeSegwit} = {
@@ -370,7 +374,7 @@ const createWallet =
       bwcClient.fromString(
         key.createCredentials(password, {
           coin,
-          chain: coin, // chain === coin for stored clients
+          chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
           network,
           account,
           n: 1,
@@ -388,6 +392,7 @@ const createWallet =
           network,
           singleAddress,
           coin,
+          chain,
           useNativeSegwit,
         },
         (err: any) => {
@@ -413,6 +418,7 @@ const createWallet =
                     createWallet({
                       key,
                       coin,
+                      chain,
                       options: {...options, account: account + 1},
                     }),
                   ),
@@ -422,7 +428,7 @@ const createWallet =
 
             reject(err);
           } else {
-            dispatch(LogActions.info(`Added Coin ${coin}`));
+            dispatch(LogActions.info(`Added Coin: ${chain}: ${coin}`));
             resolve(bwcClient);
           }
         },
@@ -591,7 +597,7 @@ export const createWalletWithOpts =
         bwcClient.fromString(
           key.createCredentials(opts.password, {
             coin: opts.coin || 'btc',
-            chain: opts.coin || 'btc', // chain === coin for stored clients
+            chain: opts.chain || 'btc', // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
             network: opts.networkName || 'livenet',
             account: opts.account || 0,
             n: opts.n || 1,

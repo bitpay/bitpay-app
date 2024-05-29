@@ -5608,10 +5608,10 @@ bitcoinjs-lib@^5.2.0:
     varuint-bitcoin "^1.0.4"
     wif "^2.0.1"
 
-bitcore-lib-cash@^10.0.28:
-  version "10.0.28"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.0.28.tgz#a4edd1c7325d6cf1e8c0c1906b5a9ce84b40b7a9"
-  integrity sha512-hz4I8N4oqDY2eaCYZIX7uDe7safS+hj+AJjThrY2mBbN4RTrl2eDwuokHqd4iny9tbBzUq5ochiQ+4q4YQUwlg==
+bitcore-lib-cash@^10.0.36:
+  version "10.0.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.0.36.tgz#ad0bb4b4cfdc8773bda56a5e1b100a0754376fbb"
+  integrity sha512-OAoM21YgoiulPwXQRn46oX6PQTTAWQ6YQnCs2O/VvsTargqb7YZXnEd/UTSXvn2j/0RXbuNYqiP64SI0BG6Apw==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -5620,10 +5620,10 @@ bitcore-lib-cash@^10.0.28:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-lib-doge@^10.0.28:
-  version "10.0.28"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.0.28.tgz#e9dcadd9a9fa5e6529800dd2e01241c8fd33398b"
-  integrity sha512-ceqxoTGiquX4IEk4kBvHG/i4RFopDjbZDIZWC6maOS+Pcd/+YNzt8qFuspOtADPk+s2kEQ+edAD7+/04cURBSA==
+bitcore-lib-doge@^10.0.36:
+  version "10.0.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.0.36.tgz#b4052e63cc8cf5202e111c00eb5077f87219e60c"
+  integrity sha512-/+Za53p5EsrA6xg0fUgzpmPkskEKJkVoB7RfAUlLGZEapS41XNs3B3jkC1NjK2OpkAEhYilewvtBOHjhm5tswA==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -5633,10 +5633,10 @@ bitcore-lib-doge@^10.0.28:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib-ltc@^10.0.28:
-  version "10.0.28"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-10.0.28.tgz#99bc1657594708e1e1c4a178ede4ae1ceb6bd5f6"
-  integrity sha512-kTAPxGClL0BigT69lxs5BvE8TcBkX6WT/KNijITiRGPeRv+qZKSqX59FvjGlcwCAI5l5CD/wTh61p2PZKfXmYw==
+bitcore-lib-ltc@^10.0.36:
+  version "10.0.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-10.0.36.tgz#42d5f72a3ebb6f84ec50f72432b5dc30f9b690fa"
+  integrity sha512-6mAUHN0HYHBZZzMbc6bF9ftDPB6VXELsweqtcUvgQKWPEA3I8trS2kt9f7sPRNJ06QPYhfIBF1zJeuT5fs0cKg==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -5647,10 +5647,10 @@ bitcore-lib-ltc@^10.0.28:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib@^10.0.28:
-  version "10.0.28"
-  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.0.28.tgz#f46810324df1021f194dcdc1411c2d1a83b9be10"
-  integrity sha512-uOWHpWbUxEj411p+tp6DCb9NfZdsCAHl6Z/rs96mquQMsef29fOqWUyk4Bl7yLf+KwzU5ZKy0HIPnjGFlmpXpg==
+bitcore-lib@^10.0.36:
+  version "10.0.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.0.36.tgz#2a88c8e0e63d4fc08e870fcc2d6493b931cfd630"
+  integrity sha512-yGSiEubYzabCYZ5/qu9ji5P/kfLkXpBgm1lAblVO2ESuD9ep7aaG6TRd3K5ips4pWgW/uRQpbiErT6pw2Ke/AQ==
   dependencies:
     bech32 "=2.0.0"
     bip-schnorr "=0.6.4"
@@ -5661,24 +5661,24 @@ bitcore-lib@^10.0.28:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-mnemonic@^10.0.28:
-  version "10.0.28"
-  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.0.28.tgz#574310ba080cfc2fb29761f3580700deae7a15e0"
-  integrity sha512-Tu/RVcoRJyOeuafrXW6BD/3kkZLMwjxMGUcfNL2C9yKFAyXl6m5eNdy3VWDycbyRsHc+JnX/HRVVlhBuj1OSOw==
+bitcore-mnemonic@^10.0.36:
+  version "10.0.36"
+  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.0.36.tgz#da871e749f3f33b69c570ae3fe5e214ffba3398c"
+  integrity sha512-7paCdPrcB8TsfryQxiDU6FB79H4DDmhlQYMiU/EcflTAJezz5RDpy9qMv3p/FX1wfUd4jRk4UIrWzQAnv0UM8A==
   dependencies:
-    bitcore-lib "^10.0.28"
+    bitcore-lib "^10.0.36"
     unorm "^1.4.1"
 
-bitcore-wallet-client@10.0.28:
-  version "10.0.28"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.0.28.tgz#d661c658a7805910c1cf7d4dbde330726c58b6d4"
-  integrity sha512-KNWf94XLocbKuSfwmvd2s0yPWqA0cz7JArr+3A6RQQwLJBhV5PA1zKIvLFnFDZWyfpA+4Az8L6NgsZmPEHOthQ==
+bitcore-wallet-client@10.0.36:
+  version "10.0.36"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.0.36.tgz#261f70dc79cc7e63e0387547b55d3042a8b21fa8"
+  integrity sha512-QPtnayk4SHwaFBnoQAeMh2NoBUohBwC/YU4A/6hXwSZu5rBWx9f0HU4tibnyF741SsLZKtRb/RW2aIo9uOk0ZQ==
   dependencies:
     ajv "6.12.0"
     async "0.9.2"
     bip38 "1.4.0"
-    bitcore-mnemonic "^10.0.28"
-    crypto-wallet-core "^10.0.28"
+    bitcore-mnemonic "^10.0.36"
+    crypto-wallet-core "^10.0.36"
     json-stable-stringify "1.0.1"
     lodash "4.17.20"
     preconditions "2.2.3"
@@ -6827,15 +6827,15 @@ crypto-js@3.1.9-1:
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
   integrity sha512-W93aKztssqf29OvUlqfikzGyYbD1rpkXvGP9IQ1JchLY3bxaLXZSWYbwrtib2vk8DobrDzX7PIXcDWHp0B6Ymw==
 
-crypto-wallet-core@^10.0.28:
-  version "10.0.28"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.0.28.tgz#00f0d53bbd67de9bbefde1f8df22ddf83b4bafe7"
-  integrity sha512-c7JdWK2a+hRfTQa7NAD8HtsAaOynz2T4+RESRxE4I7C3ptSS+eQEfvJJgEEQX9xdHrBL6duSwV2iwDOWRJIRpQ==
+crypto-wallet-core@^10.0.36:
+  version "10.0.36"
+  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.0.36.tgz#6dc80c72ae4d19ec1b888771947beab158e71eac"
+  integrity sha512-iyIXoTAqwloZmoFkqMfj3KQ/DIG+YhZ347XWVoNCohVSn7j2ByXvk/MKM58mJ3PS3jVFSfqHKy5+aORysfYCYg==
   dependencies:
-    bitcore-lib "^10.0.28"
-    bitcore-lib-cash "^10.0.28"
-    bitcore-lib-doge "^10.0.28"
-    bitcore-lib-ltc "^10.0.28"
+    bitcore-lib "^10.0.36"
+    bitcore-lib-cash "^10.0.36"
+    bitcore-lib-doge "^10.0.36"
+    bitcore-lib-ltc "^10.0.36"
     ethers "^5.7.0"
     info "0.0.6-beta.0"
     web3 "1.4.0"
@@ -13690,6 +13690,11 @@ react-native-appsflyer@6.5.20:
   resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.5.20.tgz#56af47ae77b39d8425bdbe84832a8db3fd773404"
   integrity sha512-+gfsOmDev1BhhBFLE6P/eCcT0GLKDFZgQqaKcUPnTgyC8bgIWSv+igB9ziIzgBRZKSEf3YdlZ4TCfrg2w69cow==
 
+react-native-biometrics@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-biometrics/-/react-native-biometrics-3.0.1.tgz#23c5a0bdbae1fcb1e08b22936223fe0fc4af846e"
+  integrity sha512-Ru80gXRa9KG04sl5AB9HyjLjVbduhqZVjA+AiOSGqr+fNqCDmCu9y5WEksnjbnniNLmq1yGcw+qcLXmR1ddLDQ==
+
 react-native-ble-plx@2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/react-native-ble-plx/-/react-native-ble-plx-2.0.3.tgz#b0a746f33389dbf7fd7b158513330d487d5d0fbb"
@@ -13703,13 +13708,6 @@ react-native-bootsplash@3.2.6:
     chalk "^4.1.2"
     fs-extra "^10.0.0"
     jimp "^0.16.1"
-
-react-native-camera@4.2.1:
-  version "4.2.1"
-  resolved "https://registry.yarnpkg.com/react-native-camera/-/react-native-camera-4.2.1.tgz#caf74081f055e89d7e9b0cd5108965d808c60e90"
-  integrity sha512-+Vkql24PFYQfsPRznJCvPwJQfyzCnjlcww/iZ4Ej80bgivKjL9eU0IMQIXp4yi6XCrKi4voWXxIDPMupQZKeIQ==
-  dependencies:
-    prop-types "^15.6.2"
 
 react-native-clean-project@3.6.7:
   version "3.6.7"
@@ -13778,6 +13776,11 @@ react-native-error-boundary@1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/react-native-error-boundary/-/react-native-error-boundary-1.2.1.tgz#795ca556fcc077794c8c77f2d449226b41dde822"
   integrity sha512-Ae2mjXyCI84mwSKkgVSYPv1ZDlRVTZg9DwyxCHFtEfFkjNcBS8RlEcW7Fihns13lRdpmmQx/Gr2OFf5tfkih9g==
+
+react-native-exception-handler@2.10.10:
+  version "2.10.10"
+  resolved "https://registry.yarnpkg.com/react-native-exception-handler/-/react-native-exception-handler-2.10.10.tgz#b6bfe2b7e6ea4a4deb1f518f48ce2ee1d4843497"
+  integrity sha512-otAXGoZDl1689OoUJWN/rXxVbdoZ3xcmyF1uq/CsizdLwwyZqVGd6d+p/vbYvnF996FfEyAEBnHrdFxulTn51w==
 
 react-native-fast-image@8.6.3:
   version "8.6.3"
@@ -14097,11 +14100,6 @@ react-native-timeago@0.5.0:
   resolved "https://registry.yarnpkg.com/react-native-timeago/-/react-native-timeago-0.5.0.tgz#1b08057e3473dbb5b6720ee5cde4e544a7c250f0"
   integrity sha512-GYrV36FK8ttkl7BIAdh77OlYLYGIKLGNviJqzPUtKaO8ANEtI8ph7UkSTRv9oMKfvDnA5VKV9hVX7GtYoAztRg==
 
-react-native-touch-id-ng@5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/react-native-touch-id-ng/-/react-native-touch-id-ng-5.0.1.tgz#acb229e3f3d70a7fee75153296e07778763b8032"
-  integrity sha512-J8V10YnIfRvNNJ0hVUX889qqmu6lgs5O1baFars3q1qUgVqj0l4MAsrBF5tpyo5K89LFyLGWAt5XH7/0zNOPvA==
-
 react-native-tracking-transparency@0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/react-native-tracking-transparency/-/react-native-tracking-transparency-0.1.2.tgz#78059ffe38079182aaced1326f590b35c7440ae6"
@@ -14142,6 +14140,11 @@ react-native-version@4.0.0:
     plist "^3.0.1"
     resolve-from "^5.0.0"
     semver "^7.0.0"
+
+react-native-vision-camera@3.9.2:
+  version "3.9.2"
+  resolved "https://registry.yarnpkg.com/react-native-vision-camera/-/react-native-vision-camera-3.9.2.tgz#d6656a4c0af929916d5e6b57af5adfe94ff8c65a"
+  integrity sha512-watHRWbeH7CBYq/5sPj2fpZj87V8J5nGdmYO61aYsDLuJ2Pkij7anAzBf8B8oZiyoSUuYpAzX4lIIi+LjWVedA==
 
 react-native-webview@11.26.1:
   version "11.26.1"

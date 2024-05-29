@@ -1,9 +1,12 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import styled, {useTheme} from 'styled-components/native';
+import {useTheme} from 'styled-components/native';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
-import {TextContainer} from '../../../components/styled/Containers';
+import {
+  ScreenContainer,
+  TextContainer,
+} from '../../../components/styled/Containers';
 import IntroButton from '../components/intro-button/IntroButton';
 import {
   Body,
@@ -20,10 +23,6 @@ import {IntroGroupParamList, IntroScreens} from '../IntroGroup';
 const lightBackground = require('../../../../assets/img/intro/light/home-customize.png');
 const darkBackground = require('../../../../assets/img/intro/dark/home-customize.png');
 
-const HomeContainer = styled.View`
-  flex: 1;
-`;
-
 type CustomizeHomeScreenProps = NativeStackScreenProps<
   IntroGroupParamList,
   IntroScreens.CUSTOMIZE_HOME
@@ -38,7 +37,7 @@ const CustomizeHome = ({navigation}: CustomizeHomeScreenProps) => {
   };
 
   return (
-    <HomeContainer>
+    <ScreenContainer>
       <FocusedStatusBar barStyle={'light-content'} />
 
       <Overlay />
@@ -65,7 +64,7 @@ const CustomizeHome = ({navigation}: CustomizeHomeScreenProps) => {
           <IntroButton onPress={onNext} />
         </ButtonContainer>
       </Body>
-    </HomeContainer>
+    </ScreenContainer>
   );
 };
 

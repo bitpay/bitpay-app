@@ -3,7 +3,7 @@ import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
 import ConnectToLedgerSvg from '../../../../../assets/img/connect-to-ledger.svg';
-import {H3, Paragraph} from '../../../styled/Text';
+import {H4, Paragraph} from '../../../styled/Text';
 import {useMount} from '../../../../utils/hooks';
 import {
   ActionsRow,
@@ -50,18 +50,18 @@ export const LedgerIntro: React.FC<Props> = props => {
           <ConnectToLedgerSvg />
         </HeaderImageWrapper>
 
-        <H3>Connect to Ledger Nano X</H3>
+        <H4 style={{fontWeight: '500'}}>Connect to Ledger Wallet</H4>
       </Header>
 
       <DescriptionRow>
         {noSupportedTransportTypes ? (
-          <Paragraph>
+          <Paragraph style={{textAlign: 'center'}}>
             This device does not support communication with Ledger wallets.
           </Paragraph>
         ) : (
-          <Paragraph>
-            Manage your Ledger Nano X, check balances, deposit, and withdraw
-            funds between wallets.
+          <Paragraph style={{textAlign: 'center'}}>
+            Manage your Ledger with BitPay. To continue, ensure your Ledger
+            device is unlocked.
           </Paragraph>
         )}
       </DescriptionRow>

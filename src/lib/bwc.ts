@@ -1,5 +1,6 @@
 import BWC from 'bitcore-wallet-client';
 import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
+import {PAYPRO_TRUSTED_KEYS} from '@env';
 import {
   APP_NAME,
   APP_VERSION,
@@ -102,7 +103,12 @@ export class BwcProvider {
   }
 
   public getPayProV2() {
-    return BWC.PayProV2;
+    const PayProV2 = BWC.PayProV2;
+    PayProV2.trustedKeys = {
+      ...PayProV2.trustedKeys,
+      ...JSON.parse(PAYPRO_TRUSTED_KEYS || '{}'),
+    };
+    return PayProV2;
   }
 
   public parseSecret(invitationCode: string) {

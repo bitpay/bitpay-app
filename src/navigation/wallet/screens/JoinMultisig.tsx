@@ -28,7 +28,6 @@ import {
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -72,7 +71,7 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
   const {key, invitationCode} = route.params || {};
 
   const schema = yup.object().shape({
-    myName: yup.string().required(),
+    myName: yup.string().required().trim(),
     invitationCode: yup
       .string()
       .required()
@@ -158,10 +157,6 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
                       {
                         name: WalletScreens.KEY_OVERVIEW,
                         params: {id: key.id},
-                      },
-                      {
-                        name: WalletScreens.COPAYERS,
-                        params: {walletId: wallet.id, key},
                       },
                     ],
                   }),

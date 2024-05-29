@@ -6,9 +6,13 @@ export enum DefaultDerivationPath {
   defaultDOGE = "m/44'/3'/0'",
   defaultLTC = "m/44'/2'/0'",
   defaultMATIC = "m/44'/60'/0'",
+  defaultARB = "m/44'/60'/0'",
+  defaultBASE = "m/44'/60'/0'",
+  defaultOP = "m/44'/60'/0'",
   defaultMultisigBTC = "m/48'/0'/0'",
   defaultMultisigBCH = "m/48'/145'/0'",
   defaultMultisigDOGE = "m/48'/3'/0'",
   defaultMultisigLTC = "m/48'/2'/0'",
   defaultTestnet = "m/44'/1'/0'",
+  defaultLedgerBTC = "m/84'/0'/0'",
 }

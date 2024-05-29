@@ -40,6 +40,10 @@ import {
   Slate,
   SlateDark,
   BitPay,
+  DisabledDark,
+  Disabled,
+  DisabledTextDark,
+  DisabledText,
 } from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
@@ -216,6 +220,7 @@ const SellCryptoRoot = ({
     | undefined;
   const [amount, setAmount] = useState<number>(fromAmount);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
+  const [disabledWalletFrom, setDisabledWalletFrom] = useState(true);
   const [loadingWalletFromStatus, setLoadingWalletFromStatus] =
     useState<boolean>(false);
   const [balanceDetailsModalVisible, setBalanceDetailsModalVisible] =
@@ -303,6 +308,7 @@ const SellCryptoRoot = ({
       setWallet(fromWallet);
       await sleep(500);
       dispatch(dismissOnGoingProcessModal());
+      setDisabledWalletFrom(false);
     } else {
       const availableKeys = keysList.filter(key => {
         return key.wallets && keyHasSupportedWallets(key.wallets);
@@ -335,11 +341,15 @@ const SellCryptoRoot = ({
           setSelectedWallet(allowedWallets[0]);
           await sleep(500);
           dispatch(dismissOnGoingProcessModal());
+          setDisabledWalletFrom(false);
         } else {
           walletError('walletNotSupported', fromCurrencyAbbreviation);
+          await sleep(300);
+          setDisabledWalletFrom(false);
         }
       } else {
-        walletError('emptyKeyListToSend', fromCurrencyAbbreviation);
+        dispatch(dismissOnGoingProcessModal());
+        setDisabledWalletFrom(false);
       }
     }
   };
@@ -530,6 +540,10 @@ const SellCryptoRoot = ({
       ),
       baseCurrencyAmount: amount,
       externalTransactionId: externalTransactionId,
+      paymentMethod: getMoonpaySellPayoutMethodFormat(
+        selectedPaymentMethod!.method,
+      ),
+      externalCustomerId: user?.eid ?? selectedWallet.id,
       redirectURL:
         APP_DEEPLINK_PREFIX +
         `moonpay?flow=sell&externalId=${externalTransactionId}` +
@@ -539,7 +553,7 @@ const SellCryptoRoot = ({
       colorCode: BitPay,
       theme: theme.dark ? 'dark' : 'light',
       quoteCurrencyCode: cloneDeep(fiatCurrency).toLowerCase(),
-      showWalletAddressForm: true,
+      showWalletAddressForm: false,
     };
 
     let data: MoonpayGetSellSignedPaymentUrlData;
@@ -1102,21 +1116,45 @@ const SellCryptoRoot = ({
       <ScrollView>
         <BuyCryptoItemCard
           onPress={() => {
+            if (disabledWalletFrom) {
+              return;
+            }
             showModal('walletSelector');
           }}>
           <BuyCryptoItemTitle>{t('Sell from')}</BuyCryptoItemTitle>
           {!selectedWallet && (
             <ActionsContainer>
-              <SelectedOptionContainer style={{backgroundColor: Action}}>
+              <SelectedOptionContainer
+                style={{
+                  backgroundColor: disabledWalletFrom
+                    ? theme.dark
+                      ? DisabledDark
+                      : Disabled
+                    : Action,
+                }}>
                 <SelectedOptionText
-                  style={{color: White}}
+                  style={{
+                    color: disabledWalletFrom
+                      ? theme.dark
+                        ? DisabledTextDark
+                        : DisabledText
+                      : White,
+                  }}
                   numberOfLines={1}
                   ellipsizeMode={'tail'}>
                   {t('Select Wallet')}
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
-                    {...{width: 13, height: 13, color: White}}
+                    {...{
+                      width: 13,
+                      height: 13,
+                      color: disabledWalletFrom
+                        ? theme.dark
+                          ? DisabledTextDark
+                          : DisabledText
+                        : White,
+                    }}
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>
@@ -1345,7 +1383,7 @@ const SellCryptoRoot = ({
                 <SellTermsContainer>
                   <TermsText>
                     {t(
-                      'This is an estimated price quote. The final amount will vary depending on when the Exchange receive your crypto and the fiat currency enabled for the selected withdrawal method.',
+                      'This quote provides an estimated price only. The final cost may vary based on the exact timing when your crypto is exchanged and the type of fiat currency used for withdrawal. Be aware that additional fees from third parties may also apply.',
                     )}
                   </TermsText>
                   <TermsText>
@@ -1390,7 +1428,7 @@ const SellCryptoRoot = ({
         modalTitle={t('Sell From')}
         onDismiss={(selectedWallet: Wallet) => {
           hideModal('walletSelector');
-          if (selectedWallet) {
+          if (selectedWallet?.currencyAbbreviation) {
             setSelectedWallet(selectedWallet);
           }
         }}

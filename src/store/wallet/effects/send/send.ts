@@ -30,9 +30,15 @@ import {
   FormatAmount,
   FormatAmountStr,
   ParseAmount,
+  SatToUnit,
   parseAmountToStringIfBN,
 } from '../amount/amount';
-import {FeeLevels, GetBitcoinSpeedUpTxFee, getFeeRatePerKb} from '../fee/fee';
+import {
+  FeeLevels,
+  GetBitcoinSpeedUpTxFee,
+  GetMinFee,
+  getFeeRatePerKb,
+} from '../fee/fee';
 import {GetInput} from '../transactions/transactions';
 import {
   formatCryptoAddress,
@@ -82,12 +88,8 @@ import {
 } from '../../../app/app.effects';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
-import TouchID from 'react-native-touch-id-ng';
-import {
-  authOptionalConfigObject,
-  BiometricErrorNotification,
-  TO_HANDLE_ERRORS,
-} from '../../../../constants/BiometricError';
+import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
 import {
@@ -108,6 +110,7 @@ import {
   UtxoAccountParams,
   currencyConfigs,
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -175,12 +178,13 @@ export const createProposalAndBuildTxDetails =
         }
 
         if (currencyAbbreviation === 'xrp') {
+          tx.destinationTag = destinationTag || recipient.destinationTag;
           if (payProDetails) {
             const instructions = payProDetails.instructions[0];
             const {outputs} = instructions;
             tx.invoiceID = outputs[0].invoiceID;
+            tx.destinationTag = outputs[0].destinationTag;
           }
-          tx.destinationTag = destinationTag || recipient.destinationTag;
 
           if (wallet.receiveAddress === recipient.address) {
             return reject({
@@ -191,13 +195,6 @@ export const createProposalAndBuildTxDetails =
               ),
             });
           }
-        }
-
-        if (
-          currencyAbbreviation === 'btc' &&
-          !(context && ['paypro', 'selectInputs'].includes(context))
-        ) {
-          tx.enableRBF = tx.enableRBF ?? enableReplaceByFee;
         }
 
         const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
@@ -591,7 +588,12 @@ export const buildTxDetails =
           fee: {
             feeLevel,
             cryptoAmount: dispatch(
-              FormatAmountStr(chain, chain, undefined, fee),
+              FormatAmountStr(
+                BitpaySupportedCoins[chain]?.feeCurrency,
+                chain,
+                undefined,
+                fee,
+              ),
             ),
             fiatAmount: formatFiatAmount(feeToFiat, defaultAltCurrencyIsoCode),
             percentageOfTotalAmountStr: `${percentageOfTotalAmount.toFixed(
@@ -603,7 +605,13 @@ export const buildTxDetails =
         ...(networkCost && {
           networkCost: {
             cryptoAmount: dispatch(
-              FormatAmountStr(chain, chain, undefined, networkCost),
+              // @ts-ignore
+              FormatAmountStr(
+                BitpaySupportedCoins[chain]?.feeCurrency,
+                chain,
+                undefined,
+                networkCost,
+              ),
             ),
             fiatAmount: formatFiatAmount(
               dispatch(
@@ -628,7 +636,13 @@ export const buildTxDetails =
         },
         subTotal: {
           cryptoAmount: dispatch(
-            FormatAmountStr(coin, chain, tokenAddress, amount),
+            // @ts-ignore
+            FormatAmountStr(
+              BitpaySupportedCoins[chain]?.feeCurrency,
+              chain,
+              tokenAddress,
+              amount,
+            ),
           ),
           fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
         },
@@ -636,7 +650,15 @@ export const buildTxDetails =
           cryptoAmount: isERC20
             ? `${dispatch(
                 FormatAmountStr(coin, chain, tokenAddress, amount),
-              )}\n + ${dispatch(FormatAmountStr(chain, chain, undefined, fee))}`
+                // @ts-ignore
+              )}\n + ${dispatch(
+                FormatAmountStr(
+                  BitpaySupportedCoins[chain]?.feeCurrency,
+                  chain,
+                  undefined,
+                  fee,
+                ),
+              )}`
             : dispatch(
                 FormatAmountStr(coin, chain, tokenAddress, amount + fee),
               ),
@@ -713,6 +735,10 @@ const buildTransactionProposal =
           }
         }
 
+        if (!chain) {
+          throw new Error('Chain is required');
+        }
+
         // base tx
         const txp: Partial<TransactionProposal> = {
           coin: currency?.toLowerCase(),
@@ -725,10 +751,6 @@ const buildTransactionProposal =
         };
         // currency specific
         switch (chain) {
-          case 'btc':
-            txp.enableRBF = tx.enableRBF;
-            txp.replaceTxByFee = tx.replaceTxByFee;
-            break;
           case 'eth':
           case 'matic':
             txp.from = tx.from;
@@ -759,38 +781,39 @@ const buildTransactionProposal =
           sendMaxInfo: SendMaxInfo,
           currencyAbbreviation: string,
           tokenAddress: string | undefined,
+          _chain: string,
         ) => {
           const warningMsg = [];
           if (sendMaxInfo.utxosBelowFee > 0) {
             const amountBelowFeeStr =
               sendMaxInfo.amountBelowFee /
               dispatch(
-                GetPrecision(currencyAbbreviation, chain!, tokenAddress),
+                GetPrecision(currencyAbbreviation, _chain, tokenAddress),
               )!.unitToSatoshi!;
-            const message = t(
+            const message_a = t(
               'A total of were excluded. These funds come from UTXOs smaller than the network fee provided',
               {
                 amountBelowFeeStr,
                 currencyAbbreviation: currencyAbbreviation.toUpperCase(),
               },
             );
-            warningMsg.push(message);
+            warningMsg.push(message_a);
           }
 
           if (sendMaxInfo.utxosAboveMaxSize > 0) {
             const amountAboveMaxSizeStr =
               sendMaxInfo.amountAboveMaxSize /
               dispatch(
-                GetPrecision(currencyAbbreviation, chain!, tokenAddress),
+                GetPrecision(currencyAbbreviation, _chain, tokenAddress),
               )!.unitToSatoshi;
-            const message = t(
+            const message_b = t(
               'A total of were excluded. The maximum size allowed for a transaction was exceeded.',
               {
                 amountAboveMaxSizeStr,
                 currencyAbbreviation: currencyAbbreviation.toUpperCase(),
               },
             );
-            warningMsg.push(message);
+            warningMsg.push(message_b);
           }
           return warningMsg.join('\n');
         };
@@ -808,10 +831,10 @@ const buildTransactionProposal =
                 returnInputs: true,
               },
             });
-            const {amount, inputs, fee} = sendMaxInfo;
+            const {amount, inputs: _inputs, fee} = sendMaxInfo;
 
             txp.amount = tx.amount = amount;
-            txp.inputs = inputs;
+            txp.inputs = _inputs;
             // Either fee or feePerKb can be available
             txp.fee = fee;
             txp.feePerKb = undefined;
@@ -820,6 +843,7 @@ const buildTransactionProposal =
               sendMaxInfo,
               wallet.currencyAbbreviation,
               wallet.tokenAddress,
+              wallet.chain,
             );
 
             if (!_.isEmpty(warningMsg)) {
@@ -842,7 +866,7 @@ const buildTransactionProposal =
             if (recipientList) {
               recipientList.forEach(r => {
                 const formattedAmount = dispatch(
-                  ParseAmount(r.amount || 0, chain!, chain!, undefined),
+                  ParseAmount(r.amount || 0, chain, chain, undefined),
                 );
                 txp.outputs?.push({
                   toAddress:
@@ -870,15 +894,46 @@ const buildTransactionProposal =
             }
             break;
           case 'selectInputs':
+            // new amount and fee calculation
+            const {currencyAbbreviation, tokenAddress} = wallet as Wallet;
+            const totalAmount = inputs!.reduce(
+              (total, utxo) => total + Number(utxo.amount),
+              0,
+            );
+            const precision = dispatch(
+              GetPrecision(currencyAbbreviation, chain, tokenAddress),
+            )!.unitDecimals;
+            const formattedTotalAmount = Number(totalAmount).toFixed(precision);
+            const estimatedFee = await GetMinFee(
+              wallet!,
+              1,
+              inputs?.length,
+              feeLevel,
+            );
+            const formattedEstimatedFee = dispatch(
+              SatToUnit(
+                estimatedFee,
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+              ),
+            );
+            const amount =
+              Number(formattedTotalAmount) - formattedEstimatedFee!;
+            const formattedAmount = dispatch(
+              ParseAmount(amount, currencyAbbreviation, chain, tokenAddress),
+            );
+
             txp.inputs = inputs;
-            txp.fee = tx.fee;
+            txp.amount = tx.amount = formattedAmount.amountSat;
+            txp.fee = estimatedFee;
             txp.feeLevel = undefined;
             if (tx.replaceTxByFee) {
               txp.replaceTxByFee = true;
             }
             txp.outputs.push({
               toAddress: tx.toAddress,
-              amount: tx.amount!,
+              amount: tx.amount,
               message: tx.description,
               data: tx.data,
             });
@@ -888,12 +943,12 @@ const buildTransactionProposal =
             txp.replaceTxByFee = true;
             if (recipientList) {
               recipientList.forEach(r => {
-                const formattedAmount = dispatch(
-                  ParseAmount(r.amount || 0, chain!, chain!, undefined),
+                const formattedAmount_rbf = dispatch(
+                  ParseAmount(r.amount || 0, chain, chain, undefined),
                 );
                 txp.outputs?.push({
                   toAddress: r.address,
-                  amount: formattedAmount.amountSat,
+                  amount: formattedAmount_rbf.amountSat,
                   message: tx.description,
                 });
               });
@@ -1413,6 +1468,8 @@ const createLedgerTransactionArgUtxo = (
     if (!accountPath) {
       return reject(new Error('No account path found for this wallet.'));
     }
+    const hasSegwitPath =
+      accountPath.includes("84'") || accountPath.includes("49'");
 
     // BWS only returns inputPaths for addresses it knows about
     // We kick off a scan when we import the hardware wallet so it may not be complete yet
@@ -1488,7 +1545,7 @@ const createLedgerTransactionArgUtxo = (
       // undefined will default to SIGHASH_ALL.
       // SIGHASH_ALL | SIGHASH_FORKID for bch
       const sigHashType = txp.coin === 'bch' ? 0x41 : 0x01;
-      const segwit = IsSegwitCoin(txp.coin);
+      const segwit = IsSegwitCoin(txp.coin) && hasSegwitPath;
 
       const outputs = txpAsTx.outputs.map(output => {
         const amountBuf = Buffer.alloc(8);
@@ -1516,7 +1573,7 @@ const createLedgerTransactionArgUtxo = (
 
       if (txp.coin === 'bch') {
         additionals = ['abc', 'cashaddr'];
-      } else if (txp.coin === 'btc') {
+      } else if (txp.coin === 'btc' && hasSegwitPath) {
         additionals = ['bech32']; // TODO: safe to always set this to 'bech32' ? Potencial issues here
       }
 
@@ -1677,10 +1734,10 @@ const getSignaturesFromLedger = (
   wallet: Wallet,
   txp: TransactionProposal,
 ) => {
-  const {coin: currency, network, account, chain} = wallet.credentials;
+  const {coin: currency, network, chain} = wallet.credentials;
   if (IsUtxoCoin(currency)) {
     const configFn = currencyConfigs[currency];
-    const params = configFn(network, account);
+    const params = configFn(network);
     return getUtxoSignaturesFromLedger(
       wallet,
       txp,
@@ -2135,26 +2192,21 @@ export const checkBiometricForSending =
     if (Platform.OS === 'ios') {
       dispatch(checkingBiometricForSending(true));
     }
-    return TouchID.authenticate(
-      'Authentication Check',
-      authOptionalConfigObject,
-    )
-      .then((success: any) => {
-        if (success) {
-          return Promise.resolve();
-        } else {
-          return Promise.reject('biometric check failed');
-        }
-      })
-      .catch((error: any) => {
-        if (error.code && TO_HANDLE_ERRORS[error.code]) {
-          const err = TO_HANDLE_ERRORS[error.code];
-          dispatch(
-            showBottomNotificationModal(BiometricErrorNotification(err)),
-          );
-        }
-        return Promise.reject('biometric check failed');
+    try {
+      const rnBiometrics = new ReactNativeBiometrics({
+        allowDeviceCredentials: true,
       });
+      const {success} = await rnBiometrics.simplePrompt({
+        promptMessage: t('Verify your identity'),
+      });
+      return success
+        ? Promise.resolve()
+        : Promise.reject('biometric check failed');
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(showBottomNotificationModal(BiometricErrorNotification(errMsg)));
+      return Promise.reject('biometric check failed');
+    }
   };
 
 export const sendCrypto =

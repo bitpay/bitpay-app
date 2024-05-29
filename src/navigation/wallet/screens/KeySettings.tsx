@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {
   BaseText,
   HeaderTitle,
@@ -61,8 +61,9 @@ import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
-import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
+import SearchComponent from '../../../components/chain-search/ChainSearch';
+import {WalletRowProps} from '../../../components/list/WalletRow';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -117,8 +118,13 @@ const KeySettings = () => {
   const navigation = useNavigation();
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
-
-  const _wallets = key.wallets.filter(wallet =>
+  const [searchVal, setSearchVal] = useState('');
+  const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
+  const selectedChainFilterOption = useAppSelector(
+    ({APP}) => APP.selectedChainFilterOption,
+  );
+  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
+  const _wallets = _key.wallets.filter(wallet =>
     wallet.credentials.isComplete(),
   );
   const coins = _wallets.filter(wallet => !wallet.credentials.token);
@@ -131,15 +137,14 @@ const KeySettings = () => {
     dispatch,
   );
 
-  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const {keyName} = _key || {};
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
-      navigation.navigate('CreateEncryptPassword', {key});
+      navigation.navigate('CreateEncryptPassword', {key: _key});
       scrollViewRef?.current?.scrollToEnd({animated: false});
     }
-  }, [context, key, navigation]);
+  }, [context, _key, navigation]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -157,7 +162,7 @@ const KeySettings = () => {
     return {
       onSubmitHandler: async (encryptPassword: string) => {
         try {
-          const decryptedKey = key.methods!.get(encryptPassword);
+          const decryptedKey = _key.methods!.get(encryptPassword);
           dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(300);
           cta(decryptedKey);
@@ -196,7 +201,7 @@ const KeySettings = () => {
         opts,
       );
 
-      if (_syncKey.fingerPrint === key.properties!.fingerPrint) {
+      if (_syncKey.fingerPrint === _key.properties!.fingerPrint) {
         // Filter for new wallets
         _syncWallets = _syncWallets
           .filter(
@@ -206,7 +211,7 @@ const KeySettings = () => {
           )
           .map(syncWallet => {
             // update to keyId
-            syncWallet.credentials.keyId = key.properties!.id;
+            syncWallet.credentials.keyId = _key.properties!.id;
             const {currencyAbbreviation, currencyName} = dispatch(
               mapAbbreviationAndName(
                 syncWallet.credentials.coin,
@@ -278,37 +283,9 @@ const KeySettings = () => {
     }
   };
 
-  return (
-    <WalletSettingsContainer>
-      <ScrollContainer ref={scrollViewRef}>
-        <WalletNameContainer
-          activeOpacity={ActiveOpacity}
-          onPress={() => {
-            haptic('impactLight');
-            navigation.navigate('UpdateKeyOrWalletName', {key, context: 'key'});
-          }}>
-          <View>
-            <Title>{t('Key Name')}</Title>
-            <WalletSettingsTitle>{keyName}</WalletSettingsTitle>
-          </View>
-
-          <ChevronRightSvg height={16} />
-        </WalletNameContainer>
-        <Hr />
-
-        <WalletHeaderContainer>
-          <Title>{t('Wallets')}</Title>
-          <InfoImageContainer infoMargin={'0 0 0 8px'}>
-            <TouchableOpacity
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('KeyExplanation');
-              }}>
-              <InfoSvg />
-            </TouchableOpacity>
-          </InfoImageContainer>
-        </WalletHeaderContainer>
-
+  const WalletList = ({wallets}: {wallets: WalletRowProps[]}) => {
+    return (
+      <>
         {wallets.map(
           ({
             id,
@@ -324,7 +301,10 @@ const KeySettings = () => {
             <TouchableOpacity
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('WalletSettings', {walletId: id, key});
+                navigation.navigate('WalletSettings', {
+                  key: _key,
+                  walletId: id,
+                });
               }}
               key={id}
               activeOpacity={ActiveOpacity}>
@@ -343,13 +323,65 @@ const KeySettings = () => {
             </TouchableOpacity>
           ),
         )}
+      </>
+    );
+  };
+
+  return (
+    <WalletSettingsContainer>
+      <ScrollContainer ref={scrollViewRef}>
+        <WalletNameContainer
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            haptic('impactLight');
+            navigation.navigate('UpdateKeyOrWalletName', {
+              key: _key,
+              context: 'key',
+            });
+          }}>
+          <View>
+            <Title>{t('Key Name')}</Title>
+            <WalletSettingsTitle>{keyName}</WalletSettingsTitle>
+          </View>
+
+          <ChevronRightSvg height={16} />
+        </WalletNameContainer>
+        <Hr />
+
+        <SearchComponent<WalletRowProps>
+          searchVal={searchVal}
+          setSearchVal={setSearchVal}
+          searchResults={searchResults}
+          setSearchResults={setSearchResults}
+          searchFullList={wallets}
+          context={'keysettings'}
+        />
+
+        <WalletHeaderContainer>
+          <Title>{t('Wallets')}</Title>
+          <InfoImageContainer infoMargin={'0 0 0 8px'}>
+            <TouchableOpacity
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('KeyExplanation');
+              }}>
+              <InfoSvg />
+            </TouchableOpacity>
+          </InfoImageContainer>
+        </WalletHeaderContainer>
+
+        <WalletList
+          wallets={
+            !searchVal && !selectedChainFilterOption ? wallets : searchResults
+          }
+        />
 
         {_key && !_key.isReadOnly ? (
           <VerticalPadding style={{alignItems: 'center'}}>
             <AddWalletText
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('AddingOptions', {key});
+                navigation.navigate('AddingOptions', {key: _key});
               }}>
               {t('Add Wallet')}
             </AddWalletText>
@@ -362,7 +394,7 @@ const KeySettings = () => {
             <Setting
               onPress={() => {
                 navigation.navigate('BackupOnboarding', {
-                  key,
+                  key: _key,
                   buildEncryptModalConfig,
                 });
               }}>
@@ -376,7 +408,7 @@ const KeySettings = () => {
                 {t('Request Encrypt Password')}
               </WalletSettingsTitle>
 
-              <RequestEncryptPasswordToggle currentKey={key} />
+              <RequestEncryptPasswordToggle currentKey={_key} />
             </SettingView>
 
             <Info>
@@ -478,7 +510,7 @@ const KeySettings = () => {
                     dispatch(
                       AppActions.showDecryptPasswordModal(
                         buildEncryptModalConfig(async ({mnemonic}) => {
-                          const code = generateKeyExportCode(key, mnemonic);
+                          const code = generateKeyExportCode(_key, mnemonic);
                           navigation.navigate('ExportKey', {code, keyName});
                         }),
                       ),

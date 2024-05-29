@@ -546,6 +546,7 @@ export const BuildKeysAndWalletsList = ({
       return {
         key: keyId,
         keyName: keyObj.keyName || 'My Key',
+        backupComplete: keyObj.backupComplete,
         wallets: keys[keyId].wallets
           .filter(wallet => !wallet.hideWallet)
           .filter(wallet => {

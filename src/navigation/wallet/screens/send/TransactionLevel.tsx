@@ -188,7 +188,7 @@ const TransactionLevel = ({
   feeLevel,
   feePerSatByte: paramFeePerSatByte,
 }: TransactionSpeedParamList) => {
-  const {img, currencyAbbreviation, network, chain} = wallet;
+  const {img, badgeImg, currencyAbbreviation, network, chain} = wallet;
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
@@ -485,7 +485,10 @@ const TransactionLevel = ({
                 <StepsHeaderContainer>
                   <FeeLevelStepsHeader>
                     <CurrencyImageContainer>
-                      <CurrencyImage img={img} size={20} />
+                      <CurrencyImage
+                        img={badgeImg ? badgeImg : img} // Badge image is chain image
+                        size={20}
+                      />
                     </CurrencyImageContainer>
                     <H4>
                       {chain.charAt(0).toUpperCase() + chain.slice(1)}{' '}

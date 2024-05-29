@@ -130,7 +130,6 @@ export interface ConfirmParamList {
   speedup?: boolean;
   sendMax?: boolean;
   inputs?: Utxo[];
-  selectInputs?: boolean;
   message?: string | undefined;
 }
 
@@ -168,7 +167,6 @@ const Confirm = () => {
     speedup,
     sendMax,
     inputs,
-    selectInputs,
     message,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
@@ -184,7 +182,6 @@ const Confirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
-  const [enableRBF, setEnableRBF] = useState(enableReplaceByFee);
   const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
   const [showHighFeeWarningMessage, setShowHighFeeWarningMessage] =
     useState(false);
@@ -289,7 +286,7 @@ const Confirm = () => {
   }, []);
 
   const isTxLevelAvailable = () => {
-    const includedCurrencies = ['btc', 'eth', 'matic'];
+    const includedCurrencies = ['btc', 'eth', 'matic', 'arb', 'base', 'op'];
     // TODO: exclude paypro, coinbase, usingMerchantFee txs,
     // const {payProUrl} = txDetails;
     return includedCurrencies.includes(currencyAbbreviation.toLowerCase());
@@ -303,7 +300,7 @@ const Confirm = () => {
     if (newLevel) {
       updateTxProposal({
         feeLevel: newLevel,
-        feePerKb: customFeePerKB,
+        feePerKb: customFeePerKB, // this will be ignore in select input context
       });
     }
   };
@@ -351,12 +348,6 @@ const Confirm = () => {
         keyboardType: 'numeric',
       },
     );
-  };
-
-  const onChangeEnableReplaceByFee = async (enableRBF?: boolean) => {
-    updateTxProposal({
-      enableRBF,
-    });
   };
 
   const updateTxProposal = async (newOpts: any) => {
@@ -414,12 +405,12 @@ const Confirm = () => {
 
     try {
       if (isUsingHardwareWallet) {
-        const {coin, network, account, useNativeSegwit} = wallet.credentials;
+        const {coin, network} = wallet.credentials;
         const configFn = currencyConfigs[coin];
         if (!configFn) {
           throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
         }
-        const params = configFn(network, account, useNativeSegwit);
+        const params = configFn(network);
         await prepareLedgerApp(
           params.appName,
           transportRef,
@@ -621,7 +612,7 @@ const Confirm = () => {
             />
             <Fee
               onPress={
-                isTxLevelAvailable() && !selectInputs
+                isTxLevelAvailable()
                   ? () => setShowTransactionLevel(true)
                   : undefined
               }
@@ -648,23 +639,6 @@ const Confirm = () => {
                     )}
                   </InfoDescription>
                 </Info>
-                <Hr />
-              </>
-            ) : null}
-            {enableReplaceByFee &&
-            !selectInputs &&
-            currencyAbbreviation.toLowerCase() === 'btc' ? (
-              <>
-                <Setting activeOpacity={1}>
-                  <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
-                  <ToggleSwitch
-                    onChange={value => {
-                      setEnableRBF(value);
-                      onChangeEnableReplaceByFee(value);
-                    }}
-                    isEnabled={enableRBF}
-                  />
-                </Setting>
                 <Hr />
               </>
             ) : null}

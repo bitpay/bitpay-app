@@ -330,12 +330,12 @@ const PayProConfirm = () => {
     try {
       if (isUsingHardwareWallet) {
         if (txp && wallet && recipient) {
-          const {coin, network, account, useNativeSegwit} = wallet.credentials;
+          const {coin, network} = wallet.credentials;
           const configFn = currencyConfigs[coin];
           if (!configFn) {
             throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
           }
-          const params = configFn(network, account, useNativeSegwit);
+          const params = configFn(network);
           await prepareLedgerApp(
             params.appName,
             transportRef,

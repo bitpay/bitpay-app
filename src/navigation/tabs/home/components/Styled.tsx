@@ -18,10 +18,6 @@ export const HeaderButtonContainer = styled.View`
   margin-left: ${ScreenGutter};
 `;
 
-export const HomeContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
 export const HomeSectionSubtext = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? Slate : Black)};
 `;

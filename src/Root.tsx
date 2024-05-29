@@ -126,7 +126,7 @@ import InAppMessage from './components/modal/in-app-message/InAppMessage';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
-// import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
+import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -224,7 +224,6 @@ export const getNavigationTabName = () => {
     TabsScreens.SHOP,
     TabsScreens.TRANSACT_BUTTON,
     TabsScreens.CARD,
-    TabsScreens.SETTINGS,
   ];
   const navigationState = navigationRef.getState();
   const navigationTabIndex = navigationState?.routes?.[0]?.state?.index;
@@ -578,7 +577,7 @@ export default () => {
           <BlurContainer />
           <PinModal />
           <BiometricModal />
-          {/* <ImportLedgerWalletModal /> */}
+          <ImportLedgerWalletModal />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

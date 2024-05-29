@@ -32,7 +32,7 @@ import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
 import {useScrollToTop} from '@react-navigation/native';
-import {TabsStackParamList} from '../TabsStack';
+import {SettingsScreens, SettingsGroupParamList} from './SettingsGroup';
 
 interface HomeSetting {
   id: SettingsListType;
@@ -98,11 +98,6 @@ export type SettingsHomeParamList =
     }
   | undefined;
 
-export type SettingsHomeProps = NativeStackScreenProps<
-  TabsStackParamList,
-  'Settings'
->;
-
 export type SettingsListType =
   | 'General'
   | 'Contacts'
@@ -114,7 +109,12 @@ export type SettingsListType =
   | 'Connections'
   | 'About BitPay';
 
-const SettingsHome: React.VFC<SettingsHomeProps> = ({route}) => {
+export type SettingsHomeProps = NativeStackScreenProps<
+  SettingsGroupParamList,
+  SettingsScreens.SETTINGS_HOME
+>;
+
+const SettingsHome: React.FC<SettingsHomeProps> = ({route}) => {
   const {redirectTo} = route.params || {};
   const {t} = useTranslation();
   const dispatch = useAppDispatch();

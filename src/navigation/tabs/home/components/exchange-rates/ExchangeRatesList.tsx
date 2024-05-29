@@ -6,6 +6,11 @@ import {ScreenGutter} from '../../../../../components/styled/Containers';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import ExchangeRateItem from './ExchangeRateItem';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedTokens,
+} from '../../../../../constants/currencies';
+import {getCurrencyAbbreviation} from '../../../../../utils/helper-methods';
 
 export interface ExchangeRateItemProps {
   id: string;
@@ -13,9 +18,9 @@ export interface ExchangeRateItemProps {
   currencyName: string;
   chain: string;
   currencyAbbreviation: string;
+  tokenAddress?: string;
   average?: number;
   currentPrice?: number;
-  priceDisplay: Array<any>;
 }
 
 const ExchangeRateListContainer = styled.View`
@@ -38,13 +43,22 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
           item={item}
           key={item.id}
           onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              Analytics.track('Clicked Exchange Rate', {
-                coin: item.currencyAbbreviation || '',
-              }),
+            const currencyName = getCurrencyAbbreviation(
+              item.tokenAddress ? item.tokenAddress : item.currencyAbbreviation,
+              item.chain,
             );
-            navigation.navigate('PriceCharts', {item});
+            const isStableCoin =
+              BitpaySupportedCoins[currencyName]?.properties?.isStableCoin ||
+              BitpaySupportedTokens[currencyName]?.properties?.isStableCoin;
+            if (!isStableCoin) {
+              haptic('impactLight');
+              dispatch(
+                Analytics.track('Clicked Exchange Rate', {
+                  coin: item.currencyAbbreviation || '',
+                }),
+              );
+              navigation.navigate('PriceCharts', {item});
+            }
           }}
           defaultAltCurrencyIsoCode={defaultAltCurrencyIsoCode}
         />

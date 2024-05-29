@@ -36,7 +36,7 @@ const PushNotifications = () => {
   const [confirmedTx, setConfirmedTx] = useState(
     notificationsState.confirmedTx,
   );
-  const [annnouncements, setAnnouncements] = useState(
+  const [announcements, setAnnouncements] = useState(
     notificationsState.announcements,
   );
   const [pushNotifications, setPushNotifications] = useState(
@@ -74,10 +74,10 @@ const PushNotifications = () => {
     },
     {
       title: t('Announcements'),
-      checked: annnouncements,
+      checked: announcements,
       description: t('Updates on new features and other relevant news.'),
       onPress: () => {
-        const accepted = !annnouncements;
+        const accepted = !announcements;
         setAnnouncements(accepted);
         dispatch(AppEffects.setAnnouncementsNotifications(accepted));
         if (!pushNotifications) {

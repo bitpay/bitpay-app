@@ -41,7 +41,7 @@ const SettingsGroup: React.FC<SettingsProps> = ({Settings}) => {
         name={SettingsScreens.SETTINGS_HOME}
         component={SettingsHome}
         options={{
-          animation: 'slide_from_left',
+          animation: 'slide_from_bottom',
           headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
         }}
       />

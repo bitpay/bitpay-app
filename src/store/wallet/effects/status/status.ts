@@ -544,15 +544,15 @@ export const startUpdateAllWalletStatusForReadOnlyKeys =
       );
       const promises: any = [];
       // update each read only wallet - getStatusAll checks if credentials are from the same key
-      readOnlyKeys.forEach((key, index) => {
-        promises.push(
-          dispatch(
-            startUpdateWalletStatus({key, wallet: key.wallets[index], force}),
-          ),
-        );
+      readOnlyKeys.forEach(key => {
+        key.wallets.forEach(wallet => {
+          promises.push(
+            dispatch(startUpdateWalletStatus({key, wallet, force})),
+          );
+        });
       });
 
-      await Promise.all(readOnlyKeys);
+      await Promise.all(promises);
       dispatch(
         LogActions.info('success [startUpdateAllWalletStatusForReadOnlyKeys]'),
       );
@@ -653,6 +653,7 @@ const updateWalletStatus =
         balance: cachedBalance,
         credentials: {token, multisigEthInfo},
         pendingTxps: cachedPendingTxps,
+        singleAddress: cachedSingleAddress,
         receiveAddress,
       } = wallet;
 
@@ -694,6 +695,7 @@ const updateWalletStatus =
                 ),
               },
               pendingTxps: cachedPendingTxps,
+              singleAddress: cachedSingleAddress,
             });
           }
           try {
@@ -718,12 +720,16 @@ const updateWalletStatus =
             } as WalletBalance;
 
             const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
-
+            const singleAddress = status.wallet?.singleAddress;
             console.log('[updateWalletStatus] wallet obj', wallet);
             console.log('[updateWalletStatus] newBalance', newBalance);
             console.log('[updateWalletStatus] newPendingTxps', newPendingTxps);
 
-            resolve({balance: newBalance, pendingTxps: newPendingTxps});
+            resolve({
+              balance: newBalance,
+              pendingTxps: newPendingTxps,
+              singleAddress,
+            });
           } catch (err2) {
             resolve({
               balance: {
@@ -739,6 +745,7 @@ const updateWalletStatus =
                 ),
               },
               pendingTxps: cachedPendingTxps,
+              singleAddress: cachedSingleAddress,
             });
           }
         },

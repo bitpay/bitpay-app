@@ -1,7 +1,4 @@
-import {
-  BitpaySupportedMaticTokens,
-  SUPPORTED_COINS,
-} from '../constants/currencies';
+import {SUPPORTED_COINS} from '../constants/currencies';
 import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
@@ -11,6 +8,15 @@ import {IsERCToken} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
+import {NavigationProp, StackActions} from '@react-navigation/native';
+
+export const suffixChainMap: {[suffix: string]: string} = {
+  eth: 'e',
+  matic: 'm',
+  arb: 'arb',
+  base: 'base',
+  op: 'op',
+};
 
 export const sleep = (duration: number) =>
   new Promise<void>(resolve => setTimeout(resolve, duration));
@@ -119,6 +125,9 @@ export const isValidDerivationPathCoin = (
       break;
     case 'eth':
     case 'matic':
+    case 'arb':
+    case 'base':
+    case 'op':
       isValid = ["60'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
     case 'xrp':
@@ -323,7 +332,7 @@ export const getBadgeImg = (
   currencyAbbreviation: string,
   chain: string,
 ): string | ((props?: any) => ReactElement) => {
-  return !SUPPORTED_COINS.includes(currencyAbbreviation)
+  return currencyAbbreviation.toLowerCase() !== chain.toLowerCase()
     ? CurrencyListIcons[chain]
     : '';
 };
@@ -338,7 +347,7 @@ export const getRateByCurrencyName = (
 };
 
 export const addTokenChainSuffix = (name: string, chain: string) => {
-  return `${name.toLowerCase()}_${chain.charAt(0)}`;
+  return `${name.toLowerCase()}_${suffixChainMap[chain]}`;
 };
 
 export const formatCurrencyAbbreviation = (currencyAbbreviation: string) => {
@@ -358,6 +367,11 @@ export const getCurrencyAbbreviation = (name: string, chain: string) => {
     : name.toLowerCase();
 };
 
+export const getChainFromTokenByAddressKey = (key: string) => {
+  const match = key.match(/_([a-zA-Z]+)$/);
+  return getChainUsingSuffix(match![1]);
+};
+
 export const getProtocolName = (
   chain: string,
   network: string,
@@ -366,9 +380,7 @@ export const getProtocolName = (
   const _network = network.toLowerCase();
   return PROTOCOL_NAME[_chain]?.[_network]
     ? PROTOCOL_NAME[_chain][_network]
-    : _network === 'testnet'
-    ? PROTOCOL_NAME.default[_network]
-    : undefined;
+    : PROTOCOL_NAME.default[_network];
 };
 
 export const getCWCChain = (chain: string): string => {
@@ -377,7 +389,12 @@ export const getCWCChain = (chain: string): string => {
       return 'ETHERC20';
     case 'matic':
       return 'MATICERC20';
-
+    case 'arb':
+      return 'ARBERC20';
+    case 'base':
+      return 'BASEERC20';
+    case 'op':
+      return 'OPERC20';
     default:
       return 'ETHERC20';
   }
@@ -390,6 +407,12 @@ export const getChainUsingSuffix = (symbol: string) => {
       return 'eth';
     case 'm':
       return 'matic';
+    case 'base':
+      return 'base';
+    case 'arb':
+      return 'arb';
+    case 'op':
+      return 'op';
     default:
       return 'eth';
   }
@@ -472,4 +495,25 @@ export const toggleThenUntoggle = async (
   booleanSetter(true);
   await sleep(500);
   booleanSetter(false);
+};
+
+export const popToScreen = (
+  navigation: NavigationProp<ReactNavigation.RootParamList>,
+  targetScreenName: string,
+) => {
+  // @ts-ignore
+  navigation.dispatch(state => {
+    const routes = state.routes;
+    const targetIndex = routes.findIndex(r => r.name === targetScreenName);
+    if (targetIndex === -1) {
+      // Target screen "${targetScreenName}" not found in the navigation stack.
+      return;
+    }
+    const popCount = routes.length - 1 - targetIndex;
+    if (popCount > 0) {
+      return StackActions.pop(popCount);
+    } else {
+      // Already at the target screen "${targetScreenName}". No need to pop.
+    }
+  });
 };

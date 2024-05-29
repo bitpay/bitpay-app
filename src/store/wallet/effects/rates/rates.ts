@@ -1,20 +1,8 @@
 import {Effect} from '../../../index';
 import axios from 'axios';
-import {
-  BASE_BWS_URL,
-  EVM_BLOCKCHAIN_NETWORK,
-} from '../../../../constants/config';
-import {
-  SUPPORTED_COINS,
-  SUPPORTED_EVM_COINS,
-} from '../../../../constants/currencies';
-import {
-  DateRanges,
-  HistoricRate,
-  PriceHistory,
-  Rate,
-  Rates,
-} from '../../../rate/rate.models';
+import {BASE_BWS_URL} from '../../../../constants/config';
+import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {DateRanges, HistoricRate, Rate, Rates} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
 import {
   HISTORIC_RATES_CACHE_DURATION,
@@ -22,11 +10,11 @@ import {
 } from '../../../../constants/wallet';
 import {DEFAULT_DATE_RANGE} from '../../../../constants/rate';
 import {
-  failedGetPriceHistory,
   failedGetRates,
-  successGetPriceHistory,
+  successGetHistoricalRates,
   successGetRates,
   updateCacheKey,
+  updateHistoricalCacheKey,
 } from '../../../rate/rate.actions';
 import {CacheKeys} from '../../../rate/rate.models';
 import moment from 'moment';
@@ -44,44 +32,6 @@ import {
   EvmErc20PriceJSON,
 } from '@moralisweb3/common-evm-utils';
 import {calculateUsdToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
-
-export const getPriceHistory =
-  (defaultAltCurrencyIsoCode: string): Effect =>
-  async dispatch => {
-    try {
-      dispatch(LogActions.info('starting [getPriceHistory]'));
-      const coinsList = SUPPORTED_COINS.map(
-        coin =>
-          `${coin.toUpperCase()}:${defaultAltCurrencyIsoCode.toUpperCase()}`,
-      )
-        .toString()
-        .split(',')
-        .join('","');
-      const {
-        data: {data},
-      } = await axios.get(
-        `https://bitpay.com/currencies/prices?currencyPairs=["${coinsList}"]`,
-      );
-      const formattedData = data
-        .filter((d: PriceHistory) => d)
-        .map((d: PriceHistory) => {
-          return {
-            ...d,
-            coin: d?.currencyPair.split(':')[0].toLowerCase(),
-          };
-        });
-      dispatch(successGetPriceHistory(formattedData));
-    } catch (err) {
-      let errorStr;
-      if (err instanceof Error) {
-        errorStr = err.message;
-      } else {
-        errorStr = JSON.stringify(err);
-      }
-      dispatch(failedGetPriceHistory());
-      dispatch(LogActions.error(`failed [getPriceHistory]: ${errorStr}`));
-    }
-  };
 
 export const startGetRates =
   ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
@@ -163,7 +113,6 @@ export const startGetRates =
           successGetRates({
             rates: allRates,
             lastDayRates: allLastDayRates,
-            ratesByDateRange: rates,
           }),
         );
         dispatch(LogActions.info('startGetRates: success'));
@@ -369,12 +318,12 @@ export const fetchHistoricalRates =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
-        RATE: {ratesCacheKey, ratesByDateRange: cachedRates},
+        RATE: {ratesHistoricalCacheKey, ratesByDateRange: cachedRates},
       } = getState();
 
       if (
         !isCacheKeyStale(
-          ratesCacheKey[dateRange],
+          ratesHistoricalCacheKey[dateRange],
           HISTORIC_RATES_CACHE_DURATION,
         )
       ) {
@@ -390,7 +339,9 @@ export const fetchHistoricalRates =
         return resolve(cachedRatesByCoin);
       }
 
-      dispatch(updateCacheKey({cacheKey: CacheKeys.RATES}));
+      dispatch(
+        updateHistoricalCacheKey({cacheKey: CacheKeys.HISTORICAL_RATES}),
+      );
 
       try {
         dispatch(
@@ -404,7 +355,9 @@ export const fetchHistoricalRates =
         // This pulls ALL coins in one query
         const url = `${BASE_BWS_URL}/v2/fiatrates/${fiatIsoCode}?ts=${firstDateTs}`;
         const {data: rates} = await axios.get(url);
-        dispatch(successGetRates({ratesByDateRange: rates, dateRange}));
+        dispatch(
+          successGetHistoricalRates({ratesByDateRange: rates, dateRange}),
+        );
         dispatch(
           LogActions.info('[rates]: fetched historical rates successfully'),
         );

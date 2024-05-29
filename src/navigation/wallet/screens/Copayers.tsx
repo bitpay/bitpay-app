@@ -22,7 +22,8 @@ import {
   TitleContainer,
   RowContainer,
   ActiveOpacity,
-  ActionContainer,
+  CtaContainer,
+  HeaderTitleContainer,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -44,6 +45,7 @@ const ViewContainer = styled.SafeAreaView`
 const Gutter = '10px';
 const JoinCopayersContainer = styled.View`
   padding: ${Gutter};
+  margin-bottom: 20px;
 `;
 
 const AuthorizedContainer = styled(BaseText)`
@@ -67,8 +69,8 @@ const QRCodeBackground = styled.View`
 const CopayersContainer = styled(RowContainer)`
   padding: 18px;
   border-style: solid;
-  border-top-width: 1px;
-  border-top-color: ${({theme}) => (theme.dark ? '#434D5A' : '#E1E4E7')};
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme}) => (theme.dark ? '#434D5A' : '#E1E4E7')};
 `;
 
 const Copayers: React.FC<CopayersProps> = props => {
@@ -164,11 +166,11 @@ const Copayers: React.FC<CopayersProps> = props => {
               </QRCodeBackground>
             </QRCodeContainer>
           </TouchableOpacity>
-          <TitleContainer>
+          <HeaderTitleContainer>
             <TextAlign align={'left'}>
               <H6>{t('Waiting for authorized copayers to join')}</H6>
             </TextAlign>
-          </TitleContainer>
+          </HeaderTitleContainer>
           {walletStatus.copayers.map((item: any, index: any) => {
             return (
               <CopayersContainer key={index} activeOpacity={ActiveOpacity}>
@@ -177,14 +179,11 @@ const Copayers: React.FC<CopayersProps> = props => {
               </CopayersContainer>
             );
           })}
-
-          <ActionContainer>
-            <Button onPress={shareInvitation}>
-              {t('Share this Invitation')}
-            </Button>
-          </ActionContainer>
         </JoinCopayersContainer>
       </ScrollView>
+      <CtaContainer>
+        <Button onPress={shareInvitation}>{t('Share this Invitation')}</Button>
+      </CtaContainer>
     </ViewContainer>
   );
 };

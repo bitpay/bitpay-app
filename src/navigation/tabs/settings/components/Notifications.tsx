@@ -1,8 +1,6 @@
 import React, {useEffect, useCallback} from 'react';
 import {
   Alert,
-  AppState,
-  AppStateStatus,
   Linking,
   LogBox,
   DeviceEventEmitter,
@@ -52,17 +50,12 @@ const Notifications = () => {
   }, [t]);
 
   const setNotificationValue = useCallback(
-    async (accepted: boolean, notificationsStatePush?: boolean) => {
+    async (accepted: boolean) => {
       const systemEnabled = await AppEffects.checkNotificationsPermissions();
       if (systemEnabled) {
-        if (
-          notificationsStatePush !== undefined &&
-          accepted !== notificationsStatePush
-        ) {
-          dispatch(AppEffects.setNotifications(accepted));
-          dispatch(AppEffects.setConfirmTxNotifications(accepted));
-          dispatch(AppEffects.setAnnouncementsNotifications(accepted));
-        }
+        dispatch(AppEffects.setNotifications(accepted));
+        dispatch(AppEffects.setConfirmTxNotifications(accepted));
+        dispatch(AppEffects.setAnnouncementsNotifications(accepted));
       } else {
         if (accepted && Platform.OS === 'ios') {
           const requestPermissions =
@@ -75,7 +68,7 @@ const Notifications = () => {
             dispatch(AppEffects.setConfirmTxNotifications(false));
             dispatch(AppEffects.setAnnouncementsNotifications(false));
           }
-        } else if (notificationsStatePush) {
+        } else {
           dispatch(AppEffects.setNotifications(false));
           dispatch(AppEffects.setConfirmTxNotifications(false));
           dispatch(AppEffects.setAnnouncementsNotifications(false));
@@ -86,28 +79,14 @@ const Notifications = () => {
   );
 
   useEffect(() => {
-    function onAppStateChange(status: AppStateStatus) {
-      // status === 'active' when the app goes from background to foreground,
-      if (status === 'active') {
-        setNotificationValue(notificationsState.pushNotifications);
-      }
-    }
-    const subscriptionAppStateChange = AppState.addEventListener(
-      'change',
-      onAppStateChange,
-    );
-    return () => subscriptionAppStateChange.remove();
-  }, [dispatch, setNotificationValue, notificationsState]);
-
-  useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.PUSH_NOTIFICATIONS,
       ({accepted}) => {
-        setNotificationValue(accepted, notificationsState.pushNotifications);
+        setNotificationValue(accepted);
       },
     );
     return () => subscription.remove();
-  }, [notificationsState]);
+  }, [setNotificationValue]);
 
   // Ignore warning: Setting a timer for long period of time...
   LogBox.ignoreLogs(['Setting a timer']);

@@ -1,4 +1,5 @@
 // @ts-ignore
+import {REGTEST_BASE_BITPAY_URL} from '@env';
 import {version} from '../../package.json'; // TODO: better way to get version
 import {Network} from '.';
 
@@ -13,7 +14,19 @@ export const APP_VERSION = version;
 export const BASE_BITPAY_URLS = {
   [Network.mainnet]: 'https://bitpay.com',
   [Network.testnet]: 'https://test.bitpay.com',
+  [Network.regtest]: REGTEST_BASE_BITPAY_URL || '',
 };
+// BITCORE
+export const BASE_BITCORE_URL = {
+  btc: 'https://api.bitcore.io/api',
+  ltc: 'https://api.bitcore.io/api',
+  bch: 'https://api.bitcore.io/api',
+  doge: 'https://api.bitcore.io/api',
+  eth: 'https://api-eth.bitcore.io/api',
+  matic: 'https://api-matic.bitcore.io/api',
+  xrp: 'https://api-xrp.bitcore.io/api',
+};
+
 export const APP_DEEPLINK_PREFIX = 'bitpay://';
 export const APP_UNIVERSAL_LINK_DOMAINS = [
   'link.bitpay.com',
@@ -25,6 +38,9 @@ export const APP_CRYPTO_PREFIX = [
   'bitcoincash',
   'ethereum',
   'matic',
+  'arb',
+  'base',
+  'op',
   'dogecoin',
   'litecoin',
 ];
@@ -43,44 +59,92 @@ export const DOWNLOAD_BITPAY_URL = 'https://bitpay.com/wallet';
 export const TWO_FACTOR_EMAIL_POLL_INTERVAL = 1000 * 3;
 export const TWO_FACTOR_EMAIL_POLL_TIMEOUT = 1000 * 60 * 5;
 
-export const EVM_BLOCKCHAIN_NETWORK = {
-  eth: 'ethereum',
-  matic: 'polygon-pos',
-};
-
 export const EVM_BLOCKCHAIN_ID: {[key in string]: number} = {
   eth: 1,
   matic: 137,
+  arb: 42161,
+  base: 8453,
+  op: 10,
 };
 
 export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'etherscan.io/',
-    [Network.testnet]: 'goerli.etherscan.io/',
+    [Network.testnet]: 'sepolia.etherscan.io/',
   },
   matic: {
     [Network.mainnet]: 'polygonscan.com/',
-    [Network.testnet]: 'mumbai.polygonscan.com/',
+    [Network.testnet]: 'amoy.polygonscan.com/',
+  },
+  arb: {
+    [Network.mainnet]: 'arbiscan.io/',
+    [Network.testnet]: 'sepolia.arbiscan.io/',
+  },
+  base: {
+    [Network.mainnet]: 'basescan.org/',
+    [Network.testnet]: 'sepolia.basescan.org/',
+  },
+  op: {
+    [Network.mainnet]: 'optimistic.etherscan.io/',
+    [Network.testnet]: 'sepolia-optimism.etherscan.io/',
   },
 };
 
 export const METHOD_ENVS = {
   [Network.mainnet]: 'production',
   [Network.testnet]: 'dev',
+  [Network.regtest]: 'dev',
 };
 
 export const PROTOCOL_NAME: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'Ethereum Mainnet',
-    [Network.testnet]: 'Goerli',
+    [Network.testnet]: 'Sepolia',
   },
   matic: {
     [Network.mainnet]: 'Polygon',
-    [Network.testnet]: 'Mumbai',
+    [Network.testnet]: 'Amoy',
+  },
+  arb: {
+    [Network.mainnet]: 'Arbitrum',
+    [Network.testnet]: 'Sepolia',
+  },
+  base: {
+    [Network.mainnet]: 'Base',
+    [Network.testnet]: 'Sepolia',
+  },
+  op: {
+    [Network.mainnet]: 'Optimism',
+    [Network.testnet]: 'Sepolia',
+  },
+  btc: {
+    [Network.testnet]: 'Testnet3',
+  },
+  bch: {
+    [Network.testnet]: 'Testnet3',
+  },
+  doge: {
+    [Network.testnet]: 'Testnet3',
+  },
+  ltc: {
+    [Network.testnet]: 'Testnet4',
+  },
+  arb: {
+    [Network.mainnet]: 'Arbitrum',
+    [Network.testnet]: 'Sepolia',
+  },
+  base: {
+    [Network.mainnet]: 'Base',
+    [Network.testnet]: 'Sepolia',
+  },
+  op: {
+    [Network.mainnet]: 'Optimism',
+    [Network.testnet]: 'Sepolia',
   },
   default: {
     [Network.mainnet]: 'Mainnet',
     [Network.testnet]: 'Testnet',
+    [Network.regtest]: 'Regtest',
   },
 };
 

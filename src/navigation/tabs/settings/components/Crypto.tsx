@@ -27,13 +27,9 @@ const Crypto = () => {
   const queuedTransactions = useAppSelector(
     ({WALLET}) => WALLET.queuedTransactions,
   );
-  const enableReplaceByFee = useAppSelector(
-    ({WALLET}) => WALLET.enableReplaceByFee,
-  );
   const [showInfoUnconfirmed, setShowInfoUnconfirmed] = useState(false);
   const [showInfoCustomizeEvm, setShowInfoCustomizeEvm] = useState(false);
   const [showInfoEthQueued, setShowInfoEthQueued] = useState(false);
-  const [showInfoEnableRbf, setShowInfoEnableRbf] = useState(false);
   const navigation = useNavigation();
 
   return (
@@ -116,33 +112,6 @@ const Crypto = () => {
           <InfoDescription>
             {t(
               'If enabled, your eth transactions will be queued if there is a pending transaction with a lower account nonce. This is an advanced feature, use cautiously.',
-            )}
-          </InfoDescription>
-        </Info>
-      ) : null}
-      <Hr />
-      <Setting
-        activeOpacity={1}
-        onPress={() => setShowInfoEnableRbf(!showInfoEnableRbf)}>
-        <SettingTitle>{t('Enable BTC Replace-By-Fee')}</SettingTitle>
-        <ToggleSwitch
-          onChange={value => {
-            dispatch(WalletActions.setEnableReplaceByFee(value));
-            dispatch(
-              Analytics.track('Set Enable BTC Replace-By-Fee', {
-                value,
-              }),
-            );
-          }}
-          isEnabled={enableReplaceByFee}
-        />
-      </Setting>
-      {showInfoEnableRbf ? (
-        <Info>
-          <InfoTriangle />
-          <InfoDescription>
-            {t(
-              'If enabled, your transactions will be marked as non-final, and you will have the possibility, while they are unconfirmed, to replace them with transactions that pay higher fees. Note that some merchants do not accept non-final transactions until they are confirmed.',
             )}
           </InfoDescription>
         </Info>

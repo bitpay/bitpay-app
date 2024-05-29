@@ -20,6 +20,9 @@ import {
   IsValidEVMAddress,
   IsValidEthereumUri,
   IsValidMaticUri,
+  IsValidBaseUri,
+  IsValidArbUri,
+  IsValidOpUri,
   isValidBuyCryptoUri,
   isValidSellCryptoUri,
   isValidMoonpayUri,
@@ -165,6 +168,15 @@ export const incomingData =
         // Matic URI
       } else if (IsValidMaticUri(data)) {
         dispatch(handleMaticUri(data, opts?.wallet));
+        // Arb URI
+      } else if (IsValidArbUri(data)) {
+        dispatch(handleArbUri(data, opts?.wallet));
+        // Base URI
+      } else if (IsValidBaseUri(data)) {
+        dispatch(handleBaseUri(data, opts?.wallet));
+        // Op URI
+      } else if (IsValidOpUri(data)) {
+        dispatch(handleOpUri(data, opts?.wallet));
         // Ripple URI
       } else if (IsValidRippleUri(data)) {
         dispatch(handleRippleUri(data, opts?.wallet));
@@ -783,7 +795,7 @@ const handleBitcoinCashUriLegacyAddress =
     const chain = 'bch';
     const parsed = BwcProvider.getInstance()
       .getBitcore()
-      .URI(data.replace(/^(bitcoincash:|bchtest:)/, 'bitcoin:'));
+      .URI(data.replace(/^(bitcoincash:|bchtest:|bchreg:)/, 'bitcoin:'));
 
     const oldAddr = parsed.address ? parsed.address.toString() : '';
     if (!oldAddr) {
@@ -905,6 +917,122 @@ const handleMaticUri =
     }
   };
 
+const handleArbUri =
+  (data: string, wallet?: Wallet): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: Arb URI'));
+    const coin = 'arb';
+    const chain = 'arb';
+    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
+    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    let feePerKb;
+    if (gasPrice.exec(data)) {
+      feePerKb = Number(gasPrice.exec(data)![1]);
+    }
+    const address = ExtractBitPayUriAddress(data);
+    const recipient = {
+      type: 'address',
+      currency: coin,
+      chain,
+      address,
+    };
+    if (!value.exec(data)) {
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+    } else {
+      const parsedAmount = value.exec(data)![1];
+      const amount = Number(
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
+      );
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          opts: {feePerKb},
+        }),
+      );
+    }
+  };
+
+const handleBaseUri =
+  (data: string, wallet?: Wallet): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: Base URI'));
+    const coin = 'base';
+    const chain = 'base';
+    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
+    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    let feePerKb;
+    if (gasPrice.exec(data)) {
+      feePerKb = Number(gasPrice.exec(data)![1]);
+    }
+    const address = ExtractBitPayUriAddress(data);
+    const recipient = {
+      type: 'address',
+      currency: coin,
+      chain,
+      address,
+    };
+    if (!value.exec(data)) {
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+    } else {
+      const parsedAmount = value.exec(data)![1];
+      const amount = Number(
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
+      );
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          opts: {feePerKb},
+        }),
+      );
+    }
+  };
+
+const handleOpUri =
+  (data: string, wallet?: Wallet): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: Op URI'));
+    const coin = 'op';
+    const chain = 'op';
+    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
+    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    let feePerKb;
+    if (gasPrice.exec(data)) {
+      feePerKb = Number(gasPrice.exec(data)![1]);
+    }
+    const address = ExtractBitPayUriAddress(data);
+    const recipient = {
+      type: 'address',
+      currency: coin,
+      chain,
+      address,
+    };
+    if (!value.exec(data)) {
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+    } else {
+      const parsedAmount = value.exec(data)![1];
+      const amount = Number(
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
+      );
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          opts: {feePerKb},
+        }),
+      );
+    }
+  };
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
@@ -1877,7 +2005,7 @@ const handlePlainAddress =
     dispatch(LogActions.info(`[scan] Incoming-data: ${_coin} plain address`));
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
-      : undefined; // There is no way to tell if an evm address is goerli or livenet so let's skip the network filter
+      : undefined; // There is no way to tell if an evm address is testnet or livenet so let's skip the network filter
     const recipient = {
       type: opts?.context || 'address',
       name: opts?.name,

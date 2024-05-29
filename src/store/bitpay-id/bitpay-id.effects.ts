@@ -165,11 +165,14 @@ export const startCreateAccount =
   };
 
 export const startSendVerificationEmail =
-  (): Effect => async (dispatch, getState) => {
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
     try {
       const {APP, BITPAY_ID} = getState();
 
-      AuthApi.sendVerificationEmail(APP.network, BITPAY_ID.session.csrfToken);
+      return AuthApi.sendVerificationEmail(
+        APP.network,
+        BITPAY_ID.session.csrfToken,
+      );
     } catch (err) {
       dispatch(
         LogActions.error('An error occurred sending verification email.'),
@@ -507,7 +510,7 @@ export const startDisconnectBitPayId =
       dispatch(LogActions.debug('Generating EID for anonymous user...'));
       const eid = uuid.v4().toString();
       dispatch(setBrazeEid(eid));
-      BrazeWrapper.identify(eid);
+      dispatch(Analytics.identify(eid));
       dispatch(renewSubscription());
     } catch (err) {
       dispatch(LogActions.debug('An error occured while clearing Braze user.'));

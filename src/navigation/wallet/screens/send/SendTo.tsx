@@ -38,9 +38,10 @@ import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
   ValidDataTypes,
+  ValidateCoinAddress,
   ValidateURI,
 } from '../../../../store/wallet/utils/validations';
-import {TouchableOpacity, View} from 'react-native';
+import {Linking, TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
@@ -73,9 +74,7 @@ import {
   Mismatch,
 } from '../../components/ErrorMessages';
 import {
-  CoinNetwork,
   createWalletAddress,
-  GetCoinAndNetwork,
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
@@ -92,6 +91,7 @@ import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
+import {URL} from '../../../../constants';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -226,8 +226,8 @@ export const BuildKeyWalletRow = (
         wallets.push(_wallet);
       });
     if (wallets.length) {
-      const {keyName = 'My Key'} = value;
-      filteredKeys.push({key, keyName, wallets});
+      const {keyName = 'My Key', backupComplete} = value;
+      filteredKeys.push({key, keyName, backupComplete, wallets});
     }
   });
   return filteredKeys;
@@ -287,9 +287,60 @@ const SendTo = () => {
     },
   };
 
+  const BridgeToPolygon: Option = {
+    img: <Icons.BridgeToPolygon />,
+    title: t('Bridge to Polygon'),
+    description: t('Transfer your assets to Polygon network'),
+    onPress: () => {
+      Linking.openURL(URL.POLYGON_BRIDGE);
+    },
+  };
+
+  const BridgeToArbitrum: Option = {
+    img: <Icons.BridgeToPolygon />,
+    title: t('Bridge to Arbitrum'),
+    description: t('Transfer your assets to Arbitrum network'),
+    onPress: () => {
+      Linking.openURL(URL.ARBITRUM_BRIDGE);
+    },
+  };
+
+  const BridgeToBase: Option = {
+    img: <Icons.BridgeToPolygon />,
+    title: t('Bridge to Base'),
+    description: t('Transfer your assets to Base network'),
+    onPress: () => {
+      Linking.openURL(URL.BASE_BRIDGE);
+    },
+  };
+
+  const BridgeToOptimism: Option = {
+    img: <Icons.BridgeToPolygon />,
+    title: t('Bridge to Optimism'),
+    description: t('Transfer your assets to Optimism network'),
+    onPress: () => {
+      Linking.openURL(URL.OPTIMISM_BRIDGE);
+    },
+  };
+
+  const bridgeOptions: Array<{chain: string; option: Option}> = [
+    {chain: 'matic', option: BridgeToPolygon},
+    {chain: 'arb', option: BridgeToArbitrum},
+    {chain: 'base', option: BridgeToBase},
+    {chain: 'op', option: BridgeToOptimism},
+  ];
+
   const assetOptions: Array<Option> = isUtxo
     ? [multisendOption, selectInputOption]
-    : [];
+    : bridgeOptions.reduce(
+        (acc: Array<Option>, {chain: bridgeChain, option}) => {
+          if (chain === bridgeChain || chain === 'eth') {
+            acc.push(option);
+          }
+          return acc;
+        },
+        [],
+      );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -335,7 +386,7 @@ const SendTo = () => {
   const BchLegacyAddressInfoDismiss = (searchText: string) => {
     try {
       const cashAddr = TranslateToBchCashAddress(
-        searchText.replace(/^(bitcoincash:|bchtest:)/, ''),
+        searchText.replace(/^(bitcoincash:|bchtest:|bchreg:)/, ''),
       );
       setSearchInput(cashAddr);
       validateAndNavigateToConfirm(cashAddr);
@@ -347,39 +398,33 @@ const SendTo = () => {
   const checkCoinAndNetwork =
     (data: any, isPayPro?: boolean): Effect<boolean> =>
     dispatch => {
-      let isValid, addrData: CoinNetwork | null;
+      let isValid = false;
       if (isPayPro) {
         isValid =
           data?.chain?.toLowerCase() === chain.toLowerCase() &&
           data?.network.toLowerCase() === network.toLowerCase();
       } else {
-        addrData = GetCoinAndNetwork(data, network, chain);
-        isValid =
-          chain === addrData?.coin.toLowerCase() &&
-          network === addrData?.network;
+        isValid = ValidateCoinAddress(data, chain, network);
       }
 
-      if (isValid) {
-        return true;
-      } else {
-        // @ts-ignore
-        let addrNetwork = isPayPro ? data.network : addrData?.network;
-        if (currencyAbbreviation === 'bch' && network === addrNetwork) {
-          const isLegacy = CheckIfLegacyBCH(data);
-          if (isLegacy) {
-            const appName = APP_NAME_UPPERCASE;
+      if (currencyAbbreviation === 'bch' && isValid && !isPayPro) {
+        const isLegacy = CheckIfLegacyBCH(data);
+        if (isLegacy) {
+          const appName = APP_NAME_UPPERCASE;
 
-            dispatch(
-              showBottomNotificationModal(
-                BchLegacyAddressInfo(appName, () => {
-                  BchLegacyAddressInfoDismiss(data);
-                }),
-              ),
-            );
-          }
+          dispatch(
+            showBottomNotificationModal(
+              BchLegacyAddressInfo(appName, () => {
+                // TODO: This doesn't seem to work
+                BchLegacyAddressInfoDismiss(data);
+                return false;
+              }),
+            ),
+          );
         }
       }
-      return false;
+
+      return isValid;
     };
 
   const validateText = async (text: string) => {

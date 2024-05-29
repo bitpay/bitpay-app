@@ -69,18 +69,16 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
   };
 
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
+    <SheetModal
+      isVisible={isVisible}
+      onBackdropPress={() => onDismiss(undefined)}>
       <GlobalSelectContainer>
         <GlobalSelect
           useAsModal={true}
           modalTitle={modalTitle}
           customSupportedCurrencies={_customSupportedCurrencies}
           onDismiss={onDismiss}
-          modalContext={
-            modalContext && ['sell', 'swap'].includes(modalContext)
-              ? 'send'
-              : modalContext
-          }
+          modalContext={modalContext}
           livenetOnly={livenetOnly}
           onHelpPress={onHelpPress}
         />

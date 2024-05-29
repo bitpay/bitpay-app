@@ -519,12 +519,12 @@ const MoonpaySellCheckout: React.FC = () => {
     let broadcastedTx;
     try {
       if (isUsingHardwareWallet) {
-        const {coin, network, account, useNativeSegwit} = wallet.credentials;
+        const {coin, network} = wallet.credentials;
         const configFn = currencyConfigs[coin];
         if (!configFn) {
           throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
         }
-        const params = configFn(network, account, useNativeSegwit);
+        const params = configFn(network);
         await prepareLedgerApp(
           params.appName,
           transportRef,
@@ -966,7 +966,8 @@ const MoonpaySellCheckout: React.FC = () => {
                 <RowData>
                   {dispatch(
                     FormatAmountStr(
-                      wallet.chain, // use chain for miner fee
+                      // @ts-ignore
+                      BitpaySupportedCoins[wallet.chain]?.feeCurrency, // use chain for miner fee. NO TRUE ANYMORE
                       wallet.chain,
                       undefined,
                       fee,

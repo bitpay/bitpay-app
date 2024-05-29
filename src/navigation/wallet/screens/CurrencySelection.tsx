@@ -136,6 +136,22 @@ const POPULAR_TOKENS: Record<string, string[]> = {
     '0xdab529f40e671a1d4bf91361c21bf9f0c9712ab7_m', // busd_m
     '0xb7b31a6bc18e48888545ce79e83e06003be70930_m',
   ], // ape_m
+  arb: [
+    '0xaf88d065e77c8cc2239327c5edb3a432268e5831_arb', // usdc_arb
+    '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f_arb', // wbtc_arb
+    '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9_arb', // usdt_arb
+    '0x82af49447d8a07e3bd95bd0d56f35241523fbab1_arb', // weth_arb
+  ],
+  base: [
+    '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913_base', // usdc_base
+    '0x4200000000000000000000000000000000000006_base', // weht_base
+  ],
+  op: [
+    '0x0b2c639c533813f4aa9d7837caf62653d097ff85_op', // usdc_op
+    '0x68f180fcce6836688e9084f035309e29bf0a2095_op', // wbtc_op
+    '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58_op', // usdt_op
+    '0x4200000000000000000000000000000000000006_op', // weth_op
+  ],
 };
 
 const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
@@ -234,17 +250,18 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
 
     // Add all chain currencies to list
     const list: CurrencySelectionListItem[] = SupportedCoinsOptions.map(
-      ({id, currencyAbbreviation, currencyName, img}) => {
-        const chain = currencyAbbreviation.toLowerCase();
+      ({id, chain, currencyAbbreviation, currencyName, img, badgeUri}) => {
+        const _chain = chain.toLowerCase();
         const item: CurrencySelectionListItem = {
           currency: {
             id,
             currencyAbbreviation,
             currencyName,
             img,
+            badgeUri,
             selected: false,
             disabled: false,
-            chain: chain,
+            chain: _chain,
             tokenAddress: undefined,
           },
           tokens: [],
@@ -366,7 +383,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
     >((accum, item) => {
       if (item.currency.selected) {
         accum.push({
-          chain: item.currency.currencyAbbreviation.toLowerCase(),
+          chain: item.currency.chain.toLowerCase(),
           currencyAbbreviation:
             item.currency.currencyAbbreviation.toLowerCase(),
           isToken: false,
@@ -376,7 +393,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       item.tokens.forEach(token => {
         if (token.selected) {
           accum.push({
-            chain: item.currency.currencyAbbreviation.toLowerCase(),
+            chain: item.currency.chain.toLowerCase(),
             currencyAbbreviation: token.currencyAbbreviation.toLowerCase(),
             tokenAddress: token.tokenAddress!.toLowerCase(),
             isToken: true,
@@ -450,10 +467,13 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
             const isToken = selectedCurrencies[0].isToken;
 
             let selectedId: string;
+            let selectedCurrencyAbbreviation: string;
+            let selectedChain: string;
             if (isToken) {
               selectedId = selectedCurrencies[0].tokenAddress!;
             } else {
-              selectedId = currencyAbbreviation.toLowerCase();
+              selectedCurrencyAbbreviation = currencyAbbreviation.toLowerCase();
+              selectedChain = chain.toLowerCase();
             }
 
             const item = allListItems.find(i => {
@@ -466,7 +486,9 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
                 return hasToken;
               } else {
                 return (
-                  i.currency.currencyAbbreviation.toLowerCase() === selectedId
+                  i.currency.currencyAbbreviation.toLowerCase() ===
+                    selectedCurrencyAbbreviation &&
+                  i.currency.chain.toLowerCase() === selectedChain
                 );
               }
             });
@@ -719,7 +741,9 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const memoizedOnViewAllPressed = useMemo(() => {
     return (currency: CurrencySelectionItem) => {
       const item = allListItemsRef.current.find(
-        i => i.currency.currencyAbbreviation === currency.currencyAbbreviation,
+        i =>
+          i.currency.currencyAbbreviation === currency.currencyAbbreviation &&
+          i.currency.chain === currency.chain,
       );
 
       if (!item) {

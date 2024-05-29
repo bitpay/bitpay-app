@@ -46,7 +46,7 @@ import {WalletActions} from '../wallet';
 import {
   startMigration,
   startWalletStoreInit,
-  getPriceHistory,
+  startGetRates,
 } from '../wallet/effects';
 import {
   setAnnouncementsAccepted,
@@ -121,7 +121,6 @@ import {startCustomTokensMigration} from '../wallet/effects/currencies/currencie
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
-import {initAppsFlyer} from '../../utils/appsFlyer';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -140,8 +139,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       ),
     );
 
-    // Start Unified Deep Link
-    startAppsFlyer();
     dispatch(deferDeeplinksUntilAppIsReady());
 
     const {APP, CONTACT, WALLET} = getState();
@@ -238,16 +235,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(showBlur(false));
     RNBootSplash.hide();
   }
-};
-
-const startAppsFlyer = () => {
-  initAppsFlyer()
-    .then(() => {
-      LogActions.info('AppsFlyer initialized');
-    })
-    .catch(err => {
-      LogActions.error('AppsFlyer failed to initialize: ' + err);
-    });
 };
 
 const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
@@ -946,7 +933,7 @@ const _startUpdateWalletStatus = debounce(
   {leading: true, trailing: false},
 );
 
-const _setScanFinishedForWallet = (
+const _setScanFinishedForWallet = async (
   dispatch: AppDispatch,
   key: Key,
   wallet: Wallet,
@@ -958,6 +945,10 @@ const _setScanFinishedForWallet = (
       isScanning: false,
     }),
   );
+  await dispatch(startGetRates({force: true}));
+  await dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+  await sleep(1000);
+  await dispatch(updatePortfolioBalance());
 };
 
 export const handleBwsEvent =
@@ -1035,7 +1026,6 @@ export const resetAllSettings = (): Effect => dispatch => {
   dispatch(FormatKeyBalances());
   dispatch(updatePortfolioBalance());
   dispatch(coinbaseInitialize());
-  dispatch(getPriceHistory('USD'));
   // Reset Default Language
   i18n.changeLanguage('en');
   dispatch(AppActions.setDefaultLanguage('en'));

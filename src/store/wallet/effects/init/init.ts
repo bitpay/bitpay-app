@@ -1,6 +1,6 @@
 import {Effect, RootState} from '../../../index';
 import {WalletActions} from '../../index';
-import {getPriceHistory, startGetRates} from '../rates/rates';
+import {startGetRates} from '../rates/rates';
 import {startGetTokenOptions} from '../currencies/currencies';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {LogActions} from '../../../log';
@@ -9,8 +9,7 @@ export const startWalletStoreInit =
   (): Effect<Promise<void>> => async (dispatch, getState: () => RootState) => {
     dispatch(LogActions.info('starting [startWalletStoreInit]'));
     try {
-      const {WALLET, APP} = getState();
-      const defaultAltCurrencyIsoCode = APP.defaultAltCurrency.isoCode;
+      const {WALLET} = getState();
 
       // both needed for startUpdateAllKeyAndWalletStatus
       await dispatch(startGetTokenOptions()); // needed for getRates. Get more recent 1inch tokens list
@@ -20,7 +19,6 @@ export const startWalletStoreInit =
         dispatch(startUpdateAllKeyAndWalletStatus({}));
       }
 
-      dispatch(getPriceHistory(defaultAltCurrencyIsoCode));
       dispatch(WalletActions.successWalletStoreInit());
       dispatch(LogActions.info('success [startWalletStoreInit]'));
     } catch (e) {

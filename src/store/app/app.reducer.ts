@@ -24,6 +24,8 @@ import {BiometricModalConfig} from '../../components/modal/biometric/BiometricMo
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import moment from 'moment';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {SupportedChains} from '../../constants/currencies';
+import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
@@ -40,6 +42,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'pinModalConfig',
   'showBiometricModal',
   'showBottomNotificationModal',
+  'showChainSelectorModal',
   'showDecryptPasswordModal',
   'showInAppMessage',
   'showInAppNotification',
@@ -103,6 +106,8 @@ export interface AppState {
     | undefined;
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
+  showChainSelectorModal: boolean;
+  chainSelectorModalConfig: ChainSelectorConfig | undefined;
   notificationsAccepted: boolean;
   confirmedTxAccepted: boolean;
   announcementsAccepted: boolean;
@@ -136,6 +141,9 @@ export interface AppState {
   altCurrencyList: Array<AltCurrenciesRowProps>;
   defaultAltCurrency: AltCurrenciesRowProps;
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
+  selectedChainFilterOption: SupportedChains | undefined;
+  selectedLocalChainFilterOption: SupportedChains | undefined;
+  recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
   migrationMMKVStorageComplete: boolean;
@@ -159,6 +167,11 @@ const initialState: AppState = {
       sin: '',
     },
     [Network.testnet]: {
+      priv: '',
+      pub: '',
+      sin: '',
+    },
+    [Network.regtest]: {
       priv: '',
       pub: '',
       sin: '',
@@ -219,6 +232,9 @@ const initialState: AppState = {
   altCurrencyList: [],
   defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
   recentDefaultAltCurrency: [],
+  selectedChainFilterOption: undefined,
+  selectedLocalChainFilterOption: undefined,
+  recentSelectedChainFilterOption: [],
   migrationComplete: false,
   keyMigrationFailure: false,
   migrationMMKVStorageComplete: false,
@@ -357,6 +373,19 @@ export const appReducer = (
       return {
         ...state,
         bottomNotificationModalConfig: undefined,
+      };
+
+    case AppActionTypes.SHOW_CHAIN_SELECTOR_MODAL:
+      return {
+        ...state,
+        showChainSelectorModal: true,
+        chainSelectorModalConfig: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL:
+      return {
+        ...state,
+        showChainSelectorModal: false,
       };
 
     case AppActionTypes.SET_COLOR_SCHEME:
@@ -593,6 +622,44 @@ export const appReducer = (
         ...state,
         defaultAltCurrency: action.defaultAltCurrency,
         recentDefaultAltCurrency,
+      };
+
+    case AppActionTypes.SET_DEFAULT_CHAIN_FILTER_OPTION:
+      let recentSelectedDefaultChainFilterOption = [
+        ...state.recentSelectedChainFilterOption,
+      ];
+      if (action.selectedChainFilterOption) {
+        recentSelectedDefaultChainFilterOption.unshift(
+          action.selectedChainFilterOption,
+        );
+        recentSelectedDefaultChainFilterOption = uniqBy(
+          recentSelectedDefaultChainFilterOption,
+          o => o.toLowerCase(),
+        ).slice(0, 2);
+      }
+      return {
+        ...state,
+        selectedChainFilterOption: action.selectedChainFilterOption,
+        recentSelectedChainFilterOption: recentSelectedDefaultChainFilterOption,
+      };
+
+    case AppActionTypes.SET_LOCAL_CHAIN_FILTER_OPTION:
+      let recentSelectedLocalChainFilterOption = [
+        ...state.recentSelectedChainFilterOption,
+      ];
+      if (action.selectedLocalChainFilterOption) {
+        recentSelectedLocalChainFilterOption.unshift(
+          action.selectedLocalChainFilterOption,
+        );
+        recentSelectedLocalChainFilterOption = uniqBy(
+          recentSelectedLocalChainFilterOption,
+          o => o.toLowerCase(),
+        ).slice(0, 2);
+      }
+      return {
+        ...state,
+        selectedLocalChainFilterOption: action.selectedLocalChainFilterOption,
+        recentSelectedChainFilterOption: recentSelectedLocalChainFilterOption,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:

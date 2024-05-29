@@ -177,17 +177,10 @@ const PriceCharts = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
-  const {
-    currencyName,
-    chain,
-    currentPrice,
-    priceDisplay,
-    currencyAbbreviation,
-    img,
-  } = item;
+  const {currencyName, chain, currentPrice, currencyAbbreviation, img} = item;
 
   const {coinColor, gradientBackgroundColor} =
-    BitpaySupportedCoins[currencyAbbreviation.toLowerCase()].theme;
+    BitpaySupportedCoins[chain.toLowerCase()].theme;
 
   const chartStyle = {
     data: {
@@ -262,6 +255,7 @@ const PriceCharts = () => {
       setDisplayData(cachedRates[dateRange]);
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
+      setLoading(false);
     } else {
       try {
         dispatch(startOnGoingProcessModal('LOADING'));
@@ -275,6 +269,7 @@ const PriceCharts = () => {
         setDisplayData({data, domain, percentChange});
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
+        setLoading(false);
       } catch (e) {
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
@@ -310,15 +305,9 @@ const PriceCharts = () => {
   });
 
   useEffect(() => {
-    if (loading) {
-      const defaultDateRange = DateRanges.Day;
-      const formattedData = getFormattedData(priceDisplay);
-
-      setCachedRates({...cachedRates, ...{[defaultDateRange]: formattedData}});
-      setDisplayData(formattedData);
-      setLoading(false);
-    }
-  }, [loading, cachedRates, currencyAbbreviation, priceDisplay]);
+    const defaultDateRange = DateRanges.Day;
+    redrawChart(defaultDateRange);
+  }, []);
 
   return (
     <SafeAreaView>

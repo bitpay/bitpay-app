@@ -3,10 +3,7 @@ import {HistoricRate, Rates} from '../../../rate/rate.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
-import {
-  DEFAULT_RBF_SEQ_NUMBER,
-  SAFE_CONFIRMATIONS,
-} from '../../../../constants/wallet';
+import {SAFE_CONFIRMATIONS} from '../../../../constants/wallet';
 import {IsCustomERCToken, IsERCToken, IsUtxoCoin} from '../../utils/currency';
 import {ToAddress, ToLtcAddress} from '../address/address';
 import {
@@ -21,17 +18,17 @@ import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
-import {
-  formatCurrencyAbbreviation,
-  formatFiatAmount,
-} from '../../../../utils/helper-methods';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {partition} from 'lodash';
-import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  SUPPORTED_EVM_COINS,
+} from '../../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 const BWC = BwcProvider.getInstance();
@@ -211,9 +208,25 @@ const ProcessTx =
     );
 
     tx.feeStr = tx.fee
-      ? dispatch(FormatAmountStr(chain, chain, undefined, tx.fee))
+      ? // @ts-ignore
+        dispatch(
+          FormatAmountStr(
+            BitpaySupportedCoins[chain]?.feeCurrency,
+            chain,
+            undefined,
+            tx.fee,
+          ),
+        )
       : tx.fees
-      ? dispatch(FormatAmountStr(chain, chain, undefined, tx.fees))
+      ? // @ts-ignore
+        dispatch(
+          FormatAmountStr(
+            BitpaySupportedCoins[chain]?.feeCurrency,
+            chain,
+            undefined,
+            tx.fees,
+          ),
+        )
       : 'N/A';
 
     if (tx.amountStr) {
@@ -254,11 +267,6 @@ const ProcessNewTxs =
 
       if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
         const {inputs} = await GetCoinsForTx(wallet, tx.txid);
-        tx.isRBF = inputs.some(
-          (input: any) =>
-            input.sequenceNumber &&
-            input.sequenceNumber < DEFAULT_RBF_SEQ_NUMBER - 1,
-        );
         tx.hasUnconfirmedInputs = inputs.some(
           (input: any) => input.mintHeight < 0,
         );
@@ -952,14 +960,7 @@ export const buildTransactionDetails =
 
         _transaction.feeFiatStr = formatFiatAmount(
           dispatch(
-            toFiat(
-              _fee,
-              alternativeCurrency,
-              chain,
-              chain,
-              rates,
-              wallet.tokenAddress,
-            ),
+            toFiat(_fee, alternativeCurrency, chain, chain, rates, undefined),
           ),
           alternativeCurrency,
         );

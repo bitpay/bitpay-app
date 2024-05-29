@@ -38,6 +38,7 @@ import WCV2WalletSelector from '../components/WCV2WalletSelector';
 import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import PlusIcon from '../../../components/plus/Plus';
 import {AddButton} from '../../wallet/screens/CreateMultisig';
+import SearchComponent from '../../../components/chain-search/ChainSearch';
 
 const WalletConnectConnectionsContainer = styled.SafeAreaView`
   flex: 1;
@@ -68,6 +69,12 @@ const WalletConnectConnections = () => {
   // version 2
   const sessions: WCV2SessionType[] = useAppSelector(
     ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
+  );
+
+  const [searchVal, setSearchVal] = useState('');
+  const [searchResults, setSearchResults] = useState([] as WCV2SessionType[]);
+  const selectedChainFilterOption = useAppSelector(
+    ({APP}) => APP.selectedChainFilterOption,
   );
 
   const [dappProposal, setDappProposal] = useState<any>();
@@ -191,45 +198,68 @@ const WalletConnectConnections = () => {
     [dispatch],
   );
 
+  const SessionList = ({sessions}: {sessions: WCV2SessionType[]}) => {
+    return (
+      <>
+        {sessions.map((session, index) => {
+          const {peer, namespaces, accounts} = session;
+          return (
+            <View style={{marginVertical: 15}} key={index.toString()}>
+              <ConnectionItem
+                peerIcon={peer.metadata.icons[0]}
+                peerName={peer.metadata.name}
+                session={session}
+              />
+              {Object.keys(namespaces).length
+                ? Object.keys(namespaces).map(key => {
+                    return namespaces[key].accounts
+                      .sort((a, b) => {
+                        const getAddress = (str: string) =>
+                          str.match(accountRegex)?.[0];
+                        return (getAddress(a) || '').localeCompare(
+                          getAddress(b) || '',
+                        );
+                      })
+                      .filter(account => accounts.includes(account))
+                      .map((account, subIndex) => (
+                        <Connections
+                          keys={allKeys}
+                          account={account}
+                          session={session}
+                          key={subIndex.toString()}
+                        />
+                      ));
+                  })
+                : null}
+            </View>
+          );
+        })}
+      </>
+    );
+  };
+
   return (
     <WalletConnectConnectionsContainer>
       <ScrollView>
         <View style={{marginTop: 20, padding: 16}}>
           <HeaderTitle>{t('Connections')}</HeaderTitle>
-          {sessions.length
-            ? sessions.map((session, index: number) => {
-                const {peer, namespaces} = session;
-                return (
-                  <View style={{marginVertical: 15}} key={index.toString()}>
-                    <ConnectionItem
-                      peerIcon={peer.metadata.icons[0]}
-                      peerName={peer.metadata.name}
-                      session={session}
-                    />
-                    {Object.keys(namespaces).length
-                      ? Object.keys(namespaces).map(key => {
-                          return namespaces[key].accounts
-                            .sort((a, b) => {
-                              const getAddress = (str: string) =>
-                                str.match(accountRegex)?.[0];
-                              return (getAddress(a) || '').localeCompare(
-                                getAddress(b) || '',
-                              );
-                            })
-                            .map((account, index) => (
-                              <Connections
-                                keys={allKeys}
-                                account={account}
-                                session={session}
-                                key={index.toString()}
-                              />
-                            ));
-                        })
-                      : null}
-                  </View>
-                );
-              })
-            : null}
+          <SearchComponent<WCV2SessionType>
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={searchResults}
+            setSearchResults={setSearchResults}
+            searchFullList={sessions}
+            context={'walletconnect'}
+          />
+          {sessions.length ? (
+            <SessionList
+              sessions={
+                !searchVal && !selectedChainFilterOption
+                  ? sessions
+                  : searchResults
+              }
+            />
+          ) : null}
 
           {!sessions.length ? (
             <EmptyListContainer>

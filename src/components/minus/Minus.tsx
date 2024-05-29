@@ -1,7 +1,7 @@
 import React from 'react';
 import {Color, Path, Svg} from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
-import {Slate} from '../../styles/colors';
+import {Action, White} from '../../styles/colors';
 
 interface MinusProps {
   color: Color | null | undefined;
@@ -24,7 +24,7 @@ const Minus: React.FC<MinusProps> = ({color}) => {
 
 const MinusIcon = ({color, opacity}: Props) => {
   const theme = useTheme();
-  const themedColor = theme.dark ? Slate : '#c4c4c4';
+  const themedColor = theme.dark ? White : Action;
 
   return <Minus color={color || themedColor} opacity={opacity} />;
 };

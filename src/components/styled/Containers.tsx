@@ -33,6 +33,10 @@ export const HeaderTitleContainer = styled.View`
   padding: 10px;
 `;
 
+export const ScreenContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
 export const TitleContainer = styled.View`
   width: ${WIDTH * 0.75}px;
 `;
@@ -103,6 +107,12 @@ export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
   margin: 0 6px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
+`;
+
+export const RowContainerWithoutBorders = styled.TouchableOpacity<RowContainerProps>`
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 0px;
 `;
 
 export const RowContainerWithoutFeedback = styled.View<RowContainerProps>`
@@ -339,6 +349,24 @@ export const SearchInput = styled.TextInput`
   height: 32px;
   color: ${({theme}) => theme.colors.text};
   background-color: transparent;
+`;
+
+// Search Round
+export const SearchRoundContainer = styled.View`
+  flex-direction: row;
+  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : '#e1e4e7')};
+  border-radius: 100px;
+  align-items: center;
+  height: 50px;
+  margin: 16px 0px;
+`;
+
+export const SearchRoundInput = styled.TextInput`
+  flex: 1;
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+  background-color: transparent;
+  font-size: 16px;
+  font-weight: 400;
 `;
 
 // Hidden label

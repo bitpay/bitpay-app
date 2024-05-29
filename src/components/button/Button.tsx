@@ -15,6 +15,8 @@ import {
   Caution,
   Disabled,
   DisabledDark,
+  DisabledText,
+  DisabledTextDark,
   LightBlack,
   Midnight,
   NeutralSlate,
@@ -129,7 +131,7 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 
   color: ${({danger, disabled, secondary, theme}) => {
     if (disabled) {
-      return theme.dark ? '#656565' : '#bebec0';
+      return theme.dark ? DisabledTextDark : DisabledText;
     }
 
     if (secondary) {

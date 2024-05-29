@@ -1,6 +1,7 @@
 import {Effect} from '../..';
 import {
   BitpaySupportedCoins,
+  BitpaySupportedEvmCoins,
   BitpaySupportedTokens,
   BitpaySupportedUtxoCoins,
 } from '../../../constants/currencies';
@@ -59,6 +60,12 @@ export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
   );
 };
 
+export const IsEVMCoin = (currencyAbbreviation: string): boolean => {
+  return Object.keys(BitpaySupportedEvmCoins).includes(
+    currencyAbbreviation.toLowerCase(),
+  );
+};
+
 export const IsCustomERCToken = (
   tokenAddress: string | undefined,
   chain: string,
@@ -74,7 +81,10 @@ export const IsERCToken = (
   currencyAbbreviation: string,
   chain: string,
 ): boolean => {
-  return currencyAbbreviation.toLowerCase() !== chain.toLowerCase();
+  return (
+    currencyAbbreviation.toLowerCase() !== chain.toLowerCase() &&
+    currencyAbbreviation.toLowerCase() !== 'eth' // workaround for L2 eth
+  );
 };
 
 export const GetBlockExplorerUrl = (

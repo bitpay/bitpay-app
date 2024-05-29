@@ -105,6 +105,7 @@ const initialState: CardState = {
   cards: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
+    [Network.regtest]: [],
   },
   balances: {},
   virtualCardImages: {},
