@@ -70,11 +70,11 @@ export const EVM_BLOCKCHAIN_ID: {[key in string]: number} = {
 export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'etherscan.io/',
-    [Network.testnet]: 'goerli.etherscan.io/',
+    [Network.testnet]: 'sepolia.etherscan.io/',
   },
   matic: {
     [Network.mainnet]: 'polygonscan.com/',
-    [Network.testnet]: 'mumbai.polygonscan.com/',
+    [Network.testnet]: 'amoy.polygonscan.com/',
   },
   arb: {
     [Network.mainnet]: 'arbiscan.io/',
@@ -99,11 +99,35 @@ export const METHOD_ENVS = {
 export const PROTOCOL_NAME: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'Ethereum Mainnet',
-    [Network.testnet]: 'Goerli',
+    [Network.testnet]: 'Sepolia',
   },
   matic: {
     [Network.mainnet]: 'Polygon',
-    [Network.testnet]: 'Mumbai',
+    [Network.testnet]: 'Amoy',
+  },
+  arb: {
+    [Network.mainnet]: 'Arbitrum',
+    [Network.testnet]: 'Sepolia',
+  },
+  base: {
+    [Network.mainnet]: 'Base',
+    [Network.testnet]: 'Sepolia',
+  },
+  op: {
+    [Network.mainnet]: 'Optimism',
+    [Network.testnet]: 'Sepolia',
+  },
+  btc: {
+    [Network.testnet]: 'Testnet3',
+  },
+  bch: {
+    [Network.testnet]: 'Testnet3',
+  },
+  doge: {
+    [Network.testnet]: 'Testnet3',
+  },
+  ltc: {
+    [Network.testnet]: 'Testnet4',
   },
   arb: {
     [Network.mainnet]: 'Arbitrum',

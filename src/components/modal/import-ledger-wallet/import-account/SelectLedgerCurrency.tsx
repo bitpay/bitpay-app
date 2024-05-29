@@ -188,7 +188,7 @@ export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
   eth: network => {
     const isMainnet = network === Network.mainnet;
     return {
-      appName: isMainnet ? 'Ethereum' : 'Ethereum Goerli',
+      appName: isMainnet ? 'Ethereum' : 'Ethereum Sepolia',
       network,
       purpose: "44'",
       coin: isMainnet ? "60'" : "1'",
@@ -196,8 +196,9 @@ export const currencyConfigs: {[key: string]: CurrencyConfigFn} = {
     };
   },
   matic: network => {
+    const isMainnet = network === Network.mainnet;
     return {
-      appName: 'Polygon',
+      appName: isMainnet ? 'Polygon' : 'Polygon Amoy',
       network,
       purpose: "44'",
       coin: "60'",
