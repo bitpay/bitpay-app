@@ -112,6 +112,9 @@ export interface WalletObj {
   preferences?: {
     tokenAddresses?: [];
     maticTokenAddresses?: [];
+    opTokenAddresses?: [];
+    arbTokenAddresses?: [];
+    baseTokenAddresses?: [];
   };
   img: string | ((props?: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);

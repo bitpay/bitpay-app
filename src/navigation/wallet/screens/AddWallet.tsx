@@ -440,7 +440,9 @@ const AddWallet = ({
           }
         } else {
           _currencyAbbreviation = SupportedCurrencyOptions.find(
-            currencyOpts => currencyOpts.currencyAbbreviation === chain,
+            currencyOpts =>
+              currencyOpts.chain === chain &&
+              currencyOpts.currencyAbbreviation === currencyAbbreviation,
           )?.currencyAbbreviation!;
         }
 
@@ -484,11 +486,15 @@ const AddWallet = ({
           dispatch(LogActions.info(`new address generated: ${walletAddress}`));
         }
 
-        // new wallet might have funds
-        await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-        await sleep(1000);
-        dispatch(updatePortfolioBalance());
+        try {
+          // new wallet might have funds
+          await dispatch(startGetRates({force: true}));
+          await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+          await sleep(1000);
+          dispatch(updatePortfolioBalance());
+        } catch (error) {
+          // ignore error
+        }
 
         dispatch(dismissOnGoingProcessModal());
         resolve(wallet);
@@ -656,8 +662,7 @@ const AddWallet = ({
       };
       const addrData = GetCoinAndNetwork(tokenAddress, network, chain);
       const isValid =
-        currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
-        network === addrData?.network;
+        addrData?.coin.toLowerCase() && network === addrData?.network;
 
       if (!isValid) {
         return;
@@ -694,7 +699,7 @@ const AddWallet = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={`${currencyAbbreviation} Wallet`}
-                label={isToken ? 'TOKEN NAME' : 'WALLET NAME'}
+                label={'WALLET NAME'}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.walletName?.message}

@@ -63,6 +63,12 @@ const allowedUrlPrefixes = [
   'https://bridge.arbitrum.io/',
   'https://bridge.base.org/',
   'https://app.optimism.io/bridge/',
+  'https://mainnet.optimism.io/',
+  'https://arb1.arbitrum.io/rpc',
+  'https://mainnet.base.org/',
+  'https://goerli.optimism.io',
+  'https://goerli-rollup.arbitrum.io/rpc',
+  'https://goerli.base.org',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');

@@ -618,7 +618,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
             ) : null}
             {DESCRIPTIONS[currencyAbbreviation] ? (
               <TokensHeading>
-                {t('PopularArgTokens', {currency: currencyName})}
+                {t('Popular {{currency}} Tokens', {currency: currencyName})}
               </TokensHeading>
             ) : null}
           </>
@@ -669,8 +669,8 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                 onViewAllTokensPressed(item);
               }}>
               {viewAllChainSelected !== currencyAbbreviation
-                ? t('ViewAllArgTokens', {currency: currencyName})
-                : t('MinimizeArgTokens', {currency: currencyName})}
+                ? t('View all {{currency}} tokens', {currency: currencyName})
+                : t('Minimize {{currency}} tokens', {currency: currencyName})}
             </ViewAllLink>
           </TokensFooter>
         ) : null}

@@ -922,6 +922,7 @@ export const startImportFromHardwareWallet =
     publicKey,
     accountPath,
     coin,
+    chain,
     derivationStrategy,
     accountNumber,
     network,
@@ -932,6 +933,17 @@ export const startImportFromHardwareWallet =
     publicKey?: string;
     accountPath: string;
     coin: 'btc' | 'eth' | 'xrp' | 'bch' | 'ltc' | 'doge' | 'matic';
+    chain:
+      | 'btc'
+      | 'eth'
+      | 'xrp'
+      | 'bch'
+      | 'ltc'
+      | 'doge'
+      | 'matic'
+      | 'arb'
+      | 'op'
+      | 'base';
     derivationStrategy: string;
     accountNumber: number;
     network: Network;
@@ -954,6 +966,7 @@ export const startImportFromHardwareWallet =
         w =>
           w.credentials.rootPath === accountPath &&
           w.credentials.coin === coin &&
+          w.credentials.chain === chain &&
           w.credentials.account === accountNumber &&
           w.credentials.network === network,
       );
@@ -963,9 +976,10 @@ export const startImportFromHardwareWallet =
       }
 
       const hwKeyId = key.id;
-      const name = dispatch(GetName(coin, coin)); // TODO chain === coin for stored wallets
+      const name = dispatch(GetName(coin, chain)); // TODO chain === coin for stored wallets. NOT TRUE ANYMORE
       const credentials = credentialsFromExtendedPublicKey(
         coin,
+        chain,
         accountNumber,
         accountPath,
         name,
@@ -1001,6 +1015,7 @@ export const startImportFromHardwareWallet =
             network,
             useNativeSegwit,
             coin,
+            chain,
             walletPrivKey: credentials.walletPrivKey,
             singleAddress,
           };

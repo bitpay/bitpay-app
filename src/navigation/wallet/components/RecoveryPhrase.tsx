@@ -417,10 +417,14 @@ const RecoveryPhrase = () => {
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
-      await dispatch(startGetRates({force: true}));
-      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      await sleep(1000);
-      await dispatch(updatePortfolioBalance());
+      try {
+        await dispatch(startGetRates({force: true}));
+        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await sleep(1000);
+        await dispatch(updatePortfolioBalance());
+      } catch (error) {
+        // ignore error
+      }
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       backupRedirect({
         context: route.params?.context,
@@ -483,11 +487,14 @@ const RecoveryPhrase = () => {
       await dispatch(startOnGoingProcessModal('CREATING_KEY'));
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
-      await dispatch(startGetRates({force: true}));
-      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-      await sleep(1000);
-      await dispatch(updatePortfolioBalance());
-
+      try {
+        await dispatch(startGetRates({force: true}));
+        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await sleep(1000);
+        await dispatch(updatePortfolioBalance());
+      } catch (error) {
+        // ignore error
+      }
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
       backupRedirect({
@@ -510,9 +517,14 @@ const RecoveryPhrase = () => {
 
   const renderItem = useCallback(
     ({item}) => {
-      const currencySelected = (_currencyAbbreviation: string, _chain: string) => {
+      const currencySelected = (
+        _currencyAbbreviation: string,
+        _chain: string,
+      ) => {
         const _selectedCurrency = CurrencyOptions.filter(
-          currency => currency.currencyAbbreviation === _currencyAbbreviation && currency.chain === _chain,
+          currency =>
+            currency.currencyAbbreviation === _currencyAbbreviation &&
+            currency.chain === _chain,
         );
         const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
         const chain = _selectedCurrency[0].chain;
@@ -729,7 +741,11 @@ const RecoveryPhrase = () => {
                         justifyContent: 'space-between',
                       }}>
                       <Row>
-                        <CurrencyImage img={selectedCurrency.img} badgeUri={selectedCurrency.badgeUri} size={30} />
+                        <CurrencyImage
+                          img={selectedCurrency.img}
+                          badgeUri={selectedCurrency.badgeUri}
+                          size={30}
+                        />
                         <CurrencyName>
                           {selectedCurrency?.currencyAbbreviation?.toUpperCase()}
                         </CurrencyName>

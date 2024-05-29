@@ -467,8 +467,10 @@ export const buildTxDetails =
           ? parseInt(params[0]?.gasPrice, 16)
           : feePerKb!;
         nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
-        coin = chain =
-          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
+        chain = WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
+        coin =
+          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]
+            ?.currencyAbbreviation;
         amount = parseInt(params[0]?.value, 16) || 0;
         gasLimit =
           (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
@@ -552,7 +554,7 @@ export const buildTxDetails =
         toFiat(
           fee,
           defaultAltCurrencyIsoCode,
-          chain,
+          BitpaySupportedCoins[chain]?.feeCurrency,
           chain,
           rates,
           undefined,
@@ -618,7 +620,7 @@ export const buildTxDetails =
                 toFiat(
                   networkCost,
                   defaultAltCurrencyIsoCode,
-                  chain,
+                  BitpaySupportedCoins[chain]?.feeCurrency,
                   chain,
                   rates,
                   undefined,
@@ -1734,9 +1736,9 @@ const getSignaturesFromLedger = (
   wallet: Wallet,
   txp: TransactionProposal,
 ) => {
-  const {coin: currency, network, chain} = wallet.credentials;
+  const {chain: currency, network, chain} = wallet.credentials;
   if (IsUtxoCoin(currency)) {
-    const configFn = currencyConfigs[currency];
+    const configFn = currencyConfigs[chain];
     const params = configFn(network);
     return getUtxoSignaturesFromLedger(
       wallet,
@@ -1745,14 +1747,17 @@ const getSignaturesFromLedger = (
       params as UtxoAccountParams,
     );
   }
-  if (['eth', 'matic'].includes(currency) || IsERCToken(currency, chain)) {
+  if (
+    ['eth', 'matic', 'base', 'op', 'arb'].includes(chain) ||
+    IsERCToken(currency, chain)
+  ) {
     return getEVMSignaturesFromLedger(wallet, txp, transport);
   }
-  if (currency === 'xrp') {
+  if (chain === 'xrp') {
     return getXrpSignaturesFromLedger(wallet, txp, transport);
   }
 
-  throw new Error(`Unsupported currency: ${currency.toUpperCase()}`);
+  throw new Error(`Unsupported chain: ${chain.toUpperCase()}`);
 };
 
 const getSignaturesFromHardwareWallet = (

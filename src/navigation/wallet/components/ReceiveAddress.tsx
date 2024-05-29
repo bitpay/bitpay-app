@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
@@ -138,12 +138,18 @@ const WarningTitle = styled(BaseText)`
   font-weight: bold;
 `;
 
-const WarningDescription = styled(BaseText)`
+const WarningDescription = styled(BaseText)<{isToken?: boolean}>`
   font-size: 14px;
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   padding: 0px 10px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  ${({isToken}) =>
+    isToken &&
+    css`
+      padding-bottom: 20px;
+      border-bottom-width: 1px;
+      border-bottom-color: ${({theme: {dark}}) =>
+        dark ? LightBlack : '#ECEFFD'};
+    `};
 `;
 
 interface Props {
@@ -312,7 +318,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={_closeModal}>
       <ReceiveAddressContainer>
-        {!singleAddress ? (
+        {!singleAddress && isUtxo ? (
           <ReceiveAddressHeader
             onPressRefresh={() => createAddress(true)}
             contextHandlers={headerContextHandlers}
@@ -352,43 +358,41 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           </LoadingContainer>
         )}
 
-        {IsERCToken(wallet.currencyAbbreviation, wallet.chain) ? (
-          <WarningContainer>
-            <WarningHeader>
-              <WarningSvg />
-              <WarningDescription>
-                <WarningTitle>{t('Warning!')}</WarningTitle>
-                {'\n'}
-                {t(
-                  'Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.',
-                  {
-                    coin: wallet?.currencyAbbreviation?.toUpperCase(),
-                    protocolName: titleCasing(
-                      getProtocolName(wallet.chain, wallet.network)!,
-                    ),
-                  },
-                )}
-              </WarningDescription>
-            </WarningHeader>
-            {wallet.credentials.token?.address ? (
-              <>
-                <ContractHeaderContainer>
-                  <TitleContainer>{t('Contract Address')}</TitleContainer>
-                  <LinkContainer>
-                    <LinkIcon />
-                    <ContractLink
-                      onPress={() => dispatch(viewOnBlockchain(wallet))}>
-                      {t('View Contract')}
-                    </ContractLink>
-                  </LinkContainer>
-                </ContractHeaderContainer>
-                <ContractAddressText>
-                  {wallet.credentials.token?.address}
-                </ContractAddressText>
-              </>
-            ) : null}
-          </WarningContainer>
-        ) : null}
+        <WarningContainer>
+          <WarningHeader>
+            <WarningSvg />
+            <WarningDescription isToken={wallet.credentials.token?.address}>
+              <WarningTitle>{t('Warning!')}</WarningTitle>
+              {'\n'}
+              {t(
+                'Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.',
+                {
+                  coin: wallet?.currencyAbbreviation?.toUpperCase(),
+                  protocolName: titleCasing(
+                    getProtocolName(wallet.chain, wallet.network)!,
+                  ),
+                },
+              )}
+            </WarningDescription>
+          </WarningHeader>
+          {wallet.credentials.token?.address ? (
+            <>
+              <ContractHeaderContainer>
+                <TitleContainer>{t('Contract Address')}</TitleContainer>
+                <LinkContainer>
+                  <LinkIcon />
+                  <ContractLink
+                    onPress={() => dispatch(viewOnBlockchain(wallet))}>
+                    {t('View Contract')}
+                  </ContractLink>
+                </LinkContainer>
+              </ContractHeaderContainer>
+              <ContractAddressText>
+                {wallet.credentials.token?.address}
+              </ContractAddressText>
+            </>
+          ) : null}
+        </WarningContainer>
         <CloseButton onPress={_closeModal}>
           <CloseButtonText>{t('CLOSE')}</CloseButtonText>
         </CloseButton>

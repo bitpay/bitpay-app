@@ -519,10 +519,10 @@ const MoonpaySellCheckout: React.FC = () => {
     let broadcastedTx;
     try {
       if (isUsingHardwareWallet) {
-        const {coin, network} = wallet.credentials;
-        const configFn = currencyConfigs[coin];
+        const {chain, network} = wallet.credentials;
+        const configFn = currencyConfigs[chain];
         if (!configFn) {
-          throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
+          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
         const params = configFn(network);
         await prepareLedgerApp(
@@ -967,7 +967,7 @@ const MoonpaySellCheckout: React.FC = () => {
                   {dispatch(
                     FormatAmountStr(
                       // @ts-ignore
-                      BitpaySupportedCoins[wallet.chain]?.feeCurrency, // use chain for miner fee. NO TRUE ANYMORE
+                      BitpaySupportedCoins[wallet.chain]?.feeCurrency,
                       wallet.chain,
                       undefined,
                       fee,

@@ -284,8 +284,10 @@ const CurrencyTokenSelectionScreen: React.VFC<
         <>
           {index === 0 && searchFilter?.length === 0 ? (
             <TokensHeading>
-              {t('PopularArgTokens', {currency: t(chain.currencyName)})} (
-              {tokenLength})
+              {t('Popular {{currency}} Tokens', {
+                currency: t(chain.currencyName),
+              })}{' '}
+              ({tokenLength})
             </TokensHeading>
           ) : null}
           {index === tokenLength && searchFilter?.length === 0 ? (

@@ -519,11 +519,11 @@ const BillConfirm: React.VFC<
       Analytics.track('Bill Pay - Clicked Slide to Confirm', baseEventParams),
     );
     try {
-      if (isUsingHardwareWallet) {
-        const {coin, network} = wallet.credentials;
-        const configFn = currencyConfigs[coin];
+      if (isUsingHardwareWallet && wallet) {
+        const {chain, network} = wallet.credentials;
+        const configFn = currencyConfigs[chain];
         if (!configFn) {
-          throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
+          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
         const params = configFn(network);
         await prepareLedgerApp(

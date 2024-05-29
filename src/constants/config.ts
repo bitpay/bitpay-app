@@ -25,6 +25,9 @@ export const BASE_BITCORE_URL = {
   eth: 'https://api-eth.bitcore.io/api',
   matic: 'https://api-matic.bitcore.io/api',
   xrp: 'https://api-xrp.bitcore.io/api',
+  arb: 'https://api-eth.bitcore.io/api',
+  base: 'https://api-eth.bitcore.io/api',
+  op: 'https://api-eth.bitcore.io/api',
 };
 
 export const APP_DEEPLINK_PREFIX = 'bitpay://';

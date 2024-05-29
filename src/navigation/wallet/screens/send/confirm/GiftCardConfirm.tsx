@@ -364,10 +364,10 @@ const Confirm = () => {
     try {
       if (isUsingHardwareWallet) {
         if (txp && wallet && recipient) {
-          const {coin, network} = wallet.credentials;
-          const configFn = currencyConfigs[coin];
+          const {chain, network} = wallet.credentials;
+          const configFn = currencyConfigs[chain];
           if (!configFn) {
-            throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
+            throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
           }
           const params = configFn(network);
           await prepareLedgerApp(

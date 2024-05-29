@@ -405,10 +405,10 @@ const Confirm = () => {
 
     try {
       if (isUsingHardwareWallet) {
-        const {coin, network} = wallet.credentials;
-        const configFn = currencyConfigs[coin];
+        const {chain, network} = wallet.credentials;
+        const configFn = currencyConfigs[chain];
         if (!configFn) {
-          throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
+          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
         const params = configFn(network);
         await prepareLedgerApp(
@@ -537,7 +537,7 @@ const Confirm = () => {
     if (txp.feePerKb) {
       feePerKb = txp.feePerKb;
     } else {
-      feePerKb = await getFeeRatePerKb({wallet, feeLevel: fee.feeLevel});
+      feePerKb = await getFeeRatePerKb({wallet, feeLevel: fee?.feeLevel});
     }
     setShowHighFeeWarningMessage(
       feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[chain] && txp.amount !== 0,
@@ -776,17 +776,17 @@ const Confirm = () => {
           />
           {isTxLevelAvailable() ? (
             <TransactionLevel
-              feeLevel={fee.feeLevel}
+              feeLevel={fee?.feeLevel || 'normal'}
               wallet={wallet}
               isVisible={showTransactionLevel}
               onCloseModal={(selectedLevel, customFeePerKB) =>
                 onCloseTxLevelModal(selectedLevel, customFeePerKB)
               }
               customFeePerKB={
-                fee.feeLevel === 'custom' ? txp?.feePerKb : undefined
+                fee?.feeLevel === 'custom' ? txp?.feePerKb : undefined
               }
               feePerSatByte={
-                fee.feeLevel === 'custom' && txp?.feePerKb
+                fee?.feeLevel === 'custom' && txp?.feePerKb
                   ? txp?.feePerKb / 1000
                   : undefined
               }

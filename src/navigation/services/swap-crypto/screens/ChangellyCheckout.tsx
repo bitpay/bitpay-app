@@ -627,10 +627,10 @@ const ChangellyCheckout: React.FC = () => {
     const isUsingHardwareWallet = !!transport;
     try {
       if (isUsingHardwareWallet) {
-        const {coin, network} = fromWalletSelected.credentials;
-        const configFn = currencyConfigs[coin];
+        const {chain, network} = fromWalletSelected.credentials;
+        const configFn = currencyConfigs[chain];
         if (!configFn) {
-          throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
+          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
         const params = configFn(network);
         await prepareLedgerApp(
@@ -953,7 +953,7 @@ const ChangellyCheckout: React.FC = () => {
                     FormatAmountStr(
                       // @ts-ignore
                       BitpaySupportedCoins[fromWalletSelected.chain]
-                        ?.feeCurrency, // use chain for miner fee. NO TRUE ANYMORE
+                        ?.feeCurrency,
                       fromWalletSelected.chain,
                       undefined,
                       fee,

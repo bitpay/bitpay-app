@@ -234,7 +234,7 @@ export const addWallet =
         );
 
         dispatch(successAddWallet({key}));
-        dispatch(LogActions.info(`Added Wallet ${currency}`));
+        dispatch(LogActions.info(`Added Wallet ${currencyName}`));
         resolve(newWallet);
       } catch (err) {
         const errstring =
@@ -465,6 +465,9 @@ const createTokenWallet =
         wallet.preferences = wallet.preferences || {
           tokenAddresses: [],
           maticTokenAddresses: [],
+          opTokenAddresses: [],
+          arbTokenAddresses: [],
+          baseTokenAddresses: [],
         };
 
         switch (wallet.credentials.chain) {
@@ -476,6 +479,24 @@ const createTokenWallet =
             break;
           case 'matic':
             wallet.preferences.maticTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'op':
+            wallet.preferences.opTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'base':
+            wallet.preferences.baseTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'arb':
+            wallet.preferences.arbTokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );
@@ -613,6 +634,7 @@ export const createWalletWithOpts =
             network: opts.networkName,
             singleAddress: opts.singleAddress,
             coin: opts.coin,
+            chain: opts.chain,
             useNativeSegwit: opts.useNativeSegwit,
           },
           (err: Error) => {
