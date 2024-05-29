@@ -1,4 +1,6 @@
 import Braze from 'react-native-appboy-sdk';
+import axios from 'axios';
+import {BRAZE_MERGE_AND_DELETE_API_KEY, BRAZE_REST_API_ENDPOINT} from '@env';
 
 const nonCustomAttributes = [
   'country',
@@ -81,6 +83,52 @@ const setUserAttributes = (attributes: BrazeUserAttributes) => {
   });
 };
 
+const mergeUsers = async (
+  user_to_merge: string,
+  user_to_keep: string,
+): Promise<any> => {
+  const url = 'https://' + BRAZE_REST_API_ENDPOINT + '/users/merge';
+  const body = {
+    merge_updates: [
+      {
+        identifier_to_merge: {
+          external_id: user_to_merge,
+        },
+        identifier_to_keep: {
+          external_id: user_to_keep,
+        },
+      },
+    ],
+  };
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer ' + BRAZE_MERGE_AND_DELETE_API_KEY,
+  };
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
+};
+
+const deleteUser = async (eid: string): Promise<any> => {
+  const url = 'https://' + BRAZE_REST_API_ENDPOINT + '/users/delete';
+  const body = {
+    external_ids: [eid],
+  };
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer ' + BRAZE_MERGE_AND_DELETE_API_KEY,
+  };
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
+};
+
 export type BrazeUserAttributes = {
   [K in (typeof nonCustomAttributes)[number]]?: string;
 } & Record<string, any>;
@@ -125,6 +173,14 @@ export const BrazeWrapper = (() => {
         userId,
         attributes,
       };
+    },
+
+    merge(userToMerge: string, userToKeep: string) {
+      return mergeUsers(userToMerge, userToKeep);
+    },
+
+    delete(eid: string) {
+      return deleteUser(eid);
     },
 
     screen(name: string, properties: Record<string, any> = {}) {
