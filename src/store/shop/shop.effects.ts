@@ -120,6 +120,19 @@ export const startSyncGiftCards =
     }
   };
 
+export const redeemSyncedGiftCards =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    const {APP, SHOP} = getState();
+    const savedGiftCards = SHOP.giftCards[APP.network];
+    const syncedGiftCards = savedGiftCards.filter(
+      giftCard => giftCard.status === 'SYNCED',
+    );
+    const redeemPromises = syncedGiftCards
+      .slice(0, 3)
+      .map(giftCard => dispatch(startRedeemGiftCard(giftCard.invoiceId)));
+    await Promise.all(redeemPromises);
+  };
+
 export const startCreateBillPayInvoice =
   (params: BillPayInvoiceParams): Effect<Promise<BillPayOrder>> =>
   async (dispatch, getState) => {
