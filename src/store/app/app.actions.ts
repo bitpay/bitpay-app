@@ -55,6 +55,10 @@ export const setAppFirstOpenEventDate = (date: number): AppActionType => ({
   payload: date,
 });
 
+export const setAppInstalled = (): AppActionType => ({
+  type: AppActionTypes.SET_APP_INSTALLED,
+});
+
 export const setIntroCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_INTRO_COMPLETED,
 });
