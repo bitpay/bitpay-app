@@ -519,8 +519,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
-  const [onEndReachedCalledDuringLoading, setOnEndReachedCalledDuringLoading] =
-    useState<boolean>(true);
+  const [isScrolling, setIsScrolling] = useState<boolean>(false);
 
   const setNeedActionTxps = (pendingTxps: TransactionProposal[]) => {
     const txpsPending: TransactionProposal[] = [];
@@ -1299,16 +1298,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         renderSectionHeader={renderSectionHeader}
         ItemSeparatorComponent={itemSeparatorComponent}
         ListFooterComponent={listFooterComponent}
+        onMomentumScrollBegin={() => setIsScrolling(true)}
+        onMomentumScrollEnd={() => setIsScrolling(false)}
         onEndReached={() => {
-          if (!onEndReachedCalledDuringLoading) {
+          if (isScrolling) {
             debouncedLoadHistory();
-            setOnEndReachedCalledDuringLoading(true);
           }
         }}
-        onEndReachedThreshold={0.5}
-        onMomentumScrollBegin={() => {
-          setOnEndReachedCalledDuringLoading(false);
-        }}
+        onEndReachedThreshold={0.3}
         ListEmptyComponent={listEmptyComponent}
         maxToRenderPerBatch={15}
         getItemLayout={getItemLayout}
