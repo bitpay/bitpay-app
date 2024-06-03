@@ -124,11 +124,17 @@ import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {
   ThorswapGetSwapQuoteData,
   ThorswapGetSwapQuoteRequestData,
+  ThorswapGetSwapTxData,
+  ThorswapGetSwapTxRequestData,
   ThorswapProvider,
-  thorswapQuoteRoute,
+  ThorswapQuoteRoute,
+  ThorswapTrackingStatus,
   ThorswapTransaction,
 } from '../../../../store/swap-crypto/models/thorswap.models';
-import {THORSWAP_DEFAULT_GAS_LIMIT} from '../constants/ThorswapConstants';
+import {
+  THORSWAP_DEFAULT_GAS_LIMIT,
+  THORSWAP_DEFAULT_SLIPPAGE,
+} from '../constants/ThorswapConstants';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -141,6 +147,7 @@ export interface ThorswapCheckoutProps {
   toWalletSelected: Wallet;
   amountFrom: number;
   spenderKey?: ThorswapProvider | undefined;
+  slippage?: number;
   useSendMax?: boolean;
   sendMaxInfo?: SendMaxInfo;
 }
@@ -154,6 +161,7 @@ const ThorswapCheckout: React.FC = () => {
       toWalletSelected,
       amountFrom,
       spenderKey,
+      slippage,
       useSendMax,
       sendMaxInfo,
     },
@@ -181,7 +189,7 @@ const ThorswapCheckout: React.FC = () => {
     quoteId: string;
     sellAssetAmount: string;
   }>();
-  const [routeToUse, setRouteToUse] = useState<thorswapQuoteRoute>();
+  const [routeToUse, setRouteToUse] = useState<ThorswapQuoteRoute>();
   const [thorswapPoliciesModalVisible, setThorswapPoliciesModalVisible] =
     useState(false);
   const [paymentExpired, setPaymentExpired] = useState(false);
@@ -295,16 +303,12 @@ const ThorswapCheckout: React.FC = () => {
       sellAmount: amountFrom,
       senderAddress: addressFrom,
       recipientAddress: addressTo,
+      slippage: slippage ?? THORSWAP_DEFAULT_SLIPPAGE,
     };
 
     let thorswapQuoteData: ThorswapGetSwapQuoteData | undefined;
     try {
-      console.log('============ thorswapQuoteData enviada: ', requestData);
       thorswapQuoteData = await thorswapGetSwapQuote(requestData);
-      console.log(
-        '============ thorswapQuoteData recibida: ',
-        thorswapQuoteData,
-      );
     } catch (err) {
       logger.error(
         'Thorswap createThorswapTransaction > thorswapGetSwapQuote Error: ' +
@@ -317,7 +321,7 @@ const ThorswapCheckout: React.FC = () => {
       return;
     }
 
-    let bestRouteData: thorswapQuoteRoute | undefined;
+    let bestRouteData: ThorswapQuoteRoute | undefined;
     if (spenderKey && thorswapQuoteData) {
       logger.debug(
         `getThorswapRouteBySpenderKey with spenderKey: ${spenderKey}`,
@@ -401,7 +405,7 @@ const ThorswapCheckout: React.FC = () => {
     //   ? bestRouteData.payinExtraId
     //   : undefined; // (destinationTag) Used for coins like: XRP, XLM, EOS, IGNIS, BNB, XMR, ARDOR, DCT, XEM
 
-    // setExchangeTxId(bestRouteData.id);
+    // ???? setTxHash(bestRouteData.id);
     // setAmountExpectedFrom(Number(thorswapQuoteData.sellAssetAmount));
 
     setAmountTo(Number(bestRouteData.expectedOutput));
@@ -468,13 +472,6 @@ const ThorswapCheckout: React.FC = () => {
       (amountExpectedFrom * precision!.unitToSatoshi).toFixed(0),
     );
 
-    console.log(
-      `=========== createTx with: payinAddress: ${payinAddress} | depositSat: ${depositSat} | payinExtraId: ${payinExtraId}`,
-    );
-    console.log(
-      '=========== createTx with: fromWalletSelected: ',
-      fromWalletSelected,
-    );
     createTx(
       fromWalletSelected,
       payinAddress,
@@ -483,7 +480,6 @@ const ThorswapCheckout: React.FC = () => {
       payinExtraId,
     )
       .then(async ctxp => {
-        console.log('=========== createTx ctxp: ', ctxp);
         setCtxp(ctxp);
         setFee(ctxp.fee);
 
@@ -610,18 +606,12 @@ const ThorswapCheckout: React.FC = () => {
 
         // If gasLimit is not included, estimate
         if (!gasLimit) {
-          console.log(
-            '********* IsERCToken calculate GASLIMIT calldata: ',
-            calldata,
-          );
+          logger.debug('gasLimit not present. Estimating...');
           const ABI = getExchangeAbiByContractAddress(payinAddress);
-          console.log('********* ABI: ', ABI);
           if (ABI && calldata && spenderKey) {
             try {
-              // const contract = new ethers.Contract(payinAddress, ABI);
               const iface = new ethers.utils.Interface(ABI);
               const parsedData = iface.parseTransaction({data: calldata});
-              console.log('********* parsedData: ', parsedData);
               gasLimit = estimateThorswapTxGasLimit(
                 spenderKey,
                 parsedData.name,
@@ -752,24 +742,19 @@ const ThorswapCheckout: React.FC = () => {
         );
       }
 
-      console.log('********** broadcastedTx: ', broadcastedTx);
-
-      const reqData = {
+      const reqData: ThorswapGetSwapTxRequestData = {
         env: thorswapEnv,
-        // hash: '0xe08be1cb20fd2db5603c7d0c99bbef68ee2b3278d949450beef15a7523c86cb6',
         txn: {
-          quoteId: quoteData?.quoteId,
-          hash: (broadcastedTx as Partial<TransactionProposal>).txid,
-          sellAmount: quoteData?.sellAssetAmount,
-          route: routeToUse,
+          quoteId: quoteData?.quoteId!,
+          hash: (broadcastedTx as Partial<TransactionProposal>)?.txid!,
+          sellAmount: quoteData?.sellAssetAmount!,
+          route: routeToUse!,
         },
       };
-      console.log('========== swapTx data enviada: ', reqData);
       // thorswapGetSwapTx needed to track the Tx progress
-      const swapTx = await thorswapGetSwapTx(reqData);
-      console.log('========== swapTx data recibida: ', swapTx);
+      const swapTx: ThorswapGetSwapTxData = await thorswapGetSwapTx(reqData);
 
-      saveThorswapTx(broadcastedTx);
+      saveThorswapTx(broadcastedTx, swapTx);
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
       setShowPaymentSentModal(true);
@@ -841,10 +826,21 @@ const ThorswapCheckout: React.FC = () => {
     }
   };
 
-  const saveThorswapTx = (broadcastedTx?: any) => {
+  const saveThorswapTx = (
+    broadcastedTx?: any,
+    thorswapSwapTxData?: ThorswapGetSwapTxData,
+  ) => {
+    let newStatus: ThorswapTrackingStatus = ThorswapTrackingStatus.bitpayTxSent;
+
+    if (thorswapSwapTxData?.status) {
+      newStatus = thorswapSwapTxData.status;
+    } else if (thorswapSwapTxData?.result?.status) {
+      newStatus = thorswapSwapTxData.result.status;
+    }
+
     const newData: thorswapTxData = {
       orderId: uuid.v4().toString(),
-      exchangeTxId: (broadcastedTx as Partial<TransactionProposal>)?.txid!,
+      txHash: (broadcastedTx as Partial<TransactionProposal>)?.txid!,
       date: Date.now(),
       amountTo: amountTo!,
       coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
@@ -854,12 +850,13 @@ const ThorswapCheckout: React.FC = () => {
       amountFrom: amountFrom!,
       coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
       chainFrom: fromWalletSelected.chain.toLowerCase(),
-      payinAddress: txData.payinAddress,
+      payinAddress: txData.payinAddress, // Spender contract address
       payinExtraId: txData.payinExtraId,
       totalExchangeFee: totalExchangeFee!,
       quoteId: quoteData?.quoteId!,
       spenderKey: spenderKey!,
-      status: txData.status,
+      slippage: slippage,
+      status: newStatus,
     };
 
     dispatch(
@@ -1133,7 +1130,7 @@ const ThorswapCheckout: React.FC = () => {
               <CheckBoxCol>
                 <CheckboxText>
                   {t(
-                    "Exchange services provided by THORSwap. By checking this, I acknowledge and accept THORSwap's terms of use.",
+                    "Exchange services provided by THORSwap. By checking this, I acknowledge and accept THORSwap's terms of service.",
                   )}
                 </CheckboxText>
                 <PoliciesContainer
@@ -1144,7 +1141,9 @@ const ThorswapCheckout: React.FC = () => {
                       ),
                     );
                   }}>
-                  <PoliciesText>{t('Review THORSwap policies')}</PoliciesText>
+                  <PoliciesText>
+                    {t("Review THORSwap's terms of service")}
+                  </PoliciesText>
                 </PoliciesContainer>
               </CheckBoxCol>
             </CheckBoxContainer>

@@ -17,6 +17,21 @@ export enum ThorswapProviderEnum {
   SUSHISWAP = 'SUSHISWAP',
 }
 
+export enum ThorswapProviderNames {
+  UNISWAPV2 = 'Uniswap V2',
+  UNISWAPV3 = 'Uniswap V3',
+  THORCHAIN = 'THORChain',
+  ZEROX = 'Zerox',
+  ONEINCH = '1inch',
+  SUSHISWAP = 'SushiSwap',
+}
+
+export interface ThorswapGetCurrenciesRequestData {
+  env: ThorswapEnv;
+  categories?: string | string[];
+  includeDetails?: boolean;
+}
+
 export interface ThorswapCurrency {
   address: string;
   addressUrl: string;
@@ -66,11 +81,18 @@ export interface ThorswapGetSwapQuoteRequestData {
 
 export interface ThorswapGetSwapQuoteData {
   quoteId: string;
-  routes: thorswapQuoteRoute[];
+  routes: ThorswapQuoteRoute[];
   sellAssetAmount: string;
+
+  // Errors
+  message?: string;
+  code?: string;
+  type?: string;
+  error?: any;
+  errors?: any;
 }
 
-export interface thorswapQuoteRoute {
+export interface ThorswapQuoteRoute {
   approvalTarget?: string;
   approvalToken: string;
   calldata: ThorswapRouteCalldata;
@@ -192,7 +214,7 @@ interface thorswapSwapPart {
   provider: ThorswapProvider;
 }
 
-interface ThorswapRouteTimeEstimates {
+export interface ThorswapRouteTimeEstimates {
   outboundMs: number;
   swapMs: number;
   inboundMs?: number;
@@ -205,4 +227,84 @@ interface ThorswapRouteWrapperSwapCalldata {
   recipient: string | null;
   router: string;
   tokenOut: string;
+}
+
+export enum ThorswapTrackingStatus {
+  not_started = 'not_started',
+  starting = 'starting', // first status once we receive, old or new transaction
+  broadcasted = 'broadcasted',
+  mempool = 'mempool', // or indexing
+  inbound = 'inbound',
+  outbound = 'outbound',
+  swapping = 'swapping', // more generic than streaming
+  completed = 'completed',
+  refunded = 'refunded',
+  partially_refunded = 'partially_refunded',
+  dropped = 'dropped',
+  reverted = 'reverted',
+  replaced = 'replaced',
+  retries_exceeded = 'retries_exceeded',
+  parsing_error = 'parsing_error',
+  success = 'success',
+
+  // bitpay custom status
+  bitpayTxSent = 'bitpayTxSent',
+}
+
+export interface ThorswapGetSwapTxRequestData {
+  env: ThorswapEnv;
+  // The first "GetSwap" request must include txn so that it can later be queried with just "hash".
+  txn?: {
+    // Use this the first time (in ThorswapCheckout) to include the order in Thorswap database
+    quoteId: string;
+    hash: string;
+    sellAmount: string;
+    route: Partial<ThorswapQuoteRoute>;
+  };
+  hash?: string;
+}
+
+interface ThorswapSwapTxDataResultLeg {
+  chain: string;
+  hash: string;
+  provider: ThorswapProviderEnum;
+  txnType: string;
+  fromAsset: string;
+  fromAssetImage: string;
+  toAsset: string;
+  toAssetImage: string;
+  fromAmount: string | number; // E.g. "10"
+  toAmount: string | number; // E.g. "9.9894"
+  updateTimestamp: number;
+  endTimestamp: number;
+  estimatedEndTimestamp: number;
+  estimatedDuration: number;
+  status: ThorswapTrackingStatus;
+  isStreamingSwap: boolean;
+}
+
+interface ThorswapSwapTxDataResult {
+  quoteId: string;
+  firstTransactionHash: string;
+  estimatedDuration: string | number; // E.g. "0"
+  currentLegIndex: string | number; // E.g. "-1"
+  legs: ThorswapSwapTxDataResultLeg[];
+  opaque: any;
+  isStreamingSwap: boolean;
+  isLending: boolean;
+  reprocessCount: number;
+  status: ThorswapTrackingStatus;
+}
+
+export interface ThorswapGetSwapTxData {
+  done: boolean;
+  status: ThorswapTrackingStatus;
+  result: ThorswapSwapTxDataResult;
+
+  // Errors
+  message?: string;
+  code?: string;
+  type?: string;
+  error?: any;
+  errors?: any;
 }

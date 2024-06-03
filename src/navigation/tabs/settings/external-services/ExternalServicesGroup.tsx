@@ -44,6 +44,7 @@ import {
   baseNavigatorOptions,
 } from '../../../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
+import SwapHistorySelector from './screens/SwapHistorySelector';
 
 interface ExternalServicesSettingsProps {
   ExternalServicesSettings: typeof Root;
@@ -110,6 +111,7 @@ export type ExternalServicesSettingsGroupParamList = {
   WyreDetails: {
     paymentRequest: WyrePaymentData;
   };
+  SwapHistorySelector: undefined;
   ChangellySettings: undefined;
   ChangellyDetails: {
     swapTx: changellyTxData;
@@ -136,6 +138,7 @@ export enum ExternalServicesSettingsScreens {
   TRANSAK_DETAILS = 'TransakDetails',
   WYRE_SETTINGS = 'WyreSettings',
   WYRE_DETAILS = 'WyreDetails',
+  SWAP_HISTORY_SELECTOR = 'SwapHistorySelector',
   CHANGELLY_SETTINGS = 'ChangellySettings',
   CHANGELLY_DETAILS = 'ChangellyDetails',
   THORSWAP_SETTINGS = 'ThorswapSettings',
@@ -163,7 +166,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.BANXA_SETTINGS}
         component={BanxaSettings}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Banxa Settings')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Banxa')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
@@ -177,7 +180,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.MOONPAY_SETTINGS}
         component={MoonpaySettings}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Moonpay Settings')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Moonpay')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
@@ -200,7 +203,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.RAMP_SETTINGS}
         component={RampSettings}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Ramp Settings')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Ramp')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
@@ -214,7 +217,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.SARDINE_SETTINGS}
         component={SardineSettings}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Sardine Settings')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Sardine')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
@@ -228,7 +231,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.SIMPLEX_SETTINGS}
         component={SimplexSettings}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Simplex Settings')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Simplex')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
@@ -242,7 +245,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.TRANSAK_SETTINGS}
         component={TransakSettings}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Transak Settings')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Transak')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
@@ -256,7 +259,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.WYRE_SETTINGS}
         component={WyreSettings}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Wyre Settings')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Wyre')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
@@ -267,12 +270,19 @@ const ExternalServicesSettingsGroup: React.FC<
         }}
       />
       <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.SWAP_HISTORY_SELECTOR}
+        component={SwapHistorySelector}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Swap Crypto History')}</HeaderTitle>
+          ),
+        }}
+      />
+      <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.CHANGELLY_SETTINGS}
         component={ChangellySettings}
         options={{
-          headerTitle: () => (
-            <HeaderTitle>{t('Changelly Settings')}</HeaderTitle>
-          ),
+          headerTitle: () => <HeaderTitle>{t('Changelly')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
@@ -286,9 +296,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.THORSWAP_SETTINGS}
         component={ThorswapSettings}
         options={{
-          headerTitle: () => (
-            <HeaderTitle>{t('THORSwap Settings')}</HeaderTitle>
-          ),
+          headerTitle: () => <HeaderTitle>{t('THORSwap')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
