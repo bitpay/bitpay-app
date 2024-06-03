@@ -155,6 +155,9 @@ export const getSardinePaymentMethodFormat = (
     case 'ach':
       formattedPaymentMethod = 'ach';
       break;
+    case 'applePay':
+      formattedPaymentMethod = 'apple_pay';
+      break;
     case 'debitCard':
       formattedPaymentMethod =
         country === 'US' ? 'debit' : 'international_debit';
