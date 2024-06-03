@@ -517,7 +517,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         }
       } else if (context === 'send') {
         setWalletSelectModalVisible(false);
-        await sleep(500);
+        await sleep(1000);
         navigation.navigate('SendTo', {wallet});
       } else {
         setReceiveWallet(wallet);
