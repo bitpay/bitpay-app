@@ -20,6 +20,7 @@ import {
   thorswapGetStatusDetails,
   Status,
   thorswapGetStatusColor,
+  thorswapEnv,
 } from '../../../../../navigation/services/swap-crypto/utils/thorswap-utils';
 import {
   RowDataContainer,
@@ -43,6 +44,13 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {sleep} from '../../../../../utils/helper-methods';
 import {SlateDark, White} from '../../../../../styles/colors';
+import {
+  ThorswapGetSwapTxData,
+  ThorswapGetSwapTxRequestData,
+  ThorswapTrackingStatus,
+} from '../../../../../store/swap-crypto/models/thorswap.models';
+import {thorswapGetSwapTx} from '../../../../../store/swap-crypto/effects/thorswap/thorswap';
+import cloneDeep from 'lodash.clonedeep';
 
 export interface ThorswapDetailsProps {
   swapTx: thorswapTxData;
@@ -66,11 +74,10 @@ const ThorswapDetails: React.FC = () => {
   const [copiedPayinAddress, setCopiedPayinAddress] = useState(false);
   const [copiedPayinExtraId, setCopiedPayinExtraId] = useState(false);
   const [copiedRefundAddress, setCopiedRefundAddress] = useState(false);
-  const [copiedExchangeTxId, setCopiedExchangeTxId] = useState(false);
+  const [copiedTxHash, setCopiedTxHash] = useState(false);
   const [copiedSupportEmailLabelTip, setCopiedSupportEmailLabelTip] =
     useState(false);
-  const [copiedExchangeTxIdLabelTip, setCopiedExchangeTxIdLabelTip] =
-    useState(false);
+  const [copiedTxHashLabelTip, setCopiedTxHashLabelTip] = useState(false);
 
   const copyText = (text: string) => {
     haptic('impactLight');
@@ -81,43 +88,139 @@ const ThorswapDetails: React.FC = () => {
     setStatus(thorswapGetStatusDetails(swapTx.status));
   };
 
-  // const getStatus = (force?: boolean) => {
-  //   if (swapTx.status === 'finished' && !force) {
-  //     return;
-  //   }
-  //   thorswapGetStatus(swapTx.orderId, swapTx.status)
-  //     .then(data => {
-  //       if (data.error) {
-  //         logger.error('Thorswap getStatus Error: ' + data.error.message);
-  //         return;
-  //       }
-  //       if (data.result != swapTx.status) {
-  //         logger.debug('Updating status to: ' + data.result);
-  //         swapTx.status = data.result;
-  //         updateStatusDescription();
-  //         dispatch(
-  //           SwapCryptoActions.successTxThorswap({
-  //             thorswapTxData: swapTx,
-  //           }),
-  //         );
+  const compareAmounts = (amountTo: number, toAmount: string | number) => {
+    if (typeof toAmount === 'number') {
+      toAmount = toAmount.toString();
+    }
 
-  //         logger.debug('Saved swap with: ' + JSON.stringify(swapTx));
-  //       }
-  //     })
-  //     .catch(err => {
-  //       logger.error('Thorswap getStatus Error: ' + JSON.stringify(err));
-  //     });
-  // };
+    const amountToString = amountTo.toString();
+    const decimalIndex = amountToString.indexOf('.');
+
+    const decimalPlaces =
+      decimalIndex === -1 ? 0 : amountToString.length - decimalIndex - 1;
+
+    const roundedAmountTo = parseFloat(amountTo.toFixed(decimalPlaces));
+    const roundedToAmount = parseFloat(
+      parseFloat(toAmount).toFixed(decimalPlaces),
+    );
+
+    // Compare the rounded values
+    return roundedAmountTo === roundedToAmount;
+  };
+
+  const getStatus = async (force?: boolean) => {
+    if (
+      [
+        ThorswapTrackingStatus.completed,
+        ThorswapTrackingStatus.success,
+      ].includes(swapTx.status) &&
+      !force
+    ) {
+      return;
+    }
+
+    const reqData: ThorswapGetSwapTxRequestData = {
+      env: thorswapEnv,
+      hash: swapTx.txHash,
+    };
+
+    try {
+      const swapTxData: ThorswapGetSwapTxData = await thorswapGetSwapTx(
+        reqData,
+      );
+      let shouldUpdate = false;
+      if (swapTxData?.result) {
+        if (
+          swapTxData.result.legs &&
+          swapTxData.result.legs.length === 1 &&
+          swapTxData.result.legs[0].toAmount &&
+          !compareAmounts(
+            cloneDeep(swapTx.amountTo),
+            swapTxData.result.legs[0].toAmount,
+          )
+        ) {
+          logger.debug(
+            'Updating amountTo to: ' + swapTxData.result.legs[0].toAmount,
+          );
+          swapTx.amountTo = Number(swapTxData.result.legs[0].toAmount);
+          shouldUpdate = true;
+        }
+        if (swapTxData.status && swapTxData.status != swapTx.status) {
+          logger.debug('Updating status to: ' + swapTxData.status);
+          swapTx.status = swapTxData.status;
+          updateStatusDescription();
+          shouldUpdate = true;
+        }
+        if (shouldUpdate) {
+          dispatch(
+            SwapCryptoActions.successTxThorswap({
+              thorswapTxData: swapTx,
+            }),
+          );
+
+          logger.debug('Saved swap with: ' + JSON.stringify(swapTx));
+        }
+      } else {
+        if (!swapTxData) {
+          logger.error('Thorswap error: No swapTxData received');
+        }
+        if (swapTxData.message && typeof swapTxData.message === 'string') {
+          logger.error('Thorswap error: ' + swapTxData.message);
+        }
+        if (swapTxData.error && typeof swapTxData.error === 'string') {
+          logger.error('Thorswap error: ' + swapTxData.error);
+        }
+        if (
+          swapTxData.error?.message &&
+          typeof swapTxData.error.message === 'string'
+        ) {
+          logger.error('Thorswap error: ' + swapTxData.error.message);
+        }
+        if (swapTxData.errors) {
+          logger.error(swapTxData.errors);
+        }
+        let err = t(
+          "Can't get order details at this moment. Please try again later",
+        );
+        if (swapTxData.code && swapTxData.type && swapTxData.message) {
+          err = swapTxData.message;
+        }
+        showThorswapError(err);
+      }
+    } catch (err) {
+      logger.error('Thorswap getStatus Error: ' + JSON.stringify(err));
+    }
+  };
+
+  const showThorswapError = async (msg?: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title: t('Error'),
+        message: msg ? msg : t('Unknown Error'),
+        enableBackdropDismiss: false,
+        actions: [
+          {
+            text: t('OK'),
+            action: async () => {
+              dispatch(dismissBottomNotificationModal());
+            },
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await sleep(1000); // TODO: use this: await Promise.all([getStatus(true), sleep(1000)]);
+    await Promise.all([getStatus(true), sleep(1000)]);
     setRefreshing(false);
   };
 
   useEffect(() => {
     updateStatusDescription();
-    // getStatus();
+    getStatus();
   }, []);
 
   useEffect(() => {
@@ -150,10 +253,10 @@ const ThorswapDetails: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCopiedExchangeTxId(false);
+      setCopiedTxHash(false);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [copiedExchangeTxId]);
+  }, [copiedTxHash]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -164,10 +267,10 @@ const ThorswapDetails: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCopiedExchangeTxIdLabelTip(false);
+      setCopiedTxHashLabelTip(false);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [copiedExchangeTxIdLabelTip]);
+  }, [copiedTxHashLabelTip]);
 
   return (
     <SettingsContainer>
@@ -285,18 +388,18 @@ const ThorswapDetails: React.FC = () => {
                 <TouchableOpacity
                   style={{maxWidth: '90%'}}
                   onPress={() => {
-                    copyText(swapTx.exchangeTxId);
-                    setCopiedExchangeTxIdLabelTip(true);
+                    copyText(swapTx.txHash);
+                    setCopiedTxHashLabelTip(true);
                   }}>
                   <LabelTipText>
-                    {t('Provide the transaction id:')}{' '}
+                    {t('Provide the transaction hash:')}{' '}
                     <LabelTipText style={{fontWeight: '700'}}>
-                      {swapTx.exchangeTxId}
+                      {swapTx.txHash}
                     </LabelTipText>
                   </LabelTipText>
                 </TouchableOpacity>
                 <CopyImgContainerRight style={{minWidth: '10%', paddingTop: 0}}>
-                  {copiedExchangeTxIdLabelTip ? <CopiedSvg width={17} /> : null}
+                  {copiedTxHashLabelTip ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainerRight>
               </CopiedContainer>
             </>
@@ -362,16 +465,14 @@ const ThorswapDetails: React.FC = () => {
         <ColumnDataContainer>
           <TouchableOpacity
             onPress={() => {
-              copyText(swapTx.exchangeTxId);
-              setCopiedExchangeTxId(true);
+              copyText(swapTx.txHash);
+              setCopiedTxHash(true);
             }}>
-            <RowLabel>{t('Exchange Transaction ID')}</RowLabel>
+            <RowLabel>{t('Exchange Transaction Hash')}</RowLabel>
             <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {swapTx.exchangeTxId}
-              </ColumnData>
+              <ColumnData style={{maxWidth: '90%'}}>{swapTx.txHash}</ColumnData>
               <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedExchangeTxId ? <CopiedSvg width={17} /> : null}
+                {copiedTxHash ? <CopiedSvg width={17} /> : null}
               </CopyImgContainerRight>
             </CopiedContainer>
           </TouchableOpacity>

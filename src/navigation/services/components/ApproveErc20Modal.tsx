@@ -1,10 +1,4 @@
-import React, {
-  ReactElement,
-  useCallback,
-  useMemo,
-  useState,
-  useEffect,
-} from 'react';
+import React, {useState, useEffect} from 'react';
 import styled from 'styled-components/native';
 import {ethers} from 'ethers';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
@@ -14,56 +8,23 @@ import {
   Wallet,
 } from '../../../store/wallet/wallet.models';
 import {
-  convertToFiat,
-  formatCurrencyAbbreviation,
-  formatFiatAmount,
+  getBadgeImg,
   getCurrencyAbbreviation,
-  keyExtractor,
-  sleep,
 } from '../../../utils/helper-methods';
-import {FlatList, TouchableOpacity, View} from 'react-native';
-import {AvailableWalletsPill} from '../../../components/list/GlobalSelectRow';
+import {Image, ScrollView, TouchableOpacity} from 'react-native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {
-  ActiveOpacity,
-  CurrencyColumn,
-  CurrencyImageContainer,
-} from '../../../components/styled/Containers';
 import _ from 'lodash';
-import KeyWalletsRow, {
-  KeyWallet,
-  KeyWalletsRowProps,
-} from '../../../components/list/KeyWalletsRow';
-import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {Black, White} from '../../../styles/colors';
-import {H4, TextAlign, H7, SubText} from '../../../components/styled/Text';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {H4, TextAlign, SubText} from '../../../components/styled/Text';
+import {useTheme} from '@react-navigation/native';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
-import {findWalletById, toFiat} from '../../../store/wallet/utils/wallet';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import NestedArrowIcon from '../../../components/nested-arrow/NestedArrow';
-import {SearchContainer} from '../../wallet/screens/CurrencySelection';
-import {
-  createHomeCardList,
-  keyBackupRequired,
-} from '../../tabs/home/components/Crypto';
-import {AddWalletData} from '../../../store/wallet/effects/create/create';
-import {Network} from '../../../constants';
-import CurrencySelectionSearchInput from '../../wallet/components/CurrencySelectionSearchInput';
-import {
-  DescriptionRow,
-  TokensHeading,
-} from '../../../components/list/CurrencySelectionRow';
-import {GetPrecision, IsSegwitCoin} from '../../../store/wallet/utils/currency';
-import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
-import {
-  FormatAmountStr,
-  parseAmountToStringIfBN,
-} from '../../../store/wallet/effects/amount/amount';
+import {GetPrecision} from '../../../store/wallet/utils/currency';
+import {FormatAmountStr} from '../../../store/wallet/effects/amount/amount';
 import {
   createTxProposal,
   publishAndSign,
@@ -72,6 +33,39 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
 import {RootState} from '../../../store';
+import {
+  CoinIconContainer,
+  ItemDivisor,
+  RowData,
+  RowDataContainer,
+  RowLabel,
+  SelectedOptionCol,
+  SelectedOptionContainer,
+  SelectedOptionText,
+} from '../swap-crypto/styled/SwapCryptoCheckout.styled';
+import SwapCheckoutSkeleton from '../swap-crypto/screens/SwapCheckoutSkeleton';
+import {
+  ContractAddressText,
+  ContractHeaderContainer,
+  ContractLink,
+  LinkContainer,
+  viewOnBlockchain,
+} from '../../wallet/components/SendingToERC20Warning';
+import LinkIcon from '../../../components/icons/link-icon/LinkIcon';
+import {getSpenderApprovalWhitelist} from '../../../store/external-services/external-services.effects';
+import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import haptic from '../../../components/haptic-feedback/haptic';
+import Clipboard from '@react-native-clipboard/clipboard';
+import {
+  LabelTip,
+  LabelTipText,
+} from '../../tabs/settings/external-services/styled/ExternalServicesDetails';
+import {
+  ThorswapProvider,
+  ThorswapProviderNames,
+} from '../../../store/swap-crypto/models/thorswap.models';
+
+const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -121,6 +115,13 @@ const RowContainer = styled.TouchableOpacity`
   align-items: center;
 `;
 
+interface SpenderDataWhitelist {
+  address: string;
+  contractName: string;
+  name: string;
+  url: string;
+}
+
 interface ApproveErc20ModalProps {
   isVisible: boolean;
   modalTitle?: string;
@@ -130,7 +131,7 @@ interface ApproveErc20ModalProps {
   spenderData: {
     offerKey: string;
     offerName: string;
-    spenderKey: string;
+    spenderKey: ThorswapProvider;
     spenderName: string;
     address: string;
     amount: string;
@@ -152,30 +153,68 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const logger = useLogger();
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
-  const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingSpenderData, setIsLoadingSpenderData] = useState(false);
+  const [spenderDataWhiteList, setSpenderDataWhiteList] = useState<{
+    siteUrl?: string | undefined;
+    spenderVerified?: boolean | undefined;
+  }>({
+    siteUrl: undefined,
+    spenderVerified: false,
+  });
   const [encodedData, setEncodedData] = useState<string>('');
+  const [copiedEncodedData, setCopiedEncodedData] = useState(false);
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[wallet.keyId],
   );
 
-  // object to pass to select modal
-  const [keyWallets, setKeysWallets] =
-    useState<KeyWalletsRowProps<KeyWallet>[]>();
+  const copyText = (text: string) => {
+    haptic('impactLight');
+    Clipboard.setString(text);
+  };
 
-  const getApproveErc20EncodedData = () => {
-    // Dirección del contrato ERC20 del token
-    const tokenAddress = wallet.tokenAddress; // 'contract_address_of_erc20_token';
+  const getSpenderData = async () => {
+    try {
+      const spenderDataWhitelist: SpenderDataWhitelist[] = await dispatch(
+        getSpenderApprovalWhitelist(),
+      );
+      const knownContract = spenderDataWhitelist.find(contract => {
+        return (
+          contract?.address?.toLowerCase() ==
+          cloneDeep(spenderData.address).toLowerCase()
+        );
+      });
 
-    // Dirección del beneficiario al que se le dará la aprobación
-    const spenderAddress = spenderData.address; // 'address_of_the_spender';
+      if (!_.isEmpty(knownContract)) {
+        logger.debug(
+          'Spender address verified: ' + JSON.stringify(knownContract),
+        );
+        setSpenderDataWhiteList({
+          siteUrl: knownContract.url,
+          spenderVerified: true,
+        });
+      }
+    } catch (err) {
+      setSpenderDataWhiteList({
+        siteUrl: undefined,
+        spenderVerified: false,
+      });
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      const log = `Spender address could not be verified:  ${errStr}`;
+      logger.debug(log);
+    }
+  };
 
-    // Cantidad de tokens que se aprobarán (en unidades mínimas del token)
+  const encodeErc20DataAndCreateTx = async () => {
+    // Token to approve contract address
+    const tokenAddress = wallet.tokenAddress;
+
+    // Spender contract address
+    const spenderAddress = spenderData.address;
+
+    // Allowance to approve
     const precision = dispatch(
       GetPrecision(
         wallet.currencyAbbreviation,
@@ -186,18 +225,14 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
     const amountToApprove = ethers.utils.parseUnits(
       spenderData.amount,
       precision!.unitDecimals,
-    ); // 100 tokens con 18 decimales
+    );
 
     if (!tokenAddress || !spenderAddress || !amountToApprove) {
       return;
     }
 
-    // Abre una instancia del contrato ERC20
     const tokenContract = new ethers.Contract(tokenAddress, [
-      // ABI del contrato ERC20
-      // Asegúrate de tener la ABI correcta del contrato ERC20 que estás usando
-      // Puedes encontrarlo en Etherscan o en la documentación del contrato
-      // Aquí hay un ejemplo simplificado de la ABI: 'function approve(address spender, uint256 amount) external returns (bool)'
+      // ABI ERC20 Approve function
       {
         constant: false,
         inputs: [
@@ -222,17 +257,32 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
       },
     ]);
 
-    console.log(
-      `getApproveErc20EncodedData() => spenderAddress: ${spenderAddress} | amountToApprove: ${amountToApprove} | tokenAddress: ${tokenAddress}`,
+    logger.debug(
+      `encodeErc20DataAndCreateTx() => spenderAddress: ${spenderAddress} | amountToApprove: ${amountToApprove} | tokenAddress: ${tokenAddress}`,
     );
-    // Crea la llamada a la función approve
+
     const approveData = tokenContract.interface.encodeFunctionData('approve', [
       spenderAddress,
       amountToApprove,
     ]);
 
     setEncodedData(approveData);
-    console.log('Approve calldata:', approveData);
+    logger.debug(`Approve calldata: ${approveData}`);
+
+    try {
+      const ctxp = await createTx();
+      setCtxp(ctxp);
+      setIsLoading(false);
+    } catch (err) {
+      setIsLoading(false);
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      const log = `Error creating transaction: ${errStr}`;
+      logger.error(log);
+      let msg = t('Error creating transaction');
+      const reason = 'createTx Error';
+      // showError(msg, reason); // TODO: handle how to show errors here
+      return;
+    }
   };
 
   const createTx = async () => {
@@ -291,7 +341,6 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
       // dispatch(dismissOnGoingProcessModal());
       // await sleep(500);
       setResetSwipeButton(true);
-      console.log('==============makePayment err: ', err);
       switch (err) {
         case 'invalid password':
           dispatch(showBottomNotificationModal(WrongPasswordError()));
@@ -311,29 +360,19 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
   };
 
   useEffect(() => {
-    if (encodedData) {
-      createTx()
-        .then(ctxp => {
-          console.log('============== CTXP: ', ctxp);
-          setCtxp(ctxp);
-        })
-        .catch(err => {
-          let msg = t('Error creating transaction');
-          if (typeof err?.message === 'string') {
-            msg = msg + `: ${err.message}`;
-          }
-          const reason = 'createTx Error';
-          // showError(msg, reason); // TODO: handle how to show errors here
-          return;
-        });
-    }
-  }, [encodedData]);
-
-  useEffect(() => {
     if (isVisible) {
-      getApproveErc20EncodedData();
+      setIsLoading(true);
+      encodeErc20DataAndCreateTx();
+      getSpenderData();
     }
   }, [isVisible]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedEncodedData(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedEncodedData]);
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={() => {}}>
@@ -373,45 +412,173 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
               </ModalTitleContainer>
             )}
           </ModalHeader>
-          {context === 'swapCrypto' && (
-            <TextAlign
-              style={{marginTop: 15, marginLeft: 5, marginRight: 5}}
-              align={'center'}>
-              <SubText>
-                {`To complete the swap, you will need to allow the exchange (${
-                  spenderData.spenderKey
-                }) to spend your ${wallet.currencyAbbreviation.toUpperCase()}.` +
-                  '\n' +
-                  `By granting this permission, ${
-                    spenderData.spenderName
-                  } will be able to withdraw your ${wallet.currencyAbbreviation.toUpperCase()} and complete transactions for you.`}
-              </SubText>
-            </TextAlign>
-          )}
-          <ApproveErc20ModalContainer>
-            <SubText>
-              {`Token: ${wallet.currencyAbbreviation.toUpperCase()}`}
-            </SubText>
-            <SubText>{`Token Contract: ${wallet.tokenAddress}`}</SubText>
-            <SubText>
-              {`Allowance to approve: ${
-                spenderData.amount
-              } ${wallet.currencyAbbreviation.toUpperCase()}`}
-            </SubText>
-            <SubText>{`Spender Address: ${spenderData.address}`}</SubText>
-            <SubText>{`Encoded data: ${encodedData}`}</SubText>
-            {ctxp ? (
-              <SubText>
-                {`Fee: ${dispatch(
-                  FormatAmountStr(
-                    wallet.chain, // use chain for miner fee
-                    wallet.chain,
-                    undefined,
-                    ctxp.fee,
-                  ),
-                )}`}
-              </SubText>
-            ) : null}
+          <ApproveErc20ModalContainer style={{padding: 14}}>
+            {context === 'swapCrypto' && (
+              <TextAlign style={{marginBottom: 15}} align={'left'}>
+                <SubText>
+                  {`To complete the swap, you will need to allow the exchange (${
+                    spenderData.spenderKey &&
+                    ThorswapProviderNames[spenderData.spenderKey]
+                      ? ThorswapProviderNames[spenderData.spenderKey]
+                      : spenderData.spenderKey
+                  }) to spend your ${wallet.currencyAbbreviation.toUpperCase()}.` +
+                    '\n' +
+                    `By granting this permission, ${
+                      spenderData.spenderKey &&
+                      ThorswapProviderNames[spenderData.spenderKey]
+                        ? ThorswapProviderNames[spenderData.spenderKey]
+                        : spenderData.spenderKey
+                    } will be able to withdraw your ${wallet.currencyAbbreviation.toUpperCase()} and complete transactions for you.`}
+                </SubText>
+              </TextAlign>
+            )}
+            <ScrollView>
+              <ItemDivisor />
+              <RowDataContainer>
+                <RowLabel>{t('Approving')}</RowLabel>
+                <SelectedOptionContainer>
+                  <SelectedOptionCol>
+                    <CoinIconContainer>
+                      <CurrencyImage
+                        img={wallet.img}
+                        badgeUri={getBadgeImg(
+                          getCurrencyAbbreviation(
+                            wallet.currencyAbbreviation,
+                            wallet.chain,
+                          ),
+                          wallet.chain,
+                        )}
+                        size={20}
+                      />
+                    </CoinIconContainer>
+                    <SelectedOptionText
+                      numberOfLines={1}
+                      ellipsizeMode={'tail'}>
+                      {wallet.currencyName}
+                    </SelectedOptionText>
+                  </SelectedOptionCol>
+                </SelectedOptionContainer>
+              </RowDataContainer>
+              <ItemDivisor />
+              {isLoading ? (
+                <SwapCheckoutSkeleton />
+              ) : (
+                <>
+                  <RowDataContainer>
+                    <RowLabel>{t('Allowance to approve')}</RowLabel>
+                    {spenderData?.amount ? (
+                      <RowData>
+                        {Number(spenderData.amount)
+                          .toFixed(6)
+                          .replace(/\.?0+$/, '')}{' '}
+                        {wallet.currencyAbbreviation.toUpperCase()}
+                      </RowData>
+                    ) : null}
+                  </RowDataContainer>
+                  <ItemDivisor />
+                  {ctxp ? (
+                    <>
+                      <RowDataContainer>
+                        <RowLabel>{t('Miner Fee')}</RowLabel>
+                        {ctxp.fee ? (
+                          <RowData>
+                            {dispatch(
+                              FormatAmountStr(
+                                wallet.chain, // use chain for miner fee
+                                wallet.chain,
+                                undefined,
+                                ctxp.fee,
+                              ),
+                            )}
+                          </RowData>
+                        ) : (
+                          <RowData>...</RowData>
+                        )}
+                      </RowDataContainer>
+                      <ItemDivisor />
+                    </>
+                  ) : null}
+
+                  <ContractHeaderContainer style={{paddingTop: 16}}>
+                    <RowLabel>{t('Token Contract Address')}</RowLabel>
+                    <LinkContainer>
+                      <LinkIcon />
+                      <ContractLink
+                        onPress={() => dispatch(viewOnBlockchain(wallet))}>
+                        {t('View Contract')}
+                      </ContractLink>
+                    </LinkContainer>
+                  </ContractHeaderContainer>
+                  <ContractAddressText style={{marginBottom: 16}}>
+                    {wallet.tokenAddress}
+                  </ContractAddressText>
+                  <ItemDivisor />
+
+                  <ContractHeaderContainer style={{paddingTop: 16}}>
+                    <RowContainer>
+                      <RowLabel>{t('Spender Contract Address')}</RowLabel>
+                      {spenderDataWhiteList?.spenderVerified ? (
+                        <Image
+                          source={CircleCheckIcon}
+                          style={{width: 20, height: 20, marginLeft: 6}}
+                        />
+                      ) : null}
+                    </RowContainer>
+                    <LinkContainer>
+                      <LinkIcon />
+                      <ContractLink
+                        onPress={() =>
+                          console.log(
+                            'TODO: spenderData.address: ' + spenderData.address,
+                          )
+                        }>
+                        {t('View Contract')}
+                      </ContractLink>
+                    </LinkContainer>
+                  </ContractHeaderContainer>
+                  <ContractAddressText
+                    style={{
+                      marginBottom: spenderDataWhiteList?.spenderVerified
+                        ? 5
+                        : 16,
+                    }}>
+                    {spenderData.address}
+                  </ContractAddressText>
+
+                  {spenderDataWhiteList?.spenderVerified ? (
+                    <>
+                      <RowDataContainer>
+                        <RowLabel>{t('Site URL')}</RowLabel>
+                        <RowData>{spenderDataWhiteList.siteUrl}</RowData>
+                      </RowDataContainer>
+                    </>
+                  ) : (
+                    <LabelTip type="warn">
+                      <LabelTipText>
+                        {t(
+                          'We have not been able to verify the Spender Contract Address as a trusted one. Make sure you know this spender to give them access to your tokens.',
+                        )}
+                      </LabelTipText>
+                    </LabelTip>
+                  )}
+                  <ItemDivisor />
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      copyText(encodedData);
+                      setCopiedEncodedData(true);
+                    }}>
+                    <ContractHeaderContainer style={{paddingTop: 16}}>
+                      <RowLabel>{t('Encoded Data')}</RowLabel>
+                      {copiedEncodedData ? <CopiedSvg width={17} /> : null}
+                    </ContractHeaderContainer>
+                    <ContractAddressText style={{marginBottom: 16}}>
+                      {encodedData}
+                    </ContractAddressText>
+                  </TouchableOpacity>
+                </>
+              )}
+            </ScrollView>
           </ApproveErc20ModalContainer>
         </SafeAreaView>
         {ctxp ? (

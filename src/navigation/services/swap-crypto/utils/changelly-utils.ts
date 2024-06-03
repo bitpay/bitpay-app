@@ -363,13 +363,13 @@ export const getChainFromChangellyBlockchain = (
   );
 };
 
-export const isCoinSupportedToSwap = (
+export const isCoinSupportedByChangelly = (
   coin: string,
-  chain?: string,
+  chain: string,
 ): boolean => {
   const lowerCoin = coin.toLowerCase();
 
-  if (!chain) {
+  if (chain === undefined) {
     return [
       ...changellySupportedCoins,
       ...Object.values(supportedTokensByChain).flat(),

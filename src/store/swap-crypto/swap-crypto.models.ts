@@ -1,4 +1,7 @@
-import {ThorswapProvider} from './models/thorswap.models';
+import {
+  ThorswapProvider,
+  ThorswapTrackingStatus,
+} from '../swap-crypto/models/thorswap.models';
 
 export interface SwapCryptoLimits {
   min?: number;
@@ -26,7 +29,7 @@ export interface changellyTxData {
 
 export interface thorswapTxData {
   orderId: string;
-  exchangeTxId: string;
+  txHash: string;
   date: number;
   amountTo: number;
   coinTo: string;
@@ -41,7 +44,8 @@ export interface thorswapTxData {
   totalExchangeFee: number;
   quoteId: string;
   spenderKey: ThorswapProvider;
-  status: string;
+  slippage?: number;
+  status: ThorswapTrackingStatus;
   error?: any;
   env?: 'dev' | 'prod';
 }

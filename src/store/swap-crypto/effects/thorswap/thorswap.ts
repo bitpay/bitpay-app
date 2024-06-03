@@ -1,11 +1,19 @@
 import axios from 'axios';
-import {t} from 'i18next';
 import {BASE_BWS_URL} from '../../../../constants/config';
-import {ThorswapGetSwapQuoteRequestData} from '../../models/thorswap.models';
+import {
+  ThorswapCurrency,
+  ThorswapGetCurrenciesRequestData,
+  ThorswapGetSwapQuoteData,
+  ThorswapGetSwapQuoteRequestData,
+  ThorswapGetSwapTxData,
+  ThorswapGetSwapTxRequestData,
+} from '../../models/thorswap.models';
 
 const bwsUri = BASE_BWS_URL;
 
-export const thorswapGetCurrencies = async (requestData: any) => {
+export const thorswapGetCurrencies = async (
+  requestData: ThorswapGetCurrenciesRequestData,
+): Promise<ThorswapCurrency[]> => {
   try {
     const body = requestData;
 
@@ -99,7 +107,7 @@ export const thorswapGetGasPrice = async (requestData: any) => {
 
 export const thorswapGetSwapQuote = async (
   requestData: ThorswapGetSwapQuoteRequestData,
-) => {
+): Promise<ThorswapGetSwapQuoteData> => {
   try {
     const body = requestData;
 
@@ -122,7 +130,9 @@ export const thorswapGetSwapQuote = async (
   }
 };
 
-export const thorswapGetSwapTx = async (requestData: any) => {
+export const thorswapGetSwapTx = async (
+  requestData: ThorswapGetSwapTxRequestData,
+): Promise<ThorswapGetSwapTxData> => {
   try {
     const body = requestData;
 

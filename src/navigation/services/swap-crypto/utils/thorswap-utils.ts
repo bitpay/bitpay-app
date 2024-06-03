@@ -4,7 +4,9 @@ import {
   ThorswapCurrency,
   ThorswapGetSwapQuoteData,
   ThorswapProvider,
-  thorswapQuoteRoute,
+  ThorswapQuoteRoute,
+  ThorswapRouteTimeEstimates,
+  ThorswapTrackingStatus,
 } from '../../../../store/swap-crypto/models/thorswap.models';
 import {
   ONE_INCH_ABI,
@@ -16,6 +18,291 @@ import {
 import {THORSWAP_DEFAULT_GAS_LIMIT} from '../constants/ThorswapConstants';
 
 export const thorswapEnv = __DEV__ ? 'sandbox' : 'production';
+
+export const thorswapSupportedCoins = ['btc', 'bch', 'eth', 'doge', 'ltc'];
+
+export const thorswapSupportedEthErc20Tokens = [
+  '1inch',
+  'aave',
+  'adx',
+  'aioz',
+  'akro',
+  'alcx',
+  'aleph',
+  'aleth',
+  'alpa',
+  'alpha',
+  'alusd',
+  'ampl',
+  'amp',
+  'ankreth',
+  'ankr',
+  'ant',
+  'api3',
+  'apw',
+  'arb',
+  'arch',
+  'arcx',
+  'armor',
+  'arnxm',
+  'auction',
+  'audio',
+  'axs',
+  'bac',
+  'badger',
+  'bal',
+  'band',
+  'bank',
+  'bao',
+  'base',
+  'bask',
+  'bat',
+  'bfc',
+  'bifi',
+  'bit',
+  'blocks',
+  'blur',
+  'bmi',
+  'bnt',
+  'bob',
+  'bond',
+  'btrfly',
+  'busd',
+  'caps',
+  'cbeth',
+  'cel',
+  'cgg',
+  'comp',
+  'combo',
+  'cow',
+  'cqt',
+  'cream',
+  'cro',
+  'crv',
+  'ctx',
+  'cvp',
+  'cvx',
+  'cvxcrv',
+  'dai',
+  'dao',
+  'ddx',
+  'deri',
+  'dextf',
+  'dfx',
+  'dg',
+  'dia',
+  'digg',
+  'diver',
+  'dnt',
+  'dola',
+  'dough',
+  'dpi',
+  'duck',
+  'dusd',
+  'dvf',
+  'dydx',
+  'eden',
+  'enj',
+  'ens',
+  'esd',
+  'ethx',
+  'farm',
+  'fcl',
+  'fei',
+  'flex',
+  'floki',
+  'fnc',
+  'fodl',
+  'fold',
+  'font',
+  'frax',
+  'front',
+  'ftm',
+  'fuse',
+  'fxs',
+  'gala',
+  'get',
+  'glm',
+  'gmee',
+  'gno',
+  'gog',
+  'grt',
+  'hbtc',
+  'hegic',
+  'hex',
+  'hez',
+  'hop',
+  'hopr',
+  'ice',
+  'ichi',
+  'id',
+  'idle',
+  'ilv',
+  'imx',
+  'index',
+  'inj',
+  'insur',
+  'inv',
+  'iq',
+  'jpeg',
+  'jrt',
+  'knc',
+  'kp3r',
+  'ldo',
+  'lend',
+  'lina',
+  'link',
+  'lon',
+  'lrc',
+  'lusd',
+  'lyra',
+  'mana',
+  'mars',
+  'masq',
+  'matic',
+  'meme',
+  'mic',
+  'mim',
+  'mis',
+  'mist',
+  'mkr',
+  'mln',
+  'moda',
+  'mph',
+  'mta',
+  'multi',
+  'ncr',
+  'nct',
+  'ndx',
+  'near',
+  'newo',
+  'nexo',
+  'nfp',
+  'nftx',
+  'npm',
+  'nu',
+  'num',
+  'ocean',
+  'oeth',
+  'ogn',
+  'ohm',
+  'omg',
+  'omni',
+  'onx',
+  'opium',
+  'orn',
+  'ousd',
+  'pad',
+  'pendle',
+  'pepe',
+  'perp',
+  'pickle',
+  'pixel',
+  'pipt',
+  'pmon',
+  'pnk',
+  'poly',
+  'pond',
+  'pool',
+  'premia',
+  'pre',
+  'pros',
+  'psp',
+  'punk',
+  'quad',
+  'quartz',
+  'radar',
+  'rai',
+  'rail',
+  'rare',
+  'rari',
+  'ren',
+  'repv2',
+  'revv',
+  'rgt',
+  'rlc',
+  'rook',
+  'route',
+  'rpl',
+  'rune',
+  'safe',
+  'sdao',
+  'sdt',
+  'sfi',
+  'si',
+  'snx',
+  'sos',
+  'spell',
+  'srm',
+  'stake',
+  'stg',
+  'stmx',
+  'strk',
+  'sushi',
+  'swag',
+  'swap',
+  'sxp',
+  'syn',
+  'tcap',
+  'thor',
+  'tlos',
+  'toke',
+  'tower',
+  'tribe',
+  'tru',
+  'tusd',
+  'ubt',
+  'uma',
+  'umb',
+  'uni',
+  'usdc',
+  'usdn',
+  'usdp',
+  'usdt',
+  'ust',
+  'uwu',
+  'vega',
+  'verse',
+  'vsp',
+  'vusd',
+  'wbtc',
+  'weth',
+  'wncg',
+  'woo',
+  'wxrp',
+  'xai',
+  'xcad',
+  'xdefi',
+  'xft',
+  'xor',
+  'xyo',
+  'xyz',
+  'yam',
+  'yel',
+  'yfi',
+  'yfii',
+  'ygg',
+  'zero',
+  'zrx',
+];
+
+export const isCoinSupportedByThorswap = (
+  coin: string,
+  chain: string,
+): boolean => {
+  if (chain === undefined) {
+    return [...thorswapSupportedCoins].includes(coin.toLowerCase());
+  }
+  if (coin.toLowerCase() === chain.toLowerCase()) {
+    return thorswapSupportedCoins.includes(coin.toLowerCase());
+  }
+  switch (chain) {
+    case 'eth':
+      return thorswapSupportedEthErc20Tokens.includes(coin.toLowerCase());
+    default:
+      return thorswapSupportedCoins.includes(coin.toLowerCase());
+  }
+};
 
 export const getThorswapCurrenciesFixedProps = (
   thorswapCurrenciesData: ThorswapCurrency[],
@@ -56,7 +343,7 @@ export const getThorswapFixedCoin = (
 };
 
 export const getThorswapSpenderDataFromRoute = (
-  route: thorswapQuoteRoute,
+  route: ThorswapQuoteRoute,
 ): {address: string | undefined; key: ThorswapProvider | undefined} => {
   let address;
   let key;
@@ -81,8 +368,8 @@ export const getThorswapSpenderDataFromRoute = (
   return {address, key};
 };
 
-export const getThorswapBestRoute = (quoteRouteData: thorswapQuoteRoute[]) => {
-  let bestRoute: thorswapQuoteRoute | undefined;
+export const getThorswapBestRoute = (quoteRouteData: ThorswapQuoteRoute[]) => {
+  let bestRoute: ThorswapQuoteRoute | undefined;
   if (quoteRouteData) {
     bestRoute = quoteRouteData.find(({optimal}) => optimal);
   }
@@ -90,13 +377,13 @@ export const getThorswapBestRoute = (quoteRouteData: thorswapQuoteRoute[]) => {
 };
 
 export const getThorswapRouteBySpenderKey = (
-  quoteRouteData: thorswapQuoteRoute[],
+  quoteRouteData: ThorswapQuoteRoute[],
   spenderKey: ThorswapProvider,
 ) => {
   if (!spenderKey) {
     return getThorswapBestRoute(quoteRouteData);
   }
-  let route: thorswapQuoteRoute | undefined;
+  let route: ThorswapQuoteRoute | undefined;
   if (quoteRouteData) {
     route = quoteRouteData.find(
       ({providers}) =>
@@ -177,6 +464,31 @@ export const estimateThorswapTxGasLimit = (
   return gasLimit ?? THORSWAP_DEFAULT_GAS_LIMIT;
 };
 
+export const getEstimatedTimeStrFromRoute = (
+  routeTime: ThorswapRouteTimeEstimates,
+) => {
+  let totalTime: number = 0;
+  if (routeTime.inboundMs) {
+    totalTime += routeTime.inboundMs;
+  }
+  if (routeTime.outboundMs) {
+    totalTime += routeTime.outboundMs;
+  }
+  if (routeTime.streamingMs) {
+    totalTime += routeTime.streamingMs;
+  }
+  if (routeTime.swapMs) {
+    totalTime += routeTime.swapMs;
+  }
+
+  const date = new Date(totalTime);
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+  const seconds = date.getUTCSeconds();
+
+  return `${hours}h ${minutes}m ${seconds}s`;
+};
+
 export const getExchangeAbiByContractAddress = (
   contractAddress: string,
 ): any[] | undefined => {
@@ -205,60 +517,94 @@ export interface Status {
   statusDescription?: string;
 }
 
-export const thorswapGetStatusDetails = (status: string): Status => {
-  // TODO: review this
+export const thorswapGetStatusDetails = (
+  status: ThorswapTrackingStatus,
+): Status => {
   let statusDescription, statusTitle;
   switch (status) {
-    case 'new':
-      statusTitle = t('New');
-      statusDescription = t('Transaction is waiting for an incoming payment.');
-      break;
-    case 'waiting':
-      statusTitle = t('Waiting');
-      statusDescription = t('Transaction is waiting for an incoming payment.');
-      break;
-    case 'confirming':
-      statusTitle = t('Confirming');
+    case ThorswapTrackingStatus.bitpayTxSent:
+      statusTitle = t('Swap order started');
       statusDescription = t(
-        'THORSwap has received payin and is waiting for certain amount of confirmations depending of incoming currency.',
+        'Transaction sent from bitpay wallet. The swap process may take a few minutes, please wait.',
       );
       break;
-    case 'exchanging':
-      statusTitle = t('Exchanging');
-      statusDescription = t('Payment was confirmed and is being exchanged.');
-      break;
-    case 'sending':
-      statusTitle = t('Sending');
-      statusDescription = t('Coins are being sent to the recipient address.');
-      break;
-    case 'finished':
-      statusTitle = t('Finished');
+    case ThorswapTrackingStatus.broadcasted:
+      statusTitle = t('Broadcasted');
       statusDescription = t(
-        'Coins were successfully sent to the recipient address.',
+        'The transaction has been broadcast from to the network by the provider.',
       );
       break;
-    case 'failed':
+    case ThorswapTrackingStatus.completed:
+    case ThorswapTrackingStatus.success:
+      statusTitle = t('Completed');
+      statusDescription = t(
+        'The transaction has been successfully completed and confirmed.',
+      );
+      break;
+    case ThorswapTrackingStatus.dropped:
+      statusTitle = t('Dropped');
+      statusDescription = t(
+        'The transaction has been dropped and will not proceed.',
+      );
+      break;
+    case ThorswapTrackingStatus.inbound:
+      statusTitle = t('Processing transaction');
+      statusDescription = t('The incoming transaction has been recognized.');
+      break;
+    case ThorswapTrackingStatus.mempool:
+      statusTitle = t('Processing transaction');
+      statusDescription = t(
+        'The transaction is in the mempool or is being indexed.',
+      );
+      break;
+    case ThorswapTrackingStatus.not_started:
+      statusTitle = t('Processing transaction');
+      statusDescription = t('The transaction process has not yet begun.');
+      break;
+    case ThorswapTrackingStatus.outbound:
+      statusTitle = t('Processing transaction');
+      statusDescription = t('The outgoing transaction has been initiated.');
+      break;
+    case ThorswapTrackingStatus.parsing_error:
+      statusTitle = t('Failed');
+      statusDescription = t('There was an error parsing the transaction data.');
+      break;
+    case ThorswapTrackingStatus.partially_refunded:
+      statusTitle = t('Partially refunded');
+      statusDescription = t(
+        'Part of the transaction amount has been refunded.',
+      );
+      break;
+    case ThorswapTrackingStatus.refunded:
+      statusTitle = t('Refunded');
+      statusDescription = t('The transaction amount has been refunded.');
+      break;
+    case ThorswapTrackingStatus.replaced:
+      statusTitle = t('Replaced');
+      statusDescription = t(
+        'The transaction has been replaced by another transaction.',
+      );
+      break;
+    case ThorswapTrackingStatus.retries_exceeded:
       statusTitle = t('Failed');
       statusDescription = t(
-        'Transaction has failed. In most cases, the amount was less than the minimum.',
+        'The transaction has failed and the number of retries has been exceeded.',
       );
       break;
-    case 'refunded':
-      statusTitle = t('Failed');
+    case ThorswapTrackingStatus.reverted:
+      statusTitle = t('Reverted');
+      statusDescription = t('The transaction has been reverted.');
+      break;
+    case ThorswapTrackingStatus.starting:
+      statusTitle = t('Starting');
       statusDescription = t(
-        "Exchange failed and coins were refunded to user's wallet.",
+        'The transaction has been received and swapping process is about to begin.',
       );
       break;
-    case 'hold':
-      statusTitle = t('Hold');
+    case ThorswapTrackingStatus.swapping:
+      statusTitle = t('Swapping');
       statusDescription = t(
-        'Due to AML/KYC procedure, exchange may be delayed.',
-      );
-      break;
-    case 'expired':
-      statusTitle = t('Expired');
-      statusDescription = t(
-        'Payin was not sent within the indicated timeframe.',
+        'The transaction is currently in the swapping process. This may take a few minutes.',
       );
       break;
     default:
@@ -272,20 +618,21 @@ export const thorswapGetStatusDetails = (status: string): Status => {
   };
 };
 
-export const thorswapGetStatusColor = (status: string): string => {
-  // TODO: review this
+export const thorswapGetStatusColor = (
+  status: ThorswapTrackingStatus,
+): string => {
   switch (status) {
-    case 'finished':
-    case 'refunded':
+    case ThorswapTrackingStatus.completed:
+    case ThorswapTrackingStatus.success:
       return '#01d1a2';
-    case 'failed':
-    case 'expired':
+    case ThorswapTrackingStatus.parsing_error:
+    case ThorswapTrackingStatus.retries_exceeded:
       return '#df5264';
-    case 'waiting':
-    case 'confirming':
-    case 'exchanging':
-    case 'sending':
-    case 'hold':
+    case ThorswapTrackingStatus.partially_refunded:
+    case ThorswapTrackingStatus.refunded:
+    case ThorswapTrackingStatus.reverted:
+    case ThorswapTrackingStatus.replaced:
+    case ThorswapTrackingStatus.dropped:
       return '#fdb455';
     default:
       return '#666677';

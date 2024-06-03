@@ -1,6 +1,5 @@
 import React from 'react';
 import {TouchableOpacity} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import SwapCryptoRoot, {
   SwapCryptoRootScreenParams,
@@ -23,6 +22,12 @@ import {
   baseNavigatorOptions,
 } from '../../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
+import {SwapCryptoExchangeKey} from './utils/swap-crypto-utils';
+import {
+  changellyTxData,
+  thorswapTxData,
+} from '../../../store/swap-crypto/swap-crypto.models';
+import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
 
 interface SwapCryptoProps {
   SwapCrypto: typeof Root;
@@ -56,7 +61,46 @@ const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
   const changellyHistory = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
-  const changellyTxs = Object.values(changellyHistory);
+  const thorswapHistory = useAppSelector(
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.thorswap,
+  );
+
+  type SwapTxs = {
+    [key in SwapCryptoExchangeKey]: changellyTxData[] | thorswapTxData[];
+  };
+  type SwapHistoryPath = SwapCryptoExchangeKey | 'general';
+  type SwapHistoryData = {
+    path: SwapHistoryPath;
+    exchangesWithHistory: number;
+  };
+
+  const swapTxs: SwapTxs = {
+    changelly: Object.values(changellyHistory),
+    thorswap: Object.values(thorswapHistory),
+  };
+
+  const getHistoryData = (swapTxs: SwapTxs): SwapHistoryData => {
+    let exchangeWithTxs: SwapHistoryPath = 'general';
+    let count = 0;
+
+    for (const [key, value] of Object.entries(swapTxs)) {
+      if (Array.isArray(value) && value.length > 0) {
+        exchangeWithTxs = key as SwapHistoryPath;
+        count++;
+      }
+
+      if (count > 1) {
+        exchangeWithTxs = 'general';
+      }
+    }
+
+    return {
+      path: exchangeWithTxs,
+      exchangesWithHistory: count,
+    };
+  };
+
+  const swapHistoryData = getHistoryData(swapTxs);
 
   return (
     <SwapCrypto.Group
@@ -78,14 +122,30 @@ const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
           headerTitle: () => <HeaderTitle>{t('Swap Crypto')}</HeaderTitle>,
           headerRight: () => (
             <HeaderRightContainer>
-              {!!changellyTxs.length && (
+              {swapHistoryData.exchangesWithHistory > 0 ? (
                 <TouchableOpacity
                   onPress={() => {
-                    navigationRef.navigate('ChangellySettings');
+                    switch (swapHistoryData.path) {
+                      case 'changelly':
+                        navigationRef.navigate(
+                          ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
+                        );
+                        break;
+                      case 'thorswap':
+                        navigationRef.navigate(
+                          ExternalServicesSettingsScreens.THORSWAP_SETTINGS,
+                        );
+                        break;
+                      default:
+                        navigationRef.navigate(
+                          ExternalServicesSettingsScreens.SWAP_HISTORY_SELECTOR,
+                        );
+                        break;
+                    }
                   }}>
                   <HistoryIcon width={42} height={42} />
                 </TouchableOpacity>
-              )}
+              ) : null}
             </HeaderRightContainer>
           ),
         }}

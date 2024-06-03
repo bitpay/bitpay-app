@@ -6,14 +6,13 @@ import {
   View,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
-import uuid from 'react-native-uuid';
-import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import styled from 'styled-components/native';
 import {
   RouteProp,
   useRoute,
   useNavigation,
   StackActions,
+  useIsFocused,
 } from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
@@ -25,6 +24,7 @@ import {useLogger} from '../../../../utils/hooks/useLogger';
 import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import ThorswapLogo from '../../../../components/icons/external-services/thorswap/thorswap-logo';
 import {
+  calculateSlippageMinAmount,
   isPairSupported,
   SwapCryptoExchangeKey,
   SwapCryptoSupportedExchanges,
@@ -34,7 +34,6 @@ import {
   SlateDark,
   ProgressBlue,
   White,
-  BitPay,
   LuckySevens,
   LightBlack,
   NeutralSlate,
@@ -46,29 +45,8 @@ import {
   GetPrecision,
   IsERCToken,
 } from '../../../../store/wallet/utils/currency';
-import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
-import {BuyCryptoActions} from '../../../../store/buy-crypto';
-// import {
-//   ChangellyCreateOrderData,
-//   ChangellyCreateOrderRequestData,
-//   ChangellyGetQuoteRequestData,
-//   ChangellyOrderData,
-//   ChangellyPaymentData,
-//   ChangellyQuoteData,
-//   BuyCryptoLimits,
-//   ThorswapGetCurrencyLimitsRequestData,
-//   ThorswapPaymentData,
-// } from '../../../../store/buy-crypto/buy-crypto.models';
-import {
-  calculateAltFiatToUsd,
-  getBuyCryptoFiatLimits,
-} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {SendMaxInfo, Wallet} from '../../../../store/wallet/wallet.models';
-import {
-  APP_DEEPLINK_PREFIX,
-  APP_NAME_UPPERCASE,
-} from '../../../../constants/config';
 import {
   formatFiatAmount,
   getBadgeImg,
@@ -81,14 +59,12 @@ import {
   getChangellyFixedCurrencyAbbreviation,
 } from '../utils/changelly-utils';
 import {
+  getEstimatedTimeStrFromRoute,
   getThorswapFixedCoin,
   getThorswapSpenderDataFromRoute,
   thorswapEnv,
 } from '../utils/thorswap-utils';
-import {
-  BuyCryptoConfig,
-  SwapCryptoConfig,
-} from '../../../../store/external-services/external-services.types';
+import {SwapCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../../store/app';
 // import {thorswapGetCurrencyLimits} from '../../../../store/buy-crypto/effects/thorswap/thorswap';
@@ -97,6 +73,8 @@ import {
   ItemDivisor,
 } from '../../buy-crypto/styled/BuyCryptoCard';
 import {
+  ExchangeTermsContainer,
+  ExchangeTermsText,
   TermsContainer,
   TermsText,
 } from '../../buy-crypto/styled/BuyCryptoTerms';
@@ -104,7 +82,6 @@ import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
 import {
   ChangellyGetRateData,
   ChangellyGetRateRequestData,
-  ChangellyRateData,
   ChangellyRateResult,
 } from '../../../../store/swap-crypto/models/changelly.models';
 import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
@@ -113,8 +90,8 @@ import {
   ThorswapGetSwapQuoteData,
   ThorswapGetSwapQuoteRequestData,
   ThorswapProvider,
-  ThorswapProviderEnum,
-  thorswapQuoteRoute,
+  ThorswapProviderNames,
+  ThorswapQuoteRoute,
 } from '../../../../store/swap-crypto/models/thorswap.models';
 import {getERC20TokenAllowance} from '../../../../store/moralis/moralis.effects';
 import ApproveErc20Modal from '../../components/ApproveErc20Modal';
@@ -123,9 +100,10 @@ import {WIDTH} from '../../../../components/styled/Containers';
 import {SelectorArrowContainer} from '../styled/SwapCryptoRoot.styled';
 import ArrowDownSvg from '../../../../../assets/img/chevron-down.svg';
 import ArrowUpSvg from '../../../../../assets/img/chevron-up.svg';
-import InfoSvg from '../../../../../assets/img/info.svg';
 import InfoIcon from '../../../../components/icons/info/Info';
 import {PreLoadPartnersData, SwapCryptoCoin} from './SwapCryptoRoot';
+import {THORSWAP_DEFAULT_SLIPPAGE} from '../constants/ThorswapConstants';
+import throttle from 'lodash.throttle';
 
 export type SwapCryptoOffersScreenParams = {
   amountFrom: number;
@@ -152,7 +130,6 @@ export type SwapCryptoOffer = {
   swapClicked: boolean;
   rate: string | undefined;
   rateFiat: string | undefined;
-  fiatAmount: number;
   amountReceiving?: string;
 
   showApprove?: boolean;
@@ -161,7 +138,16 @@ export type SwapCryptoOffer = {
   quoteData?: any; // Changelly | Thorswap
 
   hasExtraOpts?: boolean;
+  selectedSpenderKey?: ThorswapProvider;
+  spenderSelectorExpanded?: boolean;
   slippage?: number;
+  slippageOpts?: {
+    steps: number;
+    max: number;
+    min: number;
+    minLimit: number;
+    maxLimit: number;
+  };
   estimatedTime?: string;
   estimatedMinAmountReceiving?: string;
 
@@ -306,6 +292,14 @@ const OfferExtraOptsContainer = styled.View<{expanded: boolean}>`
   z-index: -1;
 `;
 
+const OfferExtraOptsProvidersContainer = styled.TouchableOpacity`
+  border-bottom-width: 1px;
+  border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  padding: 5px 17px 5px 15px;
+  margin: 0px 0px 0px -14px;
+  width: ${WIDTH - 32}px;
+`;
+
 const OfferDataWarningContainer = styled.View`
   max-width: 85%;
   margin-top: 20px;
@@ -378,10 +372,8 @@ const offersDefault: {
     swapClicked: false,
     showApprove: false,
     approveConfirming: false,
-    // fiatCurrency: 'USD',
     rate: undefined,
     rateFiat: undefined,
-    fiatAmount: 0,
     fiatMoney: undefined,
     hasExtraOpts: false,
     slippage: undefined,
@@ -405,15 +397,20 @@ const offersDefault: {
     ),
     expanded: false,
     swapClicked: false,
-    showApprove: true,
+    showApprove: false,
     approveConfirming: false,
-    // fiatCurrency: 'USD',
     rate: undefined,
     rateFiat: undefined,
-    fiatAmount: 0,
     fiatMoney: undefined,
     hasExtraOpts: true,
-    slippage: 3,
+    slippage: THORSWAP_DEFAULT_SLIPPAGE,
+    slippageOpts: {
+      steps: 0.5,
+      max: 10,
+      min: 0,
+      minLimit: 0.5,
+      maxLimit: 10,
+    },
     estimatedTime: undefined,
     estimatedMinAmountReceiving: undefined,
     errorMsg: undefined,
@@ -443,26 +440,26 @@ const SwapCryptoOffers: React.FC = () => {
   const {t} = useTranslation();
   const logger = useLogger();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
 
   SwapCryptoSupportedExchanges.forEach((exchange: SwapCryptoExchangeKey) => {
     if (offersDefault[exchange]) {
       let supportedCoins: SwapCryptoCoin[] | undefined;
       if (preLoadPartnersData && preLoadPartnersData[exchange]) {
         supportedCoins = preLoadPartnersData[exchange].supportedCoins;
+
+        offersDefault[exchange].amountLimits =
+          preLoadPartnersData[exchange].limits;
       }
 
       if (
         preSetPartner &&
         SwapCryptoSupportedExchanges.includes(preSetPartner)
       ) {
-        offersDefault[exchange].showOffer = // TODO: this showOffer should be setted based on supported pairs
+        offersDefault[exchange].showOffer =
           preSetPartner === exchange
             ? isPairSupported(
                 preSetPartner,
@@ -523,40 +520,20 @@ const SwapCryptoOffers: React.FC = () => {
 
     if (
       (offers.changelly.amountLimits?.min &&
-        offers.changelly.fiatAmount < offers.changelly.amountLimits.min) ||
+        amountFrom < offers.changelly.amountLimits.min) ||
       (offers.changelly.amountLimits?.max &&
-        offers.changelly.fiatAmount > offers.changelly.amountLimits.max)
+        amountFrom > offers.changelly.amountLimits.max)
     ) {
       offers.changelly.outOfLimitMsg = t(
-        'There are no changelly offers available, as the current purchase limits for this exchange must be between and',
+        'There are no Changelly offers available, as the current swap limits for this exchange must be between and',
         {
           min: offers.changelly.amountLimits.min,
           max: offers.changelly.amountLimits.max,
-          fiatCurrency: coinFrom.toUpperCase(),
+          coin: coinFrom.toUpperCase(),
         },
       );
       setFinishedChangelly(!finishedChangelly);
       return;
-    }
-
-    if (selectedWalletFrom.balance?.satSpendable) {
-      // TODO: move this if to SwapCryptoRoot ??
-      const spendableAmount = dispatch(
-        SatToUnit(
-          selectedWalletFrom.balance.satSpendable,
-          selectedWalletFrom.currencyAbbreviation,
-          selectedWalletFrom.chain,
-          selectedWalletFrom.tokenAddress,
-        ),
-      );
-
-      if (!!spendableAmount && spendableAmount < amountFrom) {
-        const msg = t(
-          'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
-        );
-        offers.changelly.outOfLimitMsg = msg;
-        return;
-      }
     }
 
     const reqData: ChangellyGetRateRequestData = {
@@ -573,7 +550,7 @@ const SwapCryptoOffers: React.FC = () => {
     try {
       const changellyQuoteData: ChangellyGetRateData =
         await changellyGetFixRateForAmount(selectedWalletFrom, reqData);
-      console.log('=========== changellyQuoteData: ', changellyQuoteData);
+
       if (changellyQuoteData.error) {
         const msg =
           t('Changelly getFixRateForAmount Error: ') +
@@ -594,15 +571,9 @@ const SwapCryptoOffers: React.FC = () => {
         return;
       }
 
-      // const newRateData: ChangellyRateData = {
-      //   fixedRateId: changellyQuoteData.result[0].id,
-      //   amountTo: Number(changellyQuoteData.result[0].amountTo),
-      //   rate: Number(changellyQuoteData.result[0].result), // result == rate
-      // };
-
       offers.changelly.quoteData = changellyQuoteData.result[0];
       offers.changelly.amountReceiving = changellyQuoteData.result[0].amountTo;
-      offers.changelly.rate = Number(changellyQuoteData.result[0].result)
+      offers.changelly.rate = Number(changellyQuoteData.result[0].result) // result == rate
         .toFixed(6)
         .replace(/\.?0+$/, '');
 
@@ -642,64 +613,6 @@ const SwapCryptoOffers: React.FC = () => {
       );
       showChangellyError(msg, title);
     }
-
-    // const requestData: ChangellyGetQuoteRequestData = {
-    //   env: changellyEnv,
-    //   source: offers.changelly.fiatCurrency,
-    //   target: getChangellyCoinFormat(coin),
-    //   source_amount: offers.changelly.fiatAmount,
-    //   account_reference: user?.eid ?? selectedWallet.id,
-    //   blockchain: getChangellyChainFormat(selectedWallet.chain),
-    // };
-
-    // selectedWallet
-    //   .changellyGetQuote(requestData)
-    //   .then((quoteData: ChangellyQuoteData) => {
-    //     if (quoteData?.data?.prices?.[0]?.coin_amount) {
-    //       const data = quoteData.data.prices[0];
-
-    //       offers.changelly.outOfLimitMsg = undefined;
-    //       offers.changelly.errorMsg = undefined;
-    //       offers.changelly.quoteData = data;
-    //       offers.changelly.amountCost = Number(data.fiat_amount);
-    //       offers.changelly.fee =
-    //         Number(data.fee_amount) + Number(data.network_fee);
-    //       offers.changelly.buyAmount = offers.changelly.amountCost - offers.changelly.fee;
-
-    //       const precision = dispatch(
-    //         GetPrecision(coin, chain, selectedWallet.tokenAddress),
-    //       );
-    //       if (offers.changelly.buyAmount && coin && precision) {
-    //         offers.changelly.fiatMoney = Number(
-    //           offers.changelly.buyAmount / Number(data.coin_amount),
-    //         ).toFixed(precision!.unitDecimals);
-    //       } else {
-    //         logger.error(`Changelly error: Could not get precision for ${coin}`);
-    //       }
-    //       offers.changelly.amountReceiving = Number(data.coin_amount).toString();
-    //       logger.debug('Changelly getting quote: SUCCESS');
-    //       setFinishedChangelly(!finishedChangelly);
-    //     } else {
-    //       if (quoteData.message && typeof quoteData.message === 'string') {
-    //         logger.error('Changelly error: ' + quoteData.message);
-    //       }
-    //       if (quoteData.error && typeof quoteData.error === 'string') {
-    //         logger.error('Changelly error: ' + quoteData.error);
-    //       }
-    //       if (quoteData.errors) {
-    //         logger.error(JSON.stringify(quoteData.errors));
-    //       }
-    //       let err = t(
-    //         "Can't get rates at this moment. Please try again later",
-    //       );
-    //       const reason = 'changellyGetQuote Error. "coin_amount" not included.';
-    //       showChangellyError(err, reason);
-    //     }
-    //   })
-    //   .catch((err: any) => {
-    //     const reason = 'changellyGetQuote Error';
-    //     showChangellyError(err, reason);
-    //   });
   };
 
   const showChangellyError = (err?: any, reason?: string) => {
@@ -718,13 +631,14 @@ const SwapCryptoOffers: React.FC = () => {
 
     logger.error('Changelly error: ' + msg);
 
+    // TODO: review analytics
     dispatch(
       Analytics.track('Failed Swap Crypto', {
         exchange: 'changelly',
         context: 'SwapCryptoOffers',
         reason: reason || 'unknown',
         amountFrom: amountFrom,
-        // amountTo: offers.changelly.amountTo, // TODO: finish this Analytics
+        // amountTo: offers.changelly.amountTo,
         coinFrom: coinFrom?.toLowerCase() || '',
         chainFrom: chainFrom?.toLowerCase() || '',
         coinTo: coinTo?.toLowerCase() || '',
@@ -751,70 +665,23 @@ const SwapCryptoOffers: React.FC = () => {
       return;
     }
 
-    // const currencyLimitsrequestData: ThorswapGetCurrencyLimitsRequestData = {
-    //   currencyAbbreviation: getThorswapFixedCurrencyAbbreviation(
-    //     coin.toLowerCase(),
-    //     selectedWallet.chain,
-    //   ),
-    //   baseCurrencyCode: offers.thorswap.fiatCurrency.toLowerCase(),
-    //   areFeesIncluded: true,
-    //   env: thorswapEnv,
-    // };
-
-    // try {
-    // const thorswapCurrencyLimitsData = await thorswapGetCurrencyLimits(
-    //   currencyLimitsrequestData,
-    // );
-    // offers.thorswap.amountLimits = {
-    //   min: thorswapCurrencyLimitsData.baseCurrency.minBuyAmount,
-    //   max: thorswapCurrencyLimitsData.baseCurrency.maxBuyAmount,
-    // };
-
     if (
       (offers.thorswap.amountLimits?.min &&
-        offers.thorswap.fiatAmount < offers.thorswap.amountLimits?.min) ||
+        amountFrom < offers.thorswap.amountLimits?.min) ||
       (offers.thorswap.amountLimits?.max &&
-        offers.thorswap.fiatAmount > offers.thorswap.amountLimits?.max)
+        amountFrom > offers.thorswap.amountLimits?.max)
     ) {
       offers.thorswap.outOfLimitMsg = t(
-        'There are no Thorswap offers available, as the current purchase limits for this exchange must be between and',
+        'There are no THORSwap offers available, as the current swap limits for this exchange must be between and',
         {
           min: offers.thorswap.amountLimits.min,
           max: offers.thorswap.amountLimits.max,
-          fiatCurrency: coinFrom.toUpperCase(),
+          coin: coinFrom.toUpperCase(),
         },
       );
       setFinishedThorswap(!finishedThorswap);
       return;
     }
-    // } catch (err) {
-    //   logger.warn(
-    //     `It was not possible to get currency limits for Thorswap with the following values: ${JSON.stringify(
-    //       currencyLimitsrequestData,
-    //     )}`,
-    //   );
-    // }
-
-    // let senderAddress: string = '';
-    // let recipientAddress: string = '';
-    // try {
-    //   senderAddress = (await dispatch<any>(
-    //     createWalletAddress({wallet: selectedWalletFrom, newAddress: false}),
-    //   )) as string;
-    // } catch (err) {
-    //   console.error(err);
-    //   const reason = 'createWalletAddress(senderAddress) Error';
-    //   showChangellyError(err, reason);
-    // }
-    // try {
-    //   recipientAddress = (await dispatch<any>(
-    //     createWalletAddress({wallet: selectedWalletTo, newAddress: false}),
-    //   )) as string;
-    // } catch (err) {
-    //   console.error(err);
-    //   const reason = 'createWalletAddress(recipientAddress) Error';
-    //   showChangellyError(err, reason);
-    // }
 
     const requestData: ThorswapGetSwapQuoteRequestData = {
       env: thorswapEnv,
@@ -829,102 +696,61 @@ const SwapCryptoOffers: React.FC = () => {
         selectedWalletTo.tokenAddress,
       ),
       sellAmount: amountFrom,
-      // providers: [ThorswapProviderEnum.UNISWAPV2], // TODO: review this
-      // senderAddress, // TODO: make a getQuote in thorswapCheckout and add senderAddress there ???
-      // recipientAddress, // TODO: make a getQuote in thorswapCheckout and add recipientAddress there ???
     };
 
     try {
-      console.log('============ thorswapQuoteData enviada: ', requestData);
       const thorswapQuoteData: ThorswapGetSwapQuoteData =
         await thorswapGetSwapQuote(requestData);
-      console.log(
-        '============ thorswapQuoteData recibida: ',
-        thorswapQuoteData,
-      );
-      if (thorswapQuoteData?.routes[0]) {
-        // ?.baseCurrencyAmount
-        // offers.thorswap.amountLimits = {
-        //   min: thorswapQuoteData.baseCurrency.minBuyAmount,
-        //   max: thorswapQuoteData.baseCurrency.maxBuyAmount,
-        // };
 
-        // if (
-        //   (offers.thorswap.amountLimits.min &&
-        //     offers.thorswap.fiatAmount < offers.thorswap.amountLimits.min) ||
-        //   (offers.thorswap.amountLimits.max &&
-        //     offers.thorswap.fiatAmount > offers.thorswap.amountLimits.max)
-        // ) {
-        //   offers.thorswap.outOfLimitMsg = t(
-        //     'There are no Thorswap offers available, as the current purchase limits for this exchange must be between and',
-        //     {
-        //       min: offers.thorswap.amountLimits.min,
-        //       max: offers.thorswap.amountLimits.max,
-        //       fiatCurrency: coinFrom.toUpperCase(),
-        //     },
-        //   );
-        //   setFinishedThorswap(!finishedThorswap);
-        //   return;
-        // } else {
+      if (thorswapQuoteData?.routes && thorswapQuoteData?.routes[0]) {
+        const bestRoute: ThorswapQuoteRoute = thorswapQuoteData.routes[0];
+
         offers.thorswap.outOfLimitMsg = undefined;
         offers.thorswap.errorMsg = undefined;
-        offers.thorswap.quoteData = thorswapQuoteData.routes; // TODO: .map with useful data
+        offers.thorswap.selectedSpenderKey = bestRoute.providers[0];
+        offers.thorswap.quoteData = thorswapQuoteData.routes;
 
-        offers.thorswap.amountReceiving =
-          thorswapQuoteData.routes[0].expectedOutput;
+        offers.thorswap.amountReceiving = bestRoute.expectedOutput;
 
         if (
-          thorswapQuoteData.routes[0].fees[
-            cloneDeep(chainFrom).toUpperCase()
-          ] &&
-          thorswapQuoteData.routes[0].fees[
-            cloneDeep(chainFrom).toUpperCase()
-          ][0]
+          bestRoute.fees[cloneDeep(chainFrom).toUpperCase()] &&
+          bestRoute.fees[cloneDeep(chainFrom).toUpperCase()][0]
         ) {
           offers.thorswap.fee = Number(
-            thorswapQuoteData.routes[0].fees[
-              cloneDeep(chainFrom).toUpperCase()
-            ][0].totalFee,
+            bestRoute.fees[cloneDeep(chainFrom).toUpperCase()][0].totalFee,
           );
         }
 
-        if (thorswapQuoteData.routes[0].timeEstimates) {
-          let totalTime: number = 0;
-          if (thorswapQuoteData.routes[0].timeEstimates.inboundMs) {
-            totalTime += thorswapQuoteData.routes[0].timeEstimates.inboundMs;
-          }
-          if (thorswapQuoteData.routes[0].timeEstimates.outboundMs) {
-            totalTime += thorswapQuoteData.routes[0].timeEstimates.outboundMs;
-          }
-          if (thorswapQuoteData.routes[0].timeEstimates.streamingMs) {
-            totalTime += thorswapQuoteData.routes[0].timeEstimates.streamingMs;
-          }
-          if (thorswapQuoteData.routes[0].timeEstimates.swapMs) {
-            totalTime += thorswapQuoteData.routes[0].timeEstimates.swapMs;
-          }
-
-          const date = new Date(totalTime);
-          const hours = date.getUTCHours();
-          const minutes = date.getUTCMinutes();
-          const seconds = date.getUTCSeconds();
-
-          offers.thorswap.estimatedTime = `${hours}h ${minutes}m ${seconds}s`;
+        if (bestRoute.timeEstimates) {
+          offers.thorswap.estimatedTime = getEstimatedTimeStrFromRoute(
+            bestRoute.timeEstimates,
+          );
         }
 
         if (
-          thorswapQuoteData.routes[0].expectedOutputMaxSlippage &&
-          thorswapQuoteData.routes[0].expectedOutputMaxSlippage !== ''
+          bestRoute.meta?.slippagePercentage &&
+          offers.thorswap.slippageOpts
         ) {
-          offers.thorswap.estimatedMinAmountReceiving = Number(
-            thorswapQuoteData.routes[0].expectedOutputMaxSlippage,
-          )
+          const slippageFromRoute = Number(bestRoute.meta.slippagePercentage);
+          if (slippageFromRoute <= 10 && slippageFromRoute >= 0.5) {
+            offers.thorswap.slippage = slippageFromRoute;
+          } else {
+            offers.thorswap.slippage = THORSWAP_DEFAULT_SLIPPAGE;
+          }
+        }
+
+        if (offers.thorswap.amountReceiving && offers.thorswap.slippage) {
+          const newMin = calculateSlippageMinAmount(
+            offers.thorswap.amountReceiving,
+            offers.thorswap.slippage,
+          );
+          offers.thorswap.estimatedMinAmountReceiving = newMin
             .toFixed(4)
             .replace(/\.?0+$/, '');
         }
 
-        if (thorswapQuoteData.routes[0].expectedOutput && amountFrom) {
-          const newRate =
-            Number(thorswapQuoteData.routes[0].expectedOutput) / amountFrom;
+        if (bestRoute.expectedOutput && amountFrom) {
+          const newRate = Number(bestRoute.expectedOutput) / amountFrom;
           offers.thorswap.rate = newRate.toFixed(6).replace(/\.?0+$/, '');
 
           const precisionTo = dispatch(
@@ -962,22 +788,64 @@ const SwapCryptoOffers: React.FC = () => {
         if (!thorswapQuoteData) {
           logger.error('Thorswap error: No thorswapQuoteData received');
         }
-        // if (thorswapQuoteData.message && typeof thorswapQuoteData.message === 'string') {
-        //   logger.error('Thorswap error: ' + thorswapQuoteData.message);
-        // }
-        // if (thorswapQuoteData.error && typeof thorswapQuoteData.error === 'string') {
-        //   logger.error('Thorswap error: ' + thorswapQuoteData.error);
-        // }
-        // if (thorswapQuoteData.errors) {
-        //   logger.error(thorswapQuoteData.errors);
-        // }
+        if (
+          thorswapQuoteData.message &&
+          typeof thorswapQuoteData.message === 'string'
+        ) {
+          logger.error('Thorswap error: ' + thorswapQuoteData.message);
+        }
+        if (
+          thorswapQuoteData.error &&
+          typeof thorswapQuoteData.error === 'string'
+        ) {
+          logger.error('Thorswap error: ' + thorswapQuoteData.error);
+        }
+        if (thorswapQuoteData.errors) {
+          logger.error(thorswapQuoteData.errors);
+        }
         let err = t("Can't get rates at this moment. Please try again later");
+        if (
+          thorswapQuoteData.code &&
+          thorswapQuoteData.type &&
+          thorswapQuoteData.message
+        ) {
+          err = thorswapQuoteData.message;
+        }
         const reason = 'thorswapGetQuote Error. Necessary data not included.';
         showThorswapError(err, reason);
       }
     } catch (err) {
       const reason = 'thorswapGetQuote Error';
       showThorswapError(err, reason);
+    }
+  };
+
+  const setSelectedThorswapRoute = (selectedRoute: ThorswapQuoteRoute) => {
+    offers.thorswap.selectedSpenderKey = selectedRoute.providers[0];
+    offers.thorswap.spenderSelectorExpanded = false;
+    if (selectedRoute.timeEstimates) {
+      offers.thorswap.estimatedTime = getEstimatedTimeStrFromRoute(
+        selectedRoute.timeEstimates,
+      );
+    }
+    offers.thorswap.amountReceiving = selectedRoute.expectedOutput;
+
+    if (
+      selectedRoute.meta?.slippagePercentage &&
+      offers.thorswap.slippageOpts
+    ) {
+      const slippageFromRoute = Number(selectedRoute.meta.slippagePercentage);
+      if (slippageFromRoute <= 10 && slippageFromRoute >= 0.5) {
+        offers.thorswap.slippage = slippageFromRoute;
+      } else {
+        offers.thorswap.slippage = THORSWAP_DEFAULT_SLIPPAGE;
+      }
+    }
+
+    if (offers.thorswap.slippage) {
+      onSlippageChange(offers.thorswap.key, offers.thorswap.slippage);
+    } else {
+      setUpdateView(Math.random());
     }
   };
 
@@ -997,13 +865,14 @@ const SwapCryptoOffers: React.FC = () => {
 
     logger.error('Thorswap error: ' + msg);
 
+    // TODO: review analytics
     dispatch(
       Analytics.track('Failed Swap Crypto', {
         exchange: 'thorswap',
         context: 'SwapCryptoOffers',
         reason: reason || 'unknown',
         amountFrom: amountFrom,
-        // amountTo: offers.changelly.amountTo, // TODO: finish this Analytics
+        // amountTo: offers.changelly.amountTo,
         coinFrom: coinFrom?.toLowerCase() || '',
         chainFrom: chainFrom?.toLowerCase() || '',
         coinTo: coinTo?.toLowerCase() || '',
@@ -1089,7 +958,8 @@ const SwapCryptoOffers: React.FC = () => {
       amountFrom: amountFrom,
       spenderKey:
         approveErc20ModalData?.approveErc20ModalOpts?.spenderKey ??
-        (offers.thorswap.quoteData as thorswapQuoteRoute[])[0].providers[0],
+        offers.thorswap.selectedSpenderKey,
+      slippage: offers.thorswap.slippage,
       useSendMax: IsERCToken(
         selectedWalletFrom!.currencyAbbreviation,
         selectedWalletFrom!.chain,
@@ -1107,6 +977,17 @@ const SwapCryptoOffers: React.FC = () => {
     }
     if (offers[key]) {
       offers[key].expanded = offers[key].expanded ? false : true;
+    }
+    setUpdateView(Math.random());
+  };
+
+  const expandProviderSelector = (offer: SwapCryptoOffer) => {
+    const key = offer.key;
+
+    if (offers[key]) {
+      offers[key].spenderSelectorExpanded = offers[key].spenderSelectorExpanded
+        ? false
+        : true;
     }
     setUpdateView(Math.random());
   };
@@ -1134,7 +1015,26 @@ const SwapCryptoOffers: React.FC = () => {
   };
 
   const showApproveErc20Modal = (offer: SwapCryptoOffer) => {
-    const spenderData = getThorswapSpenderDataFromRoute(offer.quoteData[0]);
+    let selectedRoute: ThorswapQuoteRoute | undefined;
+    if (offer.selectedSpenderKey) {
+      selectedRoute = (offer.quoteData as ThorswapQuoteRoute[]).find(
+        route => route.providers[0] === offer.selectedSpenderKey,
+      );
+    }
+
+    if (!selectedRoute) {
+      selectedRoute = offer.quoteData[0];
+    }
+
+    if (!selectedRoute) {
+      let err = t("Can't get rates at this moment. Please try again later");
+      const reason = 'checkTokenAllowance Error. selectedRoute not found.';
+      showThorswapError(err, reason);
+      return;
+    }
+
+    const spenderData = getThorswapSpenderDataFromRoute(selectedRoute);
+
     if (!spenderData?.address) {
       let err = t("Can't get rates at this moment. Please try again later");
       const reason =
@@ -1177,11 +1077,10 @@ const SwapCryptoOffers: React.FC = () => {
       address: selectedWalletFrom.tokenAddress, // ERC20 token contract address
       chain: selectedWalletFrom.chain,
       ownerAddress,
-      spenderAddress: data.spenderAddress, // 1inch v3: '0x11111112542d85b3ef69ae05771c2dccff4faa26'
+      spenderAddress: data.spenderAddress,
     };
-    console.log(
-      '======= Making getERC20TokenAllowance request with reqData: ' +
-        JSON.stringify(reqData),
+    logger.debug(
+      'getERC20TokenAllowance with reqData: ' + JSON.stringify(reqData),
     );
     const allowanceData = await dispatch(getERC20TokenAllowance(reqData));
     return allowanceData;
@@ -1193,9 +1092,27 @@ const SwapCryptoOffers: React.FC = () => {
   ) => {
     logger.debug('Thorswap: Verifiyng ERC20 token allowances...');
     try {
-      const spenderData = getThorswapSpenderDataFromRoute(
-        offers.thorswap.quoteData[0],
-      );
+      let selectedRoute: ThorswapQuoteRoute | undefined;
+      if (offers.thorswap.selectedSpenderKey) {
+        selectedRoute = (
+          offers.thorswap.quoteData as ThorswapQuoteRoute[]
+        ).find(
+          route => route.providers[0] === offers.thorswap.selectedSpenderKey,
+        );
+      }
+
+      if (!selectedRoute) {
+        selectedRoute = offers.thorswap.quoteData[0];
+      }
+
+      if (!selectedRoute) {
+        let err = t("Can't get rates at this moment. Please try again later");
+        const reason = 'checkTokenAllowance Error. selectedRoute not found.';
+        showThorswapError(err, reason);
+        return;
+      }
+
+      const spenderData = getThorswapSpenderDataFromRoute(selectedRoute);
       if (!spenderData?.address) {
         let err = t("Can't get rates at this moment. Please try again later");
         const reason =
@@ -1218,7 +1135,6 @@ const SwapCryptoOffers: React.FC = () => {
         (amountFrom * precision!.unitToSatoshi).toFixed(0),
       );
       const allowance = BigInt(tokenAllowance.allowance);
-      console.log('===============getTokenAllowance SUCCESS: ', tokenAllowance); // TODO: handle this
 
       logger.debug(
         `Amount to deposit: ${depositSat} | Allowance amount for contract(${spenderData.address}) : ${allowance}`,
@@ -1258,15 +1174,15 @@ const SwapCryptoOffers: React.FC = () => {
   ) => {
     offers[exchangeKey].slippage = value;
 
-    const newMin =
-      Number(offers[exchangeKey].amountReceiving) / (1 + value * 0.01);
+    const newMin = calculateSlippageMinAmount(
+      offers[exchangeKey].amountReceiving!,
+      value,
+    );
 
     offers[exchangeKey].estimatedMinAmountReceiving = newMin
       .toFixed(4)
       .replace(/\.?0+$/, '');
-    console.log(
-      `==== onSlippageChange(${exchangeKey}) value: ${value} | newMin: ${newMin}`,
-    );
+
     setUpdateView(Math.random());
   };
 
@@ -1295,7 +1211,7 @@ const SwapCryptoOffers: React.FC = () => {
     );
   };
 
-  useEffect(() => {
+  const init = () => {
     const showedOffersCount = Object.values(cloneDeep(offers)).filter(
       offer => offer.showOffer,
     ).length;
@@ -1308,14 +1224,30 @@ const SwapCryptoOffers: React.FC = () => {
       logger.error(msg);
       showError(title, msg);
     } else {
+      setOpeningBrowser(false);
       if (offers.changelly.showOffer) {
+        offers.changelly.swapClicked = false;
         getChangellyQuote();
       }
       if (offers.thorswap.showOffer) {
+        offers.thorswap.swapClicked = false;
         getThorswapQuote();
       }
     }
-  }, []);
+  };
+
+  useEffect(() => {
+    const initThrottle = throttle(
+      () => {
+        return init();
+      },
+      5000,
+      {leading: true, trailing: false},
+    );
+    if (isFocused) {
+      initThrottle();
+    }
+  }, [isFocused]);
 
   useEffect(() => {
     setOffers(offers);
@@ -1325,10 +1257,6 @@ const SwapCryptoOffers: React.FC = () => {
     if (!offers.thorswap.amountReceiving) {
       return;
     }
-    console.log(
-      '$$$$$$$$$$$$$$$$$$$ useEffect offers.thorswap.amountReceiving UPDATED: ',
-      offers.thorswap,
-    );
 
     const fromIsErc20Token = IsERCToken(
       selectedWalletFrom.currencyAbbreviation,
@@ -1337,9 +1265,6 @@ const SwapCryptoOffers: React.FC = () => {
 
     if (fromIsErc20Token) {
       checkTokenAllowance();
-      console.log(
-        '================================================== checkTokenAllowance finished',
-      );
     } else {
       offers.thorswap.showApprove = false;
       offers.thorswap.approveConfirming = false;
@@ -1372,9 +1297,12 @@ const SwapCryptoOffers: React.FC = () => {
             </SummaryItemContainer>
             <SummaryItemContainer>
               <SummaryTitle>{t('Amount')}</SummaryTitle>
-              <SummaryData>
-                {/* TODO: think how to show amountFrom for big numbers like SHIB */}
-                {amountFrom + ' ' + coinFrom.toUpperCase()}
+              <SummaryData style={{maxWidth: WIDTH / 2.5}}>
+                {cloneDeep(amountFrom)
+                  .toFixed(6)
+                  .replace(/\.?0+$/, '') +
+                  ' ' +
+                  coinFrom.toUpperCase()}
               </SummaryData>
             </SummaryItemContainer>
             <SummaryItemContainer>
@@ -1469,7 +1397,7 @@ const SwapCryptoOffers: React.FC = () => {
                         ) : null}
                         <OfferDataInfoContainer>
                           <OfferDataInfoLabel>
-                            {t('Provided By')}
+                            {t('Powered By')}
                           </OfferDataInfoLabel>
                           {offer.logo}
                         </OfferDataInfoContainer>
@@ -1530,6 +1458,100 @@ const SwapCryptoOffers: React.FC = () => {
                         <ItemDivisor style={{marginTop: 20}} />
                       )}
 
+                      {offer.hasExtraOpts ? (
+                        <>
+                          <OfferExtraOptsProvidersContainer
+                            onPress={() => {
+                              expandProviderSelector(offer);
+                            }}>
+                            <OfferExpandibleItem>
+                              <OfferDataInfoTitle>
+                                {t('Provider')}
+                              </OfferDataInfoTitle>
+                              <OfferRow>
+                                {offer.selectedSpenderKey ? (
+                                  <OfferDataInfoText>
+                                    {
+                                      ThorswapProviderNames[
+                                        offer.selectedSpenderKey
+                                      ]
+                                    }
+                                  </OfferDataInfoText>
+                                ) : null}
+                                <SelectorArrowContainer>
+                                  {offer.spenderSelectorExpanded ? (
+                                    <ArrowUpSvg {...{width: 13, height: 13}} />
+                                  ) : (
+                                    <ArrowDownSvg
+                                      {...{width: 13, height: 13}}
+                                    />
+                                  )}
+                                </SelectorArrowContainer>
+                              </OfferRow>
+                            </OfferExpandibleItem>
+
+                            {offer.spenderSelectorExpanded ? (
+                              <>
+                                {offer.key === 'thorswap'
+                                  ? Object.values(
+                                      offer.quoteData as ThorswapQuoteRoute[],
+                                    ).map(
+                                      (
+                                        route: ThorswapQuoteRoute,
+                                        index: number,
+                                      ) => {
+                                        return (
+                                          <TouchableOpacity
+                                            key={route.providers[0]}
+                                            style={{marginBottom: 10}}
+                                            onPress={() => {
+                                              setSelectedThorswapRoute(route);
+                                            }}>
+                                            <OfferRow>
+                                              <OfferDataInfoText>
+                                                {
+                                                  ThorswapProviderNames[
+                                                    route.providers[0]
+                                                  ]
+                                                }
+                                              </OfferDataInfoText>
+                                              <OfferColumn
+                                                style={{
+                                                  alignItems: 'flex-end',
+                                                }}>
+                                                {route.expectedOutput ? (
+                                                  <OfferDataInfoText>
+                                                    {Number(
+                                                      route.expectedOutput,
+                                                    )
+                                                      .toFixed(8)
+                                                      .replace(
+                                                        /\.?0+$/,
+                                                        '',
+                                                      )}{' '}
+                                                    {coinTo.toUpperCase()}
+                                                  </OfferDataInfoText>
+                                                ) : null}
+                                                {route.timeEstimates ? (
+                                                  <OfferDataEstimatedValues>
+                                                    {getEstimatedTimeStrFromRoute(
+                                                      route.timeEstimates,
+                                                    )}
+                                                  </OfferDataEstimatedValues>
+                                                ) : null}
+                                              </OfferColumn>
+                                            </OfferRow>
+                                          </TouchableOpacity>
+                                        );
+                                      },
+                                    )
+                                  : null}
+                              </>
+                            ) : null}
+                          </OfferExtraOptsProvidersContainer>
+                        </>
+                      ) : null}
+
                       {offer.showApprove ? (
                         offer.approveConfirming ? (
                           <>
@@ -1544,15 +1566,31 @@ const SwapCryptoOffers: React.FC = () => {
                           </>
                         ) : (
                           <>
-                            <TermsText>
-                              {`To complete the swap, you will need to allow the exchange (${
-                                offer.key
-                              }) to spend your ${selectedWalletFrom.currencyAbbreviation.toUpperCase()}.` +
-                                '\n' +
-                                `By granting this permission, ${
-                                  offer.key
-                                } will be able to withdraw your ${selectedWalletFrom.currencyAbbreviation.toUpperCase()} and complete transactions for you.`}
-                            </TermsText>
+                            <ExchangeTermsContainer style={{marginTop: 16}}>
+                              <ExchangeTermsText>
+                                {`To complete the swap, you will need to allow the exchange (${
+                                  offer.selectedSpenderKey &&
+                                  ThorswapProviderNames[
+                                    offer.selectedSpenderKey
+                                  ]
+                                    ? ThorswapProviderNames[
+                                        offer.selectedSpenderKey
+                                      ]
+                                    : offer.selectedSpenderKey
+                                }) to spend your ${selectedWalletFrom.currencyAbbreviation.toUpperCase()}.` +
+                                  '\n' +
+                                  `By granting this permission, ${
+                                    offer.selectedSpenderKey &&
+                                    ThorswapProviderNames[
+                                      offer.selectedSpenderKey
+                                    ]
+                                      ? ThorswapProviderNames[
+                                          offer.selectedSpenderKey
+                                        ]
+                                      : offer.selectedSpenderKey
+                                  } will be able to withdraw your ${selectedWalletFrom.currencyAbbreviation.toUpperCase()} and complete transactions for you.`}
+                              </ExchangeTermsText>
+                            </ExchangeTermsContainer>
                             <Button
                               action={true}
                               buttonType={'pill'}
@@ -1561,15 +1599,7 @@ const SwapCryptoOffers: React.FC = () => {
                                 haptic('impactLight');
                                 showApproveErc20Modal(offer);
                               }}>
-                              {
-                                // offer.swapClicked ? (
-                                //   <ActivityIndicator
-                                //     style={{marginBottom: -5}}
-                                //     color={White}
-                                //   />
-                                // ) :
-                                `Approve ${selectedWalletFrom.currencyAbbreviation.toUpperCase()}`
-                              }
+                              {`Approve ${selectedWalletFrom.currencyAbbreviation.toUpperCase()}`}
                             </Button>
                           </>
                         )
@@ -1592,7 +1622,7 @@ const SwapCryptoOffers: React.FC = () => {
                       </OfferExpandibleItem>
                       <ItemDivisor /> */}
 
-                          {offer.hasExtraOpts ? (
+                          {offer.hasExtraOpts && offer.slippageOpts ? (
                             <OfferDataSlidesOpts>
                               <OfferRow>
                                 <OfferDataInfoContainer>
@@ -1615,21 +1645,20 @@ const SwapCryptoOffers: React.FC = () => {
                               </OfferRow>
 
                               <OfferExpandibleItem>
-                                {/* TODO: set initial slippage value based on the quote suggestions */}
                                 <Slider
                                   style={{
                                     alignSelf: 'center',
                                     width: WIDTH - 64,
                                   }}
-                                  minimumValue={0}
-                                  lowerLimit={0.5}
-                                  maximumValue={10}
-                                  step={0.5}
-                                  value={3}
+                                  minimumValue={offer.slippageOpts.min}
+                                  lowerLimit={offer.slippageOpts.minLimit}
+                                  maximumValue={offer.slippageOpts.max}
+                                  step={offer.slippageOpts.steps}
+                                  value={offer.slippage}
                                   minimumTrackTintColor={'#6B71D6'}
                                   // maximumTrackTintColor={'#6B71D6'}
                                   // ;
-                                  onValueChange={value =>
+                                  onValueChange={(value: number) =>
                                     onSlippageChange(offer.key, value)
                                   }
                                   inverted={true}
@@ -1709,17 +1738,6 @@ const SwapCryptoOffers: React.FC = () => {
                               ) : null}
                             </OfferDataRightContainer>
                           </OfferExpandibleItem>
-                          {/* <ItemDivisor />
-                      <OfferExpandibleItem>
-                        <OfferDataInfoTotal>{t('TOTAL')}</OfferDataInfoTotal>
-                        <OfferDataInfoTotal>
-                          {formatFiatAmount(
-                            Number(offer.amountCost),
-                            offer.fiatCurrency,
-                            {customPrecision: 'minimal'},
-                          )}
-                        </OfferDataInfoTotal>
-                      </OfferExpandibleItem> */}
                         </>
                       )}
                     </>
@@ -1752,7 +1770,7 @@ const SwapCryptoOffers: React.FC = () => {
       <ApproveErc20Modal
         isVisible={approveErc20ModalData.visible}
         modalContext={'swapCrypto'}
-        modalTitle={t('Swap To')}
+        modalTitle={t('Approve Swap')}
         onDismiss={approveTxSent => {
           setApproveErc20ModalData({
             visible: false,
@@ -1778,13 +1796,12 @@ const SwapCryptoOffers: React.FC = () => {
           offerKey: approveErc20ModalData.approveErc20ModalOpts.offerKey || '',
           offerName:
             approveErc20ModalData.approveErc20ModalOpts.offerName || '',
-          spenderKey:
-            approveErc20ModalData.approveErc20ModalOpts.spenderKey || '',
+          spenderKey: approveErc20ModalData.approveErc20ModalOpts.spenderKey!,
           spenderName:
             approveErc20ModalData.approveErc20ModalOpts.spenderName || '',
           address:
             approveErc20ModalData.approveErc20ModalOpts.spenderAddress || '',
-          amount: amountFrom.toString(),
+          amount: cloneDeep(amountFrom).toString(),
         }}
       />
     </>
