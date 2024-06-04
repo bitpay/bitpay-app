@@ -6,7 +6,10 @@ import {
   BitpaySupportedTokens,
   BitpaySupportedUtxoCoins,
 } from '../../../constants/currencies';
-import {getCurrencyAbbreviation} from '../../../utils/helper-methods';
+import {
+  getCurrencyAbbreviation,
+  isL2NoSideChainNetwork,
+} from '../../../utils/helper-methods';
 
 export const GetProtocolPrefix = (
   network: string = 'livenet',
@@ -84,7 +87,8 @@ export const IsERCToken = (
 ): boolean => {
   return (
     currencyAbbreviation.toLowerCase() !== chain.toLowerCase() &&
-    currencyAbbreviation.toLowerCase() !== 'eth' // workaround for L2 eth
+    (currencyAbbreviation.toLowerCase() !== 'eth' ||
+      !isL2NoSideChainNetwork(chain)) // workaround for L2 eth
   );
 };
 
