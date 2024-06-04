@@ -199,7 +199,8 @@ const BuyCryptoRoot = ({
     const keysList = Object.values(allKeys).filter(key => key.backupComplete);
 
     if (!keysList[0]) {
-      walletError('emptyKeyList');
+      // This may cause overlap with the selector wallet modal
+      // walletError('emptyKeyList');
       return;
     }
 
