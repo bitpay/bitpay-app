@@ -400,6 +400,23 @@ export const getEVMFeeCurrency = (chain: string): string => {
   }
 };
 
+export const getCWCChain = (chain: string): string => {
+  switch (chain.toLowerCase()) {
+    case 'eth':
+      return 'ETHERC20';
+    case 'matic':
+      return 'MATICERC20';
+    case 'arb':
+      return 'ARBERC20';
+    case 'base':
+      return 'BASEERC20';
+    case 'op':
+      return 'OPERC20';
+    default:
+      return 'ETHERC20';
+  }
+};
+
 export const getChainUsingSuffix = (symbol: string) => {
   const suffix = symbol.charAt(symbol.length - 1);
   switch (suffix) {
