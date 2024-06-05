@@ -54,8 +54,10 @@ export const sardineSupportedCoins = [
   'btc',
   'bch',
   'eth',
+  'eth_arb',
   'doge',
   'ltc',
+  'matic',
   'xrp',
 ];
 
@@ -89,18 +91,22 @@ export const sardineSupportedErc20Tokens = [
 
 export const sardineSupportedMaticTokens = ['usdc'];
 
+export const sardineSupportedArbitrumTokens = ['eth', 'usdc'];
+
 export const getSardineSupportedCurrencies = (): string[] => {
-  const sardineSupportedCurrencies = sardineSupportedCoins
-    .concat(
-      sardineSupportedErc20Tokens.map(ethToken => {
-        return getCurrencyAbbreviation(ethToken, 'eth');
-      }),
-    )
-    .concat(
-      sardineSupportedMaticTokens.map(maticToken => {
-        return getCurrencyAbbreviation(maticToken, 'matic');
-      }),
-    );
+  const sardineSupportedCurrencies = [
+    ...sardineSupportedCoins,
+    ...sardineSupportedErc20Tokens.flatMap(ethToken =>
+      getCurrencyAbbreviation(ethToken, 'eth'),
+    ),
+    ...sardineSupportedMaticTokens.flatMap(maticToken =>
+      getCurrencyAbbreviation(maticToken, 'matic'),
+    ),
+    ...sardineSupportedArbitrumTokens.flatMap(arbitrumToken =>
+      getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+  ];
+
   return sardineSupportedCurrencies;
 };
 
@@ -115,6 +121,9 @@ export const getSardineChainFormat = (chain: string): string | undefined => {
   }
   let formattedChain: string | undefined;
   switch (chain.toLowerCase()) {
+    case 'arb':
+      formattedChain = 'arbitrum';
+      break;
     case 'btc':
       formattedChain = 'bitcoin';
       break;
