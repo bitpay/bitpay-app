@@ -133,7 +133,7 @@ const SearchComponent = <T extends SearchableItem>({
 
   const updateSearchResults = useCallback(
     debounce((text: string) => {
-      setSearchVal(text);
+      setSearchVal(text?.toLowerCase());
       const normalizedText = normalizeText(text);
       let results = cloneDeep(searchFullList);
       // Ignore error when there is no results

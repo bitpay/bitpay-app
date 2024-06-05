@@ -132,18 +132,6 @@ export const PROTOCOL_NAME: {[key in string]: any} = {
   ltc: {
     [Network.testnet]: 'Testnet4',
   },
-  arb: {
-    [Network.mainnet]: 'Arbitrum',
-    [Network.testnet]: 'Sepolia',
-  },
-  base: {
-    [Network.mainnet]: 'Base',
-    [Network.testnet]: 'Sepolia',
-  },
-  op: {
-    [Network.mainnet]: 'Optimism',
-    [Network.testnet]: 'Sepolia',
-  },
   default: {
     [Network.mainnet]: 'Mainnet',
     [Network.testnet]: 'Testnet',

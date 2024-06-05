@@ -53,6 +53,10 @@ import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchI
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import {orderBy} from 'lodash';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import SearchComponent, {
+  SearchableItem,
+} from '../../../components/chain-search/ChainSearch';
+import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
 
 type CurrencySelectionScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -71,18 +75,19 @@ export type CurrencySelectionParamList =
       key: Key;
     };
 
-type CurrencySelectionListItem = CurrencySelectionRowProps & {
-  /**
-   * All tokens for this chain currency.
-   */
-  tokens: CurrencySelectionItem[];
+type CurrencySelectionListItem = SearchableItem &
+  CurrencySelectionRowProps & {
+    /**
+     * All tokens for this chain currency.
+     */
+    tokens: CurrencySelectionItem[];
 
-  /**
-   * Popular tokens for this chain currency. Needs to be kept in sync with tokens.
-   * Using a separate property instead of deriving due to performance reasons.
-   */
-  popularTokens: CurrencySelectionItem[];
-};
+    /**
+     * Popular tokens for this chain currency. Needs to be kept in sync with tokens.
+     * Using a separate property instead of deriving due to performance reasons.
+     */
+    popularTokens: CurrencySelectionItem[];
+  };
 
 export type CurrencySelectionMode = 'single' | 'multi';
 
@@ -118,6 +123,11 @@ export const SearchContainer = styled.View`
   align-items: center;
   padding: 4px 0;
   margin: 20px ${ScreenGutter} 20px;
+`;
+
+const SearchComponentContainer = styled.View`
+  padding-right: 15px;
+  padding-left: 15px;
 `;
 
 const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
@@ -162,7 +172,16 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const {context, key} = route.params;
   const logger = useLogger();
   const dispatch = useAppDispatch();
-  const [searchFilter, setSearchFilter] = useState('');
+  const [searchVal, setSearchVal] = useState('');
+  const [searchResults, setSearchResults] = useState(
+    [] as CurrencySelectionListItem[],
+  );
+  const selectedChainFilterOption = useAppSelector(({APP}) =>
+    ignoreGlobalListContextList.includes(context)
+      ? APP.selectedLocalChainFilterOption
+      : APP.selectedChainFilterOption,
+  );
+
   const appTokenOptionsByAddress = useAppSelector(
     ({WALLET}) => WALLET.tokenOptionsByAddress,
   );
@@ -206,21 +225,33 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
    */
   const filteredListItems = useMemo(() => {
     // If no filter, return reference to allListItems.
-    if (!searchFilter) {
+    if (!searchVal && !selectedChainFilterOption) {
       return allListItems;
+    }
+
+    if (selectedChainFilterOption && !searchVal) {
+      return allListItems.filter(
+        item => item.currency.chain === selectedChainFilterOption,
+      );
     }
 
     // Else return a new array to trigger a rerender.
     return allListItems.reduce<CurrencySelectionListItem[]>((accum, item) => {
+      if (
+        selectedChainFilterOption &&
+        item.currency.chain !== selectedChainFilterOption
+      ) {
+        return accum;
+      }
+
       const isCurrencyMatch =
-        item.currency.currencyAbbreviation
-          .toLowerCase()
-          .includes(searchFilter) ||
-        item.currency.currencyName.toLowerCase().includes(searchFilter);
+        item.currency.currencyAbbreviation.toLowerCase().includes(searchVal) ||
+        item.currency.currencyName.toLowerCase().includes(searchVal);
+
       const matchingTokens = item.popularTokens.filter(
         token =>
-          token.currencyAbbreviation.toLowerCase().includes(searchFilter) ||
-          token.currencyName.toLowerCase().includes(searchFilter),
+          token.currencyAbbreviation.toLowerCase().includes(searchVal) ||
+          token.currencyName.toLowerCase().includes(searchVal),
       );
 
       // Display the item if the currency itself matches the filter or one of its tokens matches
@@ -233,7 +264,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
 
       return accum;
     }, []);
-  }, [searchFilter, allListItems]);
+  }, [searchVal, selectedChainFilterOption, allListItems]);
 
   // Initialize supported currencies and tokens into row item format.
   // Resets if tokenOptions or tokenData updates.
@@ -810,12 +841,16 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
 
   return (
     <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
-      <SearchContainer>
-        <CurrencySelectionSearchInput
-          onSearch={setSearchFilter}
-          debounceWait={300}
+      <SearchComponentContainer>
+        <SearchComponent<CurrencySelectionListItem>
+          searchVal={searchVal}
+          setSearchVal={setSearchVal}
+          searchResults={searchResults}
+          setSearchResults={setSearchResults}
+          searchFullList={filteredListItems}
+          context={context}
         />
-      </SearchContainer>
+      </SearchComponentContainer>
 
       {filteredListItems.length ? (
         <ListContainer>
@@ -824,7 +859,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
             keyExtractor={keyExtractor}
             renderItem={renderItem}
             ListFooterComponent={() => {
-              return searchFilter && key ? (
+              return searchVal && key ? (
                 <LinkContainer>
                   <Link
                     accessibilityLabel="add-custom-token-button"
@@ -844,7 +879,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
           />
         </ListContainer>
       ) : (
-        <CurrencySelectionNoResults query={searchFilter} walletKey={key} />
+        <CurrencySelectionNoResults query={searchVal} walletKey={key} />
       )}
 
       {onCtaPress && selectedCurrencies.length > 0 ? (
