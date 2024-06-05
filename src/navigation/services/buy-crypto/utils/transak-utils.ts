@@ -121,6 +121,9 @@ export const transakSupportedCoins = [
   'btc',
   'bch',
   'eth',
+  'eth_arb',
+  'eth_base',
+  'eth_op',
   'matic',
   'ltc',
   'xrp',
@@ -128,46 +131,66 @@ export const transakSupportedCoins = [
 
 export const transakSupportedErc20Tokens = [
   '1inch',
+  'aave',
   'ads',
   'ageur',
   'amkt',
   'ape',
+  'arkm',
   'audio',
+  'aurora',
+  'ava',
   'bat',
   'bolt',
+  'chain',
+  'chz',
   'clv',
   'comp',
-  'dai',
+  'ctsi',
   'dao',
+  'defi',
   'dpi',
   'enj',
   'ern',
+  'eth',
+  'eurc',
   'eurt',
+  'fdusd',
+  'frax',
   'glm',
   'gtc',
-  'hex',
+  'gth',
   'ibz',
+  'link',
   'looks',
   'mana',
   'mask',
+  'mcade',
   'mim',
   'minds',
   'mkr',
   'mnet',
-  'pla',
+  'mpro',
   'plot',
+  'pols',
+  'pyusd',
   'quartz',
   'sand',
+  'shib',
   'spi',
   'steth',
   'stxem',
+  'super',
   'sushi',
   'swap',
   'swapp',
   'tama',
+  'tower',
   'tsx',
   'uni',
   'usdc',
+  'usdc_c',
+  'usdr',
   'usdt',
   'verse',
   'versecopy',
@@ -175,16 +198,19 @@ export const transakSupportedErc20Tokens = [
   'wbtc',
   'xdefi',
   'yld',
+  'zerc',
 ];
 
 export const transakSupportedMaticTokens = [
   'aave',
   'adai',
   'ageur',
+  'ava',
   'bat',
   'chain',
   'dai',
   'dfyn',
+  'doga',
   'fear',
   'food',
   'fusdc',
@@ -195,31 +221,57 @@ export const transakSupportedMaticTokens = [
   'mana',
   'msu',
   'must',
-  'pla',
   'qi',
   'quick',
+  'revv',
   'sfusdc',
-  'stxusdt',
   'sfdai',
+  'stxusdt',
+  'sushi',
   'tower',
   'tsx',
   'usdc',
+  'usdc_c',
   'usdt',
+  'usdt_tob',
+  'vext',
+  'wbtc',
   'weth',
+  'zed',
 ];
 
+export const transakSupportedArbitrumTokens = [
+  'eth',
+  'gmx',
+  'spa',
+  'usdc',
+  'usds',
+];
+
+export const transakSupportedBaseTokens = ['eth', 'tower', 'usdc'];
+
+export const transakSupportedOptimismTokens = ['eth', 'usdc'];
+
 export const getTransakSupportedCurrencies = (): string[] => {
-  const transakSupportedCurrencies = transakSupportedCoins
-    .concat(
-      transakSupportedErc20Tokens.map(ethToken => {
-        return getCurrencyAbbreviation(ethToken, 'eth');
-      }),
-    )
-    .concat(
-      transakSupportedMaticTokens.map(maticToken => {
-        return getCurrencyAbbreviation(maticToken, 'matic');
-      }),
-    );
+  const transakSupportedCurrencies = [
+    ...transakSupportedCoins,
+    ...transakSupportedErc20Tokens.flatMap(ethToken =>
+      getCurrencyAbbreviation(ethToken, 'eth'),
+    ),
+    ...transakSupportedMaticTokens.flatMap(maticToken =>
+      getCurrencyAbbreviation(maticToken, 'matic'),
+    ),
+    ...transakSupportedArbitrumTokens.flatMap(arbitrumToken =>
+      getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+    ...transakSupportedBaseTokens.flatMap(baseToken =>
+      getCurrencyAbbreviation(baseToken, 'base'),
+    ),
+    ...transakSupportedOptimismTokens.flatMap(optimismToken =>
+      getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+  ];
+
   return transakSupportedCurrencies;
 };
 
@@ -301,31 +353,20 @@ export const getTransakChainFormat = (chain: string): string | undefined => {
   if (!chain) {
     return undefined;
   }
-  let formattedChain: string | undefined;
-  switch (chain.toLowerCase()) {
-    case 'btc':
-      formattedChain = 'mainnet';
-      break;
-    case 'bch':
-      formattedChain = 'mainnet';
-      break;
-    case 'eth':
-      formattedChain = 'ethereum';
-      break;
-    case 'ltc':
-      formattedChain = 'mainnet';
-      break;
-    case 'matic':
-      formattedChain = 'polygon';
-      break;
-    case 'xrp':
-      formattedChain = 'mainnet';
-      break;
-    default:
-      formattedChain = undefined;
-      break;
-  }
-  return formattedChain;
+
+  const chainMap: {[key: string]: string} = {
+    btc: 'mainnet',
+    bch: 'mainnet',
+    ltc: 'mainnet',
+    eth: 'ethereum',
+    arb: 'arbitrum',
+    base: 'base',
+    matic: 'polygon',
+    op: 'optimism',
+    xrp: 'mainnet',
+  };
+
+  return chainMap[chain.toLowerCase()];
 };
 
 export const getTransakPaymentMethodFormat = (
