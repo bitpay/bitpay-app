@@ -3,13 +3,14 @@ import styled, {useTheme} from 'styled-components/native';
 import {BaseText, H7} from '../styled/Text';
 import {StyleProp, TextStyle} from 'react-native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {buildTestBadge} from './WalletRow';
+import {buildTestBadge, buildUncompleteBadge} from './WalletRow';
 import {Column, HiddenContainer} from '../styled/Containers';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {useTranslation} from 'react-i18next';
 
 export interface WalletSettingsRowProps {
   id: string;
+  key: string;
   img: string | ((props: any) => ReactElement);
   badgeImg: string | ((props: any) => ReactElement) | undefined;
   currencyName: string;
@@ -18,6 +19,7 @@ export interface WalletSettingsRowProps {
   network: string;
   hideWallet?: boolean;
   walletName?: string;
+  isComplete?: boolean;
 }
 
 const Row = styled.View`
@@ -51,6 +53,7 @@ const WalletSettingsRow = ({
   network,
   hideWallet,
   walletName,
+  isComplete,
 }: WalletSettingsRowProps) => {
   const {t} = useTranslation();
   const theme = useTheme();
@@ -67,6 +70,8 @@ const WalletSettingsRow = ({
         {walletName || currencyName} {isToken}
       </CurrencyName>
       {buildTestBadge(network, chain, isToken)}
+
+      {buildUncompleteBadge(isComplete)}
 
       {hideWallet ? (
         <HiddenColumn>

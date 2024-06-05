@@ -17,7 +17,7 @@ import {
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import {FlatList, TouchableOpacity, View} from 'react-native';
+import {FlatList, TouchableOpacity} from 'react-native';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {ScreenGutter} from '../../../components/styled/Containers';

@@ -328,6 +328,7 @@ export const buildUIFormattedWallet: (
     credentials.n > 1
       ? `- Multisig ${credentials.m}/${credentials.n}`
       : undefined,
+  isComplete: credentials.isComplete(),
 });
 
 // Key overview list builder

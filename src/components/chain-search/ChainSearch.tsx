@@ -141,7 +141,8 @@ const SearchComponent = <T extends SearchableItem>({
       setSearchVal(text);
       const normalizedText = normalizeText(text);
       let results = cloneDeep(searchFullList);
-      if (results?.[0].accounts) {
+      // Ignore error when there is no results
+      if (results?.[0]?.accounts) {
         results.forEach(
           data =>
             (data.accounts = filterAccounts(
