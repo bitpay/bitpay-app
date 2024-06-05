@@ -91,17 +91,16 @@ export const banxaSupportedErc20Tokens = [
 export const banxaSupportedMaticTokens = [];
 
 export const getBanxaSupportedCurrencies = (): string[] => {
-  const banxaSupportedCurrencies = banxaSupportedCoins
-    .concat(
-      banxaSupportedErc20Tokens.map(ethToken => {
-        return getCurrencyAbbreviation(ethToken, 'eth');
-      }),
-    )
-    .concat(
-      banxaSupportedMaticTokens.map(maticToken => {
-        return getCurrencyAbbreviation(maticToken, 'matic');
-      }),
-    );
+  const banxaSupportedCurrencies = [
+    ...banxaSupportedCoins,
+    ...banxaSupportedErc20Tokens.flatMap(ethToken =>
+      getCurrencyAbbreviation(ethToken, 'eth'),
+    ),
+    ...banxaSupportedMaticTokens.flatMap(maticToken =>
+      getCurrencyAbbreviation(maticToken, 'matic'),
+    ),
+  ];
+
   return banxaSupportedCurrencies;
 };
 
