@@ -64,6 +64,9 @@ export const rampSupportedCoins = [
   'btc',
   'bch',
   'eth',
+  'eth_arb',
+  'eth_base',
+  'eth_op',
   'doge',
   'ltc',
   'matic',
@@ -79,6 +82,8 @@ export const rampSupportedErc20Tokens = [
   'mana',
   'rly',
   'sand',
+  'ton',
+  'usda',
   'usdc',
   'usdt',
 ];
@@ -91,20 +96,55 @@ export const rampSupportedMaticTokens = [
   'ovr',
   'sand',
   'usdc',
+  'usdce', // Bridged USD Coin (0x2791bca1f2de4661ed88a30c99a7a9449aa84174) USDC.e
+  'usdt',
+  'wmatic',
+];
+
+export const rampSupportedArbitrumTokens = [
+  'eth',
+  'usda',
+  'usdc',
+  'usdce', // Bridged USD Coin (0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8) USDC.e
+  'usdt',
+];
+
+export const rampSupportedBaseTokens = [
+  'eth',
+  'usdc',
+  'usdce', // Bridged USD Coin (0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA) USDC.e
+];
+
+export const rampSupportedOptimismTokens = [
+  'dai',
+  'eth',
+  'usda',
+  'usdc',
+  'usdce', // Bridged USD Coin (0x7F5c764cBc14f9669B88837ca1490cCa17c31607) USDC.e
+  'usdt',
+  'wld',
 ];
 
 export const getRampSupportedCurrencies = (): string[] => {
-  const rampSupportedCurrencies = rampSupportedCoins
-    .concat(
-      rampSupportedErc20Tokens.map(ethToken => {
-        return getCurrencyAbbreviation(ethToken, 'eth');
-      }),
-    )
-    .concat(
-      rampSupportedMaticTokens.map(maticToken => {
-        return getCurrencyAbbreviation(maticToken, 'matic');
-      }),
-    );
+  const rampSupportedCurrencies = [
+    ...rampSupportedCoins,
+    ...rampSupportedErc20Tokens.flatMap(ethToken =>
+      getCurrencyAbbreviation(ethToken, 'eth'),
+    ),
+    ...rampSupportedMaticTokens.flatMap(maticToken =>
+      getCurrencyAbbreviation(maticToken, 'matic'),
+    ),
+    ...rampSupportedArbitrumTokens.flatMap(arbitrumToken =>
+      getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+    ...rampSupportedBaseTokens.flatMap(baseToken =>
+      getCurrencyAbbreviation(baseToken, 'base'),
+    ),
+    ...rampSupportedOptimismTokens.flatMap(optimismToken =>
+      getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+  ];
+
   return rampSupportedCurrencies;
 };
 
