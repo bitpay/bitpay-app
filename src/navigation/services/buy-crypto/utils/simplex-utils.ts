@@ -64,6 +64,9 @@ export const simplexSupportedCoins = [
   'btc',
   'bch',
   'eth',
+  'eth_arb', // ETH-ARBITRUM
+  'eth_base', // ETH-BASE
+  'eth_op', // ETH-OPTIMISM
   'doge',
   'ltc',
   'matic',
@@ -75,10 +78,14 @@ export const simplexSupportedErc20Tokens = [
   '1inch',
   'aag', // AAG-ERC20
   'aave',
+  'aevo',
+  'agix',
   'ape',
+  'arkm',
   'axs', // AXS-ERC20
   'bat',
   'busd',
+  'bmx',
   'cel',
   'chz',
   'comp',
@@ -88,9 +95,13 @@ export const simplexSupportedErc20Tokens = [
   'dep',
   'dft',
   'elon',
+  'ena',
+  'ens',
   'enj',
   'eqx',
+  'euroc',
   'ftt',
+  'ftn',
   'gala',
   'ghx',
   'gmt', // GMT-ERC20
@@ -103,20 +114,26 @@ export const simplexSupportedErc20Tokens = [
   'husd',
   'hzm',
   'kcs',
+  'ldo',
   'link',
   'ltx',
   'mana',
   'matic', // MATIC-ERC20
+  'meme',
   'mkr',
   'pax', // backward compatibility
   'paxg',
+  'pepe',
   'pkr',
   'pla', // PLA-ERC20
   'prt',
+  'pyusd',
   'qnt',
   'revv',
   'rfox',
   'rfuel',
+  'rndr',
+  'rpl',
   'sand',
   'satt', // SATT-ERC20
   'shib',
@@ -130,7 +147,9 @@ export const simplexSupportedErc20Tokens = [
   'usdc',
   'usdp',
   'usdt',
+  'verse', // VERSE-ERC20
   'wbtc',
+  'wld',
   'xyo',
   'yoshi', // YOSHI-ERC20
 ];
@@ -144,6 +163,24 @@ export const simplexSupportedMaticTokens = [
   'weth', // WETH-MATIC
 ];
 
+export const simplexSupportedArbitrumTokens = [
+  'arb',
+  'eth', // ETH-ARBITRUM
+  'gmx',
+  'usdt', // USDT-ARBITRUM
+];
+
+export const simplexSupportedBaseTokens = [
+  'eth', // ETH-BASE
+  'usdc', // USDT-BASE
+];
+
+export const simplexSupportedOptimismTokens = [
+  'eth', // ETH-OPTIMISM
+  'op',
+  'usdt', // USDT-OPTIMISM
+];
+
 export const simplexErc20TokensWithSuffix = [
   'aag',
   'axs',
@@ -155,6 +192,7 @@ export const simplexErc20TokensWithSuffix = [
   'satt',
   'tlos',
   'uos',
+  'verse',
   'yoshi',
 ];
 
@@ -166,18 +204,41 @@ export const simplexMaticTokensWithSuffix = [
   'weth', // WETH-MATIC
 ];
 
+export const simplexArbitrumTokensWithSuffix = [
+  'eth', // ETH-ARBITRUM
+  'usdt', // USDT-ARBITRUM
+];
+
+export const simplexBaseTokensWithSuffix = [
+  'eth', // ETH-BASE
+  'usdc', // USDT-BASE
+];
+
+export const simplexOptimismTokensWithSuffix = [
+  'eth', // ETH-OPTIMISM
+  'usdt', // USDT-OPTIMISM
+];
+
 export const getSimplexSupportedCurrencies = (): string[] => {
-  const simplexSupportedCurrencies = simplexSupportedCoins
-    .concat(
-      simplexSupportedErc20Tokens.map(ethToken => {
-        return getCurrencyAbbreviation(ethToken, 'eth');
-      }),
-    )
-    .concat(
-      simplexSupportedMaticTokens.map(maticToken => {
-        return getCurrencyAbbreviation(maticToken, 'matic');
-      }),
-    );
+  const simplexSupportedCurrencies = [
+    ...simplexSupportedCoins,
+    ...simplexSupportedErc20Tokens.flatMap(ethToken =>
+      getCurrencyAbbreviation(ethToken, 'eth'),
+    ),
+    ...simplexSupportedMaticTokens.flatMap(maticToken =>
+      getCurrencyAbbreviation(maticToken, 'matic'),
+    ),
+    ...simplexSupportedArbitrumTokens.flatMap(arbitrumToken =>
+      getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+    ...simplexSupportedBaseTokens.flatMap(baseToken =>
+      getCurrencyAbbreviation(baseToken, 'base'),
+    ),
+    ...simplexSupportedOptimismTokens.flatMap(optimismToken =>
+      getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+  ];
+
   return simplexSupportedCurrencies;
 };
 
@@ -199,6 +260,21 @@ export const getSimplexCoinFormat = (coin: string, chain: string): string => {
             formattedCoin = `${coin.toUpperCase()}-MATIC`;
             break;
         }
+      }
+      break;
+    case 'arbitrum':
+      if (simplexArbitrumTokensWithSuffix.includes(coin.toLowerCase())) {
+        formattedCoin = `${coin.toUpperCase()}-ARBITRUM`;
+      }
+      break;
+    case 'base':
+      if (simplexBaseTokensWithSuffix.includes(coin.toLowerCase())) {
+        formattedCoin = `${coin.toUpperCase()}-BASE`;
+      }
+      break;
+    case 'optimism':
+      if (simplexOptimismTokensWithSuffix.includes(coin.toLowerCase())) {
+        formattedCoin = `${coin.toUpperCase()}-OPTIMISM`;
       }
       break;
     default:

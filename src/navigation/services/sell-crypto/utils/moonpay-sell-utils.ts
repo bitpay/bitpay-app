@@ -43,47 +43,42 @@ export const moonpaySellSupportedCoins = [
   'btc',
   'bch',
   'eth',
+  'eth_arb', // eth_arbitrum in MoonpaySell
   'ltc',
   'doge',
   'matic', // matic_polygon in Moonpay
 ];
 
-export const nonUSMoonpaySellSupportedCoins = [];
-
 export const moonpaySellSupportedErc20Tokens = ['axs', 'usdc', 'usdt'];
 
-export const nonUSMoonpaySellSupportedErc20Tokens = [];
-
 export const moonpaySellSupportedMaticTokens = [
-  'weth', // eth_polygon in MoonpaySell
   'usdc', // usdc_polygon in MoonpaySell
+  'weth', // eth_polygon in MoonpaySell
 ];
+
+export const moonpaySellSupportedArbitrumTokens = [
+  'eth', // eth_arbitrum in MoonpaySell
+];
+
+// Currently unsupported
+// export const moonpaySellSupportedBaseTokens = [];
+// export const moonpaySellSupportedOptimismTokens = [];
 
 export const getMoonpaySellSupportedCurrencies = (
   country?: string,
 ): string[] => {
-  let moonpaySellSupportedCurrencies = moonpaySellSupportedCoins
-    .concat(
-      moonpaySellSupportedErc20Tokens.map(ethToken => {
-        return getCurrencyAbbreviation(ethToken, 'eth');
-      }),
-    )
-    .concat(
-      moonpaySellSupportedMaticTokens.map(maticToken => {
-        return getCurrencyAbbreviation(maticToken, 'matic');
-      }),
-    );
-
-  if (country !== 'US') {
-    moonpaySellSupportedCurrencies = moonpaySellSupportedCurrencies.concat(
-      nonUSMoonpaySellSupportedCoins,
-    );
-    moonpaySellSupportedCurrencies = moonpaySellSupportedCurrencies.concat(
-      nonUSMoonpaySellSupportedErc20Tokens.map(ethToken => {
-        return getCurrencyAbbreviation(ethToken, 'eth');
-      }),
-    );
-  }
+  const moonpaySellSupportedCurrencies = [
+    ...moonpaySellSupportedCoins,
+    ...moonpaySellSupportedErc20Tokens.flatMap(ethToken =>
+      getCurrencyAbbreviation(ethToken, 'eth'),
+    ),
+    ...moonpaySellSupportedMaticTokens.flatMap(maticToken =>
+      getCurrencyAbbreviation(maticToken, 'matic'),
+    ),
+    ...moonpaySellSupportedArbitrumTokens.flatMap(arbitrumToken =>
+      getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+  ];
 
   return moonpaySellSupportedCurrencies;
 };
@@ -92,79 +87,104 @@ export const getMoonpaySellFixedCurrencyAbbreviation = (
   currency: string,
   chain: string,
 ): string => {
-  const _currency = cloneDeep(currency).toLowerCase();
-  if (chain === 'matic') {
-    switch (_currency) {
-      case 'matic':
-        return 'matic_polygon';
-      case 'eth':
-        return 'eth_polygon';
-      case 'usdc':
-        return 'usdc_polygon';
-      default:
-        return _currency;
-    }
-  } else {
-    return _currency;
+  const currencyAbbreviationMapping: {
+    [key: string]: {[key: string]: string};
+  } = {
+    matic: {
+      matic: 'matic_polygon',
+      eth: 'eth_polygon',
+      usdc: 'usdc_polygon',
+    },
+    arbitrum: {
+      eth: 'eth_arbitrum',
+    },
+  };
+
+  const _currency = currency.toLowerCase();
+  const chainMapping = currencyAbbreviationMapping[chain];
+
+  if (chainMapping && chainMapping[_currency]) {
+    return chainMapping[_currency];
   }
+
+  return _currency;
 };
 
 export const getChainFromMoonpayNetworkCode = (
   currencyAbbreviation: string,
   networkCode?: string | null,
 ): string => {
-  switch (networkCode?.toLowerCase()) {
-    case 'ethereum':
-      return 'eth';
-    case 'polygon':
-      return 'matic';
-    default:
-      return currencyAbbreviation.toLowerCase();
+  const networkCodeMapping: {[key: string]: string} = {
+    ethereum: 'eth',
+    arbitrum: 'arb',
+    polygon: 'matic',
+  };
+
+  if (!networkCode) {
+    return currencyAbbreviation.toLowerCase();
   }
+
+  return (
+    networkCodeMapping[networkCode.toLowerCase()] ??
+    currencyAbbreviation.toLowerCase()
+  );
 };
 
 export const getMoonpaySellCurrenciesFixedProps = (
   moonpayCurrenciesData: MoonpayCurrency[],
 ): MoonpayCurrency[] => {
+  const currencyMapping: {
+    [key: string]: {
+      code: string;
+      name: string;
+      networkCode?: string;
+      contractAddress?: string;
+    };
+  } = {
+    eth_polygon: {
+      code: 'weth',
+      name: 'Wrapped Ether',
+      networkCode: 'polygon',
+      contractAddress: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
+    },
+    usdc_polygon: {
+      code: 'usdc',
+      name: 'USDC',
+      networkCode: 'polygon',
+      contractAddress: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
+    },
+    usdc: {
+      code: 'usdc',
+      name: 'USD Coin',
+      networkCode: 'ethereum',
+      contractAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
+    usdt: {
+      code: 'usdt',
+      name: 'Tether USD',
+      networkCode: 'ethereum',
+      contractAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    },
+    matic_polygon: {code: 'matic', name: 'Polygon', networkCode: 'polygon'},
+    eth_arbitrum: {code: 'eth', name: 'Ethereum', networkCode: 'arbitrum'},
+  };
+
   moonpayCurrenciesData.forEach((currency: MoonpayCurrency) => {
+    const key = currency.code.toLowerCase();
+    const mapping = currencyMapping[key];
+
     if (
-      currency.code.toLowerCase() === 'eth_polygon' &&
-      currency.metadata?.networkCode?.toLowerCase() === 'polygon' &&
-      currency.metadata?.contractAddress ===
-        '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619'
+      mapping &&
+      mapping.networkCode?.toLowerCase() ===
+        currency.metadata?.networkCode?.toLowerCase() &&
+      (!mapping.contractAddress ||
+        mapping.contractAddress === currency.metadata?.contractAddress)
     ) {
-      currency.code = 'weth';
-      currency.name = 'Wrapped Ether';
-    } else if (
-      currency.code.toLowerCase() === 'usdc_polygon' &&
-      currency.metadata?.networkCode?.toLowerCase() === 'polygon' &&
-      currency.metadata?.contractAddress ===
-        '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359'
-    ) {
-      currency.code = 'usdc';
-      currency.name = 'USDC';
-    } else if (
-      currency.code.toLowerCase() === 'usdc' &&
-      currency.metadata?.networkCode?.toLowerCase() === 'ethereum' &&
-      currency.metadata?.contractAddress ===
-        '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
-    ) {
-      currency.name = 'USD Coin';
-    } else if (
-      currency.code.toLowerCase() === 'usdt' &&
-      currency.metadata?.networkCode?.toLowerCase() === 'ethereum' &&
-      currency.metadata?.contractAddress ===
-        '0xdac17f958d2ee523a2206206994597c13d831ec7'
-    ) {
-      currency.name = 'Tether USD';
-    } else if (
-      currency.code.toLowerCase() === 'matic_polygon' &&
-      currency.metadata?.networkCode?.toLowerCase() === 'polygon'
-    ) {
-      currency.code = 'matic';
-      currency.name = 'Polygon';
+      currency.code = mapping.code;
+      currency.name = mapping.name;
     }
   });
+
   return moonpayCurrenciesData;
 };
 

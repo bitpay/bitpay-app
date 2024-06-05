@@ -1,4 +1,5 @@
 import {t} from 'i18next';
+import cloneDeep from 'lodash.clonedeep';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 
 export const moonpayEnv = __DEV__ ? 'sandbox' : 'production';
@@ -52,6 +53,9 @@ export const moonpaySupportedCoins = [
   'btc',
   'bch',
   'eth',
+  'eth_arb', // eth_arbitrum in Moonpay
+  'eth_base', // eth_base in Moonpay
+  'eth_op', // eth_optimism in Moonpay
   'ltc',
   'doge',
   'matic', // matic_polygon in Moonpay
@@ -62,9 +66,11 @@ export const nonUSMoonpaySupportedCoins = ['xrp'];
 export const moonpaySupportedErc20Tokens = [
   'bat',
   'dai',
-  'orn',
+  'gods',
+  'imx',
+  'link',
+  'matic',
   'shib',
-  'tusd',
   'usdc',
   'usdt',
   'zrx',
@@ -73,28 +79,76 @@ export const moonpaySupportedErc20Tokens = [
 export const nonUSMoonpaySupportedErc20Tokens = [
   'aave',
   'ape',
+  'axs',
+  'chz',
+  'comp',
+  'floki',
+  'key',
+  'looks',
   'mana',
-  'matic',
+  'mkr',
+  'okb',
+  'om',
+  'omg',
+  'pepe',
+  'portal',
   'sand',
+  'slp',
+  'snx',
+  'stmx',
+  'tusd',
   'uni',
+  'utk',
+  'verse',
   'wbtc',
   'weth',
+  'wld',
 ];
 
-export const moonpaySupportedMaticTokens = [];
+export const moonpaySupportedMaticTokens = [
+  'sand', // sand_polygon in Moonpay
+  'usdc', // usdc_polygon in Moonpay
+  'usdt', // usdt_polygon in Moonpay
+  'voxel', // voxel_polygon in Moonpay
+  'weth', // eth_polygon in Moonpay
+];
+
+export const moonpaySupportedArbitrumTokens = [
+  'eth', // eth_arbitrum in Moonpay
+  'magic', // magic_arbitrum in Moonpay
+  'usdc', // usdc_arbitrum in Moonpay
+];
+
+export const moonpaySupportedBaseTokens = [
+  'eth', // eth_base in Moonpay
+  'usdc', // usdc_base in Moonpay
+];
+
+export const moonpaySupportedOptimismTokens = [
+  'eth', // eth_optimism in Moonpay
+  'usdc', // usdc_optimism in Moonpay
+  'wld', // wld_optimism in Moonpay
+];
 
 export const getMoonpaySupportedCurrencies = (country?: string): string[] => {
-  let moonpaySupportedCurrencies = moonpaySupportedCoins
-    .concat(
-      moonpaySupportedErc20Tokens.map(ethToken => {
-        return getCurrencyAbbreviation(ethToken, 'eth');
-      }),
-    )
-    .concat(
-      moonpaySupportedMaticTokens.map(maticToken => {
-        return getCurrencyAbbreviation(maticToken, 'matic');
-      }),
-    );
+  let moonpaySupportedCurrencies = [
+    ...moonpaySupportedCoins,
+    ...moonpaySupportedErc20Tokens.flatMap(ethToken =>
+      getCurrencyAbbreviation(ethToken, 'eth'),
+    ),
+    ...moonpaySupportedMaticTokens.flatMap(maticToken =>
+      getCurrencyAbbreviation(maticToken, 'matic'),
+    ),
+    ...moonpaySupportedArbitrumTokens.flatMap(arbitrumToken =>
+      getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+    ...moonpaySupportedBaseTokens.flatMap(baseToken =>
+      getCurrencyAbbreviation(baseToken, 'base'),
+    ),
+    ...moonpaySupportedOptimismTokens.flatMap(optimismToken =>
+      getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+  ];
 
   if (country !== 'US') {
     moonpaySupportedCurrencies = moonpaySupportedCurrencies.concat(
@@ -114,10 +168,18 @@ export const getMoonpayFixedCurrencyAbbreviation = (
   currency: string,
   chain: string,
 ): string => {
-  if (currency === 'matic' && chain === 'matic') {
-    return 'matic_polygon';
-  } else {
-    return currency;
+  const coin = cloneDeep(currency).toLowerCase();
+  switch (chain) {
+    case 'matic':
+      return coin + '_polygon';
+    case 'arbitrum':
+      return coin + '_arbitrum';
+    case 'base':
+      return coin + '_base';
+    case 'optimism':
+      return coin + '_optimism';
+    default:
+      return coin;
   }
 };
 

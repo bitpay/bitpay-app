@@ -6,11 +6,8 @@ import cloneDeep from 'lodash.clonedeep';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {
   BitpaySupportedCoins,
-  SUPPORTED_COINS,
-  SUPPORTED_ETHEREUM_TOKENS,
   SUPPORTED_EVM_COINS,
-  SUPPORTED_MATIC_TOKENS,
-  SUPPORTED_UTXO_COINS,
+  SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
 import {
   Action,
@@ -50,6 +47,9 @@ import {
   ChangellyCurrency,
   getChangellyCurrenciesFixedProps,
   getChangellyFixedCurrencyAbbreviation,
+  getChangellySupportedChains,
+  ChangellyCurrencyBlockchain,
+  getChainFromChangellyBlockchain,
 } from '../utils/changelly-utils';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
@@ -124,20 +124,6 @@ export interface SwapCryptoCoin {
   tokenAddress?: string;
 }
 
-export const getChainFromChangellyProtocol = (
-  currencyAbbreviation: string,
-  protocol?: string,
-): string => {
-  switch (protocol?.toLowerCase()) {
-    case 'erc20':
-      return 'eth';
-    case 'matic':
-      return 'matic';
-    default:
-      return currencyAbbreviation.toLowerCase();
-  }
-};
-
 const SwapCryptoContainer = styled.SafeAreaView`
   flex: 1;
 `;
@@ -197,10 +183,7 @@ const SwapCryptoRoot: React.FC = () => {
   const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
 
   let selectedWallet = route.params?.selectedWallet;
-  const SupportedEthereumTokens: string[] = SUPPORTED_ETHEREUM_TOKENS;
-  const SupportedMaticTokens: string[] = SUPPORTED_MATIC_TOKENS;
-  const SupportedChains: string[] = SUPPORTED_COINS;
-  const SupportedUtxoChains: string[] = SUPPORTED_UTXO_COINS;
+  const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
   const [swapLimits, setSwapLimits] = useState<SwapLimits>({
     minAmount: undefined,
     maxAmount: undefined,
@@ -803,34 +786,29 @@ const SwapCryptoRoot: React.FC = () => {
     currency: ChangellyCurrency,
   ): boolean => {
     // TODO: accept all Changelly supported tokens => If no wallets: create a custom token wallet
-    const allSupportedTokens: string[] = [
-      ...tokenOptions,
-      ...SupportedEthereumTokens,
-      ...SupportedMaticTokens,
-    ];
+
+    const changellySupportedChains = getChangellySupportedChains() ?? [];
+    const changellySupportedEvmChains =
+      getChangellySupportedChains('evm') ?? [];
+    const currencyBlockchain = currency.blockchain
+      ? cloneDeep(currency.blockchain).toLowerCase()
+      : undefined;
+
     return (
       currency.enabled &&
       currency.fixRateEnabled &&
-      !!currency.protocol &&
-      [...SupportedChains, 'erc20', 'matic'].includes(
-        currency.protocol.toLowerCase(),
-      ) &&
-      // Prevents UTXO coins tokens from being displayed. Ex: LUSDT, L-BTC
-      (![...SupportedUtxoChains].includes(currency.protocol.toLowerCase()) ||
-        [...SupportedUtxoChains].includes(
-          currency.ticker
-            ? currency.ticker.toLowerCase()
-            : currency.name.toLowerCase(),
-        )) &&
-      (currency.ticker === 'maticpolygon' ||
-        (['erc20', 'matic'].includes(currency.protocol.toLowerCase())
-          ? allSupportedTokens.includes(
-              getCurrencyAbbreviation(
-                currency.name,
-                getChainFromChangellyProtocol(currency.name, currency.protocol),
-              ),
-            )
-          : true))
+      !!currencyBlockchain &&
+      changellySupportedChains.includes(currencyBlockchain) &&
+      // If currency is not EVM => return true
+      // If currency is EVM => check tokens
+      (!changellySupportedEvmChains.includes(currencyBlockchain) ||
+        currency.name === 'eth' ||
+        allSupportedTokens.includes(
+          getCurrencyAbbreviation(
+            currency.name,
+            getChainFromChangellyBlockchain(currency.name, currency.blockchain),
+          ),
+        ))
     );
   };
 
@@ -877,20 +855,23 @@ const SwapCryptoRoot: React.FC = () => {
               name,
               fullName,
               protocol,
+              blockchain,
               contractAddress,
             }: {
               name: string;
               fullName: string;
               protocol?: string;
+              blockchain?: ChangellyCurrencyBlockchain;
               contractAddress?: string;
             }) => {
-              const chain = getChainFromChangellyProtocol(name, protocol);
+              const chain = getChainFromChangellyBlockchain(name, blockchain);
               return {
                 currencyAbbreviation: name.toLowerCase(),
                 symbol: getCurrencyAbbreviation(name, chain),
                 name: fullName,
                 chain,
                 protocol,
+                blockchain: blockchain?.toLowerCase(),
                 logoUri: getLogoUri(name.toLowerCase(), chain),
                 tokenAddress: contractAddress,
               };

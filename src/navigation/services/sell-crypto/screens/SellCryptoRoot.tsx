@@ -71,8 +71,7 @@ import {
 import {
   BitpaySupportedCoins,
   SUPPORTED_COINS,
-  SUPPORTED_ETHEREUM_TOKENS,
-  SUPPORTED_MATIC_TOKENS,
+  SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {orderBy} from 'lodash';
@@ -206,8 +205,6 @@ const SellCryptoRoot = ({
       return getCurrencyAbbreviation(symbol.toLowerCase(), chain);
     },
   );
-  const SupportedEthereumTokens: string[] = SUPPORTED_ETHEREUM_TOKENS;
-  const SupportedMaticTokens: string[] = SUPPORTED_MATIC_TOKENS;
   const SupportedChains: string[] = SUPPORTED_COINS;
 
   const fromWallet = route.params?.fromWallet;
@@ -772,10 +769,8 @@ const SellCryptoRoot = ({
 
       const allSupportedTokens: string[] = [
         ...tokenOptions,
-        ...SupportedEthereumTokens,
-        ...SupportedMaticTokens,
+        ...SUPPORTED_TOKENS,
       ];
-
       const moonpaySellSupportedCurrenciesFullObj =
         moonpayAllSellSupportedCurrenciesFixedProps.filter(currency => {
           return (
@@ -786,19 +781,20 @@ const SellCryptoRoot = ({
                 currency.metadata.networkCode,
               ),
             ) &&
-            (['ethereum', 'polygon'].includes(
-              currency.metadata.networkCode.toLowerCase(),
-            )
-              ? allSupportedTokens.includes(
-                  getCurrencyAbbreviation(
-                    currency.code,
-                    getChainFromMoonpayNetworkCode(
+            (currency.code === 'eth' ||
+              (['ethereum', 'polygon', 'arbitrum'].includes(
+                currency.metadata.networkCode.toLowerCase(),
+              )
+                ? allSupportedTokens.includes(
+                    getCurrencyAbbreviation(
                       currency.code,
-                      currency.metadata.networkCode,
+                      getChainFromMoonpayNetworkCode(
+                        currency.code,
+                        currency.metadata.networkCode,
+                      ),
                     ),
-                  ),
-                )
-              : true)
+                  )
+                : true))
           );
         });
 
