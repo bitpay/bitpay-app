@@ -7,28 +7,35 @@ export const chainSuffixMap: {[suffix: string]: string} = {
   base: 'base',
   op: 'op',
 };
+
 export function getCoinAndChainFromCurrencyCode(currencyCode: string): {
   coin: string;
   chain: string;
 } {
-  const [coin, suffix] = currencyCode
-    .split('_')
-    .map(item => item.toLowerCase());
+  const lastUnderscoreIndex = currencyCode.lastIndexOf('_');
+  const coin =
+    lastUnderscoreIndex >= 0
+      ? currencyCode.slice(0, lastUnderscoreIndex).toLowerCase()
+      : currencyCode.toLowerCase();
+  const suffix =
+    lastUnderscoreIndex >= 0
+      ? currencyCode.slice(lastUnderscoreIndex + 1).toLowerCase()
+      : undefined;
+
   if (suffix) {
     // Special handling for usdc.e and usdc
-    if (coin.toLowerCase() === 'usdc' && chainSuffixMap[suffix] === 'matic') {
+    if (coin === 'usdc' && chainSuffixMap[suffix] === 'matic') {
       return {coin: 'usdc.e', chain: chainSuffixMap[suffix]};
-    } else if (
-      coin.toLowerCase() === 'usdcn' &&
-      chainSuffixMap[suffix] === 'matic'
-    ) {
+    } else if (coin === 'usdcn' && chainSuffixMap[suffix] === 'matic') {
       return {coin: 'usdc', chain: chainSuffixMap[suffix]};
     }
     return {coin, chain: chainSuffixMap[suffix]};
   }
+
   if (SUPPORTED_COINS.includes(coin)) {
     return {coin, chain: coin};
   }
+
   return {coin, chain: 'eth'};
 }
 
