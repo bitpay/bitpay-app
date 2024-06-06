@@ -50,6 +50,8 @@ export const ignoreGlobalListContextList = [
   'swap',
   'buy',
   'walletconnect',
+  'createNewKey',
+  'addWallet'
 ];
 export interface ChainSelectorConfig {
   onBackdropDismiss?: () => void;
