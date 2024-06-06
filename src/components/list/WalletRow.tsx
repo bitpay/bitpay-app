@@ -73,6 +73,7 @@ export interface WalletRowProps extends SearchableItem {
   pendingTxps: TransactionProposal[];
   coinbaseAccount?: CoinbaseAccountProps;
   multisig?: string;
+  isComplete?: boolean;
 }
 
 interface Props {
@@ -102,6 +103,22 @@ export const buildTestBadge = (
   );
 };
 
+export const buildUncompleteBadge = (
+  isComplete: boolean | undefined,
+): ReactElement | undefined => {
+  if (isComplete) {
+    return;
+  }
+  // logic for mapping test networks to chain
+  const badgeLabel = 'Incomplete';
+
+  return (
+    <BadgeContainer>
+      <Badge>{badgeLabel}</Badge>
+    </BadgeContainer>
+  );
+};
+
 const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
   const {
     currencyName,
@@ -116,6 +133,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
     network,
     multisig,
     isScanning,
+    isComplete,
   } = wallet;
 
   // @ts-ignore
@@ -152,6 +170,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
           {buildTestBadge(network, chain, isToken)}
+          {buildUncompleteBadge(isComplete)}
         </Row>
       </CurrencyColumn>
       {!isScanning ? (

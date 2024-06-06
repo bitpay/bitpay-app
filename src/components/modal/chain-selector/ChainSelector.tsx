@@ -29,10 +29,7 @@ import {
   SearchRoundContainer,
   SearchRoundInput,
 } from '../../styled/Containers';
-import {
-  WalletSelectMenuContainer,
-  WalletSelectMenuHeaderContainer,
-} from '../../../navigation/wallet/screens/GlobalSelect';
+import {WalletSelectMenuHeaderContainer} from '../../../navigation/wallet/screens/GlobalSelect';
 import {useTranslation} from 'react-i18next';
 import SearchSvg from '../../../../assets/img/search.svg';
 import {

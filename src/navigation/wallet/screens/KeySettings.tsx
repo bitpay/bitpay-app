@@ -124,11 +124,8 @@ const KeySettings = () => {
     ({APP}) => APP.selectedChainFilterOption,
   );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const _wallets = _key.wallets.filter(wallet =>
-    wallet.credentials.isComplete(),
-  );
-  const coins = _wallets.filter(wallet => !wallet.credentials.token);
-  const tokens = _wallets.filter(wallet => wallet.credentials.token);
+  const coins = _key.wallets.filter(wallet => !wallet.credentials.token);
+  const tokens = _key.wallets.filter(wallet => wallet.credentials.token);
   const wallets = buildNestedWalletList(
     coins,
     tokens,
@@ -297,9 +294,14 @@ const KeySettings = () => {
             network,
             hideWallet,
             walletName,
+            isComplete,
           }) => (
             <TouchableOpacity
               onPress={() => {
+                // Ignore if wallet is not complete
+                if (!isComplete) {
+                  return;
+                }
                 haptic('impactLight');
                 navigation.navigate('WalletSettings', {
                   key: _key,
@@ -319,6 +321,7 @@ const KeySettings = () => {
                 network={network}
                 hideWallet={hideWallet}
                 walletName={walletName}
+                isComplete={isComplete}
               />
             </TouchableOpacity>
           ),
