@@ -23,11 +23,8 @@ import ChainSelectorModal, {
   ignoreGlobalListContextList,
 } from '../../components/modal/chain-selector/ChainSelector';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {
-  SupportedCoinsOptions,
-  SupportedCurrencyOption,
-} from '../../constants/SupportedCurrencyOptions';
 import {View} from 'react-native';
+import {BitpaySupportedCoins, CurrencyOpts} from '../../constants/currencies';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -104,9 +101,7 @@ const SearchComponent = <T extends SearchableItem>({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
-  const [currencyInfo, setCurrencyInfo] = useState<
-    SupportedCurrencyOption | undefined
-  >();
+  const [currencyInfo, setCurrencyInfo] = useState<CurrencyOpts | undefined>();
 
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     ignoreGlobalListContextList.includes(context)
@@ -205,11 +200,11 @@ const SearchComponent = <T extends SearchableItem>({
   );
 
   const updateSelectedChainInfo = () => {
-    if (selectedChainFilterOption) {
-      const currencyInfo = SupportedCoinsOptions.find(
-        ({currencyAbbreviation}) =>
-          currencyAbbreviation === selectedChainFilterOption,
-      );
+    if (
+      selectedChainFilterOption &&
+      BitpaySupportedCoins[selectedChainFilterOption]
+    ) {
+      const currencyInfo = BitpaySupportedCoins[selectedChainFilterOption];
       setCurrencyInfo(currencyInfo);
     }
   };
@@ -242,7 +237,7 @@ const SearchComponent = <T extends SearchableItem>({
         <RowFilterContainer>
           {selectedChainFilterOption && currencyInfo ? (
             <View style={{marginLeft: 5}}>
-              <CurrencyImage img={currencyInfo?.img} size={25} />
+              <CurrencyImage img={currencyInfo.img!} size={25} />
             </View>
           ) : null}
           <SearchFilterLabelContainer
@@ -251,7 +246,7 @@ const SearchComponent = <T extends SearchableItem>({
             }>
             <SearchFilterLabel>
               {selectedChainFilterOption && currencyInfo
-                ? currencyInfo?.currencyName
+                ? currencyInfo.name
                 : t('All Networks')}
             </SearchFilterLabel>
           </SearchFilterLabelContainer>

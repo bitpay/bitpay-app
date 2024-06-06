@@ -1,3 +1,5 @@
+import {ReactElement} from 'react';
+import {CurrencyListIcons} from './SupportedCurrencyOptions';
 import {EVM_BLOCKCHAIN_EXPLORERS, BASE_BWS_URL} from './config';
 
 export type SupportedChains =
@@ -57,6 +59,7 @@ export interface CurrencyOpts {
   chain: string;
   coin: string;
   feeCurrency: string;
+  img?: string | ((props?: any) => ReactElement);
   logoURI?: string;
   unitInfo?: {
     // Config/Precision
@@ -1156,6 +1159,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     chain: 'btc',
     coin: 'btc',
     feeCurrency: 'btc',
+    img: CurrencyListIcons.btc,
     unitInfo: {
       unitName: 'BTC',
       unitToSatoshi: 100000000,
@@ -1198,6 +1202,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     chain: 'bch',
     coin: 'bch',
     feeCurrency: 'bch',
+    img: CurrencyListIcons.bch,
     unitInfo: {
       unitName: 'BCH',
       unitToSatoshi: 100000000,
@@ -1240,6 +1245,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     chain: 'doge',
     coin: 'doge',
     feeCurrency: 'doge',
+    img: CurrencyListIcons.doge,
     unitInfo: {
       unitName: 'DOGE',
       unitToSatoshi: 1e8,
@@ -1282,6 +1288,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
     chain: 'ltc',
     coin: 'ltc',
     feeCurrency: 'ltc',
+    img: CurrencyListIcons.ltc,
     unitInfo: {
       unitName: 'LTC',
       unitToSatoshi: 100000000,
@@ -1327,6 +1334,7 @@ export const OtherBitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
     chain: 'xrp',
     coin: 'xrp',
     feeCurrency: 'xrp',
+    img: CurrencyListIcons.xrp,
     unitInfo: {
       unitName: 'XRP',
       unitToSatoshi: 1e6,
@@ -1368,6 +1376,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     chain: 'eth',
     coin: 'eth',
     feeCurrency: 'eth',
+    img: CurrencyListIcons.eth,
     unitInfo: {
       unitName: 'ETH',
       unitToSatoshi: 1e18,
@@ -1410,6 +1419,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     chain: 'matic',
     coin: 'matic',
     feeCurrency: 'matic',
+    img: CurrencyListIcons.matic,
     unitInfo: {
       unitName: 'Matic',
       unitToSatoshi: 1e18,
@@ -1448,6 +1458,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     chain: 'arb',
     coin: 'eth',
     feeCurrency: 'eth',
+    img: CurrencyListIcons.arb,
     unitInfo: {
       unitName: 'Arbitrum',
       unitToSatoshi: 1e18,
@@ -1486,6 +1497,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     chain: 'base',
     coin: 'eth',
     feeCurrency: 'eth',
+    img: CurrencyListIcons.base,
     unitInfo: {
       unitName: 'Base',
       unitToSatoshi: 1e18,
@@ -1524,6 +1536,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     chain: 'op',
     coin: 'eth',
     feeCurrency: 'eth',
+    img: CurrencyListIcons.op,
     unitInfo: {
       unitName: 'Optimism',
       unitToSatoshi: 1e18,

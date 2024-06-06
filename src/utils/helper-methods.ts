@@ -435,6 +435,10 @@ export const getChainUsingSuffix = (symbol: string) => {
   }
 };
 
+export const isL2NoSideChainNetwork = (chain: string) => {
+  return ['arb', 'base', 'op'].includes(chain.toLowerCase());
+};
+
 export const transformAmount = (
   satoshis: number,
   opts: {
