@@ -95,14 +95,16 @@ const KeyWalletsRow = <T extends WalletRowType>({
             <KeyNameContainer noBorder={!!currency}>
               {keySvg({})}
               <KeyName>{key.keyName || 'My Key'}</KeyName>
-              {key.backupComplete ? null : (
+              {key.backupComplete && !key.wallets[0].coinbaseAccount ? null : (
                 <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
               )}
             </KeyNameContainer>
           ) : null}
 
           {key.wallets.map((w, walletIndex) => (
-            <NoGutter isDisabled={!key.backupComplete} key={w.id}>
+            <NoGutter
+              isDisabled={!key.backupComplete && !w.coinbaseAccount}
+              key={w.id}>
               <WalletRow
                 wallet={w}
                 id={w.id}
