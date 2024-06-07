@@ -504,9 +504,9 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     setWalletSelectorVisible(true);
   };
 
-  const onDismiss = (selectedWallet?: Wallet, keepSelected?: boolean) => {
+  const onDismiss = (selectedWallet?: Wallet) => {
     setWalletSelectorVisible(false);
-    if (!keepSelected) {
+    if (selectedWallet?.currencyAbbreviation) {
       setSelectedWallet(selectedWallet);
     }
   };

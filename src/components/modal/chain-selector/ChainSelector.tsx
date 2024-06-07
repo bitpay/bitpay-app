@@ -19,6 +19,7 @@ import {useTheme} from '@react-navigation/native';
 import {
   setDefaultChainFilterOption,
   setLocalDefaultChainFilterOption,
+  setSelectedNetworkForDeposit,
 } from '../../../store/app/app.actions';
 import {
   ActiveOpacity,
@@ -56,6 +57,8 @@ export const ignoreGlobalListContextList = [
 export interface ChainSelectorConfig {
   onBackdropDismiss?: () => void;
   context?: string;
+  customChains?: SupportedChains[];
+  selectingNetworkForDeposit?: boolean;
 }
 
 const Header = styled.View`
@@ -142,8 +145,11 @@ const ChainSelector = () => {
   const recentSelectedChainFilterOption = useAppSelector(
     ({APP}) => APP.recentSelectedChainFilterOption,
   );
+  const {onBackdropDismiss, context, customChains, selectingNetworkForDeposit} =
+    config || {};
+
   const selectedChainFilterOption = useAppSelector(({APP}) =>
-    config?.context && ignoreGlobalListContextList.includes(config?.context)
+    context && ignoreGlobalListContextList.includes(context)
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
@@ -170,8 +176,10 @@ const ChainSelector = () => {
                 | undefined;
 
               // Check if the context is one of 'sell', 'swap', 'buy', 'walletconnect'
-              if (
-                ignoreGlobalListContextList.includes(config?.context as string)
+              if (selectingNetworkForDeposit) {
+                dispatch(setSelectedNetworkForDeposit(option));
+              } else if (
+                ignoreGlobalListContextList.includes(context as string)
               ) {
                 dispatch(setLocalDefaultChainFilterOption(option));
               } else {
@@ -201,7 +209,7 @@ const ChainSelector = () => {
         </>
       );
     },
-    [dispatch, config, selectedChainFilterOption],
+    [dispatch, context, customChains, selectedChainFilterOption],
   );
 
   const chainList = useMemo(() => {
@@ -221,22 +229,28 @@ const ChainSelector = () => {
       }
       return filteredChains;
     };
-
-    const chains = getFilteredChains();
+    const hasCustomChains = customChains && customChains?.length > 0;
+    const allNetworkTitle = hasCustomChains ? undefined : t('All Networks');
+    const chains = hasCustomChains ? customChains : getFilteredChains();
     const list = [
       {
         title: t('All Networks'),
-        data: [t('All Networks'), ...chains].filter(Boolean),
+        data: [allNetworkTitle, ...chains].filter(Boolean),
       },
     ];
-    if (recentSelectedChainFilterOption.length) {
+    if (recentSelectedChainFilterOption.length && !hasCustomChains) {
       list.unshift({
         title: t('Recently Selected'),
         data: recentSelectedChainFilterOption,
       });
     }
     return list;
-  }, [selectedChainFilterOption, recentSelectedChainFilterOption]);
+  }, [
+    selectedChainFilterOption,
+    customChains,
+    context,
+    recentSelectedChainFilterOption,
+  ]);
 
   const updateSearchResults = debounce((text: string) => {
     setSearchVal(text);
@@ -256,8 +270,6 @@ const ChainSelector = () => {
     setSearchResults(results);
   }, 300);
 
-  const {onBackdropDismiss} = config || {};
-
   return (
     <SheetModal
       isVisible={isVisible}
@@ -271,7 +283,7 @@ const ChainSelector = () => {
       }}>
       <KeyBoardAvoidingViewWrapper
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={{height: '75%'}}>
+        <View style={{maxHeight: '75%'}}>
           <WalletSelectMenuHeaderContainer>
             <TextAlign align={'left'}>
               <H4>{t('Select Network')}</H4>

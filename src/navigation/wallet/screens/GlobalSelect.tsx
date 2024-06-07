@@ -1,23 +1,32 @@
-import React, {useCallback, useMemo, useState, useEffect} from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  ReactElement,
+} from 'react';
 import styled from 'styled-components/native';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   BitpaySupportedCoins,
   BitpaySupportedEvmCoins,
   BitpaySupportedTokens,
   SUPPORTED_COINS,
+  SUPPORTED_EVM_COINS,
   SUPPORTED_TOKENS,
+  SupportedChains,
 } from '../../../constants/currencies';
-import {Wallet} from '../../../store/wallet/wallet.models';
+import {Wallet, Key} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
   formatFiatAmount,
+  getBadgeImg,
   getChainFromTokenByAddressKey,
   getCurrencyAbbreviation,
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import {FlatList, TouchableOpacity} from 'react-native';
+import {FlatList, TouchableOpacity, View} from 'react-native';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -42,6 +51,7 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {
   dismissOnGoingProcessModal,
+  setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Effect} from '../../../store';
@@ -49,7 +59,12 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
-import {toFiat} from '../../../store/wallet/utils/wallet';
+import {findWalletById, toFiat} from '../../../store/wallet/utils/wallet';
+import {
+  IsERCToken,
+  IsEVMCoin,
+  IsSegwitCoin,
+} from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -58,6 +73,16 @@ import SearchComponent, {
 } from '../../../components/chain-search/ChainSearch';
 import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
 import uniqBy from 'lodash.uniqby';
+import {CreateOptions} from '../../../store/wallet/effects';
+import {ToWalletSelectorCustomCurrency} from '../../services/components/ToWalletSelectorModal';
+import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
+import {AppActions} from '../../../store/app';
+import {
+  createHomeCardList,
+  keyBackupRequired,
+} from '../../tabs/home/components/Crypto';
+import {Network} from '../../../constants';
+import {SwapCryptoCoin} from '../../services/swap-crypto/screens/SwapCryptoRoot';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -135,6 +160,22 @@ const NoWalletsMsg = styled(BaseText)`
   margin-top: 20px;
 `;
 
+interface ToWalletSelectorCoinObj {
+  id: string;
+  chain: string;
+  currencyAbbreviation: string;
+  currencyName: string;
+  tokenAddress?: string;
+  img?: string | ((props?: any) => ReactElement);
+  total: number;
+  availableWalletsByKey: {
+    [key in string]: Wallet[];
+  };
+}
+interface ToWalletSelectorChainObj extends ToWalletSelectorCoinObj {
+  tokens?: ToWalletSelectorCoinObj[];
+}
+
 export type GlobalSelectModalContext =
   | 'send'
   | 'receive'
@@ -142,6 +183,7 @@ export type GlobalSelectModalContext =
   | 'contact'
   | 'scanner'
   | 'sell'
+  | 'buy'
   | 'swap'
   | 'paperwallet';
 
@@ -171,12 +213,17 @@ export interface GlobalSelectObj extends SearchableItem {
   currencyAbbreviation: string;
   img: string | ((props?: any) => React.ReactElement);
   total: number;
-  availableWallets: Wallet[];
-  chains: string[];
-  availableWalletsByKey: {
-    [key: string]: Wallet[];
+  chainsImg: {
+    [key: string]: {
+      badgeUri?: string | ((props?: any) => React.ReactElement) | undefined;
+      badgeImg?: string | ((props?: any) => React.ReactElement) | undefined;
+      priority: number | undefined;
+    };
   };
-  availableWalletsByChain: {
+  chains: string[];
+  tokenAddresses: string[];
+  availableWallets: Wallet[];
+  availableWalletsByKey: {
     [key: string]: Wallet[];
   };
 }
@@ -185,7 +232,81 @@ export interface GlobalSelectObjByKey {
   [key: string]: GlobalSelectObj;
 }
 
-const buildList = (
+export interface AddWalletData {
+  key: Key;
+  currency: {
+    chain: string;
+    currencyAbbreviation: string;
+    isToken?: boolean;
+    tokenAddress?: string;
+  };
+  associatedWallet?: Wallet;
+  options: CreateOptions;
+  context?: string;
+}
+
+const buildSelectableCurrenciesList = (
+  customToSelectCurrencies: ToWalletSelectorCustomCurrency[] | SwapCryptoCoin[],
+  selectedChainFilterOption: string | undefined,
+  wallets: Wallet[],
+): GlobalSelectObjByKey => {
+  const coins: GlobalSelectObjByKey = {};
+  customToSelectCurrencies.forEach(currency => {
+    const {currencyAbbreviation, chain, name, tokenAddress, logoUri, badgeUri} =
+      currency;
+
+    if (!selectedChainFilterOption || chain === selectedChainFilterOption) {
+      const filteredWallets = wallets.filter(
+        wallet =>
+          wallet.currencyAbbreviation === currencyAbbreviation &&
+          wallet.chain === chain,
+      );
+
+      const coinEntry = coins[currencyAbbreviation] || {
+        id: _.uniqueId('coin_'),
+        currencyName: name,
+        currencyAbbreviation,
+        chainsImg: {},
+        chains: [],
+        tokenAddresses: [],
+        img: logoUri,
+        availableWallets: [],
+        availableWalletsByKey: {},
+      };
+
+      coinEntry.availableWallets = _.unionBy(
+        [...coinEntry.availableWallets, ...filteredWallets],
+        c => c.id,
+      );
+
+      coinEntry.total = coinEntry.availableWallets.length;
+      coinEntry.availableWalletsByKey = _.groupBy(
+        coinEntry.availableWallets,
+        'keyId',
+      );
+      const priority = SupportedCoinsOptions.find(
+        ({chain: _chain}) => _chain === chain,
+      )?.priority;
+      coinEntry.chainsImg[chain] = {
+        badgeUri:
+          IsEVMCoin(currencyAbbreviation) && !badgeUri ? logoUri : badgeUri,
+        priority,
+      };
+      if (!coinEntry.chains.includes(chain)) {
+        coinEntry.chains = [...coinEntry.chains, chain];
+      }
+      coinEntry.tokenAddresses = [
+        ...coinEntry.tokenAddresses,
+        tokenAddress,
+      ].filter((address): address is string => Boolean(address));
+      coins[currencyAbbreviation] = coinEntry;
+    }
+  });
+
+  return coins;
+};
+
+const buildSelectableWalletList = (
   categories: string[],
   wallets: Wallet[],
 ): GlobalSelectObjByKey => {
@@ -197,19 +318,26 @@ const buildList = (
         getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
         category,
     );
-
     if (filteredWallets.length > 0) {
-      const {currencyAbbreviation, chain, currencyName, img} =
+      const {currencyAbbreviation, chain, currencyName, img, badgeImg} =
         filteredWallets[0];
+
       const coinEntry = coins[currencyAbbreviation] || {
         id: _.uniqueId('coin_'),
         currencyName,
         currencyAbbreviation,
-        chains: [],
+        chainsImg: {},
+        chains: Array.from(new Set(filteredWallets.map(w => w.chain))),
+        tokenAddresses: Array.from(
+          new Set(
+            filteredWallets
+              .map(w => w.credentials.tokenAddress)
+              .filter((address): address is string => Boolean(address)),
+          ),
+        ),
         img,
         availableWallets: [],
         availableWalletsByKey: {},
-        availableWalletsByChain: {},
       };
 
       coinEntry.availableWallets = [
@@ -221,26 +349,205 @@ const buildList = (
         coinEntry.availableWallets,
         'keyId',
       );
-      coinEntry.availableWalletsByChain = _.groupBy(
-        coinEntry.availableWallets,
-        'chain',
-      );
-      coinEntry.chains = [...coinEntry.chains, chain];
+
+      const priority = SupportedCoinsOptions.find(
+        ({chain: _chain}) => _chain === chain,
+      )?.priority;
+
+      coinEntry.chainsImg[chain] = {
+        badgeUri: IsEVMCoin(currencyAbbreviation) && !badgeImg ? img : badgeImg,
+        priority,
+      };
       coins[currencyAbbreviation] = coinEntry;
     }
   });
-
   return coins;
+};
+
+const filterByChain = (
+  selectObj: GlobalSelectObj,
+  selectedNetworkForDeposit: string,
+) => {
+  const newSelectObj = {...selectObj};
+
+  Object.entries(newSelectObj.availableWalletsByKey).forEach(
+    ([key, wallets]) => {
+      const filteredWallets = wallets.filter(
+        wallet => wallet.credentials.chain === selectedNetworkForDeposit,
+      );
+      if (filteredWallets.length > 0) {
+        newSelectObj.availableWalletsByKey[key] = filteredWallets;
+      } else {
+        delete newSelectObj.availableWalletsByKey[key]; // Remove keys with no matching wallets
+      }
+    },
+  );
+
+  // Filter availableWallets
+  newSelectObj.availableWallets = newSelectObj.availableWallets.filter(
+    wallet => wallet.credentials.chain === selectedNetworkForDeposit,
+  );
+
+  // Filter chains
+  newSelectObj.chains = newSelectObj.chains.filter(
+    chain => chain === selectedNetworkForDeposit,
+  );
+
+  // Filter token addresses
+  newSelectObj.chains = newSelectObj.chains.filter(
+    chain => chain === selectedNetworkForDeposit,
+  );
+
+  // Filter chainsImg
+  const filteredChainsImg = {};
+  Object.entries(newSelectObj.chainsImg).forEach(([chain, value]) => {
+    if (chain === selectedNetworkForDeposit) {
+      // @ts-ignore
+      filteredChainsImg[chain] = value;
+    }
+  });
+  newSelectObj.chainsImg = filteredChainsImg;
+
+  return newSelectObj;
+};
+
+const handleSingleWalletSelection = (
+  wallets: any[],
+  onWalletSelect: (wallet: any) => void,
+): boolean => {
+  if (wallets.length === 1) {
+    onWalletSelect(wallets[0]);
+    return true;
+  }
+  return false;
+};
+
+const handleLinkedChainSelection = (
+  linkedChain: any,
+  selectedNetworkForDeposit: any,
+  filteredSelectedObj: any,
+  setAddTokenToLinkedWallet: (obj: any) => void,
+  openKeyWalletSelector: (obj: any) => void,
+  openKeySelector: (obj: any) => void,
+) => {
+  const filteredLinkedChain = filterByChain(
+    linkedChain,
+    selectedNetworkForDeposit,
+  );
+  if (Object.keys(filteredLinkedChain?.availableWalletsByKey).length > 0) {
+    setAddTokenToLinkedWallet(filteredSelectedObj);
+    openKeyWalletSelector(filteredLinkedChain);
+  } else {
+    openKeySelector(filteredSelectedObj);
+  }
+};
+
+const handleTokenWalletSelection = (
+  chain: string,
+  currencyAbbreviation: string,
+  filteredSelectedObj: any,
+  selectedNetworkForDeposit: any,
+  currenciesSupportedList: any[],
+  setAddTokenToLinkedWallet: (obj: any) => void,
+  openKeyWalletSelector: (obj: any) => void,
+  openKeySelector: (obj: any) => void,
+) => {
+  const linkedChain = currenciesSupportedList.find(
+    coin =>
+      BitpaySupportedCoins[coin.currencyAbbreviation] &&
+      coin.chains.includes(chain),
+  );
+  if (linkedChain) {
+    handleLinkedChainSelection(
+      linkedChain,
+      selectedNetworkForDeposit,
+      filteredSelectedObj,
+      setAddTokenToLinkedWallet,
+      openKeyWalletSelector,
+      openKeySelector,
+    );
+  } else {
+    openKeySelector(filteredSelectedObj);
+  }
+};
+
+const isChainDisabled = (
+  disabledChain: string | undefined,
+  currencySymbol: string,
+): boolean => {
+  // disabledChain to prevent show chain selected as source, but show the available tokens
+  return (
+    !!disabledChain &&
+    SUPPORTED_EVM_COINS.includes(disabledChain) &&
+    disabledChain === currencySymbol.toLowerCase()
+  );
+};
+
+const handleWalletSelection = (
+  filteredSelectedObj: any,
+  selectedNetworkForDeposit: any,
+  currenciesSupportedList: any[],
+  setAddTokenToLinkedWallet: (obj: any) => void,
+  openKeyWalletSelector: (obj: any) => void,
+  openKeySelector: (obj: any) => void,
+  onWalletSelect: (wallet: any) => void,
+  disabledChain: string | undefined,
+  logger: any,
+) => {
+  const {chains, currencyAbbreviation} = filteredSelectedObj;
+  const chain = chains[0];
+  if (
+    isChainDisabled(
+      disabledChain,
+      getCurrencyAbbreviation(currencyAbbreviation, chain),
+    )
+  ) {
+    logger.warn(
+      `${disabledChain} is disabled, since it is the source of the Swap. Showing available tokens anyways`,
+    );
+    return;
+  }
+  const wallets = Object.values(
+    filteredSelectedObj.availableWalletsByKey,
+  ).flat();
+  if (handleSingleWalletSelection(wallets, onWalletSelect)) {
+    return;
+  } else if (wallets.length === 0) {
+    if (IsERCToken(currencyAbbreviation, chain)) {
+      handleTokenWalletSelection(
+        chain,
+        currencyAbbreviation,
+        filteredSelectedObj,
+        selectedNetworkForDeposit,
+        currenciesSupportedList,
+        setAddTokenToLinkedWallet,
+        openKeyWalletSelector,
+        openKeySelector,
+      );
+    } else {
+      openKeySelector(filteredSelectedObj);
+    }
+  } else {
+    openKeyWalletSelector(filteredSelectedObj);
+  }
 };
 
 interface GlobalSelectProps {
   useAsModal?: boolean;
   modalTitle?: any;
   customSupportedCurrencies?: any[];
-  onDismiss?: (newWallet?: any, keepSelected?: boolean) => void;
+  customToSelectCurrencies?:
+    | ToWalletSelectorCustomCurrency[]
+    | SwapCryptoCoin[];
+  globalSelectOnDismiss?: (
+    newWallet?: any,
+    createNewWalletData?: AddWalletData,
+  ) => void;
   modalContext?: any;
   livenetOnly?: any;
+  disabledChain?: string | undefined;
   onHelpPress?: () => void;
+  selectingNetworkForDeposit?: boolean;
 }
 
 type GlobalSelectScreenProps = NativeStackScreenProps<
@@ -253,10 +560,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useAsModal,
   modalTitle,
   customSupportedCurrencies,
-  onDismiss,
+  customToSelectCurrencies,
+  globalSelectOnDismiss,
   modalContext,
   livenetOnly,
+  disabledChain,
   onHelpPress,
+  selectingNetworkForDeposit,
 }) => {
   const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletGroupParamList, 'GlobalSelect'>>();
@@ -265,6 +575,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     context = modalContext;
   }
   const theme = useTheme();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
     useAppSelector(({WALLET}) => WALLET);
@@ -281,6 +592,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const navigation = useNavigation();
   const [walletSelectModalVisible, setWalletSelectModalVisible] =
     useState(false);
+  const [selectedObj, setSelectedObj] = useState({} as GlobalSelectObj);
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as GlobalSelectObj[]);
   const selectedChainFilterOption = useAppSelector(({APP}) =>
@@ -288,6 +600,15 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
+  const selectedNetworkForDeposit = useAppSelector(
+    ({APP}) => APP.selectedNetworkForDeposit,
+  );
+  const [keySelectorModalVisible, setKeySelectorModalVisible] =
+    useState<boolean>(false);
+  const [cardsList, setCardsList] = useState<any>();
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const [addTokenToLinkedWallet, setAddTokenToLinkedWallet] =
+    useState<GlobalSelectObj>();
 
   // object to pass to select modal
   const [keyWallets, setKeysWallets] =
@@ -339,7 +660,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     wallets = wallets.filter(wallet => wallet.network === 'livenet');
   }
 
-  const data = useMemo(() => {
+  const currenciesSupportedList = useMemo(() => {
     const coins = customSupportedCurrencies
       ? customSupportedCurrencies
       : SUPPORTED_COINS;
@@ -351,13 +672,26 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       [...coins, ...tokens, ...nonBitpayTokens],
       c => c,
     );
-    const allCurrencyData = buildList(allCurrencies, wallets);
+    const allCurrencyData = buildSelectableWalletList(allCurrencies, wallets);
     return Object.values(allCurrencyData);
   }, [wallets, customSupportedCurrencies]);
 
+  const customCurrenciesSupportedList = useMemo(() => {
+    if (customToSelectCurrencies) {
+      const allCurrencyData = buildSelectableCurrenciesList(
+        customToSelectCurrencies,
+        selectedChainFilterOption,
+        wallets,
+      );
+      return Object.values(allCurrencyData);
+    } else {
+      return [];
+    }
+  }, [wallets, selectedChainFilterOption, customToSelectCurrencies]);
+
   const goToBuyCrypto = async () => {
-    if (onDismiss) {
-      onDismiss(undefined);
+    if (globalSelectOnDismiss) {
+      globalSelectOnDismiss(undefined);
       await sleep(600);
       dispatch(
         LogActions.debug('[GlobalSelect] No wallets. Buy Crypto clicked.'),
@@ -458,11 +792,14 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   );
 
   const onWalletSelect = useCallback(
-    async (wallet: Wallet) => {
-      if (useAsModal && onDismiss) {
+    async (wallet: Wallet | undefined, addWalletData?: AddWalletData) => {
+      if (useAsModal && globalSelectOnDismiss) {
         setWalletSelectModalVisible(false);
         await sleep(500);
-        onDismiss(wallet);
+        globalSelectOnDismiss(wallet, addWalletData);
+        return;
+      }
+      if (!wallet) {
         return;
       }
       if (['coinbase', 'contact', 'scanner'].includes(context)) {
@@ -524,8 +861,51 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         setShowReceiveAddressBottomModal(true);
       }
     },
-    [context, navigation, onDismiss, recipient, useAsModal],
+    [context, navigation, globalSelectOnDismiss, recipient, useAsModal],
   );
+
+  const onLinkedWalletSelect = async (linkedWallet: Wallet) => {
+    if (!addTokenToLinkedWallet) {
+      logger.warn('No Token data provided. Aborting token wallet creation');
+      onWalletSelect(undefined, undefined);
+      return;
+    }
+    logger.debug(
+      `Linked wallet selected. Adding ${addTokenToLinkedWallet.currencyAbbreviation} wallet.`,
+    );
+
+    const chain = addTokenToLinkedWallet?.chains[0];
+    const tokenAddress = addTokenToLinkedWallet?.tokenAddresses[0];
+    const currencyAbbreviation =
+      addTokenToLinkedWallet?.currencyAbbreviation?.toLowerCase();
+
+    // Needed to prevent pointer issues
+    const associatedWallet = findWalletById(
+      keys[linkedWallet.keyId].wallets,
+      linkedWallet.id,
+    ) as Wallet;
+
+    const addWalletData: AddWalletData = {
+      key: keys[linkedWallet.keyId],
+      associatedWallet: associatedWallet,
+      currency: {
+        currencyAbbreviation,
+        isToken: true,
+        chain,
+        tokenAddress,
+      },
+      options: {
+        network: Network.mainnet,
+        useNativeSegwit: undefined,
+        singleAddress: false,
+        walletName: undefined,
+      },
+    };
+
+    if (addWalletData) {
+      onWalletSelect(undefined, addWalletData);
+    }
+  };
 
   const _createProposalAndBuildTxDetails =
     ({
@@ -611,13 +991,50 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       return (
         <GlobalSelectRow
           item={item}
+          context={context}
           hasSelectedChainFilterOption={!!selectedChainFilterOption}
-          emit={selectObj => {
+          emit={(selectObj: GlobalSelectObj) => {
+            // if only one chain available for the token - skip chain selector
+            const hasMultipleChainAvailable = selectObj.chains.length > 1;
+            if (
+              ['buy', 'swap'].includes(context) &&
+              IsEVMCoin(selectObj.chains[0]) &&
+              selectingNetworkForDeposit &&
+              !selectedChainFilterOption &&
+              hasMultipleChainAvailable
+            ) {
+              setSelectedObj(selectObj);
+              dispatch(
+                AppActions.showChainSelectorModal({
+                  context,
+                  customChains: selectObj.chains as SupportedChains[],
+                  selectingNetworkForDeposit,
+                }),
+              );
+              return;
+            }
             // if only one wallet - skip wallet selector
             const wallets = Object.values(
               selectObj.availableWalletsByKey,
             ).flat();
-            if (wallets.length === 1) {
+            if (wallets.length === 0) {
+              const {chains, currencyAbbreviation} = selectObj;
+              const chain = chains[0];
+              if (IsERCToken(currencyAbbreviation, chain)) {
+                handleTokenWalletSelection(
+                  chain,
+                  currencyAbbreviation,
+                  selectObj,
+                  chain, // as selectedNetworkForDeposit
+                  currenciesSupportedList,
+                  setAddTokenToLinkedWallet,
+                  openKeyWalletSelector,
+                  openKeySelector,
+                );
+              } else {
+                openKeySelector(selectObj);
+              }
+            } else if (wallets.length === 1) {
               onWalletSelect(wallets[0]);
             } else {
               openKeyWalletSelector(selectObj);
@@ -634,6 +1051,84 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     setShowReceiveAddressBottomModal(false);
   };
 
+  const handleBasicWalletCreation = async (
+    selectedCurrency: GlobalSelectObj,
+    key: Key,
+  ) => {
+    const chain = selectedCurrency?.chains[0];
+    const tokenAddress = selectedCurrency?.tokenAddresses[0];
+    const currencyAbbreviation =
+      selectedCurrency?.currencyAbbreviation?.toLowerCase();
+    if (!currencyAbbreviation) {
+      logger.warn('No adding coin provided. Aborting wallet creation');
+      return;
+    }
+
+    // adds wallet and binds to key obj - creates eth wallet if needed
+    const addWalletData: AddWalletData = {
+      key,
+      associatedWallet: undefined,
+      currency: {
+        currencyAbbreviation: currencyAbbreviation,
+        isToken: currencyAbbreviation !== chain,
+        chain,
+        tokenAddress,
+      },
+      options: {
+        network: Network.mainnet,
+        useNativeSegwit: IsSegwitCoin(selectedCurrency.currencyAbbreviation),
+        singleAddress: false,
+        walletName: undefined,
+      },
+    };
+
+    if (addWalletData) {
+      onWalletSelect(undefined, addWalletData);
+    }
+  };
+
+  const onKeySelected = async (
+    selectedCurrency: GlobalSelectObj,
+    selectedKey: Key,
+  ) => {
+    setKeySelectorModalVisible(false);
+    if (selectedKey.backupComplete) {
+      logger.debug(
+        `Key selected. Adding ${selectedCurrency.currencyAbbreviation} wallet.`,
+      );
+      handleBasicWalletCreation(selectedCurrency, selectedKey);
+    } else {
+      logger.debug('Key selected. Needs backup.');
+      if (globalSelectOnDismiss) {
+        globalSelectOnDismiss();
+      }
+      await sleep(1000);
+      dispatch(
+        showBottomNotificationModal(
+          keyBackupRequired(selectedKey, navigation, dispatch, context),
+        ),
+      );
+    }
+  };
+
+  const openKeySelector = (selectObj: GlobalSelectObj) => {
+    setCardsList(
+      createHomeCardList({
+        navigation,
+        keys: Object.values(keys),
+        dispatch,
+        linkedCoinbase: false,
+        homeCarouselConfig: homeCarouselConfig || [],
+        homeCarouselLayoutType: 'listView',
+        hideKeyBalance: hideAllBalances,
+        context: 'keySelector',
+        onPress: onKeySelected,
+        currency: selectObj,
+      }),
+    );
+    setKeySelectorModalVisible(true);
+  };
+
   useEffect(() => {
     if (!wallets[0]) {
       // No wallets available
@@ -646,6 +1141,35 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   }, [navigation, wallets, useAsModal]);
 
+  useEffect(() => {
+    if (
+      selectedNetworkForDeposit &&
+      selectingNetworkForDeposit &&
+      selectedObj.availableWalletsByKey
+    ) {
+      const filteredSelectedObj = filterByChain(
+        selectedObj,
+        selectedNetworkForDeposit,
+      );
+      handleWalletSelection(
+        filteredSelectedObj,
+        selectedNetworkForDeposit,
+        currenciesSupportedList,
+        setAddTokenToLinkedWallet,
+        openKeyWalletSelector,
+        openKeySelector,
+        onWalletSelect,
+        disabledChain,
+        logger,
+      );
+    }
+  }, [
+    navigation,
+    selectedNetworkForDeposit,
+    selectingNetworkForDeposit,
+    selectedObj,
+  ]);
+
   return (
     <SafeAreaView>
       {useAsModal && (
@@ -653,9 +1177,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           <CloseModalButtonContainer>
             <CloseModalButton
               onPress={() => {
-                if (onDismiss) {
-                  const keepSelected = context === 'paperwallet';
-                  onDismiss(undefined, keepSelected);
+                if (globalSelectOnDismiss) {
+                  globalSelectOnDismiss(undefined);
                 }
               }}>
               <CloseModal
@@ -686,27 +1209,47 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        {data.length > 0 && (
+        {(currenciesSupportedList?.length > 0 ||
+          customCurrenciesSupportedList.length > 0) && (
           <SearchComponent<GlobalSelectObj>
             searchVal={searchVal}
             setSearchVal={setSearchVal}
             searchResults={searchResults}
             setSearchResults={setSearchResults}
-            searchFullList={data}
+            searchFullList={
+              customCurrenciesSupportedList.length > 0
+                ? customCurrenciesSupportedList
+                : currenciesSupportedList
+            }
             context={context}
           />
         )}
-        {data.length > 0 && (
+        {(currenciesSupportedList?.length > 0 ||
+          customCurrenciesSupportedList.length > 0) && (
           <FlatList
-            contentContainerStyle={{paddingBottom: 100}}
+            contentContainerStyle={{paddingBottom: 200}}
             data={
-              !searchVal && !selectedChainFilterOption ? data : searchResults
+              !searchVal && !selectedChainFilterOption
+                ? selectingNetworkForDeposit &&
+                  customCurrenciesSupportedList.length > 0
+                  ? customCurrenciesSupportedList
+                  : currenciesSupportedList
+                : searchResults
             }
             keyExtractor={keyExtractor}
             renderItem={renderItem}
+            getItemLayout={(data, index) => ({
+              length: 50,
+              offset: 50 * index,
+              index,
+            })}
+            initialNumToRender={20}
+            maxToRenderPerBatch={20}
+            windowSize={21}
           />
         )}
-        {data.length === 0 ? (
+        {currenciesSupportedList.length === 0 &&
+        customCurrenciesSupportedList.length === 0 ? (
           <>
             {context === 'send' ? (
               <NoWalletsMsg>
@@ -745,7 +1288,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
         <SheetModal
           isVisible={walletSelectModalVisible}
-          onBackdropPress={() => setWalletSelectModalVisible(false)}>
+          onBackdropPress={() => {
+            setAddTokenToLinkedWallet(undefined);
+            setWalletSelectModalVisible(false);
+          }}>
           <WalletSelectMenuContainer>
             <WalletSelectMenuHeaderContainer>
               <TextAlign align={'center'}>
@@ -756,7 +1302,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               <KeyWalletsRow
                 keyWallets={keyWallets!}
                 hideBalance={hideAllBalances}
-                onPress={onWalletSelect}
+                onPress={
+                  addTokenToLinkedWallet?.currencyAbbreviation
+                    ? onLinkedWalletSelect
+                    : onWalletSelect
+                }
               />
             </WalletSelectMenuBodyContainer>
             {/*Nested receive modal*/}
@@ -777,6 +1327,29 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             wallet={receiveWallet}
           />
         )}
+        <SheetModal
+          isVisible={keySelectorModalVisible}
+          onBackdropPress={() => setKeySelectorModalVisible(false)}>
+          <WalletSelectMenuContainer>
+            <WalletSelectMenuHeaderContainer>
+              <TextAlign align={'center'}>
+                <H4>
+                  {context === 'swap' ? t('Swap to') : t('Select Destination')}
+                </H4>
+              </TextAlign>
+              <NoWalletsMsg>
+                {context === 'swap'
+                  ? t('Choose a key you would like to swap the funds to')
+                  : t('Choose a key you would like to deposit the funds to')}
+              </NoWalletsMsg>
+            </WalletSelectMenuHeaderContainer>
+            <WalletSelectMenuBodyContainer>
+              {cardsList?.list.map((data: any) => {
+                return <View key={data.id}>{data.component}</View>;
+              })}
+            </WalletSelectMenuBodyContainer>
+          </WalletSelectMenuContainer>
+        </SheetModal>
       </GlobalSelectContainer>
     </SafeAreaView>
   );

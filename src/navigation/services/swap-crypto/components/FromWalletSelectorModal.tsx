@@ -77,10 +77,11 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
           useAsModal={true}
           modalTitle={modalTitle}
           customSupportedCurrencies={_customSupportedCurrencies}
-          onDismiss={onDismiss}
+          globalSelectOnDismiss={onDismiss}
           modalContext={modalContext}
           livenetOnly={livenetOnly}
           onHelpPress={onHelpPress}
+          selectingNetworkForDeposit={false}
         />
 
         <SheetModal

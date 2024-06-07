@@ -168,7 +168,8 @@ export interface ToWalletSelectorCustomCurrency {
   symbol: string;
   chain: string;
   name: string;
-  logoUri?: any;
+  logoUri: any;
+  badgeUri: any;
   tokenAddress?: string;
 }
 

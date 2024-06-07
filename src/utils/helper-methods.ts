@@ -332,7 +332,7 @@ export const getBadgeImg = (
   currencyAbbreviation: string,
   chain: string,
 ): string | ((props?: any) => ReactElement) => {
-  return currencyAbbreviation.toLowerCase() !== chain.toLowerCase()
+  return currencyAbbreviation?.toLowerCase() !== chain.toLowerCase()
     ? CurrencyListIcons[chain]
     : '';
 };

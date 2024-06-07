@@ -138,7 +138,7 @@ export const addWallet =
             associatedWallet = (await dispatch(
               createWallet({
                 key: key.methods!,
-                coin: currency.currencyAbbreviation,
+                coin: BitpaySupportedCoins[currency.chain].coin,
                 chain: currency.chain as SupportedChains,
                 options,
               }),
@@ -148,7 +148,7 @@ export const addWallet =
               mapAbbreviationAndName(
                 associatedWallet.credentials.coin,
                 associatedWallet.credentials.chain,
-                associatedWallet.credentials?.token.address,
+                undefined,
               ),
             );
             key.wallets.push(
