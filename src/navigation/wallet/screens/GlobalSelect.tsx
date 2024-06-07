@@ -29,7 +29,10 @@ import {
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  RowContainer,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import _ from 'lodash';
 import KeyWalletsRow, {
   KeyWallet,
@@ -38,7 +41,7 @@ import KeyWalletsRow, {
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {LightBlack, White} from '../../../styles/colors';
-import {H4, TextAlign, BaseText} from '../../../components/styled/Text';
+import {H4, TextAlign, BaseText, H5} from '../../../components/styled/Text';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {useNavigation, useTheme} from '@react-navigation/native';
@@ -83,6 +86,7 @@ import {
 } from '../../tabs/home/components/Crypto';
 import {Network} from '../../../constants';
 import {SwapCryptoCoin} from '../../services/swap-crypto/screens/SwapCryptoRoot';
+import Icons from '../../wallet/components/WalletIcons';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -146,6 +150,10 @@ export const WalletSelectMenuHeaderContainer = styled.View<WalletSelectMenuHeade
   border-bottom-width: ${({currency}) => (currency ? 1 : 0)}px;
 `;
 
+export const WalletSelectBottomContainer = styled.TouchableOpacity`
+  padding: 16px;
+`;
+
 export const WalletSelectMenuHeaderIconContainer = styled.View`
   padding-right: 0px;
 `;
@@ -158,6 +166,10 @@ const NoWalletsMsg = styled(BaseText)`
   font-size: 15px;
   text-align: center;
   margin-top: 20px;
+`;
+
+const PlusIconContainer = styled.View`
+  margin-right: 15px;
 `;
 
 interface ToWalletSelectorCoinObj {
@@ -411,23 +423,12 @@ const filterByChain = (
   return newSelectObj;
 };
 
-const handleSingleWalletSelection = (
-  wallets: any[],
-  onWalletSelect: (wallet: any) => void,
-): boolean => {
-  if (wallets.length === 1) {
-    onWalletSelect(wallets[0]);
-    return true;
-  }
-  return false;
-};
-
 const handleLinkedChainSelection = (
   linkedChain: any,
   selectedNetworkForDeposit: any,
   filteredSelectedObj: any,
   setAddTokenToLinkedWallet: (obj: any) => void,
-  openKeyWalletSelector: (obj: any) => void,
+  openWalletSelector: (obj: any) => void,
   openKeySelector: (obj: any) => void,
 ) => {
   const filteredLinkedChain = filterByChain(
@@ -436,7 +437,7 @@ const handleLinkedChainSelection = (
   );
   if (Object.keys(filteredLinkedChain?.availableWalletsByKey).length > 0) {
     setAddTokenToLinkedWallet(filteredSelectedObj);
-    openKeyWalletSelector(filteredLinkedChain);
+    openWalletSelector(filteredLinkedChain);
   } else {
     openKeySelector(filteredSelectedObj);
   }
@@ -449,7 +450,7 @@ const handleTokenWalletSelection = (
   selectedNetworkForDeposit: any,
   currenciesSupportedList: any[],
   setAddTokenToLinkedWallet: (obj: any) => void,
-  openKeyWalletSelector: (obj: any) => void,
+  openWalletSelector: (obj: any) => void,
   openKeySelector: (obj: any) => void,
 ) => {
   const linkedChain = currenciesSupportedList.find(
@@ -463,7 +464,7 @@ const handleTokenWalletSelection = (
       selectedNetworkForDeposit,
       filteredSelectedObj,
       setAddTokenToLinkedWallet,
-      openKeyWalletSelector,
+      openWalletSelector,
       openKeySelector,
     );
   } else {
@@ -488,7 +489,7 @@ const handleWalletSelection = (
   selectedNetworkForDeposit: any,
   currenciesSupportedList: any[],
   setAddTokenToLinkedWallet: (obj: any) => void,
-  openKeyWalletSelector: (obj: any) => void,
+  openWalletSelector: (obj: any) => void,
   openKeySelector: (obj: any) => void,
   onWalletSelect: (wallet: any) => void,
   disabledChain: string | undefined,
@@ -510,9 +511,7 @@ const handleWalletSelection = (
   const wallets = Object.values(
     filteredSelectedObj.availableWalletsByKey,
   ).flat();
-  if (handleSingleWalletSelection(wallets, onWalletSelect)) {
-    return;
-  } else if (wallets.length === 0) {
+  if (wallets.length === 0) {
     if (IsERCToken(currencyAbbreviation, chain)) {
       handleTokenWalletSelection(
         chain,
@@ -521,14 +520,14 @@ const handleWalletSelection = (
         selectedNetworkForDeposit,
         currenciesSupportedList,
         setAddTokenToLinkedWallet,
-        openKeyWalletSelector,
+        openWalletSelector,
         openKeySelector,
       );
     } else {
       openKeySelector(filteredSelectedObj);
     }
   } else {
-    openKeyWalletSelector(filteredSelectedObj);
+    openWalletSelector(filteredSelectedObj);
   }
 };
 
@@ -609,7 +608,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const [addTokenToLinkedWallet, setAddTokenToLinkedWallet] =
     useState<GlobalSelectObj>();
-
+  const [selectedToAddToNewWallet, setSelectedToAddToNewWallet] =
+    useState<GlobalSelectObj>();
   // object to pass to select modal
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
@@ -719,7 +719,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   };
 
-  const openKeyWalletSelector = useCallback(
+  const openWalletSelector = useCallback(
     (selectObj: GlobalSelectObj) => {
       setKeysWallets(
         Object.keys(selectObj.availableWalletsByKey).map(keyId => {
@@ -994,6 +994,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           context={context}
           hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={(selectObj: GlobalSelectObj) => {
+            setSelectedToAddToNewWallet(selectObj);
             // if only one chain available for the token - skip chain selector
             const hasMultipleChainAvailable = selectObj.chains.length > 1;
             if (
@@ -1028,23 +1029,23 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   chain, // as selectedNetworkForDeposit
                   currenciesSupportedList,
                   setAddTokenToLinkedWallet,
-                  openKeyWalletSelector,
+                  openWalletSelector,
                   openKeySelector,
                 );
               } else {
                 openKeySelector(selectObj);
               }
-            } else if (wallets.length === 1) {
+            } else if (wallets.length === 1 && !selectingNetworkForDeposit) {
               onWalletSelect(wallets[0]);
             } else {
-              openKeyWalletSelector(selectObj);
+              openWalletSelector(selectObj);
             }
           }}
           key={item.id}
         />
       );
     },
-    [onWalletSelect, selectedChainFilterOption, openKeyWalletSelector],
+    [onWalletSelect, selectedChainFilterOption, openWalletSelector],
   );
 
   const closeModal = () => {
@@ -1156,7 +1157,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         selectedNetworkForDeposit,
         currenciesSupportedList,
         setAddTokenToLinkedWallet,
-        openKeyWalletSelector,
+        openWalletSelector,
         openKeySelector,
         onWalletSelect,
         disabledChain,
@@ -1309,6 +1310,25 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 }
               />
             </WalletSelectMenuBodyContainer>
+            {selectedToAddToNewWallet && selectingNetworkForDeposit ? (
+              <RowContainer
+                noBorder={true}
+                style={{marginTop: 20, marginLeft: 10}}
+                onPress={() => {
+                  setAddTokenToLinkedWallet(undefined);
+                  setWalletSelectModalVisible(false);
+                  openKeySelector(selectedToAddToNewWallet);
+                }}>
+                <PlusIconContainer>
+                  <Icons.Add />
+                </PlusIconContainer>
+                <H5 style={{fontWeight: '400'}}>
+                  {IsEVMCoin(selectedToAddToNewWallet.chains[0])
+                    ? t('Add as New Account')
+                    : t('Add as New Wallet')}
+                </H5>
+              </RowContainer>
+            ) : null}
             {/*Nested receive modal*/}
             {receiveWallet && (
               <ReceiveAddress
