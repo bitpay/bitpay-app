@@ -38,7 +38,7 @@ export interface ThorswapCurrency {
   apiIdentifier: string;
   averageBlockTime: number;
   blockchain: string;
-  chainId: number | string;
+  chainId?: number | string;
   decimals: number;
   enabled: boolean;
   extraIdName: string;
@@ -46,7 +46,7 @@ export interface ThorswapCurrency {
   image: string;
   name: string;
   notifications: any;
-  payinConfirmation: number;
+  payinConfirmation?: number;
   protocol: string;
   ticker: string; // currencyAbbreviation
   transactionUrl: string;

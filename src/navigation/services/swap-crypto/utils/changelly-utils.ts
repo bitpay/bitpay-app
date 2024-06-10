@@ -369,7 +369,7 @@ export const isCoinSupportedByChangelly = (
 ): boolean => {
   const lowerCoin = coin.toLowerCase();
 
-  if (chain === undefined) {
+  if (!chain) {
     return [
       ...changellySupportedCoins,
       ...Object.values(supportedTokensByChain).flat(),

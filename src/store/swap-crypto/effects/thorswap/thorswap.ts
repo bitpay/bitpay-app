@@ -59,52 +59,6 @@ export const thorswapGetSupportedChains = async (requestData: any) => {
   }
 };
 
-export const thorswapGetMinLimit = async (requestData: any) => {
-  try {
-    const body = requestData;
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/thorswap/minLimit',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    console.log(err);
-    return Promise.reject(err);
-  }
-};
-
-export const thorswapGetGasPrice = async (requestData: any) => {
-  try {
-    const body = requestData;
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/thorswap/getGasPrice',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    console.log(err);
-    return Promise.reject(err);
-  }
-};
-
 export const thorswapGetSwapQuote = async (
   requestData: ThorswapGetSwapQuoteRequestData,
 ): Promise<ThorswapGetSwapQuoteData> => {
@@ -144,29 +98,6 @@ export const thorswapGetSwapTx = async (
 
     const {data} = await axios.post(
       bwsUri + '/v1/service/thorswap/getSwapTx',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    console.log(err);
-    return Promise.reject(err);
-  }
-};
-
-export const moralisRunContractFunction = async (requestData: any) => {
-  try {
-    const body = requestData;
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/moralis/moralisRunContractFunction',
       body,
       config,
     );

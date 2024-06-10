@@ -110,15 +110,18 @@ import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import { ChangellyCurrency, ChangellyCurrencyBlockchain } from '../../../../store/swap-crypto/models/changelly.models';
-import {thorswapGetCurrencies} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
 import {
-  getThorswapCurrenciesFixedProps,
+  ChangellyCurrency,
+  ChangellyCurrencyBlockchain,
+} from '../../../../store/swap-crypto/models/changelly.models';
+import {
+  thorswapGetCurrencies,
+} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
+import {
+  getNameFromThorswapFullName,
   thorswapEnv,
 } from '../utils/thorswap-utils';
-import {
-  ChangellyRateData,
-} from '../../../../store/swap-crypto/models/changelly.models';
+import {ChangellyRateData} from '../../../../store/swap-crypto/models/changelly.models';
 import {
   ThorswapCurrency,
   ThorswapGetCurrenciesRequestData,
@@ -257,7 +260,6 @@ const SwapCryptoRoot: React.FC = () => {
   const preSetPartner = route.params?.partner?.toLowerCase() as
     | SwapCryptoExchangeKey
     | undefined;
-  const SupportedEthereumTokens: string[] = SUPPORTED_ETHEREUM_TOKENS;
   const SupportedChains: string[] = SUPPORTED_COINS;
   const [swapLimits, setSwapLimits] = useState<SwapLimits>({
     minAmount: undefined,
@@ -1152,14 +1154,17 @@ const SwapCryptoRoot: React.FC = () => {
       !!currency.protocol &&
       !!currency.ticker &&
       [...SupportedChains].includes(currency.protocol.toLowerCase()) &&
-      (['eth', 'matic', 'polygon'].includes(currency.protocol.toLowerCase())
-        ? allSupportedTokens.includes(
-            getCurrencyAbbreviation(
-              currency.ticker.toLowerCase(),
-              currency.protocol.toLowerCase(),
-            ),
-          )
-        : true)
+      (currency.ticker === 'eth' ||
+        (['eth', 'matic', 'polygon', 'arb', 'base', 'op'].includes(
+          currency.protocol.toLowerCase(),
+        )
+          ? allSupportedTokens.includes(
+              getCurrencyAbbreviation(
+                currency.ticker.toLowerCase(),
+                currency.protocol.toLowerCase(),
+              ),
+            )
+          : true))
     );
   };
 
@@ -1173,13 +1178,8 @@ const SwapCryptoRoot: React.FC = () => {
       await thorswapGetCurrencies(reqData);
 
     if (thorswapCurrenciesData?.length) {
-      const thorswapCurrenciesDataFixedNames: ThorswapCurrency[] =
-        getThorswapCurrenciesFixedProps(
-          thorswapCurrenciesData as ThorswapCurrency[],
-        );
-
       let supportedCoinsWithFixRateEnabled: SwapCryptoCoin[] =
-        thorswapCurrenciesDataFixedNames
+        thorswapCurrenciesData
           .filter((thorswapCurrency: ThorswapCurrency) =>
             filterThorswapCurrenciesConditions(thorswapCurrency),
           )
@@ -1197,27 +1197,27 @@ const SwapCryptoRoot: React.FC = () => {
               protocol: string;
               address?: string;
             }) => {
-              const getFullName = (
+              const getName = (
                 ticker: string,
                 protocol: string,
                 address: string | undefined,
               ): string | undefined => {
-                let fullName: string | undefined;
+                let _name: string | undefined;
                 if (address && address !== '') {
                   const tokenAddressSuffix = addTokenChainSuffix(
                     address.toLowerCase(),
                     protocol.toLowerCase(),
                   );
-                  fullName = BitpaySupportedTokens[tokenAddressSuffix]
+                  _name = BitpaySupportedTokens[tokenAddressSuffix]
                     ? BitpaySupportedTokens[tokenAddressSuffix].name
                     : undefined;
                 } else {
-                  fullName = BitpaySupportedCoins[ticker.toLowerCase()]
+                  _name = BitpaySupportedCoins[ticker.toLowerCase()]
                     ? BitpaySupportedCoins[ticker.toLowerCase()].name
                     : undefined;
                 }
 
-                return fullName;
+                return _name;
               };
               return {
                 currencyAbbreviation: ticker.toLowerCase(),
@@ -1226,7 +1226,9 @@ const SwapCryptoRoot: React.FC = () => {
                   protocol.toLowerCase(),
                 ),
                 name:
-                  getFullName(ticker, protocol, address) ?? fullName ?? name,
+                  getName(ticker, protocol, address) ??
+                  getNameFromThorswapFullName(fullName) ??
+                  name,
                 chain: protocol.toLowerCase(),
                 protocol,
                 logoUri: getLogoUri(
