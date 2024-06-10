@@ -559,7 +559,7 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/MATIC.png'),
     badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
-    badgeUri: CurrencyListIcons.matic,
+    badgeUri: CurrencyListIcons.eth,
     tokenAddress: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
   },
   {
