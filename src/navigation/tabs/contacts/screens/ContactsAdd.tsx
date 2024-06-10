@@ -345,7 +345,11 @@ const ContactsAdd = ({
     setTokenAddressValue(tokenAddress);
 
     _setSelectedChain(chain);
-    _setSelectedCurrency(currencyAbbreviation, chain);
+    _setSelectedCurrency(
+      currencyAbbreviation,
+      chain,
+      tokenAddress ? true : false,
+    );
 
     switch (chain) {
       case 'eth':
@@ -490,20 +494,21 @@ const ContactsAdd = ({
   const _setSelectedCurrency = (
     _currencyAbbreviation: string,
     _chain: string,
+    isTokenAddress: boolean,
   ) => {
+    let _selectedCurrency;
     if (!isTokenAddress) {
-      const _selectedCurrency = SupportedCoinsOptions.filter(
+      _selectedCurrency = SupportedCoinsOptions.filter(
         ({currencyAbbreviation, chain}) =>
           currencyAbbreviation === _currencyAbbreviation && chain === _chain,
       );
-      setSelectedCurrency(_selectedCurrency[0]);
     } else {
-      const _selectedCurrency = SupportedTokenOptions.filter(
+      _selectedCurrency = SupportedTokenOptions.filter(
         ({currencyAbbreviation, chain}) =>
           currencyAbbreviation === _currencyAbbreviation && chain === _chain,
       );
-      setSelectedCurrency(_selectedCurrency[0]);
     }
+    setSelectedCurrency(_selectedCurrency[0]);
   };
 
   const _setSelectedToken = (
@@ -512,12 +517,17 @@ const ContactsAdd = ({
     tokenAddress: string | undefined,
   ) => {
     const _selectedToken = allTokenOptions.find(
-      token => tokenAddress === token.tokenAddress,
+      token => tokenAddress === token.tokenAddress && chain === token.chain,
     );
-    setSelectedToken(_selectedToken || allTokenOptions[0]);
+    const token = _selectedToken || allTokenOptions[0];
+    setSelectedToken(token);
     setTokenAddressValue(tokenAddress);
     _setSelectedChain(chain);
-    _setSelectedCurrency(currencyAbbreviation.toLowerCase(), chain);
+    _setSelectedCurrency(
+      token?.currencyAbbreviation || currencyAbbreviation,
+      chain,
+      true,
+    );
     setTokenModalVisible(false);
   };
 
@@ -535,7 +545,7 @@ const ContactsAdd = ({
       );
     } else {
       _setSelectedChain(chain);
-      _setSelectedCurrency(currencyAbbreviation, chain);
+      _setSelectedCurrency(currencyAbbreviation, chain, false);
     }
     setCurrencyModalVisible(false);
   };
@@ -549,11 +559,8 @@ const ContactsAdd = ({
     setIsTokenAddress(!isTokenAddress);
     if (!isTokenAddress) {
       const isSelectedEvmCurrencyOption = SupportedEvmCurrencyOptions.find(
-        ({currencyAbbreviation, chain}) => {
-          return (
-            currencyAbbreviation === selectedCurrency.currencyAbbreviation &&
-            chain === selectedCurrency.chain
-          );
+        ({chain}) => {
+          return chain === selectedCurrency.chain;
         },
       );
       const currencyAbbreviation = isSelectedEvmCurrencyOption
@@ -565,7 +572,7 @@ const ContactsAdd = ({
       currencyChainSelected(currencyAbbreviation, chain, true);
     } else {
       currencyChainSelected(
-        selectedCurrency.currencyAbbreviation,
+        selectedCurrency.chain,
         selectedCurrency.chain,
         false,
       );
@@ -892,11 +899,7 @@ const ContactsAdd = ({
           </TextAlign>
           <FlatList
             contentContainerStyle={{minHeight: '100%'}}
-            data={
-              isTokenAddress
-                ? SupportedEvmCurrencyOptions
-                : SupportedCoinsOptions
-            }
+            data={SupportedEvmCurrencyOptions}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
