@@ -17,7 +17,7 @@ export const isCoinSupportedToSwap = (
 ): boolean => {
   return (
     isCoinSupportedBy('changelly', coin, chain) ||
-    isCoinSupportedBy('thorswap', coin, chain, country)
+    isCoinSupportedBy('thorswap', coin, chain)
   );
 };
 
@@ -25,7 +25,6 @@ const isCoinSupportedBy = (
   exchange: string,
   coin: string,
   chain: string,
-  country?: string,
 ): boolean => {
   switch (exchange) {
     case 'changelly':
