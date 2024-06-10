@@ -233,7 +233,11 @@ export interface GlobalSelectObj extends SearchableItem {
     };
   };
   chains: string[];
-  tokenAddresses: string[];
+  tokenAddresses: {
+    [key: string]: {
+      tokenAddress?: string;
+    };
+  };
   availableWallets: Wallet[];
   availableWalletsByKey: {
     [key: string]: Wallet[];
@@ -280,7 +284,7 @@ const buildSelectableCurrenciesList = (
         currencyAbbreviation,
         chainsImg: {},
         chains: [],
-        tokenAddresses: [],
+        tokenAddresses: {},
         img: logoUri,
         availableWallets: [],
         availableWalletsByKey: {},
@@ -307,10 +311,11 @@ const buildSelectableCurrenciesList = (
       if (!coinEntry.chains.includes(chain)) {
         coinEntry.chains = [...coinEntry.chains, chain];
       }
-      coinEntry.tokenAddresses = [
-        ...coinEntry.tokenAddresses,
-        tokenAddress,
-      ].filter((address): address is string => Boolean(address));
+      if (tokenAddress) {
+        coinEntry.tokenAddresses[chain] = {
+          tokenAddress,
+        };
+      }
       coins[currencyAbbreviation] = coinEntry;
     }
   });
@@ -340,13 +345,7 @@ const buildSelectableWalletList = (
         currencyAbbreviation,
         chainsImg: {},
         chains: Array.from(new Set(filteredWallets.map(w => w.chain))),
-        tokenAddresses: Array.from(
-          new Set(
-            filteredWallets
-              .map(w => w.credentials.tokenAddress)
-              .filter((address): address is string => Boolean(address)),
-          ),
-        ),
+        tokenAddresses: createTokenAddresses(filteredWallets),
         img,
         availableWallets: [],
         availableWalletsByKey: {},
@@ -374,6 +373,28 @@ const buildSelectableWalletList = (
     }
   });
   return coins;
+};
+
+const createTokenAddresses = (
+  wallets: Wallet[],
+): {
+  [key: string]: {
+    tokenAddress?: string;
+  };
+} => {
+  return wallets.reduce(
+    (acc, wallet) => {
+      if (wallet.credentials.tokenAddress) {
+        acc[wallet.chain] = {tokenAddress: wallet.credentials.tokenAddress};
+      }
+      return acc;
+    },
+    {} as {
+      [key: string]: {
+        tokenAddress?: string;
+      };
+    },
+  );
 };
 
 const filterByChain = (
@@ -720,7 +741,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   };
 
   const openWalletSelector = useCallback(
-    (selectObj: GlobalSelectObj) => {
+    async (selectObj: GlobalSelectObj) => {
       setKeysWallets(
         Object.keys(selectObj.availableWalletsByKey).map(keyId => {
           const key = keys[keyId];
@@ -786,6 +807,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           };
         }),
       );
+      await sleep(1000);
       setWalletSelectModalVisible(true);
     },
     [keys],
@@ -875,7 +897,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     );
 
     const chain = addTokenToLinkedWallet?.chains[0];
-    const tokenAddress = addTokenToLinkedWallet?.tokenAddresses[0];
+    const tokenAddress =
+      addTokenToLinkedWallet?.tokenAddresses?.[chain]?.tokenAddress;
     const currencyAbbreviation =
       addTokenToLinkedWallet?.currencyAbbreviation?.toLowerCase();
 
@@ -1057,7 +1080,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     key: Key,
   ) => {
     const chain = selectedCurrency?.chains[0];
-    const tokenAddress = selectedCurrency?.tokenAddresses[0];
+    const tokenAddress =
+      selectedCurrency?.tokenAddresses?.[chain]?.tokenAddress;
     const currencyAbbreviation =
       selectedCurrency?.currencyAbbreviation?.toLowerCase();
     if (!currencyAbbreviation) {
@@ -1112,7 +1136,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   };
 
-  const openKeySelector = (selectObj: GlobalSelectObj) => {
+  const openKeySelector = async (selectObj: GlobalSelectObj) => {
     setCardsList(
       createHomeCardList({
         navigation,
@@ -1127,6 +1151,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         currency: selectObj,
       }),
     );
+    await sleep(1000);
     setKeySelectorModalVisible(true);
   };
 
