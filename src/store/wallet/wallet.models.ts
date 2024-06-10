@@ -321,6 +321,14 @@ export interface TransactionProposal {
     data?: string;
     gasLimit?: number;
   }>;
+  effects?: Array<{
+    amount: number | string; // Support BN
+    contractAddress?: string;
+    from: string;
+    to: string;
+    type: string;
+    callback?: any;
+  }>;
   inputs: any;
   fee: any;
   message: string;

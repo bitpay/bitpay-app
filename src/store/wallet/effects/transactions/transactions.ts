@@ -203,6 +203,14 @@ const ProcessTx =
       ];
     }
 
+    // New data structure for ERC20 token transactions
+    if (tx.effects && tx.effects.length > 0 && IsERCToken(tx.coin, tx.chain)) {
+      tx.amount = tx.effects.reduce(
+        (total, {amount}) => total + Number(amount),
+        0,
+      );
+    }
+
     tx.amountStr = dispatch(
       FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
     );
