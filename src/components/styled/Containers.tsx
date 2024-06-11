@@ -360,7 +360,6 @@ export const SearchRoundContainer = styled.View`
   border-radius: 100px;
   align-items: center;
   height: 50px;
-  margin: 16px 0px;
 `;
 
 export const SearchRoundInput = styled.TextInput`

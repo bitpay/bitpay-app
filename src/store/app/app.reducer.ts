@@ -201,6 +201,8 @@ const initialState: AppState = {
   inAppNotificationData: undefined,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
+  showChainSelectorModal: false,
+  chainSelectorModalConfig: undefined,
   notificationsAccepted: false,
   confirmedTxAccepted: false,
   announcementsAccepted: false,
@@ -389,6 +391,7 @@ export const appReducer = (
       return {
         ...state,
         showChainSelectorModal: false,
+        chainSelectorModalConfig: undefined,
       };
 
     case AppActionTypes.SET_COLOR_SCHEME:

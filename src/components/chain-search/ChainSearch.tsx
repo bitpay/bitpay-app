@@ -91,6 +91,7 @@ interface SearchComponentProps<T extends SearchableItem> {
   setSearchResults: (val: T[]) => void;
   searchFullList: T[];
   context: string;
+  onModalHide?: () => void;
 }
 
 const SearchComponent = <T extends SearchableItem>({
@@ -100,6 +101,7 @@ const SearchComponent = <T extends SearchableItem>({
   setSearchResults,
   searchFullList,
   context,
+  onModalHide,
 }: SearchComponentProps<T>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
@@ -264,7 +266,7 @@ const SearchComponent = <T extends SearchableItem>({
           </SearchFilterIconContainer>
         </RowFilterContainer>
       </SearchFilterContainer>
-      <ChainSelectorModal />
+      <ChainSelectorModal onModalHide={onModalHide} />
     </SearchRoundContainer>
   );
 };

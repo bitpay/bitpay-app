@@ -7,6 +7,7 @@ import {AppState, AppStateStatus} from 'react-native';
 interface Props extends SheetParams {
   isVisible: boolean;
   onBackdropPress: (props?: any) => void;
+  onModalHide?: () => void;
   children?: any;
 }
 
@@ -16,6 +17,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
   children,
   isVisible,
   onBackdropPress,
+  onModalHide,
   placement,
 }) => {
   const [isModalVisible, setModalVisible] = useState(isVisible);
@@ -48,6 +50,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
       onBackdropPress={onBackdropPress}
       animationIn={placement === 'top' ? 'slideInDown' : 'slideInUp'}
       animationOut={placement === 'top' ? 'slideOutUp' : 'slideOutDown'}
+      onModalHide={onModalHide}
       // swipeDirection={'down'}
       // onSwipeComplete={hideModal}
       style={{

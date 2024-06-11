@@ -172,6 +172,10 @@ const PlusIconContainer = styled.View`
   margin-right: 15px;
 `;
 
+const SearchComponentContainer = styled.View`
+  margin-bottom: 16px;
+`;
+
 interface ToWalletSelectorCoinObj {
   id: string;
   chain: string;
@@ -605,6 +609,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     ...tokenOptionsByAddress,
     ...customTokenOptionsByAddress,
   };
+  const chainSelectorIsVisible = useAppSelector(
+    ({APP}) => APP.showChainSelectorModal,
+  );
+  const [chainSelectorModalIsVisible, setChainSelectorModalIsVisible] =
+    useState(false);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
@@ -807,7 +816,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           };
         }),
       );
-      await sleep(1000);
       setWalletSelectModalVisible(true);
     },
     [keys],
@@ -1151,9 +1159,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         currency: selectObj,
       }),
     );
-    await sleep(1000);
     setKeySelectorModalVisible(true);
   };
+
+  const onChainSelectorModalHide = () => {
+    setChainSelectorModalIsVisible(false);
+  };
+
+  useEffect(() => {
+    if (chainSelectorIsVisible) {
+      setChainSelectorModalIsVisible(true);
+    }
+  }, [chainSelectorIsVisible]);
 
   useEffect(() => {
     if (!wallets[0]) {
@@ -1169,6 +1186,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   useEffect(() => {
     if (
+      !chainSelectorModalIsVisible &&
       selectedNetworkForDeposit &&
       selectingNetworkForDeposit &&
       selectedObj.availableWalletsByKey
@@ -1191,6 +1209,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   }, [
     navigation,
+    chainSelectorModalIsVisible,
     selectedNetworkForDeposit,
     selectingNetworkForDeposit,
     selectedObj,
@@ -1237,18 +1256,21 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       <GlobalSelectContainer>
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) && (
-          <SearchComponent<GlobalSelectObj>
-            searchVal={searchVal}
-            setSearchVal={setSearchVal}
-            searchResults={searchResults}
-            setSearchResults={setSearchResults}
-            searchFullList={
-              customCurrenciesSupportedList.length > 0
-                ? customCurrenciesSupportedList
-                : currenciesSupportedList
-            }
-            context={context}
-          />
+            <SearchComponentContainer>
+              <SearchComponent<GlobalSelectObj>
+                searchVal={searchVal}
+                setSearchVal={setSearchVal}
+                searchResults={searchResults}
+                setSearchResults={setSearchResults}
+                searchFullList={
+                  customCurrenciesSupportedList.length > 0
+                    ? customCurrenciesSupportedList
+                    : currenciesSupportedList
+                }
+                context={context}
+                onModalHide={onChainSelectorModalHide}
+              />
+            </SearchComponentContainer>
         )}
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) && (
@@ -1265,8 +1287,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             keyExtractor={keyExtractor}
             renderItem={renderItem}
             getItemLayout={(data, index) => ({
-              length: 50,
-              offset: 50 * index,
+              length: 75,
+              offset: 75 * index,
               index,
             })}
             initialNumToRender={20}

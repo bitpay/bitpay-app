@@ -130,7 +130,7 @@ const KeyBoardAvoidingViewWrapper = styled.KeyboardAvoidingView`
   border-top-right-radius: 12px;
 `;
 
-const ChainSelector = () => {
+const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
@@ -171,6 +171,7 @@ const ChainSelector = () => {
             activeOpacity={ActiveOpacity}
             selected={selected}
             onPress={() => {
+              dispatch(AppActions.dismissChainSelectorModal());
               const option = supportedChain?.chain as
                 | SupportedChains
                 | undefined;
@@ -186,7 +187,6 @@ const ChainSelector = () => {
                 dispatch(setDefaultChainFilterOption(option));
               }
               setSearchVal('');
-              dispatch(AppActions.dismissChainSelectorModal());
             }}
             key={index.toString()}>
             <RowContainer>
@@ -273,6 +273,7 @@ const ChainSelector = () => {
   return (
     <SheetModal
       isVisible={isVisible}
+      onModalHide={onModalHide}
       onBackdropPress={() => {
         setSearchVal('');
         dispatch(AppActions.dismissChainSelectorModal());
