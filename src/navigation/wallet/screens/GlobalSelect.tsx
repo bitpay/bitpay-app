@@ -55,6 +55,7 @@ import {
 import {
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
+  setSelectedNetworkForDeposit,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Effect} from '../../../store';
@@ -1159,12 +1160,20 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         currency: selectObj,
       }),
     );
+    await sleep(1000);
     setKeySelectorModalVisible(true);
   };
 
   const onChainSelectorModalHide = () => {
     setChainSelectorModalIsVisible(false);
   };
+
+  useEffect(() => {
+    // If a chain filter was selected after a network was selected, clear the network selection.
+    if (selectedChainFilterOption && selectedNetworkForDeposit) {
+      dispatch(setSelectedNetworkForDeposit(undefined));
+    }
+  }, [selectedChainFilterOption]);
 
   useEffect(() => {
     if (chainSelectorIsVisible) {
@@ -1337,6 +1346,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => {
+            dispatch(setSelectedNetworkForDeposit(undefined));
             setAddTokenToLinkedWallet(undefined);
             setWalletSelectModalVisible(false);
           }}>
